@@ -1,0 +1,32 @@
+.header {
+    position: relative;
+    padding-inline: 5vw;
+    height: 10vh;
+    background-color: var(--white-2);
+    z-index: 1;
+}
+.header > * {
+    width: 33.3%;
+    display: flex;
+}
+
+.header-menu {
+    justify-content: space-between;
+
+}
+.header-logo {
+    height: 50%;
+    display: flex;
+    justify-content: center;
+}
+.header-logo > a {
+    display: inherit;
+}
+.header-social_links {
+    height: 30%;
+    justify-content: right;
+
+}
+.header-social_links > a {
+    display: inherit;
+}

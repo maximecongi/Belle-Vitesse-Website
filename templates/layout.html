@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en-US" prefix="og: https://ogp.me/ns#">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="shortcut icon" type="image/x-icon" href="/static/favicons/apple-touch-icon.png" />
+    <link rel="canonical" href="https://www.hologram-tech.com" />
+    <meta property="og:site_name" content="Hologram" />
+    <meta property="og:title" content="Hologram - Wireless Solutions for Cinema">
+    <meta property="og:url" content="https://www.hologram-tech.com/">
+    <meta property="og:type" content="website" />
+    <meta property="og:description"
+        content="Discover our new wireless battery monitoring solution for the film industry : Flow.">
+    <meta property="og:image" content="https://www.hologram-tech.com/static/favicons/og-image.png" />
+    <meta property="og:image:width" content="1105">
+    <meta property="og:image:height" content="579">
+    <meta itemprop="name" content="Hologram - Wireless Solutions for Cinema" />
+    <meta itemprop="url" content="https://www.hologram-tech.com/" />
+    <meta itemprop="description"
+        content="Discover our new wireless battery monitoring solution for the film industry : Flow." />
+    <meta itemprop="thumbnailUrl" content="https://www.hologram-tech.com/static/favicons/og-image.png" />
+    <link rel="image_src" href="https://www.hologram-tech.com/static/favicons/og-image.png" />
+    <meta itemprop="image" content="https://www.hologram-tech.com/static/favicons/og-image.png" />
+    <meta name="twitter:title" content="Hologram - Wireless Solutions for Cinema" />
+    <meta name="twitter:image" content="https://www.hologram-tech.com/static/favicons/og-image.png" />
+    <meta name="twitter:url" content="https://www.hologram-tech.com/" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:description"
+        content="Discover our new wireless battery monitoring solution for the film industry : Flow." />
+    <meta name="description"
+        content="Discover our new wireless battery monitoring solution for the film industry : Flow." />
+
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/favicons/apple-touch-icon.png">
+    <link rel="icon" type="image/x-icon" sizes="32x32" href="/static/favicons/favicon-32x32.png">
+    <link rel="icon" type="image/x-icon" sizes="16x16" href="/static/favicons/favicon-16x16.png">
+    <link rel="manifest" href="/static/favicons/site.webmanifest">
+    <link rel="mask-icon" href="/static/favicons/safari-pinned-tab.svg" color="#5bbad5">
+    <link rel="shortcut icon" href="/static/favicons/favicon.ico">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="msapplication-config" content="/static/favicons/browserconfig.xml">
+    <meta name="theme-color" content="#f7f7f7">
+
+
+    <title>{% block title %}{% endblock %}</title>
+    <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/js/splide.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/css/splide.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/styles.css') }}">
+</head>
+
+<body id="home">
+    <main>
+        {% include "header.html" %}
+        {% block content %}{% endblock %}
+        {% include "footer.html" %}
+    </main>
+    <script src="{{ url_for('static', filename='/js/src/script.js') }}"></script>
+    <script src="{{ url_for('static', filename='/js/src/slider.js') }}"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</body>
+
+</html>

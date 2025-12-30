@@ -1,0 +1,317 @@
+/* imports */
+@import url("normalize.css");
+@import url("main.css");
+@import url("slider.css");
+@import url("header.css");
+@import url("footer.css");
+@import url("home.css");
+@import url("categories.css");
+@import url("vehicule.css");
+
+/* fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap');
+
+/*overall style*/
+:root {
+    --white-1: #FFFFFF;
+    --white-2: #FAFAFA;
+    --white-3: #F4F4F4;
+    --white-4: #A1A1A1;
+    --grey-1: #151515;
+    --grey-2: #515151;
+    --grey-3: #1A1A1A;
+    --yellow-1: #FFC845;
+
+    --base-font-size: 12px;
+
+}
+
+html {
+    height: -webkit-fill-available;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: "Poppins";
+    background-color: var(--white-1);
+    color: var(--grey-1);
+    font-size: var(--base-font-size);
+    width: 100vw;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    padding: 0;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    letter-spacing: normal;
+    text-rendering: optimizeLegibility;
+    min-height: -webkit-fill-available;
+    margin-right: auto;
+    margin-left: auto;
+    font-weight: 500;
+    font-style: normal;
+    caret-color: transparent;
+}
+
+p {
+    line-height: 1.6em;
+}
+
+a {
+    text-decoration: none;
+    color: var(--grey-1);
+    transition: color 0.1s linear;
+}
+
+a:hover {
+    color: var(--yellow-1);
+}
+
+.button {
+    background-color: var(--white-1);
+    border: none;
+    color: var(--grey-1);
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 4px 2px;
+    cursor: pointer;
+    transition: filter 0.2s linear;
+}
+
+.button:hover {
+    filter: brightness(0.9);
+    color: var(--grey-1);
+}
+
+.img-overlay {
+    background-color: rgba(0, 0, 0, 0.3);
+    background-blend-mode: darken;
+}
+
+h1,
+h2,
+h3,
+h4 {
+    /* font-family: "Space Grotesk"; */
+    font-weight: 500;
+    margin: 0;
+}
+
+/* font size */
+.font-12 {
+    font-size: 1.2em;
+}
+
+.font-14 {
+    font-size: 1.4em;
+}
+
+.font-16 {
+    font-size: 1.6em;
+}
+
+.font-18 {
+    font-size: 1.8em;
+}
+
+.font-20 {
+    font-size: 2.0em;
+}
+
+.font-22 {
+    font-size: 2.2em;
+}
+
+.font-24 {
+    font-size: 2.4em;
+}
+
+.font-26 {
+    font-size: 2.6em;
+}
+
+.font-28 {
+    font-size: 2.8em;
+}
+
+.font-30 {
+    font-size: 3.0em;
+}
+
+.font-32 {
+    font-size: 3.2em;
+}
+
+.font-34 {
+    font-size: 3.4em;
+}
+
+.font-36 {
+    font-size: 3.6em;
+}
+
+.font-38 {
+    font-size: 3.8em;
+}
+
+.font-40 {
+    font-size: 4.0em;
+}
+
+.font-42 {
+    font-size: 4.2em;
+}
+
+.font-44 {
+    font-size: 4.4em;
+}
+
+.font-46 {
+    font-size: 4.6em;
+}
+
+.font-48 {
+    font-size: 4.8em;
+}
+
+.font-50 {
+    font-size: 5.0em;
+}
+
+.font-52 {
+    font-size: 5.2em;
+}
+
+.font-54 {
+    font-size: 5.4em;
+}
+
+.font-56 {
+    font-size: 5.6em;
+}
+
+.font-58 {
+    font-size: 5.8em;
+}
+
+/* font weight */
+.font-weight-100 {
+    font-weight: 100;
+}
+
+.font-weight-200 {
+    font-weight: 200;
+}
+
+.font-weight-300 {
+    font-weight: 300;
+}
+
+.font-weight-400 {
+    font-weight: 400;
+}
+
+.font-weight-500 {
+    font-weight: 500;
+}
+
+.font-weight-600 {
+    font-weight: 600;
+}
+
+.font-weight-700 {
+    font-weight: 700;
+}
+
+.font-weight-800 {
+    font-weight: 800;
+}
+
+.font-weight-900 {
+    font-weight: 900;
+}
+
+/* line height */
+
+.lh-00 {
+    line-height: 0;
+}
+
+.lh-05 {
+    line-height: 0.5em;
+}
+
+.lh-10 {
+    line-height: 1em;
+}
+
+.lh-15 {
+    line-height: 1.5em;
+}
+
+.lh-20 {
+    line-height: 2em;
+}
+
+/* colors */
+.color-white-1 {
+    color: var(--white-1);
+}
+
+.color-white-2 {
+    color: var(--white-2);
+}
+
+.color-white-3 {
+    color: var(--white-3);
+}
+
+.color-grey-1 {
+    color: var(--grey-1);
+}
+
+.color-grey-2 {
+    color: var(--grey-2);
+}
+
+.color-grey-3 {
+    color: var(--grey-3);
+}
+
+.color-yellow-1 {
+    color: var(--yellow-1);
+}
+
+/* backgound colors */
+.bg-color-white-1 {
+    background-color: var(--white-1);
+}
+
+.bg-color-white-2 {
+    background-color: var(--white-2);
+}
+
+.bg-color-white-3 {
+    background-color: var(--white-3);
+}
+
+.bg-color-grey-1 {
+    background-color: var(--grey-1);
+}
+
+.bg-color-grey-2 {
+    background-color: var(--grey-2);
+}
+
+.bg-color-grey-3 {
+    background-color: var(--grey-3);
+}
+
+.bg-color-yellow-1 {
+    background-color: var(--yellow-1);
+}

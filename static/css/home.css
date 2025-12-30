@@ -1,0 +1,91 @@
+/* hero banner */
+.home-hero-banner {
+    height: 90vh;
+    background-image: url(/static/imgs/bgs/bg_home.jpg);
+    background-size: cover;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.home-hero-banner div {
+    position: relative;
+    top: -10vh;
+}
+
+.home-hero-banner-slogan-text {
+    margin-bottom: 1vh;
+}
+
+/* testimonials */
+.home-testimonials {
+    display: flex;
+    align-items: center;
+}
+
+.home-testimonials>* {
+    width: 50%;
+    height: 40vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.home-testimonials-logo img {
+    height: 10vw;
+}
+
+/* solutions */
+.home-solutions {
+    flex-direction: column;
+    padding-bottom: 5vw;
+}
+
+.home-solutions-categories {
+    display: flex;
+    width: 100%;
+    justify-content: space-evenly;
+}
+
+.home-solutions-categories h3 {
+    position: relative;
+    top: 0.5em;
+    z-index: 2;
+}
+
+.home-solutions-categories img {
+    height: 20vw;
+    aspect-ratio: 1;
+    object-fit: cover;
+    transition: filter 0.3s linear;
+}
+
+.home-solutions-categories-img-link:hover img {
+    filter: brightness(0.9);
+}
+
+/* references */
+.home-references {
+    flex-direction: column;
+}
+
+.home-references-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    flex-wrap: wrap;
+}
+
+.home-references-wrapper img {
+    height: 3vh;
+    margin: 4vw 1vh;
+    filter: grayscale(1) brightness(0.3);
+    transition: filter 0.5s ease;
+    cursor: url(/static/imgs/cursors/Noir-Fond-Transparent.png), pointer;
+    ;
+}
+
+.home-references-wrapper img:hover {
+    filter: grayscale(1) brightness(0);
+}

@@ -1,0 +1,66 @@
+{% extends "layout.html" %}
+{% block title %}Belle Vitesse - Specialist in moving cinema{% endblock %}
+{% block content %}
+<section id="hero-banner" class="section-site">
+  <div class="home-hero-banner img-overlay">
+    <div class="home-hero-banner-slogan">
+      <h1 class="home-hero-banner-slogan-text font-36 color-white-2">
+        Specialist in <br /><i>moving</i> cinema
+      </h1>
+    </div>
+    <div class="home-hero-banner-buttons">
+      <a href="/" class="home-hero-banner-buttons-discover button">Discover our solutions</a>
+      <a href="/" class="home-hero-banner-buttons-contact button bg-color-yellow-1">Contact us</a>
+    </div>
+</section>
+<section id="testimonials" class="section-site">
+  <div class="home-testimonials">
+    <div class="home-testimonials-logo"><img
+        src="{{ url_for('static', filename='/imgs/logos_and_name/Noir-Fond-Transparent.png') }}"></div>
+    <div class="home-testimonials-textwrapper">
+      <p class="home-testimonials-textwrapper-text font-12em">Our goal is to equip you with the most inspiring image
+        technology in the world. We are unique in terms of the exclusive products we have developed, and our resources.
+        As part of the wider ARRI ecosystem, we are built on a bedrock of knowledge that dates back more than a century.
+
+        Through a network of facilities in North America, Europe, and the UK, our service crosses borders and
+        continents, bringing you first-class motion picture camera, lighting, and grip equipment, wherever you may be.
+        We aim for warm welcomes, friendly expertise, personalized solutions, and relationships built on trust.</p>
+    </div>
+  </div>
+</section>
+<section id="solutions" class="section-site">
+  <div class="home-solutions">
+    <h2 class="title-section font-32">Our solutions</h2>
+    <div class="home-solutions-categories font-18 color-grey-2">
+      <div>
+        <h3>Vehicules</h3>
+        <a class="home-solutions-categories-img-link" href="{{ url_for('vehicules') }}"><img
+            src="{{ url_for('static', filename='/imgs/vehicules/ebike_fondblanc_wide.png') }}" /></a>
+      </div>
+      <div>
+        <h3>Heads</h3>
+        <a class="home-solutions-categories-img-link" href="{{ url_for('heads') }}"><img
+            src="{{ url_for('static', filename='/imgs/vehicules/ebike_fondblanc_wide.png') }}" /></a>
+      </div>
+      <div>
+        <h3>Supports</h3>
+        <a class="home-solutions-categories-img-link" href="{{ url_for('supports') }}"><img
+            src="{{ url_for('static', filename='/imgs/vehicules/ebike_fondblanc_wide.png') }}" /></a>
+      </div>
+</section>
+<section id="references" class="section-site">
+  <div class="home-references">
+    <h2 class="font-32">Our references</h2>
+    <div class="home-references-wrapper">
+      <img src="{{ url_for('static', filename='/imgs/brands/dior-logo.png') }}" />
+      <img src="{{ url_for('static', filename='/imgs/brands/canal-logo.png') }}" />
+      <img src="{{ url_for('static', filename='/imgs/brands/netflix-logo.png') }}" />
+      <img src="{{ url_for('static', filename='/imgs/brands/northsix-logo.png') }}" />
+      <img src="{{ url_for('static', filename='/imgs/brands/partizan-logo.png') }}" />
+      <img src="{{ url_for('static', filename='/imgs/brands/henry-logo.png') }}" />
+      <img src="{{ url_for('static', filename='/imgs/brands/soldat-logo.png') }}" />
+      <img src="{{ url_for('static', filename='/imgs/brands/longchamp-logo.png') }}" />
+    </div>
+  </div>
+</section>
+{% endblock %}

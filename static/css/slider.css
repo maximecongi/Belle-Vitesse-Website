@@ -1,0 +1,21 @@
+.splide__arrow {
+    background: var(--white-2);
+    border-radius: 0;
+    height: 5em;
+    width: 5em;
+    opacity: 1;
+}
+.splide__arrow:hover:not(:disabled) {
+    background-color: var(--yellow-1);
+    opacity: 1;
+}
+.splide__pagination__page {
+    background: var(--white-3);
+}
+.splide__pagination__page.is-active {
+    background: var(--yellow-1);
+}    
+.splide__pagination {
+    bottom: -1.5em;
+    display: none;
+}    

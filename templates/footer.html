@@ -1,0 +1,64 @@
+{% set mail = "contact@bellevitesse.com" %}
+{% set phone= "+3361234545678" %}
+<section class="section-site">
+    <div class="footer bg-color-grey-3">
+        <div class="footer-wrapper">
+            <div class="footer-testimonials">
+                <div class="footer-testimonials-logo">
+                    <a href="/"><img src="{{ url_for('static', filename='/imgs/logos_and_name/Blanc-Fond-Transparent.png') }}"/></a>
+                </div>
+                <div class="footer-testimonials-text">
+                    <p class="color-white-2 font-weight-300">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+                </div>
+            </div>
+            <div class="footer-links">
+                <div class="footer-links-wrapper">
+                    <h3 class=""><a href="/">Vehicules</a></h3>
+                   <p class=""><a href="/">eCar</a></p>
+                   <p class=""><a href="/">eBike</a></p>
+                   <p class=""><a href="/">eTrike 360</a></p>
+                   <p class=""><a href="/">eTrike</a></p>
+                   <p class=""><a href="/">Segway X2</a></p>
+                   <p class=""><a href="/">Segway I2</a></p>
+                </div>
+                <div class="footer-links-wrapper">
+                    <h3 class=""><a href="/">Heads</a></h3>
+                   <p class=""><a href="/">Titan LT</a></p>
+                   <p class=""><a href="/">Ronin 2</a></p>
+                   <p class=""><a href="/">Mōvi Pro</a></p>
+                   <p class=""><a href="/">Ronin 4D</a></p>
+                   <p class=""><a href="/">DJI RS 4 Pro</a></p>
+                </div>
+                <div class="footer-links-wrapper">
+                    <h3 class=""><a href="/">Supports</a></h3>
+                   <p class=""><a href="/">Black-Tek Tower</a></p>
+                   <p class=""><a href="/">FlowCine Black Arm</a></p>
+                   <p class=""><a href="/">Raptor Air Iso 4</a></p>
+                </div>
+                <div class="footer-links-wrapper">
+                    <h3 class="color-white-2">Legals</h3>
+                   <p class=""><a href="/">Terms & conditions</a></p>
+                </div>
+                <div class="footer-links-wrapper">
+                    <h3 class="color-white-2"><a href="/">Contact</a></h3>
+                    <p class="color-white-2 font-weight-300">
+                        <a href="https://maps.app.goo.gl/gtf7XXeKvutYRq8j8" target="_blank">
+                        Belle Vitesse SARL<br/>
+                        39 rue Maurice Gunsbourg<br/>
+                        94200 IVRY-SUR-SEINE<br/>
+                        </a>
+                    </p>
+                    <p>
+                        <a href="tel:{{phone}}" target="_blank">{{phone}}</a>
+                    </p>
+                    <p>
+                        <a href="mailto:{{mail}}" target="_blank">{{mail}}</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="">
+        <p class="color-white-2 font-weight-300">@ Copyright Belle Vitesse 2025. Tous droits réservés.</p>
+        </div>
+    </div>
+</section>

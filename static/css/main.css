@@ -1,0 +1,16 @@
+main {
+    width: 100vw;
+}
+.section-site {
+    position: relative;
+    width: 100vw;
+    margin-inline: auto;
+}
+.section-site > * {
+    display: flex;
+    align-items: center;
+    padding-inline: 5vw;
+}
+.title-section {
+    margin: 3vw 0 5vw 0;
+}

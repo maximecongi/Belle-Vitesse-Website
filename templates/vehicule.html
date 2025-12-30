@@ -1,0 +1,213 @@
+{% extends "layout.html" %}
+{% block title %}Vehicules - Belle Vitesse{% endblock %}
+{% block content %}
+<section id="hero-banner" class="section-site">
+    <div class="vehicule-hero-banner bg-color-white-3">
+        <img src=" {{ vehicule.fields.banner[0].thumbnails.full.url }}" />
+        <div class="vehicule-hero-banner-titlewrapper">
+            <h1 class="vehicule-hero-banner-titlewrapper-title font-54 color-grey-1">
+                {{ vehicule.fields.name }}
+            </h1>
+        </div>
+        <div class="vehicule-hero-banner-textwrapper">
+            <p class="vehicule-hero-banner-textwrapper-text font-12 color-grey-1 font-weight-300">
+                {{ vehicule.fields.description }}
+            </p>
+        </div>
+</section>
+<section class="section-site">
+    <div class="vehicule-squared-highlight">
+        <div class="vehicule-squared-highlight-wrapper">
+            <div class="vehicule-squared-highlight-wrapper-square">
+                <p class="vehicule-squared-highlight-wrapper-square-value">{{ vehicule.fields.max_speed }}</p>
+                <p class="vehicule-squared-highlight-wrapper-square-unit">km/h</p>
+                <p class="vehicule-squared-highlight-wrapper-square-label">Max speed</p>
+            </div>
+            <div class="vehicule-squared-highlight-wrapper-square">
+                <p class="vehicule-squared-highlight-wrapper-square-value">
+                    1{% if vehicule.fields.passengers != 0 %}<span
+                        class="vehicule-squared-highlight-wrapper-square-value-plussign">+</span>{{
+                    vehicule.fields.passengers }}{% endif %}
+                </p>
+                <p class="vehicule-squared-highlight-wrapper-square-unit">
+                    {% if vehicule.fields.passengers != 0 %}
+                    Driver + Passengers
+                    {% else %}
+                    Driver
+                    {% endif %}
+                </p>
+                <p class="vehicule-squared-highlight-wrapper-square-label">Capacity</p>
+            </div>
+        </div>
+    </div>
+</section>
+<section class="section-site">
+    <div class="vehicule-configurator">
+        <h2 class="title-section font-32">Configurations</h2>
+        <div class="vehicule-configurator-carousel-wrapper" x-data="carousel()">
+
+            <!-- Liste des configurations groupées par type -->
+            <div class="vehicule-configurator-carousel-wrapper-config">
+                {% for type_name, items in configs_grouped.items() %}
+                <div class="vehicule-configurator-carousel-wrapper-config-group">
+                    <h3 class="title-section font-24">{{ type_name }}</h3>
+                    <nav class="vehicule-configurator-carousel-wrapper-config-list">
+                        <template x-for="(item, index) in itemsByType['{{ type_name }}']" :key="index">
+                            <button class="vehicule-configurator-carousel-wrapper-config-item"
+                                :class="{ 'active': activeIndex === getGlobalIndex('{{ type_name }}', index), 'inactive': activeIndex !== getGlobalIndex('{{ type_name }}', index) }"
+                                @click="activeIndex = getGlobalIndex('{{ type_name }}', index)"
+                                x-text="item.label"></button>
+                        </template>
+                    </nav>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- UN SEUL conteneur image -->
+            <div class="vehicule-configurator-carousel-wrapper-img-container">
+                <img :src="allItems[activeIndex].image" :alt="allItems[activeIndex].label">
+            </div>
+        </div>
+    </div>
+</section>
+<section class="vehicule-slider">
+    <div class="splide" aria-label="Splide Basic HTML Example">
+        <div class="splide__track">
+            <ul class="splide__list">
+                {% for image in vehicule.fields.gallery|reverse %}
+                <li class="splide__slide"><img src="{{ image.thumbnails.full.url }}" alt="Gallery image" /></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</section>
+<section class="section-site">
+    <div class="vehicule-specs">
+        <h2 class="vehicule-specs-title title-section font-32">Technical specifications</h2>
+        <div class="vehicule-specs-details">
+            <div>
+                <div class="vehicule-specs-details-detail-wrapper">
+                    <p>Brand : </p>
+                    <div class="vehicule-specs-details-detail-wrapper-value">
+                        <p>{{ vehicule.fields.brand }}</p>
+                    </div>
+                </div>
+                <div class="vehicule-specs-details-detail-wrapper">
+                    <p>Model : </p>
+                    <div class="vehicule-specs-details-detail-wrapper-value">
+                        <p>{{ vehicule.fields.model }}</p>
+                    </div>
+                </div>
+                <div class="vehicule-specs-details-detail-wrapper">
+                    <p>Type : </p>
+                    <div class="vehicule-specs-details-detail-wrapper-value">
+                        <p>{{ vehicule.fields.type }}</p>
+                    </div>
+                </div>
+                <div class="vehicule-specs-details-detail-wrapper">
+                    <p>Max speed: : </p>
+                    <div class="vehicule-specs-details-detail-wrapper-value">
+                        <p>{{ vehicule.fields.max_speed }} km/h</p>
+                    </div>
+                </div>
+                <div class="vehicule-specs-details-detail-wrapper">
+                    <p>Number of possible passengers : </p>
+                    <div class="vehicule-specs-details-detail-wrapper-value">
+                        <p>{{ vehicule.fields.passengers }}</p>
+                    </div>
+                </div>
+                <div class="vehicule-specs-details-detail-wrapper">
+                    <p>Power : </p>
+                    <div class="vehicule-specs-details-detail-wrapper-value">
+                        <p>{{ vehicule.fields.power }}</p>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="vehicule-specs-details-detail-wrapper">
+                    <p>Torque : </p>
+                    <div class="vehicule-specs-details-detail-wrapper-value">
+                        <p>{{ vehicule.fields.torque }}</p>
+                    </div>
+                </div>
+                <div class="vehicule-specs-details-detail-wrapper">
+                    <p>Battery: : </p>
+                    <div class="vehicule-specs-details-detail-wrapper-value">
+                        <p>{{ vehicule.fields.battery_type }}</p>
+                    </div>
+                </div>
+                <div class="vehicule-specs-details-detail-wrapper">
+                    <p>Battery life : </p>
+                    <div class="vehicule-specs-details-detail-wrapper-value">
+                        <p>{{ vehicule.fields.battery_life }}</p>
+                    </div>
+                </div>
+                <div class="vehicule-specs-details-detail-wrapper">
+                    <p>Charging time : </p>
+                    <div class="vehicule-specs-details-detail-wrapper-value">
+                        <p>{{ vehicule.fields.charging_time }}</p>
+                    </div>
+                </div>
+                <div class="vehicule-specs-details-detail-wrapper">
+                    <p>Size : </p>
+                    <div class="vehicule-specs-details-detail-wrapper-value">
+                        <p>L {{ vehicule.fields.length }} cm </span>x <span>W {{
+                                vehicule.fields.width }}
+                                cm </span>x <span>H {{ vehicule.fields.height }}
+                                cm</p>
+                    </div>
+                    <div class="vehicule-specs-details-detail-wrapper">
+                        <p>Weight : </p>
+                        <div class="vehicule-specs-details-detail-wrapper-value">
+                            <p>{{ vehicule.fields.weight }} kg</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div>
+        <img src="{{ url_for('static', filename='/imgs/logos_and_name/Noir-Fond-Transparent.png') }}" alt="Gallery image" />
+        </div>
+    </div>
+</section>
+
+
+
+<script>
+    function carousel() {
+        return {
+            activeIndex: 0,
+            allItems: [
+                {% for type_name, items in configs_grouped.items() %}
+        {% for config in items %}
+        {
+            label: "{{ config.fields.name }}",
+                image: "{{ config.fields.image[0].thumbnails.large.url }}"
+        },
+        {% endfor %}
+        {% endfor %}
+            ],
+        itemsByType: {
+            {% for type_name, items in configs_grouped.items() %}
+            "{{ type_name }}": [
+                {% for config in items %}
+        {
+            label: "{{ config.fields.name }}",
+                image: "{{ config.fields.image[0].thumbnails.large.url }}"
+        },
+        {% endfor %}
+                ],
+        {% endfor %}
+    },
+    getGlobalIndex(type, localIndex) {
+        let count = 0;
+        for (let t in this.itemsByType) {
+            if (t === type) return count + localIndex;
+            count += this.itemsByType[t].length;
+        }
+        return 0;
+    }
+        }
+    }
+</script>
+{% endblock %}

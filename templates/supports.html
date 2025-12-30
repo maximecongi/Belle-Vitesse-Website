@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block title %}Vehicules - Belle Vitesse{% endblock %}
+{% block content %}
+<section id="hero-banner" class="section-site">
+    <div class="categories-hero-banner img-overlay bg-vehicules">
+        <div class="categories-hero-banner-titlewrapper">
+            <h1 class="categories-hero-banner-titlewrapper-title font-54 color-white-2 font-weight-900">
+                Vehicules
+            </h1>
+        </div>
+        <div class="categories-hero-banner-textwrapper">
+            <p class="categories-hero-banner-textwrapper-text font-18 color-white-2 font-weight-300 lh-05">
+                Meet our fleet
+            </p>
+        </div>
+</section>
+<section id="solutions" class="section-site">
+    <div class="categories-solutions">
+        <h2 class="title-section font-32">Our solutions</h2>
+        <div class="categories-solutions-categories font-18">
+            {% for vehicule in vehicules %}
+            {% if vehicule.fields.status == "Online" %}
+            <div class="categories-solutions-categories-categorywrapper">
+                <h3>{{ vehicule.fields.name }}</h3>
+                <a class="categories-solutions-categories-img-link"
+                    href="{{ url_for('vehicule', slug=vehicule.fields.slug) }}">
+                    {% if vehicule.fields.thumbnail[0].thumbnails is defined %}
+                    <img src="{{ vehicule.fields.thumbnail[0].thumbnails.large.url }}" />
+                    {% else %}
+                    <img src="{{ url_for('static', filename='/imgs/placeholders/vehicule.jpeg') }}" />
+                    {% endif %}
+                </a>
+            </div>
+            {% endif %}
+            {% endfor %}
+</section>
+{% endblock %}
