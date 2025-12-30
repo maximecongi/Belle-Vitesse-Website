@@ -15,6 +15,17 @@
             </p>
         </div>
 </section>
+<section class="vehicule-slider">
+    <div class="splide" aria-label="Splide Basic HTML Example">
+        <div class="splide__track">
+            <ul class="splide__list">
+                {% for image in vehicule.fields.gallery|reverse %}
+                <li class="splide__slide"><img src="{{ image.thumbnails.full.url }}" alt="Gallery image" /></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</section>
 <section class="section-site">
     <div class="vehicule-squared-highlight">
         <div class="vehicule-squared-highlight-wrapper">
@@ -70,17 +81,7 @@
         </div>
     </div>
 </section>
-<section class="vehicule-slider">
-    <div class="splide" aria-label="Splide Basic HTML Example">
-        <div class="splide__track">
-            <ul class="splide__list">
-                {% for image in vehicule.fields.gallery|reverse %}
-                <li class="splide__slide"><img src="{{ image.thumbnails.full.url }}" alt="Gallery image" /></li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
-</section>
+
 <section class="section-site">
     <div class="vehicule-specs">
         <h2 class="vehicule-specs-title title-section font-32">Technical specifications</h2>
@@ -165,8 +166,8 @@
                 </div>
             </div>
         </div>
-        <div>
-        <img src="{{ url_for('static', filename='/imgs/logos_and_name/Noir-Fond-Transparent.png') }}" alt="Gallery image" />
+        <div class="vehicule-specs-diagram-wrapper">
+            <img src="{{ url_for('static', filename='/imgs/diagrams/ebike.png') }}" alt="Gallery image" />
         </div>
     </div>
 </section>

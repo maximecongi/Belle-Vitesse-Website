@@ -27,23 +27,27 @@
 
 /* slider */
 .vehicule-slider {
-    background-color: var(--grey-3);
     position: relative;
     z-index: 1;
-    padding-top: 3vh;
-    padding-bottom: 3vh;
 }    
 .vehicule-slider img {
-    width: 94%;
-    position: relative;
-    left:3%;
+    width: 100%;
+    /* position: relative; */
+    /* left: 3%; */
+    height: 100vh;
+    object-fit: cover;
+    object-position: bottom;
 }
 
 /* squares highlight */
 .vehicule-squared-highlight {
     justify-content: center;
-    padding: 3vw;
-    background-color: var(--white-1);
+    padding: 3vw 0 0 0;
+    /* background-color: var(--white-1); */
+    position: relative;
+    bottom: 17vh;
+    z-index: 9;
+    margin-bottom: -10vh;
 }
 .vehicule-squared-highlight-wrapper {
     display: flex;
@@ -96,6 +100,7 @@
     justify-content: space-between;
     width:80vw;
     align-items: center;
+    padding-bottom: 10vw;
 }
 .vehicule-configurator-carousel-wrapper-config {
     width: 20vw;
@@ -166,4 +171,7 @@
     font-size:1.4em;
     position: relative;
     left:15vw;
+}
+.vehicule-specs-diagram-wrapper img {
+    width: 80vw;
 }
