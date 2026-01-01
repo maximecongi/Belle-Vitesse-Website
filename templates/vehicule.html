@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-{% block title %}Vehicules - Belle Vitesse{% endblock %}
+{% block title %}{{vehicule.fields.name}} - Belle Vitesse{% endblock %}
 {% block content %}
 <section id="hero-banner" class="section-site">
     <div class="vehicule-hero-banner bg-color-white-3">
@@ -86,94 +86,36 @@
     <div class="vehicule-specs">
         <h2 class="vehicule-specs-title title-section font-32">Technical specifications</h2>
         <div class="vehicule-specs-details">
+
             <div>
+                {% for label, value in specs_left.items() %}
                 <div class="vehicule-specs-details-detail-wrapper">
-                    <p>Brand : </p>
+                    <p>{{ label }} :</p>
                     <div class="vehicule-specs-details-detail-wrapper-value">
-                        <p>{{ vehicule.fields.brand }}</p>
+                        <p>{{ value }}</p>
                     </div>
                 </div>
-                <div class="vehicule-specs-details-detail-wrapper">
-                    <p>Model : </p>
-                    <div class="vehicule-specs-details-detail-wrapper-value">
-                        <p>{{ vehicule.fields.model }}</p>
-                    </div>
-                </div>
-                <div class="vehicule-specs-details-detail-wrapper">
-                    <p>Type : </p>
-                    <div class="vehicule-specs-details-detail-wrapper-value">
-                        <p>{{ vehicule.fields.type }}</p>
-                    </div>
-                </div>
-                <div class="vehicule-specs-details-detail-wrapper">
-                    <p>Max speed: : </p>
-                    <div class="vehicule-specs-details-detail-wrapper-value">
-                        <p>{{ vehicule.fields.max_speed }} km/h</p>
-                    </div>
-                </div>
-                <div class="vehicule-specs-details-detail-wrapper">
-                    <p>Number of possible passengers : </p>
-                    <div class="vehicule-specs-details-detail-wrapper-value">
-                        <p>{{ vehicule.fields.passengers }}</p>
-                    </div>
-                </div>
-                <div class="vehicule-specs-details-detail-wrapper">
-                    <p>Power : </p>
-                    <div class="vehicule-specs-details-detail-wrapper-value">
-                        <p>{{ vehicule.fields.power }}</p>
-                    </div>
-                </div>
+                {% endfor %}
             </div>
+
             <div>
+                {% for label, value in specs_right.items() %}
                 <div class="vehicule-specs-details-detail-wrapper">
-                    <p>Torque : </p>
+                    <p>{{ label }} :</p>
                     <div class="vehicule-specs-details-detail-wrapper-value">
-                        <p>{{ vehicule.fields.torque }}</p>
+                        <p>{{ value }}</p>
                     </div>
                 </div>
-                <div class="vehicule-specs-details-detail-wrapper">
-                    <p>Battery: : </p>
-                    <div class="vehicule-specs-details-detail-wrapper-value">
-                        <p>{{ vehicule.fields.battery_type }}</p>
-                    </div>
-                </div>
-                <div class="vehicule-specs-details-detail-wrapper">
-                    <p>Battery life : </p>
-                    <div class="vehicule-specs-details-detail-wrapper-value">
-                        <p>{{ vehicule.fields.battery_life }}</p>
-                    </div>
-                </div>
-                <div class="vehicule-specs-details-detail-wrapper">
-                    <p>Charging time : </p>
-                    <div class="vehicule-specs-details-detail-wrapper-value">
-                        <p>{{ vehicule.fields.charging_time }}</p>
-                    </div>
-                </div>
-                <div class="vehicule-specs-details-detail-wrapper">
-                    <p>Size : </p>
-                    <div class="vehicule-specs-details-detail-wrapper-value">
-                        <p>L {{ vehicule.fields.length }} cm </span>x <span>W {{
-                                vehicule.fields.width }}
-                                cm </span>x <span>H {{ vehicule.fields.height }}
-                                cm</p>
-                    </div>
-                    <div class="vehicule-specs-details-detail-wrapper">
-                        <p>Weight : </p>
-                        <div class="vehicule-specs-details-detail-wrapper-value">
-                            <p>{{ vehicule.fields.weight }} kg</p>
-                        </div>
-                    </div>
-                </div>
+                {% endfor %}
             </div>
+
         </div>
+
         <div class="vehicule-specs-diagram-wrapper">
             <img src="{{ url_for('static', filename='/imgs/diagrams/ebike.png') }}" alt="Gallery image" />
         </div>
     </div>
 </section>
-<section class="section-site">
-    <iframe src="https://www.google.com/maps/d/u/0/embed?mid=1AZJIG1kiIaYbijTDLWeZnEbeV4nVdvA&ehbc=2E312F&noprof=1" width="640" height="480"></iframe>
-</section>  
 <script>
     function carousel() {
         return {

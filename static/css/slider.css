@@ -18,4 +18,7 @@
 .splide__pagination {
     bottom: -1.5em;
     display: none;
-}    
+}   
+.splide__list {
+    background-color: var(--grey-2);
+} 

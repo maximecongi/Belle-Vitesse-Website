@@ -13,7 +13,7 @@
             </div>
             <div class="footer-links">
                 <div class="footer-links-wrapper">
-                    <h3 class=""><a href="/">Vehicules</a></h3>
+                    <h3 class=""><a href="{{ url_for('vehicules') }}">Vehicules</a></h3>
                    <p class=""><a href="/">eCar</a></p>
                    <p class=""><a href="/">eBike</a></p>
                    <p class=""><a href="/">eTrike 360</a></p>
@@ -22,7 +22,7 @@
                    <p class=""><a href="/">Segway I2</a></p>
                 </div>
                 <div class="footer-links-wrapper">
-                    <h3 class=""><a href="/">Heads</a></h3>
+                    <h3 class=""><a href="{{ url_for('heads') }}">Heads</a></h3>
                    <p class=""><a href="/">Titan LT</a></p>
                    <p class=""><a href="/">Ronin 2</a></p>
                    <p class=""><a href="/">Mōvi Pro</a></p>
@@ -30,17 +30,17 @@
                    <p class=""><a href="/">DJI RS 4 Pro</a></p>
                 </div>
                 <div class="footer-links-wrapper">
-                    <h3 class=""><a href="/">Supports</a></h3>
+                    <h3 class=""><a href="{{ url_for('supports') }}">Supports</a></h3>
                    <p class=""><a href="/">Black-Tek Tower</a></p>
                    <p class=""><a href="/">FlowCine Black Arm</a></p>
                    <p class=""><a href="/">Raptor Air Iso 4</a></p>
                 </div>
                 <div class="footer-links-wrapper">
                     <h3 class="color-white-2">Legals</h3>
-                   <p class=""><a href="/">Terms & conditions</a></p>
+                   <p class=""><a href="{{ url_for('terms_and_conditions') }}">Terms & conditions</a></p>
                 </div>
                 <div class="footer-links-wrapper">
-                    <h3 class="color-white-2"><a href="/">Contact</a></h3>
+                    <h3 class="color-white-2"><a href="{{ url_for('contact') }}">Contact</a></h3>
                     <p class="color-white-2 font-weight-300">
                         <a href="https://maps.app.goo.gl/gtf7XXeKvutYRq8j8" target="_blank">
                         Belle Vitesse SARL<br/>

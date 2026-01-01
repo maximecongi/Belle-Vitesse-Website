@@ -1,0 +1,26 @@
+.contact-wrapper {
+        flex-direction: column;
+        align-items: flex-start;
+        margin-bottom:3vw;
+}
+.contact-wrapper-columns p {
+    font-size: 1.2em;
+}
+.contact-wrapper > *:not(h1) {
+    position: relative;
+    left: 3vw;
+}
+.contact-wrapper-columns {
+    display: flex;
+    flex-direction: row;
+}
+.contact-wrapper-columns-left {
+    width: 30vw;
+}
+.contact-wrapper-columns-right {
+    width: 60vw
+}
+.contact-wrapper-columns-right-map {
+    width: 100%;
+    aspect-ratio: 2;
+}

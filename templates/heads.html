@@ -4,8 +4,8 @@
 <section id="hero-banner" class="section-site">
     <div class="categories-hero-banner img-overlay bg-vehicules">
         <div class="categories-hero-banner-titlewrapper">
-            <h1 class="categories-hero-banner-titlewrapper-title font-54 color-white-2 font-weight-900">
-                Vehicules
+            <h1 class="categories-hero-banner-titlewrapper-title font-54 color-white-2">
+                Heads
             </h1>
         </div>
         <div class="categories-hero-banner-textwrapper">
@@ -18,16 +18,16 @@
     <div class="categories-solutions">
         <h2 class="title-section font-32">Our solutions</h2>
         <div class="categories-solutions-categories font-18">
-            {% for vehicule in vehicules %}
-            {% if vehicule.fields.status == "Online" %}
+            {% for head in heads %}
+            {% if head.fields.status == "Online" %}
             <div class="categories-solutions-categories-categorywrapper">
-                <h3>{{ vehicule.fields.name }}</h3>
+                <h3>{{ head.fields.name }}</h3>
                 <a class="categories-solutions-categories-img-link"
-                    href="{{ url_for('vehicule', slug=vehicule.fields.slug) }}">
-                    {% if vehicule.fields.thumbnail[0].thumbnails is defined %}
-                    <img src="{{ vehicule.fields.thumbnail[0].thumbnails.large.url }}" />
+                    href="{{ url_for('head', slug=head.fields.slug) }}">
+                    {% if head.fields.thumbnail[0].thumbnails is defined %}
+                    <img src="{{ head.fields.thumbnail[0].thumbnails.large.url }}" />
                     {% else %}
-                    <img src="{{ url_for('static', filename='/imgs/placeholders/vehicule.jpeg') }}" />
+                    <img src="{{ url_for('static', filename='/imgs/placeholders/head.jpeg') }}" />
                     {% endif %}
                 </a>
             </div>

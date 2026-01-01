@@ -1,0 +1,43 @@
+.about_us-wrapper {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.about_us-wrapper p {
+    margin-bottom: 3em;
+    font-size: 1.2em;
+    font-weight: 400;
+}
+.about_us-wrapper > *:not(h1) {
+    position: relative;
+    left: 3vw;
+}
+
+.about_us-wrapper ul {
+    margin-bottom: 2em;
+    font-size: 1.2em;
+    font-weight: 400;
+     list-style-type: none;
+}
+.about_us-wrapper li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 80vw;
+}    
+
+.about_us-wrapper ul li img {
+    width: 10vw;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 50%;
+    filter: grayscale(1);
+}
+.about_us-wrapper ul li div {
+    width: 65vw;
+    vertical-align: middle;
+}
+.about_us-wrapper ul li span {
+    display: inline-block;
+    margin-right:12px;
+}    

@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+{% block title %}About us - Belle Vitesse{% endblock %}
+{% block content %}
+<section class="section-site">
+    <div class="about_us-wrapper">
+        <h1 class="title-textual-section font-56 lh-20">Who we are?</h1>
+        <h2 class="dot-before title-textual-section font-30">Our mission</h2>
+        <p>
+            <span class="font-weight-600">Providing precise, safe camera movement solutions, designed by imaging
+                technicians.</span><br><br>
+            We support film, advertising, and premium content productions with vehicles and systems built for the
+            set—tested, mastered, and tailored to the real demands of shooting.<br>
+            Our goal: to enable smooth, repeatable, and fully controlled camera movement that serves the art of
+            storytelling.
+        </p>
+        <h2 class="dot-before title-textual-section font-30">Our team</h2>
+        <p>
+            <span class="font-weight-600">Belle Vitesse is built on three complementary areas of expertise, united by a
+                shared standard of excellence.</span>
+        <ul>
+            <li>
+                <img src="{{ url_for('static', filename='/imgs/team/simon-maignan.jpeg') }}" />
+                <div>
+                    <span class="font-weight-600 font-12">Simon</span>
+                    <div class="tag-job tag-job-yellow">Co-founder & CEO </div><br><br>
+                    The founder, has over 10 years of experience as a
+                    camera assistant and operator. He brings a deep
+                    understanding of the artistic and technical needs on set.
+                </div>
+            </li><br><br>
+
+            <li>
+                <img src="{{ url_for('static', filename='/imgs/team/maxime-congi.jpeg') }}" />
+                <div>
+                    <span class="font-weight-600 font-12">Maxime</span>
+                    <div class="tag-job tag-job-yellow">Co-founder & Head of Operations</div><br><br>
+                    camera assistant for 8 years, including 3 years with
+                    leading rental companies (ARRI, RVZ,
+                    PhotoCineRent), ensures the connection between equipment, workflow, and production requirements.
+                </div>
+            </li><br><br>
+
+            <li>
+                <img src="{{ url_for('static', filename='/imgs/team/ewen.jpeg') }}" />
+                <div>
+                    <span class="font-weight-600 font-12">Ewen</span>
+                    <div class="tag-job tag-job-yellow">Co-founder & Head of Pilots</div><br><br>
+                    Vehicle modification specialist and precision driver,
+                    designs and operates reliable solutions
+                    tailored to the mechanical and safety constraints of filming.
+                </div>
+            </li>
+        </ul>
+        </p>
+        <h2 class="dot-before title-textual-section font-30">Our engagement</h2>
+        <p>
+            <span class="font-weight-600">At Belle Vitesse, safety is a culture, not an option.</span><br><br>
+            Every setup is prepared, tested, and validated according to strict standards to ensure reliability,
+            performance, and peace of mind on set.<br>
+            We are committed to delivering services of the highest standard, without compromise on safety, precision, or
+            the quality of movement.
+        </p>
+    </div>
+</section>
+{% endblock %}
