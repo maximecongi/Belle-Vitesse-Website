@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     var splide = new Splide('.splide', {
-        type  : 'fade',
-        rewind: true,
+        type  : 'loop',
     });
 
     splide.mount();

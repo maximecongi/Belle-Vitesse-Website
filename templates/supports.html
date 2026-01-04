@@ -1,33 +1,33 @@
 {% extends "layout.html" %}
-{% block title %}Vehicules - Belle Vitesse{% endblock %}
+{% block title %}Supports - Belle Vitesse{% endblock %}
 {% block content %}
 <section id="hero-banner" class="section-site">
-    <div class="categories-hero-banner img-overlay bg-vehicules">
-        <div class="categories-hero-banner-titlewrapper">
+    <div class="categories-hero-banner img-overlay bg-vehicles">
+        <div class="main-wrapper categories-hero-banner-titlewrapper">
             <h1 class="categories-hero-banner-titlewrapper-title font-54 color-white-2">
                 Supports
             </h1>
-        </div>
-        <div class="categories-hero-banner-textwrapper">
-            <p class="categories-hero-banner-textwrapper-text font-18 color-white-2 font-weight-300 lh-05">
-                Meet our fleet
-            </p>
+            <div class="categories-hero-banner-textwrapper">
+                <p class="dot-before categories-hero-banner-textwrapper-text font-18 color-white-2 font-weight-300 lh-05">
+                    Meet our fleet
+                </p>
+            </div>
         </div>
 </section>
 <section id="solutions" class="section-site">
     <div class="categories-solutions">
         <h2 class="title-section font-32">Our solutions</h2>
         <div class="categories-solutions-categories font-18">
-            {% for support in supports %}
-            {% if support.fields.status == "Online" %}
+            {% for vehicle in vehicles %}
+            {% if vehicle.fields.status == "Online" %}
             <div class="categories-solutions-categories-categorywrapper">
-                <h3>{{ support.fields.name }}</h3>
+                <h3>{{ vehicle.fields.name }}</h3>
                 <a class="categories-solutions-categories-img-link"
-                    href="{{ url_for('support', slug=support.fields.slug) }}">
-                    {% if support.fields.thumbnail[0].thumbnails is defined %}
-                    <img src="{{ support.fields.thumbnail[0].thumbnails.large.url }}" />
+                    href="{{ url_for('vehicle', slug=vehicle.fields.slug) }}">
+                    {% if vehicle.fields.thumbnail[0].thumbnails is defined %}
+                    <img src="{{ vehicle.fields.thumbnail[0].thumbnails.large.url }}" />
                     {% else %}
-                    <img src="{{ url_for('static', filename='/imgs/placeholders/support.jpeg') }}" />
+                    <img src="{{ url_for('static', filename='/imgs/placeholders/vehicle.jpeg') }}" />
                     {% endif %}
                 </a>
             </div>

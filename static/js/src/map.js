@@ -42,7 +42,6 @@ function initMap() {
     }
   });
 
-  // 👉 CLIC = ouverture Google Maps
   marker.addListener("click", () => {
     const url = `https://www.google.com/maps?q=${position.lat},${position.lng}`;
     window.open(url, "_blank", "noopener");

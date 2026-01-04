@@ -40,3 +40,12 @@ main {
     position: absolute;
     left:-2ch;
 }
+.main-wrapper {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom:3vw;
+}
+.main-wrapper > *:not(h1) {
+    position: relative;
+    left: 3vw;
+}

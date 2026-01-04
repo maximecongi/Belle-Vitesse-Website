@@ -1,26 +1,17 @@
-.contact-wrapper {
-        flex-direction: column;
-        align-items: flex-start;
-        margin-bottom:3vw;
-}
-.contact-wrapper-columns p {
+.contact-container-columns p {
     font-size: 1.2em;
 }
-.contact-wrapper > *:not(h1) {
-    position: relative;
-    left: 3vw;
-}
-.contact-wrapper-columns {
+.contact-container-columns {
     display: flex;
     flex-direction: row;
 }
-.contact-wrapper-columns-left {
+.contact-container-columns-left {
     width: 30vw;
 }
-.contact-wrapper-columns-right {
+.contact-container-columns-right {
     width: 60vw
 }
-.contact-wrapper-columns-right-map {
+.contact-container-columns-right-map {
     width: 100%;
     aspect-ratio: 2;
 }

@@ -1,13 +1,4 @@
-.terms-wrapper {
-    flex-direction: column;
-    align-items: flex-start;
-    margin-bottom: 3vw;
-}
-.terms-wrapper > *:not(h1) {
-    position: relative;
-    left: 3vw;
-}
-.terms-wrapper p
+.terms-container p
 {
 white-space: pre-line;
 
