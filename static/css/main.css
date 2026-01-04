@@ -51,3 +51,8 @@ main {
     position: relative;
     left: 3vw;
 }
+
+
+/* Aminations JS */
+.js .count-up { visibility: hidden; }
+.count-up.is-visible { visibility: visible; }

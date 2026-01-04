@@ -22,31 +22,35 @@
 
         </div>
         <div>
-                <div class="vehicle-squared-highlight">
-        <div class="vehicle-squared-highlight-wrapper">
-            <div class="vehicle-squared-highlight-wrapper-square">
-                <p class="vehicle-squared-highlight-wrapper-square-value">{{ vehicle.fields.max_speed }}</p>
-                <p class="vehicle-squared-highlight-wrapper-square-unit">km/h</p>
-                <p class="vehicle-squared-highlight-wrapper-square-label">Max speed</p>
-            </div>
-            <div class="vehicle-squared-highlight-wrapper-square">
-                <p class="vehicle-squared-highlight-wrapper-square-value">
-                    1{% if vehicle.fields.passengers != 0 %}<span
-                        class="vehicle-squared-highlight-wrapper-square-value-plussign">+</span>{{
-                    vehicle.fields.passengers }}{% endif %}
-                </p>
-                <p class="vehicle-squared-highlight-wrapper-square-unit">
-                    {% if vehicle.fields.passengers != 0 %}
-                    Driver + Passengers
-                    {% else %}
-                    Driver
-                    {% endif %}
-                </p>
-                <p class="vehicle-squared-highlight-wrapper-square-label">Capacity</p>
+            <div class="vehicle-squared-highlight">
+                <div class="vehicle-squared-highlight-wrapper">
+                    <div class="vehicle-squared-highlight-wrapper-square">
+                        <p class="vehicle-squared-highlight-wrapper-square-value count-up"
+                            data-target="{{ vehicle.fields.max_speed }}" data-duration="1000">{{
+                            vehicle.fields.max_speed }}</p>
+                        <p class="vehicle-squared-highlight-wrapper-square-unit">km/h</p>
+                        <p class="vehicle-squared-highlight-wrapper-square-label">Max speed</p>
+                    </div>
+                    <div class="vehicle-squared-highlight-wrapper-square">
+                        <p class="vehicle-squared-highlight-wrapper-square-value">
+                            <span>1</span>{% if vehicle.fields.passengers != 0 %}<span class="vehicle-squared-highlight-wrapper-square-value-plussign">+</span><span class="" data-target="{{vehicle.fields.passengers }}"
+                            data-duration="1500">{{
+                                vehicle.fields.passengers }}</span>{% endif %}
+                        </p>
+                        <p class="vehicle-squared-highlight-wrapper-square-unit">
+                            {% if vehicle.fields.passengers == 0 %}
+                            Driver
+                            {% elif vehicle.fields.passengers == 1 %}
+                            Driver + Passenger
+                            {% else %}
+                            Driver + Passengers
+                            {% endif %}
+                        </p>
+                        <p class="vehicle-squared-highlight-wrapper-square-label">Capacity</p>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-    </div>
 </section>
 <section class="section-site">
     <div class="vehicle-configurator">
