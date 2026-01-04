@@ -29,15 +29,18 @@
 
 /* description */
 .vehicle-description {
+    display: flex;
     flex-direction: column;
-    align-content: center;
-    justify-content: center;
+    justify-content: flex-start;
     background-color: var(--white-1);
-    height: 30vw;
+    height: 45vw;
 }
 
-.vehicle-description>h2 {
-    margin: 3vw 0;
+.vehicle-description > div {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--white-1);
 }
 
 /* slider */
@@ -57,18 +60,12 @@
 
 /* squares highlight */
 .vehicle-squared-highlight {
-    justify-content: center;
-    padding: 3vw 0 0 0;
-    /* background-color: var(--white-1); */
-    position: relative;
-    bottom: 17vh;
-    z-index: 9;
-    margin-bottom: -10vh;
+    margin: 3vw 0 0 0;
 }
-
 .vehicle-squared-highlight-wrapper {
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
+    flex-direction: row;
 }
 
 .vehicle-squared-highlight-wrapper-square {

@@ -15,29 +15,14 @@
             </p>
         </div>
 </section>
-{# <section class="section-site">
-    <div class="vehicle-description">
-        <h2 class="font-48">The <i>fastest</i> camera tracking vehicle in town.</h2>
-        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore
-            magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
-            commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat
-            nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit
-            anim id est laborum.</p>
-    </div>
-</section> #}
-<section class="vehicle-slider">
-    <div class="splide" aria-label="Splide Basic HTML Example">
-        <div class="splide__track">
-            <ul class="splide__list">
-                {% for image in vehicle.fields.gallery|reverse %}
-                <li class="splide__slide"><img src="{{ image.thumbnails.full.url }}" alt="Gallery image" /></li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
-</section>
 <section class="section-site">
-    <div class="vehicle-squared-highlight">
+    <div class="vehicle-description">
+        <div class="vehicle-description-title">
+            <h2 class="dot-before title-section font-32">Key Features</h2>
+
+        </div>
+        <div>
+                <div class="vehicle-squared-highlight">
         <div class="vehicle-squared-highlight-wrapper">
             <div class="vehicle-squared-highlight-wrapper-square">
                 <p class="vehicle-squared-highlight-wrapper-square-value">{{ vehicle.fields.max_speed }}</p>
@@ -61,10 +46,11 @@
             </div>
         </div>
     </div>
+    </div>
 </section>
 <section class="section-site">
     <div class="vehicle-configurator">
-        <h2 class="title-section font-32">Configurations</h2>
+        <h2 class="dot-before title-section font-32">Configurations</h2>
         <div class="vehicle-configurator-carousel-wrapper" x-data="carousel()">
             <div class="vehicle-configurator-carousel-wrapper-config">
                 {% for type_name, items in configs_grouped.items() %}
@@ -87,10 +73,20 @@
         </div>
     </div>
 </section>
-
+<section class="vehicle-slider">
+    <div class="splide" aria-label="Splide Basic HTML Example">
+        <div class="splide__track">
+            <ul class="splide__list">
+                {% for image in vehicle.fields.gallery|reverse %}
+                <li class="splide__slide"><img src="{{ image.thumbnails.full.url }}" alt="Gallery image" /></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</section>
 <section class="section-site">
     <div class="vehicle-specs">
-        <h2 class="vehicle-specs-title title-section font-32">Technical specifications</h2>
+        <h2 class="vehicle-specs-title dot-before title-section font-32">Technical specifications</h2>
         <div class="vehicle-specs-details">
 
             <div>

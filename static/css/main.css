@@ -12,7 +12,8 @@ main {
     padding-inline: 5vw;
 }
 .title-section {
-    margin: 3vw 0 5vw 0;
+    position: relative;
+    margin: 5vw 0;
 }
 
 .title-textual-section {
@@ -39,6 +40,7 @@ main {
     font-size:0.8em;
     position: absolute;
     left:-2ch;
+    z-index: 3;
 }
 .main-wrapper {
     flex-direction: column;
