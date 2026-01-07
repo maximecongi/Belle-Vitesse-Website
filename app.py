@@ -36,6 +36,32 @@ app.config['CACHE_KEY_PREFIX'] = 'myapp_'
 
 cache.init_app(app)
 
+# Globals
+
+@app.context_processor
+def inject_globals():
+    vehicles = cache.get("vehicles")
+    heads = cache.get("heads")
+    supports = cache.get("supports")
+
+    if vehicles is None:
+        vehicles = TABLE_VEHICLES.all(sort=["order"])
+        cache.set("vehicles", vehicles)
+
+    if heads is None:
+        heads = TABLE_HEADS.all(sort=["order"])
+        cache.set("heads", heads)
+
+    if supports is None:
+        supports = TABLE_SUPPORTS.all(sort=["order"])
+        cache.set("supports", supports)
+
+    return dict(
+        vehicles=vehicles,
+        heads=heads,
+        supports=supports
+    )
+    
 # WEBSITE
 # Website - Navigation
 
@@ -48,7 +74,7 @@ def home():
 @cache.cached(timeout=3600)
 def vehicles():
     vehicles = TABLE_VEHICLES.all(sort=["order"])
-    return render_template('vehicles.html', vehicles=vehicles)
+    return render_template('vehicles.html')
 
 
 @app.route('/vehicles/<slug>')
@@ -74,7 +100,7 @@ def vehicle(slug):
 @cache.cached(timeout=3600)
 def heads():
     heads = TABLE_HEADS.all(sort=["order"])
-    return render_template('heads.html', heads=heads)
+    return render_template('heads.html')
 
 @app.route('/heads/<slug>')
 @cache.cached(timeout=3600, query_string=True)
@@ -88,7 +114,7 @@ def head(slug):
 @cache.cached(timeout=3600)
 def supports():
     supports = TABLE_SUPPORTS.all(sort=["order"])
-    return render_template('supports.html', supports=supports)
+    return render_template('supports.html')
 
 @app.route('/supports/<slug>')
 @cache.cached(timeout=3600, query_string=True)

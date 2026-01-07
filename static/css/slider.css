@@ -20,10 +20,11 @@
     display: none;
 }   
 .splide__list {
-    background-color: var(--grey-2);
+    background-color: var(--white-3);
 } 
 .splide__track {
     width: 45vw;
+    height: 30vw;
 }
 .splide__slide img {
     width: 100%;
