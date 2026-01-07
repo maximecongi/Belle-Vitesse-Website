@@ -1,8 +1,8 @@
 .splide__arrow {
     background: var(--white-2);
     border-radius: 0;
-    height: 5em;
-    width: 5em;
+    height: 4em;
+    width: 4em;
     opacity: 1;
 }
 .splide__arrow:hover:not(:disabled) {
@@ -10,15 +10,15 @@
     opacity: 1;
 }
 .splide__pagination__page {
-    background: var(--white-3);
+    background: var(--white-2);
 }
 .splide__pagination__page.is-active {
     background: var(--yellow-1);
 }    
-.splide__pagination {
+/* .splide__pagination {
     bottom: -1.5em;
     display: none;
-}   
+}    */
 .splide__list {
     background-color: var(--grey-2);
 } 
@@ -27,4 +27,10 @@
 }
 .splide__slide img {
     width: 100%;
+}
+.splide__arrow--prev {
+    left: -2em;
+}
+.splide__arrow--next {
+    right: -2em;
 }
