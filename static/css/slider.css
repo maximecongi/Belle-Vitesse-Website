@@ -1,8 +1,8 @@
 .splide__arrow {
     background: var(--white-2);
     border-radius: 0;
-    height: 5em;
-    width: 5em;
+    height: 4em;
+    width: 4em;
     opacity: 1;
 }
 .splide__arrow:hover:not(:disabled) {

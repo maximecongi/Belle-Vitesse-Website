@@ -19,14 +19,13 @@
     <div class="vehicle-description">
         <div class="vehicle-description-title">
             <h2 class="dot-before title-section font-32">Description</h2>
-
         </div>
         <div class="vehicle-description-wrapper">
             <div class="vehicle-description-right">
                 <div class="splide" aria-label="Splide Basic HTML Example">
                     <div class="splide__track">
                         <ul class="splide__list">
-                            {% for image in vehicle.fields.gallery|reverse %}
+                            {% for image in vehicle.fields.gallery %}
                             <li class="splide__slide"><img src="{{ image.thumbnails.full.url }}" alt="Gallery image" />
                             </li>
                             {% endfor %}
@@ -35,7 +34,7 @@
                 </div>
             </div>
             <div class="vehicle-description-left">
-                <p>{{ vehicle.fields.description }}</p>
+                <p class="font-16">{{ vehicle.fields.description }}</p>
             </div>
         </div>
     </div>
@@ -63,21 +62,16 @@
                                 data-target="{{vehicle.fields.passengers }}" data-duration="1500">{{
                                 vehicle.fields.passengers }}</span>{% endif %}
                         </p>
-                        <p class="vehicle-squared-highlight-wrapper-square-unit">
-                            {% if vehicle.fields.passengers == 0 %}
-                            Driver
-                            {% elif vehicle.fields.passengers == 1 %}
-                            Driver + Passenger
-                            {% else %}
-                            Driver + Passengers
-                            {% endif %}
-                        </p>
+                        <p class="vehicle-squared-highlight-wrapper-square-unit">{% if vehicle.fields.passengers == 0
+                            %}Driver{% elif vehicle.fields.passengers == 1 %}Driver + Passenger{% else %}Driver +
+                            Passengers{% endif %}</p>
                         <p class="vehicle-squared-highlight-wrapper-square-label">Capacity</p>
                     </div>
                 </div>
             </div>
         </div>
 </section>
+{% if configs_grouped %}
 <section class="section-site">
     <div class="vehicle-configurator">
         <h2 class="dot-before title-section font-32">Configurations</h2>
@@ -103,22 +97,11 @@
         </div>
     </div>
 </section>
-{# <section class="vehicle-slider">
-    <div class="splide" aria-label="Splide Basic HTML Example">
-        <div class="splide__track">
-            <ul class="splide__list">
-                {% for image in vehicle.fields.gallery|reverse %}
-                <li class="splide__slide"><img src="{{ image.thumbnails.full.url }}" alt="Gallery image" /></li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
-</section> #}
+{% endif %}
 <section class="section-site">
     <div class="vehicle-specs">
         <h2 class="vehicle-specs-title dot-before title-section font-32">Technical specifications</h2>
         <div class="vehicle-specs-details">
-
             <div>
                 {% for label, value in specs_left.items() %}
                 <div class="vehicle-specs-details-detail-wrapper">
@@ -144,9 +127,11 @@
         </div>
 
         <div class="vehicle-specs-diagram-wrapper">
-        
-            <div class="vehicle-specs-diagram-wrapper-sideview"><img src="{{ vehicle.fields.blueprint_side[0].thumbnails.full.url }}"/></div>
-            <div class="vehicle-specs-diagram-wrapper-topview"><img src="{{ vehicle.fields.blueprint_top[0].thumbnails.full.url }}"/></div>
+
+            <div class="vehicle-specs-diagram-wrapper-sideview"><img
+                    src="{{ vehicle.fields.blueprint_side[0].thumbnails.full.url }}" /></div>
+            <div class="vehicle-specs-diagram-wrapper-topview"><img
+                    src="{{ vehicle.fields.blueprint_top[0].thumbnails.full.url }}" /></div>
         </div>
     </div>
 </section>
