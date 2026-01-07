@@ -2,7 +2,7 @@
 {% block title %}Heads - Belle Vitesse{% endblock %}
 {% block content %}
 <section id="hero-banner" class="section-site">
-    <div class="categories-hero-banner img-overlay bg-vehicles">
+    <div class="categories-hero-banner img-overlay bg-heads">
         <div class="main-wrapper categories-hero-banner-titlewrapper">
             <h1 class="categories-hero-banner-titlewrapper-title font-54 color-white-2">
                 Heads
@@ -16,18 +16,18 @@
 </section>
 <section id="solutions" class="section-site">
     <div class="categories-solutions">
-        <h2 class="title-section font-32">Our solutions</h2>
+        <h2 class="dot-before title-section font-32">Our heads</h2>
         <div class="categories-solutions-categories font-18">
-            {% for vehicle in vehicles %}
-            {% if vehicle.fields.status == "Online" %}
+            {% for head in heads %}
+            {% if head.fields.status == "Online" %}
             <div class="categories-solutions-categories-categorywrapper">
-                <h3>{{ vehicle.fields.name }}</h3>
+                <h3>{{ head.fields.name }}</h3>
                 <a class="categories-solutions-categories-img-link"
-                    href="{{ url_for('vehicle', slug=vehicle.fields.slug) }}">
-                    {% if vehicle.fields.thumbnail[0].thumbnails is defined %}
-                    <img src="{{ vehicle.fields.thumbnail[0].thumbnails.large.url }}" />
+                    href="{{ url_for('head', slug=head.fields.slug) }}">
+                    {% if head.fields.thumbnail[0].thumbnails is defined %}
+                    <img src="{{ head.fields.thumbnail[0].thumbnails.large.url }}" />
                     {% else %}
-                    <img src="{{ url_for('static', filename='/imgs/placeholders/vehicle.jpeg') }}" />
+                    <img src="{{ url_for('static', filename='/imgs/placeholders/head.jpeg') }}" />
                     {% endif %}
                 </a>
             </div>

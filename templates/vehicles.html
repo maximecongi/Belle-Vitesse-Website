@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-{% block title %}vehicles - Belle Vitesse{% endblock %}
+{% block title %}Vehicles - Belle Vitesse{% endblock %}
 {% block content %}
 <section id="hero-banner" class="section-site">
     <div class="categories-hero-banner img-overlay bg-vehicles">
@@ -16,7 +16,7 @@
 </section>
 <section id="solutions" class="section-site">
     <div class="categories-solutions">
-        <h2 class="dot-before title-section font-32">Our solutions</h2>
+        <h2 class="dot-before title-section font-32">Our vehicles</h2>
         <div class="categories-solutions-categories font-18">
             {% for vehicle in vehicles %}
             {% if vehicle.fields.status == "Online" %}

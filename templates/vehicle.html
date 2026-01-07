@@ -3,21 +3,46 @@
 {% block content %}
 <section id="hero-banner" class="section-site">
     <div class="vehicle-hero-banner bg-color-white-3">
-        <img src=" {{ vehicle.fields.banner[0].thumbnails.full.url }}" />
+        <img src="{{ vehicle.fields.banner[0].thumbnails.full.url }}" />
         <div class="vehicle-hero-banner-titlewrapper">
             <h1 class="vehicle-hero-banner-titlewrapper-title font-54 color-grey-1">
                 {{ vehicle.fields.name }}
             </h1>
         </div>
         <div class="vehicle-hero-banner-textwrapper">
-            <p class="vehicle-hero-banner-textwrapper-text font-12 color-grey-1 font-weight-300">
-                {{ vehicle.fields.description }}
+            <p class="vehicle-hero-banner-textwrapper-text font-14 color-grey-1 font-weight-400">
+                {{ vehicle.fields.powerquote| safe }}
             </p>
         </div>
 </section>
 <section class="section-site">
     <div class="vehicle-description">
         <div class="vehicle-description-title">
+            <h2 class="dot-before title-section font-32">Description</h2>
+
+        </div>
+        <div class="vehicle-description-wrapper">
+            <div class="vehicle-description-right">
+                <div class="splide" aria-label="Splide Basic HTML Example">
+                    <div class="splide__track">
+                        <ul class="splide__list">
+                            {% for image in vehicle.fields.gallery|reverse %}
+                            <li class="splide__slide"><img src="{{ image.thumbnails.full.url }}" alt="Gallery image" />
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="vehicle-description-left">
+                <p>{{ vehicle.fields.description }}</p>
+            </div>
+        </div>
+    </div>
+</section>
+<section class="section-site">
+    <div class="vehicle-key_features">
+        <div class="vehicle-key_features-title">
             <h2 class="dot-before title-section font-32">Key Features</h2>
 
         </div>
@@ -33,8 +58,9 @@
                     </div>
                     <div class="vehicle-squared-highlight-wrapper-square">
                         <p class="vehicle-squared-highlight-wrapper-square-value">
-                            <span>1</span>{% if vehicle.fields.passengers != 0 %}<span class="vehicle-squared-highlight-wrapper-square-value-plussign">+</span><span class="" data-target="{{vehicle.fields.passengers }}"
-                            data-duration="1500">{{
+                            <span>1</span>{% if vehicle.fields.passengers != 0 %}<span
+                                class="vehicle-squared-highlight-wrapper-square-value-plussign">+</span><span class=""
+                                data-target="{{vehicle.fields.passengers }}" data-duration="1500">{{
                                 vehicle.fields.passengers }}</span>{% endif %}
                         </p>
                         <p class="vehicle-squared-highlight-wrapper-square-unit">
@@ -77,7 +103,7 @@
         </div>
     </div>
 </section>
-<section class="vehicle-slider">
+{# <section class="vehicle-slider">
     <div class="splide" aria-label="Splide Basic HTML Example">
         <div class="splide__track">
             <ul class="splide__list">
@@ -87,7 +113,7 @@
             </ul>
         </div>
     </div>
-</section>
+</section> #}
 <section class="section-site">
     <div class="vehicle-specs">
         <h2 class="vehicle-specs-title dot-before title-section font-32">Technical specifications</h2>
@@ -118,7 +144,9 @@
         </div>
 
         <div class="vehicle-specs-diagram-wrapper">
-            <img src="{{ url_for('static', filename='/imgs/diagrams/ebike.png') }}" alt="Gallery image" />
+        
+            <div class="vehicle-specs-diagram-wrapper-sideview"><img src="{{ vehicle.fields.blueprint_side[0].thumbnails.full.url }}"/></div>
+            <div class="vehicle-specs-diagram-wrapper-topview"><img src="{{ vehicle.fields.blueprint_top[0].thumbnails.full.url }}"/></div>
         </div>
     </div>
 </section>

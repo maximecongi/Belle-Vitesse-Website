@@ -1,5 +1,93 @@
 {% extends "layout.html" %}
-{% block title %{{support.fields.name}} - Belle Vitesse{% endblock %}
+{% block title %}{{support.fields.name}} - Belle Vitesse{% endblock %}
 {% block content %}
 <section id="hero-banner" class="section-site">
+    <div class="vehicle-hero-banner bg-color-white-3">
+        <img src=" {{ support.fields.banner[0].thumbnails.full.url }}" />
+        <div class="vehicle-hero-banner-titlewrapper">
+            <h1 class="vehicle-hero-banner-titlewrapper-title font-54 color-grey-1">
+                {{ support.fields.name }}
+            </h1>
+        </div>
+        <div class="vehicle-hero-banner-textwrapper">
+            <p class="vehicle-hero-banner-textwrapper-text font-12 color-grey-1 font-weight-300">
+                {{ support.fields.description }}
+            </p>
+        </div>
+</section>
+<section class="section-site">
+    <div class="vehicle-key_features">
+        <div class="vehicle-key_features-title">
+            <h2 class="dot-before title-section font-32">Key Features</h2>
+
+        </div>
+        <div>
+            <div class="vehicle-squared-highlight">
+                <div class="vehicle-squared-highlight-wrapper">
+                    <div class="vehicle-squared-highlight-wrapper-square">
+                        <p class="vehicle-squared-highlight-wrapper-square-value count-up"
+                            data-target="{{ support.fields.payload }}" data-duration="1000">{{
+                            support.fields.payload }}</p>
+                        <p class="vehicle-squared-highlight-wrapper-square-unit">kg</p>
+                        <p class="vehicle-squared-highlight-wrapper-square-label">Max payload</p>
+                    </div>
+                    <div class="vehicle-squared-highlight-wrapper-square">
+                        <p class="vehicle-squared-highlight-wrapper-square-value count-up"
+                            data-target="{{ support.fields.roll_range }}" data-duration="1000">{{
+                            support.fields.roll_range }}</p>
+                        <p class="vehicle-squared-highlight-wrapper-square-unit">deg</p>
+                        <p class="vehicle-squared-highlight-wrapper-square-label">Roll range</p>
+                    </div>
+                    <div class="vehicle-squared-highlight-wrapper-square">
+                        <p class="vehicle-squared-highlight-wrapper-square-value count-up"
+                            data-target="{{ support.fields.tilt_range }}" data-duration="1000">{{
+                            support.fields.tilt_range }}</p>
+                        <p class="vehicle-squared-highlight-wrapper-square-unit">deg</p>
+                        <p class="vehicle-squared-highlight-wrapper-square-label">Tilt range</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+</section>
+{# <section class="vehicle-slider">
+    <div class="splide" aria-label="Splide Basic HTML Example">
+        <div class="splide__track">
+            <ul class="splide__list">
+                {% for image in vehicle.fields.gallery|reverse %}
+                <li class="splide__slide"><img src="{{ image.thumbnails.full.url }}" alt="Gallery image" /></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</section> #}
+<section class="section-site">
+    <div class="vehicle-specs">
+        <h2 class="vehicle-specs-title dot-before title-section font-32">Technical specifications</h2>
+        <div class="vehicle-specs-details">
+
+            <div>
+                {% for label, value in specs_left.items() %}
+                <div class="vehicle-specs-details-detail-wrapper">
+                    <p>{{ label }} :</p>
+                    <div class="vehicle-specs-details-detail-wrapper-value">
+                        <p>{{ value }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div>
+                {% for label, value in specs_right.items() %}
+                <div class="vehicle-specs-details-detail-wrapper">
+                    <p>{{ label }} :</p>
+                    <div class="vehicle-specs-details-detail-wrapper-value">
+                        <p>{{ value }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+        </div>
+    </div>
+</section>
 {% endblock %}

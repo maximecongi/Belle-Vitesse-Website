@@ -22,3 +22,9 @@
 .splide__list {
     background-color: var(--grey-2);
 } 
+.splide__track {
+    width: 45vw;
+}
+.splide__slide img {
+    width: 100%;
+}

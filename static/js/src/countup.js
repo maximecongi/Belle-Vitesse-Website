@@ -1,7 +1,7 @@
 document.documentElement.classList.add('js')
 
 document.addEventListener('DOMContentLoaded', () => {
-  const ease = t => 1 - Math.pow(1 - t, 3)
+  const ease = t => 1 - Math.pow(1 - t, 7)
 
   const observer = new IntersectionObserver(entries => {
     entries.forEach(({ isIntersecting, target }) => {
@@ -9,15 +9,20 @@ document.addEventListener('DOMContentLoaded', () => {
       target.dataset.done = true
       target.classList.add('is-visible')
 
-      const end = +target.dataset.target
-      const start = performance.now()
+      const end = Number(target.dataset.target)
+      const decimals = (target.dataset.target.split('.')[1] || '').length
+      const startValue = end * 0.5
+      const startTime = performance.now()
       const duration = 1500
 
       const tick = now => {
-        const t = Math.min((now - start) / duration, 1)
-        target.textContent = Math.floor(ease(t) * end).toLocaleString('fr-FR')
+        const t = Math.min((now - startTime) / duration, 1)
+        const value = startValue + ease(t) * (end - startValue)
+
+        target.textContent = value.toFixed(decimals)
+
         if (t < 1) requestAnimationFrame(tick)
-        else target.textContent = end.toLocaleString('fr-FR')
+        else target.textContent = end.toFixed(decimals)
       }
 
       requestAnimationFrame(tick)

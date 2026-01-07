@@ -8,6 +8,7 @@ from flask import Flask, session, redirect, render_template, request, url_for, a
 from pyairtable import Table
 from collections import defaultdict
 from flask_caching import Cache
+from filters import markdown_filter
 
 # Config
 app = Flask(__name__,
@@ -17,8 +18,8 @@ app = Flask(__name__,
 AIRTABLE_SECRET_TOKEN = os.getenv("AIRTABLE_SECRET_TOKEN")
 AIRTABLE_BASE_ID = os.getenv("AIRTABLE_BASE_ID")
 TABLE_VEHICLES = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "vehicles")
-# TABLE_HEADS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "heads")
-# TABLE_SUPPORTS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "supports")
+TABLE_HEADS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "heads")
+TABLE_SUPPORTS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "supports")
 TABLE_CONFIGS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "configs")
 
 # Cache Configuration
@@ -72,27 +73,29 @@ def vehicle(slug):
 @app.route('/heads')
 @cache.cached(timeout=3600)
 def heads():
-    heads = TABLE_VEHICLES.all(sort=["order"])
+    heads = TABLE_HEADS.all(sort=["order"])
     return render_template('heads.html', heads=heads)
 
 @app.route('/heads/<slug>')
 @cache.cached(timeout=3600, query_string=True)
 def head(slug):
-    head = TABLE_VEHICLES.first(formula=f"{{slug}}='{slug}'")
-    return render_template('head.html', head=head)
+    head = TABLE_HEADS.first(formula=f"{{slug}}='{slug}'")
+    specs_left, specs_right = build_specs(head["fields"])    
+    return render_template('head.html', head=head, specs_left=specs_left, specs_right=specs_right)
     
 
 @app.route('/supports')
 @cache.cached(timeout=3600)
 def supports():
-    supports = TABLE_VEHICLES.all(sort=["order"])
+    supports = TABLE_SUPPORTS.all(sort=["order"])
     return render_template('supports.html', supports=supports)
 
 @app.route('/supports/<slug>')
 @cache.cached(timeout=3600, query_string=True)
 def support(slug):
-    support = TABLE_VEHICLES.first(formula=f"{{slug}}='{slug}'")
-    return render_template('support.html', support=support)
+    support = TABLE_SUPPORTS.first(formula=f"{{slug}}='{slug}'")
+    specs_left, specs_right = build_specs(support["fields"])    
+    return render_template('support.html', support=support, specs_left=specs_left, specs_right=specs_right)
 
 @app.route('/about-us')
 def about_us():
