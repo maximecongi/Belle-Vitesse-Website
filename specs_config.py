@@ -63,6 +63,14 @@ SPECS_CONFIG = {
         "side": "right",
         "value": lambda f: f.get("charging_time")
     },
+    "Operating temperatures": {
+        "side": "right",
+        "value": lambda f: f.get("operating_temperatures")
+    },
+    "Weather rating": {
+        "side": "right",
+        "value": lambda f: f.get("weather_rating")
+    },
     "Camera tray size": {
         "side": "right",
         "value": lambda f: (

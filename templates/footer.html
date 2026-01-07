@@ -5,47 +5,52 @@
         <div class="footer-wrapper">
             <div class="footer-testimonials">
                 <div class="footer-testimonials-logo">
-                    <a href="/"><img src="{{ url_for('static', filename='/imgs/logos_and_name/Blanc-Fond-Transparent.png') }}"/></a>
+                    <a href="/"><img
+                            src="{{ url_for('static', filename='/imgs/logos_and_name/Blanc-Fond-Transparent.png') }}" /></a>
                 </div>
                 <div class="footer-testimonials-text">
-                    <p class="color-white-2 font-weight-300">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+                    <p class="color-white-2 font-weight-300">Lorem ipsum dolor sit amet, consectetur adipiscing elit,
+                        sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
+                        nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
+                        dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
                 </div>
             </div>
             <div class="footer-links">
                 <div class="footer-links-wrapper">
                     <h3 class=""><a href="{{ url_for('vehicles') }}">Vehicles</a></h3>
-                   <p class=""><a href="/">eCar</a></p>
-                   <p class=""><a href="/">eBike</a></p>
-                   <p class=""><a href="/">eTrike 360</a></p>
-                   <p class=""><a href="/">eTrike</a></p>
-                   <p class=""><a href="/">Segway X2</a></p>
-                   <p class=""><a href="/">Segway I2</a></p>
+                    {% for vehicle in vehicles %}
+                        {% if vehicle.fields.status == "Online" %}
+                        <p class=""><a href="{{ url_for('vehicle', slug=vehicle.fields.slug) }}">{{vehicle.fields.name}}</a></p>
+                        {% endif %}
+                    {% endfor %}
                 </div>
                 <div class="footer-links-wrapper">
                     <h3 class=""><a href="{{ url_for('heads') }}">Heads</a></h3>
-                   <p class=""><a href="/">Titan LT</a></p>
-                   <p class=""><a href="/">Ronin 2</a></p>
-                   <p class=""><a href="/">Mōvi Pro</a></p>
-                   <p class=""><a href="/">Ronin 4D</a></p>
-                   <p class=""><a href="/">DJI RS 4 Pro</a></p>
+                    {% for head in heads %}
+                        {% if head.fields.status == "Online" %}
+                        <p class=""><a href="{{ url_for('head', slug=head.fields.slug) }}">{{head.fields.name}}</a></p>
+                        {% endif %}
+                    {% endfor %}
                 </div>
                 <div class="footer-links-wrapper">
                     <h3 class=""><a href="{{ url_for('supports') }}">Supports</a></h3>
-                   <p class=""><a href="/">Black-Tek Tower</a></p>
-                   <p class=""><a href="/">FlowCine Black Arm</a></p>
-                   <p class=""><a href="/">Raptor Air Iso 4</a></p>
+                    {% for support in supports %}
+                        {% if support.fields.status == "Online" %}
+                            <p class=""><a href="{{ url_for('support', slug=support.fields.slug) }}">{{support.fields.name}}</a></p>
+                        {% endif %}
+                    {% endfor %}
                 </div>
                 <div class="footer-links-wrapper">
                     <h3 class="color-white-2">Legals</h3>
-                   <p class=""><a href="{{ url_for('terms_and_conditions') }}">Terms & conditions</a></p>
+                    <p class=""><a href="{{ url_for('terms_and_conditions') }}">Terms & conditions</a></p>
                 </div>
                 <div class="footer-links-wrapper">
                     <h3 class="color-white-2"><a href="{{ url_for('contact') }}">Contact</a></h3>
                     <p class="color-white-2 font-weight-300">
                         <a href="https://maps.app.goo.gl/gtf7XXeKvutYRq8j8" target="_blank">
-                        Belle Vitesse SARL<br/>
-                        39 rue Maurice Gunsbourg<br/>
-                        94200 IVRY-SUR-SEINE<br/>
+                            Belle Vitesse SARL<br />
+                            39 rue Maurice Gunsbourg<br />
+                            94200 IVRY-SUR-SEINE<br />
                         </a>
                     </p>
                     <p>
@@ -58,7 +63,7 @@
             </div>
         </div>
         <div class="">
-        <p class="color-white-2 font-weight-300">@ Copyright Belle Vitesse 2025. Tous droits réservés.</p>
+            <p class="color-white-2 font-weight-300">@ Copyright Belle Vitesse 2025. Tous droits réservés.</p>
         </div>
     </div>
 </section>

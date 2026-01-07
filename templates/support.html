@@ -11,9 +11,33 @@
         </div>
         <div class="vehicle-hero-banner-textwrapper">
             <p class="vehicle-hero-banner-textwrapper-text font-12 color-grey-1 font-weight-300">
-                {{ support.fields.description }}
+                {{ support.fields.powerquote }}
             </p>
         </div>
+</section>
+<section class="section-site">
+    <div class="vehicle-description">
+        <div class="vehicle-description-title">
+            <h2 class="dot-before title-section font-32">Description</h2>
+        </div>
+        <div class="vehicle-description-wrapper">
+            <div class="vehicle-description-right">
+                <div class="splide" aria-label="Splide Basic HTML Example">
+                    <div class="splide__track">
+                        <ul class="splide__list">
+                            {% for image in support.fields.gallery %}
+                            <li class="splide__slide"><img src="{{ image.thumbnails.full.url }}" alt="Gallery image" />
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="vehicle-description-left">
+                <p class="font-16">{{ support.fields.description }}</p>
+            </div>
+        </div>
+    </div>
 </section>
 <section class="section-site">
     <div class="vehicle-key_features">

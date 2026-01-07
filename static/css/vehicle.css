@@ -113,7 +113,9 @@
 
 .vehicle-squared-highlight-wrapper-square-value-plussign {
     font-size: 4vw;
-    vertical-align: middle;
+    vertical-align: top;
+    position: relative;
+    top: 0.5vw;
 }
 
 .vehicle-squared-highlight-wrapper-square-unit {
@@ -234,17 +236,21 @@
     left: 15vw;
     width: 20vw;
 }
+
 .vehicle-specs-diagram-wrapper {
     display: flex;
     align-items: center;
     width: 90%;
 }
+
 .vehicle-specs-diagram-wrapper-sideview {
     width 70%
 }
+
 .vehicle-specs-diagram-wrapper-topview {
     width 30%
 }
+
 .vehicle-specs-diagram-wrapper img {
     width: 100%;
 }
