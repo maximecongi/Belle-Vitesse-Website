@@ -1,0 +1,33 @@
+{# macros.html #}
+{% macro square_highlight(value, unit, label) %}
+<div class="vehicle-squared-highlight-wrapper-square">
+    {% if label == "Capacity" %}
+    <p class="vehicle-squared-highlight-wrapper-square-value">
+        <span>1</span>{% if value != 0 %}<span
+            class="vehicle-squared-highlight-wrapper-square-value-plussign">+</span><span data-target="{{ value }}"
+            data-duration="1500">{{ value }}</span>
+        {% endif %}
+    </p>
+    {% else %}
+    <p class="vehicle-squared-highlight-wrapper-square-value count-up" data-target="{{ value }}" data-duration="1000">
+        {{ value }}
+    </p>
+    {% endif %}
+
+    {% if label == "Capacity" %}
+    <p class="vehicle-squared-highlight-wrapper-square-unit">
+        {% if value == 0 %}
+        Driver
+        {% elif value == 1 %}
+        Driver + Passenger
+        {% else %}
+        Driver + Passengers
+        {% endif %}
+    </p>
+    {% else %}
+    <p class="vehicle-squared-highlight-wrapper-square-unit">{{ unit }}</p>
+    {% endif %}
+
+    <p class="vehicle-squared-highlight-wrapper-square-label">{{ label }}</p>
+</div>
+{% endmacro %}

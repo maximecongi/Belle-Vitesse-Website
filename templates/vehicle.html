@@ -1,3 +1,4 @@
+{% from "macros.html" import square_highlight %}
 {% extends "layout.html" %}
 {% block title %}{{vehicle.fields.name}} - Belle Vitesse{% endblock %}
 {% block content %}
@@ -34,7 +35,7 @@
                 </div>
             </div>
             <div class="vehicle-description-left">
-                <p class="font-16">{{ vehicle.fields.description }}</p>
+                <p class="font-14 font-weight-400">{{ vehicle.fields.description }}</p>
             </div>
         </div>
     </div>
@@ -48,25 +49,8 @@
         <div>
             <div class="vehicle-squared-highlight">
                 <div class="vehicle-squared-highlight-wrapper">
-                    <div class="vehicle-squared-highlight-wrapper-square">
-                        <p class="vehicle-squared-highlight-wrapper-square-value count-up"
-                            data-target="{{ vehicle.fields.max_speed }}" data-duration="1000">{{
-                            vehicle.fields.max_speed }}</p>
-                        <p class="vehicle-squared-highlight-wrapper-square-unit">km/h</p>
-                        <p class="vehicle-squared-highlight-wrapper-square-label">Max speed</p>
-                    </div>
-                    <div class="vehicle-squared-highlight-wrapper-square">
-                        <p class="vehicle-squared-highlight-wrapper-square-value">
-                            <span>1</span>{% if vehicle.fields.passengers != 0 %}<span
-                                class="vehicle-squared-highlight-wrapper-square-value-plussign">+</span><span class=""
-                                data-target="{{vehicle.fields.passengers }}" data-duration="1500">{{
-                                vehicle.fields.passengers }}</span>{% endif %}
-                        </p>
-                        <p class="vehicle-squared-highlight-wrapper-square-unit">{% if vehicle.fields.passengers == 0
-                            %}Driver{% elif vehicle.fields.passengers == 1 %}Driver + Passenger{% else %}Driver +
-                            Passengers{% endif %}</p>
-                        <p class="vehicle-squared-highlight-wrapper-square-label">Capacity</p>
-                    </div>
+                    {{ square_highlight(vehicle.fields.max_speed, "km/h", "Max speed") }}
+                    {{ square_highlight(vehicle.fields.passengers, "", "Capacity") }}
                 </div>
             </div>
         </div>

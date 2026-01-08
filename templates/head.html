@@ -1,3 +1,4 @@
+{% from "macros.html" import square_highlight %}
 {% extends "layout.html" %}
 {% block title %}{{head.fields.name}} - Belle Vitesse{% endblock %}
 {% block content %}
@@ -10,7 +11,7 @@
             </h1>
         </div>
         <div class="vehicle-hero-banner-textwrapper">
-            <p class="vehicle-hero-banner-textwrapper-text font-12 color-grey-1 font-weight-300">
+            <p class="vehicle-hero-banner-textwrapper-text font-14 color-grey-1 font-weight-300">
                 {{ head.fields.powerquote }}
             </p>
         </div>
@@ -34,7 +35,7 @@
                 </div>
             </div>
             <div class="vehicle-description-left">
-                <p class="font-16">{{ head.fields.description }}</p>
+                <p class="font-14 font-weight-400">{{ head.fields.description }}</p>
             </div>
         </div>
     </div>
@@ -48,42 +49,14 @@
         <div>
             <div class="vehicle-squared-highlight">
                 <div class="vehicle-squared-highlight-wrapper">
-                    <div class="vehicle-squared-highlight-wrapper-square">
-                        <p class="vehicle-squared-highlight-wrapper-square-value count-up"
-                            data-target="{{ head.fields.payload }}" data-duration="1000">{{
-                            head.fields.payload }}</p>
-                        <p class="vehicle-squared-highlight-wrapper-square-unit">kg</p>
-                        <p class="vehicle-squared-highlight-wrapper-square-label">Max payload</p>
-                    </div>
-                    <div class="vehicle-squared-highlight-wrapper-square">
-                        <p class="vehicle-squared-highlight-wrapper-square-value count-up"
-                            data-target="{{ head.fields.roll_range }}" data-duration="1000">{{
-                            head.fields.roll_range }}</p>
-                        <p class="vehicle-squared-highlight-wrapper-square-unit">deg</p>
-                        <p class="vehicle-squared-highlight-wrapper-square-label">Roll range</p>
-                    </div>
-                    <div class="vehicle-squared-highlight-wrapper-square">
-                        <p class="vehicle-squared-highlight-wrapper-square-value count-up"
-                            data-target="{{ head.fields.tilt_range }}" data-duration="1000">{{
-                            head.fields.tilt_range }}</p>
-                        <p class="vehicle-squared-highlight-wrapper-square-unit">deg</p>
-                        <p class="vehicle-squared-highlight-wrapper-square-label">Tilt range</p>
+                    <div class="vehicle-squared-highlight-wrapper">
+                        {{ square_highlight(head.fields.payload, "kg", "Max payload") }}
+                        {{ square_highlight(head.fields.weight, "kg", "Weight") }}
+                        {{ square_highlight(head.fields.max_operating_speed, "km/h", "Max operating speed") }}
                     </div>
                 </div>
             </div>
-        </div>
 </section>
-{# <section class="vehicle-slider">
-    <div class="splide" aria-label="Splide Basic HTML Example">
-        <div class="splide__track">
-            <ul class="splide__list">
-                {% for image in vehicle.fields.gallery|reverse %}
-                <li class="splide__slide"><img src="{{ image.thumbnails.full.url }}" alt="Gallery image" /></li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
-</section> #}
 <section class="section-site">
     <div class="vehicle-specs">
         <h2 class="vehicle-specs-title dot-before title-section font-32">Technical specifications</h2>

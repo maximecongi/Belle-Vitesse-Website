@@ -1,97 +1,119 @@
+def with_unit(value, unit):
+    if value is None:
+        return None
+    return f"{value} {unit}"
+
+
+def dimensions(values, labels, unit):
+    if not all(values):
+        return None
+    return " × ".join(
+        f"{label} {value}" for label, value in zip(labels, values)
+    ) + f" {unit}"
+
 SPECS_CONFIG = {
     "Brand": {
         "side": "left",
-        "value": lambda f: f.get("brand")
+        "value": lambda f: f.get("brand"),
     },
     "Model": {
         "side": "left",
-        "value": lambda f: f.get("model")
+        "value": lambda f: f.get("model"),
     },
     "Type": {
         "side": "left",
-        "value": lambda f: f.get("type")
+        "value": lambda f: f.get("type"),
     },
     "Max speed": {
         "side": "left",
-        "value": lambda f: (
-            f'{f.get("max_speed")} km/h'
-            if f.get("max_speed") is not None else None
-        )
+        "value": lambda f: with_unit(f.get("max_speed"), "km/h"),
     },
     "Pan range": {
         "side": "left",
-        "value": lambda f: (
-            f'{f.get("pan_range")}°'
-            if f.get("pan_range") is not None else None
-        )
+        "value": lambda f: with_unit(f.get("pan_range"), "°"),
     },
-     "Tilt range": {
+    "Tilt range": {
         "side": "left",
-        "value": lambda f: (
-            f'{f.get("tilt_range")}°'
-            if f.get("tilt_range") is not None else None
-        )
+        "value": lambda f: with_unit(f.get("tilt_range"), "°"),
     },
-      "Roll range": {
+    "Roll range": {
         "side": "left",
-        "value": lambda f: (
-            f'{f.get("roll_range")}°'
-            if f.get("roll_range") is not None else None
-        )
+        "value": lambda f: with_unit(f.get("roll_range"), "°"),
     },
     "Passengers": {
         "side": "left",
-        "value": lambda f: f.get("passengers")
+        "value": lambda f: f.get("passengers"),
     },
     "Power": {
         "side": "left",
-        "value": lambda f: f.get("power")
+        "value": lambda f: f.get("power"),
     },
     "Torque": {
         "side": "right",
-        "value": lambda f: f.get("torque")
+        "value": lambda f: f.get("torque"),
     },
     "Battery": {
         "side": "right",
-        "value": lambda f: f.get("battery_type")
+        "value": lambda f: f.get("battery_type"),
     },
     "Battery life": {
         "side": "right",
-        "value": lambda f: f.get("battery_life")
+        "value": lambda f: f.get("battery_life"),
     },
     "Charging time": {
         "side": "right",
-        "value": lambda f: f.get("charging_time")
+        "value": lambda f: f.get("charging_time"),
+    },
+    "Remote Compatibility": {
+        "side": "right",
+        "value": lambda f: f.get("remote_compatibility"),
+    },
+    "Mount": {
+        "side": "right",
+        "value": lambda f: f.get("mount"),
+    },
+    "Power supply": {
+        "side": "right",
+        "value": lambda f: f.get("power_supply"),
     },
     "Operating temperatures": {
         "side": "right",
-        "value": lambda f: f.get("operating_temperatures")
+        "value": lambda f: f.get("operating_temperatures"),
+    },
+    "Maximum operating speed": {
+        "side": "left",
+        "value": lambda f: with_unit(f.get("max_operating_speed"), "km/h"),
     },
     "Weather rating": {
         "side": "right",
-        "value": lambda f: f.get("weather_rating")
+        "value": lambda f: f.get("weather_rating"),
     },
     "Camera tray size": {
         "side": "right",
-        "value": lambda f: (
-            f'D {f.get("camera_tray_depth")} × W {f.get("camera_tray_width")} × H {f.get("camera_tray_height")} mm'
-            if all([f.get("camera_tray_depth"), f.get("camera_tray_width"), f.get("camera_tray_height")])
-            else None
-        )
+        "value": lambda f: dimensions(
+            [
+                f.get("camera_tray_depth"),
+                f.get("camera_tray_width"),
+                f.get("camera_tray_height"),
+            ],
+            ["D", "W", "H"],
+            "mm",
+        ),
     },
     "Size": {
         "side": "right",
-        "value": lambda f: (
-            f'L {f.get("length")} × W {f.get("width")} × H {f.get("height")} mm'
-            if all([f.get("length"), f.get("width"), f.get("height")])
-            else None
-        )
+        "value": lambda f: dimensions(
+            [
+                f.get("length"),
+                f.get("width"),
+                f.get("height"),
+            ],
+            ["L", "W", "H"],
+            "mm",
+        ),
     },
     "Weight": {
         "side": "right",
-        "value": lambda f: (
-            f'{f.get("weight")} kg'
-            if f.get("weight") is not None else None
-        )
+        "value": lambda f: with_unit(f.get("weight"), "kg"),
     },
 }
