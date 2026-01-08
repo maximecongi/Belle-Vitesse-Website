@@ -245,11 +245,11 @@
 }
 
 .vehicle-specs-diagram-wrapper-sideview {
-    width 70%
+    width: 70%
 }
 
 .vehicle-specs-diagram-wrapper-topview {
-    width 30%
+    width: 30%
 }
 
 .vehicle-specs-diagram-wrapper img {
