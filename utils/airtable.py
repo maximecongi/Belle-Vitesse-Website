@@ -1,6 +1,9 @@
 from flask_caching import Cache
 from pyairtable import Table
 import os
+from dotenv import load_dotenv
+
+load_dotenv() 
 
 cache: Cache = None
 
