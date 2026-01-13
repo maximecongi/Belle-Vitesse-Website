@@ -96,17 +96,17 @@
     position: absolute;
     top: calc(50% - 1px);
     left: 30%;
-    width: 90%;
-    border-bottom: 7px solid var(--grey-1);
+    width: 60%;
+    border-bottom: 4px solid var(--grey-1);
     transition: transform .6s cubic-bezier(0.215, 0.61, 0.355, 1);
 }
 
 .menu-btn:before {
-    transform: translateY(-14px);
+    transform: translateY(-9px);
 }
 
 .menu-btn:after {
-    transform: translateY(14px);
+    transform: translateY(9px);
 }
 
 
