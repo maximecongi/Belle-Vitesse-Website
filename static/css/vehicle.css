@@ -111,6 +111,7 @@ img.top-head {
 .vehicle-squared-highlight-wrapper-square {
     background-color: var(--white-3);
     justify-items: center;
+    align-items: center;
     aspect-ratio: 3 / 2;
     height: 15vw;
     margin: 1.5vw;

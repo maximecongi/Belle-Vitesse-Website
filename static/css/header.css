@@ -9,7 +9,9 @@
     width: 33.3%;
     display: flex;
 }
-.header-menu, .header-social_links {
+
+.header-menu,
+.header-social_links {
     width: 45vw;
 }
 
@@ -27,6 +29,10 @@
 
 .header-logo>a {
     display: inherit;
+}
+
+.div-header img {
+    height: 100%;
 }
 
 .header-social_links {
@@ -216,6 +222,7 @@ body:has(#active:checked~.wrapper) {
     display: flex;
     align-items: center;
 }
+
 .dropdown-wrapper {
     position: absolute;
     top: calc(100% + 2vw - 1px);
