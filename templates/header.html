@@ -48,7 +48,7 @@
                             <ul>
                                 {% for vehicle in vehicles %}
                                 {% if vehicle.fields.status == "Online" %}
-                                {% set img_url = vehicle.fields.thumbnail[0].thumbnails.large.url if vehicle.fields.thumbnail else '' %}
+                                {% set img_url = vehicle.fields.thumbnail[0].thumbnails.small.url if vehicle.fields.thumbnail else '' %}
                                 <li>
                                     <a href="{{ url_for('vehicle', slug=vehicle.fields.slug) }}" 
                                        data-image="{{ img_url }}">
@@ -63,7 +63,7 @@
                             {% set first_img = namespace(value='') %}
                             {% for vehicle in vehicles %}
                                 {% if vehicle.fields.status == "Online" and not first_img.value %}
-                                    {% set first_img.value = vehicle.fields.thumbnail[0].thumbnails.large.url if vehicle.fields.thumbnail else '' %}
+                                    {% set first_img.value = vehicle.fields.thumbnail[0].thumbnails.small.url if vehicle.fields.thumbnail else '' %}
                                 {% endif %}
                             {% endfor %}
                             <img src="{{ first_img.value }}" class="dropdown-image-preview show" alt="Preview" data-default-src="{{ first_img.value }}">
@@ -78,7 +78,7 @@
                             <ul>
                                 {% for head in heads %}
                                 {% if head.fields.status == "Online" %}
-                                {% set img_url = head.fields.thumbnail[0].thumbnails.large.url if head.fields.thumbnail else '' %}
+                                {% set img_url = head.fields.thumbnail[0].thumbnails.small.url if head.fields.thumbnail else '' %}
                                 <li>
                                     <a href="{{ url_for('head', slug=head.fields.slug) }}"
                                        data-image="{{ img_url }}">
@@ -93,7 +93,7 @@
                             {% set first_img = namespace(value='') %}
                             {% for head in heads %}
                                 {% if head.fields.status == "Online" and not first_img.value %}
-                                    {% set first_img.value = head.fields.thumbnail[0].thumbnails.large.url if head.fields.thumbnail else '' %}
+                                    {% set first_img.value = head.fields.thumbnail[0].thumbnails.small.url if head.fields.thumbnail else '' %}
                                 {% endif %}
                             {% endfor %}
                             <img src="{{ first_img.value }}" class="dropdown-image-preview show" alt="Preview" data-default-src="{{ first_img.value }}">
@@ -108,7 +108,7 @@
                             <ul>
                                 {% for support in supports %}
                                 {% if support.fields.status == "Online" %}
-                                {% set img_url = support.fields.thumbnail[0].thumbnails.large.url if support.fields.thumbnail else '' %}
+                                {% set img_url = support.fields.thumbnail[0].thumbnails.small.url if support.fields.thumbnail else '' %}
                                 <li>
                                     <a href="{{ url_for('support', slug=support.fields.slug) }}"
                                        data-image="{{ img_url }}">
@@ -123,7 +123,7 @@
                             {% set first_img = namespace(value='') %}
                             {% for support in supports %}
                                 {% if support.fields.status == "Online" and not first_img.value %}
-                                    {% set first_img.value = support.fields.thumbnail[0].thumbnails.large.url if support.fields.thumbnail else '' %}
+                                    {% set first_img.value = support.fields.thumbnail[0].thumbnails.small.url if support.fields.thumbnail else '' %}
                                 {% endif %}
                             {% endfor %}
                             <img src="{{ first_img.value }}" class="dropdown-image-preview show" alt="Preview" data-default-src="{{ first_img.value }}">
