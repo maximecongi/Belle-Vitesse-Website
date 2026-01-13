@@ -11,7 +11,7 @@
 
 .header-menu,
 .header-social_links {
-    width: 45vw;
+    width: 40vw;
 }
 
 .header-menu {
@@ -21,6 +21,7 @@
 }
 
 .header-logo {
+    z-index: 4;
     height: 50%;
     width: 20vw;
     display: flex;
@@ -226,7 +227,8 @@ body:has(#active:checked~.wrapper) {
 
 .dropdown-wrapper {
     position: absolute;
-    top: calc(5vh + 1ch - 1px); /* half the header + size of a character - 1px */
+    top: calc(5vh + 1ch - 1px);
+    /* half the header + size of a character - 1px */
     left: 0;
     transform: translateY(0);
     width: 40vw;
