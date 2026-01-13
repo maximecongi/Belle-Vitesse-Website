@@ -1,7 +1,7 @@
 <section class="section-site">
     <div class="header">
         <div class="header-menu font-12">
-        {# Menu mobile #}
+            {# Menu mobile #}
             <input type="checkbox" id="active">
             <label for="active" class="menu-btn" id="header-menu-mobile"><span></span></label>
             <label for="active" class="close"></label>
@@ -9,14 +9,38 @@
                 <ul>
                     <li><a href="{{ url_for('home') }}">Home</a></li>
                     <li><a href="{{ url_for('vehicles') }}">Vehicles</a></li>
+                    <ul>
+                        {% for vehicle in vehicles %}
+                        {% if vehicle.fields.status == "Online" %}
+                        <li><a href="{{ url_for('vehicle', slug=vehicle.fields.slug) }}">{{vehicle.fields.name}}</a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                    </ul>
                     <li><a href="{{ url_for('heads') }}">Heads</a></li>
+                    <ul>
+                        {% for head in heads %}
+                        {% if head.fields.status == "Online" %}
+                        <li><a href="{{ url_for('head', slug=head.fields.slug) }}">{{head.fields.name}}</a></li>
+                        {% endif %}
+                        {% endfor %}
+                    </ul>
                     <li><a href="{{ url_for('supports') }}">Supports</a></li>
+                    <ul>
+                        {% for support in supports %}
+                        {% if support.fields.status == "Online" %}
+                        <li><a href="{{ url_for('support', slug=support.fields.slug) }}">{{support.fields.name}}</a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                    </ul>
                     <li><a href="{{ url_for('about_us') }}">About us</a></li>
                     <li><a href="{{ url_for('contact') }}">Contact</a></li>
                 </ul>
             </div>
             {# Menu desktop #}
             <div id="header-menu-desktop">
+                <a href="{{ url_for('home') }}">Home</a>
                 <a href="{{ url_for('vehicles') }}">Vehicles</a>
                 <a href="{{ url_for('heads') }}">Heads</a>
                 <a href="{{ url_for('supports') }}">Supports</a>

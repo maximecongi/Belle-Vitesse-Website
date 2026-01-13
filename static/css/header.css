@@ -125,7 +125,7 @@
     border-color: var(--grey-1);
 }
 
-.wrapper ul {
+.wrapper>ul {
     position: relative;
     display: flex;
     margin: 0;
@@ -134,11 +134,16 @@
     list-style: none;
     flex-direction: column;
     justify-content: center;
-    z-index:5;
+    z-index: 5;
+}
+
+.wrapper>ul>ul {
+    list-style: none;
+    padding-inline-start: 2ch;
 }
 
 .wrapper ul li {
-    margin: 5vw 0;
+    margin: 10vw 0 2vw 0;
 }
 
 .wrapper ul li a {
@@ -149,6 +154,15 @@
     transition: all 0.3s ease;
     transition: transform .6s cubic-bezier(0.215, 0.61, 0.355, 1);
 }
+
+.wrapper>ul>ul>li {
+    margin: 2vw 0 0 0;
+}
+
+.wrapper>ul>ul li a {
+    font-size: 1.5vh;
+}
+
 
 .wrapper ul li a:hover:after {
     transform: scaleY(1);
@@ -177,6 +191,7 @@ input[type="checkbox"] {
     transition-delay: .6s;
     transform: translateX(-100px);
 }
+
 body:has(#active:checked~.wrapper) {
     overflow: hidden;
 }

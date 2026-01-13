@@ -10,6 +10,7 @@ from flask import (
 )
 from werkzeug.exceptions import HTTPException
 from flask_caching import Cache
+from datetime import datetime, timezone
 
 from utils.specs import build_specs
 from utils.airtable import (
@@ -48,9 +49,9 @@ def warm_cache():
 cache = Cache()
 
 if os.getenv("FLASK_ENV") == "production":
-    app.config["CACHE_TYPE"] = "SimpleCache"  # remplaçable par Redis
+    app.config["CACHE_TYPE"] = "SimpleCache" 
 else:
-    app.config["CACHE_TYPE"] = "NullCache"
+    app.config["CACHE_TYPE"] = "SimpleCache"
 
 app.config["CACHE_DEFAULT_TIMEOUT"] = 3600
 app.config["CACHE_KEY_PREFIX"] = "myapp_"
@@ -81,6 +82,7 @@ def inject_globals():
         "vehicles": get_vehicles(),
         "heads": get_heads(),
         "supports": get_supports(),
+        "now": datetime.now(timezone.utc)
     }
 
 # -------------------------------------------------

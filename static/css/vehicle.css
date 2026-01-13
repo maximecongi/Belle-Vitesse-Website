@@ -276,7 +276,7 @@ img.top-head {
 
     /* HERO BANNER MOBILE */
     .vehicle-hero-banner img {
-        height: 50vh;
+        height: 40vh;
         bottom: 0;
     }
 
@@ -348,11 +348,12 @@ img.top-head {
 
     .vehicle-configurator-carousel-wrapper-config-list {
         flex-direction: row;
+        flex-wrap: wrap;
     }
 
     .vehicle-configurator-carousel-wrapper-config {
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
         width: auto;
         margin-top: 5vw;
     }
@@ -364,12 +365,6 @@ img.top-head {
 
     .vehicle-configurator-carousel-wrapper-config-item {
         text-align: left;
-    }
-
-    .vehicle-configurator-carousel-wrapper-config-group:not(:last-child) {
-
-        border-right: 2px solid var(--grey-1);
-        margin-right: 4em;
     }
 
     .vehicle-configurator-carousel-wrapper-img-container {

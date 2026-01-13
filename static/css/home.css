@@ -78,13 +78,16 @@
 }
 
 .home-references-group {
+    width: 80%;
     display: inline-flex;
     align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 .home-references-wrapper img {
     height: 3vh;
-    margin: 4vw 1vh;
+    margin: 4vw 5vh;
     flex-shrink: 0;
     filter: grayscale(1) brightness(0.3);
     transition: filter 0.5s ease;
@@ -95,9 +98,10 @@
 .home-references-wrapper img:hover {
     filter: grayscale(1) brightness(0);
 }
+
 .duplicated-group {
-        display:none;
-    }
+    display: none;
+}
 
 /* MOBILE VERSION */
 
@@ -140,7 +144,15 @@
         flex-wrap: nowrap;
         will-change: transform;
     }
+    .home-references-group img {
+        margin:4vw 2vh;
+    }
+    .home-references-group {
+        width: unset;
+        flex-wrap: nowrap;
+    }
+
     .duplicated-group {
-        display:inline-flex;
+        display: inline-flex;
     }
 }
