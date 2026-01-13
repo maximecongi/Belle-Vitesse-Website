@@ -227,7 +227,7 @@ body:has(#active:checked~.wrapper) {
 
 .dropdown-wrapper {
     position: absolute;
-    top: calc(100% + 2vw - 1px);
+    top: calc(5vh + 1ch - 1px); /* half the header + size of a character - 1px */
     left: 0;
     transform: translateY(0);
     width: 40vw;
