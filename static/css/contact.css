@@ -1,17 +1,34 @@
 .contact-container-columns p {
     font-size: 1.2em;
 }
+
 .contact-container-columns {
     display: flex;
     flex-direction: row;
 }
+
 .contact-container-columns-left {
     width: 30vw;
 }
+
 .contact-container-columns-right {
     width: 60vw
 }
+
 .contact-container-columns-right-map {
     width: 100%;
     aspect-ratio: 2;
+}
+
+/* MOBILE VERSION */
+
+
+@media (orientation: portrait) {
+    .contact-container-columns {
+        flex-direction: column;
+    }
+
+    .contact-container-columns-right {
+        width: 84vw;
+    }
 }

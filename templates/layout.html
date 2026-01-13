@@ -14,6 +14,8 @@
 
 
     <title>{% block title %}{% endblock %}</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/js/splide.min.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCXua1J9AOPMH9EJXAukHAvJl-nE4UhjVk"></script>
     <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/css/splide.min.css" rel="stylesheet">
@@ -30,7 +32,7 @@
     <script src="{{ url_for('static', filename='/js/src/slider.js') }}"></script>
     <script src="{{ url_for('static', filename='/js/src/map.js') }}"></script>
     <script src="{{ url_for('static', filename='/js/src/countup.js') }}"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="{{ url_for('static', filename='/js/src/infinite-scroll.js') }}"></script>
 </body>
 
 </html>

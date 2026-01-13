@@ -3,7 +3,7 @@
 <div class="vehicle-squared-highlight-wrapper-square">
     {% if label == "Capacity" %}
     <p class="vehicle-squared-highlight-wrapper-square-value">
-        <span>1</span>{% if value != 0 %}<span
+        <span>1</span>{% if value and  value != 0 %}<span
             class="vehicle-squared-highlight-wrapper-square-value-plussign">+</span><span data-target="{{ value }}"
             data-duration="1500">{{ value }}</span>
         {% endif %}
@@ -16,12 +16,12 @@
 
     {% if label == "Capacity" %}
     <p class="vehicle-squared-highlight-wrapper-square-unit">
-        {% if value == 0 %}
-        Driver
-        {% elif value == 1 %}
+        {% if value and value > 1 %}
+        Driver + Passengers
+        {% elif value and value == 1 %}
         Driver + Passenger
         {% else %}
-        Driver + Passengers
+        Driver 
         {% endif %}
     </p>
     {% else %}

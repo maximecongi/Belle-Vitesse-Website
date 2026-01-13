@@ -7,7 +7,7 @@
     align-items: flex-start;
 }
 
-.categories-hero-banner > div {
+.categories-hero-banner>div {
     position: relative;
     top: -5vh;
 }
@@ -32,6 +32,7 @@
     justify-content: flex-start;
     flex-wrap: wrap;
 }
+
 .categories-solutions-categories-categorywrapper {
     width: 20vw;
     margin: 0vw 5vw 4vw 5vw;
@@ -52,4 +53,19 @@
 
 .categories-solutions-categories-img-link:hover img {
     filter: brightness(0.9);
+}
+
+/* MOBILE VERSION */
+@media (orientation: portrait) {
+
+
+    /* LIST MOBILE*/
+    .categories-solutions-categories {
+        justify-content: center;
+    }
+
+    .categories-solutions-categories-categorywrapper {
+        width: 60vw;
+    }
+
 }

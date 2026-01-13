@@ -8,6 +8,7 @@ from flask import (
     jsonify,
     request,
 )
+from werkzeug.exceptions import HTTPException
 from flask_caching import Cache
 
 from utils.specs import build_specs
@@ -90,6 +91,15 @@ def inject_globals():
 def home():
     return render_template("home.html")
 
+
+@app.errorhandler(HTTPException)
+def handle_http_exception(e):
+    return render_template("error.html", error_title=f"{e.code} - {e.name}", error_message=e.description), e.code
+
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    return render_template("error.html", error_title="500 - Internal Server Error", error_message="An unexpected error occurred."), 500
 
 # -----------------------
 # Lists

@@ -4,22 +4,26 @@
 {% block content %}
 <section id="hero-banner" class="section-site">
     <div class="vehicle-hero-banner bg-color-white-3">
-        <img src=" {{ head.fields.banner[0].thumbnails.full.url }}" />
-        <div class="vehicle-hero-banner-titlewrapper">
-            <h1 class="vehicle-hero-banner-titlewrapper-title font-54 color-grey-1">
-                {{ head.fields.name }}
-            </h1>
+        <div class="vehicle-hero-banner-img">
+            <img class="top-head" src=" {{ head.fields.banner[0].thumbnails.full.url }}" />
         </div>
-        <div class="vehicle-hero-banner-textwrapper">
-            <p class="vehicle-hero-banner-textwrapper-text font-14 color-grey-1 font-weight-300">
-                {{ head.fields.powerquote }}
-            </p>
+        <div class="vehicle-hero-banner-wrapper animate__animated animation__banner-title text-head">
+            <div class="vehicle-hero-banner-titlewrapper">
+                <h1 class="vehicle-hero-banner-titlewrapper-title font-54 color-grey-1">
+                    {{ head.fields.name }}
+                </h1>
+            </div>
+            <div class="vehicle-hero-banner-textwrapper">
+                <p class="vehicle-hero-banner-textwrapper-text color-grey-1 font-weight-300">
+                    {{ head.fields.powerquote }}
+                </p>
+            </div>
         </div>
 </section>
 <section class="section-site">
     <div class="vehicle-description">
         <div class="vehicle-description-title">
-            <h2 class="dot-before title-section font-32">Description</h2>
+            <h2 class="dot-before title-section">Description</h2>
         </div>
         <div class="vehicle-description-wrapper">
             <div class="vehicle-description-right">
@@ -35,7 +39,7 @@
                 </div>
             </div>
             <div class="vehicle-description-left">
-                <p class="font-14 font-weight-400">{{ head.fields.description }}</p>
+                <p class="font-weight-400">{{ head.fields.description }}</p>
             </div>
         </div>
     </div>
@@ -43,7 +47,7 @@
 <section class="section-site">
     <div class="vehicle-key_features">
         <div class="vehicle-key_features-title">
-            <h2 class="dot-before title-section font-32">Key Features</h2>
+            <h2 class="dot-before title-section">Key Features</h2>
 
         </div>
         <div>
@@ -59,7 +63,7 @@
 </section>
 <section class="section-site">
     <div class="vehicle-specs">
-        <h2 class="vehicle-specs-title dot-before title-section font-32">Technical specifications</h2>
+        <h2 class="vehicle-specs-title dot-before title-section">Technical specifications</h2>
         <div class="vehicle-specs-details">
 
             <div>

@@ -1,0 +1,4 @@
+.animation__banner-title {
+    animation-name:fadeInDown;
+    animation-delay: 0.5s;
+}

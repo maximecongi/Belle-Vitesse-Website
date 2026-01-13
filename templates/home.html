@@ -10,7 +10,8 @@
     </div>
     <div class="home-hero-banner-buttons">
       <a href="{{ url_for('vehicles') }}" class="home-hero-banner-buttons-discover button">Discover our solutions</a>
-      <a href="{{ url_for('contact') }}" class="home-hero-banner-buttons-contact button bg-color-yellow-1">Contact us</a>
+      <a href="{{ url_for('contact') }}" class="home-hero-banner-buttons-contact button bg-color-yellow-1">Contact
+        us</a>
     </div>
 </section>
 <section id="testimonials" class="section-site">
@@ -18,7 +19,7 @@
     <div class="home-testimonials-logo"><img
         src="{{ url_for('static', filename='/imgs/logos_and_name/Noir-Fond-Transparent.png') }}"></div>
     <div class="home-testimonials-textwrapper">
-      <p class="home-testimonials-textwrapper-text font-12em">Our goal is to equip you with the most inspiring image
+      <p class="home-testimonials-textwrapper-text">Our goal is to equip you with the most inspiring image
         technology in the world. We are unique in terms of the exclusive products we have developed, and our resources.
         As part of the wider ARRI ecosystem, we are built on a bedrock of knowledge that dates back more than a century.
 
@@ -52,14 +53,16 @@
   <div class="home-references">
     <h2 class="dot-before title-section font-32">Our references</h2>
     <div class="home-references-wrapper">
-      <img src="{{ url_for('static', filename='/imgs/brands/dior-logo.png') }}" />
-      <img src="{{ url_for('static', filename='/imgs/brands/canal-logo.png') }}" />
-      <img src="{{ url_for('static', filename='/imgs/brands/netflix-logo.png') }}" />
-      <img src="{{ url_for('static', filename='/imgs/brands/northsix-logo.png') }}" />
-      <img src="{{ url_for('static', filename='/imgs/brands/partizan-logo.png') }}" />
-      <img src="{{ url_for('static', filename='/imgs/brands/henry-logo.png') }}" />
-      <img src="{{ url_for('static', filename='/imgs/brands/soldat-logo.png') }}" />
-      <img src="{{ url_for('static', filename='/imgs/brands/longchamp-logo.png') }}" />
+      <div class="home-references-group">
+        <img src="{{ url_for('static', filename='/imgs/brands/dior-logo.png') }}" />
+        <img src="{{ url_for('static', filename='/imgs/brands/canal-logo.png') }}" />
+        <img src="{{ url_for('static', filename='/imgs/brands/netflix-logo.png') }}" />
+        <img src="{{ url_for('static', filename='/imgs/brands/northsix-logo.png') }}" />
+        <img src="{{ url_for('static', filename='/imgs/brands/partizan-logo.png') }}" />
+        <img src="{{ url_for('static', filename='/imgs/brands/henry-logo.png') }}" />
+        <img src="{{ url_for('static', filename='/imgs/brands/soldat-logo.png') }}" />
+        <img src="{{ url_for('static', filename='/imgs/brands/longchamp-logo.png') }}" />
+      </div>
     </div>
   </div>
 </section>

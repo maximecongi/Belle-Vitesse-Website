@@ -5,21 +5,23 @@
 <section id="hero-banner" class="section-site">
     <div class="vehicle-hero-banner bg-color-white-3">
         <img src="{{ vehicle.fields.banner[0].thumbnails.full.url }}" />
-        <div class="vehicle-hero-banner-titlewrapper">
-            <h1 class="vehicle-hero-banner-titlewrapper-title font-54 color-grey-1">
-                {{ vehicle.fields.name }}
-            </h1>
-        </div>
-        <div class="vehicle-hero-banner-textwrapper">
-            <p class="vehicle-hero-banner-textwrapper-text font-14 color-grey-1 font-weight-400">
-                {{ vehicle.fields.powerquote| safe }}
-            </p>
+        <div class="vehicle-hero-banner-wrapper animate__animated animation__banner-title">
+            <div class="vehicle-hero-banner-titlewrapper">
+                <h1 class="vehicle-hero-banner-titlewrapper-title font-54 color-grey-1">
+                    {{ vehicle.fields.name }}
+                </h1>
+            </div>
+            <div class="vehicle-hero-banner-textwrapper">
+                <p class="vehicle-hero-banner-textwrapper-text color-grey-1 font-weight-400">
+                    {{ vehicle.fields.powerquote| safe }}
+                </p>
+            </div>
         </div>
 </section>
 <section class="section-site">
     <div class="vehicle-description">
         <div class="vehicle-description-title">
-            <h2 class="dot-before title-section font-32">Description</h2>
+            <h2 class="dot-before title-section">Description</h2>
         </div>
         <div class="vehicle-description-wrapper">
             <div class="vehicle-description-right">
@@ -35,7 +37,7 @@
                 </div>
             </div>
             <div class="vehicle-description-left">
-                <p class="font-14 font-weight-400">{{ vehicle.fields.description }}</p>
+                <p class="font-weight-400">{{ vehicle.fields.description }}</p>
             </div>
         </div>
     </div>
@@ -43,7 +45,7 @@
 <section class="section-site">
     <div class="vehicle-key_features">
         <div class="vehicle-key_features-title">
-            <h2 class="dot-before title-section font-32">Key Features</h2>
+            <h2 class="dot-before title-section">Key Features</h2>
 
         </div>
         <div>
@@ -58,12 +60,12 @@
 {% if configs_grouped %}
 <section class="section-site">
     <div class="vehicle-configurator">
-        <h2 class="dot-before title-section font-32">Configurations</h2>
+        <h2 class="dot-before title-section">Configurations</h2>
         <div class="vehicle-configurator-carousel-wrapper" x-data="carousel()">
             <div class="vehicle-configurator-carousel-wrapper-config">
                 {% for type_name, items in configs_grouped.items() %}
                 <div class="vehicle-configurator-carousel-wrapper-config-group">
-                    <h3 class="title-section font-24">{{ type_name }}</h3>
+                    <h3 class="title-section">{{ type_name }}</h3>
                     <nav class="vehicle-configurator-carousel-wrapper-config-list">
                         <template x-for="(item, index) in itemsByType['{{ type_name }}']" :key="index">
                             <button class="vehicle-configurator-carousel-wrapper-config-item"
@@ -84,7 +86,7 @@
 {% endif %}
 <section class="section-site">
     <div class="vehicle-specs">
-        <h2 class="vehicle-specs-title dot-before title-section font-32">Technical specifications</h2>
+        <h2 class="vehicle-specs-title dot-before title-section">Technical specifications</h2>
         <div class="vehicle-specs-details">
             <div>
                 {% for label, value in specs_left.items() %}
@@ -109,7 +111,7 @@
             </div>
 
         </div>
-
+        {% if vehicle.fields.blueprint_side %}
         <div class="vehicle-specs-diagram-wrapper">
 
             <div class="vehicle-specs-diagram-wrapper-sideview"><img
@@ -117,6 +119,7 @@
             <div class="vehicle-specs-diagram-wrapper-topview"><img
                     src="{{ vehicle.fields.blueprint_top[0].thumbnails.full.url }}" /></div>
         </div>
+        {% endif%}
     </div>
 </section>
 <script>

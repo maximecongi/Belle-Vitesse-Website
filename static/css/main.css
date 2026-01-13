@@ -1,19 +1,23 @@
 main {
     width: 100vw;
 }
+
 .section-site {
     position: relative;
     width: 100vw;
     margin-inline: auto;
 }
-.section-site > * {
+
+.section-site>* {
     display: flex;
     align-items: center;
     padding-inline: 5vw;
 }
+
 .title-section {
     position: relative;
     margin: 5vw 0;
+    text-align: center;
 }
 
 .title-textual-section {
@@ -31,28 +35,72 @@ main {
 }
 
 .tag-job-yellow {
-        background-color: var(--yellow-1);
+    background-color: var(--yellow-1);
 }
+
 .dot-before:before {
-    content:"● ";
-    color:var(--yellow-1);
-    vertical-align: text-bottom;
-    font-size:0.8em;
-    position: absolute;
-    left:-2ch;
+    content: "● ";
+    color: var(--yellow-1);
+    font-size: 0.8em;
+    position: relative;
+    left: -0.2ch;
+    top: -0.2ch;
     z-index: 3;
 }
+
 .main-wrapper {
     flex-direction: column;
     align-items: flex-start;
-    margin-bottom:3vw;
+    margin-bottom: 3vw;
 }
-.main-wrapper > *:not(h1) {
+
+.main-wrapper>*:not(h1) {
     position: relative;
     left: 3vw;
 }
 
+h1.title-section {
+    font-size: 5.4em;
+}
+
+h2.title-section {
+    font-size: 3.2em;
+}
+
+h3.title-section {
+    font-size: 2.4em;
+}
+
+h4.title-section {
+    font-size: 1.8em;
+}
+
+/* MOBILE VERSION */
+
+
+@media (orientation: portrait) {
+    .title-section {
+        margin: 5vh 0;
+    }
+
+    h1.title-section {
+        font-size: 5.4em;
+    }
+
+    h2.title-section {
+        font-size: 1.8em;
+    }
+
+    h3.title-section {
+        font-size: 1.4em;
+    }
+}
 
 /* Aminations JS */
-.js .count-up { visibility: hidden; }
-.count-up.is-visible { visibility: visible; }
+.js .count-up {
+    visibility: hidden;
+}
+
+.count-up.is-visible {
+    visibility: visible;
+}

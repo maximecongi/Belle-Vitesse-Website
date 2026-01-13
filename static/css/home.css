@@ -77,9 +77,15 @@
     flex-wrap: wrap;
 }
 
+.home-references-group {
+    display: inline-flex;
+    align-items: center;
+}
+
 .home-references-wrapper img {
     height: 3vh;
     margin: 4vw 1vh;
+    flex-shrink: 0;
     filter: grayscale(1) brightness(0.3);
     transition: filter 0.5s ease;
     cursor: url(/static/imgs/cursors/Noir-Fond-Transparent.png), pointer;
@@ -88,4 +94,53 @@
 
 .home-references-wrapper img:hover {
     filter: grayscale(1) brightness(0);
+}
+.duplicated-group {
+        display:none;
+    }
+
+/* MOBILE VERSION */
+
+
+@media (orientation: portrait) {
+
+    /* TESTIMONIALS MOBILE */
+    .home-testimonials {
+        flex-direction: column;
+    }
+
+    .home-testimonials-logo img {
+        height: 20vw;
+    }
+
+    .home-testimonials>* {
+        width: 90%;
+        height: 20vh;
+    }
+
+    /* SOLUTIONS MOBILE */
+    .home-solutions-categories {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .home-solutions-categories img {
+        height: 60vw;
+    }
+
+    /* REFERENCES MOBILE */
+    .home-references {
+        overflow: hidden;
+        width: 100%;
+    }
+
+    .home-references-wrapper {
+        display: flex;
+
+        flex-wrap: nowrap;
+        will-change: transform;
+    }
+    .duplicated-group {
+        display:inline-flex;
+    }
 }

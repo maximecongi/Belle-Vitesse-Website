@@ -1,4 +1,5 @@
 .about_us-container p {
+    max-width: 80%;
     margin-bottom: 3em;
     font-size: 1.2em;
     font-weight: 400;
@@ -8,14 +9,16 @@
     margin-bottom: 2em;
     font-size: 1.2em;
     font-weight: 400;
-     list-style-type: none;
+    list-style-type: none;
+    padding-inline-start: 0;
 }
+
 .about_us-container li {
     display: flex;
     align-items: center;
     justify-content: space-between;
     width: 80vw;
-}    
+}
 
 .about_us-container ul li img {
     width: 10vw;
@@ -24,11 +27,36 @@
     border-radius: 50%;
     filter: grayscale(1);
 }
+
 .about_us-container ul li div {
     width: 65vw;
     vertical-align: middle;
 }
+
 .about_us-container ul li span {
     display: inline-block;
-    margin-right:12px;
-}    
+    margin-right: 12px;
+}
+
+/* MOBILE VERSION */
+
+
+@media (orientation: portrait) {
+    .about_us-container ul li img {
+        width: 20vw;
+    }
+
+    .about_us-container ul li div {
+        width: 55vw;
+    }
+
+    .about_us-container .tag-job {
+        margin-top: 8px;
+        margin-bottom: -16px;
+        display: block;
+        width: fit-content;
+    }
+    h1.title-textual-section {
+        font-size:4em !important;
+    }
+}
