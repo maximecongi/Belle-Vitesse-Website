@@ -3,7 +3,7 @@
     height: 10vh;
     background-color: var(--white-2);
     z-index: 4;
-    padding-inline: 0;
+    padding-inline: 5vw;
 }
 
 .header>* {
