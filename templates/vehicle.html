@@ -69,15 +69,16 @@
                     <h3 class="title-section">{{ type_name }}</h3>
                     <nav class="vehicle-configurator-carousel-wrapper-config-list">
                         {% for item in items %}
-                        <button class="vehicle-configurator-carousel-wrapper-config-item config-btn {% if ns.first %}active{% else %}inactive{% endif %}"
-                                data-image="{{ item.fields.image[0].thumbnails.large.url }}"
-                                data-label="{{ item.fields.name }}">
+                        <button
+                            class="vehicle-configurator-carousel-wrapper-config-item config-btn {% if ns.first %}active{% else %}inactive{% endif %}"
+                            data-image="{{ item.fields.image[0].thumbnails.large.url }}"
+                            data-label="{{ item.fields.name }}">
                             {{ item.fields.name }}
                         </button>
                         {% if ns.first %}
-                            {% set ns.image = item.fields.image[0].thumbnails.large.url %}
-                            {% set ns.label = item.fields.name %}
-                            {% set ns.first = false %}
+                        {% set ns.image = item.fields.image[0].thumbnails.large.url %}
+                        {% set ns.label = item.fields.name %}
+                        {% set ns.first = false %}
                         {% endif %}
                         {% endfor %}
                     </nav>
