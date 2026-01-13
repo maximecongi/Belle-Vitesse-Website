@@ -14,7 +14,6 @@
 
 
     <title>{% block title %}{% endblock %}</title>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://unpkg.com/swup@4"></script> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/js/splide.min.js"></script>
@@ -29,9 +28,9 @@
         {% block content %}{% endblock %}
         {% include "footer.html" %}
     </main>
-    <script src="{{ url_for('static', filename='/js/src/script.js')}}"></script>
-    <script src="{{ url_for('static', filename='/js/src/slider.js') }}"></script>
-    <script src="{{ url_for('static', filename='/js/src/map.js') }}"></script>
+    <script src="{{ url_for('static', filename='/js/src/initialization.js', _external=True)}}"></script>
+    <script src="{{ url_for('static', filename='/js/src/slider.js', _external=True) }}"></script>
+    <script src="{{ url_for('static', filename='/js/src/map.js', _external=True) }}"></script>
     <script src="{{ url_for('static', filename='/js/src/countup.js', _external=True) }}"></script>
     <script src="{{ url_for('static', filename='/js/src/configurator.js', _external=True) }}"></script>
     <script src="{{ url_for('static', filename='/js/src/infinite-scroll.js', _external=True) }}"></script>
