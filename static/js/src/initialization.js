@@ -50,6 +50,9 @@ function initContent() {
     if (window.Alpine) {
         window.Alpine.initTree(document.body);
     }
+    if (typeof window.initConfigurator === 'function') {
+        window.initConfigurator();
+    }
     // Add other content initializers here (e.g. InfiniteScroll)
 }
 
