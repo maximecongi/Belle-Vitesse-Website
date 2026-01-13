@@ -175,6 +175,7 @@ img.top-head {
 .vehicle-configurator-carousel-wrapper-config h3 {
     margin-top: 0;
     margin-bottom: 1vw;
+    text-align: left;
 }
 
 .vehicle-configurator-carousel-wrapper-config-list {
@@ -297,8 +298,10 @@ img.top-head {
     .vehicle-hero-banner-wrapper {
         top: 15vh;
     }
+
     .vehicle-hero-banner-wrapper:not(.text-head) {
-        top: -25%;;
+        top: -25%;
+        ;
     }
 
     .vehicle-hero-banner-textwrapper-text {
