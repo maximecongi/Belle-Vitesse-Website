@@ -111,6 +111,7 @@
     /* TESTIMONIALS MOBILE */
     .home-testimonials {
         flex-direction: column;
+        margin-top: 10vw;
     }
 
     .home-testimonials-logo img {
@@ -119,7 +120,7 @@
 
     .home-testimonials>* {
         width: 90%;
-        height: 20vh;
+        height: fit-content;
     }
 
     /* SOLUTIONS MOBILE */
