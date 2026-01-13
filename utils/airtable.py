@@ -3,7 +3,7 @@ from pyairtable import Table
 import os
 from dotenv import load_dotenv
 
-load_dotenv()  
+load_dotenv("/home/Maxcongi/bellevitesse/.env")    
 
 cache: Cache = None
 
