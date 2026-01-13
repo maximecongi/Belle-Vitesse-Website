@@ -3,13 +3,21 @@ from pyairtable import Table
 import os
 from dotenv import load_dotenv
 
-load_dotenv() 
+load_dotenv()  
 
 cache: Cache = None
 
+# ⚡ Récupérer les variables
 AIRTABLE_SECRET_TOKEN = os.getenv("AIRTABLE_SECRET_TOKEN")
 AIRTABLE_BASE_ID = os.getenv("AIRTABLE_BASE_ID")
 
+# ⚡ Vérifier qu’elles existent
+if not AIRTABLE_SECRET_TOKEN or not AIRTABLE_BASE_ID:
+    raise RuntimeError(
+        "AIRTABLE_SECRET_TOKEN et AIRTABLE_BASE_ID doivent être définis dans le .env"
+    )
+
+# ⚡ Créer les tables après avoir confirmé que les variables existent
 TABLE_VEHICLES = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "vehicles")
 TABLE_HEADS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "heads")
 TABLE_SUPPORTS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "supports")
@@ -30,24 +38,15 @@ def get_cached(key, fetcher, timeout=3600):
 
 
 def get_vehicles():
-    return get_cached(
-        "vehicles",
-        lambda: TABLE_VEHICLES.all(sort=["order"])
-    )
+    return get_cached("vehicles", lambda: TABLE_VEHICLES.all(sort=["order"]))
 
 
 def get_heads():
-    return get_cached(
-        "heads",
-        lambda: TABLE_HEADS.all(sort=["order"])
-    )
+    return get_cached("heads", lambda: TABLE_HEADS.all(sort=["order"]))
 
 
 def get_supports():
-    return get_cached(
-        "supports",
-        lambda: TABLE_SUPPORTS.all(sort=["order"])
-    )
+    return get_cached("supports", lambda: TABLE_SUPPORTS.all(sort=["order"]))
 
 
 def get_vehicle_by_slug(slug):
