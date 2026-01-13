@@ -61,24 +61,31 @@
 <section class="section-site">
     <div class="vehicle-configurator">
         <h2 class="dot-before title-section">Configurations</h2>
-        <div class="vehicle-configurator-carousel-wrapper" x-data="carousel()">
+        <div class="vehicle-configurator-carousel-wrapper">
             <div class="vehicle-configurator-carousel-wrapper-config">
+                {% set ns = namespace(first=true, image='', label='') %}
                 {% for type_name, items in configs_grouped.items() %}
                 <div class="vehicle-configurator-carousel-wrapper-config-group">
                     <h3 class="title-section">{{ type_name }}</h3>
                     <nav class="vehicle-configurator-carousel-wrapper-config-list">
-                        <template x-for="(item, index) in itemsByType['{{ type_name }}']" :key="index">
-                            <button class="vehicle-configurator-carousel-wrapper-config-item"
-                                :class="{ 'active': activeIndex === getGlobalIndex('{{ type_name }}', index), 'inactive': activeIndex !== getGlobalIndex('{{ type_name }}', index) }"
-                                @click="activeIndex = getGlobalIndex('{{ type_name }}', index)"
-                                x-text="item.label"></button>
-                        </template>
+                        {% for item in items %}
+                        <button class="vehicle-configurator-carousel-wrapper-config-item config-btn {% if ns.first %}active{% else %}inactive{% endif %}"
+                                data-image="{{ item.fields.image[0].thumbnails.large.url }}"
+                                data-label="{{ item.fields.name }}">
+                            {{ item.fields.name }}
+                        </button>
+                        {% if ns.first %}
+                            {% set ns.image = item.fields.image[0].thumbnails.large.url %}
+                            {% set ns.label = item.fields.name %}
+                            {% set ns.first = false %}
+                        {% endif %}
+                        {% endfor %}
                     </nav>
                 </div>
                 {% endfor %}
             </div>
             <div class="vehicle-configurator-carousel-wrapper-img-container">
-                <img :src="allItems[activeIndex].image" :alt="allItems[activeIndex].label">
+                <img id="configurator-image" src="{{ ns.image }}" alt="{{ ns.label }}">
             </div>
         </div>
     </div>
@@ -122,41 +129,5 @@
         {% endif%}
     </div>
 </section>
-<script>
-    function carousel() {
-        return {
-            activeIndex: 0,
-            allItems: [
-                {% for type_name, items in configs_grouped.items() %}
-        {% for config in items %}
-        {
-            label: "{{ config.fields.name }}",
-                image: "{{ config.fields.image[0].thumbnails.large.url }}"
-        },
-        {% endfor %}
-        {% endfor %}
-            ],
-        itemsByType: {
-            {% for type_name, items in configs_grouped.items() %}
-            "{{ type_name }}": [
-                {% for config in items %}
-        {
-            label: "{{ config.fields.name }}",
-                image: "{{ config.fields.image[0].thumbnails.large.url }}"
-        },
-        {% endfor %}
-                ],
-        {% endfor %}
-    },
-    getGlobalIndex(type, localIndex) {
-        let count = 0;
-        for (let t in this.itemsByType) {
-            if (t === type) return count + localIndex;
-            count += this.itemsByType[t].length;
-        }
-        return 0;
-    }
-        }
-    }
-</script>
+
 {% endblock %}

@@ -48,6 +48,7 @@ body {
     margin: 0;
     min-height: 100vh;
     display: flex;
+    flex-direction: column;
     letter-spacing: normal;
     text-rendering: optimizeLegibility;
     min-height: -webkit-fill-available;
@@ -360,7 +361,12 @@ h4 {
     margin-bottom: 4vw;
 }
 
-.marg-tb-5 {
-    margin-top: 5vw;
-    margin-bottom: 5vw;
+/* Swup Transition */
+.transition-fade {
+    transition: 0.4s;
+    opacity: 1;
+}
+
+html.is-animating .transition-fade {
+    opacity: 0;
 }

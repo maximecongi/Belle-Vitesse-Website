@@ -33,7 +33,6 @@ app = Flask(
     static_folder=os.getenv("STATIC_FOLDER"),
     static_url_path=os.getenv("STATIC_URL_PATH"),
 )
-
 # -------------------------------------------------
 # Cache config
 # -------------------------------------------------
@@ -84,7 +83,6 @@ def inject_globals():
         "supports": get_supports(),
         "now": datetime.now(timezone.utc)
     }
-
 # -------------------------------------------------
 # Routes
 # -------------------------------------------------
@@ -230,4 +228,4 @@ if __name__ == "__main__":
         app.run()
     else:
         app.config["TEMPLATES_AUTO_RELOAD"] = True
-        app.run(use_reloader=True)
+        app.run(debug=True, use_reloader=True)
