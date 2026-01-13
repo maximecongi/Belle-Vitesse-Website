@@ -1,7 +1,10 @@
-function initMap() {
+window.initMap = function () {
+  const mapElement = document.getElementById("map");
+  if (!mapElement) return;
+
   const position = { lat: 48.81193823595843, lng: 2.4044663369790507 };
 
-  const map = new google.maps.Map(document.getElementById("map"), {
+  const map = new google.maps.Map(mapElement, {
     center: position,
     zoom: 16,
     disableDefaultUI: true,
@@ -46,6 +49,4 @@ function initMap() {
     const url = `https://www.google.com/maps?q=${position.lat},${position.lng}`;
     window.open(url, "_blank", "noopener");
   });
-}
-
-initMap();
+};

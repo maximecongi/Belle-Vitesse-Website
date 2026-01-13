@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {
+function initDropdowns() {
     const dropdowns = document.querySelectorAll('.menu-item-dropdown');
 
     dropdowns.forEach(dropdown => {
@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Optional: Reset image when leaving the dropdown wrapper
         const wrapper = dropdown.querySelector('.dropdown-wrapper');
         if (wrapper) {
             wrapper.addEventListener('mouseleave', () => {
@@ -34,4 +33,29 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
+}
+
+function initContent() {
+    // Re-initialize components that are inside the #swup container
+    if (typeof window.initSliders === 'function') {
+        window.initSliders();
+    }
+    if (typeof window.initMap === 'function') {
+        window.initMap();
+    }
+    // Add other content initializers here (e.g. CountUp, InfiniteScroll)
+}
+
+// Swup Initialization
+const swup = new Swup();
+
+swup.hooks.on('content:replace', () => {
+    initContent();
+    // Header is now persistent, so we don't re-run initDropdowns()
+});
+
+// Initial Load
+document.addEventListener('DOMContentLoaded', () => {
+    initDropdowns(); // Run once for the header
+    initContent();   // Run for the initial content
 });
