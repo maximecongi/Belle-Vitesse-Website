@@ -62,6 +62,12 @@ const swup = new Swup();
 swup.hooks.on('content:replace', () => {
     initContent();
     // Header is now persistent, so we don't re-run initDropdowns()
+
+    // Close mobile menu
+    const menuCheckbox = document.getElementById('active');
+    if (menuCheckbox) {
+        menuCheckbox.checked = false;
+    }
 });
 
 // Initial Load
