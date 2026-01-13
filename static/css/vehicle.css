@@ -109,13 +109,20 @@ img.top-head {
 }
 
 .vehicle-squared-highlight-wrapper-square {
-    background-color: var(--white-3);
-    justify-items: center;
+    display: flex;
+    flex-direction: column;
+    align-content: center;
     align-items: center;
+    background-color: var(--white-3);
     aspect-ratio: 3 / 2;
     height: 15vw;
     margin: 1.5vw;
     padding: 2vw;
+    display: flex;
+    height: 15vw;
+    margin: 1.5vw;
+    padding: 2vw;
+
 }
 
 .vehicle-squared-highlight-wrapper-square-value {
