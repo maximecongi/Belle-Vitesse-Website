@@ -1,6 +1,6 @@
 document.documentElement.classList.add('js')
 
-document.addEventListener('DOMContentLoaded', () => {
+window.initCountUp = function () {
   const ease = t => 1 - Math.pow(1 - t, 7)
 
   const observer = new IntersectionObserver(entries => {
@@ -31,4 +31,4 @@ document.addEventListener('DOMContentLoaded', () => {
   }, { threshold: 0.6 })
 
   document.querySelectorAll('.count-up').forEach(el => observer.observe(el))
-})
+}

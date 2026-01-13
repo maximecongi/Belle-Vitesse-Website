@@ -43,7 +43,14 @@ function initContent() {
     if (typeof window.initMap === 'function') {
         window.initMap();
     }
-    // Add other content initializers here (e.g. CountUp, InfiniteScroll)
+    if (typeof window.initCountUp === 'function') {
+        window.initCountUp();
+    }
+    // Re-initialize Alpine.js for the new content
+    if (window.Alpine) {
+        window.Alpine.initTree(document.body);
+    }
+    // Add other content initializers here (e.g. InfiniteScroll)
 }
 
 // Swup Initialization
