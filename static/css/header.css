@@ -30,6 +30,7 @@
 
 .header-logo>a {
     display: inherit;
+    background-image: url(/static//imgs/logos/noir-fond-transparent.png);
 }
 
 .header-logo img {
