@@ -22,7 +22,6 @@
 }
 
 .header-logo {
-    background-color: red;
     height: 50%;
     width: 20vw;
     display: flex;
@@ -34,7 +33,7 @@
 }
 
 .header-logo img {
-    height: 100%;
+    height: 5vh;
 }
 
 .header-social_links {
