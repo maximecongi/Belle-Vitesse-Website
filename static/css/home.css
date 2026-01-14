@@ -8,7 +8,7 @@
     align-items: flex-start;
 }
 
-.home-hero-banner div {
+.home-hero-banner-slogan, .home-hero-banner-buttons {
     position: relative;
     top: -5vh;
 }

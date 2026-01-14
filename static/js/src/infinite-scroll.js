@@ -2,42 +2,72 @@
   const wrapper = document.querySelector('.home-references-wrapper');
   const group = document.querySelector('.home-references-group');
 
-  if (!wrapper || !group) return; // sécurité si la page n'a pas cette section
+  if (!wrapper || !group) return;
 
-  // DUPLICATION AUTO avec classe "duplicated-group"
+  // DUPLICATION
   const clone = group.cloneNode(true);
   clone.classList.add('duplicated-group');
   wrapper.appendChild(clone);
 
   let x = 0;
   const speed = 1;
-  let running = true;
+  let rafId = null;
+  let contentWidth = 0;
 
-  function loop() {
-    const ratio = window.innerWidth / window.innerHeight;
-
-    if (ratio <= 1) {
-      // Portrait → animation active
-      if (!running) running = true;
-      x -= speed;
-      if (Math.abs(x) >= group.scrollWidth) {
-        x = 0;
-      }
-      wrapper.style.transform = `translate3d(${x}px, 0, 0)`;
-    } else {
-      // Paysage → stop
-      if (running) {
-        wrapper.style.transform = 'translate3d(0,0,0)';
-        running = false;
-      }
-    }
-
-    requestAnimationFrame(loop);
+  function computeWidth() {
+    contentWidth = group.getBoundingClientRect().width;
   }
 
-  loop();
+  function isPortrait() {
+    return window.matchMedia('(orientation: portrait)').matches;
+  }
+
+  function animate() {
+    x -= speed;
+
+    if (Math.abs(x) >= contentWidth) {
+      x = 0;
+    }
+
+    wrapper.style.transform = `translate3d(${x}px, 0, 0)`;
+    rafId = requestAnimationFrame(animate);
+  }
+
+  function start() {
+    if (rafId) return;
+    animate();
+  }
+
+  function stop() {
+    if (!rafId) return;
+    cancelAnimationFrame(rafId);
+    rafId = null;
+    wrapper.style.transform = 'translate3d(0,0,0)';
+    x = 0;
+  }
+
+  function checkOrientation() {
+    computeWidth();
+
+    if (isPortrait()) {
+      start();
+    } else {
+      stop();
+    }
+  }
+
+
+  window.addEventListener('load', () => {
+    computeWidth();
+    checkOrientation();
+  });
 
   window.addEventListener('resize', () => {
-    x = 0;
+    stop();
+    checkOrientation();
+  });
+
+  window.addEventListener('orientationchange', () => {
+    setTimeout(checkOrientation, 300);
   });
 })();

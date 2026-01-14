@@ -1,0 +1,34 @@
+.icon-scroll,
+.icon-scroll:before {
+    position: absolute;
+    left: 50%;
+}
+
+.icon-scroll {
+     opacity: 0;
+    width: 20px;
+    height: 35px;
+    margin-left: -20px;
+    bottom: 5vh;
+    margin-top: -35px;
+    box-shadow: inset 0 0 0 1px var(--white-2);
+    animation-name: reveal;
+    animation-fill-mode: forwards;
+    animation-delay: 2s;
+    animation-duration: 1.5s;
+    border-radius: 12px;
+}
+
+.icon-scroll:before {
+    content: '';
+    width: 4px;
+    height: 4px;
+    background-color: var(--white-2);
+    margin-left: -2px;
+    top: 8px;
+    border-radius: 4px;
+    animation-name: scroll;
+    animation-delay: 2s;
+    animation-duration: 1.5s;
+    animation-iteration-count: infinite;
+}
