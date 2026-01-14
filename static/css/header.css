@@ -22,7 +22,7 @@
 }
 
 .header-logo {
-    z-index: 4;
+    background-color: red;
     height: 50%;
     width: 20vw;
     display: flex;
