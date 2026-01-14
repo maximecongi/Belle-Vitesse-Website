@@ -33,7 +33,7 @@ window.initMap = async function () {
   });
 
   marker.addListener("click", () => {
-    const url = `https://www.google.com/maps?q=${position.lat},${position.lng}`;
+    const url = `https://maps.app.goo.gl/W7Px5354PT13qgxdA`;
     window.open(url, "_blank", "noopener");
   });
 };
