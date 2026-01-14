@@ -53,7 +53,9 @@ function initContent() {
     if (typeof window.initConfigurator === 'function') {
         window.initConfigurator();
     }
-    // Add other content initializers here (e.g. InfiniteScroll)
+    if (typeof window.initInfiniteScroll === 'function') {
+        window.initInfiniteScroll();
+    }
 }
 
 // Swup Initialization
