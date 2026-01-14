@@ -1,6 +1,6 @@
 /* hero banner */
 .home-hero-banner {
-    height: 90vh;
+    height: 90svh;
     background-image: url(/static/imgs/bgs/bg_home.jpg);
     background-size: cover;
     flex-direction: column;

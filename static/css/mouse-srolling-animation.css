@@ -5,7 +5,7 @@
 }
 
 .icon-scroll {
-     opacity: 0;
+    opacity: 0;
     width: 20px;
     height: 35px;
     margin-left: -20px;
@@ -31,4 +31,13 @@
     animation-delay: 2s;
     animation-duration: 1.5s;
     animation-iteration-count: infinite;
+}
+
+/* MOBILE VERSION */
+
+
+@media (orientation: portrait) {
+    .icon-scroll {
+        bottom: 5vh;
+    }
 }
