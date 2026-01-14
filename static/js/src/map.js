@@ -1,8 +1,8 @@
-window.initMap = async function () {
+/* window.initMap = async function () {
   const mapElement = document.getElementById("map");
   if (!mapElement) return;
 
-  const position = { lat: 48.81193823595843, lng: 2.4044663369790507 };
+  const position = { lat: 48.811076402747126, lng: 2.4056164603860983 };
 
   // Load the required libraries
   const { Map } = await google.maps.importLibrary("maps");
@@ -37,3 +37,4 @@ window.initMap = async function () {
     window.open(url, "_blank", "noopener");
   });
 };
+ */
