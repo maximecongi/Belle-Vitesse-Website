@@ -29,8 +29,14 @@
 }
 
 .header-logo>a {
-    display: inherit;
     background-image: url(/static//imgs/logos/noir-fond-transparent.png);
+    background-size: contain;
+    background-repeat: no-repeat;
+    height: 5vh;
+    aspect-ratio: 10/8;
+}
+.header-logo>a:hover {
+    background-image: url(/static//imgs/logos/jaune-fond-transparent.png);
 }
 
 .header-logo img {
