@@ -32,12 +32,3 @@
     animation-duration: 1.5s;
     animation-iteration-count: infinite;
 }
-
-/* MOBILE VERSION */
-
-
-@media (orientation: portrait) {
-    .icon-scroll {
-        bottom: 5vh;
-    }
-}

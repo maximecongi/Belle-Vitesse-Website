@@ -1,6 +1,6 @@
 /* hero banner */
 .vehicle-hero-banner {
-    height: 90vh;
+    height: 90svh;
     display: flex;
     background-size: cover;
 }

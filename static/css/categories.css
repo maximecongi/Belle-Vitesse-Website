@@ -1,6 +1,6 @@
 /* hero banner */
 .categories-hero-banner {
-    height: 90vh;
+    height: 90svh;
     background-size: cover;
     flex-direction: column;
     justify-content: center;
@@ -10,6 +10,15 @@
 .categories-hero-banner-titlewrapper {
     position: relative;
     top: -5vh;
+
+}
+
+.categories-hero-banner-titlewrapper-title {
+    font-size: 5.4em;
+}
+
+.categories-hero-banner-textwrapper-text {
+    font-size: 1.8em;
 }
 
 .categories-hero-banner-slogan-text {
@@ -57,6 +66,15 @@
 
 /* MOBILE VERSION */
 @media (orientation: portrait) {
+
+    /*  HERO BANNER */
+    .categories-hero-banner-titlewrapper-title {
+        font-size: 3.2em;
+    }
+
+    .categories-hero-banner-textwrapper-text {
+        font-size: 1.0em;
+    }
 
 
     /* LIST MOBILE*/
