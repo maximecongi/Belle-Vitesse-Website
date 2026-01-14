@@ -12,12 +12,7 @@ window.initMap = async function () {
     center: position,
     zoom: 16,
     disableDefaultUI: true,
-    mapId: "DEMO_MAP_ID", // Map ID is required for AdvancedMarkerElement
-    styles: [
-      { featureType: "poi", stylers: [{ visibility: "off" }] },
-      { featureType: "transit", stylers: [{ visibility: "off" }] },
-      { featureType: "road", elementType: "labels", stylers: [{ visibility: "off" }] }
-    ]
+    mapId: "7af81f7d5245a5e0b77c0a6b", // Map ID is required for AdvancedMarkerElement
   });
 
   // Create DOM element for the marker content
