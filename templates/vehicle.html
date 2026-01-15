@@ -4,7 +4,7 @@
 {% block content %}
 <section id="hero-banner" class="section-site">
     <div class="vehicle-hero-banner bg-color-white-3">
-        <img src="{{ vehicle.fields.banner[0].url }}" />
+        <img src="{{ vehicle.fields.banner[0].url }}" fetchpriority="high" />
         <div class="vehicle-hero-banner-wrapper animate__animated animation__banner-title">
             <div class="vehicle-hero-banner-titlewrapper">
                 <h1 class="vehicle-hero-banner-titlewrapper-title font-54 color-grey-1">
