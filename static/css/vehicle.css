@@ -208,7 +208,7 @@ img.top-head {
     background-color: transparent;
     border: none;
     color: var(--grey-2);
-    padding: 15px 15px 15px 0;
+    padding: 2ch 4ch 2ch 0;
     text-align: center;
     font-size: clamp(0.7rem, 1.2vw, 2rem);
     font-weight: 400;
