@@ -189,8 +189,9 @@ img.top-head {
 
 .vehicle-configurator-carousel-wrapper-config-list {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: flex-start;
+    flex-wrap: wrap;
 
 }
 
@@ -207,7 +208,7 @@ img.top-head {
     background-color: transparent;
     border: none;
     color: var(--grey-2);
-    padding: 15px 32px 15px 0;
+    padding: 15px 15px 15px 0;
     text-align: center;
     font-size: clamp(0.7rem, 1.2vw, 2rem);
     font-weight: 400;
@@ -355,10 +356,15 @@ img.top-head {
 
     /* CONFIGURATOR MOBILE */
 
+    .vehicle-configurator-carousel-wrapper {
+        flex-direction: column;
+        align-items: flex-start;
+    }
     .vehicle-configurator-carousel-wrapper-config {
         width: auto;
         margin-top: 5vw;
     }
+    
 
     .vehicle-configurator-carousel-wrapper-config-group {
         display: flex;
@@ -387,12 +393,5 @@ img.top-head {
 
     .vehicle-specs-details-detail-wrapper {
         width: 70vw;
-    }
-}
-
-@media (max-width:768px) {
-    .vehicle-configurator-carousel-wrapper {
-        flex-direction: column;
-        align-items: flex-start;
     }
 }
