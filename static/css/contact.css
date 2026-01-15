@@ -15,11 +15,13 @@
     width: 100%;
     aspect-ratio: 2;
 }
+
 .contact-container-columns-right-map img {
     width: 100%;
     filter: brightness(1);
     transition: filter 0.2s ease-in-out;
 }
+
 .contact-container-columns-right-map img:hover {
     filter: brightness(0.7);
 }
@@ -35,5 +37,9 @@
 
     .contact-container-columns-right {
         width: 84vw;
+    }
+
+    .contact-container-columns-left {
+        width: 100%;
     }
 }
