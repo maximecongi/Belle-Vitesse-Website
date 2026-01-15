@@ -62,10 +62,10 @@ body {
 
 p {
     line-height: 1.6em;
-    font-size: clamp(0.5rem, 1vw, 1.6rem);
+    font-size: clamp(0.6rem, 1vw, 1.6rem);
 }
 li {
-   font-size: clamp(0.5rem, 1vw, 1.6rem);
+   font-size: clamp(0.6rem, 1vw, 1.6rem);
 }
 
 a {
