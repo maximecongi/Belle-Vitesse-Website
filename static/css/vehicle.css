@@ -19,7 +19,7 @@ img.top-head {
 }
 
 .vehicle-hero-banner-textwrapper-text {
-    font-size: 1.4em;
+    font-size: clamp(1rem,1.6vw, 3rem);
 }
 
 .vehicle-hero-banner-slogan-text {

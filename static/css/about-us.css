@@ -1,13 +1,11 @@
 .about_us-container p {
     max-width: 80%;
     margin-bottom: 3em;
-    font-size: 1.2em;
     font-weight: 400;
 }
 
 .about_us-container ul {
     margin-bottom: 2em;
-    font-size: 1.2em;
     font-weight: 400;
     list-style-type: none;
     padding-inline-start: 0;
@@ -55,8 +53,5 @@
         margin-bottom: -16px;
         display: block;
         width: fit-content;
-    }
-    h1.title-textual-section {
-        font-size:4em !important;
     }
 }

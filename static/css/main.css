@@ -24,6 +24,15 @@ main {
     line-height: 1.5em;
 }
 
+h1.title-textual-section {
+    font-size: clamp(2rem, 4.5vw, 7rem);
+}
+
+h2.title-textual-section {
+    line-height: 1.5em;
+    font-size: clamp(1rem, 2vw, 3rem);
+}
+
 .tag-job {
     text-transform: uppercase;
     font-size: 0.6em;
@@ -64,7 +73,7 @@ h1.title-section {
 }
 
 h2.title-section {
-    font-size: 3.2em;
+    font-size: clamp(1.6rem, 4vw, 3.2rem);
 }
 
 h3.title-section {
@@ -75,24 +84,16 @@ h4.title-section {
     font-size: 1.8em;
 }
 
+#hero-banner h1:not(.home-hero-banner-slogan-text) {
+    font-size: clamp(2rem, 8vw, 5.4rem);
+}
+
 /* MOBILE VERSION */
 
 
 @media (orientation: portrait) {
     .title-section {
         margin: 5vh 0;
-    }
-
-    h1.title-section {
-        font-size: 5.4em;
-    }
-
-    h2.title-section {
-        font-size: 1.8em;
-    }
-
-    h3.title-section {
-        font-size: 1.4em;
     }
 }
 

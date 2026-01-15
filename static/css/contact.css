@@ -1,7 +1,3 @@
-.contact-container-columns p {
-    font-size: 1.2em;
-}
-
 .contact-container-columns {
     display: flex;
     flex-direction: row;

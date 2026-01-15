@@ -13,12 +13,8 @@
 
 }
 
-.categories-hero-banner-titlewrapper-title {
-    font-size: 5.4em;
-}
-
 .categories-hero-banner-textwrapper-text {
-    font-size: 1.8em;
+    font-size: clamp(1rem, 2vw, 3rem);
 }
 
 .categories-hero-banner-slogan-text {
@@ -51,6 +47,7 @@
     position: relative;
     top: 0.5em;
     z-index: 2;
+    font-size: clamp(1rem, 2vw, 3rem);
 }
 
 .categories-solutions-categories img {
@@ -66,16 +63,6 @@
 
 /* MOBILE VERSION */
 @media (orientation: portrait) {
-
-    /*  HERO BANNER */
-    .categories-hero-banner-titlewrapper-title {
-        font-size: 3.2em;
-    }
-
-    .categories-hero-banner-textwrapper-text {
-        font-size: 1.0em;
-    }
-
 
     /* LIST MOBILE*/
     .categories-solutions-categories {

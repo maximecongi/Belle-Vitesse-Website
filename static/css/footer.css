@@ -7,9 +7,13 @@
     padding: 10vh 0;
     display: flex;
 }
+.footer p {
+    font-size: clamp(0.4rem, 0.8vw, 1.4rem);
+}
 
 .footer-wrapper h3 {
     margin-bottom: 3vh;
+    font-size: clamp(0.8rem, 1.6vw, 3rem);
 }
 
 .footer-testimonials {

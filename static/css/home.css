@@ -15,7 +15,7 @@
 
 .home-hero-banner-slogan-text {
     margin-bottom: 1vh;
-    font-size: 3.6em;
+    font-size: clamp(1.6rem, 4vw, 3.6rem);
 }
 
 /* testimonials */
@@ -52,6 +52,7 @@
     position: relative;
     top: 0.5em;
     z-index: 2;
+    font-size: clamp(1rem, 2vw, 3rem);
 }
 
 .home-solutions-categories img {
@@ -108,11 +109,6 @@
 
 
 @media (orientation: portrait) {
-
-    /* HERO BANNER */
-    .home-hero-banner-slogan-text {
-        font-size: 2.4em;
-    }
 
     /* TESTIMONIALS MOBILE */
     .home-testimonials {

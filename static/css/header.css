@@ -13,6 +13,7 @@
 .header-menu,
 .header-social_links {
     width: 40vw;
+    font-size: clamp(0.6rem, 1vw, 1.2rem);
 }
 
 .header-menu {
