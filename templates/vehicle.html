@@ -19,6 +19,21 @@
         </div>
 </section>
 <section class="section-site">
+    <div class="vehicle-key_features">
+        <div class="vehicle-key_features-title">
+            <h2 class="dot-before title-section">Key Features</h2>
+
+        </div>
+        <div>
+            <div class="vehicle-squared-highlight">
+                <div class="vehicle-squared-highlight-wrapper">
+                    {{ square_highlight(vehicle.fields.max_speed, "km/h", "Max speed") }}
+                    {{ square_highlight(vehicle.fields.passengers, "", "Capacity") }}
+                </div>
+            </div>
+        </div>
+</section>
+<section class="section-site">
     <div class="vehicle-description">
         <div class="vehicle-description-title">
             <h2 class="dot-before title-section">Description</h2>
@@ -41,21 +56,6 @@
             </div>
         </div>
     </div>
-</section>
-<section class="section-site">
-    <div class="vehicle-key_features">
-        <div class="vehicle-key_features-title">
-            <h2 class="dot-before title-section">Key Features</h2>
-
-        </div>
-        <div>
-            <div class="vehicle-squared-highlight">
-                <div class="vehicle-squared-highlight-wrapper">
-                    {{ square_highlight(vehicle.fields.max_speed, "km/h", "Max speed") }}
-                    {{ square_highlight(vehicle.fields.passengers, "", "Capacity") }}
-                </div>
-            </div>
-        </div>
 </section>
 {% if configs_grouped %}
 <section class="section-site">
