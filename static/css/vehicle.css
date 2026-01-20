@@ -43,6 +43,7 @@ img.top-head {
     width: 90%;
     flex-direction: column;
     background-color: var(--white-1);
+    margin-bottom: 3vw;
 }
 
 .vehicle-description-wrapper {
@@ -360,11 +361,12 @@ img.top-head {
         flex-direction: column;
         align-items: flex-start;
     }
+
     .vehicle-configurator-carousel-wrapper-config {
         width: auto;
         margin-top: 5vw;
     }
-    
+
 
     .vehicle-configurator-carousel-wrapper-config-group {
         display: flex;
