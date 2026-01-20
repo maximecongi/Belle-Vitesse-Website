@@ -8,9 +8,29 @@
     align-items: flex-start;
 }
 
-.home-hero-banner-slogan, .home-hero-banner-buttons {
+.home-hero-banner::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.2);
+    background-blend-mode: darken;
+    z-index: 2;
+}
+
+.home-hero-banner video {
+    width: 100vw;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.home-hero-banner-slogan,
+.home-hero-banner-buttons {
     position: relative;
     top: -5vh;
+    z-index: 3;
 }
 
 .home-hero-banner-slogan-text {

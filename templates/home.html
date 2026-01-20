@@ -2,7 +2,10 @@
 {% block title %}Belle Vitesse - Specialist in moving cinema{% endblock %}
 {% block content %}
 <section id="hero-banner" class="section-site">
-  <div class="home-hero-banner img-overlay">
+  <div class="home-hero-banner">
+    <video autoplay muted loop playsinline>
+      <source src="{{ url_for('static', filename='videos/hero-banner/hero-banner-1.mov') }}" type="video/mp4">
+    </video>
     <div class="home-hero-banner-slogan">
       <h1 class="home-hero-banner-slogan-text color-white-2">
         Specialist in <br /><i>moving</i> cinema
