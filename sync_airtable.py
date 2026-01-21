@@ -12,6 +12,7 @@ import requests
 from pathlib import Path
 from dotenv import load_dotenv
 from pyairtable import Api
+import shutil
 import mysql.connector
 from mysql.connector import Error
 from sshtunnel import SSHTunnelForwarder
@@ -212,6 +213,41 @@ def sync_table(table_name, api, cursor):
         cursor.execute(upsert_query, (record_id, created_time, fields_json))
     
     print(f"\nCompleted syncing {table_name}: {len(records)} records")
+    
+    # Return list of synced IDs for cleanup
+    return [r["id"] for r in records]
+
+
+def cleanup_records(cursor, table_name, active_ids):
+    """Delete records from MySQL that are no longer in Airtable."""
+    if not active_ids:
+        # If no records, delete everything
+        print(f"  Cleaning up: deleting ALL records from {table_name}")
+        cursor.execute(f"DELETE FROM `{table_name}`")
+        return
+
+    # Delete records that are NOT in active_ids
+    format_strings = ','.join(['%s'] * len(active_ids))
+    query = f"DELETE FROM `{table_name}` WHERE id NOT IN ({format_strings})"
+    cursor.execute(query, tuple(active_ids))
+    deleted_count = cursor.rowcount
+    if deleted_count > 0:
+        print(f"  Cleaning up: deleted {deleted_count} stale records from {table_name}")
+
+
+def cleanup_images(table_name, active_ids):
+    """Delete local image folders for records that are no longer in Airtable."""
+    table_dir = os.path.join(IMAGE_STORE_PATH, table_name)
+    if not os.path.exists(table_dir):
+        return
+
+    # Iterate over directories in table_dir
+    for record_id in os.listdir(table_dir):
+        if record_id not in active_ids:
+            record_dir = os.path.join(table_dir, record_id)
+            if os.path.isdir(record_dir):
+                print(f"  Cleaning up: deleting images for stale record {record_id}")
+                shutil.rmtree(record_dir)
 
 
 def main():
