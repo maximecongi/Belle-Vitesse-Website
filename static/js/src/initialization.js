@@ -69,7 +69,9 @@ function initVideos() {
 }
 
 // Swup Initialization
-const swup = new Swup();
+const swup = new Swup({
+    plugins: [new SwupPreloadPlugin()]
+});
 
 swup.hooks.on('content:replace', () => {
     initContent();
