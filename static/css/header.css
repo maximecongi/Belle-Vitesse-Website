@@ -1,6 +1,6 @@
 .header {
     position: relative;
-    height: 10vh;
+    height: 10svh;
     background-color: var(--white-2);
     z-index: 4;
     padding-inline: 5vw;
@@ -33,7 +33,7 @@
     background-image: url(/static//imgs/logos/noir-fond-transparent.png);
     background-size: contain;
     background-repeat: no-repeat;
-    height: 5vh;
+    height: 5svh;
     aspect-ratio: 10/8;
 }
 .header-logo>a:hover {
@@ -41,7 +41,7 @@
 }
 
 .header-logo img {
-    height: 5vh;
+    height: 5svh;
 }
 
 .header-social_links {
@@ -74,7 +74,7 @@
     position: fixed;
     top: 0;
     left: -100vw;
-    height: 100vh;
+    height: 100svh;
     width: 100vw;
     background: var(--white-2);
     transition: all 0.6s ease-in-out;
@@ -146,7 +146,7 @@
     position: relative;
     display: flex;
     margin: 0;
-    top: -5vh;
+    top: -5svh;
     left: 5vw;
     height: 100%;
     list-style: none;
@@ -166,7 +166,7 @@
 
 .wrapper ul li a {
     text-decoration: none;
-    font-size: 3vh;
+    font-size: 3svh;
     color: var(--grey-1);
     opacity: 0;
     transition: all 0.3s ease;
@@ -178,7 +178,7 @@
 }
 
 .wrapper>ul>ul li a {
-    font-size: 1.5vh;
+    font-size: 1.5svh;
 }
 
 
@@ -235,7 +235,7 @@ body:has(#active:checked~.wrapper) {
 
 .dropdown-wrapper {
     position: absolute;
-    top: calc(5vh + 1ch - 1px);
+    top: calc(5svh + 1ch - 1px);
     /* half the header + size of a character - 1px */
     left: 0;
     transform: translateY(0);

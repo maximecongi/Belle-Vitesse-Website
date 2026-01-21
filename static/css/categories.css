@@ -9,7 +9,7 @@
 
 .categories-hero-banner-titlewrapper {
     position: relative;
-    top: -5vh;
+    top: -5svh;
 
 }
 
@@ -18,7 +18,7 @@
 }
 
 .categories-hero-banner-slogan-text {
-    margin-bottom: 1vh;
+    margin-bottom: 1svh;
 }
 
 .bg-vehicles {

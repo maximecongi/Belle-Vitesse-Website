@@ -85,7 +85,7 @@ h2.title-section {
 
 @media (orientation: portrait) {
     .title-section {
-        margin: 5vh 0;
+        margin: 5svh 0;
     }
 }
 
