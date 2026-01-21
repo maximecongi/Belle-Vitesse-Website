@@ -29,15 +29,9 @@
     justify-content: center;
 }
 
-.header-logo>a {
-    background-image: url(/static//imgs/logos/noir-fond-transparent.png);
-    background-size: contain;
-    background-repeat: no-repeat;
+.header-logo-icon {
     height: 5svh;
-    aspect-ratio: 10/8;
-}
-.header-logo>a:hover {
-    background-image: url(/static//imgs/logos/jaune-fond-transparent.png);
+    width: auto;
 }
 
 .header-logo img {
@@ -54,12 +48,12 @@
     display: inherit;
 }
 
-/* CA COMMENCE LA  */
-/* CA COMMENCE LA  */
-/* CA COMMENCE LA  */
-/* CA COMMENCE LA  */
-/* CA COMMENCE LA  */
-/* CA COMMENCE LA  */
+.header-social_links-icon {
+    height: 3svh;
+    width: auto;
+}
+
+/* MOBILE MENU */
 #header-menu-desktop {
     display: flex;
     width: 100%;
