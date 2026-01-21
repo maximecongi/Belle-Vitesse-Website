@@ -114,7 +114,7 @@
     flex-shrink: 0;
     filter: grayscale(1) brightness(0.3);
     transition: filter 0.5s ease;
-    cursor: url(/static/imgs/cursors/Noir-Fond-Transparent.png), pointer;
+    cursor: url(/static/imgs/cursors/cursor-yellow.svg), pointer;
     ;
 }
 
