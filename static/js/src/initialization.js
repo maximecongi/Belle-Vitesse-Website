@@ -56,6 +56,16 @@ function initContent() {
     if (typeof window.initInfiniteScroll === 'function') {
         window.initInfiniteScroll();
     }
+    initVideos();
+}
+
+function initVideos() {
+    const videos = document.querySelectorAll('video[autoplay]');
+    videos.forEach(video => {
+        video.play().catch(error => {
+            console.log("Autoplay prevented:", error);
+        });
+    });
 }
 
 // Swup Initialization
