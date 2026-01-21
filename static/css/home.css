@@ -30,12 +30,12 @@
 .home-hero-banner-slogan,
 .home-hero-banner-buttons {
     position: relative;
-    top: -5vh;
+    top: -5svh;
     z-index: 3;
 }
 
 .home-hero-banner-slogan-text {
-    margin-bottom: 1vh;
+    margin-bottom: 1svh;
     font-size: clamp(1.6rem, 4vw, 3.6rem);
 }
 
@@ -47,7 +47,7 @@
 
 .home-testimonials>* {
     width: 50%;
-    height: 40vh;
+    height: 40svh;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -109,8 +109,8 @@
 }
 
 .home-references-wrapper img {
-    height: 3vh;
-    margin: 4vw 5vh;
+    height: 3svh;
+    margin: 4vw 5svh;
     flex-shrink: 0;
     filter: grayscale(1) brightness(0.3);
     transition: filter 0.5s ease;
@@ -170,7 +170,7 @@
     }
 
     .home-references-group img {
-        margin: 4vw 2vh;
+        margin: 4vw 2svh;
     }
 
     .home-references-group {
