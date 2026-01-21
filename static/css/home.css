@@ -2,6 +2,7 @@
 .home-hero-banner {
     height: 90svh;
     background-image: url(/static/imgs/bgs/bg_home.jpg);
+    background-position: center;
     background-size: cover;
     flex-direction: column;
     justify-content: center;
