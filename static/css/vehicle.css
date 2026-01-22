@@ -182,7 +182,6 @@ img.top-head {
     justify-content: space-between;
     width: 80vw;
     align-items: center;
-    padding-bottom: 10vw;
 }
 
 .vehicle-configurator-carousel-wrapper-config {
@@ -256,7 +255,7 @@ img.top-head {
 
 .vehicle-specs-details-detail-wrapper {
     border-top: solid 1px var(--white-4);
-    width: 35vw;
+    width: 40vw;
 }
 
 .vehicle-specs-details-detail-wrapper>p {
