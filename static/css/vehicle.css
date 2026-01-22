@@ -229,7 +229,7 @@ img.top-head {
 }
 
 .vehicle-configurator-carousel-wrapper-config-item:hover::before {
-    content: "●";
+    content: "■";
     color: var(--yellow-1);
     position: absolute;
     left: -2ch;
