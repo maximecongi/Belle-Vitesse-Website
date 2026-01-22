@@ -19,7 +19,7 @@ window.initInfiniteScroll = function () {
   }
 
   let x = 0;
-  const speed = 1;
+  const speed = 2;
   let running = true;
 
   function loop() {
@@ -29,7 +29,9 @@ window.initInfiniteScroll = function () {
       // Portrait → animation active
       if (!running) running = true;
       x -= speed;
-      if (Math.abs(x) >= group.scrollWidth) {
+      // Use offsetWidth for layout-bound width, which includes padding/borders if box-sizing is border-box
+      // effectively matching the visual cycle.
+      if (Math.abs(x) >= group.offsetWidth) {
         x = 0;
       }
       wrapper.style.transform = `translate3d(${x}px, 0, 0)`;

@@ -48,7 +48,7 @@ h2.title-textual-section {
 }
 
 .dot-before:before {
-    content: "● ";
+    content: "■ ";
     color: var(--yellow-1);
     font-size: 0.8em;
     position: relative;

@@ -17,6 +17,10 @@
 
 .splide__pagination__page {
     background: var(--white-2);
+    border-radius: 0;
+    height: 0.6em;
+    aspect-ratio: 1;
+    width: auto;
 }
 
 .splide__pagination__page.is-active {

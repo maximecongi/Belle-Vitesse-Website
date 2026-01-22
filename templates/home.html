@@ -59,14 +59,13 @@
     <h2 class="dot-before title-section font-32">Our references</h2>
     <div class="home-references-wrapper">
       <div class="home-references-group">
-        <img src="{{ url_for('static', filename='/imgs/brands/dior-logo.png') }}" />
-        <img src="{{ url_for('static', filename='/imgs/brands/canal-logo.png') }}" />
-        <img src="{{ url_for('static', filename='/imgs/brands/netflix-logo.png') }}" />
-        <img src="{{ url_for('static', filename='/imgs/brands/northsix-logo.png') }}" />
-        <img src="{{ url_for('static', filename='/imgs/brands/partizan-logo.png') }}" />
-        <img src="{{ url_for('static', filename='/imgs/brands/henry-logo.png') }}" />
-        <img src="{{ url_for('static', filename='/imgs/brands/soldat-logo.png') }}" />
-        <img src="{{ url_for('static', filename='/imgs/brands/longchamp-logo.png') }}" />
+        {% for brand in brands %}
+        <a href="{{ brand.url }}" target="_blank">
+          <div class="logo"
+            style="--logo-url: url('{{ url_for('static', filename='imgs/brands/' ~ brand.slug ~ '-logo.svg') }}')"
+            aria-label="{{ brand.label }}"></div>
+        </a>
+        {% endfor %}
       </div>
     </div>
   </div>

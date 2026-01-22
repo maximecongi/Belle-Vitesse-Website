@@ -98,17 +98,17 @@
     flex-direction: row;
     justify-content: space-around;
     flex-wrap: wrap;
+    margin-bottom: 3vw;
 }
 
 .home-references-group {
-    width: 80%;
+    width: 100%;
     display: inline-flex;
-    align-items: center;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: space-evenly;
 }
 
-.home-references-wrapper img {
+/* .home-references-wrapper img {
     height: 3svh;
     margin: 4vw 5svh;
     flex-shrink: 0;
@@ -116,7 +116,39 @@
     transition: filter 0.5s ease;
     cursor: url(/static/imgs/cursors/cursor-yellow.svg), pointer;
     ;
+} */
+.logo {
+  width: 7vw;
+    aspect-ratio: 10 / 2;
+
+  background-color: var(--logo-color, var(--grey-1));
+
+  -webkit-mask-image: var(--logo-url);
+  mask-image: var(--logo-url);
+
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+
+  -webkit-mask-position: center;
+  mask-position: center;
+
+  -webkit-mask-size: contain;
+  mask-size: contain;
+
+  transition: background-color 0.3s ease;
 }
+
+/* Couleur globale */
+.home-references-group {
+  --logo-color: var(--black-1);
+}
+
+/* Exemple hover */
+.logo:hover {
+  background-color: var(--yellow-1);
+  cursor: pointer;
+}
+
 
 .home-references-wrapper img:hover {
     filter: grayscale(1) brightness(0);
@@ -164,18 +196,21 @@
 
     .home-references-wrapper {
         display: flex;
-
         flex-wrap: nowrap;
         will-change: transform;
-    }
-
-    .home-references-group img {
-        margin: 4vw 2svh;
+        justify-content: flex-start;
     }
 
     .home-references-group {
-        width: unset;
+        display: inline-flex;
         flex-wrap: nowrap;
+        width: max-content;
+        gap: 4svh;
+        padding-right: 4svh;
+    }
+
+    .home-references-group .logo {
+        width: 25vw;
     }
 
     .duplicated-group {
