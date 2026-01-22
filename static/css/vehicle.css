@@ -239,8 +239,7 @@ img.top-head {
 .vehicle-specs {
     display: flex;
     flex-direction: column;
-    /* background-color: var(--grey-3);
-    color: var(--white-2); */
+    background-color: var(--white-3);
 }
 
 .vehicle-specs-details {
