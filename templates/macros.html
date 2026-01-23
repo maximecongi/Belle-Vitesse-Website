@@ -2,7 +2,7 @@
 <div class="vehicle-squared-highlight-wrapper-square">
     {% if label == "Capacity" %}
     <p class="vehicle-squared-highlight-wrapper-square-value">
-        <span>1</span>{% if value and  value != 0 %}<span
+        <span>1</span>{% if value and value != 0 %}<span
             class="vehicle-squared-highlight-wrapper-square-value-plussign">+</span><span data-target="{{ value }}"
             data-duration="1500">{{ value }}</span>
         {% endif %}
@@ -20,7 +20,7 @@
         {% elif value and value == 1 %}
         Driver + Passenger
         {% else %}
-        Driver 
+        Driver
         {% endif %}
     </p>
     {% else %}
@@ -32,20 +32,18 @@
 {% endmacro %}
 
 {% macro slider(
-    id,
-    title,
-    min,
-    max,
-    value,
-    unit,
-    filter_key,
-    descriptions,
-    icons=[]
+id,
+title,
+min,
+max,
+value,
+unit,
+filter_key,
+descriptions,
+icons=[]
 ) %}
-<div class="slider-container"
-     data-slider-id="{{ id }}"
-     data-filter-key="{{ filter_key }}"
-     data-descriptions='{{ descriptions | tojson }}'>
+<div class="slider-container" data-slider-id="{{ id }}" data-filter-key="{{ filter_key }}"
+    data-descriptions='{{ descriptions | tojson }}'>
 
     <h2 class="slider-container-title">{{ title }}</h2>
 
@@ -58,30 +56,24 @@
     </div>
 
     <div class="slider-container-slider_wrapper">
-        <input
-            type="range"
-            min="{{ min }}"
-            max="{{ max }}"
-            value="{{ value }}"
-            class="js-slider"
-        />
+        <input type="range" min="{{ min }}" max="{{ max }}" value="{{ value }}" class="js-slider" />
 
         {% if icons %}
         <div class="labels">
             {% for icon in icons %}
-                <span class="label">
-                    {% if icon is string %}
-                        <span class="mdi {{ icon }}"></span>
-                    {% else %}
-                        {% for subicon in icon %}
-                            <span class="mdi {{ subicon }}"></span><br>
-                        {% endfor %}
-                    {% endif %}
-                </span>
+            <span class="label">
+                {% if icon is string %}
+                    <img src="{{ url_for('static', filename='imgs/icons/' ~ icon ~ '.svg') }}" />
+                {% else %}
+                    {% for subicon in icon %}
+                        <img src="{{ url_for('static', filename='imgs/icons/' ~ subicon ~ '.svg') }}" /><br>
+                    {% endfor %}
+                {% endif %}
+
+            </span>
             {% endfor %}
         </div>
         {% endif %}
     </div>
 </div>
 {% endmacro %}
-

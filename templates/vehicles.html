@@ -19,26 +19,6 @@
 <section id="solutions" class="section-site">
     <div class="categories-solutions">
         <h2 class="dot-before title-section font-32">Our vehicles</h2>
-        {# <div class="slider-container" data-filter-key="speed" data-unit="km/h">
-            <h2 class="slider-container-title">Which speed do you need?</h2>
-            <div class="slider-container-wrapper">
-                <p class="slider-container-wrapper-value_wrapper"><span class="slider__value"
-                        id="slider_vehicule_speed_value"></span><span class="slider__unit">km/h</span>
-                    <span class="slider__description">That's what you need for a average runner</span>
-                </p>
-            </div>
-            <div class="slider-container-slider_wrapper">
-                <input class="js-slider" type="range" min="5" max="50" value="5" id="slider" />
-
-                <div class="labels">
-                    <span class="mdi mdi-walk"></span>
-                    <span class="mdi mdi-run"></span>
-                    <span class="mdi mdi-run-fast"></span>
-                    <span class="mdi mdi-bike"></span>
-                    <span class="mdi mdi-atv"></span>
-                </div>
-            </div>
-        </div> #}
         <div class="filtersliders-container">
             {# SLIDER SPEED #}
             {{ slider(
@@ -55,11 +35,11 @@
             (45, "Motorized speed")
             ],
             icons=[
-            "mdi-walk",
-            "mdi-run",
-            "mdi-run-fast",
-            "mdi-bike",
-            "mdi-atv"
+            "walk",
+            "run",
+            "run-fast",
+            "bike",
+            "atv"
             ]
             ) }}
             {# SLIDER CAPACITY #}
@@ -77,10 +57,10 @@
             (3, "1 driver + 3 passengers"),
             ],
             icons=[
-            ["mdi-steering"],
-            ["mdi-steering", "mdi-human-male"],
-            ["mdi-steering", "mdi-human-male", "mdi-human-male"],
-            ["mdi-steering", "mdi-human-male", "mdi-human-male", "mdi-human-male"]
+            ["steering"],
+            ["steering", "human-male"],
+            ["steering", "human-male", "human-male"],
+            ["steering", "human-male", "human-male", "human-male"]
             ]
             ) }}
         </div>

@@ -1,4 +1,5 @@
 {% extends "layout.html" %}
+{% from "macros.html" import slider %}
 {% block title %}Heads - Belle Vitesse{% endblock %}
 {% block content %}
 {# <section id="hero-banner" class="section-site">
@@ -18,10 +19,33 @@
 <section id="solutions" class="section-site">
     <div class="categories-solutions">
         <h2 class="dot-before title-section font-32">Our heads</h2>
+                <div class="filtersliders-container">
+            {# SLIDER PAYLOAD #}
+            {{ slider(
+            title="Which payload do you need?",
+            min=5,
+            max=18,
+            value=5,
+            unit="kg",
+            filter_key="payload",
+            descriptions=[
+            (5, "Sony FX3 with 24-70mm"),
+            (9, "Red Komodo with Sigma Art"),
+            (14, "Alexa35 with Cooke S4"),
+            (18, "Arri 435 with Angénieux Optimo")
+            ],
+            icons=[
+            "sony-fx3",
+            "red-komodo",
+            "arri-alexa-mini",
+            "arri-435"
+            ]
+            ) }}
+            </div>
         <div class="categories-solutions-categories font-18">
             {% for head in heads %}
             {% if head.fields.status == "Online" %}
-            <div class="categories-solutions-categories-categorywrapper">
+            <div data-payload="{{ head.fields.payload }}" class="categories-solutions-categories-categorywrapper">
                 <h3>{{ head.fields.name }}</h3>
                 <a class="categories-solutions-categories-img-link"
                     href="{{ url_for('head', slug=head.fields.slug) }}">
