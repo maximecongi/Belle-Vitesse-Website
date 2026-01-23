@@ -1,4 +1,3 @@
-{# macros.html #}
 {% macro square_highlight(value, unit, label) %}
 <div class="vehicle-squared-highlight-wrapper-square">
     {% if label == "Capacity" %}
@@ -31,3 +30,58 @@
     <p class="vehicle-squared-highlight-wrapper-square-label">{{ label }}</p>
 </div>
 {% endmacro %}
+
+{% macro slider(
+    id,
+    title,
+    min,
+    max,
+    value,
+    unit,
+    filter_key,
+    descriptions,
+    icons=[]
+) %}
+<div class="slider-container"
+     data-slider-id="{{ id }}"
+     data-filter-key="{{ filter_key }}"
+     data-descriptions='{{ descriptions | tojson }}'>
+
+    <h2 class="slider-container-title">{{ title }}</h2>
+
+    <div class="slider-container-wrapper">
+        <p class="slider-container-wrapper-value_wrapper">
+            <span class="slider__value">{{ value }}</span>
+            <span class="slider__unit">{{ unit }}</span>
+            <span class="slider__description"></span>
+        </p>
+    </div>
+
+    <div class="slider-container-slider_wrapper">
+        <input
+            type="range"
+            min="{{ min }}"
+            max="{{ max }}"
+            value="{{ value }}"
+            class="js-slider"
+        />
+
+        {% if icons %}
+        <div class="labels">
+            {% for icon in icons %}
+                <span class="label">
+                    {% if icon is string %}
+                        <span class="mdi {{ icon }}"></span>
+                    {% else %}
+                        {% for subicon in icon %}
+                            <span class="mdi {{ subicon }}"></span><br>
+                        {% endfor %}
+                    {% endif %}
+                </span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+

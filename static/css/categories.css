@@ -41,6 +41,7 @@
 .categories-solutions-categories-categorywrapper {
     width: 20vw;
     margin: 0vw 5vw 4vw 5vw;
+    transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .categories-solutions-categories h3 {
