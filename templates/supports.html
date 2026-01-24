@@ -17,8 +17,14 @@
 </section> #}
 <section id="solutions" class="section-site">
     <div class="categories-solutions">
-        <h2 class="dot-before title-section font-32">Our supports</h2>
-        <div class="categories-solutions-categories font-18">
+        <h2 class="dot-before title-section">Our supports</h2>
+        <div class="categories-solutions-filters-dropdown" style="visibility: hidden;">
+            <p class="categories-solutions-filters-dropdown-button slider-dropdown-button"><span
+                    class="categories-solutions-filters-dropdown-icon"><img
+                        src="{{ url_for('static', filename='imgs/icons/filter.svg') }}" /></span><span
+                    class="categories-solutions-filters-dropdown-text">Filters</span></p>
+        </div>
+        <div class="categories-solutions-categories">
             {% for support in supports %}
             {% if support.fields.status == "Online" %}
             <div class="categories-solutions-categories-categorywrapper">

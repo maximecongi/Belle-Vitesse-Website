@@ -18,7 +18,7 @@
 </section> #}
 <section id="solutions" class="section-site">
     <div class="categories-solutions">
-        <h2 class="dot-before title-section font-32">Our vehicles</h2>
+        <h2 class="dot-before title-section">Our vehicles</h2>
         <div class="filtersliders-container">
             {# SLIDER SPEED #}
             {{ slider(
@@ -54,7 +54,7 @@
             (0, "Driver only"),
             (1, "1 driver + 1 passenger"),
             (2, "1 driver + 2 passengers"),
-            (3, "1 driver + 3 passengers"),
+            (3, "1 driver + 3 passengers")
             ],
             icons=[
             ["steering"],
@@ -64,8 +64,13 @@
             ]
             ) }}
         </div>
-
-        <div class="categories-solutions-categories font-18">
+        <div class="categories-solutions-filters-dropdown">
+            <p class="categories-solutions-filters-dropdown-button slider-dropdown-button"><span
+                    class="categories-solutions-filters-dropdown-icon"><img
+                        src="{{ url_for('static', filename='imgs/icons/filter.svg') }}" /></span><span
+                    class="categories-solutions-filters-dropdown-text">Filters</span></p>
+        </div>
+        <div class="categories-solutions-categories">
             {% for vehicle in vehicles %}
             {% if vehicle.fields.status == "Online" %}
             <div data-speed="{{ vehicle.fields.max_speed }}" data-capacity="{{vehicle.fields.passengers}}"

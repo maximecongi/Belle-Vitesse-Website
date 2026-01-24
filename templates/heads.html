@@ -18,20 +18,20 @@
 </section> #}
 <section id="solutions" class="section-site">
     <div class="categories-solutions">
-        <h2 class="dot-before title-section font-32">Our heads</h2>
-                <div class="filtersliders-container">
+        <h2 class="dot-before title-section">Our heads</h2>
+        <div class="filtersliders-container">
             {# SLIDER PAYLOAD #}
             {{ slider(
             title="Which payload do you need?",
-            min=5,
+            min=2,
             max=18,
-            value=5,
+            value=2,
             unit="kg",
             filter_key="payload",
             descriptions=[
-            (5, "Sony FX3 with 24-70mm"),
-            (9, "Red Komodo with Sigma Art"),
-            (14, "Alexa35 with Cooke S4"),
+            (2, "Sony FX3 with 24-70mm"),
+            (7, "Red Komodo with Sigma Art"),
+            (12, "Alexa35 with Cooke S4"),
             (18, "Arri 435 with Angénieux Optimo")
             ],
             icons=[
@@ -41,14 +41,19 @@
             "arri-435"
             ]
             ) }}
-            </div>
-        <div class="categories-solutions-categories font-18">
+        </div>
+        <div class="categories-solutions-filters-dropdown">
+            <p class="categories-solutions-filters-dropdown-button slider-dropdown-button"><span
+                    class="categories-solutions-filters-dropdown-icon"><img
+                        src="{{ url_for('static', filename='imgs/icons/filter.svg') }}" /></span><span
+                    class="categories-solutions-filters-dropdown-text">Filters</span></p>
+        </div>
+        <div class="categories-solutions-categories">
             {% for head in heads %}
             {% if head.fields.status == "Online" %}
             <div data-payload="{{ head.fields.payload }}" class="categories-solutions-categories-categorywrapper">
                 <h3>{{ head.fields.name }}</h3>
-                <a class="categories-solutions-categories-img-link"
-                    href="{{ url_for('head', slug=head.fields.slug) }}">
+                <a class="categories-solutions-categories-img-link" href="{{ url_for('head', slug=head.fields.slug) }}">
                     {% if head.fields.thumbnail[0].thumbnails is defined %}
                     <img src="{{ head.fields.thumbnail[0].thumbnails.large.url }}" />
                     {% else %}

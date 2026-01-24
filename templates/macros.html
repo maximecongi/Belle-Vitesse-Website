@@ -59,9 +59,9 @@ icons=[]
         <input type="range" min="{{ min }}" max="{{ max }}" value="{{ value }}" class="js-slider" />
 
         {% if icons %}
-        <div class="labels">
+        <div class="slider-container-wrapper-labels">
             {% for icon in icons %}
-            <span class="label">
+            <span class="slider-container-wrapper-label">
                 {% if icon is string %}
                     <img src="{{ url_for('static', filename='imgs/icons/' ~ icon ~ '.svg') }}" />
                 {% else %}

@@ -18,6 +18,7 @@ if not AIRTABLE_SECRET_TOKEN or not AIRTABLE_BASE_ID:
     )
 
 # ⚡ Créer les tables après avoir confirmé que les variables existent
+TABLE_STATIC = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "static")
 TABLE_VEHICLES = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "vehicles")
 TABLE_HEADS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "heads")
 TABLE_SUPPORTS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "supports")
@@ -36,6 +37,11 @@ def get_cached(key, fetcher, timeout=3600):
         cache.set(key, value, timeout=timeout)
     return value
 
+def get_static_by_lang(lang="en"):
+    return get_cached(
+        f"static_{lang}",
+        lambda: TABLE_STATIC.first(formula=f"{{language}}='{lang}'")
+    )
 
 def get_vehicles():
     return get_cached("vehicles", lambda: TABLE_VEHICLES.all(sort=["order"]))

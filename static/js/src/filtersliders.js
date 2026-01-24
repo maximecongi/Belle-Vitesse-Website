@@ -1,132 +1,145 @@
-// =========================
-// INIT
-// =========================
+(() => {
+    // =========================
+    // INIT
+    // =========================
 
-let sliders = [];
-let vehicles = [];
+    let sliders = [];
+    let vehicles = [];
 
-window.initSliders = function () {
-    const sliderContainers = document.querySelectorAll(".slider-container");
-    vehicles = Array.from(document.querySelectorAll(
-        ".categories-solutions-categories-categorywrapper"
-    ));
+    window.initFilterSliders = function () {
+        const sliderContainers = document.querySelectorAll(".slider-container");
+        vehicles = Array.from(document.querySelectorAll(
+            ".categories-solutions-categories-categorywrapper"
+        ));
 
-    sliders = [];
+        sliders = [];
 
-    sliderContainers.forEach((container) => {
-        sliders.push(initSlider(container));
-    });
+        sliderContainers.forEach((container) => {
+            sliders.push(initSlider(container));
+        });
 
-    // premier filtrage APRÈS init complète
-    applyFilters();
-};
-
-// Start initial load
-initSliders();
-
-// =========================
-// SLIDER SETUP
-// =========================
-
-function initSlider(container) {
-    const slider = container.querySelector(".js-slider");
-    const output = container.querySelector(".slider__value");
-
-    if (!slider || !output) return null;
-
-    const update = () => {
-        const value = parseInt(slider.value, 10);
-
-        output.textContent = value;
-        updateDescription(container, value);
-
+        // premier filtrage APRÈS init complète
         applyFilters();
     };
 
-    slider.addEventListener("input", update);
+    // =========================
+    // SLIDER SETUP
+    // =========================
 
-    // init affichage (sans filtrer encore)
-    output.textContent = slider.value;
-    updateDescription(container, parseInt(slider.value, 10));
+    function initSlider(container) {
+        const slider = container.querySelector(".js-slider");
+        const output = container.querySelector(".slider__value");
 
-    return {
-        filterKey: container.dataset.filterKey,
-        getValue: () => parseInt(slider.value, 10)
-    };
-}
+        if (!slider || !output) return null;
 
-// =========================
-// AND FILTER LOGIC
-// =========================
+        const update = () => {
+            const value = parseInt(slider.value, 10);
 
-function applyFilters() {
-    vehicles.forEach((vehicle) => {
-        const isVisible = sliders.every((slider) => {
-            if (!slider) return true;
-            const { filterKey, getValue } = slider;
-            const vehicleValue = parseInt(vehicle.dataset[filterKey], 10);
+            output.textContent = value;
+            updateDescription(container, value);
 
-            if (Number.isNaN(vehicleValue)) return false;
+            applyFilters();
+        };
 
-            return getValue() <= vehicleValue;
+        slider.addEventListener("input", update);
+
+        // init affichage (sans filtrer encore)
+        output.textContent = slider.value;
+        updateDescription(container, parseInt(slider.value, 10));
+
+        return {
+            filterKey: container.dataset.filterKey,
+            getValue: () => parseInt(slider.value, 10)
+        };
+    }
+
+    // =========================
+    // AND FILTER LOGIC
+    // =========================
+
+    function applyFilters() {
+        vehicles.forEach((vehicle) => {
+            const isVisible = sliders.every((slider) => {
+                if (!slider) return true;
+                const { filterKey, getValue } = slider;
+                const vehicleValue = parseInt(vehicle.dataset[filterKey], 10);
+
+                if (Number.isNaN(vehicleValue)) return false;
+
+                return getValue() <= vehicleValue;
+            });
+
+            if (isVisible) {
+                show(vehicle);
+            } else {
+                hide(vehicle);
+            }
+        });
+    }
+
+    // =========================
+    // DESCRIPTION HANDLER
+    // =========================
+
+    function updateDescription(container, value) {
+        const descEl = container.querySelector(".slider__description");
+        if (!descEl) return;
+
+        const descriptions = JSON.parse(container.dataset.descriptions || "[]");
+
+        let text = "";
+
+        descriptions.forEach(([min, desc]) => {
+            if (value >= min) {
+                text = desc;
+            }
         });
 
-        if (isVisible) {
-            show(vehicle);
-        } else {
-            hide(vehicle);
+        descEl.textContent = text;
+    }
+
+    // =========================
+    // ANIMATION HELPERS
+    // =========================
+
+    function hide(el) {
+        if (el.classList.contains("filterslider-is-hidden")) return;
+
+        el.classList.add("filterslider-is-hiding");
+
+        el.addEventListener(
+            "transitionend",
+            () => {
+                el.classList.remove("filterslider-is-hiding");
+                el.classList.add("filterslider-is-hidden");
+            },
+            { once: true }
+        );
+    }
+
+    function show(el) {
+        if (!el.classList.contains("filterslider-is-hidden")) return;
+
+        el.classList.remove("filterslider-is-hidden");
+        el.classList.add("filterslider-is-showing");
+
+        // force reflow
+        el.offsetHeight;
+
+        el.classList.remove("filterslider-is-showing");
+    }
+
+    // =========================
+    // ANIMATION BUTTON
+    // =========================
+
+    document.addEventListener("click", (e) => {
+        const button = e.target.closest(".slider-dropdown-button");
+        if (!button) return;
+
+        const filterssliders = document.querySelector(".filtersliders-container");
+        if (filterssliders) {
+            filterssliders.classList.toggle("filterslider-is-open");
         }
     });
-}
-
-// =========================
-// DESCRIPTION HANDLER
-// =========================
-
-function updateDescription(container, value) {
-    const descEl = container.querySelector(".slider__description");
-    if (!descEl) return;
-
-    const descriptions = JSON.parse(container.dataset.descriptions || "[]");
-
-    let text = "";
-
-    descriptions.forEach(([min, desc]) => {
-        if (value >= min) {
-            text = desc;
-        }
-    });
-
-    descEl.textContent = text;
-}
-
-// =========================
-// ANIMATION HELPERS
-// =========================
-
-function hide(el) {
-    if (el.classList.contains("is-hidden")) return;
-
-    el.classList.add("is-hiding");
-
-    el.addEventListener(
-        "transitionend",
-        () => {
-            el.classList.remove("is-hiding");
-            el.classList.add("is-hidden");
-        },
-        { once: true }
-    );
-}
-
-function show(el) {
-    if (!el.classList.contains("is-hidden")) return;
-
-    el.classList.remove("is-hidden");
-    el.classList.add("is-showing");
-
-    // force reflow
-    el.offsetHeight;
-
-    el.classList.remove("is-showing");
-}
+})();

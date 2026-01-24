@@ -1,6 +1,14 @@
 .filtersliders-container {
     display: flex;
     column-gap: 2vw;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: 
+        max-height 1s ease,
+        opacity 0.5s ease,
+        transform 1s ease;
 }
 
 .slider-container {
@@ -16,14 +24,14 @@
     margin: 1vw 0 0 0;
 }
 
-.labels {
+.slider-container-wrapper-labels {
     display: flex;
     justify-content: space-between;
     margin: 1em 0 1em 0;
     width: 100%;
 }
 
-.labels span {
+.slider-container-wrapper-labels span {
     justify-content: center;
     aspect-ratio: 1;
     width: clamp(0.8rem, 0.8vw, 1.6rem);
@@ -62,16 +70,21 @@
     align-items: center;
 }
 
-.is-hiding {
+.filterslider-is-hiding {
     opacity: 0;
     transform: translateY(10px);
 }
 
-.is-hidden {
+.filterslider-is-hidden {
     display: none;
 }
 
-.is-showing {
+.filterslider-is-showing {
     opacity: 0;
     transform: translateY(10px);
+}
+.filterslider-is-open {
+    max-height: 12vw;
+    opacity: 1;
+    transform: translateY(0);
 }

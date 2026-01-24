@@ -9,13 +9,12 @@
     </video>
     <div class="home-hero-banner-slogan">
       <h1 class="home-hero-banner-slogan-text color-white-2">
-        Specialist in <br /><i>moving</i> cinema
+        {{static.fields["home.powerquote"]| safe}}
       </h1>
     </div>
     <div class="home-hero-banner-buttons">
-      <a href="{{ url_for('vehicles') }}" class="home-hero-banner-buttons-discover button">Discover our solutions</a>
-      <a href="{{ url_for('contact') }}" class="home-hero-banner-buttons-contact button bg-color-yellow-1">Contact
-        us</a>
+      <a href="{{ url_for('vehicles') }}" class="home-hero-banner-buttons-discover button">{{static.fields["home.discover_our_solutions.button"]}}</a>
+      <a href="{{ url_for('contact') }}" class="home-hero-banner-buttons-contact button bg-color-yellow-1">{{static.fields["home.contact_us.button"]}}</a>
     </div>
     <div class="icon-scroll"></div>
 </section>

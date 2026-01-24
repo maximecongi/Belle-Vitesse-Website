@@ -5,7 +5,8 @@
 <section id="hero-banner" class="section-site">
     <div class="vehicle-hero-banner bg-color-white-3">
         <div class="vehicle-hero-banner-img">
-            <img class="top-head" src=" {{ head.fields.banner[0].thumbnails.full.url }}" />
+            <img src="{{ head.fields.banner[0].thumbnails.full.url }}" {% if head.fields.slug=="titan-lt" or
+                head.fields.slug=="movi-pro" or head.fields.slug=="ronin-2" %} class="top-head" {% endif %} />
         </div>
         <div class="vehicle-hero-banner-wrapper animate__animated animation__banner-title text-head">
             <div class="vehicle-hero-banner-titlewrapper">
@@ -35,7 +36,8 @@
                     {{ square_highlight(head.fields.max_operating_speed, "km/h", "Max operating speed") }}
                 </div>
             </div>
-            {#  </div>
+            {#
+        </div>
 </section>
 <section class="section-site">
     <div class="vehicle-description">
