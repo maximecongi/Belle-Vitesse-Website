@@ -38,9 +38,41 @@
     flex-wrap: wrap;
 }
 
+.categories-solutions-filters-dropdown {
+    width: 80vw;
+}
+
+.categories-solutions-filters-dropdown-button {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0.4vw 1.2vw;
+    background-color: var(--white-2);
+    transition: background-color 0.2s ease;
+}
+
+.categories-solutions-filters-dropdown-button:hover {
+    cursor: pointer;
+    background-color: var(--yellow-1);
+}
+
+.categories-solutions-filters-dropdown-icon {
+    width: clamp(0.6rem, 1vw, 1.6rem);
+    height: min-content;
+    display: flex;
+}
+
+span.categories-solutions-filters-dropdown-text {
+    margin-left: 0.4rem;
+    line-height: 1.3rem;
+    font-weight: 300;
+    font-size: clamp(0.4rem, 0.8vw, 1.2rem);
+}
+
 .categories-solutions-categories-categorywrapper {
     width: 20vw;
     margin: 0vw 5vw 4vw 5vw;
+    transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .categories-solutions-categories h3 {

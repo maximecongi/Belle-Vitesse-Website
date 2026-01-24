@@ -37,8 +37,11 @@ function initDropdowns() {
 
 function initContent() {
     // Re-initialize components that are inside the #swup container
-    if (typeof window.initSliders === 'function') {
-        window.initSliders();
+    if (typeof window.initSplide === 'function') {
+        window.initSplide();
+    }
+    if (typeof window.initFilterSliders === 'function') {
+        window.initFilterSliders();
     }
     if (typeof window.initMap === 'function') {
         window.initMap();
