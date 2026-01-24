@@ -64,8 +64,9 @@ p {
     line-height: 1.6em;
     font-size: clamp(0.6rem, 1vw, 1.6rem);
 }
+
 li {
-   font-size: clamp(0.6rem, 1vw, 1.6rem);
+    font-size: clamp(0.6rem, 1vw, 1.6rem);
 }
 
 a {
@@ -82,7 +83,7 @@ a:hover {
     background-color: var(--white-1);
     border: none;
     color: var(--grey-1);
-    padding: clamp(0.6rem, 1vw, 1.1rem) clamp(1.2rem,1.2vw, 2.5rem);
+    padding: clamp(0.6rem, 1vw, 1.1rem) clamp(1.2rem, 1.2vw, 2.5rem);
     text-align: center;
     text-decoration: none;
     display: inline-block;
@@ -97,8 +98,7 @@ a:hover {
     filter: brightness(0.9);
     color: var(--grey-1);
 }
-<<<<<<< Updated upstream
-=======
+
 input[type="range"] {
     width: 100%;
     -webkit-appearance: none;
@@ -111,35 +111,37 @@ input[type="range"] {
     transition: opacity .2s;
     cursor: pointer;
 }
+
 input[type="range"]::-webkit-slider-runnable-track {
     width: 100%;
     height: 0.8vw;
     background: var(--white-3);
     border: none;
 }
+
 @media (orientation: portrait) {
     input[type="range"]::-webkit-slider-runnable-track {
         height: 3vw;
     }
 }
+
 input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
     height: 0.8vw;
     width: 0.8vw;
     background: var(--yellow-1);
-    cursor: pointer;     
-    border: none;  
+    cursor: pointer;
+    border: none;
     transition: background-color 0.3s, border-color 0.3s;
 }
+
 @media (orientation: portrait) {
     input[type="range"]::-webkit-slider-thumb {
         height: 3vw;
         width: 3vw;
     }
 }
-
->>>>>>> Stashed changes
 
 .img-overlay {
     background-color: rgba(0, 0, 0, 0.5);

@@ -15,7 +15,7 @@
 }
 
 img.top-head {
-    top: -10svh;
+    top: 0;
 }
 
 .vehicle-hero-banner-textwrapper-text {
@@ -28,9 +28,10 @@ img.top-head {
 
 .vehicle-hero-banner img {
     position: absolute;
-    height: 60vw;
+    height: 90%;
     z-index: 0;
     right: 0;
+    bottom: 0;
 }
 
 .vehicle-hero-banner-textwrapper-text {

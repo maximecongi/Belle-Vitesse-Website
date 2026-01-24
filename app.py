@@ -16,6 +16,7 @@ from utils.specs import build_specs
 from utils.airtable import (
     init_cache,
     get_vehicles,
+    get_static_by_lang,
     get_heads,
     get_supports,
     get_vehicle_by_slug,
@@ -41,6 +42,7 @@ def warm_cache():
         get_vehicles()
         get_heads()
         get_supports()
+        get_static_by_lang("en")
         app.logger.info("🔥 Cache warmé avec succès")
     except Exception as e:
         app.logger.error(f"❌ Erreur warm cache : {e}")
@@ -81,6 +83,7 @@ def inject_globals():
         "vehicles": get_vehicles(),
         "heads": get_heads(),
         "supports": get_supports(),
+        "static": get_static_by_lang("en"),
         "now": datetime.now(timezone.utc)
     }
     
