@@ -41,6 +41,7 @@
 
 /* testimonials */
 .home-testimonials {
+    padding-top: 5vw;
     display: flex;
     align-items: center;
 }
