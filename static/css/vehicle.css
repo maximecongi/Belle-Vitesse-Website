@@ -113,6 +113,7 @@ img.top-head {
     justify-content: space-between;
     flex-direction: row;
     flex-wrap: wrap;
+    row-gap: 8vw;
 }
 
 .vehicle-squared-highlight-wrapper-square {
