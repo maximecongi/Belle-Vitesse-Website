@@ -1,11 +1,11 @@
 {% extends "layout.html" %}
-{% block title %}Supports - Belle Vitesse{% endblock %}
+{% block title %}grips - Belle Vitesse{% endblock %}
 {% block content %}
 {# <section id="hero-banner" class="section-site">
-    <div class="categories-hero-banner img-overlay bg-supports">
+    <div class="categories-hero-banner img-overlay bg-grips">
         <div class="main-wrapper categories-hero-banner-titlewrapper">
             <h1 class="categories-hero-banner-titlewrapper-title color-white-2">
-                Supports
+                grips
             </h1>
             <div class="categories-hero-banner-textwrapper">
                 <p class="dot-before categories-hero-banner-textwrapper-text color-white-2 font-weight-300 lh-05">
@@ -17,7 +17,7 @@
 </section> #}
 <section id="solutions" class="section-site">
     <div class="categories-solutions">
-        <h2 class="dot-before title-section">Our supports</h2>
+        <h2 class="dot-before title-section">Our grips</h2>
         <div class="categories-solutions-filters-dropdown" style="visibility: hidden;">
             <p class="categories-solutions-filters-dropdown-button slider-dropdown-button"><span
                     class="categories-solutions-filters-dropdown-icon"><img
@@ -25,16 +25,16 @@
                     class="categories-solutions-filters-dropdown-text">Filters</span></p>
         </div>
         <div class="categories-solutions-categories">
-            {% for support in supports %}
-            {% if support.fields.status == "Online" %}
+            {% for grip in grips %}
+            {% if grip.fields.status == "Online" %}
             <div class="categories-solutions-categories-categorywrapper">
-                <h3>{{ support.fields.name }}</h3>
+                <h3>{{ grip.fields.name }}</h3>
                 <a class="categories-solutions-categories-img-link"
-                    href="{{ url_for('support', slug=support.fields.slug) }}">
-                    {% if support.fields.thumbnail[0].thumbnails is defined %}
-                    <img src="{{ support.fields.thumbnail[0].thumbnails.large.url }}" />
+                    href="{{ url_for('grip', slug=grip.fields.slug) }}">
+                    {% if grip.fields.thumbnail[0].thumbnails is defined %}
+                    <img src="{{ grip.fields.thumbnail[0].thumbnails.large.url }}" />
                     {% else %}
-                    <img src="{{ url_for('static', filename='/imgs/placeholders/support.jpeg') }}" />
+                    <img src="{{ url_for('static', filename='/imgs/placeholders/grip.jpeg') }}" />
                     {% endif %}
                 </a>
             </div>

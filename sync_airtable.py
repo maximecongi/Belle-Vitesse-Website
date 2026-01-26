@@ -42,7 +42,7 @@ IMAGE_STORE_PATH = "static/images/airtable"
 STATIC_URL_PREFIX = "/static/images/airtable"
 
 # Tables to sync
-TABLES = ["vehicles", "heads", "supports", "configs"]
+TABLES = ["vehicles", "heads", "grips", "configs"]
 
 # Thumbnail sizes to download
 THUMBNAIL_SIZES = ["small", "large", "full"]

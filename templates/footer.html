@@ -30,10 +30,10 @@
                     {% endfor %}
                 </div>
                 <div class="footer-links-wrapper">
-                    <h3 class=""><a href="{{ url_for('supports') }}">Supports</a></h3>
-                    {% for support in supports %}
-                        {% if support.fields.status == "Online" %}
-                            <p class=""><a href="{{ url_for('support', slug=support.fields.slug) }}">{{support.fields.name}}</a></p>
+                    <h3 class=""><a href="{{ url_for('grips') }}">Grips</a></h3>
+                    {% for grip in grips %}
+                        {% if grip.fields.status == "Online" %}
+                            <p class=""><a href="{{ url_for('grip', slug=grip.fields.slug) }}">{{grip.fields.name}}</a></p>
                         {% endif %}
                     {% endfor %}
                 </div>

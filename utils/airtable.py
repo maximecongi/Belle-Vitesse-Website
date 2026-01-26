@@ -21,7 +21,7 @@ if not AIRTABLE_SECRET_TOKEN or not AIRTABLE_BASE_ID:
 TABLE_STATIC = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "static")
 TABLE_VEHICLES = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "vehicles")
 TABLE_HEADS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "heads")
-TABLE_SUPPORTS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "supports")
+TABLE_gripS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "grips")
 TABLE_CONFIGS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "configs")
 
 
@@ -51,8 +51,8 @@ def get_heads():
     return get_cached("heads", lambda: TABLE_HEADS.all(sort=["order"]))
 
 
-def get_supports():
-    return get_cached("supports", lambda: TABLE_SUPPORTS.all(sort=["order"]))
+def get_grips():
+    return get_cached("grips", lambda: TABLE_gripS.all(sort=["order"]))
 
 
 def get_vehicle_by_slug(slug):
@@ -69,10 +69,10 @@ def get_head_by_slug(slug):
     )
 
 
-def get_support_by_slug(slug):
+def get_grip_by_slug(slug):
     return get_cached(
-        f"support_{slug}",
-        lambda: TABLE_SUPPORTS.first(formula=f"{{slug}}='{slug}'")
+        f"grip_{slug}",
+        lambda: TABLE_gripS.first(formula=f"{{slug}}='{slug}'")
     )
 
 

@@ -149,9 +149,9 @@ def get_heads():
     return get_cached("heads", lambda: _fetch_all_from_table("heads", order_by="order"))
 
 
-def get_supports():
-    """Get all supports sorted by order."""
-    return get_cached("supports", lambda: _fetch_all_from_table("supports", order_by="order"))
+def get_grips():
+    """Get all grips sorted by order."""
+    return get_cached("grips", lambda: _fetch_all_from_table("grips", order_by="order"))
 
 
 def get_vehicle_by_slug(slug):
@@ -170,11 +170,11 @@ def get_head_by_slug(slug):
     )
 
 
-def get_support_by_slug(slug):
-    """Get a support by its slug."""
+def get_grip_by_slug(slug):
+    """Get a grip by its slug."""
     return get_cached(
-        f"support_{slug}",
-        lambda: _fetch_by_field("supports", "slug", slug)
+        f"grip_{slug}",
+        lambda: _fetch_by_field("grips", "slug", slug)
     )
 
 

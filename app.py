@@ -18,10 +18,10 @@ from utils.airtable import (
     get_vehicles,
     get_static_by_lang,
     get_heads,
-    get_supports,
+    get_grips,
     get_vehicle_by_slug,
     get_head_by_slug,
-    get_support_by_slug,
+    get_grip_by_slug,
     get_configs_for_vehicle,
 )
 
@@ -41,7 +41,7 @@ def warm_cache():
     try:
         get_vehicles()
         get_heads()
-        get_supports()
+        get_grips()
         get_static_by_lang("en")
         app.logger.info("🔥 Cache warmé avec succès")
     except Exception as e:
@@ -82,7 +82,7 @@ def inject_globals():
     return {
         "vehicles": get_vehicles(),
         "heads": get_heads(),
-        "supports": get_supports(),
+        "grips": get_grips(),
         "static": get_static_by_lang("en"),
         "now": datetime.now(timezone.utc)
     }
@@ -130,9 +130,9 @@ def heads():
     return render_template("heads.html")
 
 
-@app.route("/supports")
-def supports():
-    return render_template("supports.html")
+@app.route("/grips")
+def grips():
+    return render_template("grips.html")
 
 
 # -----------------------
@@ -179,17 +179,17 @@ def head(slug):
     )
 
 
-@app.route("/supports/<slug>")
-def support(slug):
-    support = get_support_by_slug(slug)
-    if not support:
+@app.route("/grips/<slug>")
+def grip(slug):
+    grip = get_grip_by_slug(slug)
+    if not grip:
         abort(404)
 
-    specs_left, specs_right = build_specs(support["fields"])
+    specs_left, specs_right = build_specs(grip["fields"])
 
     return render_template(
-        "support.html",
-        support=support,
+        "grip.html",
+        grip=grip,
         specs_left=specs_left,
         specs_right=specs_right,
     )
