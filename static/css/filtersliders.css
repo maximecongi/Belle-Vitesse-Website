@@ -86,7 +86,7 @@
 }
 
 .filterslider-is-open {
-    max-height: 18vw;
+    max-height: fit-content;
     opacity: 1;
     transform: translateY(0);
 }

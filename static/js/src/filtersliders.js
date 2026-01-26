@@ -133,6 +133,24 @@
     // ANIMATION BUTTON
     // =========================
 
+    document.addEventListener("DOMContentLoaded", () => {
+        const filterssliders = document.querySelector(".filtersliders-container");
+        if (!filterssliders) return;
+
+        if (filterssliders.classList.contains("filterslider-is-open")) {
+            filterssliders.style.maxHeight = filterssliders.scrollHeight + "px";
+        } else {
+            filterssliders.style.maxHeight = "0px";
+        }
+    });
+    window.addEventListener("resize", () => {
+        const filterssliders = document.querySelector(".filtersliders-container");
+        if (!filterssliders) return;
+
+        if (filterssliders.classList.contains("filterslider-is-open")) {
+            filterssliders.style.maxHeight = filterssliders.scrollHeight + "px";
+        }
+    });
     document.addEventListener("click", (e) => {
         const button = e.target.closest(".slider-dropdown-button");
         if (!button) return;
