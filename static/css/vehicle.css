@@ -50,18 +50,22 @@ img.top-head {
 .vehicle-description-wrapper {
     display: flex;
     align-items: center;
+    width: 70vw;
 }
 
 .vehicle-description-right {
-    width: 45vw;
+    width: 50%;
     aspect-ratio: 3 / 2;
 }
 
 .vehicle-description-left {
-    font-size: 1.4em;
-    padding: 0 0 0 3vw;
-    width: 37vw;
+    padding: 0 0 0 2%;
+    width: 48%;
     white-space: pre-wrap;
+}
+
+.vehicle-description-left p{
+    font-size: clamp(0.8rem, 0.8vw, 2rem);
 }
 
 /* key_features */
@@ -118,40 +122,28 @@ img.top-head {
     align-items: center;
     background-color: var(--white-3);
     aspect-ratio: 3 / 2;
-    height: 15vw;
-    margin: 1.5vw;
-    padding: 2vw;
     display: flex;
-    height: 15vw;
-    margin: 1.5vw;
+    height: 8vw;
     padding: 2vw;
 
-}
-
-.vehicle-squared-highlight-wrapper-square:first-child {
-    margin-left: 0;
-}
-
-.vehicle-squared-highlight-wrapper-square:last-child {
-    margin-right: 0;
 }
 
 .vehicle-squared-highlight-wrapper-square-value {
-    font-size: 10vw;
-    line-height: 1em;
+    font-size: 5vw;
+    line-height: 1.1em;
     margin: 0;
     font-weight: 300;
 }
 
 .vehicle-squared-highlight-wrapper-square-value-plussign {
-    font-size: 4vw;
+    font-size: 2vw;
     vertical-align: top;
     position: relative;
-    top: 0.5vw;
+    top: 0.3vw;
 }
 
 .vehicle-squared-highlight-wrapper-square-unit {
-    font-size: 1.2vw;
+    font-size: 0.8vw;
     margin: 0px;
     font-weight: 300;
     line-height: 0;
@@ -159,15 +151,15 @@ img.top-head {
 }
 
 .vehicle-squared-highlight-wrapper-square-label {
-    font-size: 1.5vw;
-    line-height: 4vw;
+    font-size: 1vw;
+    line-height: 2.5vw;
     font-weight: 300;
     width: 90%;
     text-align: center;
     color: var(--grey-2);
     border-top: 1px var(--grey-2) solid;
     margin-bottom: 0;
-    margin-top: 3vw;
+    margin-top: 1.5vw;
 }
 
 /* configurator */
@@ -241,7 +233,6 @@ img.top-head {
 .vehicle-specs {
     display: flex;
     flex-direction: column;
-    background-color: var(--white-3);
 }
 
 .vehicle-specs-details {
