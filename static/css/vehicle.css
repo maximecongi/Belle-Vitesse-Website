@@ -35,7 +35,7 @@ img.top-head {
 }
 
 .vehicle-hero-banner-textwrapper-text {
-    width: 30vw;
+    width: auto;
 }
 
 /* description */
@@ -61,6 +61,7 @@ img.top-head {
     font-size: 1.4em;
     padding: 0 0 0 3vw;
     width: 37vw;
+    white-space: pre-wrap;
 }
 
 /* key_features */

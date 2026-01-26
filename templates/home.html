@@ -23,19 +23,13 @@
     <div class="home-testimonials-logo"><img
         src="{{ url_for('static', filename='/imgs/logos_and_name/noir-fond-transparent.png') }}"></div>
     <div class="home-testimonials-textwrapper">
-      <p class="home-testimonials-textwrapper-text">Our goal is to equip you with the most inspiring image
-        technology in the world. We are unique in terms of the exclusive products we have developed, and our resources.
-        As part of the wider ARRI ecosystem, we are built on a bedrock of knowledge that dates back more than a century.
-
-        Through a network of facilities in North America, Europe, and the UK, our service crosses borders and
-        continents, bringing you first-class motion picture camera, lighting, and grip equipment, wherever you may be.
-        We aim for warm welcomes, friendly expertise, personalized solutions, and relationships built on trust.</p>
+      <p class="home-testimonials-textwrapper-text">{{static.fields["home.testimonial"]}}</p>
     </div>
   </div>
 </section>
 <section id="solutions" class="section-site">
   <div class="home-solutions">
-    <h2 class="dot-before title-section font-32">Our solutions</h2>
+    <h2 class="dot-before title-section font-32">{{static.fields["home.our_solutions.title"]}}</h2>
     <div class="home-solutions-categories font-18 color-grey-2">
       <div>
         <h3>Vehicles</h3>
@@ -55,7 +49,7 @@
 </section>
 <section id="references" class="section-site">
   <div class="home-references">
-    <h2 class="dot-before title-section font-32">Our references</h2>
+    <h2 class="dot-before title-section font-32">{{static.fields["home.our_references.title"]}}</h2>
     <div class="home-references-wrapper">
       <div class="home-references-group">
         {% for brand in brands %}

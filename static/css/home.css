@@ -44,6 +44,9 @@
     display: flex;
     align-items: center;
 }
+.home-testimonials-textwrapper-text {
+    white-space: pre-wrap;
+}
 
 .home-testimonials>* {
     width: 50%;

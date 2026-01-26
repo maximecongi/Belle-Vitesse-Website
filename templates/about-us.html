@@ -4,7 +4,7 @@
 <section class="section-site">
     <div class="main-wrapper about_us-container">
         <h1 class="title-textual-section font-56 lh-20 marg-tb-3">Who we are?</h1>
-        <h2 class="dot-before title-textual-section font-30">Our mission</h2>
+        {# <h2 class="dot-before title-textual-section font-30">Our mission</h2>
         <p>
             <span class="font-weight-600">Providing precise, safe camera movement solutions, designed by imaging
                 technicians.</span><br><br>
@@ -59,7 +59,8 @@
             performance, and peace of mind on set.<br>
             We are committed to delivering services of the highest standard, without compromise on safety, precision, or
             the quality of movement.
-        </p>
+        </p> #}
+        <p>{{static.fields["about_us.text"]| safe}}</p>
     </div>
 </section>
 {% endblock %}

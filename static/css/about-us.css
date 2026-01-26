@@ -2,6 +2,7 @@
     max-width: 80%;
     margin-bottom: 3em;
     font-weight: 400;
+    white-space: pre-wrap;
 }
 
 .about_us-container ul {
