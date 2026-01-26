@@ -134,40 +134,40 @@
     // =========================
 
     document.addEventListener("DOMContentLoaded", () => {
-        const filterssliders = document.querySelector(".filtersliders-container");
-        if (!filterssliders) return;
+        const filterSliders = document.querySelector(".filtersliders-container");
+        if (!filterSliders) return;
 
-        if (filterssliders.classList.contains("filterslider-is-open")) {
-            filterssliders.style.maxHeight = filterssliders.scrollHeight + "px";
+        if (filterSliders.classList.contains("filterslider-is-open")) {
+            filterSliders.style.maxHeight = filterSliders.scrollHeight + "px";
         } else {
-            filterssliders.style.maxHeight = "0px";
+            filterSliders.style.maxHeight = "0px";
         }
     });
     window.addEventListener("resize", () => {
-        const filterssliders = document.querySelector(".filtersliders-container");
-        if (!filterssliders) return;
+        const filterSliders = document.querySelector(".filtersliders-container");
+        if (!filterSliders) return;
 
-        if (filterssliders.classList.contains("filterslider-is-open")) {
-            filterssliders.style.maxHeight = filterssliders.scrollHeight + "px";
+        if (filterSliders.classList.contains("filterslider-is-open")) {
+            filterSliders.style.maxHeight = filterSliders.scrollHeight + "px";
         }
     });
     document.addEventListener("click", (e) => {
         const button = e.target.closest(".slider-dropdown-button");
         if (!button) return;
 
-        const filterssliders = document.querySelector(".filtersliders-container");
-        if (!filterssliders) return;
+        const filterSliders = document.querySelector(".filtersliders-container");
+        if (!filterSliders) return;
 
-        const isOpen = filterssliders.classList.contains("filterslider-is-open");
+        const isOpen = filterSliders.classList.contains("filterslider-is-open");
 
         if (isOpen) {
             // CLOSE
-            filterssliders.style.maxHeight = "0px";
-            filterssliders.classList.remove("filterslider-is-open");
+            filterSliders.style.maxHeight = "0px";
+            filterSliders.classList.remove("filterslider-is-open");
         } else {
             // OPEN
-            filterssliders.style.maxHeight = filterssliders.scrollHeight + "px";
-            filterssliders.classList.add("filterslider-is-open");
+            filterSliders.style.maxHeight = filterSliders.scrollHeight + "px";
+            filterSliders.classList.add("filterslider-is-open");
         }
     });
 })();
