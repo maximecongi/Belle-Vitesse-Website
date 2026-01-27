@@ -25,7 +25,7 @@
                         {% endif %}
                         {% endfor %}
                     </ul>
-                    <li><a href="">Grips</a></li>
+                    <li><a href="{{ url_for('grips') }}">Grips</a></li>
                     <ul>
                         {% for grips_category in grips_categories %}
                         {% if grips_category.fields.status == "Online" %}
@@ -107,7 +107,7 @@
                 </div>
 
                 <div class="menu-item-dropdown">
-                    <a href="">Grips</a>
+                    <a href="{{ url_for('grips') }}">Grips</a>
                     <div class="dropdown-wrapper">
                         <div class="dropdown-left">
                             <ul>

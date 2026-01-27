@@ -1,48 +1,44 @@
 {% extends "layout.html" %}
 {% block title %}grips - Belle Vitesse{% endblock %}
 {% block content %}
-<section id="solutions" class="section-site">
-    <div class="categories-solutions grips-solutions">
-        <h2 class="dot-before title-section">{{grips_category.fields.name}}</h2>
-        {% for grip in grips_products_by_category %}
-        <div class="grip-item-wrapper">
-            <h3>{{grip.fields.name}}</h3>
-            <div class="vehicle-description-wrapper grip-description-wrapper">
-                <div class="vehicle-description-right grip-description-right">
-                    <div class="splide" aria-label="Splide Basic HTML Example">
-                        <div class="splide__track">
-                            <ul class="splide__list">
-                                {% for image in grip.fields.gallery %}
-                                <li class="splide__slide"><img src="{{ image.thumbnails.full.url }}"
-                                        alt="Gallery image" />
-                                </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="vehicle-specs grip-specs">
-                    <div class="vehicle-specs-details grips-specs-details">
-
-                        {% set excluded_fields = ['name','category', 'created_at', 'created_by', 'status',
-                        'gallery',
-                        'last_update_by', 'last_update_at', 'thumbnail', 'slug','order'] %}
-
-                        {% for label, value in grip.fields.items() %}
-                        {% if label not in excluded_fields %}
-                        <div class=" grips-specs-details-detail-wrapper">
-                            <p class="dot-before"><span class="grips-specs-details-detail-wrapper-label">{{ label
-                                    }}</span> : <span class=" grips-specs-details-detail-wrapper-value">{{ value }}
-                                </span>
-                            </p>
-                        </div>
-                        {% endif %}
-                        {% endfor %}
-                    </div>
-                </div>
+{# <section id="hero-banner" class="section-site">
+    <div class="categories-hero-banner img-overlay bg-grips">
+        <div class="main-wrapper categories-hero-banner-titlewrapper">
+            <h1 class="categories-hero-banner-titlewrapper-title color-white-2">
+                grips
+            </h1>
+            <div class="categories-hero-banner-textwrapper">
+                <p class="dot-before categories-hero-banner-textwrapper-text color-white-2 font-weight-300 lh-05">
+                    Meet our fleet
+                </p>
             </div>
         </div>
-        {% endfor %}
-    </div>
+        <div class="icon-scroll"></div>
+</section> #}
+<section id="solutions" class="section-site">
+    <div class="categories-solutions">
+        <h2 class="dot-before title-section">Our grips</h2>
+        <div class="categories-solutions-filters-dropdown" style="visibility: hidden;">
+            <p class="categories-solutions-filters-dropdown-button slider-dropdown-button"><span
+                    class="categories-solutions-filters-dropdown-icon"><img
+                        src="{{ url_for('static', filename='imgs/icons/filter.svg') }}" /></span><span
+                    class="categories-solutions-filters-dropdown-text">Filters</span></p>
+        </div>
+        <div class="categories-solutions-categories">
+            {% for grip in grips_categories %}
+            {% if grip.fields.status == "Online" %}
+            <div class="categories-solutions-categories-categorywrapper">
+                <h3>{{ grip.fields.name }}</h3>
+                <a class="categories-solutions-categories-img-link"
+                    href="{{ url_for('grip_products', slug=grip.fields.slug) }}">
+                    {% if grip.fields.thumbnail[0].thumbnails is defined %}
+                    <img src="{{ grip.fields.thumbnail[0].thumbnails.large.url }}" />
+                    {% else %}
+                    <img src="{{ url_for('static', filename='/imgs/placeholders/grip.jpeg') }}" />
+                    {% endif %}
+                </a>
+            </div>
+            {% endif %}
+            {% endfor %}
 </section>
 {% endblock %}

@@ -147,10 +147,10 @@ def vehicles():
 def heads():
     return render_template("heads.html")
 
-
-""" @app.route("/grips")
+@app.route("/grips")
 def grips():
-    return render_template("grips.html") """
+    return render_template("grips.html")
+
 
 
 # -----------------------
@@ -196,14 +196,13 @@ def head(slug):
         specs_right=specs_right,
     )
     
-""" TEST DE SA MERE """
 @app.route("/grips/<slug>")
 def grip_products(slug):
     grips_category = get_grips_categories_by_slug(slug)
     if not grips_category:
         abort(404)
     grips_products = get_grips_products_for_category(grips_category["id"])
-    return render_template("grips.html", grips_category=grips_category, grips_products_by_category=grips_products)
+    return render_template("grip.html", grips_category=grips_category, grips_products_by_category=grips_products)
 
 # -----------------------
 # Static pages
