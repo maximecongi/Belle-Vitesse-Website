@@ -31,9 +31,9 @@
                 </div>
                 <div class="footer-links-wrapper">
                     <h3 class="color-white-2">Grips</h3>
-                    {% for grip in grips %}
-                        {% if grip.fields.status == "Online" %}
-                            <p class=""><a href="{{ url_for('grip', slug=grip.fields.slug) }}">{{grip.fields.name}}</a></p>
+                    {% for grips_category in grips_categories %}
+                        {% if grips_category.fields.status == "Online" %}
+                            <p class=""><a href="{{ url_for('grip_products', slug=grips_category.fields.slug)}}">{{grips_category.fields.name}}</a></p>
                         {% endif %}
                     {% endfor %}
                 </div>

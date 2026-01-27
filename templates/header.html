@@ -27,9 +27,9 @@
                     </ul>
                     <li><a href="">Grips</a></li>
                     <ul>
-                        {% for grip in grips %}
-                        {% if grip.fields.status == "Online" %}
-                        <li><a href="{{ url_for('grip', slug=grip.fields.slug) }}">{{grip.fields.name}}</a>
+                        {% for grips_category in grips_categories %}
+                        {% if grips_category.fields.status == "Online" %}
+                        <li><a href="{{ url_for('grip_products', slug=grips_category.fields.slug)}}">{{grips_category.fields.name}}</a>
                         </li>
                         {% endif %}
                         {% endfor %}
