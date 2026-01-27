@@ -33,18 +33,10 @@ h2.title-textual-section {
     font-size: clamp(1rem, 2vw, 3rem);
 }
 
-.tag-job {
+.tag-setups {
     text-transform: uppercase;
-    font-size: clamp(0.4rem, 0.6vw, 1rem);
     font-weight: 500;
-    background-color: var(--white-3);
     display: inline;
-    padding: 4px 8px;
-    border-radius: 16px;
-}
-
-.tag-job-yellow {
-    background-color: var(--yellow-1);
 }
 
 .dot-before:before {

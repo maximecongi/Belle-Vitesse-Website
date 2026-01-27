@@ -98,6 +98,14 @@ BRANDS = [
     {"slug": "somesuch", "label": "Somesuch", "url": "https://somesuch.co/"},
     {"slug": "unite", "label": "Unité", "url": "https://unite-films.com/"},
 ]    
+
+# -------------------------------------------------
+# Filtres custom Jinja2
+# -------------------------------------------------
+
+app.jinja_env.filters['slugify'] = lambda s: s.lower().replace(" ", "_")
+
+
 # -------------------------------------------------
 # Routes
 # -------------------------------------------------

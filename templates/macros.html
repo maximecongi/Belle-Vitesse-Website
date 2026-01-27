@@ -8,7 +8,10 @@
     {% elif label == "Setups" %}
     <div class="vehicle-squared-highlight-wrapper-square-setups">
      {% for setup in value %}
-        <span class="dot-before tag-job">{{ setup }}</span>
+        <div class="vehicle-squared-highlight-wrapper-square-setups-wrapper">
+            <img class="vehicle-squared-highlight-wrapper-square-setups-icon" src="{{ url_for('static', filename='imgs/icons/' ~ setup | slugify ~ '.svg') }}"/>
+            <span class="tag-setups">{{ setup }}</span>
+        </div>
      {% endfor %}
      </div>
     {% else %}
@@ -31,7 +34,9 @@
     <p class="vehicle-squared-highlight-wrapper-square-unit">{{ unit }}</p>
     {% endif %}
 
-    <p class="vehicle-squared-highlight-wrapper-square-label">{{ label }}</p>
+    {% if label != "Setups" %}
+        <p class="vehicle-squared-highlight-wrapper-square-label">{{ label }}</p>
+    {% endif %}
 </div>
 {% endmacro %}
 

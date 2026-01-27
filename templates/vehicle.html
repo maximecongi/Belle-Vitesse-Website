@@ -27,29 +27,31 @@
         <div>
             <div class="vehicle-squared-highlight">
                 <div class="vehicle-squared-highlight-wrapper">
+                    {{ square_highlight(vehicle.fields.setups, "", "Setups") }}
                     {{ square_highlight(vehicle.fields.max_speed, "km/h", "Max speed") }}
                     {{ square_highlight(vehicle.fields.passengers, "", "Capacity") }}
-                    {{ square_highlight(vehicle.fields.setups, "", "Setups") }}
+
                 </div>
             </div>
-        <div class="vehicle-description-wrapper">
-            <div class="vehicle-description-right">
-                <div class="splide" aria-label="Splide Basic HTML Example">
-                    <div class="splide__track">
-                        <ul class="splide__list">
-                            {% for image in vehicle.fields.gallery %}
-                            <li class="splide__slide"><img src="{{ image.thumbnails.full.url }}" alt="Gallery image" />
-                            </li>
-                            {% endfor %}
-                        </ul>
+            <div class="vehicle-description-wrapper">
+                <div class="vehicle-description-right">
+                    <div class="splide" aria-label="Splide Basic HTML Example">
+                        <div class="splide__track">
+                            <ul class="splide__list">
+                                {% for image in vehicle.fields.gallery %}
+                                <li class="splide__slide"><img src="{{ image.thumbnails.full.url }}"
+                                        alt="Gallery image" />
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="vehicle-description-left">
-                <p class="font-weight-400">{{ vehicle.fields.description }}</p>
+                <div class="vehicle-description-left">
+                    <p class="font-weight-400">{{ vehicle.fields.description }}</p>
+                </div>
             </div>
         </div>
-    </div>
 </section>
 {% if configs_grouped %}
 <section class="section-site">

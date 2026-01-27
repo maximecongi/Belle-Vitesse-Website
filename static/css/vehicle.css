@@ -53,19 +53,27 @@ img.top-head {
     width: 70vw;
 }
 
+.grip-description-wrapper {
+    width: 50vw;
+}
+
+.grip-description-wrapper>.vehicle-description-right {
+    width: 100%;
+}
+
 .vehicle-description-right {
     width: 50%;
     aspect-ratio: 3 / 2;
 }
 
 .vehicle-description-left {
-    padding: 0 0 0 2%;
-    width: 48%;
+    padding: 0 0 0 4%;
+    width: 46%;
     white-space: pre-wrap;
 }
 
-.vehicle-description-left p{
-    font-size: clamp(0.8rem, 0.8vw, 2rem);
+.vehicle-description-left p {
+    font-size: clamp(0.6rem, 0.8vw, 2rem);
 }
 
 /* key_features */
@@ -110,10 +118,10 @@ img.top-head {
 
 .vehicle-squared-highlight-wrapper {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-evenly;
     flex-direction: row;
     flex-wrap: wrap;
-    row-gap: 8vw;
+    row-gap: 4vw;
 }
 
 .vehicle-squared-highlight-wrapper-square {
@@ -124,7 +132,6 @@ img.top-head {
     align-items: center;
     background-color: var(--white-3);
     aspect-ratio: 3 / 2;
-    display: flex;
     height: 8vw;
     padding: 2vw;
 
@@ -143,9 +150,10 @@ img.top-head {
     position: relative;
     top: 0.3vw;
 }
+
 .vehicle-squared-highlight-wrapper-square-setups {
     font-size: 1.2rem;
-    height: 80%;
+    height: 100%;
     font-weight: 300;
     display: flex;
     flex-direction: column;
@@ -171,6 +179,19 @@ img.top-head {
     text-align: center;
     color: var(--grey-2);
     border-top: 1px var(--grey-2) solid;
+}
+
+.vehicle-squared-highlight-wrapper-square-setups-wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    column-gap: 0.6rem;
+    font-size: clamp(0.4rem, 0.8vw, 1rem);
+}
+
+.vehicle-squared-highlight-wrapper-square-setups-icon {
+    width: clamp(0.6rem, 1.2vw, 1.4rem);
 }
 
 /* configurator */
@@ -221,7 +242,7 @@ img.top-head {
     background-color: transparent;
     border: none;
     color: var(--grey-2);
-    padding: 2ch 4ch 2ch 0;
+    margin: 2ch;
     text-align: center;
     font-size: clamp(0.7rem, 1.2vw, 2rem);
     font-weight: 400;
@@ -350,6 +371,7 @@ img.top-head {
 
     .vehicle-squared-highlight-wrapper-square {
         height: 25vw;
+        padding: 4vw;
     }
 
     .vehicle-squared-highlight-wrapper-square-value {
@@ -363,7 +385,28 @@ img.top-head {
 
     .vehicle-squared-highlight-wrapper-square-label {
         font-size: 2.5vw;
-        margin-top: 6.5vw;
+        line-height: 6.5vw;
+    }
+
+    .vehicle-squared-highlight-wrapper {
+        flex-direction: column;
+        align-content: center;
+    }
+
+    .vehicle-squared-highlight-wrapper-square-setups-wrapper {
+        font-size: clamp(0.6rem, 2vw, 1.8rem);
+    }
+
+    .vehicle-squared-highlight-wrapper-square-setups-icon {
+        width: clamp(1rem, 3vw, 2rem);
+    }
+
+    .vehicle-squared-highlight-wrapper-square:has(.vehicle-squared-highlight-wrapper-square-setups) {
+        justify-content: center;
+    }
+
+    .grip-description-wrapper {
+        width: 80vw;
     }
 
     /* CONFIGURATOR MOBILE */
@@ -382,15 +425,17 @@ img.top-head {
     .vehicle-configurator-carousel-wrapper-config-group {
         display: flex;
         flex-direction: column;
-    }
-
-    .vehicle-configurator-carousel-wrapper-config-item {
-        text-align: left;
+        align-items: center;
     }
 
     .vehicle-configurator-carousel-wrapper-img-container {
         width: 80vw;
         margin-top: 5vw;
+    }
+
+    .vehicle-configurator-carousel-wrapper-config-list {
+        justify-content: center;
+
     }
 
     /*TECHNICAL SPECS MOBILE */
