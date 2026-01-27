@@ -21,8 +21,10 @@ if not AIRTABLE_SECRET_TOKEN or not AIRTABLE_BASE_ID:
 TABLE_STATIC = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "static")
 TABLE_VEHICLES = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "vehicles")
 TABLE_HEADS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "heads")
-TABLE_gripS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "grips")
+TABLE_GRIPS_CATEGORIES = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "grips_categories")
+TABLE_GRIP_PRODUCTS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "grip_products")
 TABLE_CONFIGS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "configs")
+
 
 
 def init_cache(app_cache: Cache):
@@ -51,9 +53,23 @@ def get_heads():
     return get_cached("heads", lambda: TABLE_HEADS.all(sort=["order"]))
 
 
-def get_grips():
-    return get_cached("grips", lambda: TABLE_gripS.all(sort=["order"]))
+def get_grips_categories():
+    return get_cached("grips_categories", lambda: TABLE_GRIPS_CATEGORIES.all(sort=["name"]))
 
+def get_grips_categories_by_slug(slug):
+    return get_cached(
+        f"grips_categories_{slug}",
+        lambda: TABLE_GRIPS_CATEGORIES.first(formula=f"{{slug}}='{slug}'")
+    )
+
+def get_grips_products_for_category(category_id):
+    return get_cached(
+        f"grips_products_{category_id}",
+        lambda: [
+            c for c in TABLE_GRIP_PRODUCTS.all(sort=["order"])
+            if category_id in c["fields"].get("category", [])
+        ]
+    )
 
 def get_vehicle_by_slug(slug):
     return get_cached(
@@ -66,13 +82,6 @@ def get_head_by_slug(slug):
     return get_cached(
         f"head_{slug}",
         lambda: TABLE_HEADS.first(formula=f"{{slug}}='{slug}'")
-    )
-
-
-def get_grip_by_slug(slug):
-    return get_cached(
-        f"grip_{slug}",
-        lambda: TABLE_gripS.first(formula=f"{{slug}}='{slug}'")
     )
 
 

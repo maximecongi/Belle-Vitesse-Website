@@ -18,10 +18,11 @@ from utils.airtable import (
     get_vehicles,
     get_static_by_lang,
     get_heads,
-    get_grips,
+    get_grips_categories,
+    get_grips_products_for_category,
+    get_grips_categories_by_slug,
     get_vehicle_by_slug,
     get_head_by_slug,
-    get_grip_by_slug,
     get_configs_for_vehicle,
 )
 
@@ -37,20 +38,23 @@ app = Flask(
 # -------------------------------------------------
 # Cache config
 # -------------------------------------------------
+
+
 def warm_cache():
     try:
         get_vehicles()
         get_heads()
-        get_grips()
+        get_grips_categories()
         get_static_by_lang("en")
         app.logger.info("🔥 Cache warmé avec succès")
     except Exception as e:
         app.logger.error(f"❌ Erreur warm cache : {e}")
 
+
 cache = Cache()
 
 if os.getenv("FLASK_ENV") == "production":
-    app.config["CACHE_TYPE"] = "SimpleCache" 
+    app.config["CACHE_TYPE"] = "SimpleCache"
 else:
     app.config["CACHE_TYPE"] = "SimpleCache"
 
@@ -64,10 +68,11 @@ init_cache(cache)
 
 if os.getenv("FLASK_ENV") == "production":
     warm_cache()
-    
+
 # -------------------------------------------------
 # Gestion des tokens admin
 # -------------------------------------------------
+
 
 def require_admin_token():
     token = request.headers.get("X-Admin-Token")
@@ -77,27 +82,31 @@ def require_admin_token():
 # Context processor (footer global)
 # -------------------------------------------------
 
+
 @app.context_processor
 def inject_globals():
     return {
         "vehicles": get_vehicles(),
         "heads": get_heads(),
-        "grips": get_grips(),
+        "grips_categories": get_grips_categories(),
         "static": get_static_by_lang("en"),
         "now": datetime.now(timezone.utc)
     }
-    
+
+
 BRANDS = [
     {"slug": "academy", "label": "Academy", "url": "https://www.academyfilms.com/"},
-    {"slug": "antiestatico", "label": "Antiestatico", "url": "https://antiestatico.com/"},
+    {"slug": "antiestatico", "label": "Antiestatico",
+        "url": "https://antiestatico.com/"},
     {"slug": "biscuit", "label": "Biscuit", "url": "https://biscuitfilmworks.com/"},
     {"slug": "canal", "label": "Canal+", "url": "https://www.canalplusgroup.com/"},
-    {"slug": "chifoumi", "label": "Chi-fou-mi", "url": "https://www.unifrance.org/annuaires/societe/351840/chi-fou-mi-productions"},
+    {"slug": "chifoumi", "label": "Chi-fou-mi",
+        "url": "https://www.unifrance.org/annuaires/societe/351840/chi-fou-mi-productions"},
     {"slug": "lapac", "label": "La Pac", "url": "https://lepac.us/"},
     {"slug": "netflix", "label": "Netflix", "url": "https://about.netflix.com/"},
     {"slug": "somesuch", "label": "Somesuch", "url": "https://somesuch.co/"},
     {"slug": "unite", "label": "Unité", "url": "https://unite-films.com/"},
-]    
+]
 
 # -------------------------------------------------
 # Filtres custom Jinja2
@@ -128,6 +137,7 @@ def handle_exception(e):
 # Lists
 # -----------------------
 
+
 @app.route("/vehicles")
 def vehicles():
     return render_template("vehicles.html")
@@ -138,9 +148,9 @@ def heads():
     return render_template("heads.html")
 
 
-@app.route("/grips")
+""" @app.route("/grips")
 def grips():
-    return render_template("grips.html")
+    return render_template("grips.html") """
 
 
 # -----------------------
@@ -185,23 +195,15 @@ def head(slug):
         specs_left=specs_left,
         specs_right=specs_right,
     )
-
-
+    
+""" TEST DE SA MERE """
 @app.route("/grips/<slug>")
-def grip(slug):
-    grip = get_grip_by_slug(slug)
-    if not grip:
+def grip_products(slug):
+    grips_category = get_grips_categories_by_slug(slug)
+    if not grips_category:
         abort(404)
-
-    specs_left, specs_right = build_specs(grip["fields"])
-
-    return render_template(
-        "grip.html",
-        grip=grip,
-        specs_left=specs_left,
-        specs_right=specs_right,
-    )
-
+    grips_products = get_grips_products_for_category(grips_category["id"])
+    return render_template("grips.html", grips_category=grips_category, grips_products_by_category=grips_products)
 
 # -----------------------
 # Static pages
@@ -233,7 +235,6 @@ def clear_cache():
     return jsonify({"status": "Cache cleared"}), 200
 
 
-
 @app.route("/admin/cache/clear/<key>", methods=["POST"])
 def clear_cache_key(key):
     require_admin_token()
@@ -241,11 +242,9 @@ def clear_cache_key(key):
     return jsonify({"status": f"Cache key {key} cleared"}), 200
 
 
-
 # -------------------------------------------------
 # Run
 # -------------------------------------------------
-
 if __name__ == "__main__":
     if os.getenv("FLASK_ENV") == "production":
         app.run()

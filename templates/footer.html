@@ -30,7 +30,7 @@
                     {% endfor %}
                 </div>
                 <div class="footer-links-wrapper">
-                    <h3 class=""><a href="{{ url_for('grips') }}">Grips</a></h3>
+                    <h3 class="color-white-2">Grips</h3>
                     {% for grip in grips %}
                         {% if grip.fields.status == "Online" %}
                             <p class=""><a href="{{ url_for('grip', slug=grip.fields.slug) }}">{{grip.fields.name}}</a></p>

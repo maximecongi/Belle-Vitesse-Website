@@ -53,13 +53,6 @@ img.top-head {
     width: 70vw;
 }
 
-.grip-description-wrapper {
-    width: 50vw;
-}
-
-.grip-description-wrapper>.vehicle-description-right {
-    width: 100%;
-}
 
 .vehicle-description-right {
     width: 50%;
