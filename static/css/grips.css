@@ -44,6 +44,5 @@
 @media (orientation: portrait) {
     .grips-specs-details {
         width: 100%;
-        grid-template-columns: repeat(4, 1fr);
     }
 }
