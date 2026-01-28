@@ -17,18 +17,18 @@
     margin: 0;
     width: 25vw;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 0.5rem;
 }
 
 .grips-specs-details-detail-wrapper p {
-    font-size: clamp(0.4rem, 0.8vw, 2rem);
+    font-size: clamp(0.6rem, 1vw, 2rem);
 }
 
 .grips-specs-details-detail-wrapper-label {
     text-transform: uppercase;
     color: var(--white-4);
-    font-size: clamp(0.3rem, 0.7vw, 1.5em);
+    font-size: clamp(0.5rem, 0.7vw, 1.5em);
 }
 
 .grip-item-wrapper h3 {
