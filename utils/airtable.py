@@ -54,7 +54,7 @@ def get_heads():
 
 
 def get_grips_categories():
-    return get_cached("grips_categories", lambda: TABLE_GRIPS_CATEGORIES.all(sort=["name"]))
+    return get_cached("grips_categories", lambda: TABLE_GRIPS_CATEGORIES.all(sort=["order"]))
 
 def get_grips_categories_by_slug(slug):
     return get_cached(
