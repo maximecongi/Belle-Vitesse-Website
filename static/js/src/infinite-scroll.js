@@ -19,7 +19,7 @@ window.initInfiniteScroll = function () {
   }
 
   let x = 0;
-  const speed = 2;
+  const speed = 1.5;
   let running = true;
 
   function loop() {
