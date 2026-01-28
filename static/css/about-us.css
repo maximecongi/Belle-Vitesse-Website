@@ -1,6 +1,6 @@
 .about_us-container p {
     width: calc(100% - 6vw);
-    margin-bottom: 3em;
+    margin-bottom: 5em;
     font-weight: 400;
     white-space: pre-line;
 }
