@@ -31,8 +31,8 @@
                         {% for label, value in grip.fields.items() %}
                         {% if label not in excluded_fields %}
                         <div class=" grips-specs-details-detail-wrapper">
-                            <p class="dot-before"><span class="grips-specs-details-detail-wrapper-label">{{ label
-                                    }}</span> : <span class=" grips-specs-details-detail-wrapper-value">{{ value }}
+                            <p><span class="dot-before grips-specs-details-detail-wrapper-label">{{ label
+                                    }} : </span><span class=" grips-specs-details-detail-wrapper-value">{{ value }}
                                 </span>
                             </p>
                         </div>
