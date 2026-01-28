@@ -76,7 +76,7 @@
 
 .newsletter-button:hover {
     transform: translateX(5px);
-    color: (--yellow-1);
+    color: var(--yellow-1);
 }
 
 
