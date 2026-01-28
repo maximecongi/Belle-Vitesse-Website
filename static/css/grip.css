@@ -15,7 +15,7 @@
 
 .grips-specs-details {
     margin: 0;
-    width: 25vw;
+    width: 30vw;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 0.5rem;

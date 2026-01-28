@@ -26,7 +26,7 @@
 
                         {% set excluded_fields = ['name','category', 'created_at', 'created_by', 'status',
                         'gallery',
-                        'last_update_by', 'last_update_at', 'thumbnail', 'slug','order'] %}
+                        'last_update_by', 'last_update_at', 'thumbnail', 'slug','order','grips_categories','grips_categories 2'] %}
 
                         {% for label, value in grip.fields.items() %}
                         {% if label not in excluded_fields %}
