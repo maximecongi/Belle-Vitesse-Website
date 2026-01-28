@@ -281,7 +281,7 @@ def subscribe():
     if not re.match(email_regex, email):
         return jsonify({"status": "error", "message": "Invalid email address"}), 400
 
-    # 2. Rate Limiting (IP based, 5 requests per hour)
+    # 2. Rate Limiting (IP based, 10 requests per hour)
     ip = request.headers.get('X-Forwarded-For', request.remote_addr)
     rate_key = f"rate_limit_{ip}"
     requests_count = cache.get(rate_key) or 0

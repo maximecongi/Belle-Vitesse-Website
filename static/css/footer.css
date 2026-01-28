@@ -76,31 +76,9 @@
 
 .newsletter-button:hover {
     transform: translateX(5px);
+    color: (--yellow-1);
 }
 
-.newsletter-button.loading svg {
-    display: none;
-}
-
-.spinner {
-    display: none;
-    width: 20px;
-    height: 20px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
-    border-top-color: var(--white-2);
-    animation: spin 1s ease-in-out infinite;
-}
-
-.newsletter-button.loading .spinner {
-    display: block;
-}
-
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
 
 .newsletter-message {
     margin-top: 10px;

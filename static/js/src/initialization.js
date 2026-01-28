@@ -78,14 +78,11 @@ function initNewsletterForm() {
 
     const messageDiv = document.getElementById('newsletter-message');
     const input = form.querySelector('input[name="email"]');
-    const button = form.querySelector('button[type="submit"]');
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const email = input.value;
-        button.classList.add('loading');
-        button.disabled = true;
         messageDiv.className = 'newsletter-message'; // Reset classes but keep opacity 0
 
         try {
@@ -98,9 +95,6 @@ function initNewsletterForm() {
             });
 
             const data = await response.json();
-
-            button.classList.remove('loading');
-            button.disabled = false;
 
             messageDiv.textContent = data.message;
             messageDiv.classList.add('show');
@@ -124,9 +118,6 @@ function initNewsletterForm() {
 
         } catch (error) {
             console.error('Error:', error);
-            button.classList.remove('loading');
-            button.disabled = false;
-
             messageDiv.textContent = 'An error occurred. Please try again.';
             messageDiv.className = 'newsletter-message error show';
 
