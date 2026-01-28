@@ -9,32 +9,49 @@
                             src="{{ url_for('static', filename='/imgs/logos_and_name/blanc-fond-transparent.png') }}" /></a>
                 </div>
                 <div class="footer-testimonials-text">
-                    <p class="footer-testimonials-subtext">{{static.fields["footer.powerquote"]| safe}}</p>
+                    <div class="footer-newsletter">
+                        <form id="newsletter-form" class="newsletter-form">
+                            <input type="email" name="email" placeholder="JOIN OUR NEWSLETTER" required
+                                class="newsletter-input">
+                            <button type="submit" class="newsletter-button">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <div class="spinner"></div>
+                            </button>
+                        </form>
+                        <div id="newsletter-message" class="newsletter-message"></div>
+                    </div>
                 </div>
             </div>
             <div class="footer-links">
                 <div class="footer-links-wrapper">
                     <h3 class=""><a href="{{ url_for('vehicles') }}">Vehicles</a></h3>
                     {% for vehicle in vehicles %}
-                        {% if vehicle.fields.status == "Online" %}
-                        <p class=""><a href="{{ url_for('vehicle', slug=vehicle.fields.slug) }}">{{vehicle.fields.name}}</a></p>
-                        {% endif %}
+                    {% if vehicle.fields.status == "Online" %}
+                    <p class=""><a href="{{ url_for('vehicle', slug=vehicle.fields.slug) }}">{{vehicle.fields.name}}</a>
+                    </p>
+                    {% endif %}
                     {% endfor %}
                 </div>
                 <div class="footer-links-wrapper">
                     <h3 class=""><a href="{{ url_for('heads') }}">Heads</a></h3>
                     {% for head in heads %}
-                        {% if head.fields.status == "Online" %}
-                        <p class=""><a href="{{ url_for('head', slug=head.fields.slug) }}">{{head.fields.name}}</a></p>
-                        {% endif %}
+                    {% if head.fields.status == "Online" %}
+                    <p class=""><a href="{{ url_for('head', slug=head.fields.slug) }}">{{head.fields.name}}</a></p>
+                    {% endif %}
                     {% endfor %}
                 </div>
                 <div class="footer-links-wrapper">
                     <h3 class=""><a href="{{ url_for('grips') }}">Grips</a></h3>
                     {% for grips_category in grips_categories %}
-                        {% if grips_category.fields.status == "Online" %}
-                            <p class=""><a href="{{ url_for('grip_products', slug=grips_category.fields.slug)}}">{{grips_category.fields.name}}</a></p>
-                        {% endif %}
+                    {% if grips_category.fields.status == "Online" %}
+                    <p class=""><a
+                            href="{{ url_for('grip_products', slug=grips_category.fields.slug)}}">{{grips_category.fields.name}}</a>
+                    </p>
+                    {% endif %}
                     {% endfor %}
                 </div>
                 <div class="footer-links-wrapper">

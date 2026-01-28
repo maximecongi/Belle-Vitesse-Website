@@ -59,6 +59,7 @@ function initContent() {
     if (typeof window.initInfiniteScroll === 'function') {
         window.initInfiniteScroll();
     }
+    initNewsletterForm();
     initVideos();
 }
 
@@ -68,6 +69,71 @@ function initVideos() {
         video.play().catch(error => {
             console.log("Autoplay prevented:", error);
         });
+    });
+}
+
+function initNewsletterForm() {
+    const form = document.getElementById('newsletter-form');
+    if (!form) return;
+
+    const messageDiv = document.getElementById('newsletter-message');
+    const input = form.querySelector('input[name="email"]');
+    const button = form.querySelector('button[type="submit"]');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const email = input.value;
+        button.classList.add('loading');
+        button.disabled = true;
+        messageDiv.className = 'newsletter-message'; // Reset classes but keep opacity 0
+
+        try {
+            const formData = new FormData();
+            formData.append('email', email);
+
+            const response = await fetch('/subscribe', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            button.classList.remove('loading');
+            button.disabled = false;
+
+            messageDiv.textContent = data.message;
+            messageDiv.classList.add('show');
+            if (response.ok) {
+                messageDiv.classList.add('success');
+                form.reset();
+            } else {
+                messageDiv.classList.add('error');
+            }
+
+            // Hide after 3 seconds
+            setTimeout(() => {
+                messageDiv.classList.remove('show');
+                // Optional: clear text after fade out finishes
+                setTimeout(() => {
+                    if (!messageDiv.classList.contains('show')) {
+                        messageDiv.textContent = '';
+                    }
+                }, 500);
+            }, 3000);
+
+        } catch (error) {
+            console.error('Error:', error);
+            button.classList.remove('loading');
+            button.disabled = false;
+
+            messageDiv.textContent = 'An error occurred. Please try again.';
+            messageDiv.className = 'newsletter-message error show';
+
+            setTimeout(() => {
+                messageDiv.classList.remove('show');
+            }, 3000);
+        }
     });
 }
 

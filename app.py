@@ -1,5 +1,6 @@
 # imports
 import os
+import re
 from collections import defaultdict
 from flask import (
     Flask,
@@ -11,6 +12,9 @@ from flask import (
 from werkzeug.exceptions import HTTPException
 from flask_caching import Cache
 from datetime import datetime, timezone
+import mysql.connector
+from mysql.connector import Error
+from sshtunnel import SSHTunnelForwarder
 
 from utils.specs import build_specs
 from utils.airtable import (
@@ -78,6 +82,49 @@ def require_admin_token():
     token = request.headers.get("X-Admin-Token")
     if not token or token != os.getenv("ADMIN_CACHE_TOKEN"):
         abort(403)
+
+# -------------------------------------------------
+# DB Connection Helper
+# -------------------------------------------------
+
+def get_db_connection():
+    """Create and return a MySQL connection."""
+    mysql_host = os.getenv("MYSQL_HOST")
+    mysql_user = os.getenv("MYSQL_USER")
+    mysql_password = os.getenv("MYSQL_PASSWORD")
+    mysql_database = os.getenv("MYSQL_DATABASE")
+    
+    use_ssh = os.getenv("USE_SSH_TUNNEL", "false").lower() == "true"
+    
+    if use_ssh:
+        ssh_host = os.getenv("SSH_HOST")
+        ssh_user = os.getenv("SSH_USER")
+        ssh_password = os.getenv("SSH_PASSWORD")
+        
+        tunnel = SSHTunnelForwarder(
+            (ssh_host, 22),
+            ssh_username=ssh_user,
+            ssh_password=ssh_password,
+            remote_bind_address=(mysql_host, 3306)
+        )
+        tunnel.start()
+        
+        connection = mysql.connector.connect(
+            host="127.0.0.1",
+            port=tunnel.local_bind_port,
+            user=mysql_user,
+            password=mysql_password,
+            database=mysql_database
+        )
+        return connection, tunnel
+    else:
+        connection = mysql.connector.connect(
+            host=mysql_host,
+            user=mysql_user,
+            password=mysql_password,
+            database=mysql_database
+        )
+        return connection, None
 # -------------------------------------------------
 # Context processor (footer global)
 # -------------------------------------------------
@@ -221,6 +268,58 @@ def contact():
 @app.route("/terms-and-conditions")
 def terms_and_conditions():
     return render_template("terms-and-conditions.html")
+
+
+@app.route("/subscribe", methods=["POST"])
+def subscribe():
+    email = request.form.get("email")
+    if not email:
+        return jsonify({"status": "error", "message": "Email is required"}), 400
+
+    # 1. Email Pattern Validation
+    email_regex = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+    if not re.match(email_regex, email):
+        return jsonify({"status": "error", "message": "Invalid email address"}), 400
+
+    # 2. Rate Limiting (IP based, 5 requests per hour)
+    ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    rate_key = f"rate_limit_{ip}"
+    requests_count = cache.get(rate_key) or 0
+    
+    if requests_count >= 10:
+        return jsonify({"status": "error", "message": "Too many requests. Please try again later."}), 429
+    
+    cache.set(rate_key, requests_count + 1, timeout=3600)
+
+    connection = None
+    tunnel = None
+    try:
+        connection, tunnel = get_db_connection()
+        cursor = connection.cursor()
+        
+        # Check if email already exists
+        cursor.execute("SELECT id FROM newsletter_subscribers WHERE email = %s", (email,))
+        if cursor.fetchone():
+            return jsonify({"status": "error", "message": "You are already subscribed!"}), 400
+            
+        # Insert new subscriber
+        cursor.execute("INSERT INTO newsletter_subscribers (email) VALUES (%s)", (email,))
+        connection.commit()
+        
+        return jsonify({"status": "success", "message": "Thank you for subscribing!"}), 200
+        
+    except Error as e:
+        app.logger.error(f"Database error: {e}")
+        return jsonify({"status": "error", "message": "A server error occurred. Please try again later."}), 500
+    except Exception as e:
+        app.logger.error(f"Unexpected error: {e}")
+        return jsonify({"status": "error", "message": "An unexpected error occurred."}), 500
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
+        if tunnel:
+            tunnel.stop()
 
 
 # -------------------------------------------------
