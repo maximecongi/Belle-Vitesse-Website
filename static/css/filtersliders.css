@@ -34,9 +34,13 @@
 
 .slider-container-wrapper-labels span {
     justify-content: center;
-    aspect-ratio: 1;
+    height: clamp(0.8rem, 0.8vw, 1.6rem);
     width: clamp(0.8rem, 0.8vw, 1.6rem);
     display: flex;
+}
+.slider-container-wrapper-labels > img {
+    height: 100%;
+    object-fit: contain;
 }
 
 .slider-container-wrapper-value_wrapper {
