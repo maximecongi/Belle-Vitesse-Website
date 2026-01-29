@@ -5,10 +5,10 @@
 <section id="hero-banner" class="section-site">
     <div class="vehicle-hero-banner bg-color-white-3">
         <div class="vehicle-hero-banner-img">
-            <img src="{{ head.fields.banner[0].thumbnails.full.url }}" {% if head.fields.slug=="titan-lt" or
-                head.fields.slug=="movi-pro" or head.fields.slug=="ronin-2" %} class="top-head" {% endif %} />
+            <img src="{{ head.fields.banner[0].thumbnails.full.url }}" {% if head.fields.banner_position=="top" %}
+                class="top-head" {% endif %} />
         </div>
-        <div class="vehicle-hero-banner-wrapper animate__animated animation__banner-title text-head">
+        <div class="vehicle-hero-banner-wrapper animate__animated animation__banner-title {% if head.fields.banner_position == 'top' %} text-head {% endif %}">
             <div class="vehicle-hero-banner-titlewrapper">
                 <h1 class="vehicle-hero-banner-titlewrapper-title font-54 color-grey-1">
                     {{ head.fields.name }}
