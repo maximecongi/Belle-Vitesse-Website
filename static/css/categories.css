@@ -70,8 +70,8 @@ span.categories-solutions-filters-dropdown-text {
 }
 
 .categories-solutions-categories-categorywrapper {
-    width: 20vw;
-    margin: 0vw 5vw 4vw 5vw;
+    width: 30%;
+    margin: 0 1.5% 4vw 1.5%;
     transition: opacity 0.3s ease, transform 0.3s ease;
 }
 

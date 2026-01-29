@@ -31,7 +31,7 @@
 }
 
 .footer-testimonials>* {
-    width: 20vw;
+    width: 20%;
 }
 
 .footer-newsletter {
@@ -107,8 +107,8 @@
 
 .footer-links {
     display: flex;
-    width: 60vw;
-    margin-left: 10vw;
+    width: 70%;
+    margin-left: 10%;
     justify-content: space-between;
 }
 
