@@ -1,0 +1,83 @@
+.newsletter {
+    margin-top: 2svh;
+    width: 100%;
+}
+
+.newsletter-contact {
+    width: 50%;
+    margin-top: 5vw;
+}
+
+.newsletter-form {
+    display: flex;
+    border-bottom: 1px solid var(--white-2);
+    padding-bottom: 5px;
+    align-items: center;
+}
+
+.newsletter-contact .newsletter-form {
+    border-bottom: 1px solid var(--grey-2);
+}
+
+.newsletter-input {
+    background: transparent;
+    border: none;
+    color: var(--white-2);
+    font-size: clamp(0.8rem, 0.8vw, 1.2rem);
+    font-family: inherit;
+    width: 100%;
+    outline: none;
+    padding: 5px 0;
+}
+
+.newsletter-contact .newsletter-input {
+    color: var(--grey-2);
+}
+
+.newsletter-input::placeholder {
+    color: var(--white-4);
+    font-weight: 300;
+}
+
+.newsletter-button {
+    background: transparent;
+    border: none;
+    color: var(--white-2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    transition: transform 0.3s ease;
+}
+
+.newsletter-contact .newsletter-button {
+    color: var(--grey-2);
+}
+
+.newsletter-button:hover {
+    transform: translateX(5px);
+    color: var(--yellow-1);
+}
+
+
+.newsletter-message {
+    margin-top: 10px;
+    font-size: 0.8rem;
+    font-weight: 300;
+    min-height: 1.2em;
+    transition: opacity 0.5s ease;
+    opacity: 0;
+}
+
+.newsletter-message.show {
+    opacity: 1;
+}
+
+.newsletter-message.success {
+    color: var(--green-1)
+}
+
+.newsletter-message.error {
+    color: var(--red-1)
+}

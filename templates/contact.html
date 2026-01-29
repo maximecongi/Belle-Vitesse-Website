@@ -14,10 +14,25 @@
                     <a href="tel:123Z356476">+33 1 23 45 67 89</a><br><br>
                     <a href="mailto:contact@bellevitesse.com">contact@bellevitesse.com</a>
                 </p>
+                <div class="newsletter newsletter-contact">
+                    <form class="newsletter-form" novalidate>
+                        <input type="email" name="email" placeholder="LET'S KEEP IN TOUCH" required
+                            class="newsletter-input">
+                        <button type="submit" class="newsletter-button">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </button>
+                    </form>
+                    <div class="newsletter-message"></div>
+                </div>
             </div>
             <div class="contact-container-columns-right">
                 <div id="map" class="contact-container-columns-right-map">
-                    <a href="https://maps.app.goo.gl/9gqrLGoeRjLtQqjq8" target="_blank"><img src="{{ url_for('static', filename='/imgs/maps/map_33.png') }}"></a>
+                    <a href="https://maps.app.goo.gl/9gqrLGoeRjLtQqjq8" target="_blank"><img
+                            src="{{ url_for('static', filename='/imgs/maps/map_33.png') }}"></a>
                 </div>
             </div>
         </div>

@@ -73,58 +73,63 @@ function initVideos() {
 }
 
 function initNewsletterForm() {
-    const form = document.getElementById('newsletter-form');
-    if (!form) return;
+    const forms = document.querySelectorAll('.newsletter-form');
 
-    const messageDiv = document.getElementById('newsletter-message');
-    const input = form.querySelector('input[name="email"]');
+    forms.forEach(form => {
+        // Find the specific message div and input for this form
+        const container = form.closest('.newsletter');
+        const messageDiv = container ? container.querySelector('.newsletter-message') : null;
+        const input = form.querySelector('input[name="email"]');
 
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
+        if (!input || !messageDiv) return;
 
-        const email = input.value;
-        messageDiv.className = 'newsletter-message'; // Reset classes but keep opacity 0
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-        try {
-            const formData = new FormData();
-            formData.append('email', email);
+            const email = input.value;
+            messageDiv.className = 'newsletter-message'; // Reset classes but keep opacity 0
 
-            const response = await fetch('/subscribe', {
-                method: 'POST',
-                body: formData
-            });
+            try {
+                const formData = new FormData();
+                formData.append('email', email);
 
-            const data = await response.json();
+                const response = await fetch('/subscribe', {
+                    method: 'POST',
+                    body: formData
+                });
 
-            messageDiv.textContent = data.message;
-            messageDiv.classList.add('show');
-            if (response.ok) {
-                messageDiv.classList.add('success');
-                form.reset();
-            } else {
-                messageDiv.classList.add('error');
-            }
+                const data = await response.json();
 
-            // Hide after 3 seconds
-            setTimeout(() => {
-                messageDiv.classList.remove('show');
-                // Optional: clear text after fade out finishes
+                messageDiv.textContent = data.message;
+                messageDiv.classList.add('show');
+                if (response.ok) {
+                    messageDiv.classList.add('success');
+                    form.reset();
+                } else {
+                    messageDiv.classList.add('error');
+                }
+
+                // Hide after 3 seconds
                 setTimeout(() => {
-                    if (!messageDiv.classList.contains('show')) {
-                        messageDiv.textContent = '';
-                    }
-                }, 500);
-            }, 3000);
+                    messageDiv.classList.remove('show');
+                    // Optional: clear text after fade out finishes
+                    setTimeout(() => {
+                        if (!messageDiv.classList.contains('show')) {
+                            messageDiv.textContent = '';
+                        }
+                    }, 500);
+                }, 3000);
 
-        } catch (error) {
-            console.error('Error:', error);
-            messageDiv.textContent = 'An error occurred. Please try again.';
-            messageDiv.className = 'newsletter-message error show';
+            } catch (error) {
+                console.error('Error:', error);
+                messageDiv.textContent = 'An error occurred. Please try again.';
+                messageDiv.className = 'newsletter-message error show';
 
-            setTimeout(() => {
-                messageDiv.classList.remove('show');
-            }, 3000);
-        }
+                setTimeout(() => {
+                    messageDiv.classList.remove('show');
+                }, 3000);
+            }
+        });
     });
 }
 
