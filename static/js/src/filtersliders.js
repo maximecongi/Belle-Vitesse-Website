@@ -64,7 +64,7 @@
                 const { filterKey, getValue } = slider;
                 const vehicleValue = parseInt(vehicle.dataset[filterKey], 10);
 
-                if (Number.isNaN(vehicleValue)) return false;
+                if (Number.isNaN(vehicleValue)) return true;
 
                 return getValue() <= vehicleValue;
             });

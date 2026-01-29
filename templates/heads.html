@@ -2,20 +2,6 @@
 {% from "macros.html" import slider %}
 {% block title %}Heads - Belle Vitesse{% endblock %}
 {% block content %}
-{# <section id="hero-banner" class="section-site">
-    <div class="categories-hero-banner img-overlay bg-heads">
-        <div class="main-wrapper categories-hero-banner-titlewrapper">
-            <h1 class="categories-hero-banner-titlewrapper-title color-white-2">
-                Heads
-            </h1>
-            <div class="categories-hero-banner-textwrapper">
-                <p class="dot-before categories-hero-banner-textwrapper-text color-white-2 font-weight-300 lh-05">
-                    Meet our fleet
-                </p>
-            </div>
-        </div>
-        <div class="icon-scroll"></div>
-</section> #}
 <section id="solutions" class="section-site">
     <div class="categories-solutions">
         <h2 class="dot-before title-section">Our heads</h2>
@@ -51,7 +37,7 @@
         <div class="categories-solutions-categories">
             {% for head in heads %}
             {% if head.fields.status == "Online" %}
-            <div data-payload="{{ head.fields.payload }}" class="categories-solutions-categories-categorywrapper">
+            <div data-payload='{% if head.fields.slug !="ronin-4d"%}{{ head.fields.payload }}{% endif %}' class="categories-solutions-categories-categorywrapper">
                 <h3>{{ head.fields.name }}</h3>
                 <a class="categories-solutions-categories-img-link" href="{{ url_for('head', slug=head.fields.slug) }}">
                     {% if head.fields.thumbnail[0].thumbnails is defined %}
