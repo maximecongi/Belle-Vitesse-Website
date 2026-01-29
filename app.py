@@ -87,20 +87,21 @@ def require_admin_token():
 # DB Connection Helper
 # -------------------------------------------------
 
+
 def get_db_connection():
     """Create and return a MySQL connection."""
     mysql_host = os.getenv("MYSQL_HOST")
     mysql_user = os.getenv("MYSQL_USER")
     mysql_password = os.getenv("MYSQL_PASSWORD")
     mysql_database = os.getenv("MYSQL_DATABASE")
-    
+
     use_ssh = os.getenv("USE_SSH_TUNNEL", "false").lower() == "true"
-    
+
     if use_ssh:
         ssh_host = os.getenv("SSH_HOST")
         ssh_user = os.getenv("SSH_USER")
         ssh_password = os.getenv("SSH_PASSWORD")
-        
+
         tunnel = SSHTunnelForwarder(
             (ssh_host, 22),
             ssh_username=ssh_user,
@@ -108,7 +109,7 @@ def get_db_connection():
             remote_bind_address=(mysql_host, 3306)
         )
         tunnel.start()
-        
+
         connection = mysql.connector.connect(
             host="127.0.0.1",
             port=tunnel.local_bind_port,
@@ -171,14 +172,14 @@ def home():
     return render_template("home.html", brands=BRANDS)
 
 
-@app.errorhandler(HTTPException)
-def handle_http_exception(e):
-    return render_template("error.html", error_title=f"{e.code} - {e.name}", error_message=e.description), e.code
+if os.getenv("FLASK_ENV") == "production":
+    @app.errorhandler(HTTPException)
+    def handle_http_exception(e):
+        return render_template("error.html", error_title=f"{e.code} - {e.name}", error_message=e.description), e.code
 
-
-@app.errorhandler(Exception)
-def handle_exception(e):
-    return render_template("error.html", error_title="500 - Internal Server Error", error_message="An unexpected error occurred."), 500
+    @app.errorhandler(Exception)
+    def handle_exception(e):
+        return render_template("error.html", error_title="500 - Internal Server Error", error_message="An unexpected error occurred."), 500
 
 # -----------------------
 # Lists
@@ -194,10 +195,10 @@ def vehicles():
 def heads():
     return render_template("heads.html")
 
+
 @app.route("/grips")
 def grips():
     return render_template("grips.html")
-
 
 
 # -----------------------
@@ -242,7 +243,8 @@ def head(slug):
         specs_left=specs_left,
         specs_right=specs_right,
     )
-    
+
+
 @app.route("/grips/<slug>")
 def grip_products(slug):
     grips_category = get_grips_categories_by_slug(slug)
@@ -254,6 +256,7 @@ def grip_products(slug):
 # -----------------------
 # Static pages
 # -----------------------
+
 
 @app.route("/about-us")
 def about_us():
@@ -285,10 +288,10 @@ def subscribe():
     ip = request.headers.get('X-Forwarded-For', request.remote_addr)
     rate_key = f"rate_limit_{ip}"
     requests_count = cache.get(rate_key) or 0
-    
+
     if requests_count >= 10:
         return jsonify({"status": "error", "message": "Too many requests. Please try again later."}), 429
-    
+
     cache.set(rate_key, requests_count + 1, timeout=3600)
 
     connection = None
@@ -296,18 +299,20 @@ def subscribe():
     try:
         connection, tunnel = get_db_connection()
         cursor = connection.cursor()
-        
+
         # Check if email already exists
-        cursor.execute("SELECT id FROM newsletter_subscribers WHERE email = %s", (email,))
+        cursor.execute(
+            "SELECT id FROM newsletter_subscribers WHERE email = %s", (email,))
         if cursor.fetchone():
             return jsonify({"status": "error", "message": "You are already subscribed!"}), 400
-            
+
         # Insert new subscriber
-        cursor.execute("INSERT INTO newsletter_subscribers (email) VALUES (%s)", (email,))
+        cursor.execute(
+            "INSERT INTO newsletter_subscribers (email) VALUES (%s)", (email,))
         connection.commit()
-        
+
         return jsonify({"status": "success", "message": "Thank you for subscribing!"}), 200
-        
+
     except Error as e:
         app.logger.error(f"Database error: {e}")
         return jsonify({"status": "error", "message": "A server error occurred. Please try again later."}), 500

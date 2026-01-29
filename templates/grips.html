@@ -31,10 +31,10 @@
                 <h3>{{ grip.fields.name }}</h3>
                 <a class="categories-solutions-categories-img-link"
                     href="{{ url_for('grip_products', slug=grip.fields.slug) }}">
-                    {% if grip.fields.thumbnail[0].thumbnails is defined %}
+                    {% if grip.fields.thumbnail is defined %}
                     <img src="{{ grip.fields.thumbnail[0].thumbnails.large.url }}" />
                     {% else %}
-                    <img src="{{ url_for('static', filename='/imgs/placeholders/grip.jpeg') }}" />
+                    <img src="{{ url_for('static', filename='/imgs/icons/gimbal.svg') }}" />
                     {% endif %}
                 </a>
             </div>
