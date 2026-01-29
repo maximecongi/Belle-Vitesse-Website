@@ -1,10 +1,10 @@
 main {
-    width: 100%;
+    width: 100vw;
 }
 
 .section-site {
     position: relative;
-    width: 100%;
+    width: 100vw;
     margin-inline: auto;
 }
 
