@@ -130,7 +130,7 @@
     }
 
     .footer-testimonials {
-        width: 60%;
+        width: 70%;
     }
 
     .footer-testimonials>* {
@@ -140,7 +140,7 @@
     .footer-links {
         display: flex;
         flex-direction: row;
-        width: 80%;
+        width: 70%;
         margin: 0;
         flex-wrap: wrap;
         justify-content: space-between;
@@ -155,8 +155,15 @@
         padding: 10vw 0;
     }
 
+    .footer-links-wrapper:nth-child(odd) {
+        padding: 10% 10% 10% 0;
+    }
+
+    .footer-links-wrapper:nth-child(even) {
+        padding: 10% 0 10% 10%;
+    }
+
     .footer-links-wrapper {
-        width: 25%;
-        padding: 10%;
+        width: 40%;
     }
 }

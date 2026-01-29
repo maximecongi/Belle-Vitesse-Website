@@ -44,21 +44,25 @@
     padding-top: 5vw;
     display: flex;
     align-items: center;
+    flex-direction: column;
 }
+
 .home-testimonials-textwrapper-text {
     white-space: pre-wrap;
 }
 
 .home-testimonials>* {
-    width: 50%;
-    height: 40svh;
+    width: 75vw;
     display: flex;
     justify-content: center;
     align-items: center;
 }
+.home-testimonials-logo {
+    margin-bottom: 3vw;
+}
 
 .home-testimonials-logo img {
-    height: 10vw;
+    height: 12vw;
 }
 
 /* solutions */
@@ -122,35 +126,35 @@
     ;
 } */
 .logo {
-  width: 7vw;
+    width: 7vw;
     aspect-ratio: 10 / 2;
 
-  background-color: var(--logo-color, var(--grey-1));
+    background-color: var(--logo-color, var(--grey-1));
 
-  -webkit-mask-image: var(--logo-url);
-  mask-image: var(--logo-url);
+    -webkit-mask-image: var(--logo-url);
+    mask-image: var(--logo-url);
 
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
 
-  -webkit-mask-position: center;
-  mask-position: center;
+    -webkit-mask-position: center;
+    mask-position: center;
 
-  -webkit-mask-size: contain;
-  mask-size: contain;
+    -webkit-mask-size: contain;
+    mask-size: contain;
 
-  transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease;
 }
 
 /* Couleur globale */
 .home-references-group {
-  --logo-color: var(--black-1);
+    --logo-color: var(--black-1);
 }
 
 /* Exemple hover */
 .logo:hover {
-  background-color: var(--yellow-1);
-  cursor: pointer;
+    background-color: var(--yellow-1);
+    cursor: pointer;
 }
 
 

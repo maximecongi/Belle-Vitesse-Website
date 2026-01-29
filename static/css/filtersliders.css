@@ -36,7 +36,7 @@
     justify-content: center;
     aspect-ratio: 1;
     width: clamp(0.8rem, 0.8vw, 1.6rem);
-    display: inline-flex;
+    display: flex;
 }
 
 .slider-container-wrapper-value_wrapper {

@@ -23,23 +23,29 @@
             {# SLIDER SPEED #}
             {{ slider(
             title="Which speed do you need?",
-            min=5,
+            min=0,
             max=50,
-            value=5,
+            value=0,
             unit="km/h",
             filter_key="speed",
             descriptions=[
-            (5, "That's enough for walking"),
-            (15, "That's what you need for an average runner"),
-            (30, "Perfect for cycling"),
-            (45, "Motorized speed")
+            (0, "That's enough for walking"),
+            (5, "That's what you need for an average runner"),
+            (15, "Perfect for cycling or sprinting"),
+            (30, "Motorized speed")
             ],
             icons=[
             "walk",
             "run",
-            "run-fast",
-            "bike",
-            "atv"
+            "null",
+            ["run-fast", "bike"],
+            "null",
+            "null",
+            "atv",
+            "null",
+            "null",
+            "null",
+            "null"
             ]
             ) }}
             {# SLIDER CAPACITY #}
@@ -51,10 +57,10 @@
             unit="",
             filter_key="capacity",
             descriptions=[
-            (0, "Driver only"),
-            (1, "1 driver + 1 passenger"),
-            (2, "1 driver + 2 passengers"),
-            (3, "1 driver + 3 passengers")
+            (0, "Pilot only"),
+            (1, "1 pilot + 1 passenger"),
+            (2, "1 pilot + 2 passengers"),
+            (3, "1 pilot + 3 passengers")
             ],
             icons=[
             ["steering"],

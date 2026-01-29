@@ -11,7 +11,7 @@
                 <div class="footer-testimonials-text">
                     <div class="footer-newsletter">
                         <form id="newsletter-form" class="newsletter-form">
-                            <input type="email" name="email" placeholder="JOIN OUR NEWSLETTER" required
+                            <input type="email" name="email" placeholder="LET'S KEEP IN TOUCH" required
                                 class="newsletter-input">
                             <button type="submit" class="newsletter-button">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -44,7 +44,7 @@
                     {% endfor %}
                 </div>
                 <div class="footer-links-wrapper">
-                    <h3 class=""><a href="{{ url_for('grips') }}">Grips</a></h3>
+                    <h3 class=""><a href="{{ url_for('grips') }}">Grip</a></h3>
                     {% for grips_category in grips_categories %}
                     {% if grips_category.fields.status == "Online" %}
                     <p class=""><a
