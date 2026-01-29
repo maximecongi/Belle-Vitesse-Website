@@ -58,7 +58,7 @@
 
 .categories-solutions-filters-dropdown-icon {
     width: clamp(0.6rem, 1vw, 1.6rem);
-    height: min-content;
+    height: clamp(0.6rem, 1vw, 1.6rem);
     display: flex;
 }
 
