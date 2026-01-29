@@ -58,7 +58,7 @@
 }
 
 .newsletter-input::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--white-4);
     font-weight: 300;
 }
 
