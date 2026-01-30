@@ -440,7 +440,7 @@ def unsubscribe(token):
     try:
         email = serializer.loads(token)
     except Exception:
-        return render_template("unsubscribe_confirmation.html", status="error", message="Lien de désinscription invalide ou expiré.")
+        return render_template("unsubscribe_confirmation.html", status="error", message="Invalid or expired unsubscribe link.")
 
     connection = None
     tunnel = None
@@ -453,20 +453,19 @@ def unsubscribe(token):
         connection.commit()
 
         if cursor.rowcount > 0:
-            return render_template("unsubscribe_confirmation.html", status="success", message="Vous avez été désabonné de notre newsletter avec succès.")
+            return render_template("unsubscribe_confirmation.html", status="success", message="You have been successfully unsubscribed from our newsletter.")
         else:
-            return render_template("unsubscribe_confirmation.html", status="info", message="Cet e-mail n'est plus dans notre liste de diffusion.")
+            return render_template("unsubscribe_confirmation.html", status="info", message="This email is no longer on our mailing list.")
 
     except Exception as e:
-        app.logger.error(f"❌ Erreur lors de la désinscription ({email}) : {e}")
-        return render_template("unsubscribe_confirmation.html", status="error", message="Une erreur serveur est survenue. Veuillez réessayer plus tard.")
+        app.logger.error(f"❌ Error during unsubscription ({email}): {e}")
+        return render_template("unsubscribe_confirmation.html", status="error", message="A server error occurred. Please try again later.")
     finally:
         if connection:
             cursor.close()
             connection.close()
         if tunnel:
             tunnel.stop()
-
 
 # -------------------------------------------------
 # Cache management

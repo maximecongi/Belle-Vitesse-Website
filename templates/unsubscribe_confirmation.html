@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Désinscription - Belle Vitesse</title>
+    <title>Unsubscribe - Belle Vitesse</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -35,7 +35,7 @@
         }
 
         .logo {
-            width: 200px;
+            width: 300px;
             margin-bottom: 3rem;
         }
 
@@ -52,20 +52,25 @@
         }
 
         .btn {
-            display: inline-block;
-            background-color: var(--yellow-1);
+            background-color: #ffc845;
             color: var(--grey-1);
-            padding: 1rem 2rem;
+            text-align: center;
+            display: inline-block;
+            font-size: clamp(0.6rem, 1vw, 1rem);
+            font-weight: 600;
+            cursor: pointer;
+            border-width: initial;
+            border-style: none;
+            border-color: initial;
+            border-image: initial;
+            padding: clamp(0.6rem, 1vw, 1.1rem) clamp(1.2rem, 1.2vw, 2.5rem);
             text-decoration: none;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-radius: 2px;
-            transition: transform 0.3s;
+            margin: 4px 2px;
+            transition: filter 0.2s linear;
         }
 
         .btn:hover {
-            transform: translateY(-2px);
+            filter: brightness(0.9);
         }
 
         .status-icon {
@@ -102,10 +107,10 @@
             {% endif %}
         </div>
 
-        <h1>{{ status|replace('success', 'Confirmé')|replace('error', 'Erreur')|replace('info', 'Information') }}</h1>
+        <h1>{{ status|replace('success', 'Confirmed')|replace('error', 'Error')|replace('info', 'Information') }}</h1>
         <p>{{ message }}</p>
 
-        <a href="/" class="btn">Retour au site</a>
+        <a href="/" class="btn">Back to home</a>
     </div>
 </body>
 

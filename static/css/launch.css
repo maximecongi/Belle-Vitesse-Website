@@ -164,16 +164,12 @@ html {
     padding: 1vw 2vw;
     font-size: clamp(0.5rem, 1vw, 2rem);
     font-weight: 700;
-    text-transform: uppercase;
     cursor: pointer;
-    transition: all 0.3s;
-    letter-spacing: 0.1em;
-    margin-top: 1vw;
+    transition: all 0.3s ease
 }
 
 .newsletter-button:hover {
     filter: brightness(0.9);
-    transform: translateY(-2px);
 }
 
 .newsletter-message {
