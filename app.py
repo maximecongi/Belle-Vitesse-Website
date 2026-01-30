@@ -186,7 +186,7 @@ def send_subscription_email(to_email):
         
         # ⭐ AJOUT DES EN-TÊTES ANTI-SPAM ⭐
         msg["Precedence"] = "bulk"
-        msg["List-Unsubscribe"] = f"<mailto:unsubscribe@bellevitesse.com?subject=unsubscribe>, <{unsubscribe_url}>"
+        msg["List-Unsubscribe"] = f"<{unsubscribe_url}>"
         msg["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click"
         msg["List-Id"] = "Belle Vitesse Newsletter <newsletter.bellevitesse.com>"
         msg["X-Entity-Ref-ID"] = "newsletter-welcome"
@@ -195,8 +195,8 @@ def send_subscription_email(to_email):
         msg["Reply-To"] = mail_user
         msg["Return-Path"] = mail_user
 
-        msg.attach(MIMEText(text_content, "plain"))
-        msg.attach(MIMEText(html_content, "html"))
+        msg.attach(MIMEText(text_content, "plain", "utf-8"))
+        msg.attach(MIMEText(html_content, "html", "utf-8"))
 
         # Send email
         app.logger.info(f"🔌 Connexion au serveur SMTP {mail_server}:{mail_port}...")
@@ -433,14 +433,36 @@ def subscribe():
             tunnel.stop()
 
 
-@app.route("/unsubscribe/<token>")
+@app.route("/unsubscribe/<token>", methods=["GET", "POST"])
 def unsubscribe(token):
     secret_key = app.config.get("SECRET_KEY") or "bv_super_secret_key_2026"
     serializer = URLSafeSerializer(secret_key)
     try:
         email = serializer.loads(token)
     except Exception:
+        if request.method == "POST":
+            return jsonify({"status": "error", "message": "Invalid token"}), 400
         return render_template("unsubscribe_confirmation.html", status="error", message="Invalid or expired unsubscribe link.")
+
+    # RFC 8058: One-Click Unsubscribe via POST
+    if request.method == "POST":
+        connection = None
+        tunnel = None
+        try:
+            connection, tunnel = get_db_connection()
+            cursor = connection.cursor()
+            cursor.execute("DELETE FROM newsletter_subscribers WHERE email = %s", (email,))
+            connection.commit()
+            return jsonify({"status": "success", "message": "Unsubscribed"}), 200
+        except Exception as e:
+            app.logger.error(f"❌ Error during POST unsubscription ({email}): {e}")
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            if connection:
+                cursor.close()
+                connection.close()
+            if tunnel:
+                tunnel.stop()
 
     connection = None
     tunnel = None
