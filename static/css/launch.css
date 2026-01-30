@@ -181,7 +181,7 @@ html {
     font-size: 0.85rem;
     min-height: 1.2em;
     opacity: 0;
-    transition: opacity 0.3s;
+    transition: opacity 0.6s ease;
 }
 
 .newsletter-message.show {
