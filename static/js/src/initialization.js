@@ -80,6 +80,7 @@ function initNewsletterForm() {
         const container = form.closest('.newsletter');
         const messageDiv = container ? container.querySelector('.newsletter-message') : null;
         const input = form.querySelector('input[name="email"]');
+        const button = form.querySelector('button[type="submit"]');
 
         if (!input || !messageDiv) return;
 
@@ -87,7 +88,11 @@ function initNewsletterForm() {
             e.preventDefault();
 
             const email = input.value;
-            messageDiv.className = 'newsletter-message'; // Reset classes but keep opacity 0
+            // 🚀 Add loading state
+            messageDiv.className = 'newsletter-message';
+            messageDiv.textContent = 'Subscribing...';
+            messageDiv.classList.add('show');
+            if (button) button.disabled = true;
 
             try {
                 const formData = new FormData();
@@ -109,6 +114,8 @@ function initNewsletterForm() {
                     messageDiv.classList.add('error');
                 }
 
+                if (button) button.disabled = false;
+
                 // Hide after 3 seconds
                 setTimeout(() => {
                     messageDiv.classList.remove('show');
@@ -124,6 +131,7 @@ function initNewsletterForm() {
                 console.error('Error:', error);
                 messageDiv.textContent = 'An error occurred. Please try again.';
                 messageDiv.className = 'newsletter-message error show';
+                if (button) button.disabled = false;
 
                 setTimeout(() => {
                     messageDiv.classList.remove('show');
