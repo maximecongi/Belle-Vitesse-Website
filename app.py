@@ -450,9 +450,10 @@ def unsubscribe(token):
 
         # Delete subscriber
         cursor.execute("DELETE FROM newsletter_subscribers WHERE email = %s", (email,))
+        affected_count = cursor.rowcount
         connection.commit()
 
-        if cursor.rowcount > 0:
+        if affected_count > 0:
             return render_template("unsubscribe_confirmation.html", status="success", message="You have been successfully unsubscribed from our newsletter.")
         else:
             return render_template("unsubscribe_confirmation.html", status="info", message="This email is no longer on our mailing list.")
