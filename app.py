@@ -172,6 +172,11 @@ def home():
     return render_template("home.html", brands=BRANDS)
 
 
+@app.route("/launch")
+def launch():
+    return render_template("launch.html")
+
+
 if os.getenv("FLASK_ENV") == "production":
     @app.errorhandler(HTTPException)
     def handle_http_exception(e):

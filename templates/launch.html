@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Belle Vitesse | The Accuracy of Motion</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/launch.css') }}">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
+</head>
+
+<body>
+    <div class="launch-background">
+        <video autoplay muted loop playsinline preload="auto"
+            poster="{{ url_for('static', filename='imgs/bgs/bg_home.jpg') }}">
+            <source src="{{ url_for('static', filename='videos/hero-banner/hero-banner-2.mp4') }}" type="video/mp4">
+        </video>
+    </div>
+
+    <div class="launch-container">
+        <div class="launch-wrapper">
+            <div class="launch-logo">
+                <img src="/static/imgs/logos_and_name/blanc-fond-transparent.png" alt="Belle Vitesse Logo">
+            </div>
+
+            <div class="launch-content">
+                <h1 class="launch-title">Specialist in <i>moving</i> cinema</span></h1>
+
+                <div class="newsletter">
+                    <div class="newsletter-box">
+                        <p>Be the first to know when we launch.</p>
+                        <form class="newsletter-form">
+                            <div class="input-group">
+                                <input type="email" name="email" placeholder="YOUR EMAIL ADDRESS" required
+                                    class="newsletter-input">
+                            </div>
+                            <button type="submit" class="newsletter-button">Notify me</button>
+                        </form>
+                        <div class="newsletter-message"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const forms = document.querySelectorAll('.newsletter-form');
+
+            forms.forEach(form => {
+                const container = form.closest('.newsletter');
+                const messageDiv = container ? container.querySelector('.newsletter-message') : null;
+                const input = form.querySelector('input[name="email"]');
+
+                if (!input || !messageDiv) return;
+
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+
+                    const email = input.value;
+                    messageDiv.className = 'newsletter-message';
+                    messageDiv.textContent = 'Subscribing...';
+                    messageDiv.classList.add('show');
+
+                    try {
+                        const formData = new FormData();
+                        formData.append('email', email);
+
+                        const response = await fetch('/subscribe', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        const data = await response.json();
+
+                        messageDiv.textContent = data.message;
+                        if (response.ok) {
+                            messageDiv.className = 'newsletter-message success show';
+                            form.reset();
+                        } else {
+                            messageDiv.className = 'newsletter-message error show';
+                        }
+
+                        setTimeout(() => {
+                            messageDiv.classList.remove('show');
+                        }, 5000);
+
+                    } catch (error) {
+                        console.error('Error:', error);
+                        messageDiv.textContent = 'An error occurred. Please try again.';
+                        messageDiv.className = 'newsletter-message error show';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

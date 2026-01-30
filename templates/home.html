@@ -23,7 +23,7 @@
     <div class="home-testimonials-logo"><img
         src="{{ url_for('static', filename='/imgs/logos_and_name/noir-fond-transparent.png') }}"></div>
     <div class="home-testimonials-textwrapper">
-      <p class="home-testimonials-textwrapper-text">{{static.fields["home.testimonial"]}}</p>
+      <p class="home-testimonials-textwrapper-text">{{static.fields["home.testimonial"] | safe}}</p>
     </div>
   </div>
 </section>
