@@ -470,15 +470,19 @@ def unsubscribe(token):
         connection, tunnel = get_db_connection()
         cursor = connection.cursor()
 
+        # Log for debugging
+        app.logger.info(f"🔎 Processing unsubscribe request for: {email}")
+
         # Delete subscriber
         cursor.execute("DELETE FROM newsletter_subscribers WHERE email = %s", (email,))
         affected_count = cursor.rowcount
         connection.commit()
+        
+        app.logger.info(f"🗑️ Rows affected by DELETE: {affected_count}")
 
-        if affected_count > 0:
-            return render_template("unsubscribe_confirmation.html", status="success", message="You have been successfully unsubscribed from our newsletter.")
-        else:
-            return render_template("unsubscribe_confirmation.html", status="info", message="This email is no longer on our mailing list.")
+        # If the token is valid, we consider it a success. 
+        # Even if affected_count is 0, it means they are not on the list anymore (perhaps already removed by an auto-clicker).
+        return render_template("unsubscribe_confirmation.html", status="success", message="You have been successfully unsubscribed from our newsletter.")
 
     except Exception as e:
         app.logger.error(f"❌ Error during unsubscription ({email}): {e}")
