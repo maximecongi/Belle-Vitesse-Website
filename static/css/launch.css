@@ -174,7 +174,6 @@ html {
 .newsletter-button:hover {
     filter: brightness(1.1);
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(255, 200, 69, 0.3);
 }
 
 .newsletter-message {
