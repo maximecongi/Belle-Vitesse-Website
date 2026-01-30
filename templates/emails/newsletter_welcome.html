@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Belle Vitesse</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #151515;
+            color: #FFFFFF;
+            font-family: 'Poppins', Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            margin: 10vw auto;
+            background-color: #151515;
+        }
+
+        .header {
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .logo {
+            width: 300px;
+            max-width: 80%;
+        }
+
+        .content {
+            padding: 20px 40px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .content a {
+            text-decoration: none;
+            transition: filter 0.3s ease;
+        }
+
+        .content a:hover {
+            filter: brightness(0.9);
+        }
+
+
+        .content-launch {
+            background-color: #FFC845;
+            padding: 16px 32px;
+            color: #151515;
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+
+        p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #A1A1A1;
+            margin-bottom: 30px;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 15px 30px;
+            background-color: #FFC845;
+            color: #151515;
+            text-decoration: none;
+            font-weight: 700;
+            text-transform: uppercase;
+            border-radius: 4px;
+            letter-spacing: 1px;
+        }
+
+        .footer {
+            padding: 40px 20px;
+            text-align: center;
+            color: #555555;
+            border-top: 1px solid #252525;
+            margin-top: 40px;
+        }
+
+        .footer p {
+            font-size: 12px;
+        }
+
+        .footer a {
+            color: #A1A1A1;
+            text-decoration: none;
+            text-transform: uppercase;
+            font-size: 10px;
+        }
+
+        .footer a:hover {
+            color: #FFC845;
+        }
+
+        .dot-before:before {
+            content: "■ ";
+            color: #FFC845;
+            font-size: 0.8em;
+            position: relative;
+            left: -0.2ch;
+            top: -0.2ch;
+            z-index: 3;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://www.bellevitesse.com/static/imgs/logos_and_name/blanc-fond-transparent.png"
+                alt="Belle Vitesse" class="logo">
+        </div>
+        <div class="content">
+            <h1 class="dot-before">Welcome to Belle Vitesse.</h1>
+            <p>
+                Thank you for subscribing to our newsletter.<br>
+                You will now receive our latest news, new releases,
+                and exclusive projects as a preview.
+            </p>
+            <a class="content-launch" href="https://www.bellevitesse.com">We are launching soon. Be ready.</a>
+        </div>
+        <div class="footer">
+            <p>
+                © Belle Vitesse {{ now.year }}. All rights reserved.<br>
+                Belle Vitesse — 33 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine, France<br>
+                You are receiving this email because you signed up on our website.<br>
+                <a href="{{ unsubscribe_url }}">Unsubscribe</a>
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>

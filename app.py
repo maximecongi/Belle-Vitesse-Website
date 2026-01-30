@@ -1,6 +1,11 @@
 # imports
 import os
 import re
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.utils import make_msgid, formatdate
+from itsdangerous import URLSafeSerializer
 from collections import defaultdict
 from flask import (
     Flask,
@@ -39,6 +44,7 @@ app = Flask(
     static_folder=os.getenv("STATIC_FOLDER"),
     static_url_path=os.getenv("STATIC_URL_PATH"),
 )
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "bv_super_secret_key_2026")
 # -------------------------------------------------
 # Cache config
 # -------------------------------------------------
@@ -126,6 +132,98 @@ def get_db_connection():
             database=mysql_database
         )
         return connection, None
+# -------------------------------------------------
+# Email Helper
+# -------------------------------------------------
+
+
+def send_subscription_email(to_email):
+    """Send a welcome email when someone subscribes to the newsletter."""
+    mail_server = os.getenv("MAIL_SERVER")
+    mail_port = int(os.getenv("MAIL_PORT", 587))
+    mail_user = os.getenv("MAIL_USERNAME")
+    mail_password = os.getenv("MAIL_PASSWORD")
+    mail_use_tls = os.getenv("MAIL_USE_TLS", "true").lower() == "true"
+
+    if not all([mail_server, mail_user, mail_password]):
+        app.logger.error("❌ Email configuration missing in .env")
+        return False
+
+    try:
+        app.logger.info(f"🚀 Démarrage de l'envoi d'email pour {to_email}")
+        
+        # Generate unsubscribe token
+        secret_key = app.config.get("SECRET_KEY") or "bv_super_secret_key_2026"
+        serializer = URLSafeSerializer(secret_key)
+        token = serializer.dumps(to_email)
+        
+        # Use request.host_url to get the full base URL
+        try:
+            base_url = request.host_url.rstrip('/')
+        except Exception:
+            base_url = "https://www.bellevitesse.com" # Fallback
+            
+        unsubscribe_url = f"{base_url}/unsubscribe/{token}"
+        app.logger.info(f"🔗 Unsubscribe URL générée: {unsubscribe_url}")
+
+        # Load HTML template
+        try:
+            html_content = render_template("emails/newsletter_welcome.html", unsubscribe_url=unsubscribe_url)
+        except Exception as e:
+            app.logger.error(f"❌ Erreur render_template: {e}")
+            raise e
+            
+        # Simple plain text fallback
+        text_content = f"Welcome to Belle Vitesse! Thank you for subscribing to our newsletter. To unsubscribe: {unsubscribe_url}"
+
+        # Create message
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = "Welcome to Belle Vitesse"
+        msg["From"] = f"Belle Vitesse <{mail_user}>"
+        msg["To"] = to_email
+        msg["Date"] = formatdate(localtime=True)
+        msg["Message-ID"] = make_msgid(domain="bellevitesse.com")
+        
+        # ⭐ AJOUT DES EN-TÊTES ANTI-SPAM ⭐
+        msg["Precedence"] = "bulk"
+        msg["List-Unsubscribe"] = f"<mailto:unsubscribe@bellevitesse.com?subject=unsubscribe>, <{unsubscribe_url}>"
+        msg["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click"
+        msg["List-Id"] = "Belle Vitesse Newsletter <newsletter.bellevitesse.com>"
+        msg["X-Entity-Ref-ID"] = "newsletter-welcome"
+        
+        # Additional headers for better deliverability
+        msg["Reply-To"] = mail_user
+        msg["Return-Path"] = mail_user
+
+        msg.attach(MIMEText(text_content, "plain"))
+        msg.attach(MIMEText(html_content, "html"))
+
+        # Send email
+        app.logger.info(f"🔌 Connexion au serveur SMTP {mail_server}:{mail_port}...")
+        server = smtplib.SMTP(mail_server, mail_port, timeout=10)
+        
+        if mail_use_tls:
+            app.logger.info("🔐 Démarrage TLS...")
+            server.starttls()
+        
+        app.logger.info(f"🔑 Tentative de login pour {mail_user}...")
+        server.login(mail_user, mail_password)
+        
+        app.logger.info("📤 Envoi du message...")
+        server.sendmail(mail_user, [to_email], msg.as_string())
+        
+        server.quit()
+
+        app.logger.info(f"✅ Email de bienvenue envoyé avec succès à {to_email}")
+        return True
+
+    except Exception as e:
+        app.logger.error(f"❌ Erreur détaillée lors de l'envoi de l'email à {to_email} : {type(e).__name__}: {e}")
+        import traceback
+        app.logger.error(traceback.format_exc())
+        return False
+
+
 # -------------------------------------------------
 # Context processor (footer global)
 # -------------------------------------------------
@@ -316,6 +414,9 @@ def subscribe():
             "INSERT INTO newsletter_subscribers (email) VALUES (%s)", (email,))
         connection.commit()
 
+        # Send welcome email (async-ish/fire and forget for now, but blocking in this simple script)
+        send_subscription_email(email)
+
         return jsonify({"status": "success", "message": "Thank you for subscribing!"}), 200
 
     except Error as e:
@@ -324,6 +425,41 @@ def subscribe():
     except Exception as e:
         app.logger.error(f"Unexpected error: {e}")
         return jsonify({"status": "error", "message": "An unexpected error occurred."}), 500
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
+        if tunnel:
+            tunnel.stop()
+
+
+@app.route("/unsubscribe/<token>")
+def unsubscribe(token):
+    secret_key = app.config.get("SECRET_KEY") or "bv_super_secret_key_2026"
+    serializer = URLSafeSerializer(secret_key)
+    try:
+        email = serializer.loads(token)
+    except Exception:
+        return render_template("unsubscribe_confirmation.html", status="error", message="Lien de désinscription invalide ou expiré.")
+
+    connection = None
+    tunnel = None
+    try:
+        connection, tunnel = get_db_connection()
+        cursor = connection.cursor()
+
+        # Delete subscriber
+        cursor.execute("DELETE FROM newsletter_subscribers WHERE email = %s", (email,))
+        connection.commit()
+
+        if cursor.rowcount > 0:
+            return render_template("unsubscribe_confirmation.html", status="success", message="Vous avez été désabonné de notre newsletter avec succès.")
+        else:
+            return render_template("unsubscribe_confirmation.html", status="info", message="Cet e-mail n'est plus dans notre liste de diffusion.")
+
+    except Exception as e:
+        app.logger.error(f"❌ Erreur lors de la désinscription ({email}) : {e}")
+        return render_template("unsubscribe_confirmation.html", status="error", message="Une erreur serveur est survenue. Veuillez réessayer plus tard.")
     finally:
         if connection:
             cursor.close()
