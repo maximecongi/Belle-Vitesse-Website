@@ -1,42 +1,40 @@
-from flask_caching import Cache
 from pyairtable import Table
 import os
-from dotenv import load_dotenv
 
-load_dotenv("/home/Maxcongi/bellevitesse/.env")    
+_cache = None
 
-cache: Cache = None
+# Tables will be initialized in init_airtable
+TABLE_STATIC = None
+TABLE_VEHICLES = None
+TABLE_HEADS = None
+TABLE_GRIPS_CATEGORIES = None
+TABLE_GRIP_PRODUCTS = None
+TABLE_CONFIGS = None
 
-# ⚡ Récupérer les variables
-AIRTABLE_SECRET_TOKEN = os.getenv("AIRTABLE_SECRET_TOKEN")
-AIRTABLE_BASE_ID = os.getenv("AIRTABLE_BASE_ID")
-
-# ⚡ Vérifier qu’elles existent
-if not AIRTABLE_SECRET_TOKEN or not AIRTABLE_BASE_ID:
-    raise RuntimeError(
-        "AIRTABLE_SECRET_TOKEN et AIRTABLE_BASE_ID doivent être définis dans le .env"
-    )
-
-# ⚡ Créer les tables après avoir confirmé que les variables existent
-TABLE_STATIC = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "static")
-TABLE_VEHICLES = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "vehicles")
-TABLE_HEADS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "heads")
-TABLE_GRIPS_CATEGORIES = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "grips_categories")
-TABLE_GRIP_PRODUCTS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "grip_products")
-TABLE_CONFIGS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "configs")
-
-
-
-def init_cache(app_cache: Cache):
-    global cache
-    cache = app_cache
-
+def init_airtable_service(app_config, cache):
+    global _cache, TABLE_STATIC, TABLE_VEHICLES, TABLE_HEADS, TABLE_GRIPS_CATEGORIES, TABLE_GRIP_PRODUCTS, TABLE_CONFIGS
+    _cache = cache
+    
+    token = app_config['AIRTABLE_SECRET_TOKEN']
+    base_id = app_config['AIRTABLE_BASE_ID']
+    
+    if not token or not base_id:
+        raise RuntimeError("AIRTABLE_SECRET_TOKEN and AIRTABLE_BASE_ID must be set")
+        
+    TABLE_STATIC = Table(token, base_id, "static")
+    TABLE_VEHICLES = Table(token, base_id, "vehicles")
+    TABLE_HEADS = Table(token, base_id, "heads")
+    TABLE_GRIPS_CATEGORIES = Table(token, base_id, "grips_categories")
+    TABLE_GRIP_PRODUCTS = Table(token, base_id, "grip_products")
+    TABLE_CONFIGS = Table(token, base_id, "configs")
 
 def get_cached(key, fetcher, timeout=3600):
-    value = cache.get(key)
+    if _cache is None:
+        return fetcher()
+    value = _cache.get(key)
     if value is None:
         value = fetcher()
-        cache.set(key, value, timeout=timeout)
+        _cache.set(key, value, timeout=timeout)
     return value
 
 def get_static_by_lang(lang="en"):
@@ -48,10 +46,8 @@ def get_static_by_lang(lang="en"):
 def get_vehicles():
     return get_cached("vehicles", lambda: TABLE_VEHICLES.all(sort=["order"]))
 
-
 def get_heads():
     return get_cached("heads", lambda: TABLE_HEADS.all(sort=["order"]))
-
 
 def get_grips_categories():
     return get_cached("grips_categories", lambda: TABLE_GRIPS_CATEGORIES.all(sort=["order"]))
@@ -77,13 +73,11 @@ def get_vehicle_by_slug(slug):
         lambda: TABLE_VEHICLES.first(formula=f"{{slug}}='{slug}'")
     )
 
-
 def get_head_by_slug(slug):
     return get_cached(
         f"head_{slug}",
         lambda: TABLE_HEADS.first(formula=f"{{slug}}='{slug}'")
     )
-
 
 def get_configs_for_vehicle(vehicle_id):
     return get_cached(
@@ -93,3 +87,13 @@ def get_configs_for_vehicle(vehicle_id):
             if vehicle_id in c["fields"].get("vehicle", [])
         ]
     )
+
+def warm_cache(app):
+    try:
+        get_vehicles()
+        get_heads()
+        get_grips_categories()
+        get_static_by_lang("en")
+        app.logger.info("🔥 Cache warmé avec succès")
+    except Exception as e:
+        app.logger.error(f"❌ Erreur warm cache : {e}")
