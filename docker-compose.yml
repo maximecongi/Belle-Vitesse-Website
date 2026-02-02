@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   mysql:
     image: mysql:8
@@ -40,6 +38,8 @@ services:
       - .env
     environment:
       DATABASE_URL: mysql+pymysql://admin:PYpD3JH3TK@mysql:3306/bellevitesse
+    ports:
+      - "5000:5000"
     volumes:
       - ./flask/static/images/airtable:/app/static/images/airtable
     labels:
