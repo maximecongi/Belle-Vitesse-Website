@@ -19,18 +19,7 @@ from services.db_service import get_db_connection
 from services.email_service import send_subscription_email
 from utils.specs import build_specs
 from itsdangerous import URLSafeSerializer
-
-BRANDS = [
-    {"slug": "academy", "label": "Academy", "url": "https://www.academyfilms.com/"},
-    {"slug": "antiestatico", "label": "Antiestatico", "url": "https://antiestatico.com/"},
-    {"slug": "biscuit", "label": "Biscuit", "url": "https://biscuitfilmworks.com/"},
-    {"slug": "canal", "label": "Canal+", "url": "https://www.canalplusgroup.com/"},
-    {"slug": "chifoumi", "label": "Chi-fou-mi", "url": "https://www.unifrance.org/annuaires/societe/351840/chi-fou-mi-productions"},
-    {"slug": "lapac", "label": "La Pac", "url": "https://lepac.us/"},
-    {"slug": "netflix", "label": "Netflix", "url": "https://about.netflix.com/"},
-    {"slug": "somesuch", "label": "Somesuch", "url": "https://somesuch.co/"},
-    {"slug": "unite", "label": "Unité", "url": "https://unite-films.com/"},
-]
+from utils.globals import BRANDS
 
 def register_routes(app):
 

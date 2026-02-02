@@ -1,4 +1,4 @@
-from specs_config import SPECS_CONFIG
+from utils.specs_config import SPECS_CONFIG
 
 def keep(v):
     return v is not None and v != ""
