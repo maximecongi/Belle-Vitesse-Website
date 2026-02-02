@@ -14,11 +14,24 @@ from sshtunnel import SSHTunnelForwarder
 # Load environment variables
 load_dotenv()
 
+import urllib.parse
+
 # MySQL Configuration
 MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
 MYSQL_USER = os.getenv("MYSQL_USER")
 MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
 MYSQL_DATABASE = os.getenv("MYSQL_DATABASE")
+
+# Support DATABASE_URL (e.g. mysql+pymysql://user:pass@host:port/db)
+DATABASE_URL = os.getenv("DATABASE_URL")
+if DATABASE_URL:
+    # Handle mysql+pymysql scheme
+    clean_url = DATABASE_URL.replace("mysql+pymysql://", "mysql://")
+    url = urllib.parse.urlparse(clean_url)
+    MYSQL_HOST = url.hostname or MYSQL_HOST
+    MYSQL_USER = url.username or MYSQL_USER
+    MYSQL_PASSWORD = url.password or MYSQL_PASSWORD
+    MYSQL_DATABASE = url.path.lstrip('/') or MYSQL_DATABASE
 
 # SSH Configuration (for local development)
 SSH_HOST = os.getenv("SSH_HOST", "ssh.pythonanywhere.com")

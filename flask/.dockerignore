@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv
+venv/
+ENV/
+.git/
+.DS_Store
+*.log
+static/images/airtable/*
+!static/images/airtable/.gitkeep
