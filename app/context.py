@@ -14,7 +14,11 @@ def register_context(app):
             "heads": get_heads(),
             "grips_categories": get_grips_categories(),
             "static": get_static_by_lang("en"),
-            "now": datetime.now(timezone.utc)
+            "now": datetime.now(timezone.utc),
+            "seo_defaults": {
+                "description": "Belle Vitesse specializes in high-level cinematic movement for film and commercial productions..",
+                "image": "/static/imgs/logos/noir-fond-transparent.svg"
+            }
         }
     
     # Custom filters

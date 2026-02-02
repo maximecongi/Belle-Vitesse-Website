@@ -1,5 +1,11 @@
 {% extends "layout.html" %}
-{% block title %}Belle Vitesse - Specialist in moving cinema{% endblock %}
+{% block title %}{{ seo_title }}{% endblock %}
+{% block description %}{{ seo_description }}{% endblock %}
+{% block og_title %}{{ seo_title }}{% endblock %}
+{% block og_description %}{{ seo_description }}{% endblock %}
+{% block twitter_title %}{{ seo_title }}{% endblock %}
+{% block twitter_description %}{{ seo_description }}{% endblock %}
+
 {% block content %}
 <section id="hero-banner" class="section-site">
   <div class="home-hero-banner">
@@ -13,8 +19,10 @@
       </h1>
     </div>
     <div class="home-hero-banner-buttons">
-      <a href="#solutions" class="home-hero-banner-buttons-discover button">{{static.fields["home.discover_our_solutions.button"]}}</a>
-      <a href="{{ url_for('contact') }}" class="home-hero-banner-buttons-contact button bg-color-yellow-1">{{static.fields["home.contact_us.button"]}}</a>
+      <a href="#solutions"
+        class="home-hero-banner-buttons-discover button">{{static.fields["home.discover_our_solutions.button"]}}</a>
+      <a href="{{ url_for('contact') }}"
+        class="home-hero-banner-buttons-contact button bg-color-yellow-1">{{static.fields["home.contact_us.button"]}}</a>
     </div>
     <div class="icon-scroll"></div>
 </section>

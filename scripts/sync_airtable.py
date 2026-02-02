@@ -16,11 +16,18 @@ import shutil
 import mysql.connector
 from mysql.connector import Error
 from sshtunnel import SSHTunnelForwarder
+import sys
+
+# Add project root to sys.path to allow importing from utils and services
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if project_root not in sys.path:
+    sys.path.append(project_root)
 
 from utils.cache_clearer import clear_cache
 
-# Load environment variables
-load_dotenv()
+# Load environment variables from the project root
+env_path = os.path.join(project_root, '.env')
+load_dotenv(env_path)
 
 # Configuration
 AIRTABLE_SECRET_TOKEN = os.getenv("AIRTABLE_SECRET_TOKEN")
@@ -38,11 +45,11 @@ SSH_USER = os.getenv("SSH_USER")
 SSH_PASSWORD = os.getenv("SSH_PASSWORD")
 USE_SSH_TUNNEL = os.getenv("USE_SSH_TUNNEL", "false").lower() == "true"
 
-IMAGE_STORE_PATH = "static/images/airtable"
+IMAGE_STORE_PATH = os.path.join(project_root, "static/images/airtable")
 STATIC_URL_PREFIX = "/static/images/airtable"
 
 # Tables to sync
-TABLES = ["vehicles", "heads", "grips", "configs"]
+TABLES = ["static", "vehicles", "heads", "grips_categories", "grip_products", "configs"]
 
 # Thumbnail sizes to download
 THUMBNAIL_SIZES = ["small", "large", "full"]

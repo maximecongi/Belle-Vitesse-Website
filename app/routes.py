@@ -1,6 +1,7 @@
 import re
 import os
-from flask import render_template, abort, jsonify, request
+from flask import render_template, abort, jsonify, request, Response
+from datetime import datetime
 from collections import defaultdict
 from werkzeug.exceptions import HTTPException
 from mysql.connector import Error
@@ -25,7 +26,12 @@ def register_routes(app):
 
     @app.route("/")
     def home():
-        return render_template("home.html", brands=BRANDS)
+        return render_template(
+            "home.html",
+            brands=BRANDS,
+            seo_title="Professional Camera Tracking Vehicles & Precision Grip",
+            seo_description="Belle Vitesse provides world-class camera tracking solutions, high-speed chase vehicles, and precision remote heads for the film and advertising industry."
+        )
 
     @app.route("/launch")
     def launch():
@@ -44,15 +50,27 @@ def register_routes(app):
     # Lists
     @app.route("/vehicles")
     def vehicles():
-        return render_template("vehicles.html")
+        return render_template(
+            "vehicles.html",
+            seo_title="Tracking Vehicles Fleet",
+            seo_description="Discover our fleet of high-performance camera tracking vehicles, from high-speed chase cars to versatile off-road platforms."
+        )
 
     @app.route("/heads")
     def heads():
-        return render_template("heads.html")
+        return render_template(
+            "heads.html",
+            seo_title="Remote Heads & Stabilization",
+            seo_description="Explore our range of stabilized remote heads, including Shotover and Scorpio, for perfectly steady shots in any conditions."
+        )
 
     @app.route("/grips")
     def grips():
-        return render_template("grips.html")
+        return render_template(
+            "grips.html",
+            seo_title="Grip Equipment & Accessories",
+            seo_description="High-quality grip equipment, shock arms, and custom mounting solutions for all your cinematography needs."
+        )
 
     # Details
     @app.route("/vehicles/<slug>")
@@ -76,6 +94,8 @@ def register_routes(app):
             configs_grouped=dict(reversed(grouped.items())),
             specs_left=specs_left,
             specs_right=specs_right,
+            seo_title=vehicle["fields"].get("name", "Vehicle"),
+            seo_description=f"Specifications and configurations for the {vehicle['fields'].get('name')}. Explore its performance and equipment."
         )
 
     @app.route("/heads/<slug>")
@@ -91,6 +111,8 @@ def register_routes(app):
             head=head,
             specs_left=specs_left,
             specs_right=specs_right,
+            seo_title=head["fields"].get("name", "Remote Head"),
+            seo_description=f"Discover the capabilities of the {head['fields'].get('name')}. Precision stabilization for your next production."
         )
 
     @app.route("/grips/<slug>")
@@ -104,15 +126,27 @@ def register_routes(app):
     # Static pages
     @app.route("/about-us")
     def about_us():
-        return render_template("about-us.html")
+        return render_template(
+            "about-us.html",
+            seo_title="About Us | Precision Cinematography Solutions",
+            seo_description="Learn about Belle Vitesse, our expertise in high-level cinematic movement, and our commitment to providing discreet and efficient motion platforms worldwide."
+        )
 
     @app.route("/contact")
     def contact():
-        return render_template("contact.html")
+        return render_template(
+            "contact.html",
+            seo_title="Contact | High-Performance Camera Tracking",
+            seo_description="Get in touch with Belle Vitesse for your camera tracking and precision grip needs. Based in Paris, operating worldwide."
+        )
 
     @app.route("/terms-and-conditions")
     def terms_and_conditions():
-        return render_template("terms-and-conditions.html")
+        return render_template(
+            "terms-and-conditions.html",
+            seo_title="Terms and Conditions",
+            seo_description="Legal terms and conditions for renting equipment and services from Belle Vitesse."
+        )
 
     # Newsletter
     @app.route("/subscribe", methods=["POST"])
@@ -234,6 +268,49 @@ def register_routes(app):
         from app import cache
         cache.delete(key)
         return jsonify({"status": f"Cache key {key} cleared"}), 200
+
+    @app.route("/sitemap.xml")
+    def sitemap():
+        pages = []
+        base_url = request.host_url.rstrip('/')
+
+        # Static pages
+        static_pages = ["/", "/vehicles", "/heads", "/grips", "/about-us", "/contact", "/terms-and-conditions"]
+        for page in static_pages:
+            pages.append(f"{base_url}{page}")
+
+        # Dynamic vehicles
+        for v in get_vehicles():
+            slug = v['fields'].get('slug')
+            if slug:
+                pages.append(f"{base_url}/vehicles/{slug}")
+
+        # Dynamic heads
+        for h in get_heads():
+            slug = h['fields'].get('slug')
+            if slug:
+                pages.append(f"{base_url}/heads/{slug}")
+
+        # Dynamic grips
+        for g in get_grips_categories():
+            slug = g['fields'].get('slug')
+            if slug:
+                pages.append(f"{base_url}/grips/{slug}")
+
+        sitemap_xml = '<?xml version="1.0" encoding="UTF-8"?>'
+        sitemap_xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        for page in pages:
+            sitemap_xml += f'<url><loc>{page}</loc><lastmod>{datetime.now().strftime("%Y-%m-%d")}</lastmod></url>'
+        sitemap_xml += '</urlset>'
+
+        return Response(sitemap_xml, mimetype='application/xml')
+
+    @app.route("/robots.txt")
+    def robots():
+        base_url = request.host_url.rstrip('/')
+        robots_txt = "User-agent: *\nAllow: /\n"
+        robots_txt += f"Sitemap: {base_url}/sitemap.xml"
+        return Response(robots_txt, mimetype='text/plain')
 
     def require_admin_token():
         token = request.headers.get("X-Admin-Token")

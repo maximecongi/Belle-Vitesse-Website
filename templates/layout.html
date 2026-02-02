@@ -13,7 +13,24 @@
     <link rel="manifest" href="/static/imgs/favicons/site.webmanifest" />
 
 
-    <title>{% block title %}{% endblock %}</title>
+    <title>{% block title %}{% endblock %} | Belle Vitesse</title>
+    <meta name="description" content="{% block description %}{{ seo_defaults.description }}{% endblock %}">
+    <link rel="canonical" href="{{ request.url }}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:title" content="{% block og_title %}{% endblock %} | Belle Vitesse">
+    <meta property="og:description" content="{% block og_description %}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ seo_defaults.image }}{% endblock %}">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{{ request.url }}">
+    <meta property="twitter:title" content="{% block twitter_title %}{% endblock %} | Belle Vitesse">
+    <meta property="twitter:description" content="{% block twitter_description %}{% endblock %}">
+    <meta property="twitter:image" content="{% block twitter_image %}{{ seo_defaults.image }}{% endblock %}">
+
     <script src="https://unpkg.com/swup@4"></script>
     <script src="https://unpkg.com/@swup/preload-plugin@3"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />

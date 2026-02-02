@@ -1,6 +1,16 @@
 {% from "macros.html" import square_highlight %}
 {% extends "layout.html" %}
-{% block title %}{{head.fields.name}} - Belle Vitesse{% endblock %}
+{% block title %}{{ seo_title }}{% endblock %}
+{% block description %}{{ seo_description }}{% endblock %}
+{% block og_title %}{{ seo_title }}{% endblock %}
+{% block og_description %}{{ seo_description }}{% endblock %}
+{% block twitter_title %}{{ seo_title }}{% endblock %}
+{% block twitter_description %}{{ seo_description }}{% endblock %}
+{% block og_image %}{% if head.fields.gallery %}{{ head.fields.gallery[0].thumbnails.full.url }}{% else %}{{
+seo_defaults.image }}{% endif %}{% endblock %}
+{% block twitter_image %}{% if head.fields.gallery %}{{ head.fields.gallery[0].thumbnails.full.url }}{% else %}{{
+seo_defaults.image }}{% endif %}{% endblock %}
+
 {% block content %}
 <section id="hero-banner" class="section-site">
     <div class="vehicle-hero-banner bg-color-white-3">
@@ -8,7 +18,8 @@
             <img src="{{ head.fields.banner[0].thumbnails.full.url }}" {% if head.fields.banner_position=="top" %}
                 class="top-head" {% endif %} />
         </div>
-        <div class="vehicle-hero-banner-wrapper animate__animated animation__banner-title {% if head.fields.banner_position == 'top' %} text-head {% endif %}">
+        <div
+            class="vehicle-hero-banner-wrapper animate__animated animation__banner-title {% if head.fields.banner_position == 'top' %} text-head {% endif %}">
             <div class="vehicle-hero-banner-titlewrapper">
                 <h1 class="vehicle-hero-banner-titlewrapper-title font-54 color-grey-1">
                     {{ head.fields.name }}
@@ -36,24 +47,25 @@
                     {# {{ square_highlight(head.fields.max_operating_speed, "km/h", "Max operating speed") }} #}
                 </div>
             </div>
-        <div class="vehicle-description-wrapper">
-            <div class="vehicle-description-right">
-                <div class="splide" aria-label="Splide Basic HTML Example">
-                    <div class="splide__track">
-                        <ul class="splide__list">
-                            {% for image in head.fields.gallery %}
-                            <li class="splide__slide"><img src="{{ image.thumbnails.full.url }}" alt="Gallery image" />
-                            </li>
-                            {% endfor %}
-                        </ul>
+            <div class="vehicle-description-wrapper">
+                <div class="vehicle-description-right">
+                    <div class="splide" aria-label="Splide Basic HTML Example">
+                        <div class="splide__track">
+                            <ul class="splide__list">
+                                {% for image in head.fields.gallery %}
+                                <li class="splide__slide"><img src="{{ image.thumbnails.full.url }}"
+                                        alt="Gallery image" />
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="vehicle-description-left">
-                <p class="font-weight-400">{{ head.fields.description }}</p>
+                <div class="vehicle-description-left">
+                    <p class="font-weight-400">{{ head.fields.description }}</p>
+                </div>
             </div>
         </div>
-    </div>
 </section>
 <section class="section-site">
     <div class="vehicle-specs">

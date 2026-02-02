@@ -1,10 +1,20 @@
 {% from "macros.html" import square_highlight %}
 {% extends "layout.html" %}
-{% block title %}{{vehicle.fields.name}} - Belle Vitesse{% endblock %}
+{% block title %}{{ seo_title }}{% endblock %}
+{% block description %}{{ seo_description }}{% endblock %}
+{% block og_title %}{{ seo_title }}{% endblock %}
+{% block og_description %}{{ seo_description }}{% endblock %}
+{% block twitter_title %}{{ seo_title }}{% endblock %}
+{% block twitter_description %}{{ seo_description }}{% endblock %}
+{% block og_image %}{% if vehicle.fields.gallery %}{{ vehicle.fields.gallery[0].thumbnails.full.url }}{% else %}{{
+seo_defaults.image }}{% endif %}{% endblock %}
+{% block twitter_image %}{% if vehicle.fields.gallery %}{{ vehicle.fields.gallery[0].thumbnails.full.url }}{% else %}{{
+seo_defaults.image }}{% endif %}{% endblock %}
+
 {% block content %}
 <section id="hero-banner" class="section-site">
     <div class="vehicle-hero-banner bg-color-white-3">
-        <img src="{{ vehicle.fields.banner[0].url }}" fetchpriority="high" />
+        <img src="{{ vehicle.fields.banner[0].url }}" alt="{{ vehicle.fields.name }} banner" fetchpriority="high" />
         <div class="vehicle-hero-banner-wrapper animate__animated animation__banner-title">
             <div class="vehicle-hero-banner-titlewrapper">
                 <h1 class="vehicle-hero-banner-titlewrapper-title font-54 color-grey-1">

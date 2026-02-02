@@ -1,6 +1,12 @@
 {% extends "layout.html" %}
 {% from "macros.html" import slider %}
-{% block title %}Heads - Belle Vitesse{% endblock %}
+{% block title %}{{ seo_title }}{% endblock %}
+{% block description %}{{ seo_description }}{% endblock %}
+{% block og_title %}{{ seo_title }}{% endblock %}
+{% block og_description %}{{ seo_description }}{% endblock %}
+{% block twitter_title %}{{ seo_title }}{% endblock %}
+{% block twitter_description %}{{ seo_description }}{% endblock %}
+
 {% block content %}
 <section id="solutions" class="section-site">
     <div class="categories-solutions">
@@ -37,13 +43,15 @@
         <div class="categories-solutions-categories">
             {% for head in heads %}
             {% if head.fields.status == "Online" %}
-            <div data-payload='{% if head.fields.slug !="ronin-4d"%}{{ head.fields.payload }}{% endif %}' class="categories-solutions-categories-categorywrapper">
+            <div data-payload='{% if head.fields.slug !="ronin-4d"%}{{ head.fields.payload }}{% endif %}'
+                class="categories-solutions-categories-categorywrapper">
                 <h3>{{ head.fields.name }}</h3>
                 <a class="categories-solutions-categories-img-link" href="{{ url_for('head', slug=head.fields.slug) }}">
                     {% if head.fields.thumbnail[0].thumbnails is defined %}
-                    <img src="{{ head.fields.thumbnail[0].thumbnails.large.url }}" />
+                    <img src="{{ head.fields.thumbnail[0].thumbnails.large.url }}" alt="{{ head.fields.name }}" />
                     {% else %}
-                    <img src="{{ url_for('static', filename='/imgs/placeholders/head.jpeg') }}" />
+                    <img src="{{ url_for('static', filename='/imgs/placeholders/head.jpeg') }}"
+                        alt="Remote head placeholder" />
                     {% endif %}
                 </a>
             </div>
