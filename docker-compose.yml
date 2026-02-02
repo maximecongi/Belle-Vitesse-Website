@@ -20,6 +20,8 @@ services:
     image: nocodb/nocodb
     environment:
       NC_DB: mysql://admin:PYpD3JH3TK@mysql:3306/bellevitesse
+    ports:
+      - "8000:8080"
     labels:
       - traefik.enable=true
       - traefik.http.routers.nocodb.rule=Host(`db.bellevitesse.com`)
