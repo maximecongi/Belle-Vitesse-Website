@@ -12,7 +12,7 @@ services:
     volumes:
       - mysqldata:/var/lib/mysql
     ports:
-      - "3306:3306"  # Expose MySQL pour debug si besoin
+      - "3306:3306"
     networks:
       - core_net
 
@@ -25,7 +25,7 @@ services:
     volumes:
       - ./flask/static/images/airtable:/app/static/images/airtable
     ports:
-      - "5000:5000"  # Flask exposé sur le port 5000
+      - "5000:5000"
     networks:
       - core_net
     depends_on:
@@ -43,7 +43,7 @@ services:
       DB_PASSWORD: ${MYSQL_PASSWORD}
       DB_NAME: ${MYSQL_DATABASE}
     ports:
-      - "8080:8080"  # NocoDB exposé sur le port 8080
+      - "8080:8080"
     networks:
       - core_net
     depends_on:
