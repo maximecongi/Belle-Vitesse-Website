@@ -6,7 +6,7 @@ from collections import defaultdict
 from werkzeug.exceptions import HTTPException
 from mysql.connector import Error
 
-from services.airtable_service import (
+from services.db_service import (
     get_vehicles,
     get_vehicle_by_slug,
     get_configs_for_vehicle,

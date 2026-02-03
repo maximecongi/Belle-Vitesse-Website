@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from services.airtable_service import (
+from services.db_service import (
     get_vehicles,
     get_heads,
     get_grips_categories,

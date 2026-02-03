@@ -24,8 +24,8 @@ def create_app():
     cache.init_app(app)
 
     # Initialize services
-    from services.airtable_service import init_airtable_service, warm_cache
-    init_airtable_service(app.config, cache)
+    from services.db_service import init_db_service, warm_cache
+    init_db_service(app.config, cache)
 
     # Register routes and context
     from app.routes import register_routes

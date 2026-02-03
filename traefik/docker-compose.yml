@@ -1,23 +1,49 @@
 services:
   traefik:
     image: traefik:v3.0
+    container_name: traefik
+    restart: unless-stopped
+
     command:
+      # Docker provider
       - --providers.docker=true
       - --providers.docker.exposedbydefault=false
+
+      # Entrypoints
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
+
+      # Redirection HTTP → HTTPS
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+
+      # Let's Encrypt
       - --certificatesresolvers.le.acme.tlschallenge=true
       - --certificatesresolvers.le.acme.email=admin@bellevitesse.com
       - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+
+      # Dashboard
+      - --api.dashboard=true
+
+      # Logs
+      - --log.level=INFO
+      - --accesslog=true
+
     ports:
       - "80:80"
       - "443:443"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./acme.json:/letsencrypt/acme.json
-    networks:
-      - web
 
-networks:
-  web:
-    external: true
+    volumes:
+      # Docker socket (lecture seule)
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+      # Certificats Let's Encrypt
+      - ./acme.json:/letsencrypt/acme.json
+
+    labels:
+      - traefik.enable=true
+
+      # Dashboard routing
+      - traefik.http.routers.traefik.rule=Host(`traefik.bellevitesse.com`)
+      - traefik.http.routers.traefik.entrypoints=websecure
+      - traefik.http.routers.traefik.tls.c
