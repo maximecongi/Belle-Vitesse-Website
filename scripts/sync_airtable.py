@@ -17,7 +17,7 @@ import mysql.connector
 from mysql.connector import Error
 from sshtunnel import SSHTunnelForwarder
 
-from utils.cache_clearer import clear_cache
+from cache_clearer import clear_cache
 
 # Load environment variables
 load_dotenv()
@@ -42,7 +42,7 @@ IMAGE_STORE_PATH = "static/images/airtable"
 STATIC_URL_PREFIX = "/static/images/airtable"
 
 # Tables to sync
-TABLES = ["vehicles", "heads", "grips", "configs"]
+TABLES = ["vehicles", "heads", "grips_categories", "grip_products", "configs", "static", "newsletter_subscribers"]
 
 # Thumbnail sizes to download
 THUMBNAIL_SIZES = ["small", "large", "full"]
@@ -205,14 +205,19 @@ def sync_table(table_name, api, cursor):
         
         # Upsert into MySQL
         upsert_query = f"""
-            INSERT INTO `{table_name}` (id, createdTime, fields)
+            INSERT INTO `{table_name}` (`id`, `createdTime`, `fields`)
             VALUES (%s, %s, %s)
             ON DUPLICATE KEY UPDATE
-                createdTime = VALUES(createdTime),
-                fields = VALUES(fields)
+                `createdTime` = VALUES(`createdTime`),
+                `fields` = VALUES(`fields`)
         """
         
-        cursor.execute(upsert_query, (record_id, created_time, fields_json))
+        try:
+            cursor.execute(upsert_query, (record_id, created_time, fields_json))
+        except Error as e:
+            print(f"  FAILED to upsert record {record_id} in table {table_name}: {e}")
+            print(f"  Query: {upsert_query}")
+            raise e
     
     print(f"\nCompleted syncing {table_name}: {len(records)} records")
     
@@ -278,9 +283,11 @@ def main():
             (SSH_HOST, 22),
             ssh_username=SSH_USER,
             ssh_password=SSH_PASSWORD,
-            remote_bind_address=(MYSQL_HOST, 3306)
+            remote_bind_address=(MYSQL_HOST, 3306),
+            local_bind_address=('127.0.0.1', 0)
         ) as tunnel:
             print(f"SSH tunnel established on local port {tunnel.local_bind_port}")
+            print(f"Forwarding to {MYSQL_HOST}:3306")
             
             connection = mysql.connector.connect(
                 host="127.0.0.1",

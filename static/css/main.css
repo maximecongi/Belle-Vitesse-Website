@@ -57,7 +57,7 @@ h2.title-textual-section {
 
 .main-wrapper>*:not(h1) {
     position: relative;
-    left: 3vw;
+    padding: 0 3vw;
 }
 
 h1.title-section {

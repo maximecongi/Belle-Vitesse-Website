@@ -33,6 +33,8 @@ from utils.airtable import (
     get_vehicle_by_slug,
     get_head_by_slug,
     get_configs_for_vehicle,
+    add_newsletter_subscriber,
+    remove_newsletter_subscriber,
 )
 
 # -------------------------------------------------
@@ -397,40 +399,19 @@ def subscribe():
 
     cache.set(rate_key, requests_count + 1, timeout=3600)
 
-    connection = None
-    tunnel = None
     try:
-        connection, tunnel = get_db_connection()
-        cursor = connection.cursor()
-
-        # Check if email already exists
-        cursor.execute(
-            "SELECT id FROM newsletter_subscribers WHERE email = %s", (email,))
-        if cursor.fetchone():
+        success = add_newsletter_subscriber(email)
+        if not success:
             return jsonify({"status": "error", "message": "You are already subscribed!"}), 400
 
-        # Insert new subscriber
-        cursor.execute(
-            "INSERT INTO newsletter_subscribers (email) VALUES (%s)", (email,))
-        connection.commit()
-
-        # Send welcome email (async-ish/fire and forget for now, but blocking in this simple script)
+        # Send welcome email
         send_subscription_email(email)
 
         return jsonify({"status": "success", "message": "Thank you for subscribing!"}), 200
 
-    except Error as e:
-        app.logger.error(f"Database error: {e}")
-        return jsonify({"status": "error", "message": "A server error occurred. Please try again later."}), 500
     except Exception as e:
         app.logger.error(f"Unexpected error: {e}")
         return jsonify({"status": "error", "message": "An unexpected error occurred."}), 500
-    finally:
-        if connection:
-            cursor.close()
-            connection.close()
-        if tunnel:
-            tunnel.stop()
 
 
 @app.route("/unsubscribe/<token>", methods=["GET", "POST"])
@@ -446,53 +427,27 @@ def unsubscribe(token):
 
     # RFC 8058: One-Click Unsubscribe via POST
     if request.method == "POST":
-        connection = None
-        tunnel = None
         try:
-            connection, tunnel = get_db_connection()
-            cursor = connection.cursor()
-            cursor.execute("DELETE FROM newsletter_subscribers WHERE email = %s", (email,))
-            connection.commit()
+            remove_newsletter_subscriber(email)
             return jsonify({"status": "success", "message": "Unsubscribed"}), 200
         except Exception as e:
             app.logger.error(f"❌ Error during POST unsubscription ({email}): {e}")
             return jsonify({"status": "error", "message": str(e)}), 500
-        finally:
-            if connection:
-                cursor.close()
-                connection.close()
-            if tunnel:
-                tunnel.stop()
 
-    connection = None
-    tunnel = None
     try:
-        connection, tunnel = get_db_connection()
-        cursor = connection.cursor()
-
         # Log for debugging
         app.logger.info(f"🔎 Processing unsubscribe request for: {email}")
 
         # Delete subscriber
-        cursor.execute("DELETE FROM newsletter_subscribers WHERE email = %s", (email,))
-        affected_count = cursor.rowcount
-        connection.commit()
+        removed = remove_newsletter_subscriber(email)
         
-        app.logger.info(f"🗑️ Rows affected by DELETE: {affected_count}")
+        app.logger.info(f"🗑️ Record removed: {removed}")
 
-        # If the token is valid, we consider it a success. 
-        # Even if affected_count is 0, it means they are not on the list anymore (perhaps already removed by an auto-clicker).
         return render_template("unsubscribe_confirmation.html", status="success", message="You have been successfully unsubscribed from our newsletter.")
 
     except Exception as e:
         app.logger.error(f"❌ Error during unsubscription ({email}): {e}")
         return render_template("unsubscribe_confirmation.html", status="error", message="A server error occurred. Please try again later.")
-    finally:
-        if connection:
-            cursor.close()
-            connection.close()
-        if tunnel:
-            tunnel.stop()
 
 # -------------------------------------------------
 # Cache management
