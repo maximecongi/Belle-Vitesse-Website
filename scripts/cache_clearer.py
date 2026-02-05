@@ -16,6 +16,7 @@ def clear_cache():
     urls = [
         "https://www.bellevitesse.com/admin/cache/clear",
         "http://127.0.0.1:5000/admin/cache/clear",
+        "http://127.0.0.1:5001/admin/cache/clear",
     ]
 
     headers = {"X-Admin-Token": admin_token}
