@@ -66,9 +66,12 @@ def get_db_connection():
 
 
 def init_cache(app_cache: Cache):
-    """Initialize the cache instance."""
+    """Initialize the cache instance for both database and airtable services."""
     global cache
     cache = app_cache
+    # Also initialize airtable's cache since we proxy functions to it
+    import utils.airtable as airtable_service
+    airtable_service.init_cache(app_cache)
 
 
 def get_cached(key, fetcher, timeout=3600):
@@ -149,9 +152,28 @@ def get_heads():
     return get_cached("heads", lambda: _fetch_all_from_table("heads", order_by="order"))
 
 
-def get_grips():
-    """Get all grips sorted by order."""
-    return get_cached("grips", lambda: _fetch_all_from_table("grips", order_by="order"))
+def get_grips_categories():
+    """Get all grip categories sorted by order."""
+    return get_cached("grips_categories", lambda: _fetch_all_from_table("grips_categories", order_by="order"))
+
+
+def get_grips_categories_by_slug(slug):
+    """Get a grip category by its slug."""
+    return get_cached(
+        f"grips_categories_{slug}",
+        lambda: _fetch_by_field("grips_categories", "slug", slug)
+    )
+
+
+def get_grips_products_for_category(category_id):
+    """Get all products for a specific grip category."""
+    def fetcher():
+        all_products = _fetch_all_from_table("grip_products")
+        return [
+            p for p in all_products
+            if category_id in p["fields"].get("category", [])
+        ]
+    return get_cached(f"grips_products_{category_id}", fetcher)
 
 
 def get_vehicle_by_slug(slug):
@@ -170,11 +192,11 @@ def get_head_by_slug(slug):
     )
 
 
-def get_grip_by_slug(slug):
-    """Get a grip by its slug."""
+def get_static_by_lang(lang="en"):
+    """Get static content for a specific language."""
     return get_cached(
-        f"grip_{slug}",
-        lambda: _fetch_by_field("grips", "slug", slug)
+        f"static_{lang}",
+        lambda: _fetch_by_field("static", "language", lang)
     )
 
 
@@ -188,3 +210,7 @@ def get_configs_for_vehicle(vehicle_id):
         ]
     
     return get_cached(f"configs_vehicle_{vehicle_id}", fetcher)
+
+
+# Proxy Newsletter functions to Airtable service for real-time management
+from utils.airtable import add_newsletter_subscriber, remove_newsletter_subscriber

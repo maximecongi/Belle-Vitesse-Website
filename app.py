@@ -1,10 +1,3 @@
-# imports
-import os
-import re
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.utils import make_msgid, formatdate
 from itsdangerous import URLSafeSerializer
 from collections import defaultdict
 from flask import (
@@ -17,12 +10,9 @@ from flask import (
 from werkzeug.exceptions import HTTPException
 from flask_caching import Cache
 from datetime import datetime, timezone
-import mysql.connector
-from mysql.connector import Error
-from sshtunnel import SSHTunnelForwarder
 
 from utils.specs import build_specs
-from utils.airtable import (
+from utils.database import (
     init_cache,
     get_vehicles,
     get_static_by_lang,
@@ -36,6 +26,10 @@ from utils.airtable import (
     add_newsletter_subscriber,
     remove_newsletter_subscriber,
 )
+from utils.mailer import send_subscription_email
+
+import os
+import re
 
 # -------------------------------------------------
 # App config
@@ -90,141 +84,6 @@ def require_admin_token():
     token = request.headers.get("X-Admin-Token")
     if not token or token != os.getenv("ADMIN_CACHE_TOKEN"):
         abort(403)
-
-# -------------------------------------------------
-# DB Connection Helper
-# -------------------------------------------------
-
-
-def get_db_connection():
-    """Create and return a MySQL connection."""
-    mysql_host = os.getenv("MYSQL_HOST")
-    mysql_user = os.getenv("MYSQL_USER")
-    mysql_password = os.getenv("MYSQL_PASSWORD")
-    mysql_database = os.getenv("MYSQL_DATABASE")
-
-    use_ssh = os.getenv("USE_SSH_TUNNEL", "false").lower() == "true"
-
-    if use_ssh:
-        ssh_host = os.getenv("SSH_HOST")
-        ssh_user = os.getenv("SSH_USER")
-        ssh_password = os.getenv("SSH_PASSWORD")
-
-        tunnel = SSHTunnelForwarder(
-            (ssh_host, 22),
-            ssh_username=ssh_user,
-            ssh_password=ssh_password,
-            remote_bind_address=(mysql_host, 3306)
-        )
-        tunnel.start()
-
-        connection = mysql.connector.connect(
-            host="127.0.0.1",
-            port=tunnel.local_bind_port,
-            user=mysql_user,
-            password=mysql_password,
-            database=mysql_database
-        )
-        return connection, tunnel
-    else:
-        connection = mysql.connector.connect(
-            host=mysql_host,
-            user=mysql_user,
-            password=mysql_password,
-            database=mysql_database
-        )
-        return connection, None
-# -------------------------------------------------
-# Email Helper
-# -------------------------------------------------
-
-
-def send_subscription_email(to_email):
-    """Send a welcome email when someone subscribes to the newsletter."""
-    mail_server = os.getenv("MAIL_SERVER")
-    mail_port = int(os.getenv("MAIL_PORT", 587))
-    mail_user = os.getenv("MAIL_USERNAME")
-    mail_password = os.getenv("MAIL_PASSWORD")
-    mail_use_tls = os.getenv("MAIL_USE_TLS", "true").lower() == "true"
-
-    if not all([mail_server, mail_user, mail_password]):
-        app.logger.error("❌ Email configuration missing in .env")
-        return False
-
-    try:
-        app.logger.info(f"🚀 Démarrage de l'envoi d'email pour {to_email}")
-        
-        # Generate unsubscribe token
-        secret_key = app.config.get("SECRET_KEY") or "bv_super_secret_key_2026"
-        serializer = URLSafeSerializer(secret_key)
-        token = serializer.dumps(to_email)
-        
-        # Use request.host_url to get the full base URL
-        try:
-            base_url = request.host_url.rstrip('/')
-        except Exception:
-            base_url = "https://www.bellevitesse.com" # Fallback
-            
-        unsubscribe_url = f"{base_url}/unsubscribe/{token}"
-        app.logger.info(f"🔗 Unsubscribe URL générée: {unsubscribe_url}")
-
-        # Load HTML template
-        try:
-            html_content = render_template("emails/newsletter_welcome.html", unsubscribe_url=unsubscribe_url)
-        except Exception as e:
-            app.logger.error(f"❌ Erreur render_template: {e}")
-            raise e
-            
-        # Simple plain text fallback
-        text_content = f"Welcome to Belle Vitesse! Thank you for subscribing to our newsletter. To unsubscribe: {unsubscribe_url}"
-
-        # Create message
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = "Welcome to Belle Vitesse"
-        msg["From"] = f"Belle Vitesse <{mail_user}>"
-        msg["To"] = to_email
-        msg["Date"] = formatdate(localtime=True)
-        msg["Message-ID"] = make_msgid(domain="bellevitesse.com")
-        
-        # ⭐ AJOUT DES EN-TÊTES ANTI-SPAM ⭐
-        msg["Precedence"] = "bulk"
-        msg["List-Unsubscribe"] = f"<{unsubscribe_url}>"
-        msg["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click"
-        msg["List-Id"] = "Belle Vitesse Newsletter <newsletter.bellevitesse.com>"
-        msg["X-Entity-Ref-ID"] = "newsletter-welcome"
-        
-        # Additional headers for better deliverability
-        msg["Reply-To"] = mail_user
-        msg["Return-Path"] = mail_user
-
-        msg.attach(MIMEText(text_content, "plain", "utf-8"))
-        msg.attach(MIMEText(html_content, "html", "utf-8"))
-
-        # Send email
-        app.logger.info(f"🔌 Connexion au serveur SMTP {mail_server}:{mail_port}...")
-        server = smtplib.SMTP(mail_server, mail_port, timeout=10)
-        
-        if mail_use_tls:
-            app.logger.info("🔐 Démarrage TLS...")
-            server.starttls()
-        
-        app.logger.info(f"🔑 Tentative de login pour {mail_user}...")
-        server.login(mail_user, mail_password)
-        
-        app.logger.info("📤 Envoi du message...")
-        server.sendmail(mail_user, [to_email], msg.as_string())
-        
-        server.quit()
-
-        app.logger.info(f"✅ Email de bienvenue envoyé avec succès à {to_email}")
-        return True
-
-    except Exception as e:
-        app.logger.error(f"❌ Erreur détaillée lors de l'envoi de l'email à {to_email} : {type(e).__name__}: {e}")
-        import traceback
-        app.logger.error(traceback.format_exc())
-        return False
-
 
 # -------------------------------------------------
 # Context processor (footer global)
@@ -475,4 +334,4 @@ if __name__ == "__main__":
         app.run()
     else:
         app.config["TEMPLATES_AUTO_RELOAD"] = True
-        app.run(debug=True, use_reloader=True)
+        app.run(debug=True, use_reloader=True, port=5001)
