@@ -43,13 +43,15 @@ def init_routes(app):
         if not token or token != os.getenv("ADMIN_CACHE_TOKEN"):
             abort(403)
 
-    @app.route("/")
-    def home():
-        return render_template("home.html", brands=BRANDS)
 
-    @app.route("/launch")
+
+    @app.route("/")
     def launch():
         return render_template("launch.html")
+    
+    @app.route("/home")
+    def home():
+        return render_template("home.html", brands=BRANDS)
 
     @app.route("/vehicles")
     def vehicles():
