@@ -3,7 +3,7 @@ from pyairtable import Table
 import os
 from dotenv import load_dotenv
 
-load_dotenv("/home/Maxcongi/bellevitesse/.env")    
+load_dotenv()    
 
 cache: Cache = None
 
@@ -24,6 +24,7 @@ TABLE_HEADS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "heads")
 TABLE_GRIPS_CATEGORIES = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "grips_categories")
 TABLE_GRIP_PRODUCTS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "grip_products")
 TABLE_CONFIGS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "configs")
+TABLE_NEWSLETTER = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "newsletter_subscribers")
 
 
 
@@ -93,3 +94,26 @@ def get_configs_for_vehicle(vehicle_id):
             if vehicle_id in c["fields"].get("vehicle", [])
         ]
     )
+
+from datetime import datetime
+
+# Newsletter Helpers
+def add_newsletter_subscriber(email):
+    """Add a new subscriber to Airtable."""
+    # Check if subscriber already exists
+    existing = TABLE_NEWSLETTER.first(formula=f"{{email}}='{email}'")
+    if existing:
+        return False
+    
+    # Airtable handles 'subscribed_at' automatically
+    TABLE_NEWSLETTER.create({
+        "email": email
+    })
+    return True
+
+def remove_newsletter_subscriber(email):
+    """Remove a subscriber from Airtable."""
+    records = TABLE_NEWSLETTER.all(formula=f"{{email}}='{email}'")
+    for r in records:
+        TABLE_NEWSLETTER.delete(r["id"])
+    return len(records) > 0
