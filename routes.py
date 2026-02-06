@@ -2,11 +2,9 @@ import os
 import re
 from collections import defaultdict
 from datetime import datetime, timezone
-<<<<<<< Updated upstream
-from flask import render_template, abort, jsonify, request, current_app
-=======
+
 from flask import render_template, abort, jsonify, request, current_app, send_from_directory
->>>>>>> Stashed changes
+
 from itsdangerous import URLSafeSerializer
 from werkzeug.exceptions import HTTPException
 
@@ -47,21 +45,11 @@ def init_routes(app):
         if not token or token != os.getenv("ADMIN_CACHE_TOKEN"):
             abort(403)
 
-
-
-<<<<<<< Updated upstream
-    @app.route("/")
-    def launch():
-        return render_template("launch.html")
-    
-    @app.route("/home")
-=======
     @app.route("/launch")
     def launch():
         return render_template("launch.html")
     
     @app.route("/")
->>>>>>> Stashed changes
     def home():
         return render_template("home.html", brands=BRANDS)
 
@@ -205,13 +193,10 @@ def init_routes(app):
         cache.delete(key)
         return jsonify({"status": f"Cache key {key} cleared"}), 200
 
-<<<<<<< Updated upstream
-=======
     @app.route("/sitemap.xml")
     def sitemap():
         return send_from_directory(app.static_folder, "sitemap.xml")
 
->>>>>>> Stashed changes
 def init_error_handlers(app):
     if os.getenv("FLASK_ENV") == "production":
         @app.errorhandler(HTTPException)
