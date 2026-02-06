@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Static Pages -->
+  <url>
+    <loc>https://www.bellevitesse.com/</loc>
+    <lastmod>2026-02-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/launch</loc>
+    <lastmod>2026-02-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/vehicles</loc>
+    <lastmod>2026-02-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/heads</loc>
+    <lastmod>2026-02-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/grips</loc>
+    <lastmod>2026-02-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/about-us</loc>
+    <lastmod>2026-02-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/contact</loc>
+    <lastmod>2026-02-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/terms-and-conditions</loc>
+    <lastmod>2026-02-06</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
+  </url>
+
+  <!-- Dynamic: Vehicles -->
+  <url><loc>https://www.bellevitesse.com/vehicles/ecar</loc><priority>0.7</priority></url>
+  <url><loc>https://www.bellevitesse.com/vehicles/ebike</loc><priority>0.7</priority></url>
+  <url><loc>https://www.bellevitesse.com/vehicles/etrike-360</loc><priority>0.7</priority></url>
+  <url><loc>https://www.bellevitesse.com/vehicles/etrike</loc><priority>0.7</priority></url>
+  <url><loc>https://www.bellevitesse.com/vehicles/segway-x2</loc><priority>0.7</priority></url>
+  <url><loc>https://www.bellevitesse.com/vehicles/segway-i2</loc><priority>0.7</priority></url>
+  <url><loc>https://www.bellevitesse.com/vehicles/jackal-rickshaw</loc><priority>0.7</priority></url>
+
+  <!-- Dynamic: Heads -->
+  <url><loc>https://www.bellevitesse.com/heads/titan-lt</loc><priority>0.7</priority></url>
+  <url><loc>https://www.bellevitesse.com/heads/ronin-2</loc><priority>0.7</priority></url>
+  <url><loc>https://www.bellevitesse.com/heads/movi-pro</loc><priority>0.7</priority></url>
+  <url><loc>https://www.bellevitesse.com/heads/ronin-4d</loc><priority>0.7</priority></url>
+  <url><loc>https://www.bellevitesse.com/heads/rs4-pro</loc><priority>0.7</priority></url>
+
+  <!-- Dynamic: Grips -->
+  <url><loc>https://www.bellevitesse.com/grips/shock-arms</loc><priority>0.7</priority></url>
+  <url><loc>https://www.bellevitesse.com/grips/controllers</loc><priority>0.7</priority></url>
+  <url><loc>https://www.bellevitesse.com/grips/vibration-isolators</loc><priority>0.7</priority></url>
+  <url><loc>https://www.bellevitesse.com/grips/mounts</loc><priority>0.7</priority></url>
+  <url><loc>https://www.bellevitesse.com/grips/vests</loc><priority>0.7</priority></url>
+</urlset>
