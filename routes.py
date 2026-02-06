@@ -197,6 +197,10 @@ def init_routes(app):
     def sitemap():
         return send_from_directory(app.static_folder, "sitemap.xml")
 
+    @app.route("/robots.txt")
+    def robots():
+        return send_from_directory(app.static_folder, "robots.txt")
+
 def init_error_handlers(app):
     if os.getenv("FLASK_ENV") == "production":
         @app.errorhandler(HTTPException)
