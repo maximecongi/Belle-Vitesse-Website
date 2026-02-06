@@ -1,9 +1,13 @@
-{% extends "layout.html" %}
 {% block title %}Belle Vitesse - Specialist in moving cinema{% endblock %}
+
+{% block extra_head %}
+<link rel="preload" as="image" href="{{ url_for('static', filename='imgs/bgs/bg_home.jpg') }}" fetchpriority="high">
+{% endblock %}
+
 {% block content %}
 <section id="hero-banner" class="section-site">
   <div class="home-hero-banner">
-    <video autoplay muted loop playsinline preload="auto"
+    <video autoplay muted loop playsinline preload="auto" fetchpriority="high"
       poster="{{ url_for('static', filename='imgs/bgs/bg_home.jpg') }}">
       <source src="{{ url_for('static', filename='videos/hero-banner/hero-banner-2.mp4') }}" type="video/mp4">
     </video>
@@ -13,8 +17,10 @@
       </h1>
     </div>
     <div class="home-hero-banner-buttons">
-      <a href="#solutions" class="home-hero-banner-buttons-discover button">{{static.fields["home.discover_our_solutions.button"]}}</a>
-      <a href="{{ url_for('contact') }}" class="home-hero-banner-buttons-contact button bg-color-yellow-1">{{static.fields["home.contact_us.button"]}}</a>
+      <a href="#solutions"
+        class="home-hero-banner-buttons-discover button">{{static.fields["home.discover_our_solutions.button"]}}</a>
+      <a href="{{ url_for('contact') }}"
+        class="home-hero-banner-buttons-contact button bg-color-yellow-1">{{static.fields["home.contact_us.button"]}}</a>
     </div>
     <div class="icon-scroll"></div>
 </section>
