@@ -18,6 +18,10 @@ def create_app():
         static_folder=os.getenv("STATIC_FOLDER"),
         static_url_path=os.getenv("STATIC_URL_PATH"),
     )
+
+    # Proxy Fix for SSL behind Traefik
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
     
     # App Config
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "bv_super_secret_key_2026")
