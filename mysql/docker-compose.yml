@@ -9,6 +9,9 @@ services:
       - bv_db_data:/var/lib/mysql
     networks:
       - bv_network
+    ports:
+      - "127.0.0.1:3306:3306" 
+    command: --default-authentication-plugin=mysql_native_password
 
 networks:
   bv_network:
