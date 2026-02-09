@@ -201,7 +201,8 @@ def sync_table(table_name, api, cursor):
         processed_fields = process_attachments_in_fields(fields, table_name, record_id)
         
         # Format createdTime for MySQL (Airtable: 2026-01-20T11:02:25.000Z -> MySQL: 2026-01-20 11:02:25)
-        created_time_formatted = created_time.replace("T", " ").replace("Z", "")
+        # We strip the milliseconds part if present to ensure maximum compatibility
+        created_time_clean = created_time.split('.')[0].replace("T", " ").replace("Z", "")
         
         # Convert to JSON for storage
         fields_json = json.dumps(processed_fields, ensure_ascii=False)
@@ -216,7 +217,7 @@ def sync_table(table_name, api, cursor):
         """
         
         try:
-            cursor.execute(upsert_query, (record_id, created_time_formatted, fields_json))
+            cursor.execute(upsert_query, (record_id, created_time_clean, fields_json))
         except Error as e:
             print(f"  FAILED to upsert record {record_id} in table {table_name}: {e}")
             print(f"  Query: {upsert_query}")
@@ -318,7 +319,7 @@ def main():
                 cursor.close()
                 connection.close()
     else:
-        # Direct connection (for running on PythonAnywhere)
+        # Direct connection (for running on PythonAnywhere or inside Docker)
         connection = mysql.connector.connect(
             host=MYSQL_HOST,
             user=MYSQL_USER,
