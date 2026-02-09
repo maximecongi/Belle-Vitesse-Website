@@ -9,6 +9,8 @@ services:
       - ../.env
     environment:
       - MYSQL_HOST=bv_mysql 
+    volumes:
+      - ../static/images/airtable:/app/static/images/airtable
     networks:
       - bv_network
       - traefik_default

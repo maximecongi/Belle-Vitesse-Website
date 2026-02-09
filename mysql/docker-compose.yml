@@ -6,7 +6,7 @@ services:
     env_file:
       - ../.env
     volumes:
-      - ./data:/var/lib/mysql
+      - bv_db_data:/var/lib/mysql
     networks:
       - bv_network
 
@@ -14,3 +14,6 @@ networks:
   bv_network:
     name: bv_network
     external: true
+
+volumes:
+  bv_db_data:
