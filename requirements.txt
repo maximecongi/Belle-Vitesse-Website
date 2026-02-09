@@ -83,4 +83,5 @@ urllib3==2.6.2
 wcwidth==0.2.14
 webencodings==0.5.1
 Werkzeug==3.1.4
-yarg==0.1.9gunicorn==23.0.0
+yarg==0.1.9
+gunicorn==23.0.0
