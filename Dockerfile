@@ -25,4 +25,4 @@ COPY . .
 EXPOSE 5001
 
 # Commande pour démarrer l'application avec Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:5001", "app:app", "--workers", "4", "--threads", "2", "--forwarded-allow-ips='*'"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5001", "app:app", "--workers", "4", "--threads", "2", "--forwarded-allow-ips=*"]
