@@ -20,6 +20,7 @@ services:
       - "traefik.http.routers.bv_app.entrypoints=websecure"
       - "traefik.http.routers.bv_app.tls.certresolver=letsencrypt"
       - "traefik.http.services.bv_app.loadbalancer.server.port=5001"
+      - "traefik.http.middlewares.add-header.headers.customRequestHeaders.X-Admin-Token=X-Admin-Token"
     ports:
       - "5001:5001"
 
