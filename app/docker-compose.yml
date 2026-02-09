@@ -16,7 +16,7 @@ services:
       - traefik_default
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.bv_app.rule=Host(`www.bellevitesse.com`,`bellevitesse.com`)"
+      - "traefik.http.routers.bv_app.rule=Host(`bellevitesse.com`)"
       - "traefik.http.routers.bv_app.entrypoints=websecure"
       - "traefik.http.routers.bv_app.tls.certresolver=letsencrypt"
       - "traefik.http.services.bv_app.loadbalancer.server.port=5001"
