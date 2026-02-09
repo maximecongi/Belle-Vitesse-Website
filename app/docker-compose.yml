@@ -8,14 +8,13 @@ services:
     env_file:
       - ../.env
     environment:
-      - FLASK_ENV=production
-      - MYSQL_HOST=bv_mysql # Override pour pointer vers le container MySQL
+      - MYSQL_HOST=bv_mysql 
     networks:
       - bv_network
       - traefik_default
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.bv_app.rule=Host(`${APP_DOMAIN}`)"
+      - "traefik.http.routers.bv_app.rule=Host(`bellevitesse.com`)"
       - "traefik.http.routers.bv_app.entrypoints=websecure"
       - "traefik.http.routers.bv_app.tls.certresolver=letsencrypt"
       - "traefik.http.services.bv_app.loadbalancer.server.port=5001"
