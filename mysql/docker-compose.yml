@@ -1,0 +1,16 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: bv_mysql
+    restart: always
+    env_file:
+      - ../.env
+    volumes:
+      - ./data:/var/lib/mysql
+    networks:
+      - bv_network
+
+networks:
+  bv_network:
+    name: bv_network
+    external: true
