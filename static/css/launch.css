@@ -138,6 +138,7 @@ html {
 
 .newsletter-input {
     width: 100%;
+    text-align: center;
     background: transparent;
     border: none;
     border-bottom: 1px solid var(--white-4);

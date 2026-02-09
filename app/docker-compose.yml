@@ -10,6 +10,7 @@ services:
     environment:
       - MYSQL_HOST=bv_mysql 
     volumes:
+      - ../static:/app/static
       - ../static/images/airtable:/app/static/images/airtable
     networks:
       - bv_network
