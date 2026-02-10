@@ -47,8 +47,4 @@ window.initInfiniteScroll = function () {
   }
 
   loop();
-
-  window.addEventListener('resize', () => {
-    x = 0;
-  });
 };
