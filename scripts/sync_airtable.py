@@ -17,8 +17,6 @@ import mysql.connector
 from mysql.connector import Error
 from sshtunnel import SSHTunnelForwarder
 
-from cache_clearer import clear_cache
-
 # Load environment variables
 load_dotenv()
 
@@ -344,7 +342,6 @@ def main():
         finally:
             cursor.close()
             connection.close()
-            clear_cache()
 
 
 if __name__ == "__main__":
