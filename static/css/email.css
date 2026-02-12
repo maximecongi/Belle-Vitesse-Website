@@ -1,0 +1,121 @@
+/* Belle Vitesse Email Theme */
+
+/* Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap');
+
+/* Reset CSS */
+body,
+html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    background-color: #fafafa;
+}
+
+/* Client-specific styles */
+body,
+table,
+td,
+a {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+}
+
+table,
+td {
+    mso-table-lspace: 0pt;
+    mso-table-rspace: 0pt;
+}
+
+img {
+    -ms-interpolation-mode: bicubic;
+    border: 0;
+    height: auto;
+    line-height: 100%;
+    outline: none;
+    text-decoration: none;
+    display: block;
+}
+
+/* Main Typography */
+h1,
+h2,
+h3,
+p {
+    font-family: 'Poppins', Helvetica, Arial, sans-serif;
+    margin: 0;
+}
+
+/* Links */
+a {
+    color: #151515;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #FFC845;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+/* Common Classes */
+.bg-white {
+    background-color: #ffffff;
+}
+
+.bg-dark {
+    background-color: #151515;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-white {
+    color: #ffffff;
+}
+
+.text-dark {
+    color: #151515;
+}
+
+.text-grey {
+    color: #666666;
+}
+
+.accent-dot {
+    color: #FFC845;
+    font-size: 0.8em;
+    position: relative;
+    top: -2px;
+    margin-right: 5px;
+}
+
+/* Buttons */
+.button {
+    display: inline-block;
+    background-color: #FFC845;
+    color: #151515;
+    padding: 16px 36px;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 4px;
+    /* Optional based on preference */
+    filter: brightness(1);
+    transition: filter 0.3s ease;
+}
+
+.button:hover {
+    filter: brightness(0.9);
+}
+
+/* Helpers */
+.w-100 {
+    width: 100%;
+}
+
+.max-w-600 {
+    max-width: 600px;
+}
