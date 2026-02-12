@@ -4,8 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coming Soon - Belle Vitesse</title>
+    <title>Coming Soon — Belle Vitesse</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap');
+
         body,
         html {
             margin: 0;
@@ -14,8 +16,6 @@
             width: 100%;
             background-color: #fafafa;
         }
-
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;600&display=swap');
 
         body,
         table,
@@ -59,7 +59,6 @@
             transition: all 0.3s ease;
         }
 
-        /* Button Hover */
         .button {
             filter: brightness(1);
             transition: filter 0.3s ease;
@@ -73,24 +72,29 @@
 
 <body style="margin: 0; padding: 0; background-color: #fafafa;">
 
+    <!-- Wrapper -->
     <table border="0" cellpadding="0" cellspacing="0" width="100%"
         style="background-color: #fafafa; font-family: 'Poppins', Helvetica, Arial, sans-serif;">
         <tr>
             <td align="center" style="padding: 40px 20px;">
 
+                <!-- Main Container -->
                 <table border="0" cellpadding="0" cellspacing="0" width="100%"
                     style="max-width: 600px; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
 
+                    <!-- Header Logo -->
                     <tr>
                         <td align="center" style="padding: 40px 0; background-color: #ffffff;">
                             <img src="https://bellevitesse.com/static/imgs/logos_and_name/noir-fond-transparent-paris.png"
-                                alt="Belle Vitesse Logo" width="240"
-                                style="display: block; width: 240px; max-width: 100%;">
+                                alt="Belle Vitesse" width="240" style="display: block; width: 240px; max-width: 100%;">
                         </td>
                     </tr>
 
+                    <!-- Body Content -->
                     <tr>
-                        <td style="padding: 40px 30px; text-align:center;">
+                        <td style="padding: 40px 30px;">
+
+                            <!-- Title -->
                             <h1
                                 style="color: #151515; font-size: 28px; font-weight: 600; margin-bottom: 20px; line-height: 1.3;">
                                 <span
@@ -115,11 +119,13 @@
                                 Our full website is currently under construction. In the meantime, sign up to be the
                                 first to know when we launch and discover our fleet.
                             </p>
+
+                            <!-- Call to Action -->
                             <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 25px;">
                                 <tr>
                                     <td align="center">
-                                        <a class="button" href="https://bellevitesse.com" target="_blank" class="button"
-                                            style="display: inline-block; color:#151515; background-color: #FFC845; padding: 14px 30px; font-size: 16px; font-weight: 600; text-decoration: none;">
+                                        <a class="button" href="https://bellevitesse.com" target="_blank"
+                                            style="display: inline-block; color: #151515; background-color: #FFC845; padding: 14px 30px; font-size: 16px; font-weight: 600; text-decoration: none;">
                                             Stay Tuned
                                         </a>
                                     </td>
@@ -128,6 +134,7 @@
                         </td>
                     </tr>
 
+                    <!-- Footer -->
                     <tr>
                         <td style="background-color: #151515; padding: 30px; text-align: center;">
                             <p style="color: #ffffff; font-size: 14px; font-weight: 600; margin-bottom: 10px;">
@@ -142,6 +149,7 @@
                     </tr>
                 </table>
 
+                <!-- Unsubscribe -->
                 <table border="0" cellpadding="0" cellspacing="0" width="100%"
                     style="max-width: 600px; margin-top: 20px;">
                     <tr>
@@ -149,9 +157,8 @@
                             <p
                                 style="color: #999999; font-size: 11px; font-family: 'Poppins', Helvetica, Arial, sans-serif;">
                                 You are receiving this email because you subscribed to the Belle Vitesse newsletter.<br>
-                                <a href="{{ unsubscribe_url }}" style="color: #999999; text-decoration: underline;">
-                                    Unsubscribe
-                                </a>
+                                <a href="{{ unsubscribe_url }}"
+                                    style="color: #999999; text-decoration: underline;">Unsubscribe</a>
                             </p>
                         </td>
                     </tr>
