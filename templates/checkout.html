@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check-Out Véhicule — Belle Vitesse</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/checkout.css') }}">
+</head>
+
+<body>
+
+    <div class="checkout">
+
+        <!-- ═══════════ HEADER ═══════════ -->
+        <header class="checkout-header">
+            <div class="checkout-header-logo">
+                <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
+                    alt="Belle Vitesse">
+            </div>
+            <div class="checkout-header-meta">
+                <strong class="dot-before">Check-Out Véhicule</strong><br>
+                <span class="checkout-doc-id">{{ data.inspection_id }}</span><br>
+                {{ data.control_date or '—' }}
+            </div>
+        </header>
+
+        <!-- ═══════════ PRODUCTION INFO ═══════════ -->
+        <section class="checkout-section">
+            <h2 class="checkout-section-title dot-before">Production</h2>
+            <div class="checkout-info-grid">
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Production</span>
+                    <span class="checkout-info-value">{{ data.production }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Projet</span>
+                    <span class="checkout-info-value">{{ data.project }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Date de départ</span>
+                    <span class="checkout-info-value">{{ data.departure_date }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Début de tournage</span>
+                    <span class="checkout-info-value">{{ data.shoot_start }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Fin de tournage</span>
+                    <span class="checkout-info-value">{{ data.shoot_end }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Responsable du contrôle</span>
+                    <span class="checkout-info-value">{{ data.controller.name }}</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════ VEHICLE INFO ═══════════ -->
+        <section class="checkout-section">
+            <h2 class="checkout-section-title dot-before">Véhicule</h2>
+            <div class="checkout-info-grid">
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Véhicule contrôlé</span>
+                    <span class="checkout-info-value">{{ data.vehicle.fields.name }}
+                        <span class="checkout-doc-id">{{ data.vehicle.fields.unique_id }}</span>
+                    </span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Kilométrage départ</span>
+                    <span class="checkout-info-value">{{ data.km or '—' }} km</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Charge batterie départ</span>
+                    <span class="checkout-info-value">{{ data.battery or '—' }} %</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">État du contrôle</span>
+                    <span class="checkout-info-value">
+                        {% if data.control_status == 'Terminé' %}
+                        <span class="checkout-badge checkout-badge--ok">Terminé</span>
+                        {% elif data.control_status == 'En cours' %}
+                        <span class="checkout-badge checkout-badge--inprogress">En cours</span>
+                        {% elif data.control_status == 'Pas commencé' %}
+                        <span class="checkout-badge checkout-badge--neutral">Pas commencé</span>
+                        {% else %}
+                        <span class="checkout-badge checkout-badge--neutral">{{ data.control_status }}</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Photo compteur -->
+            {% if data.odometer_photo %}
+            <div class="checkout-mt-1">
+                <p class="checkout-info-label">Photo compteur</p>
+                <div class="checkout-photos" style="grid-template-columns: 1fr;">
+                    <div class="checkout-photo-item" style="max-width: 300px;">
+                        <img src="{{ data.odometer_photo }}" alt="Photo compteur">
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- ═══════════ INSPECTION TABLE ═══════════ -->
+        <section class="checkout-section">
+            <h2 class="checkout-section-title dot-before">Inspection technique</h2>
+            <table class="checkout-table">
+                <thead>
+                    <tr>
+                        <th>Élément</th>
+                        <th>État</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set checks = [
+                    ('État des pneus', data.tires),
+                    ('Roue de secours', data.spare_tire),
+                    ('Niveau huile', data.oil),
+                    ('Niveau liquide de refroidissement', data.coolant),
+                    ('État des freins', data.brakes),
+                    ('État éclairage extérieur', data.lights),
+                    ('Démarrage moteur', data.engine_start),
+                    ('État des essuie-glaces', data.wipers),
+                    ('État du klaxon', data.horn),
+                    ('Triangle de signalisation / Gilet', data.safety_triangle),
+                    ('Présence extincteur', data.fire_extinguisher),
+                    ] %}
+                    {% for label, status in checks %}
+                    <tr>
+                        <td>{{ label }}</td>
+                        <td>
+                            {% if status == 'OK' %}
+                            <span class="checkout-badge checkout-badge--ok">OK</span>
+                            {% elif status == 'Non pertinent' %}
+                            <span class="checkout-badge checkout-badge--neutral">Non pertinent</span>
+                            {% elif status == 'Défaut' %}
+                            <span class="checkout-badge checkout-badge--critical">Défaut</span>
+                            {% elif status == 'Attention' %}
+                            <span class="checkout-badge checkout-badge--warning">Attention</span>
+                            {% else %}
+                            <span class="checkout-badge checkout-badge--neutral">{{ status or '—' }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        <!-- ═══════════ PHOTOS INTÉRIEURES ═══════════ -->
+        {% if data.interior_photos %}
+        <section class="checkout-section">
+            <h2 class="checkout-section-title dot-before">Photos intérieur véhicule</h2>
+            <div class="checkout-photos">
+                {% for photo in data.interior_photos %}
+                <div class="checkout-photo-item">
+                    <img src="{{ photo.url }}" alt="Intérieur {{ loop.index }}">
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- ═══════════ PHOTOS EXTÉRIEURES ═══════════ -->
+        {% if data.exterior_photos %}
+        <section class="checkout-section">
+            <h2 class="checkout-section-title dot-before">Photos extérieur véhicule</h2>
+            <div class="checkout-photos">
+                {% for photo in data.exterior_photos %}
+                <div class="checkout-photo-item">
+                    <img src="{{ photo.url }}" alt="Extérieur {{ loop.index }}">
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- ═══════════ OBSERVATIONS ═══════════ -->
+        <section class="checkout-section">
+            <h2 class="checkout-section-title dot-before">Observations générales</h2>
+            <div class="checkout-notes">
+                {{ data.notes or 'Aucune observation.' }}
+            </div>
+        </section>
+
+        <!-- ═══════════ VERDICT ═══════════ -->
+        <section class="checkout-section checkout-text-center">
+            <h2 class="checkout-section-title dot-before">Véhicule prêt au départ</h2>
+            {% if data.ready == '✅ Oui' %}
+            <span class="checkout-badge checkout-badge--ok" style="font-size: 1rem; padding: 8px 24px;">
+                OUI — Véhicule validé
+            </span>
+            {% elif data.ready == '❌ Non' %}
+            <span class="checkout-badge checkout-badge--critical" style="font-size: 1rem; padding: 8px 24px;">
+                NON — Véhicule non conforme
+            </span>
+            {% else %}
+            <span class="checkout-badge checkout-badge--neutral" style="font-size: 1rem; padding: 8px 24px;">
+                {{ data.ready or 'En attente' }}
+            </span>
+            {% endif %}
+        </section>
+
+        <hr class="checkout-divider">
+
+        <!-- ═══════════ SIGNATURE ═══════════ -->
+        <section class="checkout-section">
+            <h2 class="checkout-section-title dot-before">Signature électronique</h2>
+            <div class="checkout-signature">
+                <div class="checkout-signature-block">
+                    <p class="checkout-signature-label">Signature du responsable</p>
+                    <div class="checkout-signature-pad">
+                        {% if signature %}
+                        <img src="{{ signature }}" alt="Signature">
+                        {% else %}
+                        <span class="checkout-text-muted">En attente de signature</span>
+                        {% endif %}
+                    </div>
+                    <div class="checkout-signature-info">
+                        <strong>{{ data.controller.name }}</strong><br>
+                        {% if data.signed_at %}
+                        Signé le {{ data.signed_at }} — IP : {{ data.signed_ip }}
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if qr %}
+                <div class="checkout-signature-block" style="max-width: 160px;">
+                    <p class="checkout-signature-label">Vérification</p>
+                    <div class="checkout-qr">
+                        <img src="{{ qr }}" alt="QR Code de vérification">
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- ═══════════ VERIFICATION HASH ═══════════ -->
+        {% if hash %}
+        <div class="checkout-verification">
+            <div>
+                <p class="checkout-verification-text">
+                    <strong>Document scellé électroniquement.</strong><br>
+                    Son intégrité peut être vérifiée via le QR code ci-dessus.
+                </p>
+                <p class="checkout-hash">SHA-256 : {{ hash }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ═══════════ FOOTER ═══════════ -->
+        <footer class="checkout-footer">
+            <p>
+                <strong>Belle Vitesse SARL</strong><br>
+                33 rue Maurice Gunsbourg — 94200 Ivry-sur-Seine — France<br>
+                Ce document est confidentiel et destiné uniquement à un usage interne.
+            </p>
+        </footer>
+
+    </div>
+
+</body>
+
+</html>

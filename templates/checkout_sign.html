@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signature — {{ data.inspection_id }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/checkout.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+</head>
+
+<body>
+
+    <div class="checkout-sign-page">
+
+        <!-- Logo -->
+        <div style="margin-bottom: 2rem;">
+            <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
+                alt="Belle Vitesse" style="height: 36px;">
+        </div>
+
+        <!-- Title -->
+        <h2 class="dot-before">Signature du responsable</h2>
+
+        <!-- Recap -->
+        <div class="checkout-section" style="text-align: left; margin-bottom: 2rem;">
+            <div class="checkout-info-grid">
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Inspection</span>
+                    <span class="checkout-info-value">{{ data.inspection_id }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Véhicule contrôlé</span>
+                    <span class="checkout-info-value">{{ data.vehicle.fields.name }}
+                        <span class="checkout-doc-id">{{ data.vehicle.fields.unique_id }}</span>
+                    </span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Production</span>
+                    <span class="checkout-info-value">{{ data.production }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Projet</span>
+                    <span class="checkout-info-value">{{ data.project }}</span>
+                </div>
+            </div>
+        </div>
+
+        <p>
+            En signant ci-dessous, je certifie avoir effectué le contrôle technique
+            du véhicule et que les informations renseignées sont exactes.
+        </p>
+
+        <!-- Signature Canvas -->
+        <div class="checkout-sign-canvas-wrapper">
+            <canvas id="signature-canvas"></canvas>
+        </div>
+
+        <!-- Actions -->
+        <div class="checkout-sign-actions">
+            <button type="button" class="checkout-btn checkout-btn--secondary" id="btn-clear">
+                Effacer
+            </button>
+            <button type="button" class="checkout-btn checkout-btn--primary" id="btn-sign">
+                Signer le document
+            </button>
+        </div>
+
+        <!-- Feedback -->
+        <div id="feedback" style="margin-top: 1.5rem; display: none;">
+            <p id="feedback-text" style="font-weight: 500; text-align: center;"></p>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const canvas = document.getElementById('signature-canvas');
+            const wrapper = canvas.parentElement;
+
+            // Resize canvas to match wrapper
+            function resizeCanvas() {
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                canvas.width = wrapper.offsetWidth * ratio;
+                canvas.height = wrapper.offsetHeight * ratio;
+                canvas.getContext('2d').scale(ratio, ratio);
+                signaturePad.clear();
+            }
+
+            const signaturePad = new SignaturePad(canvas, {
+                backgroundColor: 'rgb(250, 250, 250)',
+                penColor: 'rgb(21, 21, 21)',
+            });
+
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            // Clear button
+            document.getElementById('btn-clear').addEventListener('click', function () {
+                signaturePad.clear();
+            });
+
+            // Sign button
+            document.getElementById('btn-sign').addEventListener('click', function () {
+                if (signaturePad.isEmpty()) {
+                    showFeedback('Veuillez signer avant de valider.', 'var(--red-1)');
+                    return;
+                }
+
+                const btn = this;
+                btn.disabled = true;
+                btn.textContent = 'Envoi en cours…';
+
+                const signatureData = signaturePad.toDataURL('image/png');
+
+                fetch('', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ signature: signatureData }),
+                })
+                    .then(function (res) { return res.json(); })
+                    .then(function (result) {
+                        if (result.status === 'signed') {
+                            showFeedback('✅ Document signé avec succès.', 'var(--green-1)');
+                            btn.textContent = 'Signé ✓';
+                            canvas.style.pointerEvents = 'none';
+                        } else {
+                            showFeedback('❌ ' + (result.error || 'Erreur inconnue.'), 'var(--red-1)');
+                            btn.disabled = false;
+                            btn.textContent = 'Signer le document';
+                        }
+                    })
+                    .catch(function () {
+                        showFeedback('❌ Erreur réseau. Réessayez.', 'var(--red-1)');
+                        btn.disabled = false;
+                        btn.textContent = 'Signer le document';
+                    });
+            });
+
+            function showFeedback(msg, color) {
+                const el = document.getElementById('feedback');
+                const txt = document.getElementById('feedback-text');
+                txt.textContent = msg;
+                txt.style.color = color;
+                el.style.display = 'block';
+            }
+        })();
+    </script>
+
+</body>
+
+</html>

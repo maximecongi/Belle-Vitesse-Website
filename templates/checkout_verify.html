@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vérification — Belle Vitesse</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/checkout.css') }}">
+</head>
+
+<body>
+
+    <div class="checkout" style="max-width: 500px; text-align: center; padding-top: 5vh;">
+
+        <!-- Logo -->
+        <div style="margin-bottom: 2rem;">
+            <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
+                alt="Belle Vitesse" style="height: 36px;">
+        </div>
+
+        {% if valid %}
+        {% if valid %}
+        <div style="margin-bottom: 2rem;">
+            {% if source == 'mysql' %}
+            <span class="checkout-badge checkout-badge--ok"
+                style="font-size: 1rem; padding: 10px 24px; background-color: var(--green-1); color: white;">
+                ✅ Document Certifié & Immuable
+            </span>
+            {% else %}
+            <span class="checkout-badge checkout-badge--warning"
+                style="font-size: 1rem; padding: 10px 24px; background-color: var(--yellow-1); color: var(--grey-1);">
+                ⚠️ Document Vérifié (Source Live)
+            </span>
+            <p
+                style="font-size: 0.75rem; color: var(--grey-2); margin-top: 0.5rem; max-width: 300px; margin-left: auto; margin-right: auto;">
+                Attention : Ces données proviennent d'Airtable et peuvent avoir été modifiées après signature.
+            </p>
+            {% endif %}
+        </div>
+
+        <h2 class="dot-before" style="font-size: 1.2rem; margin-bottom: 1.5rem;">{{ data.inspection_id }}</h2>
+
+        <div class="checkout-info-grid" style="text-align: left; margin-bottom: 2rem;">
+            <div class="checkout-info-item">
+                <span class="checkout-info-label">Véhicule contrôlé</span>
+                <span class="checkout-info-value">{{ data.vehicle.fields.name }}
+                    <span class="checkout-doc-id">{{ data.vehicle.fields.unique_id }}</span>
+                </span>
+            </div>
+            <div class="checkout-info-item">
+                <span class="checkout-info-label">Production</span>
+                <span class="checkout-info-value">{{ data.production }}</span>
+            </div>
+            <div class="checkout-info-item">
+                <span class="checkout-info-label">Date de contrôle</span>
+                <span class="checkout-info-value">{{ data.control_date }}</span>
+            </div>
+            <div class="checkout-info-item">
+                <span class="checkout-info-label">Responsable</span>
+                <span class="checkout-info-value">{{ data.controller.name }}</span>
+            </div>
+        </div>
+
+        {% if data.hash %}
+        <div style="margin-bottom: 2rem; background: var(--white-2); padding: 1rem; border-radius: 8px;">
+            <p
+                style="font-size: 0.75rem; color: var(--grey-2); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px;">
+                Empreinte Numérique (SHA-256)</p>
+            <code
+                style="display: block; word-break: break-all; font-size: 0.7rem; color: var(--grey-3);">{{ data.hash }}</code>
+        </div>
+        {% endif %}
+
+        {% if data.pdf_url %}
+        <div style="margin-bottom: 2rem;">
+            <a href="{{ data.pdf_url }}" target="_blank" class="button button--primary" style="text-decoration: none;">
+                Télécharger le document scellé
+            </a>
+        </div>
+        {% endif %}
+
+        <p style="font-size: 0.8rem; color: var(--grey-2); font-weight: 300; line-height: 1.6;">
+            Ce document a été généré et signé électroniquement via la plateforme
+            <strong>Belle Vitesse</strong>. Son authenticité est vérifiée.
+        </p>
+
+        {% else %}
+        <div style="margin-bottom: 2rem;">
+            <span class="checkout-badge checkout-badge--critical" style="font-size: 1rem; padding: 10px 24px;">
+                ❌ Document non trouvé
+            </span>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--grey-2); font-weight: 300;">
+            Ce document n'existe pas ou a été modifié.
+        </p>
+        {% endif %}
+
+        <footer class="checkout-footer" style="margin-top: 3rem;">
+            <p>
+                <strong>Belle Vitesse SARL</strong><br>
+                33 rue Maurice Gunsbourg — 94200 Ivry-sur-Seine — France
+            </p>
+        </footer>
+
+    </div>
+
+</body>
+
+</html>

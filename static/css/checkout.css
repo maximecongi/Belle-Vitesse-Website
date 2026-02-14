@@ -1,0 +1,681 @@
+/* ── Page Setup (WeasyPrint) ───────────── */
+@page {
+    size: A4;
+    margin: 15mm;
+}
+
+@page :first {
+    margin-top: 15mm;
+}
+
+/* ── Reset Global ────────────────────── */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 12pt;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: white;
+    font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--grey-1);
+}
+
+/* ── Document Wrapper ────────────────── */
+.checkout {
+    max-width: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 15mm;
+    font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--grey-1);
+    background-color: white;
+    font-size: 9pt;
+    line-height: 1.5;
+}
+
+/* ── Masquer les éléments non-imprimables ────────────────────── */
+.checkout-no-print {
+    display: none !important;
+}
+
+/* ── Header ──────────────────────────── */
+.checkout-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 12pt;
+    border-bottom: 2px solid var(--grey-1);
+    margin-bottom: 12pt;
+    page-break-after: avoid;
+}
+
+.checkout-header-logo img {
+    height: 30pt;
+    width: auto;
+}
+
+.checkout-header-meta {
+    text-align: right;
+    font-size: 7pt;
+    color: var(--grey-2);
+    line-height: 1.6;
+}
+
+.checkout-header-meta strong {
+    color: var(--grey-1);
+}
+
+.checkout-doc-id {
+    font-family: monospace;
+    font-size: 6pt;
+    background-color: var(--white-3);
+    padding: 2pt 6pt;
+    border-radius: 2pt;
+    margin-top: 6pt;
+}
+
+/* ── Document Title ──────────────────── */
+.checkout-title {
+    font-size: 20pt;
+    font-weight: 600;
+    margin-bottom: 4pt;
+    letter-spacing: -0.02em;
+    page-break-after: avoid;
+}
+
+.checkout-subtitle {
+    font-size: 8pt;
+    color: var(--grey-2);
+    font-weight: 300;
+    margin-bottom: 12pt;
+    page-break-after: avoid;
+}
+
+/* ── Sections ────────────────────────── */
+.checkout-section {
+    margin-bottom: 12pt;
+    page-break-inside: avoid;
+}
+
+.checkout-section-title {
+    font-size: 9pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding-bottom: 4pt;
+    border-bottom: 1pt solid var(--white-3);
+    margin-bottom: 8pt;
+    color: var(--grey-1);
+    page-break-after: avoid;
+}
+
+/* ── Info Grid (Key-Value pairs) ─────── */
+.checkout-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10mm;
+    page-break-inside: avoid;
+}
+
+.checkout-info-item {
+    display: flex;
+    flex-direction: column;
+    page-break-inside: avoid;
+}
+
+.checkout-info-label {
+    font-size: 6pt;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--white-4);
+    font-weight: 500;
+    margin-bottom: 2pt;
+}
+
+.checkout-info-value {
+    font-size: 9pt;
+    font-weight: 500;
+    color: var(--grey-1);
+}
+
+/* ── Status Badges ───────────────────── */
+.checkout-badge {
+    display: inline-block;
+    padding: 3pt 8pt;
+    border-radius: 2pt;
+    font-size: 6pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.checkout-badge--ok {
+    background-color: var(--green-1);
+    color: var(--white-1);
+}
+
+.checkout-badge--warning {
+    background-color: var(--yellow-1);
+    color: var(--grey-1);
+}
+
+.checkout-badge--critical {
+    background-color: var(--red-1);
+    color: var(--white-1);
+}
+
+.checkout-badge--neutral {
+    background-color: var(--white-3);
+    color: var(--grey-2);
+}
+
+.checkout-badge--inprogress {
+    background-color: var(--blue-1);
+    color: var(--white-1);
+}
+
+/* ── Inspection Table ────────────────── */
+.checkout-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt;
+    page-break-inside: avoid;
+}
+
+.checkout-table thead {
+    background-color: var(--grey-1);
+    color: var(--white-1);
+}
+
+.checkout-table th {
+    text-align: left;
+    padding: 6pt 10pt;
+    font-weight: 500;
+    font-size: 7pt;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.checkout-table td {
+    padding: 6pt 10pt;
+    border-bottom: 1pt solid var(--white-3);
+    vertical-align: middle;
+}
+
+.checkout-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* ── Photos Grid ─────────────────────── */
+.checkout-photos {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 8pt;
+    page-break-inside: avoid;
+}
+
+.checkout-photo-item {
+    position: relative;
+    overflow: hidden;
+    border-radius: 2pt;
+    aspect-ratio: 4 / 3;
+    page-break-inside: avoid;
+}
+
+.checkout-photo-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.checkout-photo-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(21, 21, 21, 0.85));
+    color: var(--white-1);
+    font-size: 6pt;
+    padding: 12pt 6pt 4pt;
+    font-weight: 300;
+}
+
+/* ── Notes / Comments ────────────────── */
+.checkout-notes {
+    background-color: var(--white-3);
+    padding: 8pt 10pt;
+    border-left: 3pt solid var(--yellow-1);
+    font-size: 8pt;
+    line-height: 1.5;
+    font-weight: 300;
+    color: var(--grey-2);
+    min-height: 50pt;
+    page-break-inside: avoid;
+}
+
+/* ── Signature Block ─────────────────── */
+.checkout-signature {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 12pt;
+    margin-top: 12pt;
+    padding-top: 12pt;
+    border-top: 1pt solid var(--white-3);
+    page-break-inside: avoid;
+    page-break-before: avoid;
+}
+
+.checkout-signature-block {
+    flex: 1;
+}
+
+.checkout-signature-label {
+    font-size: 6pt;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--white-4);
+    margin-bottom: 4pt;
+    font-weight: 500;
+}
+
+.checkout-signature-pad {
+    border: 1pt dashed var(--white-4);
+    border-radius: 2pt;
+    min-height: 70pt;
+    background-color: var(--white-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.checkout-signature-pad img {
+    max-width: 100%;
+    max-height: 70pt;
+}
+
+.checkout-signature-pad canvas {
+    width: 100%;
+    height: 100%;
+}
+
+.checkout-signature-info {
+    font-size: 6pt;
+    color: var(--grey-2);
+    margin-top: 4pt;
+    line-height: 1.4;
+}
+
+/* ── QR Code & Verification ──────────── */
+.checkout-verification {
+    display: flex;
+    align-items: center;
+    gap: 10pt;
+    margin-top: 12pt;
+    padding: 8pt;
+    background-color: var(--white-3);
+    border-radius: 2pt;
+    page-break-inside: avoid;
+}
+
+.checkout-qr img {
+    width: 60pt;
+    height: 60pt;
+    display: block;
+    flex-shrink: 0;
+}
+
+.checkout-verification-text {
+    font-size: 6pt;
+    color: var(--grey-2);
+    line-height: 1.5;
+    font-weight: 300;
+}
+
+.checkout-verification-text strong {
+    color: var(--grey-1);
+    font-weight: 500;
+}
+
+.checkout-hash {
+    font-family: monospace;
+    font-size: 5pt;
+    color: var(--white-4);
+    word-break: break-all;
+    margin-top: 4pt;
+}
+
+/* ── Footer Banner ───────────────────── */
+.checkout-footer {
+    margin-top: 12pt;
+    padding: 10pt;
+    background-color: var(--grey-1);
+    color: var(--white-1);
+    text-align: center;
+    border-radius: 2pt;
+    page-break-inside: avoid;
+}
+
+.checkout-footer p {
+    font-size: 6pt;
+    font-weight: 300;
+    color: var(--white-4);
+    line-height: 1.5;
+    text-align: center;
+}
+
+.checkout-footer strong {
+    color: var(--white-1);
+    font-weight: 600;
+}
+
+/* ── Signing Page (tablet) ───────────── */
+.checkout-sign-page {
+    max-width: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 15mm;
+    text-align: center;
+}
+
+.checkout-sign-page h2 {
+    font-size: 18pt;
+    font-weight: 600;
+    margin-bottom: 8pt;
+    page-break-after: avoid;
+}
+
+.checkout-sign-page p {
+    font-size: 9pt;
+    color: var(--grey-2);
+    font-weight: 300;
+    margin-bottom: 12pt;
+    text-align: center;
+    page-break-after: avoid;
+}
+
+.checkout-sign-canvas-wrapper {
+    border: 2pt solid var(--grey-1);
+    border-radius: 3pt;
+    overflow: hidden;
+    margin-bottom: 12pt;
+    background-color: var(--white-2);
+    page-break-inside: avoid;
+}
+
+.checkout-sign-canvas-wrapper canvas {
+    display: block;
+    width: 100%;
+    height: 250pt;
+    touch-action: none;
+}
+
+.checkout-sign-actions {
+    display: flex;
+    gap: 8pt;
+    justify-content: center;
+    page-break-inside: avoid;
+}
+
+.checkout-btn {
+    display: inline-block;
+    padding: 8pt 20pt;
+    font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 8pt;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: filter 0.2s linear;
+}
+
+.checkout-btn:hover {
+    filter: brightness(0.9);
+}
+
+.checkout-btn--primary {
+    background-color: var(--yellow-1);
+    color: var(--grey-1);
+}
+
+.checkout-btn--secondary {
+    background-color: var(--white-3);
+    color: var(--grey-1);
+}
+
+.checkout-btn--danger {
+    background-color: var(--red-1);
+    color: var(--white-1);
+}
+
+/* ── Utilities ───────────────────────── */
+.checkout-divider {
+    border: none;
+    border-top: 1pt solid var(--white-3);
+    margin: 12pt 0;
+}
+
+.checkout-text-muted {
+    color: var(--white-4);
+    font-size: 6pt;
+}
+
+.checkout-text-center {
+    text-align: center;
+}
+
+.checkout-mt-1 {
+    margin-top: 8pt;
+}
+
+.checkout-mt-2 {
+    margin-top: 12pt;
+}
+
+.checkout-mb-1 {
+    margin-bottom: 8pt;
+}
+
+.checkout-mb-2 {
+    margin-bottom: 12pt;
+}
+
+/* ── Responsive pour l'écran uniquement ────────────────────── */
+@media screen {
+    .checkout {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 30px;
+        background-color: var(--white-1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .checkout-header {
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+    }
+
+    .checkout-header-logo img {
+        height: 40px;
+    }
+
+    .checkout-header-meta {
+        font-size: 11px;
+    }
+
+    .checkout-title {
+        font-size: 32px;
+        margin-bottom: 8px;
+    }
+
+    .checkout-subtitle {
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+
+    .checkout-section-title {
+        font-size: 13px;
+        padding-bottom: 8px;
+        margin-bottom: 16px;
+    }
+
+    .checkout-info-grid {
+        gap: 16px;
+    }
+
+    .checkout-info-label {
+        font-size: 11px;
+        margin-bottom: 4px;
+    }
+
+    .checkout-info-value {
+        font-size: 15px;
+    }
+
+    .checkout-badge {
+        padding: 4px 12px;
+        font-size: 11px;
+    }
+
+    .checkout-table {
+        font-size: 13px;
+    }
+
+    .checkout-table th {
+        padding: 12px 16px;
+        font-size: 11px;
+    }
+
+    .checkout-table td {
+        padding: 12px 16px;
+    }
+
+    .checkout-photos {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 16px;
+    }
+
+    .checkout-notes {
+        padding: 16px 20px;
+        font-size: 13px;
+        min-height: 80px;
+    }
+
+    .checkout-signature {
+        gap: 32px;
+        margin-top: 20px;
+        padding-top: 20px;
+    }
+
+    .checkout-signature-label {
+        font-size: 11px;
+        margin-bottom: 8px;
+    }
+
+    .checkout-signature-pad {
+        min-height: 120px;
+    }
+
+    .checkout-signature-pad img {
+        max-height: 120px;
+    }
+
+    .checkout-verification {
+        gap: 24px;
+        margin-top: 20px;
+        padding: 16px;
+    }
+
+    .checkout-qr img {
+        width: 100px;
+        height: 100px;
+    }
+
+    .checkout-verification-text {
+        font-size: 12px;
+    }
+
+    .checkout-footer {
+        margin-top: 20px;
+        padding: 20px;
+    }
+
+    .checkout-footer p {
+        font-size: 11px;
+    }
+
+    .checkout-sign-page {
+        padding: 30px;
+    }
+
+    .checkout-sign-page h2 {
+        font-size: 24px;
+        margin-bottom: 16px;
+    }
+
+    .checkout-sign-page p {
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+
+    .checkout-btn {
+        padding: 12px 30px;
+        font-size: 13px;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .checkout {
+        padding: 20px;
+    }
+
+    .checkout-info-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .checkout-photos {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 12px;
+    }
+
+    .checkout-signature {
+        flex-direction: column;
+        gap: 20px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .checkout {
+        padding: 16px;
+    }
+
+    .checkout-title {
+        font-size: 24px;
+    }
+
+    .checkout-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .checkout-photos {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .checkout-table {
+        font-size: 11px;
+    }
+
+    .checkout-table th,
+    .checkout-table td {
+        padding: 6px 8px;
+    }
+}

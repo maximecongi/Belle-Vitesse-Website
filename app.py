@@ -4,13 +4,15 @@ from flask import Flask
 
 from extensions import cache
 from routes import init_routes, init_error_handlers
-from utils.database import (
+from utils.airtable import (
     init_cache,
     get_vehicles,
     get_static_by_lang,
     get_heads,
     get_grips_categories,
 )
+from utils.database import init_checkout_db
+
 
 def create_app():
     app = Flask(
@@ -21,26 +23,27 @@ def create_app():
 
     # Proxy Fix for SSL behind Traefik
     from werkzeug.middleware.proxy_fix import ProxyFix
+
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
-    
+
     # App Config
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "bv_super_secret_key_2026")
     app.config["CACHE_TYPE"] = "SimpleCache"
     app.config["CACHE_DEFAULT_TIMEOUT"] = 3600
     app.config["CACHE_KEY_PREFIX"] = "myapp_"
     app.config["PREFERRED_URL_SCHEME"] = "https"
-    
+
     # Initialize extensions
     cache.init_app(app)
     init_cache(cache)
-    
+
     # Initialize routes & error handlers
     init_routes(app)
     init_error_handlers(app)
-    
+
     # Custom Jinja2 Filters
-    app.jinja_env.filters['slugify'] = lambda s: s.lower().replace(" ", "_")
-    
+    app.jinja_env.filters["slugify"] = lambda s: s.lower().replace(" ", "_")
+
     # Context Processors (Globals)
     @app.context_processor
     def inject_globals():
@@ -49,12 +52,14 @@ def create_app():
             "heads": get_heads(),
             "grips_categories": get_grips_categories(),
             "static": get_static_by_lang("en"),
-            "now": datetime.now(timezone.utc)
+            "now": datetime.now(timezone.utc),
         }
-        
+
     return app
 
+
 app = create_app()
+
 
 def warm_cache():
     try:
@@ -63,9 +68,12 @@ def warm_cache():
             get_heads()
             get_grips_categories()
             get_static_by_lang("en")
-            app.logger.info("🔥 Cache warmé avec succès")
+            # Initialize Checkout DB
+            init_checkout_db()
+            app.logger.info("🔥 Cache warmé avec succès & DB initialisée")
     except Exception as e:
         app.logger.error(f"❌ Erreur warm cache : {e}")
+
 
 if os.getenv("FLASK_ENV") == "production":
     warm_cache()

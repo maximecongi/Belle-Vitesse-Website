@@ -59,12 +59,14 @@
             transition: all 0.3s ease;
         }
 
-        .button {
+        .button,
+        a>img {
             filter: brightness(1);
             transition: filter 0.3s ease;
         }
 
-        .button:hover {
+        .button:hover,
+        a>img:hover {
             filter: brightness(0.9);
         }
     </style>
@@ -134,17 +136,25 @@
                         </td>
                     </tr>
 
+
                     <!-- Footer -->
                     <tr>
-                        <td style="background-color: #151515; padding: 30px; text-align: center;">
-                            <p style="color: #ffffff; font-size: 14px; font-weight: 600; margin-bottom: 10px;">
-                                Belle Vitesse SARL
-                            </p>
-                            <p style="color: #a1a1a1; font-size: 12px; line-height: 1.5; margin-bottom: 5px;">
-                                33 rue Maurice Gunsbourg<br>
-                                94200 IVRY-SUR-SEINE<br>
-                                France
-                            </p>
+                        <td
+                            style="background-color: #151515;padding: 30px;text-align: center;display: flex;justify-content: space-around;flex-direction: row-reverse;align-items: center;">
+                            <a class="link_map" href="https://maps.app.goo.gl/WPGRFRjmoC7LKhZm6"
+                                style="display: contents;" target="_blank">
+                                <img style="width: 50%;" src="https://bellevitesse.com/static/imgs/maps/map_33.png">
+                            </a>
+                            <div style="text-align: left;">
+                                <p style="color: #ffffff; font-size: 14px; font-weight: 600; margin-bottom: 10px;">
+                                    Belle Vitesse SARL
+                                </p>
+                                <p style="color: #a1a1a1; font-size: 12px; line-height: 1.5; margin-bottom: 5px;">
+                                    33 rue Maurice Gunsbourg<br>
+                                    94200 IVRY-SUR-SEINE<br>
+                                    France
+                                </p>
+                            </div>
                         </td>
                     </tr>
                 </table>
@@ -163,7 +173,6 @@
                         </td>
                     </tr>
                 </table>
-
             </td>
         </tr>
     </table>

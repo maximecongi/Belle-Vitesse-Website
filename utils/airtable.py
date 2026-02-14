@@ -72,6 +72,13 @@ def get_grips_products_for_category(category_id):
         ]
     )
 
+def get_vehicle_by_id(vehicle_id):
+    """Fetch a vehicle by its Airtable record ID (recXXX)."""
+    return get_cached(
+        f"vehicle_id_{vehicle_id}",
+        lambda: TABLE_VEHICLES.get(vehicle_id)
+    )
+
 def get_vehicle_by_slug(slug):
     return get_cached(
         f"vehicle_{slug}",
