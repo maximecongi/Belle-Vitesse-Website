@@ -252,6 +252,18 @@ def init_checkout_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        # Create tokens table for Gunicorn availability
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS checkout_tokens (
+                token VARCHAR(36) PRIMARY KEY,
+                record_id VARCHAR(255) NOT NULL,
+                inspection_id VARCHAR(255) NOT NULL,
+                signature MEDIUMTEXT,
+                created_at DATETIME NOT NULL,
+                expires_at DATETIME GENERATED ALWAYS AS (created_at + INTERVAL 24 HOUR) VIRTUAL
+            )
+        """)
         connection.commit()
     except mysql.connector.Error as err:
         print(f"Error initializing checkout DB: {err}")
@@ -320,6 +332,71 @@ def get_signed_document(inspection_id):
     except mysql.connector.Error as err:
         print(f"Error fetching signed document: {err}")
         return None
+    finally:
+        cursor.close()
+        connection.close()
+
+
+def store_checkout_token(token, record_id, inspection_id, created_at):
+    """Store a checkout session token."""
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    try:
+        sql = """
+            INSERT INTO checkout_tokens (token, record_id, inspection_id, created_at)
+            VALUES (%s, %s, %s, %s)
+        """
+        cursor.execute(sql, (token, record_id, inspection_id, created_at))
+        connection.commit()
+    except mysql.connector.Error as err:
+        print(f"Error storing token: {err}")
+    finally:
+        cursor.close()
+        connection.close()
+
+
+def get_checkout_token(token):
+    """Retrieve a token for checking validity."""
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    try:
+        sql = "SELECT * FROM checkout_tokens WHERE token = %s"
+        cursor.execute(sql, (token,))
+        row = cursor.fetchone()
+        return row
+    except mysql.connector.Error as err:
+        print(f"Error fetching token: {err}")
+        return None
+    finally:
+        cursor.close()
+        connection.close()
+
+
+def update_checkout_token_signature(token, signature):
+    """Update signature for a token."""
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    try:
+        sql = "UPDATE checkout_tokens SET signature = %s WHERE token = %s"
+        cursor.execute(sql, (signature, token))
+        connection.commit()
+    except mysql.connector.Error as err:
+        print(f"Error updating token signature: {err}")
+    finally:
+        cursor.close()
+        connection.close()
+
+
+def delete_checkout_token(token):
+    """Delete a token after use."""
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    try:
+        sql = "DELETE FROM checkout_tokens WHERE token = %s"
+        cursor.execute(sql, (token,))
+        connection.commit()
+    except mysql.connector.Error as err:
+        print(f"Error deleting token: {err}")
     finally:
         cursor.close()
         connection.close()

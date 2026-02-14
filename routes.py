@@ -40,10 +40,14 @@ from utils.checkout import (
 from utils.database import (
     store_signed_document,
     get_signed_document,
+    store_checkout_token,
+    get_checkout_token,
+    update_checkout_token_signature,
+    delete_checkout_token,
 )
 
-# In-memory token store for checkout signatures
-_checkout_tokens = {}  # token -> { record_id, inspection_id, created_at, signature, ... }
+# In-memory token store REMOVED in favor of MySQL checkout_tokens table
+# _checkout_tokens = {}
 
 
 def init_routes(app):
@@ -289,12 +293,15 @@ def init_routes(app):
         data = format_checkout_data(record)
         token = str(uuid.uuid4())
 
-        _checkout_tokens[token] = {
-            "record_id": payload["record_id"],
-            "inspection_id": data["inspection_id"],
-            "created_at": datetime.now(timezone.utc),
-            "signature": None,
-        }
+        token = str(uuid.uuid4())
+        created_at = datetime.now(timezone.utc)
+
+        store_checkout_token(
+            token=token,
+            record_id=payload["record_id"],
+            inspection_id=data["inspection_id"],
+            created_at=created_at,
+        )
 
         base_url = os.getenv("BASE_URL", "https://bellevitesse.com")
         return jsonify(
@@ -308,12 +315,19 @@ def init_routes(app):
 
     @app.route("/checkout/sign/<token>", methods=["GET"])
     def checkout_sign_page(token):
-        entry = _checkout_tokens.get(token)
+        entry = get_checkout_token(token)
         if not entry:
             abort(404)
-        if datetime.now(timezone.utc) - entry["created_at"] > timedelta(hours=24):
-            _checkout_tokens.pop(token, None)
+
+        # Handle timezone for expiry check
+        created_at = entry["created_at"]
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+
+        if datetime.now(timezone.utc) - created_at > timedelta(hours=24):
+            delete_checkout_token(token)
             abort(410)
+
         if entry["signature"]:
             abort(400)
 
@@ -325,13 +339,17 @@ def init_routes(app):
 
     @app.route("/checkout/sign/<token>", methods=["POST"])
     def checkout_submit_signature(token):
-        entry = _checkout_tokens.get(token)
+        entry = get_checkout_token(token)
         if not entry:
             return jsonify({"error": "Invalid or expired token"}), 404
 
         # Check expiry (safety double-check)
-        if datetime.now(timezone.utc) - entry["created_at"] > timedelta(hours=24):
-            _checkout_tokens.pop(token, None)
+        created_at = entry["created_at"]
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+
+        if datetime.now(timezone.utc) - created_at > timedelta(hours=24):
+            delete_checkout_token(token)
             return jsonify({"error": "Token expired"}), 410
 
         if entry["signature"]:
@@ -347,10 +365,8 @@ def init_routes(app):
         signed_at = datetime.now(timezone.utc).isoformat()
         signed_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
 
-        # 1. Update entry state
-        entry["signature"] = signature_data
-        entry["signed_at"] = signed_at
-        entry["signed_ip"] = signed_ip
+        # 1. Update entry state in DB (mark as signed)
+        update_checkout_token_signature(token, signature_data)
 
         # 2. Prepare Data for PDF
         record = get_checkout_record(record_id)
@@ -432,8 +448,8 @@ def init_routes(app):
             f"✅ Signature processed for {inspection_id}. PDF saved at {file_path}"
         )
 
-        # Cleanup token
-        _checkout_tokens.pop(token, None)
+        # Cleanup token from DB
+        delete_checkout_token(token)
 
         return jsonify(
             {
