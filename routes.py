@@ -5,7 +5,6 @@ import uuid
 import secrets
 import hmac
 import hashlib
-import time
 from collections import defaultdict
 from datetime import datetime, timezone, timedelta
 
@@ -57,21 +56,25 @@ from utils.database import (
 
 def init_routes(app):
     BRANDS = [
-        {"slug": "academy", "label": "Academy", "url": "https://www.academyfilms.com/"},
+        {"slug": "academy", "label": "Academy",
+            "url": "https://www.academyfilms.com/"},
         {
             "slug": "antiestatico",
             "label": "Antiestatico",
             "url": "https://antiestatico.com/",
         },
-        {"slug": "biscuit", "label": "Biscuit", "url": "https://biscuitfilmworks.com/"},
-        {"slug": "canal", "label": "Canal+", "url": "https://www.canalplusgroup.com/"},
+        {"slug": "biscuit", "label": "Biscuit",
+            "url": "https://biscuitfilmworks.com/"},
+        {"slug": "canal", "label": "Canal+",
+            "url": "https://www.canalplusgroup.com/"},
         {
             "slug": "chifoumi",
             "label": "Chi-fou-mi",
             "url": "https://www.unifrance.org/annuaires/societe/351840/chi-fou-mi-productions",
         },
         {"slug": "lapac", "label": "La Pac", "url": "https://lepac.us/"},
-        {"slug": "netflix", "label": "Netflix", "url": "https://about.netflix.com/"},
+        {"slug": "netflix", "label": "Netflix",
+            "url": "https://about.netflix.com/"},
         {"slug": "somesuch", "label": "Somesuch", "url": "https://somesuch.co/"},
         {"slug": "unite", "label": "Unité", "url": "https://unite-films.com/"},
     ]
@@ -119,8 +122,6 @@ def init_routes(app):
 
         Tokens are valid for PDF_ACCESS_TOKEN_TTL_MINUTES (default: 60 minutes).
         """
-        import hmac as _hmac
-        import hashlib as _hashlib
 
         secret = os.getenv("HASH_SECRET_KEY", "").encode("utf-8")
         ttl = int(os.getenv("PDF_ACCESS_TOKEN_TTL_MINUTES", "60"))
@@ -130,8 +131,8 @@ def init_routes(app):
         for delta in range(ttl + 1):
             ts = now_minutes - delta
             payload = f"{filename}:{ts}".encode("utf-8")
-            expected = _hmac.new(secret, payload, _hashlib.sha256).hexdigest()
-            if _hmac.compare_digest(expected, provided_token):
+            expected = hmac.new(secret, payload, hashlib.sha256).hexdigest()
+            if hmac.compare_digest(expected, provided_token):
                 return True
         return False
 
@@ -262,7 +263,8 @@ def init_routes(app):
 
     @app.route("/unsubscribe/<token>", methods=["GET", "POST"])
     def unsubscribe(token):
-        secret_key = current_app.config.get("SECRET_KEY") or "bv_super_secret_key_2026"
+        secret_key = current_app.config.get(
+            "SECRET_KEY") or "bv_super_secret_key_2026"
         serializer = URLSafeSerializer(secret_key)
         try:
             email = serializer.loads(token)
@@ -286,7 +288,8 @@ def init_routes(app):
                 return jsonify({"status": "error", "message": str(e)}), 500
 
         try:
-            current_app.logger.info(f"🔎 Processing unsubscribe request for: {email}")
+            current_app.logger.info(
+                f"🔎 Processing unsubscribe request for: {email}")
             removed = remove_newsletter_subscriber(email)
             current_app.logger.info(f"🗑️ Record removed: {removed}")
             return render_template(
@@ -295,7 +298,8 @@ def init_routes(app):
                 message="You have been successfully unsubscribed from our newsletter.",
             )
         except Exception as e:
-            current_app.logger.error(f"❌ Error during unsubscription ({email}): {e}")
+            current_app.logger.error(
+                f"❌ Error during unsubscription ({email}): {e}")
             return render_template(
                 "unsubscribe_confirmation.html",
                 status="error",
@@ -446,7 +450,8 @@ def init_routes(app):
             return jsonify({"error": "Record not found"}), 404
 
         data = format_checkout_data(record)
-        data["signed_at"] = datetime.now(timezone.utc).strftime("%d/%m/%Y %H:%M")
+        data["signed_at"] = datetime.now(
+            timezone.utc).strftime("%d/%m/%Y %H:%M")
         data["signed_ip"] = signed_ip
 
         # 3. Compute HMAC-SHA256 digital seal
@@ -511,7 +516,8 @@ def init_routes(app):
             signed_at=datetime.now(timezone.utc),
         )
         if store_success:
-            current_app.logger.info(f"✅ Document {inspection_id} frozen in MySQL.")
+            current_app.logger.info(
+                f"✅ Document {inspection_id} frozen in MySQL.")
         else:
             current_app.logger.error(
                 f"❌ Failed to freeze document {inspection_id} in MySQL."
@@ -540,16 +546,36 @@ def init_routes(app):
         try:
             n8n_webhook_url = os.getenv("N8N_WEBHOOK_CHECKOUT_SIGN")
             secret = os.getenv("HASH_SECRET_KEY").encode()
-            ts = int(time.time() // 60)
-            payload = f"{filename}:{ts}".encode()
-            token_n8n = hmac.new(secret, payload, hashlib.sha256).hexdigest()
-            pdf_url = f"{base_url}/checkout/document/{filename}?t={token_n8n}"
+            ts = int(datetime.now(timezone.utc).timestamp() // 60)
+            token_payload = f"{filename}:{ts}".encode()
+            token_n8n = hmac.new(secret, token_payload,
+                                 hashlib.sha256).hexdigest()
+            pdf_url_signed = f"{base_url}/checkout/document/{filename}?t={token_n8n}"
 
             if n8n_webhook_url:
+                # Parse year/month from control_date (format: "16 février 2026")
+                _date_parts = data.get("control_date", "").split()
+                _year = _date_parts[2] if len(_date_parts) >= 3 else "—"
+                _month_name = _date_parts[1].lower() if len(
+                    _date_parts) >= 3 else ""
+
+                _MOIS_NUM = {
+                    "janvier": "01", "février": "02", "mars": "03",
+                    "avril": "04", "mai": "05", "juin": "06",
+                    "juillet": "07", "août": "08", "septembre": "09",
+                    "octobre": "10", "novembre": "11", "décembre": "12",
+                }
+                _month = _MOIS_NUM.get(_month_name, "—")
+
                 webhook_payload = {
                     "inspection_id": inspection_id,
-                    "pdf_url": pdf_url,
+                    "pdf_url": pdf_url_signed,
                     "hash": current_hash,
+                    "production": data.get("production", "—"),
+                    "project": data.get("project", "—"),
+                    "control_date": data.get("control_date", "—"),
+                    "year": _year,
+                    "month": _month,
                 }
                 response = requests.post(n8n_webhook_url, json=webhook_payload)
                 if response.status_code == 200:
@@ -605,7 +631,7 @@ def init_routes(app):
                 "checkout_verify.html",
                 data=data,
                 seal_valid=False,
-                pdf_valid=None,  # No PDF check possible without snapshot
+                pdf_valid=None,
                 source="airtable",
                 inspection_id=inspection_id,
             )
@@ -616,7 +642,8 @@ def init_routes(app):
         stored_signature = signed_doc["signature"]
         stored_pdf_file_hash = signed_doc.get("pdf_file_hash")
 
-        seal_vehicle_id = data.get("_seal_vehicle_id", data.get("vehicle_id", "—"))
+        seal_vehicle_id = data.get(
+            "_seal_vehicle_id", data.get("vehicle_id", "—"))
         seal_km = data.get("_seal_km", str(data.get("km", "")))
         seal_signed_at = data.get("_seal_signed_at", "")
 
