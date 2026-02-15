@@ -1,3 +1,4 @@
+import requests
 import os
 import re
 import uuid
@@ -12,7 +13,6 @@ from flask import (
     request,
     current_app,
     send_from_directory,
-    requests,
 )
 
 from itsdangerous import URLSafeSerializer
