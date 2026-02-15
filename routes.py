@@ -489,9 +489,9 @@ def init_routes(app):
 
     @app.route("/checkout/document/<filename>")
     def download_checkout_document(filename):
-        """require_checkout_token()"""
         """Serve secure checkout document."""
-        directory = current_app.config.get("PRIVATE_FOLDER")
+        private_folder = current_app.config.get("PRIVATE_FOLDER")
+        directory = os.path.join(private_folder, "checkout_pdfs")
 
         try:
             return send_from_directory(directory, filename)
@@ -510,10 +510,10 @@ def init_error_handlers(app):
                 error_message=e.description,
             ), e.code
 
-        """ @app.errorhandler(Exception)
+        @app.errorhandler(Exception)
         def handle_exception(e):
             return render_template(
                 "error.html",
                 error_title="500 - Internal Server Error",
                 error_message="An unexpected error occurred.",
-            ), 500 """
+            ), 500
