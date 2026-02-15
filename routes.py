@@ -542,8 +542,8 @@ def init_routes(app):
             secret = os.getenv("HASH_SECRET_KEY").encode()
             ts = int(time.time() // 60)
             payload = f"{filename}:{ts}".encode()
-            token = hmac.new(secret, payload, hashlib.sha256).hexdigest()
-            pdf_url = f"/checkout/document/{filename}?t={token}"
+            token_n8n = hmac.new(secret, payload, hashlib.sha256).hexdigest()
+            pdf_url = f"/checkout/document/{filename}?t={token_n8n}"
 
             if n8n_webhook_url:
                 webhook_payload = {
