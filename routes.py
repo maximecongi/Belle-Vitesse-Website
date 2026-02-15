@@ -377,8 +377,20 @@ def init_routes(app):
         signed_at = datetime.now(timezone.utc).isoformat()
         signed_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
 
-        # 1. Update entry state in DB (mark as signed)
+        # 1. Update entry state in DB (mark as signed) and Airtable
         update_checkout_token_signature(token, signature_data)
+
+        try:
+            TABLE_CHECKOUT.update(
+                record_id,
+                {
+                    "État du contrôle": "Signé",
+                },
+            )
+        except Exception as e:
+            current_app.logger.error(
+                f"❌ Failed to update Airtable for {inspection_id}: {e}"
+            )
 
         # 2. Prepare Data for PDF
         record = get_checkout_record(record_id)

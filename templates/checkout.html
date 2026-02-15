@@ -82,8 +82,8 @@
                         <span class="checkout-badge checkout-badge--ok">Terminé</span>
                         {% elif data.control_status == 'En cours' %}
                         <span class="checkout-badge checkout-badge--inprogress">En cours</span>
-                        {% elif data.control_status == 'Pas commencé' %}
-                        <span class="checkout-badge checkout-badge--neutral">Pas commencé</span>
+                        {% elif data.control_status == 'Signé' %}
+                        <span class="checkout-badge checkout-badge--signed">Signé</span>
                         {% else %}
                         <span class="checkout-badge checkout-badge--neutral">{{ data.control_status }}</span>
                         {% endif %}

@@ -171,6 +171,11 @@ body {
     color: var(--white-1);
 }
 
+.checkout-badge--signed {
+    background-color: var(--purple-1);
+    color: var(--white-1);
+}
+
 .checkout-badge--neutral {
     background-color: var(--white-3);
     color: var(--grey-2);
