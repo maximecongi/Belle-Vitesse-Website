@@ -303,6 +303,17 @@ def init_routes(app):
             inspection_id=data["inspection_id"],
             created_at=created_at,
         )
+        try:
+            TABLE_CHECKOUT.update(
+                payload["record_id"],
+                {
+                    "État du contrôle": "Terminé",
+                },
+            )
+        except Exception as e:
+            current_app.logger.error(
+                f"❌ Failed to update Airtable for {data['inspection_id']}: {e}"
+            )
 
         base_url = os.getenv("BASE_URL", "https://bellevitesse.com")
         return jsonify(
@@ -431,7 +442,7 @@ def init_routes(app):
             TABLE_CHECKOUT.update(
                 record_id,
                 {
-                    "Signé": "Signé",
+                    "État du contrôle": "Signé",
                     "PDF scellé": pdf_public_url,
                     "Hash": current_hash,
                 },
