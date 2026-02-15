@@ -3,6 +3,9 @@ import os
 import re
 import uuid
 import secrets
+import hmac
+import hashlib
+import time
 from collections import defaultdict
 from datetime import datetime, timezone, timedelta
 
@@ -536,10 +539,16 @@ def init_routes(app):
         # 10. Trigger n8n webhook
         try:
             n8n_webhook_url = os.getenv("N8N_WEBHOOK_CHECKOUT_SIGN")
+            secret = os.getenv("HASH_SECRET_KEY").encode()
+            ts = int(time.time() // 60)
+            payload = f"{filename}:{ts}".encode()
+            token = hmac.new(secret, payload, hashlib.sha256).hexdigest()
+            pdf_url = f"/checkout/document/{filename}?t={token}"
+
             if n8n_webhook_url:
                 webhook_payload = {
                     "inspection_id": inspection_id,
-                    "pdf_url": pdf_public_url,
+                    "pdf_url": pdf_url,
                     "hash": current_hash,
                 }
                 response = requests.post(n8n_webhook_url, json=webhook_payload)
