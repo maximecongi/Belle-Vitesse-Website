@@ -2,7 +2,7 @@ import requests
 import os
 import re
 import uuid
-import hashlib
+import secrets
 from collections import defaultdict
 from datetime import datetime, timezone, timedelta
 
@@ -36,6 +36,8 @@ from utils.checkout import (
     format_checkout_data,
     generate_qr_code,
     generate_checkout_pdf,
+    compute_document_seal,
+    verify_document_seal,
     TABLE_CHECKOUT,
 )
 from utils.database import (
@@ -46,9 +48,6 @@ from utils.database import (
     update_checkout_token_signature,
     delete_checkout_token,
 )
-
-# In-memory token store REMOVED in favor of MySQL checkout_tokens table
-# _checkout_tokens = {}
 
 
 def init_routes(app):
@@ -72,10 +71,66 @@ def init_routes(app):
         {"slug": "unite", "label": "Unité", "url": "https://unite-films.com/"},
     ]
 
+    # ── Admin Auth ────────────────────────────────────────────────
+
     def require_admin_token():
+        """Guard for admin routes. Uses a dedicated ADMIN_CACHE_TOKEN env var."""
         token = request.headers.get("X-Admin-Token")
         if not token or token != os.getenv("ADMIN_CACHE_TOKEN"):
             abort(403)
+
+    # ── Checkout Auth ─────────────────────────────────────────────
+
+    def require_checkout_token():
+        """
+        Guard for the /checkout/generate endpoint.
+
+        Uses CHECKOUT_API_TOKEN — a dedicated secret, separate from Flask's SECRET_KEY.
+        Generate with: python -c "import secrets; print(secrets.token_hex(32))"
+        Add to your .env: CHECKOUT_API_TOKEN=<generated_value>
+
+        ⚠️  Do NOT reuse SECRET_KEY here: Flask's SECRET_KEY signs sessions and cookies.
+        Exposing it via an API route enlarges the attack surface significantly.
+        """
+        token = request.headers.get("X-Checkout-Token")
+        expected = os.getenv("CHECKOUT_API_TOKEN")
+        if not expected:
+            current_app.logger.error(
+                "❌ CHECKOUT_API_TOKEN is not set. Set it in your .env file."
+            )
+            abort(500)
+        if not token or not secrets.compare_digest(token, expected):
+            abort(403)
+
+    # ── PDF Access Auth ───────────────────────────────────────────
+
+    def _validate_pdf_access_token(filename: str, provided_token: str) -> bool:
+        """
+        Validate a time-limited, HMAC-signed access token for a PDF filename.
+
+        The token is produced by generate_pdf_access_token() and encodes:
+          {filename}:{timestamp_utc_minutes}
+        signed with HASH_SECRET_KEY via HMAC-SHA256.
+
+        Tokens are valid for PDF_ACCESS_TOKEN_TTL_MINUTES (default: 60 minutes).
+        """
+        import hmac as _hmac
+        import hashlib as _hashlib
+
+        secret = os.getenv("HASH_SECRET_KEY", "").encode("utf-8")
+        ttl = int(os.getenv("PDF_ACCESS_TOKEN_TTL_MINUTES", "60"))
+        now_minutes = int(datetime.now(timezone.utc).timestamp() // 60)
+
+        # Accept tokens for the current and any window within TTL
+        for delta in range(ttl + 1):
+            ts = now_minutes - delta
+            payload = f"{filename}:{ts}".encode("utf-8")
+            expected = _hmac.new(secret, payload, _hashlib.sha256).hexdigest()
+            if _hmac.compare_digest(expected, provided_token):
+                return True
+        return False
+
+    # ── Standard Routes ───────────────────────────────────────────
 
     @app.route("/launch")
     def launch():
@@ -262,13 +317,7 @@ def init_routes(app):
     def robots():
         return send_from_directory(app.static_folder, "robots.txt")
 
-    # ── Checkout Routes ──────────────────────────────────────────
-
-    def require_checkout_token():
-        token = request.headers.get("X-Checkout-Token")
-        expected = os.getenv("SECRET_KEY")
-        if not expected or token != expected:
-            abort(403)
+    # ── Checkout Routes ───────────────────────────────────────────
 
     @app.route("/checkout/<inspection_id>")
     def checkout_view(inspection_id):
@@ -282,6 +331,10 @@ def init_routes(app):
 
     @app.route("/checkout/generate", methods=["POST"])
     def checkout_generate():
+        """
+        Protected endpoint: creates a one-time signing token for an inspection record.
+        Requires X-Checkout-Token header matching CHECKOUT_API_TOKEN env var.
+        """
         require_checkout_token()
         payload = request.get_json(silent=True)
         if not payload or "record_id" not in payload:
@@ -293,8 +346,6 @@ def init_routes(app):
 
         data = format_checkout_data(record)
         token = str(uuid.uuid4())
-
-        token = str(uuid.uuid4())
         created_at = datetime.now(timezone.utc)
 
         store_checkout_token(
@@ -303,12 +354,11 @@ def init_routes(app):
             inspection_id=data["inspection_id"],
             created_at=created_at,
         )
+
         try:
             TABLE_CHECKOUT.update(
                 payload["record_id"],
-                {
-                    "État du contrôle": "Terminé",
-                },
+                {"État du contrôle": "Terminé"},
             )
         except Exception as e:
             current_app.logger.error(
@@ -331,7 +381,6 @@ def init_routes(app):
         if not entry:
             abort(404)
 
-        # Handle timezone for expiry check
         created_at = entry["created_at"]
         if created_at.tzinfo is None:
             created_at = created_at.replace(tzinfo=timezone.utc)
@@ -355,7 +404,6 @@ def init_routes(app):
         if not entry:
             return jsonify({"error": "Invalid or expired token"}), 404
 
-        # Check expiry (safety double-check)
         created_at = entry["created_at"]
         if created_at.tzinfo is None:
             created_at = created_at.replace(tzinfo=timezone.utc)
@@ -377,42 +425,42 @@ def init_routes(app):
         signed_at = datetime.now(timezone.utc).isoformat()
         signed_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
 
-        # 1. Update entry state in DB (mark as signed) and Airtable
+        # 1. Mark token as used in DB + update Airtable status
         update_checkout_token_signature(token, signature_data)
 
         try:
-            TABLE_CHECKOUT.update(
-                record_id,
-                {
-                    "État du contrôle": "Signé",
-                },
-            )
+            TABLE_CHECKOUT.update(record_id, {"État du contrôle": "Signé"})
         except Exception as e:
             current_app.logger.error(
                 f"❌ Failed to update Airtable for {inspection_id}: {e}"
             )
 
-        # 2. Prepare Data for PDF
+        # 2. Fetch fresh record for PDF generation
         record = get_checkout_record(record_id)
         if not record:
             return jsonify({"error": "Record not found"}), 404
 
         data = format_checkout_data(record)
-        # Inject signature metadata into data dict for template context if needed
         data["signed_at"] = datetime.now(timezone.utc).strftime("%d/%m/%Y %H:%M")
         data["signed_ip"] = signed_ip
 
-        # 3. Compute Digital Seal (Hash of critical data + signature)
-        # We use a string representation of the key data to freeze the state
-        seal_content = f"{inspection_id}|{data['vehicle']}|{data['km']}|{signature_data}|{signed_at}"
-        current_hash = hashlib.sha256(seal_content.encode("utf-8")).hexdigest()
+        # 3. Compute HMAC-SHA256 digital seal
+        #    Uses vehicle_id (stable Airtable record ID) instead of str(data['vehicle'])
+        #    to guarantee a reproducible, canonical hash.
+        current_hash = compute_document_seal(
+            inspection_id=inspection_id,
+            vehicle_id=data["vehicle_id"],
+            km=str(data["km"]),
+            signature_data=signature_data,
+            signed_at=signed_at,
+        )
 
-        # 4. Generate QR Code
+        # 4. Generate QR Code pointing to the verification page
         base_url = os.getenv("BASE_URL", "https://bellevitesse.com")
         verification_url = f"{base_url}/checkout/verify/{inspection_id}"
         qr_code_img = generate_qr_code(verification_url)
 
-        # 5. Render HTML & Generate PDF
+        # 5. Render HTML & generate PDF
         html_content = render_template(
             "checkout.html",
             data=data,
@@ -422,23 +470,31 @@ def init_routes(app):
         )
         pdf_bytes = generate_checkout_pdf(html_content, base_url=base_url)
 
-        # 6. Save PDF Privately
-        filename = f"{inspection_id}_{current_hash[:8]}.pdf"
+        # 6. Save PDF — filename includes a 16-char random token (not just hash prefix)
+        #    to prevent enumeration/brute-force of the download URL.
+        random_token = secrets.token_hex(8)  # 16 hex chars, 64-bit entropy
+        filename = f"{inspection_id}_{random_token}.pdf"
         private_folder = current_app.config.get("PRIVATE_FOLDER")
-
         file_path = os.path.join(private_folder, "checkout_pdfs", filename)
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         with open(file_path, "wb") as f:
             f.write(pdf_bytes)
 
-        # 7. Update Airtable
+        # 7. Build the public PDF URL (access is protected by time-limited token — see route below)
         pdf_public_url = f"{base_url}/checkout/document/{filename}"
 
-        # 8. Store immutable snapshot in MySQL
+        # 8. Store immutable snapshot in MySQL (source of truth for verification)
+        #    We store vehicle_id + signed_at so verify can recompute the HMAC independently.
         store_success = store_signed_document(
             inspection_id=inspection_id,
             file_hash=current_hash,
-            data_snapshot=data,
+            data_snapshot={
+                **data,
+                # Persist the exact scalar values used in seal computation
+                "_seal_vehicle_id": data["vehicle_id"],
+                "_seal_km": str(data["km"]),
+                "_seal_signed_at": signed_at,
+            },
             signature=signature_data,
             pdf_url=pdf_public_url,
             signed_at=datetime.now(timezone.utc),
@@ -450,6 +506,7 @@ def init_routes(app):
                 f"❌ Failed to freeze document {inspection_id} in MySQL."
             )
 
+        # 9. Update Airtable with hash and PDF URL
         try:
             TABLE_CHECKOUT.update(
                 record_id,
@@ -463,36 +520,35 @@ def init_routes(app):
             current_app.logger.error(
                 f"❌ Failed to update Airtable for {inspection_id}: {e}"
             )
-            # We don't fail the request, but we log the error. The PDF is generated.
 
         current_app.logger.info(
             f"✅ Signature processed for {inspection_id}. PDF saved at {file_path}"
         )
 
-        # 9. Trigger n8n webhook
+        # 10. Trigger n8n webhook
         try:
             n8n_webhook_url = os.getenv("N8N_WEBHOOK_CHECKOUT_SIGN")
             if n8n_webhook_url:
-                payload = {
+                webhook_payload = {
                     "inspection_id": inspection_id,
                     "pdf_url": pdf_public_url,
                     "hash": current_hash,
                 }
-                response = requests.post(n8n_webhook_url, json=payload)
+                response = requests.post(n8n_webhook_url, json=webhook_payload)
                 if response.status_code == 200:
                     current_app.logger.info(
                         f"✅ n8n webhook triggered for {inspection_id}"
                     )
                 else:
                     current_app.logger.error(
-                        f"❌ Failed to trigger n8n webhook for {inspection_id}: {response.status_code}"
+                        f"❌ n8n webhook failed for {inspection_id}: {response.status_code}"
                     )
         except Exception as e:
             current_app.logger.error(
-                f"❌ Failed to trigger n8n webhook for {inspection_id}: {e}"
+                f"❌ n8n webhook exception for {inspection_id}: {e}"
             )
 
-        # Cleanup token from DB
+        # 11. Invalidate one-time token
         delete_checkout_token(token)
 
         return jsonify(
@@ -506,34 +562,93 @@ def init_routes(app):
 
     @app.route("/checkout/verify/<inspection_id>")
     def checkout_verify(inspection_id):
-        # 1. Try to get from MySQL (Immutable Source of Truth)
+        """
+        Verify the integrity of a signed checkout document.
+
+        Source of truth: MySQL snapshot (immutable).
+        Falls back to Airtable with a clear warning if MySQL record is absent.
+
+        Verification logic:
+        - Recomputes the HMAC seal from the stored scalar fields
+        - Compares it to the stored hash using constant-time comparison
+        - Only passes valid=True to the template if recomputation matches
+        """
+        # 1. MySQL — trusted immutable source
         signed_doc = get_signed_document(inspection_id)
 
         if signed_doc:
-            # Trusted data from database
             data = signed_doc["data_snapshot"]
-            # Ensure hash and PDF url are from the trusted record
-            data["hash"] = signed_doc["hash"]
-            data["pdf_url"] = signed_doc["pdf_url"]
-            # We can flag it as "Certified"
-            return render_template(
-                "checkout_verify.html", data=data, valid=True, source="mysql"
+            stored_hash = signed_doc["hash"]
+            stored_signature = signed_doc["signature"]
+
+            # Retrieve the exact scalar values used at signing time
+            seal_vehicle_id = data.get("_seal_vehicle_id", data.get("vehicle_id", "—"))
+            seal_km = data.get("_seal_km", str(data.get("km", "")))
+            seal_signed_at = data.get("_seal_signed_at", "")
+
+            # Recompute the HMAC seal and verify — never trust stored hash blindly
+            valid = verify_document_seal(
+                inspection_id=inspection_id,
+                vehicle_id=seal_vehicle_id,
+                km=seal_km,
+                signature_data=stored_signature,
+                signed_at=seal_signed_at,
+                expected_hash=stored_hash,
             )
 
-        # 2. Fallback to Airtable (Live data - potentially mutable)
+            if not valid:
+                current_app.logger.warning(
+                    f"⚠️ Seal mismatch for {inspection_id} — document may have been tampered with."
+                )
+
+            data["hash"] = stored_hash
+            data["pdf_url"] = signed_doc["pdf_url"]
+
+            return render_template(
+                "checkout_verify.html",
+                data=data,
+                valid=valid,
+                source="mysql",
+            )
+
+        # 2. Fallback to Airtable (mutable — treat as unverified)
         record = get_checkout_by_inspection_id(inspection_id)
         if not record:
             abort(404)
 
         data = format_checkout_data(record)
-        # Warning: Source is Airtable
+        current_app.logger.warning(
+            f"⚠️ Verify fallback to Airtable for {inspection_id} — no MySQL snapshot found."
+        )
         return render_template(
-            "checkout_verify.html", data=data, valid=True, source="airtable"
+            "checkout_verify.html",
+            data=data,
+            valid=False,  # Cannot verify integrity without immutable snapshot
+            source="airtable",
         )
 
     @app.route("/checkout/document/<filename>")
     def download_checkout_document(filename):
-        """Serve secure checkout document."""
+        """
+        Serve a signed checkout PDF.
+
+        Access is protected by a time-limited HMAC token passed as ?t=<token>.
+        Without a valid token the file is not served — prevents enumeration of filenames.
+
+        To generate a valid access token server-side:
+            import hmac, hashlib, time
+            secret = os.getenv("HASH_SECRET_KEY").encode()
+            ts = int(time.time() // 60)
+            payload = f"{filename}:{ts}".encode()
+            token = hmac.new(secret, payload, hashlib.sha256).hexdigest()
+            url = f"/checkout/document/{filename}?t={token}"
+        """
+        access_token = request.args.get("t", "")
+
+        # Reject requests without a valid time-limited access token
+        if not access_token or not _validate_pdf_access_token(filename, access_token):
+            abort(403)
+
         private_folder = current_app.config.get("PRIVATE_FOLDER")
         directory = os.path.join(private_folder, "checkout_pdfs")
 
