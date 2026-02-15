@@ -448,7 +448,7 @@ def init_routes(app):
 
         # 9. Trigger n8n webhook
         try:
-            n8n_webhook_url = os.getenv("N8N_WEBHOOK_URL")
+            n8n_webhook_url = os.getenv("N8N_WEBHOOK_CHECKOUT_SIGN")
             if n8n_webhook_url:
                 payload = {
                     "inspection_id": inspection_id,
