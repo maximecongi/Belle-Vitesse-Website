@@ -32,6 +32,7 @@ def create_app():
     app.config["CACHE_DEFAULT_TIMEOUT"] = 3600
     app.config["CACHE_KEY_PREFIX"] = "myapp_"
     app.config["PREFERRED_URL_SCHEME"] = "https"
+    app.config["PRIVATE_FOLDER"] = "/srv/bellevitesse/private/"
 
     # Initialize extensions
     cache.init_app(app)
