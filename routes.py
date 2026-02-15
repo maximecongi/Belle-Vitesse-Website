@@ -543,7 +543,7 @@ def init_routes(app):
             ts = int(time.time() // 60)
             payload = f"{filename}:{ts}".encode()
             token_n8n = hmac.new(secret, payload, hashlib.sha256).hexdigest()
-            pdf_url = f"/checkout/document/{filename}?t={token_n8n}"
+            pdf_url = f"{base_url}/checkout/document/{filename}?t={token_n8n}"
 
             if n8n_webhook_url:
                 webhook_payload = {
