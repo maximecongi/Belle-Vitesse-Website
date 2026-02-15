@@ -38,7 +38,6 @@ def get_db_connection():
     global _ssh_tunnel, _ssh_connection
 
     if USE_SSH_TUNNEL:
-        # For SSH tunnel mode, reuse connection if available
         if _ssh_tunnel is None or not _ssh_tunnel.is_active:
             _ssh_tunnel = SSHTunnelForwarder(
                 (SSH_HOST, 22),
@@ -56,7 +55,6 @@ def get_db_connection():
             database=MYSQL_DATABASE,
         )
     else:
-        # Direct connection (for PythonAnywhere)
         return mysql.connector.connect(
             host=MYSQL_HOST,
             user=MYSQL_USER,
@@ -69,7 +67,6 @@ def init_cache(app_cache: Cache):
     """Initialize the cache instance for both database and airtable services."""
     global cache
     cache = app_cache
-    # Also initialize airtable's cache since we proxy functions to it
     import utils.airtable as airtable_service
 
     airtable_service.init_cache(app_cache)
@@ -113,7 +110,6 @@ def _fetch_all_from_table(table_name, order_by=None):
                 }
             )
 
-        # Sort by order field if specified
         if order_by:
             records.sort(key=lambda r: r["fields"].get(order_by, 999))
 
@@ -236,77 +232,126 @@ from utils.airtable import add_newsletter_subscriber, remove_newsletter_subscrib
 # ============================================================
 
 
+def _get_existing_columns(cursor, table_name):
+    """Return the set of column names that exist on a table."""
+    cursor.execute(
+        "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS "
+        "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s",
+        (table_name,),
+    )
+    return {row["COLUMN_NAME"] for row in cursor.fetchall()}
+
+
 def init_checkout_db():
-    """Initialize the signed_documents table if it doesn't exist."""
+    """
+    Initialize checkout tables and apply any pending schema migrations.
+
+    Safe to call on every app startup:
+    - Creates tables if they don't exist yet.
+    - Adds missing columns to existing tables (additive only — never drops columns).
+
+    Current migrations tracked here:
+      signed_documents:
+        - pdf_file_hash VARCHAR(64)  → SHA-256 of the raw PDF binary (Option B verification)
+    """
     connection = get_db_connection()
-    cursor = connection.cursor()
+    cursor = connection.cursor(dictionary=True)
     try:
+        # ── signed_documents ──────────────────────────────────────
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS signed_documents (
-                inspection_id VARCHAR(255) PRIMARY KEY,
-                hash VARCHAR(255) NOT NULL,
-                data_snapshot JSON NOT NULL,
-                signature MEDIUMTEXT,
-                pdf_url TEXT,
-                signed_at DATETIME,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                inspection_id  VARCHAR(255) PRIMARY KEY,
+                hash           VARCHAR(255) NOT NULL,
+                pdf_file_hash  VARCHAR(64)  NULL,
+                data_snapshot  JSON         NOT NULL,
+                signature      MEDIUMTEXT,
+                pdf_url        TEXT,
+                signed_at      DATETIME,
+                created_at     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
             )
         """)
 
-        # Create tokens table for Gunicorn availability
+        # Migration: add pdf_file_hash to tables that were created before this column existed
+        existing = _get_existing_columns(cursor, "signed_documents")
+        if "pdf_file_hash" not in existing:
+            cursor.execute(
+                "ALTER TABLE signed_documents ADD COLUMN pdf_file_hash VARCHAR(64) NULL"
+            )
+            print("✅ Migration applied: signed_documents.pdf_file_hash added.")
+
+        # ── checkout_tokens ───────────────────────────────────────
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS checkout_tokens (
-                token VARCHAR(36) PRIMARY KEY,
-                record_id VARCHAR(255) NOT NULL,
-                inspection_id VARCHAR(255) NOT NULL,
-                signature MEDIUMTEXT,
-                created_at DATETIME NOT NULL,
-                expires_at DATETIME GENERATED ALWAYS AS (created_at + INTERVAL 24 HOUR) VIRTUAL
+                token          VARCHAR(36)  PRIMARY KEY,
+                record_id      VARCHAR(255) NOT NULL,
+                inspection_id  VARCHAR(255) NOT NULL,
+                signature      MEDIUMTEXT,
+                created_at     DATETIME     NOT NULL,
+                expires_at     DATETIME GENERATED ALWAYS AS
+                               (created_at + INTERVAL 24 HOUR) VIRTUAL
             )
         """)
+
         connection.commit()
+        print("✅ Checkout DB initialized.")
+
     except mysql.connector.Error as err:
-        print(f"Error initializing checkout DB: {err}")
+        print(f"❌ Error initializing checkout DB: {err}")
     finally:
         cursor.close()
         connection.close()
 
 
 def store_signed_document(
-    inspection_id, file_hash, data_snapshot, signature, pdf_url, signed_at
+    inspection_id,
+    file_hash,
+    data_snapshot,
+    signature,
+    pdf_url,
+    signed_at,
+    pdf_file_hash=None,  # SHA-256 of the raw PDF binary — None for legacy documents
 ):
-    """Store a signed document snapshot in MySQL."""
+    """
+    Store a signed document snapshot in MySQL.
+
+    pdf_file_hash is optional to maintain backward compatibility with call sites
+    that were created before Option B was introduced. Legacy rows will have NULL
+    in that column and will skip PDF file verification gracefully.
+    """
     connection = get_db_connection()
     cursor = connection.cursor()
     try:
-        sql = """
-            INSERT INTO signed_documents 
-            (inspection_id, hash, data_snapshot, signature, pdf_url, signed_at)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            ON DUPLICATE KEY UPDATE
-                hash = VALUES(hash),
-                data_snapshot = VALUES(data_snapshot),
-                signature = VALUES(signature),
-                pdf_url = VALUES(pdf_url),
-                signed_at = VALUES(signed_at)
-        """
-        # Ensure data_snapshot is a JSON string
         if isinstance(data_snapshot, dict):
-            data_snapshot = json.dumps(data_snapshot)
+            data_snapshot = json.dumps(data_snapshot, ensure_ascii=False)
 
-        params = (
-            inspection_id,
-            file_hash,
-            data_snapshot,
-            signature,
-            pdf_url,
-            signed_at,
+        sql = """
+            INSERT INTO signed_documents
+                (inspection_id, hash, pdf_file_hash, data_snapshot, signature, pdf_url, signed_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                hash          = VALUES(hash),
+                pdf_file_hash = VALUES(pdf_file_hash),
+                data_snapshot = VALUES(data_snapshot),
+                signature     = VALUES(signature),
+                pdf_url       = VALUES(pdf_url),
+                signed_at     = VALUES(signed_at)
+        """
+        cursor.execute(
+            sql,
+            (
+                inspection_id,
+                file_hash,
+                pdf_file_hash,
+                data_snapshot,
+                signature,
+                pdf_url,
+                signed_at,
+            ),
         )
-        cursor.execute(sql, params)
         connection.commit()
         return True
     except mysql.connector.Error as err:
-        print(f"Error storing signed document: {err}")
+        print(f"❌ Error storing signed document: {err}")
         return False
     finally:
         cursor.close()
@@ -314,23 +359,28 @@ def store_signed_document(
 
 
 def get_signed_document(inspection_id):
-    """Retrieve a signed document by inspection ID from MySQL."""
+    """
+    Retrieve a signed document by inspection ID from MySQL.
+
+    Returns the full row as a dict, including pdf_file_hash (may be None
+    for documents signed before the Option B migration).
+    """
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
     try:
-        sql = "SELECT * FROM signed_documents WHERE inspection_id = %s"
-        cursor.execute(sql, (inspection_id,))
+        cursor.execute(
+            "SELECT * FROM signed_documents WHERE inspection_id = %s",
+            (inspection_id,),
+        )
         record = cursor.fetchone()
 
         if record:
-            # Parse JSON snapshot back to dict
             if isinstance(record["data_snapshot"], str):
                 record["data_snapshot"] = json.loads(record["data_snapshot"])
-            # Convert datetime to string if needed by caller, but keeping object is fine
             return record
         return None
     except mysql.connector.Error as err:
-        print(f"Error fetching signed document: {err}")
+        print(f"❌ Error fetching signed document: {err}")
         return None
     finally:
         cursor.close()
@@ -349,7 +399,7 @@ def store_checkout_token(token, record_id, inspection_id, created_at):
         cursor.execute(sql, (token, record_id, inspection_id, created_at))
         connection.commit()
     except mysql.connector.Error as err:
-        print(f"Error storing token: {err}")
+        print(f"❌ Error storing token: {err}")
     finally:
         cursor.close()
         connection.close()
@@ -360,12 +410,10 @@ def get_checkout_token(token):
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
     try:
-        sql = "SELECT * FROM checkout_tokens WHERE token = %s"
-        cursor.execute(sql, (token,))
-        row = cursor.fetchone()
-        return row
+        cursor.execute("SELECT * FROM checkout_tokens WHERE token = %s", (token,))
+        return cursor.fetchone()
     except mysql.connector.Error as err:
-        print(f"Error fetching token: {err}")
+        print(f"❌ Error fetching token: {err}")
         return None
     finally:
         cursor.close()
@@ -377,11 +425,13 @@ def update_checkout_token_signature(token, signature):
     connection = get_db_connection()
     cursor = connection.cursor()
     try:
-        sql = "UPDATE checkout_tokens SET signature = %s WHERE token = %s"
-        cursor.execute(sql, (signature, token))
+        cursor.execute(
+            "UPDATE checkout_tokens SET signature = %s WHERE token = %s",
+            (signature, token),
+        )
         connection.commit()
     except mysql.connector.Error as err:
-        print(f"Error updating token signature: {err}")
+        print(f"❌ Error updating token signature: {err}")
     finally:
         cursor.close()
         connection.close()
@@ -392,11 +442,10 @@ def delete_checkout_token(token):
     connection = get_db_connection()
     cursor = connection.cursor()
     try:
-        sql = "DELETE FROM checkout_tokens WHERE token = %s"
-        cursor.execute(sql, (token,))
+        cursor.execute("DELETE FROM checkout_tokens WHERE token = %s", (token,))
         connection.commit()
     except mysql.connector.Error as err:
-        print(f"Error deleting token: {err}")
+        print(f"❌ Error deleting token: {err}")
     finally:
         cursor.close()
         connection.close()

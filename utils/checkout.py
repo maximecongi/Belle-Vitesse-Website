@@ -101,6 +101,34 @@ def verify_document_seal(
     return hmac.compare_digest(actual_hash, expected_hash)
 
 
+# ── PDF Binary Hash ──────────────────────────────────────────────
+
+
+def compute_pdf_hash(pdf_bytes: bytes) -> str:
+    """
+    Compute a SHA-256 hash of the raw PDF binary.
+
+    This hash fingerprints the exact file that was generated at signing time.
+    It is stored in MySQL and used later to verify that a presented PDF
+    has not been modified — even by a single byte.
+
+    Note: This is a plain SHA-256 (no HMAC key needed) because its purpose is
+    file integrity, not authentication. Authentication is handled by the HMAC seal.
+    """
+    return hashlib.sha256(pdf_bytes).hexdigest()
+
+
+def verify_pdf_hash(pdf_bytes: bytes, expected_hash: str) -> bool:
+    """
+    Verify that a PDF file matches the hash stored at signing time.
+
+    Uses hmac.compare_digest for constant-time comparison.
+    Returns True only if the file is byte-for-byte identical to the signed original.
+    """
+    actual_hash = compute_pdf_hash(pdf_bytes)
+    return hmac.compare_digest(actual_hash, expected_hash)
+
+
 # ── QR Code ──────────────────────────────────────────────────────
 
 

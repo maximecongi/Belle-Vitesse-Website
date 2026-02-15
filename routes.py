@@ -38,6 +38,8 @@ from utils.checkout import (
     generate_checkout_pdf,
     compute_document_seal,
     verify_document_seal,
+    compute_pdf_hash,
+    verify_pdf_hash,
     TABLE_CHECKOUT,
 )
 from utils.database import (
@@ -484,10 +486,16 @@ def init_routes(app):
         pdf_public_url = f"{base_url}/checkout/document/{filename}"
 
         # 8. Store immutable snapshot in MySQL (source of truth for verification)
-        #    We store vehicle_id + signed_at so verify can recompute the HMAC independently.
+        #    We store:
+        #      - current_hash   : HMAC seal over critical fields (proves data integrity)
+        #      - pdf_file_hash  : SHA-256 of the raw PDF binary (proves file integrity)
+        #    Both are needed to fully verify a document presented later.
+        pdf_file_hash = compute_pdf_hash(pdf_bytes)
+
         store_success = store_signed_document(
             inspection_id=inspection_id,
             file_hash=current_hash,
+            pdf_file_hash=pdf_file_hash,
             data_snapshot={
                 **data,
                 # Persist the exact scalar values used in seal computation
@@ -560,71 +568,138 @@ def init_routes(app):
             }
         ), 200
 
-    @app.route("/checkout/verify/<inspection_id>")
+    @app.route("/checkout/verify/<inspection_id>", methods=["GET", "POST"])
     def checkout_verify(inspection_id):
         """
         Verify the integrity of a signed checkout document.
 
-        Source of truth: MySQL snapshot (immutable).
-        Falls back to Airtable with a clear warning if MySQL record is absent.
+        GET  → displays the inspection data from MySQL with a PDF upload form
+        POST → receives the uploaded PDF, recomputes its SHA-256, and compares
+               to the hash stored at signing time
 
-        Verification logic:
-        - Recomputes the HMAC seal from the stored scalar fields
-        - Compares it to the stored hash using constant-time comparison
-        - Only passes valid=True to the template if recomputation matches
+        Two-level verification:
+          1. HMAC seal  — proves the inspection data fields were not altered in DB
+          2. PDF hash   — proves the exact file presented is the one that was signed
         """
-        # 1. MySQL — trusted immutable source
         signed_doc = get_signed_document(inspection_id)
 
-        if signed_doc:
-            data = signed_doc["data_snapshot"]
-            stored_hash = signed_doc["hash"]
-            stored_signature = signed_doc["signature"]
-
-            # Retrieve the exact scalar values used at signing time
-            seal_vehicle_id = data.get("_seal_vehicle_id", data.get("vehicle_id", "—"))
-            seal_km = data.get("_seal_km", str(data.get("km", "")))
-            seal_signed_at = data.get("_seal_signed_at", "")
-
-            # Recompute the HMAC seal and verify — never trust stored hash blindly
-            valid = verify_document_seal(
-                inspection_id=inspection_id,
-                vehicle_id=seal_vehicle_id,
-                km=seal_km,
-                signature_data=stored_signature,
-                signed_at=seal_signed_at,
-                expected_hash=stored_hash,
+        # ── No MySQL snapshot → cannot verify ────────────────────
+        if not signed_doc:
+            record = get_checkout_by_inspection_id(inspection_id)
+            if not record:
+                abort(404)
+            data = format_checkout_data(record)
+            current_app.logger.warning(
+                f"⚠️ Verify fallback to Airtable for {inspection_id} — no MySQL snapshot."
             )
-
-            if not valid:
-                current_app.logger.warning(
-                    f"⚠️ Seal mismatch for {inspection_id} — document may have been tampered with."
-                )
-
-            data["hash"] = stored_hash
-            data["pdf_url"] = signed_doc["pdf_url"]
-
             return render_template(
                 "checkout_verify.html",
                 data=data,
-                valid=valid,
-                source="mysql",
+                seal_valid=False,
+                pdf_valid=None,  # No PDF check possible without snapshot
+                source="airtable",
+                inspection_id=inspection_id,
             )
 
-        # 2. Fallback to Airtable (mutable — treat as unverified)
-        record = get_checkout_by_inspection_id(inspection_id)
-        if not record:
-            abort(404)
+        # ── Retrieve stored values ────────────────────────────────
+        data = signed_doc["data_snapshot"]
+        stored_hash = signed_doc["hash"]
+        stored_signature = signed_doc["signature"]
+        stored_pdf_file_hash = signed_doc.get("pdf_file_hash")
 
-        data = format_checkout_data(record)
-        current_app.logger.warning(
-            f"⚠️ Verify fallback to Airtable for {inspection_id} — no MySQL snapshot found."
+        seal_vehicle_id = data.get("_seal_vehicle_id", data.get("vehicle_id", "—"))
+        seal_km = data.get("_seal_km", str(data.get("km", "")))
+        seal_signed_at = data.get("_seal_signed_at", "")
+
+        # ── 1. Verify HMAC seal (data integrity) ─────────────────
+        seal_valid = verify_document_seal(
+            inspection_id=inspection_id,
+            vehicle_id=seal_vehicle_id,
+            km=seal_km,
+            signature_data=stored_signature,
+            signed_at=seal_signed_at,
+            expected_hash=stored_hash,
         )
+        if not seal_valid:
+            current_app.logger.warning(
+                f"⚠️ Seal mismatch for {inspection_id} — data may have been tampered with."
+            )
+
+        data["hash"] = stored_hash
+        data["pdf_url"] = signed_doc["pdf_url"]
+
+        # ── GET → show data + upload form ─────────────────────────
+        if request.method == "GET":
+            return render_template(
+                "checkout_verify.html",
+                data=data,
+                seal_valid=seal_valid,
+                pdf_valid=None,  # Not yet checked — waiting for upload
+                source="mysql",
+                inspection_id=inspection_id,
+                has_pdf_hash=bool(stored_pdf_file_hash),
+            )
+
+        # ── POST → verify uploaded PDF ────────────────────────────
+        uploaded_file = request.files.get("pdf")
+        if not uploaded_file:
+            return render_template(
+                "checkout_verify.html",
+                data=data,
+                seal_valid=seal_valid,
+                pdf_valid=None,
+                pdf_error="Aucun fichier reçu.",
+                source="mysql",
+                inspection_id=inspection_id,
+                has_pdf_hash=bool(stored_pdf_file_hash),
+            )
+
+        if not uploaded_file.filename.lower().endswith(".pdf"):
+            return render_template(
+                "checkout_verify.html",
+                data=data,
+                seal_valid=seal_valid,
+                pdf_valid=None,
+                pdf_error="Le fichier doit être un PDF.",
+                source="mysql",
+                inspection_id=inspection_id,
+                has_pdf_hash=bool(stored_pdf_file_hash),
+            )
+
+        if not stored_pdf_file_hash:
+            # Document was signed before pdf_file_hash was introduced
+            return render_template(
+                "checkout_verify.html",
+                data=data,
+                seal_valid=seal_valid,
+                pdf_valid=None,
+                pdf_error="Ce document a été signé avant l'introduction de la vérification PDF. Seul le sceau de données est disponible.",
+                source="mysql",
+                inspection_id=inspection_id,
+                has_pdf_hash=False,
+            )
+
+        # Read uploaded bytes and verify hash
+        uploaded_bytes = uploaded_file.read()
+        pdf_valid = verify_pdf_hash(uploaded_bytes, stored_pdf_file_hash)
+
+        if not pdf_valid:
+            current_app.logger.warning(
+                f"⚠️ PDF hash mismatch for {inspection_id} — uploaded file differs from signed original."
+            )
+        else:
+            current_app.logger.info(
+                f"✅ PDF verified for {inspection_id} — file matches signed original."
+            )
+
         return render_template(
             "checkout_verify.html",
             data=data,
-            valid=False,  # Cannot verify integrity without immutable snapshot
-            source="airtable",
+            seal_valid=seal_valid,
+            pdf_valid=pdf_valid,
+            source="mysql",
+            inspection_id=inspection_id,
+            has_pdf_hash=True,
         )
 
     @app.route("/checkout/document/<filename>")
