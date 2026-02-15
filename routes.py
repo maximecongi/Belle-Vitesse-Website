@@ -513,10 +513,10 @@ def init_error_handlers(app):
                 error_message=e.description,
             ), e.code
 
-        @app.errorhandler(Exception)
+        """ @app.errorhandler(Exception)
         def handle_exception(e):
             return render_template(
                 "error.html",
                 error_title="500 - Internal Server Error",
                 error_message="An unexpected error occurred.",
-            ), 500
+            ), 500 """
