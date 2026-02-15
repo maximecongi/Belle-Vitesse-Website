@@ -12,27 +12,27 @@
 
 <body>
 
-    <div class="checkout-sign-page">
-
-        <!-- Logo -->
-        <div style="margin-bottom: 2rem;">
-            <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
-                alt="Belle Vitesse" style="height: 36px;">
-        </div>
-
-        <!-- Title -->
-        <h2 class="dot-before">Signature du responsable</h2>
+    <div class="checkout">
+        <!-- ═══════════ HEADER ═══════════ -->
+        <header class="checkout-header">
+            <div class="checkout-header-logo">
+                <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
+                    alt="Belle Vitesse">
+            </div>
+            <div class="checkout-header-meta">
+                <strong class="dot-before">Signature du Responsable</strong><br>
+                <span class="checkout-doc-id">{{ data.inspection_id }}</span>
+            </div>
+        </header>
 
         <!-- Recap -->
-        <div class="checkout-section" style="text-align: left; margin-bottom: 2rem;">
+        <section class="checkout-section">
+            <h2 class="checkout-section-title dot-before">Récapitulatif de l'inspection</h2>
             <div class="checkout-info-grid">
                 <div class="checkout-info-item">
-                    <span class="checkout-info-label">Inspection</span>
-                    <span class="checkout-info-value">{{ data.inspection_id }}</span>
-                </div>
-                <div class="checkout-info-item">
                     <span class="checkout-info-label">Véhicule contrôlé</span>
-                    <span class="checkout-info-value">{{ data.vehicle.fields.name }}
+                    <span class="checkout-info-value">
+                        {{ data.vehicle.fields.name }}
                         <span class="checkout-doc-id">{{ data.vehicle.fields.unique_id }}</span>
                     </span>
                 </div>
@@ -44,33 +44,49 @@
                     <span class="checkout-info-label">Projet</span>
                     <span class="checkout-info-value">{{ data.project }}</span>
                 </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Date du contrôle</span>
+                    <span class="checkout-info-value">{{ data.control_date or '—' }}</span>
+                </div>
             </div>
-        </div>
+        </section>
 
-        <p>
-            En signant ci-dessous, je certifie avoir effectué le contrôle technique
-            du véhicule et que les informations renseignées sont exactes.
-        </p>
+        <!-- Terms -->
+        <section class="checkout-section">
+            <p style="text-align: left; font-size: 0.9rem; color: var(--grey-2);">
+                En signant ci-dessous, je certifie avoir effectué le contrôle technique
+                du véhicule et que les informations renseignées sont exactes.
+            </p>
+        </section>
 
         <!-- Signature Canvas -->
-        <div class="checkout-sign-canvas-wrapper">
-            <canvas id="signature-canvas"></canvas>
-        </div>
+        <section class="checkout-section">
+            <div class="checkout-sign-canvas-wrapper">
+                <canvas id="signature-canvas"></canvas>
+            </div>
 
-        <!-- Actions -->
-        <div class="checkout-sign-actions">
-            <button type="button" class="checkout-btn checkout-btn--secondary" id="btn-clear">
-                Effacer
-            </button>
-            <button type="button" class="checkout-btn checkout-btn--primary" id="btn-sign">
-                Signer le document
-            </button>
-        </div>
+            <!-- Actions -->
+            <div class="checkout-sign-actions">
+                <button type="button" class="checkout-btn checkout-btn--secondary" id="btn-clear">
+                    Effacer
+                </button>
+                <button type="button" class="checkout-btn checkout-btn--primary" id="btn-sign">
+                    Signer le document
+                </button>
+            </div>
+        </section>
 
         <!-- Feedback -->
         <div id="feedback" style="margin-top: 1.5rem; display: none;">
             <p id="feedback-text" style="font-weight: 500; text-align: center;"></p>
         </div>
+
+        <footer class="checkout-footer" style="margin-top: 4rem;">
+            <p>
+                <strong>Belle Vitesse SARL</strong><br>
+                Ce document sera scellé électroniquement après validation.
+            </p>
+        </footer>
     </div>
 
     <script>

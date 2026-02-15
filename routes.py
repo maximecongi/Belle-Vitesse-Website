@@ -401,11 +401,8 @@ def init_routes(app):
         # 6. Save PDF Privately
         filename = f"{inspection_id}_{current_hash[:8]}.pdf"
         private_folder = current_app.config.get("PRIVATE_FOLDER")
-        if not private_folder:
-            # Fallback to static if private folder not set
-            private_folder = os.path.join(app.static_folder, "checkout_pdfs")
 
-        file_path = os.path.join(private_folder, filename)
+        file_path = os.path.join(private_folder, "checkout_pdfs", filename)
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         with open(file_path, "wb") as f:
             f.write(pdf_bytes)
