@@ -460,10 +460,10 @@ def init_routes(app):
             }
         ), 200
 
-    @app.route("/checkout/verify/<doc_id>")
-    def checkout_verify(doc_id):
+    @app.route("/checkout/verify/<inspection_id>")
+    def checkout_verify(inspection_id):
         # 1. Try to get from MySQL (Immutable Source of Truth)
-        signed_doc = get_signed_document(doc_id)
+        signed_doc = get_signed_document(inspection_id)
 
         if signed_doc:
             # Trusted data from database
@@ -477,7 +477,7 @@ def init_routes(app):
             )
 
         # 2. Fallback to Airtable (Live data - potentially mutable)
-        record = get_checkout_by_inspection_id(doc_id)
+        record = get_checkout_by_inspection_id(inspection_id)
         if not record:
             abort(404)
 

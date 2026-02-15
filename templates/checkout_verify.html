@@ -44,8 +44,15 @@
         <div class="checkout-info-grid" style="text-align: left; margin-bottom: 2rem;">
             <div class="checkout-info-item">
                 <span class="checkout-info-label">Véhicule contrôlé</span>
-                <span class="checkout-info-value">{{ data.vehicle.fields.name }}
+                <span class="checkout-info-value">
+                    {% if data.vehicle %}
+                    {{ data.vehicle.fields.name }}
+                    {% if data.vehicle.fields.unique_id %}
                     <span class="checkout-doc-id">{{ data.vehicle.fields.unique_id }}</span>
+                    {% endif %}
+                    {% else %}
+                    —
+                    {% endif %}
                 </span>
             </div>
             <div class="checkout-info-item">
@@ -58,7 +65,13 @@
             </div>
             <div class="checkout-info-item">
                 <span class="checkout-info-label">Responsable</span>
-                <span class="checkout-info-value">{{ data.controller.name }}</span>
+                <span class="checkout-info-value">
+                    {% if data.controller and data.controller.name is defined %}
+                    {{ data.controller.name }}
+                    {% else %}
+                    {{ data.controller or '—' }}
+                    {% endif %}
+                </span>
             </div>
         </div>
 
