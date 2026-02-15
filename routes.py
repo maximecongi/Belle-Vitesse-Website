@@ -398,17 +398,22 @@ def init_routes(app):
         )
         pdf_bytes = generate_checkout_pdf(html_content, base_url=base_url)
 
-        # 6. Save PDF Locally
+        # 6. Save PDF Privately
         filename = f"{inspection_id}_{current_hash[:8]}.pdf"
-        file_path = os.path.join(
-            app.config["PRIVATE_FOLDER"], "checkout_pdfs", filename
-        )
+        private_folder = current_app.config.get("PRIVATE_FOLDER")
+        if not private_folder:
+            # Fallback to static if private folder not set
+            private_folder = os.path.join(app.static_folder, "checkout_pdfs")
+
+        file_path = os.path.join(private_folder, filename)
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         with open(file_path, "wb") as f:
             f.write(pdf_bytes)
 
         # 7. Update Airtable
-        pdf_public_url = f"{base_url}/static/checkout_pdfs/{filename}"
+        # pdf_public_url = f"{base_url}/static/checkout_pdfs/{filename}" # OLD
+        # NEW with centralized download route
+        pdf_public_url = f"{base_url}/checkout/document/{filename}"
 
         # 8. Store immutable snapshot in MySQL
         store_success = store_signed_document(
@@ -431,12 +436,12 @@ def init_routes(app):
                 record_id,
                 {
                     "État du contrôle": "Terminé",  # Or whatever status signifies signed
-                    "Signature": [{"url": signature_data}]
+                    "Signature": signature_data
                     if signature_data.startswith("http")
                     else None,  # Signature is base64, need to store as image? No, usually we store PDF.
                     # If we want to store signature as attachment, we'd need to upload it first. For now, let's skip direct signature attachment upload if it's base64.
                     # We prioritize PDF upload.
-                    "PDF scellé": [{"url": pdf_public_url}],
+                    "PDF scellé": pdf_public_url,
                     "Hash": current_hash,
                 },
             )
@@ -488,6 +493,19 @@ def init_routes(app):
         return render_template(
             "checkout_verify.html", data=data, valid=True, source="airtable"
         )
+
+    @app.route("/checkout/document/<filename>")
+    def download_checkout_document(filename):
+        """Serve secure checkout document."""
+        directory = current_app.config.get("PRIVATE_FOLDER")
+        if not directory:
+            # Fallback if config missing
+            directory = os.path.join(current_app.static_folder, "checkout_pdfs")
+
+        try:
+            return send_from_directory(directory, filename)
+        except Exception:
+            abort(404)
 
 
 def init_error_handlers(app):
