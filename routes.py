@@ -430,10 +430,7 @@ def init_routes(app):
             TABLE_CHECKOUT.update(
                 record_id,
                 {
-                    "État du contrôle": "Terminé",  # Or whatever status signifies signed
-                    "Signature": signature_data
-                    if signature_data.startswith("http")
-                    else None,
+                    "Signé": "Signé",
                     "PDF scellé": pdf_public_url,
                     "Hash": current_hash,
                 },
