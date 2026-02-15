@@ -344,21 +344,14 @@ def store_checkout_token(token, record_id, inspection_id, created_at):
     try:
         connection = get_db_connection()
         cursor = connection.cursor()
-
-        # Convert datetime to string for MySQL (YYYY-MM-DD HH:MM:SS)
-        if hasattr(created_at, "strftime"):
-            created_at = created_at.strftime("%Y-%m-%d %H:%M:%S")
-
         sql = """
             INSERT INTO checkout_tokens (token, record_id, inspection_id, created_at)
             VALUES (%s, %s, %s, %s)
         """
         cursor.execute(sql, (token, record_id, inspection_id, created_at))
         connection.commit()
-        return True
     except Exception as err:
         print(f"Error storing token: {err}")
-        return False
     finally:
         if cursor:
             cursor.close()
@@ -368,46 +361,58 @@ def store_checkout_token(token, record_id, inspection_id, created_at):
 
 def get_checkout_token(token):
     """Retrieve a token for checking validity."""
-    connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
+    connection = None
+    cursor = None
     try:
+        connection = get_db_connection()
+        cursor = connection.cursor(dictionary=True)
         sql = "SELECT * FROM checkout_tokens WHERE token = %s"
         cursor.execute(sql, (token,))
         row = cursor.fetchone()
         return row
-    except mysql.connector.Error as err:
+    except Exception as err:
         print(f"Error fetching token: {err}")
         return None
     finally:
-        cursor.close()
-        connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 def update_checkout_token_signature(token, signature):
     """Update signature for a token."""
-    connection = get_db_connection()
-    cursor = connection.cursor()
+    connection = None
+    cursor = None
     try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
         sql = "UPDATE checkout_tokens SET signature = %s WHERE token = %s"
         cursor.execute(sql, (signature, token))
         connection.commit()
-    except mysql.connector.Error as err:
+    except Exception as err:
         print(f"Error updating token signature: {err}")
     finally:
-        cursor.close()
-        connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 def delete_checkout_token(token):
     """Delete a token after use."""
-    connection = get_db_connection()
-    cursor = connection.cursor()
+    connection = None
+    cursor = None
     try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
         sql = "DELETE FROM checkout_tokens WHERE token = %s"
         cursor.execute(sql, (token,))
         connection.commit()
-    except mysql.connector.Error as err:
+    except Exception as err:
         print(f"Error deleting token: {err}")
     finally:
-        cursor.close()
-        connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()

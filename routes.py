@@ -294,15 +294,12 @@ def init_routes(app):
         token = str(uuid.uuid4())
         created_at = datetime.now(timezone.utc)
 
-        success = store_checkout_token(
+        store_checkout_token(
             token=token,
             record_id=payload["record_id"],
             inspection_id=data["inspection_id"],
             created_at=created_at,
         )
-
-        if not success:
-            return jsonify({"error": "Failed to store session token"}), 500
 
         base_url = os.getenv("BASE_URL", "https://bellevitesse.com")
         return jsonify(
@@ -493,7 +490,6 @@ def init_routes(app):
 
     @app.route("/checkout/document/<filename>")
     def download_checkout_document(filename):
-        """require_checkout_token()"""
         """Serve secure checkout document."""
         directory = current_app.config.get("PRIVATE_FOLDER")
 
