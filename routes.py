@@ -292,16 +292,17 @@ def init_routes(app):
 
         data = format_checkout_data(record)
         token = str(uuid.uuid4())
-
-        token = str(uuid.uuid4())
         created_at = datetime.now(timezone.utc)
 
-        store_checkout_token(
+        success = store_checkout_token(
             token=token,
             record_id=payload["record_id"],
             inspection_id=data["inspection_id"],
             created_at=created_at,
         )
+
+        if not success:
+            return jsonify({"error": "Failed to store session token"}), 500
 
         base_url = os.getenv("BASE_URL", "https://bellevitesse.com")
         return jsonify(

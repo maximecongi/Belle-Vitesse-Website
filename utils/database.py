@@ -339,20 +339,31 @@ def get_signed_document(inspection_id):
 
 def store_checkout_token(token, record_id, inspection_id, created_at):
     """Store a checkout session token."""
-    connection = get_db_connection()
-    cursor = connection.cursor()
+    connection = None
+    cursor = None
     try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+
+        # Convert datetime to string for MySQL (YYYY-MM-DD HH:MM:SS)
+        if hasattr(created_at, "strftime"):
+            created_at = created_at.strftime("%Y-%m-%d %H:%M:%S")
+
         sql = """
             INSERT INTO checkout_tokens (token, record_id, inspection_id, created_at)
             VALUES (%s, %s, %s, %s)
         """
         cursor.execute(sql, (token, record_id, inspection_id, created_at))
         connection.commit()
-    except mysql.connector.Error as err:
+        return True
+    except Exception as err:
         print(f"Error storing token: {err}")
+        return False
     finally:
-        cursor.close()
-        connection.close()
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
 
 
 def get_checkout_token(token):
