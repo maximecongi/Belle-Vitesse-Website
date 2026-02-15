@@ -1,5 +1,5 @@
 import os
-import Path
+from pathlib import Path
 from datetime import datetime, timezone
 from flask import Flask
 
