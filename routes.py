@@ -12,6 +12,7 @@ from flask import (
     request,
     current_app,
     send_from_directory,
+    requests,
 )
 
 from itsdangerous import URLSafeSerializer
@@ -414,7 +415,7 @@ def init_routes(app):
         store_success = store_signed_document(
             inspection_id=inspection_id,
             file_hash=current_hash,
-            data_snapshot=data,  # This is the "frozen" data state
+            data_snapshot=data,
             signature=signature_data,
             pdf_url=pdf_public_url,
             signed_at=datetime.now(timezone.utc),
@@ -444,6 +445,29 @@ def init_routes(app):
         current_app.logger.info(
             f"✅ Signature processed for {inspection_id}. PDF saved at {file_path}"
         )
+
+        # 9. Trigger n8n webhook
+        try:
+            n8n_webhook_url = os.getenv("N8N_WEBHOOK_URL")
+            if n8n_webhook_url:
+                payload = {
+                    "inspection_id": inspection_id,
+                    "pdf_url": pdf_public_url,
+                    "hash": current_hash,
+                }
+                response = requests.post(n8n_webhook_url, json=payload)
+                if response.status_code == 200:
+                    current_app.logger.info(
+                        f"✅ n8n webhook triggered for {inspection_id}"
+                    )
+                else:
+                    current_app.logger.error(
+                        f"❌ Failed to trigger n8n webhook for {inspection_id}: {response.status_code}"
+                    )
+        except Exception as e:
+            current_app.logger.error(
+                f"❌ Failed to trigger n8n webhook for {inspection_id}: {e}"
+            )
 
         # Cleanup token from DB
         delete_checkout_token(token)
