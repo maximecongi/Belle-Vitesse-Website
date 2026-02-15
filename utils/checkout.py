@@ -205,5 +205,5 @@ def format_checkout_data(record):
         "signed_at": None,  # Can be parsed from "Signature" attachment timestamp if needed, but often not accurate
         "signed_ip": None,
         "hash": fields.get("Hash", None),
-        "pdf_url": extract_first_photo(fields.get("PDF scellé")),
+        "pdf_url": fields.get("PDF scellé"),
     }
