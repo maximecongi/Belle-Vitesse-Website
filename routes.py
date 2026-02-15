@@ -292,6 +292,8 @@ def init_routes(app):
 
         data = format_checkout_data(record)
         token = str(uuid.uuid4())
+
+        token = str(uuid.uuid4())
         created_at = datetime.now(timezone.utc)
 
         store_checkout_token(
@@ -490,6 +492,7 @@ def init_routes(app):
 
     @app.route("/checkout/document/<filename>")
     def download_checkout_document(filename):
+        """require_checkout_token()"""
         """Serve secure checkout document."""
         directory = current_app.config.get("PRIVATE_FOLDER")
 
