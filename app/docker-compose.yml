@@ -12,6 +12,7 @@ services:
     volumes:
       - ../static:/app/static
       - ../static/images/airtable:/app/static/images/airtable
+      - /srv/bellevitesse/private:/app/private
     networks:
       - bv_network
       - traefik_default

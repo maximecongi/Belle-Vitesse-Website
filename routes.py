@@ -411,8 +411,6 @@ def init_routes(app):
             f.write(pdf_bytes)
 
         # 7. Update Airtable
-        # pdf_public_url = f"{base_url}/static/checkout_pdfs/{filename}" # OLD
-        # NEW with centralized download route
         pdf_public_url = f"{base_url}/checkout/document/{filename}"
 
         # 8. Store immutable snapshot in MySQL
@@ -438,9 +436,7 @@ def init_routes(app):
                     "État du contrôle": "Terminé",  # Or whatever status signifies signed
                     "Signature": signature_data
                     if signature_data.startswith("http")
-                    else None,  # Signature is base64, need to store as image? No, usually we store PDF.
-                    # If we want to store signature as attachment, we'd need to upload it first. For now, let's skip direct signature attachment upload if it's base64.
-                    # We prioritize PDF upload.
+                    else None,
                     "PDF scellé": pdf_public_url,
                     "Hash": current_hash,
                 },
@@ -496,11 +492,9 @@ def init_routes(app):
 
     @app.route("/checkout/document/<filename>")
     def download_checkout_document(filename):
+        """require_checkout_token()"""
         """Serve secure checkout document."""
         directory = current_app.config.get("PRIVATE_FOLDER")
-        if not directory:
-            # Fallback if config missing
-            directory = os.path.join(current_app.static_folder, "checkout_pdfs")
 
         try:
             return send_from_directory(directory, filename)

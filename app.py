@@ -1,4 +1,5 @@
 import os
+import Path
 from datetime import datetime, timezone
 from flask import Flask
 
@@ -32,7 +33,8 @@ def create_app():
     app.config["CACHE_DEFAULT_TIMEOUT"] = 3600
     app.config["CACHE_KEY_PREFIX"] = "myapp_"
     app.config["PREFERRED_URL_SCHEME"] = "https"
-    app.config["PRIVATE_FOLDER"] = "/srv/bellevitesse/private/"
+    app.config["PRIVATE_FOLDER"] = Path("/app/private")
+    app.config["PRIVATE_FOLDER"].mkdir(exist_ok=True)
 
     # Initialize extensions
     cache.init_app(app)
