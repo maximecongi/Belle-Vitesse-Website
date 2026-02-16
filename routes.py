@@ -330,6 +330,7 @@ def init_routes(app):
 
     @app.route("/checkout/<inspection_id>")
     def checkout_view(inspection_id):
+        require_checkout_token()
         record = get_checkout_by_inspection_id(inspection_id)
         if not record:
             abort(404)
