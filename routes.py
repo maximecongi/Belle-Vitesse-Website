@@ -367,7 +367,7 @@ def init_routes(app):
         try:
             TABLE_CHECKOUT.update(
                 payload["record_id"],
-                {"État du contrôle": "Terminé"},
+                {"État du contrôle": "À signer"},
             )
         except Exception as e:
             current_app.logger.error(

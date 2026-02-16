@@ -78,8 +78,8 @@
                 <div class="checkout-info-item">
                     <span class="checkout-info-label">État du contrôle</span>
                     <span class="checkout-info-value">
-                        {% if data.control_status == 'Terminé' %}
-                        <span class="checkout-badge checkout-badge--ok">Terminé</span>
+                        {% if data.control_status == 'À signer' %}
+                        <span class="checkout-badge checkout-badge--tobesigned">À signer</span>
                         {% elif data.control_status == 'En cours' %}
                         <span class="checkout-badge checkout-badge--inprogress">En cours</span>
                         {% elif data.control_status == 'Signé' %}

@@ -161,6 +161,11 @@ body {
     color: var(--white-1);
 }
 
+.checkout-badge--tobesigned {
+    background-color: var(--blue-1);
+    color: var(--white-1);
+}
+
 .checkout-badge--warning {
     background-color: var(--yellow-1);
     color: var(--grey-1);
@@ -172,7 +177,7 @@ body {
 }
 
 .checkout-badge--signed {
-    background-color: var(--purple-1);
+    background-color: var(--green-1);
     color: var(--white-1);
 }
 
@@ -182,7 +187,7 @@ body {
 }
 
 .checkout-badge--inprogress {
-    background-color: var(--blue-1);
+    background-color: var(--orange-1);
     color: var(--white-1);
 }
 
