@@ -362,7 +362,7 @@ def format_checkout_data(record: dict) -> dict:
     # and derive the display name immediately for convenience.
     production_record = _resolve_production(project_fields.get("Production"))
     production_name = (
-        production_record.get("fields", {}).get("Name", "—")
+        production_record.get("fields", {}).get("Nom", "—")
         if production_record else "—"
     )
 
