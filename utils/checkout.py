@@ -21,13 +21,16 @@ load_dotenv()
 AIRTABLE_SECRET_TOKEN = os.getenv("AIRTABLE_SECRET_TOKEN")
 AIRTABLE_BASE_ID = os.getenv("AIRTABLE_BASE_ID")
 
-TABLE_CHECKOUT = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "checkout_vehicles")
+TABLE_CHECKOUT = Table(AIRTABLE_SECRET_TOKEN,
+                       AIRTABLE_BASE_ID, "checkout_vehicles")
+TABLE_PROJECTS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "projects")
+TABLE_PRODUCTIONS = Table(AIRTABLE_SECRET_TOKEN,
+                          AIRTABLE_BASE_ID, "productions")
 
 logger = logging.getLogger(__name__)
 
 
 # ── Cryptographic Seal ──────────────────────────────────────────
-
 
 def _get_hmac_secret() -> bytes:
     """
@@ -39,7 +42,7 @@ def _get_hmac_secret() -> bytes:
     if not secret:
         raise EnvironmentError(
             "HASH_SECRET_KEY is not set. "
-            'Generate one with: python -c "import secrets; print(secrets.token_hex(32))"'
+            "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
         )
     return secret.encode("utf-8")
 
@@ -75,8 +78,7 @@ def compute_document_seal(
     Returns a hex digest string.
     """
     content = _build_seal_content(
-        inspection_id, vehicle_id, km, signature_data, signed_at
-    )
+        inspection_id, vehicle_id, km, signature_data, signed_at)
     secret = _get_hmac_secret()
     return hmac.new(secret, content.encode("utf-8"), hashlib.sha256).hexdigest()
 
@@ -102,7 +104,6 @@ def verify_document_seal(
 
 
 # ── PDF Binary Hash ──────────────────────────────────────────────
-
 
 def compute_pdf_hash(pdf_bytes: bytes) -> str:
     """
@@ -131,7 +132,6 @@ def verify_pdf_hash(pdf_bytes: bytes, expected_hash: str) -> bool:
 
 # ── QR Code ──────────────────────────────────────────────────────
 
-
 def generate_qr_code(data: str) -> str:
     """Generate a QR code and return it as a base64 data URI."""
     qr = qrcode.QRCode(
@@ -150,7 +150,6 @@ def generate_qr_code(data: str) -> str:
 
 
 # ── PDF ──────────────────────────────────────────────────────────
-
 
 def generate_checkout_pdf(html_content: str, base_url: str) -> bytes:
     """
@@ -173,7 +172,6 @@ def generate_checkout_pdf(html_content: str, base_url: str) -> bytes:
 
 # ── Airtable Helpers ─────────────────────────────────────────────
 
-
 def get_checkout_record(record_id: str):
     """Fetch a single checkout record from Airtable by record ID."""
     try:
@@ -186,7 +184,9 @@ def get_checkout_record(record_id: str):
 def get_checkout_by_inspection_id(inspection_id: str):
     """Fetch a checkout record by its inspection number (N° d'inspection)."""
     try:
-        record = TABLE_CHECKOUT.first(formula=f"{{N° d'inspection}}='{inspection_id}'")
+        record = TABLE_CHECKOUT.first(
+            formula=f"{{N° d'inspection}}='{inspection_id}'"
+        )
         logger.info(
             f"🔎 Checkout lookup '{inspection_id}' → {'found' if record else 'not found'}"
         )
@@ -199,19 +199,8 @@ def get_checkout_by_inspection_id(inspection_id: str):
 # ── Date Formatting ───────────────────────────────────────────────
 
 MOIS_FR = [
-    "",
-    "janvier",
-    "février",
-    "mars",
-    "avril",
-    "mai",
-    "juin",
-    "juillet",
-    "août",
-    "septembre",
-    "octobre",
-    "novembre",
-    "décembre",
+    "", "janvier", "février", "mars", "avril", "mai", "juin",
+    "juillet", "août", "septembre", "octobre", "novembre", "décembre",
 ]
 
 
@@ -234,7 +223,6 @@ def format_date_fr(date_str: str) -> str:
 
 
 # ── Vehicle Resolution ────────────────────────────────────────────
-
 
 def _resolve_vehicle(vehicle_field):
     """
@@ -270,16 +258,74 @@ def _extract_vehicle_id(vehicle_field) -> str:
     return vehicle_field[0]
 
 
-# ── Data Formatting ───────────────────────────────────────────────
+# ── Project Resolution ────────────────────────────────────────────
 
+def _resolve_project(project_field):
+    """
+    Fetch the full project record from Airtable given a linked record field.
+
+    The project record contains: Nom, Production (linked), Date de départ,
+    Date de début de tournage, Date de fin de tournage.
+
+    Returns the raw Airtable record dict, or None.
+    """
+    if (
+        not project_field
+        or not isinstance(project_field, list)
+        or len(project_field) == 0
+    ):
+        return None
+    try:
+        return TABLE_PROJECTS.get(project_field[0])
+    except Exception as e:
+        logger.warning(f"⚠️ _resolve_project error: {e}")
+        return None
+
+
+def _extract_project_id(project_field) -> str:
+    """Extract the raw Airtable record ID from a linked project field, or '—'."""
+    if (
+        not project_field
+        or not isinstance(project_field, list)
+        or len(project_field) == 0
+    ):
+        return "—"
+    return project_field[0]
+
+
+def _resolve_production(production_field):
+    """
+    Fetch the full production record from Airtable given a linked record field.
+
+    Returns the raw Airtable record dict (with all fields), or None.
+    Access the name via: record["fields"].get("Name")
+    Access any other field via: record["fields"].get("Votre champ")
+    """
+    if (
+        not production_field
+        or not isinstance(production_field, list)
+        or len(production_field) == 0
+    ):
+        return None
+    try:
+        return TABLE_PRODUCTIONS.get(production_field[0])
+    except Exception as e:
+        logger.warning(f"⚠️ _resolve_production error: {e}")
+        return None
+
+
+# ── Data Formatting ───────────────────────────────────────────────
 
 def format_checkout_data(record: dict) -> dict:
     """
     Transform raw Airtable record into a flat dict
     matching the checkout.html template variables.
 
-    Adds 'vehicle_id' (stable scalar for seal computation) alongside
-    'vehicle' (full resolved dict for display).
+    Linked record resolution:
+      - 'Véhicule contrôlé' → vehicle record (for display) + vehicle_id (for seal)
+      - 'Projet'            → project record, from which we pull:
+                               Nom, Production (name), Date de départ,
+                               Date de début de tournage, Date de fin de tournage
     """
     fields = record.get("fields", {})
 
@@ -296,35 +342,63 @@ def format_checkout_data(record: dict) -> dict:
             return None
         return field_value[0].get("url")
 
+    # ── Resolve vehicle ───────────────────────────────────────────
     vehicle_field = fields.get("Véhicule contrôlé")
 
+    # ── Resolve project + derive its fields ──────────────────────
+    project_field = fields.get("Projet")
+    project_record = _resolve_project(project_field)
+    project_fields = project_record.get("fields", {}) if project_record else {}
+
+    project_name = project_fields.get("Nom", "—")
+    departure_date = format_date_fr(project_fields.get("Date de départ", "—"))
+    shoot_start = format_date_fr(
+        project_fields.get("Date de début de tournage", "—"))
+    shoot_end = format_date_fr(
+        project_fields.get("Date de fin de tournage", "—"))
+
+    # Production is itself a linked field inside the project record
+    # We store the full record for future access to any field,
+    # and derive the display name immediately for convenience.
+    production_record = _resolve_production(project_fields.get("Production"))
+    production_name = (
+        production_record.get("fields", {}).get("Name", "—")
+        if production_record else "—"
+    )
+
     return {
-        "inspection_id": fields.get("N° d'inspection", "—"),
-        "production": fields.get("Production", "—"),
-        "project": fields.get("Projet", "—"),
-        "departure_date": format_date_fr(fields.get("Date de départ", "—")),
-        "shoot_start": format_date_fr(fields.get("Date de début de tournage", "—")),
-        "shoot_end": format_date_fr(fields.get("Date de fin de tournage", "—")),
+        "inspection_id":  fields.get("N° d'inspection", "—"),
+        # Resolved from linked project record
+        "production":     production_name,        # convenient string for templates
+        # full record — all fields accessible via production_record["fields"]
+        "production_record": production_record,
+        "project":        project_name,
+        "departure_date": departure_date,
+        "shoot_start":    shoot_start,
+        "shoot_end":      shoot_end,
+        # Stable project record ID (for reference / future seal extension)
+        "project_id":     _extract_project_id(project_field),
+        # Inspection-level fields (still on the checkout record)
         "control_status": fields.get("État du contrôle", "—"),
-        "control_date": format_date_fr(fields.get("Date du contrôle", "—")),
-        "controller": fields.get("Reponsable du contrôle", "—"),
+        "control_date":   format_date_fr(fields.get("Date du contrôle", "—")),
+        "controller":     fields.get("Reponsable du contrôle", "—"),
         # Full vehicle record for display in templates
-        "vehicle": _resolve_vehicle(vehicle_field),
+        "vehicle":        _resolve_vehicle(vehicle_field),
         # Stable scalar ID for seal computation — never use str(vehicle) for hashing
-        "vehicle_id": _extract_vehicle_id(vehicle_field),
-        "km": fields.get("Kilométrage départ", ""),
-        "battery": fields.get("Charge de la batterie départ", ""),
+        "vehicle_id":     _extract_vehicle_id(vehicle_field),
+        "km":             fields.get("Kilométrage départ", ""),
+        "battery":        fields.get("Charge de la batterie départ", ""),
         "odometer_photo": extract_first_photo(fields.get("Photo compteur")),
         # Inspection items
-        "tires": fields.get("État des pneus", "—"),
-        "spare_tire": fields.get("Roue de secours", "—"),
-        "oil": fields.get("Niveau huile", "—"),
-        "coolant": fields.get("Niveau liquide de refroidissement", "—"),
-        "brakes": fields.get("État des freins", "—"),
-        "lights": fields.get("État éclairage extérieur", "—"),
-        "engine_start": fields.get("Démarrage moteur", "—"),
-        "wipers": fields.get("État des essuie-glaces", "—"),
-        "horn": fields.get("État du klaxon", "—"),
+        "tires":           fields.get("État des pneus", "—"),
+        "spare_tire":      fields.get("Roue de secours", "—"),
+        "oil":             fields.get("Niveau huile", "—"),
+        "coolant":         fields.get("Niveau liquide de refroidissement", "—"),
+        "brakes":          fields.get("État des freins", "—"),
+        "lights":          fields.get("État éclairage extérieur", "—"),
+        "engine_start":    fields.get("Démarrage moteur", "—"),
+        "wipers":          fields.get("État des essuie-glaces", "—"),
+        "horn":            fields.get("État du klaxon", "—"),
         "safety_triangle": fields.get(
             "Présence Triangle de signalisation et gilet orange", "—"
         ),
@@ -336,8 +410,8 @@ def format_checkout_data(record: dict) -> dict:
         "notes": fields.get("Observations générales", ""),
         "ready": fields.get("Véhicule prêt au départ", "—"),
         # Signature metadata (populated later in routes)
-        "signed_at": None,
-        "signed_ip": None,
-        "hash": fields.get("Hash", None),
-        "pdf_url": fields.get("PDF scellé"),
+        "signed_at":  None,
+        "signed_ip":  None,
+        "hash":       fields.get("Hash", None),
+        "pdf_url":    fields.get("PDF scellé"),
     }
