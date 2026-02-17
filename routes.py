@@ -478,6 +478,7 @@ def init_routes(app):
             signature=signature_data,
             qr=qr_code_img,
             hash=current_hash,
+            verification_url=verification_url,
         )
         pdf_bytes = generate_checkout_pdf(html_content, base_url=base_url)
 

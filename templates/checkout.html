@@ -231,7 +231,9 @@
                 <div class="checkout-signature-block" style="max-width: 160px;">
                     <p class="checkout-signature-label">Vérification</p>
                     <div class="checkout-qr">
-                        <img src="{{ qr }}" alt="QR Code de vérification">
+                        <a href="{{ verification_url }}" target="_blank">
+                            <img src="{{ qr }}" alt="QR Code de vérification">
+                        </a>
                     </div>
                 </div>
                 {% endif %}
