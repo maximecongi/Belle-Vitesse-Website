@@ -4,7 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Signature — {{ data.inspection_id }}</title>
+
+    <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/static/imgs/favicons/favicon.svg" />
+    <link rel="shortcut icon" href="/static/imgs/favicons/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/imgs/favicons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Belle Vitesse" />
+    <link rel="manifest" href="/static/imgs/favicons/site.webmanifest" />
+
+    <title>Signature — {{ data.inspection_id }} - Belle Vitesse </title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/checkout.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
