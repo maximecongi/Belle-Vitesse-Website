@@ -1,10 +1,62 @@
 {% from "macros.html" import square_highlight %}
 {% extends "layout.html" %}
-{% block title %}{{vehicle.fields.name}} - Belle Vitesse{% endblock %}
+{% block title %}{{ vehicle.fields.name }} -- Electric Camera Car for Film Production | Belle Vitesse{% endblock %}
+{% block description %}{{ vehicle.fields.description | truncate(160) }}{% endblock %}
 {% block content %}
+{% block schema %}
+{{ super() }}
+<script type="application/ld+json">
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://bellevitesse.com"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Vehicles",
+        "item": "https://bellevitesse.com/vehicles"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": "{{ vehicle.fields.name }}",
+        "item": "https://bellevitesse.com/vehicles/{{ vehicle.fields.slug }}"
+      }
+    ]
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "{{ vehicle.fields.name }} -- Electric Camera Vehicle",
+    "description": "{{ vehicle.fields.description }}",
+    "brand": {
+      "@type": "Brand",
+      "name": "Belle Vitesse"
+    },
+    "offers": {
+      "@type": "Offer",
+      "availability": "https://schema.org/InStock",
+      "priceCurrency": "EUR",
+      "seller": {
+        "@type": "Organization",
+        "name": "Belle Vitesse"
+      }
+    }
+  }
+]
+</script>
+{% endblock %}
 <section id="hero-banner" class="section-site">
     <div class="vehicle-hero-banner bg-color-white-3">
-        <img src="{{ vehicle.fields.banner[0].url }}" fetchpriority="high" />
+        <img src="{{ vehicle.fields.banner[0].url }}" alt="{{ vehicle.fields.name }} banner - Belle Vitesse"
+            fetchpriority="high" />
         <div class="vehicle-hero-banner-wrapper animate__animated animation__banner-title">
             <div class="vehicle-hero-banner-titlewrapper">
                 <h1 class="vehicle-hero-banner-titlewrapper-title font-54 color-grey-1">

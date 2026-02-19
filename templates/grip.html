@@ -1,6 +1,37 @@
 {% extends "layout.html" %}
-{% block title %}grips - Belle Vitesse{% endblock %}
+{% block title %}{{ grips_category.fields.name }} -- Cinema Grip Equipment | Belle Vitesse{% endblock %}
+{% block description %}Professional cinema grip equipment for the {{ grips_category.fields.name }} category. Rental
+based in Paris, operating worldwide.{% endblock %}
 {% block content %}
+{% block schema %}
+{{ super() }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://bellevitesse.com"
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Grips",
+      "item": "https://bellevitesse.com/grips"
+    },
+    {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "{{ grips_category.fields.name }}",
+      "item": "https://bellevitesse.com/grips/{{ grips_category.fields.slug }}"
+    }
+  ]
+}
+</script>
+{% endblock %}
 <section id="solutions" class="section-site">
     <div class="categories-solutions grips-solutions">
         <h2 class="dot-before title-section">{{grips_category.fields.name}}</h2>
@@ -26,7 +57,8 @@
 
                         {% set excluded_fields = ['name','category', 'created_at', 'created_by', 'status',
                         'gallery',
-                        'last_update_by', 'last_update_at', 'thumbnail', 'slug','order','grips_categories','grips_categories 2'] %}
+                        'last_update_by', 'last_update_at', 'thumbnail',
+                        'slug','order','grips_categories','grips_categories 2'] %}
 
                         {% for label, value in grip.fields.items() %}
                         {% if label not in excluded_fields %}

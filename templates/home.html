@@ -1,6 +1,25 @@
 {% extends "layout.html" %}
-{% block title %}Belle Vitesse - Specialist in moving cinema{% endblock %}
+{% block title %}Belle Vitesse -- Specialist in Moving Cinema | Location Paris{% endblock %}
+{% block description %}Belle Vitesse specializes in high-level cinematic movement for film and commercial productions.
+Electric vehicles, stabilizer heads & grip equipment. Based in Paris, operating worldwide.{% endblock %}
 {% block content %}
+{% block schema %}
+{{ super() }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "https://bellevitesse.com"
+    }
+  ]
+}
+</script>
+{% endblock %}
 <section id="hero-banner" class="section-site">
   <div class="home-hero-banner" fetchpriority=high>
     <video autoplay muted loop playsinline preload="auto" fetchpriority=high

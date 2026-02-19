@@ -1,7 +1,51 @@
 {% extends "layout.html" %}
 {% from "macros.html" import slider %}
-{% block title %}Heads - Belle Vitesse{% endblock %}
+{% block title %}Camera Stabilizer Heads for Cinema | Belle Vitesse{% endblock %}
+{% block description %}High-end camera stabilizer heads: Titan LT, DJI Ronin 2 & 4D, Mōvi Pro, RS4 Pro. Professional
+remote heads for film and commercial production. Rental from Paris.{% endblock %}
 {% block content %}
+{% block schema %}
+{{ super() }}
+<script type="application/ld+json">
+[
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://bellevitesse.com"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Heads",
+        "item": "https://bellevitesse.com/heads"
+      }
+    ]
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "name": "Camera Stabilizer Heads Rental",
+    "provider": {
+      "@type": "LocalBusiness",
+      "name": "Belle Vitesse",
+      "url": "https://bellevitesse.com"
+    },
+    "serviceType": "Cinema Equipment Rental",
+    "description": "Professional remote heads and stabilizers rental for film and commercial production.",
+    "areaServed": {
+      "@type": "Place",
+      "name": "Worldwide"
+    },
+    "url": "https://bellevitesse.com/heads"
+  }
+]
+</script>
+{% endblock %}
 <section id="solutions" class="section-site">
     <div class="categories-solutions">
         <h2 class="dot-before title-section">Our heads</h2>
@@ -37,7 +81,8 @@
         <div class="categories-solutions-categories">
             {% for head in heads %}
             {% if head.fields.status == "Online" %}
-            <div data-payload='{% if head.fields.slug !="ronin-4d"%}{{ head.fields.payload }}{% endif %}' class="categories-solutions-categories-categorywrapper">
+            <div data-payload='{% if head.fields.slug !="ronin-4d"%}{{ head.fields.payload }}{% endif %}'
+                class="categories-solutions-categories-categorywrapper">
                 <h3>{{ head.fields.name }}</h3>
                 <a class="categories-solutions-categories-img-link" href="{{ url_for('head', slug=head.fields.slug) }}">
                     {% if head.fields.thumbnail[0].thumbnails is defined %}

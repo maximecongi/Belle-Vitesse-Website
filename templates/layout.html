@@ -13,7 +13,36 @@
     <link rel="manifest" href="/static/imgs/favicons/site.webmanifest" />
 
 
+    <meta name="description"
+        content="{% block description %}Belle Vitesse - Specialist in high-level cinematic movement. Electric vehicles, stabilizer heads & grip equipment rental based in Paris.{% endblock %}">
     <title>{% block title %}{% endblock %}</title>
+
+    {% block schema %}
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "Belle Vitesse",
+      "description": "Specialist in moving cinema. High-level cinematic movement for film and commercial productions.",
+      "url": "https://bellevitesse.com",
+      "telephone": "+33123456789",
+      "email": "contact@bellevitesse.com",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Paris",
+        "addressCountry": "FR"
+      },
+      "areaServed": {
+        "@type": "Place",
+        "name": "Worldwide"
+      },
+      "sameAs": [
+        "https://www.instagram.com/bellevitesse",
+        "https://www.linkedin.com/company/bellevitesse"
+      ]
+    }
+    </script>
+    {% endblock %}
     <script src="https://unpkg.com/swup@4"></script>
     <script src="https://unpkg.com/@swup/preload-plugin@3"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
