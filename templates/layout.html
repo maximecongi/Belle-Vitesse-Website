@@ -2,71 +2,68 @@
 <html lang="en-US" prefix="og: https://ogp.me/ns#">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
 
-    <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="/static/imgs/favicons/favicon.svg" />
-    <link rel="shortcut icon" href="/static/imgs/favicons/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/static/imgs/favicons/apple-touch-icon.png" />
-    <meta name="apple-mobile-web-app-title" content="Belle Vitesse" />
-    <link rel="manifest" href="/static/imgs/favicons/site.webmanifest" />
+  <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="/static/imgs/favicons/favicon.svg" />
+  <link rel="shortcut icon" href="/static/imgs/favicons/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/imgs/favicons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-title" content="Belle Vitesse" />
+  <link rel="manifest" href="/static/imgs/favicons/site.webmanifest" />
 
 
-    <meta name="description"
-        content="{% block description %}Belle Vitesse - Specialist in high-level cinematic movement. Electric vehicles, stabilizer heads & grip equipment rental based in Paris.{% endblock %}">
-    <title>{% block title %}{% endblock %}</title>
+  <meta name="description"
+    content="{% block description %}Belle Vitesse - Specialist in high-level cinematic movement. Electric vehicles, stabilizer heads & grip equipment rental based in Paris.{% endblock %}">
+  <title>{% block title %}{% endblock %}</title>
 
-    {% block schema %}
-    <script type="application/ld+json">
+  {% block schema %}
+  <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "LocalBusiness",
       "name": "Belle Vitesse",
       "description": "Specialist in moving cinema. High-level cinematic movement for film and commercial productions.",
       "url": "https://bellevitesse.com",
-      "telephone": "+33123456789",
       "email": "contact@bellevitesse.com",
       "address": {
         "@type": "PostalAddress",
-        "addressLocality": "Paris",
+        "streetAddress": "33 Rue Maurice Gunsbourg",
+        "addressLocality": "Ivry-sur-Seine",
+        "postalCode": "94200",
         "addressCountry": "FR"
       },
       "areaServed": {
         "@type": "Place",
         "name": "Worldwide"
-      },
-      "sameAs": [
-        "https://www.instagram.com/bellevitesse",
-        "https://www.linkedin.com/company/bellevitesse"
-      ]
+      }
     }
     </script>
-    {% endblock %}
-    <script src="https://unpkg.com/swup@4"></script>
-    <script src="https://unpkg.com/@swup/preload-plugin@3"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/js/splide.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/css/splide.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='/css/styles.css') }}">
-    <script type="text/javascript">
-        window.heapReadyCb = window.heapReadyCb || [], window.heap = window.heap || [], heap.load = function (e, t) { window.heap.envId = e, window.heap.clientConfig = t = t || {}, window.heap.clientConfig.shouldFetchServerConfig = !1; var a = document.createElement("script"); a.type = "text/javascript", a.async = !0, a.src = "https://cdn.eu.heap-api.com/config/" + e + "/heap_config.js"; var r = document.getElementsByTagName("script")[0]; r.parentNode.insertBefore(a, r); var n = ["init", "startTracking", "stopTracking", "track", "resetIdentity", "identify", "getSessionId", "getUserId", "getIdentity", "addUserProperties", "addEventProperties", "removeEventProperty", "clearEventProperties", "addAccountProperties", "addAdapter", "addTransformer", "addTransformerFn", "onReady", "addPageviewProperties", "removePageviewProperty", "clearPageviewProperties", "trackPageview"], i = function (e) { return function () { var t = Array.prototype.slice.call(arguments, 0); window.heapReadyCb.push({ name: e, fn: function () { heap[e] && heap[e].apply(heap, t) } }) } }; for (var p = 0; p < n.length; p++)heap[n[p]] = i(n[p]) };
-        heap.load("839067626");
-    </script>
+  {% endblock %}
+  <script src="https://unpkg.com/swup@4"></script>
+  <script src="https://unpkg.com/@swup/preload-plugin@3"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/js/splide.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/css/splide.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='/css/styles.css') }}">
+  <script type="text/javascript">
+    window.heapReadyCb = window.heapReadyCb || [], window.heap = window.heap || [], heap.load = function (e, t) { window.heap.envId = e, window.heap.clientConfig = t = t || {}, window.heap.clientConfig.shouldFetchServerConfig = !1; var a = document.createElement("script"); a.type = "text/javascript", a.async = !0, a.src = "https://cdn.eu.heap-api.com/config/" + e + "/heap_config.js"; var r = document.getElementsByTagName("script")[0]; r.parentNode.insertBefore(a, r); var n = ["init", "startTracking", "stopTracking", "track", "resetIdentity", "identify", "getSessionId", "getUserId", "getIdentity", "addUserProperties", "addEventProperties", "removeEventProperty", "clearEventProperties", "addAccountProperties", "addAdapter", "addTransformer", "addTransformerFn", "onReady", "addPageviewProperties", "removePageviewProperty", "clearPageviewProperties", "trackPageview"], i = function (e) { return function () { var t = Array.prototype.slice.call(arguments, 0); window.heapReadyCb.push({ name: e, fn: function () { heap[e] && heap[e].apply(heap, t) } }) } }; for (var p = 0; p < n.length; p++)heap[n[p]] = i(n[p]) };
+    heap.load("839067626");
+  </script>
 </head>
 
 <body id="home">
-    {% include "header.html" %}
-    <main id="swup" class="transition-fade">
-        {% block content %}{% endblock %}
-        {% include "footer.html" %}
-    </main>
-    <script src="{{ url_for('static', filename='js/src/initialization.js')}}"></script>
-    <script src="{{ url_for('static', filename='js/src/splide.js')}}"></script>
-    <script src="{{ url_for('static', filename='js/src/countup.js')}}"></script>
-    <script src="{{ url_for('static', filename='js/src/configurator.js')}}"></script>
-    <script src="{{ url_for('static', filename='js/src/infinite-scroll.js')}}"></script>
-    <script src="{{ url_for('static', filename='js/src/filtersliders.js')}}"></script>
+  {% include "header.html" %}
+  <main id="swup" class="transition-fade">
+    {% block content %}{% endblock %}
+    {% include "footer.html" %}
+  </main>
+  <script src="{{ url_for('static', filename='js/src/initialization.js')}}"></script>
+  <script src="{{ url_for('static', filename='js/src/splide.js')}}"></script>
+  <script src="{{ url_for('static', filename='js/src/countup.js')}}"></script>
+  <script src="{{ url_for('static', filename='js/src/configurator.js')}}"></script>
+  <script src="{{ url_for('static', filename='js/src/infinite-scroll.js')}}"></script>
+  <script src="{{ url_for('static', filename='js/src/filtersliders.js')}}"></script>
 </body>
 
 </html>
