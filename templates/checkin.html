@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/static/imgs/favicons/favicon.svg" />
+    <link rel="shortcut icon" href="/static/imgs/favicons/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/imgs/favicons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Belle Vitesse" />
+    <link rel="manifest" href="/static/imgs/favicons/site.webmanifest" />
+
+    <title>Checkin Véhicule — Belle Vitesse</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/checkin.css') }}">
+</head>
+
+<body>
+
+    <div class="checkin">
+
+        <!-- ═══════════ HEADER ═══════════ -->
+        <header class="checkin-header">
+            <div class="checkin-header-logo">
+                <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
+                    alt="Belle Vitesse">
+            </div>
+            <div class="checkin-header-meta">
+                <strong class="dot-before">Check-Out Véhicule</strong><br>
+                <span class="checkin-doc-id">{{ data.inspection_id }}</span><br>
+                {{ data.control_date or '—' }}
+            </div>
+        </header>
+
+        <!-- ═══════════ PRODUCTION INFO ═══════════ -->
+        <section class="checkin-section">
+            <h2 class="checkin-section-title dot-before">Production</h2>
+            <div class="checkin-info-grid">
+                <div class="checkin-info-item">
+                    <span class="checkin-info-label">Production</span>
+                    <span class="checkin-info-value">{{ data.production }}</span>
+                </div>
+                <div class="checkin-info-item">
+                    <span class="checkin-info-label">Projet</span>
+                    <span class="checkin-info-value">{{ data.project }}</span>
+                </div>
+                <div class="checkin-info-item">
+                    <span class="checkin-info-label">Date de retour</span>
+                    <span class="checkin-info-value">{{ data.departure_date }}</span>
+                </div>
+                <div class="checkin-info-item">
+                    <span class="checkin-info-label">Début de tournage</span>
+                    <span class="checkin-info-value">{{ data.shoot_start }}</span>
+                </div>
+                <div class="checkin-info-item">
+                    <span class="checkin-info-label">Fin de tournage</span>
+                    <span class="checkin-info-value">{{ data.shoot_end }}</span>
+                </div>
+                <div class="checkin-info-item">
+                    <span class="checkin-info-label">Responsable du contrôle</span>
+                    <span class="checkin-info-value">
+                        {% if data.controller is mapping %}
+                        {{ data.controller.get('name', '—') }}
+                        {% else %}
+                        {{ data.controller or '—' }}
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════ VEHICLE INFO ═══════════ -->
+        <section class="checkin-section">
+            <h2 class="checkin-section-title dot-before">Véhicule</h2>
+            <div class="checkin-info-grid">
+                <div class="checkin-info-item">
+                    <span class="checkin-info-label">Véhicule contrôlé</span>
+                    <span class="checkin-info-value">{{ data.vehicle.fields.name }}
+                        <span class="checkin-doc-id">{{ data.vehicle.fields.unique_id }}</span>
+                    </span>
+                </div>
+                <div class="checkin-info-item">
+                    <span class="checkin-info-label">Kilométrage retour</span>
+                    <span class="checkin-info-value">{{ data.km or '—' }} km</span>
+                </div>
+                <div class="checkin-info-item">
+                    <span class="checkin-info-label">Charge batterie retour</span>
+                    <span class="checkin-info-value">{{ data.battery or '—' }} %</span>
+                </div>
+                <div class="checkin-info-item">
+                    <span class="checkin-info-label">État du contrôle</span>
+                    <span class="checkin-info-value">
+                        {% if data.control_status == 'À signer' %}
+                        <span class="checkin-badge checkin-badge--tobesigned">À signer</span>
+                        {% elif data.control_status == 'En cours' %}
+                        <span class="checkin-badge checkin-badge--inprogress">En cours</span>
+                        {% elif data.control_status == 'Signé' %}
+                        <span class="checkin-badge checkin-badge--signed">Signé</span>
+                        {% else %}
+                        <span class="checkin-badge checkin-badge--neutral">{{ data.control_status }}</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Photo compteur -->
+            {% if data.odometer_photo %}
+            <div class="checkin-mt-1">
+                <p class="checkin-info-label">Photo compteur</p>
+                <div class="checkin-photos" style="grid-template-columns: 1fr;">
+                    <div class="checkin-photo-item" style="max-width: 300px;">
+                        <img src="{{ data.odometer_photo }}" alt="Photo compteur">
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- ═══════════ INSPECTION TABLE ═══════════ -->
+        <section class="checkin-section">
+            <h2 class="checkin-section-title dot-before">Inspection technique</h2>
+            <table class="checkin-table">
+                <thead>
+                    <tr>
+                        <th>Élément</th>
+                        <th>État</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set checks = [
+                    ('État des pneus', data.tires),
+                    ('Roue de secours', data.spare_tire),
+                    ('Niveau huile', data.oil),
+                    ('Niveau liquide de refroidissement', data.coolant),
+                    ('État des freins', data.brakes),
+                    ('État éclairage extérieur', data.lights),
+                    ('Démarrage moteur', data.engine_start),
+                    ('État des essuie-glaces', data.wipers),
+                    ('État du klaxon', data.horn),
+                    ('Triangle de signalisation / Gilet', data.safety_triangle),
+                    ('Présence extincteur', data.fire_extinguisher),
+                    ] %}
+                    {% for label, status in checks %}
+                    <tr>
+                        <td>{{ label }}</td>
+                        <td>
+                            {% if status == 'OK' %}
+                            <span class="checkin-badge checkin-badge--ok">OK</span>
+                            {% elif status == 'Non pertinent' %}
+                            <span class="checkin-badge checkin-badge--neutral">Non pertinent</span>
+                            {% elif status == 'Défaut' %}
+                            <span class="checkin-badge checkin-badge--critical">Défaut</span>
+                            {% elif status == 'Attention' %}
+                            <span class="checkin-badge checkin-badge--warning">Attention</span>
+                            {% else %}
+                            <span class="checkin-badge checkin-badge--neutral">{{ status or '—' }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        <!-- ═══════════ PHOTOS INTÉRIEURES ═══════════ -->
+        {% if data.interior_photos %}
+        <section class="checkin-section">
+            <h2 class="checkin-section-title dot-before">Photos intérieur véhicule</h2>
+            <div class="checkin-photos">
+                {% for photo in data.interior_photos %}
+                <div class="checkin-photo-item">
+                    <img src="{{ photo.url }}" alt="Intérieur {{ loop.index }}">
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- ═══════════ PHOTOS EXTÉRIEURES ═══════════ -->
+        {% if data.exterior_photos %}
+        <section class="checkin-section">
+            <h2 class="checkin-section-title dot-before">Photos extérieur véhicule</h2>
+            <div class="checkin-photos">
+                {% for photo in data.exterior_photos %}
+                <div class="checkin-photo-item">
+                    <img src="{{ photo.url }}" alt="Extérieur {{ loop.index }}">
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- ═══════════ OBSERVATIONS ═══════════ -->
+        <section class="checkin-section">
+            <h2 class="checkin-section-title dot-before">Observations générales</h2>
+            <div class="checkin-notes">
+                {{ data.notes or 'Aucune observation.' }}
+            </div>
+        </section>
+
+        <!-- ═══════════ VERDICT ═══════════ -->
+        <section class="checkin-section checkin-text-center">
+            <h2 class="checkin-section-title dot-before">Véhicule prêt au retour</h2>
+            {% if data.ready == 'Oui' %}
+            <span class="checkin-badge checkin-badge--ok" style="font-size: 1rem; padding: 8px 24px;">
+                OUI — Véhicule validé
+            </span>
+            {% elif data.ready == 'Non' %}
+            <span class="checkin-badge checkin-badge--critical" style="font-size: 1rem; padding: 8px 24px;">
+                NON — Véhicule non conforme
+            </span>
+            {% else %}
+            <span class="checkin-badge checkin-badge--neutral" style="font-size: 1rem; padding: 8px 24px;">
+                {{ data.ready or 'En attente' }}
+            </span>
+            {% endif %}
+        </section>
+
+        <hr class="checkin-divider">
+
+        <!-- ═══════════ SIGNATURE ═══════════ -->
+        <section class="checkin-section">
+            <h2 class="checkin-section-title dot-before">Signature électronique</h2>
+            <div class="checkin-signature">
+                <div class="checkin-signature-block">
+                    <p class="checkin-signature-label">Signature du responsable</p>
+                    <div class="checkin-signature-pad">
+                        {% if signature %}
+                        <img src="{{ signature }}" alt="Signature">
+                        {% else %}
+                        <span class="checkin-text-muted">En attente de signature</span>
+                        {% endif %}
+                    </div>
+                    <div class="checkin-signature-info">
+                        <strong>{{ data.controller.name }}</strong><br>
+                        {% if data.signed_at %}
+                        Signé le {{ data.signed_at }} — IP : {{ data.signed_ip }}
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if qr %}
+                <div class="checkin-signature-block" style="max-width: 160px;">
+                    <p class="checkin-signature-label">Vérification</p>
+                    <div class="checkin-qr">
+                        <a href="{{ verification_url }}" target="_blank">
+                            <img src="{{ qr }}" alt="QR Code de vérification">
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- ═══════════ VERIFICATION HASH ═══════════ -->
+        {% if hash %}
+        <div class="checkin-verification">
+            <div>
+                <p class="checkin-verification-text">
+                    <strong>Document scellé électroniquement.</strong><br>
+                    Son intégrité peut être vérifiée via le QR code ci-dessus.
+                </p>
+                <p class="checkin-hash">SHA-256 : {{ hash }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- ═══════════ FOOTER ═══════════ -->
+        <footer class="checkin-footer">
+            <p>
+                <strong>Belle Vitesse SARL</strong><br>
+                33 rue Maurice Gunsbourg — 94200 Ivry-sur-Seine — France<br>
+                Ce document est confidentiel et destiné uniquement à un usage interne.
+            </p>
+        </footer>
+
+    </div>
+
+</body>
+
+</html>

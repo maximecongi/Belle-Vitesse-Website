@@ -6,6 +6,7 @@ from werkzeug.exceptions import HTTPException
 from routes.admin import init_admin_routes
 from routes.web import init_web_routes
 from routes.checkout import init_checkout_routes
+from routes.checkin import init_checkin_routes
 
 
 def init_routes(app):
@@ -13,6 +14,7 @@ def init_routes(app):
     init_admin_routes(app)
     init_web_routes(app)
     init_checkout_routes(app)
+    init_checkin_routes(app)
 
 
 def init_error_handlers(app):
