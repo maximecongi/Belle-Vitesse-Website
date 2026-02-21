@@ -22,6 +22,7 @@ from utils.checkout import (
     get_checkout_by_inspection_id,
     format_checkout_data,
 )
+from extensions import csrf
 from services.checkout import (
     validate_signing_token,
     generate_signing_token,
@@ -59,6 +60,7 @@ def init_checkout_routes(app):
         )
 
     @app.route("/checkout/generate", methods=["POST"])
+    @csrf.exempt
     def checkout_generate():
         require_checkout_token()
         payload = request.get_json(silent=True)
@@ -84,6 +86,7 @@ def init_checkout_routes(app):
         return render_template("checkout_sign.html", data=data, token=token)
 
     @app.route("/checkout/sign/<token>", methods=["POST"])
+    @csrf.exempt
     def checkout_submit_signature(token):
         entry, error_code = validate_signing_token(token)
         if not entry:
