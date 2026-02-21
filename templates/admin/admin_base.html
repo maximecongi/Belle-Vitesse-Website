@@ -61,6 +61,16 @@
                 <div class="admin-header-actions">
                     {% block header_actions %}{% endblock %}
                 </div>
+                {% if session.get('admin_user_firstname') %}
+                <div class="admin-header-user">
+                    <div class="admin-header-user-name">
+                        {{ session.get('admin_user_firstname') }} {{ session.get('admin_user_lastname') }}
+                    </div>
+                    <div class="badge-pill admin-header-user-role" data-val="{{ session.get('admin_user_role') }}">
+                        {{ session.get('admin_user_role') }}
+                    </div>
+                </div>
+                {% endif %}
             </header>
 
             <div class="admin-content">

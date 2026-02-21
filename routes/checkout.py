@@ -22,6 +22,7 @@ from utils.checkout import (
     get_checkout_by_inspection_id,
     format_checkout_data,
 )
+from extensions import csrf
 from services.checkout import (
     validate_signing_token,
     generate_signing_token,
@@ -59,6 +60,7 @@ def init_checkout_routes(app):
         )
 
     @app.route("/checkout/generate", methods=["POST"])
+    @csrf.exempt
     def checkout_generate():
         require_checkout_token()
         payload = request.get_json(silent=True)
@@ -80,10 +82,36 @@ def init_checkout_routes(app):
         record = get_checkout_record(entry["record_id"])
         if not record:
             abort(404)
+
+        # If user reloaded the page, the abandon beacon might have set this to 'En cours'.
+        # We catch it here and revert it to 'À signer' since the user is still on the page.
+        if record.get("fields", {}).get("État du contrôle") == "En cours":
+            from utils.checkout import TABLE_CHECKOUT
+            try:
+                TABLE_CHECKOUT.update(entry["record_id"], {
+                                      "État du contrôle": "À signer"})
+            except Exception:
+                pass
+
         data = format_checkout_data(record)
         return render_template("checkout_sign.html", data=data, token=token)
 
+    @app.route("/checkout/sign/<token>/abandon", methods=["POST"])
+    @csrf.exempt
+    def checkout_abandon(token):
+        from services.checkout import abandon_signature
+        abandon_signature(token)
+        return jsonify({"status": "abandoned"}), 200
+
+    @app.route("/checkout/sign/<token>/resume", methods=["POST"])
+    @csrf.exempt
+    def checkout_resume(token):
+        from services.checkout import resume_signature
+        resume_signature(token)
+        return jsonify({"status": "resumed"}), 200
+
     @app.route("/checkout/sign/<token>", methods=["POST"])
+    @csrf.exempt
     def checkout_submit_signature(token):
         entry, error_code = validate_signing_token(token)
         if not entry:
@@ -107,6 +135,7 @@ def init_checkout_routes(app):
             return jsonify({"error": str(e)}), 404
 
     @app.route("/checkout/verify/<inspection_id>", methods=["GET", "POST"])
+    @csrf.exempt
     def checkout_verify(inspection_id):
         uploaded_file = request.files.get(
             "pdf") if request.method == "POST" else None
@@ -118,6 +147,7 @@ def init_checkout_routes(app):
         return render_template("checkout_verify.html", **context)
 
     @app.route("/checkout/document/<filename>")
+    @csrf.exempt
     def download_checkout_document(filename):
         access_token = request.args.get("t", "")
         if not access_token or not validate_pdf_access_token(filename, access_token):

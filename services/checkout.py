@@ -112,6 +112,44 @@ def generate_signing_token(record_id):
     }
 
 
+def abandon_signature(token):
+    """
+    Called when the user closes the signature page without signing.
+    Sets the Airtable state back to "En cours".
+    We don't delete the token so that if the user just reloaded the page,
+    the GET request can seamlessly restore it to 'À signer'.
+    """
+    entry = get_checkout_token(token)
+    if not entry or entry.get("signature"):
+        return False
+
+    try:
+        from utils.checkout import TABLE_CHECKOUT
+        TABLE_CHECKOUT.update(entry["record_id"], {
+                              "État du contrôle": "En cours"})
+        logger.info(f"🔙 Signature abandoned for {entry['inspection_id']}")
+    except Exception as e:
+        logger.error(f"❌ Failed to abandon signature: {e}")
+    return True
+
+
+def resume_signature(token):
+    """
+    Called if the user's browser restores the page from bfcache (tab switch).
+    Sets the Airtable state to "À signer" just in case it was abandoned.
+    """
+    entry = get_checkout_token(token)
+    if not entry or entry.get("signature"):
+        return False
+
+    try:
+        from utils.checkout import TABLE_CHECKOUT
+        TABLE_CHECKOUT.update(entry["record_id"], {
+                              "État du contrôle": "À signer"})
+    except Exception as e:
+        logger.error(f"❌ Failed to resume signature: {e}")
+    return True
+
 # ── Signature Processing ─────────────────────────────────────────
 
 
@@ -357,7 +395,15 @@ def verify_checkout_document(inspection_id, uploaded_file=None):
         )
 
     data["hash"] = stored_hash
-    data["pdf_url"] = signed_doc["pdf_url"]
+
+    # Generate an access token for the PDF download link
+    pdf_url = signed_doc["pdf_url"]
+    if pdf_url:
+        filename = pdf_url.split("/")[-1]
+        token = generate_pdf_access_token(filename)
+        data["pdf_url"] = f"{pdf_url}?t={token}"
+    else:
+        data["pdf_url"] = None
 
     context = {
         "data": data,
@@ -402,6 +448,16 @@ def verify_checkout_document(inspection_id, uploaded_file=None):
 
 
 # ── PDF Access Token ─────────────────────────────────────────────
+
+
+def generate_pdf_access_token(filename):
+    """
+    Generate a time-limited, HMAC-signed access token for a PDF filename.
+    """
+    secret = os.getenv("HASH_SECRET_KEY", "").encode("utf-8")
+    now_minutes = int(datetime.now(timezone.utc).timestamp() // 60)
+    payload = f"{filename}:{now_minutes}".encode("utf-8")
+    return hmac.new(secret, payload, hashlib.sha256).hexdigest()
 
 
 def validate_pdf_access_token(filename, provided_token):

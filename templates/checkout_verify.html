@@ -99,7 +99,7 @@
                     style="font-size: 1rem; padding: 10px 24px; background-color: var(--green-1); color: white;">
                     ✅ Données certifiées & intactes
                 </span>
-                <p style="font-size: 0.75rem; color: var(--grey-2); margin-top: 0.75rem;">
+                <p style="font-size: 0.75rem; color: var(--grey-2); margin-top: 0.75rem; text-align: center;">
                     Le sceau cryptographique correspond. Les données n'ont pas été modifiées depuis la signature.
                 </p>
                 {% else %}
@@ -107,7 +107,7 @@
                     🚨 Sceau invalide — données altérées
                 </span>
                 <p
-                    style="font-size: 0.75rem; color: var(--grey-2); margin-top: 0.75rem; max-width: 420px; margin-left: auto; margin-right: auto;">
+                    style="font-size: 0.75rem; color: var(--grey-2); margin-top: 0.75rem; max-width: 420px; margin-left: auto; margin-right: auto; text-align: center;">
                     Le sceau ne correspond pas à l'enregistrement. Les données peuvent avoir été modifiées après
                     signature.
                 </p>
@@ -124,15 +124,16 @@
                     style="font-size: 1rem; padding: 10px 24px; background-color: var(--green-1); color: white;">
                     ✅ Fichier PDF authentique
                 </span>
-                <p style="font-size: 0.75rem; color: var(--grey-2); margin-top: 0.75rem;">
+                <p style="font-size: 0.75rem; color: var(--grey-2); margin-top: 0.75rem; text-align: center;">
                     L'empreinte du fichier correspond à l'original signé, octet par octet.
                 </p>
                 {% else %}
-                <span class="checkout-badge checkout-badge--critical" style="font-size: 1rem; padding: 10px 24px;">
+                <span class="checkout-badge checkout-badge--critical"
+                    style="font-size: 1rem; padding: 10px 24px; text-align: center;">
                     🚨 Fichier PDF non authentique
                 </span>
                 <p
-                    style="font-size: 0.75rem; color: var(--grey-2); margin-top: 0.75rem; max-width: 420px; margin-left: auto; margin-right: auto;">
+                    style="font-size: 0.75rem; color: var(--grey-2); margin-top: 0.75rem; max-width: 420px; margin-left: auto; margin-right: auto; text-align: center;">
                     Ce fichier ne correspond pas au PDF original. Il a peut-être été modifié ou remplacé.
                 </p>
                 {% endif %}
