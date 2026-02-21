@@ -60,7 +60,13 @@
                 </div>
                 <div class="checkout-info-item">
                     <span class="checkout-info-label">Responsable du contrôle</span>
-                    <span class="checkout-info-value">{{ data.controller.name }}</span>
+                    <span class="checkout-info-value">
+                        {% if data.controller is mapping %}
+                        {{ data.controller.get('name', '—') }}
+                        {% else %}
+                        {{ data.controller or '—' }}
+                        {% endif %}
+                    </span>
                 </div>
             </div>
         </section>
@@ -197,11 +203,11 @@
         <!-- ═══════════ VERDICT ═══════════ -->
         <section class="checkout-section checkout-text-center">
             <h2 class="checkout-section-title dot-before">Véhicule prêt au départ</h2>
-            {% if data.ready == '✅ Oui' %}
+            {% if data.ready == 'Oui' %}
             <span class="checkout-badge checkout-badge--ok" style="font-size: 1rem; padding: 8px 24px;">
                 OUI — Véhicule validé
             </span>
-            {% elif data.ready == '❌ Non' %}
+            {% elif data.ready == 'Non' %}
             <span class="checkout-badge checkout-badge--critical" style="font-size: 1rem; padding: 8px 24px;">
                 NON — Véhicule non conforme
             </span>

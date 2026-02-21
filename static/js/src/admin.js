@@ -321,8 +321,9 @@ document.addEventListener('DOMContentLoaded', () => {
         cb.addEventListener('change', () => {
             const label = cb.closest('label');
             if (cb.checked) {
-                label.style.background = '#fef9e7';
-                label.style.borderColor = '#FFC845';
+                label.style.background = '#f8f9fa';
+                label.style.borderColor = '#858585';
+
             } else {
                 label.style.background = '';
                 label.style.borderColor = '#e5e7eb';

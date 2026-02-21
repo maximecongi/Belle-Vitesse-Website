@@ -27,6 +27,7 @@ from utils.checkout import (
     compute_pdf_hash,
     verify_pdf_hash,
     TABLE_CHECKOUT,
+    _resolve_controller,
 )
 from utils.database import (
     store_signed_document,
@@ -327,6 +328,11 @@ def verify_checkout_document(inspection_id, uploaded_file=None):
 
     # ── Retrieve stored values ────────────────────────────────────
     data = signed_doc["data_snapshot"]
+
+    # HOTFIX: Ensure controller is correctly formatted if stored as a raw Airtable ID list
+    if "controller" in data and isinstance(data["controller"], list):
+        data["controller"] = _resolve_controller(data["controller"])
+
     stored_hash = signed_doc["hash"]
     stored_signature = signed_doc["signature"]
     stored_pdf_file_hash = signed_doc.get("pdf_file_hash")

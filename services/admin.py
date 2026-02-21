@@ -522,7 +522,7 @@ def get_calendar_events():
             events.append({
                 "title": f"🚚 Départ: {name}",
                 "start": start,
-                "color": "#ff9800",
+                "color": "rgb(255 152 0 / 92%)",
                 "url": url_for("admin_project_edit", record_id=r["id"]),
             })
 
@@ -530,7 +530,7 @@ def get_calendar_events():
             event = {
                 "title": f"🎬 {name}",
                 "start": shoot_start,
-                "color": "#4caf50",
+                "color": "rgb(76 175 80 / 90%)",
                 "url": url_for("admin_project_edit", record_id=r["id"]),
             }
             if shoot_end:

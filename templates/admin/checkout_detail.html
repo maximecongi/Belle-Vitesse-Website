@@ -32,6 +32,7 @@
 {% endblock %}
 
 {% block content %}
+
 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
     <!-- Main Info -->
     <div style="display: flex; flex-direction: column; gap: 1.5rem;">
@@ -61,10 +62,12 @@
                 <div>
                     <div style="font-size: 0.85rem; color: var(--grey-2);">État</div>
                     <div>
-                        <span class="badge-pill" data-val="{{ data.control_status }}">
+                        <span class="badge-pill" data-val="{{ data.control_status }}" {% if data.ready=='Oui'
+                            %}data-conform="yes" {% elif data.ready=='Non' %}data-conform="no" {% endif %}>
                             {{ data.control_status }}
                         </span>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -194,12 +197,13 @@
         {% else %}
         <div class="admin-card">
             <div class="admin-card-title">Sceau numérique</div>
-            <form action="{{ url_for('admin_checkout_delete', record_id=record_id) }}" method="POST"
-                onsubmit="return confirm('Êtes-vous sûr de vouloir sceller ce checkout ? Cette action est irréversible.');">
+            <form action="{{ url_for('admin_checkout_seal', record_id=record_id) }}" method="POST"
+                onsubmit="if(confirm('Êtes-vous sûr de vouloir sceller ce checkout ? Cette action va générer un token via n8n.')) { const btn = this.querySelector('button[type=submit]'); btn.disabled = true; btn.classList.add('btn-disabled'); btn.innerText = 'Demande en cours...'; return true; } return false;">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                <button {% if ns.failures | length !=0 %} disabled class=" admin-btn btn-disabled" {% endif %}
-                    type="submit" class="admin-btn"
-                    style="width: 100%; background: #ffc84526; color: #ffc845; border-color: #ffc8453d;">Sceller ce
+                <button {% if ns.failures | length !=0 or data.control_status !='En cours' %} disabled
+                    class=" admin-btn btn-disabled" {% endif %} type="submit" class="admin-btn"
+                    style="width: 100%; background: #ffc84526; color: #ffc845; border-color: #ffc8453d; transition: all 0.2s;">Sceller
+                    ce
                     checkout</button>
             </form>
         </div>

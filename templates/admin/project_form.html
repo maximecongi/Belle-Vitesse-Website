@@ -55,7 +55,7 @@
                 {% set vf = v.fields %}
                 <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem;
                     border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer;
-                    {% if data and v.id in data.vehicle_ids %}background: #fef9e7; border-color: #FFC845;{% endif %}">
+                    {% if data and v.id in data.vehicle_ids %}background: #f8f9fa; border-color: #858585;{% endif %}">
                     <input type="checkbox" name="vehicle_ids" value="{{ v.id }}" {% if data and v.id in data.vehicle_ids
                         %}checked{% endif %} style="accent-color: #FFC845;">
                     {% if vf.get('thumbnail') %}

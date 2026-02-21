@@ -20,13 +20,13 @@
         <div class="admin-card-title">Check-outs du jour</div>
         {% if today_projects %}
         {% for project in today_projects %}
-        <div class="recent-row" style="padding: 1rem 0; display: block;">
+        <div class="today-row">
             <div style="margin-bottom: 0.5rem; display: flex; align-items: baseline; justify-content: space-between;">
                 <div>
                     <strong style="font-size: 0.95rem;">{{ project.name }}</strong>
                     <span style="color: var(--grey-2); margin-left: 0.5rem; font-size: 0.85rem;">{{ project.production
                         }}</span>
-                    <div style="font-size: 0.75rem; color: var(--grey-2); margin-top: 0.2rem;">
+                    <div class="today-row-dates">
                         Tournage du {{ project.shoot_start }} au {{ project.shoot_end }}
                     </div>
                 </div>
@@ -35,7 +35,7 @@
             <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
                 {% for vehicle in project.vehicles %}
                 {% if vehicle.status %}
-                <a class="recent-row-vehicle-link"
+                <a class="today-row-vehicle-link"
                     href="{{ url_for('admin_checkout_detail', record_id=vehicle.checkout_id) }}">
                     <span style="font-weight: 500;">{{ vehicle.name }}</span>
                     <span class="badge-pill" data-val="{{ vehicle.status }}" {% if vehicle.ready=='Oui'
@@ -44,7 +44,7 @@
                 </a>
                 {% else %}
                 <a href="{{ url_for('admin_checkout_new', project_id=project.id, vehicle_id=vehicle.id) }}"
-                    class="recent-row-vehicle-link">
+                    class="today-row-vehicle-link">
                     <span>{{ vehicle.name }}</span>
                     <span class="badge-pill" data-val="À contrôler"
                         style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">À contrôler</span>

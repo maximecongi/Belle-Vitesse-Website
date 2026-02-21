@@ -593,57 +593,30 @@ body.login-page {
     }
 }
 
-.fc-event {
-    cursor: pointer;
-}
-
-.fc-daygrid-event {
-    font-size: 0.85rem;
-    padding: 2px 4px;
-}
-
-.fc-toolbar-title {
-    font-size: 1.25rem !important;
-}
-
-.fc-button-primary {
-    background-color: var(--grey-1) !important;
-    border-color: var(--grey-1) !important;
-}
-
-.fc-button-primary:hover {
-    background-color: var(--admin-accent) !important;
-    border-color: var(--admin-accent) !important;
-    color: var(--grey-1) !important;
-}
-
-.fc-button-active {
-    background-color: var(--admin-accent) !important;
-    border-color: var(--admin-accent) !important;
-    color: var(--grey-1) !important;
-}
-
-.recent-row {
+.today-row {
     display: block;
-    padding: 0.6rem 0;
     border-bottom: 1px solid #f0f0f0;
     font-size: 0.85rem;
+    border-left: 3px solid var(--admin-sidebar-bg);
+    background-color: var(--admin-bg);
+    padding: 1rem;
+    margin-bottom: 1rem;
 }
 
-.recent-row ul {
+.today-row ul {
     padding-left: 0;
 }
 
-.recent-row li {
+.today-row li {
     list-style-type: none;
     padding: 0.5rem;
 }
 
-.recent-row:last-child {
+.today-row:last-child {
     border-bottom: none;
 }
 
-.recent-row-vehicle-link {
+.today-row-vehicle-link {
     text-decoration: none;
     display: inline-flex;
     align-items: center;
@@ -657,9 +630,16 @@ body.login-page {
     transition: all 0.2s;
 }
 
-.recent-row-vehicle-link:hover {
+.today-row-vehicle-link:hover {
     background: var(--admin-bg);
     color: var(--grey-2);
+}
+
+.today-row-dates {
+    font-size: 0.55rem;
+    color: var(--grey-2);
+    margin-top: 0.2rem;
+    text-transform: uppercase;
 }
 
 .btn-disabled {
