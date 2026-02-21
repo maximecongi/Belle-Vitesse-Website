@@ -23,7 +23,7 @@ from flask import (
     flash,
 )
 
-from utils.formatting import format_date_slash, next_day
+from utils.formatting import format_date_slash
 from extensions import limiter
 from services.admin import (
     list_checkouts,
@@ -112,10 +112,11 @@ def init_admin_routes(app):
     def admin_dashboard():
         try:
             projects_data = list_projects()
+            today_iso = datetime.now().strftime('%Y-%m-%d')
             today_checkouts = [p for p in projects_data
-                               if format_date_slash(p["departure_date"]) == datetime.now().strftime('%d/%m/%Y')]
+                               if p.get("raw_departure_date") == today_iso]
             today_checkins = [p for p in projects_data
-                              if next_day(format_date_slash(p["shoot_end"])) == datetime.now().strftime('%d/%m/%Y')]
+                              if p.get("raw_checkin_date") == today_iso]
 
         except Exception as e:
             current_app.logger.error(f"❌ Error loading dashboard data: {e}")

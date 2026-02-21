@@ -306,6 +306,7 @@ def format_checkin_data(record: dict) -> dict:
 
     project_name = project_fields.get("Nom", "—")
     departure_date = format_date_fr(project_fields.get("Date de départ", "—"))
+    return_date = format_date_fr(project_fields.get("Date de retour", "—"))
     shoot_start = format_date_fr(
         project_fields.get("Date de début de tournage", "—"))
     shoot_end = format_date_fr(
@@ -323,6 +324,7 @@ def format_checkin_data(record: dict) -> dict:
         "production_record": production_record,
         "project":        project_name,
         "departure_date": departure_date,
+        "return_date":    return_date,
         "shoot_start":    shoot_start,
         "shoot_end":      shoot_end,
         "project_id":     _extract_project_id(project_field),

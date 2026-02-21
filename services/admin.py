@@ -622,8 +622,11 @@ def list_projects():
             "name": fields.get("Nom", "—"),
             "production": prod_name,
             "departure_date": format_date_fr(fields.get("Date de départ", "—")),
+            "raw_departure_date": fields.get("Date de départ", ""),
             "shoot_start": format_date_fr(fields.get("Date de début de tournage", "—")),
             "shoot_end": format_date_fr(fields.get("Date de fin de tournage", "—")),
+            "return_date": format_date_fr(fields.get("Date de retour", "—")),
+            "raw_checkin_date": fields.get("Date de retour", ""),
             "vehicles": veh_list,
         })
     return projects
@@ -704,6 +707,7 @@ def get_project_for_edit(record_id):
         "departure_date_raw": fields.get("Date de départ", ""),
         "shoot_start_raw": fields.get("Date de début de tournage", ""),
         "shoot_end_raw": fields.get("Date de fin de tournage", ""),
+        "return_date_raw": fields.get("Date de retour", ""),
         "production_id": production_id,
         "vehicle_ids": vehicle_ids,
     }
@@ -806,6 +810,7 @@ def get_calendar_events():
         start = fields.get("Date de départ")
         shoot_start = fields.get("Date de début de tournage")
         shoot_end = fields.get("Date de fin de tournage")
+        return_date = fields.get("Date de retour")
 
         if start:
             events.append({
@@ -824,6 +829,15 @@ def get_calendar_events():
             }
             if shoot_end:
                 event["end"] = shoot_end
+            events.append(event)
+
+        if return_date:
+            event = {
+                "title": f"🏠 Retour: {name}",
+                "start": return_date,
+                "color": "rgb(76 17 80 / 90%)",
+                "url": url_for("admin_project_edit", record_id=r["id"]),
+            }
             events.append(event)
 
     return events

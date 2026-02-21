@@ -295,6 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 right: 'dayGridMonth,timeGridWeek'
             },
             locale: 'fr',
+            firstDay: 1,
             buttonText: {
                 today: "Aujourd'hui",
                 month: 'Mois',
