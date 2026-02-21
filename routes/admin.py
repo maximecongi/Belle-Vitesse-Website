@@ -23,7 +23,6 @@ from flask import (
     flash,
 )
 
-from utils.formatting import format_date_slash
 from extensions import limiter
 from services.admin import (
     list_checkouts,
