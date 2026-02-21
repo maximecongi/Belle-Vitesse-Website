@@ -521,7 +521,6 @@ def delete_checkin(record_id):
     TABLE_CHECKIN.delete(record_id)
 
 
-
 # ── Projects ─────────────────────────────────────────────────────
 
 
@@ -556,10 +555,23 @@ def list_projects():
         checkout_info[c["id"]] = {"vehicle_id": vid,
                                   "status": status, "ready": ready}
 
+    # Build checkin_record_id → (vehicle_id, status) mapping
+    checkins = TABLE_CHECKIN.all()
+    checkin_info = {}
+    for c in checkins:
+        cf = c.get("fields", {})
+        veh_ids = cf.get("Véhicule contrôlé", [])
+        status = cf.get("État du contrôle", "")
+        ready = cf.get("Véhicule prêt au retour", "—")
+        vid = veh_ids[0] if isinstance(veh_ids, list) and veh_ids else None
+        checkin_info[c["id"]] = {"vehicle_id": vid,
+                                 "status": status, "ready": ready}
+
     projects = []
     for r in records:
         fields = r.get("fields", {})
         veh_ids = fields.get("Véhicules à contrôler", [])
+
         # Use project's linked checkouts to build vehicle → status
         checkout_ids = fields.get("checkout_vehicles", [])
         proj_vehicle_status = {}
@@ -572,16 +584,34 @@ def list_projects():
                         "checkout_id": cid,
                         "ready": ci.get("ready", "—")
                     }
+
+        # Use project's linked checkins to build vehicle → checkin status
+        checkin_ids = fields.get("checkin_vehicles", [])
+        proj_vehicle_checkin_status = {}
+        if isinstance(checkin_ids, list):
+            for cid in checkin_ids:
+                ci = checkin_info.get(cid, {})
+                if ci.get("vehicle_id"):
+                    proj_vehicle_checkin_status[ci["vehicle_id"]] = {
+                        "status": ci["status"],
+                        "checkin_id": cid,
+                        "ready": ci.get("ready", "—")
+                    }
+
         veh_list = []
         if isinstance(veh_ids, list):
             for vid in veh_ids:
                 v_info = proj_vehicle_status.get(vid, {})
+                ci_info = proj_vehicle_checkin_status.get(vid, {})
                 veh_list.append({
                     "id": vid,
                     "name": vehicle_names.get(vid, "—"),
-                    "status": v_info.get("status", ""),
+                    "checkout_status": v_info.get("status", ""),
                     "checkout_id": v_info.get("checkout_id", ""),
-                    "ready": v_info.get("ready", "—"),
+                    "checkout_ready": v_info.get("ready", "—"),
+                    "checkin_status": ci_info.get("status", ""),
+                    "checkin_id": ci_info.get("checkin_id", ""),
+                    "checkin_ready": ci_info.get("ready", "—"),
                 })
         prod_ids = fields.get("Production", [])
         prod_name = prod_names.get(prod_ids[0], "—") if isinstance(

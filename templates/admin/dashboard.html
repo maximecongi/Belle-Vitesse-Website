@@ -34,16 +34,18 @@
 
             <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
                 {% for vehicle in checkout.vehicles %}
-                {% if vehicle.status %}
+                {% if vehicle.checkout_status %}
                 <a class="today-row-vehicle-link"
                     href="{{ url_for('admin_checkout_detail', record_id=vehicle.checkout_id) }}">
                     <span style="font-weight: 500;">{{ vehicle.name }}</span>
-                    <span class="badge-pill" data-val="{{ vehicle.status }}" {% if vehicle.ready=='Oui'
-                        %}data-conform="yes" {% elif vehicle.ready=='Non' %}data-conform="no" {% endif %}
-                        style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">{{ vehicle.status }}</span>
+                    <span class="badge-pill" data-val="{{ vehicle.checkout_status }}" {% if
+                        vehicle.checkout_ready=='Oui' %}data-conform="yes" {% elif vehicle.checkout_ready=='Non'
+                        %}data-conform="no" {% endif %}
+                        style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">{{ vehicle.checkout_status
+                        }}</span>
                 </a>
                 {% else %}
-                <a href="{{ url_for('admin_checkout_new', checkout_id=checkout.id, vehicle_id=vehicle.id) }}"
+                <a href="{{ url_for('admin_checkout_new', project_id=checkout.id, vehicle_id=vehicle.id) }}"
                     class="today-row-vehicle-link">
                     <span>{{ vehicle.name }}</span>
                     <span class="badge-pill" data-val="À contrôler"
@@ -82,16 +84,17 @@
 
             <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
                 {% for vehicle in checkin.vehicles %}
-                {% if vehicle.status %}
+                {% if vehicle.checkin_status %}
                 <a class="today-row-vehicle-link"
                     href="{{ url_for('admin_checkin_detail', record_id=vehicle.checkin_id) }}">
                     <span style="font-weight: 500;">{{ vehicle.name }}</span>
-                    <span class="badge-pill" data-val="{{ vehicle.status }}" {% if vehicle.ready=='Oui'
-                        %}data-conform="yes" {% elif vehicle.ready=='Non' %}data-conform="no" {% endif %}
-                        style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">{{ vehicle.status }}</span>
+                    <span class="badge-pill" data-val="{{ vehicle.checkin_status }}" {% if vehicle.checkin_ready=='Oui'
+                        %}data-conform="yes" {% elif vehicle.checkin_ready=='Non' %}data-conform="no" {% endif %}
+                        style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">{{ vehicle.checkin_status
+                        }}</span>
                 </a>
                 {% else %}
-                <a href="{{ url_for('admin_checkin_new', checkin_id=checkin.id, vehicle_id=vehicle.id) }}"
+                <a href="{{ url_for('admin_checkin_new', project_id=checkin.id, vehicle_id=vehicle.id) }}"
                     class="today-row-vehicle-link">
                     <span>{{ vehicle.name }}</span>
                     <span class="badge-pill" data-val="À contrôler"
