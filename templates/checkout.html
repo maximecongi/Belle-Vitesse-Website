@@ -234,7 +234,7 @@
                         {% endif %}
                     </div>
                     <div class="checkout-signature-info">
-                        <strong>{{ data.controller.name }}</strong><br>
+                        <strong>{{ data.controller.name if data.controller else '—' }}</strong><br>
                         {% if data.signed_at %}
                         Signé le {{ data.signed_at }} — IP : {{ data.signed_ip }}
                         {% endif %}

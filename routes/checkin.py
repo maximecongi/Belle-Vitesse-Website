@@ -14,6 +14,8 @@ from flask import (
     send_from_directory,
 )
 
+from extensions import csrf
+
 from utils.checkin import (
     get_checkin_record,
     get_checkin_by_inspection_id,
@@ -81,6 +83,7 @@ def init_checkin_routes(app):
         return render_template("checkin_sign.html", data=data, token=token)
 
     @app.route("/checkin/sign/<token>", methods=["POST"])
+    @csrf.exempt
     def checkin_submit_signature(token):
         entry, error_code = validate_signing_token(token)
         if not entry:
@@ -102,6 +105,10 @@ def init_checkin_routes(app):
             return jsonify({"status": "signed", **result}), 200
         except ValueError as e:
             return jsonify({"error": str(e)}), 404
+        except Exception as e:
+            current_app.logger.error(
+                f"❌ Critical error during checkin signature submission: {e}", exc_info=True)
+            return jsonify({"error": "Internal server error during signature processing"}), 500
 
     @app.route("/checkin/verify/<inspection_id>", methods=["GET", "POST"])
     def checkin_verify(inspection_id):

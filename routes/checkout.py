@@ -17,6 +17,8 @@ from flask import (
     send_from_directory,
 )
 
+from extensions import csrf
+
 from utils.checkout import (
     get_checkout_record,
     get_checkout_by_inspection_id,
