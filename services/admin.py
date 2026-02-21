@@ -88,7 +88,21 @@ def get_checkout_detail(record_id):
     record = get_checkout_record(record_id)
     if not record:
         return None
-    return format_checkout_data(record)
+    data = format_checkout_data(record)
+
+    # If signed, load the stable snapshot to get the real PDF URL and hash
+    if data.get("control_status") == "Signé":
+        from utils.database import get_signed_document
+        from services.checkout import generate_pdf_access_token
+        signed_doc = get_signed_document(data["inspection_id"])
+        if signed_doc and signed_doc.get("pdf_url"):
+            data["hash"] = signed_doc["hash"]
+            pdf_url = signed_doc["pdf_url"]
+            filename = pdf_url.split("/")[-1]
+            token = generate_pdf_access_token(filename)
+            data["pdf_url"] = f"{pdf_url}?t={token}"
+
+    return data
 
 
 def get_checkout_form_context():

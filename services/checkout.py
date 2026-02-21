@@ -395,7 +395,15 @@ def verify_checkout_document(inspection_id, uploaded_file=None):
         )
 
     data["hash"] = stored_hash
-    data["pdf_url"] = signed_doc["pdf_url"]
+
+    # Generate an access token for the PDF download link
+    pdf_url = signed_doc["pdf_url"]
+    if pdf_url:
+        filename = pdf_url.split("/")[-1]
+        token = generate_pdf_access_token(filename)
+        data["pdf_url"] = f"{pdf_url}?t={token}"
+    else:
+        data["pdf_url"] = None
 
     context = {
         "data": data,
@@ -440,6 +448,16 @@ def verify_checkout_document(inspection_id, uploaded_file=None):
 
 
 # ── PDF Access Token ─────────────────────────────────────────────
+
+
+def generate_pdf_access_token(filename):
+    """
+    Generate a time-limited, HMAC-signed access token for a PDF filename.
+    """
+    secret = os.getenv("HASH_SECRET_KEY", "").encode("utf-8")
+    now_minutes = int(datetime.now(timezone.utc).timestamp() // 60)
+    payload = f"{filename}:{now_minutes}".encode("utf-8")
+    return hmac.new(secret, payload, hashlib.sha256).hexdigest()
 
 
 def validate_pdf_access_token(filename, provided_token):
