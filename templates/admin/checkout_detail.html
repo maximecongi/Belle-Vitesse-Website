@@ -197,8 +197,8 @@
         {% else %}
         <div class="admin-card">
             <div class="admin-card-title">Sceau numérique</div>
-            <form action="{{ url_for('admin_checkout_seal', record_id=record_id) }}" method="POST"
-                onsubmit="if(confirm('Êtes-vous sûr de vouloir sceller ce checkout ? Cette action va générer un token via n8n.')) { const btn = this.querySelector('button[type=submit]'); btn.disabled = true; btn.classList.add('btn-disabled'); btn.innerText = 'Demande en cours...'; return true; } return false;">
+            <form action="{{ url_for('admin_checkout_seal', record_id=record_id) }}" target="_blank" method="POST"
+                onsubmit="if(confirm('Êtes-vous sûr de vouloir sceller ce checkout ? Cette action est irréversible.')) { const btn = this.querySelector('button[type=submit]'); btn.disabled = true; btn.classList.add('btn-disabled'); btn.innerText = 'Ouverture de la signature...'; setTimeout(() => window.location.reload(), 1500); return true; } return false;">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                 <button {% if ns.failures | length !=0 or data.control_status !='En cours' %} disabled
                     class=" admin-btn btn-disabled" {% endif %} type="submit" class="admin-btn"

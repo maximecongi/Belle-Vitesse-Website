@@ -38,9 +38,9 @@ def init_checkout_routes(app):
 
     def require_checkout_token():
         token = request.headers.get("X-Checkout-Token")
-        expected = os.getenv("CHECKOUT_API_TOKEN")
+        expected = os.getenv("CHECK_API_TOKEN")
         if not expected:
-            current_app.logger.error("❌ CHECKOUT_API_TOKEN is not set.")
+            current_app.logger.error("❌ CHECK_API_TOKEN is not set.")
             abort(500)
         if not token or not secrets.compare_digest(token, expected):
             abort(403)
