@@ -269,3 +269,5 @@ pyrightconfig.json
 static/.DS_Store
 static/imgs/.DS_Store
 .env.production
+*.production
+.env.production
