@@ -1,0 +1,692 @@
+/* ── Page Setup (WeasyPrint) ───────────── */
+@page {
+    size: A4;
+    margin: 15mm;
+}
+
+@page :first {
+    margin-top: 15mm;
+}
+
+/* ── Reset Global ────────────────────── */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 12pt;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: white;
+    font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--grey-1);
+}
+
+/* ── Document Wrapper ────────────────── */
+.checkin {
+    max-width: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 15mm;
+    font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--grey-1);
+    background-color: white;
+    font-size: 9pt;
+    line-height: 1.5;
+}
+
+/* ── Masquer les éléments non-imprimables ────────────────────── */
+.checkin-no-print {
+    display: none !important;
+}
+
+/* ── Header ──────────────────────────── */
+.checkin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 12pt;
+    border-bottom: 2px solid var(--grey-1);
+    margin-bottom: 12pt;
+    page-break-after: avoid;
+}
+
+.checkin-header-logo img {
+    height: 30pt;
+    width: auto;
+}
+
+.checkin-header-meta {
+    text-align: right;
+    font-size: 7pt;
+    color: var(--grey-2);
+    line-height: 1.6;
+}
+
+.checkin-header-meta strong {
+    color: var(--grey-1);
+}
+
+.checkin-doc-id {
+    font-family: monospace;
+    font-size: 6pt;
+    background-color: var(--white-3);
+    padding: 2pt 6pt;
+    border-radius: 2pt;
+    margin-top: 6pt;
+}
+
+/* ── Document Title ──────────────────── */
+.checkin-title {
+    font-size: 20pt;
+    font-weight: 600;
+    margin-bottom: 4pt;
+    letter-spacing: -0.02em;
+    page-break-after: avoid;
+}
+
+.checkin-subtitle {
+    font-size: 8pt;
+    color: var(--grey-2);
+    font-weight: 300;
+    margin-bottom: 12pt;
+    page-break-after: avoid;
+}
+
+/* ── Sections ────────────────────────── */
+.checkin-section {
+    margin-bottom: 12pt;
+    page-break-inside: avoid;
+}
+
+.checkin-section-title {
+    font-size: 9pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding-bottom: 4pt;
+    border-bottom: 1pt solid var(--white-3);
+    margin-bottom: 8pt;
+    color: var(--grey-1);
+    page-break-after: avoid;
+}
+
+/* ── Info Grid (Key-Value pairs) ─────── */
+.checkin-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10mm;
+    page-break-inside: avoid;
+}
+
+.checkin-info-item {
+    display: flex;
+    flex-direction: column;
+    page-break-inside: avoid;
+}
+
+.checkin-info-label {
+    font-size: 6pt;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--white-4);
+    font-weight: 500;
+    margin-bottom: 2pt;
+}
+
+.checkin-info-value {
+    font-size: 9pt;
+    font-weight: 500;
+    color: var(--grey-1);
+}
+
+/* ── Status Badges ───────────────────── */
+.checkin-badge {
+    display: inline-block;
+    padding: 3pt 8pt;
+    border-radius: 2pt;
+    font-size: 6pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.checkin-badge--ok {
+    background-color: var(--green-1);
+    color: var(--white-1);
+}
+
+.checkin-badge--tobesigned {
+    background-color: var(--blue-1);
+    color: var(--white-1);
+}
+
+.checkin-badge--warning {
+    background-color: var(--yellow-1);
+    color: var(--grey-1);
+}
+
+.checkin-badge--critical {
+    background-color: var(--red-1);
+    color: var(--white-1);
+}
+
+.checkin-badge--signed {
+    background-color: var(--green-1);
+    color: var(--white-1);
+}
+
+.checkin-badge--neutral {
+    background-color: var(--white-3);
+    color: var(--grey-2);
+}
+
+.checkin-badge--inprogress {
+    background-color: var(--orange-1);
+    color: var(--white-1);
+}
+
+/* ── Inspection Table ────────────────── */
+.checkin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt;
+    page-break-inside: avoid;
+}
+
+.checkin-table thead {
+    background-color: var(--grey-1);
+    color: var(--white-1);
+}
+
+.checkin-table th {
+    text-align: left;
+    padding: 6pt 10pt;
+    font-weight: 500;
+    font-size: 7pt;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.checkin-table td {
+    padding: 6pt 10pt;
+    border-bottom: 1pt solid var(--white-3);
+    vertical-align: middle;
+}
+
+.checkin-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* ── Photos Grid ─────────────────────── */
+.checkin-photos {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 8pt;
+    page-break-inside: avoid;
+}
+
+.checkin-photo-item {
+    position: relative;
+    overflow: hidden;
+    border-radius: 2pt;
+    aspect-ratio: 4 / 3;
+    page-break-inside: avoid;
+}
+
+.checkin-photo-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.checkin-photo-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(21, 21, 21, 0.85));
+    color: var(--white-1);
+    font-size: 6pt;
+    padding: 12pt 6pt 4pt;
+    font-weight: 300;
+}
+
+/* ── Notes / Comments ────────────────── */
+.checkin-notes {
+    background-color: var(--white-3);
+    padding: 8pt 10pt;
+    border-left: 3pt solid var(--yellow-1);
+    font-size: 8pt;
+    line-height: 1.5;
+    font-weight: 300;
+    color: var(--grey-2);
+    min-height: 50pt;
+    page-break-inside: avoid;
+}
+
+/* ── Signature Block ─────────────────── */
+.checkin-signature {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 12pt;
+    margin-top: 12pt;
+    padding-top: 12pt;
+    border-top: 1pt solid var(--white-3);
+    page-break-inside: avoid;
+    page-break-before: avoid;
+}
+
+.checkin-signature-block {
+    flex: 1;
+}
+
+.checkin-signature-label {
+    font-size: 6pt;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--white-4);
+    margin-bottom: 4pt;
+    font-weight: 500;
+}
+
+.checkin-signature-pad {
+    border: 1pt dashed var(--white-4);
+    border-radius: 2pt;
+    min-height: 70pt;
+    background-color: var(--white-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.checkin-signature-pad img {
+    max-width: 100%;
+    max-height: 70pt;
+}
+
+.checkin-signature-pad canvas {
+    width: 100%;
+    height: 100%;
+}
+
+.checkin-signature-info {
+    font-size: 6pt;
+    color: var(--grey-2);
+    margin-top: 4pt;
+    line-height: 1.4;
+}
+
+/* ── QR Code & Verification ──────────── */
+.checkin-verification {
+    display: flex;
+    align-items: center;
+    gap: 10pt;
+    margin-top: 12pt;
+    padding: 8pt;
+    background-color: var(--white-3);
+    border-radius: 2pt;
+    page-break-inside: avoid;
+}
+
+.checkin-qr img {
+    width: 60pt;
+    height: 60pt;
+    display: block;
+    flex-shrink: 0;
+}
+
+.checkin-verification-text {
+    font-size: 6pt;
+    color: var(--grey-2);
+    line-height: 1.5;
+    font-weight: 300;
+}
+
+.checkin-verification-text strong {
+    color: var(--grey-1);
+    font-weight: 500;
+}
+
+.checkin-hash {
+    font-family: monospace;
+    font-size: 5pt;
+    color: var(--white-4);
+    word-break: break-all;
+    margin-top: 4pt;
+}
+
+/* ── Footer Banner ───────────────────── */
+.checkin-footer {
+    margin-top: 12pt;
+    padding: 10pt;
+    background-color: var(--grey-1);
+    color: var(--white-1);
+    text-align: center;
+    border-radius: 2pt;
+    page-break-inside: avoid;
+}
+
+.checkin-footer p {
+    font-size: 6pt;
+    font-weight: 300;
+    color: var(--white-4);
+    line-height: 1.5;
+    text-align: center;
+}
+
+.checkin-footer strong {
+    color: var(--white-1);
+    font-weight: 600;
+}
+
+/* ── Signing Page (tablet) ───────────── */
+.checkin-sign-page {
+    max-width: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 15mm;
+    text-align: center;
+}
+
+.checkin-sign-page h2 {
+    font-size: 18pt;
+    font-weight: 600;
+    margin-bottom: 8pt;
+    page-break-after: avoid;
+}
+
+.checkin-sign-page p {
+    font-size: 9pt;
+    color: var(--grey-2);
+    font-weight: 300;
+    margin-bottom: 12pt;
+    text-align: center;
+    page-break-after: avoid;
+}
+
+.checkin-sign-canvas-wrapper {
+    border: 2pt solid var(--grey-1);
+    border-radius: 3pt;
+    overflow: hidden;
+    margin-bottom: 12pt;
+    background-color: var(--white-2);
+    page-break-inside: avoid;
+}
+
+.checkin-sign-canvas-wrapper canvas {
+    display: block;
+    width: 100%;
+    height: 250pt;
+    touch-action: none;
+}
+
+.checkin-sign-actions {
+    display: flex;
+    gap: 8pt;
+    justify-content: center;
+    page-break-inside: avoid;
+}
+
+.checkin-btn {
+    display: inline-block;
+    padding: 8pt 20pt;
+    font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 8pt;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: filter 0.2s linear;
+}
+
+.checkin-btn:hover {
+    filter: brightness(0.9);
+    color: #151515;
+}
+
+.checkin-btn--primary {
+    background-color: var(--yellow-1);
+    color: var(--grey-1);
+}
+
+.checkin-btn--secondary {
+    background-color: var(--white-3);
+    color: var(--grey-1);
+}
+
+.checkin-btn--danger {
+    background-color: var(--red-1);
+    color: var(--white-1);
+}
+
+/* ── Utilities ───────────────────────── */
+.checkin-divider {
+    border: none;
+    border-top: 1pt solid var(--white-3);
+    margin: 12pt 0;
+}
+
+.checkin-text-muted {
+    color: var(--white-4);
+    font-size: 6pt;
+}
+
+.checkin-text-center {
+    text-align: center;
+}
+
+.checkin-mt-1 {
+    margin-top: 8pt;
+}
+
+.checkin-mt-2 {
+    margin-top: 12pt;
+}
+
+.checkin-mb-1 {
+    margin-bottom: 8pt;
+}
+
+.checkin-mb-2 {
+    margin-bottom: 12pt;
+}
+
+/* ── Responsive pour l'écran uniquement ────────────────────── */
+@media screen {
+    .checkin {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 30px;
+        background-color: var(--white-1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .checkin-header {
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+    }
+
+    .checkin-header-logo img {
+        height: 40px;
+    }
+
+    .checkin-header-meta {
+        font-size: 11px;
+    }
+
+    .checkin-title {
+        font-size: 32px;
+        margin-bottom: 8px;
+    }
+
+    .checkin-subtitle {
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+
+    .checkin-section-title {
+        font-size: 13px;
+        padding-bottom: 8px;
+        margin-bottom: 16px;
+    }
+
+    .checkin-info-grid {
+        gap: 16px;
+    }
+
+    .checkin-info-label {
+        font-size: 11px;
+        margin-bottom: 4px;
+    }
+
+    .checkin-info-value {
+        font-size: 15px;
+    }
+
+    .checkin-badge {
+        padding: 4px 12px;
+        font-size: 11px;
+    }
+
+    .checkin-table {
+        font-size: 13px;
+    }
+
+    .checkin-table th {
+        padding: 12px 16px;
+        font-size: 11px;
+    }
+
+    .checkin-table td {
+        padding: 12px 16px;
+    }
+
+    .checkin-photos {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 16px;
+    }
+
+    .checkin-notes {
+        padding: 16px 20px;
+        font-size: 13px;
+        min-height: 80px;
+    }
+
+    .checkin-signature {
+        gap: 32px;
+        margin-top: 20px;
+        padding-top: 20px;
+    }
+
+    .checkin-signature-label {
+        font-size: 11px;
+        margin-bottom: 8px;
+    }
+
+    .checkin-signature-pad {
+        min-height: 120px;
+    }
+
+    .checkin-signature-pad img {
+        max-height: 120px;
+    }
+
+    .checkin-verification {
+        gap: 24px;
+        margin-top: 20px;
+        padding: 16px;
+    }
+
+    .checkin-qr img {
+        width: 100px;
+        height: 100px;
+    }
+
+    .checkin-verification-text {
+        font-size: 12px;
+    }
+
+    .checkin-footer {
+        margin-top: 20px;
+        padding: 20px;
+    }
+
+    .checkin-footer p {
+        font-size: 11px;
+    }
+
+    .checkin-sign-page {
+        padding: 30px;
+    }
+
+    .checkin-sign-page h2 {
+        font-size: 24px;
+        margin-bottom: 16px;
+    }
+
+    .checkin-sign-page p {
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+
+    .checkin-btn {
+        padding: 12px 30px;
+        font-size: 13px;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .checkin {
+        padding: 20px;
+    }
+
+    .checkin-info-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .checkin-photos {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 12px;
+    }
+
+    .checkin-signature {
+        flex-direction: column;
+        gap: 20px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .checkin {
+        padding: 16px;
+    }
+
+    .checkin-title {
+        font-size: 24px;
+    }
+
+    .checkin-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .checkin-photos {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .checkin-table {
+        font-size: 11px;
+    }
+
+    .checkin-table th,
+    .checkin-table td {
+        padding: 6px 8px;
+    }
+}

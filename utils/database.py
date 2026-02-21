@@ -449,3 +449,189 @@ def delete_checkout_token(token):
     finally:
         cursor.close()
         connection.close()
+
+# ============================================================
+# Checkin Verification (MySQL)
+# ============================================================
+
+def init_checkin_db():
+    """
+    Initialize checkin tables and apply any pending schema migrations.
+    """
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    try:
+        # ── checkin_signed_documents ──────────────────────────────────────
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS checkin_signed_documents (
+                inspection_id  VARCHAR(255) PRIMARY KEY,
+                hash           VARCHAR(255) NOT NULL,
+                pdf_file_hash  VARCHAR(64)  NULL,
+                data_snapshot  JSON         NOT NULL,
+                signature      MEDIUMTEXT,
+                pdf_url        TEXT,
+                signed_at      DATETIME,
+                created_at     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+        existing = _get_existing_columns(cursor, "checkin_signed_documents")
+        if "pdf_file_hash" not in existing:
+            cursor.execute(
+                "ALTER TABLE checkin_signed_documents ADD COLUMN pdf_file_hash VARCHAR(64) NULL"
+            )
+            print("✅ Migration applied: checkin_signed_documents.pdf_file_hash added.")
+
+        # ── checkin_tokens ───────────────────────────────────────
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS checkin_tokens (
+                token          VARCHAR(36)  PRIMARY KEY,
+                record_id      VARCHAR(255) NOT NULL,
+                inspection_id  VARCHAR(255) NOT NULL,
+                signature      MEDIUMTEXT,
+                created_at     DATETIME     NOT NULL,
+                expires_at     DATETIME GENERATED ALWAYS AS
+                               (created_at + INTERVAL 24 HOUR) VIRTUAL
+            )
+        """)
+
+        connection.commit()
+        print("✅ Checkin DB initialized.")
+
+    except mysql.connector.Error as err:
+        print(f"❌ Error initializing checkin DB: {err}")
+    finally:
+        cursor.close()
+        connection.close()
+
+
+def store_checkin_signed_document(
+    inspection_id,
+    file_hash,
+    data_snapshot,
+    signature,
+    pdf_url,
+    signed_at,
+    pdf_file_hash=None,
+):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    try:
+        if isinstance(data_snapshot, dict):
+            data_snapshot = json.dumps(data_snapshot, ensure_ascii=False)
+
+        sql = """
+            INSERT INTO checkin_signed_documents
+                (inspection_id, hash, pdf_file_hash, data_snapshot, signature, pdf_url, signed_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE
+                hash          = VALUES(hash),
+                pdf_file_hash = VALUES(pdf_file_hash),
+                data_snapshot = VALUES(data_snapshot),
+                signature     = VALUES(signature),
+                pdf_url       = VALUES(pdf_url),
+                signed_at     = VALUES(signed_at)
+        """
+        cursor.execute(
+            sql,
+            (
+                inspection_id,
+                file_hash,
+                pdf_file_hash,
+                data_snapshot,
+                signature,
+                pdf_url,
+                signed_at,
+            ),
+        )
+        connection.commit()
+        return True
+    except mysql.connector.Error as err:
+        print(f"❌ Error storing checkin signed document: {err}")
+        return False
+    finally:
+        cursor.close()
+        connection.close()
+
+
+def get_checkin_signed_document(inspection_id):
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    try:
+        cursor.execute(
+            "SELECT * FROM checkin_signed_documents WHERE inspection_id = %s",
+            (inspection_id,),
+        )
+        record = cursor.fetchone()
+
+        if record:
+            if isinstance(record["data_snapshot"], str):
+                record["data_snapshot"] = json.loads(record["data_snapshot"])
+            return record
+        return None
+    except mysql.connector.Error as err:
+        print(f"❌ Error fetching checkin signed document: {err}")
+        return None
+    finally:
+        cursor.close()
+        connection.close()
+
+
+def store_checkin_token(token, record_id, inspection_id, created_at):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    try:
+        sql = """
+            INSERT INTO checkin_tokens (token, record_id, inspection_id, created_at)
+            VALUES (%s, %s, %s, %s)
+        """
+        cursor.execute(sql, (token, record_id, inspection_id, created_at))
+        connection.commit()
+    except mysql.connector.Error as err:
+        print(f"❌ Error storing checkin token: {err}")
+    finally:
+        cursor.close()
+        connection.close()
+
+
+def get_checkin_token(token):
+    connection = get_db_connection()
+    cursor = connection.cursor(dictionary=True)
+    try:
+        cursor.execute("SELECT * FROM checkin_tokens WHERE token = %s", (token,))
+        return cursor.fetchone()
+    except mysql.connector.Error as err:
+        print(f"❌ Error fetching checkin token: {err}")
+        return None
+    finally:
+        cursor.close()
+        connection.close()
+
+
+def update_checkin_token_signature(token, signature):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    try:
+        cursor.execute(
+            "UPDATE checkin_tokens SET signature = %s WHERE token = %s",
+            (signature, token),
+        )
+        connection.commit()
+    except mysql.connector.Error as err:
+        print(f"❌ Error updating checkin token signature: {err}")
+    finally:
+        cursor.close()
+        connection.close()
+
+
+def delete_checkin_token(token):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    try:
+        cursor.execute("DELETE FROM checkin_tokens WHERE token = %s", (token,))
+        connection.commit()
+    except mysql.connector.Error as err:
+        print(f"❌ Error deleting checkin token: {err}")
+    finally:
+        cursor.close()
+        connection.close()

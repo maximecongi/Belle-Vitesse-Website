@@ -27,7 +27,8 @@
                     <td style="font-weight: 600;">{{ project.name }}</td>
                     <td>
                         {% for v in project.vehicles %}
-                        <span class="badge-pill" data-val="{{ v.status or 'Neutral' }}" style="margin: 0.15rem;">
+                        <span class="badge-pill" data-val="{{ v.checkout_status or 'Neutral' }}"
+                            style="margin: 0.15rem;">
                             {{ v.name }}
                         </span>
                         {% else %}

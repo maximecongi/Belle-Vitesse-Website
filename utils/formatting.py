@@ -1,5 +1,6 @@
 # ── Date Formatting ───────────────────────────────────────────────
 
+from datetime import datetime, timedelta
 MOIS_FR = [
     "", "janvier", "février", "mars", "avril", "mai", "juin",
     "juillet", "août", "septembre", "octobre", "novembre", "décembre",

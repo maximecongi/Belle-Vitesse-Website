@@ -1,5 +1,5 @@
 """
-Checkout utilities — Airtable data access for vehicle inspections.
+Checkin utilities — Airtable data access for vehicle return inspections.
 """
 
 import os
@@ -13,17 +13,17 @@ from pathlib import Path
 from io import BytesIO
 from pyairtable import Table
 from dotenv import load_dotenv
-from weasyprint import HTML, CSS
 from utils.airtable import get_vehicle_by_id
 from utils.formatting import format_date_fr
+from weasyprint import HTML, CSS
 
 load_dotenv()
 
 AIRTABLE_SECRET_TOKEN = os.getenv("AIRTABLE_SECRET_TOKEN")
 AIRTABLE_BASE_ID = os.getenv("AIRTABLE_BASE_ID")
 
-TABLE_CHECKOUT = Table(AIRTABLE_SECRET_TOKEN,
-                       AIRTABLE_BASE_ID, "checkout_vehicles")
+TABLE_CHECKIN = Table(AIRTABLE_SECRET_TOKEN,
+                      AIRTABLE_BASE_ID, "checkin_vehicles")
 TABLE_PROJECTS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "projects")
 TABLE_PRODUCTIONS = Table(AIRTABLE_SECRET_TOKEN,
                           AIRTABLE_BASE_ID, "productions")
@@ -59,10 +59,6 @@ def _build_seal_content(
 ) -> str:
     """
     Build a canonical, stable string to be hashed for the document seal.
-
-    ⚠️  We use explicit, scalar fields only — never a dict like data['vehicle']
-    whose str() representation could vary across Python versions or dict ordering.
-    vehicle_id must be the Airtable record ID (stable string), not the full vehicle dict.
     """
     return f"{inspection_id}|{vehicle_id}|{km}|{signature_data}|{signed_at}"
 
@@ -76,9 +72,6 @@ def compute_document_seal(
 ) -> str:
     """
     Compute an HMAC-SHA256 seal over critical document fields.
-
-    Unlike a bare SHA-256, this seal cannot be forged without the server secret.
-    Returns a hex digest string.
     """
     content = _build_seal_content(
         inspection_id, vehicle_id, km, signature_data, signed_at)
@@ -96,9 +89,6 @@ def verify_document_seal(
 ) -> bool:
     """
     Verify a document seal by recomputing the HMAC and comparing in constant time.
-
-    Uses hmac.compare_digest to prevent timing attacks.
-    Returns True only if the seal is valid.
     """
     actual_hash = compute_document_seal(
         inspection_id, vehicle_id, km, signature_data, signed_at
@@ -111,13 +101,6 @@ def verify_document_seal(
 def compute_pdf_hash(pdf_bytes: bytes) -> str:
     """
     Compute a SHA-256 hash of the raw PDF binary.
-
-    This hash fingerprints the exact file that was generated at signing time.
-    It is stored in MySQL and used later to verify that a presented PDF
-    has not been modified — even by a single byte.
-
-    Note: This is a plain SHA-256 (no HMAC key needed) because its purpose is
-    file integrity, not authentication. Authentication is handled by the HMAC seal.
     """
     return hashlib.sha256(pdf_bytes).hexdigest()
 
@@ -125,9 +108,6 @@ def compute_pdf_hash(pdf_bytes: bytes) -> str:
 def verify_pdf_hash(pdf_bytes: bytes, expected_hash: str) -> bool:
     """
     Verify that a PDF file matches the hash stored at signing time.
-
-    Uses hmac.compare_digest for constant-time comparison.
-    Returns True only if the file is byte-for-byte identical to the signed original.
     """
     actual_hash = compute_pdf_hash(pdf_bytes)
     return hmac.compare_digest(actual_hash, expected_hash)
@@ -154,15 +134,15 @@ def generate_qr_code(data: str) -> str:
 
 # ── PDF ──────────────────────────────────────────────────────────
 
-def generate_checkout_pdf(html_content: str, base_url: str) -> bytes:
+def generate_checkin_pdf(html_content: str, base_url: str) -> bytes:
     """
     Generate PDF bytes from HTML content using WeasyPrint.
-    Loads the external checkout.css stylesheet if present.
+    Loads the external checkin.css stylesheet if present.
     """
     html = HTML(string=html_content, base_url=base_url)
 
     css_list = []
-    css_path = Path(current_app.static_folder) / "css" / "checkout.css"
+    css_path = Path(current_app.static_folder) / "css" / "checkin.css"
 
     if css_path.exists():
         css_list.append(CSS(filename=str(css_path)))
@@ -175,37 +155,34 @@ def generate_checkout_pdf(html_content: str, base_url: str) -> bytes:
 
 # ── Airtable Helpers ─────────────────────────────────────────────
 
-def get_checkout_record(record_id: str):
-    """Fetch a single checkout record from Airtable by record ID."""
+def get_checkin_record(record_id: str):
+    """Fetch a single checkin record from Airtable by record ID."""
     try:
-        return TABLE_CHECKOUT.get(record_id)
+        return TABLE_CHECKIN.get(record_id)
     except Exception as e:
-        logger.error(f"❌ get_checkout_record error: {e}")
+        logger.error(f"❌ get_checkin_record error: {e}")
         return None
 
 
-def get_checkout_by_inspection_id(inspection_id: str):
-    """Fetch a checkout record by its inspection number (N° d'inspection)."""
+def get_checkin_by_inspection_id(inspection_id: str):
+    """Fetch a checkin record by its inspection number (N° d'inspection)."""
     try:
-        record = TABLE_CHECKOUT.first(
+        record = TABLE_CHECKIN.first(
             formula=f"{{N° d'inspection}}='{inspection_id}'"
         )
         logger.info(
-            f"🔎 Checkout lookup '{inspection_id}' → {'found' if record else 'not found'}"
+            f"🔎 Checkin lookup '{inspection_id}' → {'found' if record else 'not found'}"
         )
         return record
     except Exception as e:
-        logger.error(f"❌ get_checkout_by_inspection_id error: {e}")
+        logger.error(f"❌ get_checkin_by_inspection_id error: {e}")
         return None
 
 
 # ── Vehicle Resolution ────────────────────────────────────────────
 
 def _resolve_vehicle(vehicle_field):
-    """
-    Safely resolve Airtable linked vehicle record.
-    Returns the full vehicle record dict, or None.
-    """
+    """Safely resolve Airtable linked vehicle record."""
     if (
         not vehicle_field
         or not isinstance(vehicle_field, list)
@@ -219,13 +196,7 @@ def _resolve_vehicle(vehicle_field):
 
 
 def _extract_vehicle_id(vehicle_field) -> str:
-    """
-    Extract the raw Airtable record ID from a linked vehicle field.
-    Returns the ID string (e.g. 'recXXXXXXXXXXXXXX') or '—'.
-
-    ⚠️  Use this — not str(data['vehicle']) — when building the document seal,
-    to ensure a stable, scalar representation.
-    """
+    """Extract the raw Airtable record ID from a linked vehicle field."""
     if (
         not vehicle_field
         or not isinstance(vehicle_field, list)
@@ -236,10 +207,7 @@ def _extract_vehicle_id(vehicle_field) -> str:
 
 
 def _resolve_controller(controller_field):
-    """
-    Resolve linked user record ID from the users table.
-    Returns a dict with user info, or a fallback dict with name '—'.
-    """
+    """Resolve linked user record ID from the users table."""
     fallback = {"id": "", "name": "—", "firstname": "", "lastname": ""}
     if (
         not controller_field
@@ -267,14 +235,7 @@ def _resolve_controller(controller_field):
 # ── Project Resolution ────────────────────────────────────────────
 
 def _resolve_project(project_field):
-    """
-    Fetch the full project record from Airtable given a linked record field.
-
-    The project record contains: Nom, Production (linked), Date de départ,
-    Date de début de tournage, Date de fin de tournage.
-
-    Returns the raw Airtable record dict, or None.
-    """
+    """Fetch the full project record from Airtable given a linked record field."""
     if (
         not project_field
         or not isinstance(project_field, list)
@@ -289,7 +250,7 @@ def _resolve_project(project_field):
 
 
 def _extract_project_id(project_field) -> str:
-    """Extract the raw Airtable record ID from a linked project field, or '—'."""
+    """Extract the raw Airtable record ID from a linked project field."""
     if (
         not project_field
         or not isinstance(project_field, list)
@@ -300,13 +261,7 @@ def _extract_project_id(project_field) -> str:
 
 
 def _resolve_production(production_field):
-    """
-    Fetch the full production record from Airtable given a linked record field.
-
-    Returns the raw Airtable record dict (with all fields), or None.
-    Access the name via: record["fields"].get("Name")
-    Access any other field via: record["fields"].get("Votre champ")
-    """
+    """Fetch the full production record from Airtable given a linked record field."""
     if (
         not production_field
         or not isinstance(production_field, list)
@@ -322,16 +277,9 @@ def _resolve_production(production_field):
 
 # ── Data Formatting ───────────────────────────────────────────────
 
-def format_checkout_data(record: dict) -> dict:
+def format_checkin_data(record: dict) -> dict:
     """
-    Transform raw Airtable record into a flat dict
-    matching the checkout.html template variables.
-
-    Linked record resolution:
-      - 'Véhicule contrôlé' → vehicle record (for display) + vehicle_id (for seal)
-      - 'Projet'            → project record, from which we pull:
-                               Nom, Production (name), Date de départ,
-                               Date de début de tournage, Date de fin de tournage
+    Transform raw Airtable record into a flat dict matching the templates.
     """
     fields = record.get("fields", {})
 
@@ -364,9 +312,6 @@ def format_checkout_data(record: dict) -> dict:
     shoot_end = format_date_fr(
         project_fields.get("Date de fin de tournage", "—"))
 
-    # Production is itself a linked field inside the project record
-    # We store the full record for future access to any field,
-    # and derive the display name immediately for convenience.
     production_record = _resolve_production(project_fields.get("Production"))
     production_name = (
         production_record.get("fields", {}).get("Nom", "—")
@@ -375,30 +320,26 @@ def format_checkout_data(record: dict) -> dict:
 
     return {
         "inspection_id":  fields.get("N° d'inspection", "—"),
-        # Resolved from linked project record
-        "production":     production_name,        # convenient string for templates
-        # full record — all fields accessible via production_record["fields"]
+        "production":     production_name,
         "production_record": production_record,
         "project":        project_name,
         "departure_date": departure_date,
         "return_date":    return_date,
         "shoot_start":    shoot_start,
         "shoot_end":      shoot_end,
-        # Stable project record ID (for reference / future seal extension)
         "project_id":     _extract_project_id(project_field),
-        # Inspection-level fields (still on the checkout record)
+
         "control_status": fields.get("État du contrôle", "—"),
         "control_date":   format_date_fr(fields.get("Date du contrôle", "—")),
         "control_date_raw": fields.get("Date du contrôle", ""),
         "controller":     _resolve_controller(fields.get("Reponsable du contrôle")),
-        # Full vehicle record for display in templates
+
         "vehicle":        _resolve_vehicle(vehicle_field),
-        # Stable scalar ID for seal computation — never use str(vehicle) for hashing
         "vehicle_id":     _extract_vehicle_id(vehicle_field),
-        "km":             fields.get("Kilométrage départ", ""),
-        "battery":        fields.get("Charge de la batterie départ", ""),
+        "km":             fields.get("Kilométrage retour", ""),
+        "battery":        fields.get("Charge de la batterie retour", ""),
         "odometer_photos": extract_photos(fields.get("Photo compteur")),
-        # Inspection items
+
         "tires":           fields.get("État des pneus", "—"),
         "spare_tire":      fields.get("Roue de secours", "—"),
         "oil":             fields.get("Niveau huile", "—"),
@@ -412,13 +353,13 @@ def format_checkout_data(record: dict) -> dict:
             "Présence Triangle de signalisation et gilet orange", "—"
         ),
         "fire_extinguisher": fields.get("Présence extincteur", "—"),
-        # Photos
+
         "interior_photos": extract_photos(fields.get("Photos intérieur véhicule")),
         "exterior_photos": extract_photos(fields.get("Photos extérieur véhicule")),
-        # Notes & verdict
+
         "notes": fields.get("Observations générales", ""),
-        "ready": fields.get("Véhicule prêt au départ", "—"),
-        # Signature metadata (populated later in routes)
+        "ready": fields.get("Véhicule prêt au retour", "—"),
+
         "signed_at":  None,
         "signed_ip":  None,
         "hash":       fields.get("Hash", None),

@@ -1,8 +1,5 @@
 """
-Checkout routes — thin HTTP layer.
-
-Each handler: parse request → call service → render/redirect.
-All business logic lives in services.checkout.
+Checkin routes — thin HTTP layer.
 """
 
 import os
@@ -17,28 +14,27 @@ from flask import (
     send_from_directory,
 )
 
-from utils.checkout import (
-    get_checkout_record,
-    get_checkout_by_inspection_id,
-    format_checkout_data,
+from utils.checkin import (
+    get_checkin_record,
+    get_checkin_by_inspection_id,
+    format_checkin_data,
 )
-from extensions import csrf
-from services.checkout import (
+from services.checkin import (
     validate_signing_token,
     generate_signing_token,
     process_signature,
-    verify_checkout_document,
+    verify_checkin_document,
     validate_pdf_access_token,
 )
 
 
-def init_checkout_routes(app):
-    """Public checkout flow: view, generate, sign, verify, download."""
+def init_checkin_routes(app):
+    """Public checkin flow: view, generate, sign, verify, download."""
 
     # ── Auth Guards ───────────────────────────────────────────────
 
-    def require_checkout_token():
-        token = request.headers.get("X-Checkout-Token")
+    def require_checkin_token():
+        token = request.headers.get("X-Checkin-Token")
         expected = os.getenv("CHECK_API_TOKEN")
         if not expected:
             current_app.logger.error("❌ CHECK_API_TOKEN is not set.")
@@ -48,21 +44,20 @@ def init_checkout_routes(app):
 
     # ── Routes ────────────────────────────────────────────────────
 
-    @app.route("/checkout/<inspection_id>")
-    def checkout_view(inspection_id):
-        require_checkout_token()
-        record = get_checkout_by_inspection_id(inspection_id)
+    @app.route("/checkin/<inspection_id>")
+    def checkin_view(inspection_id):
+        require_checkin_token()
+        record = get_checkin_by_inspection_id(inspection_id)
         if not record:
             abort(404)
-        data = format_checkout_data(record)
+        data = format_checkin_data(record)
         return render_template(
-            "checkout.html", data=data, signature=None, qr=None, hash=None
+            "checkin.html", data=data, signature=None, qr=None, hash=None
         )
 
-    @app.route("/checkout/generate", methods=["POST"])
-    @csrf.exempt
-    def checkout_generate():
-        require_checkout_token()
+    @app.route("/checkin/generate", methods=["POST"])
+    def checkin_generate():
+        require_checkin_token()
         payload = request.get_json(silent=True)
         if not payload or "record_id" not in payload:
             return jsonify({"error": "record_id is required"}), 400
@@ -73,46 +68,20 @@ def init_checkout_routes(app):
 
         return jsonify({"status": "draft_ready", **result}), 201
 
-    @app.route("/checkout/sign/<token>", methods=["GET"])
-    def checkout_sign_page(token):
+    @app.route("/checkin/sign/<token>", methods=["GET"])
+    def checkin_sign_page(token):
         entry, error_code = validate_signing_token(token)
         if not entry:
             abort(error_code)
 
-        record = get_checkout_record(entry["record_id"])
+        record = get_checkin_record(entry["record_id"])
         if not record:
             abort(404)
+        data = format_checkin_data(record)
+        return render_template("checkin_sign.html", data=data, token=token)
 
-        # If user reloaded the page, the abandon beacon might have set this to 'En cours'.
-        # We catch it here and revert it to 'À signer' since the user is still on the page.
-        if record.get("fields", {}).get("État du contrôle") == "En cours":
-            from utils.checkout import TABLE_CHECKOUT
-            try:
-                TABLE_CHECKOUT.update(entry["record_id"], {
-                                      "État du contrôle": "À signer"})
-            except Exception:
-                pass
-
-        data = format_checkout_data(record)
-        return render_template("checkout_sign.html", data=data, token=token)
-
-    @app.route("/checkout/sign/<token>/abandon", methods=["POST"])
-    @csrf.exempt
-    def checkout_abandon(token):
-        from services.checkout import abandon_signature
-        abandon_signature(token)
-        return jsonify({"status": "abandoned"}), 200
-
-    @app.route("/checkout/sign/<token>/resume", methods=["POST"])
-    @csrf.exempt
-    def checkout_resume(token):
-        from services.checkout import resume_signature
-        resume_signature(token)
-        return jsonify({"status": "resumed"}), 200
-
-    @app.route("/checkout/sign/<token>", methods=["POST"])
-    @csrf.exempt
-    def checkout_submit_signature(token):
+    @app.route("/checkin/sign/<token>", methods=["POST"])
+    def checkin_submit_signature(token):
         entry, error_code = validate_signing_token(token)
         if not entry:
             error_messages = {
@@ -134,27 +103,25 @@ def init_checkout_routes(app):
         except ValueError as e:
             return jsonify({"error": str(e)}), 404
 
-    @app.route("/checkout/verify/<inspection_id>", methods=["GET", "POST"])
-    @csrf.exempt
-    def checkout_verify(inspection_id):
+    @app.route("/checkin/verify/<inspection_id>", methods=["GET", "POST"])
+    def checkin_verify(inspection_id):
         uploaded_file = request.files.get(
             "pdf") if request.method == "POST" else None
-        context = verify_checkout_document(inspection_id, uploaded_file)
+        context = verify_checkin_document(inspection_id, uploaded_file)
 
         if context is None:
             abort(404)
 
-        return render_template("checkout_verify.html", **context)
+        return render_template("checkin_verify.html", **context)
 
-    @app.route("/checkout/document/<filename>")
-    @csrf.exempt
-    def download_checkout_document(filename):
+    @app.route("/checkin/document/<filename>")
+    def download_checkin_document(filename):
         access_token = request.args.get("t", "")
         if not access_token or not validate_pdf_access_token(filename, access_token):
             abort(403)
 
         private_folder = current_app.config.get("PRIVATE_FOLDER")
-        directory = os.path.join(private_folder, "checkout_pdfs")
+        directory = os.path.join(private_folder, "checkin_pdfs")
 
         try:
             return send_from_directory(directory, filename)

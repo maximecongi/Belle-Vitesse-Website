@@ -1,5 +1,6 @@
 bcrypt==5.0.0
 beautifulsoup4==4.14.3
+bleach==6.3.0
 blinker==1.9.0
 brotli==1.2.0
 cachelib==0.13.0

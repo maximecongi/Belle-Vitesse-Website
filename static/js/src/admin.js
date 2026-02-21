@@ -213,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ─────────────────────────────────────────────
     const searchInput = document.getElementById('search-input');
     if (searchInput) {
-        const tbody = document.getElementById('checkouts-tbody');
+        const tbody = document.getElementById('checkouts-tbody') || document.getElementById('checkins-tbody');
         const rows = tbody.querySelectorAll('tr[data-search]');
         const resultCount = document.getElementById('result-count');
         const noResults = document.getElementById('no-results');
@@ -295,6 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 right: 'dayGridMonth,timeGridWeek'
             },
             locale: 'fr',
+            firstDay: 1,
             buttonText: {
                 today: "Aujourd'hui",
                 month: 'Mois',

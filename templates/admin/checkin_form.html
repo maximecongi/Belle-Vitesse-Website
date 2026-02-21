@@ -1,0 +1,342 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}
+{% if is_edit %}Modifier le Checkin{% else %}Nouveau Checkin{% endif %}
+{% endblock %}
+
+{% block page_title %}
+{% if is_edit %}Modifier le Checkin{% else %}Nouveau Checkin{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <form method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        <div class="admin-card-title">Informations de base</div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+            <div class="form-group">
+                <label class="form-label">Projet</label>
+                <div class="rich-select" id="projectSelect">
+                    <input type="hidden" name="project_id"
+                        value="{{ data.project_id if data and data.project_id else '' }}">
+                    <div class="badge-select-trigger" id="projectTrigger">
+                        <span id="projectLabel">
+                            {% if data and data.project_id %}
+                            {% for p in projects %}
+                            {% if p.id == data.project_id %}{{ p.fields.get('Nom', '—') }}{% endif %}
+                            {% endfor %}
+                            {% else %}
+                            — Sélectionner un projet —
+                            {% endif %}
+                        </span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="rich-select-dropdown" id="projectDropdown">
+                        <div style="padding: 0.5rem;">
+                            <input type="text" class="form-input" id="projectSearch" placeholder="Rechercher un projet…"
+                                style="width: 100%; font-size: 0.85rem; padding: 0.4rem 0.6rem;" autocomplete="off">
+                        </div>
+                        <div class="rich-select-options" id="projectOptions">
+                            <button type="button" class="rich-select-option" data-id="" data-name="— Aucun projet —">
+                                <div class="rich-option-name" style="color: var(--grey-2);">— Aucun projet —</div>
+                            </button>
+                            {% for p in projects %}
+                            {% set pf = p.fields %}
+                            <button type="button" class="rich-select-option" data-id="{{ p.id }}"
+                                data-name="{{ pf.get('Nom', '—') }}"
+                                data-vehicles="{{ pf.get('Véhicules à contrôler', [])|join(',') }}"
+                                data-search="{{ pf.get('Nom', '') }} {{ pf.get('Production', '')|join(' ') if pf.get('Production') is iterable and pf.get('Production') is not string else '' }}">
+                                <div class="rich-option-name">{{ pf.get('Nom', '—') }}</div>
+                                <div class="rich-option-meta">
+                                    {% if pf.get('_production_name') %}
+                                    <span class="badge-pill" data-val="Neutral" style="font-size: 0.7rem;">{{
+                                        pf.get('_production_name') }}</span>
+                                    {% endif %}
+                                    {% if pf.get('Date de retour') %}
+                                    <span class="rich-meta-item">🚚 {{ pf.get('Date de retour', '') }}</span>
+                                    {% endif %}
+                                    {% if pf.get('Date de début de tournage') %}
+                                    <span class="rich-meta-item">🎬 {{ pf.get('Date de début de tournage', '') }}{% if
+                                        pf.get('Date de fin de tournage') %} → {{ pf.get('Date de fin de tournage', '')
+                                        }}{% endif %}</span>
+                                    {% endif %}
+                                </div>
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <style>
+                </style>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Véhicule</label>
+                <div class="rich-select" id="vehicleSelect" {% if not (data and data.project_id) %}data-disabled="true"
+                    style="opacity: 0.5; pointer-events: none;" {% endif %}>
+                    <input type="hidden" name="vehicle_id"
+                        value="{{ data.vehicle_id if data and data.vehicle_id else '' }}">
+                    <div class="badge-select-trigger" id="vehicleTrigger">
+                        <span id="vehicleLabel">
+                            {% if data and data.vehicle_id %}
+                            {% for v in vehicles %}
+                            {% if v.id == data.vehicle_id %}
+                            <span style="display: flex; align-items: center; gap: 0.5rem;">
+                                {% if v.fields.thumbnail %}
+                                <img src="{{ v.fields.thumbnail[0].thumbnails.small.url }}"
+                                    style="width: 28px; height: 28px; border-radius: 4px; object-fit: cover;">
+                                {% endif %}
+                                {{ v.fields.get('name', '—') }}
+                            </span>
+                            {% endif %}
+                            {% endfor %}
+                            {% else %}
+                            — Sélectionner un véhicule —
+                            {% endif %}
+                        </span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="rich-select-dropdown" id="vehicleDropdown">
+                        <div style="padding: 0.5rem;">
+                            <input type="text" class="form-input" id="vehicleSearch"
+                                placeholder="Rechercher un véhicule…"
+                                style="width: 100%; font-size: 0.85rem; padding: 0.4rem 0.6rem;" autocomplete="off">
+                        </div>
+                        <div class="rich-select-options" id="vehicleOptions">
+                            <button type="button" class="rich-select-option" data-id="" data-name="— Aucun véhicule —">
+                                <div class="rich-option-name" style="color: var(--grey-2);">— Aucun véhicule —</div>
+                            </button>
+                            {% for v in vehicles %}
+                            {% set vf = v.fields %}
+                            {% set thumb_url = vf.thumbnail[0].thumbnails.large.url if vf.thumbnail else '' %}
+                            <button type="button" class="rich-select-option" data-id="{{ v.id }}"
+                                data-name="{{ vf.get('name', '—') }}" data-thumb="{{ thumb_url }}"
+                                data-search="{{ vf.get('name', '') }}">
+                                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                    {% if thumb_url %}
+                                    <img src="{{ thumb_url }}"
+                                        style="width: 40px; height: 40px; border-radius: 6px; object-fit: cover; flex-shrink: 0;">
+                                    {% else %}
+                                    <div
+                                        style="width: 40px; height: 40px; border-radius: 6px; background: #eee; flex-shrink: 0;">
+                                    </div>
+                                    {% endif %}
+                                    <div style="display: flex; align-items: center; gap: 0.4rem;">
+                                        <span class="rich-option-name">{{ vf.get('name', '—') }}</span>
+                                        {% if vf.get('_checkin_status') %}
+                                        <span class="badge-pill" data-val="{{ vf._checkin_status }}"
+                                            style="font-size: 0.7rem;">{{ vf._checkin_status }}</span>
+                                        {% else %}
+                                        <span class="badge-pill" data-val="Neutral" style="font-size: 0.7rem;">À
+                                            contrôler</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Responsable du contrôle</label>
+                {% if is_edit %}
+                <input type="hidden" name="controller_id"
+                    value="{{ data.controller.id if data and data.controller and data.controller.id else '' }}">
+                <div class="form-input" style="background: #f0f0f0; cursor: not-allowed; color: #555;">
+                    {{ data.controller.name if data and data.controller else '—' }}
+                </div>
+                {% elif session.get('admin_user_role') != 'Administrator' %}
+                <!-- Auto-select for non-admin users -->
+                <input type="hidden" name="controller_id" value="{{ session.get('admin_user_id') }}">
+                <div class="form-input"
+                    style="background: #f0f0f0; cursor: not-allowed; color: #555; display: flex; align-items: center; justify-content: space-between;">
+                    <span>{{ session.get('admin_user_firstname') }} {{ session.get('admin_user_lastname') }}</span>
+                </div>
+                {% else %}
+                <!-- Standard select for administrators, pre-selected with their own name -->
+                <div class="rich-select" id="controllerSelect">
+                    <input type="hidden" name="controller_id" value="{{ session.get('admin_user_id') }}">
+                    <div class="badge-select-trigger" id="controllerTrigger">
+                        <span id="controllerLabel">{{ session.get('admin_user_firstname') }} {{
+                            session.get('admin_user_lastname') }}</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="rich-select-dropdown" id="controllerDropdown">
+                        <div class="rich-select-options" id="controllerOptions">
+                            <button type="button" class="rich-select-option" data-id="" data-name="— Aucun —">
+                                <div class="rich-option-name" style="color: var(--grey-2);">— Aucun —</div>
+                            </button>
+                            {% for u in users %}
+                            {% set uf = u.fields %}
+                            <button type="button" class="rich-select-option" data-id="{{ u.id }}"
+                                data-name="{{ uf.get('firstname', '') }} {{ uf.get('lastname', '') }}"
+                                data-search="{{ uf.get('firstname', '') }} {{ uf.get('lastname', '') }}">
+                                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <div>
+                                        <div class="rich-option-name">{{ uf.get('firstname', '') }} {{
+                                            uf.get('lastname', '') }}</div>
+                                    </div>
+                                </div>
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Kilométrage retour</label>
+                <input type="number" name="km" class="form-input" value="{{ data.km if data else '' }}">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Charge de la batterie retour (%)</label>
+                <input type="number" name="battery" class="form-input" value="{{ data.battery if data else '' }}"
+                    min="0" max="100" placeholder="Ex: 95">
+            </div>
+        </div>
+
+        <div class="admin-card-title">État général</div>
+
+        <div
+            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+            {% for field, label in [
+            ('tires', 'État des pneus'),
+            ('spare_tire', 'Roue de secours'),
+            ('oil', 'Niveau huile'),
+            ('coolant', 'Liquide refroidissement'),
+            ('brakes', 'État des freins'),
+            ('lights', 'Éclairage extérieur'),
+            ('engine_start', 'Démarrage moteur'),
+            ('wipers', 'Essuie-glaces'),
+            ('horn', 'État du klaxon')
+            ] %}
+            {% set current = data[field] if data and data[field] else 'OK' %}
+            <div class="form-group">
+                <label class="form-label">{{ label }}</label>
+                <div class="badge-select" data-field="{{ field }}">
+                    <input type="hidden" name="{{ field }}" value="{{ current }}">
+                    <div class="badge-select-trigger">
+                        <span class="badge-pill" data-val="{{ current }}">{{ current }}</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="badge-select-dropdown">
+                        {% for val in ['OK', 'À vérifier', 'Défaut'] %}
+                        <button type="button" class="badge-select-option" data-value="{{ val }}">
+                            <span class="badge-pill" data-val="{{ val }}">{{ val }}</span>
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="admin-card-title">Sécurité</div>
+
+        <div
+            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+            {% for field, label in [('safety_triangle', 'Triangle de signalisation et gilet orange'),
+            ('fire_extinguisher', 'Présence extincteur')] %}
+            {% set current = data[field] if data and data[field] else 'OK' %}
+            <div class="form-group">
+                <label class="form-label">{{ label }}</label>
+                <div class="badge-select" data-field="{{ field }}">
+                    <input type="hidden" name="{{ field }}" value="{{ current }}">
+                    <div class="badge-select-trigger">
+                        <span class="badge-pill" data-val="{{ current }}">{{ current }}</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="badge-select-dropdown">
+                        {% for val in ['OK', 'À vérifier', 'Défaut'] %}
+                        <button type="button" class="badge-select-option" data-value="{{ val }}">
+                            <span class="badge-pill" data-val="{{ val }}">{{ val }}</span>
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+
+
+        <div class="admin-card-title">Observations</div>
+        <div class="form-group">
+            <textarea name="notes" class="form-input" rows="5">{{ data.notes if data else '' }}</textarea>
+        </div>
+
+        <div class="admin-card-title">Photos</div>
+
+        {% for field_name, label, data_key in [
+        ('odometer_photos', 'Photos compteur', 'odometer_photos'),
+        ('exterior_photos', 'Photos extérieur véhicule', 'exterior_photos'),
+        ('interior_photos', 'Photos intérieur véhicule', 'interior_photos')
+        ] %}
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label class="form-label">{{ label }}</label>
+
+            {% if is_edit %}
+            {% set photos = data.get(data_key, []) if data else [] %}
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+                {% for photo in photos %}
+                <a href="{{ photo.url }}" target="_blank"
+                    style="display: block; width: 80px; height: 80px; border-radius: 6px; overflow: hidden; border: 1px solid #e0e0e0;">
+                    <img src="{{ photo.url }}" alt="{{ photo.label }}"
+                        style="width: 100%; height: 100%; object-fit: cover;">
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <label
+                style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; border: 2px dashed #d0d0d0; border-radius: 8px; cursor: pointer; transition: border-color 0.2s; background: var(--admin-bg, #f8f9fa);"
+                onmouseover="this.style.borderColor='var(--admin-accent)'"
+                onmouseout="this.style.borderColor='#d0d0d0'">
+                <span style="font-size: 1.5rem;">📷</span>
+                <div>
+                    <div style="font-weight: 500; font-size: 0.85rem;">Ajouter des photos</div>
+                    <div style="font-size: 0.75rem; color: var(--grey-2);">Cliquez ou glissez-déposez • JPG, PNG</div>
+                </div>
+                <input type="file" name="{{ field_name }}" multiple accept="image/*" style="display: none;"
+                    onchange="updatePhotoLabel(this)">
+            </label>
+            <div class="photo-preview" data-for="{{ field_name }}"
+                style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;"></div>
+        </div>
+        {% endfor %}
+
+        <script>
+            function updatePhotoLabel(input) {
+                const preview = document.querySelector(`.photo-preview[data-for="${input.name}"]`);
+                preview.innerHTML = '';
+                for (const file of input.files) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.style.cssText = 'width: 70px; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #e0e0e0;';
+                        preview.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        </script>
+
+        <div style="margin-top: 2rem; text-align: right;">
+            <a href="{{ url_for('admin_checkins_list') }}" class="admin-btn admin-btn-secondary"
+                style="margin-right: 1rem;">Annuler</a>
+            <button type="submit" class="admin-btn admin-btn-primary">
+                {% if is_edit %}Enregistrer les modifications{% else %}Créer le Checkin{% endif %}
+            </button>
+        </div>
+
+    </form>
+</div>
+{% endblock %}

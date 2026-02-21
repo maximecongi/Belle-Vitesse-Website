@@ -12,7 +12,7 @@ from utils.airtable import (
     get_heads,
     get_grips_categories,
 )
-from utils.database import init_checkout_db
+from utils.database import init_checkout_db, init_checkin_db
 
 
 def create_app():
@@ -82,6 +82,15 @@ def create_app():
 
         return response
 
+    # Initialize DB
+    try:
+        with app.app_context():
+            init_checkout_db()
+            init_checkin_db()
+            app.logger.info("✅ Databases initialized.")
+    except Exception as e:
+        app.logger.error(f"❌ DB Init error: {e}")
+
     return app
 
 
@@ -95,9 +104,7 @@ def warm_cache():
             get_heads()
             get_grips_categories()
             get_static_by_lang("en")
-            # Initialize Checkout DB
-            init_checkout_db()
-            app.logger.info("🔥 Cache warmé avec succès & DB initialisée")
+            app.logger.info("🔥 Cache warmé avec succès")
     except Exception as e:
         app.logger.error(f"❌ Erreur warm cache : {e}")
 

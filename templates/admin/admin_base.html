@@ -39,6 +39,10 @@
                     class="admin-nav-item {% if request.endpoint == 'admin_checkouts_list' %}active{% endif %}">
                     Checkouts
                 </a>
+<a href="{{ url_for('admin_checkins_list') }}"
+                    class="admin-nav-item {% if request.endpoint == 'admin_checkins_list' %}active{% endif %}">
+                    Checkins
+                </a>
             </nav>
 
             <div class="admin-sidebar-footer">

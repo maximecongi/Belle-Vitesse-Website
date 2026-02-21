@@ -1,0 +1,76 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Liste des Checkins{% endblock %}
+{% block page_title %}Checkins{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block header_actions %}
+<a href="{{ url_for('admin_checkin_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Checkin</a>
+{% endblock %}
+
+{% block content %}
+<!-- Search & Table -->
+<div class="admin-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <div style="position: relative; width: 300px;">
+            <input type="text" id="search-input" placeholder="Rechercher (ID, Projet, Client...)" class="form-input"
+                style="padding-left: 2.5rem;">
+            <span
+                style="position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--grey-2);">
+                🔍
+            </span>
+        </div>
+        <div style="font-size: 0.9rem; color: var(--grey-2);">
+            <span id="result-count">{{ checkins|length }}</span> résultats
+        </div>
+    </div>
+
+    <div class="admin-table-container">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>N° Inspection</th>
+                    <th>Projet</th>
+                    <th>Date contrôle</th>
+                    <th>Statut</th>
+                    <th>Responsable</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="checkins-tbody">
+                {% for checkin in checkins %}
+                <tr data-search="{{ checkin.search_text }}">
+                    <td style="font-weight: 600;">{{ checkin.inspection_id }}</td>
+                    <td>{{ checkin.project }}</td>
+                    <td>{{ checkin.control_date }}</td>
+                    <td>
+                        <span class="badge-pill" data-val="{{ checkin.status }}" {% if checkin.ready=='Oui'
+                            %}data-conform="yes" {% elif checkin.ready=='Non' %}data-conform="no" {% endif %}>
+                            {{ checkin.status }}
+                        </span>
+                    </td>
+                    <td>{{ checkin.controller.name }}</td>
+                    <td>
+                        <a href="{{ url_for('admin_checkin_detail', record_id=checkin.id) }}"
+                            class="admin-btn admin-btn-secondary">Détails →</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 2rem; color: var(--grey-2);">
+                        Aucun checkin trouvé.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div id="no-results" style="display: none; text-align: center; padding: 2rem; color: var(--grey-2);">
+            Aucun résultat pour cette recherche.
+        </div>
+    </div>
+</div>
+{% endblock %}

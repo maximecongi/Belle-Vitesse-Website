@@ -5,9 +5,10 @@ Each handler: parse request → call service → render/redirect.
 All business logic lives in services.admin.
 """
 
+import os
+import secrets
 from functools import wraps
 from datetime import datetime, timezone
-
 from flask import (
     render_template,
     abort,
@@ -20,7 +21,6 @@ from flask import (
     flash,
 )
 
-from utils.formatting import format_date_slash
 from extensions import limiter
 from services.admin import (
     list_checkouts,
@@ -29,6 +29,13 @@ from services.admin import (
     create_checkout,
     update_checkout,
     delete_checkout,
+
+    list_checkins,
+    get_checkin_detail,
+    get_checkin_form_context,
+    create_checkin,
+    update_checkin,
+    delete_checkin,
     list_projects,
     get_project_form_context,
     create_project,
@@ -58,74 +65,39 @@ def init_admin_routes(app):
             return f(*args, **kwargs)
         return decorated_function
 
-    # ── Login / Logout / Auth ─────────────────────────────────────
+    # ── Login / Logout ────────────────────────────────────────────
 
     @app.route("/admin/login", methods=["GET", "POST"])
-    @limiter.limit("20 per minute")
+    @limiter.limit("5 per minute")
     def admin_login():
         if session.get("admin_authenticated"):
             return redirect(url_for("admin_dashboard"))
 
         if request.method == "POST":
-            email = request.form.get("email", "").strip()
+            password = request.form.get("password")
+            expected_password = os.getenv("ADMIN_PASSWORD")
 
-            if not email:
-                flash("Veuillez saisir une adresse email.", "error")
+            if not expected_password:
+                current_app.logger.error("❌ ADMIN_PASSWORD is not set in .env")
+                flash("Erreur de configuration serveur.", "error")
                 return render_template("admin/login.html")
 
-            from services.auth import request_magic_link
-
-            # We always show a success message to prevent email enumeration attacks
-            success = request_magic_link(email)
-            if success:
-                current_app.logger.info(
-                    f"Magic link requested successfully for {email}")
+            if secrets.compare_digest(password, expected_password):
+                session.permanent = True
+                session["admin_authenticated"] = True
+                session["admin_login_time"] = datetime.now(
+                    timezone.utc).isoformat()
+                next_page = request.args.get("next")
+                return redirect(next_page or url_for("admin_dashboard"))
             else:
-                current_app.logger.warning(
-                    f"Failed magic link request for {email}")
-
-            flash("Si cette adresse existe et est autorisée, un lien de connexion a été envoyé.\n\nVérifiez votre boîte mail (et vos indésirables).", "success")
-            return redirect(url_for("admin_login"))
+                flash("Mot de passe incorrect.", "error")
 
         return render_template("admin/login.html")
 
-    @app.route("/admin/auth/<token>")
-    @limiter.limit("10 per minute")
-    def admin_auth_magic_link(token):
-        if session.get("admin_authenticated"):
-            return redirect(url_for("admin_dashboard"))
-
-        from services.auth import verify_magic_link
-        user_data = verify_magic_link(token)
-
-        if not user_data:
-            flash(
-                "Ce lien de connexion est invalide ou a expiré. Veuillez en demander un nouveau.", "error")
-            return redirect(url_for("admin_login"))
-
-        # Initialize session
-        session.permanent = True
-        session["admin_authenticated"] = True
-        session["admin_login_time"] = datetime.now(timezone.utc).isoformat()
-        session["admin_user_id"] = user_data["id"]
-        session["admin_user_firstname"] = user_data["firstname"]
-        session["admin_user_lastname"] = user_data["lastname"]
-        session["admin_user_email"] = user_data["email"]
-        session["admin_user_role"] = user_data["role"]
-
-        flash(f"Bienvenue, {user_data['firstname']} !", "success")
-        return redirect(url_for("admin_dashboard"))
-
     @app.route("/admin/logout")
     def admin_logout():
-        keys_to_pop = [
-            "admin_authenticated", "admin_login_time",
-            "admin_user_id", "admin_user_firstname", "admin_user_lastname",
-            "admin_user_email", "admin_user_role"
-        ]
-        for key in keys_to_pop:
-            session.pop(key, None)
-
+        session.pop("admin_authenticated", None)
+        session.pop("admin_login_time", None)
         flash("Vous avez été déconnecté.", "info")
         return redirect(url_for("admin_login"))
 
@@ -137,15 +109,19 @@ def init_admin_routes(app):
     def admin_dashboard():
         try:
             projects_data = list_projects()
-            today_projects = [p for p in projects_data
-                              if format_date_slash(p["departure_date"]) == datetime.now().strftime('%d/%m/%Y')]
+            today_iso = datetime.now().strftime('%Y-%m-%d')
+            today_checkouts = [p for p in projects_data
+                               if p.get("raw_departure_date") == today_iso]
+            today_checkins = [p for p in projects_data
+                              if p.get("raw_checkin_date") == today_iso]
 
         except Exception as e:
             current_app.logger.error(f"❌ Error loading dashboard data: {e}")
-            today_projects = []
+            today_checkouts = []
+            today_checkins = []
             projects_data = []
 
-        return render_template("admin/dashboard.html", today_projects=today_projects)
+        return render_template("admin/dashboard.html", today_checkouts=today_checkouts, today_checkins=today_checkins)
 
     # ── Checkouts CRUD ────────────────────────────────────────────
 
@@ -258,7 +234,6 @@ def init_admin_routes(app):
 
             token = result["token"]
 
-            # The generate_signing_token already sets status to "À signer"
             flash("La demande de scellement a été initiée et vous avez été redirigé vers la page de signature.", "success")
             return redirect(url_for("checkout_sign_page", token=token))
 
@@ -267,6 +242,127 @@ def init_admin_routes(app):
             flash(
                 f"Erreur technique lors de la création du lien de signature : {str(e)}", "error")
             return redirect(url_for("admin_checkout_detail", record_id=record_id))
+
+# ── Checkins CRUD ────────────────────────────────────────────
+
+    @app.route("/admin/checkins")
+    @require_admin
+    def admin_checkins_list():
+        try:
+            result = list_checkins()
+            return render_template(
+                "admin/checkins_list.html",
+                checkins=result["checkins"],
+            )
+        except Exception as e:
+            current_app.logger.error(f"❌ Error in admin_checkins_list: {e}")
+            flash("Erreur lors de la récupération de la liste.", "error")
+            return render_template(
+                "admin/checkins_list.html",
+                checkins=[],
+            )
+
+    @app.route("/admin/checkins/<record_id>")
+    @require_admin
+    def admin_checkin_detail(record_id):
+        try:
+            data = get_checkin_detail(record_id)
+            if not data:
+                abort(404)
+            return render_template("admin/checkin_detail.html", data=data, record_id=record_id)
+        except Exception as e:
+            current_app.logger.error(f"❌ Error in admin_checkin_detail: {e}")
+            flash("Erreur lors de la récupération du détail.", "error")
+            return redirect(url_for("admin_checkins_list"))
+
+    @app.route("/admin/checkins/new", methods=["GET", "POST"])
+    @require_admin
+    def admin_checkin_new():
+        context = get_checkin_form_context()
+
+        initial_data = {}
+        if request.method == "GET":
+            # Prefill from URL params if provided
+            if request.args.get("project_id"):
+                initial_data["project_id"] = request.args.get("project_id")
+            if request.args.get("vehicle_id"):
+                initial_data["vehicle_id"] = request.args.get("vehicle_id")
+
+        if request.method == "POST":
+            try:
+                create_checkin(request.form, request.files)
+                flash("Checkin créé avec succès !", "success")
+                return redirect(url_for("admin_checkins_list"))
+            except Exception as e:
+                current_app.logger.error(f"❌ Error creating checkin: {e}")
+                flash(f"Erreur lors de la création : {str(e)}", "warning")
+                return render_template(
+                    "admin/checkin_form.html",
+                    data=request.form.to_dict(),
+                    is_edit=False,
+                    **context,
+                )
+
+        return render_template("admin/checkin_form.html", data=initial_data, is_edit=False, **context)
+
+    @app.route("/admin/checkins/<record_id>/edit", methods=["GET", "POST"])
+    @require_admin
+    def admin_checkin_edit(record_id):
+        context = get_checkin_form_context()
+
+        try:
+            data = get_checkin_detail(record_id)
+            if not data:
+                abort(404)
+
+            if request.method == "POST":
+                update_checkin(record_id, request.form, request.files)
+                flash("Checkin modifié avec succès !", "success")
+                return redirect(url_for("admin_checkin_detail", record_id=record_id))
+
+            return render_template(
+                "admin/checkin_form.html", data=data, is_edit=True, **context
+            )
+        except Exception as e:
+            current_app.logger.error(f"❌ Error editing checkin: {e}")
+            flash(f"Erreur lors de la modification : {str(e)}", "error")
+            return redirect(url_for("admin_checkin_detail", record_id=record_id))
+
+    @app.route("/admin/checkins/<record_id>/delete", methods=["POST"])
+    @require_admin
+    def admin_checkin_delete(record_id):
+        try:
+            delete_checkin(record_id)
+            flash("Checkin supprimé définitivement.", "success")
+            return redirect(url_for("admin_checkins_list"))
+        except Exception as e:
+            current_app.logger.error(f"❌ Error deleting checkin: {e}")
+            flash(f"Erreur lors de la suppression : {str(e)}", "error")
+            return redirect(url_for("admin_checkin_detail", record_id=record_id))
+
+    @app.route("/admin/checkins/<record_id>/seal", methods=["POST"])
+    @require_admin
+    def admin_checkin_seal(record_id):
+        try:
+            from services.checkin import generate_signing_token
+
+            result = generate_signing_token(record_id)
+            if not result:
+                flash(
+                    "Checkin introuvable ou erreur lors de la création du lien de signature.", "error")
+                return redirect(url_for("admin_checkin_detail", record_id=record_id))
+
+            token = result["token"]
+
+            # The generate_signing_token already sets status to "À signer"
+            flash("La demande de scellement a été initiée et vous avez été redirigé vers la page de signature.", "success")
+            return redirect(url_for("checkin_sign_page", token=token))
+
+        except Exception as e:
+            current_app.logger.error(f"❌ Error sealing checkin: {e}")
+            flash(
+                f"Erreur technique lors de la création du lien de signature : {str(e)}", "error")
+            return redirect(url_for("admin_checkin_detail", record_id=record_id))
 
     # ── Projects CRUD ─────────────────────────────────────────────
 
