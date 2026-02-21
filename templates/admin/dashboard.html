@@ -18,22 +18,22 @@
 <div class="dashboard-grid">
     <div class="admin-card">
         <div class="admin-card-title">Check-outs du jour</div>
-        {% if today_projects %}
-        {% for project in today_projects %}
+        {% if today_checkouts %}
+        {% for checkout in today_checkouts %}
         <div class="today-row">
             <div style="margin-bottom: 0.5rem; display: flex; align-items: baseline; justify-content: space-between;">
                 <div>
-                    <strong style="font-size: 0.95rem;">{{ project.name }}</strong>
-                    <span style="color: var(--grey-2); margin-left: 0.5rem; font-size: 0.85rem;">{{ project.production
+                    <strong style="font-size: 0.95rem;">{{ checkout.name }}</strong>
+                    <span style="color: var(--grey-2); margin-left: 0.5rem; font-size: 0.85rem;">{{ checkout.production
                         }}</span>
                     <div class="today-row-dates">
-                        Tournage du {{ project.shoot_start }} au {{ project.shoot_end }}
+                        Tournage du {{ checkout.shoot_start }} au {{ checkout.shoot_end }}
                     </div>
                 </div>
             </div>
 
             <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
-                {% for vehicle in project.vehicles %}
+                {% for vehicle in checkout.vehicles %}
                 {% if vehicle.status %}
                 <a class="today-row-vehicle-link"
                     href="{{ url_for('admin_checkout_detail', record_id=vehicle.checkout_id) }}">
@@ -43,7 +43,7 @@
                         style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">{{ vehicle.status }}</span>
                 </a>
                 {% else %}
-                <a href="{{ url_for('admin_checkout_new', project_id=project.id, vehicle_id=vehicle.id) }}"
+                <a href="{{ url_for('admin_checkout_new', checkout_id=checkout.id, vehicle_id=vehicle.id) }}"
                     class="today-row-vehicle-link">
                     <span>{{ vehicle.name }}</span>
                     <span class="badge-pill" data-val="À contrôler"
@@ -60,8 +60,56 @@
                 check-outs →</a>
         </div>
         {% else %}
-        <p style="color: var(--grey-2); font-size: 0.9rem; text-align: center; padding: 2rem 0;">Aucun projet avec
-            départ aujourd'hui.</p>
+        <p style="color: var(--grey-2); font-size: 0.9rem; text-align: center; padding: 2rem 0;">Aucun check-out prévu
+            aujourd'hui.</p>
+        {% endif %}
+    </div>
+    <div class="admin-card">
+        <div class="admin-card-title">Check-ins du jour</div>
+        {% if today_checkins %}
+        {% for checkin in today_checkins %}
+        <div class="today-row">
+            <div style="margin-bottom: 0.5rem; display: flex; align-items: baseline; justify-content: space-between;">
+                <div>
+                    <strong style="font-size: 0.95rem;">{{ checkin.name }}</strong>
+                    <span style="color: var(--grey-2); margin-left: 0.5rem; font-size: 0.85rem;">{{ checkin.production
+                        }}</span>
+                    <div class="today-row-dates">
+                        Tournage du {{ checkin.shoot_start }} au {{ checkin.shoot_end }}
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
+                {% for vehicle in checkin.vehicles %}
+                {% if vehicle.status %}
+                <a class="today-row-vehicle-link"
+                    href="{{ url_for('admin_checkin_detail', record_id=vehicle.checkin_id) }}">
+                    <span style="font-weight: 500;">{{ vehicle.name }}</span>
+                    <span class="badge-pill" data-val="{{ vehicle.status }}" {% if vehicle.ready=='Oui'
+                        %}data-conform="yes" {% elif vehicle.ready=='Non' %}data-conform="no" {% endif %}
+                        style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">{{ vehicle.status }}</span>
+                </a>
+                {% else %}
+                <a href="{{ url_for('admin_checkin_new', checkin_id=checkin.id, vehicle_id=vehicle.id) }}"
+                    class="today-row-vehicle-link">
+                    <span>{{ vehicle.name }}</span>
+                    <span class="badge-pill" data-val="À contrôler"
+                        style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">À contrôler</span>
+                </a>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+        <div style="margin-top: 1rem;">
+            <a href="{{ url_for('admin_checkins_list') }}" class="admin-btn admin-btn-secondary"
+                style="font-size: 0.8rem; width: 100%; text-align: center; box-sizing: border-box;">Voir tous les
+                check-ins →</a>
+        </div>
+        {% else %}
+        <p style="color: var(--grey-2); font-size: 0.9rem; text-align: center; padding: 2rem 0;">Aucun check-in prévu
+            aujourd'hui.</p>
         {% endif %}
     </div>
 </div>

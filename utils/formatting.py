@@ -1,5 +1,6 @@
 # ── Date Formatting ───────────────────────────────────────────────
 
+from datetime import datetime, timedelta
 MOIS_FR = [
     "", "janvier", "février", "mars", "avril", "mai", "juin",
     "juillet", "août", "septembre", "octobre", "novembre", "décembre",
@@ -37,3 +38,13 @@ def format_date_slash(date_str: str) -> str:
         return f"{day:02d}/{month:02d}/{year}"
     except (ValueError, IndexError):
         return date_str
+
+
+def next_day(date_str_slash: str) -> str:
+    """
+    Prend une date au format DD/MM/YYYY et retourne la date du jour suivant
+    au même format.
+    """
+    dt = datetime.strptime(date_str_slash, "%d/%m/%Y")
+    dt += timedelta(days=1)
+    return dt.strftime("%d/%m/%Y")

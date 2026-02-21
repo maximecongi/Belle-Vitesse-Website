@@ -23,7 +23,7 @@ from flask import (
     flash,
 )
 
-from utils.formatting import format_date_slash
+from utils.formatting import format_date_slash, next_day
 from extensions import limiter
 from services.admin import (
     list_checkouts,
@@ -112,15 +112,18 @@ def init_admin_routes(app):
     def admin_dashboard():
         try:
             projects_data = list_projects()
-            today_projects = [p for p in projects_data
-                              if format_date_slash(p["departure_date"]) == datetime.now().strftime('%d/%m/%Y')]
+            today_checkouts = [p for p in projects_data
+                               if format_date_slash(p["departure_date"]) == datetime.now().strftime('%d/%m/%Y')]
+            today_checkins = [p for p in projects_data
+                              if next_day(format_date_slash(p["shoot_end"])) == datetime.now().strftime('%d/%m/%Y')]
 
         except Exception as e:
             current_app.logger.error(f"❌ Error loading dashboard data: {e}")
-            today_projects = []
+            today_checkouts = []
+            today_checkins = []
             projects_data = []
 
-        return render_template("admin/dashboard.html", today_projects=today_projects)
+        return render_template("admin/dashboard.html", today_checkouts=today_checkouts, today_checkins=today_checkins)
 
     # ── Checkouts CRUD ────────────────────────────────────────────
 
@@ -388,7 +391,6 @@ def init_admin_routes(app):
             flash(
                 f"Erreur technique lors de la création du lien de signature : {str(e)}", "error")
             return redirect(url_for("admin_checkin_detail", record_id=record_id))
-
 
     # ── Projects CRUD ─────────────────────────────────────────────
 
