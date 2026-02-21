@@ -9,7 +9,6 @@ import os
 import secrets
 from functools import wraps
 from datetime import datetime, timezone
-import requests
 
 from flask import (
     render_template,
@@ -216,50 +215,25 @@ def init_admin_routes(app):
     @require_admin
     def admin_checkout_seal(record_id):
         try:
-            webhook_url = os.getenv("N8N_WEBHOOK_CHECKOUT_GENERATE_TOKEN")
-            if not webhook_url:
-                flash("URL du webhook non configurée dans le fichier .env", "error")
+            from services.checkout import generate_signing_token
+
+            result = generate_signing_token(record_id)
+            if not result:
+                flash(
+                    "Checkout introuvable ou erreur lors de la création du lien de signature.", "error")
                 return redirect(url_for("admin_checkout_detail", record_id=record_id))
 
-            data = get_checkout_detail(record_id)
-            if not data:
-                flash("Checkout introuvable.", "error")
-                return redirect(url_for("admin_checkouts_list"))
+            token = result["token"]
 
-            controller_email = data.get("controller", {}).get(
-                "mail", "") if isinstance(data.get("controller"), dict) else ""
-            inspection_id = data.get("inspection_id", "")
-
-            payload = {
-                "record_id": record_id,
-                "inspection_id": inspection_id,
-                "controller_email": controller_email
-            }
-
-            response = requests.post(webhook_url, json=payload, timeout=10)
-
-            if response.status_code in [200, 201]:
-                # Update Airtable state immediately so refreshing the page doesn't re-enable the button
-                from utils.checkout import TABLE_CHECKOUT
-                try:
-                    TABLE_CHECKOUT.update(
-                        record_id, {"État du contrôle": "À signer"})
-                except Exception as update_err:
-                    current_app.logger.error(
-                        f"❌ Failed to update status to 'À signer': {update_err}")
-
-                flash(
-                    "La demande de scellement a été envoyée avec succès au webhook !", "success")
-            else:
-                flash(
-                    f"Le webhook a retourné une erreur {response.status_code}", "warning")
+            # The generate_signing_token already sets status to "À signer"
+            flash("La demande de scellement a été initiée et vous avez été redirigé vers la page de signature.", "success")
+            return redirect(url_for("checkout_sign_page", token=token))
 
         except Exception as e:
             current_app.logger.error(f"❌ Error sealing checkout: {e}")
             flash(
-                f"Erreur technique lors de l'appel au webhook : {str(e)}", "error")
-
-        return redirect(url_for("admin_checkout_detail", record_id=record_id))
+                f"Erreur technique lors de la création du lien de signature : {str(e)}", "error")
+            return redirect(url_for("admin_checkout_detail", record_id=record_id))
 
     # ── Projects CRUD ─────────────────────────────────────────────
 

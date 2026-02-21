@@ -112,6 +112,44 @@ def generate_signing_token(record_id):
     }
 
 
+def abandon_signature(token):
+    """
+    Called when the user closes the signature page without signing.
+    Sets the Airtable state back to "En cours".
+    We don't delete the token so that if the user just reloaded the page,
+    the GET request can seamlessly restore it to 'À signer'.
+    """
+    entry = get_checkout_token(token)
+    if not entry or entry.get("signature"):
+        return False
+
+    try:
+        from utils.checkout import TABLE_CHECKOUT
+        TABLE_CHECKOUT.update(entry["record_id"], {
+                              "État du contrôle": "En cours"})
+        logger.info(f"🔙 Signature abandoned for {entry['inspection_id']}")
+    except Exception as e:
+        logger.error(f"❌ Failed to abandon signature: {e}")
+    return True
+
+
+def resume_signature(token):
+    """
+    Called if the user's browser restores the page from bfcache (tab switch).
+    Sets the Airtable state to "À signer" just in case it was abandoned.
+    """
+    entry = get_checkout_token(token)
+    if not entry or entry.get("signature"):
+        return False
+
+    try:
+        from utils.checkout import TABLE_CHECKOUT
+        TABLE_CHECKOUT.update(entry["record_id"], {
+                              "État du contrôle": "À signer"})
+    except Exception as e:
+        logger.error(f"❌ Failed to resume signature: {e}")
+    return True
+
 # ── Signature Processing ─────────────────────────────────────────
 
 

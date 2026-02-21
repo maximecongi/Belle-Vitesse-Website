@@ -82,8 +82,33 @@ def init_checkout_routes(app):
         record = get_checkout_record(entry["record_id"])
         if not record:
             abort(404)
+
+        # If user reloaded the page, the abandon beacon might have set this to 'En cours'.
+        # We catch it here and revert it to 'À signer' since the user is still on the page.
+        if record.get("fields", {}).get("État du contrôle") == "En cours":
+            from utils.checkout import TABLE_CHECKOUT
+            try:
+                TABLE_CHECKOUT.update(entry["record_id"], {
+                                      "État du contrôle": "À signer"})
+            except Exception:
+                pass
+
         data = format_checkout_data(record)
         return render_template("checkout_sign.html", data=data, token=token)
+
+    @app.route("/checkout/sign/<token>/abandon", methods=["POST"])
+    @csrf.exempt
+    def checkout_abandon(token):
+        from services.checkout import abandon_signature
+        abandon_signature(token)
+        return jsonify({"status": "abandoned"}), 200
+
+    @app.route("/checkout/sign/<token>/resume", methods=["POST"])
+    @csrf.exempt
+    def checkout_resume(token):
+        from services.checkout import resume_signature
+        resume_signature(token)
+        return jsonify({"status": "resumed"}), 200
 
     @app.route("/checkout/sign/<token>", methods=["POST"])
     @csrf.exempt

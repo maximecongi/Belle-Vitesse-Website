@@ -99,6 +99,25 @@
 
     <script>
         (function () {
+            let isSigned = false;
+
+            // ── Abandon Logic ───────────────────────────────────────────
+            // When the user closes the tab, navigates away, or reloads
+            window.addEventListener('pagehide', function (event) {
+                if (!isSigned) {
+                    // Use sendBeacon to reliably send the request as the page unloads
+                    navigator.sendBeacon("{{ url_for('checkout_abandon', token=token) }}");
+                }
+            });
+
+            // If the user's browser restores this page from bfcache (e.g., returning to the tab)
+            window.addEventListener('pageshow', function (event) {
+                if (event.persisted && !isSigned) {
+                    fetch("{{ url_for('checkout_resume', token=token) }}", { method: 'POST' })
+                        .catch(err => console.log('Resume failed', err));
+                }
+            });
+
             const canvas = document.getElementById('signature-canvas');
             const wrapper = canvas.parentElement;
 
@@ -145,6 +164,7 @@
                     .then(function (res) { return res.json(); })
                     .then(function (result) {
                         if (result.status === 'signed') {
+                            isSigned = true;  // Prevent abandon beacon
                             showFeedback('✅ Document signé avec succès.', 'var(--green-1)');
                             btn.textContent = 'Signé ✓';
                             canvas.style.pointerEvents = 'none';
