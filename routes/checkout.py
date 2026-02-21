@@ -110,6 +110,7 @@ def init_checkout_routes(app):
             return jsonify({"error": str(e)}), 404
 
     @app.route("/checkout/verify/<inspection_id>", methods=["GET", "POST"])
+    @csrf.exempt
     def checkout_verify(inspection_id):
         uploaded_file = request.files.get(
             "pdf") if request.method == "POST" else None
@@ -121,6 +122,7 @@ def init_checkout_routes(app):
         return render_template("checkout_verify.html", **context)
 
     @app.route("/checkout/document/<filename>")
+    @csrf.exempt
     def download_checkout_document(filename):
         access_token = request.args.get("t", "")
         if not access_token or not validate_pdf_access_token(filename, access_token):
