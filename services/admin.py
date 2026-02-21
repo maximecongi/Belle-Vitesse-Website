@@ -438,10 +438,10 @@ def build_checkin_fields(form, is_create=False):
         fields["Date du contrôle"] = date.today().isoformat()
 
     if form.get("km"):
-        fields["Kilométrage départ"] = int(form.get("km"))
+        fields["Kilométrage retour"] = int(form.get("km"))
 
     if form.get("battery"):
-        fields["Charge de la batterie départ"] = int(form.get("battery"))
+        fields["Charge de la batterie retour"] = int(form.get("battery"))
 
     if form.get("project_id"):
         fields["Projet"] = [form.get("project_id")]
