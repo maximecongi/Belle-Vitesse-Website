@@ -43,7 +43,7 @@ def create_app():
         app.config["PRIVATE_FOLDER"] = Path("/app/private")
     else:
         app.config["PRIVATE_FOLDER"] = Path(
-            "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_PROTOTYPE")
+            "Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_PROTOTYPE")
     app.config["PRIVATE_FOLDER"].mkdir(parents=True, exist_ok=True)
 
     # Initialize extensions

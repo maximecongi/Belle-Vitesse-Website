@@ -332,7 +332,7 @@ def format_checkin_data(record: dict) -> dict:
         "control_status": fields.get("État du contrôle", "—"),
         "control_date":   format_date_fr(fields.get("Date du contrôle", "—")),
         "control_date_raw": fields.get("Date du contrôle", ""),
-        "controller":     _resolve_controller(fields.get("Responsable du contrôle")),
+        "controller":     _resolve_controller(fields.get("Reponsable du contrôle")),
 
         "vehicle":        _resolve_vehicle(vehicle_field),
         "vehicle_id":     _extract_vehicle_id(vehicle_field),
@@ -349,7 +349,9 @@ def format_checkin_data(record: dict) -> dict:
         "engine_start":    fields.get("Démarrage moteur", "—"),
         "wipers":          fields.get("État des essuie-glaces", "—"),
         "horn":            fields.get("État du klaxon", "—"),
-        "safety_triangle": fields.get("Triangle de signalisation et gilet orange", "—"),
+        "safety_triangle": fields.get(
+            "Présence Triangle de signalisation et gilet orange", "—"
+        ),
         "fire_extinguisher": fields.get("Présence extincteur", "—"),
 
         "interior_photos": extract_photos(fields.get("Photos intérieur véhicule")),

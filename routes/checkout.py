@@ -40,7 +40,7 @@ def init_checkout_routes(app):
     # ── Auth Guards ───────────────────────────────────────────────
 
     def require_checkout_token():
-        token = request.headers.get("X-Checkout-Token")
+        token = request.headers.get("X-Check-Token")
         expected = os.getenv("CHECK_API_TOKEN")
         if not expected:
             current_app.logger.error("❌ CHECK_API_TOKEN is not set.")

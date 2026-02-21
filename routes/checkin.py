@@ -36,7 +36,7 @@ def init_checkin_routes(app):
     # ── Auth Guards ───────────────────────────────────────────────
 
     def require_checkin_token():
-        token = request.headers.get("X-Checkin-Token")
+        token = request.headers.get("X-Check-Token")
         expected = os.getenv("CHECK_API_TOKEN")
         if not expected:
             current_app.logger.error("❌ CHECK_API_TOKEN is not set.")
