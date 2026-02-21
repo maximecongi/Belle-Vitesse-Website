@@ -29,9 +29,10 @@
         <form method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <div class="form-group">
-                <label for="email" class="form-label">Adresse email</label>
+                <label for="email" class="form-label">Saisissez votre email pour vous connecter</label>
                 <input type="email" name="email" id="email" class="form-input" pattern=".*@bellevitesse\.com$"
-                    title="Seules les adresses @bellevitesse.com sont autorisées" placeholder="Mail" required autofocus>
+                    title="Seules les adresses @bellevitesse.com sont autorisées" placeholder="Email" required
+                    autofocus>
             </div>
             <button type="submit" class="login-btn">Recevoir un lien de connexion</button>
         </form>
