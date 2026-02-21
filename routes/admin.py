@@ -5,8 +5,6 @@ Each handler: parse request → call service → render/redirect.
 All business logic lives in services.admin.
 """
 
-import os
-import secrets
 from functools import wraps
 from datetime import datetime, timezone
 
@@ -60,39 +58,74 @@ def init_admin_routes(app):
             return f(*args, **kwargs)
         return decorated_function
 
-    # ── Login / Logout ────────────────────────────────────────────
+    # ── Login / Logout / Auth ─────────────────────────────────────
 
     @app.route("/admin/login", methods=["GET", "POST"])
-    @limiter.limit("5 per minute")
+    @limiter.limit("20 per minute")
     def admin_login():
         if session.get("admin_authenticated"):
             return redirect(url_for("admin_dashboard"))
 
         if request.method == "POST":
-            password = request.form.get("password")
-            expected_password = os.getenv("ADMIN_PASSWORD")
+            email = request.form.get("email", "").strip()
 
-            if not expected_password:
-                current_app.logger.error("❌ ADMIN_PASSWORD is not set in .env")
-                flash("Erreur de configuration serveur.", "error")
+            if not email:
+                flash("Veuillez saisir une adresse email.", "error")
                 return render_template("admin/login.html")
 
-            if secrets.compare_digest(password, expected_password):
-                session.permanent = True
-                session["admin_authenticated"] = True
-                session["admin_login_time"] = datetime.now(
-                    timezone.utc).isoformat()
-                next_page = request.args.get("next")
-                return redirect(next_page or url_for("admin_dashboard"))
+            from services.auth import request_magic_link
+
+            # We always show a success message to prevent email enumeration attacks
+            success = request_magic_link(email)
+            if success:
+                current_app.logger.info(
+                    f"Magic link requested successfully for {email}")
             else:
-                flash("Mot de passe incorrect.", "error")
+                current_app.logger.warning(
+                    f"Failed magic link request for {email}")
+
+            flash("Si cette adresse existe et est autorisée, un lien de connexion a été envoyé.\n\nVérifiez votre boîte mail (et vos indésirables).", "success")
+            return redirect(url_for("admin_login"))
 
         return render_template("admin/login.html")
 
+    @app.route("/admin/auth/<token>")
+    @limiter.limit("10 per minute")
+    def admin_auth_magic_link(token):
+        if session.get("admin_authenticated"):
+            return redirect(url_for("admin_dashboard"))
+
+        from services.auth import verify_magic_link
+        user_data = verify_magic_link(token)
+
+        if not user_data:
+            flash(
+                "Ce lien de connexion est invalide ou a expiré. Veuillez en demander un nouveau.", "error")
+            return redirect(url_for("admin_login"))
+
+        # Initialize session
+        session.permanent = True
+        session["admin_authenticated"] = True
+        session["admin_login_time"] = datetime.now(timezone.utc).isoformat()
+        session["admin_user_id"] = user_data["id"]
+        session["admin_user_firstname"] = user_data["firstname"]
+        session["admin_user_lastname"] = user_data["lastname"]
+        session["admin_user_email"] = user_data["email"]
+        session["admin_user_role"] = user_data["role"]
+
+        flash(f"Bienvenue, {user_data['firstname']} !", "success")
+        return redirect(url_for("admin_dashboard"))
+
     @app.route("/admin/logout")
     def admin_logout():
-        session.pop("admin_authenticated", None)
-        session.pop("admin_login_time", None)
+        keys_to_pop = [
+            "admin_authenticated", "admin_login_time",
+            "admin_user_id", "admin_user_firstname", "admin_user_lastname",
+            "admin_user_email", "admin_user_role"
+        ]
+        for key in keys_to_pop:
+            session.pop(key, None)
+
         flash("Vous avez été déconnecté.", "info")
         return redirect(url_for("admin_login"))
 

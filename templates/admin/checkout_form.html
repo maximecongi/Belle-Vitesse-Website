@@ -150,11 +150,20 @@
                 <div class="form-input" style="background: #f0f0f0; cursor: not-allowed; color: #555;">
                     {{ data.controller.name if data and data.controller else '—' }}
                 </div>
+                {% elif session.get('admin_user_role') != 'Administrator' %}
+                <!-- Auto-select for non-admin users -->
+                <input type="hidden" name="controller_id" value="{{ session.get('admin_user_id') }}">
+                <div class="form-input"
+                    style="background: #f0f0f0; cursor: not-allowed; color: #555; display: flex; align-items: center; justify-content: space-between;">
+                    <span>{{ session.get('admin_user_firstname') }} {{ session.get('admin_user_lastname') }}</span>
+                </div>
                 {% else %}
+                <!-- Standard select for administrators, pre-selected with their own name -->
                 <div class="rich-select" id="controllerSelect">
-                    <input type="hidden" name="controller_id" value="">
+                    <input type="hidden" name="controller_id" value="{{ session.get('admin_user_id') }}">
                     <div class="badge-select-trigger" id="controllerTrigger">
-                        <span id="controllerLabel">— Sélectionner un responsable —</span>
+                        <span id="controllerLabel">{{ session.get('admin_user_firstname') }} {{
+                            session.get('admin_user_lastname') }}</span>
                         <span class="arrow">▼</span>
                     </div>
                     <div class="rich-select-dropdown" id="controllerDropdown">
@@ -166,15 +175,11 @@
                             {% set uf = u.fields %}
                             <button type="button" class="rich-select-option" data-id="{{ u.id }}"
                                 data-name="{{ uf.get('firstname', '') }} {{ uf.get('lastname', '') }}"
-                                data-search="{{ uf.get('firstname', '') }} {{ uf.get('lastname', '') }} {{ uf.get('job', '') }}">
+                                data-search="{{ uf.get('firstname', '') }} {{ uf.get('lastname', '') }}">
                                 <div style="display: flex; align-items: center; gap: 0.6rem;">
                                     <div>
                                         <div class="rich-option-name">{{ uf.get('firstname', '') }} {{
                                             uf.get('lastname', '') }}</div>
-                                        <div class="rich-option-meta">
-                                            <span class="badge-pill" data-val="Neutral" style="font-size: 0.7rem;">{{
-                                                uf.get('job', '') }}</span>
-                                        </div>
                                     </div>
                                 </div>
                             </button>
