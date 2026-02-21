@@ -1,0 +1,56 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Projets{% endblock %}
+{% block page_title %}Projets{% endblock %}
+
+{% block header_actions %}
+<a href="{{ url_for('admin_project_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Projet</a>
+{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-table-container">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Nom du projet</th>
+                    <th>Véhicules à contrôler</th>
+                    <th>Date de départ</th>
+                    <th>Date de début tournage</th>
+                    <th>Date de fin tournage</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for project in projects %}
+                <tr>
+                    <td style="font-weight: 600;">{{ project.name }}</td>
+                    <td>
+                        {% for v in project.vehicles %}
+                        <span class="badge-pill" data-val="{{ v.status or 'Neutral' }}" style="margin: 0.15rem;">
+                            {{ v.name }}
+                        </span>
+                        {% else %}
+                        <span style="color: var(--grey-2);">—</span>
+                        {% endfor %}
+                    </td>
+                    <td>{{ project.departure_date }}</td>
+                    <td>{{ project.shoot_start }}</td>
+                    <td>{{ project.shoot_end }}</td>
+                    <td>
+                        <a href="{{ url_for('admin_project_edit', record_id=project.id) }}"
+                            class="admin-btn admin-btn-secondary">Éditer</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 2rem; color: var(--grey-2);">
+                        Aucun projet trouvé.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

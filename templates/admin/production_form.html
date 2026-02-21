@@ -1,0 +1,60 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}
+{% if is_edit %}Modifier la Production{% else %}Nouvelle Production{% endif %}
+{% endblock %}
+
+{% block page_title %}
+{% if is_edit %}Modifier la Production{% else %}Nouvelle Production{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        <div class="form-group">
+            <label class="form-label">Nom de la production</label>
+            <input type="text" name="name" class="form-input" value="{{ data.name if data else '' }}" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Adresse</label>
+            <input type="text" name="address" class="form-input" value="{{ data.address if data else '' }}">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-input" value="{{ data.email if data else '' }}">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Téléphone</label>
+                <input type="text" name="phone" class="form-input" value="{{ data.phone if data else '' }}">
+            </div>
+        </div>
+
+
+        <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                {% if is_edit %}
+                <button type="submit"
+                    formaction="{{ url_for('admin_production_delete', record_id=request.view_args.get('record_id')) }}"
+                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette production ?');" class="admin-btn"
+                    style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca;">
+                    Supprimer
+                </button>
+                {% endif %}
+            </div>
+            <div>
+                <a href="{{ url_for('admin_productions_list') }}" class="admin-btn admin-btn-secondary"
+                    style="margin-right: 1rem;">Annuler</a>
+                <button type="submit" class="admin-btn admin-btn-primary">
+                    {% if is_edit %}Enregistrer{% else %}Créer la Production{% endif %}
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

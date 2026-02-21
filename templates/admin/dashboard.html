@@ -1,0 +1,68 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Tableau de bord{% endblock %}
+{% block page_title %}Tableau de bord{% endblock %}
+
+{% block extra_css %}
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+{% endblock %}
+
+{% block content %}
+<!-- Calendar -->
+<div class="admin-card">
+    <div class="admin-card-title">Calendrier</div>
+    <div id='calendar'></div>
+</div>
+
+<!-- Today's check-outs -->
+<div class="dashboard-grid">
+    <div class="admin-card">
+        <div class="admin-card-title">Check-outs du jour</div>
+        {% if today_projects %}
+        {% for project in today_projects %}
+        <div class="recent-row" style="padding: 1rem 0; display: block;">
+            <div style="margin-bottom: 0.5rem; display: flex; align-items: baseline; justify-content: space-between;">
+                <div>
+                    <strong style="font-size: 0.95rem;">{{ project.name }}</strong>
+                    <span style="color: var(--grey-2); margin-left: 0.5rem; font-size: 0.85rem;">{{ project.production
+                        }}</span>
+                    <div style="font-size: 0.75rem; color: var(--grey-2); margin-top: 0.2rem;">
+                        Tournage du {{ project.shoot_start }} au {{ project.shoot_end }}
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
+                {% for vehicle in project.vehicles %}
+                {% if vehicle.status %}
+                <a class="recent-row-vehicle-link"
+                    href="{{ url_for('admin_checkout_detail', record_id=vehicle.checkout_id) }}">
+                    <span style="font-weight: 500;">{{ vehicle.name }}</span>
+                    <span class="badge-pill" data-val="{{ vehicle.status }}" {% if vehicle.ready=='Oui'
+                        %}data-conform="yes" {% elif vehicle.ready=='Non' %}data-conform="no" {% endif %}
+                        style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">{{ vehicle.status }}</span>
+                </a>
+                {% else %}
+                <a href="{{ url_for('admin_checkout_new', project_id=project.id, vehicle_id=vehicle.id) }}"
+                    class="recent-row-vehicle-link">
+                    <span>{{ vehicle.name }}</span>
+                    <span class="badge-pill" data-val="À contrôler"
+                        style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">À contrôler</span>
+                </a>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+        <div style="margin-top: 1rem;">
+            <a href="{{ url_for('admin_checkouts_list') }}" class="admin-btn admin-btn-secondary"
+                style="font-size: 0.8rem; width: 100%; text-align: center; box-sizing: border-box;">Voir tous les
+                check-outs →</a>
+        </div>
+        {% else %}
+        <p style="color: var(--grey-2); font-size: 0.9rem; text-align: center; padding: 2rem 0;">Aucun projet avec
+            départ aujourd'hui.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
