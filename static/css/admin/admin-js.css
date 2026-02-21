@@ -1,0 +1,69 @@
+.rich-select {
+    position: relative;
+}
+
+.rich-select-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid var(--grey-4, #e0e0e0);
+    border-radius: 8px;
+    z-index: 60;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    max-height: 320px;
+    overflow: hidden;
+    display: none;
+    flex-direction: column;
+}
+
+.rich-select.open .rich-select-dropdown {
+    display: flex;
+}
+
+.rich-select-options {
+    overflow-y: auto;
+    max-height: 260px;
+    padding: 0.25rem;
+}
+
+.rich-select-option {
+    display: block;
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    text-align: left;
+    border-radius: 6px;
+    transition: background 0.1s;
+    border-bottom: 1px solid var(--grey-4, #f0f0f0);
+}
+
+.rich-select-option:last-child {
+    border-bottom: none;
+}
+
+.rich-select-option:hover {
+    background: var(--admin-bg, #f5f5f5);
+}
+
+.rich-option-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.2rem;
+}
+
+.rich-option-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+.rich-meta-item {
+    font-size: 0.72rem;
+    color: var(--grey-2, #888);
+}

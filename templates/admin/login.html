@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Admin - Belle Vitesse</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.css') }}">
+    <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
+</head>
+
+<body class="login-page">
+    <div class="login-card">
+        <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}" alt="Belle Vitesse"
+            class="login-logo">
+        <h1 class="login-title">Dashboard Admin</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="flash-messages flash-{{ category }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="form-group">
+                <label for="password" class="form-label">Mot de passe</label>
+                <input type="password" name="password" id="password" class="form-input" required autofocus>
+            </div>
+            <button type="submit" class="login-btn">Se connecter</button>
+        </form>
+    </div>
+</body>
+
+</html>

@@ -77,8 +77,8 @@
                 <div class="checkout-info-item">
                     <span class="checkout-info-label">Responsable</span>
                     <span class="checkout-info-value">
-                        {% if data.controller and data.controller.name is defined %}
-                        {{ data.controller.name }}
+                        {% if data.controller is mapping %}
+                        {{ data.controller.get('name', '—') }}
                         {% else %}
                         {{ data.controller or '—' }}
                         {% endif %}

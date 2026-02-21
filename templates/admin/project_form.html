@@ -1,0 +1,92 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}
+{% if is_edit %}Modifier le Projet{% else %}Nouveau Projet{% endif %}
+{% endblock %}
+
+{% block page_title %}
+{% if is_edit %}Modifier le Projet{% else %}Nouveau Projet{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <div class="form-group">
+            <label class="form-label">Nom du projet</label>
+            <input type="text" name="name" class="form-input" value="{{ data.name if data else '' }}" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Production</label>
+            <select name="production_id" class="form-input">
+                <option value="">— Sélectionner une production —</option>
+                {% for p in productions %}
+                <option value="{{ p.id }}" {% if data and data.production_id==p.id %}selected{% endif %}>
+                    {{ p.fields.get('Nom', '—') }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Date de départ</label>
+                <input type="date" name="departure_date" class="form-input"
+                    value="{{ data.departure_date_raw if data else '' }}">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Début tournage</label>
+                <input type="date" name="shoot_start" class="form-input"
+                    value="{{ data.shoot_start_raw if data else '' }}">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Fin tournage</label>
+                <input type="date" name="shoot_end" class="form-input" value="{{ data.shoot_end_raw if data else '' }}">
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 1rem;">
+            <label class="form-label">Véhicules à contrôler</label>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+                {% for v in vehicles %}
+                {% set vf = v.fields %}
+                <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem;
+                    border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer;
+                    {% if data and v.id in data.vehicle_ids %}background: #f8f9fa; border-color: #858585;{% endif %}">
+                    <input type="checkbox" name="vehicle_ids" value="{{ v.id }}" {% if data and v.id in data.vehicle_ids
+                        %}checked{% endif %} style="accent-color: #FFC845;">
+                    {% if vf.get('thumbnail') %}
+                    <img src="{{ vf.thumbnail[0].thumbnails.small.url }}"
+                        style="width: 32px; height: 32px; border-radius: 4px; object-fit: cover;">
+                    {% endif %}
+                    <span style="font-weight: 500;">{{ vf.get('name', '—') }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                {% if is_edit %}
+                <button type="submit"
+                    formaction="{{ url_for('admin_project_delete', record_id=request.view_args.get('record_id')) }}"
+                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce projet ?');" class="admin-btn"
+                    style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca;">
+                    Supprimer
+                </button>
+                {% endif %}
+            </div>
+            <div>
+                <a href="{{ url_for('admin_projects_list') }}" class="admin-btn admin-btn-secondary"
+                    style="margin-right: 1rem;">Annuler</a>
+                <button type="submit" class="admin-btn admin-btn-primary">
+                    {% if is_edit %}Enregistrer{% else %}Créer le Projet{% endif %}
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

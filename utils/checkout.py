@@ -15,6 +15,7 @@ from pyairtable import Table
 from dotenv import load_dotenv
 from weasyprint import HTML, CSS
 from utils.airtable import get_vehicle_by_id
+from utils.formatting import format_date_fr
 
 load_dotenv()
 
@@ -26,6 +27,8 @@ TABLE_CHECKOUT = Table(AIRTABLE_SECRET_TOKEN,
 TABLE_PROJECTS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "projects")
 TABLE_PRODUCTIONS = Table(AIRTABLE_SECRET_TOKEN,
                           AIRTABLE_BASE_ID, "productions")
+TABLE_USERS = Table(AIRTABLE_SECRET_TOKEN,
+                    AIRTABLE_BASE_ID, "users")
 
 logger = logging.getLogger(__name__)
 
@@ -196,32 +199,6 @@ def get_checkout_by_inspection_id(inspection_id: str):
         return None
 
 
-# ── Date Formatting ───────────────────────────────────────────────
-
-MOIS_FR = [
-    "", "janvier", "février", "mars", "avril", "mai", "juin",
-    "juillet", "août", "septembre", "octobre", "novembre", "décembre",
-]
-
-
-def format_date_fr(date_str: str) -> str:
-    """Convert a date string to French format (ex: 16 février 2026)."""
-    if not date_str or date_str == "—":
-        return "—"
-    try:
-        if "/" in date_str:
-            parts = date_str.split("/")
-            day, month, year = int(parts[0]), int(parts[1]), parts[2]
-        elif "-" in date_str:
-            parts = date_str.split("-")
-            year, month, day = parts[0], int(parts[1]), int(parts[2])
-        else:
-            return date_str
-        return f"{day} {MOIS_FR[month]} {year}"
-    except (ValueError, IndexError):
-        return date_str
-
-
 # ── Vehicle Resolution ────────────────────────────────────────────
 
 def _resolve_vehicle(vehicle_field):
@@ -256,6 +233,35 @@ def _extract_vehicle_id(vehicle_field) -> str:
     ):
         return "—"
     return vehicle_field[0]
+
+
+def _resolve_controller(controller_field):
+    """
+    Resolve linked user record ID from the users table.
+    Returns a dict with user info, or a fallback dict with name '—'.
+    """
+    fallback = {"id": "", "name": "—", "firstname": "", "lastname": ""}
+    if (
+        not controller_field
+        or not isinstance(controller_field, list)
+        or len(controller_field) == 0
+    ):
+        return fallback
+    try:
+        user = TABLE_USERS.get(controller_field[0])
+        f = user.get("fields", {})
+        firstname = f.get("firstname", "")
+        lastname = f.get("lastname", "")
+        return {
+            "id": user["id"],
+            "name": f"{firstname} {lastname}".strip() or "—",
+            "firstname": firstname,
+            "lastname": lastname,
+            "mail": f.get("mail", ""),
+            "role": f.get("role", ""),
+        }
+    except Exception:
+        return fallback
 
 
 # ── Project Resolution ────────────────────────────────────────────
@@ -381,14 +387,15 @@ def format_checkout_data(record: dict) -> dict:
         # Inspection-level fields (still on the checkout record)
         "control_status": fields.get("État du contrôle", "—"),
         "control_date":   format_date_fr(fields.get("Date du contrôle", "—")),
-        "controller":     fields.get("Reponsable du contrôle", "—"),
+        "control_date_raw": fields.get("Date du contrôle", ""),
+        "controller":     _resolve_controller(fields.get("Reponsable du contrôle")),
         # Full vehicle record for display in templates
         "vehicle":        _resolve_vehicle(vehicle_field),
         # Stable scalar ID for seal computation — never use str(vehicle) for hashing
         "vehicle_id":     _extract_vehicle_id(vehicle_field),
         "km":             fields.get("Kilométrage départ", ""),
         "battery":        fields.get("Charge de la batterie départ", ""),
-        "odometer_photo": extract_first_photo(fields.get("Photo compteur")),
+        "odometer_photos": extract_photos(fields.get("Photo compteur")),
         # Inspection items
         "tires":           fields.get("État des pneus", "—"),
         "spare_tire":      fields.get("Roue de secours", "—"),
