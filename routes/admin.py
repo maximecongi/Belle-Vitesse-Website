@@ -384,11 +384,16 @@ def init_admin_routes(app):
     def admin_projects_list():
         try:
             projects = list_projects()
-            return render_template("admin/projects_list.html", projects=projects)
+            today_iso = datetime.now().strftime('%Y-%m-%d')
+            upcoming_projects = [p for p in projects
+                                 if p.get("raw_departure_date") >= today_iso]
+            past_projects = [p for p in projects
+                             if p.get("raw_departure_date") < today_iso]
+            return render_template("admin/projects_list.html", upcoming_projects=upcoming_projects, past_projects=past_projects)
         except Exception as e:
             current_app.logger.error(f"❌ Error in admin_projects_list: {e}")
             flash("Erreur lors de la récupération des projets.", "error")
-            return render_template("admin/projects_list.html", projects=[])
+            return render_template("admin/projects_list.html", upcoming_projects=[], past_projects=[])
 
     @app.route("/admin/projects/new", methods=["GET", "POST"])
     @require_admin
