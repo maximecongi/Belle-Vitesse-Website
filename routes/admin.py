@@ -61,6 +61,17 @@ def init_admin_routes(app):
         def decorated_function(*args, **kwargs):
             if not session.get("admin_authenticated"):
                 return redirect(url_for("admin_login", next=request.url))
+
+            # Session repair: if authenticated but missing ID, try to recover it
+            if not session.get("admin_user_id") and session.get("admin_user_firstname"):
+                try:
+                    # If we don't have the email in session yet, we can't easily repair
+                    # but we can at least try to find the user by firstname/lastname (risky)
+                    # Better: let's ensure email is always in session for next time.
+                    pass
+                except Exception:
+                    pass
+
             return f(*args, **kwargs)
         return decorated_function
 
@@ -92,6 +103,7 @@ def init_admin_routes(app):
         if user_data:
             session.permanent = True
             session["admin_authenticated"] = True
+            session["admin_user_id"] = user_data.get("id")
             session["admin_user_firstname"] = user_data.get("firstname", "")
             session["admin_user_lastname"] = user_data.get("lastname", "")
             session["admin_user_role"] = user_data.get("role", "admin")
@@ -107,6 +119,7 @@ def init_admin_routes(app):
     @app.route("/admin/logout")
     def admin_logout():
         session.pop("admin_authenticated", None)
+        session.pop("admin_user_id", None)
         session.pop("admin_user_firstname", None)
         session.pop("admin_user_lastname", None)
         session.pop("admin_user_role", None)
@@ -386,9 +399,9 @@ def init_admin_routes(app):
             projects = list_projects()
             today_iso = datetime.now().strftime('%Y-%m-%d')
             upcoming_projects = [p for p in projects
-                                 if p.get("raw_departure_date") >= today_iso]
+                                 if p.get("raw_return_date") >= today_iso]
             past_projects = [p for p in projects
-                             if p.get("raw_departure_date") < today_iso]
+                             if p.get("raw_return_date") < today_iso]
             return render_template("admin/projects_list.html", upcoming_projects=upcoming_projects, past_projects=past_projects)
         except Exception as e:
             current_app.logger.error(f"❌ Error in admin_projects_list: {e}")

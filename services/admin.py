@@ -68,6 +68,7 @@ def list_checkouts():
             "inspection_id": data["inspection_id"],
             "project": data.get("project", "—"),
             "departure_date": data.get("departure_date", "—"),
+            "vehicle": data.get("vehicle", "—"),
             "control_date": data.get("control_date", "—"),
             "status": data.get("control_status", "—"),
             "controller": data.get("controller", "—"),
@@ -205,14 +206,17 @@ def build_checkout_fields(form, is_create=False):
     if form.get("battery"):
         fields["Charge de la batterie départ"] = int(form.get("battery"))
 
-    if form.get("project_id"):
-        fields["Projet"] = [form.get("project_id")]
+    project_id = form.get("project_id")
+    if project_id and project_id != "None":
+        fields["Projet"] = [project_id]
 
-    if form.get("vehicle_id"):
-        fields["Véhicule contrôlé"] = [form.get("vehicle_id")]
+    vehicle_id = form.get("vehicle_id")
+    if vehicle_id and vehicle_id != "None":
+        fields["Véhicule contrôlé"] = [vehicle_id]
 
-    if form.get("controller_id"):
-        fields["Reponsable du contrôle"] = [form.get("controller_id")]
+    controller_id = form.get("controller_id")
+    if controller_id and controller_id != "None":
+        fields["Reponsable du contrôle"] = [controller_id]
 
     return fields
 
@@ -320,6 +324,7 @@ def list_checkins():
             "inspection_id": data["inspection_id"],
             "project": data.get("project", "—"),
             "departure_date": data.get("departure_date", "—"),
+            "vehicle": data.get("vehicle", "—"),
             "control_date": data.get("control_date", "—"),
             "status": data.get("control_status", "—"),
             "controller": data.get("controller", "—"),
@@ -457,14 +462,17 @@ def build_checkin_fields(form, is_create=False):
     if form.get("battery"):
         fields["Charge de la batterie retour"] = int(form.get("battery"))
 
-    if form.get("project_id"):
-        fields["Projet"] = [form.get("project_id")]
+    project_id = form.get("project_id")
+    if project_id and project_id != "None":
+        fields["Projet"] = [project_id]
 
-    if form.get("vehicle_id"):
-        fields["Véhicule contrôlé"] = [form.get("vehicle_id")]
+    vehicle_id = form.get("vehicle_id")
+    if vehicle_id and vehicle_id != "None":
+        fields["Véhicule contrôlé"] = [vehicle_id]
 
-    if form.get("controller_id"):
-        fields["Reponsable du contrôle"] = [form.get("controller_id")]
+    controller_id = form.get("controller_id")
+    if controller_id and controller_id != "None":
+        fields["Reponsable du contrôle"] = [controller_id]
 
     return fields
 
@@ -640,6 +648,7 @@ def list_projects():
             "shoot_start": format_date_fr(fields.get("Date de début de tournage", "—")),
             "shoot_end": format_date_fr(fields.get("Date de fin de tournage", "—")),
             "return_date": format_date_fr(fields.get("Date de retour", "—")),
+            "raw_return_date": fields.get("Date de retour", "—"),
             "raw_checkin_date": fields.get("Date de retour", ""),
             "vehicles": veh_list,
         })
@@ -809,28 +818,27 @@ def delete_production(record_id):
 
 
 def get_calendar_events():
-    """
-    Build calendar events from project records.
-
-    Returns:
-        list of FullCalendar-compatible event dicts.
-    """
     records = TABLE_PROJECTS.all()
     events = []
+    colors = [
+        "#618b4a", "#5299d3", "#f59e0b", "#e05c5c", "#8b5cf6",
+        "#06b6d4", "#f97316", "#ec4899", "#14b8a6", "#a855f7",
+    ]
 
-    for r in records:
+    for i, r in enumerate(records):
         fields = r.get("fields", {})
         name = fields.get("Nom", "Sans nom")
         start = fields.get("Date de départ")
         shoot_start = fields.get("Date de début de tournage")
         shoot_end = fields.get("Date de fin de tournage")
         return_date = fields.get("Date de retour")
+        color = colors[i % len(colors)]
 
         if start:
             events.append({
                 "title": f"🚚 Départ: {name}",
                 "start": start,
-                "color": "#618b4a",
+                "color": color,
                 "url": url_for("admin_project_edit", record_id=r["id"]),
             })
 
@@ -838,7 +846,7 @@ def get_calendar_events():
             event = {
                 "title": f"🎬 {name}",
                 "start": shoot_start,
-                "color": "#f59e0b",
+                "color": color,
                 "url": url_for("admin_project_edit", record_id=r["id"]),
             }
             if shoot_end:
@@ -846,13 +854,12 @@ def get_calendar_events():
             events.append(event)
 
         if return_date:
-            event = {
+            events.append({
                 "title": f"📦 Retour: {name}",
                 "start": return_date,
-                "color": "#5299d3",
+                "color": color,
                 "url": url_for("admin_project_edit", record_id=r["id"]),
-            }
-            events.append(event)
+            })
 
     return events
 

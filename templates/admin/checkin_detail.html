@@ -89,9 +89,9 @@
                 style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 1rem 1.25rem; border-radius: 8px; background: #fef2f2; border: 1px solid #fecaca;">
                 <span style="font-size: 1.5rem;">⚠️</span>
                 <div>
-                    <div style="font-weight: 600; color: #991b1b;">Véhicule non conforme</div><br>
+                    <div style="font-weight: 600; color: #991b1b;">Véhicule retourné non opérationnel</div><br>
                     <div style="font-size: 0.85rem; color: #b91c1c;">
-                        Points à corriger :
+                        Points à noter :
                         <ul style=" margin: 0.75rem 0 0 1rem; padding: 0;">
                             {% for failure in ns.failures %}
                             <li style="font-size: 0.65rem;">{{ failure }}</li>
@@ -200,8 +200,7 @@
             <form action="{{ url_for('admin_checkin_seal', record_id=record_id) }}" target="_blank" method="POST"
                 onsubmit="if(confirm('Êtes-vous sûr de vouloir sceller ce checkin ? Cette action est irréversible.')) { const btn = this.querySelector('button[type=submit]'); btn.disabled = true; btn.classList.add('btn-disabled'); btn.innerText = 'Ouverture de la signature...'; setTimeout(() => window.location.reload(), 1500); return true; } return false;">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                <button {% if ns.failures | length !=0 or data.control_status !='En cours' %} disabled
-                    class=" admin-btn btn-disabled" {% endif %} type="submit" class="admin-btn"
+                <button type="submit" class="admin-btn"
                     style="width: 100%; background: #ffc84526; color: #ffc845; border-color: #ffc8453d; transition: all 0.2s;">Sceller
                     ce
                     checkin</button>

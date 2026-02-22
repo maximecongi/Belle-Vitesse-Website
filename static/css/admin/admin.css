@@ -78,6 +78,7 @@ body {
     min-height: 100vh;
 }
 
+
 /* Sidebar */
 .admin-sidebar {
     width: var(--admin-sidebar-width);
@@ -167,6 +168,12 @@ body {
 .admin-header-title h1 {
     margin: 0;
     font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.admin-section-title {
+    margin: 0.8rem 0;
+    font-size: 1.1rem;
     font-weight: 600;
 }
 
@@ -461,15 +468,22 @@ body {
     padding: 1rem;
     background-color: var(--white-3);
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.65rem;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+}
+
+.admin-table th:last-child {
+    text-align: center;
 }
 
 .admin-table td {
     padding: 1rem;
     border-bottom: 1px solid var(--white-3);
     vertical-align: middle;
+}
+
+.admin-table td:last-child {
+    text-align: center;
 }
 
 .admin-table tr:hover {

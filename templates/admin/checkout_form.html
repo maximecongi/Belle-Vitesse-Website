@@ -17,10 +17,11 @@
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
             <div class="form-group">
-                <label class="form-label">Projet</label>
+                <label class="form-label">Projet <span style="color: var(--red-error);">*</span></label>
                 <div class="rich-select" id="projectSelect">
-                    <input type="hidden" name="project_id"
-                        value="{{ data.project_id if data and data.project_id else '' }}">
+                    <input type="text" name="project_id"
+                        value="{{ data.project_id if data and data.project_id else '' }}" required
+                        style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;">
                     <div class="badge-select-trigger" id="projectTrigger">
                         <span id="projectLabel">
                             {% if data and data.project_id %}
@@ -68,17 +69,15 @@
                         </div>
                     </div>
                 </div>
-
-                <style>
-                </style>
             </div>
 
             <div class="form-group">
-                <label class="form-label">Véhicule</label>
+                <label class="form-label">Véhicule <span style="color: var(--red-error);">*</span></label>
                 <div class="rich-select" id="vehicleSelect" {% if not (data and data.project_id) %}data-disabled="true"
                     style="opacity: 0.5; pointer-events: none;" {% endif %}>
-                    <input type="hidden" name="vehicle_id"
-                        value="{{ data.vehicle_id if data and data.vehicle_id else '' }}">
+                    <input type="text" name="vehicle_id"
+                        value="{{ data.vehicle_id if data and data.vehicle_id else '' }}" required
+                        style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;">
                     <div class="badge-select-trigger" id="vehicleTrigger">
                         <span id="vehicleLabel">
                             {% if data and data.vehicle_id %}
@@ -114,7 +113,8 @@
                             {% set thumb_url = vf.thumbnail[0].thumbnails.large.url if vf.thumbnail else '' %}
                             <button type="button" class="rich-select-option" data-id="{{ v.id }}"
                                 data-name="{{ vf.get('name', '—') }}" data-thumb="{{ thumb_url }}"
-                                data-search="{{ vf.get('name', '') }}">
+                                data-search="{{ vf.get('name', '') }}" {% if vf.get('_checkout_status')
+                                %}data-disabled="true" {% endif %}>
                                 <div style="display: flex; align-items: center; gap: 0.6rem;">
                                     {% if thumb_url %}
                                     <img src="{{ thumb_url }}"
@@ -143,7 +143,8 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label">Responsable du contrôle</label>
+                <label class="form-label">Responsable du contrôle <span
+                        style="color: var(--red-error);">*</span></label>
                 {% if is_edit %}
                 <input type="hidden" name="controller_id"
                     value="{{ data.controller.id if data and data.controller and data.controller.id else '' }}">
@@ -152,7 +153,9 @@
                 </div>
                 {% elif session.get('admin_user_role') != 'Administrator' %}
                 <!-- Auto-select for non-admin users -->
-                <input type="hidden" name="controller_id" value="{{ session.get('admin_user_id') }}">
+                <input type="text" name="controller_id"
+                    value="{{ data.controller_id if data and data.controller_id else session.get('admin_user_id') }}"
+                    required style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;">
                 <div class="form-input"
                     style="background: #f0f0f0; cursor: not-allowed; color: #555; display: flex; align-items: center; justify-content: space-between;">
                     <span>{{ session.get('admin_user_firstname') }} {{ session.get('admin_user_lastname') }}</span>
@@ -160,10 +163,20 @@
                 {% else %}
                 <!-- Standard select for administrators, pre-selected with their own name -->
                 <div class="rich-select" id="controllerSelect">
-                    <input type="hidden" name="controller_id" value="{{ session.get('admin_user_id') }}">
+                    <input type="text" name="controller_id"
+                        value="{{ data.controller_id if data and data.controller_id else session.get('admin_user_id') }}"
+                        required style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;">
                     <div class="badge-select-trigger" id="controllerTrigger">
-                        <span id="controllerLabel">{{ session.get('admin_user_firstname') }} {{
-                            session.get('admin_user_lastname') }}</span>
+                        <span id="controllerLabel">
+                            {% if data and data.controller_id %}
+                            {% for u in users %}
+                            {% if u.id == data.controller_id %}{{ u.fields.get('firstname', '') }} {{
+                            u.fields.get('lastname', '') }}{% endif %}
+                            {% endfor %}
+                            {% else %}
+                            {{ session.get('admin_user_firstname', '—') }} {{ session.get('admin_user_lastname', '') }}
+                            {% endif %}
+                        </span>
                         <span class="arrow">▼</span>
                     </div>
                     <div class="rich-select-dropdown" id="controllerDropdown">
@@ -191,14 +204,15 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label">Kilométrage départ</label>
-                <input type="number" name="km" class="form-input" value="{{ data.km if data else '' }}">
+                <label class="form-label">Kilométrage départ <span style="color: var(--red-error);">*</span></label>
+                <input type="number" name="km" class="form-input" value="{{ data.km if data else '' }}" required>
             </div>
 
             <div class="form-group">
-                <label class="form-label">Charge de la batterie départ (%)</label>
+                <label class="form-label">Charge de la batterie départ (%) <span
+                        style="color: var(--red-error);">*</span></label>
                 <input type="number" name="battery" class="form-input" value="{{ data.battery if data else '' }}"
-                    min="0" max="100" placeholder="Ex: 95">
+                    min="0" max="100" placeholder="Ex: 95" required>
             </div>
         </div>
 
@@ -217,11 +231,12 @@
             ('wipers', 'Essuie-glaces'),
             ('horn', 'État du klaxon')
             ] %}
-            {% set current = data[field] if data and data[field] else 'OK' %}
+            {% set current = data[field] if data and data[field] else 'À vérifier' %}
             <div class="form-group">
-                <label class="form-label">{{ label }}</label>
+                <label class="form-label">{{ label }} <span style="color: var(--red-error);">*</span></label>
                 <div class="badge-select" data-field="{{ field }}">
-                    <input type="hidden" name="{{ field }}" value="{{ current }}">
+                    <input type="text" name="{{ field }}" value="{{ current }}" required
+                        style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;">
                     <div class="badge-select-trigger">
                         <span class="badge-pill" data-val="{{ current }}">{{ current }}</span>
                         <span class="arrow">▼</span>
@@ -244,11 +259,12 @@
             style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
             {% for field, label in [('safety_triangle', 'Triangle de signalisation et gilet orange'),
             ('fire_extinguisher', 'Présence extincteur')] %}
-            {% set current = data[field] if data and data[field] else 'OK' %}
+            {% set current = data[field] if data and data[field] else 'À vérifier' %}
             <div class="form-group">
-                <label class="form-label">{{ label }}</label>
+                <label class="form-label">{{ label }} <span style="color: var(--red-error);">*</span></label>
                 <div class="badge-select" data-field="{{ field }}">
-                    <input type="hidden" name="{{ field }}" value="{{ current }}">
+                    <input type="text" name="{{ field }}" value="{{ current }}" required
+                        style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;">
                     <div class="badge-select-trigger">
                         <span class="badge-pill" data-val="{{ current }}">{{ current }}</span>
                         <span class="arrow">▼</span>
@@ -265,10 +281,8 @@
             {% endfor %}
         </div>
 
-
-
         <div class="admin-card-title">Observations</div>
-        <div class="form-group">
+        <div class="form-group" style="margin-bottom: 2rem;">
             <textarea name="notes" class="form-input" rows="5">{{ data.notes if data else '' }}</textarea>
         </div>
 
@@ -280,7 +294,7 @@
         ('interior_photos', 'Photos intérieur véhicule', 'interior_photos')
         ] %}
         <div class="form-group" style="margin-bottom: 1.5rem;">
-            <label class="form-label">{{ label }}</label>
+            <label class="form-label">{{ label }} <span style="color: var(--red-error);">*</span></label>
 
             {% if is_edit %}
             {% set photos = data.get(data_key, []) if data else [] %}
@@ -305,29 +319,12 @@
                     <div style="font-size: 0.75rem; color: var(--grey-2);">Cliquez ou glissez-déposez • JPG, PNG</div>
                 </div>
                 <input type="file" name="{{ field_name }}" multiple accept="image/*" style="display: none;"
-                    onchange="updatePhotoLabel(this)">
+                    onchange="updatePhotoLabel(this)" required>
             </label>
             <div class="photo-preview" data-for="{{ field_name }}"
                 style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;"></div>
         </div>
         {% endfor %}
-
-        <script>
-            function updatePhotoLabel(input) {
-                const preview = document.querySelector(`.photo-preview[data-for="${input.name}"]`);
-                preview.innerHTML = '';
-                for (const file of input.files) {
-                    const reader = new FileReader();
-                    reader.onload = function (e) {
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        img.style.cssText = 'width: 70px; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #e0e0e0;';
-                        preview.appendChild(img);
-                    };
-                    reader.readAsDataURL(file);
-                }
-            }
-        </script>
 
         <div style="margin-top: 2rem; text-align: right;">
             <a href="{{ url_for('admin_checkouts_list') }}" class="admin-btn admin-btn-secondary"
@@ -339,4 +336,23 @@
 
     </form>
 </div>
+
+<script>
+    function updatePhotoLabel(input) {
+        const preview = document.querySelector(`.photo-preview[data-for="${input.name}"]`);
+        preview.innerHTML = '';
+        if (input.files.length > 0) {
+            for (const file of input.files) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.style.cssText = 'width: 70px; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #e0e0e0;';
+                    preview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    }
+</script>
 {% endblock %}

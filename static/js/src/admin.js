@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ─────────────────────────────────────────────
     document.querySelectorAll('.badge-select').forEach(sel => {
         const trigger = sel.querySelector('.badge-select-trigger');
-        const input = sel.querySelector('input[type="hidden"]');
+        const input = sel.querySelector('input');
         const pill = trigger.querySelector('.badge-pill');
 
         trigger.addEventListener('click', () => {
@@ -80,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         pOptions.forEach(opt => {
             opt.addEventListener('click', () => {
+                if (opt.dataset.disabled === 'true') return;
                 pInput.value = opt.dataset.id;
                 pLabel.textContent = opt.dataset.name;
                 pSelect.classList.remove('open');
@@ -166,6 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         vOptions.forEach(opt => {
             opt.addEventListener('click', () => {
+                if (opt.dataset.disabled === 'true') return;
                 vInput.value = opt.dataset.id;
                 const thumb = opt.dataset.thumb;
                 if (thumb) {
@@ -201,6 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         cOptions.forEach(opt => {
             opt.addEventListener('click', () => {
+                if (opt.dataset.disabled === 'true') return;
                 cInput.value = opt.dataset.id;
                 cLabel.textContent = opt.dataset.name;
                 cSelect.classList.remove('open');
