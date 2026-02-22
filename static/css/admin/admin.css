@@ -8,8 +8,9 @@
 }
 
 .fc-daygrid-event {
-    font-size: 0.85rem;
-    padding: 2px 4px;
+    font-size: 0.8rem;
+    font-weight: 400;
+    padding: 4px 6x;
 }
 
 .fc-toolbar-title {

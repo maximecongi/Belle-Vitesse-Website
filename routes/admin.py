@@ -68,7 +68,7 @@ def init_admin_routes(app):
     # ── Login / Logout ────────────────────────────────────────────
 
     @app.route("/admin/login", methods=["GET", "POST"])
-    @limiter.limit("5 per minute")
+    @limiter.limit("20 per minute")
     def admin_login():
         if session.get("admin_authenticated"):
             return redirect(url_for("admin_dashboard"))
