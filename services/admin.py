@@ -830,7 +830,7 @@ def get_calendar_events():
             events.append({
                 "title": f"🚚 Départ: {name}",
                 "start": start,
-                "color": "#3F6E8C",
+                "color": "#618b4a",
                 "url": url_for("admin_project_edit", record_id=r["id"]),
             })
 
@@ -838,7 +838,7 @@ def get_calendar_events():
             event = {
                 "title": f"🎬 {name}",
                 "start": shoot_start,
-                "color": "#6d893d",
+                "color": "#f59e0b",
                 "url": url_for("admin_project_edit", record_id=r["id"]),
             }
             if shoot_end:
@@ -849,7 +849,7 @@ def get_calendar_events():
             event = {
                 "title": f"📦 Retour: {name}",
                 "start": return_date,
-                "color": "#de9a2c",
+                "color": "#5299d3",
                 "url": url_for("admin_project_edit", record_id=r["id"]),
             }
             events.append(event)

@@ -570,7 +570,6 @@ body.login-page {
     margin-bottom: 1rem;
     padding: 0.8rem;
     font-size: 0.9rem;
-    white-space: pre-line
 }
 
 .flash-messages.flash-error {
