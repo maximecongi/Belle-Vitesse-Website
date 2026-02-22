@@ -98,9 +98,9 @@ def get_checkout_detail(record_id):
 
     # If signed, load the stable snapshot to get the real PDF URL and hash
     if data.get("control_status") == "Signé":
-        from utils.database import get_signed_document
+        from utils.database import get_checkout_signed_document
         from services.checkout import generate_pdf_access_token
-        signed_doc = get_signed_document(data["inspection_id"])
+        signed_doc = get_checkout_signed_document(data["inspection_id"])
         if signed_doc and signed_doc.get("pdf_url"):
             data["hash"] = signed_doc["hash"]
             pdf_url = signed_doc["pdf_url"]
@@ -350,9 +350,9 @@ def get_checkin_detail(record_id):
 
     # If signed, load the stable snapshot to get the real PDF URL and hash
     if data.get("control_status") == "Signé":
-        from utils.database import get_signed_document
+        from utils.database import get_checkin_signed_document
         from services.checkin import generate_pdf_access_token
-        signed_doc = get_signed_document(data["inspection_id"])
+        signed_doc = get_checkin_signed_document(data["inspection_id"])
         if signed_doc and signed_doc.get("pdf_url"):
             data["hash"] = signed_doc["hash"]
             pdf_url = signed_doc["pdf_url"]

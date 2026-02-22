@@ -145,8 +145,9 @@ def process_signature(token, signature_data, signed_ip):
         f.write(pdf_bytes)
 
     pdf_public_url = f"{base_url}/checkin/document/{filename}"
-    pdf_file_hash = compute_pdf_hash(pdf_bytes)
 
+    # 7. Store immutable snapshot in MySQL
+    pdf_file_hash = compute_pdf_hash(pdf_bytes)
     store_success = store_checkin_signed_document(
         inspection_id=inspection_id,
         file_hash=current_hash,

@@ -358,7 +358,7 @@ def store_signed_document(
         connection.close()
 
 
-def get_signed_document(inspection_id):
+def get_checkout_signed_document(inspection_id):
     """
     Retrieve a signed document by inspection ID from MySQL.
 

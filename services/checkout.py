@@ -31,7 +31,7 @@ from utils.checkout import (
 )
 from utils.database import (
     store_signed_document,
-    get_signed_document,
+    get_checkout_signed_document,
     store_checkout_token,
     get_checkout_token,
     update_checkout_token_signature,
@@ -278,7 +278,6 @@ def process_signature(token, signature_data, signed_ip):
 
 
 def _trigger_n8n_webhook(inspection_id, filename, base_url, current_hash, data):
-    """Trigger the n8n webhook after signing (fire-and-forget)."""
     try:
         n8n_webhook_url = os.getenv("N8N_WEBHOOK_CHECKOUT_SIGN")
         if not n8n_webhook_url:
@@ -290,7 +289,6 @@ def _trigger_n8n_webhook(inspection_id, filename, base_url, current_hash, data):
         token_n8n = hmac.new(secret, token_payload, hashlib.sha256).hexdigest()
         pdf_url_signed = f"{base_url}/checkout/document/{filename}?t={token_n8n}"
 
-        # Parse French date → year + month number
         date_parts = data.get("control_date", "").split()
         year = date_parts[2] if len(date_parts) >= 3 else "—"
         month_name = date_parts[1].lower() if len(date_parts) >= 3 else ""
@@ -343,7 +341,7 @@ def verify_checkout_document(inspection_id, uploaded_file=None):
     Returns:
         dict with template context: data, seal_valid, pdf_valid, source, etc.
     """
-    signed_doc = get_signed_document(inspection_id)
+    signed_doc = get_checkout_signed_document(inspection_id)
 
     # ── No MySQL snapshot → fallback to Airtable ─────────────────
     if not signed_doc:

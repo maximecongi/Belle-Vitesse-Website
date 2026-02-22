@@ -111,6 +111,7 @@ def init_checkin_routes(app):
             return jsonify({"error": "Internal server error during signature processing"}), 500
 
     @app.route("/checkin/verify/<inspection_id>", methods=["GET", "POST"])
+    @csrf.exempt
     def checkin_verify(inspection_id):
         uploaded_file = request.files.get(
             "pdf") if request.method == "POST" else None
