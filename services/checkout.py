@@ -461,14 +461,6 @@ def generate_pdf_access_token(filename):
 
 
 def validate_pdf_access_token(filename, provided_token):
-    """
-    Validate a time-limited, HMAC-signed access token for a PDF filename.
-
-    Tokens are valid for PDF_ACCESS_TOKEN_TTL_MINUTES (default: 60 minutes).
-
-    Returns:
-        True if the token is valid, False otherwise.
-    """
     secret = os.getenv("HASH_SECRET_KEY", "").encode("utf-8")
     ttl = int(os.getenv("PDF_ACCESS_TOKEN_TTL_MINUTES", "60"))
     now_minutes = int(datetime.now(timezone.utc).timestamp() // 60)

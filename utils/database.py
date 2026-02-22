@@ -4,6 +4,7 @@ Replaces direct Airtable API calls with MySQL queries.
 Maintains the same interface as the original airtable.py.
 """
 
+from utils.airtable import add_newsletter_subscriber, remove_newsletter_subscriber
 import os
 import json
 import mysql.connector
@@ -224,7 +225,6 @@ def get_configs_for_vehicle(vehicle_id):
 
 
 # Proxy Newsletter functions to Airtable service for real-time management
-from utils.airtable import add_newsletter_subscriber, remove_newsletter_subscriber
 
 
 # ============================================================
@@ -410,7 +410,8 @@ def get_checkout_token(token):
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
     try:
-        cursor.execute("SELECT * FROM checkout_tokens WHERE token = %s", (token,))
+        cursor.execute(
+            "SELECT * FROM checkout_tokens WHERE token = %s", (token,))
         return cursor.fetchone()
     except mysql.connector.Error as err:
         print(f"❌ Error fetching token: {err}")
@@ -442,7 +443,8 @@ def delete_checkout_token(token):
     connection = get_db_connection()
     cursor = connection.cursor()
     try:
-        cursor.execute("DELETE FROM checkout_tokens WHERE token = %s", (token,))
+        cursor.execute(
+            "DELETE FROM checkout_tokens WHERE token = %s", (token,))
         connection.commit()
     except mysql.connector.Error as err:
         print(f"❌ Error deleting token: {err}")
@@ -453,6 +455,7 @@ def delete_checkout_token(token):
 # ============================================================
 # Checkin Verification (MySQL)
 # ============================================================
+
 
 def init_checkin_db():
     """
@@ -598,7 +601,8 @@ def get_checkin_token(token):
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
     try:
-        cursor.execute("SELECT * FROM checkin_tokens WHERE token = %s", (token,))
+        cursor.execute(
+            "SELECT * FROM checkin_tokens WHERE token = %s", (token,))
         return cursor.fetchone()
     except mysql.connector.Error as err:
         print(f"❌ Error fetching checkin token: {err}")

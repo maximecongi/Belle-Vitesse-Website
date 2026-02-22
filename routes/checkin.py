@@ -122,6 +122,7 @@ def init_checkin_routes(app):
         return render_template("checkin_verify.html", **context)
 
     @app.route("/checkin/document/<filename>")
+    @csrf.exempt
     def download_checkin_document(filename):
         access_token = request.args.get("t", "")
         if not access_token or not validate_pdf_access_token(filename, access_token):
