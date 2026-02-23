@@ -33,10 +33,13 @@
             </div>
 
             <nav class="admin-nav">
+                {% set user_role = session.get('admin_user_role', 'User')|lower %}
                 <a href="{{ url_for('admin_dashboard') }}"
                     class="admin-nav-item {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
                     Tableau de bord
                 </a>
+
+                {% if user_role in ['administrator', 'manager'] %}
                 <a href="{{ url_for('admin_projects_list') }}"
                     class="admin-nav-item {% if request.endpoint == 'admin_projects_list' %}active{% endif %}">
                     Projets
@@ -45,6 +48,8 @@
                     class="admin-nav-item {% if request.endpoint == 'admin_productions_list' %}active{% endif %}">
                     Productions
                 </a>
+                {% endif %}
+
                 <a href="{{ url_for('admin_checkouts_list') }}"
                     class="admin-nav-item {% if request.endpoint == 'admin_checkouts_list' %}active{% endif %}">
                     Checkouts
@@ -53,10 +58,13 @@
                     class="admin-nav-item {% if request.endpoint == 'admin_checkins_list' %}active{% endif %}">
                     Checkins
                 </a>
+
+                {% if user_role == 'administrator' %}
                 <a href="{{ url_for('admin_users_list') }}"
                     class="admin-nav-item {% if request.endpoint == 'admin_users_list' %}active{% endif %}">
                     Utilisateurs
                 </a>
+                {% endif %}
             </nav>
 
             <div class="admin-sidebar-footer">

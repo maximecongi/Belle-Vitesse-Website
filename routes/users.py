@@ -1,27 +1,19 @@
-from functools import wraps
-from flask import render_template, request, session, redirect, url_for, flash
+from flask import render_template, request, redirect, url_for, flash
 
 from services.users import list_users, get_user, create_user, update_user, delete_user
+from utils.decorators import require_roles
 
 
 def init_users_routes(app):
 
-    def require_admin(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if not session.get("admin_authenticated"):
-                return redirect(url_for("admin_login", next=request.url))
-            return f(*args, **kwargs)
-        return decorated_function
-
     @app.route("/admin/users")
-    @require_admin
+    @require_roles('administrator')
     def admin_users_list():
         users = list_users()
         return render_template("admin/users_list.html", users=users)
 
     @app.route("/admin/users/new", methods=["GET", "POST"])
-    @require_admin
+    @require_roles('administrator')
     def admin_user_create():
         if request.method == "POST":
             data = {
@@ -37,7 +29,7 @@ def init_users_routes(app):
         return render_template("admin/user_form.html", is_edit=False, data=None)
 
     @app.route("/admin/users/<record_id>/edit", methods=["GET", "POST"])
-    @require_admin
+    @require_roles('administrator')
     def admin_user_edit(record_id):
         user = get_user(record_id)
         if not user:
@@ -59,7 +51,7 @@ def init_users_routes(app):
         return render_template("admin/user_form.html", is_edit=True, data=user.get("fields", {}), record_id=record_id)
 
     @app.route("/admin/users/<record_id>/delete", methods=["POST"])
-    @require_admin
+    @require_roles('administrator')
     def admin_user_delete(record_id):
         if delete_user(record_id):
             flash("Utilisateur supprimé avec succès.", "success")

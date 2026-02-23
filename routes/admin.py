@@ -5,7 +5,7 @@ Each handler: parse request → call service → render/redirect.
 All business logic lives in services.admin.
 """
 
-from functools import wraps
+from utils.decorators import require_roles
 from datetime import datetime, timezone
 from flask import (
     render_template,
@@ -53,27 +53,6 @@ from services.auth import request_magic_link, verify_magic_link
 
 def init_admin_routes(app):
     """Admin authentication, dashboard, CRUD operations, calendar & API."""
-
-    # ── Auth Decorator ────────────────────────────────────────────
-
-    def require_admin(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if not session.get("admin_authenticated"):
-                return redirect(url_for("admin_login", next=request.url))
-
-            # Session repair: if authenticated but missing ID, try to recover it
-            if not session.get("admin_user_id") and session.get("admin_user_firstname"):
-                try:
-                    # If we don't have the email in session yet, we can't easily repair
-                    # but we can at least try to find the user by firstname/lastname (risky)
-                    # Better: let's ensure email is always in session for next time.
-                    pass
-                except Exception:
-                    pass
-
-            return f(*args, **kwargs)
-        return decorated_function
 
     # ── Login / Logout ────────────────────────────────────────────
 
@@ -131,7 +110,7 @@ def init_admin_routes(app):
 
     @app.route("/admin")
     @app.route("/admin/dashboard")
-    @require_admin
+    @require_roles('administrator', 'manager', 'user')
     def admin_dashboard():
         try:
             projects_data = list_projects()
@@ -152,7 +131,7 @@ def init_admin_routes(app):
     # ── Checkouts CRUD ────────────────────────────────────────────
 
     @app.route("/admin/checkouts")
-    @require_admin
+    @require_roles('administrator', 'manager', 'user')
     def admin_checkouts_list():
         try:
             result = list_checkouts()
@@ -169,7 +148,7 @@ def init_admin_routes(app):
             )
 
     @app.route("/admin/checkouts/<record_id>")
-    @require_admin
+    @require_roles('administrator', 'manager', 'user')
     def admin_checkout_detail(record_id):
         try:
             data = get_checkout_detail(record_id)
@@ -182,7 +161,7 @@ def init_admin_routes(app):
             return redirect(url_for("admin_checkouts_list"))
 
     @app.route("/admin/checkouts/new", methods=["GET", "POST"])
-    @require_admin
+    @require_roles('administrator', 'manager', 'user')
     def admin_checkout_new():
         context = get_checkout_form_context()
 
@@ -212,7 +191,7 @@ def init_admin_routes(app):
         return render_template("admin/checkout_form.html", data=initial_data, is_edit=False, **context)
 
     @app.route("/admin/checkouts/<record_id>/edit", methods=["GET", "POST"])
-    @require_admin
+    @require_roles('administrator', 'manager', 'user')
     def admin_checkout_edit(record_id):
         context = get_checkout_form_context()
 
@@ -235,7 +214,7 @@ def init_admin_routes(app):
             return redirect(url_for("admin_checkout_detail", record_id=record_id))
 
     @app.route("/admin/checkouts/<record_id>/delete", methods=["POST"])
-    @require_admin
+    @require_roles('administrator', 'manager', 'user')
     def admin_checkout_delete(record_id):
         try:
             delete_checkout(record_id)
@@ -247,7 +226,7 @@ def init_admin_routes(app):
             return redirect(url_for("admin_checkout_detail", record_id=record_id))
 
     @app.route("/admin/checkouts/<record_id>/seal", methods=["POST"])
-    @require_admin
+    @require_roles('administrator', 'manager', 'user')
     def admin_checkout_seal(record_id):
         try:
             from services.checkout import generate_signing_token
@@ -272,7 +251,7 @@ def init_admin_routes(app):
 # ── Checkins CRUD ────────────────────────────────────────────
 
     @app.route("/admin/checkins")
-    @require_admin
+    @require_roles('administrator', 'manager', 'user')
     def admin_checkins_list():
         try:
             result = list_checkins()
@@ -289,7 +268,7 @@ def init_admin_routes(app):
             )
 
     @app.route("/admin/checkins/<record_id>")
-    @require_admin
+    @require_roles('administrator', 'manager', 'user')
     def admin_checkin_detail(record_id):
         try:
             data = get_checkin_detail(record_id)
@@ -302,7 +281,7 @@ def init_admin_routes(app):
             return redirect(url_for("admin_checkins_list"))
 
     @app.route("/admin/checkins/new", methods=["GET", "POST"])
-    @require_admin
+    @require_roles('administrator', 'manager', 'user')
     def admin_checkin_new():
         context = get_checkin_form_context()
 
@@ -332,7 +311,7 @@ def init_admin_routes(app):
         return render_template("admin/checkin_form.html", data=initial_data, is_edit=False, **context)
 
     @app.route("/admin/checkins/<record_id>/edit", methods=["GET", "POST"])
-    @require_admin
+    @require_roles('administrator', 'manager', 'user')
     def admin_checkin_edit(record_id):
         context = get_checkin_form_context()
 
@@ -355,7 +334,7 @@ def init_admin_routes(app):
             return redirect(url_for("admin_checkin_detail", record_id=record_id))
 
     @app.route("/admin/checkins/<record_id>/delete", methods=["POST"])
-    @require_admin
+    @require_roles('administrator', 'manager', 'user')
     def admin_checkin_delete(record_id):
         try:
             delete_checkin(record_id)
@@ -367,7 +346,7 @@ def init_admin_routes(app):
             return redirect(url_for("admin_checkin_detail", record_id=record_id))
 
     @app.route("/admin/checkins/<record_id>/seal", methods=["POST"])
-    @require_admin
+    @require_roles('administrator', 'manager', 'user')
     def admin_checkin_seal(record_id):
         try:
             from services.checkin import generate_signing_token
@@ -393,7 +372,7 @@ def init_admin_routes(app):
     # ── Projects CRUD ─────────────────────────────────────────────
 
     @app.route("/admin/projects")
-    @require_admin
+    @require_roles('administrator', 'manager')
     def admin_projects_list():
         try:
             projects = list_projects()
@@ -409,7 +388,7 @@ def init_admin_routes(app):
             return render_template("admin/projects_list.html", upcoming_projects=[], past_projects=[])
 
     @app.route("/admin/projects/new", methods=["GET", "POST"])
-    @require_admin
+    @require_roles('administrator', 'manager')
     def admin_project_new():
         context = get_project_form_context()
 
@@ -433,7 +412,7 @@ def init_admin_routes(app):
         return render_template("admin/project_form.html", is_edit=False, **context)
 
     @app.route("/admin/projects/<record_id>/edit", methods=["GET", "POST"])
-    @require_admin
+    @require_roles('administrator', 'manager')
     def admin_project_edit(record_id):
         context = get_project_form_context()
 
@@ -453,7 +432,7 @@ def init_admin_routes(app):
             return redirect(url_for("admin_projects_list"))
 
     @app.route("/admin/projects/<record_id>/delete", methods=["POST"])
-    @require_admin
+    @require_roles('administrator', 'manager')
     def admin_project_delete(record_id):
         try:
             delete_project(record_id)
@@ -467,7 +446,7 @@ def init_admin_routes(app):
     # ── Productions CRUD ──────────────────────────────────────────
 
     @app.route("/admin/productions")
-    @require_admin
+    @require_roles('administrator', 'manager')
     def admin_productions_list():
         try:
             productions = list_productions()
@@ -479,7 +458,7 @@ def init_admin_routes(app):
             return render_template("admin/productions_list.html", productions=[])
 
     @app.route("/admin/productions/new", methods=["GET", "POST"])
-    @require_admin
+    @require_roles('administrator', 'manager')
     def admin_production_new():
         if request.method == "POST":
             try:
@@ -495,7 +474,7 @@ def init_admin_routes(app):
         return render_template("admin/production_form.html", is_edit=False)
 
     @app.route("/admin/productions/<record_id>/edit", methods=["GET", "POST"])
-    @require_admin
+    @require_roles('administrator', 'manager')
     def admin_production_edit(record_id):
         try:
             if request.method == "POST":
@@ -513,7 +492,7 @@ def init_admin_routes(app):
             return redirect(url_for("admin_productions_list"))
 
     @app.route("/admin/productions/<record_id>/delete", methods=["POST"])
-    @require_admin
+    @require_roles('administrator', 'manager')
     def admin_production_delete(record_id):
         try:
             delete_production(record_id)
@@ -527,7 +506,7 @@ def init_admin_routes(app):
     # ── Admin API ─────────────────────────────────────────────────
 
     @app.route("/admin/api/events")
-    @require_admin
+    @require_roles('administrator', 'manager', 'user')
     def admin_api_events():
         try:
             events = get_calendar_events()
@@ -537,7 +516,7 @@ def init_admin_routes(app):
             return jsonify([]), 500
 
     @app.route("/admin/api/stats")
-    @require_admin
+    @require_roles('administrator', 'manager', 'user')
     def admin_api_stats():
         try:
             stats = get_checkout_stats()

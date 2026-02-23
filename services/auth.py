@@ -98,5 +98,5 @@ def verify_magic_link(token):
         "email": email,
         "firstname": user_fields.get("firstname", ""),
         "lastname": user_fields.get("lastname", ""),
-        "role": user_fields.get("role", "admin")  # Default to admin if missing
+        "role": user_fields.get("role", "User")  # Default to User if missing
     }
