@@ -12,8 +12,8 @@ from flask import current_app
 from pathlib import Path
 from io import BytesIO
 from pyairtable import Table
-from dotenv import load_dotenv
 from weasyprint import HTML, CSS
+from dotenv import load_dotenv
 from utils.airtable import get_vehicle_by_id
 from utils.formatting import format_date_fr
 

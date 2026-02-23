@@ -3,7 +3,12 @@ import os
 from flask import render_template
 from werkzeug.exceptions import HTTPException
 
-from routes.admin import init_admin_routes
+from routes.auth import init_auth_routes
+from routes.dashboard import init_dashboard_routes
+from routes.projects import init_projects_routes
+from routes.productions import init_productions_routes
+from routes.admin_checkins import init_admin_checkins_routes
+from routes.admin_checkouts import init_admin_checkouts_routes
 from routes.web import init_web_routes
 from routes.checkout import init_checkout_routes
 from routes.checkin import init_checkin_routes
@@ -12,7 +17,12 @@ from routes.users import init_users_routes
 
 def init_routes(app):
     """Register all route modules."""
-    init_admin_routes(app)
+    init_auth_routes(app)
+    init_dashboard_routes(app)
+    init_projects_routes(app)
+    init_productions_routes(app)
+    init_admin_checkins_routes(app)
+    init_admin_checkouts_routes(app)
     init_web_routes(app)
     init_checkout_routes(app)
     init_checkin_routes(app)

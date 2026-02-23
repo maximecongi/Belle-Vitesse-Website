@@ -29,7 +29,7 @@
             </select>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
             <div class="form-group">
                 <label class="form-label">Date de départ</label>
                 <input type="date" name="departure_date" class="form-input"
@@ -40,6 +40,12 @@
                 <label class="form-label">Début tournage</label>
                 <input type="date" name="shoot_start" class="form-input"
                     value="{{ data.shoot_start_raw if data else '' }}">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Date de retour</label>
+                <input type="date" name="return_date" class="form-input"
+                    value="{{ data.return_date_raw if data else '' }}">
             </div>
 
             <div class="form-group">
