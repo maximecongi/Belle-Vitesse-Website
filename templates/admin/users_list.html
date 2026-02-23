@@ -23,7 +23,7 @@
                     <th>Nom</th>
                     <th>Email</th>
                     <th>Rôle</th>
-                    <th style="text-align: right; width: 120px;">Actions</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -40,8 +40,8 @@
                             {{ f.get('role', 'user') }}
                         </span>
                     </td>
-                    <td style="text-align: right;">
-                        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                    <td>
+                        <div>
                             <a href="{{ url_for('admin_user_edit', record_id=u.id) }}"
                                 class="admin-btn admin-btn-secondary"
                                 style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Modifier</a>
