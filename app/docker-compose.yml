@@ -18,11 +18,20 @@ services:
       - traefik_default
     labels:
       - "traefik.enable=true"
+      # Site principal
       - "traefik.http.routers.bv_app.rule=Host(`bellevitesse.com`)"
       - "traefik.http.routers.bv_app.entrypoints=websecure"
       - "traefik.http.routers.bv_app.tls.certresolver=letsencrypt"
       - "traefik.http.services.bv_app.loadbalancer.server.port=5001"
       - "traefik.http.middlewares.add-header.headers.customRequestHeaders.X-Admin-Token=X-Admin-Token"
+      # Admin sur team.bellevitesse.com
+      - "traefik.http.routers.bv_admin.rule=Host(`team.bellevitesse.com`)"
+      - "traefik.http.routers.bv_admin.entrypoints=websecure"
+      - "traefik.http.routers.bv_admin.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.bv_admin.service=bv_app"
+      - "traefik.http.routers.bv_admin.middlewares=admin-redirect"
+      - "traefik.http.middlewares.admin-redirect.redirectregex.regex=^https://team\\.bellevitesse\\.com/$$"
+      - "traefik.http.middlewares.admin-redirect.redirectregex.replacement=https://team.bellevitesse.com/admin"
     ports:
       - "5001:5001"
 
