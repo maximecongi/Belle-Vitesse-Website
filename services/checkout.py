@@ -271,7 +271,7 @@ def _trigger_n8n_webhook(inspection_id, filename, base_url, current_hash, data):
                 "⚠️ N8N_WEBHOOK_CHECKOUT_SIGN not set in environment.")
             return
 
-        logger.info(
+        logger.info(f"🚀 Triggering n8n webhook for {inspection_id}...")
 
         secret_raw = os.getenv("HASH_SECRET_KEY")
         if not secret_raw:
@@ -313,8 +313,7 @@ def _trigger_n8n_webhook(inspection_id, filename, base_url, current_hash, data):
             logger.info(f"✅ n8n webhook triggered for {inspection_id}")
         else:
             logger.error(
-                f"❌ n8n webhook failed for {inspection_id}: {response.status_code} - {response.text}"
-            )
+                f"❌ n8n webhook failed for {inspection_id}: {response.status_code} - {response.text}")
     except Exception as e:
         logger.error(
             f"❌ n8n webhook exception for {inspection_id}: {e}")

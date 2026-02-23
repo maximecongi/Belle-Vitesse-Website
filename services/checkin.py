@@ -189,6 +189,7 @@ def _trigger_n8n_webhook(inspection_id, filename, base_url, current_hash, data):
             return
 
         logger.info(
+            f"✅ n8n webhook triggered for {inspection_id}")
 
         secret_raw = os.getenv("HASH_SECRET_KEY")
         if not secret_raw:
