@@ -9,9 +9,12 @@ import hashlib
 import secrets
 import logging
 import requests as http_requests
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, date
 
 from flask import current_app, render_template
+
+from utils.airtable import get_vehicles
+from utils.checkout import TABLE_PROJECTS, TABLE_PRODUCTIONS, TABLE_USERS, format_date_fr
 
 from utils.checkin import (
     compute_document_seal,
@@ -367,3 +370,260 @@ def validate_pdf_access_token(filename, provided_token):
         if hmac.compare_digest(expected, provided_token):
             return True
     return False
+# ── Checkins ────────────────────────────────────────────────────
+
+
+def list_checkins():
+    """
+    Fetch all checkin records, compute stats, and format for listing.
+
+    Returns:
+        dict with keys 'checkins' (list) and 'stats' (dict).
+    """
+    records = TABLE_CHECKIN.all()
+    records.sort(key=lambda x: x.get("createdTime", ""), reverse=True)
+
+    total_count = len(records)
+    signed_count = sum(
+        1 for r in records
+        if r["fields"].get("État du contrôle") == "Signé"
+    )
+    pending_count = sum(
+        1 for r in records
+        if r["fields"].get("État du contrôle") == "Terminé"
+    )
+
+    stats = {
+        "total_checkins": total_count,
+        "signed_checkins": signed_count,
+        "pending_checkins": pending_count,
+    }
+
+    checkins = []
+    for r in records:
+        data = format_checkin_data(r)
+        checkins.append({
+            "id": r["id"],
+            "inspection_id": data["inspection_id"],
+            "project": data.get("project", "—"),
+            "departure_date": data.get("departure_date", "—"),
+            "vehicle": data.get("vehicle", "—"),
+            "control_date": data.get("control_date", "—"),
+            "status": data.get("control_status", "—"),
+            "controller": data.get("controller", "—"),
+            "created_at": r.get("createdTime"),
+            "ready": data.get("ready", "—"),
+            "search_text": (
+                f"{data['inspection_id']} "
+                f"{data.get('project', '')} "
+                f"{data.get('controller', {}).get('name', '')} "
+                f"{data.get('control_status', '')}"
+            ).lower(),
+        })
+
+    return {"checkins": checkins, "stats": stats}
+
+
+def get_checkin_detail(record_id):
+    """
+    Fetch and format a single checkin record.
+
+    Returns:
+        dict of formatted checkin data, or None if not found.
+    """
+    record = get_checkin_record(record_id)
+    if not record:
+        return None
+    data = format_checkin_data(record)
+
+    # If signed, load the stable snapshot to get the real PDF URL and hash
+    if data.get("control_status") == "Signé":
+        from utils.database import get_checkin_signed_document
+        from services.checkin import generate_pdf_access_token
+        signed_doc = get_checkin_signed_document(data["inspection_id"])
+        if signed_doc and signed_doc.get("pdf_url"):
+            data["hash"] = signed_doc["hash"]
+            pdf_url = signed_doc["pdf_url"]
+            filename = pdf_url.split("/")[-1]
+            token = generate_pdf_access_token(filename)
+            data["pdf_url"] = f"{pdf_url}?t={token}"
+
+    return data
+
+
+def get_checkin_form_context():
+    """
+    Get the context needed for the checkin form (projects + vehicles selects).
+    Resolves linked production record IDs to their display names.
+
+    Returns:
+        dict with 'projects' and 'vehicles' keys.
+    """
+    projects = TABLE_PROJECTS.all(sort=["Nom"])
+    # Build a production-id → name lookup
+    productions = TABLE_PRODUCTIONS.all()
+    prod_names = {r["id"]: r.get("fields", {}).get("Nom", "—")
+                  for r in productions}
+    # Inject resolved production name + format dates in French
+    for p in projects:
+        f = p.get("fields", {})
+        prod_ids = f.get("Production", [])
+        if prod_ids:
+            f["_production_name"] = prod_names.get(prod_ids[0], "—")
+        else:
+            f["_production_name"] = ""
+        # Format dates to French
+        for date_key in ("Date de départ", "Date de début de tournage", "Date de fin de tournage"):
+            if f.get(date_key):
+                f[date_key] = format_date_fr(f[date_key])
+    vehicles = get_vehicles()
+    # Build a vehicle-id → name lookup for the linked "Véhicule contrôlé" field
+    vehicle_names = {v["id"]: v.get("fields", {}).get(
+        "name", "—") for v in vehicles}
+    for p in projects:
+        f = p.get("fields", {})
+        veh_ids = f.get("Véhicules à contrôler", [])
+        if veh_ids and isinstance(veh_ids, list):
+            f["_vehicle_name"] = vehicle_names.get(veh_ids[0], "—")
+        else:
+            f["_vehicle_name"] = ""
+
+    # Build vehicle → latest checkin status
+    checkins = TABLE_CHECKIN.all()
+    vehicle_status = {}  # vehicle_id → status
+    for c in checkins:
+        cf = c.get("fields", {})
+        veh_ids = cf.get("Véhicule contrôlé", [])
+        status = cf.get("État du contrôle", "")
+        if veh_ids and isinstance(veh_ids, list) and status:
+            vehicle_status[veh_ids[0]] = status
+    # Inject status into vehicle records
+    for v in vehicles:
+        v["fields"]["_checkin_status"] = vehicle_status.get(v["id"], "")
+
+    users = TABLE_USERS.all(sort=["firstname"])
+    return {
+        "projects": projects,
+        "vehicles": vehicles,
+        "users": users,
+    }
+
+
+def build_checkin_fields(form, is_create=False):
+    """
+    Build Airtable fields dict from checkin form data.
+
+    Args:
+        form: Flask request.form (ImmutableMultiDict)
+        is_create: if True, sets initial status to "En cours"
+
+    Returns:
+        dict of Airtable-ready field names → values.
+    """
+    fields = {
+        "État des pneus": form.get("tires"),
+        "Roue de secours": form.get("spare_tire"),
+        "État des freins": form.get("brakes"),
+        "État éclairage extérieur": form.get("lights"),
+        "Niveau huile": form.get("oil"),
+        "Niveau liquide de refroidissement": form.get("coolant"),
+        "Démarrage moteur": form.get("engine_start"),
+        "État des essuie-glaces": form.get("wipers"),
+        "État du klaxon": form.get("horn"),
+        "Présence Triangle de signalisation et gilet orange": form.get("safety_triangle"),
+        "Présence extincteur": form.get("fire_extinguisher"),
+        "Observations générales": form.get("notes"),
+    }
+
+    if is_create:
+        fields["État du contrôle"] = "En cours"
+        fields["Date du contrôle"] = date.today().isoformat()
+
+    if form.get("km"):
+        fields["Kilométrage retour"] = int(form.get("km"))
+
+    if form.get("battery"):
+        fields["Charge de la batterie retour"] = int(form.get("battery"))
+
+    project_id = form.get("project_id")
+    if project_id and project_id != "None":
+        fields["Projet"] = [project_id]
+
+    vehicle_id = form.get("vehicle_id")
+    if vehicle_id and vehicle_id != "None":
+        fields["Véhicule contrôlé"] = [vehicle_id]
+
+    controller_id = form.get("controller_id")
+    if controller_id and controller_id != "None":
+        fields["Reponsable du contrôle"] = [controller_id]
+
+    return fields
+
+
+def _upload_photos_to_record(record_id, files):
+    """
+    Upload photo files to the Airtable record as attachments.
+
+    Args:
+        record_id: Airtable record ID
+        files: Flask request.files (ImmutableMultiDict)
+    """
+    # Mapping: form field name → Airtable attachment field name
+    photo_fields = {
+        "odometer_photos": "Photo compteur",
+        "exterior_photos": "Photos extérieur véhicule",
+        "interior_photos": "Photos intérieur véhicule",
+    }
+
+    for form_field, airtable_field in photo_fields.items():
+        uploaded = files.getlist(form_field)
+        for f in uploaded:
+            if f and f.filename:
+                TABLE_CHECKIN.upload_attachment(
+                    record_id, airtable_field, f.filename, content=f.read()
+                )
+
+
+def create_checkin(form, files=None):
+    """
+    Create a new checkin record in Airtable.
+
+    Args:
+        form: Flask request.form
+        files: Flask request.files (optional)
+
+    Returns:
+        True on success, raises on failure.
+    """
+    fields = build_checkin_fields(form, is_create=True)
+    record = TABLE_CHECKIN.create(fields)
+    if files:
+        _upload_photos_to_record(record["id"], files)
+    return True
+
+
+def update_checkin(record_id, form, files=None):
+    """
+    Update an existing checkin record in Airtable.
+
+    Args:
+        record_id: Airtable record ID
+        form: Flask request.form
+        files: Flask request.files (optional)
+
+    Returns:
+        True on success, raises on failure.
+    """
+    fields = build_checkin_fields(form, is_create=False)
+    TABLE_CHECKIN.update(record_id, fields)
+    if files:
+        _upload_photos_to_record(record_id, files)
+    return True
+
+
+def delete_checkin(record_id):
+    """Delete a checkin record from Airtable."""
+    TABLE_CHECKIN.delete(record_id)
+
+
+# ── Projects ─────────────────────────────────────────────────────
