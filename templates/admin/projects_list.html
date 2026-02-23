@@ -29,8 +29,9 @@
         <tbody>
             {% for project in project_list %}
             <tr class="searchable-row">
-                <td style="font-weight: 600;">{{ project.name }}</td>
-                <td style="font-weight: 600;">{{ project.production }}</td>
+                <td style="font-weight: 600; text-transform: uppercase; text-wrap-style: balance;">{{ project.name }}
+                </td>
+                <td style="font-weight: 600; text-wrap-style: balance;">{{ project.production }}</td>
                 <td>
                     {% for v in project.vehicles %}
                     <span class="badge-pill" data-val="{{ v.checkout_status or 'Neutral' }}" style="margin: 0.15rem;">
