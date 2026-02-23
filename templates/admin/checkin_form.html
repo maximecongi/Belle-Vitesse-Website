@@ -111,10 +111,12 @@
                             {% for v in vehicles %}
                             {% set vf = v.fields %}
                             {% set thumb_url = vf.thumbnail[0].thumbnails.large.url if vf.thumbnail else '' %}
+                            {% set checkout_signed = (vf.get('_checkout_status') == 'Signé' or
+                            vf.get('_checkout_status') == 'Validé') %}
                             <button type="button" class="rich-select-option" data-id="{{ v.id }}"
                                 data-name="{{ vf.get('name', '—') }}" data-thumb="{{ thumb_url }}"
-                                data-search="{{ vf.get('name', '') }}" {% if vf.get('_checkin_status')
-                                %}data-disabled="true" {% endif %}>
+                                data-search="{{ vf.get('name', '') }}" {% if vf.get('_checkin_status') or not
+                                checkout_signed %}data-disabled="true" {% endif %}>
                                 <div style="display: flex; align-items: center; gap: 0.6rem;">
                                     {% if thumb_url %}
                                     <img src="{{ thumb_url }}"
@@ -129,6 +131,10 @@
                                         {% if vf.get('_checkin_status') %}
                                         <span class="badge-pill" data-val="{{ vf._checkin_status }}"
                                             style="font-size: 0.7rem;">{{ vf._checkin_status }}</span>
+                                        {% elif not checkout_signed %}
+                                        <span class="badge-pill" data-val="Neutral"
+                                            style="font-size: 0.7rem; background: #eee; color: #999;">Départ non
+                                            signé</span>
                                         {% else %}
                                         <span class="badge-pill" data-val="Neutral" style="font-size: 0.7rem;">À
                                             contrôler</span>

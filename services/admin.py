@@ -549,15 +549,30 @@ def get_checkin_form_context():
     users = User.query.order_by(User.firstname).all()
 
     checkins = CheckinVehicle.query.all()
-    vehicle_status = {}
+    checkouts = CheckoutVehicle.query.all()
+
+    # Map for checkin status (already returned)
+    vehicle_checkin_status = {}
     for c in checkins:
         if c.vehicule_controle and c.etat_controle:
-            vehicle_status[c.vehicule_controle] = c.etat_controle
+            vehicle_checkin_status[c.vehicule_controle] = c.etat_controle
+
+    # Map for latest checkout status (to ensure it's "Signé")
+    vehicle_checkout_status = {}
+    for c in checkouts:
+        if c.vehicule_controle and c.etat_controle:
+            # We keep the latest one (assuming query order or just overwriting is fine for now)
+            vehicle_checkout_status[c.vehicule_controle] = c.etat_controle
 
     for v in vehicles:
-        if v["id"] in vehicle_status:
+        vid = v["id"]
+        if vid in vehicle_checkin_status:
             v.setdefault("fields", {})[
-                "_checkin_status"] = vehicle_status[v["id"]]
+                "_checkin_status"] = vehicle_checkin_status[vid]
+
+        # Add checkout status for check-in safety
+        v.setdefault("fields", {})[
+            "_checkout_status"] = vehicle_checkout_status.get(vid, "Absent")
 
     projects_formatted = []
     for p in projects:
@@ -663,6 +678,18 @@ def create_checkin(form, files=None):
         presence_extincteur=form.get("fire_extinguisher"),
         observations=form.get("notes"),
     )
+
+    # Safety: ensure latest checkout is signed
+    if record.vehicule_controle:
+        latest_checkout = CheckoutVehicle.query.filter_by(
+            vehicule_controle=record.vehicule_controle).order_by(CheckoutVehicle.id.desc()).first()
+        if not latest_checkout or latest_checkout.etat_controle not in ["Signé", "Validé"]:
+            current_app.logger.error(
+                f"❌ Blocage Checkin : Le véhicule {record.vehicule_controle} "
+                f"n'a pas de checkout signé (état actuel: {latest_checkout.etat_controle if latest_checkout else 'Néant'})")
+            raise ValueError(
+                "Le départ de ce véhicule n'a pas été validé par une signature.")
+
     record.vehicule_pret_retour = _is_ready(form)
     db.session.add(record)
     db.session.commit()
