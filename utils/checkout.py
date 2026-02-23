@@ -13,7 +13,6 @@ from pathlib import Path
 from io import BytesIO
 from pyairtable import Table
 from dotenv import load_dotenv
-from weasyprint import HTML, CSS
 from utils.airtable import get_vehicle_by_id
 from utils.formatting import format_date_fr
 
@@ -159,6 +158,7 @@ def generate_checkout_pdf(html_content: str, base_url: str) -> bytes:
     Generate PDF bytes from HTML content using WeasyPrint.
     Loads the external checkout.css stylesheet if present.
     """
+    from weasyprint import HTML, CSS
     html = HTML(string=html_content, base_url=base_url)
 
     css_list = []
