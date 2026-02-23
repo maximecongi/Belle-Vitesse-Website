@@ -325,14 +325,19 @@ def create_checkout(form, files=None):
     """Create a new checkout record in the database."""
     pid = form.get("project_id")
     uid = form.get("controller_id")
-    current_app.logger.info(
-        f"📝 Creating checkout: project_id={pid}, controller_id={uid}")
+    # Safety: ensure uid is an integer (legacy sessions might send 'rec...')
+    try:
+        user_id = int(uid) if uid and uid != "None" else None
+    except (ValueError, TypeError):
+        current_app.logger.warning(
+            f"⚠️ Invalid controller_id detected: {uid}. Record will be created without user.")
+        user_id = None
 
     record = CheckoutVehicle(
         etat_controle="En cours",
         date_controle=date.today(),
         project_id=int(pid) if pid and pid != "None" else None,
-        user_id=int(uid) if uid and uid != "None" else None,
+        user_id=user_id,
         vehicule_controle=form.get("vehicle_id") if form.get(
             "vehicle_id") != "None" else None,
         kilometrage_depart=float(form.get("km")) if form.get("km") else None,
@@ -627,14 +632,19 @@ def create_checkin(form, files=None):
     """Create a new checkin record in the database."""
     pid = form.get("project_id")
     uid = form.get("controller_id")
-    current_app.logger.info(
-        f"📝 Creating checkin: project_id={pid}, controller_id={uid}")
+    # Safety: ensure uid is an integer
+    try:
+        user_id = int(uid) if uid and uid != "None" else None
+    except (ValueError, TypeError):
+        current_app.logger.warning(
+            f"⚠️ Invalid controller_id detected: {uid}. Record will be created without user.")
+        user_id = None
 
     record = CheckinVehicle(
         etat_controle="En cours",
         date_controle=date.today(),
         project_id=int(pid) if pid and pid != "None" else None,
-        user_id=int(uid) if uid and uid != "None" else None,
+        user_id=user_id,
         vehicule_controle=form.get("vehicle_id") if form.get(
             "vehicle_id") != "None" else None,
         kilometrage_retour=float(form.get("km")) if form.get("km") else None,
