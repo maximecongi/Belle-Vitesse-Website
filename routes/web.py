@@ -20,6 +20,8 @@ from utils.database import (
     get_vehicle_by_slug,
     get_head_by_slug,
     get_configs_for_vehicle,
+)
+from services.newsletter import (
     add_newsletter_subscriber,
     remove_newsletter_subscriber,
 )

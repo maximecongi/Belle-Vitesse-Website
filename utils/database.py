@@ -4,7 +4,6 @@ Replaces direct Airtable API calls with MySQL queries.
 Maintains the same interface as the original airtable.py.
 """
 
-from utils.airtable import add_newsletter_subscriber, remove_newsletter_subscriber
 import os
 import json
 import mysql.connector
@@ -222,9 +221,6 @@ def get_configs_for_vehicle(vehicle_id):
         return [c for c in all_configs if vehicle_id in c["fields"].get("vehicle", [])]
 
     return get_cached(f"configs_vehicle_{vehicle_id}", fetcher)
-
-
-# Proxy Newsletter functions to Airtable service for real-time management
 
 
 # ============================================================
