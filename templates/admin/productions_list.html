@@ -4,7 +4,11 @@
 {% block page_title %}Productions{% endblock %}
 
 {% block header_actions %}
-<a href="{{ url_for('admin_production_new') }}" class="admin-btn admin-btn-primary">+ Nouvelle Production</a>
+<div style="display: flex; gap: 1rem; align-items: center;">
+    <input type="text" id="searchInput" class="form-input" placeholder="🔍 Rechercher une production..."
+        style="width: 250px; font-size: 0.9rem;" autocomplete="off">
+    <a href="{{ url_for('admin_production_new') }}" class="admin-btn admin-btn-primary">+ Nouvelle Production</a>
+</div>
 {% endblock %}
 
 {% block content %}
@@ -22,7 +26,7 @@
             </thead>
             <tbody>
                 {% for prod in productions %}
-                <tr>
+                <tr class="searchable-row">
                     <td style="font-weight: 600;">{{ prod.name }}</td>
                     <td>{{ prod.address }}</td>
                     <td>{{ prod.email }}</td>
@@ -43,4 +47,26 @@
         </table>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('searchInput');
+        const searchableRows = document.querySelectorAll('.searchable-row');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function (e) {
+                const searchTerm = e.target.value.toLowerCase().trim();
+
+                searchableRows.forEach(row => {
+                    const rowText = row.textContent.toLowerCase();
+                    if (rowText.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        }
+    });
+</script>
 {% endblock %}

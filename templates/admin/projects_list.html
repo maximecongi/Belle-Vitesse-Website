@@ -4,7 +4,11 @@
 {% block page_title %}Projets{% endblock %}
 
 {% block header_actions %}
-<a href="{{ url_for('admin_project_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Projet</a>
+<div style="display: flex; gap: 1rem; align-items: center;">
+    <input type="text" id="searchInput" class="form-input" placeholder="🔍 Rechercher un projet..."
+        style="width: 250px; font-size: 0.9rem;" autocomplete="off">
+    <a href="{{ url_for('admin_project_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Projet</a>
+</div>
 {% endblock %}
 
 {% macro project_table(project_list) %}
@@ -24,7 +28,7 @@
         </thead>
         <tbody>
             {% for project in project_list %}
-            <tr>
+            <tr class="searchable-row">
                 <td style="font-weight: 600;">{{ project.name }}</td>
                 <td style="font-weight: 600;">{{ project.production }}</td>
                 <td>
@@ -73,4 +77,26 @@
     <h2 class="admin-section-title" style="margin-top: 2rem;"> 📁 Projets passés</h2><br>
     {{ project_table(past_projects) }}
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('searchInput');
+        const searchableRows = document.querySelectorAll('.searchable-row');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function (e) {
+                const searchTerm = e.target.value.toLowerCase().trim();
+
+                searchableRows.forEach(row => {
+                    const rowText = row.textContent.toLowerCase();
+                    if (rowText.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        }
+    });
+</script>
 {% endblock %}

@@ -8,21 +8,17 @@
 {% endblock %}
 
 {% block header_actions %}
-<a href="{{ url_for('admin_checkout_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Checkout</a>
+<div style="display: flex; gap: 1rem; align-items: center;">
+    <input type="text" id="search-input" class="form-input" placeholder="🔍 Rechercher un checkout..."
+        style="width: 250px; font-size: 0.9rem;" autocomplete="off">
+    <a href="{{ url_for('admin_checkout_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Checkout</a>
+</div>
 {% endblock %}
 
 {% block content %}
 <!-- Search & Table -->
 <div class="admin-card">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-        <div style="position: relative; width: 300px;">
-            <input type="text" id="search-input" placeholder="Rechercher (ID, Projet, Client...)" class="form-input"
-                style="padding-left: 2.5rem;">
-            <span
-                style="position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--grey-2);">
-                🔍
-            </span>
-        </div>
+    <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 1rem;">
         <div style="font-size: 0.9rem; color: var(--grey-2);">
             <span id="result-count">{{ checkouts|length }}</span> résultats
         </div>
