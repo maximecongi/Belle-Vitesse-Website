@@ -14,26 +14,14 @@ from datetime import datetime, timezone, timedelta
 from flask import current_app, render_template
 
 from utils.checkin import (
-    get_checkin_record,
-    get_checkin_by_inspection_id,
-    format_checkin_data,
     compute_document_seal,
     verify_document_seal,
     generate_qr_code,
     generate_checkin_pdf,
     compute_pdf_hash,
     verify_pdf_hash,
-    TABLE_CHECKIN,
-    _resolve_controller,
 )
-from utils.database import (
-    store_checkin_signed_document,
-    get_checkin_signed_document,
-    store_checkin_token,
-    get_checkin_token,
-    update_checkin_token_signature,
-    delete_checkin_token,
-)
+from models import db, CheckinVehicle, CheckinToken, CheckinSignedDocument
 
 logger = logging.getLogger(__name__)
 
@@ -42,45 +30,49 @@ logger = logging.getLogger(__name__)
 
 
 def validate_signing_token(token):
-    entry = get_checkin_token(token)
+    entry = db.session.get(CheckinToken, token)
     if not entry:
         return None, 404
 
-    created_at = entry["created_at"]
+    created_at = entry.created_at
     if created_at.tzinfo is None:
         created_at = created_at.replace(tzinfo=timezone.utc)
 
     if datetime.now(timezone.utc) - created_at > timedelta(hours=24):
-        delete_checkin_token(token)
+        db.session.delete(entry)
+        db.session.commit()
         return None, 410
 
-    if entry["signature"]:
+    if entry.signature:
         return None, 400
 
     return entry, None
 
 
 def generate_signing_token(record_id):
-    record = get_checkin_record(record_id)
+    record = db.session.get(CheckinVehicle, record_id)
     if not record:
         return None
 
-    data = format_checkin_data(record)
+    from services.admin import _format_checkin_admin
+    from utils.airtable import get_vehicles
+    vehicles = get_vehicles()
+    vehicle_names = {v["id"]: v.get("fields", {}).get(
+        "name", "—") for v in vehicles}
+    data = _format_checkin_admin(record, vehicle_names)
+
     token = str(uuid.uuid4())
-    created_at = datetime.now(timezone.utc)
 
-    store_checkin_token(
+    new_token = CheckinToken(
         token=token,
-        record_id=record_id,
+        record_id=str(record_id),
         inspection_id=data["inspection_id"],
-        created_at=created_at,
+        created_at=datetime.utcnow()
     )
+    db.session.add(new_token)
 
-    try:
-        TABLE_CHECKIN.update(record_id, {"État du contrôle": "À signer"})
-    except Exception as e:
-        logger.error(
-            f"❌ Failed to update Airtable for {data['inspection_id']}: {e}")
+    record.etat_controle = "À signer"
+    db.session.commit()
 
     base_url = os.getenv("BASE_URL", "https://bellevitesse.com")
     return {
@@ -94,24 +86,28 @@ def generate_signing_token(record_id):
 
 
 def process_signature(token, signature_data, signed_ip):
-    entry = get_checkin_token(token)
-    record_id = entry["record_id"]
-    inspection_id = entry["inspection_id"]
-    signed_at = datetime.now(timezone.utc).isoformat()
+    entry = db.session.get(CheckinToken, token)
+    record_id = int(entry.record_id)
+    inspection_id = entry.inspection_id
+    signed_at = datetime.now(timezone.utc)
 
-    update_checkin_token_signature(token, signature_data)
+    entry.signature = signature_data
 
-    try:
-        TABLE_CHECKIN.update(record_id, {"État du contrôle": "Signé"})
-    except Exception as e:
-        logger.error(f"❌ Failed to update Airtable for {inspection_id}: {e}")
+    from services.admin import _format_checkin_admin
+    from utils.airtable import get_vehicles
 
-    record = get_checkin_record(record_id)
+    record = db.session.get(CheckinVehicle, record_id)
     if not record:
         raise ValueError(f"Record {record_id} not found after signing")
 
-    data = format_checkin_data(record)
-    data["signed_at"] = datetime.now(timezone.utc).strftime("%d/%m/%Y %H:%M")
+    record.etat_controle = "Signé"
+    db.session.commit()
+
+    vehicles = get_vehicles()
+    vehicle_names = {v["id"]: v.get("fields", {}).get(
+        "name", "—") for v in vehicles}
+    data = _format_checkin_admin(record, vehicle_names)
+    data["signed_at"] = signed_at.strftime("%d/%m/%Y %H:%M")
     data["signed_ip"] = signed_ip
 
     current_hash = compute_document_seal(
@@ -119,7 +115,7 @@ def process_signature(token, signature_data, signed_ip):
         vehicle_id=data["vehicle_id"],
         km=str(data["km"]),
         signature_data=signature_data,
-        signed_at=signed_at,
+        signed_at=signed_at.isoformat(),
     )
 
     base_url = os.getenv("BASE_URL", "https://bellevitesse.com")
@@ -148,44 +144,34 @@ def process_signature(token, signature_data, signed_ip):
 
     # 7. Store immutable snapshot in MySQL
     pdf_file_hash = compute_pdf_hash(pdf_bytes)
-    store_success = store_checkin_signed_document(
+
+    signed_doc = CheckinSignedDocument(
         inspection_id=inspection_id,
-        file_hash=current_hash,
+        hash=current_hash,
         pdf_file_hash=pdf_file_hash,
         data_snapshot={
             **data,
             "_seal_vehicle_id": data["vehicle_id"],
             "_seal_km": str(data["km"]),
-            "_seal_signed_at": signed_at,
+            "_seal_signed_at": signed_at.isoformat(),
         },
         signature=signature_data,
         pdf_url=pdf_public_url,
-        signed_at=datetime.now(timezone.utc),
+        signed_at=signed_at.replace(tzinfo=None)
     )
+    db.session.add(signed_doc)
 
-    if store_success:
-        logger.info(f"✅ Document {inspection_id} frozen in MySQL.")
-    else:
-        logger.error(f"❌ Failed to freeze document {inspection_id} in MySQL.")
-
-    try:
-        TABLE_CHECKIN.update(
-            record_id,
-            {
-                "État du contrôle": "Signé",
-                "PDF scellé": pdf_public_url,
-                "Hash": current_hash,
-            },
-        )
-    except Exception as e:
-        logger.error(f"❌ Failed to update Airtable for {inspection_id}: {e}")
+    record.pdf_scelle = pdf_public_url
+    record.hash = current_hash
+    db.session.commit()
 
     logger.info(
         f"✅ Signature processed for {inspection_id}. PDF saved at {file_path}")
 
     _trigger_n8n_webhook(inspection_id, filename, base_url, current_hash, data)
 
-    delete_checkin_token(token)
+    db.session.delete(entry)
+    db.session.commit()
 
     return {
         "inspection_id": inspection_id,
@@ -244,34 +230,38 @@ def _trigger_n8n_webhook(inspection_id, filename, base_url, current_hash, data):
 
 
 def verify_checkin_document(inspection_id, uploaded_file=None):
-    signed_doc = get_checkin_signed_document(inspection_id)
+    signed_doc = db.session.get(CheckinSignedDocument, inspection_id)
 
     if not signed_doc:
-        record = get_checkin_by_inspection_id(inspection_id)
+        record = CheckinVehicle.query.filter_by(
+            numero_inspection=inspection_id).first()
         if not record:
             return None
 
-        data = format_checkin_data(record)
+        from services.admin import _format_checkin_admin
+        from utils.airtable import get_vehicles
+        vehicles = get_vehicles()
+        vehicle_names = {v["id"]: v.get("fields", {}).get(
+            "name", "—") for v in vehicles}
+        data = _format_checkin_admin(record, vehicle_names)
+
         logger.warning(
-            f"⚠️ Verify fallback to Airtable for {inspection_id} — no MySQL snapshot."
+            f"⚠️ Verify fallback to MySQL (via format) for {inspection_id} — no MySQL signed snapshot."
         )
         return {
             "data": data,
             "seal_valid": False,
             "pdf_valid": None,
-            "source": "airtable",
+            "source": "mysql",
             "inspection_id": inspection_id,
             "has_pdf_hash": False,
         }
 
-    data = signed_doc["data_snapshot"]
+    data = signed_doc.data_snapshot
 
-    if "controller" in data and isinstance(data["controller"], list):
-        data["controller"] = _resolve_controller(data["controller"])
-
-    stored_hash = signed_doc["hash"]
-    stored_signature = signed_doc["signature"]
-    stored_pdf_file_hash = signed_doc.get("pdf_file_hash")
+    stored_hash = signed_doc.hash
+    stored_signature = signed_doc.signature
+    stored_pdf_file_hash = signed_doc.pdf_file_hash
 
     seal_vehicle_id = data.get("_seal_vehicle_id", data.get("vehicle_id", "—"))
     seal_km = data.get("_seal_km", str(data.get("km", "")))
@@ -292,7 +282,7 @@ def verify_checkin_document(inspection_id, uploaded_file=None):
         )
 
     data["hash"] = stored_hash
-    pdf_url = signed_doc["pdf_url"]
+    pdf_url = signed_doc.pdf_url
     if pdf_url:
         filename = pdf_url.split("/")[-1]
         token = generate_pdf_access_token(filename)

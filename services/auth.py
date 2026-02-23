@@ -1,6 +1,6 @@
 from flask import current_app, request
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
-from utils.checkout import TABLE_USERS
+from models import User
 from utils.mailer import send_magic_link_email
 
 
@@ -13,7 +13,7 @@ def get_auth_serializer():
 def request_magic_link(email):
     """
     1. Checks if email ends with @bellevitesse.com.
-    2. Looks up the user in Airtable.
+    2. Looks up the user in the database.
     3. Generates a token and sends an email.
     """
     if not email.endswith("@bellevitesse.com"):
@@ -21,22 +21,16 @@ def request_magic_link(email):
             f"⚠️ Magic link requested for non-domain email: {email}")
         return False
 
-    # Search for user in Airtable (column is 'mail' according to user feedback)
-    formula = f"{{mail}} = '{email}'"
     try:
-        users = TABLE_USERS.all(formula=formula)
+        user = User.query.filter_by(mail=email).first()
     except Exception as e:
-        current_app.logger.error(f"❌ Error fetching user from Airtable: {e}")
+        current_app.logger.error(f"❌ Error fetching user from DB: {e}")
         return False
 
-    if not users:
+    if not user:
         current_app.logger.warning(
             f"⚠️ Magic link requested for unknown domain email: {email}")
         return False
-
-    user = users[0]["fields"]
-    firstname = user.get("firstname", "")
-    lastname = user.get("lastname", "")
 
     # Generate token
     serializer = get_auth_serializer()
@@ -51,7 +45,7 @@ def request_magic_link(email):
     magic_link = f"{base_url}/admin/auth/{token}"
 
     # Send email
-    success = send_magic_link_email(email, firstname, magic_link)
+    success = send_magic_link_email(email, user.firstname, magic_link)
 
     if success:
         current_app.logger.info(f"✅ Magic link sent to {email}")
@@ -64,7 +58,7 @@ def request_magic_link(email):
 def verify_magic_link(token):
     """
     1. Validates the token and expiration.
-    2. Re-checks Airtable for the user's latest data.
+    2. Re-checks the DB for the user's latest data.
     3. Returns the user dict to store in the session.
     """
     serializer = get_auth_serializer()
@@ -78,25 +72,22 @@ def verify_magic_link(token):
         current_app.logger.warning("⚠️ Invalid magic link token.")
         return None
 
-    # Re-validate user in Airtable
-    formula = f"{{mail}} = '{email}'"
+    # Re-validate user in the database
     try:
-        users = TABLE_USERS.all(formula=formula)
+        user = User.query.filter_by(mail=email).first()
     except Exception as e:
-        current_app.logger.error(f"❌ Error verifying user from Airtable: {e}")
+        current_app.logger.error(f"❌ Error verifying user from DB: {e}")
         return None
 
-    if not users:
+    if not user:
         current_app.logger.warning(
-            f"⚠️ User found in token but no longer in Airtable: {email}")
+            f"⚠️ User found in token but no longer in DB: {email}")
         return None
 
-    user_id = users[0]["id"]
-    user_fields = users[0]["fields"]
     return {
-        "id": user_id,
+        "id": user.id,
         "email": email,
-        "firstname": user_fields.get("firstname", ""),
-        "lastname": user_fields.get("lastname", ""),
-        "role": user_fields.get("role", "User")  # Default to User if missing
+        "firstname": user.firstname,
+        "lastname": user.lastname,
+        "role": user.role if user.role else "User"
     }

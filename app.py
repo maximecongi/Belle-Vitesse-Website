@@ -13,6 +13,10 @@ from utils.airtable import (
     get_grips_categories,
 )
 from utils.database import init_checkout_db, init_checkin_db
+from models import db
+
+
+_ssh_tunnel = None
 
 
 def create_app():
@@ -35,6 +39,43 @@ def create_app():
     app.config["CACHE_KEY_PREFIX"] = "myapp_"
     app.config["PREFERRED_URL_SCHEME"] = "https"
 
+    # Database config (MySQL via SQLAlchemy)
+    global _ssh_tunnel
+
+    use_ssh = os.getenv("USE_SSH_TUNNEL", "false").lower() == "true"
+    is_prod = os.getenv("FLASK_ENV") == "production"
+
+    mysql_host = os.getenv("MYSQL_HOST", "localhost")
+    mysql_port = 3306
+
+    if use_ssh and not is_prod:
+        from sshtunnel import SSHTunnelForwarder
+        try:
+            if _ssh_tunnel is None or not _ssh_tunnel.is_active:
+                _ssh_tunnel = SSHTunnelForwarder(
+                    (os.getenv("SSH_HOST"), 22),
+                    ssh_username=os.getenv("SSH_USER"),
+                    ssh_password=os.getenv("SSH_PASSWORD"),
+                    remote_bind_address=(mysql_host, 3306)
+                )
+                _ssh_tunnel.start()
+                app.logger.info(
+                    f"✅ SSH Tunnel started on port {_ssh_tunnel.local_bind_port}")
+
+            mysql_host = "127.0.0.1"
+            mysql_port = _ssh_tunnel.local_bind_port
+        except Exception as e:
+            app.logger.error(f"❌ Failed to start SSH Tunnel: {e}")
+
+    mysql_user = os.getenv("MYSQL_USER", "root")
+    mysql_pass = os.getenv("MYSQL_PASSWORD", "")
+    mysql_db = os.getenv("MYSQL_DATABASE", "bellevitesse")
+
+    default_uri = f"mysql+mysqlconnector://{mysql_user}:{mysql_pass}@{mysql_host}:{mysql_port}/{mysql_db}"
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
+        "SQLALCHEMY_DATABASE_URI", default_uri)
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
     # Session Config
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
@@ -43,7 +84,7 @@ def create_app():
         app.config["PRIVATE_FOLDER"] = Path("/app/private")
     else:
         app.config["PRIVATE_FOLDER"] = Path(
-            "Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_PROTOTYPE")
+            "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_PROTOTYPE")
     app.config["PRIVATE_FOLDER"].mkdir(parents=True, exist_ok=True)
 
     # Initialize extensions
@@ -51,6 +92,7 @@ def create_app():
     limiter.init_app(app)
     csrf.init_app(app)
     init_cache(cache)
+    db.init_app(app)
 
     # Initialize routes & error handlers
     init_routes(app)
@@ -85,6 +127,7 @@ def create_app():
     # Initialize DB
     try:
         with app.app_context():
+            db.create_all()
             init_checkout_db()
             init_checkin_db()
             app.logger.info("✅ Databases initialized.")

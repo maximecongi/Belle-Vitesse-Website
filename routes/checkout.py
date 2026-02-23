@@ -19,12 +19,7 @@ from flask import (
 
 from extensions import csrf
 
-from utils.checkout import (
-    get_checkout_record,
-    get_checkout_by_inspection_id,
-    format_checkout_data,
-)
-from extensions import csrf
+from models import db, CheckoutVehicle
 from services.checkout import (
     validate_signing_token,
     generate_signing_token,
@@ -53,10 +48,17 @@ def init_checkout_routes(app):
     @app.route("/checkout/<inspection_id>")
     def checkout_view(inspection_id):
         require_checkout_token()
-        record = get_checkout_by_inspection_id(inspection_id)
+        record = CheckoutVehicle.query.filter_by(
+            numero_inspection=inspection_id).first()
         if not record:
             abort(404)
-        data = format_checkout_data(record)
+
+        from services.admin import _format_checkout_admin
+        from utils.airtable import get_vehicles
+        vehicle_names = {v["id"]: v.get("fields", {}).get(
+            "name", "—") for v in get_vehicles()}
+        data = _format_checkout_admin(record, vehicle_names)
+
         return render_template(
             "checkout.html", data=data, signature=None, qr=None, hash=None
         )
@@ -71,7 +73,7 @@ def init_checkout_routes(app):
 
         result = generate_signing_token(payload["record_id"])
         if not result:
-            return jsonify({"error": "Record not found in Airtable"}), 404
+            return jsonify({"error": "Record not found in database"}), 404
 
         return jsonify({"status": "draft_ready", **result}), 201
 
@@ -81,21 +83,25 @@ def init_checkout_routes(app):
         if not entry:
             abort(error_code)
 
-        record = get_checkout_record(entry["record_id"])
+        record = db.session.get(CheckoutVehicle, int(entry.record_id))
         if not record:
             abort(404)
 
         # If user reloaded the page, the abandon beacon might have set this to 'En cours'.
         # We catch it here and revert it to 'À signer' since the user is still on the page.
-        if record.get("fields", {}).get("État du contrôle") == "En cours":
-            from utils.checkout import TABLE_CHECKOUT
+        if record.etat_controle == "En cours":
             try:
-                TABLE_CHECKOUT.update(entry["record_id"], {
-                                      "État du contrôle": "À signer"})
+                record.etat_controle = "À signer"
+                db.session.commit()
             except Exception:
                 pass
 
-        data = format_checkout_data(record)
+        from services.admin import _format_checkout_admin
+        from utils.airtable import get_vehicles
+        vehicle_names = {v["id"]: v.get("fields", {}).get(
+            "name", "—") for v in get_vehicles()}
+        data = _format_checkout_admin(record, vehicle_names)
+
         return render_template("checkout_sign.html", data=data, token=token)
 
     @app.route("/checkout/sign/<token>/abandon", methods=["POST"])

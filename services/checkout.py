@@ -17,26 +17,14 @@ from datetime import datetime, timezone, timedelta
 from flask import current_app, render_template
 
 from utils.checkout import (
-    get_checkout_record,
-    get_checkout_by_inspection_id,
-    format_checkout_data,
     compute_document_seal,
     verify_document_seal,
     generate_qr_code,
     generate_checkout_pdf,
     compute_pdf_hash,
     verify_pdf_hash,
-    TABLE_CHECKOUT,
-    _resolve_controller,
 )
-from utils.database import (
-    store_signed_document,
-    get_checkout_signed_document,
-    store_checkout_token,
-    get_checkout_token,
-    update_checkout_token_signature,
-    delete_checkout_token,
-)
+from models import db, CheckoutVehicle, CheckoutToken, CheckoutSignedDocument
 
 logger = logging.getLogger(__name__)
 
@@ -49,22 +37,23 @@ def validate_signing_token(token):
     Validate a signing token and return the entry if valid.
 
     Returns:
-        tuple (entry, error_code) — entry is the token dict if valid,
+        tuple (entry, error_code) — entry is the token object if valid,
         error_code is an HTTP status code if invalid (404, 410, 400), or None.
     """
-    entry = get_checkout_token(token)
+    entry = db.session.get(CheckoutToken, token)
     if not entry:
         return None, 404
 
-    created_at = entry["created_at"]
+    created_at = entry.created_at
     if created_at.tzinfo is None:
         created_at = created_at.replace(tzinfo=timezone.utc)
 
     if datetime.now(timezone.utc) - created_at > timedelta(hours=24):
-        delete_checkout_token(token)
+        db.session.delete(entry)
+        db.session.commit()
         return None, 410
 
-    if entry["signature"]:
+    if entry.signature:
         return None, 400
 
     return entry, None
@@ -75,34 +64,37 @@ def generate_signing_token(record_id):
     Create a one-time signing token for a checkout record.
 
     Steps:
-      1. Fetch record from Airtable
+      1. Fetch record from MySQL
       2. Create token in MySQL
-      3. Update Airtable status to "À signer"
+      3. Update status to "À signer"
 
     Returns:
         dict with 'inspection_id', 'token', 'sign_url' on success.
         None if record not found.
     """
-    record = get_checkout_record(record_id)
+    record = db.session.get(CheckoutVehicle, record_id)
     if not record:
         return None
 
-    data = format_checkout_data(record)
+    from services.admin import _format_checkout_admin
+    from utils.airtable import get_vehicles
+    vehicles = get_vehicles()
+    vehicle_names = {v["id"]: v.get("fields", {}).get(
+        "name", "—") for v in vehicles}
+    data = _format_checkout_admin(record, vehicle_names)
+
     token = str(uuid.uuid4())
-    created_at = datetime.now(timezone.utc)
 
-    store_checkout_token(
+    new_token = CheckoutToken(
         token=token,
-        record_id=record_id,
+        record_id=str(record_id),
         inspection_id=data["inspection_id"],
-        created_at=created_at,
+        created_at=datetime.utcnow()
     )
+    db.session.add(new_token)
 
-    try:
-        TABLE_CHECKOUT.update(record_id, {"État du contrôle": "À signer"})
-    except Exception as e:
-        logger.error(
-            f"❌ Failed to update Airtable for {data['inspection_id']}: {e}")
+    record.etat_controle = "À signer"
+    db.session.commit()
 
     base_url = os.getenv("BASE_URL", "https://bellevitesse.com")
     return {
@@ -115,19 +107,20 @@ def generate_signing_token(record_id):
 def abandon_signature(token):
     """
     Called when the user closes the signature page without signing.
-    Sets the Airtable state back to "En cours".
+    Sets the state back to "En cours".
     We don't delete the token so that if the user just reloaded the page,
     the GET request can seamlessly restore it to 'À signer'.
     """
-    entry = get_checkout_token(token)
-    if not entry or entry.get("signature"):
+    entry = db.session.get(CheckoutToken, token)
+    if not entry or entry.signature:
         return False
 
     try:
-        from utils.checkout import TABLE_CHECKOUT
-        TABLE_CHECKOUT.update(entry["record_id"], {
-                              "État du contrôle": "En cours"})
-        logger.info(f"🔙 Signature abandoned for {entry['inspection_id']}")
+        record = db.session.get(CheckoutVehicle, int(entry.record_id))
+        if record:
+            record.etat_controle = "En cours"
+            db.session.commit()
+        logger.info(f"🔙 Signature abandoned for {entry.inspection_id}")
     except Exception as e:
         logger.error(f"❌ Failed to abandon signature: {e}")
     return True
@@ -136,16 +129,17 @@ def abandon_signature(token):
 def resume_signature(token):
     """
     Called if the user's browser restores the page from bfcache (tab switch).
-    Sets the Airtable state to "À signer" just in case it was abandoned.
+    Sets the state to "À signer" just in case it was abandoned.
     """
-    entry = get_checkout_token(token)
-    if not entry or entry.get("signature"):
+    entry = db.session.get(CheckoutToken, token)
+    if not entry or entry.signature:
         return False
 
     try:
-        from utils.checkout import TABLE_CHECKOUT
-        TABLE_CHECKOUT.update(entry["record_id"], {
-                              "État du contrôle": "À signer"})
+        record = db.session.get(CheckoutVehicle, int(entry.record_id))
+        if record:
+            record.etat_controle = "À signer"
+            db.session.commit()
     except Exception as e:
         logger.error(f"❌ Failed to resume signature: {e}")
     return True
@@ -155,9 +149,7 @@ def resume_signature(token):
 
 def process_signature(token, signature_data, signed_ip):
     """
-    Process a checkout signature: seal, PDF, MySQL, Airtable, webhook.
-
-    This is the core routine that was previously ~200 lines in the route handler.
+    Process a checkout signature: seal, PDF, MySQL, webhook.
 
     Args:
         token: the signing token string
@@ -168,26 +160,29 @@ def process_signature(token, signature_data, signed_ip):
         dict with 'inspection_id', 'pdf_url', 'hash' on success.
         Raises on critical failure.
     """
-    entry = get_checkout_token(token)
-    record_id = entry["record_id"]
-    inspection_id = entry["inspection_id"]
-    signed_at = datetime.now(timezone.utc).isoformat()
+    entry = db.session.get(CheckoutToken, token)
+    record_id = int(entry.record_id)
+    inspection_id = entry.inspection_id
+    signed_at = datetime.now(timezone.utc)
 
     # 1. Mark token as used + update Airtable status
-    update_checkout_token_signature(token, signature_data)
+    entry.signature = signature_data
 
-    try:
-        TABLE_CHECKOUT.update(record_id, {"État du contrôle": "Signé"})
-    except Exception as e:
-        logger.error(f"❌ Failed to update Airtable for {inspection_id}: {e}")
+    from services.admin import _format_checkout_admin
+    from utils.airtable import get_vehicles
 
-    # 2. Fetch fresh record for PDF
-    record = get_checkout_record(record_id)
+    record = db.session.get(CheckoutVehicle, record_id)
     if not record:
         raise ValueError(f"Record {record_id} not found after signing")
 
-    data = format_checkout_data(record)
-    data["signed_at"] = datetime.now(timezone.utc).strftime("%d/%m/%Y %H:%M")
+    record.etat_controle = "Signé"
+    db.session.commit()
+
+    vehicles = get_vehicles()
+    vehicle_names = {v["id"]: v.get("fields", {}).get(
+        "name", "—") for v in vehicles}
+    data = _format_checkout_admin(record, vehicle_names)
+    data["signed_at"] = signed_at.strftime("%d/%m/%Y %H:%M")
     data["signed_ip"] = signed_ip
 
     # 3. Compute HMAC-SHA256 digital seal
@@ -196,7 +191,7 @@ def process_signature(token, signature_data, signed_ip):
         vehicle_id=data["vehicle_id"],
         km=str(data["km"]),
         signature_data=signature_data,
-        signed_at=signed_at,
+        signed_at=signed_at.isoformat(),
     )
 
     # 4. Generate QR code → verification page
@@ -228,38 +223,28 @@ def process_signature(token, signature_data, signed_ip):
 
     # 7. Store immutable snapshot in MySQL
     pdf_file_hash = compute_pdf_hash(pdf_bytes)
-    store_success = store_signed_document(
+
+    signed_doc = CheckoutSignedDocument(
         inspection_id=inspection_id,
-        file_hash=current_hash,
+        hash=current_hash,
         pdf_file_hash=pdf_file_hash,
         data_snapshot={
             **data,
             "_seal_vehicle_id": data["vehicle_id"],
             "_seal_km": str(data["km"]),
-            "_seal_signed_at": signed_at,
+            "_seal_signed_at": signed_at.isoformat(),
         },
         signature=signature_data,
         pdf_url=pdf_public_url,
-        signed_at=datetime.now(timezone.utc),
+        # store naive datetime if needed or timezone-aware if supported. UTC is fine.
+        signed_at=signed_at.replace(tzinfo=None)
     )
+    db.session.add(signed_doc)
 
-    if store_success:
-        logger.info(f"✅ Document {inspection_id} frozen in MySQL.")
-    else:
-        logger.error(f"❌ Failed to freeze document {inspection_id} in MySQL.")
-
-    # 8. Update Airtable with hash and PDF URL
-    try:
-        TABLE_CHECKOUT.update(
-            record_id,
-            {
-                "État du contrôle": "Signé",
-                "PDF scellé": pdf_public_url,
-                "Hash": current_hash,
-            },
-        )
-    except Exception as e:
-        logger.error(f"❌ Failed to update Airtable for {inspection_id}: {e}")
+    # 8. Update Record with hash and PDF URL
+    record.pdf_scelle = pdf_public_url
+    record.hash = current_hash
+    db.session.commit()
 
     logger.info(
         f"✅ Signature processed for {inspection_id}. PDF saved at {file_path}")
@@ -268,7 +253,8 @@ def process_signature(token, signature_data, signed_ip):
     _trigger_n8n_webhook(inspection_id, filename, base_url, current_hash, data)
 
     # 10. Invalidate one-time token
-    delete_checkout_token(token)
+    db.session.delete(entry)
+    db.session.commit()
 
     return {
         "inspection_id": inspection_id,
@@ -341,37 +327,40 @@ def verify_checkout_document(inspection_id, uploaded_file=None):
     Returns:
         dict with template context: data, seal_valid, pdf_valid, source, etc.
     """
-    signed_doc = get_checkout_signed_document(inspection_id)
+    signed_doc = db.session.get(CheckoutSignedDocument, inspection_id)
 
-    # ── No MySQL snapshot → fallback to Airtable ─────────────────
+    # ── No MySQL snapshot → fallback to CheckoutVehicle ─────────────────
     if not signed_doc:
-        record = get_checkout_by_inspection_id(inspection_id)
+        record = CheckoutVehicle.query.filter_by(
+            numero_inspection=inspection_id).first()
         if not record:
             return None  # 404
 
-        data = format_checkout_data(record)
+        from services.admin import _format_checkout_admin
+        from utils.airtable import get_vehicles
+        vehicles = get_vehicles()
+        vehicle_names = {v["id"]: v.get("fields", {}).get(
+            "name", "—") for v in vehicles}
+        data = _format_checkout_admin(record, vehicle_names)
+
         logger.warning(
-            f"⚠️ Verify fallback to Airtable for {inspection_id} — no MySQL snapshot."
+            f"⚠️ Verify fallback to MySQL (via format) for {inspection_id} — no signed snapshot."
         )
         return {
             "data": data,
             "seal_valid": False,
             "pdf_valid": None,
-            "source": "airtable",
+            "source": "mysql",
             "inspection_id": inspection_id,
             "has_pdf_hash": False,
         }
 
     # ── Retrieve stored values ────────────────────────────────────
-    data = signed_doc["data_snapshot"]
+    data = signed_doc.data_snapshot
 
-    # HOTFIX: Ensure controller is correctly formatted if stored as a raw Airtable ID list
-    if "controller" in data and isinstance(data["controller"], list):
-        data["controller"] = _resolve_controller(data["controller"])
-
-    stored_hash = signed_doc["hash"]
-    stored_signature = signed_doc["signature"]
-    stored_pdf_file_hash = signed_doc.get("pdf_file_hash")
+    stored_hash = signed_doc.hash
+    stored_signature = signed_doc.signature
+    stored_pdf_file_hash = signed_doc.pdf_file_hash
 
     seal_vehicle_id = data.get("_seal_vehicle_id", data.get("vehicle_id", "—"))
     seal_km = data.get("_seal_km", str(data.get("km", "")))
@@ -395,7 +384,7 @@ def verify_checkout_document(inspection_id, uploaded_file=None):
     data["hash"] = stored_hash
 
     # Generate an access token for the PDF download link
-    pdf_url = signed_doc["pdf_url"]
+    pdf_url = signed_doc.pdf_url
     if pdf_url:
         filename = pdf_url.split("/")[-1]
         token = generate_pdf_access_token(filename)

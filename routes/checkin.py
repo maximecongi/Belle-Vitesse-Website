@@ -16,11 +16,7 @@ from flask import (
 
 from extensions import csrf
 
-from utils.checkin import (
-    get_checkin_record,
-    get_checkin_by_inspection_id,
-    format_checkin_data,
-)
+from models import db, CheckinVehicle
 from services.checkin import (
     validate_signing_token,
     generate_signing_token,
@@ -49,10 +45,16 @@ def init_checkin_routes(app):
     @app.route("/checkin/<inspection_id>")
     def checkin_view(inspection_id):
         require_checkin_token()
-        record = get_checkin_by_inspection_id(inspection_id)
+        record = CheckinVehicle.query.filter_by(
+            numero_inspection=inspection_id).first()
         if not record:
             abort(404)
-        data = format_checkin_data(record)
+
+        from services.admin import _format_checkin_admin
+        from utils.airtable import get_vehicles
+        vehicle_names = {v["id"]: v.get("fields", {}).get(
+            "name", "—") for v in get_vehicles()}
+        data = _format_checkin_admin(record, vehicle_names)
         return render_template(
             "checkin.html", data=data, signature=None, qr=None, hash=None
         )
@@ -66,7 +68,7 @@ def init_checkin_routes(app):
 
         result = generate_signing_token(payload["record_id"])
         if not result:
-            return jsonify({"error": "Record not found in Airtable"}), 404
+            return jsonify({"error": "Record not found in database"}), 404
 
         return jsonify({"status": "draft_ready", **result}), 201
 
@@ -76,10 +78,16 @@ def init_checkin_routes(app):
         if not entry:
             abort(error_code)
 
-        record = get_checkin_record(entry["record_id"])
+        record = db.session.get(CheckinVehicle, int(entry.record_id))
         if not record:
             abort(404)
-        data = format_checkin_data(record)
+
+        from services.admin import _format_checkin_admin
+        from utils.airtable import get_vehicles
+        vehicle_names = {v["id"]: v.get("fields", {}).get(
+            "name", "—") for v in get_vehicles()}
+        data = _format_checkin_admin(record, vehicle_names)
+
         return render_template("checkin_sign.html", data=data, token=token)
 
     @app.route("/checkin/sign/<token>", methods=["POST"])
