@@ -1,0 +1,66 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}
+{% if is_edit %}Modifier l'utilisateur{% else %}Nouvel Utilisateur{% endif %}
+{% endblock %}
+
+{% block page_title %}
+{% if is_edit %}Modifier l'utilisateur{% else %}Nouvel Utilisateur{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="admin-card" style="max-width: 600px;">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label class="form-label">Prénom <span style="color: var(--red-error);">*</span></label>
+            <input type="text" name="firstname" class="form-input" value="{{ data.firstname if data else '' }}"
+                required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label class="form-label">Nom <span style="color: var(--red-error);">*</span></label>
+            <input type="text" name="lastname" class="form-input" value="{{ data.lastname if data else '' }}" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+            <label class="form-label">Email <span style="color: var(--red-error);">*</span></label>
+            <input type="email" name="mail" class="form-input" value="{{ data.mail if data else '' }}" required
+                placeholder="ex: nom@bellevitesse.com">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 2rem;">
+            <label class="form-label">Rôle <span style="color: var(--red-error);">*</span></label>
+            {% set current_role = data.role if data and data.role else 'user' %}
+            <div class="badge-select">
+                <input type="text" name="role" value="{{ current_role }}" required
+                    style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;">
+                <div class="badge-select-trigger" style="max-width: 200px;">
+                    <span class="badge-pill" data-val="{{ current_role }}">{{ current_role }}</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="badge-select-dropdown" style="max-width: 200px;">
+                    <button type="button" class="badge-select-option" data-value="Administrator">
+                        <span class="badge-pill" data-val="Administrator">Administrator</span>
+                    </button>
+                    <button type="button" class="badge-select-option" data-value="Manager">
+                        <span class="badge-pill" data-val="Manager">Manager</span>
+                    </button>
+                    <button type="button" class="badge-select-option" data-value="User">
+                        <span class="badge-pill" data-val="User">User</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: right; margin-top: 2rem;">
+            <a href="{{ url_for('admin_users_list') }}" class="admin-btn admin-btn-secondary"
+                style="margin-right: 1rem;">Annuler</a>
+            <button type="submit" class="admin-btn admin-btn-primary">
+                {% if is_edit %}Mettre à jour{% else %}Créer l'utilisateur{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

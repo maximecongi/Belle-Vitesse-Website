@@ -1,0 +1,108 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Utilisateurs{% endblock %}
+{% block page_title %}Gestion des Utilisateurs{% endblock %}
+
+{% block header_actions %}
+<div style="display: flex; gap: 1rem; align-items: center;">
+    <input type="text" id="userSearchInput" class="form-input" placeholder="🔍 Rechercher un utilisateur..."
+        style="width: 250px; font-size: 0.9rem;" autocomplete="off">
+    <a href="{{ url_for('admin_user_create') }}" class="admin-btn admin-btn-primary">
+        + Nouvel utilisateur
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div style="overflow-x: auto;">
+        <table class="admin-table" id="usersTable">
+            <thead>
+                <tr>
+                    <th>Prénom</th>
+                    <th>Nom</th>
+                    <th>Email</th>
+                    <th>Rôle</th>
+                    <th style="text-align: right; width: 120px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                {% set f = u.fields %}
+                <tr class="user-row">
+                    <td class="searchable">{{ f.get('firstname', '—') }}</td>
+                    <td class="searchable">
+                        <div class="admin-list-title">{{ f.get('lastname', '—') }}</div>
+                    </td>
+                    <td class="searchable">{{ f.get('mail', '—') }}</td>
+                    <td class="searchable">
+                        <span class="badge-pill" data-val="{{ f.get('role', 'user') }}">
+                            {{ f.get('role', 'user') }}
+                        </span>
+                    </td>
+                    <td style="text-align: right;">
+                        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                            <a href="{{ url_for('admin_user_edit', record_id=u.id) }}"
+                                class="admin-btn admin-btn-secondary"
+                                style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Modifier</a>
+                            <form action="{{ url_for('admin_user_delete', record_id=u.id) }}" method="POST"
+                                onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.');"
+                                style="display: inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                                <button type="submit" class="admin-btn admin-btn-danger"
+                                    style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">Supprimer</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr id="emptyRow">
+                    <td colspan="5" style="text-align: center; color: var(--grey-2); padding: 2rem;">
+                        Aucun utilisateur trouvé.
+                    </td>
+                </tr>
+                {% endfor %}
+                <tr id="noResultsRow" style="display: none;">
+                    <td colspan="5" style="text-align: center; color: var(--grey-2); padding: 2rem;">
+                        Aucun utilisateur ne correspond à votre recherche.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('userSearchInput');
+        const userRows = document.querySelectorAll('.user-row');
+        const noResultsRow = document.getElementById('noResultsRow');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function (e) {
+                const searchTerm = e.target.value.toLowerCase().trim();
+                let visibleCount = 0;
+
+                userRows.forEach(row => {
+                    const searchableCells = row.querySelectorAll('.searchable');
+                    let rowText = '';
+                    searchableCells.forEach(cell => {
+                        rowText += cell.textContent.toLowerCase() + ' ';
+                    });
+
+                    if (rowText.includes(searchTerm)) {
+                        row.style.display = '';
+                        visibleCount++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                if (noResultsRow) {
+                    noResultsRow.style.display = (visibleCount === 0 && userRows.length > 0) ? '' : 'none';
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
