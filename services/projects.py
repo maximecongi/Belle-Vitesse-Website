@@ -120,6 +120,7 @@ def build_project_fields(form):
     fields = {
         "Nom": form.get("name"),
         "Date de départ": form.get("departure_date"),
+        "Date de retour": form.get("return_date"),
         "Date de début de tournage": form.get("shoot_start"),
         "Date de fin de tournage": form.get("shoot_end"),
     }
