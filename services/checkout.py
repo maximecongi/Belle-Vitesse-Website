@@ -267,9 +267,18 @@ def _trigger_n8n_webhook(inspection_id, filename, base_url, current_hash, data):
     try:
         n8n_webhook_url = os.getenv("N8N_WEBHOOK_CHECKOUT_SIGN")
         if not n8n_webhook_url:
+            logger.warning(
+                "⚠️ N8N_WEBHOOK_CHECKOUT_SIGN not set in environment.")
             return
 
-        secret = os.getenv("HASH_SECRET_KEY").encode()
+        logger.info(
+
+        secret_raw = os.getenv("HASH_SECRET_KEY")
+        if not secret_raw:
+            logger.error("❌ HASH_SECRET_KEY not set.")
+            return
+        secret = secret_raw.encode()
+
         ts = int(datetime.now(timezone.utc).timestamp() // 60)
         token_payload = f"{filename}:{ts}".encode()
         token_n8n = hmac.new(secret, token_payload, hashlib.sha256).hexdigest()
@@ -298,15 +307,17 @@ def _trigger_n8n_webhook(inspection_id, filename, base_url, current_hash, data):
             "month": month,
         }
 
-        response = http_requests.post(n8n_webhook_url, json=webhook_payload)
-        if response.status_code == 200:
+        response = http_requests.post(
+            n8n_webhook_url, json=webhook_payload, timeout=10)
+        if response.status_code in [200, 201]:
             logger.info(f"✅ n8n webhook triggered for {inspection_id}")
         else:
             logger.error(
-                f"❌ n8n webhook failed for {inspection_id}: {response.status_code}"
+                f"❌ n8n webhook failed for {inspection_id}: {response.status_code} - {response.text}"
             )
     except Exception as e:
-        logger.error(f"❌ n8n webhook exception for {inspection_id}: {e}")
+        logger.error(
+            f"❌ n8n webhook exception for {inspection_id}: {e}")
 
 
 # ── Verification ─────────────────────────────────────────────────

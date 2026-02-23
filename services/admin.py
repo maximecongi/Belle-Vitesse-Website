@@ -35,6 +35,22 @@ def _parse_photos_json(text):
         return [{"url": f"/files/{text}", "label": "File"}]
 
 
+
+def _is_ready(form):
+    """
+    Calculate if the vehicle is ready based on inspection fields.
+    Returns True if all critical fields are 'OK' or 'Non pertinent'.
+    """
+    checks = [
+        "tires", "spare_tire", "brakes", "lights", "oil", "coolant",
+        "engine_start", "wipers", "horn", "safety_triangle", "fire_extinguisher"
+    ]
+    for key in checks:
+        val = form.get(key)
+        if val not in ["OK", "Non pertinent"]:
+            return False
+    return True
+
 def _format_checkout_admin(c: CheckoutVehicle, vehicle_names):
     project_name = c.project.nom if c.project else "—"
     vehicle_name = vehicle_names.get(c.vehicule_controle, "—")
@@ -71,6 +87,7 @@ def _format_checkout_admin(c: CheckoutVehicle, vehicle_names):
     data["battery"] = str(
         c.charge_batterie_depart) if c.charge_batterie_depart is not None else ""
     data["odometer_photos"] = _parse_photos_json(c.photo_compteur)
+    data["odometer_photo"] = data["odometer_photos"][0]["url"] if data["odometer_photos"] else None
     data["tires"] = c.etat_pneus or "—"
     data["spare_tire"] = c.roue_secours or "—"
     data["oil"] = c.niveau_huile or "—"
@@ -149,7 +166,7 @@ def get_checkout_detail(record_id):
             pdf_url = signed_doc.pdf_url
             filename = pdf_url.split("/")[-1]
             token = generate_pdf_access_token(filename)
-            data["pdf_url"] = f"{pdf_url}?t={token}"
+            data["pdf_url"] = url_for("download_checkout_document", filename=filename, t=token)
 
     return data
 
@@ -276,6 +293,7 @@ def create_checkout(form, files=None):
         presence_extincteur=form.get("fire_extinguisher"),
         observations=form.get("notes"),
     )
+    record.vehicule_pret_depart = _is_ready(form)
     db.session.add(record)
     db.session.commit()
 
@@ -315,6 +333,7 @@ def update_checkout(record_id, form, files=None):
     record.presence_triangle_gilet = form.get("safety_triangle")
     record.presence_extincteur = form.get("fire_extinguisher")
     record.observations = form.get("notes")
+    record.vehicule_pret_depart = _is_ready(form)
 
     db.session.commit()
 
@@ -374,6 +393,7 @@ def _format_checkin_admin(c: CheckinVehicle, vehicle_names):
     data["battery"] = str(
         c.charge_batterie_retour) if c.charge_batterie_retour is not None else ""
     data["odometer_photos"] = _parse_photos_json(c.photo_compteur)
+    data["odometer_photo"] = data["odometer_photos"][0]["url"] if data["odometer_photos"] else None
     data["tires"] = c.etat_pneus or "—"
     data["spare_tire"] = c.roue_secours or "—"
     data["oil"] = c.niveau_huile or "—"
@@ -450,7 +470,7 @@ def get_checkin_detail(record_id):
             pdf_url = signed_doc.pdf_url
             filename = pdf_url.split("/")[-1]
             token = generate_pdf_access_token(filename)
-            data["pdf_url"] = f"{pdf_url}?t={token}"
+            data["pdf_url"] = url_for("download_checkin_document", filename=filename, t=token)
 
     return data
 
@@ -573,6 +593,7 @@ def create_checkin(form, files=None):
         presence_extincteur=form.get("fire_extinguisher"),
         observations=form.get("notes"),
     )
+    record.vehicule_pret_retour = _is_ready(form)
     db.session.add(record)
     db.session.commit()
 
@@ -612,6 +633,7 @@ def update_checkin(record_id, form, files=None):
     record.presence_triangle_gilet = form.get("safety_triangle")
     record.presence_extincteur = form.get("fire_extinguisher")
     record.observations = form.get("notes")
+    record.vehicule_pret_retour = _is_ready(form)
 
     db.session.commit()
 

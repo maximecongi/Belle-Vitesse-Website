@@ -119,19 +119,54 @@ def generate_qr_code(data: str) -> str:
 
 # ── PDF ──────────────────────────────────────────────────────────
 
+def make_url_fetcher(app):
+    from weasyprint import default_url_fetcher
+    from urllib.parse import urlparse
+
+    def fetcher(url):
+        parsed = urlparse(url)
+        path = parsed.path
+
+        # Resolve /static/ to local filesystem
+        if path.startswith("/static/"):
+            rel_path = path[len("/static/"):].lstrip("/")
+            full_path = Path(app.static_folder) / rel_path
+            if full_path.exists():
+                return {"file_obj": open(full_path, "rb"), "mime_type": None}
+
+        # Resolve /files/ to private/uploads local filesystem
+        if path.startswith("/files/"):
+            rel_path = path[len("/files/"):].lstrip("/")
+            full_path = Path(app.config["PRIVATE_FOLDER"]) / \
+                "uploads" / rel_path
+            if full_path.exists():
+                return {"file_obj": open(full_path, "rb"), "mime_type": None}
+
+        return default_url_fetcher(url)
+    return fetcher
+
+
 def generate_checkin_pdf(html_content: str, base_url: str) -> bytes:
     """
     Generate PDF bytes from HTML content using WeasyPrint.
     """
-    html = HTML(string=html_content, base_url=base_url)
+    fetcher = make_url_fetcher(current_app)
+    html = HTML(string=html_content, base_url=base_url, url_fetcher=fetcher)
 
     css_list = []
-    css_path = Path(current_app.static_folder) / "css" / "checkin.css"
+    static_path = Path(current_app.static_folder)
 
-    if css_path.exists():
-        css_list.append(CSS(filename=str(css_path)))
-        logger.info(f"✅ CSS chargé : {css_path}")
+    # 1. Base styles (variables, reset)
+    styles_css = static_path / "css" / "styles.css"
+    if styles_css.exists():
+        css_list.append(CSS(filename=str(styles_css), url_fetcher=fetcher))
+
+    # 2. Specific checkin styles
+    checkin_css = static_path / "css" / "checkin.css"
+    if checkin_css.exists():
+        css_list.append(CSS(filename=str(checkin_css), url_fetcher=fetcher))
+        logger.info(f"✅ CSS chargé : {checkin_css}")
     else:
-        logger.warning(f"⚠️ CSS non trouvé : {css_path}")
+        logger.warning(f"⚠️ CSS non trouvé : {checkin_css}")
 
     return html.write_pdf(stylesheets=css_list)
