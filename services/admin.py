@@ -10,6 +10,8 @@ from werkzeug.utils import secure_filename
 from models import CheckoutVehicle, CheckinVehicle
 import json
 import logging
+import os
+from pathlib import Path
 from collections import defaultdict
 from datetime import date
 
@@ -35,6 +37,60 @@ def _parse_photos_json(text):
         return [{"url": f"/files/{text}", "label": "File"}]
 
 
+def _delete_inspection_files(record):
+    """
+    Delete all physical files associated with a checkout or checkin record.
+    Includes odometer photos, interior/exterior photos, and the signed PDF.
+    """
+    private_folder = current_app.config.get("PRIVATE_FOLDER")
+    if not private_folder:
+        return
+
+    # 1. Photos
+    photo_fields = [record.photo_compteur,
+                    record.photos_interieur, record.photos_exterieur]
+    for field in photo_fields:
+        if not field:
+            continue
+        try:
+            # Field can be a JSON array or a single filename
+            paths = json.loads(field) if isinstance(
+                field, str) and field.startswith('[') else [field]
+            for p in paths:
+                # Sanitize p (it might be a full dict if not careful, but usually it's a string)
+                if not isinstance(p, str):
+                    continue
+                full_path = Path(private_folder) / "uploads" / p
+                if full_path.exists():
+                    try:
+                        os.remove(full_path)
+                        logger.info(f"🗑️ Photo supprimée : {full_path}")
+                    except Exception as e:
+                        logger.error(
+                            f"❌ Échec de la suppression de la photo {full_path}: {e}")
+        except Exception as e:
+            logger.warning(
+                f"⚠️ Erreur lors du parsing des photos pour suppression: {e}")
+
+    # 2. Signed PDF
+    if record.pdf_scelle:
+        # pdf_scelle is usually a URL: http://.../checkout/document/filename.pdf
+        filename = record.pdf_scelle.split("/")[-1]
+        if "?" in filename:
+            filename = filename.split("?")[0]
+
+        # Determine subfolder based on record type
+        subfolder = "checkout_pdfs" if isinstance(
+            record, CheckoutVehicle) else "checkin_pdfs"
+        pdf_path = Path(private_folder) / subfolder / filename
+        if pdf_path.exists():
+            try:
+                os.remove(pdf_path)
+                logger.info(f"🗑️ PDF supprimé : {pdf_path}")
+            except Exception as e:
+                logger.error(
+                    f"❌ Échec de la suppression du PDF {pdf_path}: {e}")
+
 
 def _is_ready(form):
     """
@@ -50,6 +106,7 @@ def _is_ready(form):
         if val not in ["OK", "Non pertinent"]:
             return False
     return True
+
 
 def _format_checkout_admin(c: CheckoutVehicle, vehicle_names):
     project_name = c.project.nom if c.project else "—"
@@ -166,7 +223,8 @@ def get_checkout_detail(record_id):
             pdf_url = signed_doc.pdf_url
             filename = pdf_url.split("/")[-1]
             token = generate_pdf_access_token(filename)
-            data["pdf_url"] = url_for("download_checkout_document", filename=filename, t=token)
+            data["pdf_url"] = url_for(
+                "download_checkout_document", filename=filename, t=token)
 
     return data
 
@@ -344,9 +402,10 @@ def update_checkout(record_id, form, files=None):
 
 
 def delete_checkout(record_id):
-    """Delete a checkout record from the database."""
+    """Delete a checkout record and its associated files."""
     record = db.session.get(CheckoutVehicle, record_id)
     if record:
+        _delete_inspection_files(record)
         db.session.delete(record)
         db.session.commit()
 
@@ -470,7 +529,8 @@ def get_checkin_detail(record_id):
             pdf_url = signed_doc.pdf_url
             filename = pdf_url.split("/")[-1]
             token = generate_pdf_access_token(filename)
-            data["pdf_url"] = url_for("download_checkin_document", filename=filename, t=token)
+            data["pdf_url"] = url_for(
+                "download_checkin_document", filename=filename, t=token)
 
     return data
 
@@ -644,9 +704,10 @@ def update_checkin(record_id, form, files=None):
 
 
 def delete_checkin(record_id):
-    """Delete a checkin record from the database."""
+    """Delete a checkin record and its associated files."""
     record = db.session.get(CheckinVehicle, record_id)
     if record:
+        _delete_inspection_files(record)
         db.session.delete(record)
         db.session.commit()
 
