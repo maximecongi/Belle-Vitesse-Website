@@ -28,7 +28,7 @@
                     alt="Belle Vitesse">
             </div>
             <div class="checkin-header-meta">
-                <strong class="dot-before">Check-Out Véhicule</strong><br>
+                <strong class="dot-before">Check-In Véhicule</strong><br>
                 <span class="checkin-doc-id">{{ data.inspection_id }}</span><br>
                 {{ data.control_date or '—' }}
             </div>
@@ -209,7 +209,7 @@
             </span>
             {% elif data.ready == 'Non' %}
             <span class="checkin-badge checkin-badge--critical" style="font-size: 1rem; padding: 8px 24px;">
-                NON — Véhicule non conforme
+                NON — Véhicule restitué non conforme
             </span>
             {% else %}
             <span class="checkin-badge checkin-badge--neutral" style="font-size: 1rem; padding: 8px 24px;">
