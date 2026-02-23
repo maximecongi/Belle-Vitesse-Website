@@ -27,3 +27,18 @@ def remove_newsletter_subscriber(email):
         db.session.commit()
         return True
     return False
+
+
+def list_newsletter_subscribers():
+    """List all subscribers sorted by date desc."""
+    return NewsletterSubscriber.query.order_by(NewsletterSubscriber.subscribed_at.desc()).all()
+
+
+def remove_newsletter_subscriber_by_id(subscriber_id):
+    """Remove a subscriber by ID."""
+    subscriber = db.session.get(NewsletterSubscriber, subscriber_id)
+    if subscriber:
+        db.session.delete(subscriber)
+        db.session.commit()
+        return True
+    return False

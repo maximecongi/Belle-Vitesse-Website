@@ -1,0 +1,53 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Newsletter - Dashboard{% endblock %}
+{% block page_title %}Newsletter{% endblock %}
+
+{% block header_actions %}
+<a href="{{ url_for('admin_newsletter_compose') }}" class="admin-btn admin-btn-primary">
+    Composer une newsletter
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-title">Liste des abonnés ({{ subscribers|length }})</div>
+
+    {% if subscribers %}
+    <div class="admin-table-container">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Date d'inscription</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in subscribers %}
+                <tr>
+                    <td><strong>{{ sub.email }}</strong></td>
+                    <td style="color: var(--grey-2); font-size: 0.9rem;">
+                        {{ sub.subscribed_at.strftime('%d/%m/%Y %H:%M') }}
+                    </td>
+                    <td>
+                        <form action="{{ url_for('admin_newsletter_delete', subscriber_id=sub.id) }}" method="POST"
+                            style="display: inline;" onsubmit="return confirm('Supprimer cet abonné ?');">
+                            <button type="submit" class="admin-btn admin-btn-danger"
+                                style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">
+                                Supprimer
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="padding: 3rem; text-align: center; color: var(--grey-2);">
+        Aucun abonné pour le moment.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

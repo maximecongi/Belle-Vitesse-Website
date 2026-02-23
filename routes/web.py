@@ -12,7 +12,7 @@ from flask import (
 from itsdangerous import URLSafeSerializer
 from collections import defaultdict
 
-from extensions import cache
+from extensions import cache, csrf
 from utils.specs import build_specs
 from utils.database import (
     get_grips_products_for_category,
@@ -148,6 +148,7 @@ def init_web_routes(app):
     # ── Newsletter ────────────────────────────────────────────────
 
     @app.route("/subscribe", methods=["POST"])
+    @csrf.exempt
     def subscribe():
         from utils.mailer import send_subscription_email
         email = request.form.get("email")

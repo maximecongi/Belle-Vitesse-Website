@@ -156,3 +156,84 @@ def send_subscription_email(to_email):
         current_app.logger.error(
             f"❌ Erreur détaillée lors de l'envoi de l'email à {to_email} : {type(e).__name__}: {e}")
         return False
+
+
+def send_newsletter_campaign(subject, body, subscribers):
+    """
+    Sends a bulk newsletter email to a list of subscribers.
+    subscribers is a list of NewsletterSubscriber objects.
+    """
+    mail_server = os.getenv("MAIL_SERVER")
+    mail_port = int(os.getenv("MAIL_PORT", 587))
+    mail_user = os.getenv("MAIL_USERNAME")
+    mail_password = os.getenv("MAIL_PASSWORD")
+    mail_use_tls = os.getenv("MAIL_USE_TLS", "true").lower() == "true"
+
+    if not all([mail_server, mail_user, mail_password]):
+        current_app.logger.error("❌ Email configuration missing in .env")
+        return 0, len(subscribers)
+
+    results = {"success": 0, "failed": 0}
+
+    try:
+        server = smtplib.SMTP(mail_server, mail_port, timeout=10)
+        if mail_use_tls:
+            server.starttls()
+        server.login(mail_user, mail_password)
+
+        secret_key = current_app.config.get(
+            "SECRET_KEY") or "bv_super_secret_key_2026"
+        serializer = URLSafeSerializer(secret_key)
+
+        for sub in subscribers:
+            try:
+                # Generate unique unsubscribe for each
+                token = serializer.dumps(sub.email)
+                try:
+                    base_url = request.host_url.rstrip('/')
+                except Exception:
+                    base_url = "https://www.bellevitesse.com"
+
+                unsubscribe_url = f"{base_url}/unsubscribe/{token}"
+
+                # Wrap body in a basic HTML container or just use it as is
+                # For now, let's keep it simple as the user asked for an editor
+                # We can add a base template later if needed.
+                html_content = f"""
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #151515;">
+                    <div style="padding: 2rem;">
+                        {body.replace('\n', '<br>')}
+                    </div>
+                    <div style="padding: 1rem; border-top: 1px solid #eee; font-size: 0.8rem; color: #888; text-align: center;">
+                        <p>Belle Vitesse &copy; 2026</p>
+                        <p><a href="{unsubscribe_url}" style="color: #888;">Se désabonner de la newsletter</a></p>
+                    </div>
+                </div>
+                """
+
+                msg = MIMEMultipart("alternative")
+                msg["Subject"] = subject
+                msg["From"] = f"Belle Vitesse <{mail_user}>"
+                msg["To"] = sub.email
+                msg["Date"] = formatdate(localtime=True)
+                msg["Message-ID"] = make_msgid(domain="bellevitesse.com")
+
+                msg["Precedence"] = "bulk"
+                msg["List-Unsubscribe"] = f"<{unsubscribe_url}>"
+
+                msg.attach(MIMEText(body, "plain", "utf-8"))
+                msg.attach(MIMEText(html_content, "html", "utf-8"))
+
+                server.sendmail(mail_user, [sub.email], msg.as_string())
+                results["success"] += 1
+            except Exception as e:
+                current_app.logger.warning(
+                    f"⚠️ Failed to send to {sub.email}: {e}")
+                results["failed"] += 1
+
+        server.quit()
+        return results["success"], results["failed"]
+
+    except Exception as e:
+        current_app.logger.error(f"❌ critical SMTP error during campaign: {e}")
+        return results["success"], results["failed"]

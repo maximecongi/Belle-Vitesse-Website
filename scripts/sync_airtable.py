@@ -97,7 +97,6 @@ def process_attachment(attachment, table_name, record_id):
     Process a single attachment: download main image and thumbnails.
     Returns modified attachment with local URLs.
     """
-    attachment_id = attachment.get("id", "unknown")
     filename = attachment.get("filename", "image.jpg")
     original_url = attachment.get("url")
 
