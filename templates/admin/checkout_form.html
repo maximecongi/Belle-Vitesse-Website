@@ -296,8 +296,8 @@
         <div class="form-group" style="margin-bottom: 1.5rem;">
             <label class="form-label">{{ label }} <span style="color: var(--red-error);">*</span></label>
 
-            {% if is_edit %}
             {% set photos = data.get(data_key, []) if data else [] %}
+            {% if is_edit and photos %}
             <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
                 {% for photo in photos %}
                 <a href="{{ photo.url }}" target="_blank"
@@ -310,7 +310,7 @@
             {% endif %}
 
             <label
-                style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; border: 2px dashed #d0d0d0; border-radius: 8px; cursor: pointer; transition: border-color 0.2s; background: var(--admin-bg, #f8f9fa);"
+                style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; border: 2px dashed #d0d0d0; border-radius: 8px; cursor: pointer; transition: border-color 0.2s; background: var(--admin-bg, #f8f9fa); position: relative;"
                 onmouseover="this.style.borderColor='var(--admin-accent)'"
                 onmouseout="this.style.borderColor='#d0d0d0'">
                 <span style="font-size: 1.5rem;">📷</span>
@@ -318,8 +318,9 @@
                     <div style="font-weight: 500; font-size: 0.85rem;">Ajouter des photos</div>
                     <div style="font-size: 0.75rem; color: var(--grey-2);">Cliquez ou glissez-déposez • JPG, PNG</div>
                 </div>
-                <input type="file" name="{{ field_name }}" multiple accept="image/*" style="display: none;"
-                    onchange="updatePhotoLabel(this)" required>
+                <input type="file" name="{{ field_name }}" multiple accept="image/*"
+                    style="width: 0.1px; height: 0.1px; opacity: 0; overflow: hidden; position: absolute; z-index: -1;"
+                    onchange="updatePhotoLabel(this)" {% if not photos %}required{% endif %}>
             </label>
             <div class="photo-preview" data-for="{{ field_name }}"
                 style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;"></div>
