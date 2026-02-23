@@ -15,6 +15,7 @@ from pyairtable import Table
 from dotenv import load_dotenv
 from utils.airtable import get_vehicle_by_id
 from utils.formatting import format_date_fr
+from weasyprint import HTML, CSS
 
 load_dotenv()
 
@@ -138,7 +139,6 @@ def generate_checkin_pdf(html_content: str, base_url: str) -> bytes:
     Generate PDF bytes from HTML content using WeasyPrint.
     Loads the external checkin.css stylesheet if present.
     """
-    from weasyprint import HTML, CSS
     html = HTML(string=html_content, base_url=base_url)
 
     css_list = []
