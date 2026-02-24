@@ -78,122 +78,129 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
+        const updateVehicleOptions = (opt) => {
+            if (!opt) return;
+
+            // Enable vehicle select
+            const vSelectEl = document.getElementById('vehicleSelect');
+            if (vSelectEl) {
+                vSelectEl.style.opacity = '';
+                vSelectEl.style.pointerEvents = '';
+                vSelectEl.removeAttribute('data-disabled');
+            }
+
+            // Filter vehicle options based on project's linked vehicles
+            const vehiclesStr = opt.dataset.vehicles || '';
+            const allowedVehicles = vehiclesStr ? vehiclesStr.split(',') : [];
+            const vOptions = document.querySelectorAll('#vehicleOptions .rich-select-option');
+            const vInput = document.querySelector('#vehicleSelect input[name="vehicle_id"]');
+
+            if (vOptions.length) {
+                vOptions.forEach(vOpt => {
+                    if (!vOpt.dataset.id) {
+                        // Always show "— Aucun —"
+                        vOpt.style.display = '';
+                    } else if (allowedVehicles.length === 0) {
+                        // No filter → show all
+                        vOpt.style.display = '';
+                    } else {
+                        vOpt.style.display = allowedVehicles.includes(vOpt.dataset.id) ? '' : 'none';
+                    }
+                });
+
+                // Reset vehicle if current selection is not in the allowed list
+                if (vInput && allowedVehicles.length > 0 && vInput.value && !allowedVehicles.includes(vInput.value)) {
+                    vInput.value = '';
+                    const vLabel = document.getElementById('vehicleLabel');
+                    if (vLabel) vLabel.textContent = '— Sélectionner un véhicule —';
+                    vInput.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+
+            // Dispatch event for downstream listeners
+            pInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+            // Update vehicle option statuses based on the selected project
+            const selectedProjectId = pInput.value;
+            const vOptionsForStatus = document.querySelectorAll('#vehicleOptions .rich-select-option');
+            if (vOptionsForStatus && selectedProjectId) {
+                vOptionsForStatus.forEach(opt => {
+                    const checkoutStatuses = JSON.parse(opt.dataset.checkoutStatuses || '{}');
+                    const checkinStatuses = JSON.parse(opt.dataset.checkinStatuses || '{}');
+
+                    const checkoutStatus = checkoutStatuses[selectedProjectId];
+                    const checkinStatus = checkinStatuses[selectedProjectId];
+
+                    const badgeEl = opt.querySelector('.vehicle-status-badge');
+
+                    if (opt.hasAttribute('data-checkin-statuses')) {
+                        const isCheckoutSigned = (checkoutStatus === 'Signé' || checkoutStatus === 'Validé');
+                        if (checkinStatus) {
+                            opt.dataset.disabled = "true";
+                            if (badgeEl) {
+                                badgeEl.textContent = checkinStatus;
+                                badgeEl.style.background = "var(--input-bg)";
+                                badgeEl.style.color = "var(--text-color)";
+                            }
+                        } else if (!isCheckoutSigned) {
+                            opt.dataset.disabled = "true";
+                            if (badgeEl) {
+                                badgeEl.textContent = "Départ non signé";
+                                badgeEl.style.background = "#eee";
+                                badgeEl.style.color = "#999";
+                            }
+                        } else {
+                            opt.removeAttribute('data-disabled');
+                            if (badgeEl) {
+                                badgeEl.textContent = "À contrôler";
+                                badgeEl.style.background = "var(--brand-blue)";
+                                badgeEl.style.color = "white";
+                            }
+                        }
+                    } else if (opt.hasAttribute('data-checkout-statuses')) {
+                        const blockedByProject = opt.dataset.blockedBy;
+                        if (checkoutStatus) {
+                            opt.dataset.disabled = "true";
+                            if (badgeEl) {
+                                badgeEl.textContent = checkoutStatus;
+                                badgeEl.style.background = "var(--input-bg)";
+                                badgeEl.style.color = "var(--text-color)";
+                            }
+                        } else if (blockedByProject) {
+                            opt.dataset.disabled = "true";
+                            if (badgeEl) {
+                                badgeEl.textContent = "Check-in non signé : " + blockedByProject;
+                                badgeEl.style.background = "#fee2e2";
+                                badgeEl.style.color = "#dc2626";
+                            }
+                        } else {
+                            opt.removeAttribute('data-disabled');
+                            if (badgeEl) {
+                                badgeEl.textContent = "À contrôler";
+                                badgeEl.style.background = "var(--brand-blue)";
+                                badgeEl.style.color = "white";
+                            }
+                        }
+                    }
+                });
+            }
+        };
+
         pOptions.forEach(opt => {
             opt.addEventListener('click', () => {
                 if (opt.dataset.disabled === 'true') return;
                 pInput.value = opt.dataset.id;
                 pLabel.textContent = opt.dataset.name;
                 pSelect.classList.remove('open');
-
-                // Enable vehicle select
-                const vSelectEl = document.getElementById('vehicleSelect');
-                if (vSelectEl) {
-                    vSelectEl.style.opacity = '';
-                    vSelectEl.style.pointerEvents = '';
-                    vSelectEl.removeAttribute('data-disabled');
-                }
-
-                // Filter vehicle options based on project's linked vehicles
-                const vehiclesStr = opt.dataset.vehicles || '';
-                const allowedVehicles = vehiclesStr ? vehiclesStr.split(',') : [];
-                const vOptions = document.querySelectorAll('#vehicleOptions .rich-select-option');
-                const vInput = document.querySelector('#vehicleSelect input[name="vehicle_id"]');
-
-                if (vOptions.length) {
-                    vOptions.forEach(vOpt => {
-                        if (!vOpt.dataset.id) {
-                            // Always show "— Aucun —"
-                            vOpt.style.display = '';
-                        } else if (allowedVehicles.length === 0) {
-                            // No filter → show all
-                            vOpt.style.display = '';
-                        } else {
-                            vOpt.style.display = allowedVehicles.includes(vOpt.dataset.id) ? '' : 'none';
-                        }
-                    });
-
-                    // Reset vehicle if current selection is not in the allowed list
-                    if (vInput && allowedVehicles.length > 0 && !allowedVehicles.includes(vInput.value)) {
-                        vInput.value = '';
-                        const vLabel = document.getElementById('vehicleLabel');
-                        if (vLabel) vLabel.textContent = '— Sélectionner un véhicule —';
-                        vInput.dispatchEvent(new Event('change', { bubbles: true }));
-                    }
-                } // End of if (vOptions)
-
-                // Dispatch event to allow forms to update vehicle status pills per project
-                pInput.dispatchEvent(new Event('change', { bubbles: true }));
-
-                // Update vehicle option statuses based on the selected project
-                const selectedProjectId = pInput.value;
-                const vOptionsForStatus = document.querySelectorAll('#vehicleOptions .rich-select-option');
-                if (vOptionsForStatus && selectedProjectId) {
-                    vOptionsForStatus.forEach(opt => {
-                        const checkoutStatuses = JSON.parse(opt.dataset.checkoutStatuses || '{}');
-                        const checkinStatuses = JSON.parse(opt.dataset.checkinStatuses || '{}'); // Only present in checkin form
-
-                        const checkoutStatus = checkoutStatuses[selectedProjectId];
-                        const checkinStatus = checkinStatuses[selectedProjectId];
-
-                        const badgeEl = opt.querySelector('.vehicle-status-badge');
-
-                        // Checkin logic (if data-checkin-statuses is present, we are in checkin_form)
-                        if (opt.hasAttribute('data-checkin-statuses')) {
-                            const isCheckoutSigned = (checkoutStatus === 'Signé' || checkoutStatus === 'Validé');
-                            if (checkinStatus) {
-                                opt.dataset.disabled = "true";
-                                if (badgeEl) {
-                                    badgeEl.textContent = checkinStatus;
-                                    badgeEl.style.background = "var(--input-bg)";
-                                    badgeEl.style.color = "var(--text-color)";
-                                }
-                            } else if (!isCheckoutSigned) {
-                                opt.dataset.disabled = "true";
-                                if (badgeEl) {
-                                    badgeEl.textContent = "Départ non signé";
-                                    badgeEl.style.background = "#eee";
-                                    badgeEl.style.color = "#999";
-                                }
-                            } else {
-                                opt.removeAttribute('data-disabled');
-                                if (badgeEl) {
-                                    badgeEl.textContent = "À contrôler";
-                                    badgeEl.style.background = "var(--brand-blue)";
-                                    badgeEl.style.color = "white";
-                                }
-                            }
-                        }
-                        // Checkout logic
-                        else if (opt.hasAttribute('data-checkout-statuses')) {
-                            const blockedByProject = opt.dataset.blockedBy;
-
-                            if (checkoutStatus) {
-                                opt.dataset.disabled = "true";
-                                if (badgeEl) {
-                                    badgeEl.textContent = checkoutStatus;
-                                    badgeEl.style.background = "var(--input-bg)";
-                                    badgeEl.style.color = "var(--text-color)";
-                                }
-                            } else if (blockedByProject) {
-                                opt.dataset.disabled = "true";
-                                if (badgeEl) {
-                                    badgeEl.textContent = "Check-in non signé : " + blockedByProject;
-                                    badgeEl.style.background = "#fee2e2"; // Light red
-                                    badgeEl.style.color = "#dc2626"; // Dark red
-                                }
-                            } else {
-                                opt.removeAttribute('data-disabled');
-                                if (badgeEl) {
-                                    badgeEl.textContent = "À contrôler";
-                                    badgeEl.style.background = "var(--brand-blue)";
-                                    badgeEl.style.color = "white";
-                                }
-                            }
-                        }
-                    });
-                }
+                updateVehicleOptions(opt);
             });
         });
+
+        // Initialize state if project is already selected (load via URL params)
+        if (pInput.value) {
+            const initialOpt = Array.from(pOptions).find(o => o.dataset.id === pInput.value);
+            if (initialOpt) updateVehicleOptions(initialOpt);
+        }
     }
 
     // ─────────────────────────────────────────────

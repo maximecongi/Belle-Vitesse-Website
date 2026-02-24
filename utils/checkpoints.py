@@ -46,7 +46,7 @@ def get_checkpoints_for_vehicle(vehicle_id: str) -> list:
     if not vehicle_id:
         return BASE_CHECKPOINTS
 
-    from models import db, VehicleCheckpointConfig
+    from models import VehicleCheckpointConfig
     from flask import has_app_context
 
     # Resolve the vehicle name if it's an Airtable ID (starts with rec)
