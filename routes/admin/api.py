@@ -48,6 +48,8 @@ from services.newsletter import (
     list_newsletter_subscribers,
     remove_newsletter_subscriber_by_id,
 )
+from services.admin.vehicle_config import get_vehicles_with_config, save_vehicle_checkpoint_config
+from utils.checkpoints import ALL_POSSIBLE_CHECKPOINTS
 
 
 def init_api_routes(app):
@@ -123,4 +125,38 @@ def init_api_routes(app):
             db.session.rollback()
             current_app.logger.error(
                 f"❌ Error in admin_api_checkin_status: {e}")
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/admin/vehicle-configs")
+    @require_roles('administrator')
+    def admin_vehicle_configs():
+        try:
+            vehicles = get_vehicles_with_config()
+            return render_template(
+                "admin/vehicle_configs.html",
+                vehicles=vehicles,
+                possible_checkpoints=ALL_POSSIBLE_CHECKPOINTS
+            )
+        except Exception as e:
+            current_app.logger.error(f"❌ Error in admin_vehicle_configs: {e}")
+            flash(
+                f"Erreur lors du chargement des configurations: {e}", "error")
+            return redirect(url_for('admin_dashboard'))
+
+    @app.route("/admin/api/vehicle-configs", methods=["POST"])
+    @require_roles('administrator')
+    def admin_api_save_vehicle_config():
+        try:
+            data = request.get_json()
+            vehicle_id = data.get("vehicle_id")
+            enabled_keys = data.get("enabled_keys", [])
+
+            if not vehicle_id:
+                return jsonify({"error": "Missing vehicle_id"}), 400
+
+            save_vehicle_checkpoint_config(vehicle_id, enabled_keys)
+            return jsonify({"success": True})
+        except Exception as e:
+            current_app.logger.error(
+                f"❌ Error in admin_api_save_vehicle_config: {e}")
             return jsonify({"error": str(e)}), 500

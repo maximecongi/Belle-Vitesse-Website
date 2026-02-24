@@ -2,17 +2,14 @@ import json
 import logging
 import os
 from pathlib import Path
-from collections import defaultdict
-from datetime import date
 
-from flask import current_app, url_for
-from werkzeug.utils import secure_filename
+from flask import current_app
 
-from models import db, CheckoutVehicle, CheckinVehicle, Production, Project, User
-from utils.airtable import get_vehicles
-from utils.formatting import format_date_fr
+from models import CheckoutVehicle
+from utils.checkpoints import get_checkpoints_for_vehicle
 
 logger = logging.getLogger(__name__)
+
 
 def _parse_photos_json(text):
     if not text:
@@ -79,19 +76,23 @@ def _delete_inspection_files(record):
                     f"❌ Échec de la suppression du PDF {pdf_path}: {e}")
 
 
-def _is_ready(form):
+def _is_ready(form, vehicle_id=None):
     """
     Calculate if the vehicle is ready based on inspection fields.
     Returns True if all critical fields are 'OK' or 'Non pertinent'.
     """
-    checks = [
-        "tires", "spare_tire", "brakes", "lights", "oil", "coolant",
-        "engine_start", "wipers", "horn", "safety_triangle", "fire_extinguisher"
-    ]
-    for key in checks:
+    # Get specific checkpoints for this vehicle
+    checkpoints = get_checkpoints_for_vehicle(vehicle_id)
+
+    # Only check 'status' type fields
+    # Only check 'status' type fields
+    status_keys = [cp['key']
+                   for cp in checkpoints if cp.get('type') == 'status']
+
+    for key in status_keys:
         val = form.get(key)
-        if val not in ["OK", "Non pertinent"]:
+        # If it's not present (hidden/not pertinent), we treat it as OK
+        # This will be supplemented by the service layer setting it to "Non pertinent"
+        if val is not None and val not in ["OK", "Non pertinent"]:
             return False
     return True
-
-

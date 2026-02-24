@@ -1,4 +1,4 @@
-from utils.checkpoints import get_checkpoints_for_vehicle, CHECKPOINTS_CONFIG, DEFAULT_CHECKPOINTS
+from utils.checkpoints import get_checkpoints_for_vehicle, BASE_CHECKPOINTS
 from services.admin.utils import _parse_photos_json, _delete_inspection_files, _is_ready
 import json
 import logging
@@ -211,12 +211,19 @@ def get_checkin_form_context():
             "fields": {"firstname": u.firstname, "lastname": u.lastname}
         })
 
+    # Build mapping for frontend filtering
+    checkpoints_mapping = {}
+    for v in vehicles:
+        v_name = v.get("fields", {}).get("name")
+        if v_name:
+            checkpoints_mapping[v_name] = get_checkpoints_for_vehicle(v_name)
+
     return {
         "projects": projects_formatted,
         "vehicles": vehicles,
         "users": users_formatted,
-        "checkpoints_config_json": json.dumps(CHECKPOINTS_CONFIG),
-        "default_checkpoints_json": json.dumps(DEFAULT_CHECKPOINTS),
+        "checkpoints_config_json": json.dumps(checkpoints_mapping),
+        "default_checkpoints_json": json.dumps(BASE_CHECKPOINTS),
     }
 
 
@@ -263,27 +270,38 @@ def create_checkin(form, files=None):
             f"⚠️ Invalid controller_id detected: {uid}. Record will be created without user.")
         user_id = None
 
+    # Determine pertinent status fields for this vehicle
+    vehicle_id = form.get("vehicle_id")
+    from utils.checkpoints import get_checkpoints_for_vehicle
+    checkpoints = get_checkpoints_for_vehicle(vehicle_id)
+    pertinent_keys = {cp['key']
+                      for cp in checkpoints if cp.get('type') == 'status'}
+
+    def get_val(key):
+        if key not in pertinent_keys:
+            return "Non pertinent"
+        return form.get(key, "À vérifier")
+
     record = CheckinVehicle(
         etat_controle="En cours",
         date_controle=date.today(),
         project_id=int(pid) if pid and pid != "None" else None,
         user_id=user_id,
-        vehicule_controle=form.get("vehicle_id") if form.get(
-            "vehicle_id") != "None" else None,
+        vehicule_controle=vehicle_id if vehicle_id != "None" else None,
         kilometrage_retour=float(form.get("km")) if form.get("km") else None,
         charge_batterie_retour=float(
             form.get("battery")) if form.get("battery") else None,
-        etat_pneus=form.get("tires"),
-        roue_secours=form.get("spare_tire"),
-        etat_freins=form.get("brakes"),
-        etat_eclairage_exterieur=form.get("lights"),
-        niveau_huile=form.get("oil"),
-        niveau_liquide_refroidissement=form.get("coolant"),
-        demarrage_moteur=form.get("engine_start"),
-        etat_essuie_glaces=form.get("wipers"),
-        etat_klaxon=form.get("horn"),
-        presence_triangle_gilet=form.get("safety_triangle"),
-        presence_extincteur=form.get("fire_extinguisher"),
+        etat_pneus=get_val("tires"),
+        roue_secours=get_val("spare_tire"),
+        etat_freins=get_val("brakes"),
+        etat_eclairage_exterieur=get_val("lights"),
+        niveau_huile=get_val("oil"),
+        niveau_liquide_refroidissement=get_val("coolant"),
+        demarrage_moteur=get_val("engine_start"),
+        etat_essuie_glaces=get_val("wipers"),
+        etat_klaxon=get_val("horn"),
+        presence_triangle_gilet=get_val("safety_triangle"),
+        presence_extincteur=get_val("fire_extinguisher"),
         observations=form.get("notes"),
     )
 
@@ -298,7 +316,7 @@ def create_checkin(form, files=None):
             raise ValueError(
                 "Le départ de ce véhicule n'a pas été validé par une signature.")
 
-    record.vehicule_pret_retour = _is_ready(form)
+    record.vehicule_pret_retour = _is_ready(form, record.vehicule_controle)
     db.session.add(record)
     db.session.commit()
 
@@ -326,19 +344,31 @@ def update_checkin(record_id, form, files=None):
     if form.get("battery"):
         record.charge_batterie_retour = float(form.get("battery"))
 
-    record.etat_pneus = form.get("tires")
-    record.roue_secours = form.get("spare_tire")
-    record.etat_freins = form.get("brakes")
-    record.etat_eclairage_exterieur = form.get("lights")
-    record.niveau_huile = form.get("oil")
-    record.niveau_liquide_refroidissement = form.get("coolant")
-    record.demarrage_moteur = form.get("engine_start")
-    record.etat_essuie_glaces = form.get("wipers")
-    record.etat_klaxon = form.get("horn")
-    record.presence_triangle_gilet = form.get("safety_triangle")
-    record.presence_extincteur = form.get("fire_extinguisher")
+    # Determine pertinent status fields for this vehicle
+    vehicle_id = record.vehicule_controle
+    from utils.checkpoints import get_checkpoints_for_vehicle
+    checkpoints = get_checkpoints_for_vehicle(vehicle_id)
+    pertinent_keys = {cp['key']
+                      for cp in checkpoints if cp.get('type') == 'status'}
+
+    def get_val(key):
+        if key not in pertinent_keys:
+            return "Non pertinent"
+        return form.get(key, "À vérifier")
+
+    record.etat_pneus = get_val("tires")
+    record.roue_secours = get_val("spare_tire")
+    record.etat_freins = get_val("brakes")
+    record.etat_eclairage_exterieur = get_val("lights")
+    record.niveau_huile = get_val("oil")
+    record.niveau_liquide_refroidissement = get_val("coolant")
+    record.demarrage_moteur = get_val("engine_start")
+    record.etat_essuie_glaces = get_val("wipers")
+    record.etat_klaxon = get_val("horn")
+    record.presence_triangle_gilet = get_val("safety_triangle")
+    record.presence_extincteur = get_val("fire_extinguisher")
     record.observations = form.get("notes")
-    record.vehicule_pret_retour = _is_ready(form)
+    record.vehicule_pret_retour = _is_ready(form, record.vehicule_controle)
 
     db.session.commit()
 

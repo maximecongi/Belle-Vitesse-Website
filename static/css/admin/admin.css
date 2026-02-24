@@ -490,6 +490,75 @@ body {
     background-color: rgba(0, 0, 0, 0.02);
 }
 
+
+/* ===========================
+   Custom Checkbox 
+   =========================== */
+
+.admin-table input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    border-radius: 5px;
+    border: 2px solid #ffc845;
+    background-color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Checkmark icon */
+.admin-table input[type="checkbox"]::after {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 8px;
+    border: 2.5px solid transparent;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg) translateY(-1px) translateX(-1px);
+    transition: border-color 0.15s ease;
+}
+
+/* Hover */
+.admin-table input[type="checkbox"]:hover {
+    border-color: #e6a800;
+    box-shadow: 0 0 0 4px rgba(255, 200, 69, 0.15);
+}
+
+/* Checked */
+.admin-table input[type="checkbox"]:checked {
+    background-color: #ffc845;
+    border-color: #ffc845;
+}
+
+.admin-table input[type="checkbox"]:checked::after {
+    border-color: #fff;
+}
+
+/* Focus (accessibilité) */
+.admin-table input[type="checkbox"]:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(255, 200, 69, 0.35);
+}
+
+/* Disabled */
+.admin-table input[type="checkbox"]:disabled {
+    border-color: #ddd;
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+}
+
+.admin-table input[type="checkbox"]:disabled:checked {
+    background-color: #ffd97a;
+    border-color: #ffd97a;
+}
+
 /* Badges */
 .admin-badge {
     display: inline-block;

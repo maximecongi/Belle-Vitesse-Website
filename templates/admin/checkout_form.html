@@ -363,12 +363,23 @@
     function updateCheckpoints() {
         if (!vehicleInput) return;
 
-        let vehicleName = "";
-        if (vehicleInput.value) {
-            // Find the option in the dropdown that matches the selected ID to get its name
-            const opt = document.querySelector(`#vehicleOptions .rich-select-option[data-id="${vehicleInput.value}"]`);
-            if (opt) vehicleName = opt.dataset.name || "";
+        if (!vehicleInput.value) {
+            // Show everything if no vehicle selected
+            document.querySelectorAll('.checkpoint-field').forEach(fieldEl => {
+                fieldEl.style.display = '';
+                const inputEl = fieldEl.querySelector('input');
+                if (inputEl) {
+                    const key = fieldEl.dataset.key;
+                    inputEl.required = (key === 'km' || key === 'battery');
+                }
+            });
+            return;
         }
+
+        let vehicleName = "";
+        // Find the option in the dropdown that matches the selected ID to get its name
+        const opt = document.querySelector(`#vehicleOptions .rich-select-option[data-id="${vehicleInput.value}"]`);
+        if (opt) vehicleName = opt.dataset.name || "";
 
         // Determine which config to use
         let configToUse = defaultCheckpoints;

@@ -64,6 +64,10 @@
                     class="admin-nav-item {% if request.endpoint == 'admin_users_list' %}active{% endif %}">
                     Utilisateurs
                 </a>
+                <a href="{{ url_for('admin_vehicle_configs') }}"
+                    class="admin-nav-item {% if request.endpoint == 'admin_vehicle_configs' %}active{% endif %}">
+                    Config. Véhicules
+                </a>
                 <a href="{{ url_for('admin_newsletter_dashboard') }}"
                     class="admin-nav-item {% if 'admin_newsletter' in request.endpoint %}active{% endif %}">
                     Newsletter

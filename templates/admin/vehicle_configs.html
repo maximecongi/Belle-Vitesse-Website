@@ -1,0 +1,107 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Configuration des Véhicules{% endblock %}
+{% block page_title %}Configuration des Points de Contrôle{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-card-title">Gestion des Points de Contrôle par Véhicule</div>
+    <p style="color: var(--grey-2); margin-bottom: 2rem; font-size: 0.9rem;">
+        Cochez les points de contrôle qui doivent apparaître pour chaque véhicule lors des Checkouts et Checkins.
+    </p>
+
+    <div style="overflow-x: auto;">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th style="min-width: 200px;">Véhicule</th>
+                    {% for cp in possible_checkpoints %}
+                    <th
+                        style="cursor: default; text-align: center; font-size: 0.7rem; writing-mode: vertical-lr; transform: rotate(180deg); padding: 1rem 0.5rem;">
+                        {{ cp.label }}
+                    </th>
+                    {% endfor %}
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vehicle in vehicles %}
+                <tr>
+                    <td style="font-weight: 600;">{{ vehicle.name }}</td>
+
+                    {% for cp in possible_checkpoints %}
+                    <td style="text-align: center;">
+                        <input type="checkbox" class="checkpoint-toggle" data-vehicle="{{ vehicle.id }}"
+                            data-key="{{ cp.key }}" {% if vehicle.config[cp.key] %}checked{% endif %}>
+                    </td>
+                    {% endfor %}
+
+                    <td>
+                        <button class="admin-btn admin-btn-primary save-vehicle-btn" data-vehicle="{{ vehicle.id }}"
+                            style="padding: 5px 10px; font-size: 0.8rem;">
+                            Enregistrer
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const saveButtons = document.querySelectorAll('.save-vehicle-btn');
+        const csrfToken = document.querySelector('input[name="csrf_token"]')?.value;
+
+        saveButtons.forEach(btn => {
+            btn.addEventListener('click', function () {
+                const vehicleId = this.dataset.vehicle;
+                const checkboxes = document.querySelectorAll(`.checkpoint-toggle[data-vehicle="${vehicleId}"]`);
+
+                const enabledKeys = [];
+                checkboxes.forEach(cb => {
+                    if (cb.checked) enabledKeys.push(cb.dataset.key);
+                });
+
+                btn.disabled = true;
+                btn.innerText = '...';
+
+                fetch('/admin/api/vehicle-configs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        vehicle_id: vehicleId,
+                        enabled_keys: enabledKeys
+                    })
+                })
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.success) {
+                            btn.innerText = 'C\'est fait !';
+                            btn.style.background = '#059669';
+                            setTimeout(() => {
+                                btn.disabled = false;
+                                btn.innerText = 'Enregistrer';
+                                btn.style.background = '';
+                            }, 2000);
+                        } else {
+                            alert('Erreur: ' + res.error);
+                            btn.disabled = false;
+                            btn.innerText = 'Enregistrer';
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert('Erreur de connexion');
+                        btn.disabled = false;
+                        btn.innerText = 'Enregistrer';
+                    });
+            });
+        });
+    });
+</script>
+{% endblock %}

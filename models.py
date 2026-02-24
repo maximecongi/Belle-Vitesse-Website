@@ -212,3 +212,17 @@ class CheckinToken(db.Model):
     created_at = db.Column(db.DateTime, nullable=False,
                            default=datetime.utcnow)
     expires_at = db.Column(db.DateTime, server_default=db.FetchedValue())
+
+
+class VehicleCheckpointConfig(db.Model):
+    __tablename__ = "vehicle_checkpoint_configs"
+
+    id = db.Column(db.Integer, primary_key=True)
+    vehicle_id = db.Column(db.String(100), unique=True, nullable=False)
+    # Stores enabled keys: {"tires": true, "brakes": false, ...}
+    config = db.Column(db.JSON, nullable=False)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<VehicleCheckpointConfig {self.vehicle_id}>"
