@@ -1,7 +1,7 @@
+from utils.checkpoints import get_checkpoints_for_vehicle, CHECKPOINTS_CONFIG, DEFAULT_CHECKPOINTS
+from services.admin.utils import _parse_photos_json, _delete_inspection_files, _is_ready
 import json
 import logging
-import os
-from pathlib import Path
 from collections import defaultdict
 from datetime import date
 
@@ -13,8 +13,6 @@ from utils.airtable import get_vehicles
 from utils.formatting import format_date_fr
 
 logger = logging.getLogger(__name__)
-
-from services.admin.utils import _parse_photos_json, _delete_inspection_files, _is_ready
 
 
 # ── Checkins ────────────────────────────────────────────────────
@@ -51,6 +49,8 @@ def _format_checkin_admin(c: CheckinVehicle, vehicle_names):
     }
     data["search_text"] = f"{data['inspection_id']} {project_name} {controller_name} {status}".lower(
     )
+
+    data["check_items"] = get_checkpoints_for_vehicle(vehicle_name)
 
     # Detail fields (for checkin_detail.html)
     data["control_status"] = status
@@ -153,28 +153,32 @@ def get_checkin_form_context():
     checkins = CheckinVehicle.query.all()
     checkouts = CheckoutVehicle.query.all()
 
-    # Map for checkin status (already returned)
-    vehicle_checkin_status = {}
+    # Map for checkin status: {vehicule_id: {project_id: status}}
+    vehicle_checkin_statuses = {}
     for c in checkins:
-        if c.vehicule_controle and c.etat_controle:
-            vehicle_checkin_status[c.vehicule_controle] = c.etat_controle
+        if c.vehicule_controle and c.etat_controle and c.project_id:
+            vid = c.vehicule_controle
+            if vid not in vehicle_checkin_statuses:
+                vehicle_checkin_statuses[vid] = {}
+            # We keep the latest one (overwriting)
+            vehicle_checkin_statuses[vid][str(c.project_id)] = c.etat_controle
 
-    # Map for latest checkout status (to ensure it's "Signé")
-    vehicle_checkout_status = {}
+    # Map for latest checkout status: {vehicule_id: {project_id: status}}
+    vehicle_checkout_statuses = {}
     for c in checkouts:
-        if c.vehicule_controle and c.etat_controle:
-            # We keep the latest one (assuming query order or just overwriting is fine for now)
-            vehicle_checkout_status[c.vehicule_controle] = c.etat_controle
+        if c.vehicule_controle and c.etat_controle and c.project_id:
+            vid = c.vehicule_controle
+            if vid not in vehicle_checkout_statuses:
+                vehicle_checkout_statuses[vid] = {}
+            # We keep the latest one (overwriting)
+            vehicle_checkout_statuses[vid][str(c.project_id)] = c.etat_controle
 
     for v in vehicles:
         vid = v["id"]
-        if vid in vehicle_checkin_status:
-            v.setdefault("fields", {})[
-                "_checkin_status"] = vehicle_checkin_status[vid]
-
-        # Add checkout status for check-in safety
         v.setdefault("fields", {})[
-            "_checkout_status"] = vehicle_checkout_status.get(vid, "Absent")
+            "_checkin_statuses"] = vehicle_checkin_statuses.get(vid, {})
+        v.setdefault("fields", {})[
+            "_checkout_statuses"] = vehicle_checkout_statuses.get(vid, {})
 
     projects_formatted = []
     for p in projects:
@@ -211,6 +215,8 @@ def get_checkin_form_context():
         "projects": projects_formatted,
         "vehicles": vehicles,
         "users": users_formatted,
+        "checkpoints_config_json": json.dumps(CHECKPOINTS_CONFIG),
+        "default_checkpoints_json": json.dumps(DEFAULT_CHECKPOINTS),
     }
 
 

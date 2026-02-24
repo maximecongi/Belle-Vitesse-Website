@@ -113,8 +113,9 @@
                             {% set thumb_url = vf.thumbnail[0].thumbnails.large.url if vf.thumbnail else '' %}
                             <button type="button" class="rich-select-option" data-id="{{ v.id }}"
                                 data-name="{{ vf.get('name', '—') }}" data-thumb="{{ thumb_url }}"
-                                data-search="{{ vf.get('name', '') }}" {% if vf.get('_checkout_status')
-                                %}data-disabled="true" {% endif %}>
+                                data-search="{{ vf.get('name', '') }}"
+                                data-checkout-statuses='{{ vf.get("_checkout_statuses", {}) | tojson | forceescape }}'
+                                data-blocked-by="{{ vf.get('_blocked_by', '') }}">
                                 <div style="display: flex; align-items: center; gap: 0.6rem;">
                                     {% if thumb_url %}
                                     <img src="{{ thumb_url }}"
@@ -126,13 +127,10 @@
                                     {% endif %}
                                     <div style="display: flex; align-items: center; gap: 0.4rem;">
                                         <span class="rich-option-name">{{ vf.get('name', '—') }}</span>
-                                        {% if vf.get('_checkout_status') %}
-                                        <span class="badge-pill" data-val="{{ vf._checkout_status }}"
-                                            style="font-size: 0.7rem;">{{ vf._checkout_status }}</span>
-                                        {% else %}
-                                        <span class="badge-pill" data-val="Neutral" style="font-size: 0.7rem;">À
-                                            contrôler</span>
-                                        {% endif %}
+                                        <span class="badge-pill vehicle-status-badge" data-val="Neutral"
+                                            style="font-size: 0.7rem; background: #eee; color: #999;">
+                                            Sélectionnez un projet
+                                        </span>
                                     </div>
                                 </div>
                             </button>
@@ -203,12 +201,12 @@
                 {% endif %}
             </div>
 
-            <div class="form-group">
+            <div class="form-group checkpoint-field" data-key="km">
                 <label class="form-label">Kilométrage départ <span style="color: var(--red-error);">*</span></label>
                 <input type="number" name="km" class="form-input" value="{{ data.km if data else '' }}" required>
             </div>
 
-            <div class="form-group">
+            <div class="form-group checkpoint-field" data-key="battery">
                 <label class="form-label">Charge de la batterie départ (%) <span
                         style="color: var(--red-error);">*</span></label>
                 <input type="number" name="battery" class="form-input" value="{{ data.battery if data else '' }}"
@@ -232,7 +230,7 @@
             ('horn', 'État du klaxon')
             ] %}
             {% set current = data[field] if data and data[field] else 'À vérifier' %}
-            <div class="form-group">
+            <div class="form-group checkpoint-field" data-key="{{ field }}">
                 <label class="form-label">{{ label }} <span style="color: var(--red-error);">*</span></label>
                 <div class="badge-select" data-field="{{ field }}">
                     <input type="text" name="{{ field }}" value="{{ current }}" required
@@ -260,7 +258,7 @@
             {% for field, label in [('safety_triangle', 'Triangle de signalisation et gilet orange'),
             ('fire_extinguisher', 'Présence extincteur')] %}
             {% set current = data[field] if data and data[field] else 'À vérifier' %}
-            <div class="form-group">
+            <div class="form-group checkpoint-field" data-key="{{ field }}">
                 <label class="form-label">{{ label }} <span style="color: var(--red-error);">*</span></label>
                 <div class="badge-select" data-field="{{ field }}">
                     <input type="text" name="{{ field }}" value="{{ current }}" required
@@ -354,5 +352,60 @@
             }
         }
     }
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const checkpointsConfig = {{ checkpoints_config_json| safe
+    }};
+    const defaultCheckpoints = {{ default_checkpoints_json| safe }};
+    const vehicleInput = document.querySelector('input[name="vehicle_id"]');
+
+    function updateCheckpoints() {
+        if (!vehicleInput) return;
+
+        let vehicleName = "";
+        if (vehicleInput.value) {
+            // Find the option in the dropdown that matches the selected ID to get its name
+            const opt = document.querySelector(`#vehicleOptions .rich-select-option[data-id="${vehicleInput.value}"]`);
+            if (opt) vehicleName = opt.dataset.name || "";
+        }
+
+        // Determine which config to use
+        let configToUse = defaultCheckpoints;
+        if (vehicleName) {
+            for (const key in checkpointsConfig) {
+                if (vehicleName.toLowerCase().includes(key.toLowerCase())) {
+                    configToUse = checkpointsConfig[key];
+                    break;
+                }
+            }
+        }
+
+        // Extract the valid keys for this vehicle
+        const validKeys = configToUse.map(item => item.key);
+
+        // Loop through all fields and show/hide based on config
+        document.querySelectorAll('.checkpoint-field').forEach(fieldEl => {
+            const key = fieldEl.dataset.key;
+            const inputEl = fieldEl.querySelector('input');
+
+            if (validKeys.includes(key)) {
+                fieldEl.style.display = '';
+                if (inputEl) inputEl.required = true;
+            } else {
+                fieldEl.style.display = 'none';
+                if (inputEl) inputEl.required = false;
+            }
+        });
+    }
+
+    // Listen to custom change event from admin.js
+    if (vehicleInput) {
+        vehicleInput.addEventListener('change', updateCheckpoints);
+    }
+
+    // Run once on load for edit forms
+    updateCheckpoints();
+    });
 </script>
 {% endblock %}

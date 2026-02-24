@@ -1,22 +1,9 @@
 {% extends "admin/admin_base.html" %}
 
-{% set check_items = [
-('tires', 'Pneus'),
-('spare_tire', 'Roue de secours'),
-('brakes', 'Freins'),
-('oil', 'Niveau huile'),
-('coolant', 'Liquide de refroidissement'),
-('lights', 'Éclairage extérieur'),
-('engine_start', 'Démarrage moteur'),
-('wipers', 'Essuie-glaces'),
-('horn', 'Klaxon'),
-('safety_triangle', 'Triangle / gilet'),
-('fire_extinguisher', 'Extincteur'),
-] %}
 {% set ns = namespace(failures=[]) %}
-{% for key, label in check_items %}
-{% if data[key] and data[key] != '—' and data[key] != 'OK' %}
-{% set ns.failures = ns.failures + [label] %}
+{% for item in data.check_items %}
+{% if item.type == 'status' and data[item.key] and data[item.key] != '—' and data[item.key] != 'OK' %}
+{% set ns.failures = ns.failures + [item.label] %}
 {% endif %}
 {% endfor %}
 
@@ -103,21 +90,23 @@
             {% endif %}
             <div class="admin-card-title">Points de contrôle</div>
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem;">
-                {% for key, label, unit in [('km', 'Kilométrage', 'km'),('battery', 'Charge', '%'), ('tires',
-                'Pneus', ''),
-                ('brakes', 'Freins', ''),
-                ('oil', 'Niveau Huile', ''), ('lights', 'Éclairage', ''), ('engine_start', 'Moteur', '')] %}
+                {% for item in data.check_items %}
                 <div style="background: var(--admin-bg); padding: 0.8rem; border-radius: 6px;">
-                    <div style="font-size: 0.75rem; color: var(--grey-2); text-transform: uppercase;">{{ label }}</div>
+                    <div style="font-size: 0.75rem; color: var(--grey-2); text-transform: uppercase;">{{ item.label }}
+                    </div>
                     <div style="font-weight: 600;">
-                        {% if data[key] == 'OK' %}
+                        {% if item.type == 'status' %}
+                        {% if data[item.key] == 'OK' %}
                         <span class="badge-pill" data-val="OK">OK</span>
-                        {% elif data[key] == 'À vérifier' %}
+                        {% elif data[item.key] == 'À vérifier' %}
                         <span class="badge-pill" data-val="À vérifier">À vérifier</span>
-                        {% elif data[key] == 'Défaut' %}
+                        {% elif data[item.key] == 'Défaut' %}
                         <span class="badge-pill" data-val="Défaut">Défaut</span>
                         {% else %}
-                        <span class="badge-pill" data-val="Neutral">{{ data[key] or "——" }} {{ unit }}</span>
+                        <span class="badge-pill" data-val="Neutral">——</span>
+                        {% endif %}
+                        {% else %}
+                        <span class="badge-pill" data-val="Neutral">{{ data[item.key] or "——" }} {{ item.unit }}</span>
                         {% endif %}
                     </div>
                 </div>

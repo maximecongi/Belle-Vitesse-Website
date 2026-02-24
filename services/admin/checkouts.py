@@ -1,7 +1,7 @@
+from utils.checkpoints import get_checkpoints_for_vehicle, CHECKPOINTS_CONFIG, DEFAULT_CHECKPOINTS
+from services.admin.utils import _parse_photos_json, _delete_inspection_files, _is_ready
 import json
 import logging
-import os
-from pathlib import Path
 from collections import defaultdict
 from datetime import date
 
@@ -13,8 +13,6 @@ from utils.airtable import get_vehicles
 from utils.formatting import format_date_fr
 
 logger = logging.getLogger(__name__)
-
-from services.admin.utils import _parse_photos_json, _delete_inspection_files, _is_ready
 
 
 def _format_checkout_admin(c: CheckoutVehicle, vehicle_names):
@@ -45,6 +43,8 @@ def _format_checkout_admin(c: CheckoutVehicle, vehicle_names):
     }
     data["search_text"] = f"{data['inspection_id']} {project_name} {controller_name} {status}".lower(
     )
+
+    data["check_items"] = get_checkpoints_for_vehicle(vehicle_name)
 
     # Detail fields (for checkout_detail.html)
     data["control_status"] = status
@@ -150,16 +150,50 @@ def get_checkout_form_context():
     vehicles = get_vehicles()
     users = User.query.order_by(User.firstname).all()
 
+    # Needs CheckinVehicle to evaluate blocked states
+    from models import CheckinVehicle
+
     checkouts = CheckoutVehicle.query.all()
-    vehicle_status = {}
+    checkins = CheckinVehicle.query.all()
+
+    # Dictionnaire de dictionnaires: {vehicule_id: {project_id: status}}
+    vehicle_statuses = {}
+
+    # Dictionnaire pour trouver si un dernier checkout ("Signé"/"Validé") manque d'un checkin
+    blocking_projects = {}
+
+    # Map project ids to their names for the blocking labels
+    project_names = {str(p.id): p.nom for p in projects}
+
     for c in checkouts:
-        if c.vehicule_controle and c.etat_controle:
-            vehicle_status[c.vehicule_controle] = c.etat_controle
+        if c.vehicule_controle and c.etat_controle and c.project_id:
+            vid = c.vehicule_controle
+            pid = str(c.project_id)
+            if vid not in vehicle_statuses:
+                vehicle_statuses[vid] = {}
+            # Si on veut garder le dernier statut, on l'écrase
+            vehicle_statuses[vid][pid] = c.etat_controle
+
+            # Logic to find if it is blocked
+            if c.etat_controle in ["Signé", "Validé"]:
+                # Has it been checked in?
+                has_checkin = False
+                for ci in checkins:
+                    if ci.vehicule_controle == vid and str(ci.project_id) == pid and ci.etat_controle in ["Signé", "Validé"]:
+                        has_checkin = True
+                        break
+
+                if not has_checkin:
+                    # Vehicle is blocked by this project
+                    blocking_projects[vid] = project_names.get(
+                        pid, "Projet inconnu")
 
     for v in vehicles:
-        if v["id"] in vehicle_status:
-            v.setdefault("fields", {})[
-                "_checkout_status"] = vehicle_status[v["id"]]
+        vid = v["id"]
+        v.setdefault("fields", {})[
+            "_checkout_statuses"] = vehicle_statuses.get(vid, {})
+        if vid in blocking_projects:
+            v.setdefault("fields", {})["_blocked_by"] = blocking_projects[vid]
 
     projects_formatted = []
     for p in projects:
@@ -196,6 +230,8 @@ def get_checkout_form_context():
         "projects": projects_formatted,
         "vehicles": vehicles,
         "users": users_formatted,
+        "checkpoints_config_json": json.dumps(CHECKPOINTS_CONFIG),
+        "default_checkpoints_json": json.dumps(DEFAULT_CHECKPOINTS),
     }
 
 
