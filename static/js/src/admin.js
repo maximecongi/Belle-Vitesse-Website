@@ -378,9 +378,10 @@ document.addEventListener('DOMContentLoaded', () => {
             headerToolbar: {
                 left: 'prev,next today',
                 center: 'title',
-                right: 'dayGridMonth,timeGridWeek'
+                right: 'dayGridMonth,timeGridWeek,dayGridDay'
             },
             locale: 'fr',
+            allDayText: 'Toute la journée',
             firstDay: 1,
             buttonText: {
                 today: "Aujourd'hui",
