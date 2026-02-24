@@ -72,3 +72,55 @@ def init_api_routes(app):
         except Exception as e:
             current_app.logger.error(f"❌ Error in admin_api_stats: {e}")
             return jsonify({"error": str(e)}), 500
+
+    @app.route("/admin/api/checkouts/<int:record_id>/status", methods=["GET", "POST"])
+    @require_roles('administrator', 'manager', 'user')
+    def admin_api_checkout_status(record_id):
+        from models import db, CheckoutVehicle
+        try:
+            record = db.session.get(CheckoutVehicle, record_id)
+            if not record:
+                return jsonify({"error": "Not found"}), 404
+
+            if request.method == "POST":
+                data = request.get_json()
+                new_status = data.get("status") if data else None
+                if not new_status:
+                    return jsonify({"error": "Missing status"}), 400
+
+                record.etat_controle = new_status
+                db.session.commit()
+                return jsonify({"status": record.etat_controle, "message": "Statut mis à jour avec succès"})
+
+            return jsonify({"status": record.etat_controle})
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(
+                f"❌ Error in admin_api_checkout_status: {e}")
+            return jsonify({"error": str(e)}), 500
+
+    @app.route("/admin/api/checkins/<int:record_id>/status", methods=["GET", "POST"])
+    @require_roles('administrator', 'manager', 'user')
+    def admin_api_checkin_status(record_id):
+        from models import db, CheckinVehicle
+        try:
+            record = db.session.get(CheckinVehicle, record_id)
+            if not record:
+                return jsonify({"error": "Not found"}), 404
+
+            if request.method == "POST":
+                data = request.get_json()
+                new_status = data.get("status") if data else None
+                if not new_status:
+                    return jsonify({"error": "Missing status"}), 400
+
+                record.etat_controle = new_status
+                db.session.commit()
+                return jsonify({"status": record.etat_controle, "message": "Statut mis à jour avec succès"})
+
+            return jsonify({"status": record.etat_controle})
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(
+                f"❌ Error in admin_api_checkin_status: {e}")
+            return jsonify({"error": str(e)}), 500

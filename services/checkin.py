@@ -13,6 +13,9 @@ from datetime import datetime, timezone, timedelta
 
 from flask import current_app, render_template
 
+from services.admin import _format_checkin_admin
+from utils.airtable import get_vehicles
+
 from utils.checkin import (
     compute_document_seal,
     verify_document_seal,
@@ -87,97 +90,99 @@ def generate_signing_token(record_id):
 
 def process_signature(token, signature_data, signed_ip):
     entry = db.session.get(CheckinToken, token)
+    if not entry:
+        raise ValueError("Token invalide ou introuvable.")
+
     record_id = int(entry.record_id)
     inspection_id = entry.inspection_id
     signed_at = datetime.now(timezone.utc)
-
-    entry.signature = signature_data
-
-    from services.admin import _format_checkin_admin
-    from utils.airtable import get_vehicles
 
     record = db.session.get(CheckinVehicle, record_id)
     if not record:
         raise ValueError(f"Record {record_id} not found after signing")
 
-    record.etat_controle = "Signé"
-    db.session.commit()
+    try:
+        vehicles = get_vehicles()
+        vehicle_names = {v["id"]: v.get("fields", {}).get(
+            "name", "—") for v in vehicles}
+        data = _format_checkin_admin(record, vehicle_names)
+        data["signed_at"] = signed_at.strftime("%d/%m/%Y %H:%M")
+        data["signed_ip"] = signed_ip
 
-    vehicles = get_vehicles()
-    vehicle_names = {v["id"]: v.get("fields", {}).get(
-        "name", "—") for v in vehicles}
-    data = _format_checkin_admin(record, vehicle_names)
-    data["signed_at"] = signed_at.strftime("%d/%m/%Y %H:%M")
-    data["signed_ip"] = signed_ip
+        current_hash = compute_document_seal(
+            inspection_id=inspection_id,
+            vehicle_id=data["vehicle_id"],
+            km=str(data["km"]),
+            signature_data=signature_data,
+            signed_at=signed_at.isoformat(),
+        )
 
-    current_hash = compute_document_seal(
-        inspection_id=inspection_id,
-        vehicle_id=data["vehicle_id"],
-        km=str(data["km"]),
-        signature_data=signature_data,
-        signed_at=signed_at.isoformat(),
-    )
+        base_url = os.getenv("BASE_URL", "https://bellevitesse.com")
+        verification_url = f"{base_url}/checkin/verify/{inspection_id}"
+        qr_code_img = generate_qr_code(verification_url)
 
-    base_url = os.getenv("BASE_URL", "https://bellevitesse.com")
-    verification_url = f"{base_url}/checkin/verify/{inspection_id}"
-    qr_code_img = generate_qr_code(verification_url)
+        html_content = render_template(
+            "checkin.html",
+            data=data,
+            signature=signature_data,
+            qr=qr_code_img,
+            hash=current_hash,
+            verification_url=verification_url,
+        )
+        pdf_bytes = generate_checkin_pdf(html_content, base_url=base_url)
 
-    html_content = render_template(
-        "checkin.html",
-        data=data,
-        signature=signature_data,
-        qr=qr_code_img,
-        hash=current_hash,
-        verification_url=verification_url,
-    )
-    pdf_bytes = generate_checkin_pdf(html_content, base_url=base_url)
+        random_token = secrets.token_hex(8)
+        filename = f"{inspection_id}_{random_token}.pdf"
+        private_folder = current_app.config.get("PRIVATE_FOLDER")
+        file_path = os.path.join(private_folder, "checkin_pdfs", filename)
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        with open(file_path, "wb") as f:
+            f.write(pdf_bytes)
 
-    random_token = secrets.token_hex(8)
-    filename = f"{inspection_id}_{random_token}.pdf"
-    private_folder = current_app.config.get("PRIVATE_FOLDER")
-    file_path = os.path.join(private_folder, "checkin_pdfs", filename)
-    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    with open(file_path, "wb") as f:
-        f.write(pdf_bytes)
+        pdf_public_url = f"{base_url}/checkin/document/{filename}"
+        pdf_file_hash = compute_pdf_hash(pdf_bytes)
 
-    pdf_public_url = f"{base_url}/checkin/document/{filename}"
+        entry.signature = signature_data
+        record.etat_controle = "Signé"
+        record.pdf_scelle = pdf_public_url
+        record.hash = current_hash
 
-    # 7. Store immutable snapshot in MySQL
-    pdf_file_hash = compute_pdf_hash(pdf_bytes)
+        signed_doc = CheckinSignedDocument(
+            inspection_id=inspection_id,
+            hash=current_hash,
+            pdf_file_hash=pdf_file_hash,
+            data_snapshot={
+                **data,
+                "_seal_vehicle_id": data["vehicle_id"],
+                "_seal_km": str(data["km"]),
+                "_seal_signed_at": signed_at.isoformat(),
+            },
+            signature=signature_data,
+            pdf_url=pdf_public_url,
+            signed_at=signed_at.replace(tzinfo=None)
+        )
 
-    signed_doc = CheckinSignedDocument(
-        inspection_id=inspection_id,
-        hash=current_hash,
-        pdf_file_hash=pdf_file_hash,
-        data_snapshot={
-            **data,
-            "_seal_vehicle_id": data["vehicle_id"],
-            "_seal_km": str(data["km"]),
-            "_seal_signed_at": signed_at.isoformat(),
-        },
-        signature=signature_data,
-        pdf_url=pdf_public_url,
-        signed_at=signed_at.replace(tzinfo=None)
-    )
-    db.session.add(signed_doc)
+        db.session.add(signed_doc)
+        db.session.delete(entry)
+        db.session.commit()
 
-    record.pdf_scelle = pdf_public_url
-    record.hash = current_hash
-    db.session.commit()
+        logger.info(
+            f"✅ Signature processed for {inspection_id}. PDF saved at {file_path}")
 
-    logger.info(
-        f"✅ Signature processed for {inspection_id}. PDF saved at {file_path}")
+        _trigger_n8n_webhook(inspection_id, filename,
+                             base_url, current_hash, data)
 
-    _trigger_n8n_webhook(inspection_id, filename, base_url, current_hash, data)
+        return {
+            "inspection_id": inspection_id,
+            "pdf_url": pdf_public_url,
+            "hash": current_hash,
+        }
 
-    db.session.delete(entry)
-    db.session.commit()
-
-    return {
-        "inspection_id": inspection_id,
-        "pdf_url": pdf_public_url,
-        "hash": current_hash,
-    }
+    except Exception as e:
+        db.session.rollback()
+        logger.error(
+            f"❌ Transaction failed during checkin signature {inspection_id}: {e}")
+        raise
 
 
 def _trigger_n8n_webhook(inspection_id, filename, base_url, current_hash, data):
@@ -250,8 +255,6 @@ def verify_checkin_document(inspection_id, uploaded_file=None):
         if not record:
             return None
 
-        from services.admin import _format_checkin_admin
-        from utils.airtable import get_vehicles
         vehicles = get_vehicles()
         vehicle_names = {v["id"]: v.get("fields", {}).get(
             "name", "—") for v in vehicles}

@@ -51,7 +51,7 @@ from services.newsletter import (
 
 
 def init_checkins_routes(app):
-# ── Checkins CRUD ────────────────────────────────────────────
+    # ── Checkins CRUD ────────────────────────────────────────────
 
     @app.route("/admin/checkins")
     @require_roles('administrator', 'manager', 'user')
@@ -171,4 +171,3 @@ def init_checkins_routes(app):
             flash(
                 f"Erreur technique lors de la création du lien de signature : {str(e)}", "error")
             return redirect(url_for("admin_checkin_detail", record_id=record_id))
-

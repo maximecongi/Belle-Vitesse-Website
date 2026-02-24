@@ -170,4 +170,3 @@ def init_checkouts_routes(app):
             flash(
                 f"Erreur technique lors de la création du lien de signature : {str(e)}", "error")
             return redirect(url_for("admin_checkout_detail", record_id=record_id))
-
