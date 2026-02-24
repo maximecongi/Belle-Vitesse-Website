@@ -142,7 +142,7 @@
                     ('Triangle de signalisation / Gilet', data.safety_triangle),
                     ('Présence extincteur', data.fire_extinguisher),
                     ] %}
-                    {% for label, status in checks %}
+                    {% for label, status in checks if status != 'Non pertinent' %}
                     <tr>
                         <td>{{ label }}</td>
                         <td>
