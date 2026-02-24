@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             } else if (blockedByProject) {
                                 opt.dataset.disabled = "true";
                                 if (badgeEl) {
-                                    badgeEl.textContent = "Bloqué par: " + blockedByProject;
+                                    badgeEl.textContent = "Check-in non signé : " + blockedByProject;
                                     badgeEl.style.background = "#fee2e2"; // Light red
                                     badgeEl.style.color = "#dc2626"; // Dark red
                                 }
