@@ -177,6 +177,7 @@ def process_signature(token, signature_data, signed_ip):
         raise ValueError(f"Record {record_id} not found after signing")
 
     try:
+        record.etat_controle = "Signé"
         vehicles = get_vehicles()
         vehicle_names = {v["id"]: v.get("fields", {}).get(
             "name", "—") for v in vehicles}
@@ -223,7 +224,6 @@ def process_signature(token, signature_data, signed_ip):
 
         # 7. Update Token, Record and save Immutable Document in DB (All at once)
         entry.signature = signature_data
-        record.etat_controle = "Signé"
         record.pdf_scelle = pdf_public_url
         record.hash = current_hash
 
