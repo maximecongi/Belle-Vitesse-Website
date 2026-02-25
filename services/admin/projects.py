@@ -1,14 +1,9 @@
-import json
 import logging
-import os
-from pathlib import Path
 from collections import defaultdict
-from datetime import date
+from flask import url_for
 
-from flask import current_app, url_for
-from werkzeug.utils import secure_filename
-
-from models import db, CheckoutVehicle, CheckinVehicle, Production, Project, User
+from sqlalchemy.orm import joinedload
+from models import db, CheckoutVehicle, Production, Project
 from utils.airtable import get_vehicles
 from utils.formatting import format_date_fr
 
@@ -23,7 +18,11 @@ def list_projects():
     Fetch all project records and format for listing.
     Cross-references checkout records to determine each vehicle's control status.
     """
-    projects = Project.query.order_by(Project.nom.desc()).all()
+    projects = Project.query.options(
+        joinedload(Project.production),
+        joinedload(Project.checkout_vehicles),
+        joinedload(Project.checkin_vehicles)
+    ).order_by(Project.nom.desc()).all()
     vehicles = get_vehicles()
     vehicle_names = {v["id"]: v.get("fields", {}).get(
         "name", "—") for v in vehicles}

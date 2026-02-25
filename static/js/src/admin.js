@@ -2,9 +2,38 @@
  * admin.js — Centralised JavaScript for the admin panel.
  * Loaded once via admin_base.html; each feature auto-detects
  * its DOM elements and only runs when they are present.
+ *
+ * Compatible Swup.js : init() est rappelé après chaque navigation.
+ * Les listeners sur `document` sont enregistrés une seule fois.
  */
 
-document.addEventListener('DOMContentLoaded', () => {
+
+// ─────────────────────────────────────────────
+// Global (une seule fois) — listeners sur document
+// ─────────────────────────────────────────────
+
+document.addEventListener('click', e => {
+    if (!e.target.closest('.badge-select') && !e.target.closest('.rich-select')) {
+        document.querySelectorAll('.badge-select.open, .rich-select.open')
+            .forEach(s => s.classList.remove('open'));
+    }
+});
+
+// Active nav link — une seule fois, pas dans init()
+const currentPath = window.location.pathname;
+document.querySelectorAll('.admin-nav-item').forEach(link => {
+    const href = link.getAttribute('href');
+    if (href === currentPath || (currentPath.startsWith(href) && href !== '/admin/dashboard')) {
+        link.classList.add('active');
+    }
+});
+
+
+// ─────────────────────────────────────────────
+// init() — appelé à chaque chargement de page
+// ─────────────────────────────────────────────
+
+function init() {
 
     // ─────────────────────────────────────────────
     // 1. Auto-dismiss flash messages (admin_base)
@@ -21,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 5000);
     }
 
+
     // ─────────────────────────────────────────────
     // 2. Badge selects (checkout form — état / sécurité)
     // ─────────────────────────────────────────────
@@ -30,7 +60,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const pill = trigger.querySelector('.badge-pill');
 
         trigger.addEventListener('click', () => {
-            // Close other dropdowns
             document.querySelectorAll('.badge-select.open').forEach(s => {
                 if (s !== sel) s.classList.remove('open');
             });
@@ -48,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     });
+
 
     // ─────────────────────────────────────────────
     // 3. Rich project select (checkout form)
@@ -98,17 +128,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (vOptions.length) {
                 vOptions.forEach(vOpt => {
                     if (!vOpt.dataset.id) {
-                        // Always show "— Aucun —"
                         vOpt.style.display = '';
                     } else if (allowedVehicles.length === 0) {
-                        // No filter → show all
                         vOpt.style.display = '';
                     } else {
                         vOpt.style.display = allowedVehicles.includes(vOpt.dataset.id) ? '' : 'none';
                     }
                 });
 
-                // Reset vehicle if current selection is not in the allowed list
                 if (vInput && allowedVehicles.length > 0 && vInput.value && !allowedVehicles.includes(vInput.value)) {
                     vInput.value = '';
                     const vLabel = document.getElementById('vehicleLabel');
@@ -117,10 +144,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Dispatch event for downstream listeners
             pInput.dispatchEvent(new Event('change', { bubbles: true }));
 
-            // Update vehicle option statuses based on the selected project
             const selectedProjectId = pInput.value;
             const vOptionsForStatus = document.querySelectorAll('#vehicleOptions .rich-select-option');
             if (vOptionsForStatus && selectedProjectId) {
@@ -196,12 +221,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Initialize state if project is already selected (load via URL params)
         if (pInput.value) {
             const initialOpt = Array.from(pOptions).find(o => o.dataset.id === pInput.value);
             if (initialOpt) updateVehicleOptions(initialOpt);
         }
     }
+
 
     // ─────────────────────────────────────────────
     // 3b. Rich vehicle select (checkout form)
@@ -222,8 +247,11 @@ document.addEventListener('DOMContentLoaded', () => {
             vSelect.classList.toggle('open');
             if (vSelect.classList.contains('open')) {
                 vSearch.value = '';
-                // Re-apply project filter instead of showing all
-                const selectedProject = document.querySelector('#projectOptions .rich-select-option[data-id="' + (document.querySelector('#projectSelect input[name="project_id"]')?.value || '') + '"]');
+                const selectedProject = document.querySelector(
+                    '#projectOptions .rich-select-option[data-id="' +
+                    (document.querySelector('#projectSelect input[name="project_id"]')?.value || '') +
+                    '"]'
+                );
                 const vehiclesStr = selectedProject?.dataset.vehicles || '';
                 const allowed = vehiclesStr ? vehiclesStr.split(',') : [];
                 vOptions.forEach(o => {
@@ -259,12 +287,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     vLabel.textContent = opt.dataset.name;
                 }
                 vSelect.classList.remove('open');
-
-                // Dispatch event to allow dynamic forms to update checkpoints
                 vInput.dispatchEvent(new Event('change', { bubbles: true }));
             });
         });
     }
+
 
     // ─────────────────────────────────────────────
     // 3c. Rich controller select (checkout form)
@@ -293,6 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+
 
     // ─────────────────────────────────────────────
     // 4. Checkouts list — search filter
@@ -324,11 +352,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+
     // ─────────────────────────────────────────────
     // 5. Checkouts list — Chart.js stats
+    // Guard : évite de créer le chart plusieurs fois sur le même canvas
     // ─────────────────────────────────────────────
     const monthlyCanvas = document.getElementById('monthlyChart');
-    if (monthlyCanvas && typeof Chart !== 'undefined') {
+    if (monthlyCanvas && typeof Chart !== 'undefined' && !monthlyCanvas.dataset.initialized) {
+        monthlyCanvas.dataset.initialized = 'true';
+
         fetch('/admin/api/stats')
             .then(response => response.json())
             .then(data => {
@@ -350,29 +382,36 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
 
-                new Chart(document.getElementById('statusChart'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: data.status_distribution.labels,
-                        datasets: [{
-                            data: data.status_distribution.data,
-                            backgroundColor: ['#28a745', '#f59e0b', '#dc3545', '#6c757d']
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { legend: { position: 'bottom' } }
-                    }
-                });
+                const statusCanvas = document.getElementById('statusChart');
+                if (statusCanvas) {
+                    new Chart(statusCanvas, {
+                        type: 'doughnut',
+                        data: {
+                            labels: data.status_distribution.labels,
+                            datasets: [{
+                                data: data.status_distribution.data,
+                                backgroundColor: ['#28a745', '#f59e0b', '#dc3545', '#6c757d']
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: { legend: { position: 'bottom' } }
+                        }
+                    });
+                }
             })
             .catch(error => console.error('Error fetching stats:', error));
     }
 
+
     // ─────────────────────────────────────────────
     // 6. FullCalendar init (dashboard & calendar pages)
+    // Guard : évite de réinitialiser le calendrier s'il existe déjà
     // ─────────────────────────────────────────────
     const calendarEl = document.getElementById('calendar');
-    if (calendarEl && typeof FullCalendar !== 'undefined') {
+    if (calendarEl && typeof FullCalendar !== 'undefined' && !calendarEl.dataset.initialized) {
+        calendarEl.dataset.initialized = 'true';
+
         const calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             headerToolbar: {
@@ -402,6 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
         calendar.render();
     }
 
+
     // ─────────────────────────────────────────────
     // 7. Vehicle checkbox highlight (project form)
     // ─────────────────────────────────────────────
@@ -411,7 +451,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (cb.checked) {
                 label.style.background = '#f8f9fa';
                 label.style.borderColor = '#858585';
-
             } else {
                 label.style.background = '';
                 label.style.borderColor = '#e5e7eb';
@@ -419,13 +458,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // ─────────────────────────────────────────────
-    // Global: close all dropdowns on outside click
-    // ─────────────────────────────────────────────
-    document.addEventListener('click', e => {
-        if (!e.target.closest('.badge-select') && !e.target.closest('.rich-select')) {
-            document.querySelectorAll('.badge-select.open, .rich-select.open').forEach(s => s.classList.remove('open'));
-        }
-    });
+}
 
-});
+
+// ─────────────────────────────────────────────
+// Déclenchement
+// ─────────────────────────────────────────────
+
+// Premier chargement
+document.addEventListener('DOMContentLoaded', init);

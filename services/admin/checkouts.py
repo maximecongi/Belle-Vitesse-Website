@@ -8,14 +8,15 @@ from datetime import date
 from flask import current_app, url_for
 from werkzeug.utils import secure_filename
 
-from models import db, CheckoutVehicle, CheckinVehicle, Production, Project, User
+from sqlalchemy.orm import joinedload
+from models import db, CheckoutVehicle, CheckinVehicle, Production, Project, User, VehicleCheckpointConfig
 from utils.airtable import get_vehicles
 from utils.formatting import format_date_fr
 
 logger = logging.getLogger(__name__)
 
 
-def _format_checkout_admin(c: CheckoutVehicle, vehicle_names):
+def _format_checkout_admin(c: CheckoutVehicle, vehicle_names, batch_configs=None):
     project_name = c.project.nom if c.project else "—"
     vehicle_name = vehicle_names.get(c.vehicule_controle, "—")
     controller_name = f"{c.responsible_user.firstname} {c.responsible_user.lastname}" if c.responsible_user else "—"
@@ -44,7 +45,8 @@ def _format_checkout_admin(c: CheckoutVehicle, vehicle_names):
     data["search_text"] = f"{data['inspection_id']} {project_name} {controller_name} {status}".lower(
     )
 
-    data["check_items"] = get_checkpoints_for_vehicle(vehicle_name)
+    data["check_items"] = get_checkpoints_for_vehicle(
+        vehicle_name, batch_configs=batch_configs)
 
     # Detail fields (for checkout_detail.html)
     data["control_status"] = status
@@ -87,12 +89,20 @@ def _format_checkout_admin(c: CheckoutVehicle, vehicle_names):
 def list_checkouts():
     """
     Fetch all checkout records, compute stats, and format for listing.
+    Uses eager loading to avoid N+1 queries.
     """
-    records = CheckoutVehicle.query.order_by(
-        CheckoutVehicle.created_at.desc()).all()
+    records = CheckoutVehicle.query.options(
+        joinedload(CheckoutVehicle.project).joinedload(Project.production),
+        joinedload(CheckoutVehicle.responsible_user)
+    ).order_by(CheckoutVehicle.created_at.desc()).all()
+
     vehicles = get_vehicles()
     vehicle_names = {v["id"]: v.get("fields", {}).get(
         "name", "—") for v in vehicles}
+
+    # Batch load all vehicle configurations
+    batch_configs = {
+        c.vehicle_id: c.config for c in VehicleCheckpointConfig.query.all()}
 
     total_count = len(records)
     signed_count = sum(1 for r in records if r.etat_controle == "Signé")
@@ -104,7 +114,8 @@ def list_checkouts():
         "pending_checkouts": pending_count,
     }
 
-    checkouts = [_format_checkout_admin(r, vehicle_names) for r in records]
+    checkouts = [_format_checkout_admin(
+        r, vehicle_names, batch_configs) for r in records]
     return {"checkouts": checkouts, "stats": stats}
 
 

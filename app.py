@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
-from flask import Flask, request
+from flask import Flask, request, session
 
 from extensions import cache, limiter, csrf
 from routes import init_routes, init_error_handlers
@@ -104,13 +104,34 @@ def create_app():
     # Context Processors (Globals)
     @app.context_processor
     def inject_globals():
-        return {
-            "vehicles": get_vehicles(),
-            "heads": get_heads(),
-            "grips_categories": get_grips_categories(),
-            "static": get_static_by_lang("en"),
+        is_admin = request.path.startswith('/admin')
+
+        # Base globals
+        ctx = {
             "now": datetime.now(timezone.utc),
+            "is_admin": is_admin
         }
+
+        if is_admin:
+            # Admin specific globals
+            ctx["current_user"] = {
+                "firstname": session.get('admin_user_firstname'),
+                "lastname": session.get('admin_user_lastname'),
+                "role": session.get('admin_user_role', 'User'),
+                "role_lower": session.get('admin_user_role', 'User').lower()
+            }
+            # Vehicles are still needed for some admin displays
+            ctx["vehicles"] = get_vehicles()
+        else:
+            # Public site globals (Airtable lookups)
+            ctx.update({
+                "vehicles": get_vehicles(),
+                "heads": get_heads(),
+                "grips_categories": get_grips_categories(),
+                "static": get_static_by_lang("en"),
+            })
+
+        return ctx
 
     @app.after_request
     def add_security_headers(response):

@@ -52,7 +52,7 @@ class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nom = db.Column(db.String(255), nullable=False)
     production_id = db.Column(db.Integer, db.ForeignKey(
-        "productions.id"), nullable=False)
+        "productions.id"), nullable=False, index=True)
     date_depart = db.Column(db.Date)
     date_debut_tournage = db.Column(db.Date)
     date_fin_tournage = db.Column(db.Date)
@@ -78,10 +78,12 @@ class CheckoutVehicle(db.Model):
     numero_inspection = db.Column(
         db.String(50), unique=True, default=lambda: generate_inspection_number("BVCO"))
     etat_controle = db.Column(db.String(50))  # En cours, Validé, etc.
-    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("projects.id"), index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), index=True)
     date_controle = db.Column(db.Date)
-    vehicule_controle = db.Column(db.String(100))  # eCar, eBike, eTrike...
+    # eCar, eBike, eTrike...
+    vehicule_controle = db.Column(db.String(100), index=True)
     kilometrage_depart = db.Column(db.Float)
     charge_batterie_depart = db.Column(db.Float)
     photo_compteur = db.Column(db.String(500))  # chemin ou URL du fichier
@@ -103,7 +105,7 @@ class CheckoutVehicle(db.Model):
     pdf_scelle = db.Column(db.String(500))
     hash = db.Column(db.String(255))
     message_action = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 
     def __repr__(self):
         return f"<CheckoutVehicle {self.numero_inspection}>"
@@ -117,10 +119,11 @@ class CheckinVehicle(db.Model):
     numero_inspection = db.Column(
         db.String(50), unique=True, default=lambda: generate_inspection_number("BVCU"))
     etat_controle = db.Column(db.String(50))
-    project_id = db.Column(db.Integer, db.ForeignKey("projects.id"))
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    project_id = db.Column(
+        db.Integer, db.ForeignKey("projects.id"), index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), index=True)
     date_controle = db.Column(db.Date)
-    vehicule_controle = db.Column(db.String(100))
+    vehicule_controle = db.Column(db.String(100), index=True)
     kilometrage_retour = db.Column(db.Float)
     charge_batterie_retour = db.Column(db.Float)
     photo_compteur = db.Column(db.String(500))
@@ -141,7 +144,7 @@ class CheckinVehicle(db.Model):
     vehicule_pret_retour = db.Column(db.Boolean, default=False)
     pdf_scelle = db.Column(db.String(500))
     hash = db.Column(db.String(255))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 
     # Relation vers user (responsable du contrôle)
     responsible = db.relationship(

@@ -101,8 +101,7 @@ body {
 }
 
 .admin-sidebar-logo {
-    max-width: 140px;
-    filter: brightness(0) invert(1);
+    max-width: 180px;
 }
 
 .admin-nav {

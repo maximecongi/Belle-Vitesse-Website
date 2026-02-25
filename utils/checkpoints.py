@@ -38,16 +38,26 @@ LEGACY_CHECKPOINTS_CONFIG = {
 }
 
 
-def get_checkpoints_for_vehicle(vehicle_id: str) -> list:
+def get_checkpoints_for_vehicle(vehicle_id: str, batch_configs=None) -> list:
     """
     Returns the list of checkpoints to display for a given vehicle.
     vehicle_id can be an Airtable Record ID or a Vehicle Name.
+    batch_configs: optional dict {vehicle_id: config_dict} to avoid N+1 queries.
     """
     if not vehicle_id:
         return BASE_CHECKPOINTS
 
     from models import VehicleCheckpointConfig
     from flask import has_app_context
+
+    # Try batch_configs first (passed from service layer)
+    if batch_configs and vehicle_id in batch_configs:
+        enabled_keys = {
+            k for k, v in batch_configs[vehicle_id].items() if v}
+        return BASE_CHECKPOINTS + [
+            cp for cp in ALL_POSSIBLE_CHECKPOINTS
+            if cp['key'] in enabled_keys
+        ]
 
     # Resolve the vehicle name if it's an Airtable ID (starts with rec)
     vehicle_name = vehicle_id
