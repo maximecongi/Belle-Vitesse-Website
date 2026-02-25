@@ -458,6 +458,36 @@ function init() {
         });
     });
 
+    // ─────────────────────────────────────────────
+    // 8. Project form — date validation
+    // ─────────────────────────────────────────────
+    const depDate = document.querySelector('input[name="departure_date"]');
+    const startTour = document.querySelector('input[name="shoot_start"]');
+    const endTour = document.querySelector('input[name="shoot_end"]');
+    const retDate = document.querySelector('input[name="return_date"]');
+
+    if (depDate && startTour && endTour && retDate) {
+        const updateMinDates = () => {
+            if (depDate.value) {
+                const nextDay = new Date(depDate.value);
+                nextDay.setDate(nextDay.getDate() + 1);
+                const nextDayStr = nextDay.toISOString().split('T')[0];
+
+                startTour.min = nextDayStr;
+                endTour.min = nextDayStr;
+            }
+
+            if (endTour.value) {
+                retDate.min = endTour.value;
+            }
+        };
+
+        depDate.addEventListener('change', updateMinDates);
+        endTour.addEventListener('change', updateMinDates);
+
+        // Initial run
+        updateMinDates();
+    }
 }
 
 
