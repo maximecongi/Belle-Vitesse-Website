@@ -376,20 +376,11 @@
             return;
         }
 
-        let vehicleName = "";
-        // Find the option in the dropdown that matches the selected ID to get its name
-        const opt = document.querySelector(`#vehicleOptions .rich-select-option[data-id="${vehicleInput.value}"]`);
-        if (opt) vehicleName = opt.dataset.name || "";
-
         // Determine which config to use
         let configToUse = defaultCheckpoints;
-        if (vehicleName) {
-            for (const key in checkpointsConfig) {
-                if (vehicleName.toLowerCase().includes(key.toLowerCase())) {
-                    configToUse = checkpointsConfig[key];
-                    break;
-                }
-            }
+        const vid = vehicleInput.value;
+        if (vid && checkpointsConfig[vid]) {
+            configToUse = checkpointsConfig[vid];
         }
 
         // Extract the valid keys for this vehicle

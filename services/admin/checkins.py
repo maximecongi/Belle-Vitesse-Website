@@ -225,9 +225,9 @@ def get_checkin_form_context():
     # Build mapping for frontend filtering
     checkpoints_mapping = {}
     for v in vehicles:
-        v_name = v.get("fields", {}).get("name")
-        if v_name:
-            checkpoints_mapping[v_name] = get_checkpoints_for_vehicle(v_name)
+        vid = v["id"]
+        # Use ID as primary key for mapping, get config using the same ID
+        checkpoints_mapping[vid] = get_checkpoints_for_vehicle(vid)
 
     return {
         "projects": projects_formatted,
