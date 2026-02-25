@@ -420,6 +420,7 @@ function init() {
                 right: 'dayGridMonth,timeGridWeek,dayGridDay'
             },
             locale: 'fr',
+            eventOrder: "order,start",
             allDayText: 'Toute la journée',
             firstDay: 1,
             buttonText: {

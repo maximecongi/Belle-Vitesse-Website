@@ -33,7 +33,8 @@
                 <td style="font-weight: 600;">{{ project.production }}</td>
                 <td>
                     {% for v in project.vehicles %}
-                    <span class="badge-pill" data-val="{{ v.checkout_status or 'Neutral' }}" style="margin: 0.15rem;">
+                    <span class="badge-pill" data-val="{{ v.checkout_status or 'Neutral' }}"
+                        data-conform="{{ v.checkout_conform }}" style="margin: 0.15rem;">
                         {{ v.name }}
                     </span><br>
                     {% else %}
@@ -42,7 +43,8 @@
                 </td>
                 <td>
                     {% for v in project.vehicles %}
-                    <span class="badge-pill" data-val="{{ v.checkin_status or 'Neutral' }}" style="margin: 0.15rem;">
+                    <span class="badge-pill" data-val="{{ v.checkin_status or 'Neutral' }}"
+                        data-conform="{{ v.checkin_conform }}" style="margin: 0.15rem;">
                         {{ v.name }}
                     </span><br>
                     {% else %}
