@@ -469,12 +469,8 @@ function init() {
     if (depDate && startTour && endTour && retDate) {
         const updateMinDates = () => {
             if (depDate.value) {
-                const nextDay = new Date(depDate.value);
-                nextDay.setDate(nextDay.getDate() + 1);
-                const nextDayStr = nextDay.toISOString().split('T')[0];
-
-                startTour.min = nextDayStr;
-                endTour.min = nextDayStr;
+                startTour.min = depDate.value;
+                endTour.min = depDate.value;
             }
 
             if (endTour.value) {
