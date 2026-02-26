@@ -52,7 +52,7 @@ def _format_checkin_admin(c: CheckinVehicle, vehicle_names, batch_configs=None):
     )
 
     data["check_items"] = get_checkpoints_for_vehicle(
-        vehicle_name, batch_configs=batch_configs)
+        c.vehicule_controle, batch_configs=batch_configs)
 
     # Detail fields (for checkin_detail.html)
     data["control_status"] = status

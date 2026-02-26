@@ -45,7 +45,7 @@ def _format_checkout_admin(c: CheckoutVehicle, vehicle_names, batch_configs=None
     )
 
     data["check_items"] = get_checkpoints_for_vehicle(
-        vehicle_name, batch_configs=batch_configs)
+        c.vehicule_controle, batch_configs=batch_configs)
 
     # Detail fields (for checkout_detail.html)
     data["control_status"] = status

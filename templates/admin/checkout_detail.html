@@ -27,16 +27,20 @@
             <div class="admin-card-title">Informations générales</div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <div>
+                    <div style="font-size: 0.85rem; color: var(--grey-2);">ID</div>
+                    <div style="font-weight: 500;">{{ data.inspection_id or '—' }}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--grey-2);">Véhicule</div>
+                    <div style="font-weight: 500;">{{ data.vehicle.fields.name if data.vehicle else '—' }}</div>
+                </div>
+                <div>
                     <div style="font-size: 0.85rem; color: var(--grey-2);">Production</div>
                     <div style="font-weight: 500;">{{ data.production or '—' }}</div>
                 </div>
                 <div>
                     <div style="font-size: 0.85rem; color: var(--grey-2);">Projet</div>
                     <div style="font-weight: 500;">{{ data.project or '—' }}</div>
-                </div>
-                <div>
-                    <div style="font-size: 0.85rem; color: var(--grey-2);">Véhicule</div>
-                    <div style="font-weight: 500;">{{ data.vehicle.fields.name if data.vehicle else '—' }}</div>
                 </div>
                 <div>
                     <div style="font-size: 0.85rem; color: var(--grey-2);">Responsable</div>
@@ -62,7 +66,7 @@
 
 
         <div class="admin-card">
-            {% if ns.failures | length == 0 %}
+            {% if data.ready=="Oui" %}
             <div
                 style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem 1.25rem; border-radius: 8px; background: #ecfdf5; border: 1px solid #a7f3d0; margin: 1rem 0;">
                 <span style="font-size: 1.5rem;">✅</span>
@@ -184,11 +188,11 @@
             {% endif %}
         </div>
         {% else %}
-        {% if data.control_status == 'En cours' %}
+        {% if data.control_status == 'En cours'%}
         <div class="admin-card">
             <div class="admin-card-title">Sceau numérique</div>
-            <button type="button" id="sealCheckoutBtn" {% if ns.failures | length !=0 or data.control_status
-                !='En cours' %}disabled class="admin-btn btn-disabled" {% else %}class="admin-btn" {% endif %}
+            <button type="button" id="sealCheckoutBtn" {% if ns.failures | length !=0 or data.ready !="Oui" %}disabled
+                class="admin-btn btn-disabled" {% else %}class="admin-btn" {% endif %}
                 style="width: 100%; background: #ffc84526; color: #ffc845; border-color: #ffc8453d; transition: all 0.2s;">
                 Sceller ce checkout
             </button>

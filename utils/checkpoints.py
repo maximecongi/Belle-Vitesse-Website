@@ -48,9 +48,9 @@ def get_checkpoints_for_vehicle(vehicle_id: str, batch_configs=None) -> list:
         return BASE_CHECKPOINTS
 
     from models import VehicleCheckpointConfig
-    from flask import has_app_context
+    from flask import has_app_context, current_app
 
-    # Try batch_configs first (passed from service layer)
+    # 1. Try batch_configs first (passed from service layer)
     if batch_configs and vehicle_id in batch_configs:
         enabled_keys = {
             k for k, v in batch_configs[vehicle_id].items() if v}
@@ -60,27 +60,35 @@ def get_checkpoints_for_vehicle(vehicle_id: str, batch_configs=None) -> list:
         ]
 
     # Resolve the vehicle name if it's an Airtable ID (starts with rec)
+    # We delay this to use it only as fallback for lookup or for title display
     vehicle_name = vehicle_id
-    if has_app_context() and vehicle_id.startswith('rec'):
-        try:
-            from utils.airtable import get_vehicles
-            vehicles = get_vehicles()
-            for v in vehicles:
-                if v['id'] == vehicle_id:
-                    vehicle_name = v['fields'].get('name', vehicle_id)
-                    break
-        except Exception:
-            pass
 
-    # Try to get from DB if in app context
+    # 2. Try to get from DB if in app context
     if has_app_context():
         try:
-            # Try lookup by exact ID first, then by resolved Name
+            # Try lookup by exact ID first (Technical ID from Airtable)
             config_record = VehicleCheckpointConfig.query.filter_by(
                 vehicle_id=vehicle_id).first()
-            if not config_record and vehicle_name != vehicle_id:
-                config_record = VehicleCheckpointConfig.query.filter_by(
-                    vehicle_id=vehicle_name).first()
+
+            # If not found, maybe it's stored under the name?
+            # (Legacy or manually entered configs)
+            if not config_record:
+                # Resolve name only if needed
+                if vehicle_id.startswith('rec'):
+                    try:
+                        from utils.airtable import get_vehicles
+                        vehicles = get_vehicles()
+                        for v in vehicles:
+                            if v['id'] == vehicle_id:
+                                vehicle_name = v['fields'].get(
+                                    'name', vehicle_id)
+                                break
+                    except Exception:
+                        pass
+
+                if vehicle_name != vehicle_id:
+                    config_record = VehicleCheckpointConfig.query.filter_by(
+                        vehicle_id=vehicle_name).first()
 
             if config_record and config_record.config:
                 enabled_keys = {
@@ -89,12 +97,15 @@ def get_checkpoints_for_vehicle(vehicle_id: str, batch_configs=None) -> list:
                     cp for cp in ALL_POSSIBLE_CHECKPOINTS
                     if cp['key'] in enabled_keys
                 ]
-        except Exception:
-            pass
+        except Exception as e:
+            if current_app:
+                current_app.logger.error(f"Error fetching vehicle config: {e}")
 
-    # Fallback to hardcoded legacy rules (using resolved name)
+    # 3. Fallback to hardcoded legacy rules (using resolved name)
+    # Last resort if no DB entry exists
+    vehicle_search_name = vehicle_name or vehicle_id
     for key, enabled_keys in LEGACY_CHECKPOINTS_CONFIG.items():
-        if key.lower() in vehicle_name.lower():
+        if key.lower() in vehicle_search_name.lower():
             return BASE_CHECKPOINTS + [
                 cp for cp in ALL_POSSIBLE_CHECKPOINTS
                 if cp['key'] in enabled_keys
