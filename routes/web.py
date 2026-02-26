@@ -8,6 +8,8 @@ from flask import (
     request,
     current_app,
     send_from_directory,
+    redirect,
+    url_for
 )
 from itsdangerous import URLSafeSerializer
 from collections import defaultdict
@@ -63,6 +65,16 @@ def init_web_routes(app):
             abort(403)
 
     # ── Pages ─────────────────────────────────────────────────────
+
+    @app.before_request
+    def redirect_to_launch():
+        if os.getenv("LAUNCH_MODE") == "true" \
+                and request.endpoint != 'launch' \
+                and not request.path.startswith('/static') \
+                and not request.path.startswith('/subscribe') \
+                and not request.path.startswith('/unsubscribe') \
+                and not request.path.startswith('/admin'):
+            return redirect(url_for('launch'))
 
     @app.route("/launch")
     def launch():
@@ -239,12 +251,14 @@ def init_web_routes(app):
     # ── Cache Management ──────────────────────────────────────────
 
     @app.route("/admin/cache/clear", methods=["POST"])
+    @csrf.exempt
     def clear_cache():
         require_admin_token()
         cache.clear()
         return jsonify({"status": "Cache cleared"}), 200
 
     @app.route("/admin/cache/clear/<key>", methods=["POST"])
+    @csrf.exempt
     def clear_cache_key(key):
         require_admin_token()
         cache.delete(key)
