@@ -2,14 +2,13 @@ from utils.checkpoints import get_checkpoints_for_vehicle, BASE_CHECKPOINTS
 from services.admin.utils import _parse_photos_json, _delete_inspection_files, _is_ready
 import json
 import logging
-from collections import defaultdict
 from datetime import date
 
 from flask import current_app, url_for
 from werkzeug.utils import secure_filename
 
 from sqlalchemy.orm import joinedload
-from models import db, CheckoutVehicle, CheckinVehicle, Production, Project, User, VehicleCheckpointConfig
+from models import db, CheckoutVehicle, CheckinVehicle, Project, User, VehicleCheckpointConfig
 from utils.airtable import get_vehicles
 from utils.formatting import format_date_fr
 

@@ -33,6 +33,9 @@ def _delete_inspection_files(record):
     # 1. Photos
     photo_fields = [record.photo_compteur,
                     record.photos_interieur, record.photos_exterieur]
+
+    deleted_dirs = set()
+
     for field in photo_fields:
         if not field:
             continue
@@ -41,20 +44,30 @@ def _delete_inspection_files(record):
             paths = json.loads(field) if isinstance(
                 field, str) and field.startswith('[') else [field]
             for p in paths:
-                # Sanitize p (it might be a full dict if not careful, but usually it's a string)
                 if not isinstance(p, str):
                     continue
                 full_path = Path(private_folder) / "uploads" / p
                 if full_path.exists():
                     try:
+                        parent_dir = full_path.parent
                         os.remove(full_path)
                         logger.info(f"🗑️ Photo supprimée : {full_path}")
+                        deleted_dirs.add(parent_dir)
                     except Exception as e:
                         logger.error(
                             f"❌ Échec de la suppression de la photo {full_path}: {e}")
         except Exception as e:
             logger.warning(
                 f"⚠️ Erreur lors du parsing des photos pour suppression: {e}")
+
+    # 1.1 Cleanup empty photo directories
+    for d in deleted_dirs:
+        try:
+            if d.exists() and not any(d.iterdir()):
+                d.rmdir()
+                logger.info(f"🗑️ Dossier vide supprimé : {d}")
+        except Exception:
+            pass
 
     # 2. Signed PDF
     if record.pdf_scelle:
