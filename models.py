@@ -117,7 +117,7 @@ class CheckinVehicle(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     numero_inspection = db.Column(
-        db.String(50), unique=True, default=lambda: generate_inspection_number("BVCU"))
+        db.String(50), unique=True, default=lambda: generate_inspection_number("BVCI"))
     etat_controle = db.Column(db.String(50))
     project_id = db.Column(
         db.Integer, db.ForeignKey("projects.id"), index=True)
