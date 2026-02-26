@@ -7,6 +7,7 @@ instance/*
 .webassets-cache
 .env
 .env.production
+uploads/
 
 ### Flask.Python Stack ###
 # Byte-compiled / optimized / DLL files
@@ -271,3 +272,4 @@ static/imgs/.DS_Store
 .env.production
 *.production
 .env.production
+

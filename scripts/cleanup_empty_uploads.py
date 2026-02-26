@@ -6,10 +6,8 @@ from pathlib import Path
 # En local, vous pouvez pointer vers votre dossier de dev.
 
 SEARCH_PATHS = [
-    "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/uploads/checkins",
-    "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/uploads/checkouts",
-    "/app/private/uploads/checkins",
-    "/app/private/uploads/checkouts"
+    "/srv/bellevitesse/app/private/uploads/checkins",
+    "/srv/bellevitesse/app/private/uploads/checkouts"
 ]
 
 
