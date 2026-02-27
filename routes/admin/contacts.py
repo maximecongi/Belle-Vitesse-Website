@@ -22,11 +22,51 @@ from services.admin.contacts import (
 def init_contacts_routes(app):
     # ── Contacts CRUD ──────────────────────────────────────────
 
+    def _build_mecard(c):
+        """Build a MECARD string (compact QR-friendly contact format)."""
+        parts = [f"MECARD:N:{c['nom']},{c['prenom']}"]
+        if c.get("telephone") and c["telephone"] != "—":
+            parts.append(f"TEL:{c['telephone']}")
+        if c.get("mail") and c["mail"] != "—":
+            parts.append(f"EMAIL:{c['mail']}")
+        if c.get("production_name") and c["production_name"] != "Freelance":
+            parts.append(f"ORG:{c['production_name']}")
+        if c.get("metier") and c["metier"] != "—":
+            parts.append(f"NOTE:{c['metier']}")
+        return ";".join(parts) + ";;"
+
+    def _build_vcf(c):
+        """Build a vCard 3.0 string for .vcf file download."""
+        lines = [
+            "BEGIN:VCARD",
+            "VERSION:3.0",
+            f"N:{c['nom']};{c['prenom']};;;",
+            f"FN:{c['prenom']} {c['nom']}",
+        ]
+        if c.get("telephone") and c["telephone"] != "—":
+            lines.append(f"TEL;TYPE=CELL:{c['telephone']}")
+        if c.get("mail") and c["mail"] != "—":
+            lines.append(f"EMAIL:{c['mail']}")
+        if c.get("production_name") and c["production_name"] != "Freelance":
+            lines.append(f"ORG:{c['production_name']}")
+        if c.get("metier") and c["metier"] != "—":
+            lines.append(f"TITLE:{c['metier']}")
+        lines.append("END:VCARD")
+        return "\r\n".join(lines)
+
     @app.route("/admin/contacts")
     @require_roles('administrator', 'manager')
     def admin_contacts_list():
         try:
+            import base64
             contacts = list_contacts()
+            for c in contacts:
+                c["vcard_data"] = _build_mecard(c)
+                vcf = _build_vcf(c)
+                c["vcf_b64"] = base64.b64encode(
+                    vcf.encode("utf-8")).decode("ascii")
+                c["vcf_filename"] = f"{c['prenom']}_{c['nom']}.vcf".replace(
+                    " ", "_")
             return render_template("admin/contacts_list.html", contacts=contacts)
         except Exception as e:
             current_app.logger.error(f"❌ Error fetching contacts: {e}")
@@ -91,36 +131,3 @@ def init_contacts_routes(app):
             current_app.logger.error(f"❌ Error deleting contact: {e}")
             flash(f"Erreur lors de la suppression : {str(e)}", "error")
             return redirect(url_for("admin_contacts_list"))
-
-    @app.route("/admin/contacts/<int:record_id>/vcard")
-    @require_roles('administrator', 'manager')
-    def admin_contact_vcard(record_id):
-        from models import Contact
-        contact = Contact.query.get_or_404(record_id)
-        prod_name = contact.production_rel.nom if contact.production_rel else ""
-
-        lines = [
-            "BEGIN:VCARD",
-            "VERSION:3.0",
-            f"N:{contact.nom};{contact.prenom};;;",
-            f"FN:{contact.prenom} {contact.nom}",
-        ]
-        if contact.telephone:
-            lines.append(f"TEL;TYPE=CELL:{contact.telephone}")
-        if contact.mail:
-            lines.append(f"EMAIL:{contact.mail}")
-        if prod_name:
-            lines.append(f"ORG:{prod_name}")
-        if contact.metier:
-            lines.append(f"TITLE:{contact.metier}")
-        lines.append("END:VCARD")
-
-        vcf = "\r\n".join(lines)
-        filename = f"{contact.prenom}_{contact.nom}.vcf".replace(" ", "_")
-
-        from flask import Response
-        return Response(
-            vcf,
-            mimetype="text/vcard",
-            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-        )

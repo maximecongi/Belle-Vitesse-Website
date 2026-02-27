@@ -41,11 +41,10 @@
                     <td><a href="tel:{{ c.telephone }}">{{ c.telephone }}</a></td>
                     <td><a href="mailto:{{ c.mail }}">{{ c.mail }}</a></td>
                     <td style="text-align: center;">
-                        <div class="qr-cell"
-                            data-url="{{ url_for('admin_contact_vcard', record_id=c.id, _external=True) }}"
-                            data-name="{{ c.prenom }} {{ c.nom }}"
-                            data-download="{{ url_for('admin_contact_vcard', record_id=c.id) }}"
-                            style="cursor:pointer;"></div>
+                        <span class="qr-trigger" data-vcard="{{ c.vcard_data }}" data-name="{{ c.prenom }} {{ c.nom }}"
+                            data-vcf="{{ c.vcf_b64 }}" data-filename="{{ c.vcf_filename }}"
+                            style="cursor:pointer; font-size:1.2rem;" title="Afficher le QR code"><img
+                                src="{{ url_for('static', filename='imgs/icons/qr_code.svg') }}" alt="QR Code"></span>
                     </td>
                     <td>
                         <a href="{{ url_for('admin_contact_edit', record_id=c.id) }}"
@@ -74,56 +73,61 @@
             style="display:inline-block; padding:12px; background:#fff; border-radius:8px; border:1px solid #e5e7eb;">
         </div>
         <div style="margin-top:1.5rem;">
-            <a id="qrModalDownload" href="#" class="admin-btn admin-btn-primary" style="font-size:.85rem;">
-                ⬇ Télécharger le .vcf
-            </a>
+            <button id="qrModalDownload" class="admin-btn admin-btn-primary" style="font-size:.85rem;">
+                ⬇ Télécharger la VCard
+            </button>
         </div>
         <p style="margin-top:1rem; text-align: center; font-size:.75rem; color:#9ca3af;">Scannez le QR code pour
             importer le contact</p>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const modal = document.getElementById('qrModal');
         const modalName = document.getElementById('qrModalName');
         const modalCode = document.getElementById('qrModalCode');
         const modalDownload = document.getElementById('qrModalDownload');
-        let modalQR = null;
+        let currentVcfB64 = '';
+        let currentFilename = '';
 
-        // Mini QR codes in table
-        document.querySelectorAll('.qr-cell').forEach(cell => {
-            const url = cell.dataset.url;
-            new QRCode(cell, {
-                text: url,
-                width: 48,
-                height: 48,
-                colorDark: "#1a1a2e",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.L,
-            });
+        function renderQR(container, text, size) {
+            var qr = qrcode(0, 'L');
+            qr.addData(text);
+            qr.make();
+            var cellSize = Math.floor(size / qr.getModuleCount());
+            var img = document.createElement('img');
+            img.src = qr.createDataURL(cellSize, 0);
+            img.style.width = size + 'px';
+            img.style.height = size + 'px';
+            container.appendChild(img);
+        }
 
-            // Click → open modal
-            cell.addEventListener('click', function (e) {
+        document.querySelectorAll('.qr-trigger').forEach(trigger => {
+            trigger.addEventListener('click', function (e) {
                 e.preventDefault();
                 e.stopPropagation();
 
-                modalName.textContent = cell.dataset.name;
-                modalDownload.href = cell.dataset.download;
+                modalName.textContent = trigger.dataset.name;
                 modalCode.innerHTML = '';
-
-                modalQR = new QRCode(modalCode, {
-                    text: url,
-                    width: 220,
-                    height: 220,
-                    colorDark: "#1a1a2e",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.M,
-                });
-
+                currentVcfB64 = trigger.dataset.vcf;
+                currentFilename = trigger.dataset.filename;
+                renderQR(modalCode, trigger.dataset.vcard, 220);
                 modal.style.display = 'flex';
             });
+        });
+
+        // Download VCF
+        modalDownload.addEventListener('click', function () {
+            var raw = atob(currentVcfB64);
+            var blob = new Blob([raw], { type: 'text/vcard' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = currentFilename;
+            a.click();
+            URL.revokeObjectURL(url);
         });
 
         // Close modal
