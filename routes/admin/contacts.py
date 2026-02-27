@@ -91,3 +91,36 @@ def init_contacts_routes(app):
             current_app.logger.error(f"❌ Error deleting contact: {e}")
             flash(f"Erreur lors de la suppression : {str(e)}", "error")
             return redirect(url_for("admin_contacts_list"))
+
+    @app.route("/admin/contacts/<int:record_id>/vcard")
+    @require_roles('administrator', 'manager')
+    def admin_contact_vcard(record_id):
+        from models import Contact
+        contact = Contact.query.get_or_404(record_id)
+        prod_name = contact.production_rel.nom if contact.production_rel else ""
+
+        lines = [
+            "BEGIN:VCARD",
+            "VERSION:3.0",
+            f"N:{contact.nom};{contact.prenom};;;",
+            f"FN:{contact.prenom} {contact.nom}",
+        ]
+        if contact.telephone:
+            lines.append(f"TEL;TYPE=CELL:{contact.telephone}")
+        if contact.mail:
+            lines.append(f"EMAIL:{contact.mail}")
+        if prod_name:
+            lines.append(f"ORG:{prod_name}")
+        if contact.metier:
+            lines.append(f"TITLE:{contact.metier}")
+        lines.append("END:VCARD")
+
+        vcf = "\r\n".join(lines)
+        filename = f"{contact.prenom}_{contact.nom}.vcf".replace(" ", "_")
+
+        from flask import Response
+        return Response(
+            vcf,
+            mimetype="text/vcard",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )

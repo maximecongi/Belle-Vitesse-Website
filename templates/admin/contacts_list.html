@@ -22,6 +22,7 @@
                     <th>Production</th>
                     <th>Téléphone</th>
                     <th>Email</th>
+                    <th style="width: 60px; text-align: center;">VCF</th>
                     <th style="width: 100px;">Actions</th>
                 </tr>
             </thead>
@@ -39,6 +40,13 @@
                     </td>
                     <td><a href="tel:{{ c.telephone }}">{{ c.telephone }}</a></td>
                     <td><a href="mailto:{{ c.mail }}">{{ c.mail }}</a></td>
+                    <td style="text-align: center;">
+                        <div class="qr-cell"
+                            data-url="{{ url_for('admin_contact_vcard', record_id=c.id, _external=True) }}"
+                            data-name="{{ c.prenom }} {{ c.nom }}"
+                            data-download="{{ url_for('admin_contact_vcard', record_id=c.id) }}"
+                            style="cursor:pointer;"></div>
+                    </td>
                     <td>
                         <a href="{{ url_for('admin_contact_edit', record_id=c.id) }}"
                             class="admin-btn admin-btn-secondary">Éditer</a>
@@ -46,7 +54,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="6" style="text-align: center; padding: 3rem; color: var(--grey-2);">
+                    <td colspan="7" style="text-align: center; padding: 3rem; color: var(--grey-2);">
                         Aucun contact trouvé.
                     </td>
                 </tr>
@@ -56,8 +64,81 @@
     </div>
 </div>
 
+<!-- QR Modal -->
+<div id="qrModal"
+    style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.6); backdrop-filter:blur(4px); justify-content:center; align-items:center;">
+    <div
+        style="background:#fff; border-radius:16px; padding:2.5rem; text-align:center; max-width:360px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,.3);">
+        <p id="qrModalName" style="font-weight:700; font-size:1.15rem; margin:0 0 1.25rem; color:#1a1a2e;"></p>
+        <div id="qrModalCode"
+            style="display:inline-block; padding:12px; background:#fff; border-radius:8px; border:1px solid #e5e7eb;">
+        </div>
+        <div style="margin-top:1.5rem;">
+            <a id="qrModalDownload" href="#" class="admin-btn admin-btn-primary" style="font-size:.85rem;">
+                ⬇ Télécharger le .vcf
+            </a>
+        </div>
+        <p style="margin-top:1rem; text-align: center; font-size:.75rem; color:#9ca3af;">Scannez le QR code pour
+            importer le contact</p>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('qrModal');
+        const modalName = document.getElementById('qrModalName');
+        const modalCode = document.getElementById('qrModalCode');
+        const modalDownload = document.getElementById('qrModalDownload');
+        let modalQR = null;
+
+        // Mini QR codes in table
+        document.querySelectorAll('.qr-cell').forEach(cell => {
+            const url = cell.dataset.url;
+            new QRCode(cell, {
+                text: url,
+                width: 48,
+                height: 48,
+                colorDark: "#1a1a2e",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.L,
+            });
+
+            // Click → open modal
+            cell.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                modalName.textContent = cell.dataset.name;
+                modalDownload.href = cell.dataset.download;
+                modalCode.innerHTML = '';
+
+                modalQR = new QRCode(modalCode, {
+                    text: url,
+                    width: 220,
+                    height: 220,
+                    colorDark: "#1a1a2e",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.M,
+                });
+
+                modal.style.display = 'flex';
+            });
+        });
+
+        // Close modal
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && modal.style.display === 'flex') {
+                modal.style.display = 'none';
+            }
+        });
+
+        // Search
         const searchInput = document.getElementById('searchInput');
         const searchableRows = document.querySelectorAll('.searchable-row');
 

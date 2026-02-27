@@ -847,3 +847,14 @@ body.login-page {
     filter: grayscale(1);
     cursor: not-allowed;
 }
+
+.qr-cell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.qr-cell img {
+    width: 24px;
+    height: 24px;
+}
