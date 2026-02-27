@@ -1,0 +1,452 @@
+/* ── Admin Components: Cards, Buttons, Flash, Badges, Tables, Checkboxes, Forms ── */
+
+/* Cards */
+.admin-card {
+    background: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    padding: 1.5rem;
+    margin: 1rem 0;
+}
+
+.admin-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Buttons */
+.admin-btn {
+    display: inline-block;
+    padding: 0.6rem 1.2rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    font-size: 0.9rem;
+}
+
+.admin-btn-primary {
+    background-color: var(--grey-1);
+    color: white;
+    border: 1px solid var(--grey-1);
+}
+
+.admin-btn-primary:hover {
+    background-color: var(--admin-accent);
+    color: var(--grey-1);
+    border-color: var(--admin-accent);
+}
+
+.admin-btn-secondary {
+    background-color: white;
+    color: var(--grey-1);
+    border-color: var(--white-3);
+    border: 1px solid var(--white-3);
+}
+
+.admin-btn-secondary:hover {
+    background-color: var(--yellow-1);
+    color: var(--grey-1);
+}
+
+.btn-disabled {
+    filter: grayscale(1);
+    cursor: not-allowed;
+}
+
+/* Flash Messages (Toasts) */
+.admin-flash-container {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    z-index: 2000;
+}
+
+.admin-flash-item {
+    background: white;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    animation: slideIn 0.3s ease-out;
+    min-width: 300px;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.flash-error {
+    border-left: 4px solid #ff4b2b;
+}
+
+.flash-success {
+    border-left: 4px solid #28a745;
+}
+
+.flash-info {
+    border-left: 4px solid #007bff;
+}
+
+/* Badge Select (custom dropdowns) */
+.badge-select {
+    position: relative;
+}
+
+.badge-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--grey-4, #e0e0e0);
+    background: #fff;
+    cursor: pointer;
+    min-height: 38px;
+    transition: border-color 0.15s;
+}
+
+.badge-select-trigger:hover {
+    border-color: var(--grey-3, #999);
+}
+
+.badge-select-trigger .arrow {
+    font-size: 0.7rem;
+    color: var(--grey-2, #888);
+    transition: transform 0.2s;
+}
+
+.badge-select.open .arrow {
+    transform: rotate(180deg);
+}
+
+.badge-select-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid var(--grey-4, #e0e0e0);
+    border-radius: 8px;
+    padding: 0.35rem;
+    z-index: 50;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.badge-select.open .badge-select-dropdown {
+    display: block;
+}
+
+.badge-select-option {
+    display: block;
+    width: 100%;
+    padding: 0.45rem 0.6rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    text-align: left;
+    border-radius: 6px;
+    transition: background 0.1s;
+}
+
+.badge-select-option:hover {
+    background: var(--admin-bg, #f5f5f5);
+}
+
+/* Badge Pills */
+.badge-pill {
+    display: inline-block;
+    padding: 0.2rem 0.65rem;
+    margin: 0.2rem 0;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.badge-pill:before {
+    content: "";
+    font-size: 0.9em;
+    vertical-align: middle;
+}
+
+.badge-pill[data-val="OK"] {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.badge-pill[data-val="À vérifier"] {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.badge-pill[data-val="Défaut"] {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.badge-pill[data-val="Neutral"] {
+    background: var(--neutral-bg);
+    color: var(--neutral-color);
+}
+
+.badge-pill[data-val="À contrôler"] {
+    background: var(--neutral-bg);
+    color: var(--neutral-color);
+}
+
+.badge-pill[data-val="À contrôler"]:before {
+    content: "🔍 ";
+}
+
+.badge-pill[data-val="En cours"] {
+    background: #ffe2b8;
+    color: #dc852e;
+}
+
+
+.badge-pill[data-val="En cours"][data-conform="yes"]:before {
+    content: "⏳ ";
+}
+
+.badge-pill[data-val="En cours"][data-conform="no"]:before {
+    content: "🚨 ";
+}
+
+.badge-pill[data-val="À signer"] {
+    background: #dce8fd;
+    color: #0e6292;
+}
+
+.badge-pill[data-val="À signer"]:before {
+    content: "✍️ ";
+}
+
+.badge-pill[data-val="Signé"] {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.badge-pill[data-val="Signé"]:before {
+    content: "✅ ";
+}
+
+.badge-pill[data-val="Administrator"] {
+    background: #ede9fe;
+    color: #5b21b6;
+}
+
+.badge-pill[data-val="Manager"] {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.badge-pill[data-val="User"] {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.badge-pill[data-val="incoming"] {
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 0.4rem;
+    padding: 0.1rem 0.35rem;
+    margin: 0.1rem 0;
+}
+
+.badge-pill[data-val="incoming"]:before {
+    content: "🚧 ";
+}
+
+.badge-pill[data-val="Freelance"] {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.badge-pill[data-val="Production"] {
+    background: #ffe2b8;
+    color: #dc852e;
+}
+
+/* Admin Badges (legacy) */
+.admin-badge {
+    display: inline-block;
+    padding: 0.25rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge-signed {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.badge-pending {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.badge-default {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+/* Tables */
+.admin-table-container {
+    overflow-x: auto;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table th {
+    text-align: left;
+    padding: 1rem;
+    background-color: var(--white-3);
+    font-weight: 600;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+}
+
+.admin-table th:last-child {
+    text-align: center;
+}
+
+.admin-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--white-3);
+    vertical-align: middle;
+}
+
+.admin-table td:last-child {
+    text-align: center;
+}
+
+.admin-table tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+
+/* ===========================
+   Custom Checkbox 
+   =========================== */
+
+.admin-table input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    border-radius: 5px;
+    border: 2px solid #ffc845;
+    background-color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Checkmark icon */
+.admin-table input[type="checkbox"]::after {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 8px;
+    border: 2.5px solid transparent;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg) translateY(-1px) translateX(-1px);
+    transition: border-color 0.15s ease;
+}
+
+/* Hover */
+.admin-table input[type="checkbox"]:hover {
+    border-color: #e6a800;
+    box-shadow: 0 0 0 4px rgba(255, 200, 69, 0.15);
+}
+
+/* Checked */
+.admin-table input[type="checkbox"]:checked {
+    background-color: #ffc845;
+    border-color: #ffc845;
+}
+
+.admin-table input[type="checkbox"]:checked::after {
+    border-color: #fff;
+}
+
+/* Focus (accessibilité) */
+.admin-table input[type="checkbox"]:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(255, 200, 69, 0.35);
+}
+
+/* Disabled */
+.admin-table input[type="checkbox"]:disabled {
+    border-color: #ddd;
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+}
+
+.admin-table input[type="checkbox"]:disabled:checked {
+    background-color: #ffd97a;
+    border-color: #ffd97a;
+}
+
+/* Forms */
+.form-group {
+    display: grid;
+    align-content: space-between;
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--grey-2);
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid var(--white-3);
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+.flash-messages {
+    margin-bottom: 1rem;
+    padding: 0.8rem;
+    font-size: 0.9rem;
+}
+
+.flash-messages.flash-error {
+    background-color: var(--red-bg);
+    color: var(--red-error);
+    border: 1px solid var(--red-border);
+}
+
+.flash-messages.flash-info {
+    background-color: var(--blue-bg);
+    color: var(--blue-info);
+    border: 1px solid var(--blue-border);
+}

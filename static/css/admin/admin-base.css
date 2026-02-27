@@ -1,0 +1,84 @@
+/* ── Admin Base: Variables, Body, Layout ──────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+    /* Admin Specific Variables */
+    --admin-sidebar-width: 260px;
+    --admin-header-height: 70px;
+    --admin-bg: #f8f9fa;
+    --admin-sidebar-bg: #151515;
+    --admin-accent: #FFC845;
+
+    /* Common Variables (matching main site) */
+    --font-primary: 'Poppins', sans-serif;
+    --grey-1: #151515;
+    --grey-2: #515151;
+    --grey-3: #1A1A1A;
+    --white-1: #FFFFFF;
+    --white-3: #e9ecef;
+    --text-color: #333;
+    --red-error: #b91c1c;
+    --red-bg: #fee2e2;
+    --red-border: #fecaca;
+    --blue-info: #0369a1;
+    --blue-bg: #e0f2fe;
+    --blue-border: #bae6fd;
+    --grey-bg: #f8f9fa;
+    --grey-border: #e0e0e0;
+    --green-success: #28a745;
+    --neutral-bg: hsl(0, 0%, 94%);
+    --neutral-color: hsl(0, 0%, 16%);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-primary);
+    background-color: var(--admin-bg);
+    color: var(--text-color);
+}
+
+/* ── Layout ─────────────────────────────────────────────────── */
+
+.admin-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Main Content */
+.admin-main {
+    flex-grow: 1;
+    margin-left: var(--admin-sidebar-width);
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-header {
+    height: var(--admin-header-height);
+    background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 900;
+}
+
+.admin-header-title h1 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.admin-section-title {
+    margin: 0.8rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.admin-content {
+    padding: 2rem;
+    flex-grow: 1;
+}
