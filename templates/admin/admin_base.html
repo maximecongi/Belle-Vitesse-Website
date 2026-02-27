@@ -47,37 +47,60 @@
 
             <nav class="admin-nav">
                 {% set user_role = current_user.role_lower %}
-                <a href="{{ url_for('admin_dashboard') }}" class="admin-nav-item">
-                    Tableau de bord
-                </a>
+                {% set role_levels = {'user': 1, 'manager': 2, 'administrator': 3} %}
+                {% set current_level = role_levels.get(user_role, 0) %}
 
-                {% if user_role in ['administrator', 'manager'] %}
-                <a href="{{ url_for('admin_projects_list') }}" class="admin-nav-item">
-                    Projets
-                </a>
-                <a href="{{ url_for('admin_productions_list') }}" class="admin-nav-item">
-                    Productions
+                {% macro nav_group(title, id_suffix, min_role='user', default_open=false) %}
+                {% if current_level >= role_levels.get(min_role, 3) %}
+                <div class="admin-nav-group {% if default_open %}default-open{% endif %}"
+                    data-nav-group="{{ id_suffix }}">
+                    <div class="admin-nav-group-trigger">
+                        <span>{{ title }}</span>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="admin-nav-group-items">
+                        {{ caller() }}
+                    </div>
+                </div>
+                {% endif %}
+                {% endmacro %}
+
+                {% macro nav_item(href, title, min_role='user') %}
+                {% if current_level >= role_levels.get(min_role, 3) %}
+                <a href="{{ href }}" class="admin-nav-item">
+                    {{ title }} {% if href == "#"%} <span class="badge-pill" data-val="incoming">Bientôt</span>{% endif
+                    %}
                 </a>
                 {% endif %}
+                {% endmacro %}
 
-                <a href="{{ url_for('admin_checkouts_list') }}" class="admin-nav-item">
-                    Checkouts
-                </a>
-                <a href="{{ url_for('admin_checkins_list') }}" class="admin-nav-item">
-                    Checkins
-                </a>
+                {{ nav_item(url_for('admin_dashboard'), 'Tableau de bord', 'user') }}
 
-                {% if user_role == 'administrator' %}
-                <a href="{{ url_for('admin_users_list') }}" class="admin-nav-item">
-                    Utilisateurs
-                </a>
-                <a href="{{ url_for('admin_vehicle_configs') }}" class="admin-nav-item">
-                    Config. Véhicules
-                </a>
-                <a href="{{ url_for('admin_newsletter_dashboard') }}" class="admin-nav-item">
-                    Newsletter
-                </a>
-                {% endif %}
+                {% call nav_group('Tournages', 'tournages', 'manager', false) %}
+                {{ nav_item(url_for('admin_projects_list'), 'Projets', 'manager') }}
+                {{ nav_item(url_for('admin_productions_list'), 'Productions', 'manager') }}
+                {{ nav_item('#', 'Contacts', 'manager') }}
+                {% endcall %}
+
+                {% call nav_group('Départs', 'departs', 'user', false) %}
+                {{ nav_item(url_for('admin_checkouts_list'), 'Checkouts', 'user') }}
+                {{ nav_item('#', 'Risk Assessments', 'manager') }}
+                {{ nav_item('#', 'Décharge Pilote', 'manager') }}
+                {% endcall %}
+
+                {% call nav_group('Retours', 'retours', 'user', false) %}
+                {{ nav_item(url_for('admin_checkins_list'), 'Checkins', 'user') }}
+                {{ nav_item('#', 'Gestion des incidents', 'manager') }}
+                {% endcall %}
+
+                {% call nav_group('Flotte', 'flotte', 'administrator', false) %}
+                {{ nav_item(url_for('admin_vehicle_configs'), 'Config. Véhicules', 'administrator') }}
+                {% endcall %}
+
+                {% call nav_group('Administration', 'admin', 'administrator', false) %}
+                {{ nav_item(url_for('admin_users_list'), 'Équipe', 'administrator') }}
+                {{ nav_item(url_for('admin_newsletter_dashboard'), 'Newsletter', 'administrator') }}
+                {% endcall %}
             </nav>
 
             <div class="admin-sidebar-footer">

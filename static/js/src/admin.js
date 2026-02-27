@@ -9,10 +9,49 @@
 
 
 // ─────────────────────────────────────────────
-// Global (une seule fois) — listeners sur document
+// Sidebar Nav Dropdowns (Local Storage Persistence)
 // ─────────────────────────────────────────────
 
+// Appliquer l'état sauvegardé dès que le script est lu (pour éviter le flash)
+// Cette technique fonctionne pour Swup / render initial.
+function restoreNavState() {
+    document.querySelectorAll('.admin-nav-group').forEach(group => {
+        const id = group.dataset.navGroup;
+        if (!id) return;
+        const state = localStorage.getItem(`nav-group-${id}`);
+        if (state === 'open') {
+            group.classList.add('open');
+        } else if (state === 'closed') {
+            group.classList.remove('open');
+        } else if (group.classList.contains('default-open')) {
+            // Pas de state stocké mais le HTML dit de l'ouvrir par défaut
+            group.classList.add('open');
+        }
+    });
+}
+// Run immediately if DOM is there or wait for DOMContentLoaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', restoreNavState);
+} else {
+    restoreNavState();
+}
+// Swup support : refaire au case où tout le swup remplace l'aside 
+document.addEventListener('swup:contentReplaced', restoreNavState);
+
 document.addEventListener('click', e => {
+    // Nav group trigger toggle
+    const trigger = e.target.closest('.admin-nav-group-trigger');
+    if (trigger) {
+        const group = trigger.closest('.admin-nav-group');
+        group.classList.toggle('open');
+
+        const id = group.dataset.navGroup;
+        if (id) {
+            localStorage.setItem(`nav-group-${id}`, group.classList.contains('open') ? 'open' : 'closed');
+        }
+    }
+
+    // Existing dropdown logic
     if (!e.target.closest('.badge-select') && !e.target.closest('.rich-select')) {
         document.querySelectorAll('.badge-select.open, .rich-select.open')
             .forEach(s => s.classList.remove('open'));
@@ -25,6 +64,13 @@ document.querySelectorAll('.admin-nav-item').forEach(link => {
     const href = link.getAttribute('href');
     if (href === currentPath || (currentPath.startsWith(href) && href !== '/admin/dashboard')) {
         link.classList.add('active');
+        // Si ce lien est dans un groupe, on ouvre automatiquement le groupe (Optionnel, à voir si désiré)
+        const group = link.closest('.admin-nav-group');
+        if (group && group.dataset.navGroup) {
+            // Parfois c'est utile de forcer l'ouverture si on est sur une page du groupe
+            // group.classList.add('open');
+            // localStorage.setItem(`nav-group-${group.dataset.navGroup}`, 'open');
+        }
     }
 });
 
