@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from datetime import datetime
 
 # Configurer ici le chemin vers votre dossier PRIVATE_FOLDER
 # En production, cela correspond généralement à /app/private
@@ -13,6 +14,8 @@ SEARCH_PATHS = [
 
 def cleanup_empty_dirs():
     print("--- Nettoyage des dossiers vides ---")
+    print(
+        f"Début du processsus : {datetime.now()}.strftime('%d-%m-%Y %H:%M:%S')")
 
     removed_count = 0
 
@@ -20,7 +23,6 @@ def cleanup_empty_dirs():
         base_path = Path(base_path_str)
         if not base_path.exists():
             continue
-
         print(f"Scanning : {base_path}")
 
         # On parcourt les dossiers d'inspection (topdown=False pour supprimer les enfants d'abord)
