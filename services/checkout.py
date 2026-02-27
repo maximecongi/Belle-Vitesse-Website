@@ -11,7 +11,7 @@ import hmac
 import hashlib
 import secrets
 import logging
-import requests as http_requests
+
 from datetime import datetime, timezone, timedelta
 
 from flask import current_app, render_template
@@ -275,8 +275,6 @@ def _trigger_n8n_webhook(inspection_id, filename, base_url, current_hash, data):
                 "⚠️ N8N_WEBHOOK_CHECKOUT_SIGN not set in environment.")
             return
 
-        logger.info(f"🚀 Triggering n8n webhook for {inspection_id}...")
-
         secret_raw = os.getenv("HASH_SECRET_KEY")
         if not secret_raw:
             logger.error("❌ HASH_SECRET_KEY not set.")
@@ -311,16 +309,10 @@ def _trigger_n8n_webhook(inspection_id, filename, base_url, current_hash, data):
             "month": month,
         }
 
-        response = http_requests.post(
-            n8n_webhook_url, json=webhook_payload, timeout=10)
-        if response.status_code in [200, 201]:
-            logger.info(f"✅ n8n webhook triggered for {inspection_id}")
-        else:
-            logger.error(
-                f"❌ n8n webhook failed for {inspection_id}: {response.status_code} - {response.text}")
+        from utils.n8n import trigger_n8n_webhook
+        trigger_n8n_webhook(n8n_webhook_url, **webhook_payload)
     except Exception as e:
-        logger.error(
-            f"❌ n8n webhook exception for {inspection_id}: {e}")
+        logger.error(f"❌ n8n webhook setup exception for {inspection_id}: {e}")
 
 
 # ── Verification ─────────────────────────────────────────────────
