@@ -1,5 +1,6 @@
 import os
 import smtplib
+from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.utils import make_msgid, formatdate
@@ -28,17 +29,13 @@ def send_magic_link_email(to_email, firstname, magic_link):
         # Text fallback content
         text_content = f"Bonjour {firstname},\n\nVoici votre lien de connexion temporaire à Belle Vitesse :\n{magic_link}\n\nCe lien va expirer dans 15 minutes.\n\nL'équipe Belle Vitesse."
 
-        # Simple HTML content
-        html_content = f"""
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #151515; padding: 2rem;">
-            <p style="font-size: 1.1rem;">Bonjour {firstname},</p>
-            <p>Voici votre lien sécurisé pour vous connecter à l'espace d'administration Belle Vitesse :</p>
-            <div style="text-align: center; margin: 3rem 0;">
-                <a href="{magic_link}" style="background-color: #151515; color: white; text-decoration: none; padding: 1rem 2rem; border-radius: 4px; font-weight: bold; display: inline-block;">Se connecter</a>
-            </div>
-            <p style="font-size: 0.9rem; color: #555;"><i>Ce lien expire dans 15 minutes. N'hésitez pas à en redemander un si besoin.</i></p>
-        </div>
-        """
+        # Premium HTML content via template
+        html_content = render_template(
+            "emails/magic_link.html",
+            firstname=firstname,
+            magic_link=magic_link,
+            now_year=datetime.utcnow().year if 'datetime' in globals() else 2026
+        )
 
         # Create message
         msg = MIMEMultipart("alternative")
