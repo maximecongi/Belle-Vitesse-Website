@@ -41,9 +41,9 @@
                     <td><a href="tel:{{ c.telephone }}">{{ c.telephone }}</a></td>
                     <td><a href="mailto:{{ c.mail }}">{{ c.mail }}</a></td>
                     <td style="text-align: center;">
-                        <span class="qr-trigger" data-vcard="{{ c.vcard_data }}" data-name="{{ c.prenom }} {{ c.nom }}"
-                            data-vcf="{{ c.vcf_b64 }}" data-filename="{{ c.vcf_filename }}"
-                            style="cursor:pointer; font-size:1.2rem;" title="Afficher le QR code"><img
+                        <span class="qr-trigger" data-name="{{ c.prenom }} {{ c.nom }}" data-vcf="{{ c.vcf_b64 }}"
+                            data-filename="{{ c.vcf_filename }}" style="cursor:pointer; font-size:1.2rem;"
+                            title="Afficher le QR code"><img
                                 src="{{ url_for('static', filename='imgs/icons/qr_code.svg') }}" alt="QR Code"></span>
                     </td>
                     <td>
@@ -113,7 +113,8 @@
                 modalCode.innerHTML = '';
                 currentVcfB64 = trigger.dataset.vcf;
                 currentFilename = trigger.dataset.filename;
-                renderQR(modalCode, trigger.dataset.vcard, 220);
+                var vcfText = decodeURIComponent(escape(atob(currentVcfB64)));
+                renderQR(modalCode, vcfText, 260);
                 modal.style.display = 'flex';
             });
         });

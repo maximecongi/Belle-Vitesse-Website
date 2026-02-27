@@ -22,19 +22,6 @@ from services.admin.contacts import (
 def init_contacts_routes(app):
     # ── Contacts CRUD ──────────────────────────────────────────
 
-    def _build_mecard(c):
-        """Build a MECARD string (compact QR-friendly contact format)."""
-        parts = [f"MECARD:N:{c['nom']},{c['prenom']}"]
-        if c.get("telephone") and c["telephone"] != "—":
-            parts.append(f"TEL:{c['telephone']}")
-        if c.get("mail") and c["mail"] != "—":
-            parts.append(f"EMAIL:{c['mail']}")
-        if c.get("production_name") and c["production_name"] != "Freelance":
-            parts.append(f"ORG:{c['production_name']}")
-        if c.get("metier") and c["metier"] != "—":
-            parts.append(f"NOTE:{c['metier']}")
-        return ";".join(parts) + ";;"
-
     def _build_vcf(c):
         """Build a vCard 3.0 string for .vcf file download."""
         lines = [
@@ -61,7 +48,6 @@ def init_contacts_routes(app):
             import base64
             contacts = list_contacts()
             for c in contacts:
-                c["vcard_data"] = _build_mecard(c)
                 vcf = _build_vcf(c)
                 c["vcf_b64"] = base64.b64encode(
                     vcf.encode("utf-8")).decode("ascii")
