@@ -502,6 +502,16 @@ body {
     content: "🚧 ";
 }
 
+.badge-pill[data-val="Freelance"] {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.badge-pill[data-val="Production"] {
+    background: #ffe2b8;
+    color: #dc852e;
+}
+
 @keyframes slideIn {
     from {
         transform: translateX(100%);

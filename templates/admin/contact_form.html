@@ -1,0 +1,200 @@
+{% extends "admin/admin_base.html" %}
+
+{% macro option(value, label=none) %}
+<option value="{{ value }}" {{ 'selected' if data and data.metier==value }}>
+    {{ label if label else value }}
+</option>
+{% endmacro %}
+
+{% block title %}
+{% if is_edit %}Modifier le Contact{% else %}Nouveau Contact{% endif %}
+{% endblock %}
+
+{% block page_title %}
+{% if is_edit %}Modifier le Contact{% else %}Nouveau Contact{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Prénom</label>
+                <input type="text" name="prenom" class="form-input" value="{{ data.prenom if data else '' }}" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Nom</label>
+                <input type="text" name="nom" class="form-input" value="{{ data.nom if data else '' }}" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Métier</label>
+            <select name="metier" class="form-input">
+                <option value="">— Sélectionner un métier —</option>
+
+                <optgroup label="🎬 Réalisation">
+                    {{ option("Réalisateur") }}
+                    {{ option("Premier assistant réalisateur") }}
+                    {{ option("Deuxième assistant réalisateur") }}
+                    {{ option("Scripte") }}
+                </optgroup>
+
+                <optgroup label="📷 Caméra">
+                    {{ option("Directeur de la photographie (DOP)") }}
+                    {{ option("Cadreur") }}
+                    {{ option("Assistant caméra") }}
+                    {{ option("DIT") }}
+                    {{ option("Data manager") }}
+                    {{ option("Opérateur Steadicam") }}
+                    {{ option("Gimbal tech") }}
+                    {{ option("Pilote de drone") }}
+                    {{ option("Photographe de plateau") }}
+                </optgroup>
+
+                <optgroup label="💡 Électricité">
+                    {{ option("Chef électricien (Gaffer)") }}
+                    {{ option("Électricien de plateau") }}
+                    {{ option("Équipe électrique") }}
+                    {{ option("Concepteur lumière") }}
+                    {{ option("Programmeur lumière") }}
+                    {{ option("Superviseur éclairage") }}
+                </optgroup>
+
+                <optgroup label="🔧 Machinerie">
+                    {{ option("Chef machiniste (Key Grip)") }}
+                    {{ option("Machiniste") }}
+                    {{ option("Équipe machinerie") }}
+                </optgroup>
+
+                <optgroup label="🏎️ Automobile">
+                    {{ option("Pilote de précision") }}
+                    {{ option("Mécanicien") }}
+                    {{ option("Pilote de course") }}
+                </optgroup>
+
+                <optgroup label="🎙️ Son">
+                    {{ option("Chef opérateur du son") }}
+                    {{ option("Perchiste") }}
+                    {{ option("Concepteur sonore") }}
+                    {{ option("Mixeur son (Re-recording)") }}
+                </optgroup>
+
+                <optgroup label="🎞️ Post-production">
+                    {{ option("Monteur") }}
+                    {{ option("Étalonneur") }}
+                    {{ option("Superviseur de post-production") }}
+                    {{ option("Équipe effets visuels (VFX)") }}
+                    {{ option("Compositeur / Musicien") }}
+                </optgroup>
+
+                <optgroup label="🎯 Production">
+                    {{ option("Producteur exécutif") }}
+                    {{ option("Producteur") }}
+                    {{ option("Directeur de production") }}
+                    {{ option("Directeur de ligne") }}
+                    {{ option("Coordinateur de production") }}
+                    {{ option("Chef de projet") }}
+                    {{ option("Équipe de tournage") }}
+                    {{ option("Financement de film") }}
+                </optgroup>
+
+                <optgroup label="📋 Régie">
+                    {{ option("Régisseur général") }}
+                    {{ option("Régisseur d'extérieurs") }}
+                    {{ option("Logistique") }}
+                    {{ option("Achats") }}
+                </optgroup>
+
+                <optgroup label="🎨 Décoration / Costumes">
+                    {{ option("Chef décorateur") }}
+                    {{ option("Décorateur de plateau") }}
+                    {{ option("Accessoiriste") }}
+                    {{ option("Chef costumier") }}
+                    {{ option("Costumier") }}
+                    {{ option("Maquilleur") }}
+                    {{ option("Coiffeur de plateau") }}
+                </optgroup>
+
+                <optgroup label="🔌 Technique / Système">
+                    {{ option("Technicien audiovisuel") }}
+                    {{ option("Intégration de systèmes") }}
+                    {{ option("Support technique") }}
+                    {{ option("Technicien de maintenance") }}
+                </optgroup>
+
+                <optgroup label="💼 Direction / Gestion">
+                    {{ option("Direction de société") }}
+                    {{ option("Management") }}
+                    {{ option("Finance") }}
+                </optgroup>
+
+                <optgroup label="📣 Communication">
+                    {{ option("Marketing") }}
+                    {{ option("Presse / Médias / Relations publiques") }}
+                    {{ option("Journaliste") }}
+                </optgroup>
+
+                <optgroup label="⚖️ Autre">
+                    {{ option("Avocat") }}
+                    {{ option("Consultant") }}
+                    {{ option("Chargé de cours / Professeur") }}
+                    {{ option("Développement commercial") }}
+                    {{ option("Commercial") }}
+                    {{ option("Recherche & Développement") }}
+                    {{ option("Étudiant") }}
+                </optgroup>
+
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Production <span style="color: var(--grey-2); font-weight: 400;">(optionnel —
+                    laisser vide si freelance)</span></label>
+            <select name="production_id" class="form-input">
+                <option value="">— Freelance / Aucune —</option>
+                {% for prod in productions %}
+                <option value="{{ prod.id }}" {% if data and data.production_id==prod.id %}selected{% endif %}>
+                    {{ prod.nom }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" name="mail" class="form-input" value="{{ data.mail if data else '' }}">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Téléphone</label>
+                <input type="text" name="telephone" class="form-input" value="{{ data.telephone if data else '' }}">
+            </div>
+        </div>
+
+        <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                {% if is_edit %}
+                <button type="submit"
+                    formaction="{{ url_for('admin_contact_delete', record_id=request.view_args.get('record_id')) }}"
+                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce contact ?');" class="admin-btn"
+                    style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca;">
+                    Supprimer
+                </button>
+                {% endif %}
+            </div>
+            <div>
+                <a href="{{ url_for('admin_contacts_list') }}" class="admin-btn admin-btn-secondary"
+                    style="margin-right: 1rem;">Annuler</a>
+                <button type="submit" class="admin-btn admin-btn-primary">
+                    {% if is_edit %}Enregistrer{% else %}Créer le Contact{% endif %}
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

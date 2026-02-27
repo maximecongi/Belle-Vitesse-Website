@@ -79,7 +79,7 @@
                 {% call nav_group('Tournages', 'tournages', 'manager', false) %}
                 {{ nav_item(url_for('admin_projects_list'), 'Projets', 'manager') }}
                 {{ nav_item(url_for('admin_productions_list'), 'Productions', 'manager') }}
-                {{ nav_item('#', 'Contacts', 'manager') }}
+                {{ nav_item(url_for('admin_contacts_list'), 'Contacts', 'manager') }}
                 {% endcall %}
 
                 {% call nav_group('Départs', 'departs', 'user', false) %}

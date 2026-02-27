@@ -5,6 +5,7 @@ from .checkouts import init_checkouts_routes
 from .checkins import init_checkins_routes
 from .projects import init_projects_routes
 from .productions import init_productions_routes
+from .contacts import init_contacts_routes
 from .newsletter import init_newsletter_routes
 from .api import init_api_routes
 
@@ -17,5 +18,6 @@ def init_admin_routes(app):
     init_checkins_routes(app)
     init_projects_routes(app)
     init_productions_routes(app)
+    init_contacts_routes(app)
     init_newsletter_routes(app)
     init_api_routes(app)

@@ -41,9 +41,26 @@ class Production(db.Model):
 
     # Relations
     projects = db.relationship("Project", backref="production", lazy=True)
+    contacts = db.relationship("Contact", backref="production_rel", lazy=True)
 
     def __repr__(self):
         return f"<Production {self.nom}>"
+
+
+class Contact(db.Model):
+    __tablename__ = "contacts"
+
+    id = db.Column(db.Integer, primary_key=True)
+    prenom = db.Column(db.String(100), nullable=False)
+    nom = db.Column(db.String(100), nullable=False)
+    telephone = db.Column(db.String(50))
+    mail = db.Column(db.String(255))
+    production_id = db.Column(
+        db.Integer, db.ForeignKey("productions.id"), nullable=True, index=True)
+    metier = db.Column(db.String(150))
+
+    def __repr__(self):
+        return f"<Contact {self.prenom} {self.nom}>"
 
 
 class Project(db.Model):
