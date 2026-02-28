@@ -7,8 +7,8 @@
             <label for="active" class="close"></label>
             <div class="wrapper">
                 <ul>
-                    <li><a href="{{ url_for('home') }}">Home</a></li>
-                    <li><a href="{{ url_for('vehicles') }}">Vehicles</a></li>
+                    <li><a href="{{ url_for('home') }}">{{ ts('menu.home') }}</a></li>
+                    <li><a href="{{ url_for('vehicles') }}">{{ ts('menu.vehicles') }}</a></li>
                     <ul>
                         {% for vehicle in vehicles %}
                         {% if vehicle.fields.status == "Online" %}
@@ -17,7 +17,7 @@
                         {% endif %}
                         {% endfor %}
                     </ul>
-                    <li><a href="{{ url_for('heads') }}">Heads</a></li>
+                    <li><a href="{{ url_for('heads') }}">{{ ts('menu.heads') }}</a></li>
                     <ul>
                         {% for head in heads %}
                         {% if head.fields.status == "Online" %}
@@ -25,24 +25,25 @@
                         {% endif %}
                         {% endfor %}
                     </ul>
-                    <li><a href="{{ url_for('grips') }}">Grip</a></li>
+                    <li><a href="{{ url_for('grips') }}">{{ ts('menu.supports') }}</a></li>
                     <ul>
                         {% for grips_category in grips_categories %}
                         {% if grips_category.fields.status == "Online" %}
-                        <li><a href="{{ url_for('grip_products', slug=grips_category.fields.slug)}}">{{grips_category.fields.name}}</a>
+                        <li><a href="{{ url_for('grip_products', slug=grips_category.fields.slug)}}">{{
+                                t(grips_category.fields, 'name') }}</a>
                         </li>
                         {% endif %}
                         {% endfor %}
                     </ul>
-                    <li><a href="{{ url_for('about_us') }}">About us</a></li>
-                    <li><a href="{{ url_for('contact') }}">Contact</a></li>
+                    <li><a href="{{ url_for('about_us') }}">{{ ts('menu.about_us') }}</a></li>
+                    <li><a href="{{ url_for('contact') }}">{{ ts('menu.contact') }}</a></li>
                 </ul>
             </div>
             {# Menu desktop #}
             <div id="header-menu-desktop">
-                <a href="{{ url_for('home') }}">Home</a>
+                <a href="{{ url_for('home') }}">{{ ts('menu.home') }}</a>
                 <div class="menu-item-dropdown">
-                    <a href="{{ url_for('vehicles') }}">Vehicles</a>
+                    <a href="{{ url_for('vehicles') }}">{{ ts('menu.vehicles') }}</a>
                     <div class="dropdown-wrapper">
                         <div class="dropdown-left">
                             <ul>
@@ -75,7 +76,7 @@
                 </div>
 
                 <div class="menu-item-dropdown">
-                    <a href="{{ url_for('heads') }}">Heads</a>
+                    <a href="{{ url_for('heads') }}">{{ ts('menu.heads') }}</a>
                     <div class="dropdown-wrapper">
                         <div class="dropdown-left">
                             <ul>
@@ -107,7 +108,7 @@
                 </div>
 
                 <div class="menu-item-dropdown">
-                    <a href="{{ url_for('grips') }}">Grip</a>
+                    <a href="{{ url_for('grips') }}">{{ ts('menu.supports') }}</a>
                     <div class="dropdown-wrapper">
                         <div class="dropdown-left">
                             <ul>
@@ -118,7 +119,7 @@
                                 <li>
                                     <a href="{{ url_for('grip_products', slug=grips_category.fields.slug)}}"
                                         data-image="{{ img_url }}">
-                                        {{ grips_category.fields.name }}
+                                        {{ t(grips_category.fields, 'name') }}
                                     </a>
                                 </li>
                                 {% endif %}
@@ -139,8 +140,8 @@
                     </div>
                 </div>
 
-                <a href="{{ url_for('about_us') }}">About us</a>
-                <a href="{{ url_for('contact') }}">Contact</a>
+                <a href="{{ url_for('about_us') }}">{{ ts('menu.about_us') }}</a>
+                <a href="{{ url_for('contact') }}">{{ ts('menu.contact') }}</a>
             </div>
         </div>
         <div class="header-logo">
@@ -153,6 +154,13 @@
             </a>
         </div>
         <div class="header-social_links">
+            <div class="header-lang-selector">
+                <a href="{{ url_for('set_lang', lang='en') }}"
+                    class="header-lang-link{% if lang == 'en' %} active{% endif %}">EN</a>
+                <span class="header-lang-sep">|</span>
+                <a href="{{ url_for('set_lang', lang='fr') }}"
+                    class="header-lang-link{% if lang == 'fr' %} active{% endif %}">FR</a>
+            </div>
             <a href="https://www.instagram.com/">
                 <svg xmlns="http://www.w3.org/2000/svg" class="header-social_links-icon" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"

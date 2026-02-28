@@ -29,14 +29,14 @@ Electric vehicles, stabilizer heads & grip equipment. Based in Paris, operating 
     </video>
     <div class="home-hero-banner-slogan">
       <h1 class="home-hero-banner-slogan-text color-white-2">
-        Specialist in<br>
-        <i>moving</i> cinema
+        {{ ts('home.powerquote') | safe }}
       </h1>
     </div>
     <div class="home-hero-banner-buttons">
-      <a href="#solutions" class="home-hero-banner-buttons-discover button">Discover our solutions</a>
-      <a href="{{ url_for('contact') }}" class="home-hero-banner-buttons-contact button bg-color-yellow-1">Contact
-        us</a>
+      <a href="#solutions" class="home-hero-banner-buttons-discover button">{{ ts('home.discover_our_solutions.button')
+        }}</a>
+      <a href="{{ url_for('contact') }}" class="home-hero-banner-buttons-contact button bg-color-yellow-1">{{
+        ts('home.contact_us.button') }}</a>
     </div>
     <div class="icon-scroll"></div>
 </section>
@@ -45,45 +45,33 @@ Electric vehicles, stabilizer heads & grip equipment. Based in Paris, operating 
     <div class="home-testimonials-logo"><img
         src="{{ url_for('static', filename='/imgs/logos_and_name/noir-fond-transparent.png') }}"></div>
     <div class="home-testimonials-textwrapper">
-      <p class="home-testimonials-textwrapper-text">
-        Belle Vitesse specializes in <b>high-level cinematic movement</b> for film and commercial productions.
-
-        Built through <b>custom engineering</b> and <b>extensive field experience</b>, we <b>develop</b>, <b>adapt</b>,
-        and <b>operate</b> precision motion systems designed for <b>reliability</b>, <b>control</b>, and <b>safety</b>
-        on set.
-
-        Our approach combines <b>bespoke solutions</b> with the careful selection of <b>best-in-class</b> existing
-        <b>equipment</b>, always in service of precise, <b>expressive motion</b> and <b>narrative intent</b>, in
-        <b>demanding real-world shooting conditions</b>.
-
-        Based in <b>Paris</b>, we operate <b>worldwide.</b>
-      </p>
+      <p class="home-testimonials-textwrapper-text">{{ ts('home.testimonial') | safe }}</p>
     </div>
   </div>
 </section>
 <section id="solutions" class="section-site">
   <div class="home-solutions">
-    <h2 class="dot-before title-section font-32">Our solutions</h2>
+    <h2 class="dot-before title-section font-32">{{ ts('home.our_solutions.title') }}</h2>
     <div class="home-solutions-categories font-18 color-grey-2">
       <div>
-        <h3>Vehicles</h3>
+        <h3>{{ ts('menu.vehicles') }}</h3>
         <a class="home-solutions-categories-img-link" href="{{ url_for('vehicles') }}"><img
             src="{{ url_for('static', filename='/imgs/vehicles/etrike-thumbnail.png') }}" /></a>
       </div>
       <div>
-        <h3>Heads</h3>
+        <h3>{{ ts('menu.heads') }}</h3>
         <a class="home-solutions-categories-img-link" href="{{ url_for('heads') }}"><img
             src="{{ url_for('static', filename='/imgs/vehicles/titan-lt-thumbnail.png') }}" /></a>
       </div>
       <div>
-        <h3>Grips</h3>
+        <h3>{{ ts('menu.supports') }}</h3>
         <a class="home-solutions-categories-img-link" href="{{ url_for('grips') }}"><img
             src="{{ url_for('static', filename='/imgs/vehicles/black-arm-thumbnail.png') }}" /></a>
       </div>
 </section>
 <section id="references" class="section-site">
   <div class="home-references">
-    <h2 class="dot-before title-section font-32">Our references</h2>
+    <h2 class="dot-before title-section font-32">{{ ts('home.our_references.title') }}</h2>
     <div class="home-references-wrapper">
       <div class="home-references-group">
         {% for brand in brands %}

@@ -47,82 +47,81 @@ motion vehicles for cinema and commercial productions. Rental based in Paris.{% 
 </script>
 {% endblock %}
 <section id="solutions" class="section-site">
-    <div class="categories-solutions">
-        <h2 class="dot-before title-section">Our vehicles</h2>
-        <div class="filtersliders-container filterslider-is-open">
-            {# SLIDER SPEED #}
-            {{ slider(
-            title="Which speed do you need?",
-            min=0,
-            max=50,
-            value=0,
-            unit="km/h",
-            filter_key="speed",
-            descriptions=[
-            (0, "That's walking pace"),
-            (5, "That's what you need for running"),
-            (15, "Perfect for cycling speed"),
-            (30, "That's motorized vehicle speed"),
-            (50, "High-speed chase and vehicle-tracking shots"),
-            ],
-            icons=[
-            "walk",
-            "run",
-            "null",
-            ["run-fast", "bike"],
-            "null",
-            "null",
-            ["atv", "car"],
-            "null",
-            "null",
-            "null",
-            "rocket"
-            ]
-            ) }}
-            {# SLIDER CAPACITY #}
-            {{ slider(
-            title="How many persons needs to be on the vehicule?",
-            min=O,
-            max=3,
-            value=0,
-            unit="",
-            filter_key="capacity",
-            descriptions=[
-            (0, "Pilot only"),
-            (1, "1 pilot + 1 passenger"),
-            (2, "1 pilot + 2 passengers"),
-            (3, "1 pilot + 3 passengers")
-            ],
-            icons=[
-            ["steering"],
-            ["steering", "one-human"],
-            ["steering", "two-humans"],
-            ["steering", "three-humans"]
-            ]
-            ) }}
-        </div>
-        <div class="categories-solutions-filters-dropdown">
-            <p class="categories-solutions-filters-dropdown-button slider-dropdown-button"><span
-                    class="categories-solutions-filters-dropdown-icon"><img
-                        src="{{ url_for('static', filename='imgs/icons/filter.svg') }}" /></span><span
-                    class="categories-solutions-filters-dropdown-text">Filters</span></p>
-        </div>
-        <div class="categories-solutions-categories">
-            {% for vehicle in vehicles %}
-            {% if vehicle.fields.status == "Online" %}
-            <div data-speed="{{ vehicle.fields.max_speed }}" data-capacity="{{vehicle.fields.passengers}}"
-                class="categories-solutions-categories-categorywrapper">
-                <h3>{{ vehicle.fields.name }}</h3>
-                <a class="categories-solutions-categories-img-link"
-                    href="{{ url_for('vehicle', slug=vehicle.fields.slug) }}">
-                    {% if vehicle.fields.thumbnail[0].thumbnails is defined %}
-                    <img src="{{ vehicle.fields.thumbnail[0].thumbnails.large.url }}" />
-                    {% else %}
-                    <img src="{{ url_for('static', filename='/imgs/placeholders/vehicle.jpeg') }}" />
-                    {% endif %}
-                </a>
-            </div>
-            {% endif %}
-            {% endfor %}
+  <div class="categories-solutions">
+    <h2 class="dot-before title-section">{{ ts('vehicles.our_vehicles.title') }}</h2>
+    <div class="filtersliders-container filterslider-is-open">
+      {# SLIDER SPEED #}
+      {{ slider(
+      title=ts('vehicles.filter.speed.title'),
+      min=0,
+      max=50,
+      value=0,
+      unit="km/h",
+      filter_key="speed",
+      descriptions=[
+      (0, "That's walking pace"),
+      (5, "That's enough for walking"),
+      (15, "That's what you need for an average runner"),
+      (30, "Perfect for cycling"),
+      (50, "Motorized speed"),
+      ],
+      icons=[
+      "walk",
+      "run",
+      "null",
+      ["run-fast", "bike"],
+      "null",
+      "null",
+      ["atv", "car"],
+      "null",
+      "null",
+      "null",
+      "rocket"
+      ]
+      ) }}
+      {# SLIDER CAPACITY #}
+      {{ slider(
+      title=ts('vehicles.filter.passengers.title'),
+      min=O,
+      max=3,
+      value=0,
+      unit="",
+      filter_key="capacity",
+      descriptions=[
+      (0, "Driver only"),
+      (1, "1 driver + 1 passenger"),
+      (2, "1 driver + 2 passengers"),
+      (3, "1 driver + 3 passengers")
+      ],
+      icons=[
+      ["steering"],
+      ["steering", "one-human"],
+      ["steering", "two-humans"],
+      ["steering", "three-humans"]
+      ]
+      ) }}
+    </div>
+    <div class="categories-solutions-filters-dropdown">
+      <p class="categories-solutions-filters-dropdown-button slider-dropdown-button"><span
+          class="categories-solutions-filters-dropdown-icon"><img
+            src="{{ url_for('static', filename='imgs/icons/filter.svg') }}" /></span><span
+          class="categories-solutions-filters-dropdown-text">{{ ts('.filters_button') }}</span></p>
+    </div>
+    <div class="categories-solutions-categories">
+      {% for vehicle in vehicles %}
+      {% if vehicle.fields.status == "Online" %}
+      <div data-speed="{{ vehicle.fields.max_speed }}" data-capacity="{{vehicle.fields.passengers}}"
+        class="categories-solutions-categories-categorywrapper">
+        <h3>{{ vehicle.fields.name }}</h3>
+        <a class="categories-solutions-categories-img-link" href="{{ url_for('vehicle', slug=vehicle.fields.slug) }}">
+          {% if vehicle.fields.thumbnail[0].thumbnails is defined %}
+          <img src="{{ vehicle.fields.thumbnail[0].thumbnails.large.url }}" />
+          {% else %}
+          <img src="{{ url_for('static', filename='/imgs/placeholders/vehicle.jpeg') }}" />
+          {% endif %}
+        </a>
+      </div>
+      {% endif %}
+      {% endfor %}
 </section>
 {% endblock %}

@@ -53,6 +53,37 @@
     width: auto;
 }
 
+/* Language Selector */
+.header-lang-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.3em;
+    margin-right: 1em;
+    font-size: 0.85em;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+}
+
+.header-lang-link {
+    text-decoration: none;
+    color: var(--grey-2);
+    transition: color 0.2s;
+}
+
+.header-lang-link.active {
+    color: var(--grey-1);
+    font-weight: 700;
+}
+
+.header-lang-link:hover {
+    color: var(--yellow-1);
+}
+
+.header-lang-sep {
+    color: var(--grey-2);
+    user-select: none;
+}
+
 /* MOBILE MENU */
 #header-menu-desktop {
     display: flex;

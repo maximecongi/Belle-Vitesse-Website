@@ -34,7 +34,7 @@ based in Paris, operating worldwide.{% endblock %}
 {% endblock %}
 <section id="solutions" class="section-site">
     <div class="categories-solutions grips-solutions">
-        <h2 class="dot-before title-section">{{grips_category.fields.name}}</h2>
+        <h2 class="dot-before title-section">{{ t(grips_category.fields, 'name') }}</h2>
         {% for grip in grips_products_by_category %}
         <div class="grip-item-wrapper">
             <h3>{{grip.fields.name}}</h3>

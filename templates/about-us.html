@@ -27,48 +27,11 @@ commercial productions. Custom engineering, field expertise, worldwide operation
 </script>
 {% endblock %}
 <section class="section-site">
-    <div class="main-wrapper about_us-container">
-        <h1 class="title-textual-section font-56 lh-20 marg-tb-3">Who we are?</h1>
-
-
-        {#
-        ------------------------------------------------------------------------------------------------------------------
-        #}
-        <h2 class="dot-before title-textual-section font-30">A Cinematic Motion Company</h2>
-        <p>Belle Vitesse specializes in <b>high-level cinematic movement</b> for film and commercial productions.
-
-            We operate across the <b>complete motion pipeline</b>, from camera vehicles to camera supports and remote
-            heads, delivering precise, <b>expressive motion in demanding real-world conditions</b>.</p>
-
-        {#
-        ------------------------------------------------------------------------------------------------------------------
-        #}
-        <h2 class="dot-before title-textual-section font-30">In Practice</h2>
-        <p>
-            Our approach combines <b>custom-developed solutions</b> with the careful selection of <b>best-in-class
-                existing equipment</b>, chosen for its <b>relevance</b> and <b>performance</b>.
-
-            Each motion setup is <b>designed</b> to deliver <b>precise, repeatable movement</b> with <b>full control</b>
-            and <b>safety</b> on set.
-
-            Depending on the configuration, certain standard tools can be made <b>available independently</b>, while
-            more complex setups are supplied as <b>fully operated solutions</b>.
-        </p>
-
-
-        {#
-        ------------------------------------------------------------------------------------------------------------------
-        #}
-        <h2 class="dot-before title-textual-section font-30">Designed for Real-World Production</h2>
-        <p>
-            Our systems are <b>shaped by real shooting conditions</b>: urban environments, sound-sensitive sets, tight
-            locations, and complex logistical constraints.
-
-            We prioritize <b>low-profile, quiet, modular </b>and <b>eco-conscious</b> motion platforms to ensure a
-            <b>discreet</b> and <b>efficient on-set footprint</b>.
-
-            Based in <b>Paris</b>, we operate <b>worldwide</b>.</b>
-        </p>
+  <div class="main-wrapper about_us-container">
+    <h1 class="title-textual-section font-56 lh-20 marg-tb-3">{{ ts('about_us.who_we_are.title') }}</h1>
+    <div class="about_us-text">
+      {{ ts('about_us.text') | safe }}
     </div>
+  </div>
 </section>
 {% endblock %}

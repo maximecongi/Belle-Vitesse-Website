@@ -213,6 +213,20 @@ def get_static_by_lang(lang="en"):
     )
 
 
+def get_all_static():
+    """Get all static content rows, keyed by language code.
+
+    Returns: {"en": {fields}, "fr": {fields}, ...}
+    """
+    def fetcher():
+        rows = _fetch_all_from_table("static")
+        return {
+            r["fields"].get("language", "en"): r["fields"]
+            for r in rows
+        }
+    return get_cached("static_all", fetcher)
+
+
 def get_configs_for_vehicle(vehicle_id):
     """Get all configs for a specific vehicle."""
 

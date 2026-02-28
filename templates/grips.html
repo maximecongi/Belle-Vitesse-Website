@@ -46,29 +46,29 @@ Professional grip equipment for controlled camera movement, rental from Paris.{%
 </script>
 {% endblock %}
 <section id="solutions" class="section-site">
-    <div class="categories-solutions">
-        <h2 class="dot-before title-section">Our grips</h2>
-        <div class="categories-solutions-filters-dropdown" style="visibility: hidden;">
-            <p class="categories-solutions-filters-dropdown-button slider-dropdown-button"><span
-                    class="categories-solutions-filters-dropdown-icon"><img
-                        src="{{ url_for('static', filename='imgs/icons/filter.svg') }}" /></span><span
-                    class="categories-solutions-filters-dropdown-text">Filters</span></p>
-        </div>
-        <div class="categories-solutions-categories">
-            {% for grip in grips_categories %}
-            {% if grip.fields.status == "Online" %}
-            <div class="categories-solutions-categories-categorywrapper">
-                <h3>{{ grip.fields.name }}</h3>
-                <a class="categories-solutions-categories-img-link"
-                    href="{{ url_for('grip_products', slug=grip.fields.slug) }}">
-                    {% if grip.fields.thumbnail is defined %}
-                    <img src="{{ grip.fields.thumbnail[0].thumbnails.large.url }}" />
-                    {% else %}
-                    <img src="{{ url_for('static', filename='/imgs/icons/gimbal.svg') }}" />
-                    {% endif %}
-                </a>
-            </div>
-            {% endif %}
-            {% endfor %}
+  <div class="categories-solutions">
+    <h2 class="dot-before title-section">{{ ts('supports.our_supports.title') }}</h2>
+    <div class="categories-solutions-filters-dropdown" style="visibility: hidden;">
+      <p class="categories-solutions-filters-dropdown-button slider-dropdown-button"><span
+          class="categories-solutions-filters-dropdown-icon"><img
+            src="{{ url_for('static', filename='imgs/icons/filter.svg') }}" /></span><span
+          class="categories-solutions-filters-dropdown-text">{{ ts('.filters_button') }}</span></p>
+    </div>
+    <div class="categories-solutions-categories">
+      {% for grip in grips_categories %}
+      {% if grip.fields.status == "Online" %}
+      <div class="categories-solutions-categories-categorywrapper">
+        <h3>{{ t(grip.fields, 'name') }}</h3>
+        <a class="categories-solutions-categories-img-link"
+          href="{{ url_for('grip_products', slug=grip.fields.slug) }}">
+          {% if grip.fields.thumbnail is defined %}
+          <img src="{{ grip.fields.thumbnail[0].thumbnails.large.url }}" />
+          {% else %}
+          <img src="{{ url_for('static', filename='/imgs/icons/gimbal.svg') }}" />
+          {% endif %}
+        </a>
+      </div>
+      {% endif %}
+      {% endfor %}
 </section>
 {% endblock %}

@@ -1,14 +1,14 @@
 import os
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
-from flask import Flask, request, session
+from flask import Flask, request, session, redirect, url_for
 
 from extensions import cache, limiter, csrf
 from routes import init_routes, init_error_handlers
 from utils.database import (
     init_cache,
     get_vehicles,
-    get_static_by_lang,
+    get_all_static,
     get_heads,
     get_grips_categories,
 )
@@ -101,15 +101,43 @@ def create_app():
     # Custom Jinja2 Filters
     app.jinja_env.filters["slugify"] = lambda s: s.lower().replace(" ", "_")
 
+    # ── i18n: language switching route ────────────────────────
+    @app.route("/set_lang/<lang>")
+    def set_lang(lang):
+        if lang in ('en', 'fr'):
+            session['lang'] = lang
+        return redirect(request.referrer or url_for('home'))
+
+    # ── i18n: translation helpers ────────────────────────────
+    def t(fields, key):
+        """Translate a dynamic-content field (suffixed columns).
+        Fallback: key_fr → key_en → key (original column)."""
+        lang = session.get('lang', 'en')
+        return (fields.get(f'{key}_{lang}')
+                or fields.get(f'{key}_en')
+                or fields.get(key, ''))
+
+    def ts(key):
+        """Translate a static UI string (row-per-language table).
+        Fallback: fr value → en value → raw key."""
+        lang = session.get('lang', 'en')
+        static_all = get_all_static()
+        return (static_all.get(lang, {}).get(key)
+                or static_all.get('en', {}).get(key, key))
+
     # Context Processors (Globals)
     @app.context_processor
     def inject_globals():
         is_admin = request.path.startswith('/admin')
+        lang = session.get('lang', 'en')
 
         # Base globals
         ctx = {
             "now": datetime.now(timezone.utc),
-            "is_admin": is_admin
+            "is_admin": is_admin,
+            "lang": lang,
+            "t": t,
+            "ts": ts,
         }
 
         if is_admin:
@@ -128,7 +156,6 @@ def create_app():
                 "vehicles": get_vehicles(),
                 "heads": get_heads(),
                 "grips_categories": get_grips_categories(),
-                "static": get_static_by_lang("en"),
             })
 
         return ctx
@@ -167,7 +194,7 @@ def warm_cache():
             get_vehicles()
             get_heads()
             get_grips_categories()
-            get_static_by_lang("en")
+            get_all_static()
             app.logger.info("🔥 Cache warmé avec succès")
     except Exception as e:
         app.logger.error(f"❌ Erreur warm cache : {e}")

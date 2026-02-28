@@ -28,7 +28,7 @@
             </div>
             <div class="footer-links">
                 <div class="footer-links-wrapper">
-                    <h3 class=""><a href="{{ url_for('vehicles') }}">Vehicles</a></h3>
+                    <h3 class=""><a href="{{ url_for('vehicles') }}">{{ ts('menu.vehicles') }}</a></h3>
                     {% for vehicle in vehicles %}
                     {% if vehicle.fields.status == "Online" %}
                     <p class=""><a href="{{ url_for('vehicle', slug=vehicle.fields.slug) }}">{{vehicle.fields.name}}</a>
@@ -37,7 +37,7 @@
                     {% endfor %}
                 </div>
                 <div class="footer-links-wrapper">
-                    <h3 class=""><a href="{{ url_for('heads') }}">Heads</a></h3>
+                    <h3 class=""><a href="{{ url_for('heads') }}">{{ ts('menu.heads') }}</a></h3>
                     {% for head in heads %}
                     {% if head.fields.status == "Online" %}
                     <p class=""><a href="{{ url_for('head', slug=head.fields.slug) }}">{{head.fields.name}}</a></p>
@@ -45,11 +45,11 @@
                     {% endfor %}
                 </div>
                 <div class="footer-links-wrapper">
-                    <h3 class=""><a href="{{ url_for('grips') }}">Grip</a></h3>
+                    <h3 class=""><a href="{{ url_for('grips') }}">{{ ts('menu.supports') }}</a></h3>
                     {% for grips_category in grips_categories %}
                     {% if grips_category.fields.status == "Online" %}
-                    <p class=""><a
-                            href="{{ url_for('grip_products', slug=grips_category.fields.slug)}}">{{grips_category.fields.name}}</a>
+                    <p class=""><a href="{{ url_for('grip_products', slug=grips_category.fields.slug)}}">{{
+                            t(grips_category.fields, 'name') }}</a>
                     </p>
                     {% endif %}
                     {% endfor %}
@@ -59,7 +59,7 @@
                     <p class=""><a href="{{ url_for('terms_and_conditions') }}">Terms & conditions</a></p>
                 </div>
                 <div class="footer-links-wrapper">
-                    <h3 class="color-white-2"><a href="{{ url_for('contact') }}">Contact</a></h3>
+                    <h3 class="color-white-2"><a href="{{ url_for('contact') }}">{{ ts('menu.contact') }}</a></h3>
                     <p class="color-white-2 font-weight-300">
                         <a href="https://maps.app.goo.gl/WPGRFRjmoC7LKhZm6" target="_blank">
                             Belle Vitesse SARL<br />

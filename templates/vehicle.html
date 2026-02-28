@@ -65,7 +65,7 @@
             </div>
             <div class="vehicle-hero-banner-textwrapper">
                 <p class="vehicle-hero-banner-textwrapper-text color-grey-1 font-weight-300">
-                    {{ vehicle.fields.powerquote| safe }}
+                    {{ t(vehicle.fields, 'powerquote') | safe }}
                 </p>
             </div>
         </div>
@@ -79,7 +79,7 @@
         <div>
             <div class="vehicle-squared-highlight">
                 <div class="vehicle-squared-highlight-wrapper">
-                    {{ square_highlight(vehicle.fields.setups, "", "Setups") }}
+                    {{ square_highlight(t(vehicle.fields, 'setups'), "", "Setups") }}
                     {{ square_highlight(vehicle.fields.max_speed, "km/h", "Max speed") }}
                     {{ square_highlight(vehicle.fields.passengers, "", "Capacity") }}
 
@@ -100,7 +100,7 @@
                     </div>
                 </div>
                 <div class="vehicle-description-left">
-                    <p class="font-weight-400">{{ vehicle.fields.description }}</p>
+                    <p class="font-weight-400">{{ t(vehicle.fields, 'description') }}</p>
                 </div>
             </div>
         </div>
@@ -120,8 +120,8 @@
                         <button
                             class="vehicle-configurator-carousel-wrapper-config-item config-btn {% if ns.first %}active{% else %}inactive{% endif %}"
                             data-image="{{ item.fields.image[0].thumbnails.large.url }}"
-                            data-label="{{ item.fields.name }}">
-                            {{ item.fields.name }}
+                            data-label="{{ t(item.fields, 'name') }}">
+                            {{ t(item.fields, 'name') }}
                         </button>
                         {% if ns.first %}
                         {% set ns.image = item.fields.image[0].thumbnails.large.url %}
