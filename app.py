@@ -5,7 +5,7 @@ from flask import Flask, request, session, redirect, url_for
 
 from extensions import cache, limiter, csrf
 from routes import init_routes, init_error_handlers
-from utils.database import (
+from utils.airtable import (
     init_cache,
     get_vehicles,
     get_all_static,
