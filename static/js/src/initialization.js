@@ -157,6 +157,48 @@ swup.hooks.on('content:replace', () => {
     }
 });
 
+// Language switching (works with Swup — no full reload)
+function switchLang(lang) {
+    // 1. Set session via fetch
+    fetch('/set_lang/' + lang).then(() => {
+        // 2. Immediately update header lang selector
+        document.querySelectorAll('.header-lang-link').forEach(el => {
+            el.classList.toggle('active', el.textContent.trim().toLowerCase() === lang);
+        });
+
+        // 3. Update <html lang>
+        document.documentElement.setAttribute('lang', lang);
+
+        // 4. Re-fetch current page with new lang and swap #swup content + header menus
+        fetch(window.location.href).then(r => r.text()).then(html => {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            // Swap #swup content (the main area Swup manages)
+            const newSwup = doc.querySelector('#swup');
+            const currentSwup = document.querySelector('#swup');
+            if (newSwup && currentSwup) {
+                currentSwup.innerHTML = newSwup.innerHTML;
+            }
+
+            // Swap header menus (mobile + desktop) for translated labels
+            const newHeaderMenu = doc.querySelector('.header-menu');
+            const currentHeaderMenu = document.querySelector('.header-menu');
+            if (newHeaderMenu && currentHeaderMenu) {
+                // Preserve mobile menu checkbox state
+                const wasChecked = document.getElementById('active')?.checked;
+                currentHeaderMenu.innerHTML = newHeaderMenu.innerHTML;
+                const cb = document.getElementById('active');
+                if (cb) cb.checked = wasChecked;
+            }
+
+            // Re-initialize content scripts
+            initContent();
+            initDropdowns();
+        });
+    });
+}
+
 // Initial Load
 document.addEventListener('DOMContentLoaded', () => {
     initDropdowns(); // Run once for the header
