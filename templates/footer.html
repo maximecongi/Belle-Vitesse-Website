@@ -55,8 +55,9 @@
                     {% endfor %}
                 </div>
                 <div class="footer-links-wrapper">
-                    <h3 class="color-white-2">Legals</h3>
-                    <p class=""><a href="{{ url_for('terms_and_conditions') }}">Terms & conditions</a></p>
+                    <h3 class="color-white-2">{{ ts('footer.legals') }}</h3>
+                    <p class=""><a href="{{ url_for('terms_and_conditions') }}">{{ ts('footer.terms_and_conditions')
+                            }}</a></p>
                 </div>
                 <div class="footer-links-wrapper">
                     <h3 class="color-white-2"><a href="{{ url_for('contact') }}">{{ ts('menu.contact') }}</a></h3>

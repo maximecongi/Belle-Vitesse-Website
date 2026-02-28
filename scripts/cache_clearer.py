@@ -2,6 +2,7 @@ import os
 import requests
 from dotenv import load_dotenv
 
+
 def clear_cache():
     """
     Clear the cache by sending POST requests to all cache endpoints.
@@ -29,7 +30,8 @@ def clear_cache():
             if response.ok:
                 print(f"✅ Cache successfully cleared for {url}")
             else:
-                print(f"❌ Error {response.status_code} for {url}: {response.text}")
+                print(
+                    f"❌ Error {response.status_code} for {url}: {response.text}")
                 success = False
         except requests.RequestException as e:
             # We don't fail the whole sync if cache clearing fails, but we log it
