@@ -1,5 +1,5 @@
 from models import db, VehicleCheckpointConfig
-from utils.airtable import get_vehicles
+from utils.database import get_vehicles
 from utils.checkpoints import LEGACY_CHECKPOINTS_CONFIG, ALL_POSSIBLE_CHECKPOINTS
 
 

@@ -54,7 +54,7 @@ def init_checkout_routes(app):
             abort(404)
 
         from services.admin import _format_checkout_admin
-        from utils.airtable import get_vehicles
+        from utils.database import get_vehicles
         vehicle_names = {v["id"]: v.get("fields", {}).get(
             "name", "—") for v in get_vehicles()}
         data = _format_checkout_admin(record, vehicle_names)
@@ -97,7 +97,7 @@ def init_checkout_routes(app):
                 pass
 
         from services.admin import _format_checkout_admin
-        from utils.airtable import get_vehicles
+        from utils.database import get_vehicles
         vehicle_names = {v["id"]: v.get("fields", {}).get(
             "name", "—") for v in get_vehicles()}
         data = _format_checkout_admin(record, vehicle_names)

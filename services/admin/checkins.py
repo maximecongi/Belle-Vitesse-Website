@@ -9,7 +9,7 @@ from werkzeug.utils import secure_filename
 
 from sqlalchemy.orm import joinedload
 from models import db, CheckoutVehicle, CheckinVehicle, Project, User, VehicleCheckpointConfig
-from utils.airtable import get_vehicles
+from utils.database import get_vehicles
 from utils.formatting import format_date_fr
 
 logger = logging.getLogger(__name__)

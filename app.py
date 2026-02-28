@@ -5,7 +5,7 @@ from flask import Flask, request, session
 
 from extensions import cache, limiter, csrf
 from routes import init_routes, init_error_handlers
-from utils.airtable import (
+from utils.database import (
     init_cache,
     get_vehicles,
     get_static_by_lang,
@@ -123,7 +123,7 @@ def create_app():
             # Vehicles are still needed for some admin displays
             ctx["vehicles"] = get_vehicles()
         else:
-            # Public site globals (Airtable lookups)
+            # Public site globals (MySQL lookups)
             ctx.update({
                 "vehicles": get_vehicles(),
                 "heads": get_heads(),

@@ -102,7 +102,6 @@ def get_configs_for_vehicle(vehicle_id):
         ]
     )
 
-from datetime import datetime
 
 # Newsletter Helpers
 def add_newsletter_subscriber(email):

@@ -1,16 +1,8 @@
-import json
 import logging
-import os
-from pathlib import Path
-from collections import defaultdict
-from datetime import date
 
-from flask import current_app, url_for
-from werkzeug.utils import secure_filename
+from flask import url_for
 
-from models import db, CheckoutVehicle, CheckinVehicle, Production, Project, User
-from utils.airtable import get_vehicles
-from utils.formatting import format_date_fr
+from models import Project
 
 logger = logging.getLogger(__name__)
 

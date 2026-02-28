@@ -76,7 +76,7 @@ def get_checkpoints_for_vehicle(vehicle_id: str, batch_configs=None) -> list:
                 # Resolve name only if needed
                 if vehicle_id.startswith('rec'):
                     try:
-                        from utils.airtable import get_vehicles
+                        from utils.database import get_vehicles
                         vehicles = get_vehicles()
                         for v in vehicles:
                             if v['id'] == vehicle_id:

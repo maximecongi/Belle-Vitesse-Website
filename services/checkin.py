@@ -14,7 +14,7 @@ from datetime import datetime, timezone, timedelta
 from flask import current_app, render_template
 
 from services.admin import _format_checkin_admin
-from utils.airtable import get_vehicles
+from utils.database import get_vehicles
 
 from utils.checkin import (
     compute_document_seal,
@@ -58,7 +58,7 @@ def generate_signing_token(record_id):
         return None
 
     from services.admin import _format_checkin_admin
-    from utils.airtable import get_vehicles
+    from utils.database import get_vehicles
     vehicles = get_vehicles()
     vehicle_names = {v["id"]: v.get("fields", {}).get(
         "name", "—") for v in vehicles}

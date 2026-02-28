@@ -1,10 +1,8 @@
 import logging
-from collections import defaultdict
-from flask import url_for
 
 from sqlalchemy.orm import joinedload
-from models import db, CheckoutVehicle, Production, Project
-from utils.airtable import get_vehicles
+from models import db, Production, Project
+from utils.database import get_vehicles
 from utils.formatting import format_date_fr
 
 logger = logging.getLogger(__name__)

@@ -17,7 +17,7 @@ from datetime import datetime, timezone, timedelta
 from flask import current_app, render_template
 
 from services.admin import _format_checkout_admin
-from utils.airtable import get_vehicles
+from utils.database import get_vehicles
 
 from utils.checkout import (
     compute_document_seal,
@@ -170,7 +170,7 @@ def process_signature(token, signature_data, signed_ip):
     signed_at = datetime.now(timezone.utc)
 
     from services.admin import _format_checkout_admin
-    from utils.airtable import get_vehicles
+    from utils.database import get_vehicles
 
     record = db.session.get(CheckoutVehicle, record_id)
     if not record:
@@ -343,7 +343,7 @@ def verify_checkout_document(inspection_id, uploaded_file=None):
             return None  # 404
 
         from services.admin import _format_checkout_admin
-        from utils.airtable import get_vehicles
+        from utils.database import get_vehicles
         vehicles = get_vehicles()
         vehicle_names = {v["id"]: v.get("fields", {}).get(
             "name", "—") for v in vehicles}
