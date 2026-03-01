@@ -155,7 +155,23 @@ swup.hooks.on('content:replace', () => {
     if (menuCheckbox) {
         menuCheckbox.checked = false;
     }
+
+    // Update language selector links to match the current page
+    updateLangLinks();
 });
+
+function updateLangLinks() {
+    const path = window.location.pathname;
+    document.querySelectorAll('.header-lang-link').forEach(link => {
+        const linkText = link.textContent.trim().toLowerCase(); // 'en' or 'fr'
+        // Replace the lang prefix in current path: /en/... → /fr/... or vice versa
+        const newPath = path.replace(/^\/(en|fr)\//, '/' + linkText + '/');
+        link.setAttribute('href', newPath);
+        // Update active state
+        const currentLang = path.match(/^\/(en|fr)\//)?.[1];
+        link.classList.toggle('active', linkText === currentLang);
+    });
+}
 
 // Initial Load
 document.addEventListener('DOMContentLoaded', () => {
