@@ -1,7 +1,7 @@
 {% from "macros.html" import square_highlight %}
 {% extends "layout.html" %}
-{% block title %}{{ head.fields.name }} -- Remote Head for Cinema | Belle Vitesse{% endblock %}
-{% block description %}{{ head.fields.description | truncate(160) }}{% endblock %}
+{% block title %}{{ head.fields.name }} -- {{ ts('seo.head.title_suffix') }}{% endblock %}
+{% block description %}{{ t(head.fields, 'description') | striptags | truncate(160) }}{% endblock %}
 {% block content %}
 {% block schema %}
 {{ super() }}

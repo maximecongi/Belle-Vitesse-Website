@@ -1,8 +1,7 @@
 {% extends "layout.html" %}
 {% from "macros.html" import slider %}
-{% block title %}Camera Vehicles for Film & Commercial | Belle Vitesse{% endblock %}
-{% block description %}Discover our electric camera vehicles: eCar, eBike, eTrike, Segway, Jackal Rickshaw. Precision
-motion vehicles for cinema and commercial productions. Rental based in Paris.{% endblock %}
+{% block title %}{{ ts('seo.vehicles.title') }}{% endblock %}
+{% block description %}{{ ts('seo.vehicles.description') }}{% endblock %}
 {% block content %}
 {% block schema %}
 {{ super() }}

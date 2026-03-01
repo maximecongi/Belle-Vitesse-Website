@@ -1,7 +1,7 @@
 {% from "macros.html" import square_highlight %}
 {% extends "layout.html" %}
-{% block title %}{{ vehicle.fields.name }} -- Electric Camera Car for Film Production | Belle Vitesse{% endblock %}
-{% block description %}{{ vehicle.fields.description | truncate(160) }}{% endblock %}
+{% block title %}{{ vehicle.fields.name }} -- {{ ts('seo.vehicle.title_suffix') }}{% endblock %}
+{% block description %}{{ t(vehicle.fields, 'description') | striptags | truncate(160) }}{% endblock %}
 {% block content %}
 {% block schema %}
 {{ super() }}

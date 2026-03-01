@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
-{% block title %}{{ grips_category.fields.name }} -- Cinema Grip Equipment | Belle Vitesse{% endblock %}
-{% block description %}Professional cinema grip equipment for the {{ grips_category.fields.name }} category. Rental
-based in Paris, operating worldwide.{% endblock %}
+{% block title %}{{ t(grips_category.fields, 'name') }} -- {{ ts('seo.grip.title_suffix') }}{% endblock %}
+{% block description %}{{ ts('seo.grip.description_prefix') }} {{ t(grips_category.fields, 'name') }}. {{
+ts('seo.grip.description_suffix') }}{% endblock %}
 {% block content %}
 {% block schema %}
 {{ super() }}
