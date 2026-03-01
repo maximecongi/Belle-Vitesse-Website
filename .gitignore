@@ -273,3 +273,6 @@ static/imgs/.DS_Store
 *.production
 .env.production
 
+scripts/generate_translations_excel.py
+.gitignore
+scripts/traductions_airtable.xlsx
