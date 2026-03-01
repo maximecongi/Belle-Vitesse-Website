@@ -9,7 +9,7 @@ from flask import (
     current_app,
     send_from_directory,
     redirect,
-    url_for
+    url_for,
 )
 from itsdangerous import URLSafeSerializer
 from collections import defaultdict
@@ -27,6 +27,9 @@ from services.newsletter import (
     add_newsletter_subscriber,
     remove_newsletter_subscriber,
 )
+
+SUPPORTED_LANGS = ('en', 'fr')
+DEFAULT_LANG = 'en'
 
 
 def init_web_routes(app):
@@ -64,7 +67,21 @@ def init_web_routes(app):
         if not token or token != os.getenv("ADMIN_CACHE_TOKEN"):
             abort(403)
 
-    # ── Pages ─────────────────────────────────────────────────────
+    # ── Root redirect ─────────────────────────────────────────────
+
+    @app.route("/")
+    def root():
+        """Redirect / based on: 1) session, 2) browser Accept-Language, 3) default."""
+        from flask import session
+        # 1. Check session
+        saved_lang = session.get('lang')
+        if saved_lang in SUPPORTED_LANGS:
+            return redirect(url_for('home', lang=saved_lang), code=302)
+
+        # 2. Detect browser language
+        best = request.accept_languages.best_match(
+            SUPPORTED_LANGS, default=DEFAULT_LANG)
+        return redirect(url_for('home', lang=best), code=302)
 
     @app.before_request
     def redirect_to_launch():
@@ -76,27 +93,29 @@ def init_web_routes(app):
                 and not request.path.startswith('/admin'):
             return redirect(url_for('launch'))
 
+    # ── Pages (all prefixed with /<lang>/) ────────────────────────
+
     @app.route("/launch")
     def launch():
         return render_template("launch.html")
 
-    @app.route("/")
+    @app.route("/<lang>/")
     def home():
         return render_template("home.html", brands=BRANDS)
 
-    @app.route("/vehicles")
+    @app.route("/<lang>/vehicles")
     def vehicles():
         return render_template("vehicles.html")
 
-    @app.route("/heads")
+    @app.route("/<lang>/heads")
     def heads():
         return render_template("heads.html")
 
-    @app.route("/grips")
+    @app.route("/<lang>/grips")
     def grips():
         return render_template("grips.html")
 
-    @app.route("/vehicles/<slug>")
+    @app.route("/<lang>/vehicles/<slug>")
     def vehicle(slug):
         vehicle_data = get_vehicle_by_slug(slug)
         if not vehicle_data:
@@ -118,7 +137,7 @@ def init_web_routes(app):
             specs_right=specs_right,
         )
 
-    @app.route("/heads/<slug>")
+    @app.route("/<lang>/heads/<slug>")
     def head(slug):
         head_data = get_head_by_slug(slug)
         if not head_data:
@@ -133,7 +152,7 @@ def init_web_routes(app):
             specs_right=specs_right,
         )
 
-    @app.route("/grips/<slug>")
+    @app.route("/<lang>/grips/<slug>")
     def grip_products(slug):
         grips_category = get_grips_categories_by_slug(slug)
         if not grips_category:
@@ -145,15 +164,15 @@ def init_web_routes(app):
             grips_products_by_category=grips_products,
         )
 
-    @app.route("/about-us")
+    @app.route("/<lang>/about-us")
     def about_us():
         return render_template("about-us.html")
 
-    @app.route("/contact")
+    @app.route("/<lang>/contact")
     def contact():
         return render_template("contact.html")
 
-    @app.route("/terms-and-conditions")
+    @app.route("/<lang>/terms-and-conditions")
     def terms_and_conditions():
         return render_template("terms-and-conditions.html")
 

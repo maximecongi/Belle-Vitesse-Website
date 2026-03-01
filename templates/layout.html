@@ -12,6 +12,12 @@
   <meta name="apple-mobile-web-app-title" content="Belle Vitesse" />
   <link rel="manifest" href="/static/imgs/favicons/site.webmanifest" />
 
+  {# SEO: hreflang for multilingual indexing #}
+  <link rel="alternate" hreflang="en" href="{{ alt_url('en') }}" />
+  <link rel="alternate" hreflang="fr" href="{{ alt_url('fr') }}" />
+  <link rel="alternate" hreflang="x-default" href="{{ alt_url('en') }}" />
+  <link rel="canonical" href="{{ request.url }}" />
+
 
   <meta name="description"
     content="{% block description %}Belle Vitesse - Specialist in high-level cinematic movement. Electric vehicles, stabilizer heads & grip equipment rental based in Paris.{% endblock %}">

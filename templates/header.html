@@ -155,11 +155,11 @@
         </div>
         <div class="header-social_links">
             <div class="header-lang-selector">
-                <a href="#" onclick="switchLang('en'); return false;"
-                    class="header-lang-link{% if lang == 'en' %} active{% endif %}">EN</a>
+                <a href="{{ alt_url('en') }}" class="header-lang-link{% if lang == 'en' %} active{% endif %}"
+                    data-no-swup>EN</a>
                 <span class="header-lang-sep">|</span>
-                <a href="#" onclick="switchLang('fr'); return false;"
-                    class="header-lang-link{% if lang == 'fr' %} active{% endif %}">FR</a>
+                <a href="{{ alt_url('fr') }}" class="header-lang-link{% if lang == 'fr' %} active{% endif %}"
+                    data-no-swup>FR</a>
             </div>
             <a href="https://www.instagram.com/">
                 <svg xmlns="http://www.w3.org/2000/svg" class="header-social_links-icon" viewBox="0 0 24 24" fill="none"

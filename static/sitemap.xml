@@ -1,75 +1,423 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Static Pages -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <!-- Home -->
   <url>
-    <loc>https://www.bellevitesse.com/</loc>
-    <lastmod>2026-02-06</lastmod>
+    <loc>https://www.bellevitesse.com/en/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.bellevitesse.com/en/" />
+    <lastmod>2026-03-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://www.bellevitesse.com/home</loc>
-    <lastmod>2026-02-06</lastmod>
+    <loc>https://www.bellevitesse.com/fr/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.bellevitesse.com/en/" />
+    <lastmod>2026-03-01</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <priority>1.0</priority>
   </url>
+
+  <!-- Vehicles listing -->
   <url>
-    <loc>https://www.bellevitesse.com/vehicles</loc>
-    <lastmod>2026-02-06</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.bellevitesse.com/heads</loc>
-    <lastmod>2026-02-06</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.bellevitesse.com/grips</loc>
-    <lastmod>2026-02-06</lastmod>
+    <loc>https://www.bellevitesse.com/en/vehicles</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/vehicles" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/vehicles" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.bellevitesse.com/en/vehicles" />
+    <lastmod>2026-03-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.bellevitesse.com/about-us</loc>
-    <lastmod>2026-02-06</lastmod>
+    <loc>https://www.bellevitesse.com/fr/vehicles</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/vehicles" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/vehicles" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.bellevitesse.com/en/vehicles" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Heads listing -->
+  <url>
+    <loc>https://www.bellevitesse.com/en/heads</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/heads" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/heads" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.bellevitesse.com/en/heads" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/fr/heads</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/heads" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/heads" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.bellevitesse.com/en/heads" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Grips listing -->
+  <url>
+    <loc>https://www.bellevitesse.com/en/grips</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/grips" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/grips" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.bellevitesse.com/en/grips" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/fr/grips</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/grips" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/grips" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.bellevitesse.com/en/grips" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- About Us -->
+  <url>
+    <loc>https://www.bellevitesse.com/en/about-us</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/about-us" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/about-us" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.bellevitesse.com/en/about-us" />
+    <lastmod>2026-03-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://www.bellevitesse.com/contact</loc>
-    <lastmod>2026-02-06</lastmod>
+    <loc>https://www.bellevitesse.com/fr/about-us</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/about-us" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/about-us" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.bellevitesse.com/en/about-us" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- Contact -->
+  <url>
+    <loc>https://www.bellevitesse.com/en/contact</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/contact" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/contact" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.bellevitesse.com/en/contact" />
+    <lastmod>2026-03-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://www.bellevitesse.com/terms-and-conditions</loc>
-    <lastmod>2026-02-06</lastmod>
+    <loc>https://www.bellevitesse.com/fr/contact</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/contact" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/contact" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.bellevitesse.com/en/contact" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- Terms & Conditions -->
+  <url>
+    <loc>https://www.bellevitesse.com/en/terms-and-conditions</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/terms-and-conditions" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/terms-and-conditions" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.bellevitesse.com/en/terms-and-conditions" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/fr/terms-and-conditions</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/terms-and-conditions" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/terms-and-conditions" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.bellevitesse.com/en/terms-and-conditions" />
+    <lastmod>2026-03-01</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.2</priority>
   </url>
 
   <!-- Dynamic: Vehicles -->
-  <url><loc>https://www.bellevitesse.com/vehicles/ecar</loc><priority>0.7</priority></url>
-  <url><loc>https://www.bellevitesse.com/vehicles/ebike</loc><priority>0.7</priority></url>
-  <url><loc>https://www.bellevitesse.com/vehicles/etrike-360</loc><priority>0.7</priority></url>
-  <url><loc>https://www.bellevitesse.com/vehicles/etrike</loc><priority>0.7</priority></url>
-  <url><loc>https://www.bellevitesse.com/vehicles/segway-x2</loc><priority>0.7</priority></url>
-  <url><loc>https://www.bellevitesse.com/vehicles/segway-i2</loc><priority>0.7</priority></url>
-  <url><loc>https://www.bellevitesse.com/vehicles/jackal-rickshaw</loc><priority>0.7</priority></url>
+  <url>
+    <loc>https://www.bellevitesse.com/en/vehicles/ecar</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/vehicles/ecar" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/vehicles/ecar" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/fr/vehicles/ecar</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/vehicles/ecar" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/vehicles/ecar" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/en/vehicles/ebike</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/vehicles/ebike" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/vehicles/ebike" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/fr/vehicles/ebike</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/vehicles/ebike" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/vehicles/ebike" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/en/vehicles/etrike-360</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/vehicles/etrike-360" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/vehicles/etrike-360" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/fr/vehicles/etrike-360</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/vehicles/etrike-360" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/vehicles/etrike-360" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/en/vehicles/etrike</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/vehicles/etrike" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/vehicles/etrike" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/fr/vehicles/etrike</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/vehicles/etrike" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/vehicles/etrike" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/en/vehicles/segway-x2</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/vehicles/segway-x2" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/vehicles/segway-x2" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/fr/vehicles/segway-x2</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/vehicles/segway-x2" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/vehicles/segway-x2" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/en/vehicles/segway-i2</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/vehicles/segway-i2" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/vehicles/segway-i2" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/fr/vehicles/segway-i2</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/vehicles/segway-i2" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/vehicles/segway-i2" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/en/vehicles/jackal-rickshaw</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/vehicles/jackal-rickshaw" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/vehicles/jackal-rickshaw" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/fr/vehicles/jackal-rickshaw</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/vehicles/jackal-rickshaw" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/vehicles/jackal-rickshaw" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
 
   <!-- Dynamic: Heads -->
-  <url><loc>https://www.bellevitesse.com/heads/titan-lt</loc><priority>0.7</priority></url>
-  <url><loc>https://www.bellevitesse.com/heads/ronin-2</loc><priority>0.7</priority></url>
-  <url><loc>https://www.bellevitesse.com/heads/movi-pro</loc><priority>0.7</priority></url>
-  <url><loc>https://www.bellevitesse.com/heads/ronin-4d</loc><priority>0.7</priority></url>
-  <url><loc>https://www.bellevitesse.com/heads/rs4-pro</loc><priority>0.7</priority></url>
+  <url>
+    <loc>https://www.bellevitesse.com/en/heads/titan-lt</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/heads/titan-lt" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/heads/titan-lt" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/fr/heads/titan-lt</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/heads/titan-lt" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/heads/titan-lt" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/en/heads/ronin-2</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/heads/ronin-2" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/heads/ronin-2" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/fr/heads/ronin-2</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/heads/ronin-2" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/heads/ronin-2" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/en/heads/movi-pro</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/heads/movi-pro" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/heads/movi-pro" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/fr/heads/movi-pro</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/heads/movi-pro" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/heads/movi-pro" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/en/heads/ronin-4d</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/heads/ronin-4d" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/heads/ronin-4d" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/fr/heads/ronin-4d</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/heads/ronin-4d" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/heads/ronin-4d" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/en/heads/rs4-pro</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/heads/rs4-pro" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/heads/rs4-pro" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/fr/heads/rs4-pro</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/heads/rs4-pro" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/heads/rs4-pro" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
 
   <!-- Dynamic: Grips -->
-  <url><loc>https://www.bellevitesse.com/grips/shock-arms</loc><priority>0.7</priority></url>
-  <url><loc>https://www.bellevitesse.com/grips/controllers</loc><priority>0.7</priority></url>
-  <url><loc>https://www.bellevitesse.com/grips/vibration-isolators</loc><priority>0.7</priority></url>
-  <url><loc>https://www.bellevitesse.com/grips/mounts</loc><priority>0.7</priority></url>
-  <url><loc>https://www.bellevitesse.com/grips/vests</loc><priority>0.7</priority></url>
+  <url>
+    <loc>https://www.bellevitesse.com/en/grips/shock-arms</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/grips/shock-arms" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/grips/shock-arms" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/fr/grips/shock-arms</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/grips/shock-arms" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/grips/shock-arms" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/en/grips/controllers</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/grips/controllers" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/grips/controllers" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/fr/grips/controllers</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/grips/controllers" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/grips/controllers" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/en/grips/vibration-isolators</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/grips/vibration-isolators" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/grips/vibration-isolators" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/fr/grips/vibration-isolators</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/grips/vibration-isolators" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/grips/vibration-isolators" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/en/grips/mounts</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/grips/mounts" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/grips/mounts" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/fr/grips/mounts</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/grips/mounts" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/grips/mounts" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/en/grips/vests</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/grips/vests" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/grips/vests" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.bellevitesse.com/fr/grips/vests</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.bellevitesse.com/en/grips/vests" />
+    <xhtml:link rel="alternate" hreflang="fr" href="https://www.bellevitesse.com/fr/grips/vests" />
+    <lastmod>2026-03-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
 </urlset>

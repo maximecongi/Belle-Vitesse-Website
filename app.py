@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
-from flask import Flask, request, session, redirect, url_for
+from flask import Flask, request, session, redirect, url_for, g, abort
 
 from extensions import cache, limiter, csrf
 from routes import init_routes, init_error_handlers
@@ -15,6 +15,8 @@ from utils.airtable import (
 from utils.database import init_checkout_db, init_checkin_db
 from models import db
 
+SUPPORTED_LANGS = ('en', 'fr')
+DEFAULT_LANG = 'en'
 
 _ssh_tunnel = None
 
@@ -101,35 +103,62 @@ def create_app():
     # Custom Jinja2 Filters
     app.jinja_env.filters["slugify"] = lambda s: s.lower().replace(" ", "_")
 
-    # ── i18n: language switching route ────────────────────────
-    @app.route("/set_lang/<lang>")
-    def set_lang(lang):
-        if lang in ('en', 'fr'):
-            session['lang'] = lang
-        return redirect(request.referrer or url_for('home'))
+    # ── i18n: URL-based language handling ─────────────────────
+
+    @app.url_value_preprocessor
+    def pull_lang(endpoint, values):
+        """Extract lang from URL, store in g.lang, save to session."""
+        if values and 'lang' in values:
+            lang = values.pop('lang')
+            if lang in SUPPORTED_LANGS:
+                g.lang = lang
+                session['lang'] = lang
+            else:
+                abort(404)
+        else:
+            g.lang = session.get('lang', DEFAULT_LANG)
+
+    @app.url_defaults
+    def inject_lang(endpoint, values):
+        """Automatically inject lang into url_for() for routes that need it."""
+        if 'lang' in values or not app.url_map.is_endpoint_expecting(endpoint, 'lang'):
+            return
+        values['lang'] = g.get('lang', session.get('lang', DEFAULT_LANG))
 
     # ── i18n: translation helpers ────────────────────────────
+
     def t(fields, key):
         """Translate a dynamic-content field (suffixed columns).
         Fallback: key_fr → key_en → key (original column)."""
-        lang = session.get('lang', 'en')
+        lang = g.get('lang', DEFAULT_LANG)
         return (fields.get(f'{key}_{lang}')
                 or fields.get(f'{key}_en')
                 or fields.get(key, ''))
 
     def ts(key):
         """Translate a static UI string (row-per-language table).
-        Fallback: fr value → en value → raw key."""
-        lang = session.get('lang', 'en')
+        Fallback: current lang → en → raw key."""
+        lang = g.get('lang', DEFAULT_LANG)
         static_all = get_all_static()
         return (static_all.get(lang, {}).get(key)
                 or static_all.get('en', {}).get(key, key))
+
+    def alt_url(target_lang):
+        """Generate the URL for the current page in a different language."""
+        if request.endpoint and request.view_args is not None:
+            try:
+                args = dict(request.view_args)
+                args['lang'] = target_lang
+                return url_for(request.endpoint, **args)
+            except Exception:
+                pass
+        return url_for('home', lang=target_lang)
 
     # Context Processors (Globals)
     @app.context_processor
     def inject_globals():
         is_admin = request.path.startswith('/admin')
-        lang = session.get('lang', 'en')
+        lang = g.get('lang', DEFAULT_LANG)
 
         # Base globals
         ctx = {
@@ -138,6 +167,7 @@ def create_app():
             "lang": lang,
             "t": t,
             "ts": ts,
+            "alt_url": alt_url,
         }
 
         if is_admin:
@@ -151,7 +181,7 @@ def create_app():
             # Vehicles are still needed for some admin displays
             ctx["vehicles"] = get_vehicles()
         else:
-            # Public site globals (MySQL lookups)
+            # Public site globals
             ctx.update({
                 "vehicles": get_vehicles(),
                 "heads": get_heads(),
