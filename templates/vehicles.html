@@ -57,13 +57,7 @@
       value=0,
       unit="km/h",
       filter_key="speed",
-      descriptions=[
-      (0, "That's walking pace"),
-      (5, "That's enough for walking"),
-      (15, "That's what you need for an average runner"),
-      (30, "Perfect for cycling"),
-      (50, "Motorized speed"),
-      ],
+      descriptions=ts('vehicles.filter.speed.descriptions') | from_json,
       icons=[
       "walk",
       "run",
@@ -86,12 +80,7 @@
       value=0,
       unit="",
       filter_key="capacity",
-      descriptions=[
-      (0, "Driver only"),
-      (1, "1 driver + 1 passenger"),
-      (2, "1 driver + 2 passengers"),
-      (3, "1 driver + 3 passengers")
-      ],
+      descriptions=ts('vehicles.filter.passengers.descriptions') | from_json,
       icons=[
       ["steering"],
       ["steering", "one-human"],

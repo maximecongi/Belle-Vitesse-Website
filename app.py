@@ -101,7 +101,28 @@ def create_app():
     init_error_handlers(app)
 
     # Custom Jinja2 Filters
+    import json
+    import ast
     app.jinja_env.filters["slugify"] = lambda s: s.lower().replace(" ", "_")
+
+    def _from_json(s):
+        if not isinstance(s, str):
+            return s
+        # Try JSON first, then Python literal syntax (tuples, etc.)
+        try:
+            return json.loads(s)
+        except (json.JSONDecodeError, TypeError):
+            pass
+        try:
+            result = ast.literal_eval(s)
+            # Convert tuples to lists for consistency
+            if isinstance(result, list):
+                return [list(item) if isinstance(item, tuple) else item for item in result]
+            return result
+        except (ValueError, SyntaxError):
+            return []
+
+    app.jinja_env.filters["from_json"] = _from_json
 
     # ── i18n: URL-based language handling ─────────────────────
 

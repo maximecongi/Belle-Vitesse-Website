@@ -57,12 +57,7 @@
       value=2,
       unit="kg",
       filter_key="payload",
-      descriptions=[
-      (2, "Sony FX3 with 24-70mm"),
-      (7, "Red Komodo with Sigma Art"),
-      (12, "Alexa35 with Cooke S4"),
-      (18, "Arri 435 with Angénieux Optimo")
-      ],
+      descriptions=ts('heads.filter.payload.descriptions') | from_json,
       icons=[
       "sony-fx3",
       "red-komodo",
