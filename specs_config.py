@@ -59,11 +59,11 @@ SPECS_CONFIG = {
     },
     "Battery life": {
         "label": {"en": "Battery life", "fr": "Autonomie"},
-        "value": lambda f: f.get("battery_life"),
+        "value": lambda f: with_unit(f.get("battery_life"), "h"),
     },
     "Charging time": {
         "label": {"en": "Charging time", "fr": "Temps de charge"},
-        "value": lambda f: f.get("charging_time"),
+        "value": lambda f: with_unit(f.get("charging_time"), "h"),
     },
     "Remote Compatibility": {
         "label": {"en": "Remote Compatibility", "fr": "Compatibilité télécommande"},
