@@ -276,4 +276,7 @@ static/imgs/.DS_Store
 scripts/generate_translations_excel.py
 .gitignore
 scripts/traductions_airtable.xlsx
+static/images/airtable/
+/static/images/airtable
 /static/images
+/static/images/airtable
