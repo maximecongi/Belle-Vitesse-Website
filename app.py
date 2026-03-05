@@ -3,7 +3,7 @@ from pathlib import Path
 from datetime import datetime, timezone, timedelta
 from flask import Flask, request, session, redirect, url_for, g, abort
 
-from extensions import cache, limiter, csrf
+from extensions import cache, compress, limiter, csrf
 from routes import init_routes, init_error_handlers
 from utils.database import (
     init_cache,
@@ -91,6 +91,7 @@ def create_app():
 
     # Initialize extensions
     cache.init_app(app)
+    compress.init_app(app)
     limiter.init_app(app)
     csrf.init_app(app)
     init_cache(cache)
