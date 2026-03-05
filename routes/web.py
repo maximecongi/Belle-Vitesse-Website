@@ -16,7 +16,7 @@ from collections import defaultdict
 
 from extensions import cache, csrf
 from utils.specs import build_specs
-from utils.airtable import (
+from utils.database import (
     get_grips_products_for_category,
     get_grips_categories_by_slug,
     get_vehicle_by_slug,
