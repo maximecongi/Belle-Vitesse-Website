@@ -1,5 +1,5 @@
-{% from "macros.html" import square_highlight %}
 {% extends "layout.html" %}
+{% from "macros.html" import square_highlight with context %}
 {% block title %}{{ vehicle.fields.name }} -- {{ ts('seo.vehicle.title_suffix') }}{% endblock %}
 {% block description %}{{ t(vehicle.fields, 'description') | striptags | truncate(160) }}{% endblock %}
 {% block content %}
@@ -73,15 +73,15 @@
 <section class="section-site">
     <div class="vehicle-key_features">
         <div class="vehicle-key_features-title">
-            <h2 class="dot-before title-section">Key Features</h2>
+            <h2 class="dot-before title-section">{{ ts('vehicle.key_features.title') }}</h2>
 
         </div>
         <div>
             <div class="vehicle-squared-highlight">
                 <div class="vehicle-squared-highlight-wrapper">
-                    {{ square_highlight(t(vehicle.fields, 'setups'), "", "Setups") }}
-                    {{ square_highlight(vehicle.fields.max_speed, "km/h", "Max speed") }}
-                    {{ square_highlight(vehicle.fields.passengers, "", "Capacity") }}
+                    {{ square_highlight(t(vehicle.fields, 'setups'), "", 'Setups') }}
+                    {{ square_highlight(vehicle.fields.max_speed, "km/h", ts('vehicle.highlight.max_speed')) }}
+                    {{ square_highlight(vehicle.fields.passengers, "", ts('vehicle.highlight.capacity')) }}
 
                 </div>
             </div>
@@ -113,8 +113,13 @@
             <div class="vehicle-configurator-carousel-wrapper-config">
                 {% set ns = namespace(first=true, image='', label='') %}
                 {% for type_name, items in configs_grouped.items() %}
+                {% set type_translations = {
+                "Crane": {"en": "Crane", "fr": "Grue"},
+                "Operator": {"en": "Operator", "fr": "Opérateur"},
+                "Gimbal": {"en": "Gimbal", "fr": "Stabilisateur"},
+                } %}
                 <div class="vehicle-configurator-carousel-wrapper-config-group">
-                    <h3 class="title-section">{{ type_name }}</h3>
+                    <h3 class="title-section">{{ type_translations.get(type_name, {}).get(g.lang, type_name) }}</h3>
                     <nav class="vehicle-configurator-carousel-wrapper-config-list">
                         {% for item in items %}
                         <button
@@ -142,30 +147,16 @@
 {% endif %}
 <section class="section-site">
     <div class="vehicle-specs">
-        <h2 class="vehicle-specs-title dot-before title-section">Technical specifications</h2>
+        <h2 class="vehicle-specs-title dot-before title-section">{{ ts('specs.title') }}</h2>
         <div class="vehicle-specs-details">
-            <div>
-                {% for label, value in specs_left.items() %}
-                <div class="vehicle-specs-details-detail-wrapper">
-                    <p>{{ label }} :</p>
-                    <div class="vehicle-specs-details-detail-wrapper-value">
-                        <p>{{ value }}</p>
-                    </div>
+            {% for label, value in specs.items() %}
+            <div class="vehicle-specs-details-detail-wrapper">
+                <p>{{ label }} :</p>
+                <div class="vehicle-specs-details-detail-wrapper-value">
+                    <p>{{ value }}</p>
                 </div>
-                {% endfor %}
             </div>
-
-            <div>
-                {% for label, value in specs_right.items() %}
-                <div class="vehicle-specs-details-detail-wrapper">
-                    <p>{{ label }} :</p>
-                    <div class="vehicle-specs-details-detail-wrapper-value">
-                        <p>{{ value }}</p>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-
+            {% endfor %}
         </div>
         {% if vehicle.fields.blueprint_side %}
         <div class="vehicle-specs-diagram-wrapper">

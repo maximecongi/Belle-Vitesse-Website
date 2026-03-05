@@ -11,85 +11,86 @@ def dimensions(values, labels, unit):
         f"{label} {value}" for label, value in zip(labels, values)
     ) + f" {unit}"
 
+
 SPECS_CONFIG = {
     "Brand": {
-        "side": "left",
+        "label": {"en": "Brand", "fr": "Marque"},
         "value": lambda f: f.get("brand"),
     },
     "Model": {
-        "side": "left",
+        "label": {"en": "Model", "fr": "Modèle"},
         "value": lambda f: f.get("model"),
     },
     "Type": {
-        "side": "left",
+        "label": {"en": "Type", "fr": "Type"},
         "value": lambda f: f.get("type"),
     },
     "Max speed": {
-        "side": "left",
+        "label": {"en": "Max speed", "fr": "Vitesse max"},
         "value": lambda f: with_unit(f.get("max_speed"), "km/h"),
     },
     "Pan range": {
-        "side": "left",
+        "label": {"en": "Pan range", "fr": "Plage de pan"},
         "value": lambda f: with_unit(f.get("pan_range"), "°"),
     },
     "Tilt range": {
-        "side": "left",
+        "label": {"en": "Tilt range", "fr": "Plage de tilt"},
         "value": lambda f: with_unit(f.get("tilt_range"), "°"),
     },
     "Roll range": {
-        "side": "left",
+        "label": {"en": "Roll range", "fr": "Plage de roll"},
         "value": lambda f: with_unit(f.get("roll_range"), "°"),
     },
     "Passengers": {
-        "side": "left",
+        "label": {"en": "Passengers", "fr": "Passagers"},
         "value": lambda f: f.get("passengers"),
     },
     "Power": {
-        "side": "left",
+        "label": {"en": "Power", "fr": "Puissance"},
         "value": lambda f: f.get("power"),
     },
     "Torque": {
-        "side": "right",
+        "label": {"en": "Torque", "fr": "Couple"},
         "value": lambda f: f.get("torque"),
     },
     "Battery": {
-        "side": "right",
+        "label": {"en": "Battery", "fr": "Batterie"},
         "value": lambda f: f.get("battery_type"),
     },
     "Battery life": {
-        "side": "right",
+        "label": {"en": "Battery life", "fr": "Autonomie"},
         "value": lambda f: f.get("battery_life"),
     },
     "Charging time": {
-        "side": "right",
+        "label": {"en": "Charging time", "fr": "Temps de charge"},
         "value": lambda f: f.get("charging_time"),
     },
     "Remote Compatibility": {
-        "side": "right",
+        "label": {"en": "Remote Compatibility", "fr": "Compatibilité télécommande"},
         "value": lambda f: f.get("remote_compatibility"),
     },
     "Mount": {
-        "side": "right",
+        "label": {"en": "Mount", "fr": "Monture"},
         "value": lambda f: f.get("mount"),
     },
     "Power supply": {
-        "side": "right",
+        "label": {"en": "Power supply", "fr": "Alimentation"},
         "value": lambda f: f.get("power_supply"),
     },
     "Operating temperatures": {
-        "side": "right",
+        "label": {"en": "Operating temperatures", "fr": "Températures d'utilisation"},
         "value": lambda f: f.get("operating_temperatures"),
     },
     "Maximum operating speed": {
-        "side": "left",
+        "label": {"en": "Max operating speed", "fr": "Vitesse max d'opération"},
         "value": lambda f: with_unit(f.get("max_operating_speed"), "km/h"),
     },
     "Weather rating": {
-        "side": "right",
+        "label": {"en": "Weather rating", "fr": "Indice de protection"},
         "value": lambda f: f.get("weather_rating"),
     },
     "Camera tray size": {
-        "side": "right",
+        "label": {"en": "Camera tray size", "fr": "Taille du plateau caméra"},
         "value": lambda f: dimensions(
             [
                 f.get("camera_tray_depth"),
@@ -101,7 +102,7 @@ SPECS_CONFIG = {
         ),
     },
     "Size": {
-        "side": "right",
+        "label": {"en": "Size", "fr": "Dimensions"},
         "value": lambda f: dimensions(
             [
                 f.get("length"),
@@ -113,7 +114,7 @@ SPECS_CONFIG = {
         ),
     },
     "Weight": {
-        "side": "right",
+        "label": {"en": "Weight", "fr": "Poids"},
         "value": lambda f: with_unit(f.get("weight"), "kg"),
     },
 }

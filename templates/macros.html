@@ -1,33 +1,36 @@
 {% macro square_highlight(value, unit, label) %}
 <div class="vehicle-squared-highlight-wrapper-square">
-    {% if label == "Capacity" %}
-        <p class="vehicle-squared-highlight-wrapper-square-value">
-            <span>1</span>{% if value and value != 0 %}<span class="vehicle-squared-highlight-wrapper-square-value-plussign">+</span><span data-target="{{ value }}" data-duration="1500">{{ value }}</span>
-            {% endif %}
-        </p>
+    {% if label == "Capacity" or label == "Capacité" %}
+    <p class="vehicle-squared-highlight-wrapper-square-value">
+        <span>1</span>{% if value and value != 0 %}<span
+            class="vehicle-squared-highlight-wrapper-square-value-plussign">+</span><span data-target="{{ value }}"
+            data-duration="1500">{{ value }}</span>
+        {% endif %}
+    </p>
     {% elif label == "Setups" %}
     <div class="vehicle-squared-highlight-wrapper-square-setups">
-     {% for setup in value %}
+        {% for setup in value %}
         <div class="vehicle-squared-highlight-wrapper-square-setups-wrapper">
-            <img class="vehicle-squared-highlight-wrapper-square-setups-icon" src="{{ url_for('static', filename='imgs/icons/' ~ setup | slugify ~ '.svg') }}"/>
+            <img class="vehicle-squared-highlight-wrapper-square-setups-icon"
+                src="{{ url_for('static', filename='imgs/icons/' ~ setup | slugify ~ '.svg') }}" />
             <span class="tag-setups">{{ setup }}</span>
         </div>
-     {% endfor %}
-     </div>
+        {% endfor %}
+    </div>
     {% else %}
-        <p class="vehicle-squared-highlight-wrapper-square-value count-up" data-target="{{ value }}" data-duration="1000">
-            {{ value }}
-        </p>
+    <p class="vehicle-squared-highlight-wrapper-square-value count-up" data-target="{{ value }}" data-duration="1000">
+        {{ value }}
+    </p>
     {% endif %}
 
-    {% if label == "Capacity" %}
+    {% if label == "Capacity" or label == "Capacité" %}
     <p class="vehicle-squared-highlight-wrapper-square-unit">
         {% if value and value > 1 %}
-        Pilot + Passengers
+        {{ ts('vehicle.capacity.pilot_passengers') }}
         {% elif value and value == 1 %}
-        Pilot + Passenger
+        {{ ts('vehicle.capacity.pilot_passenger') }}
         {% else %}
-        Pilot
+        {{ ts('vehicle.capacity.pilot') }}
         {% endif %}
     </p>
     {% else %}
@@ -35,7 +38,7 @@
     {% endif %}
 
     {% if label != "Setups" %}
-        <p class="vehicle-squared-highlight-wrapper-square-label">{{ label }}</p>
+    <p class="vehicle-squared-highlight-wrapper-square-label">{{ label }}</p>
     {% endif %}
 </div>
 {% endmacro %}

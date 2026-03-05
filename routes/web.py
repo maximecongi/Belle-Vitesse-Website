@@ -127,14 +127,13 @@ def init_web_routes(app):
             type_name = config["fields"].get("type", "Sans type")
             grouped[type_name].append(config)
 
-        specs_left, specs_right = build_specs(vehicle_data["fields"])
+        specs = build_specs(vehicle_data["fields"])
 
         return render_template(
             "vehicle.html",
             vehicle=vehicle_data,
             configs_grouped=dict(reversed(grouped.items())),
-            specs_left=specs_left,
-            specs_right=specs_right,
+            specs=specs,
         )
 
     @app.route("/<lang>/heads/<slug>")
@@ -143,13 +142,12 @@ def init_web_routes(app):
         if not head_data:
             abort(404)
 
-        specs_left, specs_right = build_specs(head_data["fields"])
+        specs = build_specs(head_data["fields"])
 
         return render_template(
             "head.html",
             head=head_data,
-            specs_left=specs_left,
-            specs_right=specs_right,
+            specs=specs,
         )
 
     @app.route("/<lang>/grips/<slug>")

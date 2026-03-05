@@ -262,8 +262,8 @@ img.top-head {
 }
 
 .vehicle-specs-details {
-    display: flex;
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     margin-bottom: 3vw;
 }
 
@@ -376,6 +376,7 @@ img.top-head {
         font-size: 2vw;
 
     }
+
     .vehicle-squared-highlight-wrapper-square-value-plussign {
         font-size: 5vw;
     }
