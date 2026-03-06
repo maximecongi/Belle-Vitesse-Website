@@ -10,7 +10,7 @@ services:
     environment:
       - MYSQL_HOST=bv_mysql
     volumes:
-      - ../static:/app/static
+      - /srv/bellevitesse/website/static:/app/static
       - /srv/bellevitesse/private:/app/private
     networks:
       - bv_network
