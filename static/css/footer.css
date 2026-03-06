@@ -10,6 +10,7 @@
 
 .footer p {
     font-size: clamp(0.6rem, 0.8vw, 1.4rem);
+    text-align: left;
 }
 
 .footer-wrapper h3 {
