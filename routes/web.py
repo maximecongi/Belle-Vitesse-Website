@@ -174,6 +174,10 @@ def init_web_routes(app):
     def terms_and_conditions():
         return render_template("terms-and-conditions.html")
 
+    @app.route("/<lang>/privacy-policy")
+    def privacy_policy():
+        return render_template("privacy-policy.html")
+
     # ── Newsletter ────────────────────────────────────────────────
 
     @app.route("/subscribe", methods=["POST"])
