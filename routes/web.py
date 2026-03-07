@@ -127,6 +127,9 @@ def init_web_routes(app):
             type_name = config["fields"].get("type", "Sans type")
             grouped[type_name].append(config)
 
+        for type_name in grouped:
+            grouped[type_name].sort(key=lambda c: c["fields"].get("order", 0))
+
         specs = build_specs(vehicle_data["fields"])
 
         return render_template(
