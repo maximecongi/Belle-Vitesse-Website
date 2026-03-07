@@ -5,6 +5,7 @@
 .grip-description-wrapper {
     justify-content: center;
     column-gap: 2vw;
+    width: 80vw;
 }
 
 .grip-description-right {
@@ -15,11 +16,12 @@
 
 .grips-specs-details {
     margin: 0;
-    width: 30vw;
+    width: 40vw;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 0.5rem;
     justify-items: center;
+    text-align: center;
 }
 
 .grips-specs-details-detail-wrapper {
