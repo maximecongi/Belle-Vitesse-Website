@@ -77,9 +77,9 @@ span.categories-solutions-filters-dropdown-text {
 
 .categories-solutions-categories h3 {
     position: relative;
-    top: 0.5em;
     z-index: 2;
     font-size: clamp(1rem, 2vw, 3rem);
+    height: 1ch;
 }
 
 .categories-solutions-categories img {
