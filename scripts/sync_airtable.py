@@ -284,11 +284,17 @@ def main():
     # Initialize Airtable API
     api = Api(AIRTABLE_SECRET_TOKEN)
 
-    # Clean images folder before sync
+    # Clean images folder contents before sync (keep the folder for Docker volume mount)
     if os.path.exists(IMAGE_STORE_PATH):
         print(f"🧹 Cleaning {IMAGE_STORE_PATH}...")
-        shutil.rmtree(IMAGE_STORE_PATH)
-    os.makedirs(IMAGE_STORE_PATH, exist_ok=True)
+        for item in os.listdir(IMAGE_STORE_PATH):
+            item_path = os.path.join(IMAGE_STORE_PATH, item)
+            if os.path.isdir(item_path):
+                shutil.rmtree(item_path)
+            else:
+                os.remove(item_path)
+    else:
+        os.makedirs(IMAGE_STORE_PATH, exist_ok=True)
 
     # Connect to MySQL (with optional SSH tunnel)
     if USE_SSH_TUNNEL:
