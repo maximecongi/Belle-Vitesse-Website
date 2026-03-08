@@ -147,6 +147,40 @@ def process_attachments_in_fields(fields, table_name, record_id):
 
 # ── Sync logic ───────────────────────────────────────────────
 
+def _is_attachment_field(value):
+    """Check if a field value is an Airtable attachment array."""
+    return (isinstance(value, list) and len(value) > 0
+            and isinstance(value[0], dict)
+            and "url" in value[0] and "filename" in value[0])
+
+
+def _preserve_existing_attachments(cursor, table_name, record_id, new_fields):
+    """
+    Merge new fields with existing attachment fields from DB.
+    Non-attachment fields are updated, attachment fields are kept from DB.
+    """
+    cursor.execute(
+        f"SELECT fields FROM `{table_name}` WHERE id = %s", (record_id,))
+    row = cursor.fetchone()
+
+    if not row:
+        # New record, no existing data — strip attachment fields
+        return {k: v for k, v in new_fields.items()
+                if not _is_attachment_field(v)}
+
+    existing_fields = json.loads(row[0]) if isinstance(row[0], str) else row[0]
+
+    merged = {}
+    for key, value in new_fields.items():
+        if _is_attachment_field(value) and key in existing_fields:
+            # Keep existing local URLs
+            merged[key] = existing_fields[key]
+        else:
+            merged[key] = value
+
+    return merged
+
+
 def sync_table(table_name, api, base_id, cursor, download_images=True):
     """Sync a single table from Airtable to MySQL."""
     print(f"\n{'='*50}")
@@ -171,7 +205,9 @@ def sync_table(table_name, api, base_id, cursor, download_images=True):
             processed_fields = process_attachments_in_fields(
                 fields, table_name, record_id)
         else:
-            processed_fields = fields
+            # DB-only: preserve existing image URLs from DB
+            processed_fields = _preserve_existing_attachments(
+                cursor, table_name, record_id, fields)
 
         created_time_clean = created_time.split(
             '.')[0].replace("T", " ").replace("Z", "")
