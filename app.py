@@ -204,30 +204,42 @@ def create_app():
             "alt_url": alt_url,
         }
 
-        try:
+        def _load_db_context(is_admin):
             if is_admin:
-                ctx["current_user"] = {
-                    "firstname": session.get('admin_user_firstname'),
-                    "lastname": session.get('admin_user_lastname'),
-                    "role": session.get('admin_user_role', 'User'),
-                    "role_lower": session.get('admin_user_role', 'User').lower()
+                return {
+                    "current_user": {
+                        "firstname": session.get('admin_user_firstname'),
+                        "lastname": session.get('admin_user_lastname'),
+                        "role": session.get('admin_user_role', 'User'),
+                        "role_lower": session.get('admin_user_role', 'User').lower()
+                    },
+                    "vehicles": get_vehicles(),
                 }
-                ctx["vehicles"] = get_vehicles()
             else:
-                ctx.update({
+                return {
                     "vehicles": get_vehicles(),
                     "heads": get_heads(),
                     "grips_categories": get_grips_categories(),
-                })
-        except Exception as e:
-            app.logger.error(f"❌ Context processor DB error: {e}")
-            if is_admin:
-                ctx["current_user"] = {
-                    "firstname": "", "lastname": "", "role": "User", "role_lower": "user"}
-                ctx["vehicles"] = []
-            else:
-                ctx.update({"vehicles": [], "heads": [],
-                           "grips_categories": []})
+                }
+
+        for attempt in range(2):
+            try:
+                ctx.update(_load_db_context(is_admin))
+                break
+            except Exception as e:
+                if attempt == 0:
+                    app.logger.warning(
+                        f"⚠️ Context processor DB error (retrying): {e}")
+                    continue
+                app.logger.error(
+                    f"❌ Context processor DB error (giving up): {e}")
+                if is_admin:
+                    ctx["current_user"] = {
+                        "firstname": "", "lastname": "", "role": "User", "role_lower": "user"}
+                    ctx["vehicles"] = []
+                else:
+                    ctx.update({"vehicles": [], "heads": [],
+                               "grips_categories": []})
 
         return ctx
 
