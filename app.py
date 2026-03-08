@@ -36,7 +36,8 @@ def create_app():
     # App Config
     app.config["SECRET_KEY"] = os.getenv(
         "SECRET_KEY", "bv_super_secret_key_2026")
-    app.config["CACHE_TYPE"] = "SimpleCache"
+    app.config["CACHE_TYPE"] = "FileSystemCache"
+    app.config["CACHE_DIR"] = "/tmp/flask-cache"
     app.config["CACHE_DEFAULT_TIMEOUT"] = 3600
     app.config["CACHE_KEY_PREFIX"] = "myapp_"
     app.config["PREFERRED_URL_SCHEME"] = "https"
