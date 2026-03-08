@@ -531,6 +531,45 @@ function init() {
         // Initial run
         updateMinDates();
     }
+    // ─────────────────────────────────────────────
+    // 9. Table search (contacts_list, productions_list)
+    // ─────────────────────────────────────────────
+    const simpleSearch = document.getElementById('searchInput');
+    if (simpleSearch) {
+        const rows = document.querySelectorAll('.searchable-row');
+        simpleSearch.addEventListener('input', e => {
+            const q = e.target.value.toLowerCase().trim();
+            rows.forEach(row => {
+                row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+            });
+        });
+    }
+
+    // ─────────────────────────────────────────────
+    // 10. Sortable table columns
+    // ─────────────────────────────────────────────
+    document.querySelectorAll('.admin-table th.sortable').forEach(th => {
+        th.addEventListener('click', () => {
+            const table = th.closest('table');
+            const tbody = table.querySelector('tbody');
+            const colIdx = parseInt(th.dataset.col);
+            const rows = Array.from(tbody.querySelectorAll('tr.searchable-row'));
+
+            const isAsc = th.classList.contains('asc');
+            table.querySelectorAll('th.sortable').forEach(h => h.classList.remove('asc', 'desc'));
+            th.classList.add(isAsc ? 'desc' : 'asc');
+
+            rows.sort((a, b) => {
+                const aCell = a.children[colIdx];
+                const bCell = b.children[colIdx];
+                const aText = (aCell?.dataset.sort || aCell?.textContent || '').trim().toLowerCase();
+                const bText = (bCell?.dataset.sort || bCell?.textContent || '').trim().toLowerCase();
+                return isAsc ? bText.localeCompare(aText) : aText.localeCompare(bText);
+            });
+
+            rows.forEach(row => tbody.appendChild(row));
+        });
+    });
 }
 
 

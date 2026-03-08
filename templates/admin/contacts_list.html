@@ -17,9 +17,9 @@
         <table class="admin-table">
             <thead>
                 <tr>
-                    <th>Nom</th>
-                    <th>Métier</th>
-                    <th>Production</th>
+                    <th class="sortable" data-col="0">Nom</th>
+                    <th class="sortable" data-col="1">Métier</th>
+                    <th class="sortable" data-col="2">Production</th>
                     <th>Téléphone</th>
                     <th>Email</th>
                     <th style="width: 60px; text-align: center;">VCF</th>
@@ -29,7 +29,8 @@
             <tbody>
                 {% for c in contacts %}
                 <tr class="searchable-row">
-                    <td style="font-weight: 600;">{{ c.prenom }} {{ c.nom }}</td>
+                    <td style="font-weight: 600;" data-sort="{{ c.nom }} {{ c.prenom }}">{{ c.prenom }} {{ c.nom | upper
+                        }}</td>
                     <td>{{ c.metier }}</td>
                     <td>
                         {% if c.production_name == 'Freelance' %}
@@ -142,25 +143,6 @@
                 modal.style.display = 'none';
             }
         });
-
-        // Search
-        const searchInput = document.getElementById('searchInput');
-        const searchableRows = document.querySelectorAll('.searchable-row');
-
-        if (searchInput) {
-            searchInput.addEventListener('input', function (e) {
-                const searchTerm = e.target.value.toLowerCase().trim();
-
-                searchableRows.forEach(row => {
-                    const rowText = row.textContent.toLowerCase();
-                    if (rowText.includes(searchTerm)) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-            });
-        }
     });
 </script>
 {% endblock %}

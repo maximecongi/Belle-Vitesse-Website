@@ -27,6 +27,7 @@ def init_productions_routes(app):
     def admin_productions_list():
         try:
             productions = list_productions()
+            productions.sort(key=lambda p: p.get("name", "").lower())
             return render_template("admin/productions_list.html", productions=productions)
         except Exception as e:
             current_app.logger.error(f"❌ Error fetching productions: {e}")
@@ -79,4 +80,3 @@ def init_productions_routes(app):
             current_app.logger.error(f"❌ Error deleting production: {e}")
             flash(f"Erreur lors de la suppression : {str(e)}", "error")
             return redirect(url_for("admin_productions_list"))
-

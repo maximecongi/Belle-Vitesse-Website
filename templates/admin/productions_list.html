@@ -17,8 +17,8 @@
         <table class="admin-table">
             <thead>
                 <tr>
-                    <th>Nom</th>
-                    <th>Adresse</th>
+                    <th class="sortable" data-col="0">Nom</th>
+                    <th class="sortable" data-col="1">Adresse</th>
                     <th>Email</th>
                     <th>Téléphone</th>
                     <th style="width: 100px;">Actions</th>
@@ -48,25 +48,4 @@
     </div>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const searchInput = document.getElementById('searchInput');
-        const searchableRows = document.querySelectorAll('.searchable-row');
-
-        if (searchInput) {
-            searchInput.addEventListener('input', function (e) {
-                const searchTerm = e.target.value.toLowerCase().trim();
-
-                searchableRows.forEach(row => {
-                    const rowText = row.textContent.toLowerCase();
-                    if (rowText.includes(searchTerm)) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-            });
-        }
-    });
-</script>
 {% endblock %}

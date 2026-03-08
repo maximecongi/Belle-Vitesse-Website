@@ -47,6 +47,8 @@ def init_contacts_routes(app):
         try:
             import base64
             contacts = list_contacts()
+            contacts.sort(key=lambda c: (
+                c.get("nom", "").lower(), c.get("prenom", "").lower()))
             for c in contacts:
                 vcf = _build_vcf(c)
                 c["vcf_b64"] = base64.b64encode(

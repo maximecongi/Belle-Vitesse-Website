@@ -323,6 +323,38 @@
     text-transform: uppercase;
 }
 
+.admin-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.15s;
+}
+
+.admin-table th.sortable:hover {
+    color: var(--admin-accent);
+}
+
+.admin-table th.sortable::after {
+    content: "▼";
+    font-size: 0.5rem;
+    margin-left: 0.4rem;
+    color: var(--grey-2, #888);
+    opacity: 0.3;
+    transition: transform 0.2s, opacity 0.2s;
+    display: inline-block;
+}
+
+.admin-table th.sortable.asc::after {
+    content: "▲";
+    opacity: 1;
+    color: var(--admin-accent);
+}
+
+.admin-table th.sortable.desc::after {
+    content: "▼";
+    opacity: 1;
+    color: var(--admin-accent);
+}
+
 .admin-table th:last-child {
     text-align: center;
 }
