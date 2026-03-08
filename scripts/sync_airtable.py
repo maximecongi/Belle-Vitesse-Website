@@ -1,370 +1,127 @@
 #!/usr/bin/env python3
 """
-Airtable to MySQL Sync Script
+Airtable Sync CLI
 
-Syncs Airtable tables to MySQL database and downloads images with thumbnails.
-Preserves Airtable API attachment structure with local URLs.
+Usage:
+    python scripts/sync_airtable.py            # Interactive menu
+    python scripts/sync_airtable.py --db       # Sync database only
+    python scripts/sync_airtable.py --images   # Download images only
+    python scripts/sync_airtable.py --both     # Sync database + images
 """
 
 import os
-import json
-import requests
-from pathlib import Path
+import sys
+import argparse
 from dotenv import load_dotenv
-from pyairtable import Api
-import shutil
-import mysql.connector
-from mysql.connector import Error
-from sshtunnel import SSHTunnelForwarder
 
-# Load environment variables
+# Add project root to path so we can import services
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, PROJECT_ROOT)
+os.chdir(PROJECT_ROOT)
+
 load_dotenv()
 
-# Configuration
-AIRTABLE_SECRET_TOKEN = os.getenv("AIRTABLE_SECRET_TOKEN")
-AIRTABLE_BASE_ID = os.getenv("AIRTABLE_BASE_ID")
-
-# MySQL Configuration
-MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
-MYSQL_USER = os.getenv("MYSQL_USER")
-MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
-MYSQL_DATABASE = os.getenv("MYSQL_DATABASE")
-
-# SSH Configuration (for local development)
-SSH_HOST = os.getenv("SSH_HOST", "ssh.pythonanywhere.com")
-SSH_USER = os.getenv("SSH_USER")
-SSH_PASSWORD = os.getenv("SSH_PASSWORD")
-USE_SSH_TUNNEL = os.getenv("USE_SSH_TUNNEL", "false").lower() == "true"
-
-IMAGE_STORE_PATH = "static/images/airtable"
-STATIC_URL_PREFIX = "/static/images/airtable"
-
-# Tables to sync
-TABLES = ["vehicles", "heads", "grips_categories",
-          "grip_products", "configs", "static"]
-
-# Thumbnail sizes to download
-THUMBNAIL_SIZES = ["small", "large", "full"]
+from services.sync_airtable import run_sync  # noqa: E402
 
 
-def get_mysql_connection():
-    """Create and return a MySQL connection."""
-    try:
-        connection = mysql.connector.connect(
-            host=MYSQL_HOST,
-            user=MYSQL_USER,
-            password=MYSQL_PASSWORD,
-            database=MYSQL_DATABASE
-        )
-        return connection
-    except Error as e:
-        print(f"Error connecting to MySQL: {e}")
-        raise
+def get_config():
+    """Build config dict from environment variables."""
+    return {
+        "airtable_token": os.getenv("AIRTABLE_SECRET_TOKEN"),
+        "airtable_base_id": os.getenv("AIRTABLE_BASE_ID"),
+        "mysql_host": os.getenv("MYSQL_HOST", "localhost"),
+        "mysql_user": os.getenv("MYSQL_USER"),
+        "mysql_password": os.getenv("MYSQL_PASSWORD"),
+        "mysql_database": os.getenv("MYSQL_DATABASE"),
+        "use_ssh_tunnel": os.getenv("USE_SSH_TUNNEL", "false").lower() == "true",
+        "ssh_host": os.getenv("SSH_HOST", "ssh.pythonanywhere.com"),
+        "ssh_user": os.getenv("SSH_USER"),
+        "ssh_password": os.getenv("SSH_PASSWORD"),
+    }
 
 
-def create_table_if_not_exists(cursor, table_name):
-    """Create table with flexible JSON structure if it doesn't exist."""
-    cursor.execute(f"""
-        CREATE TABLE IF NOT EXISTS `{table_name}` (
-            id VARCHAR(255) PRIMARY KEY,
-            createdTime DATETIME,
-            fields JSON,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        )
-    """)
-
-
-def download_file(url, save_path):
-    """Download a file from URL to the specified path."""
-    try:
-        response = requests.get(url, stream=True, timeout=30)
-        response.raise_for_status()
-
-        Path(save_path).parent.mkdir(parents=True, exist_ok=True)
-
-        with open(save_path, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
-
-        return True
-    except Exception as e:
-        print(f"  Error downloading {url}: {e}")
-        return False
-
-
-def process_attachment(attachment, table_name, record_id):
-    """
-    Process a single attachment: download main image and thumbnails.
-    Returns modified attachment with local URLs.
-    """
-    filename = attachment.get("filename", "image.jpg")
-    original_url = attachment.get("url")
-
-    # Base path for this attachment
-    base_path = os.path.join(IMAGE_STORE_PATH, table_name, record_id)
-    base_url = f"{STATIC_URL_PREFIX}/{table_name}/{record_id}"
-
-    # Create a copy of the attachment to modify
-    processed = attachment.copy()
-
-    # Download main image
-    if original_url:
-        main_save_path = os.path.join(base_path, filename)
-        if download_file(original_url, main_save_path):
-            processed["url"] = f"{base_url}/{filename}"
-            print(f"  Downloaded: {filename}")
-        else:
-            print(f"  Failed to download main image: {filename}")
-
-    # Process thumbnails
-    thumbnails = attachment.get("thumbnails", {})
-    if thumbnails:
-        processed_thumbnails = {}
-
-        for size in THUMBNAIL_SIZES:
-            thumb_data = thumbnails.get(size, {})
-            thumb_url = thumb_data.get("url")
-
-            if thumb_url:
-                # Create thumbnail path
-                thumb_save_path = os.path.join(
-                    base_path, "thumbnails", size, filename)
-                thumb_local_url = f"{base_url}/thumbnails/{size}/{filename}"
-
-                if download_file(thumb_url, thumb_save_path):
-                    processed_thumbnails[size] = {
-                        "url": thumb_local_url,
-                        "width": thumb_data.get("width"),
-                        "height": thumb_data.get("height")
-                    }
-                    print(f"    Thumbnail ({size}): {filename}")
-                else:
-                    # Keep original structure but note failure
-                    processed_thumbnails[size] = thumb_data
-
-        processed["thumbnails"] = processed_thumbnails
-
-    return processed
-
-
-def process_attachments_in_fields(fields, table_name, record_id):
-    """
-    Iterate through all fields and process any attachment arrays.
-    Returns modified fields with local URLs.
-    """
-    processed_fields = {}
-
-    for key, value in fields.items():
-        # Check if this field is an attachment array
-        if isinstance(value, list) and len(value) > 0:
-            first_item = value[0]
-            if isinstance(first_item, dict) and "url" in first_item and "filename" in first_item:
-                # This is an attachment field
-                print(f"  Processing attachment field: {key}")
-                processed_attachments = []
-                for attachment in value:
-                    processed = process_attachment(
-                        attachment, table_name, record_id)
-                    processed_attachments.append(processed)
-                processed_fields[key] = processed_attachments
-            else:
-                processed_fields[key] = value
-        else:
-            processed_fields[key] = value
-
-    return processed_fields
-
-
-def sync_table(table_name, api, cursor):
-    """Sync a single table from Airtable to MySQL."""
-    print(f"\n{'='*50}")
-    print(f"Syncing table: {table_name}")
-    print(f"{'='*50}")
-
-    # Ensure table exists
-    create_table_if_not_exists(cursor, table_name)
-
-    # Get table from Airtable
-    table = api.table(AIRTABLE_BASE_ID, table_name)
-    records = table.all()
-
-    print(f"Found {len(records)} records")
-
-    for record in records:
-        record_id = record["id"]
-        created_time = record["createdTime"]
-        fields = record["fields"]
-
-        print(f"\nProcessing record: {record_id}")
-
-        # Process attachments in fields
-        processed_fields = process_attachments_in_fields(
-            fields, table_name, record_id)
-
-        # Format createdTime for MySQL (Airtable: 2026-01-20T11:02:25.000Z -> MySQL: 2026-01-20 11:02:25)
-        # We strip the milliseconds part if present to ensure maximum compatibility
-        created_time_clean = created_time.split(
-            '.')[0].replace("T", " ").replace("Z", "")
-
-        # Convert to JSON for storage
-        fields_json = json.dumps(processed_fields, ensure_ascii=False)
-
-        # Upsert into MySQL
-        upsert_query = f"""
-            INSERT INTO `{table_name}` (`id`, `createdTime`, `fields`)
-            VALUES (%s, %s, %s)
-            ON DUPLICATE KEY UPDATE
-                `createdTime` = VALUES(`createdTime`),
-                `fields` = VALUES(`fields`)
-        """
-
-        try:
-            cursor.execute(
-                upsert_query, (record_id, created_time_clean, fields_json))
-        except Error as e:
-            print(
-                f"  FAILED to upsert record {record_id} in table {table_name}: {e}")
-            print(f"  Query: {upsert_query}")
-            raise e
-
-    print(f"\nCompleted syncing {table_name}: {len(records)} records")
-
-    # Return list of synced IDs for cleanup
-    return [r["id"] for r in records]
-
-
-def cleanup_records(cursor, table_name, active_ids):
-    """Delete records from MySQL that are no longer in Airtable."""
-    if not active_ids:
-        # If no records, delete everything
-        print(f"  Cleaning up: deleting ALL records from {table_name}")
-        cursor.execute(f"DELETE FROM `{table_name}`")
-        return
-
-    # Delete records that are NOT in active_ids
-    format_strings = ','.join(['%s'] * len(active_ids))
-    query = f"DELETE FROM `{table_name}` WHERE id NOT IN ({format_strings})"
-    cursor.execute(query, tuple(active_ids))
-    deleted_count = cursor.rowcount
-    if deleted_count > 0:
-        print(
-            f"  Cleaning up: deleted {deleted_count} stale records from {table_name}")
-
-
-def cleanup_images(table_name, active_ids):
-    """Delete local image folders for records that are no longer in Airtable."""
-    table_dir = os.path.join(IMAGE_STORE_PATH, table_name)
-    if not os.path.exists(table_dir):
-        return
-
-    # Iterate over directories in table_dir
-    for record_id in os.listdir(table_dir):
-        if record_id not in active_ids:
-            record_dir = os.path.join(table_dir, record_id)
-            if os.path.isdir(record_dir):
-                print(
-                    f"  Cleaning up: deleting images for stale record {record_id}")
-                shutil.rmtree(record_dir)
-
-
-def main():
-    """Main sync function."""
-    print("=" * 60)
-    print("Starting Airtable to MySQL Sync")
-    print("=" * 60)
-
-    # Validate configuration
-    if not AIRTABLE_SECRET_TOKEN or not AIRTABLE_BASE_ID:
+def validate_config(config):
+    """Validate required config values."""
+    if not config["airtable_token"] or not config["airtable_base_id"]:
         raise RuntimeError(
             "AIRTABLE_SECRET_TOKEN and AIRTABLE_BASE_ID must be set")
 
-    if not MYSQL_USER or not MYSQL_PASSWORD or not MYSQL_DATABASE:
+    if not config["mysql_user"] or not config["mysql_password"] or not config["mysql_database"]:
         raise RuntimeError("MySQL credentials must be set in .env")
 
-    # Initialize Airtable API
-    api = Api(AIRTABLE_SECRET_TOKEN)
-
-    # Clean images folder contents before sync (keep the folder for Docker volume mount)
-    if os.path.exists(IMAGE_STORE_PATH):
-        print(f"🧹 Cleaning {IMAGE_STORE_PATH}...")
-        for item in os.listdir(IMAGE_STORE_PATH):
-            item_path = os.path.join(IMAGE_STORE_PATH, item)
-            if os.path.isdir(item_path):
-                shutil.rmtree(item_path)
-            else:
-                os.remove(item_path)
-    else:
-        os.makedirs(IMAGE_STORE_PATH, exist_ok=True)
-
-    # Connect to MySQL (with optional SSH tunnel)
-    if USE_SSH_TUNNEL:
-        print("Using SSH tunnel...")
-        if not SSH_USER or not SSH_PASSWORD:
+    if config["use_ssh_tunnel"]:
+        if not config["ssh_user"] or not config["ssh_password"]:
             raise RuntimeError(
                 "SSH_USER and SSH_PASSWORD must be set when USE_SSH_TUNNEL is true")
 
-        with SSHTunnelForwarder(
-            (SSH_HOST, 22),
-            ssh_username=SSH_USER,
-            ssh_password=SSH_PASSWORD,
-            remote_bind_address=(MYSQL_HOST, 3306),
-            local_bind_address=('127.0.0.1', 0)
-        ) as tunnel:
-            print(
-                f"SSH tunnel established on local port {tunnel.local_bind_port}")
-            print(f"Forwarding to {MYSQL_HOST}:3306")
 
-            connection = mysql.connector.connect(
-                host="127.0.0.1",
-                port=tunnel.local_bind_port,
-                user=MYSQL_USER,
-                password=MYSQL_PASSWORD,
-                database=MYSQL_DATABASE
-            )
-            cursor = connection.cursor()
+def interactive_menu():
+    """Show interactive menu and return (sync_db, sync_images)."""
+    print("\n" + "=" * 40)
+    print("  Airtable Sync")
+    print("=" * 40)
+    print("  1. Sync database only")
+    print("  2. Download images only")
+    print("  3. Sync database + images")
+    print("  q. Quit")
+    print("=" * 40)
 
-            try:
-                for table_name in TABLES:
-                    sync_table(table_name, api, cursor)
+    while True:
+        choice = input("\nChoose an option: ").strip().lower()
+        if choice == "1":
+            return True, False
+        elif choice == "2":
+            return False, True
+        elif choice == "3":
+            return True, True
+        elif choice == "q":
+            print("Bye!")
+            sys.exit(0)
+        else:
+            print("Invalid choice, try again.")
 
-                connection.commit()
-                print("\n" + "=" * 60)
-                print("Sync completed successfully!")
-                print("=" * 60)
 
-            except Exception as e:
-                connection.rollback()
-                print(f"\nError during sync: {e}")
-                raise
-            finally:
-                cursor.close()
-                connection.close()
+def main():
+    parser = argparse.ArgumentParser(
+        description="Sync Airtable data to MySQL and download images")
+    parser.add_argument("--db", action="store_true",
+                        help="Sync database only")
+    parser.add_argument("--images", action="store_true",
+                        help="Download images only")
+    parser.add_argument("--both", action="store_true",
+                        help="Sync database + download images")
+
+    args = parser.parse_args()
+
+    config = get_config()
+    validate_config(config)
+
+    # Determine mode
+    if args.both:
+        sync_db, sync_images = True, True
+    elif args.db:
+        sync_db, sync_images = True, False
+    elif args.images:
+        sync_db, sync_images = False, True
     else:
-        # Direct connection (for running on PythonAnywhere or inside Docker)
-        connection = mysql.connector.connect(
-            host=MYSQL_HOST,
-            user=MYSQL_USER,
-            password=MYSQL_PASSWORD,
-            database=MYSQL_DATABASE
-        )
-        cursor = connection.cursor()
+        # No argument → interactive menu
+        sync_db, sync_images = interactive_menu()
 
-        try:
-            for table_name in TABLES:
-                sync_table(table_name, api, cursor)
+    # Summary
+    modes = []
+    if sync_db:
+        modes.append("Database")
+    if sync_images:
+        modes.append("Images")
 
-            connection.commit()
-            print("\n" + "=" * 60)
-            print("Sync completed successfully!")
-            print("=" * 60)
+    print(f"\n🚀 Starting sync: {' + '.join(modes)}")
+    print("=" * 60)
 
-        except Exception as e:
-            connection.rollback()
-            print(f"\nError during sync: {e}")
-            raise
-        finally:
-            cursor.close()
-            connection.close()
+    run_sync(config, sync_db=sync_db, sync_images=sync_images)
+
+    print("\n" + "=" * 60)
+    print("✅ Sync completed successfully!")
+    print("=" * 60)
 
 
 if __name__ == "__main__":
