@@ -1,6 +1,6 @@
 import os
 
-from flask import render_template
+from flask import g, render_template
 from werkzeug.exceptions import HTTPException
 
 from routes.admin import init_admin_routes
@@ -32,6 +32,8 @@ def init_error_handlers(app):
 
         @app.errorhandler(Exception)
         def handle_exception(e):
+            app.logger.error(f"❌ Unhandled exception: {e}", exc_info=True)
+            g._rendering_error = True
             return render_template(
                 "error.html",
                 error_title="500 - Internal Server Error",

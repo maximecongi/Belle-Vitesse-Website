@@ -182,6 +182,15 @@ def create_app():
     # Context Processors (Globals)
     @app.context_processor
     def inject_globals():
+        # Skip heavy DB calls for error pages to prevent cascading failures
+        if getattr(g, '_rendering_error', False):
+            return {
+                "now": datetime.now(timezone.utc),
+                "is_admin": request.path.startswith('/admin'),
+                "lang": g.get('lang', DEFAULT_LANG),
+                "t": t, "ts": ts, "alt_url": alt_url,
+            }
+
         is_admin = request.path.startswith('/admin')
         lang = g.get('lang', DEFAULT_LANG)
 
@@ -195,23 +204,30 @@ def create_app():
             "alt_url": alt_url,
         }
 
-        if is_admin:
-            # Admin specific globals
-            ctx["current_user"] = {
-                "firstname": session.get('admin_user_firstname'),
-                "lastname": session.get('admin_user_lastname'),
-                "role": session.get('admin_user_role', 'User'),
-                "role_lower": session.get('admin_user_role', 'User').lower()
-            }
-            # Vehicles are still needed for some admin displays
-            ctx["vehicles"] = get_vehicles()
-        else:
-            # Public site globals
-            ctx.update({
-                "vehicles": get_vehicles(),
-                "heads": get_heads(),
-                "grips_categories": get_grips_categories(),
-            })
+        try:
+            if is_admin:
+                ctx["current_user"] = {
+                    "firstname": session.get('admin_user_firstname'),
+                    "lastname": session.get('admin_user_lastname'),
+                    "role": session.get('admin_user_role', 'User'),
+                    "role_lower": session.get('admin_user_role', 'User').lower()
+                }
+                ctx["vehicles"] = get_vehicles()
+            else:
+                ctx.update({
+                    "vehicles": get_vehicles(),
+                    "heads": get_heads(),
+                    "grips_categories": get_grips_categories(),
+                })
+        except Exception as e:
+            app.logger.error(f"❌ Context processor DB error: {e}")
+            if is_admin:
+                ctx["current_user"] = {
+                    "firstname": "", "lastname": "", "role": "User", "role_lower": "user"}
+                ctx["vehicles"] = []
+            else:
+                ctx.update({"vehicles": [], "heads": [],
+                           "grips_categories": []})
 
         return ctx
 
