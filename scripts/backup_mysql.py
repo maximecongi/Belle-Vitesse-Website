@@ -10,8 +10,8 @@ load_dotenv(env_path)
 
 MYSQL_USER = os.getenv("MYSQL_USER")
 MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
-MYSQL_HOST = os.getenv("MYSQL_HOST")
-MYSQL_DB = os.getenv("MYSQL_DB")
+MYSQL_HOST = os.getenv("MYSQL_HOST", "127.0.0.1")
+MYSQL_DB = os.getenv("MYSQL_DATABASE")
 
 if not all([MYSQL_USER, MYSQL_PASSWORD, MYSQL_HOST, MYSQL_DB]):
     print("❌ Missing MySQL environment variables.")
