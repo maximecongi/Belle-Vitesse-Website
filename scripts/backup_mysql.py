@@ -30,7 +30,7 @@ cmd = [
     f"-h{MYSQL_HOST}",
     f"-u{MYSQL_USER}",
     f"-p{MYSQL_PASSWORD}",
-    "--ssl-mode=DISABLED",
+    "--skip-ssl",
     MYSQL_DB
 ]
 
