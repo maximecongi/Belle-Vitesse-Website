@@ -216,7 +216,7 @@ def check_alerts():
             )
 
             for row in delete_users:
-                loc = row.location or get_geolocation(row.ip_address)
+                loc = get_geolocation(row.ip_address)
                 alerts.append({
                     "subject": f"DELETE Flood par {row.user}",
                     "body": (
@@ -244,7 +244,7 @@ def check_alerts():
             )
 
             for row in flood_users:
-                loc = row.location or get_geolocation(row.ip_address)
+                loc = get_geolocation(row.ip_address)
                 alerts.append({
                     "subject": f"Flood total par {row.user}",
                     "body": (
@@ -272,7 +272,7 @@ def check_alerts():
                 )
 
                 for log in sensitive_logs:
-                    loc = log.location or get_geolocation(log.ip_address)
+                    loc = get_geolocation(log.ip_address)
                     alerts.append({
                         "subject": f"Modification de table sensible '{tbl}' par {log.user}",
                         "body": (
@@ -300,7 +300,7 @@ def check_alerts():
                 )
 
                 for row in out_of_hours:
-                    loc = row.location or get_geolocation(row.ip_address)
+                    loc = get_geolocation(row.ip_address)
                     alerts.append({
                         "subject": f"Activité SQL hors bureau par {row.user}",
                         "body": (
