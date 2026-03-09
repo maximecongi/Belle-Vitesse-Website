@@ -182,14 +182,18 @@ def check_alerts():
             # ── 1. DELETE flood ───────────────────────────────────────────────
             delete_window = now - timedelta(minutes=seuil_delete_window)
             delete_users = (
-                db.session.query(SqlQueryLog.user, func.count(
-                    SqlQueryLog.id).label("cnt"))
+                db.session.query(
+                    SqlQueryLog.user,
+                    SqlQueryLog.ip_address,
+                    SqlQueryLog.location,
+                    func.count(SqlQueryLog.id).label("cnt")
+                )
                 .filter(
                     SqlQueryLog.query.like("DELETE%"),
                     SqlQueryLog.timestamp >= delete_window,
                     SqlQueryLog.user != "system",
                 )
-                .group_by(SqlQueryLog.user)
+                .group_by(SqlQueryLog.user, SqlQueryLog.ip_address, SqlQueryLog.location)
                 .having(func.count(SqlQueryLog.id) >= seuil_delete_count)
                 .all()
             )
@@ -198,7 +202,8 @@ def check_alerts():
                 alerts.append({
                     "subject": f"DELETE Flood par {row.user}",
                     "body": (
-                        f"L'utilisateur {row.user} a exécuté {row.cnt} requêtes DELETE "
+                        f"L'utilisateur {row.user} (IP: {row.ip_address}, {row.location}) "
+                        f"a exécuté {row.cnt} requêtes DELETE "
                         f"dans les {seuil_delete_window} dernières minutes."
                     ),
                 })
@@ -206,13 +211,17 @@ def check_alerts():
             # ── 2. Flood général ──────────────────────────────────────────────
             flood_window = now - timedelta(minutes=seuil_flood_window)
             flood_users = (
-                db.session.query(SqlQueryLog.user, func.count(
-                    SqlQueryLog.id).label("cnt"))
+                db.session.query(
+                    SqlQueryLog.user,
+                    SqlQueryLog.ip_address,
+                    SqlQueryLog.location,
+                    func.count(SqlQueryLog.id).label("cnt")
+                )
                 .filter(
                     SqlQueryLog.timestamp >= flood_window,
                     SqlQueryLog.user != "system",
                 )
-                .group_by(SqlQueryLog.user)
+                .group_by(SqlQueryLog.user, SqlQueryLog.ip_address, SqlQueryLog.location)
                 .having(func.count(SqlQueryLog.id) >= seuil_flood_count)
                 .all()
             )
@@ -221,7 +230,8 @@ def check_alerts():
                 alerts.append({
                     "subject": f"Flood total par {row.user}",
                     "body": (
-                        f"L'utilisateur {row.user} a exécuté {row.cnt} requêtes SQL "
+                        f"L'utilisateur {row.user} (IP: {row.ip_address}, {row.location}) "
+                        f"a exécuté {row.cnt} requêtes SQL "
                         f"dans les {seuil_flood_window} dernières minutes."
                     ),
                 })
@@ -247,8 +257,8 @@ def check_alerts():
                     alerts.append({
                         "subject": f"Modification de table sensible '{tbl}' par {log.user}",
                         "body": (
-                            f"L'utilisateur {log.user} a modifié la table '{tbl}' "
-                            f"à {log.timestamp} UTC.\n"
+                            f"L'utilisateur {log.user} (IP: {log.ip_address}, {log.location}) "
+                            f"a modifié la table '{tbl}' à {log.timestamp} UTC.\n"
                             f"Requête : {render_query(log.query, log.parameters)}"
                         ),
                     })
@@ -257,13 +267,17 @@ def check_alerts():
             current_hour = now.hour
             if current_hour < heure_debut or current_hour >= heure_fin:
                 out_of_hours = (
-                    db.session.query(SqlQueryLog.user, func.count(
-                        SqlQueryLog.id).label("cnt"))
+                    db.session.query(
+                        SqlQueryLog.user,
+                        SqlQueryLog.ip_address,
+                        SqlQueryLog.location,
+                        func.count(SqlQueryLog.id).label("cnt")
+                    )
                     .filter(
                         SqlQueryLog.timestamp >= recent_window,
                         SqlQueryLog.user != "system",
                     )
-                    .group_by(SqlQueryLog.user)
+                    .group_by(SqlQueryLog.user, SqlQueryLog.ip_address, SqlQueryLog.location)
                     .all()
                 )
 
@@ -271,7 +285,8 @@ def check_alerts():
                     alerts.append({
                         "subject": f"Activité SQL hors bureau par {row.user}",
                         "body": (
-                            f"L'utilisateur {row.user} a exécuté {row.cnt} requêtes SQL "
+                            f"L'utilisateur {row.user} (IP: {row.ip_address}, {row.location}) "
+                            f"a exécuté {row.cnt} requêtes SQL "
                             f"hors des heures normales ({heure_debut}h-{heure_fin}h UTC)."
                         ),
                     })
