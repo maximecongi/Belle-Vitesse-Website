@@ -19,7 +19,7 @@ if not all([MYSQL_USER, MYSQL_PASSWORD, MYSQL_HOST, MYSQL_DB]):
 
 # Setup backup directory
 TIMESTAMP = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-BACKUP_DIR = Path(__file__).parent.parent / 'backups' / 'mysql'
+BACKUP_DIR = Path(__file__).parent.parent / "private/backups/sql"
 BACKUP_DIR.mkdir(parents=True, exist_ok=True)
 BACKUP_FILE = BACKUP_DIR / f"dump_{TIMESTAMP}.sql"
 
@@ -30,6 +30,7 @@ cmd = [
     f"-h{MYSQL_HOST}",
     f"-u{MYSQL_USER}",
     f"-p{MYSQL_PASSWORD}",
+    "--ssl-mode=DISABLED",
     MYSQL_DB
 ]
 
