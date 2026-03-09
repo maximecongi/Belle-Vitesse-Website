@@ -72,7 +72,6 @@ def render_query(query: str, parameters: str | None) -> str:
 def send_alerts_batch(alerts: list[dict], app):
     """Envoie toutes les alertes en un seul mail récapitulatif."""
     if not alerts:
-        print(f"[{datetime.now()}] ✅ Aucune alerte détectée.")
         return
 
     for alert in alerts:
