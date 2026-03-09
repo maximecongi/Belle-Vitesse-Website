@@ -55,7 +55,7 @@ h2.title-textual-section {
     margin-bottom: 3vw;
 }
 
-.main-wrapper>*:not(h1) {
+.main-wrapper>* {
     position: relative;
     padding: 0 3vw;
 }
