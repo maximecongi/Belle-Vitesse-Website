@@ -246,3 +246,29 @@ class VehicleCheckpointConfig(db.Model):
 
     def __repr__(self):
         return f"<VehicleCheckpointConfig {self.vehicle_id}>"
+
+
+class SqlQueryLog(db.Model):
+    __tablename__ = "sql_query_logs"
+
+    # BigInteger for ID, DateTime for timestamp
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    timestamp = db.Column(db.DateTime(
+        6), primary_key=True, default=datetime.utcnow)
+    user = db.Column(db.String(255), nullable=False, default='anonymous')
+    endpoint = db.Column(db.String(255))
+    method = db.Column(db.String(10))
+    query = db.Column(db.Text, nullable=False)
+    parameters = db.Column(db.Text)
+    duration_ms = db.Column(db.Float)
+
+    __table_args__ = (
+        db.Index('idx_user_ts', 'user', 'timestamp'),
+        {
+            'mysql_engine': 'InnoDB',
+            'mysql_charset': 'utf8mb4',
+        }
+    )
+
+    def __repr__(self):
+        return f"<SqlQueryLog {self.id} user={self.user} endpoint={self.endpoint}>"

@@ -14,6 +14,7 @@ from utils.database import (
 )
 from utils.database import init_checkout_db, init_checkin_db
 from models import db
+from services.sql_logger import init_sql_logger
 
 SUPPORTED_LANGS = ('en', 'fr')
 DEFAULT_LANG = 'en'
@@ -99,6 +100,9 @@ def create_app():
     csrf.init_app(app)
     init_cache(cache)
     db.init_app(app)
+
+    # Initialize SQL Logger
+    init_sql_logger(app, db)
 
     # Initialize routes & error handlers
     init_routes(app)

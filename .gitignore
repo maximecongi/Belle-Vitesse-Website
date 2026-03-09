@@ -280,3 +280,5 @@ static/images/airtable/
 /static/images/airtable
 /static/images
 /static/images/airtable
+/scripts/sql/*.log
+/var/log/sql_*.log

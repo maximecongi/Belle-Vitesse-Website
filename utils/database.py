@@ -303,7 +303,6 @@ def init_checkout_db():
         """)
 
         connection.commit()
-        print("✅ Checkout DB initialized.")
 
     except mysql.connector.Error as err:
         print(f"❌ Error initializing checkout DB: {err}")
@@ -509,7 +508,6 @@ def init_checkin_db():
         """)
 
         connection.commit()
-        print("✅ Checkin DB initialized.")
 
     except mysql.connector.Error as err:
         print(f"❌ Error initializing checkin DB: {err}")

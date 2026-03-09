@@ -1,0 +1,288 @@
+import os
+import re
+import ast
+import smtplib
+import sys
+from datetime import datetime, timedelta, timezone
+from email.message import EmailMessage
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Setup path for local imports
+_root = Path(__file__).parent.parent.parent
+sys.path.append(str(_root))
+
+# Load environment variables
+load_dotenv(_root / '.env')
+
+
+def render_query(query: str, parameters: str | None) -> str:
+    """Reconstitue la requête SQL avec ses paramètres injectés."""
+    if not parameters:
+        return query
+    try:
+        params = ast.literal_eval(parameters)
+    except Exception:
+        return query
+
+    if isinstance(params, dict):
+        def replace(match):
+            key = match.group(1)
+            val = params.get(key)
+            if val is None:
+                return "NULL"
+            if isinstance(val, str):
+                return f"'{val}'"
+            return str(val)
+        return re.sub(r'%\((\w+)\)s', replace, query)
+
+    if isinstance(params, (list, tuple)):
+        it = iter(params)
+
+        def replace(_):
+            val = next(it, None)
+            if val is None:
+                return "NULL"
+            if isinstance(val, str):
+                return f"'{val}'"
+            return str(val)
+        return re.sub(r'%s', replace, query)
+
+    return query
+
+
+def send_alerts_batch(alerts: list[dict], app):
+    """Envoie toutes les alertes en un seul mail récapitulatif."""
+    if not alerts:
+        print(f"[{datetime.now()}] ✅ Aucune alerte détectée.")
+        return
+
+    for alert in alerts:
+        print(f"[{datetime.now()}] 🚨 ALERTE : {alert['subject']}\n{alert['body']}\n")
+
+    smtp_host = os.getenv("MAIL_SERVER")
+    smtp_port = int(os.getenv("MAIL_PORT", 587))
+    smtp_user = os.getenv("MAIL_USERNAME")
+    smtp_password = os.getenv("MAIL_PASSWORD")
+    alert_to = os.getenv("SUPER_ADMIN_MAIL")
+
+    if not all([smtp_host, smtp_user, smtp_password, alert_to]):
+        print(
+            f"[{datetime.now()}] ⚠️  Config mail manquante. {len(alerts)} alerte(s) non envoyée(s).")
+        return
+
+    from flask import render_template
+
+    now_utc = datetime.now(timezone.utc)
+    date_str = now_utc.strftime("%d/%m/%Y")
+    time_str = now_utc.strftime("%H:%M:%S")
+    now_year = now_utc.year
+    subject = f"[ALERTE SQL] {len(alerts)} alerte(s) détectée(s) — {date_str} {time_str}"
+
+    with app.app_context():
+        html_content = render_template(
+            "emails/sql_alert.html",
+            alerts=alerts,
+            total_alerts=len(alerts),
+            date_str=date_str,
+            time_str=time_str,
+            now_year=now_year,
+        )
+
+    msg = EmailMessage()
+    msg['Subject'] = subject
+    msg['From'] = smtp_user
+    msg['To'] = alert_to
+    msg.add_alternative(html_content, subtype='html')
+
+    try:
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            if os.getenv("MAIL_USE_TLS", "true").lower() == "true":
+                server.starttls()
+            server.login(smtp_user, smtp_password)
+            server.send_message(msg)
+        print(
+            f"[{datetime.now()}] 📧 Mail récapitulatif envoyé ({len(alerts)} alerte(s)).")
+    except Exception as e:
+        print(f"[{datetime.now()}] ❌ Erreur envoi mail : {e}")
+
+
+def build_minimal_app():
+    """Crée une app Flask minimale avec uniquement SQLAlchemy — sans blueprints,
+    sans Airtable, sans warm cache. SSH tunnel activé hors production."""
+    from flask import Flask
+    from models import db
+
+    mysql_user = os.getenv("MYSQL_USER", "root")
+    mysql_pass = os.getenv("MYSQL_PASSWORD", "")
+    mysql_host = os.getenv("MYSQL_HOST", "localhost")
+    mysql_port = 3306
+    mysql_db = os.getenv("MYSQL_DATABASE", "bellevitesse")
+
+    is_prod = os.getenv("FLASK_ENV") == "production"
+    use_ssh = os.getenv("USE_SSH_TUNNEL", "false").lower() == "true"
+    tunnel = None
+
+    if use_ssh and not is_prod:
+        from sshtunnel import SSHTunnelForwarder
+        try:
+            tunnel = SSHTunnelForwarder(
+                (os.getenv("SSH_HOST"), 22),
+                ssh_username=os.getenv("SSH_USER"),
+                ssh_password=os.getenv("SSH_PASSWORD"),
+                remote_bind_address=(mysql_host, 3306),
+            )
+            tunnel.start()
+            mysql_host = "127.0.0.1"
+            mysql_port = tunnel.local_bind_port
+            print(
+                f"[{datetime.now()}] ✅ SSH Tunnel démarré sur le port {mysql_port}")
+        except Exception as e:
+            print(f"[{datetime.now()}] ❌ Erreur SSH Tunnel : {e}")
+
+    default_uri = (
+        f"mysql+mysqlconnector://{mysql_user}:{mysql_pass}"
+        f"@{mysql_host}:{mysql_port}/{mysql_db}"
+    )
+
+    app = Flask(__name__, template_folder=str(_root / "templates"))
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
+        "SQLALCHEMY_DATABASE_URI", default_uri)
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["SQLALCHEMY_POOL_RECYCLE"] = 280
+    app.config["SQLALCHEMY_POOL_PRE_PING"] = True
+    db.init_app(app)
+
+    return app, tunnel
+
+
+def check_alerts():
+    from models import db, SqlQueryLog
+    from sqlalchemy import func
+
+    app, tunnel = build_minimal_app()
+    alerts = []
+
+    try:
+        with app.app_context():
+            now = datetime.now(timezone.utc)
+
+            seuil_delete_count = int(os.getenv("SEUIL_DELETE_COUNT", 3))
+            seuil_delete_window = int(os.getenv("SEUIL_DELETE_WINDOW", 10))
+            seuil_flood_count = int(os.getenv("SEUIL_FLOOD_COUNT", 200))
+            seuil_flood_window = int(os.getenv("SEUIL_FLOOD_WINDOW", 5))
+            heure_debut = int(os.getenv("HEURE_DEBUT_BUREAU", 8))
+            heure_fin = int(os.getenv("HEURE_FIN_BUREAU", 20))
+            tables_sensibles = [
+                t.strip()
+                for t in os.getenv("TABLES_SENSIBLES", "users,passwords,tokens,sessions,payments").split(",")
+                if t.strip()
+            ]
+
+            # ── 1. DELETE flood ───────────────────────────────────────────────
+            delete_window = now - timedelta(minutes=seuil_delete_window)
+            delete_users = (
+                db.session.query(SqlQueryLog.user, func.count(
+                    SqlQueryLog.id).label("cnt"))
+                .filter(
+                    SqlQueryLog.query.like("DELETE%"),
+                    SqlQueryLog.timestamp >= delete_window,
+                    SqlQueryLog.user != "system",
+                )
+                .group_by(SqlQueryLog.user)
+                .having(func.count(SqlQueryLog.id) >= seuil_delete_count)
+                .all()
+            )
+
+            for row in delete_users:
+                alerts.append({
+                    "subject": f"DELETE Flood par {row.user}",
+                    "body": (
+                        f"L'utilisateur {row.user} a exécuté {row.cnt} requêtes DELETE "
+                        f"dans les {seuil_delete_window} dernières minutes."
+                    ),
+                })
+
+            # ── 2. Flood général ──────────────────────────────────────────────
+            flood_window = now - timedelta(minutes=seuil_flood_window)
+            flood_users = (
+                db.session.query(SqlQueryLog.user, func.count(
+                    SqlQueryLog.id).label("cnt"))
+                .filter(
+                    SqlQueryLog.timestamp >= flood_window,
+                    SqlQueryLog.user != "system",
+                )
+                .group_by(SqlQueryLog.user)
+                .having(func.count(SqlQueryLog.id) >= seuil_flood_count)
+                .all()
+            )
+
+            for row in flood_users:
+                alerts.append({
+                    "subject": f"Flood total par {row.user}",
+                    "body": (
+                        f"L'utilisateur {row.user} a exécuté {row.cnt} requêtes SQL "
+                        f"dans les {seuil_flood_window} dernières minutes."
+                    ),
+                })
+
+            # ── 3. Tables sensibles (5 dernières minutes) ─────────────────────
+            recent_window = now - timedelta(minutes=5)
+
+            for tbl in tables_sensibles:
+                sensitive_logs = (
+                    db.session.query(SqlQueryLog)
+                    .filter(
+                        SqlQueryLog.timestamp >= recent_window,
+                        (
+                            SqlQueryLog.query.like(f"DELETE FROM {tbl}%")
+                            | SqlQueryLog.query.like(f"UPDATE {tbl}%")
+                            | SqlQueryLog.query.like(f"DROP TABLE {tbl}%")
+                        ),
+                    )
+                    .all()
+                )
+
+                for log in sensitive_logs:
+                    alerts.append({
+                        "subject": f"Modification de table sensible '{tbl}' par {log.user}",
+                        "body": (
+                            f"L'utilisateur {log.user} a modifié la table '{tbl}' "
+                            f"à {log.timestamp} UTC.\n"
+                            f"Requête : {render_query(log.query, log.parameters)}"
+                        ),
+                    })
+
+            # ── 4. Activité hors heures de bureau ─────────────────────────────
+            current_hour = now.hour
+            if current_hour < heure_debut or current_hour >= heure_fin:
+                out_of_hours = (
+                    db.session.query(SqlQueryLog.user, func.count(
+                        SqlQueryLog.id).label("cnt"))
+                    .filter(
+                        SqlQueryLog.timestamp >= recent_window,
+                        SqlQueryLog.user != "system",
+                    )
+                    .group_by(SqlQueryLog.user)
+                    .all()
+                )
+
+                for row in out_of_hours:
+                    alerts.append({
+                        "subject": f"Activité SQL hors bureau par {row.user}",
+                        "body": (
+                            f"L'utilisateur {row.user} a exécuté {row.cnt} requêtes SQL "
+                            f"hors des heures normales ({heure_debut}h-{heure_fin}h UTC)."
+                        ),
+                    })
+
+        send_alerts_batch(alerts, app)
+
+    finally:
+        if tunnel and tunnel.is_active:
+            tunnel.stop()
+            print(f"[{datetime.now()}] 🔌 SSH Tunnel fermé.")
+
+
+if __name__ == "__main__":
+    check_alerts()
