@@ -257,7 +257,6 @@ class SqlQueryLog(db.Model):
         6), primary_key=True, default=datetime.utcnow)
     user = db.Column(db.String(255), nullable=False, default='anonymous')
     ip_address = db.Column(db.String(50))
-    location = db.Column(db.String(255))
     endpoint = db.Column(db.String(255))
     method = db.Column(db.String(10))
     query = db.Column(db.Text, nullable=False)

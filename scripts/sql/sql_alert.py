@@ -3,6 +3,8 @@ import re
 import ast
 import smtplib
 import sys
+import requests
+from functools import lru_cache
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 from pathlib import Path
@@ -14,6 +16,22 @@ sys.path.append(str(_root))
 
 # Load environment variables
 load_dotenv(_root / '.env')
+
+
+@lru_cache(maxsize=128)
+def get_geolocation(ip_address):
+    if not ip_address or ip_address in ("127.0.0.1", "::1", "localhost", "None"):
+        return "Local"
+    try:
+        response = requests.get(
+            f"http://ip-api.com/json/{ip_address}?fields=status,country,city", timeout=2.0)
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("status") == "success":
+                return f"{data.get('city', '')}, {data.get('country', '')}".strip(', ')
+    except Exception:
+        pass
+    return "Unknown"
 
 
 def render_query(query: str, parameters: str | None) -> str:
@@ -185,7 +203,6 @@ def check_alerts():
                 db.session.query(
                     SqlQueryLog.user,
                     SqlQueryLog.ip_address,
-                    SqlQueryLog.location,
                     func.count(SqlQueryLog.id).label("cnt")
                 )
                 .filter(
@@ -193,16 +210,17 @@ def check_alerts():
                     SqlQueryLog.timestamp >= delete_window,
                     SqlQueryLog.user != "system",
                 )
-                .group_by(SqlQueryLog.user, SqlQueryLog.ip_address, SqlQueryLog.location)
+                .group_by(SqlQueryLog.user, SqlQueryLog.ip_address)
                 .having(func.count(SqlQueryLog.id) >= seuil_delete_count)
                 .all()
             )
 
             for row in delete_users:
+                loc = row.location or get_geolocation(row.ip_address)
                 alerts.append({
                     "subject": f"DELETE Flood par {row.user}",
                     "body": (
-                        f"L'utilisateur {row.user} (IP: {row.ip_address}, {row.location}) "
+                        f"L'utilisateur {row.user} (IP: {row.ip_address}, {loc}) "
                         f"a exécuté {row.cnt} requêtes DELETE "
                         f"dans les {seuil_delete_window} dernières minutes."
                     ),
@@ -214,23 +232,23 @@ def check_alerts():
                 db.session.query(
                     SqlQueryLog.user,
                     SqlQueryLog.ip_address,
-                    SqlQueryLog.location,
                     func.count(SqlQueryLog.id).label("cnt")
                 )
                 .filter(
                     SqlQueryLog.timestamp >= flood_window,
                     SqlQueryLog.user != "system",
                 )
-                .group_by(SqlQueryLog.user, SqlQueryLog.ip_address, SqlQueryLog.location)
+                .group_by(SqlQueryLog.user, SqlQueryLog.ip_address)
                 .having(func.count(SqlQueryLog.id) >= seuil_flood_count)
                 .all()
             )
 
             for row in flood_users:
+                loc = row.location or get_geolocation(row.ip_address)
                 alerts.append({
                     "subject": f"Flood total par {row.user}",
                     "body": (
-                        f"L'utilisateur {row.user} (IP: {row.ip_address}, {row.location}) "
+                        f"L'utilisateur {row.user} (IP: {row.ip_address}, {loc}) "
                         f"a exécuté {row.cnt} requêtes SQL "
                         f"dans les {seuil_flood_window} dernières minutes."
                     ),
@@ -254,10 +272,11 @@ def check_alerts():
                 )
 
                 for log in sensitive_logs:
+                    loc = log.location or get_geolocation(log.ip_address)
                     alerts.append({
                         "subject": f"Modification de table sensible '{tbl}' par {log.user}",
                         "body": (
-                            f"L'utilisateur {log.user} (IP: {log.ip_address}, {log.location}) "
+                            f"L'utilisateur {log.user} (IP: {log.ip_address}, {loc}) "
                             f"a modifié la table '{tbl}' à {log.timestamp} UTC.\n"
                             f"Requête : {render_query(log.query, log.parameters)}"
                         ),
@@ -270,22 +289,22 @@ def check_alerts():
                     db.session.query(
                         SqlQueryLog.user,
                         SqlQueryLog.ip_address,
-                        SqlQueryLog.location,
                         func.count(SqlQueryLog.id).label("cnt")
                     )
                     .filter(
                         SqlQueryLog.timestamp >= recent_window,
                         SqlQueryLog.user != "system",
                     )
-                    .group_by(SqlQueryLog.user, SqlQueryLog.ip_address, SqlQueryLog.location)
+                    .group_by(SqlQueryLog.user, SqlQueryLog.ip_address)
                     .all()
                 )
 
                 for row in out_of_hours:
+                    loc = row.location or get_geolocation(row.ip_address)
                     alerts.append({
                         "subject": f"Activité SQL hors bureau par {row.user}",
                         "body": (
-                            f"L'utilisateur {row.user} (IP: {row.ip_address}, {row.location}) "
+                            f"L'utilisateur {row.user} (IP: {row.ip_address}, {loc}) "
                             f"a exécuté {row.cnt} requêtes SQL "
                             f"hors des heures normales ({heure_debut}h-{heure_fin}h UTC)."
                         ),

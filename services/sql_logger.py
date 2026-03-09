@@ -2,12 +2,10 @@ import time
 import logging
 import re
 import ast
-import requests
-from functools import lru_cache
 from datetime import datetime, timezone
 from pathlib import Path
 from sqlalchemy import event, insert
-from flask import request, session
+from flask import request, session, has_request_context
 
 from models import SqlQueryLog
 
@@ -64,23 +62,6 @@ def render_query(query: str, parameters) -> str:
     return query
 
 
-@lru_cache(maxsize=128)
-def get_geolocation(ip_address):
-    if not ip_address or ip_address in ("127.0.0.1", "::1", "localhost"):
-        return "Local"
-    try:
-        # Court timeout pour ne pas ralentir Flask
-        response = requests.get(
-            f"http://ip-api.com/json/{ip_address}?fields=status,country,city", timeout=0.8)
-        if response.status_code == 200:
-            data = response.json()
-            if data.get("status") == "success":
-                return f"{data.get('city', '')}, {data.get('country', '')}".strip(', ')
-    except Exception:
-        pass
-    return "Unknown"
-
-
 def init_sql_logger(app, db):
     """
     Initialise the SQL logger.
@@ -125,7 +106,6 @@ def init_sql_logger(app, db):
             endpoint = None
             method = None
             ip_address = None
-            location = None
 
             if request:
                 try:
@@ -136,7 +116,6 @@ def init_sql_logger(app, db):
                         'X-Forwarded-For', request.remote_addr)
                     if ip_address:
                         ip_address = ip_address.split(',')[0].strip()
-                        location = get_geolocation(ip_address)
 
                     session_firstname = session.get("admin_user_firstname")
                     session_lastname = session.get("admin_user_lastname")
@@ -163,7 +142,6 @@ def init_sql_logger(app, db):
                     timestamp=ts,
                     user=str(user),
                     ip_address=ip_address,
-                    location=location,
                     endpoint=endpoint,
                     method=method,
                     query=safe_query,
@@ -177,7 +155,7 @@ def init_sql_logger(app, db):
             try:
                 readable_query = render_query(safe_query, parameters)
                 logger.info(
-                    f"user={user} | ip={ip_address} | loc={location} | "
+                    f"user={user} | ip={ip_address} | "
                     f"endpoint={endpoint} | method={method} | "
                     f"duration={duration_ms:.2f}ms | query={readable_query}"
                 )
