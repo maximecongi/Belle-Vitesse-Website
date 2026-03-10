@@ -39,12 +39,15 @@ def create_app():
         "SECRET_KEY", "bv_super_secret_key_2026")
 
     # Redis Cache Config
-    app.config["CACHE_TYPE"] = "RedisCache"
-    app.config["CACHE_REDIS_HOST"] = os.getenv("REDIS_HOST", "bv_redis")
-    app.config["CACHE_REDIS_PORT"] = int(os.getenv("REDIS_PORT", 6379))
-    app.config["CACHE_REDIS_DB"] = int(os.getenv("REDIS_DB", 0))
-    app.config["CACHE_REDIS_URL"] = os.getenv(
-        "REDIS_URL", f"redis://{app.config['CACHE_REDIS_HOST']}:{app.config['CACHE_REDIS_PORT']}/{app.config['CACHE_REDIS_DB']}")
+    if os.getenv("FLASK_ENV") == "production":
+        app.config["CACHE_TYPE"] = "RedisCache"
+        app.config["CACHE_REDIS_HOST"] = os.getenv("REDIS_HOST", "bv_redis")
+        app.config["CACHE_REDIS_PORT"] = int(os.getenv("REDIS_PORT", 6379))
+        app.config["CACHE_REDIS_DB"] = int(os.getenv("REDIS_DB", 0))
+        app.config["CACHE_REDIS_URL"] = os.getenv(
+            "REDIS_URL", f"redis://{app.config['CACHE_REDIS_HOST']}:{app.config['CACHE_REDIS_PORT']}/{app.config['CACHE_REDIS_DB']}")
+    else:
+        app.config["CACHE_TYPE"] = "SimpleCache"
     app.config["CACHE_DEFAULT_TIMEOUT"] = 3600
     app.config["CACHE_KEY_PREFIX"] = "bv_cache_"
     app.config["PREFERRED_URL_SCHEME"] = "https"
@@ -103,8 +106,11 @@ def create_app():
     app.config["PRIVATE_FOLDER"].mkdir(parents=True, exist_ok=True)
 
     # Limiter Config
-    app.config["RATELIMIT_STORAGE_URI"] = os.getenv(
-        "REDIS_URL", f"redis://{app.config['CACHE_REDIS_HOST']}:{app.config['CACHE_REDIS_PORT']}/{app.config['CACHE_REDIS_DB']}")
+    if os.getenv("FLASK_ENV") == "production":
+        app.config["RATELIMIT_STORAGE_URI"] = os.getenv(
+            "REDIS_URL", f"redis://{app.config['CACHE_REDIS_HOST']}:{app.config['CACHE_REDIS_PORT']}/{app.config['CACHE_REDIS_DB']}")
+    else:
+        app.config["RATELIMIT_STORAGE_URI"] = "memory://"
 
     # Initialize extensions
     cache.init_app(app)
