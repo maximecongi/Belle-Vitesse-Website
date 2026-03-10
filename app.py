@@ -48,7 +48,7 @@ def create_app():
             "REDIS_URL", f"redis://{app.config['CACHE_REDIS_HOST']}:{app.config['CACHE_REDIS_PORT']}/{app.config['CACHE_REDIS_DB']}")
     else:
         app.config["CACHE_TYPE"] = "SimpleCache"
-    app.config["CACHE_DEFAULT_TIMEOUT"] = 3600
+    app.config["CACHE_DEFAULT_TIMEOUT"] = 86400  # 24h
     app.config["CACHE_KEY_PREFIX"] = "bv_cache_"
     app.config["PREFERRED_URL_SCHEME"] = "https"
 
@@ -308,6 +308,22 @@ def warm_cache():
 
 if os.getenv("FLASK_ENV") == "production":
     warm_cache()
+
+    # ── Scheduler : re-warm du cache toutes les 23h50 ──────────
+    from apscheduler.schedulers.background import BackgroundScheduler
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(
+        func=warm_cache,
+        trigger="interval",
+        hours=23,
+        minutes=50,
+        id="cache_warmup",
+        replace_existing=True,
+    )
+    scheduler.start()
+    app.logger.info("⏰ Scheduler cache démarré")
+    # ───────────────────────────────────────────────────────────
+
 
 if __name__ == "__main__":
     app.run(debug=True, use_reloader=True, port=5001)

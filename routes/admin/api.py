@@ -31,16 +31,6 @@ def init_api_routes(app):
             current_app.logger.error(f"❌ Error in admin_api_events: {e}")
             return jsonify([]), 500
 
-    @app.route("/admin/api/stats")
-    @require_roles('administrator', 'manager', 'user')
-    def admin_api_stats():
-        try:
-            stats = get_checkout_stats()
-            return jsonify(stats)
-        except Exception as e:
-            current_app.logger.error(f"❌ Error in admin_api_stats: {e}")
-            return jsonify({"error": str(e)}), 500
-
     @app.route("/admin/api/checkouts/<int:record_id>/status", methods=["GET", "POST"])
     @require_roles('administrator', 'manager', 'user')
     def admin_api_checkout_status(record_id):
