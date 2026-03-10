@@ -102,6 +102,10 @@ def create_app():
             "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE")
     app.config["PRIVATE_FOLDER"].mkdir(parents=True, exist_ok=True)
 
+    # Limiter Config
+    app.config["RATELIMIT_STORAGE_URI"] = os.getenv(
+        "REDIS_URL", f"redis://{app.config['CACHE_REDIS_HOST']}:{app.config['CACHE_REDIS_PORT']}/{app.config['CACHE_REDIS_DB']}")
+
     # Initialize extensions
     cache.init_app(app)
     compress.init_app(app)
