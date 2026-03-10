@@ -10,7 +10,7 @@ services:
 
 networks:
   bv_network:
-    driver: bridge
+    external: true
 
 volumes:
   redis_data:
