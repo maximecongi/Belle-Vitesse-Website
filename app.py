@@ -37,10 +37,16 @@ def create_app():
     # App Config
     app.config["SECRET_KEY"] = os.getenv(
         "SECRET_KEY", "bv_super_secret_key_2026")
-    app.config["CACHE_TYPE"] = "FileSystemCache"
-    app.config["CACHE_DIR"] = "/tmp/flask-cache"
+
+    # Redis Cache Config
+    app.config["CACHE_TYPE"] = "RedisCache"
+    app.config["CACHE_REDIS_HOST"] = os.getenv("REDIS_HOST", "localhost")
+    app.config["CACHE_REDIS_PORT"] = int(os.getenv("REDIS_PORT", 6379))
+    app.config["CACHE_REDIS_DB"] = int(os.getenv("REDIS_DB", 0))
+    app.config["CACHE_REDIS_URL"] = os.getenv(
+        "REDIS_URL", f"redis://{app.config['CACHE_REDIS_HOST']}:{app.config['CACHE_REDIS_PORT']}/{app.config['CACHE_REDIS_DB']}")
     app.config["CACHE_DEFAULT_TIMEOUT"] = 3600
-    app.config["CACHE_KEY_PREFIX"] = "myapp_"
+    app.config["CACHE_KEY_PREFIX"] = "bv_cache_"
     app.config["PREFERRED_URL_SCHEME"] = "https"
 
     # Database config (MySQL via SQLAlchemy)
@@ -81,6 +87,9 @@ def create_app():
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SQLALCHEMY_POOL_RECYCLE"] = 280
     app.config["SQLALCHEMY_POOL_PRE_PING"] = True
+    app.config["SQLALCHEMY_POOL_SIZE"] = 5
+    app.config["SQLALCHEMY_MAX_OVERFLOW"] = 10
+    app.config["SQLALCHEMY_POOL_TIMEOUT"] = 10
 
     # Session Config
     app.config['SESSION_COOKIE_HTTPONLY'] = True
