@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>DÉCHARGE DE RESPONSABILITÉ</title>
+</head>
+
+<body>
+    <h1>DÉCHARGE DE RESPONSABILITÉ</h1>
+    <p style="text-align: center; font-weight: bold; margin-bottom: 30px;">
+        Pilote de véhicule caméra tracking — Belle Vitesse SAS
+    </p>
+
+    <h2>1. Identification des parties</h2>
+    <p><strong>Prestataire :</strong></p>
+    <ul>
+        <li>Raison sociale : Belle Vitesse SAS</li>
+        <li>Représentant : Maxime Congi</li>
+        <li>Adresse : [Adresse de Belle Vitesse]</li>
+        <li>SIRET : [Numéro SIRET]</li>
+    </ul>
+
+    <p><strong>Pilote :</strong></p>
+    <ul>
+        <li>Nom / Prénom : <b>{{ waiver.pilot_first_name }} {{ waiver.pilot_last_name }}</b></li>
+        <li>Date de naissance : <b>{{ waiver.pilot_dob }}</b></li>
+        <li>Numéro de permis : <b>{{ waiver.pilot_license_number }}</b></li>
+        <li>Adresse : <b>{{ waiver.pilot_address }}</b></li>
+    </ul>
+
+    <h2>2. Objet</h2>
+    <p>La présente décharge concerne la mise à disposition par Belle Vitesse d'un véhicule de tracking caméra modifié
+        (ci-après « le Véhicule ») pour les besoins d'une production audiovisuelle, dans le cadre de la prestation
+        décrite ci-dessous :</p>
+    <ul>
+        <li>Projet : <b>{{ waiver.project.nom if waiver.project else '—' }}</b></li>
+        <li>Production : <b>{{ waiver.production_name or '—' }}</b></li>
+        <li>Véhicule(s) : <b>{{ waiver.vehicles or '—' }}</b></li>
+        <li>Date(s) et lieu(x) : <b>{{ waiver.shooting_dates or '—' }}</b></li>
+    </ul>
+
+    <h2>3. Déclarations du pilote</h2>
+    <p>Le pilote déclare expressément :</p>
+    <ul>
+        <li>Être titulaire d'un permis de conduire en cours de validité, de la catégorie requise pour le Véhicule
+            confié.</li>
+        <li>Avoir pris connaissance des caractéristiques techniques du Véhicule, notamment ses dimensions, son poids,
+            ses systèmes de sécurité modifiés et ses contraintes de conduite liées au matériel de caméra embarqué.</li>
+        <li>Avoir été informé et formé aux consignes de sécurité spécifiques à l'utilisation du Véhicule en contexte de
+            tournage.</li>
+        <li>Ne pas être sous l'emprise d'alcool, de substances illicites ou de médicaments altérant ses capacités de
+            conduite.</li>
+        <li>Accepter d'utiliser le Véhicule exclusivement dans le cadre de la prestation définie ci-dessus, en
+            conformité avec le Code de la route et les instructions de Belle Vitesse.</li>
+    </ul>
+
+    <h2>4. Limitation de responsabilité</h2>
+    <p>Le pilote reconnaît et accepte que Belle Vitesse ne pourra en aucun cas être tenue responsable :</p>
+    <ul>
+        <li>Des dommages corporels, matériels ou immatériels résultant d'une utilisation du Véhicule contraire aux
+            consignes remises.</li>
+        <li>Des infractions au Code de la route commises par le pilote durant la prestation.</li>
+        <li>Des dommages causés à des tiers du fait du comportement du pilote.</li>
+    </ul>
+    <p>En cas de sinistre, le pilote s'engage à informer immédiatement Belle Vitesse et à coopérer pleinement avec les
+        autorités compétentes et les assureurs.</p>
+
+    <div style="page-break-inside: avoid;">
+        <h2>5. État du véhicule</h2>
+        <p>Le pilote reconnaît avoir reçu le Véhicule en bon état de fonctionnement et s'engage à le restituer dans
+            l'état dans lequel il lui a été remis, sauf usure normale. Tout dommage constaté à la restitution sera
+            imputé au pilote, sauf preuve contraire.</p>
+
+        <h2>6. Assurances</h2>
+        <p>Le pilote déclare être couvert par une assurance responsabilité civile professionnelle et/ou personnelle en
+            vigueur à la date de la prestation.</p>
+        <ul>
+            <li>Compagnie d'assurance : <b>{{ waiver.pilot_insurance_company }}</b></li>
+            <li>N° de police : <b>{{ waiver.pilot_insurance_policy }}</b></li>
+        </ul>
+
+        <h2>7. Signature</h2>
+        <p>
+            Document signé électroniquement le <b>{{ waiver.signed_at.strftime('%d/%m/%Y à %H:%M') }}</b>.
+        </p>
+
+        <p style="margin-top: 20px; font-style: italic;">Lu et approuvé — Bon pour accord</p>
+
+        <table style="width: 100%; margin-top: 10px;">
+            <tr>
+                <td style="width: 50%;">
+                    <p><strong>Pour Belle Vitesse</strong></p>
+                    <div style="height: 100px;"></div>
+                </td>
+                <td style="width: 50%;">
+                    <p><strong>Signature du pilote</strong></p>
+                    <div class="signature-box">
+                        {% if waiver.signature_data %}
+                        <img src="{{ waiver.signature_data }}" class="signature-img" alt="Signature" />
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+</body>
+
+</html>

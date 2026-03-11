@@ -1,0 +1,115 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Décharges Pilotes{% endblock %}
+{% block page_title %}Décharges Pilotes{% endblock %}
+
+{% block header_actions %}
+<div style="display: flex; gap: 1rem; align-items: center;">
+    <input type="text" id="searchInput" class="form-input" placeholder="🔍 Rechercher..."
+        style="width: 250px; font-size: 0.9rem;" autocomplete="off">
+</div>
+{% endblock %}
+
+{% macro status_badge(status) %}
+{% if status == 'to_generate' %}
+<span class="badge-pill" data-val="À générer">À générer</span>
+{% elif status == 'to_send' %}
+<span class="badge-pill" data-val="À envoyer">À envoyer</span>
+{% elif status == 'to_sign' %}
+<span class="badge-pill" data-val="À signer">À signer</span>
+{% elif status == 'signed' %}
+<span class="badge-pill" data-val="Signé">Signé</span>
+{% else %}
+<span class="badge-pill">{{ status }}</span>
+{% endif %}
+{% endmacro %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-table-container">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Projet</th>
+                    <th>Pilote</th>
+                    <th>Dates de tournage</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for w in waivers %}
+                <tr class="searchable-row">
+                    <td style="font-weight: 600;">{{ w.project_name }}</td>
+                    <td style="font-weight: 600;">{{ w.pilot_name }}</td>
+                    <td>{{ w.shooting_dates }}</td>
+                    <td>
+                        {{ status_badge(w.status) }}
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: center;">
+                            {% if w.status == 'to_generate' %}
+                            <form action="{{ url_for('admin_pilot_waiver_generate', waiver_id=w.id) }}" method="POST"
+                                style="margin: 0;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="admin-btn admin-btn-primary"
+                                    style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">Générer</button>
+                            </form>
+                            {% elif w.status == 'to_send' %}
+                            <form action="{{ url_for('admin_pilot_waiver_send', waiver_id=w.id) }}" method="POST"
+                                style="margin: 0;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="admin-btn admin-btn-primary"
+                                    style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">Envoyer</button>
+                            </form>
+                            {% elif w.status == 'to_sign' %}
+                            <form action="{{ url_for('admin_pilot_waiver_send', waiver_id=w.id) }}" method="POST"
+                                style="margin: 0;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="admin-btn admin-btn-secondary"
+                                    style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">Relancer</button>
+                            </form>
+                            <button type="button" class="admin-btn admin-btn-secondary"
+                                style="padding: 0.25rem 0.75rem; font-size: 0.85rem;"
+                                onclick="navigator.clipboard.writeText(window.location.origin + '/sign/waiver/{{ w.signature_token }}'); alert('Lien copié dans le presse-papier !');">Lien</button>
+                            {% elif w.status == 'signed' %}
+                            <a href="{{ w.signed_pdf_path }}" class="admin-btn admin-btn-secondary"
+                                style="padding: 0.25rem 0.75rem; font-size: 0.85rem;" target="_blank">Voir PDF</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 2rem; color: var(--grey-2);">
+                        Aucune décharge trouvée.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('searchInput');
+        const searchableRows = document.querySelectorAll('.searchable-row');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function (e) {
+                const searchTerm = e.target.value.toLowerCase().trim();
+
+                searchableRows.forEach(row => {
+                    const rowText = row.textContent.toLowerCase();
+                    if (rowText.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

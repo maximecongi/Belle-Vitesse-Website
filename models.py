@@ -90,9 +90,50 @@ class Project(db.Model):
         "Contact", foreign_keys=[contact_pilote_id], backref="projects_as_pilote", lazy=True)
     contact_production_rel = db.relationship(
         "Contact", foreign_keys=[contact_production_id], backref="projects_as_production", lazy=True)
+    pilot_waiver = db.relationship(
+        "PilotWaiver", backref="project", uselist=False, lazy=True)
 
     def __repr__(self):
         return f"<Project {self.nom}>"
+
+
+class PilotWaiver(db.Model):
+    __tablename__ = "pilot_waivers"
+
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey(
+        "projects.id"), unique=True, nullable=False, index=True)
+
+    status = db.Column(db.String(20), default="to_generate", nullable=False)
+    generated_at = db.Column(db.DateTime, nullable=True)
+    sent_at = db.Column(db.DateTime, nullable=True)
+    signed_at = db.Column(db.DateTime, nullable=True)
+
+    # Snapshot data
+    pilot_first_name = db.Column(db.String(100), nullable=True)
+    pilot_last_name = db.Column(db.String(100), nullable=True)
+    pilot_dob = db.Column(db.String(50), nullable=True)
+    pilot_license_number = db.Column(db.String(100), nullable=True)
+    pilot_address = db.Column(db.Text, nullable=True)
+    pilot_insurance_company = db.Column(db.String(255), nullable=True)
+    pilot_insurance_policy = db.Column(db.String(255), nullable=True)
+
+    production_name = db.Column(db.String(255), nullable=True)
+    vehicles = db.Column(db.Text, nullable=True)
+    shooting_dates = db.Column(db.String(255), nullable=True)
+
+    # Signature
+    signature_token = db.Column(
+        db.String(36), unique=True, nullable=True, index=True)
+    signature_data = db.Column(
+        db.Text(length=16777215), nullable=True)  # MEDIUMTEXT
+    signed_pdf_path = db.Column(db.String(500), nullable=True)
+
+    # Webhook
+    webhook_triggered_at = db.Column(db.DateTime, nullable=True)
+
+    def __repr__(self):
+        return f"<PilotWaiver {self.project_id} - {self.status}>"
 
 
 class CheckoutVehicle(db.Model):

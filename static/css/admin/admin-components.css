@@ -202,7 +202,8 @@
     color: var(--neutral-color);
 }
 
-.badge-pill[data-val="À contrôler"] {
+.badge-pill[data-val="À contrôler"],
+.badge-pill[data-val="À générer"] {
     background: var(--neutral-bg);
     color: var(--neutral-color);
 }
@@ -211,13 +212,19 @@
     content: "🔍 ";
 }
 
-.badge-pill[data-val="En cours"] {
+.badge-pill[data-val="En cours"],
+.badge-pill[data-val="À envoyer"] {
     background: #ffe2b8;
     color: #dc852e;
 }
 
+.badge-pill[data-val="À envoyer"]::before {
+    content: "🚀 ";
+}
 
-.badge-pill[data-val="En cours"][data-conform="yes"]:before {
+
+.badge-pill[data-val="En cours"][data-conform="yes"]:before,
+.badge-pill[data-val="À générer"]:before {
     content: "⏳ ";
 }
 

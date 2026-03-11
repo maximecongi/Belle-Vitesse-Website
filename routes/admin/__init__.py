@@ -8,6 +8,7 @@ from .productions import init_productions_routes
 from .contacts import init_contacts_routes
 from .newsletter import init_newsletter_routes
 from .api import init_api_routes
+from .waivers import init_waivers_routes
 
 
 def init_admin_routes(app):
@@ -21,3 +22,4 @@ def init_admin_routes(app):
     init_contacts_routes(app)
     init_newsletter_routes(app)
     init_api_routes(app)
+    init_waivers_routes(app)

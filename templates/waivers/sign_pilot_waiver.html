@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/static/imgs/favicons/favicon.svg" />
+    <link rel="shortcut icon" href="/static/imgs/favicons/favicon.ico" />
+    <title>Signature Décharge Pilote - Belle Vitesse</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/checkout.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+
+    <style>
+        .waiver-content {
+            background: #fff;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--grey-3);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--grey-1);
+            margin-bottom: 2rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .waiver-content h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: #000;
+        }
+
+        .waiver-content h2 {
+            font-size: 1.1rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #000;
+            border-bottom: 1px solid var(--grey-3);
+            padding-bottom: 0.5rem;
+        }
+
+        .waiver-content hr {
+            margin: 1.5rem 0;
+            border: 0;
+            border-top: 1px solid var(--grey-3);
+        }
+
+        .waiver-content ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .waiver-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .pilot-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 600px) {
+            .pilot-form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--grey-2);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--grey-3);
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--blue-1);
+            box-shadow: 0 0 0 3px rgba(0, 100, 255, 0.08);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            display: block;
+            margin-top: 0.25rem;
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            accent-color: var(--blue-1);
+            cursor: pointer;
+        }
+
+        .checkbox-container label {
+            font-size: 0.95rem;
+            color: var(--grey-1);
+            cursor: pointer;
+            line-height: 1.4;
+        }
+
+        .feedback-box {
+            display: none;
+            margin-top: 1.5rem;
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 500;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+
+        .feedback-box.success {
+            background: #f0faf3;
+            color: #1a7a3a;
+            border: 1px solid #a8dbb8;
+        }
+
+        .feedback-box.error {
+            background: #fff5f5;
+            color: #c0392b;
+            border: 1px solid #f5c6c2;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="checkout">
+        <header class="checkout-header">
+            <div class="checkout-header-logo">
+                <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
+                    alt="Belle Vitesse">
+            </div>
+            <div class="checkout-header-meta">
+                <strong class="dot-before">Décharge Pilote</strong><br>
+                <span class="checkout-doc-id">{{ "%04d" | format(waiver.project_id) }} — {{ waiver.production_name
+                    }}</span>
+            </div>
+        </header>
+
+        {% if waiver.status == 'signed' %}
+        <!-- ── État : déjà signé ────────────────────────────────────── -->
+        <section class="checkout-section" style="text-align: center; margin-top: 4rem;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">✅</div>
+            <h2 class="checkout-section-title">Décharge déjà signée</h2>
+            <p style="color: var(--grey-2); margin-top: 1rem;">
+                Ce document a déjà été signé électroniquement et ne peut plus être modifié.
+            </p>
+        </section>
+
+        {% elif waiver.status not in ['to_sign', 'to_send'] %}
+        <!-- ── État : lien invalide ────────────────────────────────── -->
+        <section class="checkout-section" style="text-align: center; margin-top: 4rem;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">❌</div>
+            <h2 class="checkout-section-title">Lien invalide</h2>
+            <p style="color: var(--grey-2); margin-top: 1rem;">
+                Ce lien de signature est invalide ou expiré.
+            </p>
+        </section>
+
+        {% else %}
+        <!-- ── Formulaire de signature ─────────────────────────────── -->
+        <form id="waiver-form" novalidate>
+
+            <!-- Récapitulatif tournage -->
+            <section class="checkout-section">
+                <h2 class="checkout-section-title dot-before">Informations du tournage</h2>
+                <div class="checkout-info-grid">
+                    <div class="checkout-info-item">
+                        <span class="checkout-info-label">Projet</span>
+                        <span class="checkout-info-value">{{ waiver.project.nom if waiver.project else '—' }}</span>
+                    </div>
+                    <div class="checkout-info-item">
+                        <span class="checkout-info-label">Production</span>
+                        <span class="checkout-info-value">{{ waiver.production_name or '—' }}</span>
+                    </div>
+                    <div class="checkout-info-item" style="grid-column: 1 / -1;">
+                        <span class="checkout-info-label">Véhicule(s) à piloter</span>
+                        <span class="checkout-info-value">{{ waiver.vehicles or '—' }}</span>
+                    </div>
+                    <div class="checkout-info-item" style="grid-column: 1 / -1;">
+                        <span class="checkout-info-label">Date(s) et lieu(x) de tournage</span>
+                        <span class="checkout-info-value">{{ waiver.shooting_dates or '—' }}</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Informations pilote (éditables) -->
+            <section class="checkout-section">
+                <h2 class="checkout-section-title dot-before">Vos informations de pilote</h2>
+                <p style="font-size: 0.9rem; color: var(--grey-2); margin-bottom: 1.5rem;">
+                    Vérifiez et complétez vos informations personnelles avant de signer.
+                </p>
+                <div class="pilot-form-grid">
+                    <div class="form-group">
+                        <label for="first_name">Prénom <span style="color:red;">*</span></label>
+                        <input type="text" id="first_name" name="first_name" value="{{ waiver.pilot_first_name or '' }}"
+                            required autocomplete="given-name">
+                    </div>
+                    <div class="form-group">
+                        <label for="last_name">Nom <span style="color:red;">*</span></label>
+                        <input type="text" id="last_name" name="last_name" value="{{ waiver.pilot_last_name or '' }}"
+                            required autocomplete="family-name">
+                    </div>
+                    <div class="form-group">
+                        <label for="dob">Date de naissance <span style="color:red;">*</span></label>
+                        <input type="date" id="dob" name="dob" value="{{ waiver.pilot_dob or '' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="license_number">Numéro de permis <span style="color:red;">*</span></label>
+                        <input type="text" id="license_number" name="license_number"
+                            value="{{ waiver.pilot_license_number or '' }}" required>
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label for="address">Adresse postale <span style="color:red;">*</span></label>
+                        <textarea id="address" name="address" rows="3" required
+                            autocomplete="street-address">{{ waiver.pilot_address or '' }}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="insurance_company">Compagnie d'assurance (RC) <span
+                                style="color:red;">*</span></label>
+                        <input type="text" id="insurance_company" name="insurance_company"
+                            value="{{ waiver.pilot_insurance_company or '' }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="insurance_policy">Numéro de police d'assurance <span
+                                style="color:red;">*</span></label>
+                        <input type="text" id="insurance_policy" name="insurance_policy"
+                            value="{{ waiver.pilot_insurance_policy or '' }}" required>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Contenu de la décharge -->
+            <section class="checkout-section">
+                <h2 class="checkout-section-title dot-before">Contenu de la décharge</h2>
+                <div class="waiver-content">
+                    <h1>DÉCHARGE DE RESPONSABILITÉ</h1>
+                    <p style="font-weight: 500;">Pilote de véhicule caméra tracking — Belle Vitesse SAS</p>
+                    <hr>
+
+                    <h2>1. Identification des parties</h2>
+                    <p><strong>Prestataire :</strong></p>
+                    <ul>
+                        <li>Raison sociale : Belle Vitesse SAS</li>
+                        <li>Représentant : Maxime Congi</li>
+                        <li>Adresse : [Adresse de Belle Vitesse]</li>
+                        <li>SIRET : [Numéro SIRET]</li>
+                    </ul>
+                    <p><strong>Pilote :</strong></p>
+                    <ul>
+                        <li>Nom / Prénom : <strong id="text_pilot_name">…</strong></li>
+                        <li>Date de naissance : <strong id="text_pilot_dob">…</strong></li>
+                        <li>Numéro de permis : <strong id="text_pilot_license">…</strong></li>
+                        <li>Adresse : <strong id="text_pilot_address">…</strong></li>
+                    </ul>
+                    <hr>
+
+                    <h2>2. Objet</h2>
+                    <p>La présente décharge concerne la mise à disposition par Belle Vitesse d'un véhicule de tracking
+                        caméra modifié (ci-après « le Véhicule ») pour les besoins d'une production audiovisuelle.</p>
+                    <ul>
+                        <li>Projet : <strong>{{ waiver.project.nom if waiver.project else '—' }}</strong></li>
+                        <li>Production / Tournage : <strong>{{ waiver.production_name or '—' }}</strong></li>
+                        <li>Véhicule(s) : <strong>{{ waiver.vehicles or '—' }}</strong></li>
+                        <li>Date(s) et lieu(x) : <strong>{{ waiver.shooting_dates or '—' }}</strong></li>
+                    </ul>
+                    <hr>
+
+                    <h2>3. Déclarations du pilote</h2>
+                    <p>Le pilote déclare expressément :</p>
+                    <ul>
+                        <li>Être titulaire d'un permis de conduire en cours de validité, de la catégorie requise pour le
+                            Véhicule confié.</li>
+                        <li>Avoir pris connaissance des caractéristiques techniques du Véhicule, notamment ses
+                            dimensions, son poids, ses systèmes de sécurité modifiés et ses contraintes de conduite
+                            liées au matériel de caméra embarqué.</li>
+                        <li>Avoir été informé et formé aux consignes de sécurité spécifiques à l'utilisation du Véhicule
+                            en contexte de tournage.</li>
+                        <li>Ne pas être sous l'emprise d'alcool, de substances illicites ou de médicaments altérant ses
+                            capacités de conduite.</li>
+                        <li>Accepter d'utiliser le Véhicule exclusivement dans le cadre de la prestation définie
+                            ci-dessus, en conformité avec le Code de la route et les instructions de Belle Vitesse.</li>
+                    </ul>
+                    <hr>
+
+                    <h2>4. Limitation de responsabilité</h2>
+                    <p>Le pilote reconnaît et accepte que Belle Vitesse ne pourra en aucun cas être tenue responsable :
+                    </p>
+                    <ul>
+                        <li>Des dommages corporels, matériels ou immatériels résultant d'une utilisation du Véhicule
+                            contraire aux consignes remises.</li>
+                        <li>Des infractions au Code de la route commises par le pilote durant la prestation.</li>
+                        <li>Des dommages causés à des tiers du fait du comportement du pilote.</li>
+                    </ul>
+                    <p>En cas de sinistre, le pilote s'engage à informer immédiatement Belle Vitesse et à coopérer
+                        pleinement avec les autorités compétentes et les assureurs.</p>
+                    <hr>
+
+                    <h2>5. État du véhicule</h2>
+                    <p>Le pilote reconnaît avoir reçu le Véhicule en bon état de fonctionnement et s'engage à le
+                        restituer dans l'état dans lequel il lui a été remis, sauf usure normale. Tout dommage constaté
+                        à la restitution sera imputé au pilote, sauf preuve contraire.</p>
+                    <hr>
+
+                    <h2>6. Assurances</h2>
+                    <p>Le pilote déclare être couvert par une assurance responsabilité civile professionnelle et/ou
+                        personnelle en vigueur à la date de la prestation.</p>
+                    <ul>
+                        <li>Compagnie d'assurance : <strong id="text_pilot_insurance_company">…</strong></li>
+                        <li>N° de police : <strong id="text_pilot_insurance_policy">…</strong></li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Signature -->
+            <section class="checkout-section">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="accept_terms">
+                    <label for="accept_terms">
+                        <strong>J'ai lu, je comprends et j'approuve les termes de la présente décharge de
+                            responsabilité.</strong><br>
+                        Je certifie que les informations renseignées ci-dessus sont exactes.
+                    </label>
+                </div>
+
+                <div class="checkout-sign-canvas-wrapper" style="margin-top: 1rem;">
+                    <canvas id="signature-canvas"></canvas>
+                </div>
+
+                <div class="checkout-sign-actions">
+                    <button type="button" class="checkout-btn checkout-btn--secondary" id="btn-clear">
+                        Effacer la signature
+                    </button>
+                    <button type="button" class="checkout-btn checkout-btn--primary" id="btn-sign">
+                        Signer numériquement
+                    </button>
+                </div>
+            </section>
+
+            <div id="feedback" class="feedback-box"></div>
+
+        </form>
+        {% endif %}
+
+        <footer class="checkout-footer" style="margin-top: 4rem;">
+            <p><strong>Belle Vitesse SAS</strong></p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // ── Helpers ──────────────────────────────────────────────────────
+            function showFeedback(msg, type) {
+                var el = document.getElementById('feedback');
+                if (!el) return;
+                el.textContent = msg;
+                el.className = 'feedback-box ' + type;
+                el.style.display = 'block';
+                el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            // ── Live sync des champs vers le texte de la décharge ────────────
+            function updateWaiverText() {
+                var first = document.getElementById('first_name').value.trim();
+                var last = document.getElementById('last_name').value.trim();
+                var dob = document.getElementById('dob').value;
+                var license = document.getElementById('license_number').value.trim();
+                var address = document.getElementById('address').value.trim();
+                var insComp = document.getElementById('insurance_company').value.trim();
+                var insPol = document.getElementById('insurance_policy').value.trim();
+
+                var nameEl = document.getElementById('text_pilot_name');
+                if (nameEl) nameEl.textContent = (first + ' ' + last).trim() || '…';
+
+                var dobEl = document.getElementById('text_pilot_dob');
+                if (dobEl) {
+                    if (dob) {
+                        var parts = dob.split('-');
+                        dobEl.textContent = parts.length === 3 ? parts[2] + '/' + parts[1] + '/' + parts[0] : dob;
+                    } else {
+                        dobEl.textContent = '…';
+                    }
+                }
+
+                var licEl = document.getElementById('text_pilot_license');
+                if (licEl) licEl.textContent = license || '…';
+
+                var addrEl = document.getElementById('text_pilot_address');
+                if (addrEl) addrEl.textContent = address || '…';
+
+                var insCompEl = document.getElementById('text_pilot_insurance_company');
+                if (insCompEl) insCompEl.textContent = insComp || '…';
+
+                var insPolEl = document.getElementById('text_pilot_insurance_policy');
+                if (insPolEl) insPolEl.textContent = insPol || '…';
+            }
+
+            var syncIds = ['first_name', 'last_name', 'dob', 'license_number', 'address', 'insurance_company', 'insurance_policy'];
+            syncIds.forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el) el.addEventListener('input', updateWaiverText);
+            });
+            updateWaiverText(); // sync initial
+
+            // ── Validation du bouton ─────────────────────────────────────────
+            var checkbox = document.getElementById('accept_terms');
+            var btnSign = document.getElementById('btn-sign');
+            var btnClear = document.getElementById('btn-clear');
+
+            // ── Canvas & SignaturePad ────────────────────────────────────────
+            var canvas = document.getElementById('signature-canvas');
+            var wrapper = canvas ? canvas.parentElement : null;
+
+            if (!canvas || !wrapper) return; // page état signé/invalide, on s'arrête
+
+            // Checkbox events
+            var signaturePad = new SignaturePad(canvas, {
+                backgroundColor: 'rgb(250, 250, 250)',
+                penColor: 'rgb(21, 21, 21)',
+            });
+
+            function resizeCanvas() {
+                var ratio = Math.max(window.devicePixelRatio || 1, 1);
+                canvas.width = wrapper.offsetWidth * ratio;
+                canvas.height = wrapper.offsetHeight * ratio;
+                canvas.getContext('2d').scale(ratio, ratio);
+                signaturePad.clear();
+            }
+
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas(); // premier appel après que signaturePad existe
+
+            btnClear.addEventListener('click', function () {
+                signaturePad.clear();
+            });
+
+            // ── Soumission ───────────────────────────────────────────────────
+            btnSign.addEventListener('click', function () {
+
+                // 1. Champs obligatoires
+                var missing = false;
+                syncIds.forEach(function (id) {
+                    var el = document.getElementById(id);
+                    if (el && !el.value.trim()) missing = true;
+                });
+
+                if (missing) {
+                    showFeedback('❌ Veuillez remplir tous les champs obligatoires avant de signer.', 'error');
+                    return;
+                }
+
+                // 2. Checkbox
+                if (!checkbox.checked) {
+                    showFeedback('❌ Vous devez accepter les termes de la décharge.', 'error');
+                    return;
+                }
+
+                // 3. Signature
+                if (signaturePad.isEmpty()) {
+                    showFeedback('❌ Veuillez apposer votre signature.', 'error');
+                    return;
+                }
+
+                // 4. Envoi
+                btnSign.disabled = true;
+                btnSign.textContent = 'Envoi en cours…';
+
+                var payload = {
+                    first_name: document.getElementById('first_name').value.trim(),
+                    last_name: document.getElementById('last_name').value.trim(),
+                    dob: document.getElementById('dob').value,
+                    license_number: document.getElementById('license_number').value.trim(),
+                    address: document.getElementById('address').value.trim(),
+                    insurance_company: document.getElementById('insurance_company').value.trim(),
+                    insurance_policy: document.getElementById('insurance_policy').value.trim(),
+                    signature_data: signaturePad.toDataURL('image/png')
+                };
+
+                fetch(window.location.href, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                })
+                    .then(function (res) { return res.json(); })
+                    .then(function (result) {
+                        if (result.success) {
+                            showFeedback('✅ Décharge signée avec succès. Vous allez recevoir un e-mail de confirmation.', 'success');
+                            btnSign.textContent = 'Signé ✓';
+                            canvas.style.pointerEvents = 'none';
+                            setTimeout(function () { window.location.reload(); }, 2500);
+                        } else {
+                            showFeedback('❌ ' + (result.error || 'Erreur inconnue. Réessayez.'), 'error');
+                            btnSign.disabled = false;
+                            btnSign.textContent = 'Signer numériquement';
+                        }
+                    })
+                    .catch(function () {
+                        showFeedback('❌ Erreur réseau. Vérifiez votre connexion et réessayez.', 'error');
+                        btnSign.disabled = false;
+                        btnSign.textContent = 'Signer numériquement';
+                    });
+            });
+        });
+    </script>
+
+</body>
+
+</html>

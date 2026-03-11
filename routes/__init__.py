@@ -8,6 +8,7 @@ from routes.web import init_web_routes
 from routes.checkout import init_checkout_routes
 from routes.checkin import init_checkin_routes
 from routes.users import init_users_routes
+from routes.waivers import init_waiver_routes
 
 
 def init_routes(app):
@@ -17,6 +18,7 @@ def init_routes(app):
     init_checkout_routes(app)
     init_checkin_routes(app)
     init_users_routes(app)
+    init_waiver_routes(app)
 
 
 def init_error_handlers(app):
