@@ -29,10 +29,13 @@ def process_pilot_waiver_signature(waiver_id):
 
     try:
         # 3. Generate PDF
-        base_url = current_app.config.get(
-            "SERVER_NAME", "http://127.0.0.1:5000")
-        if not base_url.startswith("http"):
-            base_url = f"http://{base_url}"
+        from flask import request
+        try:
+            base_url = request.host_url
+        except RuntimeError:
+            base_url = current_app.config.get("SERVER_NAME")
+            if not base_url.startswith("https"):
+                base_url = f"https://{base_url}"
 
         # Additional print styles for PDF
         css = CSS(string='''
