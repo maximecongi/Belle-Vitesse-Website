@@ -166,7 +166,11 @@
     background: var(--admin-bg, #f5f5f5);
 }
 
-/* Badge Pills */
+/* ===========================
+   Badge Pills
+   =========================== */
+
+/* --- Base Styles --- */
 .badge-pill {
     display: inline-block;
     padding: 0.2rem 0.65rem;
@@ -182,14 +186,10 @@
     vertical-align: middle;
 }
 
+/* --- Global Statuses --- */
 .badge-pill[data-val="OK"] {
     background: #d1fae5;
     color: #065f46;
-}
-
-.badge-pill[data-val="À vérifier"] {
-    background: #fef3c7;
-    color: #92400e;
 }
 
 .badge-pill[data-val="Défaut"] {
@@ -202,8 +202,13 @@
     color: var(--neutral-color);
 }
 
-.badge-pill[data-val="À contrôler"],
-.badge-pill[data-val="À générer"] {
+/* --- Equipment Check Statuses --- */
+.badge-pill[data-val="À vérifier"] {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.badge-pill[data-val="À contrôler"] {
     background: var(--neutral-bg);
     color: var(--neutral-color);
 }
@@ -212,24 +217,36 @@
     content: "🔍 ";
 }
 
-.badge-pill[data-val="En cours"],
+.badge-pill[data-val="En cours"] {
+    background: #ffe2b8;
+    color: #dc852e;
+}
+
+.badge-pill[data-val="En cours"][data-conform="yes"]:before {
+    content: "⏳ ";
+}
+
+.badge-pill[data-val="En cours"][data-conform="no"]:before {
+    content: "🚨 ";
+}
+
+/* --- Document / Waiver Statuses --- */
+.badge-pill[data-val="À générer"] {
+    background: var(--neutral-bg);
+    color: var(--neutral-color);
+}
+
+.badge-pill[data-val="À générer"]:before {
+    content: "🔄 ";
+}
+
 .badge-pill[data-val="À envoyer"] {
     background: #ffe2b8;
     color: #dc852e;
 }
 
 .badge-pill[data-val="À envoyer"]::before {
-    content: "🚀 ";
-}
-
-
-.badge-pill[data-val="En cours"][data-conform="yes"]:before,
-.badge-pill[data-val="À générer"]:before {
-    content: "⏳ ";
-}
-
-.badge-pill[data-val="En cours"][data-conform="no"]:before {
-    content: "🚨 ";
+    content: "� ";
 }
 
 .badge-pill[data-val="À signer"] {
@@ -250,6 +267,7 @@
     content: "✅ ";
 }
 
+/* --- User Roles & Contacts --- */
 .badge-pill[data-val="Administrator"] {
     background: #ede9fe;
     color: #5b21b6;
@@ -265,6 +283,17 @@
     color: #374151;
 }
 
+.badge-pill[data-val="Freelance"] {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.badge-pill[data-val="Production"] {
+    background: #ffe2b8;
+    color: #dc852e;
+}
+
+/* --- Misc --- */
 .badge-pill[data-val="incoming"] {
     background: #fef3c7;
     color: #92400e;
@@ -275,16 +304,6 @@
 
 .badge-pill[data-val="incoming"]:before {
     content: "🚧 ";
-}
-
-.badge-pill[data-val="Freelance"] {
-    background: #dbeafe;
-    color: #1e40af;
-}
-
-.badge-pill[data-val="Production"] {
-    background: #ffe2b8;
-    color: #dc852e;
 }
 
 /* Admin Badges (legacy) */
