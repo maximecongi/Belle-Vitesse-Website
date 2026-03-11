@@ -1,7 +1,7 @@
 import logging
 
 from sqlalchemy.orm import joinedload
-from models import db, Production, Project
+from models import db, Production, Project, Contact
 from utils.database import get_vehicles
 from utils.formatting import format_date_fr
 
@@ -32,7 +32,9 @@ def list_projects():
     projects = Project.query.options(
         joinedload(Project.production),
         joinedload(Project.checkout_vehicles),
-        joinedload(Project.checkin_vehicles)
+        joinedload(Project.checkin_vehicles),
+        joinedload(Project.contact_pilote_rel),
+        joinedload(Project.contact_production_rel)
     ).order_by(Project.nom.desc()).all()
     vehicles = get_vehicles()
     vehicle_names = {v["id"]: v.get("fields", {}).get(
@@ -75,6 +77,8 @@ def list_projects():
             "return_date": format_date_fr(str(p.date_retour)) if p.date_retour else "—",
             "raw_return_date": str(p.date_retour) if p.date_retour else "",
             "raw_checkin_date": str(p.date_retour) if p.date_retour else "",
+            "contact_pilote": f"{p.contact_pilote_rel.prenom} {p.contact_pilote_rel.nom}" if p.contact_pilote_rel else "—",
+            "contact_production": f"{p.contact_production_rel.prenom} {p.contact_production_rel.nom}" if p.contact_production_rel else "—",
             "vehicles": veh_list,
         })
     return result
@@ -89,8 +93,14 @@ def get_project_form_context():
     productions_formatted = [
         {"id": str(p.id), "fields": {"Nom": p.nom}} for p in prods]
 
+    contacts = Contact.query.order_by(Contact.nom).all()
+    contacts_formatted = [
+        {"id": str(c.id), "name": f"{c.prenom} {c.nom} ({c.metier})" if c.metier else f"{c.prenom} {c.nom}"} for c in contacts
+    ]
+
     return {
         "productions": productions_formatted,
+        "contacts": contacts_formatted,
         "vehicles": get_vehicles(),
     }
 
@@ -106,6 +116,10 @@ def create_project(form):
         nom=form.get("name"),
         production_id=form.get("production_id") if form.get(
             "production_id") else None,
+        contact_pilote_id=form.get("contact_pilote_id") if form.get(
+            "contact_pilote_id") else None,
+        contact_production_id=form.get("contact_production_id") if form.get(
+            "contact_production_id") else None,
         date_depart=_parse_date(form.get("departure_date")),
         date_debut_tournage=_parse_date(form.get("shoot_start")),
         date_fin_tournage=_parse_date(form.get("shoot_end")),
@@ -127,6 +141,10 @@ def update_project(record_id, form):
     project.nom = form.get("name")
     project.production_id = form.get(
         "production_id") if form.get("production_id") else None
+    project.contact_pilote_id = form.get(
+        "contact_pilote_id") if form.get("contact_pilote_id") else None
+    project.contact_production_id = form.get(
+        "contact_production_id") if form.get("contact_production_id") else None
     project.date_depart = _parse_date(form.get("departure_date"))
     project.date_debut_tournage = _parse_date(form.get("shoot_start"))
     project.date_fin_tournage = _parse_date(form.get("shoot_end"))
@@ -155,6 +173,8 @@ def get_project_for_edit(record_id):
         "shoot_end_raw": str(p.date_fin_tournage) if p.date_fin_tournage else "",
         "return_date_raw": str(p.date_retour) if p.date_retour else "",
         "production_id": str(p.production_id) if p.production_id else "",
+        "contact_pilote_id": str(p.contact_pilote_id) if p.contact_pilote_id else "",
+        "contact_production_id": str(p.contact_production_id) if p.contact_production_id else "",
         "vehicle_ids": veh_ids,
     }
 

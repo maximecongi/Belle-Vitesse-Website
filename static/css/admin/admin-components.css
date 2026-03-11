@@ -483,3 +483,21 @@
     color: var(--blue-info);
     border: 1px solid var(--blue-border);
 }
+
+.select2-container .select2-selection--single {
+    width: 100%;
+    font-weight: 400;
+    padding: 0.8rem;
+    border: 1px solid var(--white-3);
+    font-size: 1rem;
+    box-sizing: border-box;
+    caret-color: var(--admin-accent);
+    height: 42px;
+    display: flex;
+    align-items: center;
+    padding-left: 0.5rem;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 100%;
+}

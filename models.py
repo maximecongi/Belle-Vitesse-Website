@@ -70,6 +70,10 @@ class Project(db.Model):
     nom = db.Column(db.String(255), nullable=False)
     production_id = db.Column(db.Integer, db.ForeignKey(
         "productions.id"), nullable=False, index=True)
+    contact_pilote_id = db.Column(db.Integer, db.ForeignKey(
+        "contacts.id"), nullable=True, index=True)
+    contact_production_id = db.Column(db.Integer, db.ForeignKey(
+        "contacts.id"), nullable=True, index=True)
     date_depart = db.Column(db.Date)
     date_debut_tournage = db.Column(db.Date)
     date_fin_tournage = db.Column(db.Date)
@@ -82,6 +86,10 @@ class Project(db.Model):
         "CheckoutVehicle", backref="project", lazy=True)
     checkin_vehicles = db.relationship(
         "CheckinVehicle", backref="project", lazy=True)
+    contact_pilote_rel = db.relationship(
+        "Contact", foreign_keys=[contact_pilote_id], backref="projects_as_pilote", lazy=True)
+    contact_production_rel = db.relationship(
+        "Contact", foreign_keys=[contact_production_id], backref="projects_as_production", lazy=True)
 
     def __repr__(self):
         return f"<Project {self.nom}>"

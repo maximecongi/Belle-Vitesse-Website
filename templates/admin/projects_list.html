@@ -20,9 +20,9 @@
                 <th>Production</th>
                 <th>Check-outs</th>
                 <th>Check-ins</th>
-                <th>Date de départ</th>
-                <th>Dates de tournage</th>
-                <th>Date de retour</th>
+                <th>Décharges</th>
+                <th>Dates</th>
+                <th>Contacts</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -51,9 +51,15 @@
                     <span style="color: var(--grey-2);">—</span>
                     {% endfor %}
                 </td>
-                <td>🚚 {{ project.departure_date }}</td>
-                <td>🎥 {{ project.shoot_start }}<br> → {{ project.shoot_end }}</td>
-                <td>📦 {{ project.return_date }}</td>
+                <td>pending</td>
+                <td>🚚 {{ project.departure_date }}<br><br>
+                    🎥 {{ project.shoot_start }}<br> → {{ project.shoot_end }}<br><br>
+                    📦 {{ project.return_date }}</td>
+                <td>
+                    <div><span style="color: var(--grey-2);">🏎️</span> {{ project.contact_pilote }}</div><br>
+                    <div style="margin-top: 0.2rem;"><span style="color: var(--grey-2);">🎬</span> {{
+                        project.contact_production }}</div>
+                </td>
                 <td>
                     <a href="{{ url_for('admin_project_edit', record_id=project.id) }}"
                         class="admin-btn admin-btn-secondary">Éditer</a>

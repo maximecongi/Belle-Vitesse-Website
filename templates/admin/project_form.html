@@ -19,7 +19,7 @@
 
         <div class="form-group">
             <label class="form-label">Production</label>
-            <select name="production_id" class="form-input">
+            <select name="production_id" class="form-input searchable-select">
                 <option value="">— Sélectionner une production —</option>
                 {% for p in productions %}
                 <option value="{{ p.id }}" {% if data and data.production_id==p.id %}selected{% endif %}>
@@ -27,6 +27,32 @@
                 </option>
                 {% endfor %}
             </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 1rem;">
+            <div class="form-group">
+                <label class="form-label">Contact Pilote</label>
+                <select name="contact_pilote_id" class="form-input searchable-select">
+                    <option value="">— Sélectionner un contact pilote —</option>
+                    {% for c in contacts %}
+                    <option value="{{ c.id }}" {% if data and data.contact_pilote_id==c.id %}selected{% endif %}>
+                        {{ c.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Contact Production</label>
+                <select name="contact_production_id" class="form-input searchable-select">
+                    <option value="">— Sélectionner un contact production —</option>
+                    {% for c in contacts %}
+                    <option value="{{ c.id }}" {% if data and data.contact_production_id==c.id %}selected{% endif %}>
+                        {{ c.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
         </div>
 
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem;">
@@ -95,4 +121,19 @@
         </div>
     </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('.searchable-select').select2({
+            width: '100%',
+            placeholder: function () {
+                $(this).data('placeholder');
+            }
+        });
+    });
+</script>
 {% endblock %}
