@@ -124,21 +124,6 @@
             </div>
             {% endif %}
 
-            {% if data.odometer_photos %}
-            <div class="admin-card">
-                <div class="admin-card-title">Photos compteur</div>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem;">
-                    {% for photo in data.odometer_photos %}
-                    <a href="{{ photo.url }}" target="_blank"
-                        style="display: block; aspect-ratio: 1; overflow: hidden; border-radius: 4px;">
-                        <img src="{{ photo.url }}" alt="{{ photo.label }}"
-                            style="width: 100%; height: 100%; object-fit: cover;">
-                    </a>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-
             {% if data.exterior_photos %}
             <div class="admin-card">
                 <div class="admin-card-title">Photos extérieur</div>

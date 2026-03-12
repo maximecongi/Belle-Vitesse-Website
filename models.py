@@ -155,7 +155,6 @@ class CheckoutVehicle(db.Model):
     vehicule_controle = db.Column(db.String(100), index=True)
     kilometrage_depart = db.Column(db.Float)
     charge_batterie_depart = db.Column(db.Float)
-    photo_compteur = db.Column(db.String(500))  # chemin ou URL du fichier
     etat_pneus = db.Column(db.String(50))
     roue_secours = db.Column(db.String(50))
     niveau_huile = db.Column(db.String(50))
@@ -195,7 +194,6 @@ class CheckinVehicle(db.Model):
     vehicule_controle = db.Column(db.String(100), index=True)
     kilometrage_retour = db.Column(db.Float)
     charge_batterie_retour = db.Column(db.Float)
-    photo_compteur = db.Column(db.String(500))
     etat_pneus = db.Column(db.String(50))
     roue_secours = db.Column(db.String(50))
     niveau_huile = db.Column(db.String(50))

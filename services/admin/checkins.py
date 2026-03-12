@@ -59,8 +59,6 @@ def _format_checkin_admin(c: CheckinVehicle, vehicle_names, batch_configs=None):
         c.kilometrage_retour) if c.kilometrage_retour is not None else ""
     data["battery"] = str(
         c.charge_batterie_retour) if c.charge_batterie_retour is not None else ""
-    data["odometer_photos"] = _parse_photos_json(c.photo_compteur)
-    data["odometer_photo"] = data["odometer_photos"][0]["url"] if data["odometer_photos"] else None
     data["tires"] = c.etat_pneus or "—"
     data["spare_tire"] = c.roue_secours or "—"
     data["oil"] = c.niveau_huile or "—"
@@ -246,7 +244,6 @@ def _upload_checkin_photos_local(record: CheckinVehicle, files):
     upload_dir.mkdir(parents=True, exist_ok=True)
 
     photo_fields = {
-        "odometer_photos": "photo_compteur",
         "exterior_photos": "photos_exterieur",
         "interior_photos": "photos_interieur",
     }

@@ -24,15 +24,14 @@ def _parse_photos_json(text):
 def _delete_inspection_files(record):
     """
     Delete all physical files associated with a checkout or checkin record.
-    Includes odometer photos, interior/exterior photos, and the signed PDF.
+    Includes interior/exterior photos, and the signed PDF.
     """
     private_folder = current_app.config.get("PRIVATE_FOLDER")
     if not private_folder:
         return
 
     # 1. Photos
-    photo_fields = [record.photo_compteur,
-                    record.photos_interieur, record.photos_exterieur]
+    photo_fields = [record.photos_interieur, record.photos_exterieur]
 
     deleted_dirs = set()
 
