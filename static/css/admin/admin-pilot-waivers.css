@@ -86,6 +86,7 @@ body {
     background-color: var(--white-3);
     padding: 2pt 6pt;
     border-radius: 2pt;
+    white-space: nowrap;
 }
 
 /* ── Document Title ──────────────────── */
@@ -150,6 +151,14 @@ body {
     font-size: 9pt;
     font-weight: 500;
     color: var(--grey-1);
+}
+
+.pilot-waiver-info-label-representative {
+    font-size: 11px;
+    margin-bottom: 4px;
+    font-weight: 500;
+    color: var(--white-4);
+    display: inline-block;
 }
 
 .waiver-content {
@@ -645,13 +654,6 @@ body {
 
     .pilot-waiver-info-value {
         font-size: 15px;
-    }
-
-    .pilot-waiver-info-label-representative {
-        font-size: 11px;
-        margin-bottom: 4px;
-        font-weight: 500;
-        color: var(--white-4)
     }
 
     .pilot-waiver-badge {

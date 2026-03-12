@@ -78,6 +78,10 @@
                     <span class="pilot-waiver-info-value">{{ waiver.production_name or '—' }}</span>
                 </div>
                 <div class="pilot-waiver-info-item">
+                    <span class="pilot-waiver-info-label">Date(s) de tournage</span>
+                    <span class="pilot-waiver-info-value">{{ waiver.shooting_dates or '—' }}</span>
+                </div>
+                <div class="pilot-waiver-info-item">
                     <span class="pilot-waiver-info-label">Véhicule(s) à piloter</span>
                     <div class="pilot-waiver-info-item pilot-waiver-info-vehicles" style="grid-column: 1 / -1;">
                         {% if waiver.vehicles %}
@@ -89,12 +93,26 @@
                         {% endif %}
                     </div>
                 </div>
+            </div>
+        </section>
+        <!-- ═══════════ ASSURANCE ═══════════ -->
+        <section class="pilot-waiver-section">
+            <h2 class="pilot-waiver-section-title dot-before">Assurances</h2>
+            <p style="font-size: 8pt; margin-bottom: 8px; color: var(--grey-2);">Le pilote déclare être couvert par une
+                assurance responsabilité civile professionnelle et/ou personnelle en vigueur.</p>
+            <div class="pilot-waiver-info-grid">
                 <div class="pilot-waiver-info-item">
-                    <span class="pilot-waiver-info-label">Date(s) de tournage</span>
-                    <span class="pilot-waiver-info-value">{{ waiver.shooting_dates or '—' }}</span>
+                    <span class="pilot-waiver-info-label">Compagnie d'assurance</span>
+                    <span class="pilot-waiver-info-value">{{ waiver.pilot_insurance_company }}</span>
+                </div>
+                <div class="pilot-waiver-info-item">
+                    <span class="pilot-waiver-info-label">Numéro de police</span>
+                    <span class="pilot-waiver-info-value">{{ waiver.pilot_insurance_policy }}</span>
                 </div>
             </div>
         </section>
+
+        <hr class="pilot-waiver-divider">
 
         <!-- ═══════════ CONDITIONS ═══════════ -->
         <section class="pilot-waiver-section">
@@ -146,26 +164,6 @@
                 avoir reçu les Véhicules en bon état et s'engage à le restituer tel quel. Tout dommage à la restitution
                 sera imputé au pilote, sauf preuve contraire.</p>
         </section>
-
-        <!-- ═══════════ ASSURANCE ═══════════ -->
-        <section class="pilot-waiver-section">
-            <h2 class="pilot-waiver-section-title dot-before">Assurances</h2>
-            <p style="font-size: 8pt; margin-bottom: 8px; color: var(--grey-2);">Le pilote déclare être couvert par une
-                assurance responsabilité civile professionnelle et/ou personnelle en vigueur.</p>
-            <div class="pilot-waiver-info-grid">
-                <div class="pilot-waiver-info-item">
-                    <span class="pilot-waiver-info-label">Compagnie d'assurance</span>
-                    <span class="pilot-waiver-info-value">{{ waiver.pilot_insurance_company }}</span>
-                </div>
-                <div class="pilot-waiver-info-item">
-                    <span class="pilot-waiver-info-label">Numéro de police</span>
-                    <span class="pilot-waiver-info-value">{{ waiver.pilot_insurance_policy }}</span>
-                </div>
-            </div>
-        </section>
-
-        <hr class="pilot-waiver-divider">
-
         <!-- ═══════════ SIGNATURE ═══════════ -->
         <section class="pilot-waiver-section">
             <h2 class="pilot-waiver-section-title dot-before">Signature électronique</h2>
