@@ -225,6 +225,12 @@ def create_app():
             "t": t,
             "ts": ts,
             "alt_url": alt_url,
+            "company_name": "Belle Vitesse SAS",
+            "company_representative": "Simon Maignan",
+            "company_siret": "981 514 040 00014",
+            "company_address": "33 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine, France",
+            "company_phone": "+33 6 65 51 40 40",
+            "company_email": "contact@bellevitesse.com"
         }
 
         def _load_db_context(is_admin):

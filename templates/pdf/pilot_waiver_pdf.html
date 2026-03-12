@@ -7,7 +7,7 @@
     <!-- Les variables de couleurs -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <!-- La feuille de style principale WeasyPrint / Checkout -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pilot_waiver.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.css') }}">
 </head>
 
 <body>
@@ -30,37 +30,31 @@
         <!-- ═══════════ IDENTIFICATION ═══════════ -->
         <section class="pilot-waiver-section">
             <h2 class="pilot-waiver-section-title dot-before">Identification des parties</h2>
-
-            <div style="margin-bottom: 12px;">
-                <p style="font-size: 8pt; color: var(--grey-2); line-height: 1.4;">
-                    <span class="pilot-waiver-info-label">Prestataire :</span> Belle Vitesse SAS<br>
-                    <span class="pilot-waiver-info-label">Représentant :</span> Simon Maignan<br>
-                    <span class="pilot-waiver-info-label">Adresse :</span> 33 rue Maurice Gunsbourg, 94200
-                    IVRY-SUR-SEINE<br>
-                    <span class="pilot-waiver-info-label">SIRET :</span> 984 535 071 00013
-                </p>
-            </div>
-
-            <div class="pilot-waiver-info-grid">
-                <div class="pilot-waiver-info-item">
-                    <span class="pilot-waiver-info-label">Pilote</span>
-                    <span class="pilot-waiver-info-value">{{ waiver.pilot_first_name }} {{ waiver.pilot_last_name
-                        }}</span>
+            <div class="pilot-waiver-info-grid" style="grid-template-columns: 1fr 1fr; gap: 64px;">
+                <div style="margin-bottom: 12px;">
+                    <p style="font-size: 8pt; color: var(--grey-2); line-height: 1.4;">
+                        <span class="pilot-waiver-info-label">Prestataire :<br><br></span>
+                        <span class="pilot-waiver-info-label-representative">Société :</span>
+                        {{company_name}}<br>
+                        <span class="pilot-waiver-info-label-representative">SIRET :</span> {{company_siret}}<br>
+                        <span class="pilot-waiver-info-label-representative">Représentant :</span>
+                        {{company_representative}}<br>
+                        <span class="pilot-waiver-info-label-representative">Adresse :</span> {{company_address}}
+                    </p>
                 </div>
-                <div class="pilot-waiver-info-item">
-                    <span class="pilot-waiver-info-label">Date de naissance</span>
-                    <span class="pilot-waiver-info-value">{{ waiver.pilot_dob }}</span>
-                </div>
-                <div class="pilot-waiver-info-item">
-                    <span class="pilot-waiver-info-label">Numéro de permis</span>
-                    <span class="pilot-waiver-info-value">{{ waiver.pilot_license_number }}</span>
-                </div>
-            </div>
 
-            <div class="pilot-waiver-info-grid" style="margin-top: 10px;">
-                <div class="pilot-waiver-info-item" style="grid-column: span 3;">
-                    <span class="pilot-waiver-info-label">Adresse Pilote</span>
-                    <span class="pilot-waiver-info-value">{{ waiver.pilot_address }}</span>
+                <div style="margin-bottom: 12px;">
+                    <p style="font-size: 8pt; color: var(--grey-2); line-height: 1.4;">
+                        <span class="pilot-waiver-info-label">Pilote :<br><br></span>
+                        <span class="pilot-waiver-info-label-representative">Nom :</span>
+                        {{waiver.pilot_first_name }} {{waiver.pilot_last_name }}<br>
+                        <span class="pilot-waiver-info-label-representative">Date de naissance :</span>
+                        {{waiver.pilot_dob.strftime('%d/%m/%Y') if waiver.pilot_dob else '—'}}<br>
+                        <span class="pilot-waiver-info-label-representative">Numéro de permis :</span>
+                        {{waiver.pilot_license_number}}<br>
+                        <span class="pilot-waiver-info-label-representative">Adresse Pilote :</span>
+                        {{waiver.pilot_address}}
+                    </p>
                 </div>
             </div>
         </section>
@@ -84,10 +78,18 @@
                     <span class="pilot-waiver-info-value">{{ waiver.production_name or '—' }}</span>
                 </div>
                 <div class="pilot-waiver-info-item">
-                    <span class="pilot-waiver-info-label">Véhicule(s)</span>
-                    <span class="pilot-waiver-info-value">{{ waiver.vehicles or '—' }}</span>
+                    <span class="pilot-waiver-info-label">Véhicule(s) à piloter</span>
+                    <div class="pilot-waiver-info-item pilot-waiver-info-vehicles" style="grid-column: 1 / -1;">
+                        {% if waiver.vehicles %}
+                        {% for v in waiver.vehicles.split(',') %}
+                        <span class="pilot-waiver-vehicles-badge">{{ v.strip() }}</span>
+                        {% endfor %}
+                        {% else %}
+                        —
+                        {% endif %}
+                    </div>
                 </div>
-                <div class="pilot-waiver-info-item" style="grid-column: span 3;">
+                <div class="pilot-waiver-info-item">
                     <span class="pilot-waiver-info-label">Date(s) de tournage</span>
                     <span class="pilot-waiver-info-value">{{ waiver.shooting_dates or '—' }}</span>
                 </div>
@@ -172,11 +174,11 @@
 
             <div class="pilot-waiver-signature">
                 <div class="pilot-waiver-signature-block">
-                    <p class="pilot-waiver-signature-label">Pour Belle Vitesse SAS</p>
+                    <p class="pilot-waiver-signature-label">Pour {{company_name}}</p>
                     <div style="font-size: 8pt; color: var(--grey-1); line-height: 1.4; margin-top: 10px;">
-                        <strong>Belle Vitesse SAS</strong><br>
-                        Représenté par Simon Maignan<br>
-                        SIRET : 984 535 071 00013<br><br>
+                        <strong>{{company_name}}</strong><br>
+                        Représenté par {{company_representative}}<br>
+                        SIRET : {{company_siret}}<br><br>
                         Document généré le {{ waiver.generated_at.strftime('%d/%m/%Y à %H:%M') if waiver.generated_at
                         else '—' }}
                     </div>
@@ -212,7 +214,7 @@
         <!-- ═══════════ FOOTER ═══════════ -->
         <footer class="pilot-waiver-footer">
             <p>
-                <strong>Belle Vitesse SAS</strong><br>
+                <strong>{{company_name}}</strong><br>
                 Ce document sera scellé électroniquement après validation.
             </p>
         </footer>

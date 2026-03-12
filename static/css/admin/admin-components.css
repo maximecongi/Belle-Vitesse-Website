@@ -504,6 +504,43 @@
     caret-color: var(--admin-accent);
 }
 
+input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    border: 2px solid #ffc845;
+    background-color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input[type="checkbox"]::after {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 8px;
+    border: 2.5px solid transparent;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg) translateY(-1px) translateX(-1px);
+    transition: border-color 0.15s ease;
+}
+
+input[type="checkbox"]:checked::after {
+    border-color: #fff;
+}
+
+input[type="checkbox"]:checked {
+    background-color: #ffc845;
+    border-color: #ffc845;
+}
+
 .flash-messages {
     margin-bottom: 1rem;
     padding: 0.8rem;

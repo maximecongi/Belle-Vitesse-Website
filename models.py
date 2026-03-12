@@ -112,7 +112,7 @@ class PilotWaiver(db.Model):
     # Snapshot data
     pilot_first_name = db.Column(db.String(100), nullable=True)
     pilot_last_name = db.Column(db.String(100), nullable=True)
-    pilot_dob = db.Column(db.String(50), nullable=True)
+    pilot_dob = db.Column(db.Date, nullable=True)
     pilot_license_number = db.Column(db.String(100), nullable=True)
     pilot_address = db.Column(db.Text, nullable=True)
     pilot_insurance_company = db.Column(db.String(255), nullable=True)

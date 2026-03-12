@@ -74,11 +74,18 @@ body {
 
 .pilot-waiver-doc-id {
     font-family: monospace;
-    font-size: 6pt;
+    font-size: 8pt;
     background-color: var(--white-3);
     padding: 2pt 6pt;
     border-radius: 2pt;
-    margin-top: 6pt;
+}
+
+.pilot-waiver-vehicles-badge {
+    width: max-content;
+    font-size: 8pt;
+    background-color: var(--white-3);
+    padding: 2pt 6pt;
+    border-radius: 2pt;
 }
 
 /* ── Document Title ──────────────────── */
@@ -143,6 +150,90 @@ body {
     font-size: 9pt;
     font-weight: 500;
     color: var(--grey-1);
+}
+
+.waiver-content {
+    background: #fff;
+    padding: 1.5rem;
+    background: var(--white-2);
+    border-left: solid 3px #ffc845;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--grey-1);
+    margin-bottom: 2rem;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.waiver-content h1 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: #000;
+}
+
+.waiver-content h2 {
+    font-size: 1.1rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: #000;
+    border-bottom: 1px solid var(--grey-3);
+    padding-bottom: 0.5rem;
+}
+
+.waiver-content hr {
+    margin: 1.5rem 0;
+    border: 0;
+    border-top: 1px solid var(--grey-3);
+}
+
+.waiver-content ul {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.waiver-content li {
+    margin-bottom: 0.5rem;
+}
+
+.pilot-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 600px) {
+    .pilot-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.checkbox-container {
+    display: flex;
+    gap: 16px;
+}
+
+
+.feedback-box {
+    display: none;
+    margin-top: 1.5rem;
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 500;
+    text-align: center;
+    font-size: 0.95rem;
+}
+
+.feedback-box.success {
+    background: #f0faf3;
+    color: #1a7a3a;
+    border: 1px solid #a8dbb8;
+}
+
+.feedback-box.error {
+    background: #fff5f5;
+    color: #c0392b;
+    border: 1px solid #f5c6c2;
 }
 
 /* ── Status Badges ───────────────────── */
@@ -466,6 +557,12 @@ body {
     color: var(--white-1);
 }
 
+.pilot-waiver-info-vehicles {
+    gap: 16px;
+    flex-direction: row;
+    align-items: flex-start;
+}
+
 /* ── Utilities ───────────────────────── */
 .pilot-waiver-divider {
     border: none;
@@ -548,6 +645,13 @@ body {
 
     .pilot-waiver-info-value {
         font-size: 15px;
+    }
+
+    .pilot-waiver-info-label-representative {
+        font-size: 11px;
+        margin-bottom: 4px;
+        font-weight: 500;
+        color: var(--white-4)
     }
 
     .pilot-waiver-badge {
