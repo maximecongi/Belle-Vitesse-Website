@@ -40,11 +40,16 @@
             <div style="font-size: 4rem; margin-bottom: 1rem; color: var(--green-1);">✓</div>
             <h2 class="pilot-waiver-section-title">Décharge signée</h2>
             <p style="color: var(--grey-2); margin-top: 1rem;text-align:center;">
-                Ce document a déjà été signé électroniquement et ne peut plus être modifié.<br><br>Vous pouvez fermer
-                cette
-                fenêtre.
+                Ce document a déjà été signé électroniquement et ne peut plus être modifié.<br><br>Vous allez être
+                redirigé vers <a href="https://bellevitesse.com">bellevitesse.com</a> dans quelques secondes.
             </p>
         </section>
+
+        <script>
+            setTimeout(function () {
+                window.location.href = 'https://bellevitesse.com';
+            }, 3000);
+        </script>
 
         {% elif waiver.status not in ['to_sign', 'to_send'] %}
         <!-- ── État : lien invalide ────────────────────────────────── -->

@@ -89,7 +89,7 @@
                     border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer;
                     {% if data and v.id in data.vehicle_ids %}background: #f8f9fa; border-color: #858585;{% endif %}">
                     <input type="checkbox" name="vehicle_ids" value="{{ v.id }}" {% if data and v.id in data.vehicle_ids
-                        %}checked{% endif %} style="accent-color: #FFC845;">
+                        %}checked{% endif %} style="display: none;">
                     {% if vf.get('thumbnail') %}
                     <img src="{{ vf.thumbnail[0].thumbnails.small.url }}"
                         style="width: 32px; height: 32px; border-radius: 4px; object-fit: cover;">

@@ -1,12 +1,57 @@
 import logging
 from datetime import datetime
 import uuid
+import os
 
 from sqlalchemy.orm import joinedload
-from models import db, PilotWaiver, Project
+from models import db, PilotWaiver, Project, PilotWaiverSignedDocument
 from utils.database import get_vehicles
 
 logger = logging.getLogger(__name__)
+
+
+def _cleanup_pilot_waiver_assets(waiver):
+    """Internal helper to delete physical files and signed documents associated with a waiver."""
+    from flask import current_app
+
+    # 1. Identifier les fichiers physiques à supprimer
+    files_to_delete = [
+        waiver.signed_pdf_path,
+        waiver.pilot_license_path,
+        waiver.pilot_insurance_path,
+        waiver.pilot_identity_path
+    ]
+
+    for file_path in files_to_delete:
+        if file_path and file_path.startswith('/static/'):
+            relative_path = file_path.lstrip('/')
+            full_path = os.path.join(current_app.root_path, relative_path)
+
+            if os.path.exists(full_path):
+                try:
+                    os.remove(full_path)
+                    logger.info(f"🗑️ Fichier supprimé : {full_path}")
+                except Exception as e:
+                    logger.error(
+                        f"❌ Erreur suppression fichier {full_path} : {e}")
+
+    # 2. Supprimer le document scellé associé
+    signed_doc = PilotWaiverSignedDocument.query.filter_by(
+        waiver_id=waiver.waiver_id).first()
+    if signed_doc:
+        db.session.delete(signed_doc)
+
+
+def create_pilot_waiver(project_id):
+    """Crée une nouvelle décharge pour un projet donné s'il n'en a pas déjà une."""
+    existing = PilotWaiver.query.filter_by(project_id=project_id).first()
+    if existing:
+        return False, "Une décharge existe déjà pour ce projet."
+
+    waiver = PilotWaiver(project_id=project_id)
+    db.session.add(waiver)
+    db.session.commit()
+    return True, "Décharge créée avec succès."
 
 
 def list_pilot_waivers():
@@ -128,3 +173,70 @@ def send_pilot_waiver(waiver_id):
     # For now, we just mock the success. The URL will be /sign/waiver/<token>
 
     return True, "Décharge envoyée au pilote."
+
+
+def reset_pilot_waiver(waiver_id):
+    """Réinitialise une décharge : supprime les fichiers et les scellés, mais garde l'entrée PilotWaiver."""
+    waiver = PilotWaiver.query.filter_by(waiver_id=waiver_id).first()
+    if not waiver:
+        return False, "Décharge non trouvée."
+
+    try:
+        # 1. Nettoyer les fichiers et scellés
+        _cleanup_pilot_waiver_assets(waiver)
+
+        # 2. Réinitialiser les champs de la décharge
+        waiver.status = "to_generate"
+        waiver.generated_at = None
+        waiver.sent_at = None
+        waiver.signed_at = None
+
+        # Snapshot & Documents
+        waiver.pilot_first_name = None
+        waiver.pilot_last_name = None
+        waiver.pilot_dob = None
+        waiver.pilot_license_number = None
+        waiver.pilot_address = None
+        waiver.pilot_insurance_company = None
+        waiver.pilot_insurance_policy = None
+        waiver.production_name = None
+        waiver.vehicles = None
+        waiver.shooting_dates = None
+
+        # Signature & Paths
+        waiver.signature_token = None
+        waiver.signature_data = None
+        waiver.signed_pdf_path = None
+        waiver.signer_ip = None
+        waiver.pilot_license_path = None
+        waiver.pilot_insurance_path = None
+        waiver.pilot_identity_path = None
+        waiver.webhook_triggered_at = None
+
+        db.session.commit()
+
+        return True, "Décharge réinitialisée avec succès (données et fichiers supprimés)."
+    except Exception as e:
+        db.session.rollback()
+        logger.error(
+            f"❌ Erreur lors du reset de la décharge {waiver_id} : {e}")
+        return False, f"Erreur lors de la réinitialisation : {str(e)}"
+
+
+def delete_pilot_waiver_internal(project_id):
+    """
+    Supprime complètement la décharge liée à un projet (fichiers + DB).
+    Utilisé lors de la suppression d'un projet.
+    """
+    waiver = PilotWaiver.query.filter_by(project_id=project_id).first()
+    if not waiver:
+        return
+
+    try:
+        _cleanup_pilot_waiver_assets(waiver)
+        db.session.delete(waiver)
+        db.session.commit()
+    except Exception as e:
+        logger.error(
+            f"❌ Erreur lors de la suppression interne de la décharge pour projet {project_id} : {e}")
+        db.session.rollback()
