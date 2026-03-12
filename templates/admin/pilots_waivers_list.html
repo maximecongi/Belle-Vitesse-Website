@@ -30,9 +30,10 @@
         <table class="admin-table">
             <thead>
                 <tr>
+                    <th>N° Décharge</th>
                     <th>Projet</th>
                     <th>Pilote</th>
-                    <th>Dates de tournage</th>
+                    <th>Dates</th>
                     <th>Statut</th>
                     <th>Actions</th>
                 </tr>
@@ -40,6 +41,7 @@
             <tbody>
                 {% for w in waivers %}
                 <tr class="searchable-row">
+                    <td style="font-weight: 600;">{{ w.id or '—' }}</td>
                     <td style="font-weight: 600;">{{ w.project_name }}</td>
                     <td style="font-weight: 600;">{{ w.pilot_name }}</td>
                     <td>{{ w.shooting_dates }}</td>

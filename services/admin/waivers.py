@@ -39,7 +39,7 @@ def list_pilot_waivers():
             shooting_dates = w.shooting_dates
 
         waivers_formatted.append({
-            "id": w.id,
+            "id": w.waiver_id,
             "project_id": p.id,
             "project_name": p.nom,
             "pilot_name": pilote_name,
@@ -56,8 +56,8 @@ def list_pilot_waivers():
 
 
 def generate_pilot_waiver(waiver_id):
-    """Fige les données du projet dans la décharge et passe le statut à to_send."""
-    waiver = PilotWaiver.query.get(waiver_id)
+    """Fige les données du projet dans la décharge. Reçoit le waiver_id métier (BVDW-...)."""
+    waiver = PilotWaiver.query.filter_by(waiver_id=waiver_id).first()
     if not waiver or waiver.status != "to_generate":
         return False, "Décharge non trouvée ou statut invalide."
 
@@ -73,6 +73,8 @@ def generate_pilot_waiver(waiver_id):
 
     if p.production:
         waiver.production_name = p.production.nom
+
+    waiver.project_name = p.nom
 
     if p.date_debut_tournage and p.date_fin_tournage:
         waiver.shooting_dates = f"{p.date_debut_tournage.strftime('%d/%m/%Y')} au {p.date_fin_tournage.strftime('%d/%m/%Y')}"
@@ -106,8 +108,8 @@ def generate_pilot_waiver(waiver_id):
 
 
 def send_pilot_waiver(waiver_id):
-    """Generate signature token and send email to the pilot."""
-    waiver = PilotWaiver.query.get(waiver_id)
+    """Génère le token de signature et prépare l'envoi. Reçoit le waiver_id métier (BVDW-...)."""
+    waiver = PilotWaiver.query.filter_by(waiver_id=waiver_id).first()
     if not waiver:
         return False, "Décharge non trouvée."
 

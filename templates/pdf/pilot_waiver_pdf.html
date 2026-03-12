@@ -22,7 +22,7 @@
             </div>
             <div class="pilot-waiver-header-meta">
                 <strong class="dot-before">Décharge de responsabilité</strong><br>
-                <span class="pilot-waiver-doc-id">PROJ-{{ "%04d" | format(waiver.project_id) }}</span><br>
+                <span class="pilot-waiver-doc-id">{{ waiver.waiver_id }}</span><br>
                 {{ waiver.signed_at.strftime('%d/%m/%Y') if waiver.signed_at else '' }}
             </div>
         </header>
@@ -256,8 +256,8 @@
                     alt="Belle Vitesse">
             </div>
             <div class="pilot-waiver-header-meta">
-                <strong class="dot-before">Annexe : Permis de conduire</strong><br>
-                <span class="pilot-waiver-doc-id">PROJ-{{ "%04d" | format(waiver.project_id) }}</span>
+                <span class="pilot-waiver-doc-id">{{ waiver.waiver_id or 'PROJ-' ~ ("%04d" | format(waiver.project_id))
+                    }}</span>
             </div>
         </header>
 
@@ -286,8 +286,8 @@
                     alt="Belle Vitesse">
             </div>
             <div class="pilot-waiver-header-meta">
-                <strong class="dot-before">Annexe : Attestation d'assurance</strong><br>
-                <span class="pilot-waiver-doc-id">PROJ-{{ "%04d" | format(waiver.project_id) }}</span>
+                <span class="pilot-waiver-doc-id">{{ waiver.waiver_id or 'PROJ-' ~ ("%04d" | format(waiver.project_id))
+                    }}</span>
             </div>
         </header>
 
@@ -316,8 +316,8 @@
                     alt="Belle Vitesse">
             </div>
             <div class="pilot-waiver-header-meta">
-                <strong class="dot-before">Annexe : Carte d'identité / Passeport</strong><br>
-                <span class="pilot-waiver-doc-id">PROJ-{{ "%04d" | format(waiver.project_id) }}</span>
+                <span class="pilot-waiver-doc-id">{{ waiver.waiver_id or 'PROJ-' ~ ("%04d" | format(waiver.project_id))
+                    }}</span>
             </div>
         </header>
 

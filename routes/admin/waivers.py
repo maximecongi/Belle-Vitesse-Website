@@ -13,7 +13,7 @@ def init_waivers_routes(app):
         waivers = list_pilot_waivers()
         return render_template("admin/pilots_waivers_list.html", waivers=waivers)
 
-    @app.route("/admin/waivers/pilots/<int:waiver_id>/generate", methods=["POST"])
+    @app.route("/admin/waivers/pilots/<string:waiver_id>/generate", methods=["POST"])
     @require_roles('administrator', 'manager')
     def admin_pilot_waiver_generate(waiver_id):
         success, msg = generate_pilot_waiver(waiver_id)
@@ -23,7 +23,7 @@ def init_waivers_routes(app):
             flash(msg, "error")
         return redirect(url_for('admin_pilot_waivers_list'))
 
-    @app.route("/admin/waivers/pilots/<int:waiver_id>/send", methods=["POST"])
+    @app.route("/admin/waivers/pilots/<string:waiver_id>/send", methods=["POST"])
     @require_roles('administrator', 'manager')
     def admin_pilot_waiver_send(waiver_id):
         success, msg = send_pilot_waiver(waiver_id)
@@ -33,8 +33,9 @@ def init_waivers_routes(app):
             flash(msg, "error")
         return redirect(url_for('admin_pilot_waivers_list'))
 
-    @app.route("/admin/waivers/pilots/<int:waiver_id>/preview")
+    @app.route("/admin/waivers/pilots/<string:waiver_id>/preview")
     @require_roles('administrator', 'manager')
     def admin_pilot_waiver_preview(waiver_id):
-        waiver = PilotWaiver.query.get_or_404(waiver_id)
+        waiver = PilotWaiver.query.filter_by(
+            waiver_id=waiver_id).first_or_404()
         return render_template("pdf/pilot_waiver_pdf.html", waiver=waiver)

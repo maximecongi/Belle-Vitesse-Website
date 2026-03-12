@@ -76,14 +76,23 @@ def init_waiver_routes(app):
                     f"Error processing waiver signature: {e}")
                 return jsonify({"success": False, "error": "Une erreur serveur est survenue."}), 500
 
-    @app.route("/verify/waiver/<int:waiver_id>", methods=["GET", "POST"])
+    @app.route("/verify/waiver/<string:waiver_id>", methods=["GET", "POST"])
     @csrf.exempt
     def verify_pilot_waiver(waiver_id):
-        signed_doc = PilotWaiverSignedDocument.query.get(waiver_id)
+        signed_doc = PilotWaiverSignedDocument.query.filter_by(
+            waiver_id=waiver_id).first()
         if not signed_doc:
             abort(404)
 
         data = signed_doc.data_snapshot
+        # Convert signed_at string from JSON back to datetime for strftime in template
+        if 'signed_at' in data and isinstance(data['signed_at'], str):
+            try:
+                from datetime import datetime
+                data['signed_at'] = datetime.fromisoformat(data['signed_at'])
+            except (ValueError, TypeError):
+                pass
+
         stored_hash = signed_doc.hash
         stored_signature = signed_doc.signature
         stored_pdf_file_hash = signed_doc.pdf_file_hash
@@ -114,12 +123,25 @@ def init_waiver_routes(app):
                     pdf_valid = verify_pdf_hash(
                         uploaded_bytes, stored_pdf_file_hash)
 
+        # Fallback for project_name if missing from snapshot (old documents)
+        if not data.get('project_name'):
+            waiver = PilotWaiver.query.filter_by(waiver_id=waiver_id).first()
+            if waiver:
+                data['project_name'] = waiver.project_name or (
+                    waiver.project.nom if waiver.project else None)
+
+        # Ensure hash is in data if template expects data.hash (fallback)
+        if not data.get('hash'):
+            data['hash'] = stored_hash
+
         return render_template(
             "waivers/pilot_waiver_verify.html",
             data=data,
             seal_valid=seal_valid,
             pdf_valid=pdf_valid,
             pdf_error=pdf_error,
-            inspection_id=f"PROJ-{waiver_id:04d}",
+            inspection_id=signed_doc.waiver_id,
+            document_hash=stored_hash,
+            project_name=data.get('project_name'),
             has_pdf_hash=bool(stored_pdf_file_hash)
         )

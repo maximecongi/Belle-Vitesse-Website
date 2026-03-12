@@ -30,8 +30,7 @@
             </div>
             <div class="pilot-waiver-header-meta">
                 <strong class="dot-before">Décharge Pilote</strong><br>
-                <span class="pilot-waiver-doc-id">{{ "%04d" | format(waiver.project_id) }} — {{ waiver.production_name
-                    }}</span>
+                <span class="pilot-waiver-doc-id">{{ waiver.waiver_id }}</span>
             </div>
         </header>
 
@@ -73,8 +72,12 @@
                         <span class="pilot-waiver-info-label">Production</span>
                         <span class="pilot-waiver-info-value">{{ waiver.production_name or '—' }}</span>
                     </div>
+                    <div class="pilot-waiver-info-item">
+                        <span class="pilot-waiver-info-label">Date(s)</span>
+                        <span class="pilot-waiver-info-value">{{ waiver.shooting_dates or '—' }}</span>
+                    </div>
+                    <span class="pilot-waiver-info-label">Véhicule(s) à piloter</span>
                     <div class="pilot-waiver-info-item pilot-waiver-info-vehicles" style="grid-column: 1 / -1;">
-                        <span class="pilot-waiver-info-label">Véhicule(s) à piloter</span>
                         {% if waiver.vehicles %}
                         {% for v in waiver.vehicles.split(',') %}
                         <span class="pilot-waiver-vehicles-badge">{{ v.strip() }}</span>
@@ -82,10 +85,6 @@
                         {% else %}
                         —
                         {% endif %}
-                    </div>
-                    <div class="pilot-waiver-info-item" style="grid-column: 1 / -1;">
-                        <span class="pilot-waiver-info-label">Date(s)</span>
-                        <span class="pilot-waiver-info-value">{{ waiver.shooting_dates or '—' }}</span>
                     </div>
                 </div>
             </section>
@@ -492,7 +491,7 @@
                 });
 
                 if (missing) {
-                    showFeedback('❌ Veuillez remplir tous les champs obligatoires avant de signer.', 'error');
+                    showFeedback('Veuillez remplir tous les champs obligatoires avant de signer.', 'error');
                     return;
                 }
 
@@ -504,19 +503,19 @@
                 });
 
                 if (missingFiles) {
-                    showFeedback('❌ Veuillez joindre les documents requis (Permis, Assurance, ID).', 'error');
+                    showFeedback('Veuillez joindre les documents requis (Permis, Assurance, ID).', 'error');
                     return;
                 }
 
                 // 2. Checkbox
                 if (!checkbox.checked) {
-                    showFeedback('❌ Vous devez accepter les termes de la décharge.', 'error');
+                    showFeedback('Vous devez accepter les termes de la décharge.', 'error');
                     return;
                 }
 
                 // 3. Signature
                 if (signaturePad.isEmpty()) {
-                    showFeedback('❌ Veuillez apposer votre signature.', 'error');
+                    showFeedback('Veuillez apposer votre signature.', 'error');
                     return;
                 }
 
@@ -546,7 +545,7 @@
                                     formData.append(id, imageBlob, newName);
                                 } catch (err) {
                                     console.error('PDF conversion failed:', err);
-                                    showFeedback('❌ Échec de la conversion du PDF ' + id + '. Veuillez utiliser une image ou réessayez.', 'error');
+                                    showFeedback('Échec de la conversion du PDF ' + id + '. Veuillez utiliser une image ou réessayez.', 'error');
                                     btnSign.disabled = false;
                                     btnSign.textContent = 'Signer numériquement';
                                     return;
@@ -568,18 +567,18 @@
 
                     const result = await response.json();
                     if (result.success) {
-                        showFeedback('✅ Décharge signée avec succès. Vous allez recevoir un e-mail de confirmation.', 'success');
+                        showFeedback('Décharge signée avec succès. Vous allez recevoir un e-mail de confirmation.', 'success');
                         btnSign.textContent = 'Signé ✓';
                         canvas.style.pointerEvents = 'none';
                         setTimeout(function () { window.location.reload(); }, 2500);
                     } else {
-                        showFeedback('❌ ' + (result.error || 'Erreur inconnue. Réessayez.'), 'error');
+                        showFeedback('' + (result.error || 'Erreur inconnue. Réessayez.'), 'error');
                         btnSign.disabled = false;
                         btnSign.textContent = 'Signer numériquement';
                     }
 
                 } catch (err) {
-                    showFeedback('❌ Erreur réseau. Vérifiez votre connexion et réessayez.', 'error');
+                    showFeedback('Erreur réseau. Vérifiez votre connexion et réessayez.', 'error');
                     btnSign.disabled = false;
                     btnSign.textContent = 'Signer numériquement';
                 }

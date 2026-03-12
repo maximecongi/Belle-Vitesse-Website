@@ -24,9 +24,9 @@ def process_pilot_waiver_signature(waiver_id):
     # 1. Prepare Verification Data
     pilot_full_name = f"{waiver.pilot_first_name} {waiver.pilot_last_name}"
 
-    # Compute HMAC-SHA256 digital seal
+    # Compute HMAC-SHA256 digital seal (use waiver_id string for ID)
     current_hash = compute_waiver_seal(
-        waiver_id=str(waiver.id),
+        waiver_id=waiver.waiver_id,
         pilot_name=pilot_full_name,
         license_number=waiver.pilot_license_number or "",
         signature_data=waiver.signature_data,
@@ -35,14 +35,14 @@ def process_pilot_waiver_signature(waiver_id):
 
     # Generate QR code → verification page
     domain = os.getenv("APP_DOMAIN", "https://bellevitesse.com")
-    verification_url = f"{domain}/verify/waiver/{waiver.id}"
+    verification_url = f"{domain}/verify/waiver/{waiver.waiver_id}"
     qr_code_img = generate_qr_code(verification_url)
 
     # 2. Generate PDF Path
     pdf_dir = os.path.join(current_app.static_folder, "files", "waivers")
     os.makedirs(pdf_dir, exist_ok=True)
 
-    filename = f"Decharge_Pilote_{waiver.project_id}_{waiver.id}_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf"
+    filename = f"Decharge_Pilote_{waiver.waiver_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf"
     pdf_path_system = os.path.join(pdf_dir, filename)
     pdf_path_url = f"/static/files/waivers/{filename}"
 
@@ -76,13 +76,19 @@ def process_pilot_waiver_signature(waiver_id):
         # 5. Compute PDF Hash and Save Snapshot
         pdf_file_hash = compute_pdf_hash(pdf_bytes)
 
+        # Fallback for project_name if it was generated before the model update
+        if not waiver.project_name and waiver.project:
+            waiver.project_name = waiver.project.nom
+
         signed_doc = PilotWaiverSignedDocument(
-            waiver_id=waiver.id,
+            waiver_id=waiver.waiver_id,
             hash=current_hash,
             pdf_file_hash=pdf_file_hash,
             data_snapshot={
                 "id": waiver.id,
+                "waiver_id": waiver.waiver_id,
                 "project_id": waiver.project_id,
+                "project_name": waiver.project_name,
                 "pilot_first_name": waiver.pilot_first_name,
                 "pilot_last_name": waiver.pilot_last_name,
                 "pilot_license_number": waiver.pilot_license_number,
@@ -118,6 +124,7 @@ def process_pilot_waiver_signature(waiver_id):
             payload = {
                 "event": "pilot_waiver_signed",
                 "waiver_id": waiver.id,
+                "waiver_number": waiver.waiver_id,
                 "project_id": waiver.project_id,
                 "signed_at": waiver.signed_at.isoformat(),
                 "pilot": {

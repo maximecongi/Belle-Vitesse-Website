@@ -103,7 +103,10 @@ class PilotWaiver(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, db.ForeignKey(
         "projects.id"), unique=True, nullable=False, index=True)
+    waiver_id = db.Column(
+        db.String(50), unique=True, default=lambda: generate_inspection_number("BVDW"))
 
+    project_name = db.Column(db.String(255), nullable=True)
     status = db.Column(db.String(20), default="to_generate", nullable=False)
     generated_at = db.Column(db.DateTime, nullable=True)
     sent_at = db.Column(db.DateTime, nullable=True)
@@ -240,7 +243,7 @@ class NewsletterSubscriber(db.Model):
 class PilotWaiverSignedDocument(db.Model):
     __tablename__ = "pilot_waiver_signed_documents"
 
-    waiver_id = db.Column(db.Integer, primary_key=True)
+    waiver_id = db.Column(db.String(50), primary_key=True)  # Format BVDW-...
     hash = db.Column(db.String(255), nullable=False)
     pdf_file_hash = db.Column(db.String(64))
     data_snapshot = db.Column(db.JSON, nullable=False)
