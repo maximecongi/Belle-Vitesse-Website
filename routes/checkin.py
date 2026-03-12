@@ -52,9 +52,8 @@ def init_checkin_routes(app):
 
         from services.admin import _format_checkin_admin
         from utils.database import get_vehicles
-        vehicle_names = {v["id"]: v.get("fields", {}).get(
-            "name", "—") for v in get_vehicles()}
-        data = _format_checkin_admin(record, vehicle_names)
+        vehicle_map = {v["id"]: v.get("fields", {}) for v in get_vehicles()}
+        data = _format_checkin_admin(record, vehicle_map)
         return render_template(
             "checkin.html", data=data, signature=None, qr=None, hash=None
         )
@@ -84,9 +83,8 @@ def init_checkin_routes(app):
 
         from services.admin import _format_checkin_admin
         from utils.database import get_vehicles
-        vehicle_names = {v["id"]: v.get("fields", {}).get(
-            "name", "—") for v in get_vehicles()}
-        data = _format_checkin_admin(record, vehicle_names)
+        vehicle_map = {v["id"]: v.get("fields", {}) for v in get_vehicles()}
+        data = _format_checkin_admin(record, vehicle_map)
 
         return render_template("checkin_sign.html", data=data, token=token)
 

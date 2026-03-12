@@ -37,8 +37,7 @@ def list_projects():
         joinedload(Project.contact_production_rel)
     ).order_by(Project.nom.desc()).all()
     vehicles = get_vehicles()
-    vehicle_names = {v["id"]: v.get("fields", {}).get(
-        "name", "—") for v in vehicles}
+    vehicle_map = {v["id"]: v.get("fields", {}) for v in vehicles}
 
     result = []
     for p in projects:
@@ -55,7 +54,7 @@ def list_projects():
 
             veh_list.append({
                 "id": vid,
-                "name": vehicle_names.get(vid, "—"),
+                "fields": vehicle_map.get(vid, {}),
                 "checkout_status": c_out.etat_controle if c_out else "",
                 "checkout_id": c_out.id if c_out else "",
                 "checkout_conform": _check_conformity(c_out),

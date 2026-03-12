@@ -330,6 +330,18 @@
     color: #374151;
 }
 
+/* Document ID (Unique IDs for vehicles/inspections) */
+.checkout-doc-id,
+.checkin-doc-id {
+    font-family: monospace;
+    font-size: 6pt;
+    background-color: var(--white-3);
+    padding: 2pt 6pt;
+    border-radius: 2pt;
+    margin-top: 6pt;
+    vertical-align: middle;
+}
+
 /* Tables */
 .admin-table-container {
     overflow-x: auto;

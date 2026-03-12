@@ -18,9 +18,11 @@ logger = logging.getLogger(__name__)
 # ── Checkins ────────────────────────────────────────────────────
 
 
-def _format_checkin_admin(c: CheckinVehicle, vehicle_names, batch_configs=None):
+def _format_checkin_admin(c: CheckinVehicle, vehicle_map, batch_configs=None):
     project_name = c.project.nom if c.project else "—"
-    vehicle_name = vehicle_names.get(c.vehicule_controle, "—")
+    v_data = vehicle_map.get(c.vehicule_controle, {})
+    vehicle_name = v_data.get("name", "—")
+    unique_id = v_data.get("unique_id", "—")
     controller_name = f"{c.responsible.firstname} {c.responsible.lastname}" if c.responsible else "—"
     status = c.etat_controle or "—"
     ready = "Oui" if c.vehicule_pret_retour else "Non"
@@ -36,7 +38,7 @@ def _format_checkin_admin(c: CheckinVehicle, vehicle_names, batch_configs=None):
         "project": project_name,
         "departure_date": d_date,
         "return_date": r_date,
-        "vehicle": {"fields": {"name": vehicle_name}},
+        "vehicle": {"fields": {"name": vehicle_name, "unique_id": unique_id}},
         "control_date": c_date,
         "status": status,
         "controller": {
@@ -98,8 +100,7 @@ def list_checkins():
     ).order_by(CheckinVehicle.created_at.desc()).all()
 
     vehicles = get_vehicles()
-    vehicle_names = {v["id"]: v.get("fields", {}).get(
-        "name", "—") for v in vehicles}
+    vehicle_map = {v["id"]: v.get("fields", {}) for v in vehicles}
 
     # Batch load all vehicle configurations
     batch_configs = {
@@ -116,7 +117,7 @@ def list_checkins():
     }
 
     checkins = [_format_checkin_admin(
-        r, vehicle_names, batch_configs) for r in records]
+        r, vehicle_map, batch_configs) for r in records]
     return {"checkins": checkins, "stats": stats}
 
 
@@ -129,9 +130,8 @@ def get_checkin_detail(record_id):
         return None
 
     vehicles = get_vehicles()
-    vehicle_names = {v["id"]: v.get("fields", {}).get(
-        "name", "—") for v in vehicles}
-    data = _format_checkin_admin(record, vehicle_names)
+    vehicle_map = {v["id"]: v.get("fields", {}) for v in vehicles}
+    data = _format_checkin_admin(record, vehicle_map)
 
     # If signed, load the stable snapshot to get the real PDF URL and hash
     if data.get("control_status") == "Signé":

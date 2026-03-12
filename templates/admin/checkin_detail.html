@@ -32,7 +32,9 @@
                 </div>
                 <div>
                     <div style="font-size: 0.85rem; color: var(--grey-2);">Véhicule</div>
-                    <div style="font-weight: 500;">{{ data.vehicle.fields.name if data.vehicle else '—' }}</div>
+                    <div style="font-weight: 500;">{{ data.vehicle.fields.name if data.vehicle else '—' }} <span
+                            class="checkout-doc-id">{{
+                            data.vehicle.fields.unique_id }}</span></div>
                 </div>
                 <div>
                     <div style="font-size: 0.85rem; color: var(--grey-2);">Production</div>

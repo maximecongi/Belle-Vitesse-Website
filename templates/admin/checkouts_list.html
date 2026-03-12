@@ -42,7 +42,8 @@
                 <tr data-search="{{ checkout.search_text }}">
                     <td style="font-weight: 600;">{{ checkout.inspection_id }}</td>
                     <td>{{ checkout.project }}</td>
-                    <td>{{ checkout.vehicle.fields.name }}</td>
+                    <td>{{ checkout.vehicle.fields.name }} <span class="checkout-doc-id">{{
+                            checkout.vehicle.fields.unique_id }}</span></td>
                     <td>{{ checkout.control_date }}</td>
                     <td>
                         <span class="badge-pill" data-val="{{ checkout.status }}" {% if checkout.ready=='Oui'

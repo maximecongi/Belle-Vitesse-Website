@@ -60,9 +60,8 @@ def generate_signing_token(record_id):
     from services.admin import _format_checkin_admin
     from utils.database import get_vehicles
     vehicles = get_vehicles()
-    vehicle_names = {v["id"]: v.get("fields", {}).get(
-        "name", "—") for v in vehicles}
-    data = _format_checkin_admin(record, vehicle_names)
+    vehicle_map = {v["id"]: v.get("fields", {}) for v in vehicles}
+    data = _format_checkin_admin(record, vehicle_map)
 
     token = str(uuid.uuid4())
 
@@ -104,9 +103,8 @@ def process_signature(token, signature_data, signed_ip):
     try:
         record.etat_controle = "Signé"
         vehicles = get_vehicles()
-        vehicle_names = {v["id"]: v.get("fields", {}).get(
-            "name", "—") for v in vehicles}
-        data = _format_checkin_admin(record, vehicle_names)
+        vehicle_map = {v["id"]: v.get("fields", {}) for v in vehicles}
+        data = _format_checkin_admin(record, vehicle_map)
         data["signed_at"] = signed_at.strftime("%d/%m/%Y %H:%M")
         data["signed_ip"] = signed_ip
 
@@ -246,9 +244,8 @@ def verify_checkin_document(inspection_id, uploaded_file=None):
             return None
 
         vehicles = get_vehicles()
-        vehicle_names = {v["id"]: v.get("fields", {}).get(
-            "name", "—") for v in vehicles}
-        data = _format_checkin_admin(record, vehicle_names)
+        vehicle_map = {v["id"]: v.get("fields", {}) for v in vehicles}
+        data = _format_checkin_admin(record, vehicle_map)
 
         logger.warning(
             f"⚠️ Verify fallback to MySQL (via format) for {inspection_id} — no MySQL signed snapshot."

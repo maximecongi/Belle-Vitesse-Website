@@ -42,7 +42,8 @@
                 <tr data-search="{{ checkin.search_text }}">
                     <td style="font-weight: 600;">{{ checkin.inspection_id }}</td>
                     <td>{{ checkin.project }}</td>
-                    <td>{{ checkin.vehicle.fields.name }}</td>
+                    <td>{{ checkin.vehicle.fields.name }} <span class="checkin-doc-id">{{
+                            checkin.vehicle.fields.unique_id }}</span></td>
                     <td>{{ checkin.control_date }}</td>
                     <td>
                         <span class="badge-pill" data-val="{{ checkin.status }}" {% if checkin.ready=='Oui'
