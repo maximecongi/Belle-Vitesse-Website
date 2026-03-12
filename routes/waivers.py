@@ -30,6 +30,12 @@ def init_waiver_routes(app):
                 waiver.pilot_insurance_policy = data.get("insurance_policy")
                 waiver.signature_data = data.get("signature_data")
 
+                signer_ip = request.headers.get(
+                    'X-Forwarded-For', request.remote_addr)
+                if signer_ip and ',' in signer_ip:
+                    signer_ip = signer_ip.split(',')[0].strip()
+                waiver.signer_ip = signer_ip
+
                 db.session.commit()
 
                 # Trigger background process or process synchronously

@@ -4,7 +4,7 @@ from datetime import datetime
 from flask import current_app, render_template
 
 from models import db, PilotWaiver
-from weasyprint import HTML, CSS
+from weasyprint import HTML
 
 
 def process_pilot_waiver_signature(waiver_id):
@@ -37,20 +37,7 @@ def process_pilot_waiver_signature(waiver_id):
             if not base_url.startswith("https"):
                 base_url = f"https://{base_url}"
 
-        # Additional print styles for PDF
-        css = CSS(string='''
-            @page { size: A4; margin: 2cm; }
-            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #000; }
-            h1 { font-size: 16pt; text-align: center; margin-bottom: 5px; }
-            h2 { font-size: 13pt; margin-top: 20px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
-            p, ul { margin-bottom: 10px; }
-            li { margin-bottom: 5px; }
-            .signature-box { border: 1px solid #ccc; padding: 10px; min-height: 100px; max-width: 300px; text-align: center; }
-            .signature-img { max-width: 100%; max-height: 150px; }
-        ''')
-
-        HTML(string=html_content, base_url=base_url).write_pdf(
-            pdf_path_system, stylesheets=[css])
+        HTML(string=html_content, base_url=base_url).write_pdf(pdf_path_system)
         waiver.signed_pdf_path = pdf_path_url
 
     except Exception as e:

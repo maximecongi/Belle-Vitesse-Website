@@ -246,7 +246,7 @@
 }
 
 .badge-pill[data-val="À envoyer"]::before {
-    content: "� ";
+    content: "📤 ";
 }
 
 .badge-pill[data-val="À signer"] {

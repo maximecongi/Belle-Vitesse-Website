@@ -3,106 +3,221 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>DÉCHARGE DE RESPONSABILITÉ</title>
+    <title>DÉCHARGE DE RESPONSABILITÉ — {{ "%04d" | format(waiver.project_id) }}</title>
+    <!-- Les variables de couleurs -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <!-- La feuille de style principale WeasyPrint / Checkout -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pilot_waiver.css') }}">
 </head>
 
 <body>
-    <h1>DÉCHARGE DE RESPONSABILITÉ</h1>
-    <p style="text-align: center; font-weight: bold; margin-bottom: 30px;">
-        Pilote de véhicule caméra tracking — Belle Vitesse SAS
-    </p>
 
-    <h2>1. Identification des parties</h2>
-    <p><strong>Prestataire :</strong></p>
-    <ul>
-        <li>Raison sociale : Belle Vitesse SAS</li>
-        <li>Représentant : Maxime Congi</li>
-        <li>Adresse : [Adresse de Belle Vitesse]</li>
-        <li>SIRET : [Numéro SIRET]</li>
-    </ul>
+    <div class="pilot-waiver">
 
-    <p><strong>Pilote :</strong></p>
-    <ul>
-        <li>Nom / Prénom : <b>{{ waiver.pilot_first_name }} {{ waiver.pilot_last_name }}</b></li>
-        <li>Date de naissance : <b>{{ waiver.pilot_dob }}</b></li>
-        <li>Numéro de permis : <b>{{ waiver.pilot_license_number }}</b></li>
-        <li>Adresse : <b>{{ waiver.pilot_address }}</b></li>
-    </ul>
+        <!-- ═══════════ HEADER ═══════════ -->
+        <header class="pilot-waiver-header">
+            <div class="pilot-waiver-header-logo">
+                <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
+                    alt="Belle Vitesse">
+            </div>
+            <div class="pilot-waiver-header-meta">
+                <strong class="dot-before">Décharge de responsabilité</strong><br>
+                <span class="pilot-waiver-doc-id">PROJ-{{ "%04d" | format(waiver.project_id) }}</span><br>
+                {{ waiver.signed_at.strftime('%d/%m/%Y') if waiver.signed_at else '' }}
+            </div>
+        </header>
 
-    <h2>2. Objet</h2>
-    <p>La présente décharge concerne la mise à disposition par Belle Vitesse d'un véhicule de tracking caméra modifié
-        (ci-après « le Véhicule ») pour les besoins d'une production audiovisuelle, dans le cadre de la prestation
-        décrite ci-dessous :</p>
-    <ul>
-        <li>Projet : <b>{{ waiver.project.nom if waiver.project else '—' }}</b></li>
-        <li>Production : <b>{{ waiver.production_name or '—' }}</b></li>
-        <li>Véhicule(s) : <b>{{ waiver.vehicles or '—' }}</b></li>
-        <li>Date(s) et lieu(x) : <b>{{ waiver.shooting_dates or '—' }}</b></li>
-    </ul>
+        <!-- ═══════════ IDENTIFICATION ═══════════ -->
+        <section class="pilot-waiver-section">
+            <h2 class="pilot-waiver-section-title dot-before">Identification des parties</h2>
 
-    <h2>3. Déclarations du pilote</h2>
-    <p>Le pilote déclare expressément :</p>
-    <ul>
-        <li>Être titulaire d'un permis de conduire en cours de validité, de la catégorie requise pour le Véhicule
-            confié.</li>
-        <li>Avoir pris connaissance des caractéristiques techniques du Véhicule, notamment ses dimensions, son poids,
-            ses systèmes de sécurité modifiés et ses contraintes de conduite liées au matériel de caméra embarqué.</li>
-        <li>Avoir été informé et formé aux consignes de sécurité spécifiques à l'utilisation du Véhicule en contexte de
-            tournage.</li>
-        <li>Ne pas être sous l'emprise d'alcool, de substances illicites ou de médicaments altérant ses capacités de
-            conduite.</li>
-        <li>Accepter d'utiliser le Véhicule exclusivement dans le cadre de la prestation définie ci-dessus, en
-            conformité avec le Code de la route et les instructions de Belle Vitesse.</li>
-    </ul>
+            <div style="margin-bottom: 12px;">
+                <p style="font-size: 8pt; color: var(--grey-2); line-height: 1.4;">
+                    <span class="pilot-waiver-info-label">Prestataire :</span> Belle Vitesse SAS<br>
+                    <span class="pilot-waiver-info-label">Représentant :</span> Simon Maignan<br>
+                    <span class="pilot-waiver-info-label">Adresse :</span> 33 rue Maurice Gunsbourg, 94200
+                    IVRY-SUR-SEINE<br>
+                    <span class="pilot-waiver-info-label">SIRET :</span> 984 535 071 00013
+                </p>
+            </div>
 
-    <h2>4. Limitation de responsabilité</h2>
-    <p>Le pilote reconnaît et accepte que Belle Vitesse ne pourra en aucun cas être tenue responsable :</p>
-    <ul>
-        <li>Des dommages corporels, matériels ou immatériels résultant d'une utilisation du Véhicule contraire aux
-            consignes remises.</li>
-        <li>Des infractions au Code de la route commises par le pilote durant la prestation.</li>
-        <li>Des dommages causés à des tiers du fait du comportement du pilote.</li>
-    </ul>
-    <p>En cas de sinistre, le pilote s'engage à informer immédiatement Belle Vitesse et à coopérer pleinement avec les
-        autorités compétentes et les assureurs.</p>
+            <div class="pilot-waiver-info-grid">
+                <div class="pilot-waiver-info-item">
+                    <span class="pilot-waiver-info-label">Pilote</span>
+                    <span class="pilot-waiver-info-value">{{ waiver.pilot_first_name }} {{ waiver.pilot_last_name
+                        }}</span>
+                </div>
+                <div class="pilot-waiver-info-item">
+                    <span class="pilot-waiver-info-label">Date de naissance</span>
+                    <span class="pilot-waiver-info-value">{{ waiver.pilot_dob }}</span>
+                </div>
+                <div class="pilot-waiver-info-item">
+                    <span class="pilot-waiver-info-label">Numéro de permis</span>
+                    <span class="pilot-waiver-info-value">{{ waiver.pilot_license_number }}</span>
+                </div>
+            </div>
 
-    <div style="page-break-inside: avoid;">
-        <h2>5. État du véhicule</h2>
-        <p>Le pilote reconnaît avoir reçu le Véhicule en bon état de fonctionnement et s'engage à le restituer dans
-            l'état dans lequel il lui a été remis, sauf usure normale. Tout dommage constaté à la restitution sera
-            imputé au pilote, sauf preuve contraire.</p>
+            <div class="pilot-waiver-info-grid" style="margin-top: 10px;">
+                <div class="pilot-waiver-info-item" style="grid-column: span 3;">
+                    <span class="pilot-waiver-info-label">Adresse Pilote</span>
+                    <span class="pilot-waiver-info-value">{{ waiver.pilot_address }}</span>
+                </div>
+            </div>
+        </section>
 
-        <h2>6. Assurances</h2>
-        <p>Le pilote déclare être couvert par une assurance responsabilité civile professionnelle et/ou personnelle en
-            vigueur à la date de la prestation.</p>
-        <ul>
-            <li>Compagnie d'assurance : <b>{{ waiver.pilot_insurance_company }}</b></li>
-            <li>N° de police : <b>{{ waiver.pilot_insurance_policy }}</b></li>
-        </ul>
+        <!-- ═══════════ OBJET ═══════════ -->
+        <section class="pilot-waiver-section">
+            <h2 class="pilot-waiver-section-title dot-before">Objet de la prestation</h2>
+            <div class="pilot-waiver-notes" style="margin-bottom: 12px; border-left-color: var(--yellow-1);">
+                <p style="color: var(--grey-1); font-size: 8pt;">La présente décharge concerne la mise à disposition par
+                    Belle Vitesse de véhicules de tracking caméra modifiés (ci-après « les Véhicules ») pour les besoins
+                    d'une production audiovisuelle.</p>
+            </div>
 
-        <h2>7. Signature</h2>
-        <p>
-            Document signé électroniquement le <b>{{ waiver.signed_at.strftime('%d/%m/%Y à %H:%M') }}</b>.
-        </p>
+            <div class="pilot-waiver-info-grid">
+                <div class="pilot-waiver-info-item">
+                    <span class="pilot-waiver-info-label">Projet</span>
+                    <span class="pilot-waiver-info-value">{{ waiver.project.nom if waiver.project else '—' }}</span>
+                </div>
+                <div class="pilot-waiver-info-item">
+                    <span class="pilot-waiver-info-label">Production</span>
+                    <span class="pilot-waiver-info-value">{{ waiver.production_name or '—' }}</span>
+                </div>
+                <div class="pilot-waiver-info-item">
+                    <span class="pilot-waiver-info-label">Véhicule(s)</span>
+                    <span class="pilot-waiver-info-value">{{ waiver.vehicles or '—' }}</span>
+                </div>
+                <div class="pilot-waiver-info-item" style="grid-column: span 3;">
+                    <span class="pilot-waiver-info-label">Date(s) de tournage</span>
+                    <span class="pilot-waiver-info-value">{{ waiver.shooting_dates or '—' }}</span>
+                </div>
+            </div>
+        </section>
 
-        <p style="margin-top: 20px; font-style: italic;">Lu et approuvé — Bon pour accord</p>
+        <!-- ═══════════ CONDITIONS ═══════════ -->
+        <section class="pilot-waiver-section">
+            <h2 class="pilot-waiver-section-title dot-before">Déclarations et responsabilités</h2>
 
-        <table style="width: 100%; margin-top: 10px;">
-            <tr>
-                <td style="width: 50%;">
-                    <p><strong>Pour Belle Vitesse</strong></p>
-                    <div style="height: 100px;"></div>
-                </td>
-                <td style="width: 50%;">
-                    <p><strong>Signature du pilote</strong></p>
-                    <div class="signature-box">
+            <table class="pilot-waiver-table" style="margin-bottom: 12px;">
+                <thead>
+                    <tr>
+                        <th style="width: 25px;"></th>
+                        <th>Engagement du pilote</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>✓</td>
+                        <td>Être titulaire d'un permis de conduire en cours de validité, de la catégorie requise pour le
+                            Véhicule confié.</td>
+                    </tr>
+                    <tr>
+                        <td>✓</td>
+                        <td>Avoir pris connaissance des caractéristiques techniques du Véhicule, de ses dimensions, de
+                            son poids, de ses systèmes de sécurité modifiés et des contraintes liées au matériel de
+                            caméra embarqué.</td>
+                    </tr>
+                    <tr>
+                        <td>✓</td>
+                        <td>Avoir été informé et formé aux consignes de sécurité spécifiques à l'utilisation du Véhicule
+                            en contexte de tournage.</td>
+                    </tr>
+                    <tr>
+                        <td>✓</td>
+                        <td>Ne pas être sous l'emprise d'alcool, de drogues ou de médicaments altérant les capacités de
+                            conduite.</td>
+                    </tr>
+                    <tr>
+                        <td>✓</td>
+                        <td>Accepter d'utiliser les Véhicules exclusivement dans le cadre de la prestation, en
+                            conformité
+                            avec le Code de la route et les instructions de Belle Vitesse.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p style="font-size: 8pt; margin-bottom: 8px;"><strong>Limitation de responsabilité : </strong> Le pilote
+                reconnaît et accepte que Belle Vitesse ne pourra en aucun cas être tenue responsable des dommages
+                résultant d'une utilisation contraire aux consignes, des infractions commises par le pilote, ni des
+                dommages causés à des tiers par son comportement.</p>
+            <p style="font-size: 8pt; margin-bottom: 8px;"><strong>État du véhicule : </strong> Le pilote reconnaît
+                avoir reçu les Véhicules en bon état et s'engage à le restituer tel quel. Tout dommage à la restitution
+                sera imputé au pilote, sauf preuve contraire.</p>
+        </section>
+
+        <!-- ═══════════ ASSURANCE ═══════════ -->
+        <section class="pilot-waiver-section">
+            <h2 class="pilot-waiver-section-title dot-before">Assurances</h2>
+            <p style="font-size: 8pt; margin-bottom: 8px; color: var(--grey-2);">Le pilote déclare être couvert par une
+                assurance responsabilité civile professionnelle et/ou personnelle en vigueur.</p>
+            <div class="pilot-waiver-info-grid">
+                <div class="pilot-waiver-info-item">
+                    <span class="pilot-waiver-info-label">Compagnie d'assurance</span>
+                    <span class="pilot-waiver-info-value">{{ waiver.pilot_insurance_company }}</span>
+                </div>
+                <div class="pilot-waiver-info-item">
+                    <span class="pilot-waiver-info-label">Numéro de police</span>
+                    <span class="pilot-waiver-info-value">{{ waiver.pilot_insurance_policy }}</span>
+                </div>
+            </div>
+        </section>
+
+        <hr class="pilot-waiver-divider">
+
+        <!-- ═══════════ SIGNATURE ═══════════ -->
+        <section class="pilot-waiver-section">
+            <h2 class="pilot-waiver-section-title dot-before">Signature électronique</h2>
+            <p style="font-size: 8pt; font-style: italic; color: var(--grey-2); margin-bottom: 10px;">Lu et approuvé —
+                Bon pour accord.</p>
+
+            <div class="pilot-waiver-signature">
+                <div class="pilot-waiver-signature-block">
+                    <p class="pilot-waiver-signature-label">Pour Belle Vitesse SAS</p>
+                    <div style="font-size: 8pt; color: var(--grey-1); line-height: 1.4; margin-top: 10px;">
+                        <strong>Belle Vitesse SAS</strong><br>
+                        Représenté par Simon Maignan<br>
+                        SIRET : 984 535 071 00013<br><br>
+                        Document généré le {{ waiver.generated_at.strftime('%d/%m/%Y à %H:%M') if waiver.generated_at
+                        else '—' }}
+                    </div>
+                </div>
+
+                <div class="pilot-waiver-signature-block">
+                    <p class="pilot-waiver-signature-label">Signature du Pilote</p>
+                    <div class="pilot-waiver-signature-pad">
                         {% if waiver.signature_data %}
-                        <img src="{{ waiver.signature_data }}" class="signature-img" alt="Signature" />
+                        <img src="{{ waiver.signature_data }}" alt="Signature">
+                        {% else %}
+                        <span class="pilot-waiver-text-muted">En attente</span>
                         {% endif %}
                     </div>
-                </td>
-            </tr>
-        </table>
+                    <div class="pilot-waiver-signature-info">
+                        <strong>{{ waiver.pilot_first_name }} {{ waiver.pilot_last_name }}</strong><br>
+                        {% if waiver.signed_at %}
+                        Signé le {{ waiver.signed_at.strftime('%d/%m/%Y à %H:%M') }}<br>
+                        Adresse IP : {{ waiver.signer_ip or '—' }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <p
+                style="font-size: 6pt; color: var(--grey-2); font-style: italic; margin-top: 16px; line-height: 1.4; text-align: justify;">
+                Ce document constitue une signature électronique simple au sens du règlement eIDAS (UE) n°910/2014.<br>
+                La traçabilité est assurée par : horodatage, adresse IP du signataire et données biométriques de la
+                signature manuscrite numérisée.
+            </p>
+        </section>
+
+        <!-- ═══════════ FOOTER ═══════════ -->
+        <footer class="pilot-waiver-footer">
+            <p>
+                <strong>Belle Vitesse SAS</strong><br>
+                33 rue Maurice Gunsbourg — 94200 Ivry-sur-Seine — France<br>
+                Ce document est confidentiel et destiné uniquement à un usage interne ou d'assurance.
+            </p>
+        </footer>
+
     </div>
 
 </body>

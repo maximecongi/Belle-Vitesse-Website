@@ -2,6 +2,7 @@ from flask import render_template, flash, redirect, url_for
 
 from utils.decorators import require_roles
 from services.admin.waivers import list_pilot_waivers, generate_pilot_waiver, send_pilot_waiver
+from models import PilotWaiver
 
 
 def init_waivers_routes(app):
@@ -31,3 +32,9 @@ def init_waivers_routes(app):
         else:
             flash(msg, "error")
         return redirect(url_for('admin_pilot_waivers_list'))
+
+    @app.route("/admin/waivers/pilots/<int:waiver_id>/preview")
+    @require_roles('administrator', 'manager')
+    def admin_pilot_waiver_preview(waiver_id):
+        waiver = PilotWaiver.query.get_or_404(waiver_id)
+        return render_template("pdf/pilot_waiver_pdf.html", waiver=waiver)

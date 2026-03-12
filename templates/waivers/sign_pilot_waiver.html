@@ -11,7 +11,7 @@
     <title>Signature Décharge Pilote - Belle Vitesse</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/checkout.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pilot_waiver.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 
     <style>
@@ -150,34 +150,34 @@
 
 <body>
 
-    <div class="checkout">
-        <header class="checkout-header">
-            <div class="checkout-header-logo">
+    <div class="pilot-waiver">
+        <header class="pilot-waiver-header">
+            <div class="pilot-waiver-header-logo">
                 <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
                     alt="Belle Vitesse">
             </div>
-            <div class="checkout-header-meta">
+            <div class="pilot-waiver-header-meta">
                 <strong class="dot-before">Décharge Pilote</strong><br>
-                <span class="checkout-doc-id">{{ "%04d" | format(waiver.project_id) }} — {{ waiver.production_name
+                <span class="pilot-waiver-doc-id">{{ "%04d" | format(waiver.project_id) }} — {{ waiver.production_name
                     }}</span>
             </div>
         </header>
 
         {% if waiver.status == 'signed' %}
         <!-- ── État : déjà signé ────────────────────────────────────── -->
-        <section class="checkout-section" style="text-align: center; margin-top: 4rem;">
-            <div style="font-size: 4rem; margin-bottom: 1rem;">✅</div>
-            <h2 class="checkout-section-title">Décharge déjà signée</h2>
-            <p style="color: var(--grey-2); margin-top: 1rem;">
+        <section class="pilot-waiver-section" style="text-align: center; margin-top: 4rem;">
+            <div style="font-size: 4rem; margin-bottom: 1rem; color: var(--green-1);">✓</div>
+            <h2 class="pilot-waiver-section-title">Décharge déjà signée</h2>
+            <p style="color: var(--grey-2); margin-top: 1rem;text-align:center;">
                 Ce document a déjà été signé électroniquement et ne peut plus être modifié.
             </p>
         </section>
 
         {% elif waiver.status not in ['to_sign', 'to_send'] %}
         <!-- ── État : lien invalide ────────────────────────────────── -->
-        <section class="checkout-section" style="text-align: center; margin-top: 4rem;">
-            <div style="font-size: 4rem; margin-bottom: 1rem;">❌</div>
-            <h2 class="checkout-section-title">Lien invalide</h2>
+        <section class="pilot-waiver-section" style="text-align: center; margin-top: 4rem;">
+            <div style="font-size: 4rem; margin-bottom: 1rem; color: var(--red-1);">✕</div>
+            <h2 class="pilot-waiver-section-title">Lien invalide</h2>
             <p style="color: var(--grey-2); margin-top: 1rem;">
                 Ce lien de signature est invalide ou expiré.
             </p>
@@ -188,31 +188,31 @@
         <form id="waiver-form" novalidate>
 
             <!-- Récapitulatif tournage -->
-            <section class="checkout-section">
-                <h2 class="checkout-section-title dot-before">Informations du tournage</h2>
-                <div class="checkout-info-grid">
-                    <div class="checkout-info-item">
-                        <span class="checkout-info-label">Projet</span>
-                        <span class="checkout-info-value">{{ waiver.project.nom if waiver.project else '—' }}</span>
+            <section class="pilot-waiver-section">
+                <h2 class="pilot-waiver-section-title dot-before">Informations du tournage</h2>
+                <div class="pilot-waiver-info-grid">
+                    <div class="pilot-waiver-info-item">
+                        <span class="pilot-waiver-info-label">Projet</span>
+                        <span class="pilot-waiver-info-value">{{ waiver.project.nom if waiver.project else '—' }}</span>
                     </div>
-                    <div class="checkout-info-item">
-                        <span class="checkout-info-label">Production</span>
-                        <span class="checkout-info-value">{{ waiver.production_name or '—' }}</span>
+                    <div class="pilot-waiver-info-item">
+                        <span class="pilot-waiver-info-label">Production</span>
+                        <span class="pilot-waiver-info-value">{{ waiver.production_name or '—' }}</span>
                     </div>
-                    <div class="checkout-info-item" style="grid-column: 1 / -1;">
-                        <span class="checkout-info-label">Véhicule(s) à piloter</span>
-                        <span class="checkout-info-value">{{ waiver.vehicles or '—' }}</span>
+                    <div class="pilot-waiver-info-item" style="grid-column: 1 / -1;">
+                        <span class="pilot-waiver-info-label">Véhicule(s) à piloter</span>
+                        <span class="pilot-waiver-info-value">{{ waiver.vehicles or '—' }}</span>
                     </div>
-                    <div class="checkout-info-item" style="grid-column: 1 / -1;">
-                        <span class="checkout-info-label">Date(s) et lieu(x) de tournage</span>
-                        <span class="checkout-info-value">{{ waiver.shooting_dates or '—' }}</span>
+                    <div class="pilot-waiver-info-item" style="grid-column: 1 / -1;">
+                        <span class="pilot-waiver-info-label">Date(s) et lieu(x) de tournage</span>
+                        <span class="pilot-waiver-info-value">{{ waiver.shooting_dates or '—' }}</span>
                     </div>
                 </div>
             </section>
 
             <!-- Informations pilote (éditables) -->
-            <section class="checkout-section">
-                <h2 class="checkout-section-title dot-before">Vos informations de pilote</h2>
+            <section class="pilot-waiver-section">
+                <h2 class="pilot-waiver-section-title dot-before">Vos informations de pilote</h2>
                 <p style="font-size: 0.9rem; color: var(--grey-2); margin-bottom: 1.5rem;">
                     Vérifiez et complétez vos informations personnelles avant de signer.
                 </p>
@@ -257,8 +257,8 @@
             </section>
 
             <!-- Contenu de la décharge -->
-            <section class="checkout-section">
-                <h2 class="checkout-section-title dot-before">Contenu de la décharge</h2>
+            <section class="pilot-waiver-section">
+                <h2 class="pilot-waiver-section-title dot-before">Contenu de la décharge</h2>
                 <div class="waiver-content">
                     <h1>DÉCHARGE DE RESPONSABILITÉ</h1>
                     <p style="font-weight: 500;">Pilote de véhicule caméra tracking — Belle Vitesse SAS</p>
@@ -339,7 +339,7 @@
             </section>
 
             <!-- Signature -->
-            <section class="checkout-section">
+            <section class="pilot-waiver-section">
                 <div class="checkbox-container">
                     <input type="checkbox" id="accept_terms">
                     <label for="accept_terms">
@@ -349,15 +349,15 @@
                     </label>
                 </div>
 
-                <div class="checkout-sign-canvas-wrapper" style="margin-top: 1rem;">
+                <div class="pilot-waiver-sign-canvas-wrapper" style="margin-top: 1rem;">
                     <canvas id="signature-canvas"></canvas>
                 </div>
 
-                <div class="checkout-sign-actions">
-                    <button type="button" class="checkout-btn checkout-btn--secondary" id="btn-clear">
+                <div class="pilot-waiver-sign-actions">
+                    <button type="button" class="pilot-waiver-btn pilot-waiver-btn--secondary" id="btn-clear">
                         Effacer la signature
                     </button>
-                    <button type="button" class="checkout-btn checkout-btn--primary" id="btn-sign">
+                    <button type="button" class="pilot-waiver-btn pilot-waiver-btn--primary" id="btn-sign">
                         Signer numériquement
                     </button>
                 </div>
@@ -368,7 +368,7 @@
         </form>
         {% endif %}
 
-        <footer class="checkout-footer" style="margin-top: 4rem;">
+        <footer class="pilot-waiver-footer" style="margin-top: 4rem;">
             <p><strong>Belle Vitesse SAS</strong></p>
         </footer>
     </div>

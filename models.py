@@ -129,6 +129,9 @@ class PilotWaiver(db.Model):
         db.Text(length=16777215), nullable=True)  # MEDIUMTEXT
     signed_pdf_path = db.Column(db.String(500), nullable=True)
 
+    # Signature Traceability
+    signer_ip = db.Column(db.String(45), nullable=True)
+
     # Webhook
     webhook_triggered_at = db.Column(db.DateTime, nullable=True)
 
