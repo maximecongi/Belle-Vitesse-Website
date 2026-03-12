@@ -43,8 +43,8 @@
                 {% for w in waivers %}
                 <tr class="searchable-row">
                     <td style="font-weight: 600;">{{ w.id or '—' }}</td>
-                    <td style="font-weight: 600;">{{ w.project_name }}</td>
-                    <td style="font-weight: 600;">{{ w.pilot_name }}</td>
+                    <td>{{ w.project_name }}</td>
+                    <td>{{ w.pilot_name }}</td>
                     <td>{{ w.shooting_dates }}</td>
                     <td>
                         {{ status_badge(w.status) }}
