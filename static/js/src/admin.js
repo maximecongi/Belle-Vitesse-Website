@@ -82,18 +82,42 @@ document.querySelectorAll('.admin-nav-item').forEach(link => {
 function init() {
 
     // ─────────────────────────────────────────────
-    // 1. Auto-dismiss flash messages (admin_base)
+    // 1. Flash messages management (admin_base)
     // ─────────────────────────────────────────────
     const flashes = document.querySelectorAll('.admin-flash-item');
     if (flashes.length) {
         setTimeout(() => {
-            flashes.forEach(f => {
-                f.style.opacity = '0';
-                f.style.transform = 'translateX(100%)';
-                f.style.transition = 'all 0.5s ease';
-                setTimeout(() => f.remove(), 500);
-            });
+            flashes.forEach(f => dismissFlash(f));
         }, 5000);
+    }
+
+    /**
+     * Show a flash message (toast) dynamically.
+     * @param {string} message 
+     * @param {string} category (info, success, warning, error)
+     */
+    window.showFlash = function (message, category = 'info') {
+        const container = document.querySelector('.admin-flash-container');
+        if (!container) return;
+
+        const flash = document.createElement('div');
+        flash.className = `admin-flash-item flash-${category}`;
+        flash.textContent = message;
+
+        container.appendChild(flash);
+
+        // Auto-dismiss after 5s
+        setTimeout(() => {
+            dismissFlash(flash);
+        }, 5000);
+    };
+
+    function dismissFlash(f) {
+        if (!f || !f.parentNode) return;
+        f.style.opacity = '0';
+        f.style.transform = 'translateX(100%)';
+        f.style.transition = 'all 0.5s ease';
+        setTimeout(() => f.remove(), 500);
     }
 
 

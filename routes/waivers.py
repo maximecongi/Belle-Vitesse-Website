@@ -1,8 +1,10 @@
 import os
 from werkzeug.utils import secure_filename
-from flask import render_template, request, jsonify, current_app
-from models import PilotWaiver, db
+from flask import render_template, request, jsonify, current_app, abort
+from models import PilotWaiver, PilotWaiverSignedDocument, db
 from utils.waivers import process_pilot_waiver_signature
+from utils.waiver_verification import verify_waiver_seal, verify_pdf_hash
+from extensions import csrf
 
 
 def init_waiver_routes(app):
@@ -73,3 +75,51 @@ def init_waiver_routes(app):
                 current_app.logger.error(
                     f"Error processing waiver signature: {e}")
                 return jsonify({"success": False, "error": "Une erreur serveur est survenue."}), 500
+
+    @app.route("/verify/waiver/<int:waiver_id>", methods=["GET", "POST"])
+    @csrf.exempt
+    def verify_pilot_waiver(waiver_id):
+        signed_doc = PilotWaiverSignedDocument.query.get(waiver_id)
+        if not signed_doc:
+            abort(404)
+
+        data = signed_doc.data_snapshot
+        stored_hash = signed_doc.hash
+        stored_signature = signed_doc.signature
+        stored_pdf_file_hash = signed_doc.pdf_file_hash
+
+        # 1. Verify HMAC seal
+        seal_valid = verify_waiver_seal(
+            waiver_id=str(waiver_id),
+            pilot_name=data.get("_seal_pilot_name", ""),
+            license_number=data.get("_seal_license", ""),
+            signature_data=stored_signature,
+            signed_at=data.get("_seal_signed_at", ""),
+            expected_hash=stored_hash
+        )
+
+        pdf_valid = None
+        pdf_error = None
+
+        # 2. Verify uploaded PDF (if POST)
+        if request.method == "POST":
+            uploaded_file = request.files.get("pdf")
+            if uploaded_file:
+                if not uploaded_file.filename.lower().endswith(".pdf"):
+                    pdf_error = "Le fichier doit être un PDF."
+                elif not stored_pdf_file_hash:
+                    pdf_error = "Ce document n'a pas d'empreinte PDF enregistrée."
+                else:
+                    uploaded_bytes = uploaded_file.read()
+                    pdf_valid = verify_pdf_hash(
+                        uploaded_bytes, stored_pdf_file_hash)
+
+        return render_template(
+            "waivers/pilot_waiver_verify.html",
+            data=data,
+            seal_valid=seal_valid,
+            pdf_valid=pdf_valid,
+            pdf_error=pdf_error,
+            inspection_id=f"PROJ-{waiver_id:04d}",
+            has_pdf_hash=bool(stored_pdf_file_hash)
+        )

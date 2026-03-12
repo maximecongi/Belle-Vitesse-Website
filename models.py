@@ -237,6 +237,19 @@ class NewsletterSubscriber(db.Model):
         return f"<NewsletterSubscriber {self.email}>"
 
 
+class PilotWaiverSignedDocument(db.Model):
+    __tablename__ = "pilot_waiver_signed_documents"
+
+    waiver_id = db.Column(db.Integer, primary_key=True)
+    hash = db.Column(db.String(255), nullable=False)
+    pdf_file_hash = db.Column(db.String(64))
+    data_snapshot = db.Column(db.JSON, nullable=False)
+    signature = db.Column(db.Text(length=16777215))  # MEDIUMTEXT
+    pdf_url = db.Column(db.Text)
+    signed_at = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class CheckoutSignedDocument(db.Model):
     __tablename__ = "checkout_signed_documents"
 

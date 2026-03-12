@@ -3,8 +3,13 @@ import requests
 from datetime import datetime
 from flask import current_app, render_template
 
-from models import db, PilotWaiver
+from models import db, PilotWaiver, PilotWaiverSignedDocument
 from weasyprint import HTML
+from utils.waiver_verification import (
+    compute_waiver_seal,
+    generate_qr_code,
+    compute_pdf_hash,
+)
 
 
 def process_pilot_waiver_signature(waiver_id):
@@ -16,7 +21,24 @@ def process_pilot_waiver_signature(waiver_id):
     waiver.status = "signed"
     waiver.signed_at = datetime.utcnow()
 
-    # 1. Generate PDF Path
+    # 1. Prepare Verification Data
+    pilot_full_name = f"{waiver.pilot_first_name} {waiver.pilot_last_name}"
+
+    # Compute HMAC-SHA256 digital seal
+    current_hash = compute_waiver_seal(
+        waiver_id=str(waiver.id),
+        pilot_name=pilot_full_name,
+        license_number=waiver.pilot_license_number or "",
+        signature_data=waiver.signature_data,
+        signed_at=waiver.signed_at.isoformat(),
+    )
+
+    # Generate QR code → verification page
+    domain = os.getenv("APP_DOMAIN", "https://bellevitesse.com")
+    verification_url = f"{domain}/verify/waiver/{waiver.id}"
+    qr_code_img = generate_qr_code(verification_url)
+
+    # 2. Generate PDF Path
     pdf_dir = os.path.join(current_app.static_folder, "files", "waivers")
     os.makedirs(pdf_dir, exist_ok=True)
 
@@ -24,28 +46,71 @@ def process_pilot_waiver_signature(waiver_id):
     pdf_path_system = os.path.join(pdf_dir, filename)
     pdf_path_url = f"/static/files/waivers/{filename}"
 
-    # 2. Render PDF Template
-    html_content = render_template("pdf/pilot_waiver_pdf.html", waiver=waiver)
+    # 3. Render PDF Template
+    html_content = render_template(
+        "pdf/pilot_waiver_pdf.html",
+        waiver=waiver,
+        qr=qr_code_img,
+        document_hash=current_hash,
+        verification_url=verification_url
+    )
 
     try:
-        # 3. Generate PDF
+        # 4. Generate PDF
         from flask import request
         try:
             base_url = request.host_url
         except RuntimeError:
             base_url = current_app.config.get("SERVER_NAME")
-            if not base_url.startswith("https"):
+            if base_url and not base_url.startswith("http"):
                 base_url = f"https://{base_url}"
 
-        HTML(string=html_content, base_url=base_url).write_pdf(pdf_path_system)
+        # WeasyPrint PDF generation
+        pdf_bytes = HTML(string=html_content, base_url=base_url).write_pdf()
+
+        with open(pdf_path_system, "wb") as f:
+            f.write(pdf_bytes)
+
         waiver.signed_pdf_path = pdf_path_url
+
+        # 5. Compute PDF Hash and Save Snapshot
+        pdf_file_hash = compute_pdf_hash(pdf_bytes)
+
+        signed_doc = PilotWaiverSignedDocument(
+            waiver_id=waiver.id,
+            hash=current_hash,
+            pdf_file_hash=pdf_file_hash,
+            data_snapshot={
+                "id": waiver.id,
+                "project_id": waiver.project_id,
+                "pilot_first_name": waiver.pilot_first_name,
+                "pilot_last_name": waiver.pilot_last_name,
+                "pilot_license_number": waiver.pilot_license_number,
+                "pilot_address": waiver.pilot_address,
+                "pilot_insurance_company": waiver.pilot_insurance_company,
+                "pilot_insurance_policy": waiver.pilot_insurance_policy,
+                "production_name": waiver.production_name,
+                "vehicles": waiver.vehicles,
+                "shooting_dates": waiver.shooting_dates,
+                "signed_at": waiver.signed_at.isoformat(),
+                "signer_ip": waiver.signer_ip,
+                # Seal references for re-verification
+                "_seal_pilot_name": pilot_full_name,
+                "_seal_license": waiver.pilot_license_number or "",
+                "_seal_signed_at": waiver.signed_at.isoformat(),
+            },
+            signature=waiver.signature_data,
+            pdf_url=f"{domain}{pdf_path_url}",
+            signed_at=waiver.signed_at
+        )
+        db.session.add(signed_doc)
 
     except Exception as e:
         current_app.logger.error(f"Failed to generate waiver PDF: {e}")
 
     db.session.commit()
 
-    # 4. Trigger Webhook
+    # 6. Trigger Webhook
     webhook_url = os.getenv("N8N_WEBHOOK_PILOT_WAIVER")
     if webhook_url:
         try:

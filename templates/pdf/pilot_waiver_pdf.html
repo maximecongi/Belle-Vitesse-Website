@@ -209,11 +209,39 @@
             </p>
         </section>
 
+        <!-- ═══════════ VERIFICATION ═══════════ -->
+        <section class="pilot-waiver-section"
+            style="margin-top: 30px; border-top: 1px solid var(--grey-4); padding-top: 20px;">
+            <div style="display: flex; align-items: flex-start; gap: 20px;">
+                <div style="flex: 0 0 80px;">
+                    {% if qr %}
+                    <a href="{{ verification_url or '#' }}">
+                        <img src="{{ qr }}" alt="QR Code" style="width: 80px; height: 80px;"></a>
+                    {% endif %}
+                </div>
+                <div style="flex: 1;">
+                    <p style="font-size: 8pt; font-weight: 600; margin-bottom: 4px;">Vérification de l'authenticité</p>
+                    <p style="font-size: 7pt; color: var(--grey-2); line-height: 1.4; margin-bottom: 8px;">
+                        Ce document a été scellé par une empreinte numérique unique. Scannez ou cliquez sur le QR code
+                        pour vérifier son intégrité.
+                    </p>
+                    {% if document_hash %}
+                    <div style="background: var(--white-3); padding: 6px 10px; border-radius: 4px;">
+                        <span style="font-size: 6pt; color: var(--white-4); text-transform: uppercase;">Sceau
+                            HMAC-SHA256</span><br>
+                        <code
+                            style="font-size: 6pt; color: var(--grey-2); font-family: monospace; word-break: break-all;">{{ document_hash }}</code>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
         <!-- ═══════════ FOOTER ═══════════ -->
         <footer class="pilot-waiver-footer">
             <p>
                 <strong>{{company_name}}</strong><br>
-                Ce document sera scellé électroniquement après validation.
+                Ce document est scellé électroniquement.
             </p>
         </footer>
 

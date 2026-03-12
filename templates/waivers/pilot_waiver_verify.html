@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/static/imgs/favicons/favicon.svg" />
+    <link rel="shortcut icon" href="/static/imgs/favicons/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/imgs/favicons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Belle Vitesse" />
+    <link rel="manifest" href="/static/imgs/favicons/site.webmanifest" />
+
+    <title>Vérification Décharge — Belle Vitesse</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/checkout.css') }}">
+    <style>
+        /* Reusing checkout styles but adapting for waiver */
+        :root {
+            --green-1: #28a745;
+            --red-1: #dc3545;
+        }
+
+        .verify-badge {
+            display: inline-block;
+            padding: 10px 24px;
+            border-radius: 4px;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .verify-badge-ok {
+            background-color: var(--green-1);
+            color: white;
+        }
+
+        .verify-badge-error {
+            background-color: var(--red-1);
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="checkout">
+
+        <!-- ═══════════ HEADER ═══════════ -->
+        <header class="checkout-header">
+            <div class="checkout-header-logo">
+                <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
+                    alt="Belle Vitesse">
+            </div>
+            <div class="checkout-header-meta">
+                <strong class="dot-before">Vérification de Décharge Pilote</strong><br>
+                <span class="checkout-doc-id">{{ inspection_id }}</span>
+            </div>
+        </header>
+
+        <!-- ── Badge sceau de données ── -->
+        <section class="checkout-section checkout-text-center">
+            <div style="margin-bottom: 2rem;">
+                {% if seal_valid %}
+                <div class="verify-badge verify-badge-ok">
+                    ✅ Données certifiées & intactes
+                </div>
+                <p style="font-size: 0.85rem; color: var(--grey-2); margin-top: 0.5rem;">
+                    Le sceau cryptographique est valide. Les informations n'ont pas été modifiées depuis la signature.
+                </p>
+                {% else %}
+                <div class="verify-badge verify-badge-error">
+                    🚨 Sceau invalide — données altérées
+                </div>
+                <p style="font-size: 0.85rem; color: var(--grey-2); margin-top: 0.5rem;">
+                    Attention : les données ne correspondent pas au sceau original. Ce document peut avoir été falsifié.
+                </p>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- ── Badge résultat vérification PDF ── -->
+        {% if pdf_valid is not none %}
+        <section class="checkout-section checkout-text-center">
+            <div style="margin-bottom: 1.5rem;">
+                {% if pdf_valid %}
+                <div class="verify-badge verify-badge-ok">
+                    ✅ Fichier PDF authentique
+                </div>
+                <p style="font-size: 0.85rem; color: var(--grey-2); margin-top: 0.5rem;">
+                    L'empreinte du fichier correspond exactement à l'original signé.
+                </p>
+                {% else %}
+                <div class="verify-badge verify-badge-error">
+                    🚨 Fichier PDF non authentique
+                </div>
+                <p style="font-size: 0.85rem; color: var(--grey-2); margin-top: 0.5rem;">
+                    Ce fichier ne correspond pas au document original.
+                </p>
+                {% endif %}
+            </div>
+        </section>
+        {% endif %}
+
+        {% if pdf_error %}
+        <section class="checkout-section checkout-text-center">
+            <p style="color: var(--red-1); font-weight: 500;">⚠️ {{ pdf_error }}</p>
+        </section>
+        {% endif %}
+
+        <!-- ── Données scellées ── -->
+        <section class="checkout-section">
+            <h2 class="checkout-section-title dot-before">Informations Certifiées</h2>
+            <div class="checkout-info-grid">
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Pilote</span>
+                    <span class="checkout-info-value">{{ data.pilot_first_name }} {{ data.pilot_last_name }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">N° Permis</span>
+                    <span class="checkout-info-value">{{ data.pilot_license_number or '—' }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Production</span>
+                    <span class="checkout-info-value">{{ data.production_name or '—' }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Projet</span>
+                    <span class="checkout-info-value">PROJ-{{ "%04d" | format(data.project_id) }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Signé le</span>
+                    <span class="checkout-info-value">{{ data.signed_at }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Adresse IP</span>
+                    <span class="checkout-info-value">{{ data.signer_ip or '—' }}</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Empreinte numérique ── -->
+        <section class="checkout-section">
+            <h2 class="checkout-section-title dot-before">Empreinte Numérique (HMAC)</h2>
+            <div style="background: var(--white-3); padding: 1.5rem; border-radius: 4px;">
+                <code
+                    style="display: block; word-break: break-all; font-size: 0.8rem; color: var(--grey-2); font-family: monospace;">
+                    {{ data.hash }}
+                </code>
+            </div>
+        </section>
+
+        <!-- ═══════════ UPLOAD VÉRIFICATION PDF ═══════════ -->
+        {% if has_pdf_hash %}
+        <section class="checkout-section" style="margin-top: 3rem;">
+            <h2 class="checkout-section-title dot-before">Authentifier un fichier PDF</h2>
+            <p style="font-size: 0.85rem; color: var(--grey-2); margin-bottom: 1.5rem;">
+                Uploadez le PDF pour vérifier si son contenu est identique à l'original.
+            </p>
+
+            <form method="POST" enctype="multipart/form-data">
+                <label for="pdf-input" style="cursor: pointer; display: block;">
+                    <div id="upload-area" style="
+                        border: 2px dashed var(--white-4);
+                        border-radius: 4px;
+                        padding: 2.5rem 1.5rem;
+                        text-align: center;
+                        transition: border-color 0.2s;
+                        margin-bottom: 1.25rem;
+                    ">
+                        <p style="font-size: 1.5rem; margin-bottom: 0.5rem;">📄</p>
+                        <p style="font-size: 0.9rem; color: var(--grey-2);">
+                            <strong>Cliquez ou glissez</strong> le PDF ici
+                        </p>
+                        <p id="file-name"
+                            style="display: none; margin-top: 0.5rem; color: var(--green-1); font-weight: 600;"></p>
+                    </div>
+                </label>
+                <input type="file" id="pdf-input" name="pdf" accept=".pdf" style="display: none;">
+                <button type="submit" id="submit-btn" class="checkout-btn checkout-btn--primary"
+                    style="width: 100%; border: none; cursor: pointer; opacity: 0.5;" disabled>
+                    Vérifier le fichier
+                </button>
+            </form>
+        </section>
+        {% endif %}
+
+        <!-- ═══════════ FOOTER ═══════════ -->
+        <footer class="checkout-footer" style="margin-top: 5rem;">
+            <p><strong>{{company_name}}</strong></p>
+        </footer>
+
+    </div>
+
+    <script>
+        const input = document.getElementById("pdf-input");
+        const area = document.getElementById("upload-area");
+        const nameEl = document.getElementById("file-name");
+        const btn = document.getElementById("submit-btn");
+
+        if (input) {
+            input.addEventListener("change", () => {
+                if (input.files.length > 0) {
+                    nameEl.textContent = input.files[0].name;
+                    nameEl.style.display = "block";
+                    area.style.borderColor = "var(--green-1)";
+                    btn.disabled = false;
+                    btn.style.opacity = "1";
+                }
+            });
+        }
+    </script>
+
+</body>
+
+</html>
