@@ -60,6 +60,11 @@ def process_pilot_waiver_signature(waiver_id):
                     "last_name": waiver.pilot_last_name,
                     "license_number": waiver.pilot_license_number
                 },
+                "attachments": {
+                    "license_url": f"{domain}{waiver.pilot_license_path}" if waiver.pilot_license_path else None,
+                    "insurance_url": f"{domain}{waiver.pilot_insurance_path}" if waiver.pilot_insurance_path else None,
+                    "identity_url": f"{domain}{waiver.pilot_identity_path}" if waiver.pilot_identity_path else None
+                },
                 "production_name": waiver.production_name,
                 "signed_pdf_url": f"{domain}{waiver.signed_pdf_path}" if waiver.signed_pdf_path else None
             }

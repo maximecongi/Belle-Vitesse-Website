@@ -13,6 +13,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <!-- PDF.js for client-side PDF to Image conversion -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
 </head>
 
 <body>
@@ -77,7 +82,7 @@
                         {% endif %}
                     </div>
                     <div class="pilot-waiver-info-item" style="grid-column: 1 / -1;">
-                        <span class="pilot-waiver-info-label">Date(s) et lieu(x) de tournage</span>
+                        <span class="pilot-waiver-info-label">Date(s)</span>
                         <span class="pilot-waiver-info-value">{{ waiver.shooting_dates or '—' }}</span>
                     </div>
                 </div>
@@ -112,8 +117,9 @@
                     </div>
                     <div class="form-group" style="grid-column: 1 / -1;">
                         <label for="address">Adresse postale <span style="color:red;">*</span></label>
-                        <textarea class="form-input" id="address" name="address" rows="3" required
-                            autocomplete="street-address">{{ waiver.pilot_address or '' }}</textarea>
+                        <input class="form-input" type="text" id="address" name="address" required autocomplete="off"
+                            value="{{ waiver.pilot_address or '' }}">
+                        <div id="address-suggestions" class="address-suggestions"></div>
                     </div>
                     <div class="form-group">
                         <label for="insurance_company">Compagnie d'assurance (RC) <span
@@ -127,6 +133,39 @@
                         <input class="form-input" type="text" id="insurance_policy" name="insurance_policy"
                             value="{{ waiver.pilot_insurance_policy or '' }}" required>
                     </div>
+
+                    <!-- Pièces jointes -->
+                    <div class="form-group">
+                        <label>Permis de conduire <span style="color:red;">*</span></label>
+                        <div class="custom-file-upload">
+                            <label for="pilot_license" class="custom-file-label">
+                                <span>📁 Choisir un fichier...</span>
+                            </label>
+                            <input type="file" id="pilot_license" name="pilot_license" accept="image/*,.pdf" required>
+                            <span class="file-name" id="name-pilot_license">Aucun fichier sélectionné</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Attestation d'assurance <span style="color:red;">*</span></label>
+                        <div class="custom-file-upload">
+                            <label for="pilot_insurance" class="custom-file-label">
+                                <span>📁 Choisir un fichier...</span>
+                            </label>
+                            <input type="file" id="pilot_insurance" name="pilot_insurance" accept="image/*,.pdf"
+                                required>
+                            <span class="file-name" id="name-pilot_insurance">Aucun fichier sélectionné</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Carte d'identité / Passeport <span style="color:red;">*</span></label>
+                        <div class="custom-file-upload">
+                            <label for="pilot_identity" class="custom-file-label">
+                                <span>📁 Choisir un fichier...</span>
+                            </label>
+                            <input type="file" id="pilot_identity" name="pilot_identity" accept="image/*,.pdf" required>
+                            <span class="file-name" id="name-pilot_identity">Aucun fichier sélectionné</span>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -135,7 +174,7 @@
                 <h2 class="pilot-waiver-section-title dot-before">Contenu de la décharge</h2>
                 <div class="waiver-content">
                     <h1>DÉCHARGE DE RESPONSABILITÉ</h1>
-                    <p style="font-weight: 500;">Pilote de véhicule caméra tracking — {{company_company}}</p>
+                    <p style="font-weight: 500;">Pilote de véhicule caméra tracking — {{company_name}}</p>
                     <hr>
 
                     <h2>1. Identification des parties</h2>
@@ -239,6 +278,9 @@
 
             <div id="feedback" class="feedback-box"></div>
 
+            <!-- Hidden canvas for PDF to Image conversion -->
+            <canvas id="pdf-conversion-canvas" style="display: none;"></canvas>
+
         </form>
         {% endif %}
 
@@ -300,6 +342,7 @@
             }
 
             var syncIds = ['first_name', 'last_name', 'dob', 'license_number', 'address', 'insurance_company', 'insurance_policy'];
+            var fileIds = ['pilot_license', 'pilot_insurance', 'pilot_identity'];
             syncIds.forEach(function (id) {
                 var el = document.getElementById(id);
                 if (el) el.addEventListener('input', updateWaiverText);
@@ -338,8 +381,106 @@
                 signaturePad.clear();
             });
 
+            // ── Address Autocomplete ────────────────────────────────────────
+            const addressInput = document.getElementById('address');
+            const suggestionsContainer = document.getElementById('address-suggestions');
+            let lastSelectedValue = "";
+
+            addressInput.addEventListener('input', async () => {
+                const query = addressInput.value.trim();
+
+                // Si la valeur est identique à la dernière sélectionnée ou trop courte, on cache
+                if (query === lastSelectedValue || query.length < 3) {
+                    suggestionsContainer.style.display = 'none';
+                    return;
+                }
+
+                try {
+                    const res = await fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=5`);
+                    const data = await res.json();
+
+                    if (data.features && data.features.length > 0) {
+                        suggestionsContainer.innerHTML = '';
+                        data.features.forEach(feature => {
+                            const div = document.createElement('div');
+                            div.className = 'suggestion-item';
+                            div.textContent = feature.properties.label;
+                            div.addEventListener('click', () => {
+                                lastSelectedValue = feature.properties.label;
+                                addressInput.value = feature.properties.label;
+                                suggestionsContainer.style.display = 'none';
+                                // Sync avec l'aperçu texte de la décharge
+                                updateWaiverText();
+                            });
+                            suggestionsContainer.appendChild(div);
+                        });
+                        suggestionsContainer.style.display = 'block';
+                    } else {
+                        suggestionsContainer.style.display = 'none';
+                    }
+                } catch (err) {
+                    console.error('Address API error:', err);
+                }
+            });
+
+            // Close suggestions when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!addressInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+                    suggestionsContainer.style.display = 'none';
+                }
+            });
+
+            // ── Display selected filename ──────────────────────────────────
+            fileIds.forEach(id => {
+                const el = document.getElementById(id);
+                const nameSpan = document.getElementById('name-' + id);
+                if (el && nameSpan) {
+                    el.addEventListener('change', function () {
+                        if (this.files && this.files.length > 0) {
+                            const name = this.files[0].name;
+                            const truncated = name.length > 45 ? name.slice(0, 45) + '…' : name;
+                            nameSpan.textContent = '📄 ' + truncated;
+                            nameSpan.style.color = 'var(--admin-accent)';
+                        } else {
+                            nameSpan.textContent = "Aucun fichier sélectionné";
+                            nameSpan.style.color = "var(--grey-2)";
+                        }
+                    });
+                }
+            });
+
+            // ── PDF to Image conversion ─────────────────────────────────────
+            async function convertPdfToImage(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = async function () {
+                        try {
+                            const typedarray = new Uint8Array(this.result);
+                            const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                            const page = await pdf.getPage(1);
+                            const viewport = page.getViewport({ scale: 2.0 }); // High quality
+
+                            const convCanvas = document.getElementById('pdf-conversion-canvas');
+                            const context = convCanvas.getContext('2d');
+                            convCanvas.height = viewport.height;
+                            convCanvas.width = viewport.width;
+
+                            await page.render({ canvasContext: context, viewport: viewport }).promise;
+
+                            convCanvas.toBlob((blob) => {
+                                resolve(blob);
+                            }, 'image/png');
+                        } catch (err) {
+                            reject(err);
+                        }
+                    };
+                    reader.onerror = reject;
+                    reader.readAsArrayBuffer(file);
+                });
+            }
+
             // ── Soumission ───────────────────────────────────────────────────
-            btnSign.addEventListener('click', function () {
+            btnSign.addEventListener('click', async function () {
 
                 // 1. Champs obligatoires
                 var missing = false;
@@ -350,6 +491,18 @@
 
                 if (missing) {
                     showFeedback('❌ Veuillez remplir tous les champs obligatoires avant de signer.', 'error');
+                    return;
+                }
+
+                // Attachments validation
+                var missingFiles = false;
+                fileIds.forEach(function (id) {
+                    var el = document.getElementById(id);
+                    if (el && (!el.files || el.files.length === 0)) missingFiles = true;
+                });
+
+                if (missingFiles) {
+                    showFeedback('❌ Veuillez joindre les documents requis (Permis, Assurance, ID).', 'error');
                     return;
                 }
 
@@ -365,49 +518,72 @@
                     return;
                 }
 
-                // 4. Envoi
                 btnSign.disabled = true;
-                btnSign.textContent = 'Envoi en cours…';
+                btnSign.textContent = 'Traitement des documents…';
 
-                var payload = {
-                    first_name: document.getElementById('first_name').value.trim(),
-                    last_name: document.getElementById('last_name').value.trim(),
-                    dob: document.getElementById('dob').value,
-                    license_number: document.getElementById('license_number').value.trim(),
-                    address: document.getElementById('address').value.trim(),
-                    insurance_company: document.getElementById('insurance_company').value.trim(),
-                    insurance_policy: document.getElementById('insurance_policy').value.trim(),
-                    signature_data: signaturePad.toDataURL('image/png')
-                };
+                try {
+                    var formData = new FormData();
+                    formData.append('first_name', document.getElementById('first_name').value.trim());
+                    formData.append('last_name', document.getElementById('last_name').value.trim());
+                    formData.append('dob', document.getElementById('dob').value);
+                    formData.append('license_number', document.getElementById('license_number').value.trim());
+                    formData.append('address', document.getElementById('address').value.trim());
+                    formData.append('insurance_company', document.getElementById('insurance_company').value.trim());
+                    formData.append('insurance_policy', document.getElementById('insurance_policy').value.trim());
+                    formData.append('signature_data', signaturePad.toDataURL('image/png'));
 
-                fetch(window.location.href, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify(payload)
-                })
-                    .then(function (res) { return res.json(); })
-                    .then(function (result) {
-                        if (result.success) {
-                            showFeedback('✅ Décharge signée avec succès. Vous allez recevoir un e-mail de confirmation.', 'success');
-                            btnSign.textContent = 'Signé ✓';
-                            canvas.style.pointerEvents = 'none';
-                            setTimeout(function () { window.location.reload(); }, 2500);
-                        } else {
-                            showFeedback('❌ ' + (result.error || 'Erreur inconnue. Réessayez.'), 'error');
-                            btnSign.disabled = false;
-                            btnSign.textContent = 'Signer numériquement';
+                    for (const id of fileIds) {
+                        var el = document.getElementById(id);
+                        if (el && el.files[0]) {
+                            const file = el.files[0];
+                            if (file.type === 'application/pdf') {
+                                try {
+                                    const imageBlob = await convertPdfToImage(file);
+                                    // Change extension to .png for the server to recognize it as image
+                                    const newName = file.name.replace(/\.[^/.]+$/, "") + ".png";
+                                    formData.append(id, imageBlob, newName);
+                                } catch (err) {
+                                    console.error('PDF conversion failed:', err);
+                                    showFeedback('❌ Échec de la conversion du PDF ' + id + '. Veuillez utiliser une image ou réessayez.', 'error');
+                                    btnSign.disabled = false;
+                                    btnSign.textContent = 'Signer numériquement';
+                                    return;
+                                }
+                            } else {
+                                formData.append(id, file);
+                            }
                         }
-                    })
-                    .catch(function () {
-                        showFeedback('❌ Erreur réseau. Vérifiez votre connexion et réessayez.', 'error');
+                    }
+
+                    btnSign.textContent = 'Envoi en cours…';
+                    const response = await fetch(window.location.href, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token() }}'
+                        },
+                        body: formData
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        showFeedback('✅ Décharge signée avec succès. Vous allez recevoir un e-mail de confirmation.', 'success');
+                        btnSign.textContent = 'Signé ✓';
+                        canvas.style.pointerEvents = 'none';
+                        setTimeout(function () { window.location.reload(); }, 2500);
+                    } else {
+                        showFeedback('❌ ' + (result.error || 'Erreur inconnue. Réessayez.'), 'error');
                         btnSign.disabled = false;
                         btnSign.textContent = 'Signer numériquement';
-                    });
+                    }
+
+                } catch (err) {
+                    showFeedback('❌ Erreur réseau. Vérifiez votre connexion et réessayez.', 'error');
+                    btnSign.disabled = false;
+                    btnSign.textContent = 'Signer numériquement';
+                }
             });
         });
+
     </script>
 
 </body>
