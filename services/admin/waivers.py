@@ -107,7 +107,8 @@ def list_pilot_waivers():
             return f"{route}{clean_path if is_attachment else filename}?t={token}"
 
         waivers_formatted.append({
-            "id": w.id,
+            "id": w.waiver_id,
+            "db_id": w.id,
             "waiver_id": w.waiver_id,
             "project_id": p.id,
             "project_name": p.nom,

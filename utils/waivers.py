@@ -174,11 +174,16 @@ def _trigger_n8n_webhook(waiver, filename, domain, current_hash):
             access_token = generate_waiver_pdf_access_token(path)
             return f"{domain}/pilot-waiver/attachment/{path}?t={access_token}"
 
+        # Get business dates from project if possible
+        ref_date = waiver.project.date_debut_tournage if (
+            waiver.project and waiver.project.date_debut_tournage) else waiver.signed_at
+
         payload = {
             "event": "pilot_waiver_signed",
+            "id": waiver.id,
             "waiver_id": waiver.waiver_id,
-            "year": waiver.shooting_dates.strftime("%Y"),
-            "month": waiver.shooting_dates.strftime("%m"),
+            "year": ref_date.strftime("%Y"),
+            "month": ref_date.strftime("%m"),
             "pilot": {
                 "first_name": waiver.pilot_first_name,
                 "last_name": waiver.pilot_last_name,
