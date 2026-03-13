@@ -200,7 +200,7 @@ def reset_production_waiver(waiver_id):
         waiver.webhook_triggered_at = None
 
         db.session.commit()
-        return True, "Décharge production réinitialisée."
+        return True, "Décharge réinitialisée avec succès (données et fichiers supprimés)."
     except Exception as e:
         db.session.rollback()
         return False, f"Erreur lors du reset : {e}"
