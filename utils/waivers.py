@@ -102,7 +102,7 @@ def process_pilot_waiver_signature(waiver_id):
         with open(pdf_path_system, "wb") as f:
             f.write(pdf_bytes)
 
-        waiver.signed_pdf_path = pdf_path_url
+        waiver.signed_pdf_path = filename
 
         # 5. Compute PDF Hash and Save Snapshot
         pdf_file_hash = compute_pdf_hash(pdf_bytes)
@@ -166,24 +166,32 @@ def _trigger_n8n_webhook(waiver, filename, domain, current_hash):
         access_token = generate_waiver_pdf_access_token(filename)
         pdf_url_signed = f"{domain}/pilot-waiver/document/{filename}?t={access_token}"
 
+        # Helper to generate secured attachment URL
+        def get_secured_attachment_url(path):
+            if not path:
+                return None
+            # path is "waiver_id/filename"
+            access_token = generate_waiver_pdf_access_token(path)
+            return f"{domain}/pilot-waiver/attachment/{path}?t={access_token}"
+
         payload = {
             "event": "pilot_waiver_signed",
-            "waiver_id": waiver.id,
-            "waiver_number": waiver.waiver_id,
-            "project_id": waiver.project_id,
-            "signed_at": waiver.signed_at.isoformat(),
+            "waiver_id": waiver.waiver_id,
+            "year": waiver.shooting_dates.strftime("%Y"),
+            "month": waiver.shooting_dates.strftime("%m"),
             "pilot": {
                 "first_name": waiver.pilot_first_name,
                 "last_name": waiver.pilot_last_name,
                 "license_number": waiver.pilot_license_number
             },
             "attachments": {
-                "license_url": f"{domain}{waiver.pilot_license_path}" if waiver.pilot_license_path else None,
-                "insurance_url": f"{domain}{waiver.pilot_insurance_path}" if waiver.pilot_insurance_path else None,
-                "identity_url": f"{domain}{waiver.pilot_identity_path}" if waiver.pilot_identity_path else None
+                "license_url": get_secured_attachment_url(waiver.pilot_license_path),
+                "insurance_url": get_secured_attachment_url(waiver.pilot_insurance_path),
+                "identity_url": get_secured_attachment_url(waiver.pilot_identity_path)
             },
-            "production_name": waiver.production_name,
-            "signed_pdf_url": pdf_url_signed,
+            "production": waiver.production_name,
+            "project": waiver.project_name,
+            "pdf_url": pdf_url_signed,
             "hash": current_hash
         }
 

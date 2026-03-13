@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from werkzeug.utils import secure_filename
 from flask import render_template, request, jsonify, current_app, abort, send_from_directory
 import secrets
@@ -37,8 +38,9 @@ def init_waiver_routes(app):
                 waiver.signature_data = data.get("signature_data")
 
                 # Handle file uploads
+                private_folder = current_app.config.get("PRIVATE_FOLDER")
                 upload_dir = os.path.join(
-                    current_app.static_folder, 'uploads', 'waivers', 'attachments', str(waiver.id))
+                    private_folder, 'pilot_waiver_attachments', str(waiver.id))
                 os.makedirs(upload_dir, exist_ok=True)
 
                 file_fields = {
@@ -51,13 +53,13 @@ def init_waiver_routes(app):
                     file = request.files.get(field_name)
                     if file and file.filename:
                         filename = secure_filename(file.filename)
-                        # Prepend timestamp to avoid collisions if re-signed (though not expected here)
-                        filename = f"{field_name}_{filename}"
+                        # Prepend timestamp to avoid collisions if re-signed
+                        filename = f"{field_name}_{int(datetime.now().timestamp())}_{filename}"
                         file_path = os.path.join(upload_dir, filename)
                         file.save(file_path)
-                        # Store relative path for URL generation (starts with /static/)
-                        relative_path = f"/static/uploads/waivers/attachments/{waiver.id}/{filename}"
-                        setattr(waiver, attr_name, relative_path)
+                        # Store only the relative path within the private attachment folder
+                        # Format: waiver_id/filename
+                        setattr(waiver, attr_name, f"{waiver.id}/{filename}")
 
                 signer_ip = request.headers.get(
                     'X-Forwarded-For', request.remote_addr)
@@ -183,5 +185,43 @@ def init_waiver_routes(app):
 
         try:
             return send_from_directory(directory, filename)
+        except Exception:
+            abort(404)
+
+    @app.route("/pilot-waiver/attachment/<path:filepath>")
+    @csrf.exempt
+    def download_pilot_waiver_attachment(filepath):
+        # filepath is "waiver_id/filename"
+        # 1. Check for header-based access (admin/automation)
+        token_header = request.headers.get("X-Check-Token")
+        expected_header = os.getenv("CHECK_API_TOKEN")
+
+        # 2. Check for URL-based access
+        access_token = request.args.get("t", "")
+
+        is_authorized = False
+
+        if expected_header and token_header and secrets.compare_digest(token_header, expected_header):
+            is_authorized = True
+        elif access_token and validate_waiver_pdf_access_token(filepath, access_token):
+            is_authorized = True
+
+        if not is_authorized:
+            abort(403)
+
+        private_folder = current_app.config.get("PRIVATE_FOLDER")
+        directory = os.path.join(private_folder, "pilot_waiver_attachments")
+
+        # Extract filename (last part) and subfolder (everything before)
+        parts = filepath.split('/')
+        if len(parts) < 2:
+            abort(400)
+
+        filename = parts[-1]
+        subfolder = '/'.join(parts[:-1])
+        full_directory = os.path.join(directory, subfolder)
+
+        try:
+            return send_from_directory(full_directory, filename)
         except Exception:
             abort(404)

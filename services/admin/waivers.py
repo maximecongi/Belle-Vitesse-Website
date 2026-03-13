@@ -83,8 +83,32 @@ def list_pilot_waivers():
         elif w.shooting_dates:
             shooting_dates = w.shooting_dates
 
+        from utils.waivers import generate_waiver_pdf_access_token
+
+        # Helper to generate secured URL
+        def get_secured_url(path, is_attachment=False):
+            if not path:
+                return None
+
+            # Clean path from any existing tokens
+            clean_path = path.split('?')[0]
+            # Extract filename/filepath for token generation
+            # For PDF, it's the filename. For attachments, it's waiver_id/filename
+            filename = clean_path.split(
+                '/')[-1] if not is_attachment else clean_path
+
+            # If it's the PDF and still has the full route, extract just the filename
+            if not is_attachment and '/pilot-waiver/document/' in clean_path:
+                filename = clean_path.replace('/pilot-waiver/document/', '')
+
+            token = generate_waiver_pdf_access_token(
+                clean_path if is_attachment else filename)
+            route = '/pilot-waiver/attachment/' if is_attachment else '/pilot-waiver/document/'
+            return f"{route}{clean_path if is_attachment else filename}?t={token}"
+
         waivers_formatted.append({
-            "id": w.waiver_id,
+            "id": w.id,
+            "waiver_id": w.waiver_id,
             "project_id": p.id,
             "project_name": p.nom,
             "pilot_name": pilote_name,
@@ -94,7 +118,10 @@ def list_pilot_waivers():
             "sent_at": w.sent_at,
             "signed_at": w.signed_at,
             "signature_token": w.signature_token,
-            "signed_pdf_path": w.signed_pdf_path
+            "signed_pdf_path": get_secured_url(w.signed_pdf_path),
+            "pilot_license_path": get_secured_url(w.pilot_license_path, is_attachment=True),
+            "pilot_insurance_path": get_secured_url(w.pilot_insurance_path, is_attachment=True),
+            "pilot_identity_path": get_secured_url(w.pilot_identity_path, is_attachment=True)
         })
 
     return waivers_formatted
