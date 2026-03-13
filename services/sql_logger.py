@@ -1,3 +1,4 @@
+import os
 import time
 import logging
 import re
@@ -69,6 +70,14 @@ def init_sql_logger(app, db):
     Logs to both the SQL table and a rotating file.
     Table creation is handled via models.py.
     """
+    # Check if logger is activated via environment variable
+    activated = os.getenv("SQL_LOGGER_ACTIVATED", "false").lower() in (
+        "true", "1", "t", "y", "yes")
+
+    if not activated:
+        app.logger.info(
+            "ℹ️ SQL Logger is disabled (SQL_LOGGER_ACTIVATED=false)")
+        return
 
     with app.app_context():
         @event.listens_for(db.engine, "before_cursor_execute")
