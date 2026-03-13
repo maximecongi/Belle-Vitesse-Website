@@ -128,17 +128,24 @@ def init_checkin_routes(app):
 
         return render_template("checkin_verify.html", **context)
 
-    @app.route("/checkin/document/<filename>")
+    @app.route("/checkin/document/<path:filepath>")
     @csrf.exempt
-    def download_checkin_document(filename):
+    def download_checkin_document(filepath):
         access_token = request.args.get("t", "")
-        if not access_token or not validate_pdf_access_token(filename, access_token):
+        if not access_token or not validate_pdf_access_token(filepath, access_token):
             abort(403)
 
+        output_base = current_app.config.get(
+            "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
         private_folder = current_app.config.get("PRIVATE_FOLDER")
-        directory = os.path.join(private_folder, "checkin_pdfs")
 
         try:
-            return send_from_directory(directory, filename)
+            if "/" in filepath and not filepath.startswith(".."):
+                # New hierarchical structure
+                return send_from_directory(output_base, filepath)
+            else:
+                # Legacy flat structure
+                directory = os.path.join(private_folder, "checkin_pdfs")
+                return send_from_directory(directory, filepath)
         except Exception:
             abort(404)

@@ -19,24 +19,41 @@ def _cleanup_production_waiver_assets(waiver):
         (waiver.production_insurance_path, "production_waiver_attachments")
     ]
 
+    output_base = current_app.config.get(
+        "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
+    private_folder = current_app.config.get("PRIVATE_FOLDER")
+
     for file_path, folder in files_to_delete:
         if file_path:
-            # Check if it's a relative path starting from static or just a filename
-            if file_path.startswith('/static/'):
-                relative_path = file_path.lstrip('/')
-                full_path = os.path.join(current_app.root_path, relative_path)
-            else:
-                private_folder = current_app.config.get("PRIVATE_FOLDER")
-                full_path = os.path.join(
-                    private_folder, folder, file_path)
-
-            if os.path.exists(full_path):
+            # 1. Try hierarchical structure (new)
+            full_path_new = os.path.join(output_base, file_path)
+            if os.path.exists(full_path_new):
                 try:
-                    os.remove(full_path)
-                    logger.info(f"🗑️ Fichier supprimé : {full_path}")
+                    os.remove(full_path_new)
+                    logger.info(
+                        f"🗑️ Fichier (Nouveau) supprimé : {full_path_new}")
+                    continue
                 except Exception as e:
                     logger.error(
-                        f"❌ Erreur suppression fichier {full_path} : {e}")
+                        f"❌ Erreur suppression fichier (Nouveau) {full_path_new} : {e}")
+
+            # 2. Try legacy structure
+            if file_path.startswith('/static/'):
+                relative_path = file_path.lstrip('/')
+                full_path_legacy = os.path.join(
+                    current_app.root_path, relative_path)
+            else:
+                full_path_legacy = os.path.join(
+                    private_folder, folder, file_path)
+
+            if os.path.exists(full_path_legacy):
+                try:
+                    os.remove(full_path_legacy)
+                    logger.info(
+                        f"🗑️ Fichier (Legacy) supprimé : {full_path_legacy}")
+                except Exception as e:
+                    logger.error(
+                        f"❌ Erreur suppression fichier (Legacy) {full_path_legacy} : {e}")
 
     signed_doc = ProductionWaiverSignedDocument.query.filter_by(
         waiver_id=waiver.waiver_id).first()
@@ -74,9 +91,17 @@ def list_production_waivers():
         def get_secured_url(path):
             if not path:
                 return None
-            filename = path.split('/')[-1]
-            token = generate_waiver_pdf_access_token(filename)
-            return f"/production-waiver/document/{filename}?t={token}"
+
+            # Remove any existing tokens
+            clean_path = path.split('?')[0]
+
+            # If it's a full URL or contains the route, extract the path part
+            if '/production-waiver/document/' in clean_path:
+                clean_path = clean_path.split(
+                    '/production-waiver/document/')[-1]
+
+            token = generate_waiver_pdf_access_token(clean_path)
+            return f"/production-waiver/document/{clean_path}?t={token}"
 
         # Production name
         production_name = "—"
@@ -232,18 +257,52 @@ def _cleanup_pilot_waiver_assets(waiver):
         waiver.pilot_identity_path
     ]
 
-    for file_path in files_to_delete:
-        if file_path and file_path.startswith('/static/'):
-            relative_path = file_path.lstrip('/')
-            full_path = os.path.join(current_app.root_path, relative_path)
+    output_base = current_app.config.get(
+        "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
+    private_folder = current_app.config.get("PRIVATE_FOLDER")
 
-            if os.path.exists(full_path):
+    for file_path in files_to_delete:
+        if file_path:
+            # 1. Try hierarchical structure (new)
+            # For pilot waiver attachments, the path in DB is relative to output/
+            full_path_new = os.path.join(output_base, file_path)
+            if os.path.exists(full_path_new):
                 try:
-                    os.remove(full_path)
-                    logger.info(f"🗑️ Fichier supprimé : {full_path}")
+                    os.remove(full_path_new)
+                    logger.info(
+                        f"🗑️ Fichier (Nouveau) supprimé : {full_path_new}")
+                    continue
                 except Exception as e:
                     logger.error(
-                        f"❌ Erreur suppression fichier {full_path} : {e}")
+                        f"❌ Erreur suppression fichier (Nouveau) {full_path_new} : {e}")
+
+            # 2. Try legacy static structure
+            if file_path.startswith('/static/'):
+                relative_path = file_path.lstrip('/')
+                full_path_legacy = os.path.join(
+                    current_app.root_path, relative_path)
+                if os.path.exists(full_path_legacy):
+                    try:
+                        os.remove(full_path_legacy)
+                        logger.info(
+                            f"🗑️ Fichier (Legacy Static) supprimé : {full_path_legacy}")
+                    except Exception as e:
+                        logger.error(
+                            f"❌ Erreur suppression fichier (Legacy Static) {full_path_legacy} : {e}")
+            else:
+                # 3. Try legacy private structure
+                # We don't know the exact folder here for pilot, but usually pilot_waiver_pdfs or attachments
+                for folder in ["pilot_waiver_pdfs", "pilot_waiver_attachments"]:
+                    full_path_legacy = os.path.join(
+                        private_folder, folder, file_path)
+                    if os.path.exists(full_path_legacy):
+                        try:
+                            os.remove(full_path_legacy)
+                            logger.info(
+                                f"🗑️ Fichier (Legacy Private) supprimé : {full_path_legacy}")
+                        except Exception as e:
+                            logger.error(
+                                f"❌ Erreur suppression fichier (Legacy Private) {full_path_legacy} : {e}")
 
     # 2. Supprimer le document scellé associé
     signed_doc = PilotWaiverSignedDocument.query.filter_by(
@@ -300,21 +359,18 @@ def list_pilot_waivers():
             if not path:
                 return None
 
-            # Clean path from any existing tokens
+            # Remove any existing tokens
             clean_path = path.split('?')[0]
-            # Extract filename/filepath for token generation
-            # For PDF, it's the filename. For attachments, it's waiver_id/filename
-            filename = clean_path.split(
-                '/')[-1] if not is_attachment else clean_path
 
-            # If it's the PDF and still has the full route, extract just the filename
-            if not is_attachment and '/pilot-waiver/document/' in clean_path:
-                filename = clean_path.replace('/pilot-waiver/document/', '')
+            # If it's a full URL or contains the route, extract the part after the route
+            if '/pilot-waiver/document/' in clean_path:
+                clean_path = clean_path.split('/pilot-waiver/document/')[-1]
+            elif '/pilot-waiver/attachment/' in clean_path:
+                clean_path = clean_path.split('/pilot-waiver/attachment/')[-1]
 
-            token = generate_waiver_pdf_access_token(
-                clean_path if is_attachment else filename)
+            token = generate_waiver_pdf_access_token(clean_path)
             route = '/pilot-waiver/attachment/' if is_attachment else '/pilot-waiver/document/'
-            return f"{route}{clean_path if is_attachment else filename}?t={token}"
+            return f"{route}{clean_path}?t={token}"
 
         waivers_formatted.append({
             "id": w.waiver_id,

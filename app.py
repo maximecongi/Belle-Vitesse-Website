@@ -100,10 +100,15 @@ def create_app():
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=12)
     if os.getenv("FLASK_ENV") == "production":
         app.config["PRIVATE_FOLDER"] = Path("/app/private")
+        app.config["OUTPUT_FOLDER"] = Path("/app/output")
     else:
         app.config["PRIVATE_FOLDER"] = Path(
             "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE")
+        app.config["OUTPUT_FOLDER"] = Path(
+            "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/output")
+
     app.config["PRIVATE_FOLDER"].mkdir(parents=True, exist_ok=True)
+    app.config["OUTPUT_FOLDER"].mkdir(parents=True, exist_ok=True)
 
     # Limiter Config
     if os.getenv("FLASK_ENV") == "production":

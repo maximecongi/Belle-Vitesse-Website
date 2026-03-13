@@ -7,7 +7,13 @@ from models import PilotWaiver, PilotWaiverSignedDocument, ProductionWaiver, Pro
 from utils.waivers import (
     process_pilot_waiver_signature,
     process_production_waiver_signature,
-    validate_waiver_pdf_access_token
+    validate_waiver_pdf_access_token,
+    generate_waiver_pdf_access_token
+)
+from utils.storage import (
+    get_pilot_attachments_path,
+    get_production_attachments_path,
+    ensure_dir
 )
 from utils.waiver_verification import (
     verify_waiver_seal,
@@ -45,29 +51,30 @@ def init_waiver_routes(app):
                 waiver.pilot_insurance_policy = data.get("insurance_policy")
                 waiver.signature_data = data.get("signature_data")
 
-                # Handle file uploads
-                private_folder = current_app.config.get("PRIVATE_FOLDER")
-                upload_dir = os.path.join(
-                    private_folder, 'pilot_waiver_attachments', str(waiver.id))
-                os.makedirs(upload_dir, exist_ok=True)
+                # Handle file uploads using new storage hierarchy
+                output_base = current_app.config.get(
+                    "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
 
                 file_fields = {
-                    'pilot_license': 'pilot_license_path',
-                    'pilot_insurance': 'pilot_insurance_path',
-                    'pilot_identity': 'pilot_identity_path'
+                    'pilot_license': ('pilot_license_path', 'license'),
+                    'pilot_insurance': ('pilot_insurance_path', 'insurance'),
+                    'pilot_identity': ('pilot_identity_path', 'identity')
                 }
 
-                for field_name, attr_name in file_fields.items():
+                for field_name, (attr_name, doc_type) in file_fields.items():
                     file = request.files.get(field_name)
                     if file and file.filename:
+                        upload_dir = ensure_dir(
+                            get_pilot_attachments_path(waiver.project, doc_type))
                         filename = secure_filename(file.filename)
-                        # Prepend timestamp to avoid collisions if re-signed
+                        # Prepend timestamp to avoid collisions
                         filename = f"{field_name}_{int(datetime.now().timestamp())}_{filename}"
                         file_path = os.path.join(upload_dir, filename)
                         file.save(file_path)
-                        # Store only the relative path within the private attachment folder
-                        # Format: waiver_id/filename
-                        setattr(waiver, attr_name, f"{waiver.id}/{filename}")
+
+                        # Store relative path from output base
+                        rel_path = os.path.relpath(file_path, output_base)
+                        setattr(waiver, attr_name, rel_path)
 
                 signer_ip = request.headers.get(
                     'X-Forwarded-For', request.remote_addr)
@@ -147,11 +154,12 @@ def init_waiver_routes(app):
         # Generate access token for the PDF download link
         pdf_url = signed_doc.pdf_url
         if pdf_url:
-            # handle existing ?t= if any
-            filename = pdf_url.split("/")[-1].split("?")[0]
-            from utils.waivers import generate_waiver_pdf_access_token
-            token = generate_waiver_pdf_access_token(filename)
-            pdf_download_url = f"/pilot-waiver/document/{filename}?t={token}"
+            # Extract path from URL - handles both filename for legacy and full path
+            # URLs are either /pilot-waiver/document/FILENAME or /pilot-waiver/document/PATH/TO/FILE
+            # We want the part after /document/
+            path_part = pdf_url.split("/document/")[-1].split("?")[0]
+            token = generate_waiver_pdf_access_token(path_part)
+            pdf_download_url = f"/pilot-waiver/document/{path_part}?t={token}"
         else:
             pdf_download_url = None
 
@@ -168,43 +176,14 @@ def init_waiver_routes(app):
             pdf_download_url=pdf_download_url
         )
 
-    @app.route("/pilot-waiver/document/<filename>")
+    @app.route("/pilot-waiver/document/<path:filepath>")
     @csrf.exempt
-    def download_pilot_waiver_document(filename):
+    def download_pilot_waiver_document(filepath):
         # 1. Check for header-based access (admin/automation)
         token_header = request.headers.get("X-Check-Token")
         expected_header = os.getenv("CHECK_API_TOKEN")
 
         # 2. Check for URL-based access (pilots/preview)
-        access_token = request.args.get("t", "")
-
-        is_authorized = False
-
-        if expected_header and token_header and secrets.compare_digest(token_header, expected_header):
-            is_authorized = True
-        elif access_token and validate_waiver_pdf_access_token(filename, access_token):
-            is_authorized = True
-
-        if not is_authorized:
-            abort(403)
-
-        private_folder = current_app.config.get("PRIVATE_FOLDER")
-        directory = os.path.join(private_folder, "pilot_waiver_pdfs")
-
-        try:
-            return send_from_directory(directory, filename)
-        except Exception:
-            abort(404)
-
-    @app.route("/pilot-waiver/attachment/<path:filepath>")
-    @csrf.exempt
-    def download_pilot_waiver_attachment(filepath):
-        # filepath is "waiver_id/filename"
-        # 1. Check for header-based access (admin/automation)
-        token_header = request.headers.get("X-Check-Token")
-        expected_header = os.getenv("CHECK_API_TOKEN")
-
-        # 2. Check for URL-based access
         access_token = request.args.get("t", "")
 
         is_authorized = False
@@ -217,20 +196,61 @@ def init_waiver_routes(app):
         if not is_authorized:
             abort(403)
 
+        output_base = current_app.config.get(
+            "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
         private_folder = current_app.config.get("PRIVATE_FOLDER")
-        directory = os.path.join(private_folder, "pilot_waiver_attachments")
-
-        # Extract filename (last part) and subfolder (everything before)
-        parts = filepath.split('/')
-        if len(parts) < 2:
-            abort(400)
-
-        filename = parts[-1]
-        subfolder = '/'.join(parts[:-1])
-        full_directory = os.path.join(directory, subfolder)
 
         try:
-            return send_from_directory(full_directory, filename)
+            if "/" in filepath and not filepath.startswith(".."):
+                # New hierarchical structure
+                return send_from_directory(output_base, filepath)
+            else:
+                # Legacy flat structure
+                directory = os.path.join(private_folder, "pilot_waiver_pdfs")
+                return send_from_directory(directory, filepath)
+        except Exception:
+            abort(404)
+
+    @app.route("/pilot-waiver/attachment/<path:filepath>")
+    @csrf.exempt
+    def download_pilot_waiver_attachment(filepath):
+        # filepath is either "waiver_id/filename" (legacy) or "YEAR/MONTH/.../filename" (new)
+        # 1. Check for header-based access
+        token_header = request.headers.get("X-Check-Token")
+        expected_header = os.getenv("CHECK_API_TOKEN")
+
+        # 2. Check for URL-based access
+        access_token = request.args.get("t", "")
+
+        is_authorized = False
+        if expected_header and token_header and secrets.compare_digest(token_header, expected_header):
+            is_authorized = True
+        elif access_token and validate_waiver_pdf_access_token(filepath, access_token):
+            is_authorized = True
+
+        if not is_authorized:
+            abort(403)
+
+        output_base = current_app.config.get(
+            "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
+        private_folder = current_app.config.get("PRIVATE_FOLDER")
+
+        try:
+            # Heuristic to distinguish between new path and legacy waiver_id/filename
+            # New paths have "1_SÉCURITÉ" or follow the year/month structure
+            if "1_SÉCURITÉ" in filepath or (filepath.count('/') >= 2 and filepath.split('/')[0].isdigit()):
+                return send_from_directory(output_base, filepath)
+            else:
+                # Legacy: filepath is "waiver_id/filename"
+                directory = os.path.join(
+                    private_folder, "pilot_waiver_attachments")
+                parts = filepath.split('/')
+                if len(parts) >= 2:
+                    filename = parts[-1]
+                    subfolder = '/'.join(parts[:-1])
+                    full_directory = os.path.join(directory, subfolder)
+                    return send_from_directory(full_directory, filename)
+                abort(404)
         except Exception:
             abort(404)
 
@@ -270,20 +290,22 @@ def init_waiver_routes(app):
                 waiver.location_of_use = data.get("location_of_use")
                 waiver.signature_data = data.get("signature_data")
 
-                # Handle file uploads
-                private_folder = current_app.config.get("PRIVATE_FOLDER")
-                upload_dir = os.path.join(
-                    private_folder, 'production_waiver_attachments', str(waiver.id))
-                os.makedirs(upload_dir, exist_ok=True)
+                # Handle file uploads using new storage hierarchy
+                output_base = current_app.config.get(
+                    "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
 
                 file = request.files.get('production_insurance')
                 if file and file.filename:
+                    upload_dir = ensure_dir(
+                        get_production_attachments_path(waiver.project, 'insurance'))
                     filename = secure_filename(file.filename)
                     filename = f"prod_insurance_{int(datetime.now().timestamp())}_{filename}"
                     file_path = os.path.join(upload_dir, filename)
                     file.save(file_path)
-                    # Store relative path: waiver_id/filename
-                    waiver.production_insurance_path = f"{waiver.id}/{filename}"
+
+                    # Store relative path from output base
+                    rel_path = os.path.relpath(file_path, output_base)
+                    waiver.production_insurance_path = rel_path
 
                 signer_ip = request.headers.get(
                     'X-Forwarded-For', request.remote_addr)
@@ -352,10 +374,9 @@ def init_waiver_routes(app):
 
         pdf_url = signed_doc.pdf_url
         if pdf_url:
-            filename = pdf_url.split("/")[-1].split("?")[0]
-            from utils.waivers import generate_waiver_pdf_access_token
-            token = generate_waiver_pdf_access_token(filename)
-            pdf_download_url = f"/production-waiver/document/{filename}?t={token}"
+            path_part = pdf_url.split("/document/")[-1].split("?")[0]
+            token = generate_waiver_pdf_access_token(path_part)
+            pdf_download_url = f"/production-waiver/document/{path_part}?t={token}"
         else:
             pdf_download_url = None
 
@@ -372,9 +393,9 @@ def init_waiver_routes(app):
             pdf_download_url=pdf_download_url
         )
 
-    @app.route("/production-waiver/document/<filename>")
+    @app.route("/production-waiver/document/<path:filepath>")
     @csrf.exempt
-    def download_production_waiver_document(filename):
+    def download_production_waiver_document(filepath):
         token_header = request.headers.get("X-Check-Token")
         expected_header = os.getenv("CHECK_API_TOKEN")
         access_token = request.args.get("t", "")
@@ -382,17 +403,23 @@ def init_waiver_routes(app):
         is_authorized = False
         if expected_header and token_header and secrets.compare_digest(token_header, expected_header):
             is_authorized = True
-        elif access_token and validate_waiver_pdf_access_token(filename, access_token):
+        elif access_token and validate_waiver_pdf_access_token(filepath, access_token):
             is_authorized = True
 
         if not is_authorized:
             abort(403)
 
+        output_base = current_app.config.get(
+            "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
         private_folder = current_app.config.get("PRIVATE_FOLDER")
-        directory = os.path.join(private_folder, "production_waiver_pdfs")
 
         try:
-            return send_from_directory(directory, filename)
+            if "/" in filepath and not filepath.startswith(".."):
+                return send_from_directory(output_base, filepath)
+            else:
+                directory = os.path.join(
+                    private_folder, "production_waiver_pdfs")
+                return send_from_directory(directory, filepath)
         except Exception:
             abort(404)
 
@@ -412,20 +439,22 @@ def init_waiver_routes(app):
         if not is_authorized:
             abort(403)
 
+        output_base = current_app.config.get(
+            "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
         private_folder = current_app.config.get("PRIVATE_FOLDER")
-        directory = os.path.join(
-            private_folder, "production_waiver_attachments")
-
-        # Extract filename (last part) and subfolder (everything before)
-        parts = filepath.split('/')
-        if len(parts) < 2:
-            abort(400)
-
-        filename = parts[-1]
-        subfolder = '/'.join(parts[:-1])
-        full_directory = os.path.join(directory, subfolder)
 
         try:
-            return send_from_directory(full_directory, filename)
+            if "1_SÉCURITÉ" in filepath or (filepath.count('/') >= 2 and filepath.split('/')[0].isdigit()):
+                return send_from_directory(output_base, filepath)
+            else:
+                directory = os.path.join(
+                    private_folder, "production_waiver_attachments")
+                parts = filepath.split('/')
+                if len(parts) >= 2:
+                    filename = parts[-1]
+                    subfolder = '/'.join(parts[:-1])
+                    full_directory = os.path.join(directory, subfolder)
+                    return send_from_directory(full_directory, filename)
+                abort(404)
         except Exception:
             abort(404)

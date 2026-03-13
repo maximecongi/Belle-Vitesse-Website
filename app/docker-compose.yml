@@ -12,6 +12,7 @@ services:
     volumes:
       - /srv/bellevitesse/website/static:/app/static
       - /srv/bellevitesse/private:/app/private
+      - /srv/bellevitesse/output:/app/output
     networks:
       - bv_network
       - traefik_default

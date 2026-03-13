@@ -2,6 +2,8 @@ from utils.checkpoints import get_checkpoints_for_vehicle, BASE_CHECKPOINTS
 from services.admin.utils import _parse_photos_json, _delete_inspection_files, _is_ready
 import json
 import logging
+import os
+from pathlib import Path
 from datetime import date
 
 from flask import current_app, url_for
@@ -138,10 +140,12 @@ def get_checkout_detail(record_id):
         if signed_doc and signed_doc.pdf_url:
             data["hash"] = signed_doc.hash
             pdf_url = signed_doc.pdf_url
-            filename = pdf_url.split("/")[-1]
-            token = generate_pdf_access_token(filename)
+            # Extract path from URL - handles both filename for legacy and full path
+            # URLs are like /checkout/document/PATH
+            path_part = pdf_url.split("/document/")[-1].split("?")[0]
+            token = generate_pdf_access_token(path_part)
             data["pdf_url"] = url_for(
-                "download_checkout_document", filename=filename, t=token)
+                "download_checkout_document", filepath=path_part, t=token)
 
     return data
 
@@ -254,14 +258,17 @@ def _upload_checkout_photos_local(record: CheckoutVehicle, files):
     if not files:
         return
 
-    upload_dir = current_app.config["PRIVATE_FOLDER"] / \
-        "uploads" / "checkouts" / record.numero_inspection
-    upload_dir.mkdir(parents=True, exist_ok=True)
+    from utils.storage import get_checkout_photos_path, ensure_dir
+    upload_dir = Path(ensure_dir(get_checkout_photos_path(
+        record.project, record.numero_inspection)))
 
     photo_fields = {
         "exterior_photos": "photos_exterieur",
         "interior_photos": "photos_interieur",
     }
+
+    output_base = current_app.config.get(
+        "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
 
     for form_field, model_attr in photo_fields.items():
         uploaded = files.getlist(form_field)
@@ -271,7 +278,9 @@ def _upload_checkout_photos_local(record: CheckoutVehicle, files):
                 filename = secure_filename(f.filename)
                 file_path = upload_dir / filename
                 f.save(file_path)
-                rel_path = f"checkouts/{record.numero_inspection}/{filename}"
+
+                # Store relative path from output base
+                rel_path = os.path.relpath(file_path, output_base)
                 paths.append(rel_path)
 
         if paths:

@@ -14,6 +14,7 @@ from utils.waiver_verification import (
     generate_qr_code,
     compute_pdf_hash,
 )
+from utils.storage import get_pilot_waiver_path, get_production_waiver_path, ensure_dir
 from utils.mailer import send_waiver_signed_email
 
 
@@ -68,20 +69,19 @@ def process_pilot_waiver_signature(waiver_id):
     verification_url = f"{domain}/verify/waiver/{waiver.waiver_id}"
     qr_code_img = generate_qr_code(verification_url)
 
-    # 2. Generate PDF Path
-    private_folder = current_app.config.get("PRIVATE_FOLDER")
-    pdf_dir = os.path.join(private_folder, "pilot_waiver_pdfs")
-    os.makedirs(pdf_dir, exist_ok=True)
-
+    # 2. Generate PDF Path using new storage structure
+    pdf_dir = ensure_dir(get_pilot_waiver_path(waiver.project))
     filename = f"{waiver.waiver_id}_{secrets.token_hex(4)}.pdf"
     pdf_path_system = os.path.join(pdf_dir, filename)
 
-    # 3. Secure URL (for database reference and internal use)
-    base_url = os.getenv("APP_BASE_URL", "https://bellevitesse.com")
-    if base_url and not base_url.startswith("http"):
-        base_url = f"https://{base_url}"
-    access_token = generate_waiver_pdf_access_token(filename)
-    pdf_path_url = f"/pilot-waiver/document/{filename}?t={access_token}"
+    # Calculate relative path from output base for database storage
+    output_base = current_app.config.get(
+        "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
+    rel_pdf_path = os.path.relpath(pdf_path_system, output_base)
+
+    # 3. Secure URL (for internal reference)
+    access_token = generate_waiver_pdf_access_token(rel_pdf_path)
+    pdf_path_url = f"/pilot-waiver/document/{rel_pdf_path}?t={access_token}"
 
     # 3. Render PDF Template
     html_content = render_template(
@@ -94,21 +94,22 @@ def process_pilot_waiver_signature(waiver_id):
 
     try:
         # 4. Generate PDF
-        from flask import request
         try:
-            base_url = request.host_url
+            from flask import request
+            base_url_weasy = request.host_url
         except RuntimeError:
-            base_url = current_app.config.get("SERVER_NAME")
-            if base_url and not base_url.startswith("http"):
-                base_url = f"https://{base_url}"
+            base_url_weasy = current_app.config.get("SERVER_NAME")
+            if base_url_weasy and not base_url_weasy.startswith("http"):
+                base_url_weasy = f"https://{base_url_weasy}"
 
         # WeasyPrint PDF generation
-        pdf_bytes = HTML(string=html_content, base_url=base_url).write_pdf()
+        pdf_bytes = HTML(string=html_content,
+                         base_url=base_url_weasy).write_pdf()
 
         with open(pdf_path_system, "wb") as f:
             f.write(pdf_bytes)
 
-        waiver.signed_pdf_path = filename
+        waiver.signed_pdf_path = rel_pdf_path
 
         # 5. Compute PDF Hash and Save Snapshot
         pdf_file_hash = compute_pdf_hash(pdf_bytes)
@@ -154,10 +155,10 @@ def process_pilot_waiver_signature(waiver_id):
     db.session.commit()
 
     # 6. Trigger Webhook
-    _trigger_n8n_webhook(waiver, filename, domain, current_hash)
+    _trigger_n8n_webhook(waiver, rel_pdf_path, domain, current_hash)
 
 
-def _trigger_n8n_webhook(waiver, filename, domain, current_hash):
+def _trigger_n8n_webhook(waiver, rel_pdf_path, domain, current_hash):
     """
     Trigger the n8n webhook for a signed waiver.
     Mirroring the pattern from checkout.py.
@@ -168,9 +169,9 @@ def _trigger_n8n_webhook(waiver, filename, domain, current_hash):
         return
 
     try:
-        # Generate the signed PDF URL
-        access_token = generate_waiver_pdf_access_token(filename)
-        pdf_url_signed = f"{domain}/pilot-waiver/document/{filename}?t={access_token}"
+        # Generate the signed PDF URL using relative path
+        access_token = generate_waiver_pdf_access_token(rel_pdf_path)
+        pdf_url_signed = f"{domain}/pilot-waiver/document/{rel_pdf_path}?t={access_token}"
 
         # Helper to generate secured attachment URL
         def get_secured_attachment_url(path):
@@ -217,9 +218,9 @@ def _trigger_n8n_webhook(waiver, filename, domain, current_hash):
                 recipient_email = waiver.project.contact_pilote_rel.mail
 
             if recipient_email:
-                private_folder = current_app.config.get("PRIVATE_FOLDER")
-                pdf_path = os.path.join(
-                    private_folder, "pilot_waiver_pdfs", filename)
+                output_base = current_app.config.get(
+                    "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
+                pdf_path = os.path.join(output_base, rel_pdf_path)
                 recipient_name = f"{waiver.pilot_first_name} {waiver.pilot_last_name}"
                 send_waiver_signed_email(
                     recipient_email, recipient_name, waiver.project_name, pdf_path)
@@ -258,17 +259,19 @@ def process_production_waiver_signature(waiver_db_id):
     verification_url = f"{domain}/verify/production-waiver/{waiver.waiver_id}"
     qr_code_img = generate_qr_code(verification_url)
 
-    # 2. Generate PDF Path
-    private_folder = current_app.config.get("PRIVATE_FOLDER")
-    pdf_dir = os.path.join(private_folder, "production_waiver_pdfs")
-    os.makedirs(pdf_dir, exist_ok=True)
-
+    # 2. Generate PDF Path using new storage structure
+    pdf_dir = ensure_dir(get_production_waiver_path(waiver.project))
     filename = f"{waiver.waiver_id}_{secrets.token_hex(4)}.pdf"
     pdf_path_system = os.path.join(pdf_dir, filename)
 
-    # 3. Secure URL
-    access_token = generate_waiver_pdf_access_token(filename)
-    pdf_path_url = f"/production-waiver/document/{filename}?t={access_token}"
+    # Calculate relative path from output base for database storage
+    output_base = current_app.config.get(
+        "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
+    rel_pdf_path = os.path.relpath(pdf_path_system, output_base)
+
+    # 3. Secure URL (for internal reference)
+    access_token = generate_waiver_pdf_access_token(rel_pdf_path)
+    pdf_path_url = f"/production-waiver/document/{rel_pdf_path}?t={access_token}"
 
     # 4. Render PDF Template
     html_content = render_template(
@@ -282,19 +285,20 @@ def process_production_waiver_signature(waiver_db_id):
     try:
         from flask import request
         try:
-            base_url = request.host_url
+            base_url_weasy = request.host_url
         except RuntimeError:
-            base_url = current_app.config.get("SERVER_NAME")
-            if base_url and not base_url.startswith("http"):
-                base_url = f"https://{base_url}"
+            base_url_weasy = current_app.config.get("SERVER_NAME")
+            if base_url_weasy and not base_url_weasy.startswith("http"):
+                base_url_weasy = f"https://{base_url_weasy}"
 
         # WeasyPrint PDF generation
-        pdf_bytes = HTML(string=html_content, base_url=base_url).write_pdf()
+        pdf_bytes = HTML(string=html_content,
+                         base_url=base_url_weasy).write_pdf()
 
         with open(pdf_path_system, "wb") as f:
             f.write(pdf_bytes)
 
-        waiver.signed_pdf_path = filename
+        waiver.signed_pdf_path = rel_pdf_path
 
         # 5. Compute PDF Hash and Save Snapshot
         pdf_file_hash = compute_pdf_hash(pdf_bytes)
@@ -339,10 +343,10 @@ def process_production_waiver_signature(waiver_db_id):
     db.session.commit()
 
     # 6. Trigger Webhook
-    _trigger_n8n_webhook_production(waiver, filename, domain, current_hash)
+    _trigger_n8n_webhook_production(waiver, rel_pdf_path, domain, current_hash)
 
 
-def _trigger_n8n_webhook_production(waiver, filename, domain, current_hash):
+def _trigger_n8n_webhook_production(waiver, rel_pdf_path, domain, current_hash):
     """Trigger the n8n webhook for a signed production waiver."""
     webhook_url = os.getenv("N8N_WEBHOOK_PRODUCTION_WAIVER")
     if not webhook_url:
@@ -350,8 +354,8 @@ def _trigger_n8n_webhook_production(waiver, filename, domain, current_hash):
         return
 
     try:
-        access_token = generate_waiver_pdf_access_token(filename)
-        pdf_url_signed = f"{domain}/production-waiver/document/{filename}?t={access_token}"
+        access_token = generate_waiver_pdf_access_token(rel_pdf_path)
+        pdf_url_signed = f"{domain}/production-waiver/document/{rel_pdf_path}?t={access_token}"
 
         ref_date = waiver.project.date_debut_tournage if (
             waiver.project and waiver.project.date_debut_tournage) else waiver.signed_at
@@ -385,9 +389,9 @@ def _trigger_n8n_webhook_production(waiver, filename, domain, current_hash):
                 recipient_email = waiver.project.contact_production_rel.mail
 
             if recipient_email:
-                private_folder = current_app.config.get("PRIVATE_FOLDER")
-                pdf_path = os.path.join(
-                    private_folder, "production_waiver_pdfs", filename)
+                output_base = current_app.config.get(
+                    "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
+                pdf_path = os.path.join(output_base, rel_pdf_path)
                 recipient_name = waiver.production_representative
                 send_waiver_signed_email(
                     recipient_email, recipient_name, waiver.project_name, pdf_path)

@@ -130,15 +130,21 @@ def process_signature(token, signature_data, signed_ip):
         )
         pdf_bytes = generate_checkin_pdf(html_content, base_url=base_url)
 
+        # 6. Save PDF using new hierarchical storage
+        from utils.storage import get_checkin_path, ensure_dir
+        pdf_dir = ensure_dir(get_checkin_path(record.project))
         random_token = secrets.token_hex(8)
         filename = f"{inspection_id}_{random_token}.pdf"
-        private_folder = current_app.config.get("PRIVATE_FOLDER")
-        file_path = os.path.join(private_folder, "checkin_pdfs", filename)
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        file_path = os.path.join(pdf_dir, filename)
+
+        output_base = current_app.config.get(
+            "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
+        rel_pdf_path = os.path.relpath(file_path, output_base)
+
         with open(file_path, "wb") as f:
             f.write(pdf_bytes)
 
-        pdf_public_url = f"{base_url}/checkin/document/{filename}"
+        pdf_public_url = f"{base_url}/checkin/document/{rel_pdf_path}"
         pdf_file_hash = compute_pdf_hash(pdf_bytes)
 
         entry.signature = signature_data
@@ -167,7 +173,8 @@ def process_signature(token, signature_data, signed_ip):
         logger.info(
             f"✅ Signature processed for {inspection_id}. PDF saved at {file_path}")
 
-        _trigger_n8n_webhook(inspection_id, filename,
+        # 9. Trigger n8n webhook
+        _trigger_n8n_webhook(inspection_id, rel_pdf_path,
                              base_url, current_hash, data)
 
         return {
@@ -183,7 +190,7 @@ def process_signature(token, signature_data, signed_ip):
         raise
 
 
-def _trigger_n8n_webhook(inspection_id, filename, base_url, current_hash, data):
+def _trigger_n8n_webhook(inspection_id, rel_pdf_path, base_url, current_hash, data):
     try:
         n8n_webhook_url = os.getenv("N8N_WEBHOOK_CHECKIN_SIGN")
         if not n8n_webhook_url:
@@ -198,9 +205,9 @@ def _trigger_n8n_webhook(inspection_id, filename, base_url, current_hash, data):
         secret = secret_raw.encode()
 
         ts = int(datetime.now(timezone.utc).timestamp() // 60)
-        token_payload = f"{filename}:{ts}".encode()
+        token_payload = f"{rel_pdf_path}:{ts}".encode()
         token_n8n = hmac.new(secret, token_payload, hashlib.sha256).hexdigest()
-        pdf_url_signed = f"{base_url}/checkin/document/{filename}?t={token_n8n}"
+        pdf_url_signed = f"{base_url}/checkin/document/{rel_pdf_path}?t={token_n8n}"
 
         date_parts = data.get("control_date", "").split()
         year = date_parts[2] if len(date_parts) >= 3 else "—"
@@ -214,6 +221,20 @@ def _trigger_n8n_webhook(inspection_id, filename, base_url, current_hash, data):
         }
         month = MOIS_NUM.get(month_name, "—")
 
+        # Prepare photos URLs with tokens
+        def get_secured_photo_url(photo_item):
+            # photo_item is {"url": "/files/path", "label": "..."}
+            if not photo_item or "url" not in photo_item:
+                return None
+            path = photo_item["url"].replace("/files/", "")
+            token = generate_pdf_access_token(path)
+            return f"{base_url}/files/{path}?t={token}"
+
+        interior_photos = [get_secured_photo_url(
+            p) for p in data.get("interior_photos", [])]
+        exterior_photos = [get_secured_photo_url(
+            p) for p in data.get("exterior_photos", [])]
+
         webhook_payload = {
             "inspection_id": inspection_id,
             "pdf_url": pdf_url_signed,
@@ -223,6 +244,10 @@ def _trigger_n8n_webhook(inspection_id, filename, base_url, current_hash, data):
             "control_date": data.get("control_date", "—"),
             "year": year,
             "month": month,
+            "photos": {
+                "interior": [p for p in interior_photos if p],
+                "exterior": [p for p in exterior_photos if p]
+            }
         }
 
         from utils.n8n import trigger_n8n_webhook
@@ -285,10 +310,12 @@ def verify_checkin_document(inspection_id, uploaded_file=None):
 
     data["hash"] = stored_hash
     pdf_url = signed_doc.pdf_url
+    pdf_url = signed_doc.pdf_url
     if pdf_url:
-        filename = pdf_url.split("/")[-1]
-        token = generate_pdf_access_token(filename)
-        data["pdf_url"] = f"{pdf_url}?t={token}"
+        path_part = pdf_url.split("/document/")[-1].split("?")[0]
+        token = generate_pdf_access_token(path_part)
+        base_url = os.getenv("BASE_URL", "https://bellevitesse.com")
+        data["pdf_url"] = f"{base_url}/checkin/document/{path_part}?t={token}"
     else:
         data["pdf_url"] = None
 
@@ -335,24 +362,24 @@ def verify_checkin_document(inspection_id, uploaded_file=None):
 # ── PDF Access Token ─────────────────────────────────────────────
 
 
-def generate_pdf_access_token(filename):
+def generate_pdf_access_token(path_or_filename):
     """
-    Generate a time-limited, HMAC-signed access token for a PDF filename.
+    Generate a time-limited, HMAC-signed access token for a PDF.
     """
     secret = os.getenv("HASH_SECRET_KEY", "").encode("utf-8")
     now_minutes = int(datetime.now(timezone.utc).timestamp() // 60)
-    payload = f"{filename}:{now_minutes}".encode("utf-8")
+    payload = f"{path_or_filename}:{now_minutes}".encode("utf-8")
     return hmac.new(secret, payload, hashlib.sha256).hexdigest()
 
 
-def validate_pdf_access_token(filename, provided_token):
+def validate_pdf_access_token(path_or_filename, provided_token):
     secret = os.getenv("HASH_SECRET_KEY", "").encode("utf-8")
     ttl = int(os.getenv("PDF_ACCESS_TOKEN_TTL_MINUTES", "60"))
     now_minutes = int(datetime.now(timezone.utc).timestamp() // 60)
 
     for delta in range(ttl + 1):
         ts = now_minutes - delta
-        payload = f"{filename}:{ts}".encode("utf-8")
+        payload = f"{path_or_filename}:{ts}".encode("utf-8")
         expected = hmac.new(secret, payload, hashlib.sha256).hexdigest()
         if hmac.compare_digest(expected, provided_token):
             return True

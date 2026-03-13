@@ -68,24 +68,37 @@ def _delete_inspection_files(record):
         except Exception:
             pass
 
+    output_base = current_app.config.get(
+        "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
+
     # 2. Signed PDF
     if record.pdf_scelle:
         # pdf_scelle is usually a URL: http://.../checkout/document/filename.pdf
-        filename = record.pdf_scelle.split("/")[-1]
-        if "?" in filename:
-            filename = filename.split("?")[0]
+        # or http://.../checkout/document/YEAR/MONTH/.../filename.pdf
+        path_part = record.pdf_scelle.split("/document/")[-1].split("?")[0]
 
-        # Determine subfolder based on record type
-        subfolder = "checkout_pdfs" if isinstance(
-            record, CheckoutVehicle) else "checkin_pdfs"
-        pdf_path = Path(private_folder) / subfolder / filename
-        if pdf_path.exists():
+        # Check new hierarchical structure
+        pdf_path_new = Path(output_base) / path_part
+        if pdf_path_new.exists():
             try:
-                os.remove(pdf_path)
-                logger.info(f"🗑️ PDF supprimé : {pdf_path}")
+                os.remove(pdf_path_new)
+                logger.info(f"🗑️ PDF (Nouveau) supprimé : {pdf_path_new}")
             except Exception as e:
                 logger.error(
-                    f"❌ Échec de la suppression du PDF {pdf_path}: {e}")
+                    f"❌ Échec de la suppression du PDF (Nouveau) {pdf_path_new}: {e}")
+        else:
+            # Fallback to legacy flat structure
+            subfolder = "checkout_pdfs" if isinstance(
+                record, CheckoutVehicle) else "checkin_pdfs"
+            pdf_path_legacy = Path(private_folder) / subfolder / path_part
+            if pdf_path_legacy.exists():
+                try:
+                    os.remove(pdf_path_legacy)
+                    logger.info(
+                        f"🗑️ PDF (Legacy) supprimé : {pdf_path_legacy}")
+                except Exception as e:
+                    logger.error(
+                        f"❌ Échec de la suppression du PDF (Legacy) {pdf_path_legacy}: {e}")
 
 
 def _is_ready(form, vehicle_id=None):
