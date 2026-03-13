@@ -154,6 +154,9 @@ def generate_pilot_waiver(waiver_id):
 
 def send_pilot_waiver(waiver_id):
     """Génère le token de signature et prépare l'envoi. Reçoit le waiver_id métier (BVDW-...)."""
+    from flask import request
+    from utils.mailer import send_waiver_invitation_email
+
     waiver = PilotWaiver.query.filter_by(waiver_id=waiver_id).first()
     if not waiver:
         return False, "Décharge non trouvée."
@@ -161,18 +164,41 @@ def send_pilot_waiver(waiver_id):
     if waiver.status not in ["to_send", "to_sign"]:
         return False, "Statut invalide pour l'envoi."
 
+    # 1. Obtenir l'email du pilote via le projet
+    contact_pilote = waiver.project.contact_pilote_rel
+    if not contact_pilote or not contact_pilote.mail:
+        return False, "Le pilote n'a pas d'adresse e-mail renseignée dans le projet."
+
+    # 2. Générer le token de signature si besoin
     if not waiver.signature_token:
         waiver.signature_token = str(uuid.uuid4())
 
+    # 3. Préparer le lien de signature
+    # request.host_url s'adapte à l'environnement (local, staging, production)
+    base_url = request.host_url.rstrip('/')
+    signature_link = f"{base_url}/sign/waiver/{waiver.signature_token}"
+
+    # 4. Envoyer le mail d'invitation
+    pilot_full_name = f"{contact_pilote.prenom} {contact_pilote.nom}"
+    project_name = waiver.project.nom
+
+    success = send_waiver_invitation_email(
+        to_email=contact_pilote.mail,
+        pilot_name=pilot_full_name,
+        project_name=project_name,
+        signature_link=signature_link
+    )
+
+    if not success:
+        return False, "Échec de l'envoi de l'e-mail (vérifiez les logs)."
+
+    # 5. Mettre à jour le statut et la date d'envoi
     waiver.status = "to_sign"
     waiver.sent_at = datetime.utcnow()
 
     db.session.commit()
 
-    # TODO: Implement email sending logic using utils/email.py or similar
-    # For now, we just mock the success. The URL will be /sign/waiver/<token>
-
-    return True, "Décharge envoyée au pilote."
+    return True, f"Décharge envoyée au pilote ({contact_pilote.mail})."
 
 
 def reset_pilot_waiver(waiver_id):
