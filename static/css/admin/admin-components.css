@@ -27,6 +27,7 @@
     transition: all 0.2s;
     border: 1px solid transparent;
     font-size: 0.9rem;
+    white-space: nowrap;
 }
 
 .admin-btn-primary {
@@ -178,6 +179,7 @@
     border-radius: 20px;
     font-size: 0.8rem;
     font-weight: 500;
+    white-space: nowrap;
 }
 
 .badge-pill:before {

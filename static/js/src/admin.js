@@ -541,7 +541,9 @@ function init() {
         const updateMinDates = () => {
             if (depDate.value) {
                 startTour.min = depDate.value;
-                endTour.min = depDate.value;
+            }
+            if (startTour.value) {
+                endTour.min = startTour.value;
             }
 
             if (endTour.value) {
@@ -550,6 +552,7 @@ function init() {
         };
 
         depDate.addEventListener('change', updateMinDates);
+        startTour.addEventListener('change', updateMinDates);
         endTour.addEventListener('change', updateMinDates);
 
         // Initial run

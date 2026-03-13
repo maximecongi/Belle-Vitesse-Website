@@ -129,8 +129,9 @@ def create_project(form):
     # To get the project ID before commit if needed, though commit is fine too
     db.session.flush()
 
-    from services.admin.waivers import create_pilot_waiver
+    from services.admin.waivers import create_pilot_waiver, create_production_waiver
     create_pilot_waiver(project.id)
+    create_production_waiver(project.id)
 
     db.session.commit()
     return True
@@ -188,7 +189,8 @@ def delete_project(record_id):
     """Delete a project record from the database and its associated pilot waiver."""
     p = db.session.get(Project, record_id)
     if p:
-        from services.admin.waivers import delete_pilot_waiver_internal
+        from services.admin.waivers import delete_pilot_waiver_internal, delete_production_waiver_internal
         delete_pilot_waiver_internal(record_id)
+        delete_production_waiver_internal(record_id)
         db.session.delete(p)
         db.session.commit()

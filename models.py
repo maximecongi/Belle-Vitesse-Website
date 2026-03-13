@@ -92,6 +92,8 @@ class Project(db.Model):
         "Contact", foreign_keys=[contact_production_id], backref="projects_as_production", lazy=True)
     pilot_waiver = db.relationship(
         "PilotWaiver", backref="project", uselist=False, lazy=True)
+    production_waiver = db.relationship(
+        "ProductionWaiver", backref="project", uselist=False, lazy=True)
 
     def __repr__(self):
         return f"<Project {self.nom}>"
@@ -145,6 +147,53 @@ class PilotWaiver(db.Model):
 
     def __repr__(self):
         return f"<PilotWaiver {self.project_id} - {self.status}>"
+
+
+class ProductionWaiver(db.Model):
+    __tablename__ = "production_waivers"
+
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey(
+        "projects.id"), unique=True, nullable=False, index=True)
+    waiver_id = db.Column(
+        db.String(50), unique=True, default=lambda: generate_inspection_number("BVPW"))
+
+    project_name = db.Column(db.String(255), nullable=True)
+    status = db.Column(db.String(20), default="to_generate", nullable=False)
+    generated_at = db.Column(db.DateTime, nullable=True)
+    sent_at = db.Column(db.DateTime, nullable=True)
+    signed_at = db.Column(db.DateTime, nullable=True)
+
+    # Snapshot data
+    production_name = db.Column(db.String(255), nullable=True)
+    production_representative = db.Column(db.String(255), nullable=True)
+    production_address = db.Column(db.Text, nullable=True)
+    production_siret = db.Column(db.String(100), nullable=True)
+    production_vat = db.Column(db.String(100), nullable=True)
+
+    production_insurance_company = db.Column(db.String(255), nullable=True)
+    production_insurance_policy = db.Column(db.String(255), nullable=True)
+    production_insurance_validity = db.Column(db.String(100), nullable=True)
+
+    vehicles = db.Column(db.Text, nullable=True)
+    shooting_dates = db.Column(db.String(255), nullable=True)
+    location_of_use = db.Column(db.Text, nullable=True)
+
+    # Signature
+    signature_token = db.Column(
+        db.String(36), unique=True, nullable=True, index=True)
+    signature_data = db.Column(
+        db.Text(length=16777215), nullable=True)  # MEDIUMTEXT
+    signed_pdf_path = db.Column(db.String(500), nullable=True)
+
+    # Signature Traceability
+    signer_ip = db.Column(db.String(45), nullable=True)
+
+    # Webhook
+    webhook_triggered_at = db.Column(db.DateTime, nullable=True)
+
+    def __repr__(self):
+        return f"<ProductionWaiver {self.project_id} - {self.status}>"
 
 
 class CheckoutVehicle(db.Model):
@@ -244,6 +293,19 @@ class PilotWaiverSignedDocument(db.Model):
     __tablename__ = "pilot_waiver_signed_documents"
 
     waiver_id = db.Column(db.String(50), primary_key=True)  # Format BVDW-...
+    hash = db.Column(db.String(255), nullable=False)
+    pdf_file_hash = db.Column(db.String(64))
+    data_snapshot = db.Column(db.JSON, nullable=False)
+    signature = db.Column(db.Text(length=16777215))  # MEDIUMTEXT
+    pdf_url = db.Column(db.Text)
+    signed_at = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class ProductionWaiverSignedDocument(db.Model):
+    __tablename__ = "production_waiver_signed_documents"
+
+    waiver_id = db.Column(db.String(50), primary_key=True)  # Format BVPW-...
     hash = db.Column(db.String(255), nullable=False)
     pdf_file_hash = db.Column(db.String(64))
     data_snapshot = db.Column(db.JSON, nullable=False)

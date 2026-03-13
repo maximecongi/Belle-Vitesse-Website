@@ -103,3 +103,40 @@ def validate_pdf_access_token(filename, provided_token):
         if hmac.compare_digest(expected, provided_token):
             return True
     return False
+
+
+def _build_production_waiver_seal_content(
+    waiver_id: str,
+    production_name: str,
+    representative: str,
+    signature_data: str,
+    signed_at: str,
+) -> str:
+    """Canonical string for production hashing."""
+    return f"WAIVER_PROD|{waiver_id}|{production_name}|{representative}|{signature_data}|{signed_at}"
+
+
+def compute_production_waiver_seal(
+    waiver_id: str,
+    production_name: str,
+    representative: str,
+    signature_data: str,
+    signed_at: str,
+) -> str:
+    content = _build_production_waiver_seal_content(
+        waiver_id, production_name, representative, signature_data, signed_at)
+    secret = _get_hmac_secret()
+    return hmac.new(secret, content.encode("utf-8"), hashlib.sha256).hexdigest()
+
+
+def verify_production_waiver_seal(
+    waiver_id: str,
+    production_name: str,
+    representative: str,
+    signature_data: str,
+    signed_at: str,
+    expected_hash: str,
+) -> bool:
+    actual_hash = compute_production_waiver_seal(
+        waiver_id, production_name, representative, signature_data, signed_at)
+    return hmac.compare_digest(actual_hash, expected_hash)

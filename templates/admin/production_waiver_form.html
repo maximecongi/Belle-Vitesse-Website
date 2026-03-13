@@ -1,0 +1,43 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Nouvelle décharge Production{% endblock %}
+{% block page_title %}Nouvelle décharge Production{% endblock %}
+
+{% block content %}
+<div class="admin-card" style="max-width: 600px; margin: 0 auto;">
+    <div class="admin-card-title">Sélectionner un projet</div>
+    <p style="margin-bottom: 2rem; color: var(--grey-2); font-size: 0.9rem;">
+        Choisissez le projet lié à la nouvelle décharge production. Seuls les projets n'ayant pas encore de décharge
+        production sont listés.
+    </p>
+
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-group" style="margin-bottom: 2rem;">
+            <label for="project_id" class="form-label"
+                style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Projet</label>
+            <select name="project_id" id="project_id" class="form-input" required style="width: 100%;">
+                <option value="">-- Sélectionner un projet --</option>
+                {% for p in projects %}
+                <option value="{{ p.id }}">{{ p.nom }} ({{ p.production.nom if p.production else 'Sans Production' }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <a href="{{ url_for('admin_production_waivers_list') }}" class="admin-btn admin-btn-secondary">Annuler</a>
+            <button type="submit" class="admin-btn admin-btn-primary">Créer la décharge</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof jQuery !== 'undefined' && jQuery().select2) {
+            $('#project_id').select2();
+        }
+    });
+</script>
+{% endblock %}

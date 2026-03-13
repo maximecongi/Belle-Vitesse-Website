@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/static/imgs/favicons/favicon.svg" />
+    <link rel="shortcut icon" href="/static/imgs/favicons/favicon.ico" />
+
+    <title>Vérification Décharge Production — Belle Vitesse</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/checkout.css') }}">
+</head>
+
+<body>
+
+    <div class="checkout">
+
+        <!-- ═══════════ HEADER ═══════════ -->
+        <header class="checkout-header">
+            <div class="checkout-header-logo">
+                <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
+                    alt="Belle Vitesse">
+            </div>
+            <div class="checkout-header-meta">
+                <strong class="dot-before">Vérification de Décharge Production</strong><br>
+                <span class="checkout-doc-id">{{ inspection_id }}</span>
+            </div>
+        </header>
+
+        <!-- ── Badge sceau de données ── -->
+        <section class="checkout-section checkout-text-center">
+            <div style="margin-bottom: 2rem;">
+                {% if seal_valid %}
+                <span class="checkout-badge checkout-badge--ok"
+                    style="font-size: 1rem; padding: 10px 24px; background-color: var(--green-1); color: white;">
+                    ✅ Données certifiées & intactes
+                </span>
+                <p style="font-size: 0.75rem; color: var(--grey-2); margin-top: 0.75rem; text-align: center;">
+                    Le sceau cryptographique correspond. Les données n'ont pas été modifiées depuis la signature.
+                </p>
+                {% else %}
+                <span class="checkout-badge checkout-badge--critical" style="font-size: 1rem; padding: 10px 24px;">
+                    🚨 Sceau invalide — données altérées
+                </span>
+                <p
+                    style="font-size: 0.75rem; color: var(--grey-2); margin-top: 0.75rem; max-width: 420px; margin-left: auto; margin-right: auto; text-align: center;">
+                    Le sceau ne correspond pas à l'enregistrement.
+                </p>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- ── Badge résultat vérification PDF ── -->
+        {% if pdf_valid is not none %}
+        <section class="checkout-section checkout-text-center">
+            <div style="margin-bottom: 1.5rem;">
+                {% if pdf_valid %}
+                <span class="checkout-badge checkout-badge--ok"
+                    style="font-size: 1rem; padding: 10px 24px; background-color: var(--green-1); color: white;">
+                    ✅ Fichier PDF authentique
+                </span>
+                {% else %}
+                <span class="checkout-badge checkout-badge--critical"
+                    style="font-size: 1rem; padding: 10px 24px; text-align: center;">
+                    🚨 Fichier PDF non authentique
+                </span>
+                {% endif %}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- ── Données scellées ── -->
+        <section class="checkout-section">
+            <h2 class="checkout-section-title dot-before">Données Scellées</h2>
+            <div class="checkout-info-grid">
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Production</span>
+                    <span class="checkout-info-value">{{ data.production_name or '—' }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Représentant</span>
+                    <span class="checkout-info-value">{{ data.representative or '—' }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Projet</span>
+                    <span class="checkout-info-value">{{ data.project_name or '—' }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Signé le</span>
+                    <span class="checkout-info-value">
+                        {% if data.signed_at and data.signed_at.strftime %}
+                        {{ data.signed_at.strftime('%d/%m/%Y %H:%M') }}
+                        {% else %}
+                        {{ data.signed_at or '—' }}
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="checkout-info-item" style="grid-column: 1 / -1;">
+                    <span class="checkout-info-label">Lieu d'utilisation</span>
+                    <span class="checkout-info-value">{{ data.location_of_use or '—' }}</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Empreinte numérique ── -->
+        <section class="checkout-section">
+            <h2 class="checkout-section-title dot-before">Sécurité Numérique</h2>
+            <div style="background: var(--white-3); padding: 1.5rem; border-radius: 4px;">
+                <p style="font-size: 0.75rem; color: var(--white-4); margin-bottom: 0.5rem; text-transform: uppercase;">
+                    Sceau HMAC-SHA256 (Production)
+                </p>
+                <code
+                    style="display: block; word-break: break-all; font-size: 0.75rem; color: var(--grey-2); font-family: monospace;">
+                    {{ document_hash }}
+                </code>
+            </div>
+        </section>
+
+        <!-- ═══════════ FOOTER ═══════════ -->
+        <footer class="checkout-footer" style="margin-top: 5rem;">
+            <p><strong>{{company_name}}</strong> — {{company_address}}</p>
+        </footer>
+
+    </div>
+
+</body>
+
+</html>

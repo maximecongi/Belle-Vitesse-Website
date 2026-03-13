@@ -292,3 +292,61 @@ def send_waiver_invitation_email(to_email, pilot_name, project_name, signature_l
         current_app.logger.error(
             f"❌ Erreur sending waiver email to {to_email}: {e}")
         return False
+
+
+def send_production_waiver_invitation_email(to_email, prod_contact_name, project_name, signature_link):
+    """Sends an invitation to a production contact to sign their waiver."""
+    mail_server = os.getenv("MAIL_SERVER")
+    mail_port = int(os.getenv("MAIL_PORT", 587))
+    mail_user = os.getenv("MAIL_ADMIN_USERNAME")
+    mail_password = os.getenv("MAIL_ADMIN_PASSWORD")
+    mail_use_tls = os.getenv("MAIL_USE_TLS", "true").lower() == "true"
+
+    if not all([mail_server, mail_user, mail_password]):
+        current_app.logger.error(
+            "❌ Email configuration missing in .env for waiver invitation.")
+        return False
+
+    try:
+        current_app.logger.info(
+            f"🚀 Sending production waiver invitation email to {to_email}")
+
+        # Text fallback content
+        text_content = f"Bonjour {prod_contact_name},\n\nVous êtes invité à compléter et signer électroniquement la décharge production pour le projet : {project_name}.\n\nSuivez ce lien pour signer : {signature_link}\n\nL'équipe Belle Vitesse."
+
+        # Premium HTML content via template
+        html_content = render_template(
+            "emails/production_waiver_invitation.html",
+            prod_contact_name=prod_contact_name,
+            project_name=project_name,
+            signature_link=signature_link,
+            now_year=datetime.utcnow().year if 'datetime' in globals() else 2026
+        )
+
+        # Create message
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = f"Signature décharge production - {project_name}"
+        msg["From"] = f"Belle Vitesse <{mail_user}>"
+        msg["To"] = to_email
+        msg["Date"] = formatdate(localtime=True)
+        msg["Message-ID"] = make_msgid(domain="bellevitesse.com")
+        msg["Reply-To"] = mail_user
+
+        msg.attach(MIMEText(text_content, "plain", "utf-8"))
+        msg.attach(MIMEText(html_content, "html", "utf-8"))
+
+        server = smtplib.SMTP(mail_server, mail_port, timeout=10)
+
+        if mail_use_tls:
+            server.starttls()
+
+        server.login(mail_user, mail_password)
+        server.sendmail(mail_user, [to_email], msg.as_string())
+        server.quit()
+
+        return True
+
+    except Exception as e:
+        current_app.logger.error(
+            f"❌ Erreur sending production waiver email to {to_email}: {e}")
+        return False

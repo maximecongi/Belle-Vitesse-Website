@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>DÉCHARGE PRODUCTION — {{ "%04d" | format(waiver.project_id) }}</title>
+    <!-- Les variables de couleurs -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <!-- La feuille de style principale WeasyPrint / Checkout -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.css') }}">
+</head>
+
+<body>
+
+    <div class="pilot-waiver"> <!-- Reusing the same class for styling consistency -->
+
+        <!-- ═══════════ HEADER ═══════════ -->
+        <header class="pilot-waiver-header">
+            <div class="pilot-waiver-header-logo">
+                <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
+                    alt="Belle Vitesse">
+            </div>
+            <div class="pilot-waiver-header-meta">
+                <strong class="dot-before">Décharge de responsabilité Production</strong><br>
+                <span class="pilot-waiver-doc-id">{{ waiver.waiver_id }}</span><br>
+                {{ waiver.signed_at.strftime('%d/%m/%Y') if waiver.signed_at else '' }}
+            </div>
+        </header>
+
+        <!-- ═══════════ IDENTIFICATION ═══════════ -->
+        <section class="pilot-waiver-section">
+            <h2 class="pilot-waiver-section-title dot-before">Identification des parties</h2>
+            <div class="pilot-waiver-info-grid" style="grid-template-columns: 1fr 1fr; gap: 64px;">
+                <div style="margin-bottom: 12px;">
+                    <p style="font-size: 8pt; color: var(--grey-2); line-height: 1.4;">
+                        <span class="pilot-waiver-info-label">Prestataire :<br><br></span>
+                        <span class="pilot-waiver-info-label-representative">Société :</span>
+                        {{company_name}}<br>
+                        <span class="pilot-waiver-info-label-representative">SIRET :</span> {{company_siret}}<br>
+                        <span class="pilot-waiver-info-label-representative">Représentant :</span>
+                        {{company_representative}}<br>
+                        <span class="pilot-waiver-info-label-representative">Adresse :</span> {{company_address}}
+                    </p>
+                </div>
+
+                <div style="margin-bottom: 12px;">
+                    <p style="font-size: 8pt; color: var(--grey-2); line-height: 1.4;">
+                        <span class="pilot-waiver-info-label">Production :<br><br></span>
+                        <span class="pilot-waiver-info-label-representative">Nom :</span>
+                        {{ waiver.production_name }}<br>
+                        <span class="pilot-waiver-info-label-representative">Représentant :</span>
+                        {{ waiver.production_representative }}<br>
+                        <span class="pilot-waiver-info-label-representative">SIRET :</span>
+                        {{ waiver.production_siret }}<br>
+                        <span class="pilot-waiver-info-label-representative">Adresse :</span>
+                        {{ waiver.production_address }}
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════ OBJET ═══════════ -->
+        <section class="pilot-waiver-section">
+            <h2 class="pilot-waiver-section-title dot-before">Objet de la prestation</h2>
+            <div class="pilot-waiver-notes" style="margin-bottom: 12px; border-left-color: var(--yellow-1);">
+                <p style="color: var(--grey-1); font-size: 8pt;">La présente décharge concerne la mise à disposition par
+                    Belle Vitesse de véhicules de tracking caméra modifiés (ci-après « les Véhicules ») pour les besoins
+                    d'une production audiovisuelle.</p>
+            </div>
+
+            <div class="pilot-waiver-info-grid">
+                <div class="pilot-waiver-info-item">
+                    <span class="pilot-waiver-info-label">Projet</span>
+                    <span class="pilot-waiver-info-value">{{ waiver.project_name or '—' }}</span>
+                </div>
+                <div class="pilot-waiver-info-item">
+                    <span class="pilot-waiver-info-label">Lieu(x) d'utilisation</span>
+                    <span class="pilot-waiver-info-value">{{ waiver.location_of_use or '—' }}</span>
+                </div>
+                <div class="pilot-waiver-info-item">
+                    <span class="pilot-waiver-info-label">Date(s) de tournage</span>
+                    <span class="pilot-waiver-info-value">{{ waiver.shooting_dates or '—' }}</span>
+                </div>
+            </div>
+            <div class="pilot-waiver-info-item" style="margin-top:12pt;">
+                <span class="pilot-waiver-info-label">Véhicule(s) concerné(s)</span>
+                <div class="pilot-waiver-info-item pilot-waiver-info-vehicles" style="grid-column: 1 / -1;">
+                    {% if waiver.vehicles %}
+                    {% for v in waiver.vehicles.split(',') %}
+                    <span class="pilot-waiver-vehicles-badge">{{ v.strip() }}</span>
+                    {% endfor %}
+                    {% else %}
+                    —
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════ ASSURANCE ═══════════ -->
+        <section class="pilot-waiver-section">
+            <h2 class="pilot-waiver-section-title dot-before">Assurances Production</h2>
+            <p style="font-size: 8pt; margin-bottom: 8px; color: var(--grey-2);">La Production déclare être titulaire
+                d'une assurance RC Production couvrant les risques liés au tournage.</p>
+            <div class="pilot-waiver-info-grid">
+                <div class="pilot-waiver-info-item">
+                    <span class="pilot-waiver-info-label">Compagnie d'assurance</span>
+                    <span class="pilot-waiver-info-value">{{ waiver.production_insurance_company }}</span>
+                </div>
+                <div class="pilot-waiver-info-item">
+                    <span class="pilot-waiver-info-label">Numéro de police</span>
+                    <span class="pilot-waiver-info-value">{{ waiver.production_insurance_policy }}</span>
+                </div>
+            </div>
+        </section>
+
+        <hr class="pilot-waiver-divider">
+
+        <!-- ═══════════ CONDITIONS ═══════════ -->
+        <section class="pilot-waiver-section">
+            <h2 class="pilot-waiver-section-title dot-before">Engagements de la Production</h2>
+
+            <table class="pilot-waiver-table" style="margin-bottom: 12px;">
+                <thead>
+                    <tr>
+                        <th style="width: 25px;"></th>
+                        <th>Engagement</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>✓</td>
+                        <td>N'utiliser les véhicules que par l'intermédiaire de pilotes agréés par Belle Vitesse.</td>
+                    </tr>
+                    <tr>
+                        <td>✓</td>
+                        <td>Déclare être titulaire d'une assurance RC Production couvrant les risques liés au tournage.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>✓</td>
+                        <td>Assumer la pleine responsabilité des dommages causés aux tiers du fait de ses instructions
+                            de tournage.</td>
+                    </tr>
+                    <tr>
+                        <td>✓</td>
+                        <td>Respecter scrupuleusement les consignes de sécurité remises par le personnel de Belle
+                            Vitesse.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p style="font-size: 8pt; margin-bottom: 8px;"><strong>Responsabilités : </strong> La Production reconnaît
+                que les véhicules sont mis à disposition avec des équipements techniques spécifiques. Elle s'engage à ce
+                que leur utilisation soit conforme à l'usage prévu et aux règles de sécurité en vigueur sur le lieu du
+                tournage.</p>
+            <p style="font-size: 8pt; margin-bottom: 8px;"><strong>État du matériel : </strong> Le matériel est présumé
+                remis en bon état. Tout dommage constaté lors de la prestation doit être signalé immédiatement. La
+                Production est responsable des dégradations causées au matériel mis à disposition.</p>
+        </section>
+
+        <!-- ═══════════ SIGNATURE ═══════════ -->
+        <section class="pilot-waiver-section">
+            <h2 class="pilot-waiver-section-title dot-before">Signature électronique</h2>
+            <p style="font-size: 8pt; font-style: italic; color: var(--grey-2); margin-bottom: 10px;">Lu et approuvé —
+                Pour la Production.</p>
+
+            <div class="pilot-waiver-signature">
+                <div class="pilot-waiver-signature-block">
+                    <p class="pilot-waiver-signature-label">Pour {{company_name}}</p>
+                    <div style="font-size: 8pt; color: var(--grey-1); line-height: 1.4; margin-top: 10px;">
+                        <strong>{{company_name}}</strong><br>
+                        Représenté par {{company_representative}}<br>
+                        SIRET : {{company_siret}}<br><br>
+                        Document généré le {{ waiver.generated_at.strftime('%d/%m/%Y à %H:%M') if waiver.generated_at
+                        else '—' }}
+                    </div>
+                </div>
+
+                <div class="pilot-waiver-signature-block">
+                    <p class="pilot-waiver-signature-label">Signature Production</p>
+                    <div class="pilot-waiver-signature-pad">
+                        {% if waiver.signature_data %}
+                        <img src="{{ waiver.signature_data }}" alt="Signature">
+                        {% else %}
+                        <span class="pilot-waiver-text-muted">En attente</span>
+                        {% endif %}
+                    </div>
+                    <div class="pilot-waiver-signature-info">
+                        <strong>{{ waiver.production_representative }}</strong><br>
+                        {% if waiver.signed_at %}
+                        Signé le {{ waiver.signed_at.strftime('%d/%m/%Y à %H:%M') }}<br>
+                        Adresse IP : {{ waiver.signer_ip or '—' }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <p
+                style="font-size: 6pt; color: var(--grey-2); font-style: italic; margin-top: 16px; line-height: 1.4; text-align: justify;">
+                Ce document constitue une signature électronique simple au sens du règlement eIDAS (UE) n°910/2014.<br>
+                La traçabilité est assurée par : horodatage, adresse IP du signataire et données biométriques de la
+                signature manuscrite numérisée.
+            </p>
+        </section>
+
+        <!-- ═══════════ VERIFICATION ═══════════ -->
+        <section class="pilot-waiver-section"
+            style="margin-top: 30px; border-top: 1px solid var(--grey-4); padding-top: 20px;">
+            <div style="display: flex; align-items: flex-start; gap: 20px;">
+                <div style="flex: 0 0 80px;">
+                    {% if qr %}
+                    <a href="{{ verification_url or '#' }}">
+                        <img src="{{ qr }}" alt="QR Code" style="width: 80px; height: 80px;"></a>
+                    {% endif %}
+                </div>
+                <div style="flex: 1;">
+                    <p style="font-size: 8pt; font-weight: 600; margin-bottom: 4px;">Vérification de l'authenticité</p>
+                    <p style="font-size: 7pt; color: var(--grey-2); line-height: 1.4; margin-bottom: 8px;">
+                        Ce document a été scellé par une empreinte numérique unique. Scannez ou cliquez sur le QR code
+                        pour vérifier son intégrité.
+                    </p>
+                    {% if document_hash %}
+                    <div style="background: var(--white-3); padding: 6px 10px; border-radius: 4px;">
+                        <span style="font-size: 6pt; color: var(--white-4); text-transform: uppercase;">Sceau
+                            HMAC-SHA256</span><br>
+                        <code
+                            style="font-size: 6pt; color: var(--grey-2); font-family: monospace; word-break: break-all;">{{ document_hash }}</code>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════ FOOTER ═══════════ -->
+        <footer class="pilot-waiver-footer">
+            <p>
+                <strong>{{company_name}}</strong><br>
+                Ce document est scellé électroniquement.
+            </p>
+        </footer>
+
+    </div>
+
+</body>
+
+</html>

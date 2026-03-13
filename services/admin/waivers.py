@@ -1,13 +1,222 @@
+from utils.database import get_vehicles
 import logging
 from datetime import datetime
 import uuid
 import os
 
 from sqlalchemy.orm import joinedload
-from models import db, PilotWaiver, Project, PilotWaiverSignedDocument
-from utils.database import get_vehicles
+from models import db, PilotWaiver, ProductionWaiver, Project, PilotWaiverSignedDocument, ProductionWaiverSignedDocument
 
 logger = logging.getLogger(__name__)
+
+
+def _cleanup_production_waiver_assets(waiver):
+    """Internal helper to delete physical files and signed documents associated with a production waiver."""
+    from flask import current_app
+
+    files_to_delete = [
+        waiver.signed_pdf_path
+    ]
+
+    for file_path in files_to_delete:
+        if file_path:
+            # Check if it's a relative path starting from static or just a filename
+            if file_path.startswith('/static/'):
+                relative_path = file_path.lstrip('/')
+                full_path = os.path.join(current_app.root_path, relative_path)
+            else:
+                private_folder = current_app.config.get("PRIVATE_FOLDER")
+                full_path = os.path.join(
+                    private_folder, "production_waiver_pdfs", file_path)
+
+            if os.path.exists(full_path):
+                try:
+                    os.remove(full_path)
+                    logger.info(f"🗑️ Fichier supprimé : {full_path}")
+                except Exception as e:
+                    logger.error(
+                        f"❌ Erreur suppression fichier {full_path} : {e}")
+
+    signed_doc = ProductionWaiverSignedDocument.query.filter_by(
+        waiver_id=waiver.waiver_id).first()
+    if signed_doc:
+        db.session.delete(signed_doc)
+
+
+def create_production_waiver(project_id):
+    """Crée une nouvelle décharge production pour un projet donné."""
+    existing = ProductionWaiver.query.filter_by(project_id=project_id).first()
+    if existing:
+        return False, "Une décharge production existe déjà pour ce projet."
+
+    waiver = ProductionWaiver(project_id=project_id)
+    db.session.add(waiver)
+    db.session.commit()
+    return True, "Décharge production créée avec succès."
+
+
+def list_production_waivers():
+    """Retrieve all production waivers."""
+    waivers = ProductionWaiver.query.options(
+        joinedload(ProductionWaiver.project)
+    ).all()
+
+    waivers.sort(key=lambda w: (
+        w.project.date_depart or datetime.min.date(), w.project.nom), reverse=True)
+
+    waivers_formatted = []
+    from utils.waivers import generate_waiver_pdf_access_token
+
+    for w in waivers:
+        p = w.project
+
+        def get_secured_url(path):
+            if not path:
+                return None
+            filename = path.split('/')[-1]
+            token = generate_waiver_pdf_access_token(filename)
+            return f"/production-waiver/document/{filename}?t={token}"
+
+        # Production name
+        production_name = "—"
+        if p.production:
+            production_name = p.production.nom
+        elif w.production_name:
+            production_name = w.production_name
+
+        shooting_dates = "—"
+        if p.date_debut_tournage and p.date_fin_tournage:
+            shooting_dates = f"{p.date_debut_tournage.strftime('%d/%m/%Y')} → {p.date_fin_tournage.strftime('%d/%m/%Y')}"
+        elif w.shooting_dates:
+            shooting_dates = w.shooting_dates
+
+        waivers_formatted.append({
+            "id": w.waiver_id,
+            "db_id": w.id,
+            "waiver_id": w.waiver_id,
+            "project_id": p.id,
+            "project_name": p.nom,
+            "production_name": production_name,
+            "shooting_dates": shooting_dates,
+            "status": w.status,
+            "generated_at": w.generated_at,
+            "sent_at": w.sent_at,
+            "signed_at": w.signed_at,
+            "signature_token": w.signature_token,
+            "signed_pdf_path": get_secured_url(w.signed_pdf_path)
+        })
+
+    return waivers_formatted
+
+
+def generate_production_waiver(waiver_id):
+    """Fige les données du projet dans la décharge production."""
+    waiver = ProductionWaiver.query.filter_by(waiver_id=waiver_id).first()
+    if not waiver or waiver.status != "to_generate":
+        return False, "Décharge non trouvée ou statut invalide."
+
+    p = waiver.project
+    waiver.project_name = p.nom
+
+    if p.production:
+        waiver.production_name = p.production.nom
+        waiver.production_address = p.production.adresse
+
+    if p.date_debut_tournage and p.date_fin_tournage:
+        waiver.shooting_dates = f"{p.date_debut_tournage.strftime('%d/%m/%Y')} au {p.date_fin_tournage.strftime('%d/%m/%Y')}"
+
+    # Locations
+    # We don't have a direct "locations" field in Project, maybe from observations or just leave empty for manual filling
+
+    # Vehicles
+    if p.vehicules_a_controler:
+        veh_ids = [v.strip()
+                   for v in p.vehicules_a_controler.split(",") if v.strip()]
+        all_vehicles = get_vehicles()
+        vehicle_map = {str(v["id"]): v.get("fields", {}) for v in all_vehicles}
+        assigned_names = [vehicle_map.get(vid, {}).get(
+            "name", f"ID {vid}") for vid in veh_ids]
+        waiver.vehicles = ", ".join(assigned_names)
+
+    waiver.status = "to_send"
+    waiver.generated_at = datetime.utcnow()
+
+    db.session.commit()
+    return True, "Décharge production générée avec succès."
+
+
+def send_production_waiver(waiver_id):
+    """Prépare l'envoi de la décharge production."""
+    from flask import request
+    from utils.mailer import send_production_waiver_invitation_email
+
+    waiver = ProductionWaiver.query.filter_by(waiver_id=waiver_id).first()
+    if not waiver:
+        return False, "Décharge non trouvée."
+
+    contact_prod = waiver.project.contact_production_rel
+    if not contact_prod or not contact_prod.mail:
+        return False, "La production n'a pas d'adresse e-mail de contact renseignée dans le projet."
+
+    if not waiver.signature_token:
+        waiver.signature_token = str(uuid.uuid4())
+
+    base_url = request.host_url.rstrip('/')
+    signature_link = f"{base_url}/sign/production-waiver/{waiver.signature_token}"
+
+    success = send_production_waiver_invitation_email(
+        to_email=contact_prod.mail,
+        prod_contact_name=f"{contact_prod.prenom} {contact_prod.nom}",
+        project_name=waiver.project.nom,
+        signature_link=signature_link
+    )
+
+    if not success:
+        return False, "Échec de l'envoi de l'e-mail."
+
+    waiver.status = "to_sign"
+    waiver.sent_at = datetime.utcnow()
+    db.session.commit()
+    return True, f"Décharge envoyée à la production ({contact_prod.mail})."
+
+
+def reset_production_waiver(waiver_id):
+    """Réinitialise une décharge production."""
+    waiver = ProductionWaiver.query.filter_by(waiver_id=waiver_id).first()
+    if not waiver:
+        return False, "Décharge non trouvée."
+
+    try:
+        _cleanup_production_waiver_assets(waiver)
+        waiver.status = "to_generate"
+        waiver.generated_at = None
+        waiver.sent_at = None
+        waiver.signed_at = None
+        waiver.signature_token = None
+        waiver.signature_data = None
+        waiver.signed_pdf_path = None
+        waiver.signer_ip = None
+        waiver.webhook_triggered_at = None
+
+        db.session.commit()
+        return True, "Décharge production réinitialisée."
+    except Exception as e:
+        db.session.rollback()
+        return False, f"Erreur lors du reset : {e}"
+
+
+def delete_production_waiver_internal(project_id):
+    """Supprime complètement la décharge production liée à un projet."""
+    waiver = ProductionWaiver.query.filter_by(project_id=project_id).first()
+    if not waiver:
+        return
+    try:
+        _cleanup_production_waiver_assets(waiver)
+        db.session.delete(waiver)
+        db.session.commit()
+    except Exception as e:
+        logger.error(f"❌ Erreur suppression décharge production : {e}")
+        db.session.rollback()
 
 
 def _cleanup_pilot_waiver_assets(waiver):
