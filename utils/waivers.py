@@ -14,6 +14,7 @@ from utils.waiver_verification import (
     generate_qr_code,
     compute_pdf_hash,
 )
+from utils.mailer import send_waiver_signed_email
 
 
 def generate_waiver_pdf_access_token(filename):
@@ -208,6 +209,24 @@ def _trigger_n8n_webhook(waiver, filename, domain, current_hash):
         requests.post(webhook_url, json=payload, timeout=5)
         waiver.webhook_triggered_at = datetime.utcnow()
         db.session.commit()
+
+        # Email Notification with PDF Attachment
+        try:
+            recipient_email = None
+            if waiver.project and waiver.project.contact_pilote_rel:
+                recipient_email = waiver.project.contact_pilote_rel.mail
+
+            if recipient_email:
+                private_folder = current_app.config.get("PRIVATE_FOLDER")
+                pdf_path = os.path.join(
+                    private_folder, "pilot_waiver_pdfs", filename)
+                recipient_name = f"{waiver.pilot_first_name} {waiver.pilot_last_name}"
+                send_waiver_signed_email(
+                    recipient_email, recipient_name, waiver.project_name, pdf_path)
+        except Exception as mail_err:
+            current_app.logger.error(
+                f"❌ Email error (pilot {waiver.id}): {mail_err}")
+
     except Exception as e:
         current_app.logger.error(
             f"❌ Failed to trigger N8N webhook for waiver {waiver.id}: {e}")
@@ -358,6 +377,24 @@ def _trigger_n8n_webhook_production(waiver, filename, domain, current_hash):
         requests.post(webhook_url, json=payload, timeout=5)
         waiver.webhook_triggered_at = datetime.utcnow()
         db.session.commit()
+
+        # Email Notification with PDF Attachment
+        try:
+            recipient_email = None
+            if waiver.project and waiver.project.contact_production_rel:
+                recipient_email = waiver.project.contact_production_rel.mail
+
+            if recipient_email:
+                private_folder = current_app.config.get("PRIVATE_FOLDER")
+                pdf_path = os.path.join(
+                    private_folder, "production_waiver_pdfs", filename)
+                recipient_name = waiver.production_representative
+                send_waiver_signed_email(
+                    recipient_email, recipient_name, waiver.project_name, pdf_path)
+        except Exception as mail_err:
+            current_app.logger.error(
+                f"❌ Email error (prod {waiver.id}): {mail_err}")
+
     except Exception as e:
         current_app.logger.error(
             f"❌ Failed to trigger N8N webhook for production waiver {waiver.id}: {e}")

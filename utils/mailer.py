@@ -3,6 +3,7 @@ import smtplib
 from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
 from email.utils import make_msgid, formatdate
 from itsdangerous import URLSafeSerializer
 from flask import render_template, request, current_app
@@ -349,4 +350,75 @@ def send_production_waiver_invitation_email(to_email, prod_contact_name, project
     except Exception as e:
         current_app.logger.error(
             f"❌ Erreur sending production waiver email to {to_email}: {e}")
+        return False
+
+
+def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path):
+    """
+    Sends an email with the signed PDF as an attachment.
+    """
+    mail_server = os.getenv("MAIL_SERVER")
+    mail_port = int(os.getenv("MAIL_PORT", 587))
+    mail_user = os.getenv("MAIL_CONTACT_USERNAME")
+    mail_password = os.getenv("MAIL_CONTACT_PASSWORD")
+    mail_use_tls = os.getenv("MAIL_USE_TLS", "true").lower() == "true"
+    admin_mail = os.getenv("SUPER_ADMIN_MAIL", "contact@bellevitesse.com")
+
+    if not all([mail_server, mail_user, mail_password]):
+        current_app.logger.error(
+            "❌ Email configuration missing in .env for signed waiver.")
+        return False
+
+    try:
+        current_app.logger.info(
+            f"🚀 Sending signed waiver PDF to {to_email} and {admin_mail}")
+
+        # Text fallback content
+        text_content = f"Bonjour {recipient_name},\n\nVeuillez trouver ci-joint la décharge signée pour le projet : {project_name}.\n\nBelle journée,\nL'équipe Belle Vitesse."
+
+        # Premium HTML content via template
+        html_content = render_template(
+            "emails/waiver_signed_confirmation.html",
+            recipient_name=recipient_name,
+            project_name=project_name,
+            now_year=datetime.utcnow().year if 'datetime' in globals() else 2026
+        )
+
+        # Create message
+        msg = MIMEMultipart()
+        msg["Subject"] = f"Décharge signée - {project_name}"
+        msg["From"] = f"Belle Vitesse <{mail_user}>"
+        msg["To"] = to_email
+        msg["Cc"] = admin_mail
+        msg["Date"] = formatdate(localtime=True)
+        msg["Message-ID"] = make_msgid(domain="bellevitesse.com")
+
+        msg.attach(MIMEText(text_content, "plain", "utf-8"))
+        msg.attach(MIMEText(html_content, "html", "utf-8"))
+
+        # Attach PDF
+        if os.path.exists(pdf_path):
+            with open(pdf_path, "rb") as f:
+                part = MIMEApplication(
+                    f.read(), Name=os.path.basename(pdf_path))
+            part['Content-Disposition'] = f'attachment; filename="{os.path.basename(pdf_path)}"'
+            msg.attach(part)
+        else:
+            current_app.logger.error(f"❌ PDF file not found at {pdf_path}")
+
+        server = smtplib.SMTP(mail_server, mail_port, timeout=15)
+
+        if mail_use_tls:
+            server.starttls()
+
+        server.login(mail_user, mail_password)
+        recipients = [to_email, admin_mail]
+        server.sendmail(mail_user, recipients, msg.as_string())
+        server.quit()
+
+        return True
+
+    except Exception as e:
+        current_app.logger.error(
+            f"❌ Erreur sending signed waiver email to {to_email}: {e}")
         return False
