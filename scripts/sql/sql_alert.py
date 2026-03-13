@@ -79,8 +79,8 @@ def send_alerts_batch(alerts: list[dict], app):
 
     smtp_host = os.getenv("MAIL_SERVER")
     smtp_port = int(os.getenv("MAIL_PORT", 587))
-    smtp_user = os.getenv("MAIL_USERNAME")
-    smtp_password = os.getenv("MAIL_PASSWORD")
+    smtp_user = os.getenv("MAIL_ADMIN_USERNAME")
+    smtp_password = os.getenv("MAIL_ADMIN_PASSWORD")
     alert_to = os.getenv("SUPER_ADMIN_MAIL")
 
     if not all([smtp_host, smtp_user, smtp_password, alert_to]):

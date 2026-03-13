@@ -200,6 +200,7 @@ def reset_pilot_waiver(waiver_id):
         waiver.pilot_insurance_company = None
         waiver.pilot_insurance_policy = None
         waiver.production_name = None
+        waiver.project_name = None
         waiver.vehicles = None
         waiver.shooting_dates = None
 

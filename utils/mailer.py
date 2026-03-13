@@ -14,8 +14,8 @@ def send_magic_link_email(to_email, firstname, magic_link):
     """
     mail_server = os.getenv("MAIL_SERVER")
     mail_port = int(os.getenv("MAIL_PORT", 587))
-    mail_user = os.getenv("MAIL_USERNAME")
-    mail_password = os.getenv("MAIL_PASSWORD")
+    mail_user = os.getenv("MAIL_ADMIN_USERNAME")
+    mail_password = os.getenv("MAIL_ADMIN_PASSWORD")
     mail_use_tls = os.getenv("MAIL_USE_TLS", "true").lower() == "true"
 
     if not all([mail_server, mail_user, mail_password]):
@@ -70,8 +70,8 @@ def send_subscription_email(to_email):
     """Send a welcome email when someone subscribes to the newsletter."""
     mail_server = os.getenv("MAIL_SERVER")
     mail_port = int(os.getenv("MAIL_PORT", 587))
-    mail_user = os.getenv("MAIL_USERNAME")
-    mail_password = os.getenv("MAIL_PASSWORD")
+    mail_user = os.getenv("MAIL_CONTACT_USERNAME")
+    mail_password = os.getenv("MAIL_CONTACT_PASSWORD")
     mail_use_tls = os.getenv("MAIL_USE_TLS", "true").lower() == "true"
 
     if not all([mail_server, mail_user, mail_password]):
@@ -162,8 +162,8 @@ def send_newsletter_campaign(subject, body, subscribers):
     """
     mail_server = os.getenv("MAIL_SERVER")
     mail_port = int(os.getenv("MAIL_PORT", 587))
-    mail_user = os.getenv("MAIL_USERNAME")
-    mail_password = os.getenv("MAIL_PASSWORD")
+    mail_user = os.getenv("MAIL_CONTACT_USERNAME")
+    mail_password = os.getenv("MAIL_CONTACT_PASSWORD")
     mail_use_tls = os.getenv("MAIL_USE_TLS", "true").lower() == "true"
 
     if not all([mail_server, mail_user, mail_password]):
