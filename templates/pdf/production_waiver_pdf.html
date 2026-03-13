@@ -4,15 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <title>DÉCHARGE PRODUCTION — {{ "%04d" | format(waiver.project_id) }}</title>
-    <!-- Les variables de couleurs -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <!-- La feuille de style principale WeasyPrint / Checkout -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.css') }}">
 </head>
 
 <body>
 
-    <div class="pilot-waiver"> <!-- Reusing the same class for styling consistency -->
+    <div class="pilot-waiver">
 
         <!-- ═══════════ HEADER ═══════════ -->
         <header class="pilot-waiver-header">
@@ -34,26 +32,24 @@
                 <div style="margin-bottom: 12px;">
                     <p style="font-size: 8pt; color: var(--grey-2); line-height: 1.4;">
                         <span class="pilot-waiver-info-label">Prestataire :<br><br></span>
-                        <span class="pilot-waiver-info-label-representative">Société :</span>
-                        {{company_name}}<br>
-                        <span class="pilot-waiver-info-label-representative">SIRET :</span> {{company_siret}}<br>
-                        <span class="pilot-waiver-info-label-representative">Représentant :</span>
-                        {{company_representative}}<br>
-                        <span class="pilot-waiver-info-label-representative">Adresse :</span> {{company_address}}
+                        <span class="pilot-waiver-info-label-representative">Société :</span> {{ company_name }}<br>
+                        <span class="pilot-waiver-info-label-representative">SIRET :</span> {{ company_siret }}<br>
+                        <span class="pilot-waiver-info-label-representative">Représentant :</span> {{
+                        company_representative }}<br>
+                        <span class="pilot-waiver-info-label-representative">Adresse :</span> {{ company_address }}
                     </p>
                 </div>
-
                 <div style="margin-bottom: 12px;">
                     <p style="font-size: 8pt; color: var(--grey-2); line-height: 1.4;">
                         <span class="pilot-waiver-info-label">Production :<br><br></span>
-                        <span class="pilot-waiver-info-label-representative">Nom :</span>
-                        {{ waiver.production_name }}<br>
-                        <span class="pilot-waiver-info-label-representative">Représentant :</span>
-                        {{ waiver.production_representative }}<br>
-                        <span class="pilot-waiver-info-label-representative">SIRET :</span>
-                        {{ waiver.production_siret }}<br>
-                        <span class="pilot-waiver-info-label-representative">Adresse :</span>
-                        {{ waiver.production_address }}
+                        <span class="pilot-waiver-info-label-representative">Nom :</span> {{ waiver.production_name
+                        }}<br>
+                        <span class="pilot-waiver-info-label-representative">Représentant :</span> {{
+                        waiver.production_representative }}<br>
+                        <span class="pilot-waiver-info-label-representative">SIRET :</span> {{ waiver.production_siret
+                        }}<br>
+                        <span class="pilot-waiver-info-label-representative">Adresse :</span> {{
+                        waiver.production_address }}
                     </p>
                 </div>
             </div>
@@ -63,11 +59,11 @@
         <section class="pilot-waiver-section">
             <h2 class="pilot-waiver-section-title dot-before">Objet de la prestation</h2>
             <div class="pilot-waiver-notes" style="margin-bottom: 12px; border-left-color: var(--yellow-1);">
-                <p style="color: var(--grey-1); font-size: 8pt;">La présente décharge concerne la mise à disposition par
-                    Belle Vitesse de véhicules de tracking caméra modifiés (ci-après « les Véhicules ») pour les besoins
-                    d'une production audiovisuelle.</p>
+                <p style="color: var(--grey-1); font-size: 8pt;">La présente décharge encadre la mise à disposition par
+                    {{ company_name }} de véhicules de tracking caméra modifiés (ci-après « les Véhicules ») à la
+                    Production,
+                    dans le cadre exclusif de la production audiovisuelle décrite ci-dessous.</p>
             </div>
-
             <div class="pilot-waiver-info-grid">
                 <div class="pilot-waiver-info-item">
                     <span class="pilot-waiver-info-label">Projet</span>
@@ -82,16 +78,14 @@
                     <span class="pilot-waiver-info-value">{{ waiver.shooting_dates or '—' }}</span>
                 </div>
             </div>
-            <div class="pilot-waiver-info-item" style="margin-top:12pt;">
+            <div class="pilot-waiver-info-item" style="margin-top: 12pt;">
                 <span class="pilot-waiver-info-label">Véhicule(s) concerné(s)</span>
                 <div class="pilot-waiver-info-item pilot-waiver-info-vehicles" style="grid-column: 1 / -1;">
                     {% if waiver.vehicles %}
                     {% for v in waiver.vehicles.split(',') %}
                     <span class="pilot-waiver-vehicles-badge">{{ v.strip() }}</span>
                     {% endfor %}
-                    {% else %}
-                    —
-                    {% endif %}
+                    {% else %}—{% endif %}
                 </div>
             </div>
         </section>
@@ -99,8 +93,10 @@
         <!-- ═══════════ ASSURANCE ═══════════ -->
         <section class="pilot-waiver-section">
             <h2 class="pilot-waiver-section-title dot-before">Assurances Production</h2>
-            <p style="font-size: 8pt; margin-bottom: 8px; color: var(--grey-2);">La Production déclare être titulaire
-                d'une assurance RC Production couvrant les risques liés au tournage.</p>
+            <p style="font-size: 8pt; margin-bottom: 8px; color: var(--grey-2);">La Production déclare disposer d'une
+                assurance tous risques tournage et/ou responsabilité civile professionnelle en cours de validité à la
+                date de la prestation, couvrant notamment les véhicules de prestataires mis à sa disposition. Une
+                attestation d'assurance a été jointe lors de la signature électronique.</p>
             <div class="pilot-waiver-info-grid">
                 <div class="pilot-waiver-info-item">
                     <span class="pilot-waiver-info-label">Compagnie d'assurance</span>
@@ -115,7 +111,7 @@
 
         <hr class="pilot-waiver-divider">
 
-        <!-- ═══════════ CONDITIONS ═══════════ -->
+        <!-- ═══════════ ENGAGEMENTS ═══════════ -->
         <section class="pilot-waiver-section">
             <h2 class="pilot-waiver-section-title dot-before">Engagements de la Production</h2>
 
@@ -129,33 +125,60 @@
                 <tbody>
                     <tr>
                         <td>✓</td>
-                        <td>N'utiliser les véhicules que par l'intermédiaire de pilotes agréés par Belle Vitesse.</td>
+                        <td>N'autoriser la conduite des Véhicules qu'à des pilotes titulaires du permis requis,
+                            préalablement agréés par Belle Vitesse.</td>
                     </tr>
                     <tr>
                         <td>✓</td>
-                        <td>Déclare être titulaire d'une assurance RC Production couvrant les risques liés au tournage.
+                        <td>Utiliser les Véhicules exclusivement dans le cadre de la prestation définie ci-dessus et
+                            dans les lieux déclarés, conformément aux consignes de sécurité remises par Belle Vitesse.
                         </td>
                     </tr>
                     <tr>
                         <td>✓</td>
-                        <td>Assumer la pleine responsabilité des dommages causés aux tiers du fait de ses instructions
-                            de tournage.</td>
+                        <td>Respecter les contraintes techniques d'utilisation (charge, vitesse, conditions de tournage)
+                            définies par Belle Vitesse pour chaque Véhicule.</td>
                     </tr>
                     <tr>
                         <td>✓</td>
-                        <td>Respecter scrupuleusement les consignes de sécurité remises par le personnel de Belle
-                            Vitesse.</td>
+                        <td>Assurer la sécurité de son personnel et des tiers présents lors de toute manœuvre
+                            impliquant les Véhicules.</td>
+                    </tr>
+                    <tr>
+                        <td>✓</td>
+                        <td>Signaler immédiatement à Belle Vitesse tout incident, accident ou dommage survenant sur les
+                            Véhicules ou à leur périphérie.</td>
+                    </tr>
+                    <tr>
+                        <td>✓</td>
+                        <td>Restituer les Véhicules à la date convenue, propres et en bon état de fonctionnement.</td>
                     </tr>
                 </tbody>
             </table>
 
-            <p style="font-size: 8pt; margin-bottom: 8px;"><strong>Responsabilités : </strong> La Production reconnaît
-                que les véhicules sont mis à disposition avec des équipements techniques spécifiques. Elle s'engage à ce
-                que leur utilisation soit conforme à l'usage prévu et aux règles de sécurité en vigueur sur le lieu du
-                tournage.</p>
-            <p style="font-size: 8pt; margin-bottom: 8px;"><strong>État du matériel : </strong> Le matériel est présumé
-                remis en bon état. Tout dommage constaté lors de la prestation doit être signalé immédiatement. La
-                Production est responsable des dégradations causées au matériel mis à disposition.</p>
+            <p style="font-size: 8pt; margin-bottom: 8px;">
+                <strong>Limitation de responsabilité de {{ company_name }} : </strong>
+                La Production reconnaît et accepte que {{ company_name }} ne pourra en aucun cas être tenue responsable
+                des dommages corporels, matériels ou immatériels causés à des tiers ou à la Production résultant d'une
+                utilisation des Véhicules non conforme aux consignes fournies, des dommages causés au matériel de prise
+                de vue embarqué appartenant à la Production ou à des tiers, des retards ou interruptions de tournage
+                liés à un sinistre survenu du fait de la Production, ni des infractions commises par son personnel.
+                La responsabilité de {{ company_name }} est en tout état de cause limitée au montant hors taxes de la
+                prestation facturée.
+            </p>
+            <p style="font-size: 8pt; margin-bottom: 8px;">
+                <strong>Responsabilité financière en cas de dommage : </strong>
+                Le matériel est présumé remis en bon état de fonctionnement. En cas de dommages constatés à la
+                restitution des Véhicules, la Production s'engage à prendre en charge l'intégralité des frais de
+                réparation ou de remplacement, déduction faite de la franchise éventuelle couverte par son assurance.
+                {{ company_name }} se réserve le droit d'immobiliser tout Véhicule endommagé jusqu'à règlement complet.
+            </p>
+            <p style="font-size: 8pt; margin-bottom: 0;">
+                <strong>Droit applicable : </strong>
+                La présente décharge est soumise au droit français. En cas de litige, les parties s'engagent à
+                rechercher une solution amiable dans un délai de 30 jours. À défaut d'accord, les tribunaux de Paris
+                seront seuls compétents, même en cas de pluralité de défendeurs ou d'appel en garantie.
+            </p>
         </section>
 
         <!-- ═══════════ SIGNATURE ═══════════ -->
@@ -166,11 +189,11 @@
 
             <div class="pilot-waiver-signature">
                 <div class="pilot-waiver-signature-block">
-                    <p class="pilot-waiver-signature-label">Pour {{company_name}}</p>
+                    <p class="pilot-waiver-signature-label">Pour {{ company_name }}</p>
                     <div style="font-size: 8pt; color: var(--grey-1); line-height: 1.4; margin-top: 10px;">
-                        <strong>{{company_name}}</strong><br>
-                        Représenté par {{company_representative}}<br>
-                        SIRET : {{company_siret}}<br><br>
+                        <strong>{{ company_name }}</strong><br>
+                        Représenté par {{ company_representative }}<br>
+                        SIRET : {{ company_siret }}<br><br>
                         Document généré le {{ waiver.generated_at.strftime('%d/%m/%Y à %H:%M') if waiver.generated_at
                         else '—' }}
                     </div>
@@ -197,7 +220,7 @@
 
             <p
                 style="font-size: 6pt; color: var(--grey-2); font-style: italic; margin-top: 16px; line-height: 1.4; text-align: justify;">
-                Ce document constitue une signature électronique simple au sens du règlement eIDAS (UE) n°910/2014.<br>
+                Ce document constitue une signature électronique simple au sens du règlement eIDAS (UE) n°910/2014.
                 La traçabilité est assurée par : horodatage, adresse IP du signataire et données biométriques de la
                 signature manuscrite numérisée.
             </p>
@@ -210,7 +233,8 @@
                 <div style="flex: 0 0 80px;">
                     {% if qr %}
                     <a href="{{ verification_url or '#' }}">
-                        <img src="{{ qr }}" alt="QR Code" style="width: 80px; height: 80px;"></a>
+                        <img src="{{ qr }}" alt="QR Code" style="width: 80px; height: 80px;">
+                    </a>
                     {% endif %}
                 </div>
                 <div style="flex: 1;">
@@ -234,7 +258,7 @@
         <!-- ═══════════ FOOTER ═══════════ -->
         <footer class="pilot-waiver-footer">
             <p>
-                <strong>{{company_name}}</strong><br>
+                <strong>{{ company_name }}</strong><br>
                 Ce document est scellé électroniquement.
             </p>
         </footer>

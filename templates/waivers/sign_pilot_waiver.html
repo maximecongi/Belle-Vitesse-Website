@@ -13,7 +13,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
-    <!-- PDF.js for client-side PDF to Image conversion -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -39,16 +38,14 @@
         <section class="pilot-waiver-section" style="text-align: center; margin-top: 4rem;">
             <div style="font-size: 4rem; margin-bottom: 1rem; color: var(--green-1);">✓</div>
             <h2 class="pilot-waiver-section-title">Décharge signée</h2>
-            <p style="color: var(--grey-2); margin-top: 1rem;text-align:center;">
-                Ce document a déjà été signé électroniquement et ne peut plus être modifié.<br><br>Vous allez être
-                redirigé vers <a href="https://bellevitesse.com">bellevitesse.com</a> dans quelques secondes.
+            <p style="color: var(--grey-2); margin-top: 1rem; text-align: center;">
+                Ce document a déjà été signé électroniquement et ne peut plus être modifié.<br><br>
+                Vous allez être redirigé vers <a href="https://bellevitesse.com">bellevitesse.com</a> dans quelques
+                secondes.
             </p>
         </section>
-
         <script>
-            setTimeout(function () {
-                window.location.href = 'https://bellevitesse.com';
-            }, 3000);
+            setTimeout(function () { window.location.href = 'https://bellevitesse.com'; }, 3000);
         </script>
 
         {% elif waiver.status not in ['to_sign', 'to_send'] %}
@@ -87,9 +84,7 @@
                         {% for v in waiver.vehicles.split(',') %}
                         <span class="pilot-waiver-vehicles-badge">{{ v.strip() }}</span>
                         {% endfor %}
-                        {% else %}
-                        —
-                        {% endif %}
+                        {% else %}—{% endif %}
                     </div>
                 </div>
             </section>
@@ -144,9 +139,8 @@
                     <div class="form-group">
                         <label>Permis de conduire <span style="color:red;">*</span></label>
                         <div class="custom-file-upload">
-                            <label for="pilot_license" class="custom-file-label">
-                                <span>📁 Choisir un fichier...</span>
-                            </label>
+                            <label for="pilot_license" class="custom-file-label"><span>📁 Choisir un
+                                    fichier...</span></label>
                             <input type="file" id="pilot_license" name="pilot_license" accept="image/*,.pdf" required>
                             <span class="file-name" id="name-pilot_license">Aucun fichier sélectionné</span>
                         </div>
@@ -154,9 +148,8 @@
                     <div class="form-group">
                         <label>Attestation d'assurance <span style="color:red;">*</span></label>
                         <div class="custom-file-upload">
-                            <label for="pilot_insurance" class="custom-file-label">
-                                <span>📁 Choisir un fichier...</span>
-                            </label>
+                            <label for="pilot_insurance" class="custom-file-label"><span>📁 Choisir un
+                                    fichier...</span></label>
                             <input type="file" id="pilot_insurance" name="pilot_insurance" accept="image/*,.pdf"
                                 required>
                             <span class="file-name" id="name-pilot_insurance">Aucun fichier sélectionné</span>
@@ -165,9 +158,8 @@
                     <div class="form-group">
                         <label>Carte d'identité / Passeport <span style="color:red;">*</span></label>
                         <div class="custom-file-upload">
-                            <label for="pilot_identity" class="custom-file-label">
-                                <span>📁 Choisir un fichier...</span>
-                            </label>
+                            <label for="pilot_identity" class="custom-file-label"><span>📁 Choisir un
+                                    fichier...</span></label>
                             <input type="file" id="pilot_identity" name="pilot_identity" accept="image/*,.pdf" required>
                             <span class="file-name" id="name-pilot_identity">Aucun fichier sélectionné</span>
                         </div>
@@ -180,17 +172,12 @@
                 <h2 class="pilot-waiver-section-title dot-before">Contenu de la décharge</h2>
                 <div class="waiver-content">
                     <h1>DÉCHARGE DE RESPONSABILITÉ</h1>
-                    <p style="font-weight: 500;">Pilote de véhicule caméra tracking — {{company_name}}</p>
+                    <p style="font-weight: 500;">Pilote de véhicule caméra tracking — {{ company_name }}</p>
                     <hr>
 
                     <h2>1. Identification des parties</h2>
-                    <p><strong>Prestataire :</strong></p>
-                    <ul>
-                        <li>Raison sociale : {{company_name}}</li>
-                        <li>Représentant : {{company_representative}}</li>
-                        <li>Adresse : {{company_address}}</li>
-                        <li>SIRET : {{company_siret}}</li>
-                    </ul>
+                    <p><strong>Prestataire :</strong> {{ company_name }} — {{ company_address }} — SIRET : {{
+                        company_siret }} — Représenté par {{ company_representative }}.</p>
                     <p><strong>Pilote :</strong></p>
                     <ul>
                         <li>Nom / Prénom : <strong id="text_pilot_name">…</strong></li>
@@ -201,8 +188,9 @@
                     <hr>
 
                     <h2>2. Objet</h2>
-                    <p>La présente décharge concerne la mise à disposition par Belle Vitesse d'un véhicule de tracking
-                        caméra modifié (ci-après « le Véhicule ») pour les besoins d'une production audiovisuelle.</p>
+                    <p>La présente décharge encadre la mise à disposition par <strong>{{ company_name }}</strong> d'un
+                        véhicule de tracking caméra modifié (ci-après « le Véhicule ») au pilote, dans le cadre exclusif
+                        de la production audiovisuelle suivante :</p>
                     <ul>
                         <li>Projet : <strong>{{ waiver.project.nom if waiver.project else '—' }}</strong></li>
                         <li>Production / Tournage : <strong>{{ waiver.production_name or '—' }}</strong></li>
@@ -224,36 +212,51 @@
                         <li>Ne pas être sous l'emprise d'alcool, de substances illicites ou de médicaments altérant ses
                             capacités de conduite.</li>
                         <li>Accepter d'utiliser le Véhicule exclusivement dans le cadre de la prestation définie
-                            ci-dessus, en conformité avec le Code de la route et les instructions de Belle Vitesse.</li>
+                            ci-dessus, en conformité avec le Code de la route et les instructions de {{ company_name }}.
+                        </li>
                     </ul>
                     <hr>
 
-                    <h2>4. Limitation de responsabilité</h2>
-                    <p>Le pilote reconnaît et accepte que Belle Vitesse ne pourra en aucun cas être tenue responsable :
-                    </p>
+                    <h2>4. Limitation de responsabilité de {{ company_name }}</h2>
+                    <p>Le pilote reconnaît et accepte que <strong>{{ company_name }} ne pourra en aucun cas être tenue
+                            responsable</strong> :</p>
                     <ul>
                         <li>Des dommages corporels, matériels ou immatériels résultant d'une utilisation du Véhicule
                             contraire aux consignes remises.</li>
                         <li>Des infractions au Code de la route commises par le pilote durant la prestation.</li>
                         <li>Des dommages causés à des tiers du fait du comportement du pilote.</li>
+                        <li>Des dommages causés au matériel de prise de vue embarqué appartenant à la production ou à
+                            des tiers.</li>
                     </ul>
-                    <p>En cas de sinistre, le pilote s'engage à informer immédiatement Belle Vitesse et à coopérer
-                        pleinement avec les autorités compétentes et les assureurs.</p>
+                    <p>La responsabilité de {{ company_name }} est en tout état de cause limitée au montant hors taxes
+                        de la prestation facturée. En cas de sinistre, le pilote s'engage à informer immédiatement {{
+                        company_name }} et à coopérer pleinement avec les autorités compétentes et les assureurs.</p>
                     <hr>
 
-                    <h2>5. État du véhicule</h2>
+                    <h2>5. État du véhicule et responsabilité financière</h2>
                     <p>Le pilote reconnaît avoir reçu le Véhicule en bon état de fonctionnement et s'engage à le
-                        restituer dans l'état dans lequel il lui a été remis, sauf usure normale. Tout dommage constaté
-                        à la restitution sera imputé au pilote, sauf preuve contraire.</p>
+                        restituer dans l'état dans lequel il lui a été remis, sauf usure normale. En cas de dommages
+                        constatés à la restitution, le pilote s'engage à prendre en charge l'intégralité des frais de
+                        réparation ou de remplacement, déduction faite de la franchise éventuelle couverte par son
+                        assurance. {{ company_name }} se réserve le droit d'immobiliser tout Véhicule endommagé jusqu'à
+                        règlement complet.</p>
                     <hr>
 
                     <h2>6. Assurances</h2>
                     <p>Le pilote déclare être couvert par une assurance responsabilité civile professionnelle et/ou
-                        personnelle en vigueur à la date de la prestation.</p>
+                        personnelle en vigueur à la date de la prestation. Une attestation d'assurance a été jointe lors
+                        de la signature électronique.</p>
                     <ul>
                         <li>Compagnie d'assurance : <strong id="text_pilot_insurance_company">…</strong></li>
                         <li>N° de police : <strong id="text_pilot_insurance_policy">…</strong></li>
                     </ul>
+                    <hr>
+
+                    <h2>7. Droit applicable et juridiction compétente</h2>
+                    <p>La présente décharge est soumise au droit français. En cas de litige, les parties s'engagent à
+                        rechercher une solution amiable dans un délai de 30 jours. À défaut d'accord, les tribunaux de
+                        Paris seront seuls compétents, même en cas de pluralité de défendeurs ou d'appel en garantie.
+                    </p>
                 </div>
             </section>
 
@@ -262,9 +265,10 @@
                 <div class="checkbox-container">
                     <input type="checkbox" id="accept_terms">
                     <label for="accept_terms">
-                        <strong>J'ai lu, je comprends et j'approuve les termes de la présente décharge de
+                        <strong>J'ai lu, je comprends et j'approuve l'intégralité des termes de la présente décharge de
                             responsabilité.</strong><br>
-                        Je certifie que les informations renseignées ci-dessus sont exactes.
+                        Je certifie que les informations renseignées ci-dessus sont exactes et que les documents joints
+                        sont authentiques.
                     </label>
                 </div>
 
@@ -283,8 +287,6 @@
             </section>
 
             <div id="feedback" class="feedback-box"></div>
-
-            <!-- Hidden canvas for PDF to Image conversion -->
             <canvas id="pdf-conversion-canvas" style="display: none;"></canvas>
 
         </form>
@@ -292,7 +294,7 @@
 
         <footer class="pilot-waiver-footer">
             <p>
-                <strong>{{company_name}}</strong><br>
+                <strong>{{ company_name }}</strong><br>
                 Ce document sera scellé électroniquement après validation.
             </p>
         </footer>
@@ -349,24 +351,18 @@
 
             var syncIds = ['first_name', 'last_name', 'dob', 'license_number', 'address', 'insurance_company', 'insurance_policy'];
             var fileIds = ['pilot_license', 'pilot_insurance', 'pilot_identity'];
+
             syncIds.forEach(function (id) {
                 var el = document.getElementById(id);
                 if (el) el.addEventListener('input', updateWaiverText);
             });
-            updateWaiverText(); // sync initial
+            updateWaiverText();
 
-            // ── Validation du bouton ─────────────────────────────────────────
-            var checkbox = document.getElementById('accept_terms');
-            var btnSign = document.getElementById('btn-sign');
-            var btnClear = document.getElementById('btn-clear');
-
-            // ── Canvas & SignaturePad ────────────────────────────────────────
+            // ── SignaturePad ─────────────────────────────────────────────────
             var canvas = document.getElementById('signature-canvas');
             var wrapper = canvas ? canvas.parentElement : null;
+            if (!canvas || !wrapper) return;
 
-            if (!canvas || !wrapper) return; // page état signé/invalide, on s'arrête
-
-            // Checkbox events
             var signaturePad = new SignaturePad(canvas, {
                 backgroundColor: 'rgb(250, 250, 250)',
                 penColor: 'rgb(21, 21, 21)',
@@ -381,41 +377,36 @@
             }
 
             window.addEventListener('resize', resizeCanvas);
-            resizeCanvas(); // premier appel après que signaturePad existe
+            resizeCanvas();
 
-            btnClear.addEventListener('click', function () {
+            document.getElementById('btn-clear').addEventListener('click', function () {
                 signaturePad.clear();
             });
 
-            // ── Address Autocomplete ────────────────────────────────────────
-            const addressInput = document.getElementById('address');
-            const suggestionsContainer = document.getElementById('address-suggestions');
-            let lastSelectedValue = "";
+            // ── Address Autocomplete ─────────────────────────────────────────
+            var addressInput = document.getElementById('address');
+            var suggestionsContainer = document.getElementById('address-suggestions');
+            var lastSelectedValue = '';
 
-            addressInput.addEventListener('input', async () => {
-                const query = addressInput.value.trim();
-
-                // Si la valeur est identique à la dernière sélectionnée ou trop courte, on cache
+            addressInput.addEventListener('input', async function () {
+                var query = addressInput.value.trim();
                 if (query === lastSelectedValue || query.length < 3) {
                     suggestionsContainer.style.display = 'none';
                     return;
                 }
-
                 try {
-                    const res = await fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=5`);
-                    const data = await res.json();
-
+                    var res = await fetch('https://api-adresse.data.gouv.fr/search/?q=' + encodeURIComponent(query) + '&limit=5');
+                    var data = await res.json();
                     if (data.features && data.features.length > 0) {
                         suggestionsContainer.innerHTML = '';
-                        data.features.forEach(feature => {
-                            const div = document.createElement('div');
+                        data.features.forEach(function (feature) {
+                            var div = document.createElement('div');
                             div.className = 'suggestion-item';
                             div.textContent = feature.properties.label;
-                            div.addEventListener('click', () => {
+                            div.addEventListener('click', function () {
                                 lastSelectedValue = feature.properties.label;
                                 addressInput.value = feature.properties.label;
                                 suggestionsContainer.style.display = 'none';
-                                // Sync avec l'aperçu texte de la décharge
                                 updateWaiverText();
                             });
                             suggestionsContainer.appendChild(div);
@@ -429,53 +420,47 @@
                 }
             });
 
-            // Close suggestions when clicking outside
-            document.addEventListener('click', (e) => {
+            document.addEventListener('click', function (e) {
                 if (!addressInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
                     suggestionsContainer.style.display = 'none';
                 }
             });
 
-            // ── Display selected filename ──────────────────────────────────
-            fileIds.forEach(id => {
-                const el = document.getElementById(id);
-                const nameSpan = document.getElementById('name-' + id);
+            // ── Display selected filename ────────────────────────────────────
+            fileIds.forEach(function (id) {
+                var el = document.getElementById(id);
+                var nameSpan = document.getElementById('name-' + id);
                 if (el && nameSpan) {
                     el.addEventListener('change', function () {
                         if (this.files && this.files.length > 0) {
-                            const name = this.files[0].name;
-                            const truncated = name.length > 45 ? name.slice(0, 45) + '…' : name;
+                            var name = this.files[0].name;
+                            var truncated = name.length > 45 ? name.slice(0, 45) + '…' : name;
                             nameSpan.textContent = '📄 ' + truncated;
                             nameSpan.style.color = 'var(--admin-accent)';
                         } else {
-                            nameSpan.textContent = "Aucun fichier sélectionné";
-                            nameSpan.style.color = "var(--grey-2)";
+                            nameSpan.textContent = 'Aucun fichier sélectionné';
+                            nameSpan.style.color = 'var(--grey-2)';
                         }
                     });
                 }
             });
 
-            // ── PDF to Image conversion ─────────────────────────────────────
+            // ── PDF to Image conversion ──────────────────────────────────────
             async function convertPdfToImage(file) {
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
+                return new Promise(function (resolve, reject) {
+                    var reader = new FileReader();
                     reader.onload = async function () {
                         try {
-                            const typedarray = new Uint8Array(this.result);
-                            const pdf = await pdfjsLib.getDocument(typedarray).promise;
-                            const page = await pdf.getPage(1);
-                            const viewport = page.getViewport({ scale: 2.0 }); // High quality
-
-                            const convCanvas = document.getElementById('pdf-conversion-canvas');
-                            const context = convCanvas.getContext('2d');
+                            var typedarray = new Uint8Array(this.result);
+                            var pdf = await pdfjsLib.getDocument(typedarray).promise;
+                            var page = await pdf.getPage(1);
+                            var viewport = page.getViewport({ scale: 2.0 });
+                            var convCanvas = document.getElementById('pdf-conversion-canvas');
+                            var context = convCanvas.getContext('2d');
                             convCanvas.height = viewport.height;
                             convCanvas.width = viewport.width;
-
                             await page.render({ canvasContext: context, viewport: viewport }).promise;
-
-                            convCanvas.toBlob((blob) => {
-                                resolve(blob);
-                            }, 'image/png');
+                            convCanvas.toBlob(function (blob) { resolve(blob); }, 'image/png');
                         } catch (err) {
                             reject(err);
                         }
@@ -486,7 +471,8 @@
             }
 
             // ── Soumission ───────────────────────────────────────────────────
-            btnSign.addEventListener('click', async function () {
+            document.getElementById('btn-sign').addEventListener('click', async function () {
+                var btnSign = this;
 
                 // 1. Champs obligatoires
                 var missing = false;
@@ -494,33 +480,31 @@
                     var el = document.getElementById(id);
                     if (el && !el.value.trim()) missing = true;
                 });
-
                 if (missing) {
-                    showFeedback('Veuillez remplir tous les champs obligatoires avant de signer.', 'error');
+                    showFeedback('❌ Veuillez remplir tous les champs obligatoires avant de signer.', 'error');
                     return;
                 }
 
-                // Attachments validation
+                // 2. Pièces jointes
                 var missingFiles = false;
                 fileIds.forEach(function (id) {
                     var el = document.getElementById(id);
                     if (el && (!el.files || el.files.length === 0)) missingFiles = true;
                 });
-
                 if (missingFiles) {
-                    showFeedback('Veuillez joindre les documents requis (Permis, Assurance, ID).', 'error');
+                    showFeedback('❌ Veuillez joindre les trois documents requis (permis, attestation d\'assurance, pièce d\'identité).', 'error');
                     return;
                 }
 
-                // 2. Checkbox
-                if (!checkbox.checked) {
-                    showFeedback('Vous devez accepter les termes de la décharge.', 'error');
+                // 3. Checkbox
+                if (!document.getElementById('accept_terms').checked) {
+                    showFeedback('❌ Vous devez accepter les termes de la décharge.', 'error');
                     return;
                 }
 
-                // 3. Signature
+                // 4. Signature
                 if (signaturePad.isEmpty()) {
-                    showFeedback('Veuillez apposer votre signature.', 'error');
+                    showFeedback('❌ Veuillez apposer votre signature.', 'error');
                     return;
                 }
 
@@ -538,19 +522,19 @@
                     formData.append('insurance_policy', document.getElementById('insurance_policy').value.trim());
                     formData.append('signature_data', signaturePad.toDataURL('image/png'));
 
-                    for (const id of fileIds) {
+                    for (var i = 0; i < fileIds.length; i++) {
+                        var id = fileIds[i];
                         var el = document.getElementById(id);
                         if (el && el.files[0]) {
-                            const file = el.files[0];
+                            var file = el.files[0];
                             if (file.type === 'application/pdf') {
                                 try {
-                                    const imageBlob = await convertPdfToImage(file);
-                                    // Change extension to .png for the server to recognize it as image
-                                    const newName = file.name.replace(/\.[^/.]+$/, "") + ".png";
+                                    var imageBlob = await convertPdfToImage(file);
+                                    var newName = file.name.replace(/\.[^/.]+$/, '') + '.png';
                                     formData.append(id, imageBlob, newName);
                                 } catch (err) {
                                     console.error('PDF conversion failed:', err);
-                                    showFeedback('Échec de la conversion du PDF ' + id + '. Veuillez utiliser une image ou réessayez.', 'error');
+                                    showFeedback('❌ Échec de la conversion du PDF. Veuillez utiliser une image ou réessayer.', 'error');
                                     btnSign.disabled = false;
                                     btnSign.textContent = 'Signer numériquement';
                                     return;
@@ -562,34 +546,32 @@
                     }
 
                     btnSign.textContent = 'Envoi en cours…';
-                    const response = await fetch(window.location.href, {
+
+                    var response = await fetch(window.location.href, {
                         method: 'POST',
-                        headers: {
-                            'X-CSRFToken': '{{ csrf_token() }}'
-                        },
+                        headers: { 'X-CSRFToken': '{{ csrf_token() }}' },
                         body: formData
                     });
 
-                    const result = await response.json();
+                    var result = await response.json();
                     if (result.success) {
-                        showFeedback('Décharge signée avec succès. Vous allez recevoir un e-mail de confirmation.', 'success');
+                        showFeedback('✅ Décharge signée avec succès. Vous allez recevoir un e-mail de confirmation.', 'success');
                         btnSign.textContent = 'Signé ✓';
                         canvas.style.pointerEvents = 'none';
                         setTimeout(function () { window.location.reload(); }, 2500);
                     } else {
-                        showFeedback('' + (result.error || 'Erreur inconnue. Réessayez.'), 'error');
+                        showFeedback('❌ ' + (result.error || 'Erreur inconnue. Réessayez.'), 'error');
                         btnSign.disabled = false;
                         btnSign.textContent = 'Signer numériquement';
                     }
 
                 } catch (err) {
-                    showFeedback('Erreur réseau. Vérifiez votre connexion et réessayez.', 'error');
+                    showFeedback('❌ Erreur réseau. Vérifiez votre connexion et réessayez.', 'error');
                     btnSign.disabled = false;
                     btnSign.textContent = 'Signer numériquement';
                 }
             });
         });
-
     </script>
 
 </body>

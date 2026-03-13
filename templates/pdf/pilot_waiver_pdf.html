@@ -4,9 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>DÉCHARGE DE RESPONSABILITÉ — {{ "%04d" | format(waiver.project_id) }}</title>
-    <!-- Les variables de couleurs -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <!-- La feuille de style principale WeasyPrint / Checkout -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.css') }}">
 </head>
 
@@ -34,26 +32,23 @@
                 <div style="margin-bottom: 12px;">
                     <p style="font-size: 8pt; color: var(--grey-2); line-height: 1.4;">
                         <span class="pilot-waiver-info-label">Prestataire :<br><br></span>
-                        <span class="pilot-waiver-info-label-representative">Société :</span>
-                        {{company_name}}<br>
-                        <span class="pilot-waiver-info-label-representative">SIRET :</span> {{company_siret}}<br>
-                        <span class="pilot-waiver-info-label-representative">Représentant :</span>
-                        {{company_representative}}<br>
-                        <span class="pilot-waiver-info-label-representative">Adresse :</span> {{company_address}}
+                        <span class="pilot-waiver-info-label-representative">Société :</span> {{ company_name }}<br>
+                        <span class="pilot-waiver-info-label-representative">SIRET :</span> {{ company_siret }}<br>
+                        <span class="pilot-waiver-info-label-representative">Représentant :</span> {{
+                        company_representative }}<br>
+                        <span class="pilot-waiver-info-label-representative">Adresse :</span> {{ company_address }}
                     </p>
                 </div>
-
                 <div style="margin-bottom: 12px;">
                     <p style="font-size: 8pt; color: var(--grey-2); line-height: 1.4;">
                         <span class="pilot-waiver-info-label">Pilote :<br><br></span>
-                        <span class="pilot-waiver-info-label-representative">Nom :</span>
-                        {{waiver.pilot_first_name }} {{waiver.pilot_last_name }}<br>
-                        <span class="pilot-waiver-info-label-representative">Date de naissance :</span>
-                        {{waiver.pilot_dob.strftime('%d/%m/%Y') if waiver.pilot_dob else '—'}}<br>
-                        <span class="pilot-waiver-info-label-representative">Numéro de permis :</span>
-                        {{waiver.pilot_license_number}}<br>
-                        <span class="pilot-waiver-info-label-representative">Adresse Pilote :</span>
-                        {{waiver.pilot_address}}
+                        <span class="pilot-waiver-info-label-representative">Nom :</span> {{ waiver.pilot_first_name }}
+                        {{ waiver.pilot_last_name }}<br>
+                        <span class="pilot-waiver-info-label-representative">Date de naissance :</span> {{
+                        waiver.pilot_dob.strftime('%d/%m/%Y') if waiver.pilot_dob else '—' }}<br>
+                        <span class="pilot-waiver-info-label-representative">Numéro de permis :</span> {{
+                        waiver.pilot_license_number }}<br>
+                        <span class="pilot-waiver-info-label-representative">Adresse :</span> {{ waiver.pilot_address }}
                     </p>
                 </div>
             </div>
@@ -63,11 +58,10 @@
         <section class="pilot-waiver-section">
             <h2 class="pilot-waiver-section-title dot-before">Objet de la prestation</h2>
             <div class="pilot-waiver-notes" style="margin-bottom: 12px; border-left-color: var(--yellow-1);">
-                <p style="color: var(--grey-1); font-size: 8pt;">La présente décharge concerne la mise à disposition par
-                    Belle Vitesse de véhicules de tracking caméra modifiés (ci-après « les Véhicules ») pour les besoins
-                    d'une production audiovisuelle.</p>
+                <p style="color: var(--grey-1); font-size: 8pt;">La présente décharge encadre la mise à disposition par
+                    {{ company_name }} d'un véhicule de tracking caméra modifié (ci-après « le Véhicule ») au pilote,
+                    dans le cadre exclusif de la production audiovisuelle décrite ci-dessous.</p>
             </div>
-
             <div class="pilot-waiver-info-grid">
                 <div class="pilot-waiver-info-item">
                     <span class="pilot-waiver-info-label">Projet</span>
@@ -82,24 +76,24 @@
                     <span class="pilot-waiver-info-value">{{ waiver.shooting_dates or '—' }}</span>
                 </div>
             </div>
-            <div class="pilot-waiver-info-item" style="margin-top:12pt;">
+            <div class="pilot-waiver-info-item" style="margin-top: 12pt;">
                 <span class="pilot-waiver-info-label">Véhicule(s) à piloter</span>
                 <div class="pilot-waiver-info-item pilot-waiver-info-vehicles" style="grid-column: 1 / -1;">
                     {% if waiver.vehicles %}
                     {% for v in waiver.vehicles.split(',') %}
                     <span class="pilot-waiver-vehicles-badge">{{ v.strip() }}</span>
                     {% endfor %}
-                    {% else %}
-                    —
-                    {% endif %}
+                    {% else %}—{% endif %}
                 </div>
             </div>
         </section>
+
         <!-- ═══════════ ASSURANCE ═══════════ -->
         <section class="pilot-waiver-section">
             <h2 class="pilot-waiver-section-title dot-before">Assurances</h2>
             <p style="font-size: 8pt; margin-bottom: 8px; color: var(--grey-2);">Le pilote déclare être couvert par une
-                assurance responsabilité civile professionnelle et/ou personnelle en vigueur.</p>
+                assurance responsabilité civile professionnelle et/ou personnelle en vigueur à la date de la prestation.
+                Une attestation d'assurance a été jointe lors de la signature électronique.</p>
             <div class="pilot-waiver-info-grid">
                 <div class="pilot-waiver-info-item">
                     <span class="pilot-waiver-info-label">Compagnie d'assurance</span>
@@ -149,21 +143,42 @@
                     </tr>
                     <tr>
                         <td>✓</td>
-                        <td>Accepter d'utiliser les Véhicules exclusivement dans le cadre de la prestation, en
-                            conformité
-                            avec le Code de la route et les instructions de Belle Vitesse.</td>
+                        <td>Utiliser le Véhicule exclusivement dans le cadre de la prestation définie, en conformité
+                            avec le Code de la route et les instructions de {{ company_name }}.</td>
+                    </tr>
+                    <tr>
+                        <td>✓</td>
+                        <td>Signaler immédiatement à {{ company_name }} tout incident, accident ou dommage survenant sur
+                            le Véhicule ou à sa périphérie.</td>
                     </tr>
                 </tbody>
             </table>
 
-            <p style="font-size: 8pt; margin-bottom: 8px;"><strong>Limitation de responsabilité : </strong> Le pilote
-                reconnaît et accepte que Belle Vitesse ne pourra en aucun cas être tenue responsable des dommages
-                résultant d'une utilisation contraire aux consignes, des infractions commises par le pilote, ni des
-                dommages causés à des tiers par son comportement.</p>
-            <p style="font-size: 8pt; margin-bottom: 8px;"><strong>État du véhicule : </strong> Le pilote reconnaît
-                avoir reçu les Véhicules en bon état et s'engage à le restituer tel quel. Tout dommage à la restitution
-                sera imputé au pilote, sauf preuve contraire.</p>
+            <p style="font-size: 8pt; margin-bottom: 8px;">
+                <strong>Limitation de responsabilité de {{ company_name }} : </strong>
+                Le pilote reconnaît et accepte que {{ company_name }} ne pourra en aucun cas être tenue responsable des
+                dommages corporels, matériels ou immatériels résultant d'une utilisation du Véhicule contraire aux
+                consignes remises, des infractions au Code de la route commises par le pilote, des dommages causés à
+                des tiers du fait du comportement du pilote, ni des dommages causés au matériel de prise de vue
+                embarqué appartenant à la production ou à des tiers. La responsabilité de {{ company_name }} est en
+                tout état de cause limitée au montant hors taxes de la prestation facturée.
+            </p>
+            <p style="font-size: 8pt; margin-bottom: 8px;">
+                <strong>État du véhicule et responsabilité financière : </strong>
+                Le pilote reconnaît avoir reçu le Véhicule en bon état de fonctionnement et s'engage à le restituer
+                dans l'état dans lequel il lui a été remis, sauf usure normale. En cas de dommages constatés à la
+                restitution, le pilote s'engage à prendre en charge l'intégralité des frais de réparation ou de
+                remplacement, déduction faite de la franchise éventuelle couverte par son assurance.
+                {{ company_name }} se réserve le droit d'immobiliser tout Véhicule endommagé jusqu'à règlement complet.
+            </p>
+            <p style="font-size: 8pt; margin-bottom: 0;">
+                <strong>Droit applicable : </strong>
+                La présente décharge est soumise au droit français. En cas de litige, les parties s'engagent à
+                rechercher une solution amiable dans un délai de 30 jours. À défaut d'accord, les tribunaux de Paris
+                seront seuls compétents, même en cas de pluralité de défendeurs ou d'appel en garantie.
+            </p>
         </section>
+
         <!-- ═══════════ SIGNATURE ═══════════ -->
         <section class="pilot-waiver-section">
             <h2 class="pilot-waiver-section-title dot-before">Signature électronique</h2>
@@ -172,11 +187,11 @@
 
             <div class="pilot-waiver-signature">
                 <div class="pilot-waiver-signature-block">
-                    <p class="pilot-waiver-signature-label">Pour {{company_name}}</p>
+                    <p class="pilot-waiver-signature-label">Pour {{ company_name }}</p>
                     <div style="font-size: 8pt; color: var(--grey-1); line-height: 1.4; margin-top: 10px;">
-                        <strong>{{company_name}}</strong><br>
-                        Représenté par {{company_representative}}<br>
-                        SIRET : {{company_siret}}<br><br>
+                        <strong>{{ company_name }}</strong><br>
+                        Représenté par {{ company_representative }}<br>
+                        SIRET : {{ company_siret }}<br><br>
                         Document généré le {{ waiver.generated_at.strftime('%d/%m/%Y à %H:%M') if waiver.generated_at
                         else '—' }}
                     </div>
@@ -216,7 +231,8 @@
                 <div style="flex: 0 0 80px;">
                     {% if qr %}
                     <a href="{{ verification_url or '#' }}">
-                        <img src="{{ qr }}" alt="QR Code" style="width: 80px; height: 80px;"></a>
+                        <img src="{{ qr }}" alt="QR Code" style="width: 80px; height: 80px;">
+                    </a>
                     {% endif %}
                 </div>
                 <div style="flex: 1;">
@@ -240,11 +256,13 @@
         <!-- ═══════════ FOOTER ═══════════ -->
         <footer class="pilot-waiver-footer">
             <p>
-                <strong>{{company_name}}</strong><br>
+                <strong>{{ company_name }}</strong><br>
                 Ce document est scellé électroniquement.
             </p>
         </footer>
 
     </div>
+
+</body>
 
 </html>

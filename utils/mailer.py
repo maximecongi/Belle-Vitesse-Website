@@ -384,8 +384,8 @@ def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path):
             now_year=datetime.utcnow().year if 'datetime' in globals() else 2026
         )
 
-        # Create message
-        msg = MIMEMultipart()
+        # Create message (mixed for attachments)
+        msg = MIMEMultipart("mixed")
         msg["Subject"] = f"Décharge signée - {project_name}"
         msg["From"] = f"Belle Vitesse <{mail_user}>"
         msg["To"] = to_email
@@ -393,8 +393,11 @@ def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path):
         msg["Date"] = formatdate(localtime=True)
         msg["Message-ID"] = make_msgid(domain="bellevitesse.com")
 
-        msg.attach(MIMEText(text_content, "plain", "utf-8"))
-        msg.attach(MIMEText(html_content, "html", "utf-8"))
+        # Create alternative container for body content
+        body = MIMEMultipart("alternative")
+        body.attach(MIMEText(text_content, "plain", "utf-8"))
+        body.attach(MIMEText(html_content, "html", "utf-8"))
+        msg.attach(body)
 
         # Attach PDF
         if os.path.exists(pdf_path):
