@@ -270,6 +270,21 @@ def init_waiver_routes(app):
                 waiver.location_of_use = data.get("location_of_use")
                 waiver.signature_data = data.get("signature_data")
 
+                # Handle file uploads
+                private_folder = current_app.config.get("PRIVATE_FOLDER")
+                upload_dir = os.path.join(
+                    private_folder, 'production_waiver_attachments', str(waiver.id))
+                os.makedirs(upload_dir, exist_ok=True)
+
+                file = request.files.get('production_insurance')
+                if file and file.filename:
+                    filename = secure_filename(file.filename)
+                    filename = f"prod_insurance_{int(datetime.now().timestamp())}_{filename}"
+                    file_path = os.path.join(upload_dir, filename)
+                    file.save(file_path)
+                    # Store relative path: waiver_id/filename
+                    waiver.production_insurance_path = f"{waiver.id}/{filename}"
+
                 signer_ip = request.headers.get(
                     'X-Forwarded-For', request.remote_addr)
                 if signer_ip and ',' in signer_ip:
@@ -378,5 +393,39 @@ def init_waiver_routes(app):
 
         try:
             return send_from_directory(directory, filename)
+        except Exception:
+            abort(404)
+
+    @app.route("/production-waiver/attachment/<path:filepath>")
+    @csrf.exempt
+    def download_production_waiver_attachment(filepath):
+        token_header = request.headers.get("X-Check-Token")
+        expected_header = os.getenv("CHECK_API_TOKEN")
+        access_token = request.args.get("t", "")
+
+        is_authorized = False
+        if expected_header and token_header and secrets.compare_digest(token_header, expected_header):
+            is_authorized = True
+        elif access_token and validate_waiver_pdf_access_token(filepath, access_token):
+            is_authorized = True
+
+        if not is_authorized:
+            abort(403)
+
+        private_folder = current_app.config.get("PRIVATE_FOLDER")
+        directory = os.path.join(
+            private_folder, "production_waiver_attachments")
+
+        # Extract filename (last part) and subfolder (everything before)
+        parts = filepath.split('/')
+        if len(parts) < 2:
+            abort(400)
+
+        filename = parts[-1]
+        subfolder = '/'.join(parts[:-1])
+        full_directory = os.path.join(directory, subfolder)
+
+        try:
+            return send_from_directory(full_directory, filename)
         except Exception:
             abort(404)

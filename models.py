@@ -189,6 +189,9 @@ class ProductionWaiver(db.Model):
     # Signature Traceability
     signer_ip = db.Column(db.String(45), nullable=True)
 
+    # Attachments
+    production_insurance_path = db.Column(db.String(500), nullable=True)
+
     # Webhook
     webhook_triggered_at = db.Column(db.DateTime, nullable=True)
 

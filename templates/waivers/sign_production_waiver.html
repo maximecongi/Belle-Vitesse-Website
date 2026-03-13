@@ -140,6 +140,17 @@
                         <input class="form-input" type="text" id="insurance_policy" name="insurance_policy"
                             value="{{ waiver.production_insurance_policy or '' }}" required>
                     </div>
+                    <div class="form-group" style="grid-column: 1 / -1; margin-top: 1rem;">
+                        <label>Attestation d'assurance <span style="color:red;">*</span></label>
+                        <div class="custom-file-upload">
+                            <label for="production_insurance" class="custom-file-label">
+                                <span>📁 Choisir un fichier...</span>
+                            </label>
+                            <input type="file" id="production_insurance" name="production_insurance"
+                                accept="image/*,.pdf" required>
+                            <span class="file-name" id="name-production_insurance">Aucun fichier sélectionné</span>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -254,6 +265,26 @@
             });
             updateWaiverText();
 
+            // ── Display selected filename ──────────────────────────────────
+            var fileIds = ['production_insurance'];
+            fileIds.forEach(id => {
+                const el = document.getElementById(id);
+                const nameSpan = document.getElementById('name-' + id);
+                if (el && nameSpan) {
+                    el.addEventListener('change', function () {
+                        if (this.files && this.files.length > 0) {
+                            const name = this.files[0].name;
+                            const truncated = name.length > 45 ? name.slice(0, 45) + '…' : name;
+                            nameSpan.textContent = '📄 ' + truncated;
+                            nameSpan.style.color = 'var(--admin-accent)';
+                        } else {
+                            nameSpan.textContent = 'Aucun fichier sélectionné';
+                            nameSpan.style.color = 'var(--grey-4)';
+                        }
+                    });
+                }
+            });
+
             // ── SignaturePad ────────────────────────────────────────────────
             var canvas = document.getElementById('signature-canvas');
             var wrapper = canvas ? canvas.parentElement : null;
@@ -344,20 +375,24 @@
                     return;
                 }
 
-                const btn = this;
-                btn.disabled = true;
-                btn.textContent = 'Envoi en cours…';
+                const form = document.getElementById('waiver-form');
+                const btnSign = this;
+                const signatureData = signaturePad.toDataURL();
 
-                const formData = new FormData(document.getElementById('waiver-form'));
-                formData.append('signature_data', signaturePad.toDataURL());
+                // Create FormData to handle file uploads
+                const formData = new FormData(form);
+                formData.set("signature_data", signatureData); // override with actual canvas data
+
+                btnSign.disabled = true;
+                btnSign.textContent = "Traitement...";
 
                 try {
-                    const res = await fetch(window.location.href, {
-                        method: 'POST',
-                        headers: { 'X-CSRFToken': '{{ csrf_token() }}' },
+                    const response = await fetch(form.action, {
+                        method: "POST",
+                        headers: { 'X-CSRFToken': '{{ csrf_token() }}' }, // Preserve CSRF token
                         body: formData
                     });
-                    const data = await res.json();
+                    const data = await response.json(); // Use 'response' instead of 'res'
                     if (data.success) {
                         showFeedback('Décharge signée avec succès.', 'success');
                         setTimeout(() => window.location.reload(), 2000);

@@ -297,6 +297,7 @@ def process_production_waiver_signature(waiver_db_id):
                 "insurance_company": waiver.production_insurance_company,
                 "insurance_policy": waiver.production_insurance_policy,
                 "insurance_validity": waiver.production_insurance_validity,
+                "insurance_path": waiver.production_insurance_path,
                 "vehicles": waiver.vehicles,
                 "shooting_dates": waiver.shooting_dates,
                 "location_of_use": waiver.location_of_use,
@@ -346,7 +347,8 @@ def _trigger_n8n_webhook_production(waiver, filename, domain, current_hash):
                 "name": waiver.production_name,
                 "representative": waiver.production_representative,
                 "siret": waiver.production_siret,
-                "vat": waiver.production_vat
+                "vat": waiver.production_vat,
+                "insurance_url": f"{domain}/production-waiver/attachment/{waiver.production_insurance_path}?t={generate_waiver_pdf_access_token(waiver.production_insurance_path)}" if waiver.production_insurance_path else None
             },
             "project": waiver.project_name,
             "pdf_url": pdf_url_signed,

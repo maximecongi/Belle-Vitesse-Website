@@ -15,10 +15,11 @@ def _cleanup_production_waiver_assets(waiver):
     from flask import current_app
 
     files_to_delete = [
-        waiver.signed_pdf_path
+        (waiver.signed_pdf_path, "production_waiver_pdfs"),
+        (waiver.production_insurance_path, "production_waiver_attachments")
     ]
 
-    for file_path in files_to_delete:
+    for file_path, folder in files_to_delete:
         if file_path:
             # Check if it's a relative path starting from static or just a filename
             if file_path.startswith('/static/'):
@@ -27,7 +28,7 @@ def _cleanup_production_waiver_assets(waiver):
             else:
                 private_folder = current_app.config.get("PRIVATE_FOLDER")
                 full_path = os.path.join(
-                    private_folder, "production_waiver_pdfs", file_path)
+                    private_folder, folder, file_path)
 
             if os.path.exists(full_path):
                 try:
