@@ -61,6 +61,8 @@ def process_pilot_waiver_signature(waiver_id):
 
     # Generate QR code → verification page
     domain = os.getenv("APP_BASE_URL", "https://bellevitesse.com")
+    if domain and not domain.startswith("http"):
+        domain = f"https://{domain}"
     verification_url = f"{domain}/verify/waiver/{waiver.waiver_id}"
     qr_code_img = generate_qr_code(verification_url)
 
@@ -74,6 +76,8 @@ def process_pilot_waiver_signature(waiver_id):
 
     # 3. Secure URL (for database reference and internal use)
     base_url = os.getenv("APP_BASE_URL", "https://bellevitesse.com")
+    if base_url and not base_url.startswith("http"):
+        base_url = f"https://{base_url}"
     access_token = generate_waiver_pdf_access_token(filename)
     pdf_path_url = f"/pilot-waiver/document/{filename}?t={access_token}"
 
