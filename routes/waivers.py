@@ -1,8 +1,9 @@
 import os
 from werkzeug.utils import secure_filename
-from flask import render_template, request, jsonify, current_app, abort
+from flask import render_template, request, jsonify, current_app, abort, send_from_directory
+import secrets
 from models import PilotWaiver, PilotWaiverSignedDocument, db
-from utils.waivers import process_pilot_waiver_signature
+from utils.waivers import process_pilot_waiver_signature, validate_waiver_pdf_access_token
 from utils.waiver_verification import verify_waiver_seal, verify_pdf_hash
 from extensions import csrf
 
@@ -130,9 +131,19 @@ def init_waiver_routes(app):
                 data['project_name'] = waiver.project_name or (
                     waiver.project.nom if waiver.project else None)
 
-        # Ensure hash is in data if template expects data.hash (fallback)
         if not data.get('hash'):
             data['hash'] = stored_hash
+
+        # Generate access token for the PDF download link
+        pdf_url = signed_doc.pdf_url
+        if pdf_url:
+            # handle existing ?t= if any
+            filename = pdf_url.split("/")[-1].split("?")[0]
+            from utils.waivers import generate_waiver_pdf_access_token
+            token = generate_waiver_pdf_access_token(filename)
+            pdf_download_url = f"/pilot-waiver/document/{filename}?t={token}"
+        else:
+            pdf_download_url = None
 
         return render_template(
             "waivers/pilot_waiver_verify.html",
@@ -143,5 +154,34 @@ def init_waiver_routes(app):
             inspection_id=signed_doc.waiver_id,
             document_hash=stored_hash,
             project_name=data.get('project_name'),
-            has_pdf_hash=bool(stored_pdf_file_hash)
+            has_pdf_hash=bool(stored_pdf_file_hash),
+            pdf_download_url=pdf_download_url
         )
+
+    @app.route("/pilot-waiver/document/<filename>")
+    @csrf.exempt
+    def download_pilot_waiver_document(filename):
+        # 1. Check for header-based access (admin/automation)
+        token_header = request.headers.get("X-Check-Token")
+        expected_header = os.getenv("CHECK_API_TOKEN")
+
+        # 2. Check for URL-based access (pilots/preview)
+        access_token = request.args.get("t", "")
+
+        is_authorized = False
+
+        if expected_header and token_header and secrets.compare_digest(token_header, expected_header):
+            is_authorized = True
+        elif access_token and validate_waiver_pdf_access_token(filename, access_token):
+            is_authorized = True
+
+        if not is_authorized:
+            abort(403)
+
+        private_folder = current_app.config.get("PRIVATE_FOLDER")
+        directory = os.path.join(private_folder, "pilot_waiver_pdfs")
+
+        try:
+            return send_from_directory(directory, filename)
+        except Exception:
+            abort(404)

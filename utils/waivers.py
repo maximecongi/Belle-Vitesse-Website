@@ -1,6 +1,9 @@
 import os
 import requests
-from datetime import datetime
+import hmac
+import hashlib
+import secrets
+from datetime import datetime, timezone
 from flask import current_app, render_template
 
 from models import db, PilotWaiver, PilotWaiverSignedDocument
@@ -10,6 +13,29 @@ from utils.waiver_verification import (
     generate_qr_code,
     compute_pdf_hash,
 )
+
+
+def generate_waiver_pdf_access_token(filename):
+    """Generate a time-limited, HMAC-signed access token for a waiver PDF filename."""
+    secret = os.getenv("HASH_SECRET_KEY", "").encode("utf-8")
+    now_minutes = int(datetime.now(timezone.utc).timestamp() // 60)
+    payload = f"{filename}:{now_minutes}".encode("utf-8")
+    return hmac.new(secret, payload, hashlib.sha256).hexdigest()
+
+
+def validate_waiver_pdf_access_token(filename, provided_token):
+    """Validate a time-limited access token for a waiver PDF."""
+    secret = os.getenv("HASH_SECRET_KEY", "").encode("utf-8")
+    ttl = int(os.getenv("PDF_ACCESS_TOKEN_TTL_MINUTES", "60"))
+    now_minutes = int(datetime.now(timezone.utc).timestamp() // 60)
+
+    for delta in range(ttl + 1):
+        ts = now_minutes - delta
+        payload = f"{filename}:{ts}".encode("utf-8")
+        expected = hmac.new(secret, payload, hashlib.sha256).hexdigest()
+        if hmac.compare_digest(expected, provided_token):
+            return True
+    return False
 
 
 def process_pilot_waiver_signature(waiver_id):
@@ -39,12 +65,17 @@ def process_pilot_waiver_signature(waiver_id):
     qr_code_img = generate_qr_code(verification_url)
 
     # 2. Generate PDF Path
-    pdf_dir = os.path.join(current_app.static_folder, "files", "waivers")
+    private_folder = current_app.config.get("PRIVATE_FOLDER")
+    pdf_dir = os.path.join(private_folder, "pilot_waiver_pdfs")
     os.makedirs(pdf_dir, exist_ok=True)
 
-    filename = f"Decharge_Pilote_{waiver.waiver_id}_{datetime.now().strftime('%Y%m%d%H%M%S')}.pdf"
+    filename = f"Decharge_Pilote_{waiver.waiver_id}_{secrets.token_hex(4)}.pdf"
     pdf_path_system = os.path.join(pdf_dir, filename)
-    pdf_path_url = f"/static/files/waivers/{filename}"
+
+    # 3. Secure URL (for database reference and internal use)
+    base_url = os.getenv("APP_DOMAIN", "https://bellevitesse.com")
+    access_token = generate_waiver_pdf_access_token(filename)
+    pdf_path_url = f"/pilot-waiver/document/{filename}?t={access_token}"
 
     # 3. Render PDF Template
     html_content = render_template(
@@ -138,7 +169,7 @@ def process_pilot_waiver_signature(waiver_id):
                     "identity_url": f"{domain}{waiver.pilot_identity_path}" if waiver.pilot_identity_path else None
                 },
                 "production_name": waiver.production_name,
-                "signed_pdf_url": f"{domain}{waiver.signed_pdf_path}" if waiver.signed_pdf_path else None
+                "signed_pdf_url": f"{domain}/pilot-waiver/document/{filename}?t={generate_waiver_pdf_access_token(filename)}" if filename else None
             }
             requests.post(webhook_url, json=payload, timeout=5)
             waiver.webhook_triggered_at = datetime.utcnow()
