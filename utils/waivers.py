@@ -148,32 +148,48 @@ def process_pilot_waiver_signature(waiver_id):
     db.session.commit()
 
     # 6. Trigger Webhook
+    _trigger_n8n_webhook(waiver, filename, domain, current_hash)
+
+
+def _trigger_n8n_webhook(waiver, filename, domain, current_hash):
+    """
+    Trigger the n8n webhook for a signed waiver.
+    Mirroring the pattern from checkout.py.
+    """
     webhook_url = os.getenv("N8N_WEBHOOK_PILOT_WAIVER")
-    if webhook_url:
-        try:
-            domain = os.getenv("APP_DOMAIN", "http://localhost:5000")
-            payload = {
-                "event": "pilot_waiver_signed",
-                "waiver_id": waiver.id,
-                "waiver_number": waiver.waiver_id,
-                "project_id": waiver.project_id,
-                "signed_at": waiver.signed_at.isoformat(),
-                "pilot": {
-                    "first_name": waiver.pilot_first_name,
-                    "last_name": waiver.pilot_last_name,
-                    "license_number": waiver.pilot_license_number
-                },
-                "attachments": {
-                    "license_url": f"{domain}{waiver.pilot_license_path}" if waiver.pilot_license_path else None,
-                    "insurance_url": f"{domain}{waiver.pilot_insurance_path}" if waiver.pilot_insurance_path else None,
-                    "identity_url": f"{domain}{waiver.pilot_identity_path}" if waiver.pilot_identity_path else None
-                },
-                "production_name": waiver.production_name,
-                "signed_pdf_url": f"{domain}/pilot-waiver/document/{filename}?t={generate_waiver_pdf_access_token(filename)}" if filename else None
-            }
-            requests.post(webhook_url, json=payload, timeout=5)
-            waiver.webhook_triggered_at = datetime.utcnow()
-            db.session.commit()
-        except Exception as e:
-            current_app.logger.error(
-                f"Failed to trigger N8N webhook for waiver {waiver.id}: {e}")
+    if not webhook_url:
+        current_app.logger.warning("⚠️ N8N_WEBHOOK_PILOT_WAIVER not set.")
+        return
+
+    try:
+        # Generate the signed PDF URL
+        access_token = generate_waiver_pdf_access_token(filename)
+        pdf_url_signed = f"{domain}/pilot-waiver/document/{filename}?t={access_token}"
+
+        payload = {
+            "event": "pilot_waiver_signed",
+            "waiver_id": waiver.id,
+            "waiver_number": waiver.waiver_id,
+            "project_id": waiver.project_id,
+            "signed_at": waiver.signed_at.isoformat(),
+            "pilot": {
+                "first_name": waiver.pilot_first_name,
+                "last_name": waiver.pilot_last_name,
+                "license_number": waiver.pilot_license_number
+            },
+            "attachments": {
+                "license_url": f"{domain}{waiver.pilot_license_path}" if waiver.pilot_license_path else None,
+                "insurance_url": f"{domain}{waiver.pilot_insurance_path}" if waiver.pilot_insurance_path else None,
+                "identity_url": f"{domain}{waiver.pilot_identity_path}" if waiver.pilot_identity_path else None
+            },
+            "production_name": waiver.production_name,
+            "signed_pdf_url": pdf_url_signed,
+            "hash": current_hash
+        }
+
+        requests.post(webhook_url, json=payload, timeout=5)
+        waiver.webhook_triggered_at = datetime.utcnow()
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(
+            f"❌ Failed to trigger N8N webhook for waiver {waiver.id}: {e}")
