@@ -69,7 +69,7 @@ def process_pilot_waiver_signature(waiver_id):
     pdf_dir = os.path.join(private_folder, "pilot_waiver_pdfs")
     os.makedirs(pdf_dir, exist_ok=True)
 
-    filename = f"Decharge_Pilote_{waiver.waiver_id}_{secrets.token_hex(4)}.pdf"
+    filename = f"{waiver.waiver_id}_{secrets.token_hex(4)}.pdf"
     pdf_path_system = os.path.join(pdf_dir, filename)
 
     # 3. Secure URL (for database reference and internal use)
@@ -77,13 +77,22 @@ def process_pilot_waiver_signature(waiver_id):
     access_token = generate_waiver_pdf_access_token(filename)
     pdf_path_url = f"/pilot-waiver/document/{filename}?t={access_token}"
 
+    # 3. Prepare attachment paths for PDF rendering (must be absolute system paths for WeasyPrint)
+    attachment_dir = os.path.join(private_folder, "pilot_waiver_attachments")
+    abs_attachment_paths = {
+        'license': os.path.join(attachment_dir, waiver.pilot_license_path) if waiver.pilot_license_path else None,
+        'insurance': os.path.join(attachment_dir, waiver.pilot_insurance_path) if waiver.pilot_insurance_path else None,
+        'identity': os.path.join(attachment_dir, waiver.pilot_identity_path) if waiver.pilot_identity_path else None,
+    }
+
     # 3. Render PDF Template
     html_content = render_template(
         "pdf/pilot_waiver_pdf.html",
         waiver=waiver,
         qr=qr_code_img,
         document_hash=current_hash,
-        verification_url=verification_url
+        verification_url=verification_url,
+        abs_paths=abs_attachment_paths
     )
 
     try:
