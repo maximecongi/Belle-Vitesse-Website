@@ -214,14 +214,33 @@ def reset_production_waiver(waiver_id):
 
     try:
         _cleanup_production_waiver_assets(waiver)
+        # 2. Réinitialiser les champs de la décharge
         waiver.status = "to_generate"
         waiver.generated_at = None
         waiver.sent_at = None
         waiver.signed_at = None
+
+        # Snapshot data
+        waiver.production_name = None
+        waiver.production_representative = None
+        waiver.production_address = None
+        waiver.production_siret = None
+        waiver.production_vat = None
+
+        waiver.production_insurance_company = None
+        waiver.production_insurance_policy = None
+        waiver.production_insurance_validity = None
+
+        waiver.vehicles = None
+        waiver.shooting_dates = None
+        waiver.location_of_use = None
+
+        # Signature & Paths
         waiver.signature_token = None
         waiver.signature_data = None
         waiver.signed_pdf_path = None
         waiver.signer_ip = None
+        waiver.production_insurance_path = None
         waiver.webhook_triggered_at = None
 
         db.session.commit()
