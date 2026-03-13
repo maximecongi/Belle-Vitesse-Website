@@ -169,7 +169,7 @@
             <div class="form-group">
                 <label class="form-label">Téléphone</label>
                 <input type="text" name="telephone" class="form-input" value="{{ data.telephone if data else '' }}"
-                    oninput="this.value = this.value.replace(/\s/g, '')">
+                    oninput="this.value = this.value.replace(/[\s.()[\]]/g, '')">
             </div>
         </div>
 

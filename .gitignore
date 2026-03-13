@@ -283,3 +283,5 @@ static/images/airtable/
 /scripts/sql/*.log
 /var/log/sql_*.log
 static/files/waivers/*
+checkout_pdfs/*
+checkin_pdfs/*

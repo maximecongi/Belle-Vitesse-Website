@@ -31,7 +31,8 @@
 
             <div class="form-group">
                 <label class="form-label">Téléphone</label>
-                <input type="text" name="phone" class="form-input" value="{{ data.phone if data else '' }}">
+                <input type="text" name="phone" class="form-input" value="{{ data.phone if data else '' }}"
+                    oninput="this.value = this.value.replace(/[\s.()\[\]]/g, '')">
             </div>
         </div>
 
