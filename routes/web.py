@@ -90,7 +90,11 @@ def init_web_routes(app):
                 and not request.path.startswith('/static') \
                 and not request.path.startswith('/subscribe') \
                 and not request.path.startswith('/unsubscribe') \
-                and not request.path.startswith('/admin'):
+                and not request.path.startswith('/admin') \
+                and not request.path.startswith('/verify/') \
+                and not request.path.startswith('/sign/') \
+                and not request.path.startswith('/pilot-waiver/') \
+                and not request.path.startswith('/production-waiver/'):
             return redirect(url_for('launch'))
 
     # ── Pages (all prefixed with /<lang>/) ────────────────────────
