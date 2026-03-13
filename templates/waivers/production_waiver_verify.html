@@ -119,6 +119,117 @@
             </div>
         </section>
 
+        <!-- ═══════════ UPLOAD VÉRIFICATION PDF ═══════════ -->
+        {% if has_pdf_hash %}
+        <section class="checkout-section" style="margin-top: 3rem;">
+            <h2 class="checkout-section-title dot-before">Vérifier le fichier PDF</h2>
+            <p style="font-size: 0.85rem; color: var(--grey-2); margin-bottom: 1.5rem; line-height: 1.6;">
+                Uploadez le PDF que vous souhaitez authentifier. Son empreinte SHA-256 sera comparée
+                à celle enregistrée au moment de la signature. Si le fichier a été modifié,
+                même d'un seul caractère, la vérification échouera.
+            </p>
+
+            <form method="POST" enctype="multipart/form-data">
+                <label for="pdf-input" style="cursor: pointer; display: block;">
+                    <div id="upload-area" style="
+                        border: 2px dashed var(--white-4);
+                        border-radius: 4px;
+                        padding: 2.5rem 1.5rem;
+                        text-align: center;
+                        transition: border-color 0.2s, background 0.2s;
+                        margin-bottom: 1.25rem;
+                    ">
+                        <p style="font-size: 1.5rem; margin-bottom: 0.5rem;">📎</p>
+                        <p style="font-size: 0.9rem; color: var(--grey-2);">
+                            <strong style="color: var(--black-1);">Cliquez pour sélectionner</strong>
+                            ou glissez le PDF ici
+                        </p>
+                        <p id="file-name"
+                            style="display: none; margin-top: 0.5rem; font-size: 0.85rem; color: var(--green-1); font-weight: 500;">
+                        </p>
+                    </div>
+                </label>
+
+                <input type="file" id="pdf-input" name="pdf" accept=".pdf" style="display: none;">
+
+                <button type="submit" id="submit-btn" class="checkout-btn checkout-btn--primary"
+                    style="width: 100%; border: none; cursor: pointer; border-radius: 4px; opacity: 0.35;" disabled>
+                    Vérifier l'authenticité du PDF
+                </button>
+            </form>
+
+            <p style="font-size: 0.75rem; color: var(--white-4); text-align: center; margin-top: 1rem;">
+                Le fichier est analysé sur le serveur et n'est pas conservé.
+            </p>
+        </section>
+
+        <script>
+            const pdfInput = document.getElementById('pdf-input');
+            const fileNameDisp = document.getElementById('file-name');
+            const submitBtn = document.getElementById('submit-btn');
+            const uploadArea = document.getElementById('upload-area');
+
+            pdfInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    const name = e.target.files[0].name;
+                    fileNameDisp.textContent = "Fichier sélectionné : " + name;
+                    fileNameDisp.style.display = 'block';
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                    uploadArea.style.borderColor = 'var(--green-1)';
+                    uploadArea.style.background = 'rgba(46, 204, 113, 0.05)';
+                }
+            });
+
+            // Drag & Drop
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, highlight, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, unhighlight, false);
+            });
+
+            function highlight(e) { uploadArea.style.borderColor = 'var(--black-1)'; }
+            function unhighlight(e) {
+                if (pdfInput.files.length > 0) {
+                    uploadArea.style.borderColor = 'var(--green-1)';
+                } else {
+                    uploadArea.style.borderColor = 'var(--white-4)';
+                }
+            }
+
+            uploadArea.addEventListener('drop', handleDrop, false);
+
+            function handleDrop(e) {
+                let dt = e.dataTransfer;
+                let files = dt.files;
+                pdfInput.files = files;
+                pdfInput.dispatchEvent(new Event('change'));
+            }
+        </script>
+
+        {% else %}
+        <section class="checkout-section" style="margin-top: 2rem;">
+            <div style="background: var(--white-3); padding: 1.25rem 1.5rem; border-radius: 4px;">
+                <p style="font-size: 0.8rem; color: var(--grey-2); line-height: 1.6;">
+                    ℹ️ Ce document a été signé avant l'introduction de la vérification par empreinte PDF.
+                    Seul le sceau de données est disponible.
+                </p>
+            </div>
+        </section>
+        {% endif %}
+
+
         <!-- ═══════════ FOOTER ═══════════ -->
         <footer class="checkout-footer" style="margin-top: 5rem;">
             <p><strong>{{company_name}}</strong> — {{company_address}}</p>
