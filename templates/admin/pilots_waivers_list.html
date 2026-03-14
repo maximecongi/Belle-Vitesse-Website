@@ -53,21 +53,21 @@
                         <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: center;">
                             {% if w.status == 'to_generate' %}
                             <form
-                                action="{{ url_for('admin_pilot_waiver_generate', waiver_id=w.id) }}?q={{ request.args.get('q', '') }}"
+                                action="{{ url_for('admin_pilot_waiver_generate', waiver_id=w.id, q=request.args.get('q')) }}"
                                 method="POST" style="margin: 0;">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="admin-btn admin-btn-primary">Générer</button>
                             </form>
                             {% elif w.status == 'to_send' %}
                             <form
-                                action="{{ url_for('admin_pilot_waiver_send', waiver_id=w.id) }}?q={{ request.args.get('q', '') }}"
+                                action="{{ url_for('admin_pilot_waiver_send', waiver_id=w.id, q=request.args.get('q')) }}"
                                 method="POST" style="margin: 0;">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="admin-btn admin-btn-primary">Envoyer</button>
                             </form>
                             {% elif w.status == 'to_sign' %}
                             <form
-                                action="{{ url_for('admin_pilot_waiver_send', waiver_id=w.id) }}?q={{ request.args.get('q', '') }}"
+                                action="{{ url_for('admin_pilot_waiver_send', waiver_id=w.id, q=request.args.get('q')) }}"
                                 method="POST" style="margin: 0;">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="admin-btn admin-btn-secondary">Relancer</button>
@@ -80,7 +80,7 @@
                             {% endif %}
 
                             <form
-                                action="{{ url_for('admin_pilot_waiver_reset', waiver_id=w.id) }}?q={{ request.args.get('q', '') }}"
+                                action="{{ url_for('admin_pilot_waiver_reset', waiver_id=w.id, q=request.args.get('q')) }}"
                                 method="POST" style="display:inline;"
                                 onsubmit="return confirm('Êtes-vous sûr de vouloir réinitialiser cette décharge ? Tous les fichiers et données scellées seront supprimés, mais la décharge pourra être générée à nouveau.');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

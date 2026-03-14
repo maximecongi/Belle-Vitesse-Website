@@ -33,25 +33,80 @@
                 <td style="font-weight: 600;">{{ project.production }}</td>
                 <td>
                     {% for v in project.vehicles %}
-                    <span class="badge-pill" data-val="{{ v.checkout_status or 'Neutral' }}"
-                        data-conform="{{ v.checkout_conform }}" style="margin: 0.15rem;">
-                        {{ v.fields.name }}
-                    </span><br>
+                    {% if v.checkout_id %}
+                    <a href="{{ url_for('admin_checkout_detail', record_id=v.checkout_id) }}"
+                        style="text-decoration: none;">
+                        <span class="badge-pill" data-val="{{ v.checkout_status or 'Neutral' }}"
+                            data-conform="{{ v.checkout_conform }}" style="margin: 0.15rem;">
+                            {{ v.fields.name }}
+                        </span>
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('admin_checkout_new', project_id=project.id, vehicle_id=v.id) }}"
+                        style="text-decoration: none;">
+                        <span class="badge-pill" data-val="À contrôler" style="margin: 0.15rem;">
+                            {{ v.fields.name }}
+                        </span>
+                    </a>
+                    {% endif %}<br>
                     {% else %}
                     <span style="color: var(--grey-2);">—</span>
                     {% endfor %}
                 </td>
                 <td>
                     {% for v in project.vehicles %}
-                    <span class="badge-pill" data-val="{{ v.checkin_status or 'Neutral' }}"
-                        data-conform="{{ v.checkin_conform }}" style="margin: 0.15rem;">
-                        {{ v.fields.name }}
-                    </span><br>
+                    {% if v.checkin_id %}
+                    <a href="{{ url_for('admin_checkin_detail', record_id=v.checkin_id) }}"
+                        style="text-decoration: none;">
+                        <span class="badge-pill" data-val="{{ v.checkin_status or 'Neutral' }}"
+                            data-conform="{{ v.checkin_conform }}" style="margin: 0.15rem;">
+                            {{ v.fields.name }}
+                        </span>
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('admin_checkin_new', project_id=project.id, vehicle_id=v.id) }}"
+                        style="text-decoration: none;">
+                        <span class="badge-pill" data-val="À contrôler" style="margin: 0.15rem;">
+                            {{ v.fields.name }}
+                        </span>
+                    </a>
+                    {% endif %}<br>
                     {% else %}
                     <span style="color: var(--grey-2);">—</span>
                     {% endfor %}
                 </td>
-                <td>pending</td>
+                <td>
+                    <div style="margin-bottom: 0.5rem;display: flex; gap: 0.5rem; align-items: center;">
+                        <span style="font-size: 0.7rem; color: var(--grey-2); font-weight: 600;">🏎️</span>
+                        {% if project.pilot_waiver.id %}
+                        <a href="{{ url_for('admin_pilot_waivers_list', q=project.pilot_waiver.waiver_num) }}"
+                            style="text-decoration: none;">
+                            <span class="badge-pill" data-val="{{ project.pilot_waiver.status }}"
+                                style="margin: 0; font-size: 0.75rem;">
+                                {{ project.pilot_waiver.status }}
+                            </span>
+                        </a>
+                        {% else %}
+                        <span class="badge-pill" data-val="Neutral" style="margin: 0; font-size: 0.75rem;">À
+                            créer</span>
+                        {% endif %}
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <span style="font-size:0.7rem; color: var(--grey-2); font-weight: 600;">🎬</span>
+                        {% if project.production_waiver.id %} <a
+                            href="{{ url_for('admin_production_waivers_list', q=project.production_waiver.waiver_num) }}"
+                            style="text-decoration: none;">
+                            <span class="badge-pill" data-val="{{ project.production_waiver.status }}"
+                                style="margin: 0; font-size: 0.75rem;">
+                                {{ project.production_waiver.status }}
+                            </span>
+                        </a>
+                        {% else %}
+                        <span class="badge-pill" data-val="Neutral" style="margin: 0; font-size: 0.75rem;">À
+                            créer</span>
+                        {% endif %}
+                    </div>
+                </td>
                 <td>🚚 {{ project.departure_date }}<br><br>
                     🎥 {{ project.shoot_start }}<br> → {{ project.shoot_end }}<br><br>
                     📦 {{ project.return_date }}</td>
