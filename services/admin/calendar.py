@@ -30,7 +30,7 @@ def get_calendar_events():
                 "color": color,
                 "groupId": group_id,
                 "order": i,
-                "url": url_for("admin_project_edit", record_id=r.id),
+                "url": url_for("admin_projects_list", q=r.project_id),
             })
 
         if r.date_debut_tournage:
@@ -40,7 +40,7 @@ def get_calendar_events():
                 "color": color,
                 "groupId": group_id,
                 "order": i,
-                "url": url_for("admin_project_edit", record_id=r.id),
+                "url": url_for("admin_projects_list", q=r.project_id),
             }
             if r.date_fin_tournage:
                 event_data["end"] = r.date_fin_tournage.isoformat()
@@ -53,7 +53,7 @@ def get_calendar_events():
                 "color": color,
                 "groupId": group_id,
                 "order": i,
-                "url": url_for("admin_project_edit", record_id=r.id),
+                "url": url_for("admin_projects_list", q=r.project_id),
             })
 
     return events

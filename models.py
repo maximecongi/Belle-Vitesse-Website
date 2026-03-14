@@ -67,6 +67,8 @@ class Project(db.Model):
     __tablename__ = "projects"
 
     id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(
+        db.String(50), unique=True, default=lambda: generate_inspection_number("BVPR"))
     nom = db.Column(db.String(255), nullable=False)
     production_id = db.Column(db.Integer, db.ForeignKey(
         "productions.id"), nullable=False, index=True)

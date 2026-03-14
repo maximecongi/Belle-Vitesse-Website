@@ -28,7 +28,8 @@
         </thead>
         <tbody>
             {% for project in project_list %}
-            <tr class="searchable-row">
+            <tr class="searchable-row"
+                data-search="{{ project.name|lower }} {{ project.production|lower }} {{ project.project_id|lower }}">
                 <td style="font-weight: 600;">{{ project.name }}</td>
                 <td style="font-weight: 600;">{{ project.production }}</td>
                 <td>
@@ -142,22 +143,28 @@
 </div>
 
 <script>
+    function filterRows(term) {
+        const searchableRows = document.querySelectorAll('.searchable-row');
+        const searchTerm = term.toLowerCase().trim();
+        searchableRows.forEach(row => {
+            const dataSearch = (row.getAttribute('data-search') || '').toLowerCase();
+            row.style.display = (!searchTerm || dataSearch.includes(searchTerm)) ? '' : 'none';
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         const searchInput = document.getElementById('searchInput');
-        const searchableRows = document.querySelectorAll('.searchable-row');
 
         if (searchInput) {
-            searchInput.addEventListener('input', function (e) {
-                const searchTerm = e.target.value.toLowerCase().trim();
+            const urlParams = new URLSearchParams(window.location.search);
+            const q = urlParams.get('q');
+            if (q) {
+                searchInput.value = q;
+                filterRows(q);
+            }
 
-                searchableRows.forEach(row => {
-                    const rowText = row.textContent.toLowerCase();
-                    if (rowText.includes(searchTerm)) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
+            searchInput.addEventListener('input', function (e) {
+                filterRows(e.target.value);
             });
         }
     });

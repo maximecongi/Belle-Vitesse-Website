@@ -567,7 +567,8 @@ function init() {
         simpleSearch.addEventListener('input', e => {
             const q = e.target.value.toLowerCase().trim();
             rows.forEach(row => {
-                row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+                const searchText = (row.getAttribute('data-search') || '') + ' ' + row.textContent.toLowerCase();
+                row.style.display = searchText.includes(q) ? '' : 'none';
             });
         });
     }

@@ -80,6 +80,7 @@ def list_projects():
 
         result.append({
             "id": p.id,
+            "project_id": p.project_id,
             "name": p.nom,
             "production": p.production.nom if p.production else "—",
             "departure_date": format_date_fr(str(p.date_depart)) if p.date_depart else "—",
@@ -196,6 +197,7 @@ def get_project_for_edit(record_id):
         ",")] if p.vehicules_a_controler else []
 
     return {
+        "project_id": p.project_id,
         "name": p.nom,
         "departure_date_raw": str(p.date_depart) if p.date_depart else "",
         "shoot_start_raw": str(p.date_debut_tournage) if p.date_debut_tournage else "",
