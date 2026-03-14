@@ -103,7 +103,7 @@ def create_app():
         app.config["OUTPUT_FOLDER"] = Path("/app/output")
     else:
         app.config["PRIVATE_FOLDER"] = Path(
-            "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE")
+            "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/private")
         app.config["OUTPUT_FOLDER"] = Path(
             "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/output")
 

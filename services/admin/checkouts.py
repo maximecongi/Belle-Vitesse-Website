@@ -10,7 +10,8 @@ from flask import current_app, url_for
 from werkzeug.utils import secure_filename
 
 from sqlalchemy.orm import joinedload
-from models import db, CheckoutVehicle, CheckinVehicle, Project, User, VehicleCheckpointConfig
+from models import db, CheckoutVehicle, CheckinVehicle, Project, User, VehicleCheckpointConfig, \
+    CheckoutSignedDocument, CheckoutToken, CheckinSignedDocument, CheckinToken
 from utils.database import get_vehicles
 from utils.formatting import format_date_fr
 
@@ -398,10 +399,22 @@ def update_checkout(record_id, form, files=None):
 
 
 def delete_checkout(record_id):
-    """Delete a checkout record and its associated files."""
+    """Delete a checkout record and its associated files & tokens."""
     record = db.session.get(CheckoutVehicle, record_id)
     if record:
+        # 1. Clean up database records related to this inspection
+        if record.numero_inspection:
+            # Delete tokens
+            CheckoutToken.query.filter_by(
+                inspection_id=record.numero_inspection).delete()
+            # Delete signed document snapshot
+            CheckoutSignedDocument.query.filter_by(
+                inspection_id=record.numero_inspection).delete()
+
+        # 2. Delete physical files
         _delete_inspection_files(record)
+
+        # 3. Delete the main record
         db.session.delete(record)
         db.session.commit()
 
@@ -605,14 +618,17 @@ def _upload_checkin_photos_local(record: CheckinVehicle, files):
     if not files:
         return
 
-    upload_dir = current_app.config["PRIVATE_FOLDER"] / \
-        "uploads" / "checkins" / record.numero_inspection
-    upload_dir.mkdir(parents=True, exist_ok=True)
+    from utils.storage import get_checkin_photos_path, ensure_dir
+    upload_dir = Path(ensure_dir(get_checkin_photos_path(
+        record.project, record.numero_inspection)))
 
     photo_fields = {
         "exterior_photos": "photos_exterieur",
         "interior_photos": "photos_interieur",
     }
+
+    output_base = current_app.config.get(
+        "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
 
     for form_field, model_attr in photo_fields.items():
         uploaded = files.getlist(form_field)
@@ -622,7 +638,9 @@ def _upload_checkin_photos_local(record: CheckinVehicle, files):
                 filename = secure_filename(f.filename)
                 file_path = upload_dir / filename
                 f.save(file_path)
-                rel_path = f"checkins/{record.numero_inspection}/{filename}"
+
+                # Store relative path from output base
+                rel_path = os.path.relpath(file_path, output_base)
                 paths.append(rel_path)
 
         if paths:
@@ -729,9 +747,21 @@ def update_checkin(record_id, form, files=None):
 
 
 def delete_checkin(record_id):
-    """Delete a checkin record and its associated files."""
+    """Delete a checkin record and its associated files & tokens."""
     record = db.session.get(CheckinVehicle, record_id)
     if record:
+        # 1. Clean up database records related to this inspection
+        if record.numero_inspection:
+            # Delete tokens
+            CheckinToken.query.filter_by(
+                inspection_id=record.numero_inspection).delete()
+            # Delete signed document snapshot
+            CheckinSignedDocument.query.filter_by(
+                inspection_id=record.numero_inspection).delete()
+
+        # 2. Delete physical files
         _delete_inspection_files(record)
+
+        # 3. Delete the main record
         db.session.delete(record)
         db.session.commit()

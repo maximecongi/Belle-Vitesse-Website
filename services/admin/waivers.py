@@ -21,39 +21,17 @@ def _cleanup_production_waiver_assets(waiver):
 
     output_base = current_app.config.get(
         "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
-    private_folder = current_app.config.get("PRIVATE_FOLDER")
 
     for file_path, folder in files_to_delete:
         if file_path:
-            # 1. Try hierarchical structure (new)
-            full_path_new = os.path.join(output_base, file_path)
-            if os.path.exists(full_path_new):
+            full_path = os.path.join(output_base, file_path)
+            if os.path.exists(full_path):
                 try:
-                    os.remove(full_path_new)
-                    logger.info(
-                        f"🗑️ Fichier (Nouveau) supprimé : {full_path_new}")
-                    continue
+                    os.remove(full_path)
+                    logger.info(f"🗑️ Fichier supprimé : {full_path}")
                 except Exception as e:
                     logger.error(
-                        f"❌ Erreur suppression fichier (Nouveau) {full_path_new} : {e}")
-
-            # 2. Try legacy structure
-            if file_path.startswith('/static/'):
-                relative_path = file_path.lstrip('/')
-                full_path_legacy = os.path.join(
-                    current_app.root_path, relative_path)
-            else:
-                full_path_legacy = os.path.join(
-                    private_folder, folder, file_path)
-
-            if os.path.exists(full_path_legacy):
-                try:
-                    os.remove(full_path_legacy)
-                    logger.info(
-                        f"🗑️ Fichier (Legacy) supprimé : {full_path_legacy}")
-                except Exception as e:
-                    logger.error(
-                        f"❌ Erreur suppression fichier (Legacy) {full_path_legacy} : {e}")
+                        f"❌ Erreur suppression fichier {full_path} : {e}")
 
     signed_doc = ProductionWaiverSignedDocument.query.filter_by(
         waiver_id=waiver.waiver_id).first()
@@ -278,50 +256,17 @@ def _cleanup_pilot_waiver_assets(waiver):
 
     output_base = current_app.config.get(
         "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
-    private_folder = current_app.config.get("PRIVATE_FOLDER")
 
     for file_path in files_to_delete:
         if file_path:
-            # 1. Try hierarchical structure (new)
-            # For pilot waiver attachments, the path in DB is relative to output/
-            full_path_new = os.path.join(output_base, file_path)
-            if os.path.exists(full_path_new):
+            full_path = os.path.join(output_base, file_path)
+            if os.path.exists(full_path):
                 try:
-                    os.remove(full_path_new)
-                    logger.info(
-                        f"🗑️ Fichier (Nouveau) supprimé : {full_path_new}")
-                    continue
+                    os.remove(full_path)
+                    logger.info(f"🗑️ Fichier supprimé : {full_path}")
                 except Exception as e:
                     logger.error(
-                        f"❌ Erreur suppression fichier (Nouveau) {full_path_new} : {e}")
-
-            # 2. Try legacy static structure
-            if file_path.startswith('/static/'):
-                relative_path = file_path.lstrip('/')
-                full_path_legacy = os.path.join(
-                    current_app.root_path, relative_path)
-                if os.path.exists(full_path_legacy):
-                    try:
-                        os.remove(full_path_legacy)
-                        logger.info(
-                            f"🗑️ Fichier (Legacy Static) supprimé : {full_path_legacy}")
-                    except Exception as e:
-                        logger.error(
-                            f"❌ Erreur suppression fichier (Legacy Static) {full_path_legacy} : {e}")
-            else:
-                # 3. Try legacy private structure
-                # We don't know the exact folder here for pilot, but usually pilot_waiver_pdfs or attachments
-                for folder in ["pilot_waiver_pdfs", "pilot_waiver_attachments"]:
-                    full_path_legacy = os.path.join(
-                        private_folder, folder, file_path)
-                    if os.path.exists(full_path_legacy):
-                        try:
-                            os.remove(full_path_legacy)
-                            logger.info(
-                                f"🗑️ Fichier (Legacy Private) supprimé : {full_path_legacy}")
-                        except Exception as e:
-                            logger.error(
-                                f"❌ Erreur suppression fichier (Legacy Private) {full_path_legacy} : {e}")
+                        f"❌ Erreur suppression fichier {full_path} : {e}")
 
     # 2. Supprimer le document scellé associé
     signed_doc = PilotWaiverSignedDocument.query.filter_by(

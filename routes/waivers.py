@@ -198,16 +198,9 @@ def init_waiver_routes(app):
 
         output_base = current_app.config.get(
             "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
-        private_folder = current_app.config.get("PRIVATE_FOLDER")
 
         try:
-            if "/" in filepath and not filepath.startswith(".."):
-                # New hierarchical structure
-                return send_from_directory(output_base, filepath)
-            else:
-                # Legacy flat structure
-                directory = os.path.join(private_folder, "pilot_waiver_pdfs")
-                return send_from_directory(directory, filepath)
+            return send_from_directory(output_base, filepath)
         except Exception:
             abort(404)
 
@@ -233,24 +226,9 @@ def init_waiver_routes(app):
 
         output_base = current_app.config.get(
             "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
-        private_folder = current_app.config.get("PRIVATE_FOLDER")
 
         try:
-            # Heuristic to distinguish between new path and legacy waiver_id/filename
-            # New paths have "1_SÉCURITÉ" or follow the year/month structure
-            if "1_SÉCURITÉ" in filepath or (filepath.count('/') >= 2 and filepath.split('/')[0].isdigit()):
-                return send_from_directory(output_base, filepath)
-            else:
-                # Legacy: filepath is "waiver_id/filename"
-                directory = os.path.join(
-                    private_folder, "pilot_waiver_attachments")
-                parts = filepath.split('/')
-                if len(parts) >= 2:
-                    filename = parts[-1]
-                    subfolder = '/'.join(parts[:-1])
-                    full_directory = os.path.join(directory, subfolder)
-                    return send_from_directory(full_directory, filename)
-                abort(404)
+            return send_from_directory(output_base, filepath)
         except Exception:
             abort(404)
 
@@ -411,15 +389,9 @@ def init_waiver_routes(app):
 
         output_base = current_app.config.get(
             "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
-        private_folder = current_app.config.get("PRIVATE_FOLDER")
 
         try:
-            if "/" in filepath and not filepath.startswith(".."):
-                return send_from_directory(output_base, filepath)
-            else:
-                directory = os.path.join(
-                    private_folder, "production_waiver_pdfs")
-                return send_from_directory(directory, filepath)
+            return send_from_directory(output_base, filepath)
         except Exception:
             abort(404)
 
@@ -441,20 +413,8 @@ def init_waiver_routes(app):
 
         output_base = current_app.config.get(
             "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
-        private_folder = current_app.config.get("PRIVATE_FOLDER")
 
         try:
-            if "1_SÉCURITÉ" in filepath or (filepath.count('/') >= 2 and filepath.split('/')[0].isdigit()):
-                return send_from_directory(output_base, filepath)
-            else:
-                directory = os.path.join(
-                    private_folder, "production_waiver_attachments")
-                parts = filepath.split('/')
-                if len(parts) >= 2:
-                    filename = parts[-1]
-                    subfolder = '/'.join(parts[:-1])
-                    full_directory = os.path.join(directory, subfolder)
-                    return send_from_directory(full_directory, filename)
-                abort(404)
+            return send_from_directory(output_base, filepath)
         except Exception:
             abort(404)

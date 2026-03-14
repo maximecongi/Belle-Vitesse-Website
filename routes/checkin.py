@@ -137,15 +137,8 @@ def init_checkin_routes(app):
 
         output_base = current_app.config.get(
             "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
-        private_folder = current_app.config.get("PRIVATE_FOLDER")
 
         try:
-            if "/" in filepath and not filepath.startswith(".."):
-                # New hierarchical structure
-                return send_from_directory(output_base, filepath)
-            else:
-                # Legacy flat structure
-                directory = os.path.join(private_folder, "checkin_pdfs")
-                return send_from_directory(directory, filepath)
+            return send_from_directory(output_base, filepath)
         except Exception:
             abort(404)

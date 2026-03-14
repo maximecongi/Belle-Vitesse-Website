@@ -121,7 +121,9 @@ def generate_qr_code(data: str) -> str:
 
 def make_url_fetcher(app):
     from weasyprint import default_url_fetcher
-    from urllib.parse import urlparse
+    from urllib.parse import urlparse, unquote
+
+    import unicodedata
 
     def fetcher(url):
         parsed = urlparse(url)
@@ -132,15 +134,29 @@ def make_url_fetcher(app):
             rel_path = path[len("/static/"):].lstrip("/")
             full_path = Path(app.static_folder) / rel_path
             if full_path.exists():
-                return {"file_obj": open(full_path, "rb"), "mime_type": None}
+                return default_url_fetcher(full_path.as_uri())
 
-        # Resolve /files/ to private/uploads local filesystem
+        # Resolve /files/ to local filesystem
         if path.startswith("/files/"):
-            rel_path = path[len("/files/"):].lstrip("/")
-            full_path = Path(app.config["PRIVATE_FOLDER"]) / \
-                "uploads" / rel_path
-            if full_path.exists():
-                return {"file_obj": open(full_path, "rb"), "mime_type": None}
+            rel_path = unquote(path[len("/files/"):].lstrip("/"))
+
+            # Try OUTPUT_FOLDER (New hierarchical storage)
+            output_base = app.config.get("OUTPUT_FOLDER")
+            if output_base:
+                full_path = Path(output_base) / rel_path
+
+                # MacOS Unicode Normalization handling (NFC/NFD)
+                if not full_path.exists():
+                    nfd_path = unicodedata.normalize('NFD', str(full_path))
+                    if os.path.exists(nfd_path):
+                        full_path = Path(nfd_path)
+
+                if full_path.exists():
+                    logger.info(f"✅ Fetcher found file in OUTPUT: {full_path}")
+                    return default_url_fetcher(full_path.as_uri())
+                else:
+                    logger.warning(
+                        f"❌ Fetcher NOT found in OUTPUT: {full_path}")
 
         return default_url_fetcher(url)
     return fetcher

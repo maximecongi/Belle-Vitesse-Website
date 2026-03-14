@@ -26,79 +26,43 @@ def _delete_inspection_files(record):
     Delete all physical files associated with a checkout or checkin record.
     Includes interior/exterior photos, and the signed PDF.
     """
-    private_folder = current_app.config.get("PRIVATE_FOLDER")
-    if not private_folder:
-        return
-
-    # 1. Photos
-    photo_fields = [record.photos_interieur, record.photos_exterieur]
-
-    deleted_dirs = set()
-
-    for field in photo_fields:
-        if not field:
-            continue
-        try:
-            # Field can be a JSON array or a single filename
-            paths = json.loads(field) if isinstance(
-                field, str) and field.startswith('[') else [field]
-            for p in paths:
-                if not isinstance(p, str):
-                    continue
-                full_path = Path(private_folder) / "uploads" / p
-                if full_path.exists():
-                    try:
-                        parent_dir = full_path.parent
-                        os.remove(full_path)
-                        logger.info(f"🗑️ Photo supprimée : {full_path}")
-                        deleted_dirs.add(parent_dir)
-                    except Exception as e:
-                        logger.error(
-                            f"❌ Échec de la suppression de la photo {full_path}: {e}")
-        except Exception as e:
-            logger.warning(
-                f"⚠️ Erreur lors du parsing des photos pour suppression: {e}")
-
-    # 1.1 Cleanup empty photo directories
-    for d in deleted_dirs:
-        try:
-            if d.exists() and not any(d.iterdir()):
-                d.rmdir()
-                logger.info(f"🗑️ Dossier vide supprimé : {d}")
-        except Exception:
-            pass
 
     output_base = current_app.config.get(
         "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
 
-    # 2. Signed PDF
-    if record.pdf_scelle:
-        # pdf_scelle is usually a URL: http://.../checkout/document/filename.pdf
-        # or http://.../checkout/document/YEAR/MONTH/.../filename.pdf
-        path_part = record.pdf_scelle.split("/document/")[-1].split("?")[0]
+    # 1. Photos (Hierarchical: output/YEAR/MONTH/.../PHOTOS/ID)
+    if record.project and record.numero_inspection:
+        from utils.storage import get_checkout_photos_path, get_checkin_photos_path
+        import shutil
 
-        # Check new hierarchical structure
-        pdf_path_new = Path(output_base) / path_part
-        if pdf_path_new.exists():
+        if isinstance(record, CheckoutVehicle):
+            hierarchical_photo_dir = get_checkout_photos_path(
+                record.project, record.numero_inspection)
+        else:
+            hierarchical_photo_dir = get_checkin_photos_path(
+                record.project, record.numero_inspection)
+
+        if hierarchical_photo_dir.exists():
             try:
-                os.remove(pdf_path_new)
-                logger.info(f"🗑️ PDF (Nouveau) supprimé : {pdf_path_new}")
+                shutil.rmtree(hierarchical_photo_dir)
+                logger.info(
+                    f"🗑️ Dossier PHOTOS supprimé : {hierarchical_photo_dir}")
             except Exception as e:
                 logger.error(
-                    f"❌ Échec de la suppression du PDF (Nouveau) {pdf_path_new}: {e}")
-        else:
-            # Fallback to legacy flat structure
-            subfolder = "checkout_pdfs" if isinstance(
-                record, CheckoutVehicle) else "checkin_pdfs"
-            pdf_path_legacy = Path(private_folder) / subfolder / path_part
-            if pdf_path_legacy.exists():
-                try:
-                    os.remove(pdf_path_legacy)
-                    logger.info(
-                        f"🗑️ PDF (Legacy) supprimé : {pdf_path_legacy}")
-                except Exception as e:
-                    logger.error(
-                        f"❌ Échec de la suppression du PDF (Legacy) {pdf_path_legacy}: {e}")
+                    f"❌ Échec de la suppression du dossier PHOTOS {hierarchical_photo_dir}: {e}")
+
+    # 2. Signed PDF
+    if record.pdf_scelle:
+        # pdf_scelle is usually a URL: http://.../checkout/document/filepath
+        path_part = record.pdf_scelle.split("/document/")[-1].split("?")[0]
+        pdf_path = Path(output_base) / path_part
+        if pdf_path.exists():
+            try:
+                os.remove(pdf_path)
+                logger.info(f"🗑️ PDF supprimé : {pdf_path}")
+            except Exception as e:
+                logger.error(
+                    f"❌ Échec de la suppression du PDF {pdf_path}: {e}")
 
 
 def _is_ready(form, vehicle_id=None):
