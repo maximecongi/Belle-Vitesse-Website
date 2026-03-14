@@ -192,6 +192,11 @@ def reset_production_waiver(waiver_id):
         return False, "Décharge non trouvée."
 
     try:
+        webhook_url = os.getenv("N8N_WEBHOOK_PRODUCTION_WAIVER")
+        if webhook_url:
+            trigger_n8n_webhook(webhook_url, method="DELETE",
+                                waiver_id=waiver.waiver_id)
+
         _cleanup_production_waiver_assets(waiver)
         # 2. Réinitialiser les champs de la décharge
         waiver.status = "to_generate"
@@ -474,6 +479,11 @@ def reset_pilot_waiver(waiver_id):
 
     try:
         # 1. Nettoyer les fichiers et scellés
+        webhook_url = os.getenv("N8N_WEBHOOK_PILOT_WAIVER")
+        if webhook_url:
+            trigger_n8n_webhook(webhook_url, method="DELETE",
+                                waiver_id=waiver.waiver_id)
+
         _cleanup_pilot_waiver_assets(waiver)
 
         # 2. Réinitialiser les champs de la décharge
