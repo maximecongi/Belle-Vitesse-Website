@@ -115,5 +115,85 @@
             aujourd'hui.</p>
         {% endif %}
     </div>
+
+    <!-- Décharges Pilote du jour -->
+    <div class="admin-card">
+        <div class="admin-card-title">Décharges pilote du jour</div>
+        {% if today_checkouts %}
+        {% for project in today_checkouts %}
+        <div class="today-row">
+            <div style="margin-bottom: 0.5rem; display: flex; align-items: baseline; justify-content: space-between;">
+                <div>
+                    <strong style="font-size: 0.95rem;">{{ project.name }}</strong>
+                    <span style="color: var(--grey-2); margin-left: 0.5rem; font-size: 0.85rem;">{{ project.production
+                        }}</span>
+                </div>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.25rem;">
+                {% if project.pilot_waiver.id %}
+                <a class="today-row-vehicle-link"
+                    href="{{ url_for('admin_pilot_waivers_list') }}?q={{ project.pilot_waiver.waiver_num|urlencode }}">
+                    <span style="font-weight: 500;">Décharge Pilote</span>
+                    <span class="badge-pill" data-val="{{ project.pilot_waiver.status }}"
+                        style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">{{ project.pilot_waiver.status
+                        }}</span>
+                </a>
+                {% else %}
+                <span class="badge-pill" data-val="En attente"
+                    style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">Non générée</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        <div style="margin-top: 1rem;">
+            <a href="{{ url_for('admin_pilot_waivers_list') }}" class="admin-btn admin-btn-secondary"
+                style="font-size: 0.8rem; width: 100%; text-align: center; box-sizing: border-box;">Voir toutes les
+                décharges pilote →</a>
+        </div>
+        {% else %}
+        <p style="color: var(--grey-2); font-size: 0.9rem; text-align: center; padding: 2rem 0;">Aucune décharge pilote
+            prévue.</p>
+        {% endif %}
+    </div>
+
+    <!-- Décharges Production du jour -->
+    <div class="admin-card">
+        <div class="admin-card-title">Décharges production du jour</div>
+        {% if today_checkouts %}
+        {% for project in today_checkouts %}
+        <div class="today-row">
+            <div style="margin-bottom: 0.5rem; display: flex; align-items: baseline; justify-content: space-between;">
+                <div>
+                    <strong style="font-size: 0.95rem;">{{ project.name }}</strong>
+                    <span style="color: var(--grey-2); margin-left: 0.5rem; font-size: 0.85rem;">{{ project.production
+                        }}</span>
+                </div>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.25rem;">
+                {% if project.production_waiver.id %}
+                <a class="today-row-vehicle-link"
+                    href="{{ url_for('admin_production_waivers_list') }}?q={{ project.production_waiver.waiver_num|urlencode }}">
+                    <span style="font-weight: 500;">Décharge Prod.</span>
+                    <span class="badge-pill" data-val="{{ project.production_waiver.status }}"
+                        style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">{{
+                        project.production_waiver.status }}</span>
+                </a>
+                {% else %}
+                <span class="badge-pill" data-val="En attente"
+                    style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">Non générée</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        <div style="margin-top: 1rem;">
+            <a href="{{ url_for('admin_production_waivers_list') }}" class="admin-btn admin-btn-secondary"
+                style="font-size: 0.8rem; width: 100%; text-align: center; box-sizing: border-box;">Voir toutes les
+                décharges prod. →</a>
+        </div>
+        {% else %}
+        <p style="color: var(--grey-2); font-size: 0.9rem; text-align: center; padding: 2rem 0;">Aucune décharge
+            production prévue.</p>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

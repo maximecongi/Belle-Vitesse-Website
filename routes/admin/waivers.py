@@ -47,7 +47,8 @@ def init_waivers_routes(app):
             flash(msg, "success")
         else:
             flash(msg, "error")
-        return redirect(url_for('admin_pilot_waivers_list'))
+        q = request.args.get('q', '')
+        return redirect(url_for('admin_pilot_waivers_list', q=q if q else None))
 
     @app.route("/admin/waivers/pilots/<string:waiver_id>/send", methods=["POST"], endpoint='admin_pilot_waiver_send')
     @require_roles('administrator', 'manager')
@@ -57,7 +58,8 @@ def init_waivers_routes(app):
             flash(msg, "success")
         else:
             flash(msg, "error")
-        return redirect(url_for('admin_pilot_waivers_list'))
+        q = request.args.get('q', '')
+        return redirect(url_for('admin_pilot_waivers_list', q=q if q else None))
 
     @app.route("/admin/waivers/pilots/<string:waiver_id>/preview", endpoint='admin_pilot_waiver_preview')
     @require_roles('administrator', 'manager')
@@ -74,7 +76,8 @@ def init_waivers_routes(app):
             flash(msg, "success")
         else:
             flash(msg, "error")
-        return redirect(url_for('admin_pilot_waivers_list'))
+        q = request.args.get('q', '')
+        return redirect(url_for('admin_pilot_waivers_list', q=q if q else None))
 
     # --- PRODUCTION WAIVERS ---
 
@@ -112,7 +115,8 @@ def init_waivers_routes(app):
             flash(msg, "success")
         else:
             flash(msg, "error")
-        return redirect(url_for('admin_production_waivers_list'))
+        q = request.args.get('q', '')
+        return redirect(url_for('admin_production_waivers_list', q=q if q else None))
 
     @app.route("/admin/waivers/productions/<string:waiver_id>/send", methods=["POST"], endpoint='admin_production_waiver_send')
     @require_roles('administrator', 'manager')
@@ -122,7 +126,8 @@ def init_waivers_routes(app):
             flash(msg, "success")
         else:
             flash(msg, "error")
-        return redirect(url_for('admin_production_waivers_list'))
+        q = request.args.get('q', '')
+        return redirect(url_for('admin_production_waivers_list', q=q if q else None))
 
     @app.route("/admin/waivers/productions/<string:waiver_id>/preview", endpoint='admin_production_waiver_preview')
     @require_roles('administrator', 'manager')
@@ -139,4 +144,5 @@ def init_waivers_routes(app):
             flash(msg, "success")
         else:
             flash(msg, "error")
-        return redirect(url_for('admin_production_waivers_list'))
+        q = request.args.get('q', '')
+        return redirect(url_for('admin_production_waivers_list', q=q if q else None))

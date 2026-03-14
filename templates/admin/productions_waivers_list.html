@@ -52,20 +52,23 @@
                     <td>
                         <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: center;">
                             {% if w.status == 'to_generate' %}
-                            <form action="{{ url_for('admin_production_waiver_generate', waiver_id=w.id) }}"
+                            <form
+                                action="{{ url_for('admin_production_waiver_generate', waiver_id=w.id) }}?q={{ request.args.get('q', '') }}"
                                 method="POST" style="margin: 0;">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="admin-btn admin-btn-primary">Générer</button>
                             </form>
                             {% elif w.status == 'to_send' %}
-                            <form action="{{ url_for('admin_production_waiver_send', waiver_id=w.id) }}" method="POST"
-                                style="margin: 0;">
+                            <form
+                                action="{{ url_for('admin_production_waiver_send', waiver_id=w.id) }}?q={{ request.args.get('q', '') }}"
+                                method="POST" style="margin: 0;">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="admin-btn admin-btn-primary">Envoyer</button>
                             </form>
                             {% elif w.status == 'to_sign' %}
-                            <form action="{{ url_for('admin_production_waiver_send', waiver_id=w.id) }}" method="POST"
-                                style="margin: 0;">
+                            <form
+                                action="{{ url_for('admin_production_waiver_send', waiver_id=w.id) }}?q={{ request.args.get('q', '') }}"
+                                method="POST" style="margin: 0;">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="admin-btn admin-btn-secondary">Relancer</button>
                             </form>
@@ -76,8 +79,9 @@
                                 target="_blank">Télécharger le PDF 📄</a>
                             {% endif %}
 
-                            <form action="{{ url_for('admin_production_waiver_reset', waiver_id=w.id) }}" method="POST"
-                                style="display:inline;"
+                            <form
+                                action="{{ url_for('admin_production_waiver_reset', waiver_id=w.id) }}?q={{ request.args.get('q', '') }}"
+                                method="POST" style="display:inline;"
                                 onsubmit="return confirm('Êtes-vous sûr de vouloir réinitialiser cette décharge ? Tous les fichiers et données scellées seront supprimés, mais la décharge pourra être générée à nouveau.');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="admin-btn"
@@ -104,6 +108,19 @@
         const searchableRows = document.querySelectorAll('.searchable-row');
 
         if (searchInput) {
+            // Initialize search from URL param if present
+            const urlParams = new URLSearchParams(window.location.search);
+            const q = urlParams.get('q');
+            if (q) {
+                searchInput.value = q;
+                // Trigger the filter logic
+                const searchTerm = q.toLowerCase().trim();
+                searchableRows.forEach(row => {
+                    const rowText = row.textContent.toLowerCase();
+                    row.style.display = rowText.includes(searchTerm) ? '' : 'none';
+                });
+            }
+
             searchInput.addEventListener('input', function (e) {
                 const searchTerm = e.target.value.toLowerCase().trim();
 

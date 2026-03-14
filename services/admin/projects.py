@@ -24,6 +24,17 @@ def _check_conformity(record):
     return "yes"
 
 
+def _format_waiver_status(status):
+    """Map internal status to French label for dashboard."""
+    mapping = {
+        "to_generate": "À générer",
+        "to_send": "À envoyer",
+        "to_sign": "À signer",
+        "signed": "Signé"
+    }
+    return mapping.get(status, status)
+
+
 def list_projects():
     """
     Fetch all project records and format for listing.
@@ -34,7 +45,9 @@ def list_projects():
         joinedload(Project.checkout_vehicles),
         joinedload(Project.checkin_vehicles),
         joinedload(Project.contact_pilote_rel),
-        joinedload(Project.contact_production_rel)
+        joinedload(Project.contact_production_rel),
+        joinedload(Project.pilot_waiver),
+        joinedload(Project.production_waiver)
     ).order_by(Project.nom.desc()).all()
     vehicles = get_vehicles()
     vehicle_map = {v["id"]: v.get("fields", {}) for v in vehicles}
@@ -79,6 +92,16 @@ def list_projects():
             "contact_pilote": f"{p.contact_pilote_rel.prenom} {p.contact_pilote_rel.nom}" if p.contact_pilote_rel else "—",
             "contact_production": f"{p.contact_production_rel.prenom} {p.contact_production_rel.nom}" if p.contact_production_rel else "—",
             "vehicles": veh_list,
+            "pilot_waiver": {
+                "id": p.pilot_waiver.id if p.pilot_waiver else None,
+                "waiver_num": p.pilot_waiver.waiver_id if p.pilot_waiver else "",
+                "status": _format_waiver_status(p.pilot_waiver.status) if p.pilot_waiver else "",
+            },
+            "production_waiver": {
+                "id": p.production_waiver.id if p.production_waiver else None,
+                "waiver_num": p.production_waiver.waiver_id if p.production_waiver else "",
+                "status": _format_waiver_status(p.production_waiver.status) if p.production_waiver else "",
+            }
         })
     return result
 
