@@ -1,5 +1,6 @@
 from utils.checkpoints import get_checkpoints_for_vehicle, BASE_CHECKPOINTS
 from services.admin.utils import _parse_photos_json, _delete_inspection_files, _is_ready
+from utils.n8n import trigger_n8n_webhook
 import json
 import logging
 import os
@@ -396,6 +397,12 @@ def delete_checkin(record_id):
     """Delete a checkin record and its associated files."""
     record = db.session.get(CheckinVehicle, record_id)
     if record:
+        # Trigger n8n delete before database deletion
+        webhook_url = os.getenv("N8N_WEBHOOK_CHECKIN_SIGN")
+        if webhook_url:
+            trigger_n8n_webhook(webhook_url, method="DELETE",
+                                inspection_id=record.numero_inspection)
+
         _delete_inspection_files(record)
         db.session.delete(record)
         db.session.commit()

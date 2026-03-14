@@ -1,5 +1,6 @@
 from utils.checkpoints import get_checkpoints_for_vehicle, BASE_CHECKPOINTS
 from services.admin.utils import _parse_photos_json, _delete_inspection_files, _is_ready
+from utils.n8n import trigger_n8n_webhook
 import json
 import logging
 import os
@@ -402,6 +403,12 @@ def delete_checkout(record_id):
     """Delete a checkout record and its associated files & tokens."""
     record = db.session.get(CheckoutVehicle, record_id)
     if record:
+        # Trigger n8n delete before database deletion
+        webhook_url = os.getenv("N8N_WEBHOOK_CHECKOUT_SIGN")
+        if webhook_url:
+            trigger_n8n_webhook(webhook_url, method="DELETE",
+                                inspection_id=record.numero_inspection)
+
         # 1. Clean up database records related to this inspection
         if record.numero_inspection:
             # Delete tokens

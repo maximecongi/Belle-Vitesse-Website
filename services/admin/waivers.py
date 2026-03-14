@@ -1,4 +1,5 @@
 from utils.database import get_vehicles
+from utils.n8n import trigger_n8n_webhook
 import logging
 from datetime import datetime
 import uuid
@@ -234,6 +235,12 @@ def delete_production_waiver_internal(project_id):
     if not waiver:
         return
     try:
+        # Trigger n8n delete before database deletion
+        webhook_url = os.getenv("N8N_WEBHOOK_PRODUCTION_WAIVER")
+        if webhook_url:
+            trigger_n8n_webhook(webhook_url, method="DELETE",
+                                waiver_id=waiver.waiver_id)
+
         _cleanup_production_waiver_assets(waiver)
         db.session.delete(waiver)
         db.session.commit()
@@ -518,6 +525,12 @@ def delete_pilot_waiver_internal(project_id):
         return
 
     try:
+        # Trigger n8n delete before database deletion
+        webhook_url = os.getenv("N8N_WEBHOOK_PILOT_WAIVER")
+        if webhook_url:
+            trigger_n8n_webhook(webhook_url, method="DELETE",
+                                waiver_id=waiver.waiver_id)
+
         _cleanup_pilot_waiver_assets(waiver)
         db.session.delete(waiver)
         db.session.commit()
