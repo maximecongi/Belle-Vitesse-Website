@@ -2,6 +2,8 @@
 
 {% block title %}Nouvelle décharge{% endblock %}
 {% block page_title %}Nouvelle décharge pilote{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-pilot-waivers.css') }}">{% endblock %}
 
 {% block content %}
 <div class="admin-card" style="max-width: 600px; margin: 0 auto;">

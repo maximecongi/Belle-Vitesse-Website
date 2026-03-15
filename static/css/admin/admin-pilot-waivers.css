@@ -8,18 +8,13 @@
     margin-top: 15mm;
 }
 
-/* ── Reset Global ────────────────────── */
-* {
-    margin: 0;
-    padding: 0;
+/* ── Reset Global (Scoped) ────────────── */
+.pilot-waiver-container * {
     box-sizing: border-box;
 }
 
-html {
+.pilot-waiver-container {
     font-size: 12pt;
-}
-
-body {
     margin: 0;
     padding: 0;
     background-color: white;
