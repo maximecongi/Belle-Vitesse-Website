@@ -9,6 +9,7 @@ from .contacts import init_contacts_routes
 from .newsletter import init_newsletter_routes
 from .api import init_api_routes
 from .waivers import init_waivers_routes
+from .tools import init_tools_routes
 from flask_wtf.csrf import CSRFError
 from flask import redirect, url_for
 
@@ -25,6 +26,7 @@ def init_admin_routes(app):
     init_newsletter_routes(app)
     init_api_routes(app)
     init_waivers_routes(app)
+    init_tools_routes(app)
 
     @app.errorhandler(CSRFError)
     def handle_csrf_error(e):

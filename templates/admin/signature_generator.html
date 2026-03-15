@@ -1,0 +1,209 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Générateur de signature mail{% endblock %}
+{% block page_title %}Générateur de signature mail{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-signature-generator.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="sig-editor-layout">
+    <!-- FORM -->
+    <div class="admin-card">
+        <h3 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.1rem;">Informations</h3>
+
+        <div class="form-group">
+            <label class="form-label" for="f-name">Nom complet</label>
+            <input type="text" id="f-name" class="form-input"
+                value="{{ current_user.firstname }} {{ current_user.lastname }}" oninput="update()">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="f-job">Poste</label>
+            <input type="text" id="f-job" class="form-input" value="{{ current_user.role }}" oninput="update()">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="f-email">Email (préfixe)</label>
+            <div style="display: flex; align-items: center;">
+                <input type="text" id="f-email" class="form-input" style="flex: 1;" placeholder="prénom"
+                    oninput="update()">
+                <span style="margin-left: 0.5rem; color: var(--grey-2); font-size: 0.9rem;">@bellevitesse.com</span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="f-phone">Téléphone</label>
+            <input type="text" id="f-phone" class="form-input" placeholder="+33 6 00 00 00 00" oninput="update()">
+        </div>
+    </div>
+
+    <!-- PREVIEW & CODE -->
+    <div>
+        <div class="admin-card">
+            <h3 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.1rem;">Aperçu</h3>
+            <div class="sig-preview-card">
+                <div id="sig-preview" class="sig-preview-container">
+                    <!-- Preview will be injected here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-card sig-code-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0; font-size: 1.1rem;">Code HTML</h3>
+                <button type="button" class="admin-btn admin-btn-secondary" id="copy-btn" onclick="copyHtml()">Copier le
+                    code</button>
+            </div>
+            <div id="code-output" class="code-output"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function get(id) { return document.getElementById(id); }
+
+    function esc(s) {
+        if (!s) return "";
+        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function buildHtml(name, job, emailLocal, phone) {
+        var email = emailLocal.trim() + '@bellevitesse.com';
+        var tel = phone.replace(/\s/g, '');
+        return [
+            '<html>',
+            '<body style="margin:0;padding:0;font-family:Helvetica Neue,Helvetica,Arial,sans-serif;">',
+            '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;">',
+            '  <tr>',
+            '    <td style="padding-bottom:12px;">',
+            '      <div style="width:100%;height:2px;background:#ffc845;"></div>',
+            '    </td>',
+            '  </tr>',
+            '  <tr>',
+            '    <td>',
+            '      <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;">',
+            '        <tr>',
+            '          <td style="padding-right:20px;vertical-align:middle;border-right:1px solid #e8e8e8;">',
+            '            <img src="https://bellevitesse.com/static/CDN/noir-fond-transparent.png" width="90" style="display:block;" />',
+            '          </td>',
+            '          <td style="padding-left:20px;vertical-align:middle;">',
+            '            <p style="margin:0 0 1px;font-size:15px;font-weight:700;color:#0f0f0f;">' + name + '</p>',
+            '            <p style="margin:0 0 10px;font-size:9px;color:#ffc845;text-transform:uppercase;letter-spacing:0.14em;font-weight:600;">' + job + '</p>',
+            '            <table cellpadding="0" cellspacing="0">',
+            '              <tr><td style="padding-bottom:4px;">',
+            '                <span style="display:inline-block;width:3px;height:3px;background:#ffc845;vertical-align:middle;margin-right:6px;"></span>',
+            '                <a href="mailto:' + email + '" style="font-size:11px;color:#333;text-decoration:none;">' + email + '</a>',
+            '              </td></tr>',
+            '              <tr><td style="padding-bottom:4px;">',
+            '                <span style="display:inline-block;width:3px;height:3px;background:#ffc845;vertical-align:middle;margin-right:6px;"></span>',
+            '                <a href="tel:' + tel + '" style="font-size:11px;color:#333;text-decoration:none;">' + phone + '</a>',
+            '              </td></tr>',
+            '              <tr><td>',
+            '                <span style="display:inline-block;width:3px;height:3px;background:#e0e0e0;vertical-align:middle;margin-right:6px;"></span>',
+            '                <span style="font-size:11px;color:#999;">Belle Vitesse SAS</span>',
+            '              </td></tr>',
+            '            </table>',
+            '          </td>',
+            '        </tr>',
+            '      </table>',
+            '    </td>',
+            '  </tr>',
+            '</table>',
+            '</body>',
+            '</html>'
+        ].join('\n');
+    }
+
+    function syntaxColor(raw) {
+        var code = esc(raw);
+        // Tags
+        code = code.replace(/(&lt;\/?)([\w]+)/g, '<span class="t-punct">$1</span><span class="t-tag">$2</span>');
+        // Attributes and Values
+        code = code.replace(/ ([\w-]+)=(&quot;)(.*?)(&quot;)/g, ' <span class="t-attr">$1</span><span class="t-punct">=</span><span class="t-punct">&quot;</span><span class="t-val">$3</span><span class="t-punct">&quot;</span>');
+        // Closing brackets
+        code = code.replace(/(&gt;)/g, '<span class="t-punct">$1</span>');
+        return code;
+    }
+
+    function update() {
+        var name = get('f-name').value || '';
+        var job = get('f-job').value || '';
+        var emailLocal = get('f-email').value || '';
+        var phone = get('f-phone').value || '';
+        var email = emailLocal.trim() + '@bellevitesse.com';
+        var tel = phone.replace(/\s/g, '');
+
+        // Update Code Display
+        var raw = buildHtml(name, job, emailLocal, phone);
+        get('code-output').innerHTML = syntaxColor(raw);
+        get('copy-btn').dataset.raw = raw;
+
+        // Update Live Preview (extract inner body content)
+        var previewHtml = [
+            '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse; font-family:Helvetica Neue,Helvetica,Arial,sans-serif;">',
+            '  <tr>',
+            '    <td style="padding-bottom:12px;">',
+            '      <div style="width:100%;height:2px;background:#ffc845;"></div>',
+            '    </td>',
+            '  </tr>',
+            '  <tr>',
+            '    <td>',
+            '      <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;">',
+            '        <tr>',
+            '          <td style="padding-right:20px;vertical-align:middle;border-right:1px solid #e8e8e8;">',
+            '            <img src="https://bellevitesse.com/static/CDN/noir-fond-transparent.png" width="90" style="display:block;" />',
+            '          </td>',
+            '          <td style="padding-left:20px;vertical-align:middle;">',
+            '            <p style="margin:0 0 1px;font-size:15px;font-weight:700;color:#0f0f0f;">' + name + '</p>',
+            '            <p style="margin:0 0 10px;font-size:9px;color:#ffc845;text-transform:uppercase;letter-spacing:0.14em;font-weight:600;">' + job + '</p>',
+            '            <table cellpadding="0" cellspacing="0">',
+            '              <tr><td style="padding-bottom:4px;">',
+            '                <span class="sig-dot"></span>',
+            '                <a href="mailto:' + email + '" style="font-size:11px;color:#333;text-decoration:none;">' + email + '</a>',
+            '              </td></tr>',
+            '              <tr><td style="padding-bottom:4px;">',
+            '                <span class="sig-dot"></span>',
+            '                <a href="tel:' + tel + '" style="font-size:11px;color:#333;text-decoration:none;">' + phone + '</a>',
+            '              </td></tr>',
+            '              <tr><td>',
+            '                <span class="sig-dot muted"></span>',
+            '                <span style="font-size:11px;color:#999;">Belle Vitesse SAS</span>',
+            '              </td></tr>',
+            '            </table>',
+            '          </td>',
+            '        </tr>',
+            '      </table>',
+            '    </td>',
+            '  </tr>',
+            '</table>'
+        ].join('\n');
+
+        get('sig-preview').innerHTML = previewHtml;
+    }
+
+    function copyHtml() {
+        var raw = get('copy-btn').dataset.raw || '';
+        navigator.clipboard.writeText(raw).then(function () {
+            var btn = get('copy-btn');
+            var originalText = btn.textContent;
+            btn.textContent = 'Copié ✓';
+            btn.classList.remove('admin-btn-secondary');
+            btn.classList.add('admin-btn-primary');
+            setTimeout(function () {
+                btn.textContent = originalText;
+                btn.classList.remove('admin-btn-primary');
+                btn.classList.add('admin-btn-secondary');
+            }, 2000);
+        });
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function () {
+        update();
+    });
+</script>
+{% endblock %}

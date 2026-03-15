@@ -1,0 +1,9 @@
+from flask import render_template
+from utils.decorators import require_roles
+
+
+def init_tools_routes(app):
+    @app.route("/admin/tools/signature-generator", endpoint='admin_signature_generator')
+    @require_roles('administrator', 'manager', 'user')
+    def admin_signature_generator():
+        return render_template("admin/signature_generator.html")

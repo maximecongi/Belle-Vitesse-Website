@@ -1,0 +1,76 @@
+.sig-editor-layout {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+.sig-preview-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    border: 1px solid var(--admin-border);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+}
+
+.sig-code-card {
+    margin-top: 2rem;
+}
+
+.code-output {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    padding: 1rem;
+    border-radius: 4px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.85rem;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.copy-btn-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1rem;
+}
+
+/* Target specific styles from the signature generator to match admin DA */
+.sig-dot {
+    display: inline-block;
+    width: 3px;
+    height: 3px;
+    background: #ffc845;
+    vertical-align: middle;
+    margin-right: 6px;
+}
+
+.sig-dot.muted {
+    background: #e0e0e0;
+}
+
+/* Syntax Highlighting */
+.t-tag {
+    color: #569cd6;
+}
+
+/* Blue */
+.t-attr {
+    color: #9cdcfe;
+}
+
+/* Light Blue */
+.t-val {
+    color: #ce9178;
+}
+
+/* Orange/Salmon */
+.t-punct {
+    color: #808080;
+}
+
+/* Grey */

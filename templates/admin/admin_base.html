@@ -98,9 +98,13 @@
                 {{ nav_item(url_for('admin_vehicle_configs'), 'Config. Véhicules', 'administrator') }}
                 {% endcall %}
 
-                {% call nav_group('🛠️ Administration', 'admin', 'administrator', false) %}
+                {% call nav_group('🧰 Administration', 'admin', 'administrator', false) %}
                 {{ nav_item(url_for('admin_users_list'), 'Équipe', 'administrator') }}
                 {{ nav_item(url_for('admin_newsletter_dashboard'), 'Newsletter', 'administrator') }}
+                {% endcall %}
+
+                {% call nav_group('🛠️ Outils', 'tools', 'user', false) %}
+                {{ nav_item(url_for('admin_signature_generator'), 'Générateur de signature mail', 'user') }}
                 {% endcall %}
             </nav>
 
