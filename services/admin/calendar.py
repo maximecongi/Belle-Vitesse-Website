@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from flask import url_for
 
@@ -18,10 +19,17 @@ def get_calendar_events():
         "#06b6d4", "#f97316", "#ec4899", "#14b8a6", "#a855f7",
     ]
 
+    today_iso = datetime.now().strftime('%Y-%m-%d')
+
     for i, r in enumerate(records):
         name = r.nom or "Sans nom"
         color = colors[i % len(colors)]
         group_id = f"project-{r.id}"
+
+        # Determine which list to redirect to based on the return date
+        # Matching logic in routes/admin/projects.py
+        is_archive = r.date_retour and r.date_retour.isoformat() < today_iso
+        route_name = "admin_projects_archives" if is_archive else "admin_projects_list"
 
         if r.date_depart:
             events.append({
@@ -30,7 +38,7 @@ def get_calendar_events():
                 "color": color,
                 "groupId": group_id,
                 "order": i,
-                "url": url_for("admin_projects_list", q=r.project_id),
+                "url": url_for(route_name, q=r.project_id),
             })
 
         if r.date_debut_tournage:
@@ -40,7 +48,7 @@ def get_calendar_events():
                 "color": color,
                 "groupId": group_id,
                 "order": i,
-                "url": url_for("admin_projects_list", q=r.project_id),
+                "url": url_for(route_name, q=r.project_id),
             }
             if r.date_fin_tournage:
                 event_data["end"] = r.date_fin_tournage.isoformat()
@@ -53,7 +61,7 @@ def get_calendar_events():
                 "color": color,
                 "groupId": group_id,
                 "order": i,
-                "url": url_for("admin_projects_list", q=r.project_id),
+                "url": url_for(route_name, q=r.project_id),
             })
 
     return events
