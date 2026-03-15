@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
-from flask import Flask, request, session, redirect, url_for, g, abort
+from flask import Flask, request, session, url_for, g, abort
 
 from extensions import cache, compress, limiter, csrf
 from routes import init_routes, init_error_handlers
@@ -288,7 +288,7 @@ def create_app():
     def add_security_headers(response):
         """Add security headers, specifically for admin routes."""
         if request.path.startswith('/admin/'):
-            response.headers['X-Frame-Options'] = 'DENY'
+            response.headers['X-Frame-Options'] = 'SAMEORIGIN'
             response.headers['X-Content-Type-Options'] = 'nosniff'
 
         if os.getenv("FLASK_ENV") == "production":

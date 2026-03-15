@@ -7,3 +7,8 @@ def init_tools_routes(app):
     @require_roles('administrator', 'manager', 'user')
     def admin_signature_generator():
         return render_template("admin/signature_generator.html")
+
+    @app.route("/admin/tools/check-vehicles", endpoint='admin_check_vehicles')
+    @require_roles('administrator', 'manager', 'user')
+    def admin_check_vehicles():
+        return render_template("check_vehicles.html")
