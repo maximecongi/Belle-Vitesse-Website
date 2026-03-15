@@ -99,6 +99,17 @@ def _format_checkout_admin(c: CheckoutVehicle, vehicle_map, batch_configs=None):
             str(c.project.date_retour)) if c.project.date_retour else "—"
         data["vehicle_id"] = c.vehicule_controle
         data["project_id"] = str(c.project.id)
+        data["project_name"] = c.project.nom
+
+        # Get vehicle name for display
+        from utils.database import get_vehicles
+        vehicles = get_vehicles()
+        v_name = "—"
+        for v in vehicles:
+            if v['id'] == c.vehicule_controle:
+                v_name = v['fields'].get('name', '—')
+                break
+        data["vehicle_name"] = v_name
 
     return data
 

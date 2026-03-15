@@ -102,6 +102,17 @@ def _format_checkin_admin(c: CheckinVehicle, vehicle_map, batch_configs=None):
             str(c.project.date_fin_tournage)) if c.project.date_fin_tournage else "—"
         data["vehicle_id"] = c.vehicule_controle
         data["project_id"] = str(c.project.id)
+        data["project_name"] = c.project.nom
+
+        # Get vehicle name for display
+        from utils.database import get_vehicles
+        vehicles = get_vehicles()
+        v_name = "—"
+        for v in vehicles:
+            if v['id'] == c.vehicule_controle:
+                v_name = v['fields'].get('name', '—')
+                break
+        data["vehicle_name"] = v_name
 
     return data
 
@@ -240,8 +251,10 @@ def get_checkin_form_context():
     checkpoints_mapping = {}
     for v in vehicles:
         vid = v["id"]
-        # Use ID as primary key for mapping, get config using the same ID
-        checkpoints_mapping[vid] = get_checkpoints_for_vehicle(vid)
+        vname = v.get("fields", {}).get("name")
+        # Use ID as primary key for mapping, get config using the same ID or name fallback
+        checkpoints_mapping[vid] = get_checkpoints_for_vehicle(
+            vid, vehicle_name=vname)
 
     return {
         "projects": projects_formatted,

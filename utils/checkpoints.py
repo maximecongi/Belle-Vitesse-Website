@@ -54,16 +54,21 @@ ALL_POSSIBLE_CHECKPOINTS = [
 # Legacy hardcoded configs (will be used as first-time defaults if DB is empty)
 LEGACY_CHECKPOINTS_CONFIG = {
     "eCar": [
-        "tires", "brakes", "test_roulage", "serrage_roues", "serrage_arceau",
+        ("tires", "eCar : 2 bar"), "brakes", "test_roulage", ("serrage_roues",
+                                                              "eCar : 110 Nm"), ("serrage_arceau", "eCar : 45 Nm"),
         "serrage_plaques_sieges", "battery", "lights", "horn", "mallette_accessoires"
     ],
     "eTrike": [
-        "tires", "brakes", "fonctionnement_vitesses", "moteur_assistance", "serrage_roues",
-        "serrage_plaques_sieges", "battery", "ceinture_securite", "casques_passagers", "mallette_accessoires"
+        ("tires", "eTrike/eTrike 360 : 3 bar"), "brakes", "fonctionnement_vitesses", "moteur_assistance", (
+            "serrage_roues", "eTrike/eTrike 360 : 12 Nm"),
+        "serrage_plaques_sieges", "battery", "ceinture_securite", "casques_passagers", (
+            "mallette_accessoires", "Trike : chambre à air ×2, chargeur, pompe, outils")
     ],
     "eBike": [
-        "tires", "brakes", "fonctionnement_vitesses", "moteur_assistance", "serrage_roues",
-        "tension_chaine", "serrage_arceau", "battery", "protections_pilote", "systeme_communication", "mallette_accessoires"
+        ("tires", "eBike : voir flanc pneu"), "brakes", "fonctionnement_vitesses", "moteur_assistance", (
+            "serrage_roues", "eBike : 110 Nm"),
+        "tension_chaine", ("serrage_arceau",
+                           "eBike : 45 Nm"), "battery", "protections_pilote", "systeme_communication", ("mallette_accessoires", "eBike : pièces de rechange, outils, bijouterie, chargeur"), ("malette_accessoires", "eCar : pièces de rechange, outils, bijouterie, chargeur")
     ],
 }
 
@@ -82,71 +87,79 @@ def get_checkpoints_for_vehicle(vehicle_id: str, batch_configs=None, vehicle_nam
 
     # 1. Try batch_configs first (passed from service layer)
     if batch_configs and vehicle_id in batch_configs:
-        enabled_keys = {
-            k for k, v in batch_configs[vehicle_id].items() if v}
-        return BASE_CHECKPOINTS + [
-            cp for cp in ALL_POSSIBLE_CHECKPOINTS
-            if cp['key'] in enabled_keys
-        ]
+        config = batch_configs[vehicle_id]
+        if isinstance(config, dict):
+            # DB config is a dict {key: bool}
+            enabled_keys = {k for k, v in config.items() if v}
+        else:
+            # Legacy or other format might be a list
+            enabled_keys = config
+
+        return BASE_CHECKPOINTS + _resolve_checkpoints(enabled_keys)
 
     # Resolve the vehicle name if it's an Airtable ID (starts with rec)
-    # We delay this to use it only as fallback for lookup or for title display
     if not vehicle_name:
         vehicle_name = vehicle_id
 
     # 2. Try to get from DB if in app context
     if has_app_context():
         try:
-            # Try lookup by exact ID first (Technical ID from Airtable)
             config_record = VehicleCheckpointConfig.query.filter_by(
                 vehicle_id=vehicle_id).first()
 
-            # If not found, maybe it's stored under the name?
-            # (Legacy or manually entered configs)
-            if not config_record:
-                # Resolve name only if needed
-                if vehicle_id.startswith('rec'):
-                    try:
-                        from utils.database import get_vehicles
-                        vehicles = get_vehicles()
-                        for v in vehicles:
-                            if v['id'] == vehicle_id:
-                                vehicle_name = v['fields'].get(
-                                    'name', vehicle_id)
-                                break
-                    except Exception:
-                        pass
+            if not config_record and vehicle_id.startswith('rec'):
+                try:
+                    from utils.database import get_vehicles
+                    vehicles = get_vehicles()
+                    for v in vehicles:
+                        if v['id'] == vehicle_id:
+                            vehicle_name = v['fields'].get('name', vehicle_id)
+                            break
+                except Exception:
+                    pass
 
                 if vehicle_name != vehicle_id:
                     config_record = VehicleCheckpointConfig.query.filter_by(
                         vehicle_id=vehicle_name).first()
 
             if config_record and config_record.config:
+                # DB config is usually {key: bool}
                 enabled_keys = {
                     k for k, v in config_record.config.items() if v}
-                return BASE_CHECKPOINTS + [
-                    cp for cp in ALL_POSSIBLE_CHECKPOINTS
-                    if cp['key'] in enabled_keys
-                ]
+                return BASE_CHECKPOINTS + _resolve_checkpoints(enabled_keys)
         except Exception as e:
             if current_app:
                 current_app.logger.error(f"Error fetching vehicle config: {e}")
 
-    # 3. Fallback to hardcoded legacy rules (using resolved name)
-    # Last resort if no DB entry exists
+    # 3. Fallback to hardcoded legacy rules
     vehicle_search_name = vehicle_name or vehicle_id
-    if current_app:
-        current_app.logger.info(
-            f"🔍 FALLBACK matching for vehicle: '{vehicle_search_name}'")
-
     for key, enabled_keys in LEGACY_CHECKPOINTS_CONFIG.items():
         if key.lower() in vehicle_search_name.lower():
-            if current_app:
-                current_app.logger.info(f"✅ Matched legacy config: {key}")
-            return BASE_CHECKPOINTS + [
-                cp for cp in ALL_POSSIBLE_CHECKPOINTS
-                if cp['key'] in enabled_keys
-            ]
+            return BASE_CHECKPOINTS + _resolve_checkpoints(enabled_keys)
+
+    # Final fallback: return ALL possible checkpoints
+    return BASE_CHECKPOINTS + ALL_POSSIBLE_CHECKPOINTS
+
+
+def _resolve_checkpoints(enabled_keys) -> list:
+    """Helper to build list of checkpoint dicts, supporting optional tuples for detail override."""
+    # Convert enabled_keys to a map for easy lookup: {key: detail_override or None}
+    overrides = {}
+    for item in enabled_keys:
+        if isinstance(item, (tuple, list)) and len(item) >= 2:
+            overrides[item[0]] = item[1]
+        else:
+            overrides[item] = None
+
+    result = []
+    for cp in ALL_POSSIBLE_CHECKPOINTS:
+        if cp['key'] in overrides:
+            # Clone and override detail if provided
+            new_cp = cp.copy()
+            if overrides[cp['key']]:
+                new_cp['detail'] = overrides[cp['key']]
+            result.append(new_cp)
+    return result
 
     # Final fallback: return ALL possible checkpoints if unknown vehicle
     if current_app:

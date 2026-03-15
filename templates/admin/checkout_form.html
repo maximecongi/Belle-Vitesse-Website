@@ -18,6 +18,12 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
             <div class="form-group">
                 <label class="form-label">Projet <span style="color: var(--red-error);">*</span></label>
+                {% if is_edit %}
+                <input type="hidden" name="project_id" value="{{ data.project_id if data else '' }}">
+                <div class="form-input" style="background: #f0f0f0; cursor: not-allowed; color: #555;">
+                    {{ data.project_name if data and data.project_name else '—' }}
+                </div>
+                {% else %}
                 <div class="rich-select" id="projectSelect">
                     <input type="text" name="project_id"
                         value="{{ data.project_id if data and data.project_id else '' }}" required
@@ -69,10 +75,17 @@
                         </div>
                     </div>
                 </div>
+                {% endif %}
             </div>
 
             <div class="form-group">
                 <label class="form-label">Véhicule <span style="color: var(--red-error);">*</span></label>
+                {% if is_edit %}
+                <input type="hidden" name="vehicle_id" value="{{ data.vehicle_id if data else '' }}">
+                <div class="form-input" style="background: #f0f0f0; cursor: not-allowed; color: #555;">
+                    {{ data.vehicle_name if data and data.vehicle_name else '—' }}
+                </div>
+                {% else %}
                 <div class="rich-select" id="vehicleSelect" {% if not (data and data.project_id) %}data-disabled="true"
                     style="opacity: 0.5; pointer-events: none;" {% endif %}>
                     <input type="text" name="vehicle_id"
@@ -138,6 +151,7 @@
                         </div>
                     </div>
                 </div>
+                {% endif %}
             </div>
 
             <div class="form-group">
@@ -226,12 +240,10 @@
                     style="background: white; padding: 1.25rem; border-radius: 10px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
                     <label class="form-label" style="display: block; margin-bottom: 0.25rem; font-weight: 700;">{{ label
                         }} <span style="color: var(--red-error);">*</span></label>
-                    {% if item.detail %}
-                    <div
+                    <div class="checkpoint-detail"
                         style="font-size: 0.75rem; color: var(--grey-2); margin-bottom: 0.75rem; line-height: 1.3; font-style: italic;">
-                        {{ item.detail }}
+                        {{ item.detail if item.detail else "" }}
                     </div>
-                    {% endif %}
 
                     {% if item.type == 'value' %}
                     <div
@@ -350,18 +362,18 @@
     function updateCheckpoints() {
         if (!vehicleInput) return;
 
+        const submitBtn = document.querySelector('button[type="submit"]');
+
         if (!vehicleInput.value) {
-            // Show everything if no vehicle selected
+            // Hide everything if no vehicle selected
             document.querySelectorAll('.checkpoint-field').forEach(fieldEl => {
-                fieldEl.style.display = '';
-                const inputEl = fieldEl.querySelector('input');
-                if (inputEl) {
-                    const key = fieldEl.dataset.key;
-                    inputEl.required = (key === 'km' || key === 'battery');
-                }
+                fieldEl.style.display = 'none';
             });
+            if (submitBtn) submitBtn.disabled = true;
             return;
         }
+
+        if (submitBtn) submitBtn.disabled = false;
 
         // Determine which config to use
         let configToUse = defaultCheckpoints;
@@ -377,10 +389,17 @@
         document.querySelectorAll('.checkpoint-field').forEach(fieldEl => {
             const key = fieldEl.dataset.key;
             const inputEl = fieldEl.querySelector('input');
+            const detailEl = fieldEl.querySelector('.checkpoint-detail');
 
-            if (validKeys.includes(key)) {
+            const configItem = configToUse.find(cp => cp.key === key);
+
+            if (configItem) {
                 fieldEl.style.display = '';
                 if (inputEl) inputEl.required = true;
+                // Update detail text if available
+                if (detailEl && configItem.detail) {
+                    detailEl.innerText = configItem.detail;
+                }
             } else {
                 fieldEl.style.display = 'none';
                 if (inputEl) inputEl.required = false;

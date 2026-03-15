@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contrôle Technique — Belle Vitesse</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #151515;
+      --surface: #1C1C1C;
+      --surface-hover: #252525;
+      --border: #2D2D2D;
+      --text: #FFFFFF;
+      --text-muted: #A1A1A1;
+      --yellow: #FFC845;
+      --blue: #5299D3;
+      --red: #C32F27;
+      --success: #618B4A;
+
+      --font-main: 'Poppins', sans-serif;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-main);
+      padding: 60px 40px;
+      line-height: 1.6;
+    }
+
+    /* --- Header Section --- */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 80px;
+      padding-bottom: 40px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .brand-label {
+      font-size: 13px;
+      color: var(--yellow);
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      font-weight: 600;
+    }
+
+    h1 {
+      font-size: 52px;
+      font-weight: 700;
+      text-transform: uppercase;
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    h1::before {
+      content: "■";
+      color: var(--yellow);
+      margin-right: 15px;
+      font-size: 0.8em;
+    }
+
+    .legend {
+      display: flex;
+      gap: 30px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 0;
+    }
+
+    .dot-sec {
+      background: var(--yellow);
+    }
+
+    .dot-eq {
+      background: var(--blue);
+    }
+
+    /* --- Primary Table Layout --- */
+    .table-wrap {
+      margin-bottom: 100px;
+      border-radius: 0;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    thead th {
+      background: var(--surface);
+      padding: 40px 20px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+    }
+
+    thead th:first-child {
+      width: 35%;
+      text-align: left;
+      padding-left: 30px;
+    }
+
+    .vehicle-name {
+      font-size: 24px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .vehicle-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    /* --- Category Labels --- */
+    .section-row td {
+      padding: 15px 30px;
+      background: #252525;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-label {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-row.sec .section-label {
+      color: var(--yellow);
+    }
+
+    .section-row.eq .section-label {
+      color: var(--blue);
+    }
+
+    .section-label::before {
+      content: "■";
+      font-size: 0.8em;
+    }
+
+    /* --- Data Rows --- */
+    tr.data-row td {
+      padding: 25px 20px;
+      border-bottom: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      vertical-align: middle;
+      background: var(--bg);
+      transition: all 0.2s ease;
+    }
+
+    tr.data-row td:first-child {
+      padding-left: 30px;
+    }
+
+    tr.data-row:hover td {
+      background: var(--surface-hover);
+    }
+
+    .check-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .check-detail {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .cell {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* --- Check Box Icons --- */
+    .check-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .check-icon.sec {
+      background: rgba(255, 200, 69, 0.1);
+      border: 1px solid var(--yellow);
+      color: var(--yellow);
+    }
+
+    .check-icon.eq {
+      background: rgba(82, 153, 211, 0.1);
+      border: 1px solid var(--blue);
+      color: var(--blue);
+    }
+
+    .na {
+      width: 25px;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* --- Detail Protocol Cards --- */
+    .detail-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+    }
+
+    .detail-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 50px;
+      position: relative;
+    }
+
+    .detail-card::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--yellow);
+    }
+
+    .detail-card-header {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .detail-card-icon {
+      font-size: 42px;
+      color: var(--yellow);
+    }
+
+    .detail-card-title {
+      font-size: 26px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .detail-card-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .detail-phase {
+      margin-bottom: 35px;
+    }
+
+    .phase-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--yellow);
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .phase-title::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .detail-items {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .detail-item {
+      font-size: 14px;
+      color: var(--text);
+      display: flex;
+      gap: 15px;
+    }
+
+    .detail-item::before {
+      content: "■";
+      color: var(--yellow);
+      font-size: 0.7em;
+      padding-top: 3px;
+    }
+
+    .warn-banner {
+      margin-top: 30px;
+      padding: 15px 20px;
+      background: rgba(195, 47, 39, 0.1);
+      border-left: 3px solid var(--red);
+      font-size: 13px;
+      font-weight: 600;
+      color: #EFA8A8;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* --- Responsive Fixes --- */
+    @media (max-width: 1100px) {
+      .detail-section {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+      }
+
+      h1 {
+        font-size: 36px;
+      }
+
+      body {
+        padding: 40px 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="brand">
+      <span class="brand-label">Belle Vitesse — Protocole de contrôle</span>
+      <h1>Contrôle Technique Véhicules</h1>
+    </div>
+    <div class="legend">
+      <div class="legend-item">
+        <div class="dot dot-sec"></div>Sécurité
+      </div>
+      <div class="legend-item">
+        <div class="dot dot-eq"></div>Équipements
+      </div>
+    </div>
+  </header>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th></th>
+          <th>
+            <span class="vehicle-name">eTrike 360 / eTrike</span>
+            <span class="vehicle-sub">Vélo électriques</span>
+          </th>
+          <th>
+            <span class="vehicle-name">eBike</span>
+            <span class="vehicle-sub">Moto électrique</span>
+          </th>
+          <th>
+            <span class="vehicle-name">eCar</span>
+            <span class="vehicle-sub">Voiture électrique</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <!-- ═══ SÉCURITÉ ═══ -->
+        <tr class="section-row sec">
+          <td colspan="4"><span class="section-label">Sécurité</span></td>
+        </tr>
+
+        <tr class="data-row">
+          <td>
+            <div class="check-name">Pression des pneus</div>
+            <div class="check-detail">Trike : 3 bar · Stark : voir flanc pneu · Twizy : 2 bar</div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon sec">✓</div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon sec">✓</div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon sec">✓</div>
+            </div>
+          </td>
+        </tr>
+
+        <tr class="data-row">
+          <td>
+            <div class="check-name">Contrôle des freins</div>
+            <div class="check-detail">Voir protocole freins complet ↓</div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon sec">✓</div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon sec">✓</div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon sec">✓</div>
+            </div>
+          </td>
+        </tr>
+
+        <tr class="data-row">
+          <td>
+            <div class="check-name">Fonctionnement des vitesses</div>
+            <div class="check-detail">Rouler et passer toutes les vitesses</div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon sec">✓</div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon sec">✓</div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="na"></div>
+            </div>
+          </td>
+        </tr>
+
+        <tr class="data-row">
+          <td>
+            <div class="check-name">Moteur / Assistance électrique</div>
+            <div class="check-detail">Vérifier tous les modes d'assistance</div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon sec">✓</div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon sec">✓</div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="na"></div>
+            </div>
+          </td>
+        </tr>
+
+        <tr class="data-row">
+          <td>
+            <div class="check-name">Test roulage (D / R / N)</div>
+            <div class="check-detail">Pas de bruit anormal en roulage</div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="na"></div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="na"></div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon sec">✓</div>
+            </div>
+          </td>
+        </tr>
+
+        <tr class="data-row">
+          <td>
+            <div class="check-name">Serrage des roues</div>
+            <div class="check-detail">Trike : 12 Nm · Twizy : 110 Nm</div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon sec">✓</div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon sec">✓</div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon sec">✓</div>
+            </div>
+          </td>
+        </tr>
+
+        <tr class="data-row">
+          <td>
+            <div class="check-name">Tension chaîne</div>
+            <div class="check-detail">Vérification du jeu</div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="na"></div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon sec">✓</div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="na"></div>
+            </div>
+          </td>
+        </tr>
+
+        <tr class="data-row">
+          <td>
+            <div class="check-name">Serrage barres / arceau</div>
+            <div class="check-detail">Stark : x Nm à définir · Twizy : 45 Nm</div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="na"></div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon sec">✓</div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon sec">✓</div>
+            </div>
+          </td>
+        </tr>
+
+        <tr class="data-row">
+          <td>
+            <div class="check-name">Serrage plaques & sièges</div>
+            <div class="check-detail">Vérification du serrage</div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon sec">✓</div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="na"></div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon sec">✓</div>
+            </div>
+          </td>
+        </tr>
+
+        <tr class="data-row">
+          <td>
+            <div class="check-name">Ceinture de sécurité</div>
+            <div class="check-detail">Fonctionnement & état</div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon sec">✓</div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="na"></div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="na"></div>
+            </div>
+          </td>
+        </tr>
+
+        <tr class="data-row">
+          <td>
+            <div class="check-name">Phares & clignotants</div>
+            <div class="check-detail">Fonctionnement complet</div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="na"></div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="na"></div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon sec">✓</div>
+            </div>
+          </td>
+        </tr>
+
+        <tr class="data-row">
+          <td>
+            <div class="check-name">Klaxon</div>
+            <div class="check-detail">Fonctionnement</div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="na"></div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="na"></div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon sec">✓</div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- ═══ ÉQUIPEMENTS ═══ -->
+        <tr class="section-row eq">
+          <td colspan="4"><span class="section-label">Équipements</span></td>
+        </tr>
+
+        <tr class="data-row">
+          <td>
+            <div class="check-name">Batterie chargée à 100%</div>
+            <div class="check-detail">Vérification avant départ</div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon eq">✓</div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon eq">✓</div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon eq">✓</div>
+            </div>
+          </td>
+        </tr>
+
+        <tr class="data-row">
+          <td>
+            <div class="check-name">Casques passagers</div>
+            <div class="check-detail">Trike : x casques à définir</div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon eq">✓</div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="na"></div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="na"></div>
+            </div>
+          </td>
+        </tr>
+
+        <tr class="data-row">
+          <td>
+            <div class="check-name">Protections pilote</div>
+            <div class="check-detail">Casque, combi, gants, bottes, jeans, veste, masque</div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="na"></div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon eq">✓</div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="na"></div>
+            </div>
+          </td>
+        </tr>
+
+        <tr class="data-row">
+          <td>
+            <div class="check-name">Système de communication</div>
+            <div class="check-detail">À définir</div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="na"></div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon eq">✓</div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="na"></div>
+            </div>
+          </td>
+        </tr>
+
+        <tr class="data-row">
+          <td>
+            <div class="check-name">Mallette / Roulante accessoires</div>
+            <div class="check-detail">Trike : chambre à air ×2, chargeur, pompe, outils<br>Stark & Twizy : pièces de
+              rechange, outils, bijouterie, chargeur</div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon eq">✓</div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon eq">✓</div>
+            </div>
+          </td>
+          <td>
+            <div class="cell">
+              <div class="check-icon eq">✓</div>
+            </div>
+          </td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── Protocoles détaillés ── -->
+  <div class="detail-section">
+
+    <!-- FREINS -->
+    <div class="detail-card">
+      <div class="detail-card-header">
+        <div class="detail-card-icon">🛑</div>
+        <div>
+          <div class="detail-card-title">Protocole Freins</div>
+          <div class="detail-card-sub">Applicable : Trike 360 · Stark Varg · Twizy</div>
+        </div>
+      </div>
+      <div class="detail-body">
+
+        <div class="detail-phase">
+          <div class="phase-title">Contrôle visuel</div>
+          <div class="detail-items">
+            <div class="detail-item">Plaquettes en bon état</div>
+            <div class="detail-item">Disque en bon état</div>
+            <div class="detail-item">Niveau liquide de frein correct</div>
+            <div class="detail-item">Durites sans accros ni coupures</div>
+          </div>
+        </div>
+
+        <div class="detail-phase">
+          <div class="phase-title">Contrôle à l'arrêt</div>
+          <div class="detail-items">
+            <div class="detail-item">Appuyer 3 fois sur le frein — la pédale/levier doit être ferme</div>
+            <div class="detail-item">Appui prolongé 10 secondes — le frein ne doit pas s'enfoncer</div>
+            <div class="detail-item">Test frein de parking — le véhicule ne doit pas bouger en le poussant</div>
+          </div>
+        </div>
+
+        <div class="detail-phase">
+          <div class="phase-title">Contrôle en roulant</div>
+          <div class="detail-items">
+            <div class="detail-item">À vitesse moyenne : freinage progressif, véhicule droit, pas de vibration</div>
+            <div class="detail-item">À vitesse élevée : freinage d'urgence, pas de tirage gauche/droite</div>
+          </div>
+        </div>
+
+        <div class="warn-banner">
+          ⚠️ Si un seul critère n'est pas validé — véhicule à réparer avant utilisation
+        </div>
+      </div>
+    </div>
+
+    <!-- PNEUS -->
+    <div class="detail-card">
+      <div class="detail-card-header">
+        <div class="detail-card-icon">🛞</div>
+        <div>
+          <div class="detail-card-title">Protocole Pneus</div>
+          <div class="detail-card-sub">Applicable : Trike 360 · Stark Varg · Twizy</div>
+        </div>
+      </div>
+      <div class="detail-body">
+
+        <div class="detail-phase">
+          <div class="phase-title">Contrôle visuel</div>
+          <div class="detail-items">
+            <div class="detail-item">Flancs : aucune hernie ni déchirure</div>
+            <div class="detail-item">Bande de roulement : motif présent et en bon état</div>
+          </div>
+        </div>
+
+        <div class="detail-phase">
+          <div class="phase-title">Contrôle pression</div>
+          <div class="detail-items">
+            <div class="detail-item">Trike 360 / eTrike — <strong>3 bar</strong></div>
+            <div class="detail-item">Stark Varg — voir flanc du pneu (modèle dépendant)</div>
+            <div class="detail-item">Twizy — <strong>2 bar</strong></div>
+          </div>
+        </div>
+
+        <div class="warn-banner">
+          ⚠️ Toujours vérifier la pression à froid, avant utilisation
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+
+</html>
