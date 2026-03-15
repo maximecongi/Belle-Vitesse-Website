@@ -36,12 +36,27 @@ def list_children(directory_id):
     """Retourne la liste des enfants directs d'un dossier."""
     url = f"{BASE_URL}/files/{directory_id}/files"
     params = {"limit": 1000}
-    r = requests.get(url, headers=HEADERS, params=params)
-    r.raise_for_status()
-    data = r.json().get("data", [])
-    # kDrive peut paginer via cursor
-    items = data if isinstance(data, list) else data.get("files", [])
-    return items
+    try:
+        r = requests.get(url, headers=HEADERS, params=params)
+        r.raise_for_status()
+        data = r.json().get("data", [])
+        # kDrive peut paginer via cursor
+        items = data if isinstance(data, list) else data.get("files", [])
+        return items
+    except Exception as e:
+        log.error(f"Erreur list_children(id={directory_id}): {e}")
+        return []
+
+
+def get_folder_name(file_id):
+    """Récupère le nom d'un dossier via son ID."""
+    url = f"{BASE_URL}/files/{file_id}"
+    try:
+        r = requests.get(url, headers=HEADERS)
+        r.raise_for_status()
+        return r.json().get("data", {}).get("name", str(file_id))
+    except Exception:
+        return str(file_id)
 
 
 def delete_folder(file_id, name):
@@ -49,12 +64,15 @@ def delete_folder(file_id, name):
         log.info(f"[DRY-RUN] Supprimerait dossier : {name!r} (id={file_id})")
         return
     url = f"{BASE_URL}/files/{file_id}"
-    r = requests.delete(url, headers=HEADERS)
-    if r.status_code in (200, 204):
-        log.info(f"✓ Supprimé : {name!r} (id={file_id})")
-    else:
-        log.warning(
-            f"✗ Échec suppression {name!r} (id={file_id}) → {r.status_code} {r.text}")
+    try:
+        r = requests.delete(url, headers=HEADERS)
+        if r.status_code in (200, 204):
+            log.info(f"✓ Supprimé : {name!r} (id={file_id})")
+        else:
+            log.warning(
+                f"✗ Échec suppression {name!r} (id={file_id}) → {r.status_code} {r.text}")
+    except Exception as e:
+        log.error(f"Erreur delete_folder({name}): {e}")
 
 
 # ── Logique principale ────────────────────────────────────────────────────────
@@ -64,17 +82,13 @@ def process_directory(dir_id, path=""):
     Parcourt récursivement un dossier.
     Retourne True si le dossier est vide après traitement (peut être supprimé par le parent).
     """
-    try:
-        children = list_children(dir_id)
-    except requests.HTTPError as e:
-        log.error(f"Impossible de lister {path} (id={dir_id}) : {e}")
-        return False
+    children = list_children(dir_id)
 
     dirs = [f for f in children if f.get("type") == "dir"]
 
     # Recurse d'abord dans les sous-dossiers
     for d in dirs:
-        child_path = f"{path}/{d['name']}"
+        child_path = f"{path}/{d['name']}" if path else d['name']
         child_empty = process_directory(d["id"], child_path)
         if child_empty:
             delete_folder(d["id"], child_path)
@@ -82,31 +96,37 @@ def process_directory(dir_id, path=""):
 
     # Re-lister pour voir si des sous-dossiers ont été supprimés
     # (on recompte : si plus rien → ce dossier est vide)
-    try:
-        remaining = list_children(dir_id)
-    except requests.HTTPError:
-        return False
+    remaining = list_children(dir_id)
 
     return len(remaining) == 0
 
 
 def main():
+    if not DRIVE_ID or not API_TOKEN:
+        log.error(
+            "ERREUR : N8N_DRIVE_ID ou N8N_API_TOKEN manquant dans le .env")
+        sys.exit(1)
+
     log.info(
         f"{'[DRY-RUN] ' if DRY_RUN else ''}Démarrage purge dossiers vides — drive {DRIVE_ID}")
 
-    if ROOT_DIR_ID is None:
+    if not ROOT_DIR_ID:
         # Lister la racine : on récupère les dossiers de premier niveau
         url = f"{BASE_URL}/files"
-        r = requests.get(url, headers=HEADERS, params={"limit": 1000})
-        r.raise_for_status()
-        top_level = r.json().get("data", [])
-        dirs = [f for f in top_level if f.get("type") == "dir"]
-        for d in dirs:
-            empty = process_directory(d["id"], d["name"])
-            if empty:
-                delete_folder(d["id"], d["name"])
+        try:
+            r = requests.get(url, headers=HEADERS, params={"limit": 1000})
+            r.raise_for_status()
+            top_level = r.json().get("data", [])
+            dirs = [f for f in top_level if f.get("type") == "dir"]
+            for d in dirs:
+                empty = process_directory(d["id"], d["name"])
+                if empty:
+                    delete_folder(d["id"], d["name"])
+        except Exception as e:
+            log.error(f"Erreur lors du listing racine : {e}")
     else:
-        process_directory(ROOT_DIR_ID, str(ROOT_DIR_ID))
+        root_name = get_folder_name(ROOT_DIR_ID)
+        process_directory(ROOT_DIR_ID, root_name)
 
     log.info("Terminé.")
 
