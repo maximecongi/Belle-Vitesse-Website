@@ -65,15 +65,24 @@ def _delete_inspection_files(record):
                     f"❌ Échec de la suppression du PDF {pdf_path}: {e}")
 
 
-def _is_ready(form, vehicle_id=None):
+def _is_ready(form, vehicle_id=None, is_checkout=False):
     """
     Calculate if the vehicle is ready based on inspection fields.
     Returns True if all critical fields are 'OK' or 'Non pertinent'.
+    For checkouts, also requires a 100% battery charge.
     """
-    # Get specific checkpoints for this vehicle
+    # 1. Battery check for checkout
+    if is_checkout:
+        battery_val = form.get("battery")
+        try:
+            if battery_val and float(battery_val) < 100:
+                return False
+        except (ValueError, TypeError):
+            pass
+
+    # 2. Status checkpoints check
     checkpoints = get_checkpoints_for_vehicle(vehicle_id)
 
-    # Only check 'status' type fields
     # Only check 'status' type fields
     status_keys = [cp['key']
                    for cp in checkpoints if cp.get('type') == 'status']
@@ -81,7 +90,6 @@ def _is_ready(form, vehicle_id=None):
     for key in status_keys:
         val = form.get(key)
         # If it's not present (hidden/not pertinent), we treat it as OK
-        # This will be supplemented by the service layer setting it to "Non pertinent"
         if val is not None and val not in ["OK", "Non pertinent"]:
             return False
     return True

@@ -187,7 +187,7 @@ def process_signature(token, signature_data, signed_ip):
         current_hash = compute_document_seal(
             inspection_id=inspection_id,
             vehicle_id=data["vehicle_id"],
-            km=str(data["km"]),
+            km="",
             signature_data=signature_data,
             signed_at=signed_at.isoformat(),
         )
@@ -237,7 +237,7 @@ def process_signature(token, signature_data, signed_ip):
             data_snapshot={
                 **data,
                 "_seal_vehicle_id": data["vehicle_id"],
-                "_seal_km": str(data["km"]),
+                "_seal_km": "",
                 "_seal_signed_at": signed_at.isoformat(),
             },
             signature=signature_data,

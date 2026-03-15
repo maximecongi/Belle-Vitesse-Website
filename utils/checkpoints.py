@@ -5,40 +5,70 @@
 # - label : le libellé affiché
 # - unit : l'unité à afficher (ex: 'km', '%') si type='value'
 # - type : 'value' (affiche la valeur + unit) ou 'status' (affiche un badge OK/Défaut/...)
+# - category : 'Sécurité' ou 'Équipements'
+# - detail : Texte d'aide ou précision
 
 # Common building blocks to ensure consistency
-BASE_CHECKPOINTS = [
-    {'key': 'km', 'label': 'Kilométrage', 'unit': 'km', 'type': 'value'},
-    {'key': 'battery', 'label': 'Charge', 'unit': '%', 'type': 'value'},
-]
+BASE_CHECKPOINTS = []
 
 ALL_POSSIBLE_CHECKPOINTS = [
-    {'key': 'tires', 'label': 'Pneus', 'unit': '', 'type': 'status'},
-    {'key': 'spare_tire', 'label': 'Roue de secours', 'unit': '', 'type': 'status'},
-    {'key': 'brakes', 'label': 'Freins', 'unit': '', 'type': 'status'},
-    {'key': 'oil', 'label': 'Niveau Huile', 'unit': '', 'type': 'status'},
-    {'key': 'coolant', 'label': 'Liquide de refroidissement',
-        'unit': '', 'type': 'status'},
-    {'key': 'lights', 'label': 'Éclairage', 'unit': '', 'type': 'status'},
-    {'key': 'engine_start', 'label': 'Démarrage Moteur', 'unit': '', 'type': 'status'},
-    {'key': 'wipers', 'label': 'Essuie-glaces', 'unit': '', 'type': 'status'},
-    {'key': 'horn', 'label': 'Klaxon', 'unit': '', 'type': 'status'},
-    {'key': 'safety_triangle', 'label': 'Triangle / Gilet',
-        'unit': '', 'type': 'status'},
-    {'key': 'fire_extinguisher', 'label': 'Extincteur', 'unit': '', 'type': 'status'},
+    # SÉCURITÉ
+    {'key': 'tires', 'label': 'Pression des pneus', 'category': 'Sécurité', 'type': 'status',
+     'detail': 'Trike : 3 bar · Stark : voir flanc pneu · Twizy : 2 bar'},
+    {'key': 'brakes', 'label': 'Contrôle des freins', 'category': 'Sécurité', 'type': 'status',
+     'detail': 'Voir protocole freins complet'},
+    {'key': 'fonctionnement_vitesses', 'label': 'Fonctionnement des vitesses', 'category': 'Sécurité', 'type': 'status',
+     'detail': 'Rouler et passer toutes les vitesses'},
+    {'key': 'moteur_assistance', 'label': 'Moteur / Assistance électrique', 'category': 'Sécurité', 'type': 'status',
+     'detail': 'Vérifier tous les modes d\'assistance'},
+    {'key': 'test_roulage', 'label': 'Test roulage (D / R / N)', 'category': 'Sécurité', 'type': 'status',
+     'detail': 'Pas de bruit anormal en roulage'},
+    {'key': 'serrage_roues', 'label': 'Serrage des roues', 'category': 'Sécurité', 'type': 'status',
+     'detail': 'Trike : 12 Nm · Twizy : 110 Nm'},
+    {'key': 'tension_chaine', 'label': 'Tension chaîne', 'category': 'Sécurité', 'type': 'status',
+     'detail': 'Vérification du jeu'},
+    {'key': 'serrage_arceau', 'label': 'Serrage barres / arceau', 'category': 'Sécurité', 'type': 'status',
+     'detail': 'Stark : x Nm à définir · Twizy : 45 Nm'},
+    {'key': 'serrage_plaques_sieges', 'label': 'Serrage plaques & sièges', 'category': 'Sécurité', 'type': 'status',
+     'detail': 'Vérification du serrage'},
+    {'key': 'ceinture_securite', 'label': 'Ceinture de sécurité', 'category': 'Sécurité', 'type': 'status',
+     'detail': 'Fonctionnement & état'},
+    {'key': 'lights', 'label': 'Phares & clignotants', 'category': 'Sécurité', 'type': 'status',
+     'detail': 'Fonctionnement complet'},
+    {'key': 'horn', 'label': 'Klaxon', 'category': 'Sécurité', 'type': 'status',
+     'detail': 'Fonctionnement'},
+
+    # ÉQUIPEMENTS
+    {'key': 'battery', 'label': 'Charge', 'unit': '%',
+     'type': 'value', 'category': 'Équipements'},
+    {'key': 'casques_passagers', 'label': 'Casques passagers', 'category': 'Équipements', 'type': 'status',
+     'detail': 'Trike : x casques à définir'},
+    {'key': 'protections_pilote', 'label': 'Protections pilote', 'category': 'Équipements', 'type': 'status',
+     'detail': 'Casque, combi, gants, bottes, jeans, veste, masque'},
+    {'key': 'systeme_communication', 'label': 'Système de communication', 'category': 'Équipements', 'type': 'status',
+     'detail': 'À définir'},
+    {'key': 'mallette_accessoires', 'label': 'Mallette / Roulante accessoires', 'category': 'Équipements', 'type': 'status',
+     'detail': 'Trike : chambre à air ×2, chargeur, pompe, outils · Stark & Twizy : pièces de rechange, outils, bijouterie, chargeur'},
 ]
 
 # Legacy hardcoded configs (will be used as first-time defaults if DB is empty)
 LEGACY_CHECKPOINTS_CONFIG = {
-    "eCar": [cp['key'] for cp in ALL_POSSIBLE_CHECKPOINTS],
-    "eTrike": ["tires", "brakes", "lights", "horn"],
-    "eBike": ["tires", "brakes", "lights", "horn"],
-    "Segway": ["tires", "brakes", "lights", "horn"],
-    "Jackal": ["tires", "brakes", "lights", "horn"],
+    "eCar": [
+        "tires", "brakes", "test_roulage", "serrage_roues", "serrage_arceau",
+        "serrage_plaques_sieges", "battery", "lights", "horn", "mallette_accessoires"
+    ],
+    "eTrike": [
+        "tires", "brakes", "fonctionnement_vitesses", "moteur_assistance", "serrage_roues",
+        "serrage_plaques_sieges", "battery", "ceinture_securite", "casques_passagers", "mallette_accessoires"
+    ],
+    "eBike": [
+        "tires", "brakes", "fonctionnement_vitesses", "moteur_assistance", "serrage_roues",
+        "tension_chaine", "serrage_arceau", "battery", "protections_pilote", "systeme_communication", "mallette_accessoires"
+    ],
 }
 
 
-def get_checkpoints_for_vehicle(vehicle_id: str, batch_configs=None) -> list:
+def get_checkpoints_for_vehicle(vehicle_id: str, batch_configs=None, vehicle_name=None) -> list:
     """
     Returns the list of checkpoints to display for a given vehicle.
     vehicle_id can be an Airtable Record ID or a Vehicle Name.
@@ -61,7 +91,8 @@ def get_checkpoints_for_vehicle(vehicle_id: str, batch_configs=None) -> list:
 
     # Resolve the vehicle name if it's an Airtable ID (starts with rec)
     # We delay this to use it only as fallback for lookup or for title display
-    vehicle_name = vehicle_id
+    if not vehicle_name:
+        vehicle_name = vehicle_id
 
     # 2. Try to get from DB if in app context
     if has_app_context():
@@ -104,12 +135,21 @@ def get_checkpoints_for_vehicle(vehicle_id: str, batch_configs=None) -> list:
     # 3. Fallback to hardcoded legacy rules (using resolved name)
     # Last resort if no DB entry exists
     vehicle_search_name = vehicle_name or vehicle_id
+    if current_app:
+        current_app.logger.info(
+            f"🔍 FALLBACK matching for vehicle: '{vehicle_search_name}'")
+
     for key, enabled_keys in LEGACY_CHECKPOINTS_CONFIG.items():
         if key.lower() in vehicle_search_name.lower():
+            if current_app:
+                current_app.logger.info(f"✅ Matched legacy config: {key}")
             return BASE_CHECKPOINTS + [
                 cp for cp in ALL_POSSIBLE_CHECKPOINTS
                 if cp['key'] in enabled_keys
             ]
 
-    # Final fallback
-    return BASE_CHECKPOINTS
+    # Final fallback: return ALL possible checkpoints if unknown vehicle
+    if current_app:
+        current_app.logger.warning(
+            f"⚠️ No match found for '{vehicle_search_name}', returning ALL checkpoints.")
+    return BASE_CHECKPOINTS + ALL_POSSIBLE_CHECKPOINTS

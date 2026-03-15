@@ -82,10 +82,6 @@
                     </span>
                 </div>
                 <div class="checkin-info-item">
-                    <span class="checkin-info-label">Kilométrage retour</span>
-                    <span class="checkin-info-value">{{ data.km or '—' }} km</span>
-                </div>
-                <div class="checkin-info-item">
                     <span class="checkin-info-label">Charge batterie retour</span>
                     <span class="checkin-info-value">{{ data.battery or '—' }} %</span>
                 </div>
@@ -106,51 +102,53 @@
             </div>
         </section>
 
-        <!-- ═══════════ INSPECTION TABLE ═══════════ -->
-        <section class="checkin-section">
-            <h2 class="checkin-section-title dot-before">Inspection technique</h2>
-            <table class="checkin-table">
-                <thead>
-                    <tr>
-                        <th>Élément</th>
-                        <th>État</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% set checks = [
-                    ('État des pneus', data.tires),
-                    ('Roue de secours', data.spare_tire),
-                    ('Niveau huile', data.oil),
-                    ('Niveau liquide de refroidissement', data.coolant),
-                    ('État des freins', data.brakes),
-                    ('État éclairage extérieur', data.lights),
-                    ('Démarrage moteur', data.engine_start),
-                    ('État des essuie-glaces', data.wipers),
-                    ('État du klaxon', data.horn),
-                    ('Triangle de signalisation / Gilet', data.safety_triangle),
-                    ('Présence extincteur', data.fire_extinguisher),
-                    ] %}
-                    {% for label, status in checks if status != 'Non pertinent' %}
-                    <tr>
-                        <td>{{ label }}</td>
-                        <td>
-                            {% if status == 'OK' %}
-                            <span class="checkin-badge checkin-badge--ok">OK</span>
-                            {% elif status == 'Non pertinent' %}
-                            <span class="checkin-badge checkin-badge--neutral">Non pertinent</span>
-                            {% elif status == 'Défaut' %}
-                            <span class="checkin-badge checkin-badge--critical">Défaut</span>
-                            {% elif status == 'Attention' %}
-                            <span class="checkin-badge checkin-badge--warning">Attention</span>
-                            {% else %}
-                            <span class="checkin-badge checkin-badge--neutral">{{ status or '—' }}</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </section>
+        {% set grouped_check_items = {} %}
+        {% for item in data.check_items %}
+        {% if item.type == 'status' %}
+        {% set cat = item.category or 'Autre' %}
+        {% if cat not in grouped_check_items %}
+        {% set _ = grouped_check_items.update({cat: []}) %}
+        {% endif %}
+        {% set _ = grouped_check_items[cat].append(item) %}
+        {% endif %}
+        {% endfor %}
+
+        {% for cat, items in grouped_check_items.items() %}
+        <h3
+            style="font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; border-bottom: 1px solid #eee; padding-bottom: 5px; color: #333;">
+            {{ cat }}</h3>
+        <table class="checkin-table">
+            <thead>
+                <tr>
+                    <th>Élément</th>
+                    <th>État</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                {% set status = data[item.key] %}
+                {% if status != 'Non pertinent' %}
+                <tr>
+                    <td>{{ item.label }}</td>
+                    <td>
+                        {% if status == 'OK' %}
+                        <span class="checkin-badge checkin-badge--ok">OK</span>
+                        {% elif status == 'Non pertinent' %}
+                        <span class="checkin-badge checkin-badge--neutral">Non pertinent</span>
+                        {% elif status == 'Défaut' %}
+                        <span class="checkin-badge checkin-badge--critical">Défaut</span>
+                        {% elif status == 'Attention' %}
+                        <span class="checkin-badge checkin-badge--warning">Attention</span>
+                        {% else %}
+                        <span class="checkin-badge checkin-badge--neutral">{{ status or '—' }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endfor %}
 
         <!-- ═══════════ PHOTOS INTÉRIEURES ═══════════ -->
         {% if data.interior_photos %}

@@ -1,4 +1,4 @@
-from utils.checkpoints import get_checkpoints_for_vehicle, BASE_CHECKPOINTS
+from utils.checkpoints import get_checkpoints_for_vehicle, BASE_CHECKPOINTS, ALL_POSSIBLE_CHECKPOINTS
 from services.admin.utils import _parse_photos_json, _delete_inspection_files, _is_ready
 from utils.n8n import trigger_n8n_webhook
 import json
@@ -60,8 +60,7 @@ def _format_checkin_admin(c: CheckinVehicle, vehicle_map, batch_configs=None):
 
     # Detail fields (for checkin_detail.html)
     data["control_status"] = status
-    data["km"] = str(
-        c.kilometrage_retour) if c.kilometrage_retour is not None else ""
+    data["battery_charge"] = c.charge_batterie_retour if c.charge_batterie_retour is not None else None
     data["battery"] = str(
         c.charge_batterie_retour) if c.charge_batterie_retour is not None else ""
     data["tires"] = c.etat_pneus or "—"
@@ -75,6 +74,21 @@ def _format_checkin_admin(c: CheckinVehicle, vehicle_map, batch_configs=None):
     data["horn"] = c.etat_klaxon or "—"
     data["safety_triangle"] = c.presence_triangle_gilet or "—"
     data["fire_extinguisher"] = c.presence_extincteur or "—"
+
+    # New checkpoints
+    data["fonctionnement_vitesses"] = c.fonctionnement_vitesses or "—"
+    data["moteur_assistance"] = c.moteur_assistance or "—"
+    data["test_roulage"] = c.test_roulage or "—"
+    data["serrage_roues"] = c.serrage_roues or "—"
+    data["tension_chaine"] = c.tension_chaine or "—"
+    data["serrage_arceau"] = c.serrage_arceau or "—"
+    data["serrage_plaques_sieges"] = c.serrage_plaques_sieges or "—"
+    data["ceinture_securite"] = c.ceinture_securite or "—"
+    data["casques_passagers"] = c.casques_passagers or "—"
+    data["protections_pilote"] = c.protections_pilote or "—"
+    data["systeme_communication"] = c.systeme_communication or "—"
+    data["mallette_accessoires"] = c.mallette_accessoires or "—"
+
     data["interior_photos"] = _parse_photos_json(c.photos_interieur)
     data["exterior_photos"] = _parse_photos_json(c.photos_exterieur)
     data["notes"] = c.observations or ""
@@ -233,6 +247,7 @@ def get_checkin_form_context():
         "projects": projects_formatted,
         "vehicles": vehicles,
         "users": users_formatted,
+        "checkpoints": ALL_POSSIBLE_CHECKPOINTS,
         "checkpoints_config_json": json.dumps(checkpoints_mapping),
         "default_checkpoints_json": json.dumps(BASE_CHECKPOINTS),
     }
@@ -303,7 +318,6 @@ def create_checkin(form, files=None):
         project_id=int(pid) if pid and pid != "None" else None,
         user_id=user_id,
         vehicule_controle=vehicle_id if vehicle_id != "None" else None,
-        kilometrage_retour=float(form.get("km")) if form.get("km") else None,
         charge_batterie_retour=float(
             form.get("battery")) if form.get("battery") else None,
         etat_pneus=get_val("tires"),
@@ -317,6 +331,18 @@ def create_checkin(form, files=None):
         etat_klaxon=get_val("horn"),
         presence_triangle_gilet=get_val("safety_triangle"),
         presence_extincteur=get_val("fire_extinguisher"),
+        fonctionnement_vitesses=get_val("fonctionnement_vitesses"),
+        moteur_assistance=get_val("moteur_assistance"),
+        test_roulage=get_val("test_roulage"),
+        serrage_roues=get_val("serrage_roues"),
+        tension_chaine=get_val("tension_chaine"),
+        serrage_arceau=get_val("serrage_arceau"),
+        serrage_plaques_sieges=get_val("serrage_plaques_sieges"),
+        ceinture_securite=get_val("ceinture_securite"),
+        casques_passagers=get_val("casques_passagers"),
+        protections_pilote=get_val("protections_pilote"),
+        systeme_communication=get_val("systeme_communication"),
+        mallette_accessoires=get_val("mallette_accessoires"),
         observations=form.get("notes"),
     )
 
@@ -331,7 +357,8 @@ def create_checkin(form, files=None):
             raise ValueError(
                 "Le départ de ce véhicule n'a pas été validé par une signature.")
 
-    record.vehicule_pret_retour = _is_ready(form, record.vehicule_controle)
+    record.vehicule_pret_retour = _is_ready(
+        form, record.vehicule_controle, is_checkout=False)
     db.session.add(record)
     db.session.commit()
 
@@ -354,8 +381,6 @@ def update_checkin(record_id, form, files=None):
     record.user_id = int(uid) if uid and uid != "None" else None
     record.vehicule_controle = form.get("vehicle_id") if form.get(
         "vehicle_id") != "None" else None
-    if form.get("km"):
-        record.kilometrage_retour = float(form.get("km"))
     if form.get("battery"):
         record.charge_batterie_retour = float(form.get("battery"))
 
@@ -382,8 +407,21 @@ def update_checkin(record_id, form, files=None):
     record.etat_klaxon = get_val("horn")
     record.presence_triangle_gilet = get_val("safety_triangle")
     record.presence_extincteur = get_val("fire_extinguisher")
+    record.fonctionnement_vitesses = get_val("fonctionnement_vitesses")
+    record.moteur_assistance = get_val("moteur_assistance")
+    record.test_roulage = get_val("test_roulage")
+    record.serrage_roues = get_val("serrage_roues")
+    record.tension_chaine = get_val("tension_chaine")
+    record.serrage_arceau = get_val("serrage_arceau")
+    record.serrage_plaques_sieges = get_val("serrage_plaques_sieges")
+    record.ceinture_securite = get_val("ceinture_securite")
+    record.casques_passagers = get_val("casques_passagers")
+    record.protections_pilote = get_val("protections_pilote")
+    record.systeme_communication = get_val("systeme_communication")
+    record.mallette_accessoires = get_val("mallette_accessoires")
     record.observations = form.get("notes")
-    record.vehicule_pret_retour = _is_ready(form, record.vehicule_controle)
+    record.vehicule_pret_retour = _is_ready(
+        form, record.vehicule_controle, is_checkout=False)
 
     db.session.commit()
 

@@ -62,6 +62,12 @@
                     </div>
 
                 </div>
+                <div>
+                    <div style="font-size: 0.85rem; color: var(--grey-2);">Charge batterie</div>
+                    <div style="font-weight: 500;">{{ data.battery_charge if data.battery_charge is not none else '—'
+                        }}%
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -95,30 +101,43 @@
                 </div>
             </div><br>
             {% endif %}
-            <div class="admin-card-title">Points de contrôle</div>
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem;">
-                {% for item in data.check_items %}
+            {% set grouped_check_items = {} %}
+            {% for item in data.check_items %}
+            {% if item.type == 'status' %}
+            {% set cat = item.category or 'Autre' %}
+            {% if cat not in grouped_check_items %}
+            {% set _ = grouped_check_items.update({cat: []}) %}
+            {% endif %}
+            {% set _ = grouped_check_items[cat].append(item) %}
+            {% endif %}
+            {% endfor %}
+
+            {% for cat, items in grouped_check_items.items() %}
+            <div class="admin-card-title"
+                style="font-size: 0.9rem; margin-top: 1rem; border-bottom: 1px solid var(--admin-border);">{{ cat }}
+            </div>
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                {% for item in items %}
                 <div style="background: var(--admin-bg); padding: 0.8rem; border-radius: 6px;">
                     <div style="font-size: 0.75rem; color: var(--grey-2); text-transform: uppercase;">{{ item.label }}
                     </div>
                     <div style="font-weight: 600;">
-                        {% if item.type == 'status' %}
-                        {% if data[item.key] == 'OK' %}
+                        {% set val = data[item.key] %}
+                        {% if val == 'OK' %}
                         <span class="badge-pill" data-val="OK">OK</span>
-                        {% elif data[item.key] == 'À vérifier' %}
+                        {% elif val == 'À vérifier' %}
                         <span class="badge-pill" data-val="À vérifier">À vérifier</span>
-                        {% elif data[item.key] == 'Défaut' %}
+                        {% elif val == 'Défaut' %}
                         <span class="badge-pill" data-val="Défaut">Défaut</span>
                         {% else %}
                         <span class="badge-pill" data-val="Neutral">——</span>
-                        {% endif %}
-                        {% else %}
-                        <span class="badge-pill" data-val="Neutral">{{ data[item.key] or "——" }} {{ item.unit }}</span>
                         {% endif %}
                     </div>
                 </div>
                 {% endfor %}
             </div>
+            {% endfor %}
 
             {% if data.notes %}
             <div class="admin-card">
