@@ -22,22 +22,23 @@
                     <th>Prénom</th>
                     <th>Nom</th>
                     <th>Email</th>
+                    <th>Poste</th>
                     <th>Rôle</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for u in users %}
-                {% set f = u.fields %}
                 <tr class="user-row">
-                    <td class="searchable">{{ f.get('firstname', '—') }}</td>
+                    <td class="searchable">{{ u.firstname or '—' }}</td>
                     <td class="searchable">
-                        <div class="admin-list-title">{{ f.get('lastname', '—') }}</div>
+                        <div class="admin-list-title">{{ u.lastname or '—' }}</div>
                     </td>
-                    <td class="searchable">{{ f.get('mail', '—') }}</td>
+                    <td class="searchable">{{ u.mail or '—' }}</td>
+                    <td class="searchable">{{ u.job or '—' }}</td>
                     <td class="searchable">
-                        <span class="badge-pill" data-val="{{ f.get('role', 'user') }}">
-                            {{ f.get('role', 'user') }}
+                        <span class="badge-pill" data-val="{{ u.role or 'user' }}">
+                            {{ u.role or 'user' }}
                         </span>
                     </td>
                     <td>

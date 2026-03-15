@@ -502,9 +502,17 @@
     width: 100%;
     padding: 0.8rem;
     border: 1px solid var(--white-3);
-    font-size: 1rem;
+    font-size: 0.9rem;
     box-sizing: border-box;
     caret-color: var(--admin-accent);
+    transition: all 0.2s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    box-shadow: none;
+    border: 1px solid var(--admin-accent);
+    background-color: #ffc84510;
 }
 
 input[type="checkbox"] {
@@ -567,13 +575,21 @@ input[type="checkbox"]:checked {
     font-weight: 400;
     padding: 0.8rem;
     border: 1px solid var(--white-3);
-    font-size: 1rem;
+    font-size: 0.9rem;
     box-sizing: border-box;
     caret-color: var(--admin-accent);
     height: 42px;
     display: flex;
     align-items: center;
     padding-left: 0.5rem;
+    border-radius: 0;
+}
+
+.select2-container .select2-selection--single:focus {
+    border: 1px solid var(--admin-accent);
+    background-color: #ffc84510;
+    outline: none;
+    box-shadow: none;
 }
 
 .select2-container--default .select2-selection--single .select2-selection__arrow {

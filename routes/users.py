@@ -20,7 +20,9 @@ def init_users_routes(app):
                 "firstname": request.form.get("firstname"),
                 "lastname": request.form.get("lastname"),
                 "mail": request.form.get("mail"),
-                "role": request.form.get("role")
+                "role": request.form.get("role"),
+                "phone": request.form.get("phone"),
+                "job": request.form.get("job")
             }
             if create_user(data):
                 flash("Utilisateur créé avec succès.", "success")
@@ -41,14 +43,16 @@ def init_users_routes(app):
                 "firstname": request.form.get("firstname"),
                 "lastname": request.form.get("lastname"),
                 "mail": request.form.get("mail"),
-                "role": request.form.get("role")
+                "role": request.form.get("role"),
+                "phone": request.form.get("phone"),
+                "job": request.form.get("job")
             }
             if update_user(record_id, data):
                 flash("Utilisateur mis à jour avec succès.", "success")
                 return redirect(url_for("admin_users_list"))
             flash("Erreur lors de la mise à jour de l'utilisateur.", "error")
 
-        return render_template("admin/user_form.html", is_edit=True, data=user.get("fields", {}), record_id=record_id)
+        return render_template("admin/user_form.html", is_edit=True, data=user, record_id=record_id)
 
     @app.route("/admin/users/<record_id>/delete", methods=["POST"])
     @require_roles('administrator')

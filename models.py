@@ -20,11 +20,16 @@ class User(db.Model):
     lastname = db.Column(db.String(100), nullable=False)
     mail = db.Column(db.String(255), unique=True, nullable=False)
     phone = db.Column(db.String(50))
+    job = db.Column(db.String(100))
     role = db.Column(db.String(50))  # ex: Administrator, Manager
 
     # Relations
     checkout_vehicles = db.relationship(
         "CheckoutVehicle", backref="responsible_user", lazy=True)
+
+    @property
+    def role_lower(self):
+        return self.role.lower() if self.role else 'user'
 
     def __repr__(self):
         return f"<User {self.firstname} {self.lastname}>"

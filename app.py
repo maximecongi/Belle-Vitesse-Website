@@ -13,7 +13,7 @@ from utils.database import (
     get_grips_categories,
 )
 from utils.database import init_checkout_db, init_checkin_db
-from models import db
+from models import db, User
 from services.sql_logger import init_sql_logger
 
 SUPPORTED_LANGS = ('en', 'fr')
@@ -240,12 +240,19 @@ def create_app():
 
         def _load_db_context(is_admin):
             if is_admin:
+                user_id = session.get('admin_user_id')
+                user = db.session.get(User, user_id) if user_id else None
+
                 return {
-                    "current_user": {
-                        "firstname": session.get('admin_user_firstname'),
-                        "lastname": session.get('admin_user_lastname'),
+                    "current_user": user if user else {
+                        "id": session.get('admin_user_id', 0),
+                        "firstname": session.get('admin_user_firstname', ''),
+                        "lastname": session.get('admin_user_lastname', ''),
                         "role": session.get('admin_user_role', 'User'),
-                        "role_lower": session.get('admin_user_role', 'User').lower()
+                        "role_lower": session.get('admin_user_role', 'User').lower(),
+                        "mail": "",
+                        "job": "",
+                        "phone": ""
                     },
                     "vehicles": get_vehicles(),
                 }

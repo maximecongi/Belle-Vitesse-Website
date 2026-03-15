@@ -58,21 +58,46 @@ document.addEventListener('click', e => {
     }
 });
 
-// Active nav link — une seule fois, pas dans init()
-const currentPath = window.location.pathname;
-document.querySelectorAll('.admin-nav-item').forEach(link => {
-    const href = link.getAttribute('href');
-    if (href === currentPath || (currentPath.startsWith(href) && href !== '/admin/dashboard')) {
-        link.classList.add('active');
-        // Si ce lien est dans un groupe, on ouvre automatiquement le groupe (Optionnel, à voir si désiré)
-        const group = link.closest('.admin-nav-group');
-        if (group && group.dataset.navGroup) {
-            // Parfois c'est utile de forcer l'ouverture si on est sur une page du groupe
-            // group.classList.add('open');
-            // localStorage.setItem(`nav-group-${group.dataset.navGroup}`, 'open');
+// Active nav link logic
+function updateActiveNavLink() {
+    const currentPath = window.location.pathname;
+    let bestMatch = null;
+    let maxLen = -1;
+
+    const navItems = document.querySelectorAll('.admin-nav-item');
+    navItems.forEach(link => {
+        link.classList.remove('active');
+        const href = link.getAttribute('href');
+        if (!href || href === '#' || href === '') return;
+
+        // Exact match is always priority
+        if (href === currentPath) {
+            bestMatch = link;
+            maxLen = 999;
+        } else if (currentPath.startsWith(href) && href !== '/admin/dashboard' && href !== '/admin') {
+            // Prefix match: keep the longest one (e.g. /admin/projects/archives vs /admin/projects)
+            if (href.length > maxLen) {
+                maxLen = href.length;
+                bestMatch = link;
+            }
         }
+    });
+
+    if (bestMatch) {
+        bestMatch.classList.add('active');
     }
-});
+}
+
+// Initial call
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', updateActiveNavLink);
+} else {
+    updateActiveNavLink();
+}
+
+// Swup support: update active link when content is replaced
+document.addEventListener('swup:contentReplaced', updateActiveNavLink);
+document.addEventListener('swup:transitionEnd', updateActiveNavLink);
 
 
 // ─────────────────────────────────────────────
@@ -395,14 +420,14 @@ function init() {
     // ─────────────────────────────────────────────
     // 4. Checkouts list — search filter
     // ─────────────────────────────────────────────
-    const searchInput = document.getElementById('search-input');
-    if (searchInput) {
+    const checkoutSearchInput = document.getElementById('search-input');
+    if (checkoutSearchInput) {
         const tbody = document.getElementById('checkouts-tbody') || document.getElementById('checkins-tbody');
         const rows = tbody.querySelectorAll('tr[data-search]');
         const resultCount = document.getElementById('result-count');
         const noResults = document.getElementById('no-results');
 
-        searchInput.addEventListener('input', (e) => {
+        checkoutSearchInput.addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase().trim();
             let visibleCount = 0;
 
@@ -559,17 +584,31 @@ function init() {
         updateMinDates();
     }
     // ─────────────────────────────────────────────
-    // 9. Table search (contacts_list, productions_list)
+    // 9. Centralized Search (handles q= URL param + data-search rows)
     // ─────────────────────────────────────────────
-    const simpleSearch = document.getElementById('searchInput');
-    if (simpleSearch) {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
         const rows = document.querySelectorAll('.searchable-row');
-        simpleSearch.addEventListener('input', e => {
-            const q = e.target.value.toLowerCase().trim();
+
+        const filterItems = (query) => {
+            const q = query.toLowerCase().trim();
             rows.forEach(row => {
                 const searchText = (row.getAttribute('data-search') || '') + ' ' + row.textContent.toLowerCase();
                 row.style.display = searchText.includes(q) ? '' : 'none';
             });
+        };
+
+        // Handle URL parameter 'q' on load
+        const urlParams = new URLSearchParams(window.location.search);
+        const qParam = urlParams.get('q');
+        if (qParam) {
+            searchInput.value = qParam;
+            filterItems(qParam);
+        }
+
+        // Handle real-time input
+        searchInput.addEventListener('input', e => {
+            filterItems(e.target.value);
         });
     }
 

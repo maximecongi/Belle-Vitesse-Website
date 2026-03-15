@@ -21,21 +21,22 @@
 
         <div class="form-group">
             <label class="form-label" for="f-job">Poste</label>
-            <input type="text" id="f-job" class="form-input" value="{{ current_user.role }}" oninput="update()">
+            <input type="text" id="f-job" class="form-input" value="{{ current_user.job }}" oninput="update()">
         </div>
 
         <div class="form-group">
             <label class="form-label" for="f-email">Email (préfixe)</label>
             <div style="display: flex; align-items: center;">
-                <input type="text" id="f-email" class="form-input" style="flex: 1;" placeholder="prénom"
-                    oninput="update()">
-                <span style="margin-left: 0.5rem; color: var(--grey-2); font-size: 0.9rem;">@bellevitesse.com</span>
+                <input type="text" id="f-email" class="form-input" style="flex: 1;"
+                    value="{{ current_user.mail.split('@')[0] }}" oninput="update()">
+                <span
+                    style="padding: 0.5rem;color: var(--white-4);font-size: 0.7rem;backgrou;background-color: var(--neutral-bg);display: flex;height: 100%;font-family: monospace;align-items: center;justify-content: flex-start;">@bellevitesse.com</span>
             </div>
         </div>
 
         <div class="form-group">
             <label class="form-label" for="f-phone">Téléphone</label>
-            <input type="text" id="f-phone" class="form-input" placeholder="+33 6 00 00 00 00" oninput="update()">
+            <input type="text" id="f-phone" class="form-input" value="{{ current_user.phone }}" oninput="update()">
         </div>
     </div>
 

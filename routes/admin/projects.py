@@ -32,13 +32,26 @@ def init_projects_routes(app):
             today_iso = datetime.now().strftime('%Y-%m-%d')
             upcoming_projects = [p for p in projects
                                  if p.get("raw_return_date") >= today_iso]
-            past_projects = [p for p in projects
-                             if p.get("raw_return_date") < today_iso]
-            return render_template("admin/projects_list.html", upcoming_projects=upcoming_projects, past_projects=past_projects)
+            return render_template("admin/projects_list.html", projects=upcoming_projects, is_archive=False)
         except Exception as e:
             current_app.logger.error(f"❌ Error in admin_projects_list: {e}")
             flash("Erreur lors de la récupération des projets.", "error")
-            return render_template("admin/projects_list.html", upcoming_projects=[], past_projects=[])
+            return render_template("admin/projects_list.html", projects=[], is_archive=False)
+
+    @app.route("/admin/projects/archives")
+    @require_roles('administrator', 'manager')
+    def admin_projects_archives():
+        try:
+            projects = list_projects()
+            today_iso = datetime.now().strftime('%Y-%m-%d')
+            past_projects = [p for p in projects
+                             if p.get("raw_return_date") < today_iso]
+            return render_template("admin/projects_list.html", projects=past_projects, is_archive=True)
+        except Exception as e:
+            current_app.logger.error(
+                f"❌ Error in admin_projects_archives: {e}")
+            flash("Erreur lors de la récupération des archives.", "error")
+            return render_template("admin/projects_list.html", projects=[], is_archive=True)
 
     @app.route("/admin/projects/new", methods=["GET", "POST"])
     @require_roles('administrator', 'manager')
@@ -95,4 +108,3 @@ def init_projects_routes(app):
             current_app.logger.error(f"❌ Error deleting project: {e}")
             flash(f"Erreur lors de la suppression : {str(e)}", "error")
             return redirect(url_for("admin_project_edit", record_id=record_id))
-
