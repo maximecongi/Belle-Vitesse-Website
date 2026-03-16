@@ -51,24 +51,26 @@ ALL_POSSIBLE_CHECKPOINTS = [
      'detail': 'Trike : chambre à air ×2, chargeur, pompe, outils · Stark & Twizy : pièces de rechange, outils, bijouterie, chargeur'},
 ]
 
-# Legacy hardcoded configs (will be used as first-time defaults if DB is empty)
-LEGACY_CHECKPOINTS_CONFIG = {
+# Specific detail overrides by vehicle type/name
+SPECIFIC_DETAILS = {
     "eCar": [
-        ("tires", "eCar : 2 bar"), "brakes", "test_roulage", ("serrage_roues",
-                                                              "eCar : 110 Nm"), ("serrage_arceau", "eCar : 45 Nm"),
-        "serrage_plaques_sieges", "battery", "lights", "horn", "mallette_accessoires"
+        ("tires", "eCar : 2 bar"),
+        ("serrage_roues", "eCar : 110 Nm"),
+        ("serrage_arceau", "eCar : 45 Nm"),
+        ("mallette_accessoires",
+         "eCar : pièces de rechange, outils, bijouterie, chargeur"),
     ],
     "eTrike": [
-        ("tires", "eTrike/eTrike 360 : 3 bar"), "brakes", "fonctionnement_vitesses", "moteur_assistance", (
-            "serrage_roues", "eTrike/eTrike 360 : 12 Nm"),
-        "serrage_plaques_sieges", "battery", "ceinture_securite", "casques_passagers", (
-            "mallette_accessoires", "Trike : chambre à air ×2, chargeur, pompe, outils")
+        ("tires", "eTrike/eTrike 360 : 3 bar"),
+        ("serrage_roues", "eTrike/eTrike 360 : 12 Nm"),
+        ("mallette_accessoires", "Trike : chambre à air ×2, chargeur, pompe, outils"),
     ],
     "eBike": [
-        ("tires", "eBike : voir flanc pneu"), "brakes", "fonctionnement_vitesses", "moteur_assistance", (
-            "serrage_roues", "eBike : 110 Nm"),
-        "tension_chaine", ("serrage_arceau",
-                           "eBike : 45 Nm"), "battery", "protections_pilote", "systeme_communication", ("mallette_accessoires", "eBike : pièces de rechange, outils, bijouterie, chargeur"), ("malette_accessoires", "eCar : pièces de rechange, outils, bijouterie, chargeur")
+        ("tires", "eBike : voir flanc pneu"),
+        ("serrage_roues", "eBike : 110 Nm"),
+        ("serrage_arceau", "eBike : 45 Nm"),
+        ("mallette_accessoires",
+         "eBike : pièces de rechange, outils, bijouterie, chargeur"),
     ],
 }
 
@@ -101,68 +103,79 @@ def get_checkpoints_for_vehicle(vehicle_id: str, batch_configs=None, vehicle_nam
     if not vehicle_name:
         vehicle_name = vehicle_id
 
+    # Try to resolve actual name from DB/Airtable if we only have an ID so we can match SPECIFIC_DETAILS later
+    if has_app_context() and vehicle_id.startswith('rec') and vehicle_name == vehicle_id:
+        try:
+            from utils.database import get_vehicles
+            vehicles = get_vehicles()
+            for v in vehicles:
+                if v['id'] == vehicle_id:
+                    vehicle_name = v['fields'].get('name', vehicle_id)
+                    break
+        except Exception:
+            pass
+
+    # 1. Try batch_configs first (passed from service layer)
+    if batch_configs and vehicle_id in batch_configs:
+        config = batch_configs[vehicle_id]
+        if isinstance(config, dict):
+            # DB config is a dict {key: bool}
+            enabled_keys = {k for k, v in config.items() if v}
+        else:
+            # Legacy or other format might be a list
+            enabled_keys = config
+
+        return BASE_CHECKPOINTS + _resolve_checkpoints(enabled_keys, vehicle_name)
+
     # 2. Try to get from DB if in app context
     if has_app_context():
         try:
             config_record = VehicleCheckpointConfig.query.filter_by(
                 vehicle_id=vehicle_id).first()
 
-            if not config_record and vehicle_id.startswith('rec'):
-                try:
-                    from utils.database import get_vehicles
-                    vehicles = get_vehicles()
-                    for v in vehicles:
-                        if v['id'] == vehicle_id:
-                            vehicle_name = v['fields'].get('name', vehicle_id)
-                            break
-                except Exception:
-                    pass
-
-                if vehicle_name != vehicle_id:
-                    config_record = VehicleCheckpointConfig.query.filter_by(
-                        vehicle_id=vehicle_name).first()
+            if not config_record and vehicle_id.startswith('rec') and vehicle_name != vehicle_id:
+                config_record = VehicleCheckpointConfig.query.filter_by(
+                    vehicle_id=vehicle_name).first()
 
             if config_record and config_record.config:
                 # DB config is usually {key: bool}
                 enabled_keys = {
                     k for k, v in config_record.config.items() if v}
-                return BASE_CHECKPOINTS + _resolve_checkpoints(enabled_keys)
+                return BASE_CHECKPOINTS + _resolve_checkpoints(enabled_keys, vehicle_name)
         except Exception as e:
             if current_app:
                 current_app.logger.error(f"Error fetching vehicle config: {e}")
-
-    # 3. Fallback to hardcoded legacy rules
-    vehicle_search_name = vehicle_name or vehicle_id
-    for key, enabled_keys in LEGACY_CHECKPOINTS_CONFIG.items():
-        if key.lower() in vehicle_search_name.lower():
-            return BASE_CHECKPOINTS + _resolve_checkpoints(enabled_keys)
 
     # Final fallback: return ALL possible checkpoints
     return BASE_CHECKPOINTS + ALL_POSSIBLE_CHECKPOINTS
 
 
-def _resolve_checkpoints(enabled_keys) -> list:
-    """Helper to build list of checkpoint dicts, supporting optional tuples for detail override."""
-    # Convert enabled_keys to a map for easy lookup: {key: detail_override or None}
-    overrides = {}
+def _resolve_checkpoints(enabled_keys, vehicle_name=None) -> list:
+    """Helper to build list of checkpoint dicts, supporting optional detail overrides from SPECIFIC_DETAILS."""
+    # Base enabled keys (usually just a set/list of strings from DB)
+    enabled_keys_set = set()
     for item in enabled_keys:
-        if isinstance(item, (tuple, list)) and len(item) >= 2:
-            overrides[item[0]] = item[1]
+        if isinstance(item, (tuple, list)) and len(item) >= 1:
+            enabled_keys_set.add(item[0])
         else:
-            overrides[item] = None
+            enabled_keys_set.add(item)
+
+    # Find specific details for the given vehicle
+    detail_overrides = {}
+    if vehicle_name:
+        for v_type, specific_list in SPECIFIC_DETAILS.items():
+            if v_type.lower() in vehicle_name.lower():
+                for item in specific_list:
+                    if isinstance(item, (tuple, list)) and len(item) >= 2:
+                        detail_overrides[item[0]] = item[1]
+                break
 
     result = []
     for cp in ALL_POSSIBLE_CHECKPOINTS:
-        if cp['key'] in overrides:
-            # Clone and override detail if provided
+        if cp['key'] in enabled_keys_set:
             new_cp = cp.copy()
-            if overrides[cp['key']]:
-                new_cp['detail'] = overrides[cp['key']]
+            if cp['key'] in detail_overrides:
+                new_cp['detail'] = detail_overrides[cp['key']]
             result.append(new_cp)
-    return result
 
-    # Final fallback: return ALL possible checkpoints if unknown vehicle
-    if current_app:
-        current_app.logger.warning(
-            f"⚠️ No match found for '{vehicle_search_name}', returning ALL checkpoints.")
-    return BASE_CHECKPOINTS + ALL_POSSIBLE_CHECKPOINTS
+    return result

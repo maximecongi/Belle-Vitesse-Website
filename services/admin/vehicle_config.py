@@ -1,6 +1,6 @@
 from models import db, VehicleCheckpointConfig
 from utils.database import get_vehicles
-from utils.checkpoints import LEGACY_CHECKPOINTS_CONFIG, ALL_POSSIBLE_CHECKPOINTS
+from utils.checkpoints import ALL_POSSIBLE_CHECKPOINTS
 
 
 def get_vehicles_with_config():
@@ -21,15 +21,9 @@ def get_vehicles_with_config():
             record_id) or local_configs.get(name)
 
         if not current_config:
-            # Fallback logic to show what's currently active via legacy rules
-            enabled_keys = []
-            for key, keys in LEGACY_CHECKPOINTS_CONFIG.items():
-                if key.lower() in name.lower():
-                    enabled_keys = keys
-                    break
-
-            current_config = {cp['key']: (cp['key'] in enabled_keys)
-                              for cp in ALL_POSSIBLE_CHECKPOINTS}
+            # Default to no checkpoints enabled if not configured
+            current_config = {
+                cp['key']: False for cp in ALL_POSSIBLE_CHECKPOINTS}
 
         results.append({
             'id': record_id,
