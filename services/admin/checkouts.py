@@ -99,6 +99,7 @@ def _format_checkout_admin(c: CheckoutVehicle, vehicle_map, batch_configs=None):
             str(c.project.date_retour)) if c.project.date_retour else "—"
         data["vehicle_id"] = c.vehicule_controle
         data["project_id"] = str(c.project.id)
+        data["project_id_unique"] = c.project.project_id
         data["project_name"] = c.project.nom
 
         # Get vehicle name for display
@@ -460,7 +461,8 @@ def delete_checkout(record_id):
         webhook_url = os.getenv("N8N_WEBHOOK_CHECKOUT_SIGN")
         if webhook_url:
             trigger_n8n_webhook(webhook_url, method="DELETE",
-                                inspection_id=record.numero_inspection)
+                                inspection_id=record.numero_inspection,
+                                project_id=record.project.project_id if record.project else None)
 
         # 1. Clean up database records related to this inspection
         if record.numero_inspection:

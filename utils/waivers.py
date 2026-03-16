@@ -189,6 +189,7 @@ def _trigger_n8n_webhook(waiver, rel_pdf_path, domain, current_hash):
             "event": "pilot_waiver_signed",
             "id": waiver.id,
             "waiver_id": waiver.waiver_id,
+            "project_id": waiver.project.project_id,
             "year": ref_date.strftime("%Y"),
             "month": ref_date.strftime("%m"),
             "pilot": {
@@ -364,6 +365,7 @@ def _trigger_n8n_webhook_production(waiver, rel_pdf_path, domain, current_hash):
             "event": "production_waiver_signed",
             "id": waiver.id,
             "waiver_id": waiver.waiver_id,
+            "project_id": waiver.project.project_id,
             "year": ref_date.strftime("%Y"),
             "month": ref_date.strftime("%m"),
             "production": {

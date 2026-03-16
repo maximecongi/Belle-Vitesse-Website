@@ -102,6 +102,7 @@ def _format_checkin_admin(c: CheckinVehicle, vehicle_map, batch_configs=None):
             str(c.project.date_fin_tournage)) if c.project.date_fin_tournage else "—"
         data["vehicle_id"] = c.vehicule_controle
         data["project_id"] = str(c.project.id)
+        data["project_id_unique"] = c.project.project_id
         data["project_name"] = c.project.nom
 
         # Get vehicle name for display
@@ -452,7 +453,8 @@ def delete_checkin(record_id):
         webhook_url = os.getenv("N8N_WEBHOOK_CHECKIN_SIGN")
         if webhook_url:
             trigger_n8n_webhook(webhook_url, method="DELETE",
-                                inspection_id=record.numero_inspection)
+                                inspection_id=record.numero_inspection,
+                                project_id=record.project.project_id if record.project else None)
 
         _delete_inspection_files(record)
         db.session.delete(record)

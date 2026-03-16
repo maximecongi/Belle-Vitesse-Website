@@ -237,6 +237,7 @@ def _trigger_n8n_webhook(inspection_id, rel_pdf_path, base_url, current_hash, da
 
         webhook_payload = {
             "inspection_id": inspection_id,
+            "project_id": data.get("project_id_unique", "—"),
             "pdf_url": pdf_url_signed,
             "hash": current_hash,
             "production": data.get("production", "—"),

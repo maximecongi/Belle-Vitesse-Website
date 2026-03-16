@@ -22,7 +22,7 @@ def trigger_n8n_webhook(url: str, method: str = "POST", **kwargs) -> bool:
 
     # Extract ID for logging if available (e.g., inspection_id)
     doc_id = kwargs.get("inspection_id") or kwargs.get(
-        "waiver_id") or kwargs.get("id", "")
+        "waiver_id") or kwargs.get("project_id") or kwargs.get("id", "")
     log_suffix = f" for {doc_id}" if doc_id else ""
 
     logger.info(f"🚀 Triggering n8n webhook ({method}){log_suffix}...")

@@ -195,7 +195,8 @@ def reset_production_waiver(waiver_id):
         webhook_url = os.getenv("N8N_WEBHOOK_PRODUCTION_WAIVER")
         if webhook_url:
             trigger_n8n_webhook(webhook_url, method="DELETE",
-                                waiver_id=waiver.waiver_id)
+                                waiver_id=waiver.waiver_id,
+                                project_id=waiver.project.project_id)
 
         _cleanup_production_waiver_assets(waiver)
         # 2. Réinitialiser les champs de la décharge
@@ -244,7 +245,8 @@ def delete_production_waiver_internal(project_id):
         webhook_url = os.getenv("N8N_WEBHOOK_PRODUCTION_WAIVER")
         if webhook_url:
             trigger_n8n_webhook(webhook_url, method="DELETE",
-                                waiver_id=waiver.waiver_id)
+                                waiver_id=waiver.waiver_id,
+                                project_id=waiver.project.project_id)
 
         _cleanup_production_waiver_assets(waiver)
         db.session.delete(waiver)
@@ -482,7 +484,8 @@ def reset_pilot_waiver(waiver_id):
         webhook_url = os.getenv("N8N_WEBHOOK_PILOT_WAIVER")
         if webhook_url:
             trigger_n8n_webhook(webhook_url, method="DELETE",
-                                waiver_id=waiver.waiver_id)
+                                waiver_id=waiver.waiver_id,
+                                project_id=waiver.project.project_id)
 
         _cleanup_pilot_waiver_assets(waiver)
 
@@ -539,7 +542,8 @@ def delete_pilot_waiver_internal(project_id):
         webhook_url = os.getenv("N8N_WEBHOOK_PILOT_WAIVER")
         if webhook_url:
             trigger_n8n_webhook(webhook_url, method="DELETE",
-                                waiver_id=waiver.waiver_id)
+                                waiver_id=waiver.waiver_id,
+                                project_id=waiver.project.project_id)
 
         _cleanup_pilot_waiver_assets(waiver)
         db.session.delete(waiver)
