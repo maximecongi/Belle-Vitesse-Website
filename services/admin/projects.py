@@ -228,11 +228,6 @@ def delete_project(record_id):
     """Delete a project record from the database and its associated pilot waiver."""
     p = db.session.get(Project, record_id)
     if p:
-        # Trigger n8n delete before database deletion
-        webhook_url = os.getenv("N8N_WEBHOOK_PROJECT")
-        if webhook_url:
-            trigger_n8n_webhook(webhook_url, method="DELETE",
-                                project_id=p.project_id)
 
         from services.admin.waivers import delete_pilot_waiver_internal, delete_production_waiver_internal
         delete_pilot_waiver_internal(record_id)
