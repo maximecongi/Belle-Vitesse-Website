@@ -230,7 +230,7 @@
         {% for cat, items in grouped_checkpoints.items() %}
         {% set bg_style = "background: hsl(45, 100%, 96%); border: 1px solid hsl(45, 100%, 85%);" if cat == "Sécurité"
         else "background: hsl(210, 100%, 96%); border: 1px solid hsl(210, 100%, 85%);" %}
-        <div style="{{ bg_style }} padding: 1.5rem; margin-bottom: 2rem;">
+        <div class="checkpoint-group" style="{{ bg_style }} padding: 1.5rem; margin-bottom: 2rem;">
             <div class="admin-card-title"
                 style="margin-top: 0; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 0.5rem;">
                 {{ cat }}</div>
@@ -382,6 +382,9 @@
             document.querySelectorAll('.checkpoint-field').forEach(fieldEl => {
                 fieldEl.style.display = 'none';
             });
+            document.querySelectorAll('.checkpoint-group').forEach(groupEl => {
+                groupEl.style.display = 'none';
+            });
             if (submitBtn) submitBtn.disabled = true;
             return;
         }
@@ -417,6 +420,16 @@
                 fieldEl.style.display = 'none';
                 if (inputEl) inputEl.required = false;
             }
+        });
+
+        // Hide empty groups
+        document.querySelectorAll('.checkpoint-group').forEach(groupEl => {
+            const fields = groupEl.querySelectorAll('.checkpoint-field');
+            let hasVisibleField = false;
+            fields.forEach(f => {
+                if (f.style.display !== 'none') hasVisibleField = true;
+            });
+            groupEl.style.display = hasVisibleField ? '' : 'none';
         });
     }
 

@@ -64,8 +64,10 @@
                 </div>
                 <div>
                     <div style="font-size: 0.85rem; color: var(--grey-2);">Charge batterie</div>
-                    <div style="font-weight: 500;">{{ data.battery_charge if data.battery_charge is not none else '—'
-                        }}%
+                    <div style="font-weight: 500;"> <span class="badge-pill" data-val="Neutral">{{
+                            data.battery_charge if
+                            data.battery_charge is not none
+                            else '—' }}%</span>
                     </div>
                 </div>
             </div>

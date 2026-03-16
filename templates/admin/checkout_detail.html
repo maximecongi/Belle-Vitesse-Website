@@ -63,9 +63,11 @@
                     </div>
                     <div>
                         <div style="font-size: 0.85rem; color: var(--grey-2);">Charge batterie</div>
-                        <div style="font-weight: 500;">{{ data.battery_charge if data.battery_charge is not none else
-                            '—'
-                            }}%
+                        <div style="font-weight: 500;"> <span class="badge-pill"
+                                data-val="{% if data.battery_charge < 100 %}Défaut{% else %}OK{% endif %}">{{
+                                data.battery_charge if
+                                data.battery_charge is not none
+                                else '—' }}%</span>
                         </div>
                     </div>
                 </div>
@@ -113,13 +115,15 @@
 
                 {% for cat, items in grouped_check_items.items() %}
                 <div class="admin-card-title"
-                    style="font-size: 0.9rem; margin-top: 1rem; border-bottom: 1px solid var(--admin-border);">{{ cat }}
+                    style="font-size: 0.9rem; margin-top: 1rem; border-bottom: 1px solid var(--admin-border);">{{
+                    cat }}
                 </div>
                 <div
                     style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
                     {% for item in items %}
                     <div style="background: var(--admin-bg); padding: 0.8rem; border-radius: 6px;">
-                        <div style="font-size: 0.75rem; color: var(--grey-2); text-transform: uppercase;">{{ item.label
+                        <div style="font-size: 0.75rem; color: var(--grey-2); text-transform: uppercase;">{{
+                            item.label
                             }}
                         </div>
                         <div style="font-weight: 600;">
@@ -229,7 +233,8 @@
                     onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce checkout ? Cette action est irréversible.');">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                     <button type="submit" class="admin-btn"
-                        style="width: 100%; background: #fee2e2; color: #b91c1c; border-color: #fecaca;">Supprimer ce
+                        style="width: 100%; background: #fee2e2; color: #b91c1c; border-color: #fecaca;">Supprimer
+                        ce
                         checkout</button>
                 </form>
             </div>
