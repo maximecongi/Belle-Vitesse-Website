@@ -11,7 +11,7 @@ from flask import request, session, has_request_context
 from models import SqlQueryLog
 
 # ── File logger setup ─────────────────────────────────────────────────────────
-_log_dir = Path(__file__).parent.parent / "private/sql_logs"
+_log_dir = Path(__file__).parent.parent / "logs/sql_logs"
 _log_dir.mkdir(parents=True, exist_ok=True)
 
 file_handler = logging.FileHandler(
