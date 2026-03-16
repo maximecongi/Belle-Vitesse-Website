@@ -98,7 +98,21 @@ def create_app():
     app.config['SESSION_COOKIE_HTTPONLY'] = True
     app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=12)
+    if os.getenv("FLASK_ENV") == "production":
+        app.config["OUTPUT_FOLDER"] = Path("/app/output")
+        app.config["BACKUPS_FOLDER"] = Path("/app/backups")
+        app.config["LOGS_FOLDER"] = Path("/app/logs")
+    else:
+        app.config["OUTPUT_FOLDER"] = Path(
+            "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/output")
+        app.config["BACKUPS_FOLDER"] = Path(
+            "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/backups")
+        app.config["LOGS_FOLDER"] = Path(
+            "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/logs")
+
     app.config["OUTPUT_FOLDER"].mkdir(parents=True, exist_ok=True)
+    app.config["BACKUPS_FOLDER"].mkdir(parents=True, exist_ok=True)
+    app.config["LOGS_FOLDER"].mkdir(parents=True, exist_ok=True)
 
     # Limiter Config
     if os.getenv("FLASK_ENV") == "production":
