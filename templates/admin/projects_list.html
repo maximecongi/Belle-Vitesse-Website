@@ -116,13 +116,13 @@
                     </div>
                 </td>
                 <td>
-                    <div><span style="color: var(--grey-2);">🏎️</span>
+                    <div style="white-space: nowrap;"><span style="color: var(--grey-2);">🏎️</span>
                         <a href="{{ url_for('admin_contacts_list', q=project.contact_pilote) }}"
                             style="text-decoration: none; color: inherit; font-weight: 500;">
                             {{ project.contact_pilote }}
                         </a>
                     </div><br>
-                    <div style="margin-top: 0.2rem;"><span style="color: var(--grey-2);">🎬</span>
+                    <div style="margin-top: 0.2rem; white-space: nowrap;"><span style="color: var(--grey-2);">🎬</span>
                         <a href="{{ url_for('admin_contacts_list', q=project.contact_production) }}"
                             style="text-decoration: none; color: inherit; font-weight: 500;">
                             {{ project.contact_production }}
