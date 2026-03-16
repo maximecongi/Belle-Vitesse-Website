@@ -166,8 +166,10 @@ def create_project(form):
             project_id=project.project_id,
             name=project.nom,
             production=project.production.nom if project.production else "—",
-            departure_date=str(
-                project.date_depart) if project.date_depart else "—"
+            year=str(project.date_depart.strftime("%Y")
+                     ) if project.date_depart else "—",
+            month=str(project.date_depart.strftime("%m")
+                      ) if project.date_depart else "—",
         )
 
     return True
