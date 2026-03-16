@@ -55,12 +55,12 @@
 }
 
 .admin-btn-tertiary {
-    background-color: white;
+    background-color: var(--yellow);
     color: var(--grey-1);
 }
 
 .admin-btn-tertiary:hover {
-    background-color: var(--yellow);
+    background-color: white;
     color: var(--grey-1);
 }
 
