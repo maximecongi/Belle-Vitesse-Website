@@ -6,7 +6,8 @@ import ast
 from datetime import datetime, timezone
 from pathlib import Path
 from sqlalchemy import event, insert
-from flask import request, session, has_request_context
+from flask import request, session
+from utils.async_tasks import run_async
 
 from models import SqlQueryLog
 
@@ -144,30 +145,50 @@ def init_sql_logger(app, db):
                 except RuntimeError:
                     pass
 
-            ts = datetime.now(timezone.utc)
+            # Extract context info BEFORE starting background thread
+            ctx_data = {
+                'ts': datetime.now(timezone.utc),
+                'user': str(user),
+                'ip_address': ip_address,
+                'endpoint': endpoint,
+                'method': method,
+                'safe_query': safe_query,
+                'safe_params': safe_params,
+                'duration_ms': duration_ms,
+                'parameters': parameters
+            }
 
-            # ── Insert into SQL table ─────────────────────────────────────────
-            try:
-                stmt = insert(SqlQueryLog).values(
-                    timestamp=ts,
-                    user=str(user),
-                    ip_address=ip_address,
-                    endpoint=endpoint,
-                    method=method,
-                    query=safe_query,
-                    parameters=safe_params,
-                    duration_ms=duration_ms
-                )
-                conn.execute(stmt)
-            except Exception as e:
-                app.logger.error(f"sql_logger failed to insert log: {e}")
+            def _log_async():
+                # For table insert, we need a fresh connection from the engine
+                # because the event 'conn' might be closed or in a transaction
+                try:
+                    with db.engine.connect() as log_conn:
+                        stmt = insert(SqlQueryLog).values(
+                            timestamp=ctx_data['ts'],
+                            user=ctx_data['user'],
+                            ip_address=ctx_data['ip_address'],
+                            endpoint=ctx_data['endpoint'],
+                            method=ctx_data['method'],
+                            query=ctx_data['safe_query'],
+                            parameters=ctx_data['safe_params'],
+                            duration_ms=ctx_data['duration_ms']
+                        )
+                        log_conn.execute(stmt)
+                        # SQLAlchemy >= 2.0 requires commit for manual connection
+                        log_conn.commit()
+                except Exception as e:
+                    print(f"CRITICAL: sql_logger failed to insert log: {e}")
 
-            try:
-                readable_query = render_query(safe_query, parameters)
-                logger.info(
-                    f"user={user} | ip={ip_address} | "
-                    f"endpoint={endpoint} | method={method} | "
-                    f"duration={duration_ms:.2f}ms | query={readable_query}"
-                )
-            except Exception as e:
-                app.logger.error(f"sql_logger failed to write file log: {e}")
+                try:
+                    readable_query = render_query(
+                        ctx_data['safe_query'], ctx_data['parameters'])
+                    logger.info(
+                        f"user={ctx_data['user']} | ip={ctx_data['ip_address']} | "
+                        f"endpoint={ctx_data['endpoint']} | method={ctx_data['method']} | "
+                        f"duration={ctx_data['duration_ms']:.2f}ms | query={readable_query}"
+                    )
+                except Exception as e:
+                    print(
+                        f"CRITICAL: sql_logger failed to write file log: {e}")
+
+            run_async(app, _log_async)

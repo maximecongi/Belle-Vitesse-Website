@@ -90,9 +90,9 @@ def create_app():
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SQLALCHEMY_POOL_RECYCLE"] = 280
     app.config["SQLALCHEMY_POOL_PRE_PING"] = True
-    app.config["SQLALCHEMY_POOL_SIZE"] = 5
-    app.config["SQLALCHEMY_MAX_OVERFLOW"] = 10
-    app.config["SQLALCHEMY_POOL_TIMEOUT"] = 10
+    app.config["SQLALCHEMY_POOL_SIZE"] = 10
+    app.config["SQLALCHEMY_MAX_OVERFLOW"] = 20
+    app.config["SQLALCHEMY_POOL_TIMEOUT"] = 30
 
     # Session Config
     app.config['SESSION_COOKIE_HTTPONLY'] = True
