@@ -164,7 +164,7 @@ def create_project(form):
             webhook_url,
             event="project_created",
             project_id=project.project_id,
-            name=project.nom,
+            project=project.nom,
             production=project.production.nom if project.production else "—",
             year=str(project.date_depart.strftime("%Y")
                      ) if project.date_depart else "—",
