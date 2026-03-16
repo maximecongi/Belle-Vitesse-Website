@@ -90,7 +90,7 @@ def process_directory(dir_id, path=""):
     for d in dirs:
         child_path = f"{path}/{d['name']}" if path else d['name']
         child_empty = process_directory(d["id"], child_path)
-        if child_empty:
+        if child_empty and "SÉCURITÉ" in child_path.upper() and "SÉCURITÉ" not in d["name"].upper():
             delete_folder(d["id"], child_path)
             time.sleep(0.1)  # throttle léger
 
@@ -120,7 +120,7 @@ def main():
             dirs = [f for f in top_level if f.get("type") == "dir"]
             for d in dirs:
                 empty = process_directory(d["id"], d["name"])
-                if empty:
+                if empty and "SÉCURITÉ" in d["name"].upper():
                     delete_folder(d["id"], d["name"])
         except Exception as e:
             log.error(f"Erreur lors du listing racine : {e}")
