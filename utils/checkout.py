@@ -13,7 +13,6 @@ from pathlib import Path
 from io import BytesIO
 from dotenv import load_dotenv
 from weasyprint import HTML, CSS
-from utils.pdf import make_url_fetcher
 
 load_dotenv()
 
@@ -118,11 +117,56 @@ def generate_qr_code(data: str) -> str:
     return f"data:image/png;base64,{base64.b64encode(buffered.getvalue()).decode()}"
 
 
+# ── PDF ──────────────────────────────────────────────────────────
+
+def make_url_fetcher(app):
+    from weasyprint import default_url_fetcher
+    from urllib.parse import urlparse, unquote
+
+    import unicodedata
+
+    def fetcher(url):
+        parsed = urlparse(url)
+        path = parsed.path
+
+        # Resolve /static/ to local filesystem
+        if path.startswith("/static/"):
+            rel_path = path[len("/static/"):].lstrip("/")
+            full_path = Path(app.static_folder) / rel_path
+            if full_path.exists():
+                return default_url_fetcher(full_path.as_uri())
+
+        # Resolve /files/ to local filesystem
+        if path.startswith("/files/"):
+            rel_path = unquote(path[len("/files/"):].lstrip("/"))
+
+            # Try OUTPUT_FOLDER (New hierarchical storage)
+            output_base = app.config.get("OUTPUT_FOLDER")
+            if output_base:
+                full_path = Path(output_base) / rel_path
+
+                # MacOS Unicode Normalization handling (NFC/NFD)
+                if not full_path.exists():
+                    nfd_path = unicodedata.normalize('NFD', str(full_path))
+                    if os.path.exists(nfd_path):
+                        full_path = Path(nfd_path)
+
+                if full_path.exists():
+                    logger.info(f"✅ Fetcher found file in OUTPUT: {full_path}")
+                    return default_url_fetcher(full_path.as_uri())
+                else:
+                    logger.warning(
+                        f"❌ Fetcher NOT found in OUTPUT: {full_path}")
+
+        return default_url_fetcher(url)
+    return fetcher
+
+
 def generate_checkout_pdf(html_content: str, base_url: str) -> bytes:
     """
     Generate PDF bytes from HTML content using WeasyPrint.
     """
-    fetcher = make_url_fetcher(current_app._get_current_object())
+    fetcher = make_url_fetcher(current_app)
     html = HTML(string=html_content, base_url=base_url, url_fetcher=fetcher)
 
     css_list = []

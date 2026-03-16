@@ -8,7 +8,6 @@ from flask import current_app, render_template
 
 from models import db, PilotWaiver, PilotWaiverSignedDocument, ProductionWaiver, ProductionWaiverSignedDocument
 from weasyprint import HTML
-from utils.pdf import make_url_fetcher
 from utils.waiver_verification import (
     compute_waiver_seal,
     compute_production_waiver_seal,
@@ -105,8 +104,7 @@ def process_pilot_waiver_signature(waiver_id):
 
         # WeasyPrint PDF generation
         pdf_bytes = HTML(string=html_content,
-                         base_url=base_url_weasy,
-                         url_fetcher=make_url_fetcher(current_app._get_current_object())).write_pdf()
+                         base_url=base_url_weasy).write_pdf()
 
         with open(pdf_path_system, "wb") as f:
             f.write(pdf_bytes)
@@ -296,8 +294,7 @@ def process_production_waiver_signature(waiver_db_id):
 
         # WeasyPrint PDF generation
         pdf_bytes = HTML(string=html_content,
-                         base_url=base_url_weasy,
-                         url_fetcher=make_url_fetcher(current_app._get_current_object())).write_pdf()
+                         base_url=base_url_weasy).write_pdf()
 
         with open(pdf_path_system, "wb") as f:
             f.write(pdf_bytes)

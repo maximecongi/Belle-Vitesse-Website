@@ -3,11 +3,10 @@ import time
 import logging
 import re
 import ast
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
-from sqlalchemy import event
-from flask import request, session
-from utils.async_tasks import run_async
+from sqlalchemy import event, insert
+from flask import request, session, has_request_context
 
 from models import SqlQueryLog
 
@@ -31,6 +30,7 @@ def render_query(query: str, parameters) -> str:
     if not parameters:
         return query
 
+    # parameters peut être un dict ou tuple directement (pas encore stringifié)
     params = parameters
     if isinstance(params, str):
         try:
@@ -64,60 +64,14 @@ def render_query(query: str, parameters) -> str:
     return query
 
 
-def _extract_user_from_session() -> str:
-    """Extrait l'identifiant utilisateur depuis la session Flask."""
-    try:
-        firstname = session.get("admin_user_firstname")
-        lastname = session.get("admin_user_lastname")
-
-        if firstname and lastname:
-            return f"{firstname} {lastname}"
-        if firstname:
-            return firstname
-
-        user = session.get("user", "anonymous")
-        if isinstance(user, dict):
-            return user.get("email") or str(user.get("id", "anonymous"))
-        return str(user)
-    except RuntimeError:
-        return "system"
-
-
-def _extract_request_context() -> dict:
-    """Extrait les infos de la requête Flask courante."""
-    ctx = {
-        "user": "system",
-        "endpoint": None,
-        "method": None,
-        "ip_address": None,
-    }
-
-    if not request:
-        return ctx
-
-    try:
-        ctx["endpoint"] = request.endpoint
-        ctx["method"] = request.method
-
-        forwarded_for = request.headers.get(
-            "X-Forwarded-For", request.remote_addr)
-        if forwarded_for:
-            ctx["ip_address"] = forwarded_for.split(",")[0].strip()
-
-        ctx["user"] = _extract_user_from_session()
-    except RuntimeError:
-        pass
-
-    return ctx
-
-
 def init_sql_logger(app, db):
     """
-    Initialise le SQL logger.
-    Attache les événements SQLAlchemy pour logger les requêtes.
-    Logs dans la table SQL et dans un fichier rotatif.
-    La création de la table est gérée via models.py.
+    Initialise the SQL logger.
+    Attaches SQLAlchemy events to log queries.
+    Logs to both the SQL table and a rotating file.
+    Table creation is handled via models.py.
     """
+    # Check if logger is activated via environment variable
     activated = os.getenv("SQL_LOGGER_ACTIVATED", "false").lower() in (
         "true", "1", "t", "y", "yes")
 
@@ -127,7 +81,6 @@ def init_sql_logger(app, db):
         return
 
     with app.app_context():
-
         @event.listens_for(db.engine, "before_cursor_execute")
         def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
             context._query_start_time = time.time()
@@ -136,68 +89,85 @@ def init_sql_logger(app, db):
         def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
             duration_ms = (time.time() - context._query_start_time) * 1000
 
-            # Anti-récursion : ignorer les requêtes sur notre table de logs
+            # Anti-recursion: ignore queries on our log table
             if "sql_query_logs" in statement.lower():
                 return
 
-            # Ignorer les DESCRIBE émis par le système (pas par un user connecté)
+            # Ignore DESCRIBE queries from the system user
             if statement.strip().upper().startswith("DESCRIBE"):
-                req_ctx = _extract_request_context()
-                if req_ctx["user"] == "system":
+                is_system = True
+                if request:
+                    try:
+                        if session.get("admin_user_firstname") or session.get("user"):
+                            is_system = False
+                    except RuntimeError:
+                        pass
+                if is_system:
                     return
 
+            # Truncate query to prevent massive logs
             safe_query = statement[:500]
+
+            # Convert parameters to string safely (truncate if huge)
             safe_params = str(parameters)[:500] if parameters else None
 
-            req_ctx = _extract_request_context()
+            # Extract context from Flask request if available
+            user = "system"
+            endpoint = None
+            method = None
+            ip_address = None
 
-            ctx_data = {
-                "ts": datetime.utcnow(),
-                "user": req_ctx["user"],
-                "ip_address": req_ctx["ip_address"],
-                "endpoint": req_ctx["endpoint"],
-                "method": req_ctx["method"],
-                "safe_query": safe_query,
-                "safe_params": safe_params,
-                "duration_ms": duration_ms,
-                "parameters": parameters,
-            }
-
-            def _log_async():
-                # ── Insert en base ────────────────────────────────────────────
+            if request:
                 try:
-                    # Using ORM in background thread
-                    log_entry = SqlQueryLog(
-                        timestamp=ctx_data['ts'],
-                        user=ctx_data['user'],
-                        ip_address=ctx_data['ip_address'],
-                        endpoint=ctx_data['endpoint'],
-                        method=ctx_data['method'],
-                        query=ctx_data['safe_query'],
-                        parameters=ctx_data['safe_params'],
-                        duration_ms=ctx_data['duration_ms']
-                    )
-                    db.session.add(log_entry)
-                    db.session.commit()
-                    db_status = "✅ DB OK"
-                except Exception as e:
-                    db_status = f"❌ DB FAIL: {str(e)}"
-                    db.session.rollback()
-                    app.logger.error(
-                        f"❌ SQL Logger DB insert failed", exc_info=True)
-                finally:
-                    db.session.remove()
+                    endpoint = request.endpoint
+                    method = request.method
 
-                # ── Log fichier ───────────────────────────────────────────────
-                try:
-                    readable_query = render_query(
-                        ctx_data['safe_query'], ctx_data['parameters'])
-                    logger.info(
-                        f"user={ctx_data['user']} | ip={ctx_data['ip_address']} | "
-                        f"endpoint={ctx_data['endpoint']} | method={ctx_data['method']} | "
-                        f"duration={ctx_data['duration_ms']:.2f}ms | {db_status} | query={readable_query}"
-                    )
-                except Exception as e:
-                    print(f"CRITICAL: sql_logger log write failed: {e}")
+                    ip_address = request.headers.get(
+                        'X-Forwarded-For', request.remote_addr)
+                    if ip_address:
+                        ip_address = ip_address.split(',')[0].strip()
 
-            run_async(app, _log_async)
+                    session_firstname = session.get("admin_user_firstname")
+                    session_lastname = session.get("admin_user_lastname")
+
+                    if session_firstname and session_lastname:
+                        user = f"{session_firstname} {session_lastname}"
+                    elif session_firstname:
+                        user = session_firstname
+                    else:
+                        user = session.get("user", "anonymous")
+
+                    if isinstance(user, dict) and "email" in user:
+                        user = user["email"]
+                    elif isinstance(user, dict) and "id" in user:
+                        user = str(user["id"])
+                except RuntimeError:
+                    pass
+
+            ts = datetime.now(timezone.utc)
+
+            # ── Insert into SQL table ─────────────────────────────────────────
+            try:
+                stmt = insert(SqlQueryLog).values(
+                    timestamp=ts,
+                    user=str(user),
+                    ip_address=ip_address,
+                    endpoint=endpoint,
+                    method=method,
+                    query=safe_query,
+                    parameters=safe_params,
+                    duration_ms=duration_ms
+                )
+                conn.execute(stmt)
+            except Exception as e:
+                app.logger.error(f"sql_logger failed to insert log: {e}")
+
+            try:
+                readable_query = render_query(safe_query, parameters)
+                logger.info(
+                    f"user={user} | ip={ip_address} | "
+                    f"endpoint={endpoint} | method={method} | "
+                    f"duration={duration_ms:.2f}ms | query={readable_query}"
+                )
+            except Exception as e:
+                app.logger.error(f"sql_logger failed to write file log: {e}")

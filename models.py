@@ -422,7 +422,8 @@ class SqlQueryLog(db.Model):
 
     # BigInteger for ID, DateTime for timestamp
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
-    timestamp = db.Column(db.DateTime(6), default=datetime.utcnow, index=True)
+    timestamp = db.Column(db.DateTime(
+        6), primary_key=True, default=datetime.utcnow)
     user = db.Column(db.String(255), nullable=False, default='anonymous')
     ip_address = db.Column(db.String(50))
     endpoint = db.Column(db.String(255))
