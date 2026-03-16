@@ -247,7 +247,7 @@
                             {% if field in ['tires', 'brakes'] %}
                             <span class="vehicle-modal-trigger"
                                 style="cursor: pointer; margin-left: 0.4rem; font-size: 1rem; vertical-align: middle;"
-                                title="Voir l'état du parc">
+                                title="Voir l'protocoles freins et pneus">
                                 <img src="{{ url_for('static', filename='imgs/icons/information.svg') }}"
                                     alt="Information" style="width: 1rem; height: 1rem;"></span>
                             {% endif %}
@@ -425,42 +425,8 @@
         vehicleInput.addEventListener('change', updateCheckpoints);
     }
 
-    // Modal logic
-    const modal = document.getElementById('vehiclesModal');
-    const triggers = document.querySelectorAll('.vehicle-modal-trigger');
-    const closeBtn = document.getElementById('closeVehiclesModal');
-
-    triggers.forEach(trigger => {
-        trigger.addEventListener('click', (e) => {
-            e.preventDefault();
-            modal.style.display = 'flex';
-        });
-    });
-
-    if (closeBtn && modal) {
-        closeBtn.addEventListener('click', () => {
-            modal.style.display = 'none';
-        });
-    }
-
-    window.addEventListener('click', (event) => {
-        if (event.target === modal) {
-            modal.style.display = 'none';
-        }
-    });
-
     // Run once on load for edit forms
     updateCheckpoints();
     });
 </script>
-
-<!-- Modal État du parc -->
-<div class="admin-modal-overlay" id="vehiclesModal">
-    <div class="admin-modal-container">
-        <button type="button" class="admin-modal-close" id="closeVehiclesModal">&times;</button>
-        <div class="admin-modal-content">
-            <iframe src="{{ url_for('admin_check_vehicles') }}" class="admin-modal-iframe"></iframe>
-        </div>
-    </div>
-</div>
 {% endblock %}

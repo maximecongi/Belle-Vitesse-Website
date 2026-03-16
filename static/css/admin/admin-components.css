@@ -54,6 +54,16 @@
     color: var(--grey-1);
 }
 
+.admin-btn-tertiary {
+    background-color: white;
+    color: var(--grey-1);
+}
+
+.admin-btn-tertiary:hover {
+    background-color: var(--yellow);
+    color: var(--grey-1);
+}
+
 .btn-disabled {
     filter: grayscale(1);
     cursor: not-allowed;
@@ -673,6 +683,7 @@ input[type="checkbox"]:checked {
     font-style: italic;
     word-break: break-all;
 }
+
 /* Modal */
 .admin-modal-overlay {
     position: fixed;
@@ -698,7 +709,7 @@ input[type="checkbox"]:checked {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 }
 
 .admin-modal-close {
@@ -716,7 +727,7 @@ input[type="checkbox"]:checked {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: transform 0.2s;
 }
 

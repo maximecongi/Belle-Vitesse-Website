@@ -147,6 +147,16 @@
         {% endwith %}
     </div>
 
+    <!-- Modal protocoles freins et pneus -->
+    <div class="admin-modal-overlay" id="vehiclesModal">
+        <div class="admin-modal-container">
+            <button type="button" class="admin-modal-close" id="closeVehiclesModal">&times;</button>
+            <div class="admin-modal-content">
+                <iframe src="{{ url_for('admin_check_vehicles') }}" class="admin-modal-iframe"></iframe>
+            </div>
+        </div>
+    </div>
+
     {% block extra_js %}{% endblock %}
     <script src="{{ url_for('static', filename='js/src/admin.js') }}"></script>
 </body>

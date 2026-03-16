@@ -5,7 +5,11 @@
 
 {% block content %}
 <div class="admin-card">
-    <div class="admin-card-title">Gestion des Points de Contrôle par Véhicule</div>
+    <div class="admin-card-title">Gestion des Points de Contrôle par Véhicule <span class="vehicle-modal-trigger"
+            style="cursor: pointer; margin-left: 0.4rem; font-size: 1rem; vertical-align: middle;"
+            title="Voir l'protocoles freins et pneus"><img
+                src="{{ url_for('static', filename='imgs/icons/information.svg') }}" alt="Information"
+                style="width: 1rem; height: 1rem;"></span></div>
     <p style="color: var(--grey-2); margin-bottom: 2rem; font-size: 0.9rem;">
         Cochez les points de contrôle qui doivent apparaître pour chaque véhicule lors des Checkouts et Checkins.
     </p>
@@ -14,7 +18,7 @@
         <table class="admin-table">
             <thead>
                 <tr>
-                    <th style="min-width: 200px;">Véhicule</th>
+                    <th style="min-width: 150px;">Véhicule</th>
                     {% for cp in possible_checkpoints %}
                     <th
                         style="cursor: default; text-align: center; font-size: 0.7rem; writing-mode: vertical-lr; transform: rotate(180deg); padding: 1rem 0.5rem;">
@@ -102,6 +106,7 @@
                     });
             });
         });
+
     });
 </script>
 {% endblock %}

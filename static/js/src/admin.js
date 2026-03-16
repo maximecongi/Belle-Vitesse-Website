@@ -637,6 +637,34 @@ function init() {
             rows.forEach(row => tbody.appendChild(row));
         });
     });
+
+    // ─────────────────────────────────────────────
+    // 11. Modal protocoles freins et pneus
+    // ─────────────────────────────────────────────
+    const vehiclesModal = document.getElementById('vehiclesModal');
+    const vTriggers = document.querySelectorAll('.vehicle-modal-trigger');
+    const closeVModalBtn = document.getElementById('closeVehiclesModal');
+
+    if (vehiclesModal && vTriggers.length > 0) {
+        vTriggers.forEach(trigger => {
+            trigger.addEventListener('click', (e) => {
+                e.preventDefault();
+                vehiclesModal.style.display = 'flex';
+            });
+        });
+
+        if (closeVModalBtn) {
+            closeVModalBtn.addEventListener('click', () => {
+                vehiclesModal.style.display = 'none';
+            });
+        }
+
+        window.addEventListener('click', (event) => {
+            if (event.target === vehiclesModal) {
+                vehiclesModal.style.display = 'none';
+            }
+        });
+    }
 }
 
 
