@@ -46,58 +46,58 @@ def init_sql_logger(app, db):
 
         @event.listens_for(engine, "after_cursor_execute")
         def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-        start = getattr(context, "_query_start_time", None)
-        if start is None:
-            return
+            start = getattr(context, "_query_start_time", None)
+            if start is None:
+                return
 
-        duration_ms = (time.perf_counter() - start) * 1000
-        print(
-            f"[sql_logger] Query detected: {duration_ms:.2f}ms | statement: {statement[:50]}...")
-
-        if duration_ms < SLOW_QUERY_THRESHOLD_MS:
-            return
-
-        stmt_upper = statement.strip().upper()
-        if stmt_upper.startswith(IGNORED_PREFIXES):
-            return
-
-        if "sql_query_logs" in statement.lower():
-            return
-
-        safe_query = statement[:1000]
-        sanitized_params = sanitize_params(parameters)
-        ctx = get_request_context()
-        tz = zoneinfo.ZoneInfo("Europe/Paris")
-        ts = datetime.now(tz)
-
-        try:
-            readable_query = render_query(safe_query, sanitized_params)
-            level = logging.WARNING if duration_ms > 500 else logging.INFO
-
+            duration_ms = (time.perf_counter() - start) * 1000
             print(
-                f"[sql_logger] ENQUEUING to {os.getenv('FLASK_ENV')}: {readable_query[:100]}")
-            record = {
-                "db": {
-                    "timestamp": ts,
-                    "user": ctx["user"],
-                    "ip_address": ctx["ip_address"],
-                    "endpoint": ctx["endpoint"],
-                    "method": ctx["method"],
-                    "query": safe_query,
-                    "parameters": str(sanitized_params)[:1000],
-                    "duration_ms": duration_ms
-                },
-                "message": (
-                    f"user={ctx['user']} | ip={ctx['ip_address']} | "
-                    f"endpoint={ctx['endpoint']} | method={ctx['method']} | "
-                    f"duration={duration_ms:.2f}ms | rows={cursor.rowcount} | "
-                    f"query={readable_query}"
-                ),
-                "level": level
-            }
+                f"[sql_logger] Query detected: {duration_ms:.2f}ms | statement: {statement[:50]}...")
 
-            enqueue("process_sql_log", record)
+            if duration_ms < SLOW_QUERY_THRESHOLD_MS:
+                return
 
-        except Exception as e:
-            print(f"[sql_logger] Error preparing record: {e}")
-            app.logger.error(f"[sql_logger] failed to prepare log: {e}")
+            stmt_upper = statement.strip().upper()
+            if stmt_upper.startswith(IGNORED_PREFIXES):
+                return
+
+            if "sql_query_logs" in statement.lower():
+                return
+
+            safe_query = statement[:1000]
+            sanitized_params = sanitize_params(parameters)
+            ctx = get_request_context()
+            tz = zoneinfo.ZoneInfo("Europe/Paris")
+            ts = datetime.now(tz)
+
+            try:
+                readable_query = render_query(safe_query, sanitized_params)
+                level = logging.WARNING if duration_ms > 500 else logging.INFO
+
+                print(
+                    f"[sql_logger] ENQUEUING to {os.getenv('FLASK_ENV')}: {readable_query[:100]}")
+                record = {
+                    "db": {
+                        "timestamp": ts,
+                        "user": ctx["user"],
+                        "ip_address": ctx["ip_address"],
+                        "endpoint": ctx["endpoint"],
+                        "method": ctx["method"],
+                        "query": safe_query,
+                        "parameters": str(sanitized_params)[:1000],
+                        "duration_ms": duration_ms
+                    },
+                    "message": (
+                        f"user={ctx['user']} | ip={ctx['ip_address']} | "
+                        f"endpoint={ctx['endpoint']} | method={ctx['method']} | "
+                        f"duration={duration_ms:.2f}ms | rows={cursor.rowcount} | "
+                        f"query={readable_query}"
+                    ),
+                    "level": level
+                }
+
+                enqueue("process_sql_log", record)
+
+            except Exception as e:
+                print(f"[sql_logger] Error preparing record: {e}")
+                app.logger.error(f"[sql_logger] failed to prepare log: {e}")
