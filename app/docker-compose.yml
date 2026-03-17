@@ -45,7 +45,7 @@ services:
     restart: always
     env_file:
       - ../.env
-    command: rq worker sql_logs
+    command: rq worker -u redis://bv_redis:6379/1 sql_logs
     volumes:
       - /srv/bellevitesse/logs:/app/logs
     networks:
