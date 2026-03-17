@@ -66,6 +66,8 @@ def init_sql_logger(app, db):
             readable_query = render_query(safe_query, sanitized_params)
             level = logging.WARNING if duration_ms > 500 else logging.INFO
 
+            print(
+                f"[sql_logger] Event fired: {duration_ms:.2f}ms - Enqueuing...")
             record = {
                 "db": {
                     "timestamp": ts,
@@ -89,4 +91,5 @@ def init_sql_logger(app, db):
             enqueue("process_sql_log", record)
 
         except Exception as e:
+            print(f"[sql_logger] Error preparing log: {e}")
             app.logger.error(f"[sql_logger] failed to prepare log: {e}")

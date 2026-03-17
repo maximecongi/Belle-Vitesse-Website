@@ -6,6 +6,7 @@ from redis import Redis
 from rq import Queue as RQQueue
 
 FLASK_ENV = os.getenv("FLASK_ENV", "production")
+print(f"[sql_logger] queue.py initialized with FLASK_ENV={FLASK_ENV}")
 
 # ─────────────────────────────────────────────
 # DEV → queue mémoire
@@ -52,6 +53,8 @@ else:
 
     def enqueue(func, record):
         try:
+            print(
+                f"[sql_logger] Enqueuing to RQ (Redis): {record.get('message')}")
             rq_queue.enqueue(
                 "services.sql_logger.worker.process_sql_log",
                 record,
