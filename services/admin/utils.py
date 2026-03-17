@@ -5,10 +5,24 @@ from pathlib import Path
 
 from flask import current_app
 
-from models import CheckoutVehicle
+from models import db, CheckoutVehicle
 from utils.checkpoints import get_checkpoints_for_vehicle
 
+import functools
+
 logger = logging.getLogger(__name__)
+
+
+def handle_admin_service_error(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"❌ Error in {func.__name__}: {e}")
+            raise e
+    return wrapper
 
 
 def _parse_photos_json(text):

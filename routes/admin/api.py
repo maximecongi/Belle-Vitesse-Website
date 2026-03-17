@@ -30,12 +30,10 @@ def init_api_routes(app):
             current_app.logger.error(f"❌ Error in admin_api_events: {e}")
             return jsonify([]), 500
 
-    @app.route("/admin/api/checkouts/<int:record_id>/status", methods=["GET", "POST"])
-    @require_roles('administrator', 'manager', 'user')
-    def admin_api_checkout_status(record_id):
-        from models import db, CheckoutVehicle
+    def _handle_status_update(model, record_id):
+        from models import db
         try:
-            record = db.session.get(CheckoutVehicle, record_id)
+            record = db.session.get(model, record_id)
             if not record:
                 return jsonify({"error": "Not found"}), 404
 
@@ -52,35 +50,20 @@ def init_api_routes(app):
             return jsonify({"status": record.etat_controle})
         except Exception as e:
             db.session.rollback()
-            current_app.logger.error(
-                f"❌ Error in admin_api_checkout_status: {e}")
+            current_app.logger.error(f"❌ Error in status update: {e}")
             return jsonify({"error": str(e)}), 500
+
+    @app.route("/admin/api/checkouts/<int:record_id>/status", methods=["GET", "POST"])
+    @require_roles('administrator', 'manager', 'user')
+    def admin_api_checkout_status(record_id):
+        from models import CheckoutVehicle
+        return _handle_status_update(CheckoutVehicle, record_id)
 
     @app.route("/admin/api/checkins/<int:record_id>/status", methods=["GET", "POST"])
     @require_roles('administrator', 'manager', 'user')
     def admin_api_checkin_status(record_id):
-        from models import db, CheckinVehicle
-        try:
-            record = db.session.get(CheckinVehicle, record_id)
-            if not record:
-                return jsonify({"error": "Not found"}), 404
-
-            if request.method == "POST":
-                data = request.get_json()
-                new_status = data.get("status") if data else None
-                if not new_status:
-                    return jsonify({"error": "Missing status"}), 400
-
-                record.etat_controle = new_status
-                db.session.commit()
-                return jsonify({"status": record.etat_controle, "message": "Statut mis à jour avec succès"})
-
-            return jsonify({"status": record.etat_controle})
-        except Exception as e:
-            db.session.rollback()
-            current_app.logger.error(
-                f"❌ Error in admin_api_checkin_status: {e}")
-            return jsonify({"error": str(e)}), 500
+        from models import CheckinVehicle
+        return _handle_status_update(CheckinVehicle, record_id)
 
     @app.route("/admin/vehicle-configs")
     @require_roles('administrator')

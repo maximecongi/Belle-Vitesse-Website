@@ -14,7 +14,7 @@ BASE_CHECKPOINTS = []
 ALL_POSSIBLE_CHECKPOINTS = [
     # SÉCURITÉ
     {'key': 'tires', 'label': 'Pression des pneus', 'category': 'Sécurité', 'type': 'status',
-     'detail': 'Trike : 3 bar · Stark : voir flanc pneu · Twizy : 2 bar'},
+     'detail': 'eTrike/eTrike 360 : 3 bar · eBike : voir flanc pneu · eCar : 2 bar'},
     {'key': 'brakes', 'label': 'Contrôle des freins', 'category': 'Sécurité', 'type': 'status',
      'detail': 'Voir protocole freins complet'},
     {'key': 'fonctionnement_vitesses', 'label': 'Fonctionnement des vitesses', 'category': 'Sécurité', 'type': 'status',
@@ -24,11 +24,11 @@ ALL_POSSIBLE_CHECKPOINTS = [
     {'key': 'test_roulage', 'label': 'Test roulage (D / R / N)', 'category': 'Sécurité', 'type': 'status',
      'detail': 'Pas de bruit anormal en roulage'},
     {'key': 'serrage_roues', 'label': 'Serrage des roues', 'category': 'Sécurité', 'type': 'status',
-     'detail': 'Trike : 12 Nm · Twizy : 110 Nm'},
+     'detail': 'eTrike/eTrike 360 : 12 Nm · eCar : 110 Nm'},
     {'key': 'tension_chaine', 'label': 'Tension chaîne', 'category': 'Sécurité', 'type': 'status',
      'detail': 'Vérification du jeu'},
     {'key': 'serrage_arceau', 'label': 'Serrage barres / arceau', 'category': 'Sécurité', 'type': 'status',
-     'detail': 'Stark : x Nm à définir · Twizy : 45 Nm'},
+     'detail': 'eBike : x Nm à définir · eCar : 45 Nm'},
     {'key': 'serrage_plaques_sieges', 'label': 'Serrage plaques & sièges', 'category': 'Sécurité', 'type': 'status',
      'detail': 'Vérification du serrage'},
     {'key': 'ceinture_securite', 'label': 'Ceinture de sécurité', 'category': 'Sécurité', 'type': 'status',
@@ -48,8 +48,17 @@ ALL_POSSIBLE_CHECKPOINTS = [
     {'key': 'systeme_communication', 'label': 'Système de communication', 'category': 'Équipements', 'type': 'status',
      'detail': 'À définir'},
     {'key': 'mallette_accessoires', 'label': 'Mallette / Roulante accessoires', 'category': 'Équipements', 'type': 'status',
-     'detail': 'Trike : chambre à air ×2, chargeur, pompe, outils · Stark & Twizy : pièces de rechange, outils, bijouterie, chargeur'},
+     'detail': 'eTrike/eTrike 360 : chambre à air ×2, chargeur, pompe, outils · eBike & eCar : pièces de rechange, outils, bijouterie, chargeur'},
 ]
+
+# Mapping from English 'key' to French/legacy database columns in models.py
+CHECKPOINT_TO_MODEL_MAP = {
+    'tires': 'etat_pneus',
+    'brakes': 'etat_freins',
+    'lights': 'etat_eclairage_exterieur',
+    'horn': 'etat_klaxon',
+    # Others use the key as the column name
+}
 
 # Specific detail overrides by vehicle type/name
 SPECIFIC_DETAILS = {
