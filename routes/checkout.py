@@ -53,10 +53,10 @@ def init_checkout_routes(app):
         if not record:
             abort(404)
 
-        from services.admin import _format_checkout_admin
+        from services.admin.inspections import _format_base_inspection_admin
         from utils.database import get_vehicles
         vehicle_map = {v["id"]: v.get("fields", {}) for v in get_vehicles()}
-        data = _format_checkout_admin(record, vehicle_map)
+        data = _format_base_inspection_admin(record, vehicle_map)
 
         return render_template(
             "checkout.html", data=data, signature=None, qr=None, hash=None
@@ -95,10 +95,10 @@ def init_checkout_routes(app):
             except Exception:
                 pass
 
-        from services.admin import _format_checkout_admin
+        from services.admin.inspections import _format_base_inspection_admin
         from utils.database import get_vehicles
         vehicle_map = {v["id"]: v.get("fields", {}) for v in get_vehicles()}
-        data = _format_checkout_admin(record, vehicle_map)
+        data = _format_base_inspection_admin(record, vehicle_map)
 
         return render_template("checkout_sign.html", data=data, token=token)
 

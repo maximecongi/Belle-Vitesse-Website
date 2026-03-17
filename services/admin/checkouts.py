@@ -19,10 +19,6 @@ from services.admin.utils import handle_admin_service_error
 logger = logging.getLogger(__name__)
 
 
-def _format_checkout_admin(c: CheckoutVehicle, vehicle_map, batch_configs=None):
-    return _format_base_inspection_admin(c, vehicle_map, batch_configs)
-
-
 def list_checkouts():
     """
     Fetch all checkout records, compute stats, and format for listing.
@@ -50,7 +46,7 @@ def list_checkouts():
         "pending_checkouts": pending_count,
     }
 
-    checkouts = [_format_checkout_admin(
+    checkouts = [_format_base_inspection_admin(
         r, vehicle_map, batch_configs) for r in records]
     return {"checkouts": checkouts, "stats": stats}
 
@@ -68,7 +64,7 @@ def get_checkout_detail(record_id):
 
     vehicles = get_vehicles()
     vehicle_map = {v["id"]: v.get("fields", {}) for v in vehicles}
-    data = _format_checkout_admin(record, vehicle_map)
+    data = _format_base_inspection_admin(record, vehicle_map)
 
     # If signed, load the stable snapshot to get the real PDF URL and hash
     if data.get("control_status") == "Signé":

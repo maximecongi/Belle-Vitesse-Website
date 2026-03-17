@@ -1,6 +1,6 @@
 from services.admin.documents import get_signed_document_info
 from services.admin.inspections import _format_base_inspection_admin, get_unified_form_context, apply_inspection_data
-from services.admin.utils import _delete_inspection_files, _is_ready, handle_admin_service_error
+from services.admin.utils import _delete_inspection_files, handle_admin_service_error
 from utils.n8n import trigger_n8n_webhook
 import json
 import logging
@@ -19,10 +19,6 @@ logger = logging.getLogger(__name__)
 
 
 # ── Checkins ────────────────────────────────────────────────────
-
-
-def _format_checkin_admin(c: CheckinVehicle, vehicle_map, batch_configs=None):
-    return _format_base_inspection_admin(c, vehicle_map, batch_configs)
 
 
 def list_checkins():
@@ -52,7 +48,7 @@ def list_checkins():
         "pending_checkins": pending_count,
     }
 
-    checkins = [_format_checkin_admin(
+    checkins = [_format_base_inspection_admin(
         r, vehicle_map, batch_configs) for r in records]
     return {"checkins": checkins, "stats": stats}
 
@@ -70,7 +66,7 @@ def get_checkin_detail(record_id):
 
     vehicles = get_vehicles()
     vehicle_map = {v["id"]: v.get("fields", {}) for v in vehicles}
-    data = _format_checkin_admin(record, vehicle_map)
+    data = _format_base_inspection_admin(record, vehicle_map)
 
     # If signed, load the stable snapshot to get the real PDF URL and hash
     if data.get("control_status") == "Signé":
@@ -168,8 +164,6 @@ def create_checkin(form, files=None):
             raise ValueError(
                 "Le départ de ce véhicule n'a pas été validé par une signature.")
 
-    record.vehicule_pret_retour = _is_ready(
-        form, record.vehicule_controle, is_checkout=False)
     db.session.add(record)
     db.session.commit()
 
