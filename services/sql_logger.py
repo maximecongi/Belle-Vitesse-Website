@@ -6,7 +6,8 @@ import ast
 import threading
 import queue
 
-from datetime import datetime, timezone
+from datetime import datetime
+import zoneinfo
 from pathlib import Path
 from logging.handlers import RotatingFileHandler
 
@@ -260,7 +261,8 @@ def init_sql_logger(app, db):
 
             ctx = get_request_context()
 
-            ts = datetime.now(timezone.utc)
+            tz = zoneinfo.ZoneInfo("Europe/Paris")
+            ts = datetime.now(tz)
 
             try:
                 readable_query = render_query(safe_query, sanitized_params)
