@@ -45,7 +45,7 @@ services:
     restart: always
     env_file:
       - ../.env
-    command: rq worker sql_logs # ✅ worker séparé
+    command: rq worker sql_logs
     volumes:
       - /srv/bellevitesse/logs:/app/logs
     networks:

@@ -11,7 +11,7 @@ FLASK_ENV = os.getenv("FLASK_ENV", "production")
 # DEV → queue mémoire
 # ─────────────────────────────────────────────
 
-if FLASK_ENV == "development":
+if FLASK_ENV == "dev":
     log_queue = queue.Queue(maxsize=1000)
 
     def enqueue(func, record):
