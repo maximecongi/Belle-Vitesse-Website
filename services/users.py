@@ -1,5 +1,4 @@
 import logging
-import os
 from models import db, User
 from extensions import cache
 
@@ -7,9 +6,8 @@ logger = logging.getLogger(__name__)
 
 
 def invalidate_user_cache(user_id):
-    """Clear Redis cache for a specific user ID (Prod only)."""
-    if os.getenv("FLASK_ENV") == "production":
-        cache.delete(f"user:{user_id}")
+    """Clear cache for a specific user ID."""
+    cache.delete(f"user:{user_id}")
 
 
 def list_users():

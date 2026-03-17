@@ -249,12 +249,11 @@ def create_app():
                 user = None
                 if user_id:
                     cache_key = f"user:{user_id}"
-                    if os.getenv("FLASK_ENV") == "production":
-                        user = cache.get(cache_key)
+                    user = cache.get(cache_key)
 
                     if not user:
                         user = db.session.get(User, user_id)
-                        if user and os.getenv("FLASK_ENV") == "production":
+                        if user:
                             cache.set(cache_key, user, timeout=300)
 
                 return {
