@@ -47,7 +47,6 @@ services:
     env_file:
       - ../.env
     environment:
-      - FLASK_ENV=production
       - MYSQL_HOST=bv_mysql
     command: rq worker -u redis://bv_redis:6379/1 sql_logs
     volumes:

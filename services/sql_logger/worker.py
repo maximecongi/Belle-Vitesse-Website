@@ -41,15 +41,12 @@ def process_sql_log(record, app=None):
     - directement en dev (thread)
     - via RQ en prod
     """
-    print(f"[sql_logger] Worker processing log: {record.get('message')}")
-
     if not app:
         try:
             from app import app as flask_app
             app = flask_app
-            print("[sql_logger] Imported app from app.py")
-        except Exception as e:
-            print(f"[sql_logger] Failed to import app: {e}")
+        except Exception:
+            pass
 
     ctx = None
     if app:
@@ -65,12 +62,10 @@ def process_sql_log(record, app=None):
             stmt = insert(SqlQueryLog).values(**record["db"])
             db.session.execute(stmt)
             db.session.commit()
-            print("[sql_logger] DB insert success")
         except Exception as e:
             if db.session:
                 db.session.rollback()
             msg = f"DB insert failed: {e}"
-            print(f"[sql_logger] {msg}")
             worker_logger.error(msg)
 
         # ── File Log ──
@@ -78,13 +73,11 @@ def process_sql_log(record, app=None):
             worker_logger.log(record["level"], record["message"])
         except Exception as e:
             msg = f"File log failed: {e}"
-            print(f"[sql_logger] {msg}")
             worker_logger.error(msg)
 
-    except Exception as e:
-        print(f"[sql_logger] Global worker error: {e}")
+    except Exception:
+        pass
 
     finally:
         if ctx:
             ctx.pop()
-        print("[sql_logger] Worker job finished")

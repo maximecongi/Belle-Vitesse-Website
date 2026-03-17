@@ -53,8 +53,6 @@ else:
 
     def enqueue(func, record):
         try:
-            print(
-                f"[sql_logger] Enqueuing to RQ (Redis): {record.get('message')}")
             rq_queue.enqueue(
                 "services.sql_logger.worker.process_sql_log",
                 record,

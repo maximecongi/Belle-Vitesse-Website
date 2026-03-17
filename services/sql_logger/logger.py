@@ -51,12 +51,8 @@ def init_sql_logger(app, db):
                 return
 
             duration_ms = (time.perf_counter() - start) * 1000
-            print(
-                f"[sql_logger] Query detected: {duration_ms:.2f}ms | statement: {statement[:50]}...")
 
             if duration_ms < SLOW_QUERY_THRESHOLD_MS:
-                print(
-                    f"[sql_logger] Query too fast ({duration_ms:.2f}ms < {SLOW_QUERY_THRESHOLD_MS}ms)")
                 return
 
             stmt_upper = statement.strip().upper()
@@ -76,8 +72,6 @@ def init_sql_logger(app, db):
                 readable_query = render_query(safe_query, sanitized_params)
                 level = logging.WARNING if duration_ms > 500 else logging.INFO
 
-                print(
-                    f"[sql_logger] ENQUEUING to {os.getenv('FLASK_ENV')}: {readable_query[:100]}")
                 record = {
                     "db": {
                         "timestamp": ts,
