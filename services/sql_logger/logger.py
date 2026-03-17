@@ -11,7 +11,7 @@ from .helpers import (
     render_query
 )
 
-SLOW_QUERY_THRESHOLD_MS = int(os.getenv("SQL_LOGGER_THRESHOLD_MS", 10))
+SLOW_QUERY_THRESHOLD_MS = int(os.getenv("SQL_LOGGER_THRESHOLD_MS", 0))
 IGNORED_PREFIXES = ("DESCRIBE", "SHOW", "PRAGMA", "SELECT 1")
 
 
@@ -55,6 +55,8 @@ def init_sql_logger(app, db):
                 f"[sql_logger] Query detected: {duration_ms:.2f}ms | statement: {statement[:50]}...")
 
             if duration_ms < SLOW_QUERY_THRESHOLD_MS:
+                print(
+                    f"[sql_logger] Query too fast ({duration_ms:.2f}ms < {SLOW_QUERY_THRESHOLD_MS}ms)")
                 return
 
             stmt_upper = statement.strip().upper()
