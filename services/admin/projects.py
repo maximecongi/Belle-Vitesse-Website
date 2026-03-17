@@ -11,19 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 # ── Projects ─────────────────────────────────────────────────────
-def _check_conformity(record):
-    if not record:
-        return "yes"
-    # Check all status fields for "Défaut"
-    status_fields = [
-        'etat_pneus', 'roue_secours', 'niveau_huile', 'niveau_liquide_refroidissement',
-        'etat_freins', 'etat_eclairage_exterieur', 'demarrage_moteur', 'etat_essuie_glaces',
-        'etat_klaxon', 'presence_triangle_gilet', 'presence_extincteur'
-    ]
-    for field in status_fields:
-        if getattr(record, field, None) == "Défaut":
-            return "no"
-    return "yes"
 
 
 def _format_waiver_status(status):
@@ -72,11 +59,11 @@ def list_projects():
                 "fields": vehicle_map.get(vid, {}),
                 "checkout_status": c_out.etat_controle if c_out else "",
                 "checkout_id": c_out.id if c_out else "",
-                "checkout_conform": _check_conformity(c_out),
+                "checkout_conform": "yes" if (c_out and c_out.vehicule_pret_depart) else "no",
                 "checkout_ready": "Oui" if (c_out and c_out.vehicule_pret_depart) else ("Non" if c_out else "—"),
                 "checkin_status": c_in.etat_controle if c_in else "",
                 "checkin_id": c_in.id if c_in else "",
-                "checkin_conform": _check_conformity(c_in),
+                "checkin_conform": "yes" if (c_in and c_in.vehicule_pret_retour) else "no",
                 "checkin_ready": "Oui" if (c_in and c_in.vehicule_pret_retour) else ("Non" if c_in else "—"),
             })
 
