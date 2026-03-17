@@ -7,7 +7,6 @@ services:
     restart: always
     env_file:
       - ../.env
-    command: rq worker sql_logs
     environment:
       - MYSQL_HOST=bv_mysql
     volumes:
@@ -31,11 +30,26 @@ services:
       - "traefik.http.routers.bv_admin.entrypoints=websecure"
       - "traefik.http.routers.bv_admin.tls.certresolver=letsencrypt"
       - "traefik.http.routers.bv_admin.service=bv_app"
-      - "traefik.http.routers.bv_admin.middlewares=admin-redirect"
+      - "traefik.http.routers.bv_admin.mid adlewares=admin-redirect"
       - "traefik.http.middlewares.admin-redirect.redirectregex.regex=^https://team\\.bellevitesse\\.com/$$"
       - "traefik.http.middlewares.admin-redirect.redirectregex.replacement=https://team.bellevitesse.com/admin"
     ports:
       - "5001:5001"
+
+  # ───── Worker RQ ─────
+  worker:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: bv_worker
+    restart: always
+    env_file:
+      - ../.env
+    command: rq worker sql_logs # ✅ worker séparé
+    volumes:
+      - /srv/bellevitesse/logs:/app/logs
+    networks:
+      - bv_network
 
 networks:
   bv_network:
