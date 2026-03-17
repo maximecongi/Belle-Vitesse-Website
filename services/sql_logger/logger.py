@@ -35,16 +35,17 @@ def init_sql_logger(app, db):
         print("[sql_logger] Starting dev worker thread")
         start_dev_worker(app)
 
-    from sqlalchemy import event
-    # On écoute sur db.engine directement
-    engine = db.engine
+    with app.app_context():
+        from sqlalchemy import event
+        # On écoute sur db.engine directement
+        engine = db.engine
 
-    @event.listens_for(engine, "before_cursor_execute")
-    def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-        context._query_start_time = time.perf_counter()
+        @event.listens_for(engine, "before_cursor_execute")
+        def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+            context._query_start_time = time.perf_counter()
 
-    @event.listens_for(engine, "after_cursor_execute")
-    def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+        @event.listens_for(engine, "after_cursor_execute")
+        def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
         start = getattr(context, "_query_start_time", None)
         if start is None:
             return
