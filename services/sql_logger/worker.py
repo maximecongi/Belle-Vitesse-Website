@@ -43,6 +43,13 @@ def process_sql_log(record, app=None):
     - via RQ en prod
     """
 
+    if not app:
+        try:
+            from app import app as flask_app
+            app = flask_app
+        except Exception:
+            pass
+
     ctx = None
     if app:
         ctx = app.app_context()
