@@ -21,7 +21,7 @@ from models import SqlQueryLog
 # ─────────────────────────────────────────────────────────────────────────────
 
 LOG_DIR = Path(__file__).parent.parent / \
-    os.getenv("LOGS_DIR", "logs") / "sql_logs"
+    os.getenv("LOGS_DIR", "logs")
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 LOG_FILE = LOG_DIR / "sql_queries.log"
