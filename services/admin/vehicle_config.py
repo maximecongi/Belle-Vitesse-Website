@@ -1,14 +1,32 @@
+import os
 from models import db, VehicleCheckpointConfig
 from utils.database import get_vehicles
 from utils.checkpoints import ALL_POSSIBLE_CHECKPOINTS
+from extensions import cache
+
+
+def get_checkpoint_configs():
+    """Fetch all vehicle checkpoint configurations with Redis caching (Prod only)."""
+    if os.getenv("FLASK_ENV") == "production":
+        configs = cache.get('checkpoint_configs')
+        if configs is not None:
+            return configs
+
+    # Fetch from DB
+    records = VehicleCheckpointConfig.query.all()
+    configs = {c.vehicle_id: c.config for c in records}
+
+    if os.getenv("FLASK_ENV") == "production":
+        cache.set('checkpoint_configs', configs, timeout=3600)
+
+    return configs
 
 
 def get_vehicles_with_config():
     """Fetch all vehicles and their current checkpoint configuration."""
     vehicles = get_vehicles()
-    # Get all local configs
-    local_configs = {
-        c.vehicle_id: c.config for c in VehicleCheckpointConfig.query.all()}
+    # Get all local configs via the cached helper
+    local_configs = get_checkpoint_configs()
 
     results = []
     for v in vehicles:
@@ -52,4 +70,6 @@ def save_vehicle_checkpoint_config(vehicle_id, enabled_keys):
         db.session.add(config_record)
 
     db.session.commit()
+    if os.getenv("FLASK_ENV") == "production":
+        cache.delete('checkpoint_configs')
     return True

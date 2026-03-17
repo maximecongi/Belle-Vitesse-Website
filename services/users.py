@@ -1,7 +1,15 @@
 import logging
+import os
 from models import db, User
+from extensions import cache
 
 logger = logging.getLogger(__name__)
+
+
+def invalidate_user_cache(user_id):
+    """Clear Redis cache for a specific user ID (Prod only)."""
+    if os.getenv("FLASK_ENV") == "production":
+        cache.delete(f"user:{user_id}")
 
 
 def list_users():
@@ -43,6 +51,7 @@ def create_user(data):
         )
         db.session.add(new_user)
         db.session.commit()
+        invalidate_user_cache(new_user.id)
         logger.info(f"Created new user: {new_user.id} - {new_user.mail}")
         return new_user
     except Exception as e:
@@ -71,6 +80,7 @@ def update_user(record_id, data):
             user.job = data['job']
 
         db.session.commit()
+        invalidate_user_cache(record_id)
         logger.info(f"Updated user: {record_id}")
         return user
     except Exception as e:
@@ -90,6 +100,7 @@ def delete_user(record_id):
 
         db.session.delete(user)
         db.session.commit()
+        invalidate_user_cache(record_id)
         logger.info(f"Deleted user: {record_id}")
         return True
     except Exception as e:

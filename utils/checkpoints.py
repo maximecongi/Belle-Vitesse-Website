@@ -84,7 +84,6 @@ def get_checkpoints_for_vehicle(vehicle_id: str, batch_configs=None, vehicle_nam
     if not vehicle_id:
         return BASE_CHECKPOINTS
 
-    from models import VehicleCheckpointConfig
     from flask import has_app_context, current_app
 
     # 1. Try batch_configs first (passed from service layer)
@@ -127,20 +126,19 @@ def get_checkpoints_for_vehicle(vehicle_id: str, batch_configs=None, vehicle_nam
 
         return BASE_CHECKPOINTS + _resolve_checkpoints(enabled_keys, vehicle_name)
 
-    # 2. Try to get from DB if in app context
+    # 2. Try to get from DB (cached) if in app context
     if has_app_context():
         try:
-            config_record = VehicleCheckpointConfig.query.filter_by(
-                vehicle_id=vehicle_id).first()
+            from services.admin.vehicle_config import get_checkpoint_configs
+            all_configs = get_checkpoint_configs()
 
-            if not config_record and vehicle_id.startswith('rec') and vehicle_name != vehicle_id:
-                config_record = VehicleCheckpointConfig.query.filter_by(
-                    vehicle_id=vehicle_name).first()
+            config = all_configs.get(vehicle_id)
+            if not config and vehicle_id.startswith('rec') and vehicle_name != vehicle_id:
+                config = all_configs.get(vehicle_name)
 
-            if config_record and config_record.config:
+            if config:
                 # DB config is usually {key: bool}
-                enabled_keys = {
-                    k for k, v in config_record.config.items() if v}
+                enabled_keys = {k for k, v in config.items() if v}
                 return BASE_CHECKPOINTS + _resolve_checkpoints(enabled_keys, vehicle_name)
         except Exception as e:
             if current_app:

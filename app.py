@@ -246,7 +246,16 @@ def create_app():
         def _load_db_context(is_admin):
             if is_admin:
                 user_id = session.get('admin_user_id')
-                user = db.session.get(User, user_id) if user_id else None
+                user = None
+                if user_id:
+                    cache_key = f"user:{user_id}"
+                    if os.getenv("FLASK_ENV") == "production":
+                        user = cache.get(cache_key)
+
+                    if not user:
+                        user = db.session.get(User, user_id)
+                        if user and os.getenv("FLASK_ENV") == "production":
+                            cache.set(cache_key, user, timeout=300)
 
                 return {
                     "current_user": user if user else {

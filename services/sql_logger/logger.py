@@ -1,8 +1,7 @@
 import os
 import time
 import logging
-from datetime import datetime
-import zoneinfo
+from datetime import datetime, timezone
 
 from .queue import enqueue, start_dev_worker
 from .helpers import (
@@ -65,8 +64,7 @@ def init_sql_logger(app, db):
             safe_query = statement[:1000]
             sanitized_params = sanitize_params(parameters)
             ctx = get_request_context()
-            tz = zoneinfo.ZoneInfo("Europe/Paris")
-            ts = datetime.now(tz)
+            ts = datetime.now(timezone.utc)
 
             try:
                 readable_query = render_query(safe_query, sanitized_params)

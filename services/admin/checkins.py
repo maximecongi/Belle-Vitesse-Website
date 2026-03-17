@@ -11,7 +11,7 @@ from flask import current_app, url_for
 from werkzeug.utils import secure_filename
 
 from sqlalchemy.orm import joinedload
-from models import db, CheckoutVehicle, CheckinVehicle, Project, User, VehicleCheckpointConfig
+from models import db, CheckoutVehicle, CheckinVehicle, Project, User
 from utils.database import get_vehicles
 from utils.formatting import format_date_fr
 
@@ -131,9 +131,9 @@ def list_checkins():
     vehicles = get_vehicles()
     vehicle_map = {v["id"]: v.get("fields", {}) for v in vehicles}
 
-    # Batch load all vehicle configurations
-    batch_configs = {
-        c.vehicle_id: c.config for c in VehicleCheckpointConfig.query.all()}
+    # Batch load all vehicle configurations (cached)
+    from services.admin.vehicle_config import get_checkpoint_configs
+    batch_configs = get_checkpoint_configs()
 
     total_count = len(records)
     signed_count = sum(1 for r in records if r.etat_controle == "Signé")
@@ -154,7 +154,10 @@ def get_checkin_detail(record_id):
     """
     Fetch and format a single checkin record.
     """
-    record = db.session.get(CheckinVehicle, record_id)
+    record = CheckinVehicle.query.options(
+        joinedload(CheckinVehicle.project).joinedload(Project.production),
+        joinedload(CheckinVehicle.responsible)
+    ).filter_by(id=record_id).first()
     if not record:
         return None
 
@@ -183,7 +186,8 @@ def get_checkin_form_context():
     """
     Get the context needed for the checkin form (projects + vehicles selects).
     """
-    projects = Project.query.order_by(Project.nom).all()
+    projects = Project.query.options(joinedload(
+        Project.production)).order_by(Project.nom).all()
     vehicles = get_vehicles()
     users = User.query.order_by(User.firstname).all()
 
