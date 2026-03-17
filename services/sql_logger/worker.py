@@ -3,7 +3,6 @@ import logging
 from pathlib import Path
 from logging.handlers import RotatingFileHandler
 from sqlalchemy import insert
-from sqlalchemy.orm import sessionmaker
 
 from models import SqlQueryLog
 
@@ -42,13 +41,15 @@ def process_sql_log(record, app=None):
     - directement en dev (thread)
     - via RQ en prod
     """
+    print(f"[sql_logger] Worker processing log: {record.get('message')}")
 
     if not app:
         try:
             from app import app as flask_app
             app = flask_app
-        except Exception:
-            pass
+            print("[sql_logger] Imported app from app.py")
+        except Exception as e:
+            print(f"[sql_logger] Failed to import app: {e}")
 
     ctx = None
     if app:
@@ -59,25 +60,31 @@ def process_sql_log(record, app=None):
         from models import db  # import lazy
 
         # ── DB Insert ──
-        Session = sessionmaker(bind=db.engine)
-        session = Session()
-
         try:
+            # On utilise db.session car on est dans le context_app
             stmt = insert(SqlQueryLog).values(**record["db"])
-            session.execute(stmt)
-            session.commit()
+            db.session.execute(stmt)
+            db.session.commit()
+            print("[sql_logger] DB insert success")
         except Exception as e:
-            session.rollback()
-            worker_logger.error(f"DB insert failed: {e}")
-        finally:
-            session.close()
+            if db.session:
+                db.session.rollback()
+            msg = f"DB insert failed: {e}"
+            print(f"[sql_logger] {msg}")
+            worker_logger.error(msg)
 
         # ── File Log ──
         try:
             worker_logger.log(record["level"], record["message"])
         except Exception as e:
-            worker_logger.error(f"File log failed: {e}")
+            msg = f"File log failed: {e}"
+            print(f"[sql_logger] {msg}")
+            worker_logger.error(msg)
+
+    except Exception as e:
+        print(f"[sql_logger] Global worker error: {e}")
 
     finally:
         if ctx:
             ctx.pop()
+        print("[sql_logger] Worker job finished")
