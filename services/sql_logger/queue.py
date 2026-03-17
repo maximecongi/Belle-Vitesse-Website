@@ -60,3 +60,7 @@ else:
             )
         except Exception as e:
             print(f"[sql_logger] Redis enqueue failed: {e}")
+
+    def start_dev_worker(app):
+        """No-op in production (using RQ worker)"""
+        pass
