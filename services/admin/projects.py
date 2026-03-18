@@ -24,10 +24,65 @@ def _format_waiver_status(status):
     return mapping.get(status, status)
 
 
+def _format_vehicle_state(project, vehicle_id, vehicle_map):
+    """
+    Format the checkout/checkin state for a single vehicle in a project.
+    """
+    # Find matching records in the pre-loaded project collections
+    c_out = next((c for c in project.checkout_vehicles if c.vehicule_controle == vehicle_id), None)
+    c_in = next((c for c in project.checkin_vehicles if c.vehicule_controle == vehicle_id), None)
+
+    return {
+        "id": vehicle_id,
+        "fields": vehicle_map.get(vehicle_id, {}),
+        "checkout_status": c_out.etat_controle if c_out else "",
+        "checkout_id": c_out.id if c_out else "",
+        "checkout_conform": "yes" if (c_out and c_out.vehicule_pret_depart) else "no",
+        "checkout_ready": "Oui" if (c_out and c_out.vehicule_pret_depart) else ("Non" if c_out else "—"),
+        "checkin_status": c_in.etat_controle if c_in else "",
+        "checkin_id": c_in.id if c_in else "",
+        "checkin_conform": "yes" if (c_in and c_in.vehicule_pret_retour) else "no",
+        "checkin_ready": "Oui" if (c_in and c_in.vehicule_pret_retour) else ("Non" if c_in else "—"),
+    }
+
+
+def _format_project_admin(p, vehicle_map):
+    """
+    Format a single project record for the admin listing.
+    """
+    veh_ids = [v.strip() for v in (p.vehicules_a_controler or "").split(",") if v.strip()]
+    
+    return {
+        "id": p.id,
+        "project_id": p.project_id,
+        "name": p.nom,
+        "production": p.production.nom if p.production else "—",
+        "departure_date": format_date_fr(str(p.date_depart)) if p.date_depart else "—",
+        "raw_departure_date": str(p.date_depart) if p.date_depart else "",
+        "shoot_start": format_date_fr(str(p.date_debut_tournage)) if p.date_debut_tournage else "—",
+        "shoot_end": format_date_fr(str(p.date_fin_tournage)) if p.date_fin_tournage else "—",
+        "return_date": format_date_fr(str(p.date_retour)) if p.date_retour else "—",
+        "raw_return_date": str(p.date_retour) if p.date_retour else "",
+        "raw_checkin_date": str(p.date_retour) if p.date_retour else "",
+        "contact_pilote": f"{p.contact_pilote_rel.prenom} {p.contact_pilote_rel.nom}" if p.contact_pilote_rel else "—",
+        "contact_production": f"{p.contact_production_rel.prenom} {p.contact_production_rel.nom}" if p.contact_production_rel else "—",
+        "vehicles": [_format_vehicle_state(p, vid, vehicle_map) for vid in veh_ids],
+        "pilot_waiver": {
+            "id": p.pilot_waiver.id if p.pilot_waiver else None,
+            "waiver_num": p.pilot_waiver.waiver_id if p.pilot_waiver else "",
+            "status": _format_waiver_status(p.pilot_waiver.status) if p.pilot_waiver else "",
+        },
+        "production_waiver": {
+            "id": p.production_waiver.id if p.production_waiver else None,
+            "waiver_num": p.production_waiver.waiver_id if p.production_waiver else "",
+            "status": _format_waiver_status(p.production_waiver.status) if p.production_waiver else "",
+        }
+    }
+
+
 def list_projects():
     """
     Fetch all project records and format for listing.
-    Cross-references checkout records to determine each vehicle's control status.
     """
     projects = Project.query.options(
         joinedload(Project.production),
@@ -38,62 +93,11 @@ def list_projects():
         joinedload(Project.pilot_waiver),
         joinedload(Project.production_waiver)
     ).order_by(Project.nom.desc()).all()
+
     vehicles = get_vehicles()
     vehicle_map = {v["id"]: v.get("fields", {}) for v in vehicles}
 
-    result = []
-    for p in projects:
-        # Get checkout and checkin statuses for vehicles in this project
-        checkout_map = {c.vehicule_controle: c for c in p.checkout_vehicles}
-        checkin_map = {c.vehicule_controle: c for c in p.checkin_vehicles}
-
-        veh_ids = [v.strip() for v in (
-            p.vehicules_a_controler or "").split(",") if v.strip()]
-        veh_list = []
-        for vid in veh_ids:
-            c_out = checkout_map.get(vid)
-            c_in = checkin_map.get(vid)
-
-            veh_list.append({
-                "id": vid,
-                "fields": vehicle_map.get(vid, {}),
-                "checkout_status": c_out.etat_controle if c_out else "",
-                "checkout_id": c_out.id if c_out else "",
-                "checkout_conform": "yes" if (c_out and c_out.vehicule_pret_depart) else "no",
-                "checkout_ready": "Oui" if (c_out and c_out.vehicule_pret_depart) else ("Non" if c_out else "—"),
-                "checkin_status": c_in.etat_controle if c_in else "",
-                "checkin_id": c_in.id if c_in else "",
-                "checkin_conform": "yes" if (c_in and c_in.vehicule_pret_retour) else "no",
-                "checkin_ready": "Oui" if (c_in and c_in.vehicule_pret_retour) else ("Non" if c_in else "—"),
-            })
-
-        result.append({
-            "id": p.id,
-            "project_id": p.project_id,
-            "name": p.nom,
-            "production": p.production.nom if p.production else "—",
-            "departure_date": format_date_fr(str(p.date_depart)) if p.date_depart else "—",
-            "raw_departure_date": str(p.date_depart) if p.date_depart else "",
-            "shoot_start": format_date_fr(str(p.date_debut_tournage)) if p.date_debut_tournage else "—",
-            "shoot_end": format_date_fr(str(p.date_fin_tournage)) if p.date_fin_tournage else "—",
-            "return_date": format_date_fr(str(p.date_retour)) if p.date_retour else "—",
-            "raw_return_date": str(p.date_retour) if p.date_retour else "",
-            "raw_checkin_date": str(p.date_retour) if p.date_retour else "",
-            "contact_pilote": f"{p.contact_pilote_rel.prenom} {p.contact_pilote_rel.nom}" if p.contact_pilote_rel else "—",
-            "contact_production": f"{p.contact_production_rel.prenom} {p.contact_production_rel.nom}" if p.contact_production_rel else "—",
-            "vehicles": veh_list,
-            "pilot_waiver": {
-                "id": p.pilot_waiver.id if p.pilot_waiver else None,
-                "waiver_num": p.pilot_waiver.waiver_id if p.pilot_waiver else "",
-                "status": _format_waiver_status(p.pilot_waiver.status) if p.pilot_waiver else "",
-            },
-            "production_waiver": {
-                "id": p.production_waiver.id if p.production_waiver else None,
-                "waiver_num": p.production_waiver.waiver_id if p.production_waiver else "",
-                "status": _format_waiver_status(p.production_waiver.status) if p.production_waiver else "",
-            }
-        })
-    return result
+    return [_format_project_admin(p, vehicle_map) for p in projects]
 
 
 def get_project_form_context():
