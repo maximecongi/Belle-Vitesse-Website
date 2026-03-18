@@ -1,5 +1,6 @@
 import logging
 from datetime import date
+from flask import current_app
 from models import db, CheckoutVehicle
 from services.admin.inspections import (
     list_inspections_unified,
@@ -37,6 +38,7 @@ def create_checkout(form, files=None):
     try:
         user_id = int(uid) if uid and uid != "None" else None
     except (ValueError, TypeError):
+        current_app.logger.warning(f"⚠️ Invalid controller_id detected: {uid}")
         user_id = None
 
     record = CheckoutVehicle(

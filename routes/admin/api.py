@@ -10,9 +10,7 @@ from flask import (
 )
 
 
-from services.admin import (
-    get_calendar_events,
-)
+from services.admin.calendar import get_calendar_events
 from services.admin.vehicle_config import get_vehicles_with_config, save_vehicle_checkpoint_config
 from utils.checkpoints import ALL_POSSIBLE_CHECKPOINTS
 

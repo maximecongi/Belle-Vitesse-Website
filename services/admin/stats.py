@@ -1,24 +1,12 @@
 import logging
 from collections import defaultdict
-
-
 from models import CheckoutVehicle
 
 logger = logging.getLogger(__name__)
 
-
-# ── Stats (Chart.js) ─────────────────────────────────────────────
-
-
 def get_checkout_stats():
     """
     Compute checkout statistics for Chart.js charts.
-
-    Returns a dict with nested structure matching the frontend expectations:
-        {
-            'monthly_activity': { 'labels': [...], 'data': [...] },
-            'status_distribution': { 'labels': [...], 'data': [...] },
-        }
     """
     records = CheckoutVehicle.query.all()
 
