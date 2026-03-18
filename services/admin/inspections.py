@@ -253,7 +253,7 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
     """
     is_checkout = isinstance(c, CheckoutVehicle)
 
-    project_name = c.project.nom if c.project else "—"
+    project_name = c.project.name if c.project else "—"
     v_data = vehicle_map.get(c.vehicule_controle, {})
     vehicle_name = v_data.get("name", "—")
     unique_id = v_data.get("unique_id", "—")
@@ -270,10 +270,10 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
     ready = "Oui" if getattr(c, ready_field, False) else "Non"
 
     c_date = format_date_fr(str(c.date_controle)) if c.date_controle else "—"
-    d_date = format_date_fr(str(c.project.date_depart)
-                            ) if c.project and c.project.date_depart else "—"
-    r_date = format_date_fr(str(c.project.date_retour)
-                            ) if c.project and c.project.date_retour else "—"
+    d_date = format_date_fr(str(c.project.departure_date)
+                            ) if c.project and c.project.departure_date else "—"
+    r_date = format_date_fr(str(c.project.return_date)
+                            ) if c.project and c.project.return_date else "—"
 
     data = {
         "id": c.id,
@@ -321,13 +321,13 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
     if c.project:
         data["production"] = c.project.production.name if c.project.production else "—"
         data["shoot_start"] = format_date_fr(
-            str(c.project.date_debut_tournage)) if c.project.date_debut_tournage else "—"
+            str(c.project.shoot_start_date)) if c.project.shoot_start_date else "—"
         data["shoot_end"] = format_date_fr(
-            str(c.project.date_fin_tournage)) if c.project.date_fin_tournage else "—"
+            str(c.project.shoot_end_date)) if c.project.shoot_end_date else "—"
         data["vehicle_id"] = c.vehicule_controle
         data["project_id"] = str(c.project.id)
         data["project_id_unique"] = c.project.project_id
-        data["project_name"] = c.project.nom
+        data["project_name"] = c.project.name
 
         # Cache vehicle name in data for convenience
         data["vehicle_name"] = vehicle_name
@@ -340,7 +340,7 @@ def get_unified_form_context(mode="checkout"):
     Unifies get_checkout_form_context and get_checkin_form_context.
     """
     projects = Project.query.options(joinedload(
-        Project.production)).order_by(Project.nom).all()
+        Project.production)).order_by(Project.name).all()
     vehicles = get_vehicles()
     users = User.query.order_by(User.firstname).all()
 
@@ -348,7 +348,7 @@ def get_unified_form_context(mode="checkout"):
     checkins = CheckinVehicle.query.all()
 
     # Pre-calculate project names mapping
-    project_names = {str(p.id): p.nom for p in projects}
+    project_names = {str(p.id): p.name for p in projects}
 
     # Map for statuses: {vehicule_id: {project_id: status}}
     vehicle_checkout_statuses = {}
@@ -399,7 +399,7 @@ def get_unified_form_context(mode="checkout"):
     projects_formatted = []
     for p in projects:
         veh_ids = [v.strip() for v in (
-            p.vehicules_a_controler or "").split(",") if v.strip()]
+            p.vehicles_to_check or "").split(",") if v.strip()]
         v_name = "—"
         if veh_ids:
             # Simple match for the first vehicle name to show in select
@@ -411,11 +411,11 @@ def get_unified_form_context(mode="checkout"):
         projects_formatted.append({
             "id": str(p.id),
             "fields": {
-                "Nom": p.nom,
+                "Nom": p.name,
                 "_production_name": p.production.name if p.production else "—",
-                "Date de départ": format_date_fr(str(p.date_depart)) if p.date_depart else "—",
-                "Date de début de tournage": format_date_fr(str(p.date_debut_tournage)) if p.date_debut_tournage else "—",
-                "Date de fin de tournage": format_date_fr(str(p.date_fin_tournage)) if p.date_fin_tournage else "—",
+                "Date de départ": format_date_fr(str(p.departure_date)) if p.departure_date else "—",
+                "Date de début de tournage": format_date_fr(str(p.shoot_start_date)) if p.shoot_start_date else "—",
+                "Date de fin de tournage": format_date_fr(str(p.shoot_end_date)) if p.shoot_end_date else "—",
                 "Véhicules à contrôler": veh_ids,
                 "_vehicle_name": v_name
             }

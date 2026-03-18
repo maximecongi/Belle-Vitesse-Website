@@ -22,7 +22,7 @@
             <select name="project_id" id="project_id" class="form-input" required style="width: 100%;">
                 <option value="">-- Sélectionner un projet --</option>
                 {% for p in projects %}
-                <option value="{{ p.id }}">{{ p.nom }} ({{ p.production.nom if p.production else 'Sans Production' }})
+                <option value="{{ p.id }}">{{ p.name }} ({{ p.production.name if p.production else 'Sans Production' }})
                 </option>
                 {% endfor %}
             </select>

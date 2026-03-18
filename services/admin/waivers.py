@@ -128,7 +128,7 @@ def list_production_waivers():
     waivers = ProductionWaiver.query.options(
         joinedload(ProductionWaiver.project)).all()
     waivers.sort(key=lambda w: (
-        w.project.date_depart or datetime.min.date(), w.project.nom), reverse=True)
+        w.project.departure_date or datetime.min.date(), w.project.name), reverse=True)
 
     formatted = []
     for w in waivers:
@@ -144,8 +144,8 @@ def list_production_waivers():
             return f"/production-waiver/document/{clean_path}?t={token}"
 
         shooting_dates = "—"
-        if p.date_debut_tournage and p.date_fin_tournage:
-            shooting_dates = f"{p.date_debut_tournage.strftime('%d/%m/%Y')} → {p.date_fin_tournage.strftime('%d/%m/%Y')}"
+        if p.shoot_start_date and p.shoot_end_date:
+            shooting_dates = f"{p.shoot_start_date.strftime('%d/%m/%Y')} → {p.shoot_end_date.strftime('%d/%m/%Y')}"
         elif w.shooting_dates:
             shooting_dates = w.shooting_dates
 
@@ -158,7 +158,7 @@ def list_production_waivers():
             "db_id": w.id,
             "waiver_id": w.waiver_id,
             "project_id": p.id,
-            "project_name": p.nom,
+            "project_name": p.name,
             "production_name": (p.production.name if p.production else w.production_name) or "—",
             "shooting_dates": shooting_dates,
             "status": format_waiver_status(w.status),
@@ -177,17 +177,17 @@ def generate_production_waiver(waiver_id):
         return False, "Décharge non trouvée ou statut invalide."
 
     p = waiver.project
-    waiver.project_name = p.nom
+    waiver.project_name = p.name
     if p.production:
         waiver.production_name = p.production.name
         waiver.production_address = p.production.address
 
-    if p.date_debut_tournage and p.date_fin_tournage:
-        waiver.shooting_dates = f"{p.date_debut_tournage.strftime('%d/%m/%Y')} au {p.date_fin_tournage.strftime('%d/%m/%Y')}"
+    if p.shoot_start_date and p.shoot_end_date:
+        waiver.shooting_dates = f"{p.shoot_start_date.strftime('%d/%m/%Y')} au {p.shoot_end_date.strftime('%d/%m/%Y')}"
 
-    if p.vehicules_a_controler:
+    if p.vehicles_to_check:
         veh_ids = [v.strip()
-                   for v in p.vehicules_a_controler.split(",") if v.strip()]
+                   for v in p.vehicles_to_check.split(",") if v.strip()]
         all_vehicles = get_vehicles()
         vehicle_map = {str(v["id"]): v.get("fields", {}).get(
             "name", f"ID {v['id']}") for v in all_vehicles}
@@ -224,7 +224,7 @@ def send_production_waiver(waiver_id):
     success = send_production_waiver_invitation_email(
         to_email=contact_prod.mail,
         prod_contact_name=f"{contact_prod.first_name} {contact_prod.last_name}",
-        project_name=waiver.project.nom,
+        project_name=waiver.project.name,
         signature_link=signature_link
     )
 
@@ -292,7 +292,7 @@ def list_pilot_waivers():
         joinedload(PilotWaiver.project).joinedload(Project.contact_pilote_rel)
     ).all()
     waivers.sort(key=lambda w: (
-        w.project.date_depart or datetime.min.date(), w.project.nom), reverse=True)
+        w.project.departure_date or datetime.min.date(), w.project.name), reverse=True)
 
     formatted = []
     for w in waivers:
@@ -315,8 +315,8 @@ def list_pilot_waivers():
             )
 
         shooting_dates = "—"
-        if p.date_debut_tournage and p.date_fin_tournage:
-            shooting_dates = f"{p.date_debut_tournage.strftime('%d/%m/%Y')} → {p.date_fin_tournage.strftime('%d/%m/%Y')}"
+        if p.shoot_start_date and p.shoot_end_date:
+            shooting_dates = f"{p.shoot_start_date.strftime('%d/%m/%Y')} → {p.shoot_end_date.strftime('%d/%m/%Y')}"
         elif w.shooting_dates:
             shooting_dates = w.shooting_dates
 
@@ -329,7 +329,7 @@ def list_pilot_waivers():
             "db_id": w.id,
             "waiver_id": w.waiver_id,
             "project_id": p.id,
-            "project_name": p.nom,
+            "project_name": p.name,
             "pilot_name": pilote_name,
             "shooting_dates": shooting_dates,
             "status": format_waiver_status(w.status),
@@ -359,14 +359,14 @@ def generate_pilot_waiver(waiver_id):
 
     if p.production:
         waiver.production_name = p.production.name
-    waiver.project_name = p.nom
+    waiver.project_name = p.name
 
-    if p.date_debut_tournage and p.date_fin_tournage:
-        waiver.shooting_dates = f"{p.date_debut_tournage.strftime('%d/%m/%Y')} au {p.date_fin_tournage.strftime('%d/%m/%Y')}"
+    if p.shoot_start_date and p.shoot_end_date:
+        waiver.shooting_dates = f"{p.shoot_start_date.strftime('%d/%m/%Y')} au {p.shoot_end_date.strftime('%d/%m/%Y')}"
 
-    if p.vehicules_a_controler:
+    if p.vehicles_to_check:
         veh_ids = [v.strip()
-                   for v in p.vehicules_a_controler.split(",") if v.strip()]
+                   for v in p.vehicles_to_check.split(",") if v.strip()]
         all_vehicles = get_vehicles()
         vehicle_map = {str(v["id"]): v.get("fields", {}).get(
             "name", f"ID {v['id']}") for v in all_vehicles}
@@ -407,7 +407,7 @@ def send_pilot_waiver(waiver_id):
     success = send_waiver_invitation_email(
         to_email=contact_pilote.mail,
         pilot_name=f"{contact_pilote.first_name} {contact_pilote.last_name}",
-        project_name=waiver.project.nom,
+        project_name=waiver.project.name,
         signature_link=signature_link
     )
 

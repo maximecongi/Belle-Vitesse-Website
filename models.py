@@ -74,19 +74,19 @@ class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(
         db.String(50), unique=True, default=lambda: generate_inspection_number("BVPR"))
-    nom = db.Column(db.String(255), nullable=False)
+    name = db.Column(db.String(255), nullable=False)
     production_id = db.Column(db.Integer, db.ForeignKey(
         "productions.id"), nullable=False, index=True)
     contact_pilote_id = db.Column(db.Integer, db.ForeignKey(
         "contacts.id"), nullable=True, index=True)
     contact_production_id = db.Column(db.Integer, db.ForeignKey(
         "contacts.id"), nullable=True, index=True)
-    date_depart = db.Column(db.Date)
-    date_debut_tournage = db.Column(db.Date)
-    date_fin_tournage = db.Column(db.Date)
-    date_retour = db.Column(db.Date)
+    departure_date = db.Column(db.Date)
+    shoot_start_date = db.Column(db.Date)
+    shoot_end_date = db.Column(db.Date)
+    return_date = db.Column(db.Date)
     # liste séparée par virgules ex: "eCar, eBike"
-    vehicules_a_controler = db.Column(db.String(500))
+    vehicles_to_check = db.Column(db.String(500))
 
     # Relations
     checkout_vehicles = db.relationship(
@@ -103,7 +103,7 @@ class Project(db.Model):
         "ProductionWaiver", backref="project", uselist=False, lazy=True)
 
     def __repr__(self):
-        return f"<Project {self.nom}>"
+        return f"<Project {self.name}>"
 
 
 class PilotWaiver(db.Model):

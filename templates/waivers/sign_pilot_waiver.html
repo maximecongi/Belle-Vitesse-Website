@@ -69,7 +69,7 @@
                 <div class="pilot-waiver-info-grid">
                     <div class="pilot-waiver-info-item">
                         <span class="pilot-waiver-info-label">Projet</span>
-                        <span class="pilot-waiver-info-value">{{ waiver.project.nom if waiver.project else '—' }}</span>
+                        <span class="pilot-waiver-info-value">{{ waiver.project.name if waiver.project else '—' }}</span>
                     </div>
                     <div class="pilot-waiver-info-item">
                         <span class="pilot-waiver-info-label">Production</span>
@@ -193,7 +193,7 @@
                         véhicule de tracking caméra modifié (ci-après « le Véhicule ») au pilote, dans le cadre exclusif
                         de la production audiovisuelle suivante :</p>
                     <ul>
-                        <li>Projet : <strong>{{ waiver.project.nom if waiver.project else '—' }}</strong></li>
+                        <li>Projet : <strong>{{ waiver.project.name if waiver.project else '—' }}</strong></li>
                         <li>Production / Tournage : <strong>{{ waiver.production_name or '—' }}</strong></li>
                         <li>Véhicule(s) : <strong>{{ waiver.vehicles or '—' }}</strong></li>
                         <li>Date(s) et lieu(x) : <strong>{{ waiver.shooting_dates or '—' }}</strong></li>

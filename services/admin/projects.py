@@ -40,20 +40,20 @@ def _format_project_admin(p, vehicle_map):
     """
     Format a single project record for the admin listing.
     """
-    veh_ids = [v.strip() for v in (p.vehicules_a_controler or "").split(",") if v.strip()]
+    veh_ids = [v.strip() for v in (p.vehicles_to_check or "").split(",") if v.strip()]
     
     return {
         "id": p.id,
         "project_id": p.project_id,
-        "name": p.nom,
+        "name": p.name,
         "production": p.production.name if p.production else "—",
-        "departure_date": format_date_fr(str(p.date_depart)) if p.date_depart else "—",
-        "raw_departure_date": str(p.date_depart) if p.date_depart else "",
-        "shoot_start": format_date_fr(str(p.date_debut_tournage)) if p.date_debut_tournage else "—",
-        "shoot_end": format_date_fr(str(p.date_fin_tournage)) if p.date_fin_tournage else "—",
-        "return_date": format_date_fr(str(p.date_retour)) if p.date_retour else "—",
-        "raw_return_date": str(p.date_retour) if p.date_retour else "",
-        "raw_checkin_date": str(p.date_retour) if p.date_retour else "",
+        "departure_date": format_date_fr(str(p.departure_date)) if p.departure_date else "—",
+        "raw_departure_date": str(p.departure_date) if p.departure_date else "",
+        "shoot_start": format_date_fr(str(p.shoot_start_date)) if p.shoot_start_date else "—",
+        "shoot_end": format_date_fr(str(p.shoot_end_date)) if p.shoot_end_date else "—",
+        "return_date": format_date_fr(str(p.return_date)) if p.return_date else "—",
+        "raw_return_date": str(p.return_date) if p.return_date else "",
+        "raw_checkin_date": str(p.return_date) if p.return_date else "",
         "contact_pilote": f"{p.contact_pilote_rel.first_name} {p.contact_pilote_rel.last_name}" if p.contact_pilote_rel else "—",
         "contact_production": f"{p.contact_production_rel.first_name} {p.contact_production_rel.last_name}" if p.contact_production_rel else "—",
         "vehicles": [_format_vehicle_state(p, vid, vehicle_map) for vid in veh_ids],
@@ -82,7 +82,7 @@ def list_projects():
         joinedload(Project.contact_production_rel),
         joinedload(Project.pilot_waiver),
         joinedload(Project.production_waiver)
-    ).order_by(Project.nom.desc()).all()
+    ).order_by(Project.name.desc()).all()
 
     vehicles = get_vehicles()
     vehicle_map = {v["id"]: v.get("fields", {}) for v in vehicles}
@@ -118,18 +118,18 @@ def create_project(form):
     """Create a new project record in the database."""
     veh_ids = form.getlist("vehicle_ids") if hasattr(form, 'getlist') else []
     project = Project(
-        nom=form.get("name"),
+        name=form.get("name"),
         production_id=form.get("production_id") if form.get(
             "production_id") else None,
         contact_pilote_id=form.get("contact_pilote_id") if form.get(
             "contact_pilote_id") else None,
         contact_production_id=form.get("contact_production_id") if form.get(
             "contact_production_id") else None,
-        date_depart=_parse_date(form.get("departure_date")),
-        date_debut_tournage=_parse_date(form.get("shoot_start")),
-        date_fin_tournage=_parse_date(form.get("shoot_end")),
-        date_retour=_parse_date(form.get("return_date")),
-        vehicules_a_controler=",".join(veh_ids)
+        departure_date=_parse_date(form.get("departure_date")),
+        shoot_start_date=_parse_date(form.get("shoot_start")),
+        shoot_end_date=_parse_date(form.get("shoot_end")),
+        return_date=_parse_date(form.get("return_date")),
+        vehicles_to_check=",".join(veh_ids)
     )
     db.session.add(project)
     # To get the project ID before commit if needed, though commit is fine too
@@ -144,12 +144,12 @@ def create_project(form):
             webhook_url,
             event="project_created",
             project_id=project.project_id,
-            project=project.nom,
+            project=project.name,
             production=project.production.name if project.production else "—",
-            year=str(project.date_depart.strftime("%Y")
-                     ) if project.date_depart else "—",
-            month=str(project.date_depart.strftime("%m")
-                      ) if project.date_depart else "—",
+            year=str(project.departure_date.strftime("%Y")
+                     ) if project.departure_date else "—",
+            month=str(project.departure_date.strftime("%m")
+                      ) if project.departure_date else "—",
         )
 
     return True
@@ -162,18 +162,18 @@ def update_project(record_id, form):
         return False
 
     veh_ids = form.getlist("vehicle_ids") if hasattr(form, 'getlist') else []
-    project.nom = form.get("name")
+    project.name = form.get("name")
     project.production_id = form.get(
         "production_id") if form.get("production_id") else None
     project.contact_pilote_id = form.get(
         "contact_pilote_id") if form.get("contact_pilote_id") else None
     project.contact_production_id = form.get(
         "contact_production_id") if form.get("contact_production_id") else None
-    project.date_depart = _parse_date(form.get("departure_date"))
-    project.date_debut_tournage = _parse_date(form.get("shoot_start"))
-    project.date_fin_tournage = _parse_date(form.get("shoot_end"))
-    project.date_retour = _parse_date(form.get("return_date"))
-    project.vehicules_a_controler = ",".join(veh_ids)
+    project.departure_date = _parse_date(form.get("departure_date"))
+    project.shoot_start_date = _parse_date(form.get("shoot_start"))
+    project.shoot_end_date = _parse_date(form.get("shoot_end"))
+    project.return_date = _parse_date(form.get("return_date"))
+    project.vehicles_to_check = ",".join(veh_ids)
 
     db.session.commit()
     return True
@@ -187,16 +187,16 @@ def get_project_for_edit(record_id):
     if not p:
         return None
 
-    veh_ids = [v.strip() for v in (p.vehicules_a_controler or "").split(
-        ",")] if p.vehicules_a_controler else []
+    veh_ids = [v.strip() for v in (p.vehicles_to_check or "").split(
+        ",")] if p.vehicles_to_check else []
 
     return {
         "project_id": p.project_id,
-        "name": p.nom,
-        "departure_date_raw": str(p.date_depart) if p.date_depart else "",
-        "shoot_start_raw": str(p.date_debut_tournage) if p.date_debut_tournage else "",
-        "shoot_end_raw": str(p.date_fin_tournage) if p.date_fin_tournage else "",
-        "return_date_raw": str(p.date_retour) if p.date_retour else "",
+        "name": p.name,
+        "departure_date_raw": str(p.departure_date) if p.departure_date else "",
+        "shoot_start_raw": str(p.shoot_start_date) if p.shoot_start_date else "",
+        "shoot_end_raw": str(p.shoot_end_date) if p.shoot_end_date else "",
+        "return_date_raw": str(p.return_date) if p.return_date else "",
         "production_id": str(p.production_id) if p.production_id else "",
         "contact_pilote_id": str(p.contact_pilote_id) if p.contact_pilote_id else "",
         "contact_production_id": str(p.contact_production_id) if p.contact_production_id else "",

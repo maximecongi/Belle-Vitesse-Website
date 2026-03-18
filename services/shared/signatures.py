@@ -332,7 +332,7 @@ def _build_flow_data(mode, record, extra_data):
         snapshot = {
             "pilot_name": full_name,
             "license": record.pilot_license_number,
-            "project": record.project_name or (record.project.nom if record.project else "—"),
+            "project": record.project_name or (record.project.name if record.project else "—"),
         }
         return snapshot, seal_args
 
@@ -342,7 +342,7 @@ def _build_flow_data(mode, record, extra_data):
         snapshot = {
             "production": record.production_name,
             "representative": record.production_representative,
-            "project": record.project_name or (record.project.nom if record.project else "—"),
+            "project": record.project_name or (record.project.name if record.project else "—"),
         }
         return snapshot, seal_args
 
@@ -477,7 +477,7 @@ def _send_waiver_confirmation_email(mode, waiver, pdf_path):
                 recipient_email,
                 recipient_name,
                 waiver.project_name or (
-                    waiver.project.nom if waiver.project else "—"),
+                    waiver.project.name if waiver.project else "—"),
                 pdf_path
             )
     except Exception as e:

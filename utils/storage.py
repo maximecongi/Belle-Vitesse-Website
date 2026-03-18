@@ -42,9 +42,9 @@ def get_project_base_path(project):
     year = date.strftime("%Y")
     month = date.strftime("%m")
 
-    prod_name = sanitize_folder_name(project.production.nom if (
-        project.production and project.production.nom) else "SANS_PRODUCTION")
-    proj_name = sanitize_folder_name(project.nom)
+    prod_name = sanitize_folder_name(project.production.name if (
+        project.production and project.production.name) else "SANS_PRODUCTION")
+    proj_name = sanitize_folder_name(project.name)
 
     path = Path(output_base) / year / month / prod_name / proj_name
     return path

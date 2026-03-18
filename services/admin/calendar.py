@@ -16,32 +16,32 @@ def get_calendar_events():
     ]
 
     for i, r in enumerate(records):
-        name = r.nom or "Sans nom"
+        name = r.name or "Sans nom"
         color = colors[i % len(colors)]
 
-        if r.date_depart:
+        if r.departure_date:
             events.append({
                 "title": f"🚚 Départ: {name}",
-                "start": r.date_depart.isoformat(),
+                "start": r.departure_date.isoformat(),
                 "color": color,
                 "url": url_for("admin_project_edit", record_id=r.id),
             })
 
-        if r.date_debut_tournage:
+        if r.shoot_start_date:
             event = {
                 "title": f"🎬 {name}",
-                "start": r.date_debut_tournage.isoformat(),
+                "start": r.shoot_start_date.isoformat(),
                 "color": color,
                 "url": url_for("admin_project_edit", record_id=r.id),
             }
-            if r.date_fin_tournage:
-                event["end"] = r.date_fin_tournage.isoformat()
+            if r.shoot_end_date:
+                event["end"] = r.shoot_end_date.isoformat()
             events.append(event)
 
-        if r.date_retour:
+        if r.return_date:
             events.append({
                 "title": f"📦 Retour: {name}",
-                "start": r.date_retour.isoformat(),
+                "start": r.return_date.isoformat(),
                 "color": color,
                 "url": url_for("admin_project_edit", record_id=r.id),
             })
