@@ -107,3 +107,62 @@ def _is_ready(form, vehicle_id=None, is_checkout=False):
         if val is not None and val not in ["OK", "Non pertinent"]:
             return False
     return True
+
+
+# ── Generic CRUD Helpers ──────────────────────────────────────────
+
+
+def generic_list_records(model, fields_map, order_by_attr=None):
+    """
+    Generic fetcher that returns a list of records formatted with the 'Fields Pattern'.
+    
+    Args:
+        model: SQLAlchemy model class.
+        fields_map: Dict mapping frontend keys to model attributes or callables.
+        order_by_attr: Optional attribute to order by.
+    """
+    query = model.query
+    if order_by_attr:
+        query = query.order_by(order_by_attr)
+    
+    records = query.all()
+    result = []
+    
+    for r in records:
+        formatted = {"id": r.id}
+        for key, attr in fields_map.items():
+            if callable(attr):
+                formatted[key] = attr(r)
+            else:
+                formatted[key] = getattr(r, attr) or "—"
+        result.append(formatted)
+    
+    return result
+
+
+def generic_get_record_for_edit(model, record_id, fields_list):
+    """
+    Generic fetcher for form editing data.
+    
+    Args:
+        model: SQLAlchemy model class.
+        record_id: ID of the record.
+        fields_list: List of model attributes to include.
+    """
+    record = db.session.get(model, record_id)
+    if not record:
+        return None
+    
+    return {field: getattr(record, field) or "" for field in fields_list}
+
+
+@handle_admin_service_error
+def generic_delete_record(model, record_id):
+    """
+    Generic record deletion.
+    """
+    record = db.session.get(model, record_id)
+    if record:
+        db.session.delete(record)
+        db.session.commit()
+    return True
