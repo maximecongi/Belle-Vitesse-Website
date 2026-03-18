@@ -559,7 +559,7 @@
                         showFeedback('✅ Décharge signée avec succès. Vous allez recevoir un e-mail de confirmation.', 'success');
                         btnSign.textContent = 'Signé ✓';
                         canvas.style.pointerEvents = 'none';
-                        setTimeout(function () { window.location.reload(); }, 2500);
+                        setTimeout(function () { /* No reload needed, token preserved */ }, 2500);
                     } else {
                         showFeedback('❌ ' + (result.error || 'Erreur inconnue. Réessayez.'), 'error');
                         btnSign.disabled = false;

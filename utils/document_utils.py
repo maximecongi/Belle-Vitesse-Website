@@ -171,24 +171,30 @@ def make_url_fetcher(app):
 
 # ── PDF Generation ──────────────────────────────────────────────
 
-def generate_inspection_pdf(html_content: str, base_url: str, mode: str) -> bytes:
+def render_pdf_from_template(html_content: str, base_url: str, stylesheets: list[str] = None) -> bytes:
     """
-    Generate PDF bytes for either 'checkin' or 'checkout'.
+    Generic PDF generator using WeasyPrint.
+    Args:
+        html_content (str): Rendered HTML string.
+        base_url (str): Base URL for assets.
+        stylesheets (list[str]): List of static filenames (e.g. ['css/styles.css', 'css/checkin.css'])
     """
     fetcher = make_url_fetcher(current_app)
     html = HTML(string=html_content, base_url=base_url, url_fetcher=fetcher)
 
     css_list = []
-    static_path = Path(current_app.static_folder)
-
-    # 1. Base styles
-    styles_css = static_path / "css" / "styles.css"
-    if styles_css.exists():
-        css_list.append(CSS(filename=str(styles_css), url_fetcher=fetcher))
-
-    # 2. Specific styles
-    spec_css = static_path / "css" / f"{mode}.css"
-    if spec_css.exists():
-        css_list.append(CSS(filename=str(spec_css), url_fetcher=fetcher))
+    if stylesheets:
+        static_path = Path(current_app.static_folder)
+        for ss in stylesheets:
+            css_file = static_path / ss.lstrip("/")
+            if css_file.exists():
+                css_list.append(CSS(filename=str(css_file), url_fetcher=fetcher))
 
     return html.write_pdf(stylesheets=css_list)
+
+
+# Backward compatibility alias
+def generate_inspection_pdf(html_content: str, base_url: str, mode: str) -> bytes:
+    """Legacy helper for inspections."""
+    stylesheets = ["css/styles.css", f"css/{mode}.css"]
+    return render_pdf_from_template(html_content, base_url, stylesheets)

@@ -12,7 +12,6 @@ from models import (
     PilotWaiverToken,
     ProductionWaiverToken
 )
-from services.shared.waiver_signatures import process_waiver_signature
 from utils.storage import (
     get_pilot_attachments_path,
     get_production_attachments_path,
@@ -147,7 +146,16 @@ def init_waiver_routes(app):
             waiver.signer_ip = signer_ip
 
             db.session.commit()
-            process_waiver_signature(mode, waiver.id)
+
+            from services.shared.signatures import finalize_signed_document
+            finalize_signed_document(mode, waiver.id, waiver.signature_data, signer_ip)
+
+            # We don't delete the token immediately to allow the user
+            # to see the "signed" state if they reload the page.
+            # Token will expire naturally after 24h.
+            # db.session.delete(token_rec)
+            # db.session.commit()
+
             return jsonify({"success": True})
 
         except Exception as e:

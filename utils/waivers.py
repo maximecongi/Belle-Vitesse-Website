@@ -10,10 +10,10 @@ Most logic has moved to document_utils.py and waiver_signatures.py.
 
 
 def process_pilot_waiver_signature(waiver_id):
-    from services.shared.waiver_signatures import process_waiver_signature
+    from services.shared.signatures import process_waiver_signature
     return process_waiver_signature("pilot", waiver_id)
 
 
 def process_production_waiver_signature(waiver_id):
-    from services.shared.waiver_signatures import process_waiver_signature
+    from services.shared.signatures import process_waiver_signature
     return process_waiver_signature("production", waiver_id)
