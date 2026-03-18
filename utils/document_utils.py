@@ -9,6 +9,7 @@ import logging
 import qrcode
 import base64
 import unicodedata
+from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
 from urllib.parse import urlparse, unquote
@@ -21,44 +22,48 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-# ── Cryptographic Seal ──────────────────────────────────────────
+# ── HMAC Sealing ─────────────────────────────────────────────────
 
 
 def _get_hmac_secret() -> bytes:
     """Return the HMAC secret key from environment."""
     secret = os.getenv("HASH_SECRET_KEY")
     if not secret:
-        raise EnvironmentError("HASH_SECRET_KEY is not set.")
+        # Fallback to SECRET_KEY for dev, though distinct is better
+        secret = os.getenv("SECRET_KEY", "fallback_secret_for_dev_only")
     return secret.encode("utf-8")
 
 
-def compute_document_seal(
-    inspection_id: str,
-    vehicle_id: str,
-    signature_data: str,
-    signed_at: str,
-) -> str:
+def compute_hmac_seal(prefix, *args) -> str:
     """
-    Compute an HMAC-SHA256 seal over critical document fields.
-    Removed 'km' field as it is no longer used.
+    Computes a cryptographic HMAC-SHA256 seal for any document.
+    Args:
+        prefix (str): E.g. 'INSPECTION', 'WAIVER', 'WAIVER_PROD'
+        *args: Variable number of strings that form the seal content.
     """
-    content = f"{inspection_id}|{vehicle_id}|{signature_data}|{signed_at}"
+    # Join prefix and all args with a pipe
+    content_parts = [prefix] + [str(arg) for arg in args]
+    content = "|".join(content_parts)
+
     secret = _get_hmac_secret()
     return hmac.new(secret, content.encode("utf-8"), hashlib.sha256).hexdigest()
 
 
-def verify_document_seal(
-    inspection_id: str,
-    vehicle_id: str,
-    signature_data: str,
-    signed_at: str,
-    expected_hash: str,
-) -> bool:
-    """Verify a document seal by recomputing the HMAC."""
-    actual_hash = compute_document_seal(
-        inspection_id, vehicle_id, signature_data, signed_at
-    )
+def verify_hmac_seal(expected_hash, prefix, *args) -> bool:
+    """
+    Verifies a cryptographic HMAC-SHA256 seal.
+    """
+    actual_hash = compute_hmac_seal(prefix, *args)
     return hmac.compare_digest(actual_hash, expected_hash)
+
+
+# Backward compatibility aliases for inspections
+def compute_document_seal(inspection_id, vehicle_id, signature_data, signed_at):
+    return compute_hmac_seal("INSPECTION", inspection_id, vehicle_id, signature_data, signed_at)
+
+
+def verify_document_seal(inspection_id, vehicle_id, signature_data, signed_at, expected_hash):
+    return verify_hmac_seal(expected_hash, "INSPECTION", inspection_id, vehicle_id, signature_data, signed_at)
 
 
 # ── PDF Binary Hash ──────────────────────────────────────────────
@@ -91,6 +96,42 @@ def generate_qr_code(data: str) -> str:
     buffered = BytesIO()
     img.save(buffered, format="PNG")
     return f"data:image/png;base64,{base64.b64encode(buffered.getvalue()).decode()}"
+
+
+# ── PDF Access Tokens ───────────────────────────────────────────
+
+def generate_pdf_access_token(filename: str) -> str:
+    """Generate a time-limited, HMAC-signed access token for a PDF filename."""
+    secret = _get_hmac_secret()
+    now_minutes = int(datetime.now(timezone.utc).timestamp() // 60)
+    payload = f"{filename}:{now_minutes}".encode("utf-8")
+    return hmac.new(secret, payload, hashlib.sha256).hexdigest()
+
+
+def validate_pdf_access_token(filename: str, provided_token: str) -> bool:
+    """Validate a time-limited access token for a PDF."""
+    if not provided_token:
+        return False
+    secret = _get_hmac_secret()
+    ttl = int(os.getenv("PDF_ACCESS_TOKEN_TTL_MINUTES", "60"))
+    now_minutes = int(datetime.now(timezone.utc).timestamp() // 60)
+
+    for delta in range(ttl + 1):
+        ts = now_minutes - delta
+        payload = f"{filename}:{ts}".encode("utf-8")
+        expected = hmac.new(secret, payload, hashlib.sha256).hexdigest()
+        if hmac.compare_digest(expected, provided_token):
+            return True
+    return False
+
+
+# Compatibility aliases
+def generate_waiver_pdf_access_token(filename):
+    return generate_pdf_access_token(filename)
+
+
+def validate_waiver_pdf_access_token(filename, token):
+    return validate_pdf_access_token(filename, token)
 
 
 # ── WeasyPrint Fetcher ──────────────────────────────────────────

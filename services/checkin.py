@@ -13,7 +13,7 @@ from services.shared.signatures import (
     generate_pdf_access_token as gen_token,
     validate_pdf_access_token as val_token
 )
-from utils.inspection_utils import verify_document_seal, verify_pdf_hash
+from utils.document_utils import verify_document_seal, verify_pdf_hash
 
 logger = logging.getLogger(__name__)
 

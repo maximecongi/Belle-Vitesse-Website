@@ -19,11 +19,11 @@ from models import (
 from utils.database import get_vehicles
 from utils.storage import get_checkout_path, get_checkin_path, ensure_dir
 from utils.n8n import trigger_n8n_webhook
-from utils.inspection_utils import (
+from utils.document_utils import (
     compute_document_seal,
     generate_qr_code,
+    generate_inspection_pdf,
     compute_pdf_hash,
-    generate_inspection_pdf
 )
 
 logger = logging.getLogger(__name__)
