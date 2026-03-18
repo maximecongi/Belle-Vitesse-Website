@@ -13,6 +13,14 @@ from utils.formatting import format_date_fr
 from utils.checkpoints import get_checkpoints_for_vehicle, BASE_CHECKPOINTS, ALL_POSSIBLE_CHECKPOINTS, CHECKPOINT_TO_MODEL_MAP
 from services.admin.utils import _parse_photos_json, _is_ready, _delete_inspection_files
 
+from services.admin.status_mapping import (
+    INSPECTION_DB_SIGNED,
+    INSPECTION_DB_TERMINÉ,
+    INSPECTION_DB_PENDING,
+    INSPECTION_DB_TO_CHECK,
+    format_inspection_status
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -70,8 +78,8 @@ def list_inspections_unified(mode):
     batch_configs = get_checkpoint_configs()
 
     total = len(records)
-    signed = sum(1 for r in records if r.etat_controle == "Signé")
-    pending = sum(1 for r in records if r.etat_controle == "Terminé")
+    signed = sum(1 for r in records if r.etat_controle == INSPECTION_DB_SIGNED)
+    pending = sum(1 for r in records if r.etat_controle == INSPECTION_DB_TERMINÉ)
 
     formatted = [_format_base_inspection_admin(
         r, vehicle_map, batch_configs) for r in records]
@@ -106,7 +114,7 @@ def get_inspection_detail_unified(mode, record_id):
     vehicle_map = {v["id"]: v.get("fields", {}) for v in vehicles}
     data = _format_base_inspection_admin(record, vehicle_map)
 
-    if data.get("control_status") == "Signé":
+    if data.get("control_status") == INSPECTION_DB_SIGNED:
         from services.admin.documents import get_signed_document_info
         doc_info = get_signed_document_info(
             data["inspection_id"], is_checkout=config["is_checkout"])
@@ -206,7 +214,7 @@ def apply_inspection_data(record, form, is_checkout=True):
     def get_val(key):
         if key not in pertinent_keys:
             return "Non pertinent"
-        return form.get(key, "À vérifier")
+        return form.get(key, INSPECTION_DB_PENDING)
 
     # 1. Map all standard status checkpoints
     for cp in ALL_POSSIBLE_CHECKPOINTS:
@@ -255,7 +263,7 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
         c, 'responsible', None)
     controller_name = f"{responsible.firstname} {responsible.lastname}" if responsible else "—"
 
-    status = c.etat_controle or "—"
+    status = format_inspection_status(c.etat_controle or INSPECTION_DB_TO_CHECK)
 
     # Handle readiness field: vehicule_pret_depart vs vehicule_pret_retour
     ready_field = 'vehicule_pret_depart' if is_checkout else 'vehicule_pret_retour'
@@ -366,11 +374,11 @@ def get_unified_form_context(mode="checkout"):
     if mode == "checkout":
         for vid, p_statuses in vehicle_checkout_statuses.items():
             for pid, status in p_statuses.items():
-                if status in ["Signé", "Validé"]:
+                if status in [INSPECTION_DB_SIGNED, "Validé"]: # keeping Validé if legacy
                     # Has it been checked in?
                     has_checkin = False
                     for ci in checkins:
-                        if ci.vehicule_controle == vid and str(ci.project_id) == pid and ci.etat_controle in ["Signé", "Validé"]:
+                        if ci.vehicule_controle == vid and str(ci.project_id) == pid and ci.etat_controle in [INSPECTION_DB_SIGNED, "Validé"]:
                             has_checkin = True
                             break
                     if not has_checkin:

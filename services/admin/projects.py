@@ -6,22 +6,12 @@ from sqlalchemy.orm import joinedload
 from models import db, Production, Project, Contact
 from utils.database import get_vehicles
 from utils.formatting import format_date_fr
+from services.admin.status_mapping import format_waiver_status
 
 logger = logging.getLogger(__name__)
 
 
 # ── Projects ─────────────────────────────────────────────────────
-
-
-def _format_waiver_status(status):
-    """Map internal status to French label for dashboard."""
-    mapping = {
-        "to_generate": "À générer",
-        "to_send": "À envoyer",
-        "to_sign": "À signer",
-        "signed": "Signé"
-    }
-    return mapping.get(status, status)
 
 
 def _format_vehicle_state(project, vehicle_id, vehicle_map):
@@ -70,12 +60,12 @@ def _format_project_admin(p, vehicle_map):
         "pilot_waiver": {
             "id": p.pilot_waiver.id if p.pilot_waiver else None,
             "waiver_num": p.pilot_waiver.waiver_id if p.pilot_waiver else "",
-            "status": _format_waiver_status(p.pilot_waiver.status) if p.pilot_waiver else "",
+            "status": format_waiver_status(p.pilot_waiver.status) if p.pilot_waiver else "",
         },
         "production_waiver": {
             "id": p.production_waiver.id if p.production_waiver else None,
             "waiver_num": p.production_waiver.waiver_id if p.production_waiver else "",
-            "status": _format_waiver_status(p.production_waiver.status) if p.production_waiver else "",
+            "status": format_waiver_status(p.production_waiver.status) if p.production_waiver else "",
         }
     }
 

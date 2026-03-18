@@ -18,6 +18,7 @@ from utils.database import get_vehicles
 from utils.n8n import trigger_n8n_webhook
 # Keep here for list view
 from utils.document_utils import generate_pdf_access_token as generate_waiver_pdf_access_token
+from services.admin.status_mapping import format_waiver_status
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +161,7 @@ def list_production_waivers():
             "project_name": p.nom,
             "production_name": (p.production.nom if p.production else w.production_name) or "—",
             "shooting_dates": shooting_dates,
-            "status": w.status,
+            "status": format_waiver_status(w.status),
             "generated_at": w.generated_at,
             "sent_at": w.sent_at,
             "signed_at": w.signed_at,
@@ -331,7 +332,7 @@ def list_pilot_waivers():
             "project_name": p.nom,
             "pilot_name": pilote_name,
             "shooting_dates": shooting_dates,
-            "status": w.status,
+            "status": format_waiver_status(w.status),
             "generated_at": w.generated_at,
             "sent_at": w.sent_at,
             "signed_at": w.signed_at,
