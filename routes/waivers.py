@@ -4,7 +4,15 @@ from datetime import datetime
 from werkzeug.utils import secure_filename
 from flask import render_template, request, jsonify, current_app, abort, send_from_directory
 
-from models import db, PilotWaiver, PilotWaiverSignedDocument, ProductionWaiver, ProductionWaiverSignedDocument
+from models import (
+    db,
+    PilotWaiver,
+    PilotWaiverSignedDocument,
+    ProductionWaiver,
+    ProductionWaiverSignedDocument,
+    PilotWaiverToken,
+    ProductionWaiverToken
+)
 from services.shared.waiver_signatures import process_waiver_signature
 from utils.document_utils import (
     validate_pdf_access_token,
@@ -27,6 +35,7 @@ def _get_waiver_route_config(mode):
         return {
             "model": PilotWaiver,
             "signed_model": PilotWaiverSignedDocument,
+            "token_model": PilotWaiverToken,
             "template_sign": "waivers/sign_pilot_waiver.html",
             "template_verify": "waivers/pilot_waiver_verify.html",
             "route_base": "pilot-waiver",
@@ -35,6 +44,7 @@ def _get_waiver_route_config(mode):
     return {
         "model": ProductionWaiver,
         "signed_model": ProductionWaiverSignedDocument,
+        "token_model": ProductionWaiverToken,
         "template_sign": "waivers/sign_production_waiver.html",
         "template_verify": "waivers/production_waiver_verify.html",
         "route_base": "production-waiver",
@@ -67,15 +77,31 @@ def init_waiver_routes(app):
 
     def _handle_sign_waiver(mode, token):
         config = _get_waiver_route_config(mode)
-        waiver = config["model"].query.filter_by(signature_token=token).first()
+
+        # 1. Validate Token
+        token_rec = config["token_model"].query.filter_by(token=token).first()
+        if not token_rec:
+            if request.method == "GET":
+                return render_template(config["template_sign"], waiver={"status": "invalid"})
+            return jsonify({"success": False, "error": "Token invalide."})
+
+        # 2. Check Expiration (24h)
+        if token_rec.expires_at and token_rec.expires_at < datetime.utcnow():
+            if request.method == "GET":
+                return render_template(config["template_sign"], waiver={"status": "expired"})
+            return jsonify({"success": False, "error": "Ce lien de signature a expiré."})
+
+        # 3. Get Waiver
+        waiver = config["model"].query.filter_by(
+            waiver_id=token_rec.waiver_id).first()
+        if not waiver:
+            abort(404)
 
         if request.method == "GET":
-            if not waiver:
-                return render_template(config["template_sign"], waiver={"status": "invalid"})
             return render_template(config["template_sign"], waiver=waiver)
 
-        if not waiver or waiver.status == 'signed':
-            return jsonify({"success": False, "error": "Token invalide ou décharge déjà signée."})
+        if waiver.status == 'signed':
+            return jsonify({"success": False, "error": "Cette décharge a déjà été signée."})
 
         try:
             data = request.form

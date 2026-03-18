@@ -10,7 +10,9 @@ from models import (
     ProductionWaiver,
     Project,
     PilotWaiverSignedDocument,
-    ProductionWaiverSignedDocument
+    ProductionWaiverSignedDocument,
+    PilotWaiverToken,
+    ProductionWaiverToken
 )
 from utils.database import get_vehicles
 from utils.n8n import trigger_n8n_webhook
@@ -27,6 +29,7 @@ def _get_waiver_config(mode):
         return {
             "model": PilotWaiver,
             "signed_model": PilotWaiverSignedDocument,
+            "token_model": PilotWaiverToken,
             "webhook_env": "N8N_WEBHOOK_PILOT_WAIVER",
             "route_base": "pilot-waiver",
             "attachment_fields": ["pilot_license_path", "pilot_insurance_path", "pilot_identity_path"]
@@ -34,6 +37,7 @@ def _get_waiver_config(mode):
     return {
         "model": ProductionWaiver,
         "signed_model": ProductionWaiverSignedDocument,
+        "token_model": ProductionWaiverToken,
         "webhook_env": "N8N_WEBHOOK_PRODUCTION_WAIVER",
         "route_base": "production-waiver",
         "attachment_fields": ["production_insurance_path"]
@@ -67,6 +71,9 @@ def _cleanup_waiver_assets(mode, waiver):
     if signed_doc:
         db.session.delete(signed_doc)
 
+    # Cleanup tokens
+    config["token_model"].query.filter_by(waiver_id=waiver.waiver_id).delete()
+
 
 def _reset_waiver_fields(mode, waiver):
     """Resets all snapshot and signature fields of a waiver."""
@@ -74,7 +81,6 @@ def _reset_waiver_fields(mode, waiver):
     waiver.generated_at = None
     waiver.sent_at = None
     waiver.signed_at = None
-    waiver.signature_token = None
     waiver.signature_data = None
     waiver.signed_pdf_path = None
     waiver.signer_ip = None
@@ -142,6 +148,10 @@ def list_production_waivers():
         elif w.shooting_dates:
             shooting_dates = w.shooting_dates
 
+        # Get active token if any
+        active_token = ProductionWaiverToken.query.filter_by(
+            waiver_id=w.waiver_id).order_by(ProductionWaiverToken.created_at.desc()).first()
+
         formatted.append({
             "id": w.waiver_id,
             "db_id": w.id,
@@ -154,7 +164,7 @@ def list_production_waivers():
             "generated_at": w.generated_at,
             "sent_at": w.sent_at,
             "signed_at": w.signed_at,
-            "signature_token": w.signature_token,
+            "signature_token": active_token.token if active_token else None,
             "signed_pdf_path": get_secured_url(w.signed_pdf_path)
         })
     return formatted
@@ -201,11 +211,14 @@ def send_production_waiver(waiver_id):
     if not contact_prod or not contact_prod.mail:
         return False, "La production n'a pas d'adresse e-mail de contact renseignée dans le projet."
 
-    if not waiver.signature_token:
-        waiver.signature_token = str(uuid.uuid4())
+    # Create new token (24h validity managed by DB)
+    new_token = str(uuid.uuid4())
+    token_rec = ProductionWaiverToken(
+        token=new_token, waiver_id=waiver.waiver_id)
+    db.session.add(token_rec)
 
     base_url = request.host_url.rstrip('/')
-    signature_link = f"{base_url}/sign/production-waiver/{waiver.signature_token}"
+    signature_link = f"{base_url}/sign/production-waiver/{new_token}"
 
     success = send_production_waiver_invitation_email(
         to_email=contact_prod.mail,
@@ -306,6 +319,10 @@ def list_pilot_waivers():
         elif w.shooting_dates:
             shooting_dates = w.shooting_dates
 
+        # Get active token if any
+        active_token = PilotWaiverToken.query.filter_by(
+            waiver_id=w.waiver_id).order_by(PilotWaiverToken.created_at.desc()).first()
+
         formatted.append({
             "id": w.waiver_id,
             "db_id": w.id,
@@ -318,7 +335,7 @@ def list_pilot_waivers():
             "generated_at": w.generated_at,
             "sent_at": w.sent_at,
             "signed_at": w.signed_at,
-            "signature_token": w.signature_token,
+            "signature_token": active_token.token if active_token else None,
             "signed_pdf_path": get_secured_url(w.signed_pdf_path),
             "pilot_license_path": get_secured_url(w.pilot_license_path, is_attachment=True),
             "pilot_insurance_path": get_secured_url(w.pilot_insurance_path, is_attachment=True),
@@ -378,11 +395,13 @@ def send_pilot_waiver(waiver_id):
     if not contact_pilote or not contact_pilote.mail:
         return False, "Le pilote n'a pas d'adresse e-mail renseignée dans le projet."
 
-    if not waiver.signature_token:
-        waiver.signature_token = str(uuid.uuid4())
+    # Create new token (24h validity managed by DB)
+    new_token = str(uuid.uuid4())
+    token_rec = PilotWaiverToken(token=new_token, waiver_id=waiver.waiver_id)
+    db.session.add(token_rec)
 
     base_url = request.host_url.rstrip('/')
-    signature_link = f"{base_url}/sign/waiver/{waiver.signature_token}"
+    signature_link = f"{base_url}/sign/waiver/{new_token}"
 
     success = send_waiver_invitation_email(
         to_email=contact_pilote.mail,

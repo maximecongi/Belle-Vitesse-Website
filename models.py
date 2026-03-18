@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timedelta
 import random
 import string
 
@@ -135,8 +135,6 @@ class PilotWaiver(db.Model):
     shooting_dates = db.Column(db.String(255), nullable=True)
 
     # Signature
-    signature_token = db.Column(
-        db.String(36), unique=True, nullable=True, index=True)
     signature_data = db.Column(
         db.Text(length=16777215), nullable=True)  # MEDIUMTEXT
     signed_pdf_path = db.Column(db.String(500), nullable=True)
@@ -187,8 +185,6 @@ class ProductionWaiver(db.Model):
     location_of_use = db.Column(db.Text, nullable=True)
 
     # Signature
-    signature_token = db.Column(
-        db.String(36), unique=True, nullable=True, index=True)
     signature_data = db.Column(
         db.Text(length=16777215), nullable=True)  # MEDIUMTEXT
     signed_pdf_path = db.Column(db.String(500), nullable=True)
@@ -359,9 +355,8 @@ class CheckoutToken(db.Model):
     signature = db.Column(db.Text(length=16777215))
     created_at = db.Column(db.DateTime, nullable=False,
                            default=datetime.utcnow)
-    # expires_at is a virtual generated column in MySQL (created_at + 24h)
-    # We mark it as FetchedValue so SQLAlchemy doesn't try to INSERT/UPDATE it.
-    expires_at = db.Column(db.DateTime, server_default=db.FetchedValue())
+    expires_at = db.Column(db.DateTime, nullable=False,
+                           default=lambda: datetime.utcnow() + timedelta(hours=24))
 
 
 class CheckinSignedDocument(db.Model):
@@ -386,7 +381,30 @@ class CheckinToken(db.Model):
     signature = db.Column(db.Text(length=16777215))
     created_at = db.Column(db.DateTime, nullable=False,
                            default=datetime.utcnow)
-    expires_at = db.Column(db.DateTime, server_default=db.FetchedValue())
+    expires_at = db.Column(db.DateTime, nullable=False,
+                           default=lambda: datetime.utcnow() + timedelta(hours=24))
+
+
+class PilotWaiverToken(db.Model):
+    __tablename__ = "pilot_waiver_tokens"
+
+    token = db.Column(db.String(36), primary_key=True)
+    waiver_id = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False,
+                           default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False,
+                           default=lambda: datetime.utcnow() + timedelta(hours=24))
+
+
+class ProductionWaiverToken(db.Model):
+    __tablename__ = "production_waiver_tokens"
+
+    token = db.Column(db.String(36), primary_key=True)
+    waiver_id = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False,
+                           default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False,
+                           default=lambda: datetime.utcnow() + timedelta(hours=24))
 
 
 class VehicleCheckpointConfig(db.Model):

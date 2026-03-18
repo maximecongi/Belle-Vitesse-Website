@@ -7,10 +7,6 @@ Most logic has moved to document_utils.py and waiver_signatures.py.
 # the process_pilot_waiver_signature and process_production_waiver_signature
 # are now handled in services/shared/waiver_signatures.py.
 # If any old code still calls them, they should be redirected there.
-from utils.document_utils import (
-    generate_pdf_access_token as generate_waiver_pdf_access_token,
-    validate_pdf_access_token as validate_waiver_pdf_access_token,
-)
 
 
 def process_pilot_waiver_signature(waiver_id):
