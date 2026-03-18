@@ -1,5 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
+{% from "admin/macros.html" import status_badge %}
+
 {% block title %}Décharges Pilotes{% endblock %}
 {% block page_title %}Décharges Pilotes{% endblock %}
 {% block extra_css %}
@@ -13,19 +15,6 @@
 </div>
 {% endblock %}
 
-{% macro status_badge(status) %}
-{% if status == 'to_generate' %}
-<span class="badge-pill" data-val="À générer">À générer</span>
-{% elif status == 'to_send' %}
-<span class="badge-pill" data-val="À envoyer">À envoyer</span>
-{% elif status == 'to_sign' %}
-<span class="badge-pill" data-val="À signer">À signer</span>
-{% elif status == 'signed' %}
-<span class="badge-pill" data-val="Signé">Signé</span>
-{% else %}
-<span class="badge-pill">{{ status }}</span>
-{% endif %}
-{% endmacro %}
 
 {% block content %}
 <div class="admin-card">
@@ -53,21 +42,21 @@
                     </td>
                     <td>
                         <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: center;">
-                            {% if w.status == 'to_generate' %}
+                            {% if w.raw_status == 'to_generate' %}
                             <form
                                 action="{{ url_for('admin_pilot_waiver_generate', waiver_id=w.id, q=request.args.get('q')) }}"
                                 method="POST" style="margin: 0;">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="admin-btn admin-btn-primary">Générer</button>
                             </form>
-                            {% elif w.status == 'to_send' %}
+                            {% elif w.raw_status == 'to_send' %}
                             <form
                                 action="{{ url_for('admin_pilot_waiver_send', waiver_id=w.id, q=request.args.get('q')) }}"
                                 method="POST" style="margin: 0;">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="admin-btn admin-btn-primary">Envoyer</button>
                             </form>
-                            {% elif w.status == 'to_sign' %}
+                            {% elif w.raw_status == 'to_sign' %}
                             <form
                                 action="{{ url_for('admin_pilot_waiver_send', waiver_id=w.id, q=request.args.get('q')) }}"
                                 method="POST" style="margin: 0;">
@@ -76,7 +65,7 @@
                             </form>
                             <button type="button" class="admin-btn admin-btn-secondary"
                                 onclick="navigator.clipboard.writeText(window.location.origin + '/sign/waiver/{{ w.signature_token }}'); showFlash('Le lien a été copié dans le presse-papier. ', 'info');">Lien</button>
-                            {% elif w.status == 'signed' %}
+                            {% elif w.raw_status == 'signed' %}
                             <a href="{{ w.signed_pdf_path }}" class="admin-btn admin-btn-secondary"
                                 target="_blank">Télécharger le PDF 📄</a>
                             {% endif %}

@@ -61,11 +61,13 @@ def _format_project_admin(p, vehicle_map):
             "id": p.pilot_waiver.id if p.pilot_waiver else None,
             "waiver_num": p.pilot_waiver.waiver_id if p.pilot_waiver else "",
             "status": format_waiver_status(p.pilot_waiver.status) if p.pilot_waiver else "",
+            "raw_status": p.pilot_waiver.status if p.pilot_waiver else "",
         },
         "production_waiver": {
             "id": p.production_waiver.id if p.production_waiver else None,
             "waiver_num": p.production_waiver.waiver_id if p.production_waiver else "",
             "status": format_waiver_status(p.production_waiver.status) if p.production_waiver else "",
+            "raw_status": p.production_waiver.status if p.production_waiver else "",
         }
     }
 

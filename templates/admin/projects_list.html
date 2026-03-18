@@ -1,5 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
+{% from "admin/macros.html" import status_badge %}
+
 {% block title %}{{ 'Archives' if is_archive else 'Projets' }}{% endblock %}
 {% block page_title %}{{ 'Archives' if is_archive else 'Projets' }}{% endblock %}
 
@@ -86,33 +88,17 @@
                 <td>
                     <div style="margin-bottom: 0.5rem;display: flex; gap: 0.5rem; align-items: center;">
                         <span style="font-size: 0.7rem; color: var(--grey-2); font-weight: 600;">🏎️</span>
-                        {% if project.pilot_waiver.id %}
                         <a href="{{ url_for('admin_pilot_waivers_list', q=project.pilot_waiver.waiver_num) }}"
                             style="text-decoration: none;">
-                            <span class="badge-pill" data-val="{{ project.pilot_waiver.status }}"
-                                style="margin: 0; font-size: 0.75rem;">
-                                {{ project.pilot_waiver.status }}
-                            </span>
+                            {{ status_badge(project.pilot_waiver.status) }}
                         </a>
-                        {% else %}
-                        <span class="badge-pill" data-val="Neutral" style="margin: 0; font-size: 0.75rem;">À
-                            créer</span>
-                        {% endif %}
                     </div>
                     <div style="display: flex; gap: 0.5rem; align-items: center;">
                         <span style="font-size:0.7rem; color: var(--grey-2); font-weight: 600;">🎬</span>
-                        {% if project.production_waiver.id %} <a
-                            href="{{ url_for('admin_production_waivers_list', q=project.production_waiver.waiver_num) }}"
+                        <a href="{{ url_for('admin_production_waivers_list', q=project.production_waiver.waiver_num) }}"
                             style="text-decoration: none;">
-                            <span class="badge-pill" data-val="{{ project.production_waiver.status }}"
-                                style="margin: 0; font-size: 0.75rem;">
-                                {{ project.production_waiver.status }}
-                            </span>
+                            {{ status_badge(project.production_waiver.status) }}
                         </a>
-                        {% else %}
-                        <span class="badge-pill" data-val="Neutral" style="margin: 0; font-size: 0.75rem;">À
-                            créer</span>
-                        {% endif %}
                     </div>
                 </td>
                 <td>
