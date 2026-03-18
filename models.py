@@ -39,8 +39,8 @@ class Production(db.Model):
     __tablename__ = "productions"
 
     id = db.Column(db.Integer, primary_key=True)
-    nom = db.Column(db.String(255), nullable=False)
-    adresse = db.Column(db.String(500))
+    name = db.Column(db.String(255), nullable=False)
+    address = db.Column(db.String(500))
     mail = db.Column(db.String(255))
     phone = db.Column(db.String(50))
 
@@ -49,23 +49,23 @@ class Production(db.Model):
     contacts = db.relationship("Contact", backref="production_rel", lazy=True)
 
     def __repr__(self):
-        return f"<Production {self.nom}>"
+        return f"<Production {self.name}>"
 
 
 class Contact(db.Model):
     __tablename__ = "contacts"
 
     id = db.Column(db.Integer, primary_key=True)
-    prenom = db.Column(db.String(100), nullable=False)
-    nom = db.Column(db.String(100), nullable=False)
-    telephone = db.Column(db.String(50))
+    first_name = db.Column(db.String(100), nullable=False)
+    last_name = db.Column(db.String(100), nullable=False)
+    phone = db.Column(db.String(50))
     mail = db.Column(db.String(255))
     production_id = db.Column(
         db.Integer, db.ForeignKey("productions.id"), nullable=True, index=True)
-    metier = db.Column(db.String(150))
+    job_title = db.Column(db.String(150))
 
     def __repr__(self):
-        return f"<Contact {self.prenom} {self.nom}>"
+        return f"<Contact {self.first_name} {self.last_name}>"
 
 
 class Project(db.Model):

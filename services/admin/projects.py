@@ -46,7 +46,7 @@ def _format_project_admin(p, vehicle_map):
         "id": p.id,
         "project_id": p.project_id,
         "name": p.nom,
-        "production": p.production.nom if p.production else "—",
+        "production": p.production.name if p.production else "—",
         "departure_date": format_date_fr(str(p.date_depart)) if p.date_depart else "—",
         "raw_departure_date": str(p.date_depart) if p.date_depart else "",
         "shoot_start": format_date_fr(str(p.date_debut_tournage)) if p.date_debut_tournage else "—",
@@ -54,8 +54,8 @@ def _format_project_admin(p, vehicle_map):
         "return_date": format_date_fr(str(p.date_retour)) if p.date_retour else "—",
         "raw_return_date": str(p.date_retour) if p.date_retour else "",
         "raw_checkin_date": str(p.date_retour) if p.date_retour else "",
-        "contact_pilote": f"{p.contact_pilote_rel.prenom} {p.contact_pilote_rel.nom}" if p.contact_pilote_rel else "—",
-        "contact_production": f"{p.contact_production_rel.prenom} {p.contact_production_rel.nom}" if p.contact_production_rel else "—",
+        "contact_pilote": f"{p.contact_pilote_rel.first_name} {p.contact_pilote_rel.last_name}" if p.contact_pilote_rel else "—",
+        "contact_production": f"{p.contact_production_rel.first_name} {p.contact_production_rel.last_name}" if p.contact_production_rel else "—",
         "vehicles": [_format_vehicle_state(p, vid, vehicle_map) for vid in veh_ids],
         "pilot_waiver": {
             "id": p.pilot_waiver.id if p.pilot_waiver else None,
@@ -94,14 +94,13 @@ def get_project_form_context():
     """
     Get context for project form (productions + vehicles selects).
     """
-    prods = Production.query.order_by(Production.nom).all()
-    # Format productions exactly as the template expects: {"id":..., "fields": {"Nom":...}}
+    prods = Production.query.order_by(Production.name).all()
     productions_formatted = [
-        {"id": str(p.id), "fields": {"Nom": p.nom}} for p in prods]
+        {"id": str(p.id), "fields": {"Nom": p.name}} for p in prods]
 
-    contacts = Contact.query.order_by(Contact.nom).all()
+    contacts = Contact.query.order_by(Contact.last_name).all()
     contacts_formatted = [
-        {"id": str(c.id), "name": f"{c.prenom} {c.nom} ({c.metier})" if c.metier else f"{c.prenom} {c.nom}"} for c in contacts
+        {"id": str(c.id), "name": f"{c.first_name} {c.last_name} ({c.job_title})" if c.job_title else f"{c.first_name} {c.last_name}"} for c in contacts
     ]
 
     return {
@@ -146,7 +145,7 @@ def create_project(form):
             event="project_created",
             project_id=project.project_id,
             project=project.nom,
-            production=project.production.nom if project.production else "—",
+            production=project.production.name if project.production else "—",
             year=str(project.date_depart.strftime("%Y")
                      ) if project.date_depart else "—",
             month=str(project.date_depart.strftime("%m")

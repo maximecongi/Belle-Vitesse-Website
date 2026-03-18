@@ -1,7 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
 {% macro option(value, label=none) %}
-<option value="{{ value }}" {{ 'selected' if data and data.metier==value }}>
+<option value="{{ value }}" {{ 'selected' if data and data.job_title==value }}>
     {{ label if label else value }}
 </option>
 {% endmacro %}
@@ -22,18 +22,18 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
             <div class="form-group">
                 <label class="form-label">Prénom</label>
-                <input type="text" name="prenom" class="form-input" value="{{ data.prenom if data else '' }}" required>
+                <input type="text" name="first_name" class="form-input" value="{{ data.first_name if data else '' }}" required>
             </div>
 
             <div class="form-group">
                 <label class="form-label">Nom</label>
-                <input type="text" name="nom" class="form-input" value="{{ data.nom if data else '' }}" required>
+                <input type="text" name="last_name" class="form-input" value="{{ data.last_name if data else '' }}" required>
             </div>
         </div>
 
         <div class="form-group">
             <label class="form-label">Métier</label>
-            <select name="metier" class="form-input">
+            <select name="job_title" class="form-input">
                 <option value="">— Sélectionner un métier —</option>
 
                 <optgroup label="🎬 Réalisation">
@@ -154,7 +154,7 @@
                 <option value="">— Freelance / Aucune —</option>
                 {% for prod in productions %}
                 <option value="{{ prod.id }}" {% if data and data.production_id==prod.id %}selected{% endif %}>
-                    {{ prod.nom }}
+                    {{ prod.name }}
                 </option>
                 {% endfor %}
             </select>
@@ -168,7 +168,7 @@
 
             <div class="form-group">
                 <label class="form-label">Téléphone</label>
-                <input type="text" name="telephone" class="form-input" value="{{ data.telephone if data else '' }}"
+                <input type="text" name="phone" class="form-input" value="{{ data.phone if data else '' }}"
                     oninput="this.value = this.value.replace(/[\s.()[\]]/g, '')">
             </div>
         </div>

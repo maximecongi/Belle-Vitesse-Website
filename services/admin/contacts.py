@@ -13,14 +13,14 @@ logger = logging.getLogger(__name__)
 def list_contacts():
     """Fetch all contacts formatted for listing."""
     fields_map = {
-        "prenom": "prenom",
-        "nom": "nom",
-        "telephone": "telephone",
+        "first_name": "first_name",
+        "last_name": "last_name",
+        "phone": "phone",
         "mail": "mail",
-        "metier": "metier",
-        "production_name": lambda r: r.production_rel.nom if r.production_rel else "Freelance",
+        "job_title": "job_title",
+        "production_name": lambda r: r.production_rel.name if r.production_rel else "Freelance",
     }
-    return generic_list_records(Contact, fields_map, order_by_attr=Contact.nom)
+    return generic_list_records(Contact, fields_map, order_by_attr=Contact.last_name)
 
 
 @handle_admin_service_error
@@ -28,12 +28,12 @@ def create_contact(form):
     """Create a new contact record."""
     pid = form.get("production_id")
     contact = Contact(
-        prenom=form.get("prenom", ""),
-        nom=form.get("nom", ""),
-        telephone=form.get("telephone", ""),
+        first_name=form.get("first_name", ""),
+        last_name=form.get("last_name", ""),
+        phone=form.get("phone", ""),
         mail=form.get("mail", ""),
         production_id=int(pid) if pid and pid != "None" else None,
-        metier=form.get("metier", ""),
+        job_title=form.get("job_title", ""),
     )
     db.session.add(contact)
     db.session.commit()
@@ -48,12 +48,12 @@ def update_contact(record_id, form):
         return False
 
     pid = form.get("production_id")
-    contact.prenom = form.get("prenom", "")
-    contact.nom = form.get("nom", "")
-    contact.telephone = form.get("telephone", "")
+    contact.first_name = form.get("first_name", "")
+    contact.last_name = form.get("last_name", "")
+    contact.phone = form.get("phone", "")
     contact.mail = form.get("mail", "")
     contact.production_id = int(pid) if pid and pid != "None" else None
-    contact.metier = form.get("metier", "")
+    contact.job_title = form.get("job_title", "")
 
     db.session.commit()
     return True
@@ -61,7 +61,7 @@ def update_contact(record_id, form):
 
 def get_contact_for_edit(record_id):
     """Fetch contact data for editing."""
-    fields = ["prenom", "nom", "telephone", "mail", "production_id", "metier"]
+    fields = ["first_name", "last_name", "phone", "mail", "production_id", "job_title"]
     return generic_get_record_for_edit(Contact, record_id, fields)
 
 
@@ -72,4 +72,4 @@ def delete_contact(record_id):
 
 def get_productions_for_select():
     """Return all productions for the contact form select."""
-    return Production.query.order_by(Production.nom).all()
+    return Production.query.order_by(Production.name).all()

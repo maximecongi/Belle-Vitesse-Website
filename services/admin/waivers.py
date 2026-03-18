@@ -159,7 +159,7 @@ def list_production_waivers():
             "waiver_id": w.waiver_id,
             "project_id": p.id,
             "project_name": p.nom,
-            "production_name": (p.production.nom if p.production else w.production_name) or "—",
+            "production_name": (p.production.name if p.production else w.production_name) or "—",
             "shooting_dates": shooting_dates,
             "status": format_waiver_status(w.status),
             "generated_at": w.generated_at,
@@ -179,8 +179,8 @@ def generate_production_waiver(waiver_id):
     p = waiver.project
     waiver.project_name = p.nom
     if p.production:
-        waiver.production_name = p.production.nom
-        waiver.production_address = p.production.adresse
+        waiver.production_name = p.production.name
+        waiver.production_address = p.production.address
 
     if p.date_debut_tournage and p.date_fin_tournage:
         waiver.shooting_dates = f"{p.date_debut_tournage.strftime('%d/%m/%Y')} au {p.date_fin_tournage.strftime('%d/%m/%Y')}"
@@ -223,7 +223,7 @@ def send_production_waiver(waiver_id):
 
     success = send_production_waiver_invitation_email(
         to_email=contact_prod.mail,
-        prod_contact_name=f"{contact_prod.prenom} {contact_prod.nom}",
+        prod_contact_name=f"{contact_prod.first_name} {contact_prod.last_name}",
         project_name=waiver.project.nom,
         signature_link=signature_link
     )
@@ -309,7 +309,7 @@ def list_pilot_waivers():
 
         pilote_name = "—"
         if p.contact_pilote_rel:
-            pilote_name = f"{p.contact_pilote_rel.prenom} {p.contact_pilote_rel.nom}"
+            pilote_name = f"{p.contact_pilote_rel.first_name} {p.contact_pilote_rel.last_name}"
         elif w.pilot_first_name or w.pilot_last_name:
             pilote_name = f"{w.pilot_first_name or ''} {w.pilot_last_name or ''}".strip(
             )
@@ -353,12 +353,12 @@ def generate_pilot_waiver(waiver_id):
     p = waiver.project
     contact = p.contact_pilote_rel
     if contact:
-        waiver.pilot_first_name = contact.prenom
-        waiver.pilot_last_name = contact.nom
-        waiver.pilot_address = getattr(contact, 'adresse', "")
+        waiver.pilot_first_name = contact.first_name
+        waiver.pilot_last_name = contact.last_name
+        waiver.pilot_address = getattr(contact, 'address', "")
 
     if p.production:
-        waiver.production_name = p.production.nom
+        waiver.production_name = p.production.name
     waiver.project_name = p.nom
 
     if p.date_debut_tournage and p.date_fin_tournage:
@@ -406,7 +406,7 @@ def send_pilot_waiver(waiver_id):
 
     success = send_waiver_invitation_email(
         to_email=contact_pilote.mail,
-        pilot_name=f"{contact_pilote.prenom} {contact_pilote.nom}",
+        pilot_name=f"{contact_pilote.first_name} {contact_pilote.last_name}",
         project_name=waiver.project.nom,
         signature_link=signature_link
     )

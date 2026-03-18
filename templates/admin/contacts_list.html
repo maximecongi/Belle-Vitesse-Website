@@ -29,9 +29,9 @@
             <tbody>
                 {% for c in contacts %}
                 <tr class="searchable-row">
-                    <td style="font-weight: 600;" data-sort="{{ c.nom }} {{ c.prenom }}">{{ c.prenom }} {{ c.nom | upper
+                    <td style="font-weight: 600;" data-sort="{{ c.last_name }} {{ c.first_name }}">{{ c.first_name }} {{ c.last_name | upper
                         }}</td>
-                    <td>{{ c.metier }}</td>
+                    <td>{{ c.job_title }}</td>
                     <td>
                         {% if c.production_name == 'Freelance' %}
                         <span class="badge-pill" data-val="Freelance">Freelance</span>
@@ -39,10 +39,10 @@
                         <span class="badge-pill" data-val="Production">{{ c.production_name }}</span>
                         {% endif %}
                     </td>
-                    <td><a href="tel:{{ c.telephone }}">{{ c.telephone }}</a></td>
+                    <td><a href="tel:{{ c.phone }}">{{ c.phone }}</a></td>
                     <td><a href="mailto:{{ c.mail }}">{{ c.mail }}</a></td>
                     <td style="text-align: center;">
-                        <span class="qr-trigger" data-name="{{ c.prenom }} {{ c.nom }}" data-vcf="{{ c.vcf_b64 }}"
+                        <span class="qr-trigger" data-name="{{ c.first_name }} {{ c.last_name }}" data-vcf="{{ c.vcf_b64 }}"
                             data-filename="{{ c.vcf_filename }}" style="cursor:pointer; font-size:1.2rem;"
                             title="Afficher le QR code"><img
                                 src="{{ url_for('static', filename='imgs/icons/qr_code.svg') }}" alt="QR Code"></span>

@@ -13,20 +13,20 @@ logger = logging.getLogger(__name__)
 def list_productions():
     """Fetch all production records formatted for listing."""
     fields_map = {
-        "name": "nom",
-        "address": "adresse",
+        "name": "name",
+        "address": "address",
         "email": "mail",
         "phone": "phone",
     }
-    return generic_list_records(Production, fields_map, order_by_attr=Production.nom)
+    return generic_list_records(Production, fields_map, order_by_attr=Production.name)
 
 
 @handle_admin_service_error
 def create_production(form):
     """Create a new production record."""
     prod = Production(
-        nom=form.get("name", ""),
-        adresse=form.get("address", ""),
+        name=form.get("name", ""),
+        address=form.get("address", ""),
         mail=form.get("email", ""),
         phone=form.get("phone", "")
     )
@@ -42,8 +42,8 @@ def update_production(record_id, form):
     if not prod:
         return False
 
-    prod.nom = form.get("name", "")
-    prod.adresse = form.get("address", "")
+    prod.name = form.get("name", "")
+    prod.address = form.get("address", "")
     prod.mail = form.get("email", "")
     prod.phone = form.get("phone", "")
 
@@ -53,17 +53,17 @@ def update_production(record_id, form):
 
 def get_production_for_edit(record_id):
     """Fetch production data for editing."""
-    fields = ["nom", "adresse", "mail", "phone"]
+    fields = ["name", "address", "mail", "phone"]
     data = generic_get_record_for_edit(Production, record_id, fields)
     if not data:
         return None
     
     # Map model names to form names
     return {
-        "name": data["nom"],
-        "address": data["adresse"],
-        "email": data["mail"],
-        "phone": data["phone"],
+        "name": data["name"],
+        "address": data.get("address", ""),
+        "email": data.get("mail", ""),
+        "phone": data.get("phone", ""),
     }
 
 

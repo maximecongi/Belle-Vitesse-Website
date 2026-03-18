@@ -27,17 +27,17 @@ def init_contacts_routes(app):
         lines = [
             "BEGIN:VCARD",
             "VERSION:3.0",
-            f"N:{c['nom']};{c['prenom']};;;",
-            f"FN:{c['prenom']} {c['nom']}",
+            f"N:{c.get('last_name', '')};{c.get('first_name', '')};;;",
+            f"FN:{c.get('first_name', '')} {c.get('last_name', '')}",
         ]
-        if c.get("telephone") and c["telephone"] != "—":
-            lines.append(f"TEL;TYPE=CELL:{c['telephone']}")
+        if c.get("phone") and c["phone"] != "—":
+            lines.append(f"TEL;TYPE=CELL:{c['phone']}")
         if c.get("mail") and c["mail"] != "—":
             lines.append(f"EMAIL:{c['mail']}")
         if c.get("production_name") and c["production_name"] != "Freelance":
             lines.append(f"ORG:{c['production_name']}")
-        if c.get("metier") and c["metier"] != "—":
-            lines.append(f"TITLE:{c['metier']}")
+        if c.get("job_title") and c["job_title"] != "—":
+            lines.append(f"TITLE:{c['job_title']}")
         lines.append("END:VCARD")
         return "\r\n".join(lines)
 
@@ -48,12 +48,12 @@ def init_contacts_routes(app):
             import base64
             contacts = list_contacts()
             contacts.sort(key=lambda c: (
-                c.get("nom", "").lower(), c.get("prenom", "").lower()))
+                c.get("last_name", "").lower(), c.get("first_name", "").lower()))
             for c in contacts:
                 vcf = _build_vcf(c)
                 c["vcf_b64"] = base64.b64encode(
                     vcf.encode("utf-8")).decode("ascii")
-                c["vcf_filename"] = f"{c['prenom']}_{c['nom']}.vcf".replace(
+                c["vcf_filename"] = f"{c.get('first_name', '')}_{c.get('last_name', '')}.vcf".replace(
                     " ", "_")
             return render_template("admin/contacts_list.html", contacts=contacts)
         except Exception as e:

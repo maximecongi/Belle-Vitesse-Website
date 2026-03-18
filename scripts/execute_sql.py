@@ -1,10 +1,8 @@
 import os
 import subprocess
-from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables
 env_path = Path(__file__).parent.parent / '.env'
 load_dotenv(env_path)
 
@@ -17,37 +15,27 @@ SSH_HOST = os.getenv("SSH_HOST")
 SSH_USER = os.getenv("SSH_USER")
 SSH_PASSWORD = os.getenv("SSH_PASSWORD")
 
-# Add common Homebrew paths to PATH for mysqldump
+# Add common Homebrew paths to PATH for mysql
 os.environ["PATH"] += os.pathsep + "/opt/homebrew/bin" + os.pathsep + "/usr/local/bin" + os.pathsep + "/opt/homebrew/Cellar/mysql-client/9.6.0/bin"
 
-if not all([MYSQL_USER, MYSQL_PASSWORD, MYSQL_DB]):
-    print("❌ Missing MySQL environment variables.")
-    exit(1)
+SQL_FILE = "/tmp/migrate_projects.sql"
 
-# Setup backup directory
-TIMESTAMP = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-BACKUP_DIR = Path(__file__).parent.parent / "backups" / "sql"
-BACKUP_DIR.mkdir(parents=True, exist_ok=True)
-BACKUP_FILE = BACKUP_DIR / f"dump_{TIMESTAMP}.sql"
-
-def run_backup(host, port):
+def execute_sql(host, port):
     cmd = [
-        "mysqldump",
+        "mysql",
         f"-h{host}",
         f"-P{port}",
         f"-u{MYSQL_USER}",
         f"-p{MYSQL_PASSWORD}",
         MYSQL_DB
     ]
-    print(f"📦 Starting MySQL backup to {BACKUP_FILE} via port {port}...")
+    print(f"🚀 Executing SQL from {SQL_FILE} via port {port}...")
     try:
-        with open(BACKUP_FILE, 'w') as f:
-            subprocess.check_call(cmd, stdout=f)
-        print("✅ Backup successful!")
+        with open(SQL_FILE, 'r') as f:
+            subprocess.check_call(cmd, stdin=f)
+        print("✅ SQL execution successful!")
     except Exception as e:
-        print(f"❌ Backup failed: {e}")
-        if BACKUP_FILE.exists():
-            BACKUP_FILE.unlink()
+        print(f"❌ SQL execution failed: {e}")
         exit(1)
 
 if os.getenv("USE_SSH_TUNNEL", "false").lower() == "true":
@@ -60,9 +48,9 @@ if os.getenv("USE_SSH_TUNNEL", "false").lower() == "true":
             ssh_password=SSH_PASSWORD,
             remote_bind_address=(MYSQL_HOST, 3306)
         ) as tunnel:
-            run_backup("127.0.0.1", tunnel.local_bind_port)
+            execute_sql("127.0.0.1", tunnel.local_bind_port)
     except Exception as e:
         print(f"❌ SSH Tunnel failed: {e}")
         exit(1)
 else:
-    run_backup(MYSQL_HOST, 3306)
+    execute_sql(MYSQL_HOST, 3306)

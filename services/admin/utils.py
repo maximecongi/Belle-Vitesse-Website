@@ -140,6 +140,25 @@ def generic_list_records(model, fields_map, order_by_attr=None):
     return result
 
 
+def format_contact_for_list(c): return {
+    "id": c.id,
+    "name": f"{c.first_name} {c.last_name}",
+    "production": c.production_rel.name if c.production_rel else "Indépendant",
+    "job": c.job_title or "—",
+    "phone": c.phone or "—",
+    "mail": c.mail or "—"
+}
+
+
+def format_production_for_list(p): return {
+    "id": p.id,
+    "name": p.name,
+    "address": p.address or "—",
+    "contacts_count": len(p.contacts),
+    "projects_count": len(p.projects)
+}
+
+
 def generic_get_record_for_edit(model, record_id, fields_list):
     """
     Generic fetcher for form editing data.

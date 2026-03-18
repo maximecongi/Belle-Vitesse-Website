@@ -319,7 +319,7 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
     data["notes"] = c.observations or ""
 
     if c.project:
-        data["production"] = c.project.production.nom if c.project.production else "—"
+        data["production"] = c.project.production.name if c.project.production else "—"
         data["shoot_start"] = format_date_fr(
             str(c.project.date_debut_tournage)) if c.project.date_debut_tournage else "—"
         data["shoot_end"] = format_date_fr(
@@ -412,7 +412,7 @@ def get_unified_form_context(mode="checkout"):
             "id": str(p.id),
             "fields": {
                 "Nom": p.nom,
-                "_production_name": p.production.nom if p.production else "—",
+                "_production_name": p.production.name if p.production else "—",
                 "Date de départ": format_date_fr(str(p.date_depart)) if p.date_depart else "—",
                 "Date de début de tournage": format_date_fr(str(p.date_debut_tournage)) if p.date_debut_tournage else "—",
                 "Date de fin de tournage": format_date_fr(str(p.date_fin_tournage)) if p.date_fin_tournage else "—",
