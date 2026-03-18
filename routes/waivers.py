@@ -1,8 +1,7 @@
 import os
-import secrets
 from datetime import datetime
 from werkzeug.utils import secure_filename
-from flask import render_template, request, jsonify, current_app, abort, send_from_directory
+from flask import render_template, request, jsonify, current_app, abort
 
 from models import (
     db,
@@ -14,18 +13,13 @@ from models import (
     ProductionWaiverToken
 )
 from services.shared.waiver_signatures import process_waiver_signature
-from utils.document_utils import (
-    validate_pdf_access_token,
-    generate_pdf_access_token,
-    verify_hmac_seal,
-    verify_pdf_hash
-)
 from utils.storage import (
     get_pilot_attachments_path,
     get_production_attachments_path,
     ensure_dir
 )
 from extensions import csrf
+from routes.shared_docs import handle_document_download, handle_document_verify
 
 # ── Shared Helpers ──────────────────────────────────────────────
 
@@ -50,17 +44,6 @@ def _get_waiver_route_config(mode):
         "route_base": "production-waiver",
         "seal_prefix": "WAIVER_PROD"
     }
-
-
-def _is_authorized(filepath):
-    """Internal helper for document/attachment authorization."""
-    token_header = request.headers.get("X-Check-Token")
-    expected_header = os.getenv("CHECK_API_TOKEN")
-    access_token = request.args.get("t", "")
-
-    if expected_header and token_header and secrets.compare_digest(token_header, expected_header):
-        return True
-    return validate_pdf_access_token(filepath, access_token)
 
 
 def init_waiver_routes(app):
@@ -177,92 +160,37 @@ def init_waiver_routes(app):
     @app.route("/verify/waiver/<string:waiver_id>", methods=["GET", "POST"])
     @csrf.exempt
     def verify_pilot_waiver(waiver_id):
-        return _handle_verify_waiver("pilot", waiver_id)
+        config = _get_waiver_route_config("pilot")
+
+        def get_seal_args(data, signed_doc):
+            return [data.get("_seal_pilot_name", ""),
+                    data.get("_seal_license", ""),
+                    signed_doc.signature,
+                    data.get("_seal_signed_at", "")]
+
+        config["get_seal_args"] = get_seal_args
+        return handle_document_verify(config, waiver_id)
 
     @app.route("/verify/production-waiver/<string:waiver_id>", methods=["GET", "POST"])
     @csrf.exempt
     def verify_production_waiver(waiver_id):
-        return _handle_verify_waiver("production", waiver_id)
+        config = _get_waiver_route_config("production")
 
-    def _handle_verify_waiver(mode, waiver_id):
-        config = _get_waiver_route_config(mode)
-        signed_doc = config["signed_model"].query.filter_by(
-            waiver_id=waiver_id).first()
-        if not signed_doc:
-            abort(404)
+        def get_seal_args(data, signed_doc):
+            return [data.get("_seal_production_name", ""),
+                    data.get("_seal_representative", ""),
+                    signed_doc.signature,
+                    data.get("_seal_signed_at", "")]
 
-        data = signed_doc.data_snapshot
-        if 'signed_at' in data and isinstance(data['signed_at'], str):
-            try:
-                data['signed_at'] = datetime.fromisoformat(data['signed_at'])
-            except:
-                pass
-
-        # 1. Verify Seal
-        seal_args = []
-        if mode == "pilot":
-            seal_args = [data.get("_seal_pilot_name", ""),
-                         data.get("_seal_license", "")]
-        else:
-            seal_args = [data.get("_seal_production_name", ""), data.get(
-                "_seal_representative", "")]
-        seal_args += [signed_doc.signature, data.get("_seal_signed_at", "")]
-
-        seal_valid = verify_hmac_seal(
-            signed_doc.hash, config["seal_prefix"], waiver_id, *seal_args)
-
-        pdf_valid = None
-        pdf_error = None
-        if request.method == "POST":
-            uploaded_file = request.files.get("pdf")
-            if uploaded_file:
-                if not uploaded_file.filename.lower().endswith(".pdf"):
-                    pdf_error = "Le fichier doit être un PDF."
-                elif not signed_doc.pdf_file_hash:
-                    pdf_error = "Pas d'empreinte enregistrée."
-                else:
-                    pdf_valid = verify_pdf_hash(
-                        uploaded_file.read(), signed_doc.pdf_file_hash)
-
-        # 2. PDF URL with token
-        pdf_download_url = None
-        if signed_doc.pdf_url:
-            path_part = signed_doc.pdf_url.split(
-                "/document/")[-1].split("?")[0]
-            token = generate_pdf_access_token(path_part)
-            pdf_download_url = f"/{config['route_base']}/document/{path_part}?t={token}"
-
-        return render_template(
-            config["template_verify"],
-            data=data,
-            seal_valid=seal_valid,
-            pdf_valid=pdf_valid,
-            pdf_error=pdf_error,
-            inspection_id=signed_doc.waiver_id,
-            document_hash=signed_doc.hash,
-            project_name=data.get('project_name'),
-            has_pdf_hash=bool(signed_doc.pdf_file_hash),
-            pdf_download_url=pdf_download_url
-        )
+        config["get_seal_args"] = get_seal_args
+        return handle_document_verify(config, waiver_id)
 
     # ── Download Routes ──────────────────────────────────────────
 
     @app.route("/pilot-waiver/document/<path:filepath>")
     @app.route("/production-waiver/document/<path:filepath>")
-    @csrf.exempt
-    def download_waiver_document(filepath):
-        if not _is_authorized(filepath):
-            abort(403)
-        output_base = current_app.config.get(
-            "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
-        return send_from_directory(output_base, filepath)
-
     @app.route("/pilot-waiver/attachment/<path:filepath>")
     @app.route("/production-waiver/attachment/<path:filepath>")
     @csrf.exempt
-    def download_waiver_attachment(filepath):
-        if not _is_authorized(filepath):
-            abort(403)
-        output_base = current_app.config.get(
-            "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
-        return send_from_directory(output_base, filepath)
+    def download_waiver_secured_file(filepath):
+        return handle_document_download(filepath)

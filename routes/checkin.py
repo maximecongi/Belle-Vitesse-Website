@@ -11,7 +11,6 @@ from flask import (
     jsonify,
     request,
     current_app,
-    send_from_directory,
 )
 
 from extensions import csrf
@@ -21,9 +20,8 @@ from services.checkin import (
     validate_signing_token,
     generate_signing_token,
     process_signature,
-    verify_checkin_document,
-    validate_pdf_access_token,
 )
+from routes.shared_docs import handle_document_download, handle_document_verify
 
 
 def init_checkin_routes(app):
@@ -81,12 +79,35 @@ def init_checkin_routes(app):
         if not record:
             abort(404)
 
+        # If user reloaded the page, the abandon beacon might have set this to 'En cours'.
+        # We catch it here and revert it to 'À signer' since the user is still on the page.
+        if record.etat_controle == "En cours":
+            try:
+                record.etat_controle = "À signer"
+                db.session.commit()
+            except Exception:
+                pass
+
         from services.admin.inspections import _format_base_inspection_admin
         from utils.database import get_vehicles
         vehicle_map = {v["id"]: v.get("fields", {}) for v in get_vehicles()}
         data = _format_base_inspection_admin(record, vehicle_map)
 
         return render_template("checkin_sign.html", data=data, token=token)
+
+    @app.route("/checkin/sign/<token>/abandon", methods=["POST"])
+    @csrf.exempt
+    def checkin_abandon(token):
+        from services.checkin import abandon_signature
+        abandon_signature(token)
+        return jsonify({"status": "abandoned"}), 200
+
+    @app.route("/checkin/sign/<token>/resume", methods=["POST"])
+    @csrf.exempt
+    def checkin_resume(token):
+        from services.checkin import resume_signature
+        resume_signature(token)
+        return jsonify({"status": "resumed"}), 200
 
     @app.route("/checkin/sign/<token>", methods=["POST"])
     @csrf.exempt
@@ -119,26 +140,22 @@ def init_checkin_routes(app):
     @app.route("/checkin/verify/<inspection_id>", methods=["GET", "POST"])
     @csrf.exempt
     def checkin_verify(inspection_id):
-        uploaded_file = request.files.get(
-            "pdf") if request.method == "POST" else None
-        context = verify_checkin_document(inspection_id, uploaded_file)
-
-        if context is None:
-            abort(404)
-
-        return render_template("checkin_verify.html", **context)
+        from models import CheckinSignedDocument
+        config = {
+            "signed_model": CheckinSignedDocument,
+            "seal_prefix": "INSPECTION",
+            "template_verify": "checkin_verify.html",
+            "route_base": "checkin",
+            "get_seal_args": lambda data, signed_doc: [
+                data.get("inspection_id", ""),
+                data.get("vehicle_id", ""),
+                signed_doc.signature,
+                data.get("_seal_signed_at", "")
+            ]
+        }
+        return handle_document_verify(config, inspection_id)
 
     @app.route("/checkin/document/<path:filepath>")
     @csrf.exempt
     def download_checkin_document(filepath):
-        access_token = request.args.get("t", "")
-        if not access_token or not validate_pdf_access_token(filepath, access_token):
-            abort(403)
-
-        output_base = current_app.config.get(
-            "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
-
-        try:
-            return send_from_directory(output_base, filepath)
-        except Exception:
-            abort(404)
+        return handle_document_download(filepath)

@@ -1,0 +1,105 @@
+import os
+import secrets
+from datetime import datetime
+from flask import current_app, send_from_directory, abort, request, render_template
+from utils.document_utils import (
+    validate_pdf_access_token,
+    verify_hmac_seal,
+    verify_pdf_hash,
+    generate_pdf_access_token
+)
+
+def handle_document_download(filepath):
+    """
+    Generic handler for secured document downloads.
+    Validates either the administrative 'X-Check-Token' header 
+    OR the time-limited HMAC token 't' from request args.
+    """
+    # 1. Check Admin Secret (X-Check-Token)
+    token_header = request.headers.get("X-Check-Token")
+    expected_header = os.getenv("CHECK_API_TOKEN")
+    if expected_header and token_header and secrets.compare_digest(token_header, expected_header):
+        pass # Authorized by admin secret
+    else:
+        # 2. Check Time-limited Token (t)
+        access_token = request.args.get("t", "")
+        if not access_token or not validate_pdf_access_token(filepath, access_token):
+            abort(403)
+
+    output_base = current_app.config.get(
+        "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
+
+    try:
+        return send_from_directory(output_base, filepath)
+    except Exception:
+        abort(404)
+
+def handle_document_verify(mode_config, identifier):
+    """
+    Generic handler for document verification (Check-in, Check-out, Waivers).
+
+    mode_config: dict containing:
+        - signed_model: The SQLAlchemy model for the signed document.
+        - seal_prefix: Prefix for HMAC (e.g., 'INSPECTION', 'WAIVER').
+        - template_verify: Path to the HTML template.
+        - route_base: Base URL for document links (e.g., 'pilot-waiver').
+        - get_seal_args: Callback (data, signed_doc) -> list of args for sealing.
+    identifier: The primary key (inspection_id or waiver_id).
+    """
+    from models import db
+    signed_doc = db.session.get(mode_config["signed_model"], identifier)
+    if not signed_doc:
+        abort(404)
+
+    data = signed_doc.data_snapshot
+    # Normalize date for template display
+    if 'signed_at' in data and isinstance(data['signed_at'], str):
+        try:
+            data['signed_at'] = datetime.fromisoformat(data['signed_at'])
+        except (ValueError, TypeError):
+            pass
+
+    # 1. Verify Seal integrity
+    seal_args = mode_config["get_seal_args"](data, signed_doc)
+    seal_valid = verify_hmac_seal(
+        signed_doc.hash, mode_config["seal_prefix"], *seal_args)
+
+    pdf_valid = None
+    pdf_error = None
+    if request.method == "POST":
+        uploaded_file = request.files.get("pdf")
+        if uploaded_file:
+            if not uploaded_file.filename.lower().endswith(".pdf"):
+                pdf_error = "Le fichier doit être un PDF."
+            elif not signed_doc.pdf_file_hash:
+                pdf_error = "Pas d'empreinte enregistrée pour ce document."
+            else:
+                pdf_valid = verify_pdf_hash(
+                    uploaded_file.read(), signed_doc.pdf_file_hash)
+
+    # 2. PDF Download URL with fresh token
+    pdf_download_url = None
+    if signed_doc.pdf_url:
+        # Extract relative path from stored URL
+        if "/document/" in signed_doc.pdf_url:
+            path_part = signed_doc.pdf_url.split("/document/")[-1].split("?")[0]
+        elif "/attachment/" in signed_doc.pdf_url:
+            path_part = signed_doc.pdf_url.split("/attachment/")[-1].split("?")[0]
+        else:
+            path_part = signed_doc.pdf_url
+
+        token = generate_pdf_access_token(path_part)
+        pdf_download_url = f"/{mode_config['route_base']}/document/{path_part}?t={token}"
+
+    return render_template(
+        mode_config["template_verify"],
+        data=data,
+        seal_valid=seal_valid,
+        pdf_valid=pdf_valid,
+        pdf_error=pdf_error,
+        inspection_id=identifier,
+        document_hash=signed_doc.hash,
+        project_name=data.get('project_name', data.get('project', '—')),
+        has_pdf_hash=bool(signed_doc.pdf_file_hash),
+        pdf_download_url=pdf_download_url
+    )

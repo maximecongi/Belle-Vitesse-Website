@@ -25,12 +25,12 @@ def get_signed_document_info(inspection_id, is_checkout=True):
     else:
         path_part = pdf_url.split(delimiter)[-1].split("?")[0]
 
+    from services.shared.signatures import generate_pdf_access_token
+
     # Import the appropriate token generator
     if is_checkout:
-        from services.checkout import generate_pdf_access_token
         endpoint = "download_checkout_document"
     else:
-        from services.checkin import generate_pdf_access_token
         endpoint = "download_checkin_document"
 
     token = generate_pdf_access_token(path_part)

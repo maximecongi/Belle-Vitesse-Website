@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime, timedelta
+from datetime import datetime
 import random
 import string
 
@@ -307,104 +307,70 @@ class NewsletterSubscriber(db.Model):
         return f"<NewsletterSubscriber {self.email}>"
 
 
-class PilotWaiverSignedDocument(db.Model):
+# ── Shared Mixins ──────────────────────────────────────────────
+
+class TokenMixin:
+    """Base for all time-limited signature tokens."""
+    token = db.Column(db.String(36), primary_key=True)
+    created_at = db.Column(db.DateTime, nullable=False,
+                           default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False,
+                           server_default=db.FetchedValue())
+
+
+class SignedDocumentMixin:
+    """Base for all archived signed documents."""
+    hash = db.Column(db.String(255), nullable=False)
+    pdf_file_hash = db.Column(db.String(64))
+    data_snapshot = db.Column(db.JSON, nullable=False)
+    signature = db.Column(db.Text(length=16777215))  # MEDIUMTEXT
+    pdf_url = db.Column(db.Text)
+    signed_at = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class PilotWaiverSignedDocument(db.Model, SignedDocumentMixin):
     __tablename__ = "pilot_waiver_signed_documents"
-
-    waiver_id = db.Column(db.String(50), primary_key=True)  # Format BVDW-...
-    hash = db.Column(db.String(255), nullable=False)
-    pdf_file_hash = db.Column(db.String(64))
-    data_snapshot = db.Column(db.JSON, nullable=False)
-    signature = db.Column(db.Text(length=16777215))  # MEDIUMTEXT
-    pdf_url = db.Column(db.Text)
-    signed_at = db.Column(db.DateTime)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    waiver_id = db.Column(db.String(50), primary_key=True)
 
 
-class ProductionWaiverSignedDocument(db.Model):
+class ProductionWaiverSignedDocument(db.Model, SignedDocumentMixin):
     __tablename__ = "production_waiver_signed_documents"
-
-    waiver_id = db.Column(db.String(50), primary_key=True)  # Format BVPW-...
-    hash = db.Column(db.String(255), nullable=False)
-    pdf_file_hash = db.Column(db.String(64))
-    data_snapshot = db.Column(db.JSON, nullable=False)
-    signature = db.Column(db.Text(length=16777215))  # MEDIUMTEXT
-    pdf_url = db.Column(db.Text)
-    signed_at = db.Column(db.DateTime)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    waiver_id = db.Column(db.String(50), primary_key=True)
 
 
-class CheckoutSignedDocument(db.Model):
+class CheckoutSignedDocument(db.Model, SignedDocumentMixin):
     __tablename__ = "checkout_signed_documents"
-
     inspection_id = db.Column(db.String(255), primary_key=True)
-    hash = db.Column(db.String(255), nullable=False)
-    pdf_file_hash = db.Column(db.String(64))
-    data_snapshot = db.Column(db.JSON, nullable=False)
-    signature = db.Column(db.Text(length=16777215))  # MEDIUMTEXT equivalent
-    pdf_url = db.Column(db.Text)
-    signed_at = db.Column(db.DateTime)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
-class CheckoutToken(db.Model):
+class CheckoutToken(db.Model, TokenMixin):
     __tablename__ = "checkout_tokens"
-
-    token = db.Column(db.String(36), primary_key=True)
     record_id = db.Column(db.String(255), nullable=False)
     inspection_id = db.Column(db.String(255), nullable=False)
     signature = db.Column(db.Text(length=16777215))
-    created_at = db.Column(db.DateTime, nullable=False,
-                           default=datetime.utcnow)
-    expires_at = db.Column(db.DateTime, nullable=False,
-                           default=lambda: datetime.utcnow() + timedelta(hours=24))
 
 
-class CheckinSignedDocument(db.Model):
+class CheckinSignedDocument(db.Model, SignedDocumentMixin):
     __tablename__ = "checkin_signed_documents"
-
     inspection_id = db.Column(db.String(255), primary_key=True)
-    hash = db.Column(db.String(255), nullable=False)
-    pdf_file_hash = db.Column(db.String(64))
-    data_snapshot = db.Column(db.JSON, nullable=False)
-    signature = db.Column(db.Text(length=16777215))  # MEDIUMTEXT equivalent
-    pdf_url = db.Column(db.Text)
-    signed_at = db.Column(db.DateTime)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
-class CheckinToken(db.Model):
+class CheckinToken(db.Model, TokenMixin):
     __tablename__ = "checkin_tokens"
-
-    token = db.Column(db.String(36), primary_key=True)
     record_id = db.Column(db.String(255), nullable=False)
     inspection_id = db.Column(db.String(255), nullable=False)
     signature = db.Column(db.Text(length=16777215))
-    created_at = db.Column(db.DateTime, nullable=False,
-                           default=datetime.utcnow)
-    expires_at = db.Column(db.DateTime, nullable=False,
-                           default=lambda: datetime.utcnow() + timedelta(hours=24))
 
 
-class PilotWaiverToken(db.Model):
+class PilotWaiverToken(db.Model, TokenMixin):
     __tablename__ = "pilot_waiver_tokens"
-
-    token = db.Column(db.String(36), primary_key=True)
     waiver_id = db.Column(db.String(255), nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False,
-                           default=datetime.utcnow)
-    expires_at = db.Column(db.DateTime, nullable=False,
-                           default=lambda: datetime.utcnow() + timedelta(hours=24))
 
 
-class ProductionWaiverToken(db.Model):
+class ProductionWaiverToken(db.Model, TokenMixin):
     __tablename__ = "production_waiver_tokens"
-
-    token = db.Column(db.String(36), primary_key=True)
     waiver_id = db.Column(db.String(255), nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False,
-                           default=datetime.utcnow)
-    expires_at = db.Column(db.DateTime, nullable=False,
-                           default=lambda: datetime.utcnow() + timedelta(hours=24))
 
 
 class VehicleCheckpointConfig(db.Model):

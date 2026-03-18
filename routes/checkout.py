@@ -14,7 +14,6 @@ from flask import (
     jsonify,
     request,
     current_app,
-    send_from_directory,
 )
 
 from extensions import csrf
@@ -24,9 +23,8 @@ from services.checkout import (
     validate_signing_token,
     generate_signing_token,
     process_signature,
-    verify_checkout_document,
-    validate_pdf_access_token,
 )
+from routes.shared_docs import handle_document_download, handle_document_verify
 
 
 def init_checkout_routes(app):
@@ -143,26 +141,22 @@ def init_checkout_routes(app):
     @app.route("/checkout/verify/<inspection_id>", methods=["GET", "POST"])
     @csrf.exempt
     def checkout_verify(inspection_id):
-        uploaded_file = request.files.get(
-            "pdf") if request.method == "POST" else None
-        context = verify_checkout_document(inspection_id, uploaded_file)
-
-        if context is None:
-            abort(404)
-
-        return render_template("checkout_verify.html", **context)
+        from models import CheckoutSignedDocument
+        config = {
+            "signed_model": CheckoutSignedDocument,
+            "seal_prefix": "INSPECTION",
+            "template_verify": "checkout_verify.html",
+            "route_base": "checkout",
+            "get_seal_args": lambda data, signed_doc: [
+                data.get("inspection_id", ""),
+                data.get("vehicle_id", ""),
+                signed_doc.signature,
+                data.get("_seal_signed_at", "")
+            ]
+        }
+        return handle_document_verify(config, inspection_id)
 
     @app.route("/checkout/document/<path:filepath>")
     @csrf.exempt
     def download_checkout_document(filepath):
-        access_token = request.args.get("t", "")
-        if not access_token or not validate_pdf_access_token(filepath, access_token):
-            abort(403)
-
-        output_base = current_app.config.get(
-            "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
-
-        try:
-            return send_from_directory(output_base, filepath)
-        except Exception:
-            abort(404)
+        return handle_document_download(filepath)
