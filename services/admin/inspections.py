@@ -1,15 +1,196 @@
 import json
 import logging
+import os
+from pathlib import Path
+
+from flask import current_app
+from werkzeug.utils import secure_filename
 from sqlalchemy.orm import joinedload
 
-from models import CheckoutVehicle, CheckinVehicle, Project, User
+from models import db, CheckoutVehicle, CheckinVehicle, Project, User
 from utils.database import get_vehicles
 from utils.formatting import format_date_fr
 from utils.checkpoints import get_checkpoints_for_vehicle, BASE_CHECKPOINTS, ALL_POSSIBLE_CHECKPOINTS, CHECKPOINT_TO_MODEL_MAP
-from services.admin.utils import _parse_photos_json, _is_ready
+from services.admin.utils import _parse_photos_json, _is_ready, _delete_inspection_files
 
 logger = logging.getLogger(__name__)
 
+
+# ── Configuration & Metadata ─────────────────────────────────────
+
+def get_inspection_config(mode):
+    """
+    Returns model and metadata for a given inspection mode.
+    """
+    if mode == "checkout":
+        from models import CheckoutToken, CheckoutSignedDocument
+        return {
+            "model": CheckoutVehicle,
+            "token_model": CheckoutToken,
+            "signed_model": CheckoutSignedDocument,
+            "webhook_env": "N8N_WEBHOOK_CHECKOUT_SIGN",
+            "photos_path_func": "get_checkout_photos_path",
+            "responsible_attr": "responsible_user",
+            "is_checkout": True,
+            "stats_key": "checkouts"
+        }
+    else:
+        from models import CheckinToken, CheckinSignedDocument
+        return {
+            "model": CheckinVehicle,
+            "token_model": CheckinToken,
+            "signed_model": CheckinSignedDocument,
+            "webhook_env": "N8N_WEBHOOK_CHECKIN_SIGN",
+            "photos_path_func": "get_checkin_photos_path",
+            "responsible_attr": "responsible",
+            "is_checkout": False,
+            "stats_key": "checkins"
+        }
+
+
+# ── Core Operations (Unified) ───────────────────────────────────
+
+def list_inspections_unified(mode):
+    """
+    Generic fetcher for Checkout or Checkin records.
+    """
+    config = get_inspection_config(mode)
+    record_model = config["model"]
+    resp_attr = config["responsible_attr"]
+
+    records = record_model.query.options(
+        joinedload(record_model.project).joinedload(Project.production),
+        joinedload(getattr(record_model, resp_attr))
+    ).order_by(record_model.created_at.desc()).all()
+
+    vehicles = get_vehicles()
+    vehicle_map = {v["id"]: v.get("fields", {}) for v in vehicles}
+
+    from services.admin.vehicle_config import get_checkpoint_configs
+    batch_configs = get_checkpoint_configs()
+
+    total = len(records)
+    signed = sum(1 for r in records if r.etat_controle == "Signé")
+    pending = sum(1 for r in records if r.etat_controle == "Terminé")
+
+    formatted = [_format_base_inspection_admin(
+        r, vehicle_map, batch_configs) for r in records]
+
+    return {
+        config["stats_key"]: formatted,
+        "stats": {
+            f"total_{config['stats_key']}": total,
+            f"signed_{config['stats_key']}": signed,
+            f"pending_{config['stats_key']}": pending,
+        }
+    }
+
+
+def get_inspection_detail_unified(mode, record_id):
+    """
+    Generic detail fetcher for a single inspection.
+    """
+    config = get_inspection_config(mode)
+    record_model = config["model"]
+    resp_attr = config["responsible_attr"]
+
+    record = record_model.query.options(
+        joinedload(record_model.project).joinedload(Project.production),
+        joinedload(getattr(record_model, resp_attr))
+    ).filter_by(id=record_id).first()
+
+    if not record:
+        return None
+
+    vehicles = get_vehicles()
+    vehicle_map = {v["id"]: v.get("fields", {}) for v in vehicles}
+    data = _format_base_inspection_admin(record, vehicle_map)
+
+    if data.get("control_status") == "Signé":
+        from services.admin.documents import get_signed_document_info
+        doc_info = get_signed_document_info(
+            data["inspection_id"], is_checkout=config["is_checkout"])
+        if doc_info:
+            data.update(doc_info)
+
+    return data
+
+
+def delete_inspection_unified(mode, record_id):
+    """
+    Generic deletion for any inspection type.
+    """
+    config = get_inspection_config(mode)
+    record = db.session.get(config["model"], record_id)
+    if not record:
+        return False
+
+    from utils.n8n import trigger_n8n_webhook
+    insp_id = record.numero_inspection
+
+    if insp_id:
+        # 1. Database Cleanup
+        config["token_model"].query.filter_by(inspection_id=insp_id).delete()
+        config["signed_model"].query.filter_by(inspection_id=insp_id).delete()
+
+        # 2. Webhook
+        webhook_url = os.getenv(config["webhook_env"])
+        if webhook_url:
+            trigger_n8n_webhook(
+                webhook_url, method="DELETE",
+                inspection_id=insp_id,
+                project_id=record.project.project_id if record.project else None
+            )
+
+    # 3. Assets & Files
+    _delete_inspection_files(record)
+
+    # 4. Main Record
+    db.session.delete(record)
+    db.session.commit()
+    return True
+
+
+def upload_inspection_photos_shared(mode, record, files):
+    """
+    Universal photo uploader for inspections.
+    """
+    if not files:
+        return
+
+    config = get_inspection_config(mode)
+    # Dynamic import to avoid circular dependency
+    import utils.storage as storage
+    path_func = getattr(storage, config["photos_path_func"])
+
+    upload_dir = Path(storage.ensure_dir(path_func(
+        record.project, record.numero_inspection)))
+
+    photo_fields = {
+        "exterior_photos": "photos_exterieur",
+        "interior_photos": "photos_interieur",
+    }
+
+    output_base = current_app.config.get(
+        "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
+
+    for form_field, model_attr in photo_fields.items():
+        uploaded = files.getlist(form_field)
+        paths = []
+        for f in uploaded:
+            if f and f.filename:
+                filename = secure_filename(f.filename)
+                file_path = upload_dir / filename
+                f.save(file_path)
+                paths.append(os.path.relpath(file_path, output_base))
+
+        if paths:
+            setattr(record, model_attr, json.dumps(paths))
+
+    db.session.commit()
+
+
+# ── Internal Helpers ───────────────────────────────────────────
 
 def apply_inspection_data(record, form, is_checkout=True):
     """
