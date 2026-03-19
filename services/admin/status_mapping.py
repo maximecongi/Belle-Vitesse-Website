@@ -30,9 +30,7 @@ INSPECTION_STATUS_MAP = {
     "pending": "À signer",
     "signed": "Signé",
     "validated": "Validé",
-    "completed": "Terminé",
-    "ok": "OK",
-    "defect": "Défaut",
+    "completed": "Terminé"
 }
 
 
@@ -50,7 +48,7 @@ def get_inspection_key(status):
 
 CHECKPOINT_STATUS_MAP = {
     "ok": "OK",
-    "defect": "Défaut",
+    "critical": "Défaut",
     "warning": "À vérifier"
 }
 
