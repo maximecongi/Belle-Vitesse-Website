@@ -4,11 +4,11 @@ from flask import g, render_template
 from werkzeug.exceptions import HTTPException
 
 from routes.admin import init_admin_routes
-from routes.web import init_web_routes
-from routes.checkout import init_checkout_routes
-from routes.checkin import init_checkin_routes
-from routes.users import init_users_routes
-from routes.waivers import init_waiver_routes
+from routes.public.web import init_web_routes
+from routes.public.checkout import init_checkout_routes
+from routes.public.checkin import init_checkin_routes
+from routes.admin.users import init_users_routes
+from routes.public.waivers import init_waiver_routes
 
 
 def init_routes(app):

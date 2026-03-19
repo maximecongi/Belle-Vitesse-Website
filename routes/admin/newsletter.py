@@ -11,7 +11,7 @@ from flask import (
 from extensions import csrf
 from utils.mailer import send_newsletter_campaign
 
-from services.newsletter import (
+from services.public.newsletter import (
     list_newsletter_subscribers,
     remove_newsletter_subscriber_by_id,
 )

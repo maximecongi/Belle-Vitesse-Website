@@ -1,5 +1,5 @@
-{% extends "layout.html" %}
-{% from "macros.html" import square_highlight with context %}
+{% extends "public/layout.html" %}
+{% from "public/macros.html" import square_highlight with context %}
 {% block title %}{{ vehicle.fields.name }} -- {{ ts('seo.vehicle.title_suffix') }}{% endblock %}
 {% block description %}{{ t(vehicle.fields, 'description') | striptags | truncate(160) }}{% endblock %}
 {% block content %}

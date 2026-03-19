@@ -19,12 +19,12 @@ from flask import (
 from extensions import csrf
 
 from models import db, CheckoutVehicle
-from services.checkout import (
+from services.public.checkout import (
     validate_signing_token,
     generate_signing_token,
     process_signature,
 )
-from routes.shared_docs import handle_document_download, handle_document_verify
+from routes.public.shared_docs import handle_document_download, handle_document_verify
 
 
 def init_checkout_routes(app):
@@ -57,7 +57,7 @@ def init_checkout_routes(app):
         data = _format_base_inspection_admin(record, vehicle_map)
 
         return render_template(
-            "checkout.html", data=data, signature=None, qr=None, hash=None
+            "public/checkout.html", data=data, signature=None, qr=None, hash=None
         )
 
     @app.route("/checkout/generate", methods=["POST"])
@@ -98,19 +98,19 @@ def init_checkout_routes(app):
         vehicle_map = {v["id"]: v.get("fields", {}) for v in get_vehicles()}
         data = _format_base_inspection_admin(record, vehicle_map)
 
-        return render_template("checkout_sign.html", data=data, token=token)
+        return render_template("public/checkout_sign.html", data=data, token=token)
 
     @app.route("/checkout/sign/<token>/abandon", methods=["POST"])
     @csrf.exempt
     def checkout_abandon(token):
-        from services.checkout import abandon_signature
+        from services.public.checkout import abandon_signature
         abandon_signature(token)
         return jsonify({"status": "abandoned"}), 200
 
     @app.route("/checkout/sign/<token>/resume", methods=["POST"])
     @csrf.exempt
     def checkout_resume(token):
-        from services.checkout import resume_signature
+        from services.public.checkout import resume_signature
         resume_signature(token)
         return jsonify({"status": "resumed"}), 200
 
@@ -145,7 +145,7 @@ def init_checkout_routes(app):
         config = {
             "signed_model": CheckoutSignedDocument,
             "seal_prefix": "BVCO",
-            "template_verify": "checkout_verify.html",
+            "template_verify": "public/checkout_verify.html",
             "route_base": "checkout",
             "get_seal_args": lambda data, signed_doc: [
                 data.get("inspection_id", ""),

@@ -1,5 +1,5 @@
 import logging
-from services.shared.signatures import (
+from services.common.signatures import (
     validate_inspection_token,
     generate_inspection_token,
     process_inspection_signature,

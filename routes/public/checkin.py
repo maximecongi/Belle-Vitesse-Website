@@ -16,12 +16,12 @@ from flask import (
 from extensions import csrf
 
 from models import db, CheckinVehicle
-from services.checkin import (
+from services.public.checkin import (
     validate_signing_token,
     generate_signing_token,
     process_signature,
 )
-from routes.shared_docs import handle_document_download, handle_document_verify
+from routes.public.shared_docs import handle_document_download, handle_document_verify
 
 
 def init_checkin_routes(app):
@@ -53,7 +53,7 @@ def init_checkin_routes(app):
         vehicle_map = {v["id"]: v.get("fields", {}) for v in get_vehicles()}
         data = _format_base_inspection_admin(record, vehicle_map)
         return render_template(
-            "checkin.html", data=data, signature=None, qr=None, hash=None
+            "public/checkin.html", data=data, signature=None, qr=None, hash=None
         )
 
     @app.route("/checkin/generate", methods=["POST"])
@@ -93,19 +93,19 @@ def init_checkin_routes(app):
         vehicle_map = {v["id"]: v.get("fields", {}) for v in get_vehicles()}
         data = _format_base_inspection_admin(record, vehicle_map)
 
-        return render_template("checkin_sign.html", data=data, token=token)
+        return render_template("public/checkin_sign.html", data=data, token=token)
 
     @app.route("/checkin/sign/<token>/abandon", methods=["POST"])
     @csrf.exempt
     def checkin_abandon(token):
-        from services.checkin import abandon_signature
+        from services.public.checkin import abandon_signature
         abandon_signature(token)
         return jsonify({"status": "abandoned"}), 200
 
     @app.route("/checkin/sign/<token>/resume", methods=["POST"])
     @csrf.exempt
     def checkin_resume(token):
-        from services.checkin import resume_signature
+        from services.public.checkin import resume_signature
         resume_signature(token)
         return jsonify({"status": "resumed"}), 200
 
@@ -144,7 +144,7 @@ def init_checkin_routes(app):
         config = {
             "signed_model": CheckinSignedDocument,
             "seal_prefix": "BVCI",
-            "template_verify": "checkin_verify.html",
+            "template_verify": "public/checkin_verify.html",
             "route_base": "checkin",
             "get_seal_args": lambda data, signed_doc: [
                 data.get("inspection_id", ""),

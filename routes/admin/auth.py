@@ -10,7 +10,7 @@ from flask import (
 
 from extensions import limiter
 
-from services.auth import request_magic_link, verify_magic_link
+from services.common.auth import request_magic_link, verify_magic_link
 
 
 def init_auth_routes(app):

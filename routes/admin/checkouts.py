@@ -122,7 +122,7 @@ def init_checkouts_routes(app):
     @require_roles('administrator', 'manager', 'user')
     def admin_checkout_seal(record_id):
         try:
-            from services.checkout import generate_signing_token
+            from services.public.checkout import generate_signing_token
 
             result = generate_signing_token(record_id)
             if not result:

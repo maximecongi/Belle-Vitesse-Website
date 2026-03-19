@@ -1,6 +1,6 @@
 from flask import render_template, request, redirect, url_for, flash
 
-from services.users import list_users, get_user, create_user, update_user, delete_user
+from services.admin.users import list_users, get_user, create_user, update_user, delete_user
 from utils.decorators import require_roles
 
 

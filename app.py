@@ -21,7 +21,7 @@ from services.admin.status_mapping import (
     INSPECTION_STATUS_MAP,
     CHECKPOINT_STATUS_MAP
 )
-from services.sql_logger import init_sql_logger
+from services.admin.sql_logger import init_sql_logger
 
 SUPPORTED_LANGS = ('en', 'fr')
 DEFAULT_LANG = 'en'

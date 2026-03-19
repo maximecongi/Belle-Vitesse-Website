@@ -23,7 +23,7 @@ from utils.database import (
     get_head_by_slug,
     get_configs_for_vehicle,
 )
-from services.newsletter import (
+from services.public.newsletter import (
     add_newsletter_subscriber,
     remove_newsletter_subscriber,
 )
@@ -101,23 +101,23 @@ def init_web_routes(app):
 
     @app.route("/launch")
     def launch():
-        return render_template("launch.html")
+        return render_template("public/launch.html")
 
     @app.route("/<lang>/")
     def home():
-        return render_template("home.html", brands=BRANDS)
+        return render_template("public/home.html", brands=BRANDS)
 
     @app.route("/<lang>/vehicles")
     def vehicles():
-        return render_template("vehicles.html")
+        return render_template("public/vehicles.html")
 
     @app.route("/<lang>/heads")
     def heads():
-        return render_template("heads.html")
+        return render_template("public/heads.html")
 
     @app.route("/<lang>/grips")
     def grips():
-        return render_template("grips.html")
+        return render_template("public/grips.html")
 
     @app.route("/<lang>/vehicles/<slug>")
     def vehicle(slug):
@@ -137,7 +137,7 @@ def init_web_routes(app):
         specs = build_specs(vehicle_data["fields"])
 
         return render_template(
-            "vehicle.html",
+            "public/vehicle.html",
             vehicle=vehicle_data,
             configs_grouped=dict(reversed(grouped.items())),
             specs=specs,
@@ -152,7 +152,7 @@ def init_web_routes(app):
         specs = build_specs(head_data["fields"])
 
         return render_template(
-            "head.html",
+            "public/head.html",
             head=head_data,
             specs=specs,
         )
@@ -164,26 +164,26 @@ def init_web_routes(app):
             abort(404)
         grips_products = get_grips_products_for_category(grips_category["id"])
         return render_template(
-            "grip.html",
+            "public/grip.html",
             grips_category=grips_category,
             grips_products_by_category=grips_products,
         )
 
     @app.route("/<lang>/about-us")
     def about_us():
-        return render_template("about-us.html")
+        return render_template("public/about-us.html")
 
     @app.route("/<lang>/contact")
     def contact():
-        return render_template("contact.html")
+        return render_template("public/contact.html")
 
     @app.route("/<lang>/terms-and-conditions")
     def terms_and_conditions():
-        return render_template("terms-and-conditions.html")
+        return render_template("public/terms-and-conditions.html")
 
     @app.route("/<lang>/privacy-policy")
     def privacy_policy():
-        return render_template("privacy-policy.html")
+        return render_template("public/privacy-policy.html")
 
     # ── Newsletter ────────────────────────────────────────────────
 

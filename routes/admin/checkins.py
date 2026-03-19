@@ -122,7 +122,7 @@ def init_checkins_routes(app):
     @require_roles('administrator', 'manager', 'user')
     def admin_checkin_seal(record_id):
         try:
-            from services.checkin import generate_signing_token
+            from services.public.checkin import generate_signing_token
 
             result = generate_signing_token(record_id)
             if not result:

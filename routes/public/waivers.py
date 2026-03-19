@@ -18,7 +18,7 @@ from utils.storage import (
     ensure_dir
 )
 from extensions import csrf
-from routes.shared_docs import handle_document_download, handle_document_verify
+from routes.public.shared_docs import handle_document_download, handle_document_verify
 
 # ── Shared Helpers ──────────────────────────────────────────────
 
@@ -29,8 +29,8 @@ def _get_waiver_route_config(mode):
             "model": PilotWaiver,
             "signed_model": PilotWaiverSignedDocument,
             "token_model": PilotWaiverToken,
-            "template_sign": "waivers/sign_pilot_waiver.html",
-            "template_verify": "waivers/pilot_waiver_verify.html",
+            "template_sign": "public/waivers/sign_pilot_waiver.html",
+            "template_verify": "public/waivers/pilot_waiver_verify.html",
             "route_base": "pilot-waiver",
             "seal_prefix": "WAIVER"
         }
@@ -38,8 +38,8 @@ def _get_waiver_route_config(mode):
         "model": ProductionWaiver,
         "signed_model": ProductionWaiverSignedDocument,
         "token_model": ProductionWaiverToken,
-        "template_sign": "waivers/sign_production_waiver.html",
-        "template_verify": "waivers/production_waiver_verify.html",
+        "template_sign": "public/waivers/sign_production_waiver.html",
+        "template_verify": "public/waivers/production_waiver_verify.html",
         "route_base": "production-waiver",
         "seal_prefix": "WAIVER_PROD"
     }
@@ -147,7 +147,7 @@ def init_waiver_routes(app):
 
             db.session.commit()
 
-            from services.shared.signatures import finalize_signed_document
+            from services.common.signatures import finalize_signed_document
             finalize_signed_document(mode, waiver.id, waiver.signature_data, signer_ip)
 
             # We don't delete the token immediately to allow the user
