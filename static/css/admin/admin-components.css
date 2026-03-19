@@ -210,14 +210,13 @@
     color: #991b1b;
 }
 
-.badge-pill[data-val="Neutral"] {
+.badge-pill[data-val="neutral"] {
     background: var(--neutral-bg);
     color: var(--neutral-color);
 }
 
 /* --- Equipment Check Statuses --- */
-.badge-pill[data-val="warning"],
-.badge-pill[data-val="À vérifier"] {
+.badge-pill[data-val="warning"] {
     background: #fef3c7;
     color: #92400e;
 }
