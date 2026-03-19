@@ -146,6 +146,11 @@ def create_project(form):
 
     db.session.commit()
 
+    # Automatically create associated waivers
+    from services.admin.waivers import create_pilot_waiver, create_production_waiver
+    create_pilot_waiver(project.id)
+    create_production_waiver(project.id)
+
     # Trigger n8n webhook
     webhook_url = os.getenv("N8N_WEBHOOK_PROJECT")
     if webhook_url:
