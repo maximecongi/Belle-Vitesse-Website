@@ -14,88 +14,31 @@
 
     <title>Vérification — Belle Vitesse</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/checkin.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/' + config.route_base + '.css') }}">
 </head>
 
 <body>
 
-    <div class="checkin">
+    <div class="{{ config.route_base }}">
 
         <!-- ═══════════ HEADER ═══════════ -->
-        <header class="checkin-header">
-            <div class="checkin-header-logo">
+        <header class="{{ config.route_base }}-header">
+            <div class="{{ config.route_base }}-header-logo">
                 <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
                     alt="Belle Vitesse">
             </div>
-            <div class="checkin-header-meta">
+            <div class="{{ config.route_base }}-header-meta">
                 <strong class="dot-before">Vérification de Document</strong><br>
-                <span class="checkin-doc-id">{{ data.inspection_id or '—' }}</span>
+                <span class="{{ config.route_base }}-doc-id">{{ data.inspection_id or '—' }}</span>
             </div>
         </header>
 
 
-        <!-- ═══════════ CAS : SOURCE AIRTABLE (pas de snapshot certifié) ═══════════ -->
-        {% if source == 'airtable' %}
-
-        <section class="checkin-section checkin-text-center" style="margin-top: 4rem;">
-            <span class="checkin-badge checkin-badge--warning" style="font-size: 1rem; padding: 10px 24px;">
-                ⚠️ Authenticité non garantie
-            </span>
-            <p
-                style="font-size: 0.85rem; color: var(--grey-2); margin-top: 1rem; max-width: 460px; margin-left: auto; margin-right: auto; line-height: 1.6;">
-                Aucun enregistrement certifié n'a été trouvé pour ce document.<br>
-                Les données affichées proviennent d'Airtable et peuvent avoir été modifiées après signature.
-            </p>
-        </section>
-
-        <section class="checkin-section">
-            <h2 class="checkin-section-title dot-before">Données disponibles</h2>
-            <div class="checkin-info-grid">
-                <div class="checkin-info-item">
-                    <span class="checkin-info-label">Véhicule contrôlé</span>
-                    <span class="checkin-info-value">
-                        {% if data.vehicle %}
-                        {{ data.vehicle.fields.name }}
-                        {% if data.vehicle.fields.unique_id %}
-                        <span class="checkin-doc-id">{{ data.vehicle.fields.unique_id }}</span>
-                        {% endif %}
-                        {% else %}—{% endif %}
-                    </span>
-                </div>
-                <div class="checkin-info-item">
-                    <span class="checkin-info-label">Production</span>
-                    <span class="checkin-info-value">{{ data.production }}</span>
-                </div>
-                <div class="checkin-info-item">
-                    <span class="checkin-info-label">Projet</span>
-                    <span class="checkin-info-value">{{ data.project }}</span>
-                </div>
-                <div class="checkin-info-item">
-                    <span class="checkin-info-label">Date de contrôle</span>
-                    <span class="checkin-info-value">{{ data.control_date }}</span>
-                </div>
-                <div class="checkin-info-item">
-                    <span class="checkin-info-label">Responsable</span>
-                    <span class="checkin-info-value">
-                        {% if data.controller is mapping %}
-                        {{ data.controller.get('name', '—') }}
-                        {% else %}
-                        {{ data.controller or '—' }}
-                        {% endif %}
-                    </span>
-                </div>
-            </div>
-        </section>
-
-
-        <!-- ═══════════ CAS : SOURCE MYSQL (snapshot certifié) ═══════════ -->
-        {% else %}
-
         <!-- ── Badge sceau de données ── -->
-        <section class="checkin-section checkin-text-center">
+        <section class="{{ config.route_base }}-section {{ config.route_base }}-text-center">
             <div style="margin-bottom: 2rem;">
                 {% if seal_valid %}
-                <span class="checkin-badge checkin-badge--ok"
+                <span class="{{ config.route_base }}-badge {{ config.route_base }}-badge--ok"
                     style="font-size: 1rem; padding: 10px 24px; background-color: var(--green-1); color: white;">
                     ✅ Données certifiées & intactes
                 </span>
@@ -103,7 +46,7 @@
                     Le sceau cryptographique correspond. Les données n'ont pas été modifiées depuis la signature.
                 </p>
                 {% else %}
-                <span class="checkin-badge checkin-badge--critical" style="font-size: 1rem; padding: 10px 24px;">
+                <span class="{{ config.route_base }}-badge {{ config.route_base }}-badge--critical" style="font-size: 1rem; padding: 10px 24px;">
                     🚨 Sceau invalide — données altérées
                 </span>
                 <p
@@ -117,10 +60,10 @@
 
         <!-- ── Badge résultat vérification PDF (après upload) ── -->
         {% if pdf_valid is not none %}
-        <section class="checkin-section checkin-text-center">
+        <section class="{{ config.route_base }}-section {{ config.route_base }}-text-center">
             <div style="margin-bottom: 1.5rem;">
                 {% if pdf_valid %}
-                <span class="checkin-badge checkin-badge--ok"
+                <span class="{{ config.route_base }}-badge {{ config.route_base }}-badge--ok"
                     style="font-size: 1rem; padding: 10px 24px; background-color: var(--green-1); color: white;">
                     ✅ Fichier PDF authentique
                 </span>
@@ -128,7 +71,7 @@
                     L'empreinte du fichier correspond à l'original signé, octet par octet.
                 </p>
                 {% else %}
-                <span class="checkin-badge checkin-badge--critical"
+                <span class="{{ config.route_base }}-badge {{ config.route_base }}-badge--critical"
                     style="font-size: 1rem; padding: 10px 24px; text-align: center;">
                     🚨 Fichier PDF non authentique
                 </span>
@@ -143,43 +86,43 @@
 
         <!-- ── Erreur upload ── -->
         {% if pdf_error %}
-        <section class="checkin-section checkin-text-center">
-            <span class="checkin-badge checkin-badge--warning" style="font-size: 0.9rem; padding: 8px 20px;">
+        <section class="{{ config.route_base }}-section {{ config.route_base }}-text-center">
+            <span class="{{ config.route_base }}-badge {{ config.route_base }}-badge--warning" style="font-size: 0.9rem; padding: 8px 20px;">
                 ⚠️ {{ pdf_error }}
             </span>
         </section>
         {% endif %}
 
         <!-- ── Données scellées ── -->
-        <section class="checkin-section">
-            <h2 class="checkin-section-title dot-before">Données Scellées</h2>
-            <div class="checkin-info-grid">
-                <div class="checkin-info-item">
-                    <span class="checkin-info-label">Véhicule contrôlé</span>
-                    <span class="checkin-info-value">
+        <section class="{{ config.route_base }}-section">
+            <h2 class="{{ config.route_base }}-section-title dot-before">Données Scellées</h2>
+            <div class="{{ config.route_base }}-info-grid">
+                <div class="{{ config.route_base }}-info-item">
+                    <span class="{{ config.route_base }}-info-label">Véhicule contrôlé</span>
+                    <span class="{{ config.route_base }}-info-value">
                         {% if data.vehicle %}
                         {{ data.vehicle.fields.name }}
                         {% if data.vehicle.fields.unique_id %}
-                        <span class="checkin-doc-id">{{ data.vehicle.fields.unique_id }}</span>
+                        <span class="{{ config.route_base }}-doc-id">{{ data.vehicle.fields.unique_id }}</span>
                         {% endif %}
                         {% else %}—{% endif %}
                     </span>
                 </div>
-                <div class="checkin-info-item">
-                    <span class="checkin-info-label">Production</span>
-                    <span class="checkin-info-value">{{ data.production }}</span>
+                <div class="{{ config.route_base }}-info-item">
+                    <span class="{{ config.route_base }}-info-label">Production</span>
+                    <span class="{{ config.route_base }}-info-value">{{ data.production }}</span>
                 </div>
-                <div class="checkin-info-item">
-                    <span class="checkin-info-label">Projet</span>
-                    <span class="checkin-info-value">{{ data.project }}</span>
+                <div class="{{ config.route_base }}-info-item">
+                    <span class="{{ config.route_base }}-info-label">Projet</span>
+                    <span class="{{ config.route_base }}-info-value">{{ data.project }}</span>
                 </div>
-                <div class="checkin-info-item">
-                    <span class="checkin-info-label">Date de contrôle</span>
-                    <span class="checkin-info-value">{{ data.control_date }}</span>
+                <div class="{{ config.route_base }}-info-item">
+                    <span class="{{ config.route_base }}-info-label">Date de contrôle</span>
+                    <span class="{{ config.route_base }}-info-value">{{ data.control_date }}</span>
                 </div>
-                <div class="checkin-info-item">
-                    <span class="checkin-info-label">Responsable</span>
-                    <span class="checkin-info-value">
+                <div class="{{ config.route_base }}-info-item">
+                    <span class="{{ config.route_base }}-info-label">Responsable</span>
+                    <span class="{{ config.route_base }}-info-value">
                         {% if data.controller and data.controller.name is defined %}
                         {{ data.controller.name }}
                         {% else %}
@@ -188,9 +131,9 @@
                     </span>
                 </div>
                 {% if data.signed_at %}
-                <div class="checkin-info-item">
-                    <span class="checkin-info-label">Signé le</span>
-                    <span class="checkin-info-value">{{ data.signed_at }}</span>
+                <div class="{{ config.route_base }}-info-item">
+                    <span class="{{ config.route_base }}-info-label">Signé le</span>
+                    <span class="{{ config.route_base }}-info-value">{{ data.signed_at }}</span>
                 </div>
                 {% endif %}
             </div>
@@ -198,8 +141,8 @@
 
         <!-- ── Empreinte numérique ── -->
         {% if data.hash %}
-        <section class="checkin-section">
-            <h2 class="checkin-section-title dot-before">Sécurité Numérique</h2>
+        <section class="{{ config.route_base }}-section">
+            <h2 class="{{ config.route_base }}-section-title dot-before">Sécurité Numérique</h2>
             <div style="background: var(--white-3); padding: 1.5rem; border-radius: 4px;">
                 <p
                     style="font-size: 0.75rem; color: var(--white-4); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px;">
@@ -213,25 +156,10 @@
         </section>
         {% endif %}
 
-        {% if data.pdf_url and false %}
-        <!-- ── Lien PDF signé ── -->
-        <section class="checkin-section checkin-text-center" style="margin-top: 2rem;">
-            <a href="{{ data.pdf_url }}" target="_blank" class="checkin-btn checkin-btn--primary"
-                style="text-decoration: none; border-radius: 4px;">
-                Ouvrir le document scellé (PDF)
-            </a>
-            <p
-                style="font-size: 0.8rem; color: var(--grey-2); margin-top: 1.5rem; font-weight: 300; line-height: 1.6; max-width: 500px; margin-left: auto; margin-right: auto;">
-                Ce document a été généré et signé électroniquement via la plateforme
-                <strong>Belle Vitesse</strong>. Son authenticité est garantie par l'empreinte numérique ci-dessus.
-            </p>
-        </section>
-        {% endif %}
-
         <!-- ═══════════ UPLOAD VÉRIFICATION PDF ═══════════ -->
         {% if has_pdf_hash %}
-        <section class="checkin-section" style="margin-top: 3rem;">
-            <h2 class="checkin-section-title dot-before">Vérifier le fichier PDF</h2>
+        <section class="{{ config.route_base }}-section" style="margin-top: 3rem;">
+            <h2 class="{{ config.route_base }}-section-title dot-before">Vérifier le fichier PDF</h2>
             <p style="font-size: 0.85rem; color: var(--grey-2); margin-bottom: 1.5rem; line-height: 1.6;">
                 Uploadez le PDF que vous souhaitez authentifier. Son empreinte SHA-256 sera comparée
                 à celle enregistrée au moment de la signature. Si le fichier a été modifié,
@@ -239,7 +167,7 @@
             </p>
 
             <form method="POST" enctype="multipart/form-data"
-                action="{{ url_for('checkin_verify', inspection_id=inspection_id) }}">
+                action="{{ url_for(config.route_base + '_verify', inspection_id=inspection_id) }}">
 
                 <label for="pdf-input" style="cursor: pointer; display: block;">
                     <div id="upload-area" style="
@@ -263,7 +191,7 @@
 
                 <input type="file" id="pdf-input" name="pdf" accept=".pdf" style="display: none;">
 
-                <button type="submit" id="submit-btn" class="checkin-btn checkin-btn--primary"
+                <button type="submit" id="submit-btn" class="{{ config.route_base }}-btn {{ config.route_base }}-btn--primary"
                     style="width: 100%; border: none; cursor: pointer; border-radius: 4px; opacity: 0.35;" disabled>
                     Vérifier l'authenticité du PDF
                 </button>
@@ -276,7 +204,7 @@
         </section>
 
         {% else %}
-        <section class="checkin-section" style="margin-top: 2rem;">
+        <section class="{{ config.route_base }}-section" style="margin-top: 2rem;">
             <div style="background: var(--white-3); padding: 1.25rem 1.5rem; border-radius: 4px;">
                 <p style="font-size: 0.8rem; color: var(--grey-2); line-height: 1.6;">
                     ℹ️ Ce document a été signé avant l'introduction de la vérification par empreinte PDF.
@@ -286,11 +214,9 @@
         </section>
         {% endif %}
 
-        {% endif %}{# end source == mysql #}
-
 
         <!-- ═══════════ FOOTER ═══════════ -->
-        <footer class="checkin-footer" style="margin-top: 5rem;">
+        <footer class="{{ config.route_base }}-footer" style="margin-top: 5rem;">
             <p>
                 <strong>{{company_name}}</strong><br>
                 {{company_address}}

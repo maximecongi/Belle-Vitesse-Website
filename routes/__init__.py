@@ -7,7 +7,6 @@ from routes.admin import init_admin_routes
 from routes.public.web import init_web_routes
 from routes.public.checkout import init_checkout_routes
 from routes.public.checkin import init_checkin_routes
-from routes.admin.users import init_users_routes
 from routes.public.waivers import init_waiver_routes
 
 
@@ -17,7 +16,6 @@ def init_routes(app):
     init_web_routes(app)
     init_checkout_routes(app)
     init_checkin_routes(app)
-    init_users_routes(app)
     init_waiver_routes(app)
 
 

@@ -122,15 +122,14 @@ def init_checkouts_routes(app):
     @require_roles('administrator', 'manager', 'user')
     def admin_checkout_seal(record_id):
         try:
-            from services.public.checkout import generate_signing_token
+            from services.common.signatures import generate_inspection_token
 
-            result = generate_signing_token(record_id)
-            if not result:
+            token = generate_inspection_token(record_id, "checkout")
+            if not token:
                 flash(
                     "Checkout introuvable ou erreur lors de la création du lien de signature.", "error")
                 return redirect(url_for("admin_checkout_detail", record_id=record_id))
 
-            token = result["token"]
 
             flash("La demande de scellement a été initiée et vous avez été redirigé vers la page de signature.", "success")
             return redirect(url_for("checkout_sign_page", token=token))

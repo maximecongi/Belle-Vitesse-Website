@@ -122,15 +122,13 @@ def init_checkins_routes(app):
     @require_roles('administrator', 'manager', 'user')
     def admin_checkin_seal(record_id):
         try:
-            from services.public.checkin import generate_signing_token
-
-            result = generate_signing_token(record_id)
-            if not result:
+            from services.common.signatures import generate_inspection_token
+            token = generate_inspection_token(record_id, "checkin")
+            if not token:
                 flash(
                     "Checkin introuvable ou erreur lors de la création du lien de signature.", "error")
                 return redirect(url_for("admin_checkin_detail", record_id=record_id))
 
-            token = result["token"]
 
             # The generate_signing_token already sets status to "À signer"
             flash("La demande de scellement a été initiée et vous avez été redirigé vers la page de signature.", "success")

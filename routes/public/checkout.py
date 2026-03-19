@@ -19,10 +19,12 @@ from flask import (
 from extensions import csrf
 
 from models import db, CheckoutVehicle
-from services.public.checkout import (
-    validate_signing_token,
-    generate_signing_token,
-    process_signature,
+from services.common.signatures import (
+    validate_inspection_token,
+    generate_inspection_token,
+    process_inspection_signature,
+    abandon_inspection_signature,
+    resume_inspection_signature
 )
 from routes.public.shared_docs import handle_document_download, handle_document_verify
 
@@ -68,7 +70,7 @@ def init_checkout_routes(app):
         if not payload or "record_id" not in payload:
             return jsonify({"error": "record_id is required"}), 400
 
-        result = generate_signing_token(payload["record_id"])
+        result = generate_inspection_token(payload["record_id"], "checkout")
         if not result:
             return jsonify({"error": "Record not found in database"}), 404
 
@@ -76,7 +78,7 @@ def init_checkout_routes(app):
 
     @app.route("/checkout/sign/<token>", methods=["GET"])
     def checkout_sign_page(token):
-        entry, error_code = validate_signing_token(token)
+        entry, error_code = validate_inspection_token(token, "checkout")
         if not entry:
             abort(error_code)
 
@@ -98,26 +100,24 @@ def init_checkout_routes(app):
         vehicle_map = {v["id"]: v.get("fields", {}) for v in get_vehicles()}
         data = _format_base_inspection_admin(record, vehicle_map)
 
-        return render_template("public/checkout_sign.html", data=data, token=token)
+        return render_template("public/inspection_sign.html", data=data, token=token, type="checkout")
 
     @app.route("/checkout/sign/<token>/abandon", methods=["POST"])
     @csrf.exempt
     def checkout_abandon(token):
-        from services.public.checkout import abandon_signature
-        abandon_signature(token)
+        abandon_inspection_signature(token, "checkout")
         return jsonify({"status": "abandoned"}), 200
 
     @app.route("/checkout/sign/<token>/resume", methods=["POST"])
     @csrf.exempt
     def checkout_resume(token):
-        from services.public.checkout import resume_signature
-        resume_signature(token)
+        record = resume_inspection_signature(token, "checkout")
         return jsonify({"status": "resumed"}), 200
 
     @app.route("/checkout/sign/<token>", methods=["POST"])
     @csrf.exempt
     def checkout_submit_signature(token):
-        entry, error_code = validate_signing_token(token)
+        entry, error_code = validate_inspection_token(token, "checkout")
         if not entry:
             error_messages = {
                 404: "Invalid or expired token",
@@ -133,8 +133,8 @@ def init_checkout_routes(app):
         signed_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
 
         try:
-            result = process_signature(token, payload["signature"], signed_ip)
-            return jsonify({"status": "signed", **result}), 200
+            record, error = process_inspection_signature(token, "checkout", payload["signature"], signed_ip)
+            return jsonify({"status": "signed", **record}), 200
         except ValueError as e:
             return jsonify({"error": str(e)}), 404
 
@@ -145,7 +145,7 @@ def init_checkout_routes(app):
         config = {
             "signed_model": CheckoutSignedDocument,
             "seal_prefix": "BVCO",
-            "template_verify": "public/checkout_verify.html",
+            "template_verify": "public/inspection_verify.html",
             "route_base": "checkout",
             "get_seal_args": lambda data, signed_doc: [
                 data.get("inspection_id", ""),

@@ -3,14 +3,15 @@ import logging
 import os
 from pathlib import Path
 
-from flask import current_app
+from flask import current_app, url_for
 from werkzeug.utils import secure_filename
 from sqlalchemy.orm import joinedload
 
-from models import db, CheckoutVehicle, CheckinVehicle, Project, User
+from models import db, CheckoutVehicle, CheckinVehicle, Project, User, CheckoutSignedDocument, CheckinSignedDocument
 from utils.database import get_vehicles
 from utils.formatting import format_date_fr
 from utils.checkpoints import get_checkpoints_for_vehicle, BASE_CHECKPOINTS, ALL_POSSIBLE_CHECKPOINTS, CHECKPOINT_TO_MODEL_MAP
+from utils.document_utils import generate_pdf_access_token
 from services.admin.utils import _parse_photos_json, _is_ready, _delete_inspection_files
 
 from services.admin.status_mapping import (
@@ -115,13 +116,42 @@ def get_inspection_detail_unified(mode, record_id):
     data = _format_base_inspection_admin(record, vehicle_map)
 
     if get_inspection_key(data.get("raw_status")) == "signed":
-        from services.admin.documents import get_signed_document_info
         doc_info = get_signed_document_info(
             data["inspection_id"], is_checkout=config["is_checkout"])
         if doc_info:
             data.update(doc_info)
 
     return data
+
+
+def get_signed_document_info(inspection_id, is_checkout=True):
+    """
+    Fetch signed document info (PDF URL, Hash) and generate a temporary access token.
+    """
+    model = CheckoutSignedDocument if is_checkout else CheckinSignedDocument
+    signed_doc = db.session.get(model, inspection_id)
+
+    if not signed_doc or not signed_doc.pdf_url:
+        return None
+
+    pdf_url = signed_doc.pdf_url
+    # Extract path from URL - handles both filename for legacy and full path
+    # URLs are like /checkout/document/PATH or /checkin/document/PATH
+    delimiter = "/document/"
+    if delimiter not in pdf_url:
+        # Fallback for legacy filenames stored directly
+        path_part = pdf_url
+    else:
+        path_part = pdf_url.split(delimiter)[-1].split("?")[0]
+
+    # Import the appropriate token generator
+    endpoint = "download_checkout_document" if is_checkout else "download_checkin_document"
+    token = generate_pdf_access_token(path_part)
+
+    return {
+        "hash": getattr(signed_doc, 'hash', None),
+        "pdf_url": url_for(endpoint, filepath=path_part, t=token)
+    }
 
 
 def delete_inspection_unified(mode, record_id):
