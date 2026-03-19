@@ -261,26 +261,27 @@
                     {% if item.type == 'value' %}
                     <div
                         style="display: flex; align-items: center; gap: 0.5rem; background: #f9f9f9; padding: 0.5rem; border-radius: 8px;">
-                        <input type="number" name="{{ field }}" class="form-input"
-                            value="{{ data[field] if data and data[field] else '' }}" {% if field=='battery' %}min="0"
-                            max="100" {% endif %} style="background: white; border: 1px solid #ddd; height: 38px;"
-                            required>
+                        <input type="number" name="battery_level" class="form-input" {{ data }}
+                            value="{{ data.battery_level if data and data.battery_level is not none else '' }}" {% if
+                            field=='battery_level' %}min="0" max="100" {% endif %}
+                            style="background: white; border: 1px solid #ddd; height: 38px;" required>
                         {% if item.unit %}<span style="font-weight: 600; color: var(--grey-1);">{{ item.unit }}</span>{%
                         endif %}
                     </div>
                     {% else %}
-                    {% set current = data[field] if data and data[field] else 'À vérifier' %}
+                    {% set current = get_checkpoint_key(data[field]) if data and data[field] else 'warning' %}
                     <div class="badge-select" data-field="{{ field }}">
                         <input type="text" name="{{ field }}" value="{{ current }}" required
                             style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;">
                         <div class="badge-select-trigger" style="background: white; border-color: #ddd;">
-                            <span class="badge-pill" data-val="{{ current }}">{{ current }}</span>
+                            <span class="badge-pill" data-val="{{ current }}">{{ CHECKPOINT_STATUS_MAP.get(current,
+                                current) }}</span>
                             <span class="arrow">▼</span>
                         </div>
                         <div class="badge-select-dropdown">
-                            {% for val in ['OK', 'À vérifier', 'Défaut'] %}
-                            <button type="button" class="badge-select-option" data-value="{{ val }}">
-                                <span class="badge-pill" data-val="{{ val }}">{{ val }}</span>
+                            {% for key, label in CHECKPOINT_STATUS_MAP.items() %}
+                            <button type="button" class="badge-select-option" data-value="{{ key }}">
+                                <span class="badge-pill" data-val="{{ key }}">{{ label }}</span>
                             </button>
                             {% endfor %}
                         </div>

@@ -46,7 +46,7 @@
                     {% if v.checkout_id %}
                     <a href="{{ url_for('admin_checkout_detail', record_id=v.checkout_id) }}"
                         style="text-decoration: none;">
-                        <span class="badge-pill" data-val="{{ v.checkout_status or 'Neutral' }}"
+                        <span class="badge-pill" data-val="{{ v.checkout_status_id }}"
                             data-conform="{{ v.checkout_conform }}" style="margin: 0.15rem;">
                             {{ v.fields.name }}
                         </span>
@@ -54,7 +54,7 @@
                     {% else %}
                     <a href="{{ url_for('admin_checkout_new', project_id=project.id, vehicle_id=v.id) }}"
                         style="text-decoration: none;">
-                        <span class="badge-pill" data-val="À contrôler" style="margin: 0.15rem;">
+                        <span class="badge-pill" data-val="to_check" style="margin: 0.15rem;">
                             {{ v.fields.name }}
                         </span>
                     </a>
@@ -68,7 +68,7 @@
                     {% if v.checkin_id %}
                     <a href="{{ url_for('admin_checkin_detail', record_id=v.checkin_id) }}"
                         style="text-decoration: none;">
-                        <span class="badge-pill" data-val="{{ v.checkin_status or 'Neutral' }}"
+                        <span class="badge-pill" data-val="{{ v.checkin_status_id }}"
                             data-conform="{{ v.checkin_conform }}" style="margin: 0.15rem;">
                             {{ v.fields.name }}
                         </span>
@@ -76,7 +76,7 @@
                     {% else %}
                     <a href="{{ url_for('admin_checkin_new', project_id=project.id, vehicle_id=v.id) }}"
                         style="text-decoration: none;">
-                        <span class="badge-pill" data-val="À contrôler" style="margin: 0.15rem;">
+                        <span class="badge-pill" data-val="to_check" style="margin: 0.15rem;">
                             {{ v.fields.name }}
                         </span>
                     </a>
@@ -90,28 +90,28 @@
                         <span style="font-size: 0.7rem; color: var(--grey-2); font-weight: 600;">🏎️</span>
                         <a href="{{ url_for('admin_pilot_waivers_list', q=project.pilot_waiver.waiver_num) }}"
                             style="text-decoration: none;">
-                            {{ status_badge(project.pilot_waiver.status) }}
+                            {{ status_badge(project.pilot_waiver.status, project.pilot_waiver.raw_status) }}
                         </a>
                     </div>
                     <div style="display: flex; gap: 0.5rem; align-items: center;">
                         <span style="font-size:0.7rem; color: var(--grey-2); font-weight: 600;">🎬</span>
                         <a href="{{ url_for('admin_production_waivers_list', q=project.production_waiver.waiver_num) }}"
                             style="text-decoration: none;">
-                            {{ status_badge(project.production_waiver.status) }}
+                            {{ status_badge(project.production_waiver.status, project.production_waiver.raw_status) }}
                         </a>
                     </div>
                 </td>
                 <td>
                     <div style="white-space: nowrap;"><span style="color: var(--grey-2);">🏎️</span>
-                        <a href="{{ url_for('admin_contacts_list', q=project.contact_pilote) }}"
+                        <a href="{{ url_for('admin_contacts_list', q=project.pilot_contact_name) }}"
                             style="text-decoration: none; color: inherit; font-weight: 500;">
-                            {{ project.contact_pilote }}
+                            {{ project.pilot_contact_name }}
                         </a>
                     </div><br>
                     <div style="margin-top: 0.2rem; white-space: nowrap;"><span style="color: var(--grey-2);">🎬</span>
-                        <a href="{{ url_for('admin_contacts_list', q=project.contact_production) }}"
+                        <a href="{{ url_for('admin_contacts_list', q=project.production_contact_name) }}"
                             style="text-decoration: none; color: inherit; font-weight: 500;">
-                            {{ project.contact_production }}
+                            {{ project.production_contact_name }}
                         </a>
                     </div>
                 </td>

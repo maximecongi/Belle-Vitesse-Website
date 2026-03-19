@@ -31,7 +31,7 @@ def init_projects_routes(app):
             projects = list_projects()
             today_iso = datetime.now().strftime('%Y-%m-%d')
             upcoming_projects = [p for p in projects
-                                 if p.get("raw_return_date") >= today_iso]
+                                 if not p.get("raw_return_date") or p.get("raw_return_date") >= today_iso]
             return render_template("admin/projects_list.html", projects=upcoming_projects, is_archive=False)
         except Exception as e:
             current_app.logger.error(f"❌ Error in admin_projects_list: {e}")
@@ -45,7 +45,7 @@ def init_projects_routes(app):
             projects = list_projects()
             today_iso = datetime.now().strftime('%Y-%m-%d')
             past_projects = [p for p in projects
-                             if p.get("raw_return_date") < today_iso]
+                             if p.get("raw_return_date") and p.get("raw_return_date") < today_iso]
             return render_template("admin/projects_list.html", projects=past_projects, is_archive=True)
         except Exception as e:
             current_app.logger.error(

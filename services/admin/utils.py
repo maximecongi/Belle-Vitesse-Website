@@ -87,7 +87,7 @@ def _is_ready(form, vehicle_id=None, is_checkout=False):
     """
     # 1. Battery check for checkout
     if is_checkout:
-        battery_val = form.get("battery")
+        battery_val = form.get("battery_level") or form.get("battery")
         try:
             if battery_val and float(battery_val) < 100:
                 return False
@@ -104,7 +104,7 @@ def _is_ready(form, vehicle_id=None, is_checkout=False):
     for key in status_keys:
         val = form.get(key)
         # If it's not present (hidden/not pertinent), we treat it as OK
-        if val is not None and val not in ["OK", "Non pertinent"]:
+        if val is not None and val not in ["ok", "non_applicable"]:
             return False
     return True
 
@@ -115,7 +115,7 @@ def _is_ready(form, vehicle_id=None, is_checkout=False):
 def generic_list_records(model, fields_map, order_by_attr=None):
     """
     Generic fetcher that returns a list of records formatted with the 'Fields Pattern'.
-    
+
     Args:
         model: SQLAlchemy model class.
         fields_map: Dict mapping frontend keys to model attributes or callables.
@@ -124,10 +124,10 @@ def generic_list_records(model, fields_map, order_by_attr=None):
     query = model.query
     if order_by_attr:
         query = query.order_by(order_by_attr)
-    
+
     records = query.all()
     result = []
-    
+
     for r in records:
         formatted = {"id": r.id}
         for key, attr in fields_map.items():
@@ -136,7 +136,7 @@ def generic_list_records(model, fields_map, order_by_attr=None):
             else:
                 formatted[key] = getattr(r, attr) or "—"
         result.append(formatted)
-    
+
     return result
 
 
@@ -162,7 +162,7 @@ def format_production_for_list(p): return {
 def generic_get_record_for_edit(model, record_id, fields_list):
     """
     Generic fetcher for form editing data.
-    
+
     Args:
         model: SQLAlchemy model class.
         record_id: ID of the record.
@@ -171,7 +171,7 @@ def generic_get_record_for_edit(model, record_id, fields_list):
     record = db.session.get(model, record_id)
     if not record:
         return None
-    
+
     return {field: getattr(record, field) or "" for field in fields_list}
 
 

@@ -88,12 +88,12 @@
                 <div class="checkout-info-item">
                     <span class="checkout-info-label">État du contrôle</span>
                     <span class="checkout-info-value">
-                        {% if data.control_status == 'À signer' %}
-                        <span class="checkout-badge checkout-badge--tobesigned">À signer</span>
-                        {% elif data.control_status == 'En cours' %}
-                        <span class="checkout-badge checkout-badge--inprogress">En cours</span>
-                        {% elif data.control_status == 'Signé' %}
-                        <span class="checkout-badge checkout-badge--signed">Signé</span>
+                        {% if data.status_id == 'pending' %}
+                        <span class="checkout-badge checkout-badge--tobesigned">{{ data.control_status }}</span>
+                        {% elif data.status_id == 'in_progress' %}
+                        <span class="checkout-badge checkout-badge--inprogress">{{ data.control_status }}</span>
+                        {% elif data.status_id == 'signed' %}
+                        <span class="checkout-badge checkout-badge--signed">{{ data.control_status }}</span>
                         {% else %}
                         <span class="checkout-badge checkout-badge--neutral">{{ data.control_status }}</span>
                         {% endif %}
@@ -127,20 +127,24 @@
             <tbody>
                 {% for item in items %}
                 {% set status = data[item.key] %}
-                {% if status != 'Non pertinent' %}
+                {% if status and status != 'not_applicable' %}
                 <tr>
                     <td>{{ item.label }}</td>
                     <td>
-                        {% if status == 'OK' %}
-                        <span class="checkout-badge checkout-badge--ok">OK</span>
-                        {% elif status == 'Non pertinent' %}
-                        <span class="checkout-badge checkout-badge--neutral">Non pertinent</span>
-                        {% elif status == 'Défaut' %}
-                        <span class="checkout-badge checkout-badge--critical">Défaut</span>
-                        {% elif status == 'Attention' %}
-                        <span class="checkout-badge checkout-badge--warning">Attention</span>
+                        {% if status == 'ok' %}
+                        <span
+                            class="{{ 'checkout' if 'checkout' in request.path else 'checkin' }}-badge {{ 'checkout' if 'checkout' in request.path else 'checkin' }}-badge--ok">OK</span>
+                        {% elif status == 'warning' %}
+                        <span
+                            class="{{ 'checkout' if 'checkout' in request.path else 'checkin' }}-badge {{ 'checkout' if 'checkout' in request.path else 'checkin' }}-badge--warning">À
+                            vérifier</span>
+                        {% elif status == 'critical' %}
+                        <span
+                            class="{{ 'checkout' if 'checkout' in request.path else 'checkin' }}-badge {{ 'checkout' if 'checkout' in request.path else 'checkin' }}-badge--critical">Défaut</span>
                         {% else %}
-                        <span class="checkout-badge checkout-badge--neutral">{{ status or '—' }}</span>
+                        <span
+                            class="{{ 'checkout' if 'checkout' in request.path else 'checkin' }}-badge {{ 'checkout' if 'checkout' in request.path else 'checkin' }}-badge--neutral">{{
+                            status or '—' }}</span>
                         {% endif %}
                     </td>
                 </tr>
@@ -189,11 +193,11 @@
         <!-- ═══════════ VERDICT ═══════════ -->
         <section class="checkout-section checkout-text-center">
             <h2 class="checkout-section-title dot-before">Véhicule prêt au départ</h2>
-            {% if data.ready == 'Oui' %}
+            {% if data.ready == 'true' %}
             <span class="checkout-badge checkout-badge--ok" style="font-size: 1rem; padding: 8px 24px;">
                 OUI — Véhicule conforme
             </span>
-            {% elif data.ready == 'Non' %}
+            {% elif data.ready == 'false' %}
             <span class="checkout-badge checkout-badge--critical" style="font-size: 1rem; padding: 8px 24px;">
                 NON — Véhicule non conforme
             </span>

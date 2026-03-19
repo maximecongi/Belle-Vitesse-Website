@@ -165,8 +165,9 @@ function init() {
         sel.querySelectorAll('.badge-select-option').forEach(opt => {
             opt.addEventListener('click', () => {
                 const val = opt.dataset.value;
+                const label = opt.querySelector('.badge-pill')?.textContent || val;
                 input.value = val;
-                pill.textContent = val;
+                pill.textContent = label;
                 pill.dataset.val = val;
                 sel.classList.remove('open');
             });
@@ -244,6 +245,13 @@ function init() {
             const selectedProjectId = pInput.value;
             const vOptionsForStatus = document.querySelectorAll('#vehicleOptions .rich-select-option');
             if (vOptionsForStatus && selectedProjectId) {
+                const statusMap = {
+                    'signed': 'Signé',
+                    'pending': 'À signer',
+                    'in_progress': 'En cours',
+                    'validated': 'Validé',
+                    'to_sign': 'À signer'
+                };
                 vOptionsForStatus.forEach(opt => {
                     const checkoutStatuses = JSON.parse(opt.dataset.checkoutStatuses || '{}');
                     const checkinStatuses = JSON.parse(opt.dataset.checkinStatuses || '{}');
@@ -254,11 +262,11 @@ function init() {
                     const badgeEl = opt.querySelector('.vehicle-status-badge');
 
                     if (opt.hasAttribute('data-checkin-statuses')) {
-                        const isCheckoutSigned = (checkoutStatus === 'Signé' || checkoutStatus === 'Validé');
+                        const isCheckoutSigned = (checkoutStatus === 'signed' || checkoutStatus === 'validated');
                         if (checkinStatus) {
                             opt.dataset.disabled = "true";
                             if (badgeEl) {
-                                badgeEl.textContent = checkinStatus;
+                                badgeEl.textContent = statusMap[checkinStatus] || checkinStatus;
                                 badgeEl.style.background = "var(--input-bg)";
                                 badgeEl.style.color = "var(--text-color)";
                             }
@@ -282,14 +290,14 @@ function init() {
                         if (checkoutStatus) {
                             opt.dataset.disabled = "true";
                             if (badgeEl) {
-                                badgeEl.textContent = checkoutStatus;
+                                badgeEl.textContent = statusMap[checkoutStatus] || checkoutStatus;
                                 badgeEl.style.background = "var(--input-bg)";
                                 badgeEl.style.color = "var(--text-color)";
                             }
                         } else if (blockedByProject) {
                             opt.dataset.disabled = "true";
                             if (badgeEl) {
-                                badgeEl.textContent = "Check-in non signé : " + blockedByProject;
+                                badgeEl.textContent = "Retour non signé : " + blockedByProject;
                                 badgeEl.style.background = "#fee2e2";
                                 badgeEl.style.color = "#dc2626";
                             }

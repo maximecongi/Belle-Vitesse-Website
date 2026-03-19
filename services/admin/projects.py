@@ -18,21 +18,27 @@ def _format_vehicle_state(project, vehicle_id, vehicle_map):
     """
     Format the checkout/checkin state for a single vehicle in a project.
     """
+    from services.admin.status_mapping import get_inspection_key
+
     # Find matching records in the pre-loaded project collections
-    c_out = next((c for c in project.checkout_vehicles if c.vehicule_controle == vehicle_id), None)
-    c_in = next((c for c in project.checkin_vehicles if c.vehicule_controle == vehicle_id), None)
+    c_out = next(
+        (c for c in project.checkout_vehicles if c.vehicle_id == vehicle_id), None)
+    c_in = next(
+        (c for c in project.checkin_vehicles if c.vehicle_id == vehicle_id), None)
 
     return {
         "id": vehicle_id,
         "fields": vehicle_map.get(vehicle_id, {}),
-        "checkout_status": c_out.etat_controle if c_out else "",
+        "checkout_status": c_out.status if c_out else "",
+        "checkout_status_id": get_inspection_key(c_out.status) if c_out else "to_check",
         "checkout_id": c_out.id if c_out else "",
-        "checkout_conform": "yes" if (c_out and c_out.vehicule_pret_depart) else "no",
-        "checkout_ready": "Oui" if (c_out and c_out.vehicule_pret_depart) else ("Non" if c_out else "—"),
-        "checkin_status": c_in.etat_controle if c_in else "",
+        "checkout_conform": "true" if (c_out and c_out.vehicle_ready) else "false",
+        "checkout_ready": "true" if (c_out and c_out.vehicle_ready) else ("false" if c_out else "—"),
+        "checkin_status": c_in.status if c_in else "",
+        "checkin_status_id": get_inspection_key(c_in.status) if c_in else "to_check",
         "checkin_id": c_in.id if c_in else "",
-        "checkin_conform": "yes" if (c_in and c_in.vehicule_pret_retour) else "no",
-        "checkin_ready": "Oui" if (c_in and c_in.vehicule_pret_retour) else ("Non" if c_in else "—"),
+        "checkin_conform": "true" if (c_in and c_in.vehicle_ready) else "false",
+        "checkin_ready": "true" if (c_in and c_in.vehicle_ready) else ("false" if c_in else "—"),
     }
 
 
@@ -40,8 +46,9 @@ def _format_project_admin(p, vehicle_map):
     """
     Format a single project record for the admin listing.
     """
-    veh_ids = [v.strip() for v in (p.vehicles_to_check or "").split(",") if v.strip()]
-    
+    veh_ids = [v.strip()
+               for v in (p.vehicles_to_check or "").split(",") if v.strip()]
+
     return {
         "id": p.id,
         "project_id": p.project_id,
@@ -54,8 +61,8 @@ def _format_project_admin(p, vehicle_map):
         "return_date": format_date_fr(str(p.return_date)) if p.return_date else "—",
         "raw_return_date": str(p.return_date) if p.return_date else "",
         "raw_checkin_date": str(p.return_date) if p.return_date else "",
-        "contact_pilote": f"{p.contact_pilote_rel.first_name} {p.contact_pilote_rel.last_name}" if p.contact_pilote_rel else "—",
-        "contact_production": f"{p.contact_production_rel.first_name} {p.contact_production_rel.last_name}" if p.contact_production_rel else "—",
+        "pilot_contact_name": f"{p.pilot_contact.first_name} {p.pilot_contact.last_name}" if p.pilot_contact else "—",
+        "production_contact_name": f"{p.production_contact.first_name} {p.production_contact.last_name}" if p.production_contact else "—",
         "vehicles": [_format_vehicle_state(p, vid, vehicle_map) for vid in veh_ids],
         "pilot_waiver": {
             "id": p.pilot_waiver.id if p.pilot_waiver else None,
@@ -80,8 +87,8 @@ def list_projects():
         joinedload(Project.production),
         joinedload(Project.checkout_vehicles),
         joinedload(Project.checkin_vehicles),
-        joinedload(Project.contact_pilote_rel),
-        joinedload(Project.contact_production_rel),
+        joinedload(Project.pilot_contact),
+        joinedload(Project.production_contact),
         joinedload(Project.pilot_waiver),
         joinedload(Project.production_waiver)
     ).order_by(Project.name.desc()).all()
@@ -123,10 +130,10 @@ def create_project(form):
         name=form.get("name"),
         production_id=form.get("production_id") if form.get(
             "production_id") else None,
-        contact_pilote_id=form.get("contact_pilote_id") if form.get(
-            "contact_pilote_id") else None,
-        contact_production_id=form.get("contact_production_id") if form.get(
-            "contact_production_id") else None,
+        pilot_contact_id=form.get("pilot_contact_id") if form.get(
+            "pilot_contact_id") else None,
+        production_contact_id=form.get("production_contact_id") if form.get(
+            "production_contact_id") else None,
         departure_date=_parse_date(form.get("departure_date")),
         shoot_start_date=_parse_date(form.get("shoot_start")),
         shoot_end_date=_parse_date(form.get("shoot_end")),
@@ -167,10 +174,10 @@ def update_project(record_id, form):
     project.name = form.get("name")
     project.production_id = form.get(
         "production_id") if form.get("production_id") else None
-    project.contact_pilote_id = form.get(
-        "contact_pilote_id") if form.get("contact_pilote_id") else None
-    project.contact_production_id = form.get(
-        "contact_production_id") if form.get("contact_production_id") else None
+    project.pilot_contact_id = form.get(
+        "pilot_contact_id") if form.get("pilot_contact_id") else None
+    project.production_contact_id = form.get(
+        "production_contact_id") if form.get("production_contact_id") else None
     project.departure_date = _parse_date(form.get("departure_date"))
     project.shoot_start_date = _parse_date(form.get("shoot_start"))
     project.shoot_end_date = _parse_date(form.get("shoot_end"))
@@ -200,8 +207,8 @@ def get_project_for_edit(record_id):
         "shoot_end_raw": str(p.shoot_end_date) if p.shoot_end_date else "",
         "return_date_raw": str(p.return_date) if p.return_date else "",
         "production_id": str(p.production_id) if p.production_id else "",
-        "contact_pilote_id": str(p.contact_pilote_id) if p.contact_pilote_id else "",
-        "contact_production_id": str(p.contact_production_id) if p.contact_production_id else "",
+        "pilot_contact_id": str(p.pilot_contact_id) if p.pilot_contact_id else "",
+        "production_contact_id": str(p.production_contact_id) if p.production_contact_id else "",
         "vehicle_ids": veh_ids,
     }
 

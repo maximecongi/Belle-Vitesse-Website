@@ -24,8 +24,8 @@ class User(db.Model):
     role = db.Column(db.String(50))  # ex: Administrator, Manager
 
     # Relations
-    checkout_vehicles = db.relationship(
-        "CheckoutVehicle", backref="responsible_user", lazy=True)
+    controller_checkouts = db.relationship(
+        "CheckoutVehicle", backref="controller", lazy=True)
 
     @property
     def role_lower(self):
@@ -77,9 +77,9 @@ class Project(db.Model):
     name = db.Column(db.String(255), nullable=False)
     production_id = db.Column(db.Integer, db.ForeignKey(
         "productions.id"), nullable=False, index=True)
-    contact_pilote_id = db.Column(db.Integer, db.ForeignKey(
+    pilot_contact_id = db.Column(db.Integer, db.ForeignKey(
         "contacts.id"), nullable=True, index=True)
-    contact_production_id = db.Column(db.Integer, db.ForeignKey(
+    production_contact_id = db.Column(db.Integer, db.ForeignKey(
         "contacts.id"), nullable=True, index=True)
     departure_date = db.Column(db.Date)
     shoot_start_date = db.Column(db.Date)
@@ -93,10 +93,10 @@ class Project(db.Model):
         "CheckoutVehicle", backref="project", lazy=True)
     checkin_vehicles = db.relationship(
         "CheckinVehicle", backref="project", lazy=True)
-    contact_pilote_rel = db.relationship(
-        "Contact", foreign_keys=[contact_pilote_id], backref="projects_as_pilote", lazy=True)
-    contact_production_rel = db.relationship(
-        "Contact", foreign_keys=[contact_production_id], backref="projects_as_production", lazy=True)
+    pilot_contact = db.relationship(
+        "Contact", foreign_keys=[pilot_contact_id], backref="pilot_projects", lazy=True)
+    production_contact = db.relationship(
+        "Contact", foreign_keys=[production_contact_id], backref="production_projects", lazy=True)
     pilot_waiver = db.relationship(
         "PilotWaiver", backref="project", uselist=False, lazy=True)
     production_waiver = db.relationship(
@@ -207,45 +207,45 @@ class CheckoutVehicle(db.Model):
     __tablename__ = "checkout_vehicles"
 
     id = db.Column(db.Integer, primary_key=True)
-    numero_inspection = db.Column(
+    inspection_number = db.Column(
         db.String(50), unique=True, default=lambda: generate_inspection_number("BVCO"))
-    etat_controle = db.Column(db.String(50))  # En cours, Validé, etc.
+    status = db.Column(db.String(50))  # in_progress, pending, signed, etc.
     project_id = db.Column(
         db.Integer, db.ForeignKey("projects.id"), index=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), index=True)
-    date_controle = db.Column(db.Date)
+    controller_id = db.Column(
+        db.Integer, db.ForeignKey("users.id"), index=True)
+    inspection_date = db.Column(db.Date)
     # eCar, eBike, eTrike...
-    vehicule_controle = db.Column(db.String(100), index=True)
-    charge_batterie_depart = db.Column(db.Float)
-    etat_pneus = db.Column(db.String(50))
-    etat_freins = db.Column(db.String(50))
-    etat_eclairage_exterieur = db.Column(db.String(50))
-    etat_klaxon = db.Column(db.String(50))
+    vehicle_id = db.Column(db.String(100), index=True)
+    battery_level = db.Column(db.Float)
+    tire_status = db.Column(db.String(50))
+    brake_status = db.Column(db.String(50))
+    exterior_lighting_status = db.Column(db.String(50))
+    horn_status = db.Column(db.String(50))
     # New checkpoints
-    fonctionnement_vitesses = db.Column(db.String(50))
-    moteur_assistance = db.Column(db.String(50))
-    test_roulage = db.Column(db.String(50))
-    serrage_roues = db.Column(db.String(50))
-    tension_chaine = db.Column(db.String(50))
-    serrage_arceau = db.Column(db.String(50))
-    serrage_plaques_sieges = db.Column(db.String(50))
-    ceinture_securite = db.Column(db.String(50))
-    casques_passagers = db.Column(db.String(50))
-    protections_pilote = db.Column(db.String(50))
-    systeme_communication = db.Column(db.String(50))
-    mallette_accessoires = db.Column(db.String(50))
+    gearbox_status = db.Column(db.String(50))
+    engine_assistance_status = db.Column(db.String(50))
+    driving_test_status = db.Column(db.String(50))
+    wheel_tightness_status = db.Column(db.String(50))
+    chain_tension_status = db.Column(db.String(50))
+    roll_bar_tightness_status = db.Column(db.String(50))
+    seat_plate_tightness_status = db.Column(db.String(50))
+    seat_belt_status = db.Column(db.String(50))
+    passenger_helmets_status = db.Column(db.String(50))
+    pilot_protections_status = db.Column(db.String(50))
+    communication_system_status = db.Column(db.String(50))
+    accessories_case_status = db.Column(db.String(50))
 
-    photos_interieur = db.Column(db.Text)  # JSON ou chemins séparés
-    photos_exterieur = db.Column(db.Text)
-    observations = db.Column(db.Text)
-    vehicule_pret_depart = db.Column(db.Boolean, default=False)
-    pdf_scelle = db.Column(db.String(500))
+    interior_photos = db.Column(db.Text)  # JSON or paths
+    exterior_photos = db.Column(db.Text)
+    notes = db.Column(db.Text)
+    vehicle_ready = db.Column(db.Boolean, default=False)
+    sealed_pdf_path = db.Column(db.String(500))
     hash = db.Column(db.String(255))
-    message_action = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 
     def __repr__(self):
-        return f"<CheckoutVehicle {self.numero_inspection}>"
+        return f"<CheckoutVehicle {self.inspection_number}>"
 
 
 class CheckinVehicle(db.Model):
@@ -253,47 +253,48 @@ class CheckinVehicle(db.Model):
     __tablename__ = "checkin_vehicles"
 
     id = db.Column(db.Integer, primary_key=True)
-    numero_inspection = db.Column(
+    inspection_number = db.Column(
         db.String(50), unique=True, default=lambda: generate_inspection_number("BVCI"))
-    etat_controle = db.Column(db.String(50))
+    status = db.Column(db.String(50))
     project_id = db.Column(
         db.Integer, db.ForeignKey("projects.id"), index=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), index=True)
-    date_controle = db.Column(db.Date)
-    vehicule_controle = db.Column(db.String(100), index=True)
-    charge_batterie_retour = db.Column(db.Float)
-    etat_pneus = db.Column(db.String(50))
-    etat_freins = db.Column(db.String(50))
-    etat_eclairage_exterieur = db.Column(db.String(50))
-    etat_klaxon = db.Column(db.String(50))
+    controller_id = db.Column(
+        db.Integer, db.ForeignKey("users.id"), index=True)
+    inspection_date = db.Column(db.Date)
+    vehicle_id = db.Column(db.String(100), index=True)
+    battery_level = db.Column(db.Float)
+    tire_status = db.Column(db.String(50))
+    brake_status = db.Column(db.String(50))
+    exterior_lighting_status = db.Column(db.String(50))
+    horn_status = db.Column(db.String(50))
     # New checkpoints
-    fonctionnement_vitesses = db.Column(db.String(50))
-    moteur_assistance = db.Column(db.String(50))
-    test_roulage = db.Column(db.String(50))
-    serrage_roues = db.Column(db.String(50))
-    tension_chaine = db.Column(db.String(50))
-    serrage_arceau = db.Column(db.String(50))
-    serrage_plaques_sieges = db.Column(db.String(50))
-    ceinture_securite = db.Column(db.String(50))
-    casques_passagers = db.Column(db.String(50))
-    protections_pilote = db.Column(db.String(50))
-    systeme_communication = db.Column(db.String(50))
-    mallette_accessoires = db.Column(db.String(50))
+    gearbox_status = db.Column(db.String(50))
+    engine_assistance_status = db.Column(db.String(50))
+    driving_test_status = db.Column(db.String(50))
+    wheel_tightness_status = db.Column(db.String(50))
+    chain_tension_status = db.Column(db.String(50))
+    roll_bar_tightness_status = db.Column(db.String(50))
+    seat_plate_tightness_status = db.Column(db.String(50))
+    seat_belt_status = db.Column(db.String(50))
+    passenger_helmets_status = db.Column(db.String(50))
+    pilot_protections_status = db.Column(db.String(50))
+    communication_system_status = db.Column(db.String(50))
+    accessories_case_status = db.Column(db.String(50))
 
-    photos_interieur = db.Column(db.Text)
-    photos_exterieur = db.Column(db.Text)
-    observations = db.Column(db.Text)
-    vehicule_pret_retour = db.Column(db.Boolean, default=False)
-    pdf_scelle = db.Column(db.String(500))
+    interior_photos = db.Column(db.Text)
+    exterior_photos = db.Column(db.Text)
+    notes = db.Column(db.Text)
+    vehicle_ready = db.Column(db.Boolean, default=False)
+    sealed_pdf_path = db.Column(db.String(500))
     hash = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 
     # Relation vers user (responsable du contrôle)
-    responsible = db.relationship(
-        "User", backref="checkin_vehicles", lazy=True)
+    controller = db.relationship(
+        "User", backref="controller_checkins", lazy=True)
 
     def __repr__(self):
-        return f"<CheckinVehicle {self.numero_inspection}>"
+        return f"<CheckinVehicle {self.inspection_number}>"
 
 
 class NewsletterSubscriber(db.Model):

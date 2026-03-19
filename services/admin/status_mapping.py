@@ -1,6 +1,7 @@
 """
 Centralized status mapping and formatting for the admin section.
 Handles labels for Waivers and Inspections (Check-ins/Check-outs).
+Using standardized English keys as Source of Truth.
 """
 
 # ── Waivers Mapping ──────────────────────────────────────────────
@@ -10,6 +11,8 @@ WAIVER_STATUS_MAP = {
     "to_send": "À envoyer",
     "to_sign": "À signer",
     "signed": "Signé",
+    "approved": "Approuvé",
+    "rejected": "Rejeté",
 }
 
 
@@ -20,71 +23,101 @@ def format_waiver_status(status_id):
     return WAIVER_STATUS_MAP.get(status_id, status_id)
 
 
-# ── Inspections Mapping ──────────────────────────────────────────
-
-# DB values for inspections (legacy French strings)
-INSPECTION_DB_SIGNED = "Signé"
-INSPECTION_DB_TERMINÉ = "Terminé"
-INSPECTION_DB_PENDING = "À signer"
-INSPECTION_DB_TO_CHECK = "À contrôler"
-
-# Mapping from internal logic keys to French labels
+# Unified internal keys for inspections
 INSPECTION_STATUS_MAP = {
-    "signed": "Signé",
-    "completed": "Terminé",
-    "pending": "À signer",
     "to_check": "À contrôler",
+    "in_progress": "En cours",
+    "pending": "À signer",
+    "signed": "Signé",
+    "validated": "Validé",
+    "completed": "Terminé",
+    "ok": "OK",
+    "defect": "Défaut",
 }
 
-# Mapping from DB values (French) to internal logic keys
-# This allows logic like `if get_inspection_key(record.etat_controle) == "signed"`
-INSPECTION_DB_TO_KEY = {
-    INSPECTION_DB_SIGNED: "signed",
-    INSPECTION_DB_TERMINÉ: "completed",
-    INSPECTION_DB_PENDING: "pending",
-    INSPECTION_DB_TO_CHECK: "to_check",
+
+def get_inspection_key(status):
+    """
+    Returns the English internal key for a given status.
+    Ensures that we always have a valid key (defaults to 'to_check').
+    """
+    if not status or status not in INSPECTION_STATUS_MAP:
+        return "warning"
+    return status
+
+
+# ── Checkpoints Mapping ──────────────────────────────────────────
+
+CHECKPOINT_STATUS_MAP = {
+    "ok": "OK",
+    "defect": "Défaut",
+    "warning": "À vérifier"
 }
 
 
-def format_inspection_status(db_status):
+def get_checkpoint_key(status):
     """
-    Map a DB status string to its display label via the internal key.
+    Returns the English internal key for a checkpoint status.
+    Mappings:
+      - OK/ok -> ok
+      - À vérifier/warning/pending -> warning
+      - Défaut/critical/Non/no -> critical
     """
-    key = INSPECTION_DB_TO_KEY.get(db_status, db_status)
-    return INSPECTION_STATUS_MAP.get(key, db_status)
+    if not status:
+        return "pending"
+    s = str(status).lower().strip()
+    if s in ["ok", "success", "oui", "yes"]:
+        return "ok"
+    if s in ["à vérifier", "warning", "pending", "to_check"]:
+        return "warning"
+    if s in ["défaut", "critical", "non", "no", "danger"]:
+        return "critical"
+    if s in ["non pertinent", "not_applicable", "n/a", "none"]:
+        return "not_applicable"
+    return s
 
+
+def get_checkpoint_status(status):
+    """
+    Returns the French label for a checkpoint status.
+    """
+    return CHECKPOINT_STATUS_MAP.get(status, status)
 
 # ── CSS & UI Helpers ─────────────────────────────────────────────
 
-def get_status_css_class(status_or_id):
+
+def get_status_css_class(status_id):
     """
-    Returns a CSS-friendly class name based on the status label, ID, or DB value.
-    Used for badge styling in the frontend.
+    Returns a CSS-friendly class name based on the internal English key.
+    Handles both Inspection and Checkpoint statuses.
     """
-    if not status_or_id:
+    if not status_id:
         return "status-null"
 
-    # 1. Try to find if it's an internal key
-    if status_or_id in ["signed", "completed", "pending", "to_check", "to_generate", "to_send", "to_sign"]:
-        mapping = {
-            "signed": "status-signed",
-            "completed": "status-completed",
-            "pending": "status-pending-signature",
-            "to_sign": "status-pending-signature",
-            "to_check": "status-to-check",
-            "to_generate": "status-to-generate",
-            "to_send": "status-to-send",
-        }
-        return mapping.get(status_or_id)
-
-    # 2. Fallback for legacy DB values or display labels
+    # Map internal English keys to CSS classes
     mapping = {
-        "Signé": "status-signed",
-        "Terminé": "status-completed",
-        "À signer": "status-pending-signature",
-        "À générer": "status-to-generate",
-        "À envoyer": "status-to-send",
-        "À contrôler": "status-to-check",
+        # Inspections
+        "to_check": "status-to-check",
+        "in_progress": "status-in-progress",
+        "pending": "status-pending-signature",
+        "signed": "status-signed",
+        "validated": "status-completed",
+        "completed": "status-completed",
+        # Waivers
+        "to_generate": "status-to-generate",
+        "to_send": "status-to-send",
+        "to_sign": "status-pending-signature",
+        # Checkpoints
+        "ok": "status-ok",
+        "warning": "status-warning",
+        "critical": "status-critical",
+        "not_applicable": "status-neutral",
     }
 
-    return mapping.get(status_or_id, f"status-{status_or_id.lower().replace(' ', '-')}")
+    # Try checkpoint key first, then inspection key
+    key = get_checkpoint_key(status_id)
+    if key in mapping:
+        return mapping[key]
+
+    key = get_inspection_key(status_id)
+    return mapping.get(key, f"status-{str(key).lower().replace(' ', '-')}")

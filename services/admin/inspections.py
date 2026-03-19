@@ -14,11 +14,9 @@ from utils.checkpoints import get_checkpoints_for_vehicle, BASE_CHECKPOINTS, ALL
 from services.admin.utils import _parse_photos_json, _is_ready, _delete_inspection_files
 
 from services.admin.status_mapping import (
-    INSPECTION_DB_SIGNED,
-    INSPECTION_DB_TERMINÉ,
-    INSPECTION_DB_PENDING,
-    INSPECTION_DB_TO_CHECK,
-    format_inspection_status
+    INSPECTION_STATUS_MAP,
+    get_inspection_key,
+    get_checkpoint_key
 )
 
 logger = logging.getLogger(__name__)
@@ -38,7 +36,7 @@ def get_inspection_config(mode):
             "signed_model": CheckoutSignedDocument,
             "webhook_env": "N8N_WEBHOOK_CHECKOUT_SIGN",
             "photos_path_func": "get_checkout_photos_path",
-            "responsible_attr": "responsible_user",
+            "responsible_attr": "controller",
             "is_checkout": True,
             "stats_key": "checkouts"
         }
@@ -50,7 +48,7 @@ def get_inspection_config(mode):
             "signed_model": CheckinSignedDocument,
             "webhook_env": "N8N_WEBHOOK_CHECKIN_SIGN",
             "photos_path_func": "get_checkin_photos_path",
-            "responsible_attr": "responsible",
+            "responsible_attr": "controller",
             "is_checkout": False,
             "stats_key": "checkins"
         }
@@ -78,8 +76,10 @@ def list_inspections_unified(mode):
     batch_configs = get_checkpoint_configs()
 
     total = len(records)
-    signed = sum(1 for r in records if r.etat_controle == INSPECTION_DB_SIGNED)
-    pending = sum(1 for r in records if r.etat_controle == INSPECTION_DB_TERMINÉ)
+    signed = sum(1 for r in records if get_inspection_key(
+        r.status) == "signed")
+    pending = sum(1 for r in records if get_inspection_key(
+        r.status) == "completed")
 
     formatted = [_format_base_inspection_admin(
         r, vehicle_map, batch_configs) for r in records]
@@ -114,7 +114,7 @@ def get_inspection_detail_unified(mode, record_id):
     vehicle_map = {v["id"]: v.get("fields", {}) for v in vehicles}
     data = _format_base_inspection_admin(record, vehicle_map)
 
-    if data.get("control_status") == INSPECTION_DB_SIGNED:
+    if get_inspection_key(data.get("raw_status")) == "signed":
         from services.admin.documents import get_signed_document_info
         doc_info = get_signed_document_info(
             data["inspection_id"], is_checkout=config["is_checkout"])
@@ -134,7 +134,7 @@ def delete_inspection_unified(mode, record_id):
         return False
 
     from utils.n8n import trigger_n8n_webhook
-    insp_id = record.numero_inspection
+    insp_id = record.inspection_number
 
     if insp_id:
         # 1. Database Cleanup
@@ -172,11 +172,11 @@ def upload_inspection_photos_shared(mode, record, files):
     path_func = getattr(storage, config["photos_path_func"])
 
     upload_dir = Path(storage.ensure_dir(path_func(
-        record.project, record.numero_inspection)))
+        record.project, record.inspection_number)))
 
     photo_fields = {
-        "exterior_photos": "photos_exterieur",
-        "interior_photos": "photos_interieur",
+        "exterior_photos": "exterior_photos",
+        "interior_photos": "interior_photos",
     }
 
     output_base = current_app.config.get(
@@ -206,15 +206,15 @@ def apply_inspection_data(record, form, is_checkout=True):
     Handles battery and ready state calculation.
     """
     vehicle_id = form.get("vehicle_id") or getattr(
-        record, 'vehicule_controle', None)
+        record, 'vehicle_id', None)
     checkpoints = get_checkpoints_for_vehicle(vehicle_id)
     pertinent_keys = {cp['key']
                       for cp in checkpoints if cp.get('type') == 'status'}
 
     def get_val(key):
         if key not in pertinent_keys:
-            return "Non pertinent"
-        return form.get(key, INSPECTION_DB_PENDING)
+            return "not_applicable"
+        return get_checkpoint_key(form.get(key, "pending"))
 
     # 1. Map all standard status checkpoints
     for cp in ALL_POSSIBLE_CHECKPOINTS:
@@ -225,26 +225,22 @@ def apply_inspection_data(record, form, is_checkout=True):
                 setattr(record, column, get_val(key))
 
     # 2. Handle Battery (Value type)
-    battery_val = form.get("battery")
-    if battery_val:
+    battery_val = form.get("battery_level") or form.get("battery")
+    if battery_val is not None:
         try:
-            val = float(battery_val)
-            if is_checkout:
-                record.charge_batterie_depart = val
-            else:
-                record.charge_batterie_retour = val
+            record.battery_level = float(battery_val)
         except (ValueError, TypeError):
             pass
 
     # 3. Handle readiness state
     if is_checkout:
-        record.vehicule_pret_depart = _is_ready(
+        record.vehicle_ready = _is_ready(
             form, vehicle_id, is_checkout=True)
     else:
-        record.vehicule_pret_retour = _is_ready(
+        record.vehicle_ready = _is_ready(
             form, vehicle_id, is_checkout=False)
 
-    record.observations = form.get("notes")
+    record.notes = form.get("notes")
 
 
 def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
@@ -254,22 +250,23 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
     is_checkout = isinstance(c, CheckoutVehicle)
 
     project_name = c.project.name if c.project else "—"
-    v_data = vehicle_map.get(c.vehicule_controle, {})
+    v_data = vehicle_map.get(c.vehicle_id, {})
     vehicle_name = v_data.get("name", "—")
     unique_id = v_data.get("unique_id", "—")
 
-    # Handle relation names: responsible_user vs responsible
-    responsible = getattr(c, 'responsible_user', None) if is_checkout else getattr(
-        c, 'responsible', None)
-    controller_name = f"{responsible.firstname} {responsible.lastname}" if responsible else "—"
+    # Use standardized relationship name: controller
+    controller_obj = getattr(c, 'controller', None)
+    controller_name = f"{(controller_obj.firstname or '') if controller_obj else ''} {(controller_obj.lastname or '') if controller_obj else ''}".strip() or "—"
 
-    status = format_inspection_status(c.etat_controle or INSPECTION_DB_TO_CHECK)
+    status_id = get_inspection_key(c.status)
+    status_label = INSPECTION_STATUS_MAP.get(status_id, status_id)
 
-    # Handle readiness field: vehicule_pret_depart vs vehicule_pret_retour
-    ready_field = 'vehicule_pret_depart' if is_checkout else 'vehicule_pret_retour'
-    ready = "Oui" if getattr(c, ready_field, False) else "Non"
+    # Handle readiness field
+    ready_field = 'vehicle_ready' if is_checkout else 'vehicle_ready'
+    ready = "true" if getattr(c, ready_field, False) else "false"
 
-    c_date = format_date_fr(str(c.date_controle)) if c.date_controle else "—"
+    c_date = format_date_fr(str(c.inspection_date)
+                            ) if c.inspection_date else "—"
     d_date = format_date_fr(str(c.project.departure_date)
                             ) if c.project and c.project.departure_date else "—"
     r_date = format_date_fr(str(c.project.return_date)
@@ -277,35 +274,35 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
 
     data = {
         "id": c.id,
-        "inspection_id": c.numero_inspection or "—",
+        "inspection_id": c.inspection_number or "—",
         "project": project_name,
         "departure_date": d_date,
         "return_date": r_date,
         "vehicle": {"fields": {"name": vehicle_name, "unique_id": unique_id}},
         "control_date": c_date,
-        "status": status,
+        "status": status_label,
+        "raw_status": status_id,
+        "status_id": status_id,
         "controller": {
-            "id": c.user_id,
+            "id": c.controller_id,
             "name": controller_name
         },
         "created_at": c.created_at.isoformat() if c.created_at else "",
         "ready": ready,
-        "controller_id": c.user_id,
+        "controller_id": c.controller_id,
     }
 
-    data["search_text"] = f"{data['inspection_id']} {project_name} {controller_name} {status}".lower(
+    data["search_text"] = f"{data['inspection_id']} {project_name} {controller_name} {status_label}".lower(
     )
     data["check_items"] = get_checkpoints_for_vehicle(
-        c.vehicule_controle, batch_configs=batch_configs)
+        c.vehicle_id, batch_configs=batch_configs)
 
-    # Detail fields
-    data["control_status"] = status
+    # Detail fields (for backward compatibility / internal use)
+    data["control_status"] = status_label
 
-    # Handle battery: charge_batterie_depart vs charge_batterie_retour
-    battery_field = 'charge_batterie_depart' if is_checkout else 'charge_batterie_retour'
-    battery_val = getattr(c, battery_field, None)
-    data["battery_charge"] = battery_val if battery_val is not None else None
-    data["battery"] = str(battery_val) if battery_val is not None else ""
+    # Handle battery
+    battery_val = getattr(c, 'battery_level', None)
+    data["battery_level"] = battery_val if battery_val is not None else None
 
     # Map all checkpoints dynamically
     for cp in ALL_POSSIBLE_CHECKPOINTS:
@@ -314,9 +311,9 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
             column = CHECKPOINT_TO_MODEL_MAP.get(key, key)
             data[key] = getattr(c, column, "—") or "—"
 
-    data["interior_photos"] = _parse_photos_json(c.photos_interieur)
-    data["exterior_photos"] = _parse_photos_json(c.photos_exterieur)
-    data["notes"] = c.observations or ""
+    data["interior_photos"] = _parse_photos_json(c.interior_photos)
+    data["exterior_photos"] = _parse_photos_json(c.exterior_photos)
+    data["notes"] = c.notes or ""
 
     if c.project:
         data["production"] = c.project.production.name if c.project.production else "—"
@@ -324,7 +321,7 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
             str(c.project.shoot_start_date)) if c.project.shoot_start_date else "—"
         data["shoot_end"] = format_date_fr(
             str(c.project.shoot_end_date)) if c.project.shoot_end_date else "—"
-        data["vehicle_id"] = c.vehicule_controle
+        data["vehicle_id"] = c.vehicle_id
         data["project_id"] = str(c.project.id)
         data["project_id_unique"] = c.project.project_id
         data["project_name"] = c.project.name
@@ -353,32 +350,32 @@ def get_unified_form_context(mode="checkout"):
     # Map for statuses: {vehicule_id: {project_id: status}}
     vehicle_checkout_statuses = {}
     for c in checkouts:
-        if c.vehicule_controle and c.etat_controle and c.project_id:
-            vid = c.vehicule_controle
+        if c.vehicle_id and c.status and c.project_id:
+            vid = c.vehicle_id
             pid = str(c.project_id)
             if vid not in vehicle_checkout_statuses:
                 vehicle_checkout_statuses[vid] = {}
-            vehicle_checkout_statuses[vid][pid] = c.etat_controle
+            vehicle_checkout_statuses[vid][pid] = c.status
 
     vehicle_checkin_statuses = {}
     for c in checkins:
-        if c.vehicule_controle and c.etat_controle and c.project_id:
-            vid = c.vehicule_controle
+        if c.vehicle_id and c.status and c.project_id:
+            vid = c.vehicle_id
             pid = str(c.project_id)
             if vid not in vehicle_checkin_statuses:
                 vehicle_checkin_statuses[vid] = {}
-            vehicle_checkin_statuses[vid][pid] = c.etat_controle
+            vehicle_checkin_statuses[vid][pid] = c.status
 
     # Specifically for checkout: blocking projects logic
     blocking_projects = {}
     if mode == "checkout":
         for vid, p_statuses in vehicle_checkout_statuses.items():
             for pid, status in p_statuses.items():
-                if status in [INSPECTION_DB_SIGNED, "Validé"]: # keeping Validé if legacy
+                if get_inspection_key(status) in ["signed", "completed"]:
                     # Has it been checked in?
                     has_checkin = False
                     for ci in checkins:
-                        if ci.vehicule_controle == vid and str(ci.project_id) == pid and ci.etat_controle in [INSPECTION_DB_SIGNED, "Validé"]:
+                        if ci.vehicle_id == vid and str(ci.project_id) == pid and get_inspection_key(ci.status) in ["signed", "completed"]:
                             has_checkin = True
                             break
                     if not has_checkin:

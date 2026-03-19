@@ -51,13 +51,24 @@ ALL_POSSIBLE_CHECKPOINTS = [
      'detail': 'eTrike/eTrike 360 : chambre à air ×2, chargeur, pompe, outils · eBike & eCar : pièces de rechange, outils, bijouterie, chargeur'},
 ]
 
-# Mapping from English 'key' to French/legacy database columns in models.py
+# Mapping from English 'key' to standardized English database columns in models.py
 CHECKPOINT_TO_MODEL_MAP = {
-    'tires': 'etat_pneus',
-    'brakes': 'etat_freins',
-    'lights': 'etat_eclairage_exterieur',
-    'horn': 'etat_klaxon',
-    # Others use the key as the column name
+    'tires': 'tire_status',
+    'brakes': 'brake_status',
+    'lights': 'exterior_lighting_status',
+    'horn': 'horn_status',
+    'fonctionnement_vitesses': 'gearbox_status',
+    'moteur_assistance': 'engine_assistance_status',
+    'test_roulage': 'driving_test_status',
+    'serrage_roues': 'wheel_tightness_status',
+    'tension_chaine': 'chain_tension_status',
+    'serrage_arceau': 'roll_bar_tightness_status',
+    'serrage_plaques_sieges': 'seat_plate_tightness_status',
+    'ceinture_securite': 'seat_belt_status',
+    'casques_passagers': 'passenger_helmets_status',
+    'protections_pilote': 'pilot_protections_status',
+    'systeme_communication': 'communication_system_status',
+    'mallette_accessoires': 'accessories_case_status',
 }
 
 # Specific detail overrides by vehicle type/name

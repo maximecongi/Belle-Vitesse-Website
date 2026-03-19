@@ -37,6 +37,7 @@
                     <th>Actions</th>
                 </tr>
             </thead>
+            {% from "admin/macros.html" import status_badge %}
             <tbody id="checkouts-tbody">
                 {% for checkout in checkouts %}
                 <tr data-search="{{ checkout.search_text }}">
@@ -46,10 +47,8 @@
                             checkout.vehicle.fields.unique_id }}</span></td>
                     <td>{{ checkout.control_date }}</td>
                     <td>
-                        <span class="badge-pill" data-val="{{ checkout.status }}" {% if checkout.ready=='Oui'
-                            %}data-conform="yes" {% elif checkout.ready=='Non' %}data-conform="no" {% endif %}>
-                            {{ checkout.status }}
-                        </span>
+                        {{ status_badge(checkout.status, checkout.status_id, **{'data-conform': 'true' if
+                        checkout.ready=='true' else 'false' if checkout.ready=='false' else None}) }}
                     </td>
                     <td>{{ checkout.controller.name }}</td>
                     <td>

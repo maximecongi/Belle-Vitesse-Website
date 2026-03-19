@@ -135,7 +135,7 @@ def generate_inspection_token(record_id, mode):
     )
     db.session.add(new_token)
 
-    record.etat_controle = "À signer"
+    record.status = "pending"
     db.session.commit()
 
     base_url = os.getenv("BASE_URL", "https://bellevitesse.com")
@@ -158,7 +158,7 @@ def abandon_inspection_signature(token_str, mode):
     try:
         record = db.session.get(model, int(entry.record_id))
         if record:
-            record.etat_controle = "En cours"
+            record.status = "in_progress"
             db.session.commit()
         logger.info(f"🔙 Signature abandoned for {entry.inspection_id}")
     except Exception as e:
@@ -178,7 +178,7 @@ def resume_inspection_signature(token_str, mode):
     try:
         record = db.session.get(model, int(entry.record_id))
         if record:
-            record.etat_controle = "À signer"
+            record.status = "pending"
             db.session.commit()
     except Exception as e:
         logger.error(f"❌ Failed to resume signature: {e}")
@@ -210,9 +210,7 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
 
     try:
         # 1. Update State
-        if hasattr(record, "etat_controle"):
-            record.etat_controle = "Signé"
-        elif hasattr(record, "status"):
+        if hasattr(record, "status"):
             record.status = "signed"
         if hasattr(record, "signed_at"):
             record.signed_at = signed_at.replace(tzinfo=None)
@@ -221,7 +219,7 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
 
         # 2. Build Data Snapshot & Seal
         document_id = getattr(
-            record, "numero_inspection", getattr(record, "waiver_id", None))
+            record, "inspection_number", getattr(record, "waiver_id", None))
         snapshot, seal_args = _build_flow_data(mode, record, extra_data)
 
         current_hash = compute_hmac_seal(
@@ -268,9 +266,7 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         pdf_file_hash = compute_pdf_hash(pdf_bytes)
 
         # 5. Persistence
-        if hasattr(record, "pdf_scelle"):
-            record.pdf_scelle = pdf_public_url
-        elif hasattr(record, "signed_pdf_path"):
+        if hasattr(record, "signed_pdf_path"):
             record.signed_pdf_path = rel_pdf_path
 
         if hasattr(record, "hash"):
@@ -397,7 +393,7 @@ def _trigger_unified_webhook(mode, record, rel_pdf_path, base_url, current_hash,
     # Base Payload
     payload = {
         "event": f"{mode}_signed",
-        "document_id": getattr(record, "numero_inspection", getattr(record, "waiver_id", "—")),
+        "document_id": getattr(record, "inspection_number", getattr(record, "waiver_id", "—")),
         "project_id": project_id_unique,
         "pdf_url": pdf_url_signed,
         "hash": current_hash,
@@ -464,12 +460,12 @@ def _send_waiver_confirmation_email(mode, waiver, pdf_path):
         recipient_name = None
 
         if mode == "pilot":
-            if waiver.project and waiver.project.contact_pilote_rel:
-                recipient_email = waiver.project.contact_pilote_rel.mail
+            if waiver.project and waiver.project.pilot_contact:
+                recipient_email = waiver.project.pilot_contact.mail
             recipient_name = f"{waiver.pilot_first_name} {waiver.pilot_last_name}"
         else:
-            if waiver.project and waiver.project.contact_production_rel:
-                recipient_email = waiver.project.contact_production_rel.mail
+            if waiver.project and waiver.project.production_contact:
+                recipient_email = waiver.project.production_contact.mail
             recipient_name = waiver.production_representative
 
         if recipient_email:

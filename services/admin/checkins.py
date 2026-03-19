@@ -36,26 +36,26 @@ def create_checkin(form, files=None):
     pid = form.get("project_id")
     uid = form.get("controller_id")
     try:
-        user_id = int(uid) if uid and uid != "None" else None
+        controller_id = int(uid) if uid and uid != "None" else None
     except (ValueError, TypeError):
         current_app.logger.warning(f"⚠️ Invalid controller_id detected: {uid}")
-        user_id = None
+        controller_id = None
 
     record = CheckinVehicle(
-        etat_controle="En cours",
-        date_controle=date.today(),
+        status="in_progress",
+        inspection_date=date.today(),
         project_id=int(pid) if pid and pid != "None" else None,
-        user_id=user_id,
-        vehicule_controle=form.get("vehicle_id") if form.get("vehicle_id") != "None" else None,
+        controller_id=controller_id,
+        vehicle_id=form.get("vehicle_id") if form.get("vehicle_id") != "None" else None,
     )
 
     apply_inspection_data(record, form, is_checkout=False)
 
     # Safety: ensure latest checkout is signed
-    if record.vehicule_controle:
+    if record.vehicle_id:
         latest_checkout = CheckoutVehicle.query.filter_by(
-            vehicule_controle=record.vehicule_controle).order_by(CheckoutVehicle.id.desc()).first()
-        if not latest_checkout or latest_checkout.etat_controle not in ["Signé", "Validé"]:
+            vehicle_id=record.vehicle_id).order_by(CheckoutVehicle.id.desc()).first()
+        if not latest_checkout or latest_checkout.status not in ["signed", "validated"]:
             raise ValueError("Le départ de ce véhicule n'a pas été validé par une signature.")
 
     db.session.add(record)

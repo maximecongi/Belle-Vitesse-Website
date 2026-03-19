@@ -13,7 +13,7 @@
 {% block header_actions %}
 <a href="{{ url_for('checkin_verify', inspection_id=data.inspection_id) }}" target="_blank"
     class="admin-btn admin-btn-secondary">Page de vérification ↗</a>
-{% if data.control_status == 'En cours' %}
+{% if data.status_id == 'in_progress' %}
 <a href="{{ url_for('admin_checkin_edit', record_id=record_id) }}" class="admin-btn admin-btn-primary">Éditer</a>
 {% endif %}
 {% endblock %}
@@ -53,21 +53,20 @@
                     <div style="font-weight: 500;">{{ data.control_date or '—' }}</div>
                 </div>
                 <div>
+                    {% from "admin/macros.html" import status_badge %}
                     <div style="font-size: 0.85rem; color: var(--grey-2);">État</div>
                     <div>
-                        <span class="badge-pill" data-val="{{ data.control_status }}" {% if data.ready=='Oui'
-                            %}data-conform="yes" {% elif data.ready=='Non' %}data-conform="no" {% endif %}>
-                            {{ data.control_status }}
-                        </span>
+                        {{ status_badge(data.status, data.status_id, **{'data-conform': 'true' if data.ready=='true'
+                        else 'false' if data.ready=='false' else None}) }}
                     </div>
 
                 </div>
                 <div>
                     <div style="font-size: 0.85rem; color: var(--grey-2);">Charge batterie</div>
-                    <div style="font-weight: 500;"> <span class="badge-pill" data-val="Neutral">{{
-                            data.battery_charge if
-                            data.battery_charge is not none
-                            else '—' }}%</span>
+                    <div style="font-weight: 500;">
+                        <span class="badge-pill" data-val="Neutral">
+                            {{ data.battery_level if data.battery_level is not none else '—' }}%
+                        </span>
                     </div>
                 </div>
             </div>
@@ -76,7 +75,7 @@
 
 
         <div class="admin-card">
-            {% if data.ready=="Oui" %}
+            {% if data.ready=="true" %}
             <div
                 style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem 1.25rem; border-radius: 8px; background: #ecfdf5; border: 1px solid #a7f3d0; margin: 1rem 0;">
                 <span style="font-size: 1.5rem;">✅</span>
@@ -121,20 +120,13 @@
             <div
                 style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
                 {% for item in items %}
-                <div style="background: var(--admin-bg); padding: 0.8rem; border-radius: 6px;">
+                <div
+                    style="display: flex; flex-direction: column; justify-content: space-between;background: var(--admin-bg); padding: 0.8rem; border-radius: 6px;">
                     <div style="font-size: 0.75rem; color: var(--grey-2); text-transform: uppercase;">{{ item.label }}
                     </div>
                     <div style="font-weight: 600;">
                         {% set val = data[item.key] %}
-                        {% if val == 'OK' %}
-                        <span class="badge-pill" data-val="OK">OK</span>
-                        {% elif val == 'À vérifier' %}
-                        <span class="badge-pill" data-val="À vérifier">À vérifier</span>
-                        {% elif val == 'Défaut' %}
-                        <span class="badge-pill" data-val="Défaut">Défaut</span>
-                        {% else %}
-                        <span class="badge-pill" data-val="Neutral">——</span>
-                        {% endif %}
+                        {{ status_badge(get_checkpoint_status(val), val) }}
                     </div>
                 </div>
                 {% endfor %}
@@ -196,7 +188,7 @@
             {% endif %}
         </div>
         {% else %}
-        {% if data.control_status == 'En cours' %}
+        {% if data.status_id == 'in_progress' %}
         <div class="admin-card">
             <div class="admin-card-title">Sceau numérique</div>
             <button type="button" id="sealCheckinBtn" class="admin-btn"
@@ -238,7 +230,7 @@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const recordId = "{{ record_id }}";
-        const currentStatus = "{{ data.control_status }}";
+        const currentStatusId = "{{ data.status_id }}";
         const csrfToken = document.querySelector('input[name="csrf_token"]')?.value;
 
         // Logique du bouton "Sceller" (passer au statut "À signer")
@@ -257,11 +249,11 @@
                         "Content-Type": "application/json",
                         "X-CSRFToken": csrfToken
                     },
-                    body: JSON.stringify({ status: "À signer" })
+                    body: JSON.stringify({ status: "pending" })
                 })
                     .then(r => r.json())
                     .then(res => {
-                        if (res.status === "À signer") {
+                        if (res.status_id === "pending") {
                             window.location.reload();
                         } else {
                             console.error("Erreur serveur lors de la mise à jour :", res);
@@ -283,12 +275,12 @@
 
         // Si la signature est en attente, on check l'état toutes les 3s 
         // afin de recharger la page automatiquement dès que c'est signé!
-        if (currentStatus === "À signer") {
+        if (currentStatusId === "pending") {
             setInterval(() => {
                 fetch(`/admin/api/checkins/${recordId}/status`)
                     .then(r => r.json())
                     .then(res => {
-                        if (res.status && res.status !== currentStatus) {
+                        if (res.status_id && res.status_id !== currentStatusId) {
                             window.location.reload();
                         }
                     })

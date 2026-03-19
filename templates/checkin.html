@@ -88,12 +88,12 @@
                 <div class="checkin-info-item">
                     <span class="checkin-info-label">État du contrôle</span>
                     <span class="checkin-info-value">
-                        {% if data.control_status == 'À signer' %}
-                        <span class="checkin-badge checkin-badge--tobesigned">À signer</span>
-                        {% elif data.control_status == 'En cours' %}
-                        <span class="checkin-badge checkin-badge--inprogress">En cours</span>
-                        {% elif data.control_status == 'Signé' %}
-                        <span class="checkin-badge checkin-badge--signed">Signé</span>
+                        {% if data.status_id == 'pending' %}
+                        <span class="checkin-badge checkin-badge--tobesigned">{{ data.control_status }}</span>
+                        {% elif data.status_id == 'in_progress' %}
+                        <span class="checkin-badge checkin-badge--inprogress">{{ data.control_status }}</span>
+                        {% elif data.status_id == 'signed' %}
+                        <span class="checkin-badge checkin-badge--signed">{{ data.control_status }}</span>
                         {% else %}
                         <span class="checkin-badge checkin-badge--neutral">{{ data.control_status }}</span>
                         {% endif %}
@@ -127,18 +127,16 @@
             <tbody>
                 {% for item in items %}
                 {% set status = data[item.key] %}
-                {% if status != 'Non pertinent' %}
+                {% if status and status != 'not_applicable' %}
                 <tr>
                     <td>{{ item.label }}</td>
                     <td>
-                        {% if status == 'OK' %}
+                        {% if status == 'ok' %}
                         <span class="checkin-badge checkin-badge--ok">OK</span>
-                        {% elif status == 'Non pertinent' %}
-                        <span class="checkin-badge checkin-badge--neutral">Non pertinent</span>
-                        {% elif status == 'Défaut' %}
+                        {% elif status == 'warning' %}
+                        <span class="checkin-badge checkin-badge--warning">À vérifier</span>
+                        {% elif status == 'critical' %}
                         <span class="checkin-badge checkin-badge--critical">Défaut</span>
-                        {% elif status == 'Attention' %}
-                        <span class="checkin-badge checkin-badge--warning">Attention</span>
                         {% else %}
                         <span class="checkin-badge checkin-badge--neutral">{{ status or '—' }}</span>
                         {% endif %}
@@ -189,11 +187,11 @@
         <!-- ═══════════ VERDICT ═══════════ -->
         <section class="checkin-section checkin-text-center">
             <h2 class="checkin-section-title dot-before">Véhicule prêt au retour</h2>
-            {% if data.ready == 'Oui' %}
+            {% if data.ready == 'true' %}
             <span class="checkin-badge checkin-badge--ok" style="font-size: 1rem; padding: 8px 24px;">
                 OUI — Véhicule restitué conforme
             </span>
-            {% elif data.ready == 'Non' %}
+            {% elif data.ready == 'false' %}
             <span class="checkin-badge checkin-badge--critical" style="font-size: 1rem; padding: 8px 24px;">
                 NON — Véhicule restitué non conforme
             </span>

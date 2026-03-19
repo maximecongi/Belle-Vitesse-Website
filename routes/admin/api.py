@@ -30,6 +30,7 @@ def init_api_routes(app):
 
     def _handle_status_update(model, record_id):
         from models import db
+        from services.admin.status_mapping import get_inspection_key
         try:
             record = db.session.get(model, record_id)
             if not record:
@@ -41,11 +42,24 @@ def init_api_routes(app):
                 if not new_status:
                     return jsonify({"error": "Missing status"}), 400
 
-                record.etat_controle = new_status
+                record.status = new_status
                 db.session.commit()
-                return jsonify({"status": record.etat_controle, "message": "Statut mis à jour avec succès"})
+                from services.admin.status_mapping import INSPECTION_STATUS_MAP
+                status_id = get_inspection_key(record.status)
+                status_label = INSPECTION_STATUS_MAP.get(status_id, status_id)
+                return jsonify({
+                    "status": status_label, 
+                    "status_id": status_id,
+                    "message": "Statut mis à jour avec succès"
+                })
 
-            return jsonify({"status": record.etat_controle})
+            status_id = get_inspection_key(record.status)
+            from services.admin.status_mapping import INSPECTION_STATUS_MAP
+            status_label = INSPECTION_STATUS_MAP.get(status_id, status_id)
+            return jsonify({
+                "status": status_label,
+                "status_id": status_id
+            })
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(f"❌ Error in status update: {e}")

@@ -38,9 +38,9 @@
                 <a class="today-row-vehicle-link"
                     href="{{ url_for('admin_checkout_detail', record_id=vehicle.checkout_id) }}">
                     <span style="font-weight: 500;">{{ vehicle.fields.name }}</span>
-                    <span class="badge-pill" data-val="{{ vehicle.checkout_status }}" {% if
-                        vehicle.checkout_ready=='Oui' %}data-conform="yes" {% elif vehicle.checkout_ready=='Non'
-                        %}data-conform="no" {% endif %}
+                    <span class="badge-pill" data-val="{{ vehicle.checkout_status_id }}" {% if
+                        vehicle.checkout_ready=='true' %}data-conform="true" {% elif vehicle.checkout_ready=='false'
+                        %}data-conform="false" {% endif %}
                         style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">{{ vehicle.checkout_status
                         }}</span>
                 </a>
@@ -48,7 +48,7 @@
                 <a href="{{ url_for('admin_checkout_new', project_id=checkout.id, vehicle_id=vehicle.id) }}"
                     class="today-row-vehicle-link">
                     <span>{{ vehicle.fields.name }}</span>
-                    <span class="badge-pill" data-val="À contrôler"
+                    <span class="badge-pill" data-val="to_check"
                         style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">À contrôler</span>
                 </a>
                 {% endif %}
@@ -88,8 +88,9 @@
                 <a class="today-row-vehicle-link"
                     href="{{ url_for('admin_checkin_detail', record_id=vehicle.checkin_id) }}">
                     <span style="font-weight: 500;">{{ vehicle.fields.name }}</span>
-                    <span class="badge-pill" data-val="{{ vehicle.checkin_status }}" {% if vehicle.checkin_ready=='Oui'
-                        %}data-conform="yes" {% elif vehicle.checkin_ready=='Non' %}data-conform="no" {% endif %}
+                    <span class="badge-pill" data-val="{{ vehicle.checkin_status_id }}" {% if
+                        vehicle.checkin_ready=='true' %}data-conform="true" {% elif vehicle.checkin_ready=='false'
+                        %}data-conform="false" {% endif %}
                         style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">{{ vehicle.checkin_status
                         }}</span>
                 </a>
@@ -97,7 +98,7 @@
                 <a href="{{ url_for('admin_checkin_new', project_id=checkin.id, vehicle_id=vehicle.id) }}"
                     class="today-row-vehicle-link">
                     <span>{{ vehicle.fields.name }}</span>
-                    <span class="badge-pill" data-val="À contrôler"
+                    <span class="badge-pill" data-val="to_check"
                         style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">À contrôler</span>
                 </a>
                 {% endif %}
@@ -137,12 +138,12 @@
                 <a class="today-row-vehicle-link"
                     href="{{ url_for('admin_pilot_waivers_list') }}?q={{ project.pilot_waiver.waiver_num|urlencode }}">
                     <span style="font-weight: 500;">Décharge Pilote</span>
-                    <span class="badge-pill" data-val="{{ project.pilot_waiver.status }}"
+                    <span class="badge-pill" data-val="{{ project.pilot_waiver.raw_status }}"
                         style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">{{ project.pilot_waiver.status
                         }}</span>
                 </a>
                 {% else %}
-                <span class="badge-pill" data-val="En attente"
+                <span class="badge-pill" data-val="pending"
                     style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">Non générée</span>
                 {% endif %}
             </div>
@@ -180,12 +181,12 @@
                 <a class="today-row-vehicle-link"
                     href="{{ url_for('admin_production_waivers_list') }}?q={{ project.production_waiver.waiver_num|urlencode }}">
                     <span style="font-weight: 500;">Décharge Prod.</span>
-                    <span class="badge-pill" data-val="{{ project.production_waiver.status }}"
+                    <span class="badge-pill" data-val="{{ project.production_waiver.status_id }}"
                         style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">{{
                         project.production_waiver.status }}</span>
                 </a>
                 {% else %}
-                <span class="badge-pill" data-val="En attente"
+                <span class="badge-pill" data-val="pending"
                     style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">Non générée</span>
                 {% endif %}
             </div>

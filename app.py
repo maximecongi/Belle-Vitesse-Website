@@ -15,6 +15,14 @@ from utils.database import (
 from utils.database import init_checkout_db, init_checkin_db
 from models import db, User
 from services.sql_logger import init_sql_logger
+from services.admin.status_mapping import (
+    get_inspection_key,
+    get_checkpoint_key,
+    get_checkpoint_status,
+    get_status_css_class,
+    INSPECTION_STATUS_MAP,
+    CHECKPOINT_STATUS_MAP
+)
 
 SUPPORTED_LANGS = ('en', 'fr')
 DEFAULT_LANG = 'en'
@@ -240,7 +248,14 @@ def create_app():
             "company_siret": "981 514 040 00014",
             "company_address": "33 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine, France",
             "company_phone": "+33 6 65 51 40 40",
-            "company_email": "contact@bellevitesse.com"
+            "company_email": "contact@bellevitesse.com",
+            # Status Mapping Utilities
+            "get_inspection_key": get_inspection_key,
+            "get_checkpoint_key": get_checkpoint_key,
+            "get_checkpoint_status": get_checkpoint_status,
+            "get_status_css_class": get_status_css_class,
+            "INSPECTION_STATUS_MAP": INSPECTION_STATUS_MAP,
+            "CHECKPOINT_STATUS_MAP": CHECKPOINT_STATUS_MAP,
         }
 
         def _load_db_context(is_admin):

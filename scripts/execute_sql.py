@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -18,7 +19,8 @@ SSH_PASSWORD = os.getenv("SSH_PASSWORD")
 # Add common Homebrew paths to PATH for mysql
 os.environ["PATH"] += os.pathsep + "/opt/homebrew/bin" + os.pathsep + "/usr/local/bin" + os.pathsep + "/opt/homebrew/Cellar/mysql-client/9.6.0/bin"
 
-SQL_FILE = "/tmp/migrate_projects.sql"
+# The first argument is the SQL file to execute
+SQL_FILE = sys.argv[1] if len(sys.argv) > 1 else "/tmp/migrate_projects.sql"
 
 def execute_sql(host, port):
     cmd = [

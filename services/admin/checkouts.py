@@ -36,17 +36,17 @@ def create_checkout(form, files=None):
     pid = form.get("project_id")
     uid = form.get("controller_id")
     try:
-        user_id = int(uid) if uid and uid != "None" else None
+        controller_id = int(uid) if uid and uid != "None" else None
     except (ValueError, TypeError):
         current_app.logger.warning(f"⚠️ Invalid controller_id detected: {uid}")
-        user_id = None
+        controller_id = None
 
     record = CheckoutVehicle(
-        etat_controle="En cours",
-        date_controle=date.today(),
+        status="in_progress",
+        inspection_date=date.today(),
         project_id=int(pid) if pid and pid != "None" else None,
-        user_id=user_id,
-        vehicule_controle=form.get("vehicle_id") if form.get("vehicle_id") != "None" else None,
+        controller_id=controller_id,
+        vehicle_id=form.get("vehicle_id") if form.get("vehicle_id") != "None" else None,
     )
 
     apply_inspection_data(record, form, is_checkout=True)

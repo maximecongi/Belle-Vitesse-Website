@@ -47,7 +47,7 @@ def init_checkout_routes(app):
     def checkout_view(inspection_id):
         require_checkout_token()
         record = CheckoutVehicle.query.filter_by(
-            numero_inspection=inspection_id).first()
+            inspection_number=inspection_id).first()
         if not record:
             abort(404)
 
@@ -86,9 +86,9 @@ def init_checkout_routes(app):
 
         # If user reloaded the page, the abandon beacon might have set this to 'En cours'.
         # We catch it here and revert it to 'À signer' since the user is still on the page.
-        if record.etat_controle == "En cours":
+        if record.status == "in_progress":
             try:
-                record.etat_controle = "À signer"
+                record.status = "pending"
                 db.session.commit()
             except Exception:
                 pass

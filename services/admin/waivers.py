@@ -209,7 +209,7 @@ def send_production_waiver(waiver_id):
     if not waiver:
         return False, "Décharge non trouvée."
 
-    contact_prod = waiver.project.contact_production_rel
+    contact_prod = waiver.project.production_contact
     if not contact_prod or not contact_prod.mail:
         return False, "La production n'a pas d'adresse e-mail de contact renseignée dans le projet."
 
@@ -290,7 +290,7 @@ def create_pilot_waiver(project_id):
 
 def list_pilot_waivers():
     waivers = PilotWaiver.query.options(
-        joinedload(PilotWaiver.project).joinedload(Project.contact_pilote_rel)
+        joinedload(PilotWaiver.project).joinedload(Project.pilot_contact)
     ).all()
     waivers.sort(key=lambda w: (
         w.project.departure_date or datetime.min.date(), w.project.name), reverse=True)
@@ -309,8 +309,8 @@ def list_pilot_waivers():
             return f"{route}{clean_path}?t={token}"
 
         pilote_name = "—"
-        if p.contact_pilote_rel:
-            pilote_name = f"{p.contact_pilote_rel.first_name} {p.contact_pilote_rel.last_name}"
+        if p.pilot_contact:
+            pilote_name = f"{p.pilot_contact.first_name} {p.pilot_contact.last_name}"
         elif w.pilot_first_name or w.pilot_last_name:
             pilote_name = f"{w.pilot_first_name or ''} {w.pilot_last_name or ''}".strip(
             )
@@ -353,7 +353,7 @@ def generate_pilot_waiver(waiver_id):
         return False, "Décharge non trouvée ou statut invalide."
 
     p = waiver.project
-    contact = p.contact_pilote_rel
+    contact = p.pilot_contact
     if contact:
         waiver.pilot_first_name = contact.first_name
         waiver.pilot_last_name = contact.last_name
@@ -394,8 +394,8 @@ def send_pilot_waiver(waiver_id):
     if waiver.status not in ["to_send", "to_sign"]:
         return False, "Statut invalide pour l'envoi."
 
-    contact_pilote = waiver.project.contact_pilote_rel
-    if not contact_pilote or not contact_pilote.mail:
+    pilot_contact = waiver.project.pilot_contact
+    if not pilot_contact or not pilot_contact.mail:
         return False, "Le pilote n'a pas d'adresse e-mail renseignée dans le projet."
 
     # Create new token (24h validity managed by DB)
@@ -407,8 +407,8 @@ def send_pilot_waiver(waiver_id):
     signature_link = f"{base_url}/sign/waiver/{new_token}"
 
     success = send_waiver_invitation_email(
-        to_email=contact_pilote.mail,
-        pilot_name=f"{contact_pilote.first_name} {contact_pilote.last_name}",
+        to_email=pilot_contact.mail,
+        pilot_name=f"{pilot_contact.first_name} {pilot_contact.last_name}",
         project_name=waiver.project.name,
         signature_link=signature_link
     )
@@ -419,7 +419,7 @@ def send_pilot_waiver(waiver_id):
     waiver.status = "to_sign"
     waiver.sent_at = datetime.utcnow()
     db.session.commit()
-    return True, f"Décharge envoyée au pilote ({contact_pilote.mail})."
+    return True, f"Décharge envoyée au pilote ({pilot_contact.mail})."
 
 
 def reset_pilot_waiver(waiver_id):

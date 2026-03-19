@@ -199,12 +199,13 @@
 }
 
 /* --- Global Statuses --- */
-.badge-pill[data-val="OK"] {
+.badge-pill[data-val="ok"],
+.badge-pill[data-val="signed"] {
     background: #d1fae5;
     color: #065f46;
 }
 
-.badge-pill[data-val="Défaut"] {
+.badge-pill[data-val="defect"] {
     background: #fee2e2;
     color: #991b1b;
 }
@@ -215,67 +216,70 @@
 }
 
 /* --- Equipment Check Statuses --- */
+.badge-pill[data-val="warning"],
 .badge-pill[data-val="À vérifier"] {
     background: #fef3c7;
     color: #92400e;
 }
 
-.badge-pill[data-val="À contrôler"] {
+.badge-pill[data-val="to_check"] {
     background: var(--neutral-bg);
     color: var(--neutral-color);
 }
 
-.badge-pill[data-val="À contrôler"]:before {
+.badge-pill[data-val="to_check"]:before {
     content: "🔍 ";
 }
 
-.badge-pill[data-val="En cours"] {
+.badge-pill[data-val="in_progress"] {
     background: #ffe2b8;
     color: #dc852e;
 }
 
-.badge-pill[data-val="En cours"][data-conform="yes"]:before {
+.badge-pill[data-val="in_progress"][data-conform="true"]:before {
     content: "⏳ ";
 }
 
-.badge-pill[data-val="En cours"][data-conform="no"]:before {
+.badge-pill[data-val="in_progress"][data-conform="false"]:before {
     content: "🚨 ";
 }
 
 /* --- Document / Waiver Statuses --- */
-.badge-pill[data-val="À générer"] {
+.badge-pill[data-val="to_generate"] {
     background: var(--neutral-bg);
     color: var(--neutral-color);
 }
 
-.badge-pill[data-val="À générer"]:before {
+.badge-pill[data-val="to_generate"]:before {
     content: "🔄 ";
 }
 
-.badge-pill[data-val="À envoyer"] {
+.badge-pill[data-val="to_send"] {
     background: #ffe2b8;
     color: #dc852e;
 }
 
-.badge-pill[data-val="À envoyer"]::before {
+.badge-pill[data-val="to_send"]::before {
     content: "📤 ";
 }
 
-.badge-pill[data-val="À signer"] {
+.badge-pill[data-val="to_sign"],
+.badge-pill[data-val="pending"] {
     background: #dce8fd;
     color: #0e6292;
 }
 
-.badge-pill[data-val="À signer"]:before {
+.badge-pill[data-val="to_sign"]:before,
+.badge-pill[data-val="pending"]:before {
     content: "✍️ ";
 }
 
-.badge-pill[data-val="Signé"] {
+.badge-pill[data-val="signed"] {
     background: #d1fae5;
     color: #065f46;
 }
 
-.badge-pill[data-val="Signé"]:before {
+.badge-pill[data-val="signed"]:before {
     content: "✅ ";
 }
 
