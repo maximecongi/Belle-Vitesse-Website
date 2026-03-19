@@ -45,16 +45,16 @@ def _delete_inspection_files(record):
         "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
 
     # 1. Photos (Hierarchical: output/YEAR/MONTH/.../PHOTOS/ID)
-    if record.project and record.numero_inspection:
+    if record.project and record.inspection_number:
         from utils.storage import get_checkout_photos_path, get_checkin_photos_path
         import shutil
 
         if isinstance(record, CheckoutVehicle):
             hierarchical_photo_dir = get_checkout_photos_path(
-                record.project, record.numero_inspection)
+                record.project, record.inspection_number)
         else:
             hierarchical_photo_dir = get_checkin_photos_path(
-                record.project, record.numero_inspection)
+                record.project, record.inspection_number)
 
         if hierarchical_photo_dir.exists():
             try:
@@ -66,9 +66,10 @@ def _delete_inspection_files(record):
                     f"❌ Échec de la suppression du dossier PHOTOS {hierarchical_photo_dir}: {e}")
 
     # 2. Signed PDF
-    if record.pdf_scelle:
-        # pdf_scelle is usually a URL: http://.../checkout/document/filepath
-        path_part = record.pdf_scelle.split("/document/")[-1].split("?")[0]
+    if record.signed_pdf_path:
+        # signed_pdf_path is usually a URL or relative path: http://.../checkout/document/filepath
+        path_part = record.signed_pdf_path.split(
+            "/document/")[-1].split("?")[0]
         pdf_path = Path(output_base) / path_part
         if pdf_path.exists():
             try:

@@ -33,8 +33,8 @@ def get_project_base_path(project):
 
     # Use project start date if available, otherwise current date
     # project is a models.Project instance
-    date = project.date_depart if (
-        hasattr(project, 'date_depart') and project.date_depart) else None
+    date = project.departure_date if (
+        hasattr(project, 'departure_date') and project.departure_date) else None
 
     if not date:
         date = datetime.now()

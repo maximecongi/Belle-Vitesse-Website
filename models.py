@@ -240,7 +240,8 @@ class CheckoutVehicle(db.Model):
     exterior_photos = db.Column(db.Text)
     notes = db.Column(db.Text)
     vehicle_ready = db.Column(db.Boolean, default=False)
-    sealed_pdf_path = db.Column(db.String(500))
+    signed_pdf_path = db.Column(db.String(500))
+
     hash = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 
@@ -285,7 +286,8 @@ class CheckinVehicle(db.Model):
     exterior_photos = db.Column(db.Text)
     notes = db.Column(db.Text)
     vehicle_ready = db.Column(db.Boolean, default=False)
-    sealed_pdf_path = db.Column(db.String(500))
+    signed_pdf_path = db.Column(db.String(500))
+
     hash = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 
