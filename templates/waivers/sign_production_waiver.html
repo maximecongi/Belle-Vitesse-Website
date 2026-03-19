@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-pilot-waivers.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="{{ url_for('static', filename='js/src/ui-utils.js') }}"></script>
 </head>
 
 <body class="pilot-waiver-container">
@@ -65,7 +66,8 @@
                 <div class="pilot-waiver-info-grid">
                     <div class="pilot-waiver-info-item">
                         <span class="pilot-waiver-info-label">Projet</span>
-                        <span class="pilot-waiver-info-value">{{ waiver.project.name if waiver.project else '—' }}</span>
+                        <span class="pilot-waiver-info-value">{{ waiver.project.name if waiver.project else '—'
+                            }}</span>
                     </div>
                     <div class="pilot-waiver-info-item">
                         <span class="pilot-waiver-info-label">Production</span>
@@ -264,7 +266,7 @@
                         Effacer la signature
                     </button>
                     <button type="button" class="pilot-waiver-btn pilot-waiver-btn--primary" id="btn-sign">
-                        Signer numériquement
+                        Signer le document
                     </button>
                 </div>
             </section>
@@ -286,14 +288,6 @@
         document.addEventListener('DOMContentLoaded', function () {
 
             // ── Helpers ──────────────────────────────────────────────────────
-            function showFeedback(msg, type) {
-                var el = document.getElementById('feedback');
-                if (!el) return;
-                el.textContent = msg;
-                el.className = 'feedback-box ' + type;
-                el.style.display = 'block';
-                el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
 
             // ── Live sync des champs vers le texte de la décharge ────────────
             function updateWaiverText() {
@@ -400,6 +394,7 @@
 
             // ── Soumission ───────────────────────────────────────────────────
             document.getElementById('btn-sign').addEventListener('click', async function () {
+                hideFeedback();
                 var btnSign = this;
 
                 // 1. Champs obligatoires
@@ -409,31 +404,31 @@
                 });
 
                 if (missing) {
-                    showFeedback('❌ Veuillez remplir tous les champs obligatoires.', 'error');
+                    showFeedback('Veuillez remplir tous les champs obligatoires.', 'error');
                     return;
                 }
 
                 // 2. Attestation d'assurance
                 var insFile = document.getElementById('production_insurance');
                 if (!insFile || !insFile.files || insFile.files.length === 0) {
-                    showFeedback('❌ Veuillez joindre votre attestation d\'assurance.', 'error');
+                    showFeedback('Veuillez joindre votre attestation d\'assurance.', 'error');
                     return;
                 }
 
                 // 3. Checkbox
                 if (!document.getElementById('accept_terms').checked) {
-                    showFeedback('❌ Vous devez accepter les termes de la décharge.', 'error');
+                    showFeedback('Vous devez accepter les termes de la décharge.', 'error');
                     return;
                 }
 
                 // 4. Signature
                 if (signaturePad.isEmpty()) {
-                    showFeedback('❌ Veuillez apposer votre signature.', 'error');
+                    showFeedback('Veuillez apposer votre signature.', 'error');
                     return;
                 }
 
                 btnSign.disabled = true;
-                btnSign.textContent = 'Traitement…';
+                btnSign.textContent = 'Envoi en cours…';
 
                 var form = document.getElementById('waiver-form');
                 var formData = new FormData(form);
@@ -452,14 +447,14 @@
                         canvas.style.pointerEvents = 'none';
                         setTimeout(function () { window.location.reload(); }, 2500);
                     } else {
-                        showFeedback('❌ ' + (result.error || 'Erreur lors de la signature.'), 'error');
+                        showFeedback(result.error || 'Erreur lors de la signature.', 'error');
                         btnSign.disabled = false;
-                        btnSign.textContent = 'Signer numériquement';
+                        btnSign.textContent = 'Signer le document';
                     }
                 } catch (e) {
-                    showFeedback('❌ Erreur réseau. Vérifiez votre connexion et réessayez.', 'error');
+                    showFeedback('Erreur réseau. Vérifiez votre connexion et réessayez.', 'error');
                     btnSign.disabled = false;
-                    btnSign.textContent = 'Signer numériquement';
+                    btnSign.textContent = 'Signer le document';
                 }
             });
         });

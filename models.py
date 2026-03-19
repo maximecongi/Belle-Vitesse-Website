@@ -217,7 +217,7 @@ class CheckoutVehicle(db.Model):
     inspection_date = db.Column(db.Date)
     # eCar, eBike, eTrike...
     vehicle_id = db.Column(db.String(100), index=True)
-    battery_level = db.Column(db.Float)
+    battery_level = db.Column(db.Integer)
     tire_status = db.Column(db.String(50))
     brake_status = db.Column(db.String(50))
     exterior_lighting_status = db.Column(db.String(50))
@@ -262,7 +262,7 @@ class CheckinVehicle(db.Model):
         db.Integer, db.ForeignKey("users.id"), index=True)
     inspection_date = db.Column(db.Date)
     vehicle_id = db.Column(db.String(100), index=True)
-    battery_level = db.Column(db.Float)
+    battery_level = db.Column(db.Integer)
     tire_status = db.Column(db.String(50))
     brake_status = db.Column(db.String(50))
     exterior_lighting_status = db.Column(db.String(50))

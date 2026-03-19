@@ -55,23 +55,26 @@ CHECKPOINT_STATUS_MAP = {
 
 def get_checkpoint_key(status):
     """
-    Returns the English internal key for a checkpoint status.
-    Mappings:
-      - OK/ok -> ok
-      - À vérifier/warning/pending -> warning
-      - Défaut/critical/Non/no -> critical
+    Standardize the internal key for a checkpoint status.
+    Handles None/Empty and maps common synonyms and legacy labels.
     """
     if not status:
         return "pending"
+
     s = str(status).lower().strip()
-    if s in ["ok", "success", "oui", "yes"]:
-        return "ok"
-    if s in ["à vérifier", "warning", "pending", "to_check"]:
-        return "warning"
-    if s in ["défaut", "critical", "non", "no", "danger"]:
-        return "critical"
-    if s in ["non pertinent", "not_applicable", "n/a", "none"]:
-        return "not_applicable"
+
+    # Mapping synonyms to standardized internal keys
+    mappings = {
+        "ok": ["ok", "success", "oui", "yes"],
+        "critical": ["critical", "défaut", "non", "no", "danger"],
+        "warning": ["warning", "à vérifier", "pending", "to_check"],
+        "not_applicable": ["not_applicable", "non pertinent", "n/a", "none"]
+    }
+
+    for key, synonyms in mappings.items():
+        if s in synonyms:
+            return key
+
     return s
 
 
@@ -83,39 +86,3 @@ def get_checkpoint_status(status):
 
 # ── CSS & UI Helpers ─────────────────────────────────────────────
 
-
-def get_status_css_class(status_id):
-    """
-    Returns a CSS-friendly class name based on the internal English key.
-    Handles both Inspection and Checkpoint statuses.
-    """
-    if not status_id:
-        return "status-null"
-
-    # Map internal English keys to CSS classes
-    mapping = {
-        # Inspections
-        "to_check": "status-to-check",
-        "in_progress": "status-in-progress",
-        "pending": "status-pending-signature",
-        "signed": "status-signed",
-        "validated": "status-completed",
-        "completed": "status-completed",
-        # Waivers
-        "to_generate": "status-to-generate",
-        "to_send": "status-to-send",
-        "to_sign": "status-pending-signature",
-        # Checkpoints
-        "ok": "status-ok",
-        "warning": "status-warning",
-        "critical": "status-critical",
-        "not_applicable": "status-neutral",
-    }
-
-    # Try checkpoint key first, then inspection key
-    key = get_checkpoint_key(status_id)
-    if key in mapping:
-        return mapping[key]
-
-    key = get_inspection_key(status_id)
-    return mapping.get(key, f"status-{str(key).lower().replace(' ', '-')}")

@@ -15,7 +15,9 @@
     <title>Signature — {{ data.inspection_id }} - Belle Vitesse </title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/checkout.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-components.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="{{ url_for('static', filename='js/src/ui-utils.js') }}"></script>
 </head>
 
 <body>
@@ -85,9 +87,7 @@
         </section>
 
         <!-- Feedback -->
-        <div id="feedback" style="margin-top: 1.5rem; display: none;">
-            <p id="feedback-text" style="font-weight: 500; text-align: center;"></p>
-        </div>
+        <div id="feedback" class="feedback-box"></div>
 
         <footer class="checkout-footer" style="margin-top: 4rem;">
             <p>
@@ -145,8 +145,9 @@
 
             // Sign button
             document.getElementById('btn-sign').addEventListener('click', function () {
+                hideFeedback();
                 if (signaturePad.isEmpty()) {
-                    showFeedback('Veuillez signer avant de valider.', 'var(--red-1)');
+                    showFeedback('Veuillez signer avant de valider.', 'error');
                     return;
                 }
 
@@ -165,29 +166,22 @@
                     .then(function (result) {
                         if (result.status === 'signed') {
                             isSigned = true;  // Prevent abandon beacon
-                            showFeedback('✅ Document signé avec succès.', 'var(--green-1)');
+                            showFeedback('✅ Document signé avec succès.', 'success');
                             btn.textContent = 'Signé ✓';
                             canvas.style.pointerEvents = 'none';
                         } else {
-                            showFeedback('❌ ' + (result.error || 'Erreur inconnue.'), 'var(--red-1)');
+                            showFeedback(result.error || 'Erreur inconnue.', 'error');
                             btn.disabled = false;
                             btn.textContent = 'Signer le document';
                         }
                     })
                     .catch(function () {
-                        showFeedback('❌ Erreur réseau. Réessayez.', 'var(--red-1)');
+                        showFeedback('Erreur réseau. Réessayez.', 'error');
                         btn.disabled = false;
                         btn.textContent = 'Signer le document';
                     });
             });
 
-            function showFeedback(msg, color) {
-                const el = document.getElementById('feedback');
-                const txt = document.getElementById('feedback-text');
-                txt.textContent = msg;
-                txt.style.color = color;
-                el.style.display = 'block';
-            }
         })();
     </script>
 

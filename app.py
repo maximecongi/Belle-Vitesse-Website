@@ -14,15 +14,14 @@ from utils.database import (
 )
 from utils.database import init_checkout_db, init_checkin_db
 from models import db, User
-from services.sql_logger import init_sql_logger
 from services.admin.status_mapping import (
     get_inspection_key,
     get_checkpoint_key,
     get_checkpoint_status,
-    get_status_css_class,
     INSPECTION_STATUS_MAP,
     CHECKPOINT_STATUS_MAP
 )
+from services.sql_logger import init_sql_logger
 
 SUPPORTED_LANGS = ('en', 'fr')
 DEFAULT_LANG = 'en'
@@ -253,7 +252,6 @@ def create_app():
             "get_inspection_key": get_inspection_key,
             "get_checkpoint_key": get_checkpoint_key,
             "get_checkpoint_status": get_checkpoint_status,
-            "get_status_css_class": get_status_css_class,
             "INSPECTION_STATUS_MAP": INSPECTION_STATUS_MAP,
             "CHECKPOINT_STATUS_MAP": CHECKPOINT_STATUS_MAP,
         }
