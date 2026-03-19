@@ -329,6 +329,7 @@ def _build_flow_data(mode, record, extra_data):
             "_seal_pilot_name": full_name,
             "_seal_license": record.pilot_license_number or "",
             "project": record.project_name or (record.project.name if record.project else "—"),
+            "production": record.production_name or (record.project.production.name if record.project and record.project.production else "—"),
         }
         return snapshot, seal_args
 
@@ -339,6 +340,7 @@ def _build_flow_data(mode, record, extra_data):
             "_seal_production_name": record.production_name or "",
             "_seal_representative": record.production_representative or "",
             "project": record.project_name or (record.project.name if record.project else "—"),
+            "production": record.production_name or (record.project.production.name if record.project and record.project.production else "—"),
         }
         return snapshot, seal_args
 
