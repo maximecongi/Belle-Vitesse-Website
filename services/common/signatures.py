@@ -390,6 +390,14 @@ def _trigger_unified_webhook(mode, record, rel_pdf_path, base_url, current_hash,
     if project_obj:
         project_id_unique = getattr(project_obj, "project_id", "—")
 
+    # Extract year and month from project departure date or current date
+    date_ref = datetime.utcnow()
+    if project_obj and project_obj.departure_date:
+        date_ref = project_obj.departure_date
+
+    year_str = date_ref.strftime("%Y")
+    month_str = date_ref.strftime("%m")
+
     # Base Payload
     payload = {
         "event": f"{mode}_signed",
@@ -399,6 +407,8 @@ def _trigger_unified_webhook(mode, record, rel_pdf_path, base_url, current_hash,
         "hash": current_hash,
         "production": snapshot.get("production", "—"),
         "project": snapshot.get("project", "—"),
+        "year": year_str,
+        "month": month_str,
     }
 
     # Flow-specific payload components
