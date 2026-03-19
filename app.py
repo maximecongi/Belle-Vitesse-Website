@@ -17,7 +17,8 @@ from models import db, User
 from services.admin.status_mapping import (
     get_inspection_key,
     get_checkpoint_key,
-    get_checkpoint_status,
+    format_checkpoint_status,
+    format_inspection_status,
     INSPECTION_STATUS_MAP,
     CHECKPOINT_STATUS_MAP
 )
@@ -251,7 +252,8 @@ def create_app():
             # Status Mapping Utilities
             "get_inspection_key": get_inspection_key,
             "get_checkpoint_key": get_checkpoint_key,
-            "get_checkpoint_status": get_checkpoint_status,
+            "format_inspection_status": format_inspection_status,
+            "format_checkpoint_status": format_checkpoint_status,
             "INSPECTION_STATUS_MAP": INSPECTION_STATUS_MAP,
             "CHECKPOINT_STATUS_MAP": CHECKPOINT_STATUS_MAP,
         }

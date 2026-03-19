@@ -14,193 +14,143 @@
     <div id='calendar'></div>
 </div>
 
-<!-- Today's check-outs -->
+<h2
+    style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--grey-2); font-weight: 600;">
+    Agenda du jour</h2>
+
+{% if agenda %}
 <div class="dashboard-grid">
+    {% for project in agenda %}
     <div class="admin-card">
-        <div class="admin-card-title">Check-outs du jour</div>
-        {% if today_checkouts %}
-        {% for checkout in today_checkouts %}
-        <div class="today-row">
-            <div style="margin-bottom: 0.5rem; display: flex; align-items: baseline; justify-content: space-between;">
-                <div>
-                    <strong style="font-size: 0.95rem;">{{ checkout.name }}</strong>
-                    <span style="color: var(--grey-2); margin-left: 0.5rem; font-size: 0.85rem;">{{ checkout.production
-                        }}</span>
-                    <div class="today-row-dates">
-                        Tournage du {{ checkout.shoot_start }} au {{ checkout.shoot_end }}
+        <div class="admin-card-title"
+            style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.25rem;">
+            <span>{{ project.name }}</span>
+            <span style="font-weight: 400; font-size: 0.8rem; color: var(--grey-2);">{{ project.production }}</span>
+        </div>
+        <div class="today-row-dates" style="margin-bottom: 1.5rem;">
+            Tournage du {{ project.shoot_start }} au {{ project.shoot_end }}
+        </div>
+
+        <div class="project-agenda-grid">
+            <!-- Logistique -->
+            <div class="agenda-section">
+                <div class="agenda-section-title">Logistique</div>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    {% if project.is_checkout_today %}
+                    <div>
+                        <div
+                            style="font-size: 0.75rem; font-weight: 600; color: var(--admin-accent); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.3rem;">
+                            <span style="font-size: 1rem;">🚚</span> CHECK-OUTS
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            {% for vehicle in project.vehicles %}
+                            {% if vehicle.checkout_status %}
+                            <a class="today-row-vehicle-link"
+                                href="{{ url_for('admin_checkout_detail', record_id=vehicle.checkout_id) }}">
+                                <span style="font-weight: 500;">{{ vehicle.fields.name }}</span>
+                                <span class="badge-pill" data-val="{{ vehicle.checkout_status_id }}"
+                                    data-conform="{{ vehicle.checkout_ready }}"
+                                    style="margin: 0; font-size: 0.65rem;">{{
+                                    format_inspection_status(vehicle.checkout_status) }}</span>
+                            </a>
+                            {% else %}
+                            <a href="{{ url_for('admin_checkout_new', project_id=project.id, vehicle_id=vehicle.id) }}"
+                                class="today-row-vehicle-link">
+                                <span>{{ vehicle.fields.name }}</span>
+                                <span class="badge-pill" data-val="to_check" style="margin: 0; font-size: 0.65rem;">À
+                                    contrôler</span>
+                            </a>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
                     </div>
+                    {% endif %}
+
+                    {% if project.is_checkin_today %}
+                    <div>
+                        <div
+                            style="font-size: 0.75rem; font-weight: 600; color: var(--green-1); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.3rem;">
+                            <span style="font-size: 1rem;">📦</span> CHECK-INS
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            {% for vehicle in project.vehicles %}
+                            {% if vehicle.checkin_status %}
+                            <a class="today-row-vehicle-link"
+                                href="{{ url_for('admin_checkin_detail', record_id=vehicle.checkin_id) }}">
+                                <span style="font-weight: 500;">{{ vehicle.fields.name }}</span>
+                                <span class="badge-pill" data-val="{{ vehicle.checkin_status_id }}"
+                                    style="margin: 0; font-size: 0.65rem;">{{
+                                    format_inspection_status(vehicle.checkin_status) }}</span>
+                            </a>
+                            {% else %}
+                            <a href="{{ url_for('admin_checkin_new', project_id=project.id, vehicle_id=vehicle.id) }}"
+                                class="today-row-vehicle-link">
+                                <span>{{ vehicle.fields.name }}</span>
+                                <span class="badge-pill" data-val="to_check" style="margin: 0; font-size: 0.65rem;">À
+                                    contrôler</span>
+                            </a>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
-            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
-                {% for vehicle in checkout.vehicles %}
-                {% if vehicle.checkout_status %}
-                <a class="today-row-vehicle-link"
-                    href="{{ url_for('admin_checkout_detail', record_id=vehicle.checkout_id) }}">
-                    <span style="font-weight: 500;">{{ vehicle.fields.name }}</span>
-                    <span class="badge-pill" data-val="{{ vehicle.checkout_status_id }}" {% if
-                        vehicle.checkout_ready=='true' %}data-conform="true" {% elif vehicle.checkout_ready=='false'
-                        %}data-conform="false" {% endif %}
-                        style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">{{ vehicle.checkout_status
-                        }}</span>
-                </a>
-                {% else %}
-                <a href="{{ url_for('admin_checkout_new', project_id=checkout.id, vehicle_id=vehicle.id) }}"
-                    class="today-row-vehicle-link">
-                    <span>{{ vehicle.fields.name }}</span>
-                    <span class="badge-pill" data-val="to_check"
-                        style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">À contrôler</span>
-                </a>
-                {% endif %}
-                {% endfor %}
-            </div>
-        </div>
-        {% endfor %}
-        <div style="margin-top: 1rem;">
-            <a href="{{ url_for('admin_checkouts_list') }}" class="admin-btn admin-btn-secondary"
-                style="font-size: 0.8rem; width: 100%; text-align: center; box-sizing: border-box;">Voir tous les
-                check-outs →</a>
-        </div>
-        {% else %}
-        <p style="color: var(--grey-2); font-size: 0.9rem; text-align: center; padding: 2rem 0;">Aucun check-out prévu
-            aujourd'hui.</p>
-        {% endif %}
-    </div>
-    <div class="admin-card">
-        <div class="admin-card-title">Check-ins du jour</div>
-        {% if today_checkins %}
-        {% for checkin in today_checkins %}
-        <div class="today-row">
-            <div style="margin-bottom: 0.5rem; display: flex; align-items: baseline; justify-content: space-between;">
-                <div>
-                    <strong style="font-size: 0.95rem;">{{ checkin.name }}</strong>
-                    <span style="color: var(--grey-2); margin-left: 0.5rem; font-size: 0.85rem;">{{ checkin.production
-                        }}</span>
-                    <div class="today-row-dates">
-                        Tournage du {{ checkin.shoot_start }} au {{ checkin.shoot_end }}
+            <!-- Administratif -->
+            <div class="agenda-section">
+                <div class="agenda-section-title">Administratif</div>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div
+                        style="display: flex; align-items: center; justify-content: space-between; background: var(--admin-bg); padding: 0.6rem 0.8rem; border-radius: 8px;">
+                        <span style="font-size: 0.8rem; font-weight: 500;">Décharge Pilote</span>
+                        {% if project.pilot_waiver.id %}
+                        <a href="{{ url_for('admin_pilot_waivers_list') }}?q={{ project.pilot_waiver.waiver_num|urlencode }}"
+                            class="badge-pill" data-val="{{ project.pilot_waiver.raw_status }}"
+                            style="margin: 0; font-size: 0.65rem;">
+                            {{ project.pilot_waiver.status }}
+                        </a>
+                        {% else %}
+                        <span class="badge-pill" data-val="pending" style="margin: 0; font-size: 0.65rem;">Non
+                            générée</span>
+                        {% endif %}
+                    </div>
+                    <div
+                        style="display: flex; align-items: center; justify-content: space-between; background: var(--admin-bg); padding: 0.6rem 0.8rem; border-radius: 8px;">
+                        <span style="font-size: 0.8rem; font-weight: 500;">Décharge Prod.</span>
+                        {% if project.production_waiver.id %}
+                        <a href="{{ url_for('admin_production_waivers_list') }}?q={{ project.production_waiver.waiver_num|urlencode }}"
+                            class="badge-pill" data-val="{{ project.production_waiver.raw_status }}"
+                            style="margin: 0; font-size: 0.65rem;">
+                            {{ project.production_waiver.status }}
+                        </a>
+                        {% else %}
+                        <span class="badge-pill" data-val="pending" style="margin: 0; font-size: 0.65rem;">Non
+                            générée</span>
+                        {% endif %}
                     </div>
                 </div>
             </div>
-
-            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
-                {% for vehicle in checkin.vehicles %}
-                {% if vehicle.checkin_status %}
-                <a class="today-row-vehicle-link"
-                    href="{{ url_for('admin_checkin_detail', record_id=vehicle.checkin_id) }}">
-                    <span style="font-weight: 500;">{{ vehicle.fields.name }}</span>
-                    <span class="badge-pill" data-val="{{ vehicle.checkin_status_id }}" {% if
-                        vehicle.checkin_ready=='true' %}data-conform="true" {% elif vehicle.checkin_ready=='false'
-                        %}data-conform="false" {% endif %}
-                        style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">{{ vehicle.checkin_status
-                        }}</span>
-                </a>
-                {% else %}
-                <a href="{{ url_for('admin_checkin_new', project_id=checkin.id, vehicle_id=vehicle.id) }}"
-                    class="today-row-vehicle-link">
-                    <span>{{ vehicle.fields.name }}</span>
-                    <span class="badge-pill" data-val="to_check"
-                        style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">À contrôler</span>
-                </a>
-                {% endif %}
-                {% endfor %}
-            </div>
         </div>
-        {% endfor %}
-        <div style="margin-top: 1rem;">
-            <a href="{{ url_for('admin_checkins_list') }}" class="admin-btn admin-btn-secondary"
-                style="font-size: 0.8rem; width: 100%; text-align: center; box-sizing: border-box;">Voir tous les
-                check-ins →</a>
-        </div>
-        {% else %}
-        <p style="color: var(--grey-2); font-size: 0.9rem; text-align: center; padding: 2rem 0;">Aucun check-in prévu
-            aujourd'hui.</p>
-        {% endif %}
     </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="admin-card" style="text-align: center; padding: 4rem 2rem;">
+    <div style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.3;">☕️</div>
+    <p style="color: var(--grey-2); font-size: 0.95rem;">Aucune activité (départ ou retour) prévue aujourd'hui.</p>
+</div>
+{% endif %}
 
-    <!-- Décharges Pilote du jour -->
-    <div class="admin-card">
-        <div class="admin-card-title">Décharges pilote du jour</div>
-        {% if today_checkouts %}
-        {% for project in today_checkouts %}
-        <div class="today-row">
-            <div style="margin-bottom: 0.5rem; display: flex; align-items: baseline; justify-content: space-between;">
-                <div>
-                    <strong style="font-size: 0.95rem;">{{ project.name }}</strong>
-                    <span style="color: var(--grey-2); margin-left: 0.5rem; font-size: 0.85rem;">{{ project.production
-                        }}</span>
-                    <div class="today-row-dates">
-                        Tournage du {{ project.shoot_start }} au {{ project.shoot_end }}
-                    </div>
-                </div>
-            </div>
-            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.25rem;">
-                {% if project.pilot_waiver.id %}
-                <a class="today-row-vehicle-link"
-                    href="{{ url_for('admin_pilot_waivers_list') }}?q={{ project.pilot_waiver.waiver_num|urlencode }}">
-                    <span style="font-weight: 500;">Décharge Pilote</span>
-                    <span class="badge-pill" data-val="{{ project.pilot_waiver.raw_status }}"
-                        style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">{{ project.pilot_waiver.status
-                        }}</span>
-                </a>
-                {% else %}
-                <span class="badge-pill" data-val="pending"
-                    style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">Non générée</span>
-                {% endif %}
-            </div>
-        </div>
-        {% endfor %}
-        <div style="margin-top: 1rem;">
-            <a href="{{ url_for('admin_pilot_waivers_list') }}" class="admin-btn admin-btn-secondary"
-                style="font-size: 0.8rem; width: 100%; text-align: center; box-sizing: border-box;">Voir toutes les
-                décharges pilote →</a>
-        </div>
-        {% else %}
-        <p style="color: var(--grey-2); font-size: 0.9rem; text-align: center; padding: 2rem 0;">Aucune décharge pilote
-            prévue.</p>
-        {% endif %}
-    </div>
-
-    <!-- Décharges Production du jour -->
-    <div class="admin-card">
-        <div class="admin-card-title">Décharges production du jour</div>
-        {% if today_checkouts %}
-        {% for project in today_checkouts %}
-        <div class="today-row">
-            <div style="margin-bottom: 0.5rem; display: flex; align-items: baseline; justify-content: space-between;">
-                <div>
-                    <strong style="font-size: 0.95rem;">{{ project.name }}</strong>
-                    <span style="color: var(--grey-2); margin-left: 0.5rem; font-size: 0.85rem;">{{ project.production
-                        }}</span>
-                    <div class="today-row-dates">
-                        Tournage du {{ project.shoot_start }} au {{ project.shoot_end }}
-                    </div>
-                </div>
-            </div>
-            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.25rem;">
-                {% if project.production_waiver.id %}
-                <a class="today-row-vehicle-link"
-                    href="{{ url_for('admin_production_waivers_list') }}?q={{ project.production_waiver.waiver_num|urlencode }}">
-                    <span style="font-weight: 500;">Décharge Prod.</span>
-                    <span class="badge-pill" data-val="{{ project.production_waiver.status_id }}"
-                        style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">{{
-                        project.production_waiver.status }}</span>
-                </a>
-                {% else %}
-                <span class="badge-pill" data-val="pending"
-                    style="margin: 0; font-size: 0.7rem; padding: 0.15rem 0.5rem;">Non générée</span>
-                {% endif %}
-            </div>
-        </div>
-        {% endfor %}
-        <div style="margin-top: 1rem;">
-            <a href="{{ url_for('admin_production_waivers_list') }}" class="admin-btn admin-btn-secondary"
-                style="font-size: 0.8rem; width: 100%; text-align: center; box-sizing: border-box;">Voir toutes les
-                décharges prod. →</a>
-        </div>
-        {% else %}
-        <p style="color: var(--grey-2); font-size: 0.9rem; text-align: center; padding: 2rem 0;">Aucune décharge
-            production prévue.</p>
-        {% endif %}
-    </div>
+<div
+    style="margin-top: 3rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; border-top: 1px solid #eee; padding-top: 2rem;">
+    <a href="{{ url_for('admin_checkouts_list') }}" class="admin-btn admin-btn-secondary"
+        style="text-align: center; font-size: 0.8rem;">Tous les check-outs</a>
+    <a href="{{ url_for('admin_checkins_list') }}" class="admin-btn admin-btn-secondary"
+        style="text-align: center; font-size: 0.8rem;">Tous les check-ins</a>
+    <a href="{{ url_for('admin_pilot_waivers_list') }}" class="admin-btn admin-btn-secondary"
+        style="text-align: center; font-size: 0.8rem;">Décharges pilote</a>
+    <a href="{{ url_for('admin_production_waivers_list') }}" class="admin-btn admin-btn-secondary"
+        style="text-align: center; font-size: 0.8rem;">Décharges production</a>
 </div>
 {% endblock %}

@@ -4,6 +4,7 @@ from models import Project
 
 logger = logging.getLogger(__name__)
 
+
 def get_calendar_events():
     """
     Fetch all projects and format as FullCalendar events.
@@ -11,8 +12,8 @@ def get_calendar_events():
     records = Project.query.all()
     events = []
     colors = [
-        "#618b4a", "#5299d3", "#f59e0b", "#e05c5c", "#8b5cf6",
-        "#06b6d4", "#f97316", "#ec4899", "#14b8a6", "#a855f7",
+        "#618b4ae6", "#5299d3e6", "#f59e0be6", "#e05c5ce6", "#8b5cf6e6",
+        "#06b6d4e6", "#f97316e6", "#ec4899e6", "#14b8a6e6", "#a855f7e6",
     ]
 
     for i, r in enumerate(records):

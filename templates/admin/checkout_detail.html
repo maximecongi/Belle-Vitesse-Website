@@ -128,7 +128,7 @@
                         </div>
                         <div style="font-weight: 600;">
                             {% set val = data[item.key] %}
-                            {{ status_badge(get_checkpoint_status(val), val) }}
+                            {{ status_badge(format_checkpoint_status(val), val) }}
                         </div>
                     </div>
                     {% endfor %}

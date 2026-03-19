@@ -28,9 +28,7 @@ INSPECTION_STATUS_MAP = {
     "to_check": "À contrôler",
     "in_progress": "En cours",
     "pending": "À signer",
-    "signed": "Signé",
-    "validated": "Validé",
-    "completed": "Terminé"
+    "signed": "Signé"
 }
 
 
@@ -42,6 +40,13 @@ def get_inspection_key(status):
     if not status or status not in INSPECTION_STATUS_MAP:
         return "warning"
     return status
+
+
+def format_inspection_status(status_id):
+    """
+    Map an internal inspection status identifier to its French label.
+    """
+    return INSPECTION_STATUS_MAP.get(status_id, status_id)
 
 
 # ── Checkpoints Mapping ──────────────────────────────────────────
@@ -78,11 +83,10 @@ def get_checkpoint_key(status):
     return s
 
 
-def get_checkpoint_status(status):
+def format_checkpoint_status(status):
     """
     Returns the French label for a checkpoint status.
     """
     return CHECKPOINT_STATUS_MAP.get(status, status)
 
 # ── CSS & UI Helpers ─────────────────────────────────────────────
-

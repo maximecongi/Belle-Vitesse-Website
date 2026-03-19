@@ -40,6 +40,30 @@
     }
 }
 
+.project-agenda-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+@media (max-width: 600px) {
+    .project-agenda-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.agenda-section-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: var(--grey-2);
+    margin-bottom: 0.8rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.3rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
 .today-row {
     display: block;
     border-bottom: 1px solid #f0f0f0;
