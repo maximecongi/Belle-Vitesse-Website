@@ -144,7 +144,7 @@ def init_checkout_routes(app):
         from models import CheckoutSignedDocument
         config = {
             "signed_model": CheckoutSignedDocument,
-            "seal_prefix": "INSPECTION",
+            "seal_prefix": "BVCO",
             "template_verify": "checkout_verify.html",
             "route_base": "checkout",
             "get_seal_args": lambda data, signed_doc: [

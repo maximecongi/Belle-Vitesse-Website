@@ -143,7 +143,7 @@ def init_checkin_routes(app):
         from models import CheckinSignedDocument
         config = {
             "signed_model": CheckinSignedDocument,
-            "seal_prefix": "INSPECTION",
+            "seal_prefix": "BVCI",
             "template_verify": "checkin_verify.html",
             "route_base": "checkin",
             "get_seal_args": lambda data, signed_doc: [

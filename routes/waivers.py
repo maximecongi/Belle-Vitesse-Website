@@ -171,7 +171,8 @@ def init_waiver_routes(app):
         config = _get_waiver_route_config("pilot")
 
         def get_seal_args(data, signed_doc):
-            return [data.get("_seal_pilot_name", ""),
+            return [waiver_id,
+                    data.get("_seal_pilot_name", ""),
                     data.get("_seal_license", ""),
                     signed_doc.signature,
                     data.get("_seal_signed_at", "")]
@@ -185,7 +186,8 @@ def init_waiver_routes(app):
         config = _get_waiver_route_config("production")
 
         def get_seal_args(data, signed_doc):
-            return [data.get("_seal_production_name", ""),
+            return [waiver_id,
+                    data.get("_seal_production_name", ""),
                     data.get("_seal_representative", ""),
                     signed_doc.signature,
                     data.get("_seal_signed_at", "")]

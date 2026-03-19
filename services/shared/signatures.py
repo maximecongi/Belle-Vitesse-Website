@@ -324,10 +324,10 @@ def _build_flow_data(mode, record, extra_data):
     elif mode == "pilot":
         full_name = f"{record.pilot_first_name} {record.pilot_last_name}"
         seal_args = [full_name, record.pilot_license_number or ""]
-        # Simplified snapshot for waivers as they are already rich objects
+        # Snapshot for waivers
         snapshot = {
-            "pilot_name": full_name,
-            "license": record.pilot_license_number,
+            "_seal_pilot_name": full_name,
+            "_seal_license": record.pilot_license_number or "",
             "project": record.project_name or (record.project.name if record.project else "—"),
         }
         return snapshot, seal_args
@@ -336,8 +336,8 @@ def _build_flow_data(mode, record, extra_data):
         seal_args = [record.production_name or "",
                      record.production_representative or ""]
         snapshot = {
-            "production": record.production_name,
-            "representative": record.production_representative,
+            "_seal_production_name": record.production_name or "",
+            "_seal_representative": record.production_representative or "",
             "project": record.project_name or (record.project.name if record.project else "—"),
         }
         return snapshot, seal_args
