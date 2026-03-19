@@ -353,7 +353,8 @@ def warm_cache():
 
 
 if os.getenv("FLASK_ENV") == "production":
-    warm_cache()
+    import threading
+    threading.Thread(target=warm_cache, daemon=True).start()
 
     # ── Scheduler : re-warm du cache toutes les 23h50 ──────────
     from apscheduler.schedulers.background import BackgroundScheduler
