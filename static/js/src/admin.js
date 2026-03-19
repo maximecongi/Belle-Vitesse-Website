@@ -516,11 +516,11 @@ function init() {
         calendarEl.dataset.initialized = 'true';
 
         const calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
+            initialView: 'dayGridDay',
             headerToolbar: {
                 left: 'prev,next today',
                 center: 'title',
-                right: 'dayGridMonth,timeGridWeek,dayGridDay'
+                right: 'dayGridMonth,dayGridWeek,dayGridDay'
             },
             locale: 'fr',
             eventOrder: "order,start",
