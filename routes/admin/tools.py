@@ -12,3 +12,9 @@ def init_tools_routes(app):
     @require_roles('administrator', 'manager', 'user')
     def admin_check_vehicles():
         return render_template("admin/check_vehicles.html")
+
+    @app.route("/admin/api-docs", endpoint='admin_api_docs')
+    @require_roles('administrator', 'manager')
+    def admin_api_docs():
+        return render_template("admin/api_docs.html")
+

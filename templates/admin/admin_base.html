@@ -106,6 +106,7 @@
 
                 {% call nav_group('🛠️ Outils', 'tools', 'user', false) %}
                 {{ nav_item(url_for('admin_signature_generator'), 'Générateur de signature mail', 'user') }}
+                {{ nav_item(url_for('admin_api_docs'), 'Documentation API', 'administrator') }}
                 {% endcall %}
             </nav>
 

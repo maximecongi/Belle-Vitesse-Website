@@ -5,6 +5,7 @@ from routes.api.projects import api_projects_bp
 from routes.api.productions import api_productions_bp
 from routes.api.contacts import api_contacts_bp
 from routes.api.dashboard import api_dashboard_bp
+from routes.api.waivers import api_waivers_bp
 from extensions import csrf
 
 
@@ -18,8 +19,10 @@ def init_api_v1_routes(app):
         api_productions_bp,
         api_contacts_bp,
         api_dashboard_bp,
+        api_waivers_bp,
     ]
     for bp in blueprints:
         csrf.exempt(bp)
         app.register_blueprint(bp, url_prefix="/api/v1")
+
 
