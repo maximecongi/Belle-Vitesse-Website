@@ -516,7 +516,7 @@ function init() {
         calendarEl.dataset.initialized = 'true';
 
         const calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridDay',
+            initialView: 'dayGridWeek',
             headerToolbar: {
                 left: 'prev,next today',
                 center: 'title',
