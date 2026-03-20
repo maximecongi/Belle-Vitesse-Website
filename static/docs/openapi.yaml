@@ -1,11 +1,21 @@
 openapi: 3.0.0
 info:
   title: Belle Vitesse API
-  description: API de gestion pour Belle Vitesse (Checkouts, Checkins, Projets, Productions, Contacts, Décharges).
+  description: API de gestion pour Belle Vitesse (Authentification, Inspections, Décharges, Administratif).
   version: 1.0.0
 servers:
   - url: /api/v1
     description: Serveur local / Production
+
+tags:
+  - name: Authentification
+    description: Connexion et gestion de session via JWT
+  - name: Inspections
+    description: Gestion des check-outs et check-ins des véhicules
+  - name: Décharges
+    description: Gestion des décharges pilotes et productions (PDF & Signatures)
+  - name: Administratif
+    description: Gestion des productions, contacts, projets et calendrier
 
 components:
   securitySchemes:
@@ -118,34 +128,35 @@ components:
 security:
   - bearerAuth: []
 
-
 paths:
+  # ── Authentification ──────────────────────────────────────────
+
   /auth/login:
     post:
-      summary: Demander un lien magique de connexion
+      summary: Connexion par lien magique
+      tags: [Authentification]
       security: []
       requestBody:
         content:
           application/json:
             schema:
               type: object
+              required: [email]
               properties:
                 email: { type: string }
       responses:
         200:
-          description: Succès
+          description: Lien envoyé
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Message' }
         400:
-          description: Erreur
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/Error' }
+          description: Email manquant
 
   /auth/verify/{token}:
     get:
-      summary: Vérifier le lien magique et obtenir un JWT
+      summary: Échange du lien magique contre un JWT
+      tags: [Authentification]
       security: []
       parameters:
         - name: token
@@ -167,7 +178,8 @@ paths:
 
   /auth/me:
     get:
-      summary: Obtenir mon profil
+      summary: Session utilisateur actuelle
+      tags: [Authentification]
       responses:
         200:
           description: Profil utilisateur
@@ -175,12 +187,15 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/User' }
 
+  # ── Inspections (Checkouts/Checkins) ──────────────────────────
+
   /checkouts:
     get:
-      summary: Lister les checkouts
+      summary: Liste des check-outs
+      tags: [Inspections]
       responses:
         200:
-          description: Liste des checkouts
+          description: Liste
           content:
             application/json:
               schema:
@@ -190,17 +205,16 @@ paths:
                     type: array
                     items: { $ref: '#/components/schemas/Inspection' }
     post:
-      summary: Créer un checkout
+      summary: Créer un check-out
+      tags: [Inspections]
       responses:
         201:
           description: Créé
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/Message' }
-
+  
   /checkouts/{id}:
     get:
-      summary: Détail d'un checkout
+      summary: Détail d'un check-out
+      tags: [Inspections]
       parameters:
         - name: id
           in: path
@@ -209,11 +223,9 @@ paths:
       responses:
         200:
           description: Détail
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/Inspection' }
     put:
-      summary: Modifier un checkout
+      summary: Modifier un check-out
+      tags: [Inspections]
       parameters:
         - name: id
           in: path
@@ -221,9 +233,10 @@ paths:
           schema: { type: integer }
       responses:
         200:
-          description: Succès
+          description: Mis à jour
     delete:
-      summary: Supprimer un checkout
+      summary: Supprimer un check-out
+      tags: [Inspections]
       parameters:
         - name: id
           in: path
@@ -235,7 +248,8 @@ paths:
 
   /checkouts/{id}/status:
     patch:
-      summary: Mettre à jour le statut
+      summary: Changer le statut d'un check-out
+      tags: [Inspections]
       parameters:
         - name: id
           in: path
@@ -254,10 +268,11 @@ paths:
 
   /checkins:
     get:
-      summary: Lister les checkins
+      summary: Liste des check-ins
+      tags: [Inspections]
       responses:
         200:
-          description: Liste des checkins
+          description: Liste
           content:
             application/json:
               schema:
@@ -267,14 +282,16 @@ paths:
                     type: array
                     items: { $ref: '#/components/schemas/Inspection' }
     post:
-      summary: Créer un checkin
+      summary: Créer un check-in
+      tags: [Inspections]
       responses:
         201:
           description: Créé
 
   /checkins/{id}:
     get:
-      summary: Détail d'un checkin
+      summary: Détail d'un check-in
+      tags: [Inspections]
       parameters:
         - name: id
           in: path
@@ -284,13 +301,186 @@ paths:
         200:
           description: Détail
     put:
-      summary: Modifier
+      summary: Modifier un check-in
+      tags: [Inspections]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        200:
+          description: Mis à jour
     delete:
-      summary: Supprimer
+      summary: Supprimer un check-in
+      tags: [Inspections]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        200:
+          description: Supprimé
+
+  /checkins/{id}/status:
+    patch:
+      summary: Changer le statut d'un check-in
+      tags: [Inspections]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: { type: string }
+      responses:
+        200:
+          description: Succès
+
+  # ── Décharges ─────────────────────────────────────────────────
+
+  /pilot-waivers:
+    get:
+      summary: Liste des décharges pilotes
+      tags: [Décharges]
+      responses:
+        200:
+          description: Liste
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/PilotWaiver' }
+    post:
+      summary: Créer une décharge pilote
+      tags: [Décharges]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id: { type: integer }
+      responses:
+        201:
+          description: Créée
+
+  /pilot-waivers/{id}/generate:
+    post:
+      summary: Générer le PDF pilote
+      tags: [Décharges]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        200:
+          description: PDF généré
+
+  /pilot-waivers/{id}/send:
+    post:
+      summary: Envoyer la décharge pilote
+      tags: [Décharges]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        200:
+          description: Envoyée
+
+  /pilot-waivers/{id}/reset:
+    post:
+      summary: Réinitialiser la décharge pilote
+      tags: [Décharges]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        200:
+          description: Réinitialisée
+
+  /production-waivers:
+    get:
+      summary: Liste des décharges production
+      tags: [Décharges]
+      responses:
+        200:
+          description: Liste
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ProductionWaiver' }
+    post:
+      summary: Créer une décharge production
+      tags: [Décharges]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id: { type: integer }
+      responses:
+        201:
+          description: Créée
+
+  /production-waivers/{id}/generate:
+    post:
+      summary: Générer le PDF production
+      tags: [Décharges]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        200:
+          description: PDF généré
+
+  /production-waivers/{id}/send:
+    post:
+      summary: Envoyer la décharge production
+      tags: [Décharges]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        200:
+          description: Envoyée
+
+  /production-waivers/{id}/reset:
+    post:
+      summary: Réinitialiser la décharge production
+      tags: [Décharges]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        200:
+          description: Réinitialisée
+
+  # ── Administratif ─────────────────────────────────────────────
 
   /projects:
     get:
       summary: Lister les projets
+      tags: [Administratif]
       responses:
         200:
           description: Liste
@@ -302,10 +492,160 @@ paths:
                   projects:
                     type: array
                     items: { $ref: '#/components/schemas/Project' }
+    post:
+      summary: Créer un projet
+      tags: [Administratif]
+      responses:
+        201:
+          description: Créé
+
+  /projects/{id}:
+    get:
+      summary: Détail d'un projet
+      tags: [Administratif]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        200:
+          description: Détail
+    put:
+      summary: Modifier un projet
+      tags: [Administratif]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        200:
+          description: Mis à jour
+    delete:
+      summary: Supprimer un projet
+      tags: [Administratif]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        200:
+          description: Supprimé
+
+  /productions:
+    get:
+      summary: Lister les productions
+      tags: [Administratif]
+      responses:
+        200:
+          description: Liste
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Production' }
+    post:
+      summary: Créer une production
+      tags: [Administratif]
+      responses:
+        201:
+          description: Créée
+
+  /productions/{id}:
+    get:
+      summary: Détail d'une production
+      tags: [Administratif]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        200:
+          description: Détail
+    put:
+      summary: Modifier une production
+      tags: [Administratif]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        200:
+          description: Mis à jour
+    delete:
+      summary: Supprimer une production
+      tags: [Administratif]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        200:
+          description: Supprimée
+
+  /contacts:
+    get:
+      summary: Lister les contacts
+      tags: [Administratif]
+      responses:
+        200:
+          description: Liste
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Contact' }
+    post:
+      summary: Créer un contact
+      tags: [Administratif]
+      responses:
+        201:
+          description: Créé
+
+  /contacts/{id}:
+    get:
+      summary: Détail d'un contact
+      tags: [Administratif]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        200:
+          description: Détail
+    put:
+      summary: Modifier un contact
+      tags: [Administratif]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        200:
+          description: Mis à jour
+    delete:
+      summary: Supprimer un contact
+      tags: [Administratif]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        200:
+          description: Supprimé
 
   /calendar/events:
     get:
       summary: Événements du calendrier
+      tags: [Administratif]
       responses:
         200:
           description: Liste d'événements
@@ -314,148 +654,3 @@ paths:
               schema:
                 type: array
                 items: { type: object }
-
-  # ── Décharges Pilotes ─────────────────────────────────────────
-
-  /pilot-waivers:
-    get:
-      summary: Lister les décharges pilotes
-      tags: [Décharges]
-      responses:
-        200:
-          description: Liste des décharges pilotes
-          content:
-            application/json:
-              schema:
-                type: array
-                items: { $ref: '#/components/schemas/PilotWaiver' }
-    post:
-      summary: Créer une décharge pilote pour un projet
-      tags: [Décharges]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [project_id]
-              properties:
-                project_id: { type: integer }
-      responses:
-        201:
-          description: Décharge créée
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/Message' }
-        400:
-          description: project_id manquant
-
-  /pilot-waivers/{waiver_id}/generate:
-    post:
-      summary: Générer le PDF de la décharge pilote
-      tags: [Décharges]
-      parameters:
-        - name: waiver_id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        200:
-          description: PDF généré
-
-  /pilot-waivers/{waiver_id}/send:
-    post:
-      summary: Envoyer la décharge pilote au signataire
-      tags: [Décharges]
-      parameters:
-        - name: waiver_id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        200:
-          description: Envoyée
-
-  /pilot-waivers/{waiver_id}/reset:
-    post:
-      summary: Réinitialiser la décharge pilote (to_generate)
-      tags: [Décharges]
-      parameters:
-        - name: waiver_id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        200:
-          description: Réinitialisée
-
-  # ── Décharges Production ──────────────────────────────────────
-
-  /production-waivers:
-    get:
-      summary: Lister les décharges production
-      tags: [Décharges]
-      responses:
-        200:
-          description: Liste des décharges production
-          content:
-            application/json:
-              schema:
-                type: array
-                items: { $ref: '#/components/schemas/ProductionWaiver' }
-    post:
-      summary: Créer une décharge production pour un projet
-      tags: [Décharges]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [project_id]
-              properties:
-                project_id: { type: integer }
-      responses:
-        201:
-          description: Décharge créée
-        400:
-          description: project_id manquant
-
-  /production-waivers/{waiver_id}/generate:
-    post:
-      summary: Générer le PDF de la décharge production
-      tags: [Décharges]
-      parameters:
-        - name: waiver_id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        200:
-          description: PDF généré
-
-  /production-waivers/{waiver_id}/send:
-    post:
-      summary: Envoyer la décharge production au signataire
-      tags: [Décharges]
-      parameters:
-        - name: waiver_id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        200:
-          description: Envoyée
-
-  /production-waivers/{waiver_id}/reset:
-    post:
-      summary: Réinitialiser la décharge production (to_generate)
-      tags: [Décharges]
-      parameters:
-        - name: waiver_id
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        200:
-          description: Réinitialisée
