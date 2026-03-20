@@ -25,6 +25,7 @@
                     <th>N° Décharge</th>
                     <th>Projet</th>
                     <th>Production</th>
+                    <th>Contact</th>
                     <th>Dates</th>
                     <th>Statut</th>
                     <th>Actions</th>
@@ -36,6 +37,7 @@
                     <td style="font-weight: 600; white-space: nowrap;">{{ w.id or '—' }}</td>
                     <td>{{ w.project_name }}</td>
                     <td>{{ w.production_name }}</td>
+                    <td>{{ w.production_contact_name }}</td>
                     <td>{{ w.shooting_dates }}</td>
                     <td>
                         {{ status_badge(w.status, w.raw_status) }}

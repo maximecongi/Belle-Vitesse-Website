@@ -153,6 +153,10 @@ def list_production_waivers():
         active_token = ProductionWaiverToken.query.filter_by(
             waiver_id=w.waiver_id).order_by(ProductionWaiverToken.created_at.desc()).first()
 
+        production_contact_name = "—"
+        if p.production_contact:
+            production_contact_name = f"{p.production_contact.first_name} {p.production_contact.last_name}"
+
         formatted.append({
             "id": w.waiver_id,
             "db_id": w.id,
@@ -160,6 +164,7 @@ def list_production_waivers():
             "project_id": p.id,
             "project_name": p.name,
             "production_name": (p.production.name if p.production else w.production_name) or "—",
+            "production_contact_name": production_contact_name,
             "shooting_dates": shooting_dates,
             "status": format_waiver_status(w.status),
             "raw_status": w.status,
@@ -176,6 +181,9 @@ def generate_production_waiver(waiver_id):
     waiver = ProductionWaiver.query.filter_by(waiver_id=waiver_id).first()
     if not waiver or waiver.status != "to_generate":
         return False, "Décharge non trouvée ou statut invalide."
+
+    if not waiver.project.production_contact:
+        return False, "Aucun contact de production n'est assigné à ce projet."
 
     p = waiver.project
     waiver.project_name = p.name
@@ -351,6 +359,9 @@ def generate_pilot_waiver(waiver_id):
     waiver = PilotWaiver.query.filter_by(waiver_id=waiver_id).first()
     if not waiver or waiver.status != "to_generate":
         return False, "Décharge non trouvée ou statut invalide."
+
+    if not waiver.project.pilot_contact:
+        return False, "Aucun pilote n'est assigné à ce projet."
 
     p = waiver.project
     contact = p.pilot_contact
