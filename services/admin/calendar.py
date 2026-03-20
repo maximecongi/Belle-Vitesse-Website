@@ -12,8 +12,8 @@ def get_calendar_events():
     records = Project.query.all()
     events = []
     colors = [
-        "#618b4ae6", "#5299d3e6", "#f59e0be6", "#e05c5ce6", "#8b5cf6e6",
-        "#06b6d4e6", "#f97316e6", "#ec4899e6", "#14b8a6e6", "#a855f7e6",
+        "#618b4acc", "#5299d3cc", "#f59e0bcc", "#e05c5ccc", "#8b5cf6cc",
+        "#06b6d4cc", "#f97316cc", "#ec4899cc", "#14b8a6cc", "#a855f7cc",
     ]
 
     for i, r in enumerate(records):
@@ -22,12 +22,14 @@ def get_calendar_events():
 
         if r.departure_date:
             events.append({
-                "title": f"🚚 Départ: {name}",
+                "title": f"🚚 Départ : {name}",
                 "start": r.departure_date.isoformat(),
                 "color": color,
                 "url": url_for("admin_project_edit", record_id=r.id),
             })
 
+        """ Date de tournage 
+        
         if r.shoot_start_date:
             event = {
                 "title": f"🎬 {name}",
@@ -37,11 +39,11 @@ def get_calendar_events():
             }
             if r.shoot_end_date:
                 event["end"] = r.shoot_end_date.isoformat()
-            events.append(event)
+            events.append(event) """
 
         if r.return_date:
             events.append({
-                "title": f"📦 Retour: {name}",
+                "title": f"📦 Retour : {name}",
                 "start": r.return_date.isoformat(),
                 "color": color,
                 "url": url_for("admin_project_edit", record_id=r.id),
