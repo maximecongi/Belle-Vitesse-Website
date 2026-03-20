@@ -34,3 +34,10 @@
 .fc .fc-button-primary:not(:disabled):active:focus {
     box-shadow: none !important;
 }
+
+.fc .fc-button-primary:disabled {
+    background-color: var(--grey-2) !important;
+    color: var(--white-1) !important;
+    cursor: default;
+    border-color: var(--grey-2) !important;
+}
