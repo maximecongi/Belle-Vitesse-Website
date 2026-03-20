@@ -31,6 +31,17 @@ class User(db.Model):
     def role_lower(self):
         return self.role.lower() if self.role else 'user'
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "firstname": self.firstname,
+            "lastname": self.lastname,
+            "mail": self.mail,
+            "phone": self.phone,
+            "job": self.job,
+            "role": self.role,
+        }
+
     def __repr__(self):
         return f"<User {self.firstname} {self.lastname}>"
 
@@ -48,6 +59,15 @@ class Production(db.Model):
     projects = db.relationship("Project", backref="production", lazy=True)
     contacts = db.relationship("Contact", backref="production_rel", lazy=True)
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "address": self.address,
+            "mail": self.mail,
+            "phone": self.phone,
+        }
+
     def __repr__(self):
         return f"<Production {self.name}>"
 
@@ -63,6 +83,17 @@ class Contact(db.Model):
     production_id = db.Column(
         db.Integer, db.ForeignKey("productions.id"), nullable=True, index=True)
     job_title = db.Column(db.String(150))
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "phone": self.phone,
+            "mail": self.mail,
+            "production_id": self.production_id,
+            "job_title": self.job_title,
+        }
 
     def __repr__(self):
         return f"<Contact {self.first_name} {self.last_name}>"
@@ -101,6 +132,21 @@ class Project(db.Model):
         "PilotWaiver", backref="project", uselist=False, lazy=True)
     production_waiver = db.relationship(
         "ProductionWaiver", backref="project", uselist=False, lazy=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "project_id": self.project_id,
+            "name": self.name,
+            "production_id": self.production_id,
+            "pilot_contact_id": self.pilot_contact_id,
+            "production_contact_id": self.production_contact_id,
+            "departure_date": self.departure_date.isoformat() if self.departure_date else None,
+            "shoot_start_date": self.shoot_start_date.isoformat() if self.shoot_start_date else None,
+            "shoot_end_date": self.shoot_end_date.isoformat() if self.shoot_end_date else None,
+            "return_date": self.return_date.isoformat() if self.return_date else None,
+            "vehicles_to_check": self.vehicles_to_check,
+        }
 
     def __repr__(self):
         return f"<Project {self.name}>"
@@ -150,6 +196,19 @@ class PilotWaiver(db.Model):
     # Webhook
     webhook_triggered_at = db.Column(db.DateTime, nullable=True)
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "waiver_id": self.waiver_id,
+            "project_id": self.project_id,
+            "status": self.status,
+            "generated_at": self.generated_at.isoformat() if self.generated_at else None,
+            "sent_at": self.sent_at.isoformat() if self.sent_at else None,
+            "signed_at": self.signed_at.isoformat() if self.signed_at else None,
+            "pilot_first_name": self.pilot_first_name,
+            "pilot_last_name": self.pilot_last_name,
+        }
+
     def __repr__(self):
         return f"<PilotWaiver {self.project_id} - {self.status}>"
 
@@ -198,6 +257,18 @@ class ProductionWaiver(db.Model):
     # Webhook
     webhook_triggered_at = db.Column(db.DateTime, nullable=True)
 
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "waiver_id": self.waiver_id,
+            "project_id": self.project_id,
+            "status": self.status,
+            "generated_at": self.generated_at.isoformat() if self.generated_at else None,
+            "sent_at": self.sent_at.isoformat() if self.sent_at else None,
+            "signed_at": self.signed_at.isoformat() if self.signed_at else None,
+            "production_name": self.production_name,
+        }
+
     def __repr__(self):
         return f"<ProductionWaiver {self.project_id} - {self.status}>"
 
@@ -244,6 +315,21 @@ class CheckoutVehicle(db.Model):
 
     hash = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "inspection_number": self.inspection_number,
+            "status": self.status,
+            "project_id": self.project_id,
+            "controller_id": self.controller_id,
+            "inspection_date": self.inspection_date.isoformat() if self.inspection_date else None,
+            "vehicle_id": self.vehicle_id,
+            "battery_level": self.battery_level,
+            "vehicle_ready": self.vehicle_ready,
+            "notes": self.notes,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
 
     def __repr__(self):
         return f"<CheckoutVehicle {self.inspection_number}>"
@@ -294,6 +380,21 @@ class CheckinVehicle(db.Model):
     # Relation vers user (responsable du contrôle)
     controller = db.relationship(
         "User", backref="controller_checkins", lazy=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "inspection_number": self.inspection_number,
+            "status": self.status,
+            "project_id": self.project_id,
+            "controller_id": self.controller_id,
+            "inspection_date": self.inspection_date.isoformat() if self.inspection_date else None,
+            "vehicle_id": self.vehicle_id,
+            "battery_level": self.battery_level,
+            "vehicle_ready": self.vehicle_ready,
+            "notes": self.notes,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
 
     def __repr__(self):
         return f"<CheckinVehicle {self.inspection_number}>"
