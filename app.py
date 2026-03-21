@@ -119,9 +119,18 @@ def create_app():
         app.config["LOGS_FOLDER"] = Path(
             "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/logs")
 
+    # Arclight Config
+    if os.getenv("FLASK_ENV") == "production":
+        app.config["ARCLIGHT_UPLOAD_DIR"] = Path(os.getenv("ARCLIGHT_UPLOAD_DIR", "/srv/bellevitesse/arclight/videos"))
+    else:
+        app.config["ARCLIGHT_UPLOAD_DIR"] = Path(os.getenv("ARCLIGHT_UPLOAD_DIR", str(Path(__file__).parent / "arclight" / "videos")))
+    
+    app.config["ARCLIGHT_SECRET"] = os.getenv("ARCLIGHT_SECRET", "ton_token_secret")
+
     app.config["OUTPUT_FOLDER"].mkdir(parents=True, exist_ok=True)
     app.config["BACKUPS_FOLDER"].mkdir(parents=True, exist_ok=True)
     app.config["LOGS_FOLDER"].mkdir(parents=True, exist_ok=True)
+    app.config["ARCLIGHT_UPLOAD_DIR"].mkdir(parents=True, exist_ok=True)
 
     # Limiter Config
     if os.getenv("FLASK_ENV") == "production":
