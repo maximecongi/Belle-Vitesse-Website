@@ -30,22 +30,51 @@ def upload_video():
     upload_dir = current_app.config.get("ARCLIGHT_UPLOAD_DIR")
     save_path = os.path.join(upload_dir, filename)
     
+    # Debug info
+    content_length = request.content_length
+    content_type = request.content_type
+    current_app.logger.info(f"📁 Attempting to save Arclight video: {filename} (Size: {content_length}, Type: {content_type})")
+
+    # If Content-Length is explicitly 0, we can abort early
+    if content_length == 0:
+        current_app.logger.warning(f"⚠️ Arclight upload rejected: Content-Length is 0 for {filename}")
+        return "Empty body (Content-Length is 0)", 400
+    
     try:
-        # Stream the raw request body to a file to handle large uploads efficiently
-        with open(save_path, 'wb') as f:
-            # We use request.stream as it's a file-like object for the raw input stream
-            # We read in chunks to avoid loading large files into memory
-            chunk_size = 1024 * 1024  # 1MB chunks
-            while True:
-                chunk = request.stream.read(chunk_size)
-                if not chunk:
-                    break
-                f.write(chunk)
+        # Ensure directory exists
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        bytes_written = 0
+        
+        # 1. Check if it's a multipart/form-data upload (standard file field)
+        video_file = request.files.get("video")
+        if video_file:
+            current_app.logger.info(f"📦 Arclight upload detected as multipart/form-data for {filename}")
+            video_file.save(save_path)
+            # Get size of the saved file
+            bytes_written = os.path.getsize(save_path)
+        else:
+            # 2. Otherwise treat it as a raw body upload (streaming)
+            current_app.logger.info(f"🌊 Arclight upload detected as raw body streaming for {filename}")
+            with open(save_path, 'wb') as f:
+                chunk_size = 1024 * 1024  # 1MB chunks
+                while True:
+                    chunk = request.stream.read(chunk_size)
+                    if not chunk:
+                        break
+                    f.write(chunk)
+                    bytes_written += len(chunk)
                 
-        current_app.logger.info(f"✅ Arclight video uploaded (raw body): {filename}")
+        if bytes_written == 0:
+            if os.path.exists(save_path):
+                os.remove(save_path)
+            current_app.logger.warning(f"⚠️ Arclight upload failed: 0 bytes received for {filename}.")
+            return "No data received (Request body was empty)", 400
+        
+        current_app.logger.info(f"✅ Arclight video uploaded: {filename} ({bytes_written} bytes saved) to {save_path}")
         return "OK", 200
     except Exception as e:
         if os.path.exists(save_path):
             os.remove(save_path)
-        current_app.logger.error(f"❌ Arclight upload error (raw body): {e}")
+        current_app.logger.error(f"❌ Arclight upload error for {filename}: {e}")
         return f"Internal Server Error: {str(e)}", 500
