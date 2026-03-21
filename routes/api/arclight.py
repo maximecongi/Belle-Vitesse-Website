@@ -33,11 +33,15 @@ def upload_video():
     # Debug info
     content_length = request.content_length
     content_type = request.content_type
-    current_app.logger.info(f"📁 Attempting to save Arclight video: {filename} (Size: {content_length}, Type: {content_type})")
+    debug_msg = f"📁 [V3] Attempting to save Arclight video: {filename} (Size: {content_length}, Type: {content_type})"
+    print(f"[ARCLIGHT] {debug_msg}", flush=True)
+    current_app.logger.info(debug_msg)
 
     # If Content-Length is explicitly 0, we can abort early
     if content_length == 0:
-        current_app.logger.warning(f"⚠️ Arclight upload rejected: Content-Length is 0 for {filename}")
+        err_msg = f"⚠️ [V3] Arclight upload rejected: Content-Length is 0 for {filename}"
+        print(f"[ARCLIGHT] {err_msg}", flush=True)
+        current_app.logger.warning(err_msg)
         return "Empty body (Content-Length is 0)", 400
     
     try:
@@ -49,12 +53,14 @@ def upload_video():
         # 1. Check if it's a multipart/form-data upload (standard file field)
         video_file = request.files.get("video")
         if video_file:
+            print(f"[ARCLIGHT] 📦 [V3] Detected as multipart/form-data for {filename}", flush=True)
             current_app.logger.info(f"📦 Arclight upload detected as multipart/form-data for {filename}")
             video_file.save(save_path)
             # Get size of the saved file
             bytes_written = os.path.getsize(save_path)
         else:
             # 2. Otherwise treat it as a raw body upload (streaming)
+            print(f"[ARCLIGHT] 🌊 [V3] Detected as raw body streaming for {filename}", flush=True)
             current_app.logger.info(f"🌊 Arclight upload detected as raw body streaming for {filename}")
             with open(save_path, 'wb') as f:
                 chunk_size = 1024 * 1024  # 1MB chunks
@@ -68,13 +74,19 @@ def upload_video():
         if bytes_written == 0:
             if os.path.exists(save_path):
                 os.remove(save_path)
-            current_app.logger.warning(f"⚠️ Arclight upload failed: 0 bytes received for {filename}.")
+            warn_msg = f"⚠️ [V3] Arclight upload failed: 0 bytes received for {filename}."
+            print(f"[ARCLIGHT] {warn_msg}", flush=True)
+            current_app.logger.warning(warn_msg)
             return "No data received (Request body was empty)", 400
         
-        current_app.logger.info(f"✅ Arclight video uploaded: {filename} ({bytes_written} bytes saved) to {save_path}")
+        success_msg = f"✅ [V3] Arclight video uploaded: {filename} ({bytes_written} bytes saved) to {save_path}"
+        print(f"[ARCLIGHT] {success_msg}", flush=True)
+        current_app.logger.info(success_msg)
         return "OK", 200
     except Exception as e:
         if os.path.exists(save_path):
             os.remove(save_path)
-        current_app.logger.error(f"❌ Arclight upload error for {filename}: {e}")
+        err_msg = f"❌ [V3] Arclight upload error for {filename}: {e}"
+        print(f"[ARCLIGHT] {err_msg}", flush=True)
+        current_app.logger.error(err_msg)
         return f"Internal Server Error: {str(e)}", 500
