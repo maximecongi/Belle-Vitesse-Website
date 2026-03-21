@@ -21,14 +21,13 @@ def init_routes(app):
     init_api_v1_routes(app)
 
 
-
 def init_error_handlers(app):
     if os.getenv("FLASK_ENV") == "production":
 
         @app.errorhandler(HTTPException)
         def handle_http_exception(e):
             return render_template(
-                "error.html",
+                "public/error.html",
                 error_title=f"{e.code} - {e.name}",
                 error_message=e.description,
             ), e.code
@@ -38,7 +37,7 @@ def init_error_handlers(app):
             app.logger.error(f"❌ Unhandled exception: {e}", exc_info=True)
             g._rendering_error = True
             return render_template(
-                "error.html",
+                "public/error.html",
                 error_title="500 - Internal Server Error",
                 error_message="An unexpected error occurred.",
             ), 500
