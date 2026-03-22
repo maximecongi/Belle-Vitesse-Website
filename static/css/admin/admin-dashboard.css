@@ -55,6 +55,15 @@
     gap: 0.5rem;
 }
 
+/* Status Borders */
+.admin-card.status-yellow {
+    border-left: 3px solid #ffcc00;
+}
+
+.admin-card.status-green {
+    border-left: 3px solid #2ecc71;
+}
+
 @media (max-width: 1000px) {
     .dashboard-grid,
     .dashboard-split-layout {

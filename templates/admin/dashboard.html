@@ -27,7 +27,24 @@
         {% for project in agenda %}
         {% if project.is_checkout_today %}
         {% set ns.has_checkout = true %}
-        <div class="admin-card">
+        
+        {# Status Logic for Checkout #}
+        {% set p_status = namespace(is_green=true) %}
+        {% for v in project.vehicles %}
+            {% if v.checkout_status != 'signed' %}
+                {% set p_status.is_green = false %}
+            {% endif %}
+        {% endfor %}
+        {% if project.pilot_waiver.raw_status != 'signed' or project.production_waiver.raw_status != 'signed' %}
+            {% set p_status.is_green = false %}
+        {% endif %}
+        
+        {% set border_class = 'status-yellow' %}
+        {% if p_status.is_green %}
+            {% set border_class = 'status-green' %}
+        {% endif %}
+
+        <div class="admin-card {{ border_class }}">
             <div class="admin-card-title"
                 style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.25rem;">
                 <span>{{ project.name }}</span>
@@ -124,7 +141,25 @@
         {% for project in agenda %}
         {% if project.is_checkin_today %}
         {% set ns_in.has_checkin = true %}
-        <div class="admin-card">
+
+        {# Status Logic for Checkin #}
+        {% set p_status_in = namespace(is_green=true) %}
+        {% for v in project.vehicles %}
+            {% if v.checkin_status != 'signed' %}
+                {% set p_status_in.is_green = false %}
+            {% endif %}
+        {% endfor %}
+        {# We check project waivers even for checkins as they cover the whole activity #}
+        {% if project.pilot_waiver.raw_status != 'signed' or project.production_waiver.raw_status != 'signed' %}
+            {% set p_status_in.is_green = false %}
+        {% endif %}
+        
+        {% set border_class_in = 'status-yellow' %}
+        {% if p_status_in.is_green %}
+            {% set border_class_in = 'status-green' %}
+        {% endif %}
+
+        <div class="admin-card {{ border_class_in }}">
             <div class="admin-card-title"
                 style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.25rem;">
                 <span>{{ project.name }}</span>
