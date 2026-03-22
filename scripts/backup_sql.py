@@ -41,7 +41,8 @@ def run_backup(host, port):
         f"-P{port}",
         f"-u{MYSQL_USER}",
         f"-p{MYSQL_PASSWORD}",
-        "--ssl-mode=DISABLED",
+        "--skip-ssl" if os.getenv(
+            "FLASK_ENV") == "production" else "--ssl-mode=DISABLED",
         MYSQL_DB
     ]
     print(f"📦 Starting MySQL backup to {BACKUP_FILE} via port {port}...")
