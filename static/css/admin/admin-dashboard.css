@@ -34,8 +34,30 @@
     gap: 0 2rem;
 }
 
-@media (max-width: 900px) {
-    .dashboard-grid {
+.dashboard-split-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 1rem;
+}
+
+.dashboard-column-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--grey-2);
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--admin-bg);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+@media (max-width: 1000px) {
+    .dashboard-grid,
+    .dashboard-split-layout {
         grid-template-columns: 1fr;
     }
 }
