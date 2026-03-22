@@ -13,7 +13,7 @@ print(f"[sql_logger] queue.py initialized with FLASK_ENV={FLASK_ENV}")
 # DEV → queue mémoire
 # ─────────────────────────────────────────────
 
-if FLASK_ENV == "dev":
+if FLASK_ENV == "development":
     log_queue = queue.Queue(maxsize=1000)
 
     def enqueue(func, record):

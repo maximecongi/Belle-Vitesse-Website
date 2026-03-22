@@ -26,7 +26,7 @@ def init_sql_logger(app, db):
     app.logger.info("SQL Logger (v2) enabled")
 
     # ✅ DEV → démarre thread local
-    if os.getenv("FLASK_ENV") == "dev":
+    if os.getenv("FLASK_ENV") == "development":
         print("[sql_logger] Starting dev worker thread")
         start_dev_worker(app)
 

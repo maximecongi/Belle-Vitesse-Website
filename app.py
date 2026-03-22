@@ -1,4 +1,6 @@
 import os
+from dotenv import load_dotenv
+
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -30,12 +32,15 @@ from utils.database import (
 SUPPORTED_LANGS = ('en', 'fr')
 DEFAULT_LANG = 'en'
 
+load_dotenv()
+
 # Configuration
+
 
 def create_app():
     env = os.getenv("FLASK_ENV", "development")
     app_config = config.get(env, config['default'])
-    
+
     app = Flask(
         __name__,
         static_folder=os.getenv("STATIC_FOLDER"),
@@ -51,13 +56,15 @@ def create_app():
     if env != "production":
         from utils.database import get_ssh_tunnel
         tunnel, local_port = get_ssh_tunnel()
-        
-        if tunnel:
-            mysql_user = app.config.get("MYSQL_USER", "root")
-            mysql_pass = app.config.get("MYSQL_PASS", "")
-            mysql_db = app.config.get("MYSQL_DB", "bellevitesse")
-            app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+mysqlconnector://{mysql_user}:{mysql_pass}@127.0.0.1:{local_port}/{mysql_db}"
 
+        if tunnel:
+            mysql_user = os.getenv("MYSQL_USER", "root")
+            mysql_pass = os.getenv("MYSQL_PASSWORD", "")
+            mysql_db = os.getenv("MYSQL_DATABASE", "bellevitesse")
+            app.config["SQLALCHEMY_DATABASE_URI"] = (
+                f"mysql+mysqlconnector://{mysql_user}:{mysql_pass}"
+                f"@127.0.0.1:{local_port}/{mysql_db}"
+            )
     # Ensure folders exist
     for folder in ["OUTPUT_FOLDER", "BACKUPS_FOLDER", "LOGS_FOLDER", "ARCLIGHT_UPLOAD_DIR"]:
         if folder in app.config:

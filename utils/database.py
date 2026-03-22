@@ -27,6 +27,7 @@ cache: Cache = None
 _ssh_tunnel = None
 _ssh_connection = None
 
+
 def get_ssh_tunnel():
     """
     Ensure the SSH tunnel is started (if in dev) and return (tunnel, local_port).
@@ -39,10 +40,11 @@ def get_ssh_tunnel():
 
     from utils.ssh_helper import start_ssh_tunnel
     logger = logging.getLogger("database.ssh")
-    
+
     cfg = {"MYSQL_HOST": MYSQL_HOST}
-    tunnel, local_port = start_ssh_tunnel(cfg, logger, existing_tunnel=_ssh_tunnel)
-    
+    tunnel, local_port = start_ssh_tunnel(
+        cfg, logger, existing_tunnel=_ssh_tunnel)
+
     if tunnel:
         _ssh_tunnel = tunnel
         return tunnel, local_port
@@ -52,7 +54,7 @@ def get_ssh_tunnel():
 def get_db_connection():
     """Create and return a MySQL connection (with optional SSH tunnel)."""
     tunnel, local_port = get_ssh_tunnel()
-    
+
     if tunnel:
         return mysql.connector.connect(
             host="127.0.0.1",
