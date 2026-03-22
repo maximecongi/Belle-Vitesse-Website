@@ -27,21 +27,21 @@
         {% for project in agenda %}
         {% if project.is_checkout_today %}
         {% set ns.has_checkout = true %}
-        
+
         {# Status Logic for Checkout #}
         {% set p_status = namespace(is_green=true) %}
         {% for v in project.vehicles %}
-            {% if v.checkout_status != 'signed' %}
-                {% set p_status.is_green = false %}
-            {% endif %}
+        {% if v.checkout_status != 'signed' %}
+        {% set p_status.is_green = false %}
+        {% endif %}
         {% endfor %}
         {% if project.pilot_waiver.raw_status != 'signed' or project.production_waiver.raw_status != 'signed' %}
-            {% set p_status.is_green = false %}
+        {% set p_status.is_green = false %}
         {% endif %}
-        
+
         {% set border_class = 'status-yellow' %}
         {% if p_status.is_green %}
-            {% set border_class = 'status-green' %}
+        {% set border_class = 'status-green' %}
         {% endif %}
 
         <div class="admin-card {{ border_class }}">
@@ -60,10 +60,6 @@
                     <div class="agenda-section-title">Logistique</div>
                     <div style="display: flex; flex-direction: column; gap: 1rem;">
                         <div>
-                            <div
-                                style="font-size: 0.75rem; font-weight: 600; color: var(--admin-accent); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.3rem;">
-                                CHECK-OUTS
-                            </div>
                             <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                                 {% for vehicle in project.vehicles %}
                                 {% if vehicle.checkout_status %}
@@ -79,7 +75,8 @@
                                 <a href="{{ url_for('admin_checkout_new', project_id=project.id, vehicle_id=vehicle.id) }}"
                                     class="today-row-vehicle-link">
                                     <span>{{ vehicle.fields.name }}</span>
-                                    <span class="badge-pill" data-val="to_check" style="margin: 0; font-size: 0.65rem;">À
+                                    <span class="badge-pill" data-val="to_check"
+                                        style="margin: 0; font-size: 0.65rem;">À
                                         contrôler</span>
                                 </a>
                                 {% endif %}
@@ -128,7 +125,8 @@
         {% endif %}
         {% endfor %}
         {% if not ns.has_checkout %}
-        <div style="text-align: center; padding: 2rem; opacity: 0.5; font-size: 0.8rem; border: 1px dashed #ddd; border-radius: 12px; background: #fafafa;">
+        <div
+            style="text-align: center; padding: 2rem; opacity: 0.5; font-size: 0.8rem; border: 1px dashed #ddd; border-radius: 12px; background: #fafafa;">
             Aucun départ prévu
         </div>
         {% endif %}
@@ -145,18 +143,18 @@
         {# Status Logic for Checkin #}
         {% set p_status_in = namespace(is_green=true) %}
         {% for v in project.vehicles %}
-            {% if v.checkin_status != 'signed' %}
-                {% set p_status_in.is_green = false %}
-            {% endif %}
+        {% if v.checkin_status != 'signed' %}
+        {% set p_status_in.is_green = false %}
+        {% endif %}
         {% endfor %}
         {# We check project waivers even for checkins as they cover the whole activity #}
         {% if project.pilot_waiver.raw_status != 'signed' or project.production_waiver.raw_status != 'signed' %}
-            {% set p_status_in.is_green = false %}
+        {% set p_status_in.is_green = false %}
         {% endif %}
-        
+
         {% set border_class_in = 'status-yellow' %}
         {% if p_status_in.is_green %}
-            {% set border_class_in = 'status-green' %}
+        {% set border_class_in = 'status-green' %}
         {% endif %}
 
         <div class="admin-card {{ border_class_in }}">
@@ -175,10 +173,6 @@
                     <div class="agenda-section-title">Logistique</div>
                     <div style="display: flex; flex-direction: column; gap: 1rem;">
                         <div>
-                            <div
-                                style="font-size: 0.75rem; font-weight: 600; color: var(--green-1); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.3rem;">
-                                CHECK-INS
-                            </div>
                             <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                                 {% for vehicle in project.vehicles %}
                                 {% if vehicle.checkin_status %}
@@ -193,7 +187,8 @@
                                 <a href="{{ url_for('admin_checkin_new', project_id=project.id, vehicle_id=vehicle.id) }}"
                                     class="today-row-vehicle-link">
                                     <span>{{ vehicle.fields.name }}</span>
-                                    <span class="badge-pill" data-val="to_check" style="margin: 0; font-size: 0.65rem;">À
+                                    <span class="badge-pill" data-val="to_check"
+                                        style="margin: 0; font-size: 0.65rem;">À
                                         contrôler</span>
                                 </a>
                                 {% endif %}
@@ -242,7 +237,8 @@
         {% endif %}
         {% endfor %}
         {% if not ns_in.has_checkin %}
-        <div style="text-align: center; padding: 2rem; opacity: 0.5; font-size: 0.8rem; border: 1px dashed #ddd; border-radius: 12px; background: #fafafa;">
+        <div
+            style="text-align: center; padding: 2rem; opacity: 0.5; font-size: 0.8rem; border: 1px dashed #ddd; border-radius: 12px; background: #fafafa;">
             Aucun retour prévu
         </div>
         {% endif %}
