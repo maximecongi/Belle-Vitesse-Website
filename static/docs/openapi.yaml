@@ -266,6 +266,36 @@ paths:
         200:
           description: Succès
 
+  /checkouts/{id}/finalize:
+    post:
+      summary: Finaliser un check-out (Signature)
+      tags: [Inspections]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [signature_data]
+              properties:
+                signature_data: { type: string, description: "Données de signature (Base64)" }
+                token: { type: string, description: "Optionnel: Token de session de signature" }
+      responses:
+        200:
+          description: Finalisé avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  document_id: { type: string }
+                  pdf_url: { type: string }
+
   /checkins:
     get:
       summary: Liste des check-ins
@@ -343,6 +373,36 @@ paths:
         200:
           description: Succès
 
+  /checkins/{id}/finalize:
+    post:
+      summary: Finaliser un check-in (Signature)
+      tags: [Inspections]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [signature_data]
+              properties:
+                signature_data: { type: string, description: "Données de signature (Base64)" }
+                token: { type: string, description: "Optionnel: Token de session de signature" }
+      responses:
+        200:
+          description: Finalisé avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  document_id: { type: string }
+                  pdf_url: { type: string }
+
   # ── Décharges ─────────────────────────────────────────────────
 
   /pilot-waivers:
@@ -410,6 +470,42 @@ paths:
         200:
           description: Réinitialisée
 
+  /pilot-waivers/{id}/finalize:
+    post:
+      summary: Finaliser une décharge pilote (Signature & Data)
+      tags: [Décharges]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [signature_data]
+              properties:
+                signature_data: { type: string, description: "Base64 signature" }
+                first_name: { type: string }
+                last_name: { type: string }
+                dob: { type: string, format: date }
+                license_number: { type: string }
+                address: { type: string }
+                insurance_company: { type: string }
+                insurance_policy: { type: string }
+      responses:
+        200:
+          description: Finalisée
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  document_id: { type: string }
+                  pdf_url: { type: string }
+
   /production-waivers:
     get:
       summary: Liste des décharges production
@@ -474,6 +570,42 @@ paths:
       responses:
         200:
           description: Réinitialisée
+
+  /production-waivers/{id}/finalize:
+    post:
+      summary: Finaliser une décharge production (Signature & Data)
+      tags: [Décharges]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [signature_data]
+              properties:
+                signature_data: { type: string, description: "Base64 signature" }
+                production_name: { type: string }
+                representative: { type: string }
+                address: { type: string }
+                siret: { type: string }
+                vat_number: { type: string }
+                insurance_company: { type: string }
+                insurance_policy: { type: string }
+      responses:
+        200:
+          description: Finalisée
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  document_id: { type: string }
+                  pdf_url: { type: string }
 
   # ── Administratif ─────────────────────────────────────────────
 

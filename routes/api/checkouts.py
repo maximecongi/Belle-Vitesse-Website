@@ -97,3 +97,42 @@ def api_update_checkout_status(record_id):
         db.session.rollback()
         current_app.logger.error(f"❌ API checkout status error: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+@api_checkouts_bp.route("/checkouts/<int:record_id>/finalize", methods=["POST"])
+@require_api_auth("administrator", "manager", "user")
+def api_finalize_checkout(record_id):
+    """
+    Finalize a checkout by submitting signature data.
+    Triggers PDF generation, emails, and webhooks.
+    """
+    from services.common.signatures import process_inspection_signature
+    try:
+        data = request.get_json(silent=True) or {}
+        signature_data = data.get("signature_data")
+        token = data.get("token")  # Optional if we want to bypass token check in some cases, but process_inspection_signature needs it
+
+        if not signature_data:
+            return jsonify({"error": "signature_data requis"}), 400
+
+        # We treat the API call as a trusted source (IP de l'app ou du proxy)
+        signer_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+        if signer_ip and ',' in signer_ip:
+            signer_ip = signer_ip.split(',')[0].strip()
+
+        # If we have a token (sent by the app), we use the standard process
+        if token:
+            result = process_inspection_signature(token, "checkout", signature_data, signer_ip)
+        else:
+            # Direct finalization using the record_id (skipping token validation)
+            from services.common.signatures import finalize_signed_document
+            result = finalize_signed_document("checkout", record_id, signature_data, signer_ip)
+
+        return jsonify({
+            "message": "Checkout finalisé avec succès",
+            "document_id": result.get("document_id"),
+            "pdf_url": result.get("pdf_url")
+        })
+    except Exception as e:
+        current_app.logger.error(f"❌ API finalize_checkout error: {e}")
+        return jsonify({"error": str(e)}), 500

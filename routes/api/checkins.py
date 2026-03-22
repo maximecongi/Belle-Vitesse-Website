@@ -97,3 +97,39 @@ def api_update_checkin_status(record_id):
         db.session.rollback()
         current_app.logger.error(f"❌ API checkin status error: {e}")
         return jsonify({"error": str(e)}), 500
+
+
+@api_checkins_bp.route("/checkins/<int:record_id>/finalize", methods=["POST"])
+@require_api_auth("administrator", "manager", "user")
+def api_finalize_checkin(record_id):
+    """
+    Finalize a checkin by submitting signature data.
+    Triggers PDF generation, emails, and webhooks.
+    """
+    from services.common.signatures import process_inspection_signature
+    try:
+        data = request.get_json(silent=True) or {}
+        signature_data = data.get("signature_data")
+        token = data.get("token")
+
+        if not signature_data:
+            return jsonify({"error": "signature_data requis"}), 400
+
+        signer_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+        if signer_ip and ',' in signer_ip:
+            signer_ip = signer_ip.split(',')[0].strip()
+
+        if token:
+            result = process_inspection_signature(token, "checkin", signature_data, signer_ip)
+        else:
+            from services.common.signatures import finalize_signed_document
+            result = finalize_signed_document("checkin", record_id, signature_data, signer_ip)
+
+        return jsonify({
+            "message": "Check-in finalisé avec succès",
+            "document_id": result.get("document_id"),
+            "pdf_url": result.get("pdf_url")
+        })
+    except Exception as e:
+        current_app.logger.error(f"❌ API finalize_checkin error: {e}")
+        return jsonify({"error": str(e)}), 500
