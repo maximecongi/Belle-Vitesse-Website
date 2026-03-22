@@ -18,7 +18,8 @@ SSH_USER = os.getenv("SSH_USER")
 SSH_PASSWORD = os.getenv("SSH_PASSWORD")
 
 # Add common Homebrew paths to PATH for mysqldump
-os.environ["PATH"] += os.pathsep + "/opt/homebrew/bin" + os.pathsep + "/usr/local/bin" + os.pathsep + "/opt/homebrew/Cellar/mysql-client/9.6.0/bin"
+os.environ["PATH"] += os.pathsep + "/opt/homebrew/bin" + os.pathsep + \
+    "/usr/local/bin" + os.pathsep + "/opt/homebrew/Cellar/mysql-client/9.6.0/bin"
 
 if not all([MYSQL_USER, MYSQL_PASSWORD, MYSQL_DB]):
     print("❌ Missing MySQL environment variables.")
@@ -30,6 +31,7 @@ BACKUP_DIR = Path(__file__).parent.parent / "backups" / "sql"
 BACKUP_DIR.mkdir(parents=True, exist_ok=True)
 BACKUP_FILE = BACKUP_DIR / f"dump_{TIMESTAMP}.sql"
 
+
 def run_backup(host, port):
     cmd = [
         "mysqldump",
@@ -37,6 +39,7 @@ def run_backup(host, port):
         f"-P{port}",
         f"-u{MYSQL_USER}",
         f"-p{MYSQL_PASSWORD}",
+        "--ssl-mode=DISABLED",
         MYSQL_DB
     ]
     print(f"📦 Starting MySQL backup to {BACKUP_FILE} via port {port}...")
@@ -50,7 +53,8 @@ def run_backup(host, port):
             BACKUP_FILE.unlink()
         exit(1)
 
-if os.getenv("USE_SSH_TUNNEL", "false").lower() == "true":
+
+if os.getenv("FLASK_ENV", "production").lower() != "production":
     from sshtunnel import SSHTunnelForwarder
     print(f"🔗 Establishing SSH Tunnel to {SSH_HOST}...")
     try:
