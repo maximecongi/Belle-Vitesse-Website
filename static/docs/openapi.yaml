@@ -786,3 +786,58 @@ paths:
               schema:
                 type: array
                 items: { type: object }
+
+  /api/v1/meta/vehicles:
+    get:
+      summary: Liste les véhicules (discovery)
+      tags: [Meta]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Liste des véhicules simplifiée
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: { type: string }
+                    name: { type: string }
+                    slug: { type: string }
+                    unique_id: { type: string }
+                    plate: { type: string }
+                    brand: { type: string }
+                    model: { type: string }
+                    type: { type: string }
+                    image_url: { type: string }
+
+  /api/v1/meta/inspection-context:
+    get:
+      summary: Contexte complet pour inspections
+      description: Retourne les projets, véhicules, utilisateurs et mapping de contrôles nécessaires pour créer une inspection.
+      tags: [Meta]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Données de contexte d'inspection
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/v1/meta/static-data:
+    get:
+      summary: Données statiques et traductions
+      tags: [Meta]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Contenu statique, têtes, catégories et mapping de statuts
+          content:
+            application/json:
+              schema:
+                type: object

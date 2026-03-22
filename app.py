@@ -29,8 +29,7 @@ from config import config
 SUPPORTED_LANGS = ('en', 'fr')
 DEFAULT_LANG = 'en'
 
-_ssh_tunnel = None
-
+# Configuration
 
 def create_app():
     env = os.getenv("FLASK_ENV", "development")
@@ -48,13 +47,11 @@ def create_app():
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
     # SSH Tunnel (Development only)
-    global _ssh_tunnel
     if env != "production":
-        from utils.ssh_helper import start_ssh_tunnel
-        tunnel, local_port = start_ssh_tunnel(app.config, app.logger, existing_tunnel=_ssh_tunnel)
+        from utils.database import get_ssh_tunnel
+        tunnel, local_port = get_ssh_tunnel()
         
         if tunnel:
-            _ssh_tunnel = tunnel
             mysql_user = app.config.get("MYSQL_USER", "root")
             mysql_pass = app.config.get("MYSQL_PASS", "")
             mysql_db = app.config.get("MYSQL_DB", "bellevitesse")

@@ -28,3 +28,5 @@ def init_api_v1_routes(app):
         app.register_blueprint(bp, url_prefix="/api/v1")
 
 
+    from routes.api.meta import api_meta_bp
+    app.register_blueprint(api_meta_bp, url_prefix="/api/v1")

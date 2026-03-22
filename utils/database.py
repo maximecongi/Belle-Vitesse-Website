@@ -7,9 +7,9 @@ Maintains the same interface as the original airtable.py.
 import os
 import json
 import mysql.connector
+import logging
 from flask_caching import Cache
 from dotenv import load_dotenv
-from sshtunnel import SSHTunnelForwarder
 
 # Load environment variables
 load_dotenv()
@@ -20,47 +20,53 @@ MYSQL_USER = os.getenv("MYSQL_USER")
 MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
 MYSQL_DATABASE = os.getenv("MYSQL_DATABASE")
 
-# SSH Configuration (for local development)
-SSH_HOST = os.getenv("SSH_HOST", "ssh.pythonanywhere.com")
-SSH_USER = os.getenv("SSH_USER")
-SSH_PASSWORD = os.getenv("SSH_PASSWORD")
-USE_SSH_TUNNEL = os.getenv("USE_SSH_TUNNEL", "false").lower() == "true"
-
 cache: Cache = None
 
 # Global tunnel and connection for SSH mode
 _ssh_tunnel = None
 _ssh_connection = None
 
+def get_ssh_tunnel():
+    """
+    Ensure the SSH tunnel is started (if in dev) and return (tunnel, local_port).
+    Returns (None, None) in production.
+    """
+    global _ssh_tunnel
+    env = os.getenv("FLASK_ENV", "development")
+    if env == "production":
+        return None, None
+
+    from utils.ssh_helper import start_ssh_tunnel
+    logger = logging.getLogger("database.ssh")
+    
+    cfg = {"MYSQL_HOST": MYSQL_HOST}
+    tunnel, local_port = start_ssh_tunnel(cfg, logger, existing_tunnel=_ssh_tunnel)
+    
+    if tunnel:
+        _ssh_tunnel = tunnel
+        return tunnel, local_port
+    return None, None
+
 
 def get_db_connection():
     """Create and return a MySQL connection (with optional SSH tunnel)."""
-    global _ssh_tunnel, _ssh_connection
-
-    if USE_SSH_TUNNEL:
-        if _ssh_tunnel is None or not _ssh_tunnel.is_active:
-            _ssh_tunnel = SSHTunnelForwarder(
-                (SSH_HOST, 22),
-                ssh_username=SSH_USER,
-                ssh_password=SSH_PASSWORD,
-                remote_bind_address=(MYSQL_HOST, 3306),
-            )
-            _ssh_tunnel.start()
-
+    tunnel, local_port = get_ssh_tunnel()
+    
+    if tunnel:
         return mysql.connector.connect(
             host="127.0.0.1",
-            port=_ssh_tunnel.local_bind_port,
+            port=local_port,
             user=MYSQL_USER,
             password=MYSQL_PASSWORD,
             database=MYSQL_DATABASE,
         )
-    else:
-        return mysql.connector.connect(
-            host=MYSQL_HOST,
-            user=MYSQL_USER,
-            password=MYSQL_PASSWORD,
-            database=MYSQL_DATABASE,
-        )
+
+    return mysql.connector.connect(
+        host=MYSQL_HOST,
+        user=MYSQL_USER,
+        password=MYSQL_PASSWORD,
+        database=MYSQL_DATABASE,
+    )
 
 
 def init_cache(app_cache: Cache):
