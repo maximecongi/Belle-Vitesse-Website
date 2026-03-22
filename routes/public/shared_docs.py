@@ -1,13 +1,16 @@
 import os
 import secrets
 from datetime import datetime
-from flask import current_app, send_from_directory, abort, request, render_template
+
+from flask import abort, current_app, render_template, request, send_from_directory
+
 from utils.document_utils import (
+    generate_pdf_access_token,
     validate_pdf_access_token,
     verify_hmac_seal,
     verify_pdf_hash,
-    generate_pdf_access_token
 )
+
 
 def handle_document_download(filepath):
     """

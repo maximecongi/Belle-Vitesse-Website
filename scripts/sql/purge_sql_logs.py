@@ -2,6 +2,7 @@ import os
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 # Setup path for local imports
@@ -14,6 +15,7 @@ load_dotenv(_root / '.env')
 
 def build_minimal_app():
     from flask import Flask
+
     from models import db
 
     mysql_user = os.getenv("MYSQL_USER", "root")
@@ -60,7 +62,7 @@ def build_minimal_app():
 
 
 def purge_logs():
-    from models import db, SqlQueryLog
+    from models import SqlQueryLog, db
 
     app, tunnel = build_minimal_app()
 

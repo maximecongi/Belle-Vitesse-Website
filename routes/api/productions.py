@@ -1,12 +1,13 @@
-from flask import Blueprint, request, jsonify, current_app
-from utils.jwt_auth import require_api_auth
+from flask import Blueprint, current_app, jsonify, request
+
 from services.admin.productions import (
-    list_productions,
     create_production,
-    update_production,
-    get_production_for_edit,
     delete_production,
+    get_production_for_edit,
+    list_productions,
+    update_production,
 )
+from utils.jwt_auth import require_api_auth
 
 api_productions_bp = Blueprint("api_productions", __name__)
 

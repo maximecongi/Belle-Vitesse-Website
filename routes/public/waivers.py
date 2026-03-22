@@ -1,24 +1,25 @@
 import os
 from datetime import datetime
-from werkzeug.utils import secure_filename
-from flask import render_template, request, jsonify, current_app, abort
 
+from flask import abort, current_app, jsonify, render_template, request
+from werkzeug.utils import secure_filename
+
+from extensions import csrf
 from models import (
-    db,
     PilotWaiver,
     PilotWaiverSignedDocument,
+    PilotWaiverToken,
     ProductionWaiver,
     ProductionWaiverSignedDocument,
-    PilotWaiverToken,
-    ProductionWaiverToken
+    ProductionWaiverToken,
+    db,
 )
+from routes.public.shared_docs import handle_document_download, handle_document_verify
 from utils.storage import (
+    ensure_dir,
     get_pilot_attachments_path,
     get_production_attachments_path,
-    ensure_dir
 )
-from extensions import csrf
-from routes.public.shared_docs import handle_document_download, handle_document_verify
 
 # ── Shared Helpers ──────────────────────────────────────────────
 

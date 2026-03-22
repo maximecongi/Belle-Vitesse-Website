@@ -1,13 +1,13 @@
+from extensions import csrf
+from routes.api.arclight import api_arclight_bp
 from routes.api.auth import api_auth_bp
-from routes.api.checkouts import api_checkouts_bp
 from routes.api.checkins import api_checkins_bp
-from routes.api.projects import api_projects_bp
-from routes.api.productions import api_productions_bp
+from routes.api.checkouts import api_checkouts_bp
 from routes.api.contacts import api_contacts_bp
 from routes.api.dashboard import api_dashboard_bp
+from routes.api.productions import api_productions_bp
+from routes.api.projects import api_projects_bp
 from routes.api.waivers import api_waivers_bp
-from routes.api.arclight import api_arclight_bp
-from extensions import csrf
 
 
 def init_api_v1_routes(app):

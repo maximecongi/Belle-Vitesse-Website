@@ -1,22 +1,22 @@
-from utils.decorators import require_roles
 from flask import (
-    render_template,
     abort,
-    request,
     current_app,
-    redirect,
-    url_for,
     flash,
+    redirect,
+    render_template,
+    request,
+    url_for,
 )
 
 from services.admin.contacts import (
-    list_contacts,
     create_contact,
-    update_contact,
-    get_contact_for_edit,
     delete_contact,
+    get_contact_for_edit,
     get_productions_for_select,
+    list_contacts,
+    update_contact,
 )
+from utils.decorators import require_roles
 
 
 def init_contacts_routes(app):

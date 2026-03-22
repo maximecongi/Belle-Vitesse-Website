@@ -1,24 +1,24 @@
-from utils.decorators import require_roles
 from datetime import datetime
-from flask import (
-    render_template,
-    abort,
-    request,
-    current_app,
-    redirect,
-    url_for,
-    flash,
-)
 
+from flask import (
+    abort,
+    current_app,
+    flash,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 
 from services.admin import (
-    list_projects,
-    get_project_form_context,
     create_project,
-    update_project,
-    get_project_for_edit,
     delete_project,
+    get_project_for_edit,
+    get_project_form_context,
+    list_projects,
+    update_project,
 )
+from utils.decorators import require_roles
 
 
 def init_projects_routes(app):

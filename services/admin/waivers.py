@@ -2,23 +2,27 @@ import logging
 import os
 import uuid
 from datetime import datetime
+
 from sqlalchemy.orm import joinedload
 
 from models import (
-    db,
     PilotWaiver,
-    ProductionWaiver,
-    Project,
     PilotWaiverSignedDocument,
-    ProductionWaiverSignedDocument,
     PilotWaiverToken,
-    ProductionWaiverToken
+    ProductionWaiver,
+    ProductionWaiverSignedDocument,
+    ProductionWaiverToken,
+    Project,
+    db,
 )
-from utils.database import get_vehicles
-from utils.n8n import trigger_n8n_webhook
-# Keep here for list view
-from utils.document_utils import generate_pdf_access_token as generate_waiver_pdf_access_token
 from services.admin.status_mapping import format_waiver_status
+from utils.database import get_vehicles
+
+# Keep here for list view
+from utils.document_utils import (
+    generate_pdf_access_token as generate_waiver_pdf_access_token,
+)
+from utils.n8n import trigger_n8n_webhook
 
 logger = logging.getLogger(__name__)
 
@@ -211,6 +215,7 @@ def generate_production_waiver(waiver_id):
 
 def send_production_waiver(waiver_id):
     from flask import request
+
     from utils.mailer import send_production_waiver_invitation_email
 
     waiver = ProductionWaiver.query.filter_by(waiver_id=waiver_id).first()
@@ -397,6 +402,7 @@ def generate_pilot_waiver(waiver_id):
 
 def send_pilot_waiver(waiver_id):
     from flask import request
+
     from utils.mailer import send_waiver_invitation_email
 
     waiver = PilotWaiver.query.filter_by(waiver_id=waiver_id).first()

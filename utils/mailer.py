@@ -1,12 +1,13 @@
 import os
 import smtplib
 from datetime import datetime
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
-from email.utils import make_msgid, formatdate
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.utils import formatdate, make_msgid
+
+from flask import current_app, render_template, request
 from itsdangerous import URLSafeSerializer
-from flask import render_template, request, current_app
 
 
 def send_magic_link_email(to_email, firstname, magic_link):

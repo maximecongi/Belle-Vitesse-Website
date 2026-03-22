@@ -1,6 +1,7 @@
-from flask import Blueprint, jsonify, current_app
-from utils.jwt_auth import require_api_auth
+from flask import Blueprint, current_app, jsonify
+
 from services.admin.calendar import get_calendar_events
+from utils.jwt_auth import require_api_auth
 
 api_dashboard_bp = Blueprint("api_dashboard", __name__)
 

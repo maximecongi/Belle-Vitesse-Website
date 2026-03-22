@@ -1,5 +1,6 @@
 from functools import wraps
-from flask import session, redirect, url_for, flash, request, current_app
+
+from flask import current_app, flash, redirect, request, session, url_for
 
 
 def require_roles(*allowed_roles):

@@ -1,18 +1,19 @@
-from .auth import init_auth_routes
-from .files import init_files_routes
-from .dashboard import init_dashboard_routes
-from .checkouts import init_checkouts_routes
-from .checkins import init_checkins_routes
-from .projects import init_projects_routes
-from .productions import init_productions_routes
-from .contacts import init_contacts_routes
-from .newsletter import init_newsletter_routes
+from flask import redirect, url_for
+from flask_wtf.csrf import CSRFError
+
 from .api import init_api_routes
-from .waivers import init_waivers_routes
+from .auth import init_auth_routes
+from .checkins import init_checkins_routes
+from .checkouts import init_checkouts_routes
+from .contacts import init_contacts_routes
+from .dashboard import init_dashboard_routes
+from .files import init_files_routes
+from .newsletter import init_newsletter_routes
+from .productions import init_productions_routes
+from .projects import init_projects_routes
 from .tools import init_tools_routes
 from .users import init_users_routes
-from flask_wtf.csrf import CSRFError
-from flask import redirect, url_for
+from .waivers import init_waivers_routes
 
 
 def init_admin_routes(app):

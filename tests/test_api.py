@@ -1,5 +1,5 @@
-import sys
 import os
+import sys
 import unittest
 from unittest.mock import MagicMock
 
@@ -80,9 +80,10 @@ class APIRouteSmokeTest(unittest.TestCase):
 
     def test_api_with_valid_jwt(self):
         """GET /api/v1/checkouts with valid JWT returns 200."""
-        from models import db, User
-        from utils.jwt_auth import generate_token
         import uuid
+
+        from models import User, db
+        from utils.jwt_auth import generate_token
 
         with self.app.app_context():
             unique_mail = f"test-{uuid.uuid4().hex[:8]}@bellevitesse.com"
@@ -101,9 +102,10 @@ class APIRouteSmokeTest(unittest.TestCase):
 
     def test_api_me_with_valid_jwt(self):
         """GET /api/v1/auth/me with valid JWT returns user profile."""
-        from models import db, User
-        from utils.jwt_auth import generate_token
         import uuid
+
+        from models import User, db
+        from utils.jwt_auth import generate_token
 
         with self.app.app_context():
             unique_mail = f"me-{uuid.uuid4().hex[:8]}@bellevitesse.com"

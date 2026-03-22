@@ -1,8 +1,9 @@
-from flask import Blueprint, jsonify, current_app
-from utils.jwt_auth import require_api_auth
-from utils.database import get_vehicles, get_all_static, get_heads, get_grips_categories
+from flask import Blueprint, current_app, jsonify
+
 from services.admin.inspections import get_unified_form_context
-from services.admin.status_mapping import INSPECTION_STATUS_MAP, CHECKPOINT_STATUS_MAP
+from services.admin.status_mapping import CHECKPOINT_STATUS_MAP, INSPECTION_STATUS_MAP
+from utils.database import get_all_static, get_grips_categories, get_heads, get_vehicles
+from utils.jwt_auth import require_api_auth
 
 api_meta_bp = Blueprint("api_meta", __name__)
 

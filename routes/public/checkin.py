@@ -6,24 +6,23 @@ import os
 import secrets
 
 from flask import (
-    render_template,
     abort,
-    jsonify,
-    request,
     current_app,
+    jsonify,
+    render_template,
+    request,
 )
 
 from extensions import csrf
-
-from models import db, CheckinVehicle
+from models import CheckinVehicle, db
+from routes.public.shared_docs import handle_document_download, handle_document_verify
 from services.common.signatures import (
-    validate_inspection_token,
+    abandon_inspection_signature,
     generate_inspection_token,
     process_inspection_signature,
-    abandon_inspection_signature,
-    resume_inspection_signature
+    resume_inspection_signature,
+    validate_inspection_token,
 )
-from routes.public.shared_docs import handle_document_download, handle_document_verify
 
 
 def init_checkin_routes(app):
@@ -106,7 +105,7 @@ def init_checkin_routes(app):
     @app.route("/checkin/sign/<token>/resume", methods=["POST"])
     @csrf.exempt
     def checkin_resume(token):
-        record = resume_inspection_signature(token, "checkin")
+        resume_inspection_signature(token, "checkin")
         return jsonify({"status": "resumed"}), 200
 
     @app.route("/checkin/sign/<token>", methods=["POST"])
@@ -128,7 +127,7 @@ def init_checkin_routes(app):
         signed_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
 
         try:
-            record, error = process_inspection_signature(token, "checkin", payload["signature"], signed_ip)
+            record = process_inspection_signature(token, "checkin", payload["signature"], signed_ip)
             return jsonify({"status": "signed", **record}), 200
         except ValueError as e:
             return jsonify({"error": str(e)}), 404

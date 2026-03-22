@@ -1,15 +1,15 @@
 from datetime import datetime, timezone
+
 from flask import (
+    flash,
+    redirect,
     render_template,
     request,
     session,
-    redirect,
     url_for,
-    flash,
 )
 
 from extensions import limiter
-
 from services.common.auth import request_magic_link, verify_magic_link
 
 

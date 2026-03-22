@@ -1,12 +1,13 @@
-from flask import Blueprint, request, jsonify, current_app
-from utils.jwt_auth import require_api_auth
+from flask import Blueprint, current_app, jsonify, request
+
 from services.admin.checkins import (
-    list_checkins,
-    get_checkin_detail,
     create_checkin,
-    update_checkin,
     delete_checkin,
+    get_checkin_detail,
+    list_checkins,
+    update_checkin,
 )
+from utils.jwt_auth import require_api_auth
 
 api_checkins_bp = Blueprint("api_checkins", __name__)
 
@@ -73,8 +74,8 @@ def api_delete_checkin(record_id):
 @api_checkins_bp.route("/checkins/<int:record_id>/status", methods=["PATCH"])
 @require_api_auth("administrator", "manager", "user")
 def api_update_checkin_status(record_id):
-    from models import db, CheckinVehicle
-    from services.admin.status_mapping import get_inspection_key, INSPECTION_STATUS_MAP
+    from models import CheckinVehicle, db
+    from services.admin.status_mapping import INSPECTION_STATUS_MAP, get_inspection_key
     try:
         record = db.session.get(CheckinVehicle, record_id)
         if not record:

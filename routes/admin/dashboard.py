@@ -1,14 +1,14 @@
-from utils.decorators import require_roles
 from datetime import datetime
-from flask import (
-    render_template,
-    current_app,
-)
 
+from flask import (
+    current_app,
+    render_template,
+)
 
 from services.admin import (
     list_projects,
 )
+from utils.decorators import require_roles
 
 
 def init_dashboard_routes(app):

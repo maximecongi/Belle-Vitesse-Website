@@ -2,7 +2,9 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
+from sshtunnel import SSHTunnelForwarder
 
 env_path = Path(__file__).parent.parent / '.env'
 load_dotenv(env_path)
@@ -41,7 +43,6 @@ def execute_sql(host, port):
         exit(1)
 
 if os.getenv("USE_SSH_TUNNEL", "false").lower() == "true":
-    from sshtunnel import SSHTunnelForwarder
     print(f"🔗 Establishing SSH Tunnel to {SSH_HOST}...")
     try:
         with SSHTunnelForwarder(

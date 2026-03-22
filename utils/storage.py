@@ -1,8 +1,9 @@
-import re
 import os
-from pathlib import Path
-from flask import current_app
+import re
 from datetime import datetime
+from pathlib import Path
+
+from flask import current_app
 
 
 def sanitize_folder_name(name):

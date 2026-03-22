@@ -1,6 +1,7 @@
-import os
 import datetime
-from flask import Blueprint, request, current_app
+import os
+
+from flask import Blueprint, current_app, request
 from werkzeug.utils import secure_filename
 
 api_arclight_bp = Blueprint("api_arclight", __name__)

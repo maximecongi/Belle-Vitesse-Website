@@ -1,6 +1,6 @@
-import unittest
 import os
 import sys
+import unittest
 from unittest.mock import MagicMock
 
 # Add the project root to sys.path
@@ -12,8 +12,8 @@ mock_weasyprint.HTML = MagicMock()
 mock_weasyprint.CSS = MagicMock()
 sys.modules["weasyprint"] = mock_weasyprint
 
-from models import db, CheckoutVehicle, CheckinVehicle
-from app import create_app
+from app import create_app  # noqa: E402
+from models import db  # noqa: E402
 
 
 class RouteSmokeTest(unittest.TestCase):

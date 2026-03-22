@@ -4,12 +4,13 @@ Replaces direct Airtable API calls with MySQL queries.
 Maintains the same interface as the original airtable.py.
 """
 
-import os
 import json
-import mysql.connector
 import logging
-from flask_caching import Cache
+import os
+
+import mysql.connector
 from dotenv import load_dotenv
+from flask_caching import Cache
 
 # Load environment variables
 load_dotenv()

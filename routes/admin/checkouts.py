@@ -1,23 +1,22 @@
-from utils.decorators import require_roles
 from flask import (
-    render_template,
     abort,
-    request,
     current_app,
-    redirect,
-    url_for,
     flash,
+    redirect,
+    render_template,
+    request,
+    url_for,
 )
-
 
 from services.admin import (
-    list_checkouts,
+    create_checkout,
+    delete_checkout,
     get_checkout_detail,
     get_checkout_form_context,
-    create_checkout,
+    list_checkouts,
     update_checkout,
-    delete_checkout,
 )
+from utils.decorators import require_roles
 
 
 def init_checkouts_routes(app):
@@ -132,7 +131,7 @@ def init_checkouts_routes(app):
 
 
             flash("La demande de scellement a été initiée et vous avez été redirigé vers la page de signature.", "success")
-            return redirect(url_for("checkout_sign_page", token=token))
+            return redirect(url_for("checkout_sign_page", token=token["token"]))
 
         except Exception as e:
             current_app.logger.error(f"❌ Error sealing checkout: {e}")

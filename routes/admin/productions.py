@@ -1,22 +1,21 @@
-from utils.decorators import require_roles
 from flask import (
-    render_template,
     abort,
-    request,
     current_app,
-    redirect,
-    url_for,
     flash,
+    redirect,
+    render_template,
+    request,
+    url_for,
 )
-
 
 from services.admin import (
-    list_productions,
     create_production,
-    update_production,
-    get_production_for_edit,
     delete_production,
+    get_production_for_edit,
+    list_productions,
+    update_production,
 )
+from utils.decorators import require_roles
 
 
 def init_productions_routes(app):

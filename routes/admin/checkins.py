@@ -1,23 +1,22 @@
-from utils.decorators import require_roles
 from flask import (
-    render_template,
     abort,
-    request,
     current_app,
-    redirect,
-    url_for,
     flash,
+    redirect,
+    render_template,
+    request,
+    url_for,
 )
-
 
 from services.admin import (
-    list_checkins,
+    create_checkin,
+    delete_checkin,
     get_checkin_detail,
     get_checkin_form_context,
-    create_checkin,
+    list_checkins,
     update_checkin,
-    delete_checkin,
 )
+from utils.decorators import require_roles
 
 
 def init_checkins_routes(app):
@@ -132,7 +131,7 @@ def init_checkins_routes(app):
 
             # The generate_signing_token already sets status to "À signer"
             flash("La demande de scellement a été initiée et vous avez été redirigé vers la page de signature.", "success")
-            return redirect(url_for("checkin_sign_page", token=token))
+            return redirect(url_for("checkin_sign_page", token=token["token"]))
 
         except Exception as e:
             current_app.logger.error(f"❌ Error sealing checkin: {e}")

@@ -1,20 +1,19 @@
-from utils.decorators import require_roles
 from flask import (
+    current_app,
+    flash,
+    redirect,
     render_template,
     request,
-    current_app,
-    redirect,
     url_for,
-    flash,
 )
 
 from extensions import csrf
-from utils.mailer import send_newsletter_campaign
-
 from services.public.newsletter import (
     list_newsletter_subscribers,
     remove_newsletter_subscriber_by_id,
 )
+from utils.decorators import require_roles
+from utils.mailer import send_newsletter_campaign
 
 
 def init_newsletter_routes(app):

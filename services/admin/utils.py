@@ -1,3 +1,4 @@
+import functools
 import json
 import logging
 import os
@@ -5,10 +6,8 @@ from pathlib import Path
 
 from flask import current_app
 
-from models import db, CheckoutVehicle
+from models import CheckoutVehicle, db
 from utils.checkpoints import get_checkpoints_for_vehicle
-
-import functools
 
 logger = logging.getLogger(__name__)
 
@@ -46,8 +45,9 @@ def _delete_inspection_files(record):
 
     # 1. Photos (Hierarchical: output/YEAR/MONTH/.../PHOTOS/ID)
     if record.project and record.inspection_number:
-        from utils.storage import get_checkout_photos_path, get_checkin_photos_path
         import shutil
+
+        from utils.storage import get_checkin_photos_path, get_checkout_photos_path
 
         if isinstance(record, CheckoutVehicle):
             hierarchical_photo_dir = get_checkout_photos_path(

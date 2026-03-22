@@ -9,9 +9,10 @@ Usage:
     python scripts/sync_airtable.py --both     # Sync database + images
 """
 
+import argparse
 import os
 import sys
-import argparse
+
 from dotenv import load_dotenv
 
 # Add project root to path so we can import services

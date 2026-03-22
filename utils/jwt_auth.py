@@ -1,9 +1,10 @@
-import jwt
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
-from flask import request, jsonify, g, current_app
-from models import User
 
+import jwt
+from flask import current_app, g, jsonify, request
+
+from models import User
 
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 12

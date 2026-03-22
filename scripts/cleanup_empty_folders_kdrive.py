@@ -5,12 +5,13 @@ Supprime tous les dossiers vides dans kDrive (récursivement).
 Usage : python purge_empty_kdrive_folders.py [--dry-run]
 """
 
+import logging
+import os
 import sys
 import time
-import logging
-import requests
 from pathlib import Path
-import os
+
+import requests
 from dotenv import load_dotenv
 
 env_path = Path(__file__).parent.parent / '.env'

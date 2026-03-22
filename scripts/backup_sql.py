@@ -2,7 +2,9 @@ import os
 import subprocess
 from datetime import datetime
 from pathlib import Path
+
 from dotenv import load_dotenv
+from sshtunnel import SSHTunnelForwarder
 
 # Load environment variables
 env_path = Path(__file__).parent.parent / '.env'
@@ -55,7 +57,6 @@ def run_backup(host, port):
 
 
 if os.getenv("FLASK_ENV", "production").lower() != "production":
-    from sshtunnel import SSHTunnelForwarder
     print(f"🔗 Establishing SSH Tunnel to {SSH_HOST}...")
     try:
         with SSHTunnelForwarder(

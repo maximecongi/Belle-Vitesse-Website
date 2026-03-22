@@ -1,7 +1,7 @@
-from models import db, VehicleCheckpointConfig
-from utils.database import get_vehicles
-from utils.checkpoints import ALL_POSSIBLE_CHECKPOINTS
 from extensions import cache
+from models import VehicleCheckpointConfig, db
+from utils.checkpoints import ALL_POSSIBLE_CHECKPOINTS
+from utils.database import get_vehicles
 
 
 def get_checkpoint_configs():

@@ -1,7 +1,8 @@
-import os
 import logging
-from pathlib import Path
+import os
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
+
 from sqlalchemy import insert
 
 from models import SqlQueryLog

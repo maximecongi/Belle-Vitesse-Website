@@ -1,12 +1,13 @@
-from flask import Blueprint, request, jsonify, current_app
-from utils.jwt_auth import require_api_auth
+from flask import Blueprint, current_app, jsonify, request
+
 from services.admin.contacts import (
-    list_contacts,
     create_contact,
-    update_contact,
-    get_contact_for_edit,
     delete_contact,
+    get_contact_for_edit,
+    list_contacts,
+    update_contact,
 )
+from utils.jwt_auth import require_api_auth
 
 api_contacts_bp = Blueprint("api_contacts", __name__)
 

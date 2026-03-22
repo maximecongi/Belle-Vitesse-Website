@@ -4,21 +4,33 @@ import os
 from pathlib import Path
 
 from flask import current_app, url_for
-from werkzeug.utils import secure_filename
 from sqlalchemy.orm import joinedload
+from werkzeug.utils import secure_filename
 
-from models import db, CheckoutVehicle, CheckinVehicle, Project, User, CheckoutSignedDocument, CheckinSignedDocument
-from utils.database import get_vehicles
-from utils.formatting import format_date_fr
-from utils.checkpoints import get_checkpoints_for_vehicle, BASE_CHECKPOINTS, ALL_POSSIBLE_CHECKPOINTS, CHECKPOINT_TO_MODEL_MAP
-from utils.document_utils import generate_pdf_access_token
-from services.admin.utils import _parse_photos_json, _is_ready, _delete_inspection_files
-
+from models import (
+    CheckinSignedDocument,
+    CheckinVehicle,
+    CheckoutSignedDocument,
+    CheckoutVehicle,
+    Project,
+    User,
+    db,
+)
 from services.admin.status_mapping import (
     INSPECTION_STATUS_MAP,
+    get_checkpoint_key,
     get_inspection_key,
-    get_checkpoint_key
 )
+from services.admin.utils import _delete_inspection_files, _is_ready, _parse_photos_json
+from utils.checkpoints import (
+    ALL_POSSIBLE_CHECKPOINTS,
+    BASE_CHECKPOINTS,
+    CHECKPOINT_TO_MODEL_MAP,
+    get_checkpoints_for_vehicle,
+)
+from utils.database import get_vehicles
+from utils.document_utils import generate_pdf_access_token
+from utils.formatting import format_date_fr
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +42,7 @@ def get_inspection_config(mode):
     Returns model and metadata for a given inspection mode.
     """
     if mode == "checkout":
-        from models import CheckoutToken, CheckoutSignedDocument
+        from models import CheckoutSignedDocument, CheckoutToken
         return {
             "model": CheckoutVehicle,
             "token_model": CheckoutToken,
@@ -42,7 +54,7 @@ def get_inspection_config(mode):
             "stats_key": "checkouts"
         }
     else:
-        from models import CheckinToken, CheckinSignedDocument
+        from models import CheckinSignedDocument, CheckinToken
         return {
             "model": CheckinVehicle,
             "token_model": CheckinToken,

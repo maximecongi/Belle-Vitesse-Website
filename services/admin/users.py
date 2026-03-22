@@ -1,6 +1,7 @@
 import logging
-from models import db, User
+
 from extensions import cache
+from models import User, db
 
 logger = logging.getLogger(__name__)
 

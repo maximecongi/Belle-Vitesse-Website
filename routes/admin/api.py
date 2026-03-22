@@ -1,18 +1,20 @@
-from utils.decorators import require_roles
 from flask import (
-    render_template,
-    jsonify,
-    request,
     current_app,
-    redirect,
-    url_for,
     flash,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    url_for,
 )
 
-
 from services.admin.calendar import get_calendar_events
-from services.admin.vehicle_config import get_vehicles_with_config, save_vehicle_checkpoint_config
+from services.admin.vehicle_config import (
+    get_vehicles_with_config,
+    save_vehicle_checkpoint_config,
+)
 from utils.checkpoints import ALL_POSSIBLE_CHECKPOINTS
+from utils.decorators import require_roles
 
 
 def init_api_routes(app):

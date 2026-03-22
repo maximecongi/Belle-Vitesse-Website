@@ -1,5 +1,6 @@
 from flask import current_app, request
-from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
+
 from models import User
 from utils.mailer import send_magic_link_email
 

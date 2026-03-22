@@ -2,8 +2,9 @@ import os
 import queue
 import threading
 
-from redis import Redis
 from rq import Queue as RQQueue
+
+from redis import Redis
 
 FLASK_ENV = os.getenv("FLASK_ENV", "production")
 print(f"[sql_logger] queue.py initialized with FLASK_ENV={FLASK_ENV}")

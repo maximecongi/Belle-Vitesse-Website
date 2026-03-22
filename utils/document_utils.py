@@ -2,21 +2,21 @@
 Shared utilities for inspections (check-in/check-out) — PDF, sealing and QR codes.
 """
 
-import os
-import hmac
-import hashlib
-import logging
-import qrcode
 import base64
+import hashlib
+import hmac
+import logging
+import os
 import unicodedata
 from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
-from urllib.parse import urlparse, unquote
+from urllib.parse import unquote, urlparse
 
-from flask import current_app
-from weasyprint import HTML, CSS
+import qrcode
 from dotenv import load_dotenv
+from flask import current_app
+from weasyprint import CSS, HTML
 
 load_dotenv()
 

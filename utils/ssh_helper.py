@@ -1,5 +1,7 @@
 import os
+
 from sshtunnel import SSHTunnelForwarder
+
 
 def start_ssh_tunnel(app_config, logger, existing_tunnel=None):
     """

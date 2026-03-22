@@ -2,35 +2,46 @@
 Shared signature and token service for both Check-in and Check-out (Technician flow).
 """
 
-import os
-import uuid
-import secrets
 import logging
-from datetime import datetime, timezone, timedelta
+import os
+import secrets
+import uuid
+from datetime import datetime, timedelta, timezone
 
 from flask import current_app, render_template
+
 from models import (
-    db,
+    CheckinSignedDocument,
+    CheckinToken,
+    CheckinVehicle,
+    CheckoutSignedDocument,
+    CheckoutToken,
     # Inspections
-    CheckoutVehicle, CheckoutToken, CheckoutSignedDocument,
-    CheckinVehicle, CheckinToken, CheckinSignedDocument,
+    CheckoutVehicle,
     # Waivers
-    PilotWaiver, PilotWaiverSignedDocument, PilotWaiverToken,
-    ProductionWaiver, ProductionWaiverSignedDocument, ProductionWaiverToken
+    PilotWaiver,
+    PilotWaiverSignedDocument,
+    PilotWaiverToken,
+    ProductionWaiver,
+    ProductionWaiverSignedDocument,
+    ProductionWaiverToken,
+    db,
 )
 from utils.database import get_vehicles
-from utils.storage import (
-    get_checkout_path, get_checkin_path,
-    get_pilot_waiver_path, get_production_waiver_path,
-    ensure_dir
+from utils.document_utils import (
+    compute_hmac_seal,
+    compute_pdf_hash,
+    generate_qr_code,
+    render_pdf_from_template,
 )
 from utils.mailer import send_waiver_signed_email
 from utils.n8n import trigger_n8n_webhook
-from utils.document_utils import (
-    compute_hmac_seal,
-    generate_qr_code,
-    render_pdf_from_template,
-    compute_pdf_hash,
+from utils.storage import (
+    ensure_dir,
+    get_checkin_path,
+    get_checkout_path,
+    get_pilot_waiver_path,
+    get_production_waiver_path,
 )
 
 logger = logging.getLogger(__name__)

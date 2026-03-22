@@ -1,5 +1,6 @@
-from utils.specs_config import SPECS_CONFIG
 from flask import g
+
+from utils.specs_config import SPECS_CONFIG
 
 
 def keep(v):

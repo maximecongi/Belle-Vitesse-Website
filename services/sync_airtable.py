@@ -4,14 +4,15 @@ Airtable Sync Service
 Core logic for syncing Airtable data to MySQL and downloading images.
 """
 
-import os
 import json
+import os
 import shutil
-import requests
 from pathlib import Path
-from pyairtable import Api
+
 import mysql.connector
+import requests
 from mysql.connector import Error
+from pyairtable import Api
 from sshtunnel import SSHTunnelForwarder
 
 IMAGE_STORE_PATH = "static/images/airtable"

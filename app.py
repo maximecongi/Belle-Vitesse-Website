@@ -1,30 +1,31 @@
 import os
-from pathlib import Path
 from datetime import datetime, timezone
-from flask import Flask, request, session, url_for, g, abort
+from pathlib import Path
 
-from extensions import cache, compress, limiter, csrf
-from routes import init_routes, init_error_handlers
-from utils.database import (
-    init_cache,
-    get_vehicles,
-    get_all_static,
-    get_heads,
-    get_grips_categories,
-)
-from utils.database import init_checkout_db, init_checkin_db
-from models import db, User
-from services.admin.status_mapping import (
-    get_inspection_key,
-    get_checkpoint_key,
-    format_checkpoint_status,
-    format_inspection_status,
-    INSPECTION_STATUS_MAP,
-    CHECKPOINT_STATUS_MAP
-)
-from services.admin.sql_logger import init_sql_logger
+from flask import Flask, abort, g, request, session, url_for
 
 from config import config
+from extensions import cache, compress, csrf, limiter
+from models import User, db
+from routes import init_error_handlers, init_routes
+from services.admin.sql_logger import init_sql_logger
+from services.admin.status_mapping import (
+    CHECKPOINT_STATUS_MAP,
+    INSPECTION_STATUS_MAP,
+    format_checkpoint_status,
+    format_inspection_status,
+    get_checkpoint_key,
+    get_inspection_key,
+)
+from utils.database import (
+    get_all_static,
+    get_grips_categories,
+    get_heads,
+    get_vehicles,
+    init_cache,
+    init_checkin_db,
+    init_checkout_db,
+)
 
 SUPPORTED_LANGS = ('en', 'fr')
 DEFAULT_LANG = 'en'
@@ -78,8 +79,8 @@ def create_app():
     init_error_handlers(app)
 
     # Custom Jinja2 Filters
-    import json
     import ast
+    import json
     app.jinja_env.filters["slugify"] = lambda s: s.lower().replace(" ", "_")
 
     def _from_json(s):

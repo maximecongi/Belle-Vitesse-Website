@@ -1,5 +1,7 @@
 import logging
+
 from flask import url_for
+
 from models import Project
 
 logger = logging.getLogger(__name__)

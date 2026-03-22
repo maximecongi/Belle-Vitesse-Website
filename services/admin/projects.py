@@ -1,12 +1,13 @@
 import logging
 import os
-from utils.n8n import trigger_n8n_webhook
 
 from sqlalchemy.orm import joinedload
-from models import db, Production, Project, Contact
+
+from models import Contact, Production, Project, db
+from services.admin.status_mapping import format_waiver_status
 from utils.database import get_vehicles
 from utils.formatting import format_date_fr
-from services.admin.status_mapping import format_waiver_status
+from utils.n8n import trigger_n8n_webhook
 
 logger = logging.getLogger(__name__)
 
@@ -223,7 +224,10 @@ def delete_project(record_id):
     p = db.session.get(Project, record_id)
     if p:
 
-        from services.admin.waivers import delete_pilot_waiver_internal, delete_production_waiver_internal
+        from services.admin.waivers import (
+            delete_pilot_waiver_internal,
+            delete_production_waiver_internal,
+        )
         delete_pilot_waiver_internal(record_id)
         delete_production_waiver_internal(record_id)
         db.session.delete(p)

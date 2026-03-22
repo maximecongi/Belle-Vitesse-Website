@@ -104,7 +104,7 @@ def get_checkpoints_for_vehicle(vehicle_id: str, batch_configs=None, vehicle_nam
     if not vehicle_id:
         return BASE_CHECKPOINTS
 
-    from flask import has_app_context, current_app
+    from flask import current_app, has_app_context
 
     # 1. Try batch_configs first (passed from service layer)
     if batch_configs and vehicle_id in batch_configs:

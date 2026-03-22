@@ -1,13 +1,21 @@
 import os
-from flask import render_template, flash, redirect, url_for, request
 
+from flask import flash, redirect, render_template, request, url_for
 
-from utils.decorators import require_roles
-from services.admin.waivers import (
-    list_pilot_waivers, generate_pilot_waiver, send_pilot_waiver, reset_pilot_waiver, create_pilot_waiver,
-    list_production_waivers, generate_production_waiver, send_production_waiver, reset_production_waiver, create_production_waiver
-)
 from models import PilotWaiver, ProductionWaiver, Project
+from services.admin.waivers import (
+    create_pilot_waiver,
+    create_production_waiver,
+    generate_pilot_waiver,
+    generate_production_waiver,
+    list_pilot_waivers,
+    list_production_waivers,
+    reset_pilot_waiver,
+    reset_production_waiver,
+    send_pilot_waiver,
+    send_production_waiver,
+)
+from utils.decorators import require_roles
 
 
 def init_waivers_routes(app):

@@ -1,12 +1,13 @@
-from flask import Blueprint, request, jsonify, current_app
-from utils.jwt_auth import require_api_auth
+from flask import Blueprint, current_app, jsonify, request
+
 from services.admin.projects import (
-    list_projects,
     create_project,
-    update_project,
-    get_project_for_edit,
     delete_project,
+    get_project_for_edit,
+    list_projects,
+    update_project,
 )
+from utils.jwt_auth import require_api_auth
 
 api_projects_bp = Blueprint("api_projects", __name__)
 

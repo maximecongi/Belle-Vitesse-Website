@@ -1,17 +1,18 @@
-from flask import Blueprint, request, jsonify, current_app
-from utils.jwt_auth import require_api_auth
+from flask import Blueprint, current_app, jsonify, request
+
 from services.admin.waivers import (
-    list_pilot_waivers,
     create_pilot_waiver,
-    generate_pilot_waiver,
-    send_pilot_waiver,
-    reset_pilot_waiver,
-    list_production_waivers,
     create_production_waiver,
+    generate_pilot_waiver,
     generate_production_waiver,
-    send_production_waiver,
+    list_pilot_waivers,
+    list_production_waivers,
+    reset_pilot_waiver,
     reset_production_waiver,
+    send_pilot_waiver,
+    send_production_waiver,
 )
+from utils.jwt_auth import require_api_auth
 
 api_waivers_bp = Blueprint("api_waivers", __name__)
 
@@ -146,7 +147,7 @@ def api_finalize_pilot_waiver(record_id):
     """
     Finalize a pilot waiver with provided data and signature.
     """
-    from models import db, PilotWaiver
+    from models import PilotWaiver, db
     from services.common.signatures import finalize_signed_document
     try:
         data = request.get_json(silent=True) or {}
@@ -193,7 +194,7 @@ def api_finalize_production_waiver(record_id):
     """
     Finalize a production waiver with provided data and signature.
     """
-    from models import db, ProductionWaiver
+    from models import ProductionWaiver, db
     from services.common.signatures import finalize_signed_document
     try:
         data = request.get_json(silent=True) or {}

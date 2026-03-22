@@ -1,10 +1,11 @@
 import logging
-from models import db, Contact, Production
+
+from models import Contact, Production, db
 from services.admin.utils import (
-    generic_list_records,
-    generic_get_record_for_edit,
     generic_delete_record,
-    handle_admin_service_error
+    generic_get_record_for_edit,
+    generic_list_records,
+    handle_admin_service_error,
 )
 
 logger = logging.getLogger(__name__)

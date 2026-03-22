@@ -1,32 +1,32 @@
 import os
 import re
+from collections import defaultdict
 
 from flask import (
-    render_template,
     abort,
-    jsonify,
-    request,
     current_app,
-    send_from_directory,
+    jsonify,
     redirect,
+    render_template,
+    request,
+    send_from_directory,
     url_for,
 )
 from itsdangerous import URLSafeSerializer
-from collections import defaultdict
 
 from extensions import cache, csrf
-from utils.specs import build_specs
-from utils.database import (
-    get_grips_products_for_category,
-    get_grips_categories_by_slug,
-    get_vehicle_by_slug,
-    get_head_by_slug,
-    get_configs_for_vehicle,
-)
 from services.public.newsletter import (
     add_newsletter_subscriber,
     remove_newsletter_subscriber,
 )
+from utils.database import (
+    get_configs_for_vehicle,
+    get_grips_categories_by_slug,
+    get_grips_products_for_category,
+    get_head_by_slug,
+    get_vehicle_by_slug,
+)
+from utils.specs import build_specs
 
 SUPPORTED_LANGS = ('en', 'fr')
 DEFAULT_LANG = 'en'

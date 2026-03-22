@@ -1,5 +1,6 @@
-from models import NewsletterSubscriber, db
 from datetime import datetime
+
+from models import NewsletterSubscriber, db
 
 
 def add_newsletter_subscriber(email):

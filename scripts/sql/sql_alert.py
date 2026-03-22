@@ -1,13 +1,14 @@
+import ast
 import os
 import re
-import ast
 import smtplib
 import sys
-import requests
-from functools import lru_cache
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
+from functools import lru_cache
 from pathlib import Path
+
+import requests
 from dotenv import load_dotenv
 
 # Setup path for local imports
@@ -128,6 +129,7 @@ def build_minimal_app():
     """Crée une app Flask minimale avec uniquement SQLAlchemy — sans blueprints,
     sans Airtable, sans warm cache. SSH tunnel activé hors production."""
     from flask import Flask
+
     from models import db
 
     mysql_user = os.getenv("MYSQL_USER", "root")
@@ -174,8 +176,9 @@ def build_minimal_app():
 
 
 def check_alerts():
-    from models import db, SqlQueryLog
     from sqlalchemy import func
+
+    from models import SqlQueryLog, db
 
     app, tunnel = build_minimal_app()
     alerts = []

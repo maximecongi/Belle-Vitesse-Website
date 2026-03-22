@@ -1,6 +1,7 @@
-import re
 import ast
-from flask import request, session, has_request_context
+import re
+
+from flask import has_request_context, request, session
 
 SENSITIVE_KEYS = {"password", "token", "secret", "authorization", "cookie"}
 

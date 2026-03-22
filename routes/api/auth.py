@@ -1,8 +1,9 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify, request
+
 from extensions import limiter
+from models import User, db
 from services.common.auth import request_magic_link, verify_magic_link
 from utils.jwt_auth import generate_token, require_api_auth
-from models import db, User
 
 api_auth_bp = Blueprint("api_auth", __name__)
 

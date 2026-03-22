@@ -1,14 +1,16 @@
 import logging
 from datetime import date
+
 from flask import current_app
-from models import db, CheckinVehicle, CheckoutVehicle
+
+from models import CheckinVehicle, CheckoutVehicle, db
 from services.admin.inspections import (
-    list_inspections_unified,
-    get_inspection_detail_unified,
-    get_unified_form_context,
     apply_inspection_data,
     delete_inspection_unified,
-    upload_inspection_photos_shared
+    get_inspection_detail_unified,
+    get_unified_form_context,
+    list_inspections_unified,
+    upload_inspection_photos_shared,
 )
 from services.admin.utils import handle_admin_service_error
 

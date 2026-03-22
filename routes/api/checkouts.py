@@ -1,12 +1,13 @@
-from flask import Blueprint, request, jsonify, current_app
-from utils.jwt_auth import require_api_auth
+from flask import Blueprint, current_app, jsonify, request
+
 from services.admin.checkouts import (
-    list_checkouts,
-    get_checkout_detail,
     create_checkout,
-    update_checkout,
     delete_checkout,
+    get_checkout_detail,
+    list_checkouts,
+    update_checkout,
 )
+from utils.jwt_auth import require_api_auth
 
 api_checkouts_bp = Blueprint("api_checkouts", __name__)
 
@@ -73,8 +74,8 @@ def api_delete_checkout(record_id):
 @api_checkouts_bp.route("/checkouts/<int:record_id>/status", methods=["PATCH"])
 @require_api_auth("administrator", "manager", "user")
 def api_update_checkout_status(record_id):
-    from models import db, CheckoutVehicle
-    from services.admin.status_mapping import get_inspection_key, INSPECTION_STATUS_MAP
+    from models import CheckoutVehicle, db
+    from services.admin.status_mapping import INSPECTION_STATUS_MAP, get_inspection_key
     try:
         record = db.session.get(CheckoutVehicle, record_id)
         if not record:

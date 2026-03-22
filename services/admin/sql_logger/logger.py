@@ -1,14 +1,10 @@
+import logging
 import os
 import time
-import logging
 from datetime import datetime, timezone
 
+from .helpers import get_request_context, render_query, sanitize_params
 from .queue import enqueue, start_dev_worker
-from .helpers import (
-    get_request_context,
-    sanitize_params,
-    render_query
-)
 
 SLOW_QUERY_THRESHOLD_MS = int(os.getenv("SQL_LOGGER_THRESHOLD_MS", 0))
 IGNORED_PREFIXES = ("DESCRIBE", "SHOW", "PRAGMA", "SELECT 1")
