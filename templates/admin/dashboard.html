@@ -134,7 +134,7 @@
                 Tournage du {{ project.shoot_start }} au {{ project.shoot_end }}
             </div>
 
-            <div class="project-agenda-grid" style="grid-template-columns: 1fr;">
+            <div class="project-agenda-grid">
                 <!-- Logistique - Focus Checkin -->
                 <div class="agenda-section">
                     <div class="agenda-section-title">Logistique</div>
@@ -164,6 +164,41 @@
                                 {% endif %}
                                 {% endfor %}
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Administratif -->
+                <div class="agenda-section">
+                    <div class="agenda-section-title">Administratif</div>
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <div
+                            style="display: flex; align-items: center; justify-content: space-between; background: var(--admin-bg); padding: 0.6rem 0.8rem; border-radius: 8px;">
+                            <span style="font-size: 0.8rem; font-weight: 500;">Décharge Pilote</span>
+                            {% if project.pilot_waiver.id %}
+                            <a href="{{ url_for('admin_pilot_waivers_list') }}?q={{ project.pilot_waiver.waiver_num|urlencode }}"
+                                class="badge-pill" data-val="{{ project.pilot_waiver.raw_status }}"
+                                style="margin: 0; font-size: 0.65rem;">
+                                {{ project.pilot_waiver.status }}
+                            </a>
+                            {% else %}
+                            <span class="badge-pill" data-val="pending" style="margin: 0; font-size: 0.65rem;">Non
+                                générée</span>
+                            {% endif %}
+                        </div>
+                        <div
+                            style="display: flex; align-items: center; justify-content: space-between; background: var(--admin-bg); padding: 0.6rem 0.8rem; border-radius: 8px;">
+                            <span style="font-size: 0.8rem; font-weight: 500;">Décharge Prod.</span>
+                            {% if project.production_waiver.id %}
+                            <a href="{{ url_for('admin_production_waivers_list') }}?q={{ project.production_waiver.waiver_num|urlencode }}"
+                                class="badge-pill" data-val="{{ project.production_waiver.raw_status }}"
+                                style="margin: 0; font-size: 0.65rem;">
+                                {{ project.production_waiver.status }}
+                            </a>
+                            {% else %}
+                            <span class="badge-pill" data-val="pending" style="margin: 0; font-size: 0.65rem;">Non
+                                générée</span>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
