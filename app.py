@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from flask import Flask, request, session, url_for, g, abort
 
 from extensions import cache, compress, limiter, csrf
@@ -24,6 +24,8 @@ from services.admin.status_mapping import (
 )
 from services.admin.sql_logger import init_sql_logger
 
+from config import config
+
 SUPPORTED_LANGS = ('en', 'fr')
 DEFAULT_LANG = 'en'
 
@@ -31,113 +33,37 @@ _ssh_tunnel = None
 
 
 def create_app():
+    env = os.getenv("FLASK_ENV", "development")
+    app_config = config.get(env, config['default'])
+    
     app = Flask(
         __name__,
         static_folder=os.getenv("STATIC_FOLDER"),
         static_url_path=os.getenv("STATIC_URL_PATH"),
     )
+    app.config.from_object(app_config)
 
     # Proxy Fix for SSL behind Traefik
     from werkzeug.middleware.proxy_fix import ProxyFix
-
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-    # App Config
-    app.config["SECRET_KEY"] = os.getenv(
-        "SECRET_KEY", "bv_super_secret_key_2026")
-
-    # Redis Cache Config
-    if os.getenv("FLASK_ENV") == "production":
-        app.config["CACHE_TYPE"] = "RedisCache"
-        app.config["CACHE_REDIS_HOST"] = os.getenv("REDIS_HOST", "bv_redis")
-        app.config["CACHE_REDIS_PORT"] = int(os.getenv("REDIS_PORT", 6379))
-        app.config["CACHE_REDIS_DB"] = int(
-            os.getenv("REDIS_DB_FLASK_CACHING", 0))
-        app.config["CACHE_REDIS_URL"] = os.getenv(
-            "REDIS_URL", f"redis://{app.config['CACHE_REDIS_HOST']}:{app.config['CACHE_REDIS_PORT']}/{app.config['CACHE_REDIS_DB']}")
-    else:
-        app.config["CACHE_TYPE"] = "SimpleCache"
-    app.config["CACHE_DEFAULT_TIMEOUT"] = 86400  # 24h
-    app.config["CACHE_KEY_PREFIX"] = "bv_cache_"
-    app.config["PREFERRED_URL_SCHEME"] = "https"
-
-    # Database config (MySQL via SQLAlchemy)
+    # SSH Tunnel (Development only)
     global _ssh_tunnel
+    if env != "production":
+        from utils.ssh_helper import start_ssh_tunnel
+        tunnel, local_port = start_ssh_tunnel(app.config, app.logger, existing_tunnel=_ssh_tunnel)
+        
+        if tunnel:
+            _ssh_tunnel = tunnel
+            mysql_user = app.config.get("MYSQL_USER", "root")
+            mysql_pass = app.config.get("MYSQL_PASS", "")
+            mysql_db = app.config.get("MYSQL_DB", "bellevitesse")
+            app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+mysqlconnector://{mysql_user}:{mysql_pass}@127.0.0.1:{local_port}/{mysql_db}"
 
-    use_ssh = os.getenv("USE_SSH_TUNNEL", "false").lower() == "true"
-    is_prod = os.getenv("FLASK_ENV") == "production"
-
-    mysql_host = os.getenv("MYSQL_HOST", "localhost")
-    mysql_port = 3306
-
-    if use_ssh and not is_prod:
-        from sshtunnel import SSHTunnelForwarder
-        try:
-            if _ssh_tunnel is None or not _ssh_tunnel.is_active:
-                _ssh_tunnel = SSHTunnelForwarder(
-                    (os.getenv("SSH_HOST"), 22),
-                    ssh_username=os.getenv("SSH_USER"),
-                    ssh_password=os.getenv("SSH_PASSWORD"),
-                    remote_bind_address=(mysql_host, 3306)
-                )
-                _ssh_tunnel.start()
-                app.logger.info(
-                    f"✅ SSH Tunnel started on port {_ssh_tunnel.local_bind_port}")
-
-            mysql_host = "127.0.0.1"
-            mysql_port = _ssh_tunnel.local_bind_port
-        except Exception as e:
-            app.logger.error(f"❌ Failed to start SSH Tunnel: {e}")
-
-    mysql_user = os.getenv("MYSQL_USER", "root")
-    mysql_pass = os.getenv("MYSQL_PASSWORD", "")
-    mysql_db = os.getenv("MYSQL_DATABASE", "bellevitesse")
-
-    default_uri = f"mysql+mysqlconnector://{mysql_user}:{mysql_pass}@{mysql_host}:{mysql_port}/{mysql_db}"
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
-        "SQLALCHEMY_DATABASE_URI", default_uri)
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["SQLALCHEMY_POOL_RECYCLE"] = 280
-    app.config["SQLALCHEMY_POOL_PRE_PING"] = True
-    app.config["SQLALCHEMY_POOL_SIZE"] = 5
-    app.config["SQLALCHEMY_MAX_OVERFLOW"] = 10
-    app.config["SQLALCHEMY_POOL_TIMEOUT"] = 10
-
-    # Session Config
-    app.config['SESSION_COOKIE_HTTPONLY'] = True
-    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=12)
-    if os.getenv("FLASK_ENV") == "production":
-        app.config["OUTPUT_FOLDER"] = Path("/app/output")
-        app.config["BACKUPS_FOLDER"] = Path("/app/backups")
-        app.config["LOGS_FOLDER"] = Path("/app/logs")
-    else:
-        app.config["OUTPUT_FOLDER"] = Path(
-            "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/output")
-        app.config["BACKUPS_FOLDER"] = Path(
-            "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/backups")
-        app.config["LOGS_FOLDER"] = Path(
-            "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/logs")
-
-    # Arclight Config
-    if os.getenv("FLASK_ENV") == "production":
-        app.config["ARCLIGHT_UPLOAD_DIR"] = Path(os.getenv("ARCLIGHT_UPLOAD_DIR", "/srv/bellevitesse/arclight/videos"))
-    else:
-        app.config["ARCLIGHT_UPLOAD_DIR"] = Path(os.getenv("ARCLIGHT_UPLOAD_DIR", str(Path(__file__).parent / "arclight" / "videos")))
-    
-    app.config["ARCLIGHT_SECRET"] = os.getenv("ARCLIGHT_SECRET", "ton_token_secret")
-
-    app.config["OUTPUT_FOLDER"].mkdir(parents=True, exist_ok=True)
-    app.config["BACKUPS_FOLDER"].mkdir(parents=True, exist_ok=True)
-    app.config["LOGS_FOLDER"].mkdir(parents=True, exist_ok=True)
-    app.config["ARCLIGHT_UPLOAD_DIR"].mkdir(parents=True, exist_ok=True)
-
-    # Limiter Config
-    if os.getenv("FLASK_ENV") == "production":
-        app.config["RATELIMIT_STORAGE_URI"] = os.getenv(
-            "REDIS_URL", f"redis://{app.config['CACHE_REDIS_HOST']}:{app.config['CACHE_REDIS_PORT']}/{app.config['CACHE_REDIS_DB']}")
-    else:
-        app.config["RATELIMIT_STORAGE_URI"] = "memory://"
+    # Ensure folders exist
+    for folder in ["OUTPUT_FOLDER", "BACKUPS_FOLDER", "LOGS_FOLDER", "ARCLIGHT_UPLOAD_DIR"]:
+        if folder in app.config:
+            Path(app.config[folder]).mkdir(parents=True, exist_ok=True)
 
     # Initialize extensions
     cache.init_app(app)

@@ -1,4 +1,4 @@
-from specs_config import SPECS_CONFIG
+from utils.specs_config import SPECS_CONFIG
 from flask import g
 
 
