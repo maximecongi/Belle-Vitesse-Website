@@ -292,3 +292,4 @@ pilot_waiver_attachments/*
 output
 static/images/airtable/*
 backups/*
+static/images/airtable/
