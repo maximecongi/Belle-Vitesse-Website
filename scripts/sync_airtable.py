@@ -12,48 +12,36 @@ Usage:
 import argparse
 import os
 import sys
+from pathlib import Path
 
-from dotenv import load_dotenv
+# Setup path for local imports (parent of scripts/)
+_root = Path(__file__).parent.parent
+sys.path.append(str(_root))
+os.chdir(_root)
 
-# Add project root to path so we can import services
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.insert(0, PROJECT_ROOT)
-os.chdir(PROJECT_ROOT)
-
-load_dotenv()
-
-from services.sync_airtable import run_sync  # noqa: E402
+from utils.scripts_helper import build_minimal_app
+from services.sync_airtable import run_sync
 
 
-def get_config():
-    """Build config dict from environment variables."""
+def get_airtable_config():
+    """Build Airtable-specific config."""
     return {
         "airtable_token": os.getenv("AIRTABLE_SECRET_TOKEN"),
         "airtable_base_id": os.getenv("AIRTABLE_BASE_ID"),
+        # We still need these for run_sync which is not yet fully ORM-based
         "mysql_host": os.getenv("MYSQL_HOST", "localhost"),
         "mysql_user": os.getenv("MYSQL_USER"),
         "mysql_password": os.getenv("MYSQL_PASSWORD"),
         "mysql_database": os.getenv("MYSQL_DATABASE"),
         "use_ssh_tunnel": os.getenv("USE_SSH_TUNNEL", "false").lower() == "true",
-        "ssh_host": os.getenv("SSH_HOST", "ssh.pythonanywhere.com"),
-        "ssh_user": os.getenv("SSH_USER"),
-        "ssh_password": os.getenv("SSH_PASSWORD"),
     }
 
 
-def validate_config(config):
-    """Validate required config values."""
+def validate_airtable_config(config):
+    """Validate required Airtable values."""
     if not config["airtable_token"] or not config["airtable_base_id"]:
         raise RuntimeError(
             "AIRTABLE_SECRET_TOKEN and AIRTABLE_BASE_ID must be set")
-
-    if not config["mysql_user"] or not config["mysql_password"] or not config["mysql_database"]:
-        raise RuntimeError("MySQL credentials must be set in .env")
-
-    if config["use_ssh_tunnel"]:
-        if not config["ssh_user"] or not config["ssh_password"]:
-            raise RuntimeError(
-                "SSH_USER and SSH_PASSWORD must be set when USE_SSH_TUNNEL is true")
 
 
 def interactive_menu():
@@ -94,31 +82,35 @@ def main():
 
     args = parser.parse_args()
 
-    config = get_config()
-    validate_config(config)
+    # Initialize App & Tunnel
+    app, tunnel = build_minimal_app()
+    
+    with app.app_context():
+        config = get_airtable_config()
+        validate_airtable_config(config)
 
-    # Determine mode
-    if args.both:
-        sync_db, sync_images = True, True
-    elif args.db:
-        sync_db, sync_images = True, False
-    elif args.images:
-        sync_db, sync_images = False, True
-    else:
-        # No argument → interactive menu
-        sync_db, sync_images = interactive_menu()
+        # Determine mode
+        if args.both:
+            sync_db, sync_images = True, True
+        elif args.db:
+            sync_db, sync_images = True, False
+        elif args.images:
+            sync_db, sync_images = False, True
+        else:
+            # No argument → interactive menu
+            sync_db, sync_images = interactive_menu()
 
-    # Summary
-    modes = []
-    if sync_db:
-        modes.append("Database")
-    if sync_images:
-        modes.append("Images")
+        # Summary
+        modes = []
+        if sync_db:
+            modes.append("Database")
+        if sync_images:
+            modes.append("Images")
 
-    print(f"\n🚀 Starting sync: {' + '.join(modes)}")
-    print("=" * 60)
+        print(f"\n🚀 Starting sync: {' + '.join(modes)}")
+        print("=" * 60)
 
-    run_sync(config, sync_db=sync_db, sync_images=sync_images)
+        run_sync(config, sync_db=sync_db, sync_images=sync_images)
 
     print("\n" + "=" * 60)
     print("✅ Sync completed successfully!")

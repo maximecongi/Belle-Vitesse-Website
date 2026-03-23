@@ -11,11 +11,10 @@ from pathlib import Path
 
 import requests
 from pyairtable import Api
-from sshtunnel import SSHTunnelForwarder
 from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 
-IMAGE_STORE_PATH = "static/images/airtable"
+IMAGE_STORE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static", "images", "airtable")
 STATIC_URL_PREFIX = "/static/images/airtable"
 
 TABLES = ["vehicles", "heads", "grips_categories",
@@ -286,7 +285,7 @@ def run_sync(config, sync_db=True, sync_images=True):
     Args:
         config: dict with keys: airtable_token, airtable_base_id,
                 mysql_host, mysql_user, mysql_password, mysql_database,
-                use_ssh_tunnel, ssh_host, ssh_user, ssh_password
+                use_ssh_tunnel, etc.
         sync_db: whether to sync database records
         sync_images: whether to download images
     """
@@ -311,34 +310,36 @@ def run_sync(config, sync_db=True, sync_images=True):
                     process_attachments_in_fields(
                         record["fields"], table_name, record["id"])
 
-    if config.get("use_ssh_tunnel"):
-        print("Using SSH tunnel...")
-        with SSHTunnelForwarder(
-            (config["ssh_host"], 22),
-            ssh_username=config["ssh_user"],
-            ssh_password=config["ssh_password"],
-            remote_bind_address=(config["mysql_host"], 3306),
-            local_bind_address=('127.0.0.1', 0)
-        ) as tunnel:
-            print(f"SSH tunnel established on local port {tunnel.local_bind_port}")
+    # Centralized connection handling
+    use_ssh = config.get("use_ssh_tunnel") or os.getenv("FLASK_ENV") != "production"
+    
+    if use_ssh:
+        from utils.ssh_helper import get_ssh_tunnel
+        print("Ensuring SSH tunnel via centralized helper...")
+        tunnel, local_port = get_ssh_tunnel()
+        
+        if tunnel:
+            print(f"SSH tunnel active on local port {local_port}")
             engine = get_sqlalchemy_engine(
                 "127.0.0.1", config["mysql_user"], config["mysql_password"],
-                config["mysql_database"], port=tunnel.local_bind_port
+                config["mysql_database"], port=local_port
             )
-            with engine.begin() as connection:
-                try:
-                    _do_sync(connection)
-                except Exception as e:
-                    print(f"\nError during sync: {e}")
-                    raise
+        else:
+            # Fallback for dev if tunnel is not available (e.g. local mysql)
+            print("SSH tunnel not available, attempting direct connection...")
+            engine = get_sqlalchemy_engine(
+                config["mysql_host"], config["mysql_user"], config["mysql_password"],
+                config["mysql_database"]
+            )
     else:
         engine = get_sqlalchemy_engine(
             config["mysql_host"], config["mysql_user"], config["mysql_password"],
             config["mysql_database"]
         )
-        with engine.begin() as connection:
-            try:
-                _do_sync(connection)
-            except Exception as e:
-                print(f"\nError during sync: {e}")
-                raise
+
+    with engine.begin() as connection:
+        try:
+            _do_sync(connection)
+        except Exception as e:
+            print(f"\nError during sync: {e}")
+            raise

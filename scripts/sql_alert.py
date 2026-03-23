@@ -7,14 +7,15 @@ from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 from functools import lru_cache
 from pathlib import Path
+from dotenv import load_dotenv
 
 import requests
-from dotenv import load_dotenv
-from utils.scripts_helper import build_minimal_app
 
-# Setup path for local imports
-_root = Path(__file__).parent.parent.parent
+# Setup path for local imports (parent of scripts/)
+_root = Path(__file__).parent.parent
 sys.path.append(str(_root))
+
+from utils.scripts_helper import build_minimal_app
 
 # Load environment variables
 load_dotenv(_root / '.env')

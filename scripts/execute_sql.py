@@ -1,28 +1,29 @@
 import os
-import subprocess
 import sys
+import subprocess
 from pathlib import Path
-
 from dotenv import load_dotenv
-from sshtunnel import SSHTunnelForwarder
 
-env_path = Path(__file__).parent.parent / '.env'
-load_dotenv(env_path)
+# Setup path for local imports
+_root = Path(__file__).parent.parent
+sys.path.append(str(_root))
+
+from utils.ssh_helper import get_ssh_tunnel
+
+# Load environment variables
+load_dotenv(_root / '.env')
 
 MYSQL_USER = os.getenv("MYSQL_USER")
 MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
 MYSQL_HOST = os.getenv("MYSQL_HOST", "127.0.0.1")
 MYSQL_DB = os.getenv("MYSQL_DATABASE")
 
-SSH_HOST = os.getenv("SSH_HOST")
-SSH_USER = os.getenv("SSH_USER")
-SSH_PASSWORD = os.getenv("SSH_PASSWORD")
-
 # Add common Homebrew paths to PATH for mysql
 os.environ["PATH"] += os.pathsep + "/opt/homebrew/bin" + os.pathsep + "/usr/local/bin" + os.pathsep + "/opt/homebrew/Cellar/mysql-client/9.6.0/bin"
 
 # The first argument is the SQL file to execute
 SQL_FILE = sys.argv[1] if len(sys.argv) > 1 else "/tmp/migrate_projects.sql"
+
 
 def execute_sql(host, port):
     cmd = [
@@ -42,18 +43,14 @@ def execute_sql(host, port):
         print(f"❌ SQL execution failed: {e}")
         exit(1)
 
-if os.getenv("USE_SSH_TUNNEL", "false").lower() == "true":
-    print(f"🔗 Establishing SSH Tunnel to {SSH_HOST}...")
-    try:
-        with SSHTunnelForwarder(
-            (SSH_HOST, 22),
-            ssh_username=SSH_USER,
-            ssh_password=SSH_PASSWORD,
-            remote_bind_address=(MYSQL_HOST, 3306)
-        ) as tunnel:
-            execute_sql("127.0.0.1", tunnel.local_bind_port)
-    except Exception as e:
-        print(f"❌ SSH Tunnel failed: {e}")
-        exit(1)
+
+if os.getenv("USE_SSH_TUNNEL", "false").lower() == "true" or os.getenv("FLASK_ENV") != "production":
+    print("🔗 Ensuring SSH Tunnel via centralized helper...")
+    tunnel, local_port = get_ssh_tunnel()
+    if tunnel:
+        execute_sql("127.0.0.1", local_port)
+    else:
+        print("⚠️ SSH Tunnel not available, attempting direct connection...")
+        execute_sql(MYSQL_HOST, 3306)
 else:
     execute_sql(MYSQL_HOST, 3306)

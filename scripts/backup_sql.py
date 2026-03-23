@@ -1,23 +1,23 @@
 import os
+import sys
 import subprocess
 from datetime import datetime
 from pathlib import Path
-
 from dotenv import load_dotenv
-from sshtunnel import SSHTunnelForwarder
+
+# Setup path for local imports
+_root = Path(__file__).parent.parent
+sys.path.append(str(_root))
+
+from utils.ssh_helper import get_ssh_tunnel
 
 # Load environment variables
-env_path = Path(__file__).parent.parent / '.env'
-load_dotenv(env_path)
+load_dotenv(_root / '.env')
 
 MYSQL_USER = os.getenv("MYSQL_USER")
 MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
 MYSQL_HOST = os.getenv("MYSQL_HOST", "127.0.0.1")
 MYSQL_DB = os.getenv("MYSQL_DATABASE")
-
-SSH_HOST = os.getenv("SSH_HOST")
-SSH_USER = os.getenv("SSH_USER")
-SSH_PASSWORD = os.getenv("SSH_PASSWORD")
 
 # Add common Homebrew paths to PATH for mysqldump
 os.environ["PATH"] += os.pathsep + "/opt/homebrew/bin" + os.pathsep + \
@@ -29,7 +29,7 @@ if not all([MYSQL_USER, MYSQL_PASSWORD, MYSQL_DB]):
 
 # Setup backup directory
 TIMESTAMP = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-BACKUP_DIR = Path(__file__).parent.parent / "backups" / "sql"
+BACKUP_DIR = _root / "backups" / "sql"
 BACKUP_DIR.mkdir(parents=True, exist_ok=True)
 BACKUP_FILE = BACKUP_DIR / f"dump_{TIMESTAMP}.sql"
 
@@ -58,17 +58,12 @@ def run_backup(host, port):
 
 
 if os.getenv("FLASK_ENV", "production").lower() != "production":
-    print(f"🔗 Establishing SSH Tunnel to {SSH_HOST}...")
-    try:
-        with SSHTunnelForwarder(
-            (SSH_HOST, 22),
-            ssh_username=SSH_USER,
-            ssh_password=SSH_PASSWORD,
-            remote_bind_address=(MYSQL_HOST, 3306)
-        ) as tunnel:
-            run_backup("127.0.0.1", tunnel.local_bind_port)
-    except Exception as e:
-        print(f"❌ SSH Tunnel failed: {e}")
-        exit(1)
+    print("🔗 Ensuring SSH Tunnel via centralized helper...")
+    tunnel, local_port = get_ssh_tunnel()
+    if tunnel:
+        run_backup("127.0.0.1", local_port)
+    else:
+        print("⚠️ SSH Tunnel not available, attempting direct connection...")
+        run_backup(MYSQL_HOST, 3306)
 else:
     run_backup(MYSQL_HOST, 3306)
