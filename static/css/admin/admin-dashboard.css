@@ -57,14 +57,15 @@
 
 /* Status Borders */
 .admin-card.status-yellow {
-    border-left: 3px solid #ffcc00;
+    border-left: 3px solid var(--yellow-1);
 }
 
 .admin-card.status-green {
-    border-left: 3px solid #2ecc71;
+    border-left: 3px solid var(--green-success);
 }
 
 @media (max-width: 1000px) {
+
     .dashboard-grid,
     .dashboard-split-layout {
         grid-template-columns: 1fr;
