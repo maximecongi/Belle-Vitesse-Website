@@ -44,13 +44,21 @@
                 <td>
                     {% for v in project.vehicles %}
                     {% if v.checkout_id %}
-                    <a href="{{ url_for('admin_checkout_detail', record_id=v.checkout_id) }}"
-                        style="text-decoration: none;">
-                        <span class="badge-pill" data-val="{{ v.checkout_status_id }}"
-                            data-conform="{{ v.checkout_conform }}" style="margin: 0.15rem;">
-                            {{ v.fields.name }}
-                        </span>
-                    </a>
+                    <div style="display: inline-flex; align-items: center; gap: 0.2rem;">
+                        <a href="{{ url_for('admin_checkout_detail', record_id=v.checkout_id) }}"
+                            style="text-decoration: none;">
+                            <span class="badge-pill" data-val="{{ v.checkout_status_id }}"
+                                data-conform="{{ v.checkout_conform }}" style="margin: 0.15rem;">
+                                {{ v.fields.name }}
+                            </span>
+                        </a>
+                        {% if v.checkout_pdf %}
+                        <a href="{{ v.checkout_pdf }}" target="_blank" style="text-decoration: none;"
+                            title="Voir le document"><img style="width: 1.0rem;position:relative; top:1px;"
+                                src="{{ url_for('static', filename='imgs/icons/file-download.svg') }}"
+                                alt="pdf icon"></a>
+                        {% endif %}
+                    </div>
                     {% else %}
                     <a href="{{ url_for('admin_checkout_new', project_id=project.id, vehicle_id=v.id) }}"
                         style="text-decoration: none;">
@@ -66,13 +74,21 @@
                 <td>
                     {% for v in project.vehicles %}
                     {% if v.checkin_id %}
-                    <a href="{{ url_for('admin_checkin_detail', record_id=v.checkin_id) }}"
-                        style="text-decoration: none;">
-                        <span class="badge-pill" data-val="{{ v.checkin_status_id }}"
-                            data-conform="{{ v.checkin_conform }}" style="margin: 0.15rem;">
-                            {{ v.fields.name }}
-                        </span>
-                    </a>
+                    <div style="display: inline-flex; align-items: center; gap: 0.2rem;">
+                        <a href="{{ url_for('admin_checkin_detail', record_id=v.checkin_id) }}"
+                            style="text-decoration: none;">
+                            <span class="badge-pill" data-val="{{ v.checkin_status_id }}"
+                                data-conform="{{ v.checkin_conform }}" style="margin: 0.15rem;">
+                                {{ v.fields.name }}
+                            </span>
+                        </a>
+                        {% if v.checkin_pdf %}
+                        <a href="{{ v.checkin_pdf }}" target="_blank" style="text-decoration: none;"
+                            title="Voir le document"><img style="width: 1.0rem;position:relative; top:1px;"
+                                src="{{ url_for('static', filename='imgs/icons/file-download.svg') }}"
+                                alt="pdf icon"></a>
+                        {% endif %}
+                    </div>
                     {% else %}
                     <a href="{{ url_for('admin_checkin_new', project_id=project.id, vehicle_id=v.id) }}"
                         style="text-decoration: none;">
@@ -92,6 +108,12 @@
                             style="text-decoration: none;">
                             {{ status_badge(project.pilot_waiver.status, project.pilot_waiver.raw_status) }}
                         </a>
+                        {% if project.pilot_waiver.pdf_path %}
+                        <a href="{{ project.pilot_waiver.pdf_path }}" target="_blank" style="text-decoration: none;"
+                            title="Voir le document"><img style="width: 1.0rem;position:relative; top:1px;"
+                                src="{{ url_for('static', filename='imgs/icons/file-download.svg') }}"
+                                alt="pdf icon"></a>
+                        {% endif %}
                     </div>
                     <div style="display: flex; gap: 0.5rem; align-items: center;">
                         <span style="font-size:0.7rem; color: var(--grey-2); font-weight: 600;">🎬</span>
@@ -99,6 +121,13 @@
                             style="text-decoration: none;">
                             {{ status_badge(project.production_waiver.status, project.production_waiver.raw_status) }}
                         </a>
+                        {% if project.production_waiver.pdf_path %}
+                        <a href="{{ project.production_waiver.pdf_path }}" target="_blank"
+                            style="text-decoration: none;" title="Voir le document"><img
+                                style="width: 1.0rem;position:relative; top:1px;"
+                                src="{{ url_for('static', filename='imgs/icons/file-download.svg') }}"
+                                alt="pdf icon"></a>
+                        {% endif %}
                     </div>
                 </td>
                 <td>

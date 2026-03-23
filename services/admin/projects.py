@@ -33,11 +33,13 @@ def _format_vehicle_state(project, vehicle_id, vehicle_map):
         "checkout_status": c_out.status if c_out else "",
         "checkout_status_id": get_inspection_key(c_out.status) if c_out else "to_check",
         "checkout_id": c_out.id if c_out else "",
+        "checkout_pdf": c_out.signed_pdf_path if c_out else None,
         "checkout_conform": "true" if (c_out and c_out.vehicle_ready) else "false",
         "checkout_ready": "true" if (c_out and c_out.vehicle_ready) else ("false" if c_out else "—"),
         "checkin_status": c_in.status if c_in else "",
         "checkin_status_id": get_inspection_key(c_in.status) if c_in else "to_check",
         "checkin_id": c_in.id if c_in else "",
+        "checkin_pdf": c_in.signed_pdf_path if c_in else None,
         "checkin_conform": "true" if (c_in and c_in.vehicle_ready) else "false",
         "checkin_ready": "true" if (c_in and c_in.vehicle_ready) else ("false" if c_in else "—"),
     }
@@ -70,12 +72,14 @@ def _format_project_admin(p, vehicle_map):
             "waiver_num": p.pilot_waiver.waiver_id if p.pilot_waiver else "",
             "status": format_waiver_status(p.pilot_waiver.status) if p.pilot_waiver else "",
             "raw_status": p.pilot_waiver.status if p.pilot_waiver else "",
+            "pdf_path": p.pilot_waiver.signed_pdf_path if p.pilot_waiver else None,
         },
         "production_waiver": {
             "id": p.production_waiver.id if p.production_waiver else None,
             "waiver_num": p.production_waiver.waiver_id if p.production_waiver else "",
             "status": format_waiver_status(p.production_waiver.status) if p.production_waiver else "",
             "raw_status": p.production_waiver.status if p.production_waiver else "",
+            "pdf_path": p.production_waiver.signed_pdf_path if p.production_waiver else None,
         }
     }
 
