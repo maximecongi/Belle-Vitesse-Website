@@ -478,6 +478,41 @@ class ProductionWaiverToken(db.Model, TokenMixin):
     waiver_id = db.Column(db.String(255), nullable=False)
 
 
+# ── Dynamic Airtable-Sync Models ────────────────────────────────
+
+class SyncRecordMixin:
+    """Base for tables synchronised from Airtable."""
+    id = db.Column(db.String(255), primary_key=True)
+    createdTime = db.Column(db.DateTime)
+    fields = db.Column(db.JSON)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class Vehicle(db.Model, SyncRecordMixin):
+    __tablename__ = "vehicles"
+
+
+class Head(db.Model, SyncRecordMixin):
+    __tablename__ = "heads"
+
+
+class GripCategory(db.Model, SyncRecordMixin):
+    __tablename__ = "grips_categories"
+
+
+class GripProduct(db.Model, SyncRecordMixin):
+    __tablename__ = "grip_products"
+
+
+class Config(db.Model, SyncRecordMixin):
+    __tablename__ = "configs"
+
+
+class Static(db.Model, SyncRecordMixin):
+    __tablename__ = "static"
+
+
 class VehicleCheckpointConfig(db.Model):
     __tablename__ = "vehicle_checkpoint_configs"
 

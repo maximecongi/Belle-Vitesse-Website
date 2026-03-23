@@ -4,72 +4,28 @@ Replaces direct Airtable API calls with MySQL queries.
 Maintains the same interface as the original airtable.py.
 """
 
-import json
 import logging
-import os
-
-import mysql.connector
-from dotenv import load_dotenv
 from flask_caching import Cache
+from models import (
+    Vehicle,
+    Head,
+    GripCategory,
+    GripProduct,
+    Config,
+    Static
+)
 
-# Load environment variables
-load_dotenv()
-
-# MySQL Configuration
-MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
-MYSQL_USER = os.getenv("MYSQL_USER")
-MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
-MYSQL_DATABASE = os.getenv("MYSQL_DATABASE")
+# Mapping table names to models
+TABLE_MODELS = {
+    "vehicles": Vehicle,
+    "heads": Head,
+    "grips_categories": GripCategory,
+    "grip_products": GripProduct,
+    "configs": Config,
+    "static": Static,
+}
 
 cache: Cache = None
-
-# Global tunnel and connection for SSH mode
-_ssh_tunnel = None
-_ssh_connection = None
-
-
-def get_ssh_tunnel():
-    """
-    Ensure the SSH tunnel is started (if in dev) and return (tunnel, local_port).
-    Returns (None, None) in production.
-    """
-    global _ssh_tunnel
-    env = os.getenv("FLASK_ENV", "development")
-    if env == "production":
-        return None, None
-
-    from utils.ssh_helper import start_ssh_tunnel
-    logger = logging.getLogger("database.ssh")
-
-    cfg = {"MYSQL_HOST": MYSQL_HOST}
-    tunnel, local_port = start_ssh_tunnel(
-        cfg, logger, existing_tunnel=_ssh_tunnel)
-
-    if tunnel:
-        _ssh_tunnel = tunnel
-        return tunnel, local_port
-    return None, None
-
-
-def get_db_connection():
-    """Create and return a MySQL connection (with optional SSH tunnel)."""
-    tunnel, local_port = get_ssh_tunnel()
-
-    if tunnel:
-        return mysql.connector.connect(
-            host="127.0.0.1",
-            port=local_port,
-            user=MYSQL_USER,
-            password=MYSQL_PASSWORD,
-            database=MYSQL_DATABASE,
-        )
-
-    return mysql.connector.connect(
-        host=MYSQL_HOST,
-        user=MYSQL_USER,
-        password=MYSQL_PASSWORD,
-        database=MYSQL_DATABASE,
-    )
 
 
 def init_cache(app_cache: Cache):
@@ -93,69 +49,49 @@ def get_cached(key, fetcher, timeout=3600):
 
 
 def _fetch_all_from_table(table_name, order_by=None):
-    """Fetch all records from a table and format like Airtable response."""
-    connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
-
+    """Fetch all records from a table using ORM."""
     try:
-        query = f"SELECT id, createdTime, fields FROM `{table_name}`"
-        cursor.execute(query)
-        rows = cursor.fetchall()
+        model = TABLE_MODELS.get(table_name)
+        if not model:
+            logging.error(f"No model found for table: {table_name}")
+            return []
 
         records = []
-        for row in rows:
-            fields = (
-                json.loads(row["fields"])
-                if isinstance(row["fields"], str)
-                else row["fields"]
-            )
-            records.append(
-                {
-                    "id": row["id"],
-                    "createdTime": str(row["createdTime"])
-                    if row["createdTime"]
-                    else None,
-                    "fields": fields,
-                }
-            )
+        for row in model.query.all():
+            records.append({
+                "id": row.id,
+                "createdTime": str(row.createdTime) if row.createdTime else None,
+                "fields": row.fields
+            })
 
         if order_by:
             records.sort(key=lambda r: r["fields"].get(order_by, 999))
 
         return records
-    finally:
-        cursor.close()
-        connection.close()
+    except Exception as e:
+        logging.error(f"Error fetching from {table_name}: {e}")
+        return []
 
 
 def _fetch_by_field(table_name, field_name, field_value):
-    """Fetch a single record by field value."""
-    connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
-
+    """Fetch a single record by field value using ORM scan (since fields are JSON)."""
     try:
-        query = f"SELECT id, createdTime, fields FROM `{table_name}`"
-        cursor.execute(query)
-        rows = cursor.fetchall()
+        model = TABLE_MODELS.get(table_name)
+        if not model:
+            return None
 
-        for row in rows:
-            fields = (
-                json.loads(row["fields"])
-                if isinstance(row["fields"], str)
-                else row["fields"]
-            )
-            if fields.get(field_name) == field_value:
+        # Scan all (since columns are hidden in JSON 'fields')
+        for row in model.query.all():
+            if row.fields.get(field_name) == field_value:
                 return {
-                    "id": row["id"],
-                    "createdTime": str(row["createdTime"])
-                    if row["createdTime"]
-                    else None,
-                    "fields": fields,
+                    "id": row.id,
+                    "createdTime": str(row.createdTime) if row.createdTime else None,
+                    "fields": row.fields
                 }
         return None
-    finally:
-        cursor.close()
-        connection.close()
+    except Exception as e:
+        logging.error(f"Error fetching by field from {table_name}: {e}")
+        return None
 
 
 # ============================================================
@@ -246,413 +182,4 @@ def get_configs_for_vehicle(vehicle_id):
     return get_cached(f"configs_vehicle_{vehicle_id}", fetcher)
 
 
-# ============================================================
-# Checkout Verification (MySQL)
-# ============================================================
-
-
-def _get_existing_columns(cursor, table_name):
-    """Return the set of column names that exist on a table."""
-    cursor.execute(
-        "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS "
-        "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s",
-        (table_name,),
-    )
-    return {row["COLUMN_NAME"] for row in cursor.fetchall()}
-
-
-def init_checkout_db():
-    """
-    Initialize checkout tables and apply any pending schema migrations.
-
-    Safe to call on every app startup:
-    - Creates tables if they don't exist yet.
-    - Adds missing columns to existing tables (additive only — never drops columns).
-
-    Current migrations tracked here:
-      signed_documents:
-        - pdf_file_hash VARCHAR(64)  → SHA-256 of the raw PDF binary (Option B verification)
-    """
-    connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
-    try:
-        # ── signed_documents ──────────────────────────────────────
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS signed_documents (
-                inspection_id  VARCHAR(255) PRIMARY KEY,
-                hash           VARCHAR(255) NOT NULL,
-                pdf_file_hash  VARCHAR(64)  NULL,
-                data_snapshot  JSON         NOT NULL,
-                signature      MEDIUMTEXT,
-                pdf_url        TEXT,
-                signed_at      DATETIME,
-                created_at     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-
-        # Migration: add pdf_file_hash to tables that were created before this column existed
-        existing = _get_existing_columns(cursor, "signed_documents")
-        if "pdf_file_hash" not in existing:
-            cursor.execute(
-                "ALTER TABLE signed_documents ADD COLUMN pdf_file_hash VARCHAR(64) NULL"
-            )
-            print("✅ Migration applied: signed_documents.pdf_file_hash added.")
-
-        # ── checkout_tokens ───────────────────────────────────────
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS checkout_tokens (
-                token          VARCHAR(36)  PRIMARY KEY,
-                record_id      VARCHAR(255) NOT NULL,
-                inspection_id  VARCHAR(255) NOT NULL,
-                signature      MEDIUMTEXT,
-                created_at     DATETIME     NOT NULL,
-                expires_at     DATETIME GENERATED ALWAYS AS
-                               (created_at + INTERVAL 24 HOUR) VIRTUAL
-            )
-        """)
-
-        connection.commit()
-
-    except mysql.connector.Error as err:
-        print(f"❌ Error initializing checkout DB: {err}")
-    finally:
-        cursor.close()
-        connection.close()
-
-
-def store_signed_document(
-    inspection_id,
-    file_hash,
-    data_snapshot,
-    signature,
-    pdf_url,
-    signed_at,
-    pdf_file_hash=None,  # SHA-256 of the raw PDF binary — None for legacy documents
-):
-    """
-    Store a signed document snapshot in MySQL.
-
-    pdf_file_hash is optional to maintain backward compatibility with call sites
-    that were created before Option B was introduced. Legacy rows will have NULL
-    in that column and will skip PDF file verification gracefully.
-    """
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    try:
-        if isinstance(data_snapshot, dict):
-            data_snapshot = json.dumps(data_snapshot, ensure_ascii=False)
-
-        sql = """
-            INSERT INTO signed_documents
-                (inspection_id, hash, pdf_file_hash, data_snapshot, signature, pdf_url, signed_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-            ON DUPLICATE KEY UPDATE
-                hash          = VALUES(hash),
-                pdf_file_hash = VALUES(pdf_file_hash),
-                data_snapshot = VALUES(data_snapshot),
-                signature     = VALUES(signature),
-                pdf_url       = VALUES(pdf_url),
-                signed_at     = VALUES(signed_at)
-        """
-        cursor.execute(
-            sql,
-            (
-                inspection_id,
-                file_hash,
-                pdf_file_hash,
-                data_snapshot,
-                signature,
-                pdf_url,
-                signed_at,
-            ),
-        )
-        connection.commit()
-        return True
-    except mysql.connector.Error as err:
-        print(f"❌ Error storing signed document: {err}")
-        return False
-    finally:
-        cursor.close()
-        connection.close()
-
-
-def get_checkout_signed_document(inspection_id):
-    """
-    Retrieve a signed document by inspection ID from MySQL.
-
-    Returns the full row as a dict, including pdf_file_hash (may be None
-    for documents signed before the Option B migration).
-    """
-    connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
-    try:
-        cursor.execute(
-            "SELECT * FROM signed_documents WHERE inspection_id = %s",
-            (inspection_id,),
-        )
-        record = cursor.fetchone()
-
-        if record:
-            if isinstance(record["data_snapshot"], str):
-                record["data_snapshot"] = json.loads(record["data_snapshot"])
-            return record
-        return None
-    except mysql.connector.Error as err:
-        print(f"❌ Error fetching signed document: {err}")
-        return None
-    finally:
-        cursor.close()
-        connection.close()
-
-
-def store_checkout_token(token, record_id, inspection_id, created_at):
-    """Store a checkout session token."""
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    try:
-        sql = """
-            INSERT INTO checkout_tokens (token, record_id, inspection_id, created_at)
-            VALUES (%s, %s, %s, %s)
-        """
-        cursor.execute(sql, (token, record_id, inspection_id, created_at))
-        connection.commit()
-    except mysql.connector.Error as err:
-        print(f"❌ Error storing token: {err}")
-    finally:
-        cursor.close()
-        connection.close()
-
-
-def get_checkout_token(token):
-    """Retrieve a token for checking validity."""
-    connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
-    try:
-        cursor.execute(
-            "SELECT * FROM checkout_tokens WHERE token = %s", (token,))
-        return cursor.fetchone()
-    except mysql.connector.Error as err:
-        print(f"❌ Error fetching token: {err}")
-        return None
-    finally:
-        cursor.close()
-        connection.close()
-
-
-def update_checkout_token_signature(token, signature):
-    """Update signature for a token."""
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    try:
-        cursor.execute(
-            "UPDATE checkout_tokens SET signature = %s WHERE token = %s",
-            (signature, token),
-        )
-        connection.commit()
-    except mysql.connector.Error as err:
-        print(f"❌ Error updating token signature: {err}")
-    finally:
-        cursor.close()
-        connection.close()
-
-
-def delete_checkout_token(token):
-    """Delete a token after use."""
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    try:
-        cursor.execute(
-            "DELETE FROM checkout_tokens WHERE token = %s", (token,))
-        connection.commit()
-    except mysql.connector.Error as err:
-        print(f"❌ Error deleting token: {err}")
-    finally:
-        cursor.close()
-        connection.close()
-
-# ============================================================
-# Checkin Verification (MySQL)
-# ============================================================
-
-
-def init_checkin_db():
-    """
-    Initialize checkin tables and apply any pending schema migrations.
-    """
-    connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
-    try:
-        # ── checkin_signed_documents ──────────────────────────────────────
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS checkin_signed_documents (
-                inspection_id  VARCHAR(255) PRIMARY KEY,
-                hash           VARCHAR(255) NOT NULL,
-                pdf_file_hash  VARCHAR(64)  NULL,
-                data_snapshot  JSON         NOT NULL,
-                signature      MEDIUMTEXT,
-                pdf_url        TEXT,
-                signed_at      DATETIME,
-                created_at     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-
-        existing = _get_existing_columns(cursor, "checkin_signed_documents")
-        if "pdf_file_hash" not in existing:
-            cursor.execute(
-                "ALTER TABLE checkin_signed_documents ADD COLUMN pdf_file_hash VARCHAR(64) NULL"
-            )
-            print("✅ Migration applied: checkin_signed_documents.pdf_file_hash added.")
-
-        # ── checkin_tokens ───────────────────────────────────────
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS checkin_tokens (
-                token          VARCHAR(36)  PRIMARY KEY,
-                record_id      VARCHAR(255) NOT NULL,
-                inspection_id  VARCHAR(255) NOT NULL,
-                signature      MEDIUMTEXT,
-                created_at     DATETIME     NOT NULL,
-                expires_at     DATETIME GENERATED ALWAYS AS
-                               (created_at + INTERVAL 24 HOUR) VIRTUAL
-            )
-        """)
-
-        connection.commit()
-
-    except mysql.connector.Error as err:
-        print(f"❌ Error initializing checkin DB: {err}")
-    finally:
-        cursor.close()
-        connection.close()
-
-
-def store_checkin_signed_document(
-    inspection_id,
-    file_hash,
-    data_snapshot,
-    signature,
-    pdf_url,
-    signed_at,
-    pdf_file_hash=None,
-):
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    try:
-        if isinstance(data_snapshot, dict):
-            data_snapshot = json.dumps(data_snapshot, ensure_ascii=False)
-
-        sql = """
-            INSERT INTO checkin_signed_documents
-                (inspection_id, hash, pdf_file_hash, data_snapshot, signature, pdf_url, signed_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-            ON DUPLICATE KEY UPDATE
-                hash          = VALUES(hash),
-                pdf_file_hash = VALUES(pdf_file_hash),
-                data_snapshot = VALUES(data_snapshot),
-                signature     = VALUES(signature),
-                pdf_url       = VALUES(pdf_url),
-                signed_at     = VALUES(signed_at)
-        """
-        cursor.execute(
-            sql,
-            (
-                inspection_id,
-                file_hash,
-                pdf_file_hash,
-                data_snapshot,
-                signature,
-                pdf_url,
-                signed_at,
-            ),
-        )
-        connection.commit()
-        return True
-    except mysql.connector.Error as err:
-        print(f"❌ Error storing checkin signed document: {err}")
-        return False
-    finally:
-        cursor.close()
-        connection.close()
-
-
-def get_checkin_signed_document(inspection_id):
-    connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
-    try:
-        cursor.execute(
-            "SELECT * FROM checkin_signed_documents WHERE inspection_id = %s",
-            (inspection_id,),
-        )
-        record = cursor.fetchone()
-
-        if record:
-            if isinstance(record["data_snapshot"], str):
-                record["data_snapshot"] = json.loads(record["data_snapshot"])
-            return record
-        return None
-    except mysql.connector.Error as err:
-        print(f"❌ Error fetching checkin signed document: {err}")
-        return None
-    finally:
-        cursor.close()
-        connection.close()
-
-
-def store_checkin_token(token, record_id, inspection_id, created_at):
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    try:
-        sql = """
-            INSERT INTO checkin_tokens (token, record_id, inspection_id, created_at)
-            VALUES (%s, %s, %s, %s)
-        """
-        cursor.execute(sql, (token, record_id, inspection_id, created_at))
-        connection.commit()
-    except mysql.connector.Error as err:
-        print(f"❌ Error storing checkin token: {err}")
-    finally:
-        cursor.close()
-        connection.close()
-
-
-def get_checkin_token(token):
-    connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
-    try:
-        cursor.execute(
-            "SELECT * FROM checkin_tokens WHERE token = %s", (token,))
-        return cursor.fetchone()
-    except mysql.connector.Error as err:
-        print(f"❌ Error fetching checkin token: {err}")
-        return None
-    finally:
-        cursor.close()
-        connection.close()
-
-
-def update_checkin_token_signature(token, signature):
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    try:
-        cursor.execute(
-            "UPDATE checkin_tokens SET signature = %s WHERE token = %s",
-            (signature, token),
-        )
-        connection.commit()
-    except mysql.connector.Error as err:
-        print(f"❌ Error updating checkin token signature: {err}")
-    finally:
-        cursor.close()
-        connection.close()
-
-
-def delete_checkin_token(token):
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    try:
-        cursor.execute("DELETE FROM checkin_tokens WHERE token = %s", (token,))
-        connection.commit()
-    except mysql.connector.Error as err:
-        print(f"❌ Error deleting checkin token: {err}")
-    finally:
-        cursor.close()
-        connection.close()
+# End of generic data utilities

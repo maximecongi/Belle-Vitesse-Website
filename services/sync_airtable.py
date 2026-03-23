@@ -9,11 +9,11 @@ import os
 import shutil
 from pathlib import Path
 
-import mysql.connector
 import requests
-from mysql.connector import Error
 from pyairtable import Api
 from sshtunnel import SSHTunnelForwarder
+from sqlalchemy import create_engine, text
+from sqlalchemy.exc import SQLAlchemyError
 
 IMAGE_STORE_PATH = "static/images/airtable"
 STATIC_URL_PREFIX = "/static/images/airtable"
@@ -26,29 +26,27 @@ THUMBNAIL_SIZES = ["small", "large", "full"]
 
 # ── MySQL helpers ────────────────────────────────────────────
 
-def get_mysql_connection(host, user, password, database, port=3306):
-    """Create and return a MySQL connection."""
+def get_sqlalchemy_engine(host, user, password, database, port=3306):
+    """Create and return a SQLAlchemy engine."""
     try:
-        connection = mysql.connector.connect(
-            host=host, user=user, password=password,
-            database=database, port=port,
-        )
-        return connection
-    except Error as e:
-        print(f"Error connecting to MySQL: {e}")
+        url = f"mysql+mysqlconnector://{user}:{password}@{host}:{port}/{database}"
+        engine = create_engine(url)
+        return engine
+    except Exception as e:
+        print(f"Error creating SQLAlchemy engine: {e}")
         raise
 
 
-def create_table_if_not_exists(cursor, table_name):
+def create_table_if_not_exists(connection, table_name):
     """Create table with flexible JSON structure if it doesn't exist."""
-    cursor.execute(f"""
+    connection.execute(text(f"""
         CREATE TABLE IF NOT EXISTS `{table_name}` (
             id VARCHAR(255) PRIMARY KEY,
             createdTime DATETIME,
             fields JSON,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         )
-    """)
+    """))
 
 
 # ── Image download helpers ───────────────────────────────────
@@ -155,26 +153,25 @@ def _is_attachment_field(value):
             and "url" in value[0] and "filename" in value[0])
 
 
-def _preserve_existing_attachments(cursor, table_name, record_id, new_fields):
+def _preserve_existing_attachments(connection, table_name, record_id, new_fields):
     """
     Merge new fields with existing attachment fields from DB.
-    Non-attachment fields are updated, attachment fields are kept from DB.
     """
-    cursor.execute(
-        f"SELECT fields FROM `{table_name}` WHERE id = %s", (record_id,))
-    row = cursor.fetchone()
+    query = text(f"SELECT fields FROM `{table_name}` WHERE id = :record_id")
+    result = connection.execute(query, {"record_id": record_id})
+    row = result.fetchone()
 
     if not row:
-        # New record, no existing data — strip attachment fields
         return {k: v for k, v in new_fields.items()
                 if not _is_attachment_field(v)}
 
-    existing_fields = json.loads(row[0]) if isinstance(row[0], str) else row[0]
+    existing_fields = row[0]
+    if isinstance(existing_fields, str):
+        existing_fields = json.loads(existing_fields)
 
     merged = {}
     for key, value in new_fields.items():
         if _is_attachment_field(value) and key in existing_fields:
-            # Keep existing local URLs
             merged[key] = existing_fields[key]
         else:
             merged[key] = value
@@ -182,13 +179,13 @@ def _preserve_existing_attachments(cursor, table_name, record_id, new_fields):
     return merged
 
 
-def sync_table(table_name, api, base_id, cursor, download_images=True):
+def sync_table(table_name, api, base_id, connection, download_images=True):
     """Sync a single table from Airtable to MySQL."""
     print(f"\n{'='*50}")
     print(f"Syncing table: {table_name}")
     print(f"{'='*50}")
 
-    create_table_if_not_exists(cursor, table_name)
+    create_table_if_not_exists(connection, table_name)
 
     table = api.table(base_id, table_name)
     records = table.all()
@@ -206,27 +203,28 @@ def sync_table(table_name, api, base_id, cursor, download_images=True):
             processed_fields = process_attachments_in_fields(
                 fields, table_name, record_id)
         else:
-            # DB-only: preserve existing image URLs from DB
             processed_fields = _preserve_existing_attachments(
-                cursor, table_name, record_id, fields)
+                connection, table_name, record_id, fields)
 
         created_time_clean = created_time.split(
             '.')[0].replace("T", " ").replace("Z", "")
 
         fields_json = json.dumps(processed_fields, ensure_ascii=False)
 
-        upsert_query = f"""
+        upsert_query = text(f"""
             INSERT INTO `{table_name}` (`id`, `createdTime`, `fields`)
-            VALUES (%s, %s, %s)
+            VALUES (:id, :createdTime, :fields)
             ON DUPLICATE KEY UPDATE
                 `createdTime` = VALUES(`createdTime`),
                 `fields` = VALUES(`fields`)
-        """
+        """)
 
         try:
-            cursor.execute(
-                upsert_query, (record_id, created_time_clean, fields_json))
-        except Error as e:
+            connection.execute(
+                upsert_query, 
+                {"id": record_id, "createdTime": created_time_clean, "fields": fields_json}
+            )
+        except Exception as e:
             print(
                 f"  FAILED to upsert record {record_id} in table {table_name}: {e}")
             raise e
@@ -235,20 +233,19 @@ def sync_table(table_name, api, base_id, cursor, download_images=True):
     return [r["id"] for r in records]
 
 
-def cleanup_records(cursor, table_name, active_ids):
+def cleanup_records(connection, table_name, active_ids):
     """Delete records from MySQL that are no longer in Airtable."""
     if not active_ids:
         print(f"  Cleaning up: deleting ALL records from {table_name}")
-        cursor.execute(f"DELETE FROM `{table_name}`")
+        connection.execute(text(f"DELETE FROM `{table_name}`"))
         return
 
-    format_strings = ','.join(['%s'] * len(active_ids))
-    query = f"DELETE FROM `{table_name}` WHERE id NOT IN ({format_strings})"
-    cursor.execute(query, tuple(active_ids))
-    deleted_count = cursor.rowcount
-    if deleted_count > 0:
-        print(
-            f"  Cleaning up: deleted {deleted_count} stale records from {table_name}")
+    query = text(f"DELETE FROM `{table_name}` WHERE id NOT IN (:active_ids)")
+    connection.execute(query, {"active_ids": active_ids})
+    
+    # In SQLAlchemy Core, we can get affected rows from the result
+    # but for simplicity in this script, we'll just log that cleanup ran
+    print(f"  Cleaning up stale records from {table_name}")
 
 
 def cleanup_images(table_name, active_ids):
@@ -298,14 +295,12 @@ def run_sync(config, sync_db=True, sync_images=True):
     if sync_images:
         clean_images_folder()
 
-    def _do_sync(cursor):
+    def _do_sync(connection):
         for table_name in TABLES:
             if sync_db:
                 sync_table(table_name, api, config["airtable_base_id"],
-                           cursor, download_images=sync_images)
+                           connection, download_images=sync_images)
             elif sync_images:
-                # Images only: still need to read records from Airtable
-                # to know what images to download
                 table = api.table(config["airtable_base_id"], table_name)
                 records = table.all()
                 print(f"\n{'='*50}")
@@ -325,41 +320,25 @@ def run_sync(config, sync_db=True, sync_images=True):
             remote_bind_address=(config["mysql_host"], 3306),
             local_bind_address=('127.0.0.1', 0)
         ) as tunnel:
-            print(
-                f"SSH tunnel established on local port {tunnel.local_bind_port}")
-            connection = mysql.connector.connect(
-                host="127.0.0.1",
-                port=tunnel.local_bind_port,
-                user=config["mysql_user"],
-                password=config["mysql_password"],
-                database=config["mysql_database"],
+            print(f"SSH tunnel established on local port {tunnel.local_bind_port}")
+            engine = get_sqlalchemy_engine(
+                "127.0.0.1", config["mysql_user"], config["mysql_password"],
+                config["mysql_database"], port=tunnel.local_bind_port
             )
-            cursor = connection.cursor()
+            with engine.begin() as connection:
+                try:
+                    _do_sync(connection)
+                except Exception as e:
+                    print(f"\nError during sync: {e}")
+                    raise
+    else:
+        engine = get_sqlalchemy_engine(
+            config["mysql_host"], config["mysql_user"], config["mysql_password"],
+            config["mysql_database"]
+        )
+        with engine.begin() as connection:
             try:
-                _do_sync(cursor)
-                connection.commit()
+                _do_sync(connection)
             except Exception as e:
-                connection.rollback()
                 print(f"\nError during sync: {e}")
                 raise
-            finally:
-                cursor.close()
-                connection.close()
-    else:
-        connection = mysql.connector.connect(
-            host=config["mysql_host"],
-            user=config["mysql_user"],
-            password=config["mysql_password"],
-            database=config["mysql_database"],
-        )
-        cursor = connection.cursor()
-        try:
-            _do_sync(cursor)
-            connection.commit()
-        except Exception as e:
-            connection.rollback()
-            print(f"\nError during sync: {e}")
-            raise
-        finally:
-            cursor.close()
-            connection.close()

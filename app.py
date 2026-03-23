@@ -25,8 +25,6 @@ from utils.database import (
     get_heads,
     get_vehicles,
     init_cache,
-    init_checkin_db,
-    init_checkout_db,
 )
 
 SUPPORTED_LANGS = ('en', 'fr')
@@ -54,7 +52,7 @@ def create_app():
 
     # SSH Tunnel (Development only)
     if env != "production":
-        from utils.database import get_ssh_tunnel
+        from utils.ssh_helper import get_ssh_tunnel
         tunnel, local_port = get_ssh_tunnel()
 
         if tunnel:
@@ -264,13 +262,39 @@ def create_app():
 
         return response
 
-    # Initialize DB
-    try:
+    # Initialize DB & Schema Migrations
+    def _init_database_schema():
         with app.app_context():
             db.create_all()
-            init_checkout_db()
-            init_checkin_db()
-            app.logger.info("✅ Databases initialized.")
+
+            # Manual migrations for legacy tables (missing columns not handled by create_all)
+            from sqlalchemy import inspect, text
+            inspector = inspect(db.engine)
+            tables_to_check = [
+                'checkout_signed_documents',
+                'checkin_signed_documents',
+                'pilot_waiver_signed_documents',
+                'production_waiver_signed_documents'
+            ]
+
+            for table in tables_to_check:
+                if inspector.has_table(table):
+                    columns = [c['name'] for c in inspector.get_columns(table)]
+                    if 'pdf_file_hash' not in columns:
+                        try:
+                            db.session.execute(
+                                text(f"ALTER TABLE {table} ADD COLUMN pdf_file_hash VARCHAR(64) NULL"))
+                            db.session.commit()
+                            app.logger.info(
+                                f"✅ Migration: {table}.pdf_file_hash added.")
+                        except Exception as e:
+                            db.session.rollback()
+                            app.logger.warning(
+                                f"⚠️ Migration failed for {table}: {e}")
+
+    try:
+        _init_database_schema()
+        app.logger.info("✅ Database schema initialized.")
     except Exception as e:
         app.logger.error(f"❌ DB Init error: {e}")
 
