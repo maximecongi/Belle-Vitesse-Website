@@ -246,12 +246,11 @@
 </div>
 {% else %}
 <div class="admin-card" style="text-align: center; padding: 4rem 2rem;">
-    <div style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.3;">☕️</div>
-    <p style="color: var(--grey-2); font-size: 0.95rem;">Aucune activité (départ ou retour) prévue aujourd'hui.</p>
+    <p style="color: var(--grey-2); font-size: 0.95rem;">Aucun départ ou retour prévu aujourd'hui.</p>
 </div>
 {% endif %}
 
-<div
+{# <div
     style="margin-top: 3rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; border-top: 1px solid #eee; padding-top: 2rem;">
     <a href="{{ url_for('admin_checkouts_list') }}" class="admin-btn admin-btn-secondary"
         style="text-align: center; font-size: 0.8rem;">Tous les check-outs</a>
@@ -261,5 +260,5 @@
         style="text-align: center; font-size: 0.8rem;">Décharges pilote</a>
     <a href="{{ url_for('admin_production_waivers_list') }}" class="admin-btn admin-btn-secondary"
         style="text-align: center; font-size: 0.8rem;">Décharges production</a>
-</div>
+</div> #}
 {% endblock %}
