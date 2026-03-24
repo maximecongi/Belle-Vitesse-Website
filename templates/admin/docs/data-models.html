@@ -8,12 +8,13 @@
     <h2>Schéma de Synthèse</h2>
     <div class="mermaid">
     erDiagram
-        PROJECT ||--o{ CHECKIN : "contient"
-        PROJECT ||--o{ CHECKOUT : "contient"
-        PROJECT ||--o{ PILOT_WAIVER : "nécessite"
-        PROJECT }|--|| CONTACT : "client"
+        PROJECT ||--o| PILOT_WAIVER : "pose un"
+        PROJECT ||--o| PRODUCTION_WAIVER : "pose un"
+        PROJECT }|--|| CONTACT : "pilote_ref"
+        PROJECT }|--|| CONTACT : "production_ref"
+        PROJECT }|--|| PRODUCTION : "société"
         VEHICLE ||--o{ CHECKIN : "inspecté"
-        PILOT_WAIVER ||--|| CONTACT : "signataire"
+        VEHICLE ||--o{ CHECKOUT : "inspecté"
     </div>
 
     <h2>Entités Majeures</h2>
@@ -21,23 +22,37 @@
     <h3>1. Projets (Project)</h3>
     <p>Le pivot central de l'application. Un projet lie une production, un client, des véhicules et des dates.</p>
     <ul>
-        <li><code>project_id</code> : Identifiant unique BVPR-XXXX (généré).</li>
+        <li><code>project_id</code> : Identifiant unique BVPR-XXXX (généré aléatoirement).</li>
         <li><code>status</code> : État du projet (Planifié, En cours, Terminé, Annulé).</li>
+        <li><code>pilot_contact_id</code> : Référence au pilote principal.</li>
+        <li><code>production_contact_id</code> : Référence au chargé de production.</li>
     </ul>
 
     <h3>2. Inspections (Check-in / Check-out)</h3>
-    <p>Trace l'état des véhicules avant et après utilisation. </p>
+    <p>Trace l'état physique des véhicules avant et après utilisation. Les données sont "gelées" lors de la signature via une archive JSON.</p>
     <ul>
-        <li><code>inspection_number</code> : Référence unique du protocole.</li>
-        <li><code>status</code> : État de la signature (À signer, En cours, Signé).</li>
-        <li><code>snapshot</code> : Copie JSON des données au moment de la signature (Immuabilité).</li>
+        <li><code>inspection_number</code> : Référence unique (BVCO-XXXX ou BVCI-XXXX).</li>
+        <li><code>status</code> : État du processus (À signer, Signé).</li>
+        <li><code>snapshot</code> : Copie JSON immuable des points de contrôle au moment de la validation.</li>
     </ul>
 
     <h3>3. Décharges (Waivers)</h3>
-    <p>Documents juridiques signés par les pilotes ou les productions.</p>
+    <p>Il existe deux types de décharges distinctes, chacune ayant son propre workflow et ses données spécifiques.</p>
+    
+    <h4 style="color: var(--bv-yellow); margin-top: 1rem;">A. Décharge Pilote (PilotWaiver)</h4>
+    <p>Signée personnellement par le pilote. Elle se concentre sur ses compétences et ses assurances personnelles.</p>
     <ul>
-        <li><code>pilot_contact_id</code> : Lien vers le contact signataire.</li>
-        <li><code>hash</code> : Empreinte cryptographique garantissant l'intégrité du document.</li>
+        <li><strong>Identifiant</strong> : BVDW-XXXX.</li>
+        <li><strong>Données clés</strong> : N° de permis, date de naissance, police d'assurance civile du pilote.</li>
+        <li><strong>Pièces jointes</strong> : Scan du permis et de l'attestation d'assurance.</li>
+    </ul>
+
+    <h4 style="color: var(--bv-yellow); margin-top: 1rem;">B. Décharge Production (ProductionWaiver)</h4>
+    <p>Signée par le représentant de la société de production pour couvrir l'utilisation globale du matériel.</p>
+    <ul>
+        <li><strong>Identifiant</strong> : BVPW-XXXX.</li>
+        <li><strong>Données clés</strong> : SIRET, N° de TVA, RC Pro Production, lieu d'utilisation.</li>
+        <li><strong>Pièces jointes</strong> : Attestation d'assurance RC Pro Production.</li>
     </ul>
 
     <h2>Standards de Nommage</h2>

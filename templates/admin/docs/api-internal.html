@@ -1,69 +1,74 @@
 {% extends "admin/docs/base.html" %}
 
 {% block content %}
-    <h1>API & Webhooks</h1>
+    <h1>Architecture API</h1>
     
-    <p>La plateforme communique avec des services tiers via une API REST interne et un système de webhooks sortants, principalement gérés par <strong>n8n</strong>.</p>
+    <p>La plateforme Belle Vitesse utilise deux couches d'API distinctes selon l'usage : une API administrative pour le tableau de bord et une API REST publique pour les intégrations externes.</p>
 
-    <h2>API Administrative</h2>
-    <p>Utilisée par le tableau de bord pour les mises à jour de statut en temps réel sans rechargement de page.</p>
-    <ul>
-        <li><strong>Base URL</strong> : <code>/admin/api/v1</code></li>
-        <li><strong>Authentification</strong> : Session administrative ou Jeton Bearer JWT (pour accès externe).</li>
-    </ul>
+    <div class="callout callout-important">
+        <h4>Documentation Interactive (Swagger)</h4>
+        <p>L'intégralité de l'API REST publique est documentée via l'interface Swagger UI. Elle permet de tester les endpoints, de consulter les schémas de données et les codes de réponse.</p>
+        <a href="{{ url_for('admin_api_docs') }}" class="badge-bv" style="text-decoration: none;">Accéder au Swagger API</a>
+    </div>
 
-    <h3>Endpoints Majeurs</h3>
+    <h2>1. API Administrative (Interne)</h2>
+    <p>Ces points d'entrée sont utilisés par l'interface d'administration pour les mises à jour dynamiques (AJAX). Ils nécessitent une session active avec les rôles appropriés.</p>
+    
     <table>
         <thead>
             <tr>
                 <th>Méthode</th>
                 <th>Route</th>
-                <th>Description</th>
+                <th>Usage</th>
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td>POST</td>
-                <td><code>/status/update</code></td>
-                <td>Met à jour l'état d'une inspection ou décharge.</td>
+                <td>GET</td>
+                <td><code>/admin/api/events</code></td>
+                <td>Récupère les événements pour le calendrier du dashboard.</td>
             </tr>
             <tr>
-                <td>GET</td>
-                <td><code>/projects/list</code></td>
-                <td>Récupère la liste filtrée des projets.</td>
+                <td>GET/POST</td>
+                <td><code>/admin/api/checkouts/&lt;id&gt;/status</code></td>
+                <td>Consulte ou modifie le statut d'un Check-out.</td>
+            </tr>
+            <tr>
+                <td>GET/POST</td>
+                <td><code>/admin/api/checkins/&lt;id&gt;/status</code></td>
+                <td>Consulte ou modifie le statut d'un Check-in.</td>
+            </tr>
+            <tr>
+                <td>POST</td>
+                <td><code>/admin/api/vehicle-configs</code></td>
+                <td>Enregistre la configuration des points de contrôle d'un véhicule.</td>
             </tr>
         </tbody>
     </table>
 
-    <h2>Webhooks Sortants (n8n)</h2>
-    <p>Le module <code>utils/n8n.py</code> centralise l'envoi de données vers l'outil d'automatisation.</p>
-    
-    <div class="callout callout-important">
-        <h4>Événements Déclencheurs</h4>
-        <ul>
-            <li><strong>Signature Finalisée</strong> : Envoi du JSON complet et du chemin PDF pour archivage.</li>
-            <li><strong>Projet Créé/Supprimé</strong> : Notification aux systèmes de production.</li>
-            <li><strong>Alerte Erreur</strong> : Notification en cas d'échec critique (ex: échec SMTP).</li>
-        </ul>
-    </div>
+    <h2>2. API REST Publique</h2>
+    <p>Cette API est conçue pour les intégrations externes (n8n, applications mobiles). Elle est versionnée et utilise une authentification par jeton <strong>JWT (Bearer)</strong>.</p>
+    <ul>
+        <li><strong>Base URL</strong> : <code>/api/v1</code></li>
+        <li><strong>Authentification</strong> : <code>Authorization: Bearer &lt;JWT_TOKEN&gt;</code></li>
+    </ul>
 
-    <h3>Structure d'un Payload Webhook</h3>
-    <pre><code># Exemple de données envoyées à n8n
+    <h3>Webhooks Sortants</h3>
+    <p>Le système envoie des webhooks vers <strong>n8n</strong> lors d'événements clés. Les payloads sont structurés pour faciliter l'automatisation.</p>
+    <ul>
+        <li><strong>Signature finalisée</strong> : Envoi automatique après scellement du document.</li>
+        <li><strong>Notifications</strong> : Alertes de création de projet ou d'erreurs système.</li>
+    </ul>
+
+    <pre><code># Exemple de payload envoyé à n8n
 {
     "event": "inspection_signed",
-    "project_id": "BVPR-1234",
+    "project_id": "BVPR-XXXX",
     "inspection_id": "recAbc123",
-    "type": "checkin",
     "pdf_url": "https://bellevitesse.com/document/..."
 }</code></pre>
 
-    <h2>API Publique (Waivers)</h2>
-    <p>Une couche API minimale existe pour supporter le processus de signature sur les appareils mobiles (tablettes).</p>
-    <ul>
-        <li><strong>Endpoint</strong> : <code>/waiver/sign/&lt;token&gt;</code></li>
-        <li><strong>Sécurité</strong> : CSRF désactivé spécifiquement pour ces routes (via <code>@csrf.exempt</code>) pour permettre la soumission depuis n'importe quel navigateur sans contrainte de session, tout en validant le <code>token</code> unique.</li>
-    </ul>
-
-    <h3>Délais d'Expiration (TTL)</h3>
-    <p>Les jetons de signature ont une durée de vie limitée définie dans le <code>.env</code> (par défaut 24h). Passé ce délai, le webhook n8n ou le bouton admin doit générer un nouveau lien.</p>
+    <div class="callout">
+        <p><strong>Note Technique</strong> : Toutes les routes de l'API administrative sont définies dans <code>routes/admin/api.py</code>, tandis que l'API publique est structurée dans le blueprint <code>api_v1</code> (voir <code>static/docs/openapi.yaml</code>).</p>
+    </div>
 {% endblock %}

@@ -15,6 +15,8 @@
     </ul>
 
     <h2>Fréquence et Déclenchement</h2>
+    <p>La synchronisation des données depuis Airtable vers la base de données locale (MySQL) n'est <strong>pas automatique</strong> par défaut pour des raisons de performance et de contrôle.</p>
+    
     <table>
         <thead>
             <tr>
@@ -25,21 +27,21 @@
         </thead>
         <tbody>
             <tr>
-                <td>Automatique</td>
-                <td>Webhook Airtable</td>
-                <td>Dès modification d'un enregistrement</td>
+                <td>Manuel (Script)</td>
+                <td><code>python scripts/sync_airtable.py</code></td>
+                <td>Mise à jour complète de toutes les tables</td>
             </tr>
             <tr>
-                <td>Planifié</td>
-                <td>Scheduler (Tâches de fond)</td>
-                <td>Rafraîchissement complet toutes les ~24h</td>
+                <td>Performance</td>
+                <td>Scheduler Flask (Warmup)</td>
+                <td>Pré-chargement du cache toutes les ~24h</td>
             </tr>
         </tbody>
     </table>
 
     <div class="callout callout-important">
-        <h4>Note sur l'interface</h4>
-        <p>Il n'existe pas de bouton de synchronisation manuel dans l'interface administrative actuelle. Les données sont maintenues à jour de manière transparente par le serveur.</p>
+        <h4>Différence Importante</h4>
+        <p>Le <strong>Scheduler</strong> présent dans l'application (tâches de fond) ne synchronise pas de nouvelles données depuis Airtable. Son rôle est uniquement de "réchauffer" le cache local à partir des données déjà présentes dans MySQL pour garantir une navigation instantanée.</p>
     </div>
 
     <h2>Structure Technique</h2>
