@@ -1,0 +1,60 @@
+{% extends "admin/docs/base.html" %}
+
+{% block content %}
+    <h1>Modèles de Données</h1>
+    
+    <p>Le schéma de base de données est conçu pour garantir l'intégrité des données tout en restant flexible pour les futurs développements. Voici les entités principales définies dans <code>models.py</code>.</p>
+
+    <h2>Schéma de Synthèse</h2>
+    <div class="mermaid">
+    erDiagram
+        PROJECT ||--o{ CHECKIN : "contient"
+        PROJECT ||--o{ CHECKOUT : "contient"
+        PROJECT ||--o{ PILOT_WAIVER : "nécessite"
+        PROJECT }|--|| CONTACT : "client"
+        VEHICLE ||--o{ CHECKIN : "inspecté"
+        PILOT_WAIVER ||--|| CONTACT : "signataire"
+    </div>
+
+    <h2>Entités Majeures</h2>
+
+    <h3>1. Projets (Project)</h3>
+    <p>Le pivot central de l'application. Un projet lie une production, un client, des véhicules et des dates.</p>
+    <ul>
+        <li><code>project_id</code> : Identifiant unique BVPR-XXXX (généré).</li>
+        <li><code>status</code> : État du projet (Planifié, En cours, Terminé, Annulé).</li>
+    </ul>
+
+    <h3>2. Inspections (Check-in / Check-out)</h3>
+    <p>Trace l'état des véhicules avant et après utilisation. </p>
+    <ul>
+        <li><code>inspection_number</code> : Référence unique du protocole.</li>
+        <li><code>status</code> : État de la signature (À signer, En cours, Signé).</li>
+        <li><code>snapshot</code> : Copie JSON des données au moment de la signature (Immuabilité).</li>
+    </ul>
+
+    <h3>3. Décharges (Waivers)</h3>
+    <p>Documents juridiques signés par les pilotes ou les productions.</p>
+    <ul>
+        <li><code>pilot_contact_id</code> : Lien vers le contact signataire.</li>
+        <li><code>hash</code> : Empreinte cryptographique garantissant l'intégrité du document.</li>
+    </ul>
+
+    <h2>Standards de Nommage</h2>
+    <div class="callout">
+        <p><strong>Règle d'Or</strong> : Les noms de colonnes en base de données sont toujours en <strong>Anglais</strong> (snake_case) pour la cohérence avec SQLAlchemy. Les labels d'affichage utilisateur sont gérés via les dictionnaires de traduction ou Airtable.</p>
+    </div>
+
+    <h3>Exemple de relation :</h3>
+    <pre><code># Extrait de models.py
+class Project(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.String(20), unique=True)
+    name = db.Column(db.String(100), nullable=False)
+    # Relation avec la production
+    production_id = db.Column(db.Integer, db.ForeignKey('productions.id'))
+    production = db.relationship('Production', backref='projects')</code></pre>
+
+    <h2>Synchronisation des Données</h2>
+    <p>Les tables issues d'Airtable (<code>vehicles</code>, <code>heads</code>, etc.) possèdent un champ <code>fields</code> de type JSON contenant l'intégralité des données brutes, permettant une grande flexibilité sans migration de schéma fréquente.</p>
+{% endblock %}

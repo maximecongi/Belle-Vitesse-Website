@@ -18,29 +18,29 @@ logger = logging.getLogger(__name__)
 
 
 def list_checkins():
-    """Fetch all checkin records using unified logic."""
+    """Récupère tous les enregistrements de retour par la logique unifiée."""
     return list_inspections_unified("checkin")
 
 
 def get_checkin_detail(record_id):
-    """Fetch a single checkin record using unified logic."""
+    """Récupère un retour spécifique par la logique unifiée."""
     return get_inspection_detail_unified("checkin", record_id)
 
 
 def get_checkin_form_context():
-    """Get form context for checkin."""
+    """Récupère le contexte du formulaire pour un retour."""
     return get_unified_form_context(mode="checkin")
 
 
 @handle_admin_service_error
 def create_checkin(form, files=None):
-    """Create a new checkin record in the database."""
+    """Crée un nouvel enregistrement de retour dans la base de données."""
     pid = form.get("project_id")
     uid = form.get("controller_id")
     try:
         controller_id = int(uid) if uid and uid != "None" else None
     except (ValueError, TypeError):
-        current_app.logger.warning(f"⚠️ Invalid controller_id detected: {uid}")
+        current_app.logger.warning(f"⚠️ Identifiant contrôleur invalide : {uid}")
         controller_id = None
 
     record = CheckinVehicle(
@@ -53,7 +53,7 @@ def create_checkin(form, files=None):
 
     apply_inspection_data(record, form, is_checkout=False)
 
-    # Safety: ensure latest checkout is signed
+    # Sécurité : s'assurer que le dernier départ (checkout) est bien signé
     if record.vehicle_id:
         latest_checkout = CheckoutVehicle.query.filter_by(
             vehicle_id=record.vehicle_id).order_by(CheckoutVehicle.id.desc()).first()
@@ -71,7 +71,7 @@ def create_checkin(form, files=None):
 
 @handle_admin_service_error
 def update_checkin(record_id, form, files=None):
-    """Update an existing checkin record."""
+    """Met à jour un retour existant."""
     record = db.session.get(CheckinVehicle, record_id)
     if not record:
         return False
@@ -87,5 +87,5 @@ def update_checkin(record_id, form, files=None):
 
 @handle_admin_service_error
 def delete_checkin(record_id):
-    """Delete a checkin record using unified logic."""
+    """Supprime un retour par la logique unifiée."""
     return delete_inspection_unified("checkin", record_id)

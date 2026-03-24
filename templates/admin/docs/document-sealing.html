@@ -1,0 +1,54 @@
+{% extends "admin/docs/base.html" %}
+
+{% block title %}Scellement des Documents — Documentation Belle Vitesse{% endblock %}
+
+{% block content %}
+    <h1>Scellement des Documents</h1>
+    
+    <p>Le système de scellement garantit l'intégrité de chaque document PDF généré (Check-ins, Check-outs, Waivers). Toute modification ultérieure du fichier rendrait le sceau invalide.</p>
+
+    <h2>Mécanisme Technique</h2>
+    <p>Le scellement repose sur une combinaison de hachage cryptographique et de code d'authentification de message (HMAC).</p>
+    
+    <div class="mermaid">
+    graph TD
+        A[Génération du PDF] --> B[Calcul du Hash SHA-256 du fichier]
+        B --> C[Récupération des métadonnées : ID, Date]
+        C --> D[Génération du Sceau HMAC-SHA256]
+        D --> E[Stockage en Base de Données]
+        E --> F[Validation lors de la consultation]
+    </div>
+
+    <h3>1. Empreinte Numérique (SHA-256)</h3>
+    <p>Dès qu'un PDF est généré, le serveur calcule son empreinte (hash) SHA-256. Cette empreinte est unique : un seul bit de différence dans le PDF produirait un hash totalement différent.</p>
+    <code>Colonne SQL : pdf_file_hash (VARCHAR 64)</code>
+
+    <h3>2. Sceau HMAC</h3>
+    <p>Le sceau est généré à l'aide d'une clé secrète (<code>SIGNATURE_SECRET_KEY</code>) connue uniquement du serveur. Il lie le hash du fichier aux données de l'enregistrement.</p>
+    <pre><code>seal = hmac.new(
+    key, 
+    msg=f"{record_id}|{pdf_hash}|{timestamp}".encode(), 
+    digestmod=sha256
+).hexdigest()</code></pre>
+
+    <h2>Validation de l'Intégrité</h2>
+    <p>Lorsqu'un administrateur consulte un document, le système effectue les vérifications suivantes :</p>
+    <ol>
+        <li><strong>Vérification du fichier</strong> : Le hash SHA-256 du fichier sur le disque est comparé à celui stocké en base.</li>
+        <li><strong>Vérification du sceau</strong> : Le sceau est recalculé et comparé au sceau stocké pour s'assurer qu'aucune donnée de la base (ID, dates) n'a été altérée.</li>
+    </ol>
+
+    <div class="callout callout-important">
+        <h4>Alerte de Sécurité</h4>
+        <p>Si la clé <code>SIGNATURE_SECRET_KEY</code> est modifiée dans l'environnement, tous les sceaux existants deviendront techniquement invalides (bien que les documents restent intègres).</p>
+    </div>
+
+    <h2>Stockage</h2>
+    <p>Les preuves de scellement sont stockées dans les tables de mapping des documents signés :</p>
+    <ul>
+        <li><code>checkout_signed_documents</code></li>
+        <li><code>checkin_signed_documents</code></li>
+        <li><code>pilot_waiver_signed_documents</code></li>
+        <li><code>production_waiver_signed_documents</code></li>
+    </ul>
+{% endblock %}

@@ -36,6 +36,7 @@ load_dotenv()
 
 
 def create_app():
+    """Usine de création de l'application Flask (Application Factory)."""
     env = os.getenv("FLASK_ENV", "development")
     app_config = config.get(env, config['default'])
 
@@ -46,11 +47,11 @@ def create_app():
     )
     app.config.from_object(app_config)
 
-    # Proxy Fix for SSL behind Traefik
+    # Correction de Proxy pour SSL derrière Traefik (nécessaire pour url_for HTTPS)
     from werkzeug.middleware.proxy_fix import ProxyFix
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
-    # SSH Tunnel (Development only)
+    # Tunnel SSH (uniquement en développement pour accéder à la DB distante)
     if env != "production":
         from utils.ssh_helper import get_ssh_tunnel
         tunnel, local_port = get_ssh_tunnel()
@@ -63,12 +64,12 @@ def create_app():
                 f"mysql+mysqlconnector://{mysql_user}:{mysql_pass}"
                 f"@127.0.0.1:{local_port}/{mysql_db}"
             )
-    # Ensure folders exist
+    # S'assurer que les dossiers nécessaires existent sur le serveur
     for folder in ["OUTPUT_FOLDER", "BACKUPS_FOLDER", "LOGS_FOLDER", "ARCLIGHT_UPLOAD_DIR"]:
         if folder in app.config:
             Path(app.config[folder]).mkdir(parents=True, exist_ok=True)
 
-    # Initialize extensions
+    # Initialisation des extensions
     cache.init_app(app)
     compress.init_app(app)
     limiter.init_app(app)
@@ -76,29 +77,30 @@ def create_app():
     init_cache(cache)
     db.init_app(app)
 
-    # Initialize SQL Logger
+    # Journalisation des requêtes SQL
     init_sql_logger(app, db)
 
-    # Initialize routes & error handlers
+    # Initialisation des routes et des gestionnaires d'erreurs
     init_routes(app)
     init_error_handlers(app)
 
-    # Custom Jinja2 Filters
+    # Filtres Jinja2 personnalisés
     import ast
     import json
     app.jinja_env.filters["slugify"] = lambda s: s.lower().replace(" ", "_")
 
     def _from_json(s):
+        """Désérialise une chaîne JSON ou une syntaxe littérale Python en objet."""
         if not isinstance(s, str):
             return s
-        # Try JSON first, then Python literal syntax (tuples, etc.)
+        # Tente le JSON d'abord, puis la syntaxe littérale Python (tuples, etc.)
         try:
             return json.loads(s)
         except (json.JSONDecodeError, TypeError):
             pass
         try:
             result = ast.literal_eval(s)
-            # Convert tuples to lists for consistency
+            # Convertit les tuples en listes pour la cohérence
             if isinstance(result, list):
                 return [list(item) if isinstance(item, tuple) else item for item in result]
             return result
@@ -107,11 +109,11 @@ def create_app():
 
     app.jinja_env.filters["from_json"] = _from_json
 
-    # ── i18n: URL-based language handling ─────────────────────
+    # ── i18n : Gestion de la langue via l'URL ─────────────────
 
     @app.url_value_preprocessor
     def pull_lang(endpoint, values):
-        """Extract lang from URL, store in g.lang, save to session."""
+        """Extrait la langue de l'URL, la stocke dans g.lang et en session."""
         if values and 'lang' in values:
             lang = values.pop('lang')
             if lang in SUPPORTED_LANGS:
@@ -124,31 +126,31 @@ def create_app():
 
     @app.url_defaults
     def inject_lang(endpoint, values):
-        """Automatically inject lang into url_for() for routes that need it."""
+        """Injecte automatiquement la langue dans url_for() pour les routes concernées."""
         if 'lang' in values or not app.url_map.is_endpoint_expecting(endpoint, 'lang'):
             return
         values['lang'] = g.get('lang', session.get('lang', DEFAULT_LANG))
 
-    # ── i18n: translation helpers ────────────────────────────
+    # ── i18n : Aides à la traduction ──────────────────────────
 
     def t(fields, key):
-        """Translate a dynamic-content field (suffixed columns).
-        Fallback: key_fr → key_en → key (original column)."""
+        """Traduit un champ de contenu dynamique (colonnes suffixées).
+        Priorité : clé_fr → clé_en → clé (colonne originale)."""
         lang = g.get('lang', DEFAULT_LANG)
         return (fields.get(f'{key}_{lang}')
                 or fields.get(f'{key}_en')
                 or fields.get(key, ''))
 
     def ts(key):
-        """Translate a static UI string (row-per-language table).
-        Fallback: current lang → en → raw key."""
+        """Traduit une chaîne UI statique (table de traduction par ligne).
+        Priorité : langue courante → en → clé brute."""
         lang = g.get('lang', DEFAULT_LANG)
         static_all = get_all_static()
         return (static_all.get(lang, {}).get(key)
                 or static_all.get('en', {}).get(key, key))
 
     def alt_url(target_lang):
-        """Generate the URL for the current page in a different language."""
+        """Génère l'URL de la page courante dans une autre langue."""
         if request.endpoint and request.view_args is not None:
             try:
                 args = dict(request.view_args)
@@ -158,10 +160,10 @@ def create_app():
                 pass
         return url_for('home', lang=target_lang)
 
-    # Context Processors (Globals)
+    # Processeurs de Contexte (Variables Globales pour les Templates)
     @app.context_processor
     def inject_globals():
-        # Skip heavy DB calls for error pages to prevent cascading failures
+        # Évite les appels DB lourds pour les pages d'erreur afin de prévenir les pannes en cascade
         if getattr(g, '_rendering_error', False):
             return {
                 "now": datetime.now(timezone.utc),
@@ -173,7 +175,7 @@ def create_app():
         is_admin = request.path.startswith('/admin')
         lang = g.get('lang', DEFAULT_LANG)
 
-        # Base globals
+        # Variables globales de base
         ctx = {
             "now": datetime.now(timezone.utc),
             "is_admin": is_admin,
@@ -187,7 +189,7 @@ def create_app():
             "company_address": "33 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine, France",
             "company_phone": "+33 6 65 51 40 40",
             "company_email": "contact@bellevitesse.com",
-            # Status Mapping Utilities
+            # Utilitaires de mapping de statuts
             "get_inspection_key": get_inspection_key,
             "get_checkpoint_key": get_checkpoint_key,
             "format_inspection_status": format_inspection_status,
@@ -197,6 +199,7 @@ def create_app():
         }
 
         def _load_db_context(is_admin):
+            """Charge les données dynamiques depuis la base de données pour le contexte."""
             if is_admin:
                 user_id = session.get('admin_user_id')
                 user = None
@@ -229,6 +232,7 @@ def create_app():
                     "grips_categories": get_grips_categories(),
                 }
 
+        # Tentative de chargement avec retry en cas d'erreur DB
         for attempt in range(2):
             try:
                 ctx.update(_load_db_context(is_admin))
@@ -236,10 +240,10 @@ def create_app():
             except Exception as e:
                 if attempt == 0:
                     app.logger.warning(
-                        f"⚠️ Context processor DB error (retrying): {e}")
+                        f"⚠️ Erreur DB dans le context processor (nouvelle tentative) : {e}")
                     continue
                 app.logger.error(
-                    f"❌ Context processor DB error (giving up): {e}")
+                    f"❌ Erreur DB dans le context processor (abandon) : {e}")
                 if is_admin:
                     ctx["current_user"] = {
                         "firstname": "", "lastname": "", "role": "User", "role_lower": "user"}
@@ -252,7 +256,7 @@ def create_app():
 
     @app.after_request
     def add_security_headers(response):
-        """Add security headers, specifically for admin routes."""
+        """Ajoute des en-têtes de sécurité, particulièrement pour les routes admin."""
         if request.path.startswith('/admin/'):
             response.headers['X-Frame-Options'] = 'SAMEORIGIN'
             response.headers['X-Content-Type-Options'] = 'nosniff'
@@ -262,12 +266,13 @@ def create_app():
 
         return response
 
-    # Initialize DB & Schema Migrations
+    # Initialisation de la DB et migrations de schéma
     def _init_database_schema():
+        """Initialise le schéma de la base de données et applique les migrations manuelles."""
         with app.app_context():
             db.create_all()
 
-            # Manual migrations for legacy tables (missing columns not handled by create_all)
+            # Migrations manuelles pour les tables existantes (colonnes manquantes)
             from sqlalchemy import inspect, text
             inspector = inspect(db.engine)
             tables_to_check = [
@@ -286,17 +291,17 @@ def create_app():
                                 text(f"ALTER TABLE {table} ADD COLUMN pdf_file_hash VARCHAR(64) NULL"))
                             db.session.commit()
                             app.logger.info(
-                                f"✅ Migration: {table}.pdf_file_hash added.")
+                                f"✅ Migration : {table}.pdf_file_hash ajoutée.")
                         except Exception as e:
                             db.session.rollback()
                             app.logger.warning(
-                                f"⚠️ Migration failed for {table}: {e}")
+                                f"⚠️ Échec de la migration pour {table} : {e}")
 
     try:
         _init_database_schema()
-        app.logger.info("✅ Database schema initialized.")
+        app.logger.info("✅ Schéma de base de données initialisé.")
     except Exception as e:
-        app.logger.error(f"❌ DB Init error: {e}")
+        app.logger.error(f"❌ Erreur d'initialisation DB : {e}")
 
     return app
 
@@ -305,22 +310,24 @@ app = create_app()
 
 
 def warm_cache():
+    """Pré-charge (warmup) le cache avec les données Airtable pour améliorer les performances."""
     try:
         with app.app_context():
             get_vehicles()
             get_heads()
             get_grips_categories()
             get_all_static()
-            app.logger.info("🔥 Cache warmé avec succès")
+            app.logger.info("🔥 Cache pré-chargé avec succès")
     except Exception as e:
-        app.logger.error(f"❌ Erreur warm cache : {e}")
+        app.logger.error(f"❌ Erreur lors du pré-chargement du cache : {e}")
 
 
 if os.getenv("FLASK_ENV") == "production":
     import threading
+    # Exécute le warmup dans un thread séparé au démarrage
     threading.Thread(target=warm_cache, daemon=True).start()
 
-    # ── Scheduler : re-warm du cache toutes les 23h50 ──────────
+    # ── Scheduler : Re-warm du cache toutes les 23h50 ──────────
     from apscheduler.schedulers.background import BackgroundScheduler
     scheduler = BackgroundScheduler()
     scheduler.add_job(
@@ -332,7 +339,7 @@ if os.getenv("FLASK_ENV") == "production":
         replace_existing=True,
     )
     scheduler.start()
-    app.logger.info("⏰ Scheduler cache démarré")
+    app.logger.info("⏰ Scheduler de cache démarré")
     # ───────────────────────────────────────────────────────────
 
 

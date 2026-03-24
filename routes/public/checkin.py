@@ -1,5 +1,5 @@
 """
-Checkin routes — thin HTTP layer.
+Routes de retour (Check-in) — couche HTTP légère.
 """
 
 import os
@@ -26,9 +26,9 @@ from services.common.signatures import (
 
 
 def init_checkin_routes(app):
-    """Public checkin flow: view, generate, sign, verify, download."""
+    """Flux de retour public : affichage, génération, signature, vérification, téléchargement."""
 
-    # ── Auth Guards ───────────────────────────────────────────────
+    # ── Protections d'Authentification ────────────────────────────
 
     def require_checkin_token():
         token = request.headers.get("X-Check-Token")
@@ -80,8 +80,8 @@ def init_checkin_routes(app):
         if not record:
             abort(404)
 
-        # If user reloaded the page, the abandon beacon might have set this to 'En cours'.
-        # We catch it here and revert it to 'À signer' since the user is still on the page.
+        # Si l'utilisateur a rechargé la page, la balise d'abandon a peut-être mis cela à 'En cours'.
+        # On le capture ici pour repasser en 'À signer' car l'utilisateur est toujours sur la page.
         if record.status == "in_progress":
             try:
                 record.status = "pending"
@@ -114,9 +114,9 @@ def init_checkin_routes(app):
         entry, error_code = validate_inspection_token(token, "checkin")
         if not entry:
             error_messages = {
-                404: "Invalid or expired token",
-                410: "Token expired",
-                400: "Already signed",
+                404: "Jeton invalide ou expiré",
+                410: "Jeton expiré",
+                400: "Déjà signé",
             }
             return jsonify({"error": error_messages.get(error_code, "Error")}), error_code
 

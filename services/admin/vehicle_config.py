@@ -5,12 +5,12 @@ from utils.database import get_vehicles
 
 
 def get_checkpoint_configs():
-    """Fetch all vehicle checkpoint configurations with caching."""
+    """Récupère toutes les configurations de points de contrôle des véhicules avec mise en cache."""
     configs = cache.get('checkpoint_configs')
     if configs is not None:
         return configs
 
-    # Fetch from DB
+    # Récupération en base de données
     records = VehicleCheckpointConfig.query.all()
     configs = {c.vehicle_id: c.config for c in records}
 
@@ -20,9 +20,9 @@ def get_checkpoint_configs():
 
 
 def get_vehicles_with_config():
-    """Fetch all vehicles and their current checkpoint configuration."""
+    """Récupère tous les véhicules et leur configuration actuelle de points de contrôle."""
     vehicles = get_vehicles()
-    # Get all local configs via the cached helper
+    # Récupère toutes les configurations via l'aide avec cache
     local_configs = get_checkpoint_configs()
 
     results = []
@@ -30,13 +30,13 @@ def get_vehicles_with_config():
         record_id = v['id']
         name = v['fields'].get('name', 'Unknown')
 
-        # If no config in DB, use legacy fallback as initial state for UI
-        # Try Record ID first, then Name for existing configs
+        # Si aucune config en base, utilise le fallback hérité comme état initial
+        # Tente d'abord l'ID, puis le nom pour les configs existantes
         current_config = local_configs.get(
             record_id) or local_configs.get(name)
 
         if not current_config:
-            # Default to no checkpoints enabled if not configured
+            # Par défaut, aucun point de contrôle n'est activé si non configuré
             current_config = {
                 cp['key']: False for cp in ALL_POSSIBLE_CHECKPOINTS}
 
@@ -50,8 +50,8 @@ def get_vehicles_with_config():
 
 
 def save_vehicle_checkpoint_config(vehicle_id, enabled_keys):
-    """Save the enabled checkpoints for a specific vehicle."""
-    # Build the full config dict
+    """Enregistre les points de contrôle activés pour un véhicule spécifique."""
+    # Construit le dictionnaire de configuration complet
     full_config = {cp['key']: (cp['key'] in enabled_keys)
                    for cp in ALL_POSSIBLE_CHECKPOINTS}
 

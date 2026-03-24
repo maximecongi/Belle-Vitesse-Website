@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 def get_calendar_events():
     """
-    Fetch all projects and format as FullCalendar events.
+    Récupère tous les projets et les formate comme événements FullCalendar.
     """
     records = Project.query.all()
     events = []

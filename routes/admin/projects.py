@@ -22,7 +22,7 @@ from utils.decorators import require_roles
 
 
 def init_projects_routes(app):
-    # ── Projects CRUD ─────────────────────────────────────────────
+    # ── CRUD Projets ──────────────────────────────────────────────
 
     @app.route("/admin/projects")
     @require_roles('administrator', 'manager')
@@ -34,7 +34,7 @@ def init_projects_routes(app):
                                  if not p.get("raw_return_date") or p.get("raw_return_date") >= today_iso]
             return render_template("admin/projects_list.html", projects=upcoming_projects, is_archive=False)
         except Exception as e:
-            current_app.logger.error(f"❌ Error in admin_projects_list: {e}")
+            current_app.logger.error(f"❌ Erreur dans admin_projects_list : {e}")
             flash("Erreur lors de la récupération des projets.", "error")
             return render_template("admin/projects_list.html", projects=[], is_archive=False)
 
@@ -49,7 +49,7 @@ def init_projects_routes(app):
             return render_template("admin/projects_list.html", projects=past_projects, is_archive=True)
         except Exception as e:
             current_app.logger.error(
-                f"❌ Error in admin_projects_archives: {e}")
+                f"❌ Erreur dans admin_projects_archives : {e}")
             flash("Erreur lors de la récupération des archives.", "error")
             return render_template("admin/projects_list.html", projects=[], is_archive=True)
 
@@ -69,7 +69,7 @@ def init_projects_routes(app):
                 flash("Projet créé avec succès !", "success")
                 return redirect(url_for("admin_projects_list"))
             except Exception as e:
-                current_app.logger.error(f"❌ Error creating project: {e}")
+                current_app.logger.error(f"❌ Erreur lors de la création du projet : {e}")
                 flash(f"Erreur lors de la création : {str(e)}", "error")
                 return render_template(
                     "admin/project_form.html", data=request.form, is_edit=False, **context
@@ -93,7 +93,7 @@ def init_projects_routes(app):
                 abort(404)
             return render_template("admin/project_form.html", data=data, is_edit=True, **context)
         except Exception as e:
-            current_app.logger.error(f"❌ Error editing project: {e}")
+            current_app.logger.error(f"❌ Erreur lors de la modification du projet : {e}")
             flash(f"Erreur lors de la modification : {str(e)}", "error")
             return redirect(url_for("admin_projects_list"))
 
@@ -105,6 +105,6 @@ def init_projects_routes(app):
             flash("Projet supprimé avec succès.", "success")
             return redirect(url_for("admin_projects_list"))
         except Exception as e:
-            current_app.logger.error(f"❌ Error deleting project: {e}")
+            current_app.logger.error(f"❌ Erreur lors de la suppression du projet : {e}")
             flash(f"Erreur lors de la suppression : {str(e)}", "error")
             return redirect(url_for("admin_project_edit", record_id=record_id))

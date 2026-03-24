@@ -1,7 +1,7 @@
 """
-Database access layer for MySQL.
-Replaces direct Airtable API calls with MySQL queries.
-Maintains the same interface as the original airtable.py.
+Couche d'accès à la base de données pour MySQL.
+Remplace les appels directs à l'API Airtable par des requêtes MySQL.
+Maintient la même interface que le fichier original airtable.py.
 """
 
 import logging
@@ -15,7 +15,7 @@ from models import (
     Static
 )
 
-# Mapping table names to models
+# Correspondance des noms de tables avec les modèles
 TABLE_MODELS = {
     "vehicles": Vehicle,
     "heads": Head,
@@ -29,7 +29,7 @@ cache: Cache = None
 
 
 def init_cache(app_cache: Cache):
-    """Initialize the cache instance for both database and airtable services."""
+    """Initialise l'instance de cache pour les services de base de données et Airtable."""
     global cache
     cache = app_cache
     import utils.airtable as airtable_service
@@ -38,7 +38,7 @@ def init_cache(app_cache: Cache):
 
 
 def get_cached(key, fetcher, timeout=3600):
-    """Get a value from cache or fetch it."""
+    """Récupère une valeur du cache ou l'extrait via le 'fetcher'."""
     if cache is None:
         return fetcher()
     value = cache.get(key)
@@ -49,7 +49,7 @@ def get_cached(key, fetcher, timeout=3600):
 
 
 def _fetch_all_from_table(table_name, order_by=None):
-    """Fetch all records from a table using ORM."""
+    """Récupère tous les enregistrements d'une table via l'ORM."""
     try:
         model = TABLE_MODELS.get(table_name)
         if not model:
@@ -74,7 +74,7 @@ def _fetch_all_from_table(table_name, order_by=None):
 
 
 def _fetch_by_field(table_name, field_name, field_value):
-    """Fetch a single record by field value using ORM scan (since fields are JSON)."""
+    """Récupère un seul enregistrement par valeur de champ via un scan ORM (les champs sont en JSON)."""
     try:
         model = TABLE_MODELS.get(table_name)
         if not model:
@@ -95,24 +95,24 @@ def _fetch_by_field(table_name, field_name, field_value):
 
 
 # ============================================================
-# Public API (same interface as original airtable.py)
+# API Publique (même interface que l'original airtable.py)
 # ============================================================
 
 
 def get_vehicles():
-    """Get all vehicles sorted by order."""
+    """Récupère tous les véhicules triés par ordre."""
     return get_cached(
         "vehicles", lambda: _fetch_all_from_table("vehicles", order_by="order")
     )
 
 
 def get_heads():
-    """Get all heads sorted by order."""
+    """Récupère toutes les têtes triées par ordre."""
     return get_cached("heads", lambda: _fetch_all_from_table("heads", order_by="order"))
 
 
 def get_grips_categories():
-    """Get all grip categories sorted by order."""
+    """Récupère toutes les catégories de grip triées par ordre."""
     return get_cached(
         "grips_categories",
         lambda: _fetch_all_from_table("grips_categories", order_by="order"),
@@ -120,7 +120,7 @@ def get_grips_categories():
 
 
 def get_grips_categories_by_slug(slug):
-    """Get a grip category by its slug."""
+    """Récupère une catégorie de grip par son slug."""
     return get_cached(
         f"grips_categories_{slug}",
         lambda: _fetch_by_field("grips_categories", "slug", slug),
@@ -128,7 +128,7 @@ def get_grips_categories_by_slug(slug):
 
 
 def get_grips_products_for_category(category_id):
-    """Get all products for a specific grip category."""
+    """Récupère tous les produits pour une catégorie de grip spécifique."""
 
     def fetcher():
         all_products = _fetch_all_from_table("grip_products")
@@ -140,28 +140,28 @@ def get_grips_products_for_category(category_id):
 
 
 def get_vehicle_by_slug(slug):
-    """Get a vehicle by its slug."""
+    """Récupère un véhicule par son slug."""
     return get_cached(
         f"vehicle_{slug}", lambda: _fetch_by_field("vehicles", "slug", slug)
     )
 
 
 def get_head_by_slug(slug):
-    """Get a head by its slug."""
+    """Récupère une tête par son slug."""
     return get_cached(f"head_{slug}", lambda: _fetch_by_field("heads", "slug", slug))
 
 
 def get_static_by_lang(lang="en"):
-    """Get static content for a specific language."""
+    """Récupère le contenu statique pour une langue spécifique."""
     return get_cached(
         f"static_{lang}", lambda: _fetch_by_field("static", "language", lang)
     )
 
 
 def get_all_static():
-    """Get all static content rows, keyed by language code.
+    """Récupère toutes les lignes de contenu statique, indexées par code langue.
 
-    Returns: {"en": {fields}, "fr": {fields}, ...}
+    Retourne : {"en": {fields}, "fr": {fields}, ...}
     """
     def fetcher():
         rows = _fetch_all_from_table("static")
@@ -173,7 +173,7 @@ def get_all_static():
 
 
 def get_configs_for_vehicle(vehicle_id):
-    """Get all configs for a specific vehicle."""
+    """Récupère toutes les configurations pour un véhicule spécifique."""
 
     def fetcher():
         all_configs = _fetch_all_from_table("configs")

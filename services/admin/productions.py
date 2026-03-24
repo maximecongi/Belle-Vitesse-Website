@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def list_productions():
-    """Fetch all production records formatted for listing."""
+    """Récupère tous les enregistrements de production formattés pour l'affichage."""
     fields_map = {
         "name": "name",
         "address": "address",
@@ -24,7 +24,7 @@ def list_productions():
 
 @handle_admin_service_error
 def create_production(form):
-    """Create a new production record."""
+    """Crée un nouvel enregistrement de production."""
     prod = Production(
         name=form.get("name", ""),
         address=form.get("address", ""),
@@ -38,7 +38,7 @@ def create_production(form):
 
 @handle_admin_service_error
 def update_production(record_id, form):
-    """Update an existing production record."""
+    """Met à jour un enregistrement de production existant."""
     prod = db.session.get(Production, record_id)
     if not prod:
         return False
@@ -53,13 +53,13 @@ def update_production(record_id, form):
 
 
 def get_production_for_edit(record_id):
-    """Fetch production data for editing."""
+    """Récupère les données d'une production pour l'édition."""
     fields = ["name", "address", "mail", "phone"]
     data = generic_get_record_for_edit(Production, record_id, fields)
     if not data:
         return None
     
-    # Map model names to form names
+    # Mappe les noms des modèles vers les noms des formulaires
     return {
         "name": data["name"],
         "address": data.get("address", ""),
@@ -69,5 +69,5 @@ def get_production_for_edit(record_id):
 
 
 def delete_production(record_id):
-    """Delete a production record."""
+    """Supprime un enregistrement de production."""
     return generic_delete_record(Production, record_id)

@@ -13,18 +13,20 @@ logger = logging.getLogger(__name__)
 
 
 def handle_admin_service_error(func):
+    """Décorateur pour centraliser la gestion des erreurs dans les services admin (rollback et log)."""
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except Exception as e:
             db.session.rollback()
-            logger.error(f"❌ Error in {func.__name__}: {e}")
+            logger.error(f"❌ Erreur dans {func.__name__} : {e}")
             raise e
     return wrapper
 
 
 def _parse_photos_json(text):
+    """Analyse une chaîne JSON de chemins de photos et retourne une liste de dictionnaires (URL, label)."""
     if not text:
         return []
     try:
@@ -36,8 +38,8 @@ def _parse_photos_json(text):
 
 def _delete_inspection_files(record):
     """
-    Delete all physical files associated with a checkout or checkin record.
-    Includes interior/exterior photos, and the signed PDF.
+    Supprime tous les fichiers physiques associés à un enregistrement de départ ou de retour.
+    Inclut les photos intérieures/extérieures et le PDF signé.
     """
 
     output_base = current_app.config.get(
@@ -82,9 +84,9 @@ def _delete_inspection_files(record):
 
 def _is_ready(form, vehicle_id=None, is_checkout=False):
     """
-    Calculate if the vehicle is ready based on inspection fields.
-    Returns True if all critical fields are 'OK' or 'Non pertinent'.
-    For checkouts, also requires a 100% battery charge.
+    Calcule si le véhicule est 'prêt' basé sur les points de contrôle.
+    Retourne True si tous les points critiques sont 'OK' ou 'Non pertinent'.
+    Pour les départs (checkout), exige également une batterie à 100%.
     """
     # 1. Battery check for checkout
     if is_checkout:
@@ -110,17 +112,17 @@ def _is_ready(form, vehicle_id=None, is_checkout=False):
     return True
 
 
-# ── Generic CRUD Helpers ──────────────────────────────────────────
+# ── Aides CRUD Génériques ──────────────────────────────────────────
 
 
 def generic_list_records(model, fields_map, order_by_attr=None):
     """
-    Generic fetcher that returns a list of records formatted with the 'Fields Pattern'.
+    Récupérateur générique qui retourne une liste d'enregistrements formattés.
 
     Args:
-        model: SQLAlchemy model class.
-        fields_map: Dict mapping frontend keys to model attributes or callables.
-        order_by_attr: Optional attribute to order by.
+        model: Classe du modèle SQLAlchemy.
+        fields_map: Dict mappant les clés frontend aux attributs du modèle ou callables.
+        order_by_attr: Attribut optionnel pour le tri.
     """
     query = model.query
     if order_by_attr:
@@ -162,12 +164,12 @@ def format_production_for_list(p): return {
 
 def generic_get_record_for_edit(model, record_id, fields_list):
     """
-    Generic fetcher for form editing data.
+    Récupérateur générique pour les données d'édition de formulaire.
 
     Args:
-        model: SQLAlchemy model class.
-        record_id: ID of the record.
-        fields_list: List of model attributes to include.
+        model: Classe du modèle SQLAlchemy.
+        record_id: ID de l'enregistrement.
+        fields_list: Liste des attributs du modèle à inclure.
     """
     record = db.session.get(model, record_id)
     if not record:
@@ -179,7 +181,7 @@ def generic_get_record_for_edit(model, record_id, fields_list):
 @handle_admin_service_error
 def generic_delete_record(model, record_id):
     """
-    Generic record deletion.
+    Suppression d'enregistrement générique.
     """
     record = db.session.get(model, record_id)
     if record:

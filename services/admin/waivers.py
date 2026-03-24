@@ -26,10 +26,13 @@ from utils.n8n import trigger_n8n_webhook
 
 logger = logging.getLogger(__name__)
 
-# ── Generic Internal Helpers ─────────────────────────────────────
+# ── Aides Internes Génériques ──────────────────────────────────────
 
 
 def _get_waiver_config(mode):
+    """
+    Retourne la configuration (modèles, webhooks, routes) selon le type de décharge (pilote ou production).
+    """
     if mode == "pilot":
         return {
             "model": PilotWaiver,
@@ -50,10 +53,13 @@ def _get_waiver_config(mode):
 
 
 def _cleanup_waiver_assets(mode, waiver):
-    """Internal helper to delete physical files and signed documents."""
+    """
+    Supprime les fichiers physiques (PDF signés, pièces jointes) et les documents archivés associés.
+    """
     from flask import current_app
     config = _get_waiver_config(mode)
 
+    # Liste des fichiers à supprimer physiquement du serveur
     files_to_delete = [waiver.signed_pdf_path] + \
         [getattr(waiver, f) for f in config["attachment_fields"]]
 
@@ -71,17 +77,20 @@ def _cleanup_waiver_assets(mode, waiver):
                     logger.error(
                         f"❌ Erreur suppression fichier {full_path} : {e}")
 
+    # Supprime l'enregistrement du document signé archivé
     signed_doc = config["signed_model"].query.filter_by(
         waiver_id=waiver.waiver_id).first()
     if signed_doc:
         db.session.delete(signed_doc)
 
-    # Cleanup tokens
+    # Supprime les jetons de signature actifs
     config["token_model"].query.filter_by(waiver_id=waiver.waiver_id).delete()
 
 
 def _reset_waiver_fields(mode, waiver):
-    """Resets all snapshot and signature fields of a waiver."""
+    """
+    Réinitialise tous les champs de snapshot et de signature d'une décharge.
+    """
     waiver.status = "to_generate"
     waiver.generated_at = None
     waiver.sent_at = None
@@ -91,7 +100,7 @@ def _reset_waiver_fields(mode, waiver):
     waiver.signer_ip = None
     waiver.webhook_triggered_at = None
 
-    # Snapshot cleanup
+    # Nettoyage des données figées (snapshot) communes
     common_fields = ["project_name", "vehicles", "shooting_dates"]
     for f in common_fields:
         setattr(waiver, f, None)
@@ -115,9 +124,10 @@ def _reset_waiver_fields(mode, waiver):
             setattr(waiver, f, None)
 
 
-# ── Production Waivers ───────────────────────────────────────────
+# ── Décharges Production ───────────────────────────────────────────
 
 def create_production_waiver(project_id):
+    """Crée une décharge production pour un projet s'il n'en existe pas déjà une."""
     existing = ProductionWaiver.query.filter_by(project_id=project_id).first()
     if existing:
         return False, "Une décharge production existe déjà pour ce projet."
@@ -129,8 +139,10 @@ def create_production_waiver(project_id):
 
 
 def list_production_waivers():
+    """Liste et formate toutes les décharges production pour l'administration."""
     waivers = ProductionWaiver.query.options(
         joinedload(ProductionWaiver.project)).all()
+    # Tri par date de départ du projet (décroissant)
     waivers.sort(key=lambda w: (
         w.project.departure_date or datetime.min.date(), w.project.name), reverse=True)
 
@@ -139,9 +151,9 @@ def list_production_waivers():
         p = w.project
 
         def get_secured_url(path):
+            """Génère l'URL sécurisée pour le document signé."""
             if not path:
                 return None
-            # Extract path if it's already a full URL/tokenized
             clean_path = path.split('?')[0].split(
                 '/production-waiver/document/')[-1]
             token = generate_waiver_pdf_access_token(clean_path)
@@ -153,7 +165,7 @@ def list_production_waivers():
         elif w.shooting_dates:
             shooting_dates = w.shooting_dates
 
-        # Get active token if any
+        # Récupère le jeton de signature actif si existant
         active_token = ProductionWaiverToken.query.filter_by(
             waiver_id=w.waiver_id).order_by(ProductionWaiverToken.created_at.desc()).first()
 
@@ -182,6 +194,10 @@ def list_production_waivers():
 
 
 def generate_production_waiver(waiver_id):
+    """
+    Génère (fige les données de snapshot) une décharge production.
+    Passe le statut de 'to_generate' à 'to_send'.
+    """
     waiver = ProductionWaiver.query.filter_by(waiver_id=waiver_id).first()
     if not waiver or waiver.status != "to_generate":
         return False, "Décharge non trouvée ou statut invalide."
@@ -214,8 +230,8 @@ def generate_production_waiver(waiver_id):
 
 
 def send_production_waiver(waiver_id):
+    """Envoie l'invitation de signature par e-mail au contact production."""
     from flask import request
-
     from utils.mailer import send_production_waiver_invitation_email
 
     waiver = ProductionWaiver.query.filter_by(waiver_id=waiver_id).first()
@@ -226,7 +242,7 @@ def send_production_waiver(waiver_id):
     if not contact_prod or not contact_prod.mail:
         return False, "La production n'a pas d'adresse e-mail de contact renseignée dans le projet."
 
-    # Create new token (24h validity managed by DB)
+    # Crée un nouveau jeton de signature (validité 24h gérée en DB)
     new_token = str(uuid.uuid4())
     token_rec = ProductionWaiverToken(
         token=new_token, waiver_id=waiver.waiver_id)
@@ -252,11 +268,13 @@ def send_production_waiver(waiver_id):
 
 
 def reset_production_waiver(waiver_id):
+    """Réinitialise complètement une décharge production (supprime signature, PDF et notifie n8n)."""
     waiver = ProductionWaiver.query.filter_by(waiver_id=waiver_id).first()
     if not waiver:
         return False, "Décharge non trouvée."
 
     try:
+        # Notifie n8n de la suppression/reset
         webhook_url = os.getenv("N8N_WEBHOOK_PRODUCTION_WAIVER")
         if webhook_url:
             trigger_n8n_webhook(webhook_url, method="DELETE",
@@ -272,6 +290,7 @@ def reset_production_waiver(waiver_id):
 
 
 def delete_production_waiver_internal(project_id):
+    """Supprime proprement une décharge production en interne (appelé lors de suppression de projet)."""
     waiver = ProductionWaiver.query.filter_by(project_id=project_id).first()
     if not waiver:
         return
@@ -288,9 +307,10 @@ def delete_production_waiver_internal(project_id):
         db.session.rollback()
 
 
-# ── Pilot Waivers ────────────────────────────────────────────────
+# ── Décharges Pilote ────────────────────────────────────────────────
 
 def create_pilot_waiver(project_id):
+    """Crée une décharge pilote pour un projet s'il n'en existe pas déjà une."""
     existing = PilotWaiver.query.filter_by(project_id=project_id).first()
     if existing:
         return False, "Une décharge existe déjà pour ce projet."
@@ -302,9 +322,11 @@ def create_pilot_waiver(project_id):
 
 
 def list_pilot_waivers():
+    """Liste et formate toutes les décharges pilote pour l'administration."""
     waivers = PilotWaiver.query.options(
         joinedload(PilotWaiver.project).joinedload(Project.pilot_contact)
     ).all()
+    # Tri par date de départ du projet (décroissant)
     waivers.sort(key=lambda w: (
         w.project.departure_date or datetime.min.date(), w.project.name), reverse=True)
 
@@ -313,6 +335,7 @@ def list_pilot_waivers():
         p = w.project
 
         def get_secured_url(path, is_attachment=False):
+            """Génère l'URL sécurisée pour le PDF signé ou les pièces jointes (permis, assurance, ID)."""
             if not path:
                 return None
             clean_path = path.split('?')[0].split(
@@ -334,7 +357,7 @@ def list_pilot_waivers():
         elif w.shooting_dates:
             shooting_dates = w.shooting_dates
 
-        # Get active token if any
+        # Récupère le jeton de signature actif si existant
         active_token = PilotWaiverToken.query.filter_by(
             waiver_id=w.waiver_id).order_by(PilotWaiverToken.created_at.desc()).first()
 
@@ -361,6 +384,10 @@ def list_pilot_waivers():
 
 
 def generate_pilot_waiver(waiver_id):
+    """
+    Génère (fige les données de snapshot) une décharge pilote.
+    Passe le statut de 'to_generate' à 'to_send'.
+    """
     waiver = PilotWaiver.query.filter_by(waiver_id=waiver_id).first()
     if not waiver or waiver.status != "to_generate":
         return False, "Décharge non trouvée ou statut invalide."
@@ -391,6 +418,7 @@ def generate_pilot_waiver(waiver_id):
         waiver.vehicles = ", ".join(
             [vehicle_map.get(vid, vid) for vid in veh_ids])
     else:
+        # Fallback sur les véhicules déjà contrôlés (checkout)
         waiver.vehicles = ", ".join(
             [cv.vehicle_name for cv in p.checkout_vehicles])
 
@@ -401,8 +429,8 @@ def generate_pilot_waiver(waiver_id):
 
 
 def send_pilot_waiver(waiver_id):
+    """Envoie l'invitation de signature par e-mail au pilote."""
     from flask import request
-
     from utils.mailer import send_waiver_invitation_email
 
     waiver = PilotWaiver.query.filter_by(waiver_id=waiver_id).first()
@@ -415,7 +443,7 @@ def send_pilot_waiver(waiver_id):
     if not pilot_contact or not pilot_contact.mail:
         return False, "Le pilote n'a pas d'adresse e-mail renseignée dans le projet."
 
-    # Create new token (24h validity managed by DB)
+    # Crée un nouveau jeton de signature (validité 24h gérée en DB)
     new_token = str(uuid.uuid4())
     token_rec = PilotWaiverToken(token=new_token, waiver_id=waiver.waiver_id)
     db.session.add(token_rec)
@@ -440,11 +468,13 @@ def send_pilot_waiver(waiver_id):
 
 
 def reset_pilot_waiver(waiver_id):
+    """Réinitialise complètement une décharge pilote (supprime signature, PDF et notifie n8n)."""
     waiver = PilotWaiver.query.filter_by(waiver_id=waiver_id).first()
     if not waiver:
         return False, "Décharge non trouvée."
 
     try:
+        # Notifie n8n de la suppression/reset
         webhook_url = os.getenv("N8N_WEBHOOK_PILOT_WAIVER")
         if webhook_url:
             trigger_n8n_webhook(webhook_url, method="DELETE",
@@ -462,6 +492,7 @@ def reset_pilot_waiver(waiver_id):
 
 
 def delete_pilot_waiver_internal(project_id):
+    """Supprime proprement une décharge pilote en interne (appelé lors de suppression de projet)."""
     waiver = PilotWaiver.query.filter_by(project_id=project_id).first()
     if not waiver:
         return

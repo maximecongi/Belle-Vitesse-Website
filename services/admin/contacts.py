@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def list_contacts():
-    """Fetch all contacts formatted for listing."""
+    """Récupère tous les contacts formattés pour l'affichage en liste."""
     fields_map = {
         "first_name": "first_name",
         "last_name": "last_name",
@@ -26,7 +26,7 @@ def list_contacts():
 
 @handle_admin_service_error
 def create_contact(form):
-    """Create a new contact record."""
+    """Crée un nouvel enregistrement de contact."""
     pid = form.get("production_id")
     contact = Contact(
         first_name=form.get("first_name", ""),
@@ -43,7 +43,7 @@ def create_contact(form):
 
 @handle_admin_service_error
 def update_contact(record_id, form):
-    """Update an existing contact record."""
+    """Met à jour un enregistrement de contact existant."""
     contact = db.session.get(Contact, record_id)
     if not contact:
         return False
@@ -61,16 +61,16 @@ def update_contact(record_id, form):
 
 
 def get_contact_for_edit(record_id):
-    """Fetch contact data for editing."""
+    """Récupère les données d'un contact pour l'édition."""
     fields = ["first_name", "last_name", "phone", "mail", "production_id", "job_title"]
     return generic_get_record_for_edit(Contact, record_id, fields)
 
 
 def delete_contact(record_id):
-    """Delete a contact record."""
+    """Supprime un enregistrement de contact."""
     return generic_delete_record(Contact, record_id)
 
 
 def get_productions_for_select():
-    """Return all productions for the contact form select."""
+    """Retourne toutes les productions pour le sélecteur du formulaire contact."""
     return Production.query.order_by(Production.name).all()

@@ -1,5 +1,5 @@
 """
-Shared utilities for inspections (check-in/check-out) — PDF, sealing and QR codes.
+Utilitaires partagés pour les inspections (check-in/check-out) — PDF, scellement et codes QR.
 """
 
 import base64
@@ -22,11 +22,11 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-# ── HMAC Sealing ─────────────────────────────────────────────────
+# ── Scellement HMAC (Sealing) ────────────────────────────────────
 
 
 def _get_hmac_secret() -> bytes:
-    """Return the HMAC secret key from environment."""
+    """Récupère la clé secrète HMAC depuis l'environnement."""
     secret = os.getenv("HASH_SECRET_KEY")
     if not secret:
         # Fallback to SECRET_KEY for dev, though distinct is better
@@ -36,10 +36,10 @@ def _get_hmac_secret() -> bytes:
 
 def compute_hmac_seal(prefix, *args) -> str:
     """
-    Computes a cryptographic HMAC-SHA256 seal for any document.
+    Calcule un sceau cryptographique HMAC-SHA256 pour tout document.
     Args:
-        prefix (str): E.g. 'INSPECTION', 'WAIVER', 'WAIVER_PROD'
-        *args: Variable number of strings that form the seal content.
+        prefix (str) : Ex: 'INSPECTION', 'WAIVER', 'WAIVER_PROD'
+        *args : Nombre variable de chaînes formant le contenu du sceau.
     """
     # Join prefix and all args with a pipe
     content_parts = [prefix] + [str(arg) for arg in args]
@@ -51,13 +51,13 @@ def compute_hmac_seal(prefix, *args) -> str:
 
 def verify_hmac_seal(expected_hash, prefix, *args) -> bool:
     """
-    Verifies a cryptographic HMAC-SHA256 seal.
+    Vérifie l'intégrité d'un sceau cryptographique HMAC-SHA256.
     """
     actual_hash = compute_hmac_seal(prefix, *args)
     return hmac.compare_digest(actual_hash, expected_hash)
 
 
-# Backward compatibility aliases for inspections
+# Alias de compatibilité descendante pour les inspections
 def compute_document_seal(inspection_id, vehicle_id, signature_data, signed_at):
     return compute_hmac_seal("INSPECTION", inspection_id, vehicle_id, signature_data, signed_at)
 
@@ -66,15 +66,15 @@ def verify_document_seal(inspection_id, vehicle_id, signature_data, signed_at, e
     return verify_hmac_seal(expected_hash, "INSPECTION", inspection_id, vehicle_id, signature_data, signed_at)
 
 
-# ── PDF Binary Hash ──────────────────────────────────────────────
+# ── Empreinte Binaire PDF (Hash) ─────────────────────────────────
 
 def compute_pdf_hash(pdf_bytes: bytes) -> str:
-    """Compute a SHA-256 hash of the raw PDF binary."""
+    """Calcule une empreinte SHA-256 du binaire brut du PDF."""
     return hashlib.sha256(pdf_bytes).hexdigest()
 
 
 def verify_pdf_hash(pdf_bytes: bytes, expected_hash: str) -> bool:
-    """Verify that a PDF file matches the stored hash."""
+    """Vérifie qu'un fichier PDF correspond à l'empreinte enregistrée."""
     actual_hash = compute_pdf_hash(pdf_bytes)
     return hmac.compare_digest(actual_hash, expected_hash)
 
@@ -82,7 +82,7 @@ def verify_pdf_hash(pdf_bytes: bytes, expected_hash: str) -> bool:
 # ── QR Code ──────────────────────────────────────────────────────
 
 def generate_qr_code(data: str) -> str:
-    """Generate a QR code and return it as a base64 data URI."""
+    """Génère un code QR et le retourne sous forme d'URI de données base64."""
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -98,10 +98,10 @@ def generate_qr_code(data: str) -> str:
     return f"data:image/png;base64,{base64.b64encode(buffered.getvalue()).decode()}"
 
 
-# ── PDF Access Tokens ───────────────────────────────────────────
+# ── Jetons d'Accès PDF ───────────────────────────────────────────
 
 def generate_pdf_access_token(filename: str) -> str:
-    """Generate a time-limited, HMAC-signed access token for a PDF filename."""
+    """Génère un jeton d'accès signé HMAC, limité dans le temps, pour un nom de fichier PDF."""
     secret = _get_hmac_secret()
     now_minutes = int(datetime.now(timezone.utc).timestamp() // 60)
     payload = f"{filename}:{now_minutes}".encode("utf-8")
@@ -109,7 +109,7 @@ def generate_pdf_access_token(filename: str) -> str:
 
 
 def validate_pdf_access_token(filename: str, provided_token: str) -> bool:
-    """Validate a time-limited access token for a PDF."""
+    """Valide un jeton d'accès limité dans le temps pour un PDF."""
     if not provided_token:
         return False
     secret = _get_hmac_secret()
@@ -137,6 +137,7 @@ def validate_waiver_pdf_access_token(filename, token):
 # ── WeasyPrint Fetcher ──────────────────────────────────────────
 
 def make_url_fetcher(app):
+    """Générateur de fetcher d'URL personnalisé pour WeasyPrint (gestion des préfixes /static/ et /files/)."""
     from weasyprint import default_url_fetcher
 
     def fetcher(url):
@@ -169,15 +170,15 @@ def make_url_fetcher(app):
     return fetcher
 
 
-# ── PDF Generation ──────────────────────────────────────────────
+# ── Génération de PDF ────────────────────────────────────────────
 
 def render_pdf_from_template(html_content: str, base_url: str, stylesheets: list[str] = None) -> bytes:
     """
-    Generic PDF generator using WeasyPrint.
+    Générateur de PDF générique utilisant WeasyPrint.
     Args:
-        html_content (str): Rendered HTML string.
-        base_url (str): Base URL for assets.
-        stylesheets (list[str]): List of static filenames (e.g. ['css/styles.css', 'css/checkin.css'])
+        html_content (str) : Contenu HTML rendu.
+        base_url (str) : URL de base pour les ressources.
+        stylesheets (list[str]) : Liste des fichiers statiques CSS (ex: ['css/styles.css']).
     """
     fetcher = make_url_fetcher(current_app)
     html = HTML(string=html_content, base_url=base_url, url_fetcher=fetcher)

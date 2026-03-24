@@ -1,5 +1,5 @@
 """
-Shared signature and token service for both Check-in and Check-out (Technician flow).
+Service partagé de signature et de jetons pour les Retours et Départs (flux technicien) ainsi que les décharges.
 """
 
 import logging
@@ -46,7 +46,7 @@ from utils.storage import (
 
 logger = logging.getLogger(__name__)
 
-# ── Model Mapping ──────────────────────────────────────────────
+# ── Configuration des Flux ──────────────────────────────────────
 
 FLOW_CONFIG = {
     "checkout": {
@@ -79,7 +79,7 @@ FLOW_CONFIG = {
         "url_path": "pilot-waiver",
         "storage_func": get_pilot_waiver_path,
         "webhook_env": "N8N_WEBHOOK_PILOT_WAIVER",
-        "stylesheets": [],  # Using inline or global for waivers
+        "stylesheets": [],  # Utilise des styles en ligne ou globaux pour les décharges
         "template": "public/waivers/pilot_waiver_pdf.html"
     },
     "production": {
@@ -90,12 +90,12 @@ FLOW_CONFIG = {
         "url_path": "production-waiver",
         "storage_func": get_production_waiver_path,
         "webhook_env": "N8N_WEBHOOK_PRODUCTION_WAIVER",
-        "stylesheets": [],  # Using inline or global for waivers
+        "stylesheets": [],  # Utilise des styles en ligne ou globaux pour les décharges
         "template": "public/waivers/production_waiver_pdf.html"
     }
 }
 
-# ── Token Management ─────────────────────────────────────────────
+# ── Gestion des Jetons ───────────────────────────────────────────
 
 
 def validate_inspection_token(token_str, mode):
@@ -130,7 +130,7 @@ def generate_inspection_token(record_id, mode):
     if not record:
         return None
 
-    # Importing dynamically to avoid circular dependencies
+    # Importation dynamique pour éviter les dépendances circulaires
     from services.admin.inspections import _format_base_inspection_admin
 
     vehicles = get_vehicles()
@@ -171,9 +171,9 @@ def abandon_inspection_signature(token_str, mode):
         if record:
             record.status = "in_progress"
             db.session.commit()
-        logger.info(f"🔙 Signature abandoned for {entry.inspection_id}")
+        logger.info(f"🔙 Signature abandonnée pour {entry.inspection_id}")
     except Exception as e:
-        logger.error(f"❌ Failed to abandon signature: {e}")
+        logger.error(f"❌ Échec de l'abandon de la signature : {e}")
     return True
 
 
@@ -192,15 +192,16 @@ def resume_inspection_signature(token_str, mode):
             record.status = "pending"
             db.session.commit()
     except Exception as e:
-        logger.error(f"❌ Failed to resume signature: {e}")
+        logger.error(f"❌ Échec de la reprise de la signature : {e}")
     return True
 
 
-# ── Signature Processing Engine ──────────────────────────────────
+# ── Moteur de Traitement des Signatures ──────────────────────────
 
 def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_data=None):
     """
-    Unified engine for finalizing any signed document (Inspection or Waiver).
+    Moteur unifié pour finaliser n'importe quel document signé (Inspection ou Décharge).
+    Génère le PDF, enregistre l'archive et déclenche les webhooks/emails.
     """
     config = FLOW_CONFIG.get(mode)
     if not config:
@@ -220,7 +221,7 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         base_url = f"https://{base_url}"
 
     try:
-        # 1. Update State
+        # 1. Mise à jour de l'état
         if hasattr(record, "status"):
             record.status = "signed"
         if hasattr(record, "signed_at"):
@@ -228,7 +229,7 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         if hasattr(record, "signer_ip"):
             record.signer_ip = signed_ip
 
-        # 2. Build Data Snapshot & Seal
+        # 2. Construction du Snapshot des données et Scellé (Hash)
         document_id = getattr(
             record, "inspection_number", getattr(record, "waiver_id", None))
         snapshot, seal_args = _build_flow_data(mode, record, extra_data)
@@ -236,21 +237,21 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         current_hash = compute_hmac_seal(
             config["prefix"], document_id, *seal_args, signature_data, signed_at.isoformat())
 
-        # 3. QR code & PDF
+        # 3. QR code et génération du PDF
         verification_url = f"{base_url}/{config['url_path']}/verify/{document_id}"
         qr_code_img = generate_qr_code(verification_url)
 
-        # Render template
+        # Préparation du contexte de rendu
         render_ctx = {
             "signature": signature_data,
             "qr": qr_code_img,
             "hash": current_hash,
-            "document_hash": current_hash,  # for waivers
+            "document_hash": current_hash,  # utilisé pour les décharges
             "verification_url": verification_url,
             "signed_at_str": signed_at.strftime("%d/%m/%Y %H:%M"),
             "signed_ip": signed_ip,
         }
-        # Add flow-specific data
+        # Ajout des données spécifiques au flux
         if mode in ["checkout", "checkin"]:
             render_ctx["data"] = snapshot
         else:
@@ -260,7 +261,7 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         pdf_bytes = render_pdf_from_template(
             html_content, base_url, config["stylesheets"])
 
-        # 4. Storage
+        # 4. Stockage physique
         project_obj = getattr(record, "project", None)
         pdf_dir = ensure_dir(config["storage_func"](project_obj))
         filename = f"{document_id}_{secrets.token_hex(8)}.pdf"
@@ -276,15 +277,15 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         pdf_public_url = f"{base_url}/{config['url_path']}/document/{rel_pdf_path}"
         pdf_file_hash = compute_pdf_hash(pdf_bytes)
 
-        # 5. Persistence
+        # 5. Persistance en base de données
         if hasattr(record, "signed_pdf_path"):
             record.signed_pdf_path = rel_pdf_path
 
         if hasattr(record, "hash"):
             record.hash = current_hash
 
-        # Archive record
-        # Determine PK name for signed model
+        # Création de l'enregistrement d'archive
+        # Détermine le nom de la PK pour le modèle de document signé
         pk_name = "inspection_id" if mode in [
             "checkout", "checkin"] else "waiver_id"
         signed_doc = signed_model(
@@ -303,7 +304,7 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         db.session.add(signed_doc)
         db.session.commit()
 
-        # 6. Post-processing (Webhook & Email)
+        # 6. Post-traitement (Webhooks et Emails)
         _trigger_unified_webhook(
             mode, record, rel_pdf_path, base_url, current_hash, snapshot)
 
@@ -318,12 +319,12 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
 
     except Exception as e:
         db.session.rollback()
-        logger.error(f"❌ Transaction failed during {mode} signature: {e}")
+        logger.error(f"❌ La transaction a échoué pendant la signature {mode} : {e}")
         raise
 
 
 def _build_flow_data(mode, record, extra_data):
-    """Build type-specific snapshot and seal arguments."""
+    """Construit l'instantané (snapshot) et les arguments du scellé spécifiques au type de flux."""
     if mode in ["checkout", "checkin"]:
         from services.admin.inspections import _format_base_inspection_admin
         vehicles = get_vehicles()
@@ -335,7 +336,7 @@ def _build_flow_data(mode, record, extra_data):
     elif mode == "pilot":
         full_name = f"{record.pilot_first_name} {record.pilot_last_name}"
         seal_args = [full_name, record.pilot_license_number or ""]
-        # Snapshot for waivers
+        # Snapshot pour les décharges
         snapshot = {
             "_seal_pilot_name": full_name,
             "_seal_license": record.pilot_license_number or "",
@@ -358,16 +359,15 @@ def _build_flow_data(mode, record, extra_data):
     return {}, []
 
 
-# Backward compatibility alias for waivers
 def process_waiver_signature(mode, record_id):
-    """Legacy helper for waivers where data is already on the record."""
+    """Aide historique pour les décharges où les données sont déjà sur l'enregistrement."""
     config = FLOW_CONFIG.get(mode)
     record = db.session.get(config["model"], record_id)
     return finalize_signed_document(
         mode, record_id, record.signature_data, record.signer_ip)
 
 
-# Backward compatibility alias for inspections
+# Alias de compatibilité descendante pour les inspections
 def process_inspection_signature(token_str, mode, signature_data, signed_ip):
     config = FLOW_CONFIG[mode]
     token_model = config["token_model"]
@@ -382,18 +382,18 @@ def process_inspection_signature(token_str, mode, signature_data, signed_ip):
     return res
 
 
-# ── Webhook Logic ──────────────────────────────────────────────
+# ── Logique Webhook ──────────────────────────────────────────────
 
 def _trigger_unified_webhook(mode, record, rel_pdf_path, base_url, current_hash, snapshot):
     """
-    Triggers the appropriate n8n webhook for any signed document.
+    Déclenche le webhook n8n approprié pour tout document signé.
     """
     config = FLOW_CONFIG.get(mode)
     webhook_url = os.getenv(config["webhook_env"])
     if not webhook_url:
         return
 
-    # PDF Access Token
+    # Jeton d'accès PDF (pour sécuriser le lien envoyé au webhook)
     from utils.document_utils import generate_pdf_access_token
     pdf_access_token = generate_pdf_access_token(rel_pdf_path)
     pdf_url_signed = f"{base_url}/{config['url_path']}/document/{rel_pdf_path}?t={pdf_access_token}"
@@ -403,7 +403,7 @@ def _trigger_unified_webhook(mode, record, rel_pdf_path, base_url, current_hash,
     if project_obj:
         project_id_unique = getattr(project_obj, "project_id", "—")
 
-    # Extract year and month from project departure date or current date
+    # Extrait l'année et le mois du projet (date de départ) ou date actuelle
     date_ref = datetime.utcnow()
     if project_obj and project_obj.departure_date:
         date_ref = project_obj.departure_date
@@ -411,7 +411,7 @@ def _trigger_unified_webhook(mode, record, rel_pdf_path, base_url, current_hash,
     year_str = date_ref.strftime("%Y")
     month_str = date_ref.strftime("%m")
 
-    # Base Payload
+    # Payload de base
     payload = {
         "event": f"{mode}_signed",
         "document_id": getattr(record, "inspection_number", getattr(record, "waiver_id", "—")),
@@ -424,7 +424,7 @@ def _trigger_unified_webhook(mode, record, rel_pdf_path, base_url, current_hash,
         "month": month_str,
     }
 
-    # Flow-specific payload components
+    # Composants de payload spécifiques au flux
     if mode in ["checkout", "checkin"]:
         def get_secured_photo_url(photo_item):
             if not photo_item or "url" not in photo_item:
@@ -473,11 +473,11 @@ def _trigger_unified_webhook(mode, record, rel_pdf_path, base_url, current_hash,
             record.webhook_triggered_at = datetime.utcnow()
             db.session.commit()
     except Exception as e:
-        logger.error(f"❌ Webhook error ({mode}): {e}")
+        logger.error(f"❌ Erreur Webhook ({mode}) : {e}")
 
 
 def _send_waiver_confirmation_email(mode, waiver, pdf_path):
-    """Sends confirmation email with PDF."""
+    """Envoie une confirmation par e-mail avec le PDF en pièce jointe."""
     try:
         recipient_email = None
         recipient_name = None
@@ -500,4 +500,4 @@ def _send_waiver_confirmation_email(mode, waiver, pdf_path):
                 pdf_path
             )
     except Exception as e:
-        logger.error(f"❌ Email error ({mode} {waiver.id}): {e}")
+        logger.error(f"❌ Erreur e-mail ({mode} {waiver.id}) : {e}")

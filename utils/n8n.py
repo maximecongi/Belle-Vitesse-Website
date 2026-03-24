@@ -7,26 +7,26 @@ logger = logging.getLogger(__name__)
 
 def trigger_n8n_webhook(url: str, method: str = "POST", **kwargs) -> bool:
     """
-    Trigger an n8n webhook with the given URL, HTTP method, and arguments as payload.
+    Déclenche un webhook n8n avec l'URL, la méthode HTTP et les arguments fournis comme payload.
 
     Args:
-        url (str): The n8n webhook URL.
-        method (str): The HTTP method to use (POST, DELETE, etc.).
-        **kwargs: The data to send in the JSON payload.
+        url (str) : L'URL du webhook n8n.
+        method (str) : La méthode HTTP à utiliser (POST, DELETE, etc.).
+        **kwargs : Les données à envoyer dans le payload JSON.
 
     Returns:
-        bool: True if the webhook was triggered successfully, False otherwise.
+        bool : True si le webhook a été déclenché avec succès, False sinon.
     """
     if not url:
-        logger.warning("⚠️ Webhook URL is empty.")
+        logger.warning("⚠️ L'URL du webhook est vide.")
         return False
 
-    # Extract ID for logging if available (e.g., inspection_id)
+    # Extraire l'ID pour le log si disponible (ex: inspection_id)
     doc_id = kwargs.get("inspection_id") or kwargs.get(
         "waiver_id") or kwargs.get("project_id") or kwargs.get("id", "")
-    log_suffix = f" for {doc_id}" if doc_id else ""
+    log_suffix = f" pour {doc_id}" if doc_id else ""
 
-    logger.info(f"🚀 Triggering n8n webhook ({method}){log_suffix}...")
+    logger.info(f"🚀 Déclenchement du webhook n8n ({method}){log_suffix}...")
 
     try:
         response = http_requests.request(method, url, json=kwargs, timeout=10)

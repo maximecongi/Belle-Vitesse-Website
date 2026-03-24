@@ -1,7 +1,7 @@
 """
-Airtable Sync Service
+Service de Synchronisation Airtable
 
-Core logic for syncing Airtable data to MySQL and downloading images.
+Logique principale pour synchroniser les données Airtable vers MySQL et télécharger les images.
 """
 
 import json
@@ -12,7 +12,6 @@ from pathlib import Path
 import requests
 from pyairtable import Api
 from sqlalchemy import create_engine, text
-from sqlalchemy.exc import SQLAlchemyError
 
 IMAGE_STORE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static", "images", "airtable")
 STATIC_URL_PREFIX = "/static/images/airtable"
@@ -23,21 +22,21 @@ TABLES = ["vehicles", "heads", "grips_categories",
 THUMBNAIL_SIZES = ["small", "large", "full"]
 
 
-# ── MySQL helpers ────────────────────────────────────────────
+# ── Aide MySQL ───────────────────────────────────────────────
 
 def get_sqlalchemy_engine(host, user, password, database, port=3306):
-    """Create and return a SQLAlchemy engine."""
+    """Crée et retourne un moteur SQLAlchemy."""
     try:
         url = f"mysql+mysqlconnector://{user}:{password}@{host}:{port}/{database}"
         engine = create_engine(url)
         return engine
     except Exception as e:
-        print(f"Error creating SQLAlchemy engine: {e}")
+        print(f"Erreur lors de la création du moteur SQLAlchemy : {e}")
         raise
 
 
 def create_table_if_not_exists(connection, table_name):
-    """Create table with flexible JSON structure if it doesn't exist."""
+    """Crée la table avec une structure JSON flexible si elle n'existe pas."""
     connection.execute(text(f"""
         CREATE TABLE IF NOT EXISTS `{table_name}` (
             id VARCHAR(255) PRIMARY KEY,
@@ -48,10 +47,10 @@ def create_table_if_not_exists(connection, table_name):
     """))
 
 
-# ── Image download helpers ───────────────────────────────────
+# ── Aides au téléchargement d'images ─────────────────────────
 
 def download_file(url, save_path):
-    """Download a file from URL to the specified path."""
+    """Télécharge un fichier depuis une URL vers le chemin spécifié."""
     try:
         response = requests.get(url, stream=True, timeout=30)
         response.raise_for_status()
@@ -64,14 +63,14 @@ def download_file(url, save_path):
 
         return True
     except Exception as e:
-        print(f"  Error downloading {url}: {e}")
+        print(f"  Erreur lors du téléchargement de {url} : {e}")
         return False
 
 
 def process_attachment(attachment, table_name, record_id):
     """
-    Process a single attachment: download main image and thumbnails.
-    Returns modified attachment with local URLs.
+    Traite une seule pièce jointe : télécharge l'image principale et les miniatures.
+    Retourne la pièce jointe modifiée avec les URLs locales.
     """
     filename = attachment.get("filename", "image.jpg")
     original_url = attachment.get("url")
@@ -85,9 +84,9 @@ def process_attachment(attachment, table_name, record_id):
         main_save_path = os.path.join(base_path, filename)
         if download_file(original_url, main_save_path):
             processed["url"] = f"{base_url}/{filename}"
-            print(f"  Downloaded: {filename}")
+            print(f"  Téléchargé : {filename}")
         else:
-            print(f"  Failed to download main image: {filename}")
+            print(f"  Échec du téléchargement de l'image principale : {filename}")
 
     thumbnails = attachment.get("thumbnails", {})
     if thumbnails:
@@ -108,7 +107,7 @@ def process_attachment(attachment, table_name, record_id):
                         "width": thumb_data.get("width"),
                         "height": thumb_data.get("height")
                     }
-                    print(f"    Thumbnail ({size}): {filename}")
+                    print(f"    Miniature ({size}) : {filename}")
                 else:
                     processed_thumbnails[size] = thumb_data
 
@@ -119,8 +118,8 @@ def process_attachment(attachment, table_name, record_id):
 
 def process_attachments_in_fields(fields, table_name, record_id):
     """
-    Iterate through all fields and process any attachment arrays.
-    Returns modified fields with local URLs.
+    Parcourt tous les champs et traite les tableaux de pièces jointes.
+    Retourne les champs modifiés avec les URLs locales.
     """
     processed_fields = {}
 
@@ -128,7 +127,7 @@ def process_attachments_in_fields(fields, table_name, record_id):
         if isinstance(value, list) and len(value) > 0:
             first_item = value[0]
             if isinstance(first_item, dict) and "url" in first_item and "filename" in first_item:
-                print(f"  Processing attachment field: {key}")
+                print(f"  Traitement du champ de pièce jointe : {key}")
                 processed_attachments = []
                 for attachment in value:
                     processed = process_attachment(
@@ -143,10 +142,10 @@ def process_attachments_in_fields(fields, table_name, record_id):
     return processed_fields
 
 
-# ── Sync logic ───────────────────────────────────────────────
+# ── Logique de Synchronisation ───────────────────────────────
 
 def _is_attachment_field(value):
-    """Check if a field value is an Airtable attachment array."""
+    """Vérifie si une valeur de champ est un tableau de pièces jointes Airtable."""
     return (isinstance(value, list) and len(value) > 0
             and isinstance(value[0], dict)
             and "url" in value[0] and "filename" in value[0])
@@ -154,7 +153,7 @@ def _is_attachment_field(value):
 
 def _preserve_existing_attachments(connection, table_name, record_id, new_fields):
     """
-    Merge new fields with existing attachment fields from DB.
+    Fusionne les nouveaux champs avec les champs de pièces jointes existants de la base.
     """
     query = text(f"SELECT fields FROM `{table_name}` WHERE id = :record_id")
     result = connection.execute(query, {"record_id": record_id})
@@ -179,9 +178,9 @@ def _preserve_existing_attachments(connection, table_name, record_id, new_fields
 
 
 def sync_table(table_name, api, base_id, connection, download_images=True):
-    """Sync a single table from Airtable to MySQL."""
+    """Synchronise une seule table depuis Airtable vers MySQL."""
     print(f"\n{'='*50}")
-    print(f"Syncing table: {table_name}")
+    print(f"Synchronisation de la table : {table_name}")
     print(f"{'='*50}")
 
     create_table_if_not_exists(connection, table_name)
@@ -189,14 +188,14 @@ def sync_table(table_name, api, base_id, connection, download_images=True):
     table = api.table(base_id, table_name)
     records = table.all()
 
-    print(f"Found {len(records)} records")
+    print(f"{len(records)} enregistrements trouvés")
 
     for record in records:
         record_id = record["id"]
         created_time = record["createdTime"]
         fields = record["fields"]
 
-        print(f"\nProcessing record: {record_id}")
+        print(f"\nTraitement de l'enregistrement : {record_id}")
 
         if download_images:
             processed_fields = process_attachments_in_fields(
@@ -225,30 +224,30 @@ def sync_table(table_name, api, base_id, connection, download_images=True):
             )
         except Exception as e:
             print(
-                f"  FAILED to upsert record {record_id} in table {table_name}: {e}")
+                f"  ÉCHEC de l'insertion de l'enregistrement {record_id} dans la table {table_name} : {e}")
             raise e
 
-    print(f"\nCompleted syncing {table_name}: {len(records)} records")
+    print(f"\nSynchronisation terminée pour {table_name} : {len(records)} enregistrements")
     return [r["id"] for r in records]
 
 
 def cleanup_records(connection, table_name, active_ids):
-    """Delete records from MySQL that are no longer in Airtable."""
+    """Supprime les enregistrements de MySQL qui ne sont plus présents dans Airtable."""
     if not active_ids:
-        print(f"  Cleaning up: deleting ALL records from {table_name}")
+        print(f"  Nettoyage : suppression de TOUS les enregistrements de {table_name}")
         connection.execute(text(f"DELETE FROM `{table_name}`"))
         return
 
     query = text(f"DELETE FROM `{table_name}` WHERE id NOT IN (:active_ids)")
     connection.execute(query, {"active_ids": active_ids})
     
-    # In SQLAlchemy Core, we can get affected rows from the result
-    # but for simplicity in this script, we'll just log that cleanup ran
-    print(f"  Cleaning up stale records from {table_name}")
+    # Dans SQLAlchemy Core, nous pouvons obtenir les lignes affectées via le résultat
+    # mais pour simplifier dans ce script, nous logguons juste que le nettoyage a eu lieu
+    print(f"  Nettoyage des enregistrements obsolètes de {table_name}")
 
 
 def cleanup_images(table_name, active_ids):
-    """Delete local image folders for records that are no longer in Airtable."""
+    """Supprime les dossiers d'images locaux pour les enregistrements qui ne sont plus dans Airtable."""
     table_dir = os.path.join(IMAGE_STORE_PATH, table_name)
     if not os.path.exists(table_dir):
         return
@@ -258,16 +257,16 @@ def cleanup_images(table_name, active_ids):
             record_dir = os.path.join(table_dir, record_id)
             if os.path.isdir(record_dir):
                 print(
-                    f"  Cleaning up: deleting images for stale record {record_id}")
+                    f"  Nettoyage : suppression des images pour l'enregistrement obsolète {record_id}")
                 shutil.rmtree(record_dir)
 
 
 # ── Public API ───────────────────────────────────────────────
 
 def clean_images_folder():
-    """Clear all contents from the images folder."""
+    """Vide tout le contenu du dossier des images."""
     if os.path.exists(IMAGE_STORE_PATH):
-        print(f"🧹 Cleaning {IMAGE_STORE_PATH}...")
+        print(f"🧹 Nettoyage de {IMAGE_STORE_PATH}...")
         for item in os.listdir(IMAGE_STORE_PATH):
             item_path = os.path.join(IMAGE_STORE_PATH, item)
             if os.path.isdir(item_path):
@@ -280,14 +279,14 @@ def clean_images_folder():
 
 def run_sync(config, sync_db=True, sync_images=True):
     """
-    Main sync entry point.
+    Point d'entrée principal de la synchronisation.
 
     Args:
-        config: dict with keys: airtable_token, airtable_base_id,
+        config: dict avec les clés : airtable_token, airtable_base_id,
                 mysql_host, mysql_user, mysql_password, mysql_database,
                 use_ssh_tunnel, etc.
-        sync_db: whether to sync database records
-        sync_images: whether to download images
+        sync_db : si True, synchronise les enregistrements de la base de données
+        sync_images : si True, télécharge les images
     """
     api = Api(config["airtable_token"])
 
@@ -341,5 +340,5 @@ def run_sync(config, sync_db=True, sync_images=True):
         try:
             _do_sync(connection)
         except Exception as e:
-            print(f"\nError during sync: {e}")
+            print(f"\nErreur pendant la synchronisation : {e}")
             raise

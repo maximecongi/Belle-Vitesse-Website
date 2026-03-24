@@ -12,7 +12,7 @@ from itsdangerous import URLSafeSerializer
 
 def send_magic_link_email(to_email, firstname, magic_link):
     """
-    Sends a magic link for passwordless login to an administrator.
+    Envoie un lien magique pour une connexion sans mot de passe à un administrateur.
     """
     mail_server = os.getenv("MAIL_SERVER")
     mail_port = int(os.getenv("MAIL_PORT", 587))
@@ -69,7 +69,7 @@ def send_magic_link_email(to_email, firstname, magic_link):
 
 
 def send_subscription_email(to_email):
-    """Send a welcome email when someone subscribes to the newsletter."""
+    """Envoie un email de bienvenue lors de l'inscription à la newsletter."""
     mail_server = os.getenv("MAIL_SERVER")
     mail_port = int(os.getenv("MAIL_PORT", 587))
     mail_user = os.getenv("MAIL_CONTACT_USERNAME")
@@ -159,8 +159,8 @@ def send_subscription_email(to_email):
 
 def send_newsletter_campaign(subject, body, subscribers):
     """
-    Sends a bulk newsletter email to a list of subscribers.
-    subscribers is a list of NewsletterSubscriber objects.
+    Envoie une campagne newsletter groupée à une liste d'abonnés.
+    'subscribers' est une liste d'objets NewsletterSubscriber.
     """
     mail_server = os.getenv("MAIL_SERVER")
     mail_port = int(os.getenv("MAIL_PORT", 587))
@@ -239,7 +239,7 @@ def send_newsletter_campaign(subject, body, subscribers):
 
 
 def send_waiver_invitation_email(to_email, pilot_name, project_name, signature_link):
-    """Sends an invitation to a pilot to sign their waiver."""
+    """Envoie une invitation à un pilote pour signer sa décharge."""
     mail_server = os.getenv("MAIL_SERVER")
     mail_port = int(os.getenv("MAIL_PORT", 587))
     mail_user = os.getenv("MAIL_ADMIN_USERNAME")
@@ -297,7 +297,7 @@ def send_waiver_invitation_email(to_email, pilot_name, project_name, signature_l
 
 
 def send_production_waiver_invitation_email(to_email, prod_contact_name, project_name, signature_link):
-    """Sends an invitation to a production contact to sign their waiver."""
+    """Envoie une invitation à un contact de production pour signer sa décharge."""
     mail_server = os.getenv("MAIL_SERVER")
     mail_port = int(os.getenv("MAIL_PORT", 587))
     mail_user = os.getenv("MAIL_ADMIN_USERNAME")
@@ -356,7 +356,7 @@ def send_production_waiver_invitation_email(to_email, prod_contact_name, project
 
 def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path):
     """
-    Sends an email with the signed PDF as an attachment.
+    Envoie un email avec le PDF signé en pièce jointe.
     """
     mail_server = os.getenv("MAIL_SERVER")
     mail_port = int(os.getenv("MAIL_PORT", 587))

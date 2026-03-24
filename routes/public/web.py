@@ -33,7 +33,7 @@ DEFAULT_LANG = 'en'
 
 
 def init_web_routes(app):
-    """Public website routes: pages, newsletter, cache, sitemap."""
+    """Routes publiques du site : pages, newsletter, cache, sitemap."""
 
     BRANDS = [
         {"slug": "academy", "label": "Academy",
@@ -59,26 +59,26 @@ def init_web_routes(app):
         {"slug": "unite", "label": "Unité", "url": "https://unite-films.com/"},
     ]
 
-    # ── Admin Auth Guard (for cache endpoints) ────────────────────
+    # ── Protection Admin (pour les endpoints du cache) ─────────────
 
     def require_admin_token():
-        """Guard for admin cache routes. Uses ADMIN_CACHE_TOKEN env var."""
+        """Protection pour les routes de cache admin. Utilise ADMIN_CACHE_TOKEN."""
         token = request.headers.get("X-Admin-Token")
         if not token or token != os.getenv("ADMIN_CACHE_TOKEN"):
             abort(403)
 
-    # ── Root redirect ─────────────────────────────────────────────
+    # ── Redirection racine ────────────────────────────────────────
 
     @app.route("/")
     def root():
-        """Redirect / based on: 1) session, 2) browser Accept-Language, 3) default."""
+        """Redirige / selon : 1) session, 2) langue du navigateur (Accept-Language), 3) défaut."""
         from flask import session
-        # 1. Check session
+        # 1. Vérifie la session
         saved_lang = session.get('lang')
         if saved_lang in SUPPORTED_LANGS:
             return redirect(url_for('home', lang=saved_lang), code=302)
 
-        # 2. Detect browser language
+        # 2. Détecte la langue du navigateur
         best = request.accept_languages.best_match(
             SUPPORTED_LANGS, default=DEFAULT_LANG)
         return redirect(url_for('home', lang=best), code=302)
@@ -97,7 +97,7 @@ def init_web_routes(app):
                 and not request.path.startswith('/production-waiver/'):
             return redirect(url_for('launch'))
 
-    # ── Pages (all prefixed with /<lang>/) ────────────────────────
+    # ── Pages (toutes préfixées par /<lang>/) ──────────────────────
 
     @app.route("/launch")
     def launch():
@@ -193,11 +193,11 @@ def init_web_routes(app):
         from utils.mailer import send_subscription_email
         email = request.form.get("email")
         if not email:
-            return jsonify({"status": "error", "message": "Email is required"}), 400
+            return jsonify({"status": "error", "message": "L'email est requis"}), 400
 
         email_regex = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
         if not re.match(email_regex, email):
-            return jsonify({"status": "error", "message": "Invalid email address"}), 400
+            return jsonify({"status": "error", "message": "Adresse email invalide"}), 400
 
         ip = request.headers.get("X-Forwarded-For", request.remote_addr)
         rate_key = f"rate_limit_{ip}"
@@ -207,7 +207,7 @@ def init_web_routes(app):
             return jsonify(
                 {
                     "status": "error",
-                    "message": "Too many requests. Please try again later.",
+                    "message": "Trop de requêtes. Veuillez réessayer plus tard.",
                 }
             ), 429
 
@@ -217,18 +217,18 @@ def init_web_routes(app):
             success = add_newsletter_subscriber(email)
             if not success:
                 return jsonify(
-                    {"status": "error", "message": "You are already subscribed!"}
+                    {"status": "error", "message": "Vous êtes déjà inscrit !"}
                 ), 400
 
             send_subscription_email(email)
             return jsonify(
-                {"status": "success", "message": "Thank you for subscribing!"}
+                {"status": "success", "message": "Merci pour votre inscription !"}
             ), 200
 
         except Exception as e:
             current_app.logger.error(f"Unexpected error: {e}")
             return jsonify(
-                {"status": "error", "message": "An unexpected error occurred."}
+                {"status": "error", "message": "Une erreur inattendue est survenue."}
             ), 500
 
     @app.route("/unsubscribe/<token>", methods=["GET", "POST"])
@@ -240,17 +240,17 @@ def init_web_routes(app):
             email = serializer.loads(token)
         except Exception:
             if request.method == "POST":
-                return jsonify({"status": "error", "message": "Invalid token"}), 400
+                return jsonify({"status": "error", "message": "Jeton invalide"}), 400
             return render_template(
                 "unsubscribe_confirmation.html",
                 status="error",
-                message="Invalid or expired unsubscribe link.",
+                message="Lien de désinscription invalide ou expiré.",
             )
 
         if request.method == "POST":
             try:
                 remove_newsletter_subscriber(email)
-                return jsonify({"status": "success", "message": "Unsubscribed"}), 200
+                return jsonify({"status": "success", "message": "Désinscription réussie"}), 200
             except Exception as e:
                 current_app.logger.error(
                     f"❌ Error during POST unsubscription ({email}): {e}"
@@ -259,13 +259,13 @@ def init_web_routes(app):
 
         try:
             current_app.logger.info(
-                f"🔎 Processing unsubscribe request for: {email}")
+                f"🔎 Traitement d'une demande de désinscription pour : {email}")
             removed = remove_newsletter_subscriber(email)
-            current_app.logger.info(f"🗑️ Record removed: {removed}")
+            current_app.logger.info(f"🗑️ Enregistrement supprimé : {removed}")
             return render_template(
                 "unsubscribe_confirmation.html",
                 status="success",
-                message="You have been successfully unsubscribed from our newsletter.",
+                message="Vous avez été désinscrit avec succès de notre newsletter.",
             )
         except Exception as e:
             current_app.logger.error(
@@ -273,10 +273,10 @@ def init_web_routes(app):
             return render_template(
                 "unsubscribe_confirmation.html",
                 status="error",
-                message="A server error occurred. Please try again later.",
+                message="Une erreur serveur est survenue. Veuillez réessayer plus tard.",
             )
 
-    # ── Cache Management ──────────────────────────────────────────
+    # ── Gestion du Cache ──────────────────────────────────────────
 
     @app.route("/admin/cache/clear", methods=["POST"])
     @csrf.exempt

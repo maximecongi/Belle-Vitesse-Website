@@ -35,11 +35,11 @@ from utils.formatting import format_date_fr
 logger = logging.getLogger(__name__)
 
 
-# ── Configuration & Metadata ─────────────────────────────────────
+# ── Configuration & Métadonnées ───────────────────────────────────
 
 def get_inspection_config(mode):
     """
-    Returns model and metadata for a given inspection mode.
+    Retourne les modèles et métadonnées spécifiques pour un mode d'inspection donné (Départ ou Retour).
     """
     if mode == "checkout":
         from models import CheckoutSignedDocument, CheckoutToken
@@ -67,16 +67,18 @@ def get_inspection_config(mode):
         }
 
 
-# ── Core Operations (Unified) ───────────────────────────────────
+# ── Opérations Cœur (Unifiées) ───────────────────────────────────
 
 def list_inspections_unified(mode):
     """
-    Generic fetcher for Checkout or Checkin records.
+    Récupérateur générique pour les listes de départs (Checkout) ou de retours (Checkin).
+    Calcule également les statistiques pour le tableau de bord.
     """
     config = get_inspection_config(mode)
     record_model = config["model"]
     resp_attr = config["responsible_attr"]
 
+    # Chargement lié optimisé pour éviter le problème N+1
     records = record_model.query.options(
         joinedload(record_model.project).joinedload(Project.production),
         joinedload(getattr(record_model, resp_attr))
@@ -88,6 +90,7 @@ def list_inspections_unified(mode):
     from services.admin.vehicle_config import get_checkpoint_configs
     batch_configs = get_checkpoint_configs()
 
+    # Calcul des statistiques sommaires
     total = len(records)
     signed = sum(1 for r in records if get_inspection_key(
         r.status) == "signed")
@@ -109,7 +112,8 @@ def list_inspections_unified(mode):
 
 def get_inspection_detail_unified(mode, record_id):
     """
-    Generic detail fetcher for a single inspection.
+    Récupère les détails complets d'une inspection spécifique (Checkout ou Checkin).
+    Inclut les informations du document signé si disponible.
     """
     config = get_inspection_config(mode)
     record_model = config["model"]
@@ -127,6 +131,7 @@ def get_inspection_detail_unified(mode, record_id):
     vehicle_map = {v["id"]: v.get("fields", {}) for v in vehicles}
     data = _format_base_inspection_admin(record, vehicle_map)
 
+    # Si l'inspection est signée, on récupère les infos du PDF (URL sécurisée, Hash)
     if get_inspection_key(data.get("raw_status")) == "signed":
         doc_info = get_signed_document_info(
             data["inspection_id"], is_checkout=config["is_checkout"])
@@ -138,7 +143,7 @@ def get_inspection_detail_unified(mode, record_id):
 
 def get_signed_document_info(inspection_id, is_checkout=True):
     """
-    Fetch signed document info (PDF URL, Hash) and generate a temporary access token.
+    Récupère les infos d'un document signé (URL PDF, Hash) et génère un jeton d'accès temporaire.
     """
     model = CheckoutSignedDocument if is_checkout else CheckinSignedDocument
     signed_doc = db.session.get(model, inspection_id)
@@ -147,16 +152,13 @@ def get_signed_document_info(inspection_id, is_checkout=True):
         return None
 
     pdf_url = signed_doc.pdf_url
-    # Extract path from URL - handles both filename for legacy and full path
-    # URLs are like /checkout/document/PATH or /checkin/document/PATH
+    # L'URL peut être un nom de fichier simple ou un chemin complet
     delimiter = "/document/"
     if delimiter not in pdf_url:
-        # Fallback for legacy filenames stored directly
         path_part = pdf_url
     else:
         path_part = pdf_url.split(delimiter)[-1].split("?")[0]
 
-    # Import the appropriate token generator
     endpoint = "download_checkout_document" if is_checkout else "download_checkin_document"
     token = generate_pdf_access_token(path_part)
 
@@ -168,7 +170,8 @@ def get_signed_document_info(inspection_id, is_checkout=True):
 
 def delete_inspection_unified(mode, record_id):
     """
-    Generic deletion for any inspection type.
+    Supprime génériquement une inspection (Checkout ou Checkin).
+    Supprime également les documents signés, les jetons et notifie n8n.
     """
     config = get_inspection_config(mode)
     record = db.session.get(config["model"], record_id)
@@ -179,11 +182,11 @@ def delete_inspection_unified(mode, record_id):
     insp_id = record.inspection_number
 
     if insp_id:
-        # 1. Database Cleanup
+        # 1. Nettoyage de la base de données (jetons et documents signés archivés)
         config["token_model"].query.filter_by(inspection_id=insp_id).delete()
         config["signed_model"].query.filter_by(inspection_id=insp_id).delete()
 
-        # 2. Webhook
+        # 2. Notification n8n de la suppression
         webhook_url = os.getenv(config["webhook_env"])
         if webhook_url:
             trigger_n8n_webhook(
@@ -192,10 +195,10 @@ def delete_inspection_unified(mode, record_id):
                 project_id=record.project.project_id if record.project else None
             )
 
-    # 3. Assets & Files
+    # 3. Suppression des fichiers physiques (photos, PDF)
     _delete_inspection_files(record)
 
-    # 4. Main Record
+    # 4. Suppression de l'enregistrement principal
     db.session.delete(record)
     db.session.commit()
     return True
@@ -203,16 +206,18 @@ def delete_inspection_unified(mode, record_id):
 
 def upload_inspection_photos_shared(mode, record, files):
     """
-    Universal photo uploader for inspections.
+    Gère l'upload des photos pour n'importe quel type d'inspection.
+    Organise les photos dans des dossiers par projet et numéro d'inspection.
     """
     if not files:
         return
 
     config = get_inspection_config(mode)
-    # Dynamic import to avoid circular dependency
+    # Import dynamique pour éviter les dépendances circulaires
     import utils.storage as storage
     path_func = getattr(storage, config["photos_path_func"])
 
+    # Assure l'existence du dossier de destination spécifique
     upload_dir = Path(storage.ensure_dir(path_func(
         record.project, record.inspection_number)))
 
@@ -232,9 +237,11 @@ def upload_inspection_photos_shared(mode, record, files):
                 filename = secure_filename(f.filename)
                 file_path = upload_dir / filename
                 f.save(file_path)
+                # Enregistre le chemin relatif par rapport à OUTPUT_FOLDER
                 paths.append(os.path.relpath(file_path, output_base))
 
         if paths:
+            # Stockage des chemins sous forme de liste JSON en base de données
             setattr(record, model_attr, json.dumps(paths))
 
     db.session.commit()
@@ -244,21 +251,23 @@ def upload_inspection_photos_shared(mode, record, files):
 
 def apply_inspection_data(record, form, is_checkout=True):
     """
-    Dynamically maps form fields to model attributes based on ALL_POSSIBLE_CHECKPOINTS.
-    Handles battery and ready state calculation.
+    Mappe dynamiquement les champs du formulaire aux attributs du modèle basés sur ALL_POSSIBLE_CHECKPOINTS.
+    Gère également le niveau de batterie et le calcul de l'état 'prêt' (vehicle_ready).
     """
     vehicle_id = form.get("vehicle_id") or getattr(
         record, 'vehicle_id', None)
+    # Récupère uniquement les points de contrôle pertinents pour ce type de véhicule
     checkpoints = get_checkpoints_for_vehicle(vehicle_id)
     pertinent_keys = {cp['key']
                       for cp in checkpoints if cp.get('type') == 'status'}
 
     def get_val(key):
+        """Récupère la clé interne du statut, ou 'not_applicable' si le point n'est pas pertinent."""
         if key not in pertinent_keys:
             return "not_applicable"
         return get_checkpoint_key(form.get(key, "pending"))
 
-    # 1. Map all standard status checkpoints
+    # 1. Mappe tous les points de contrôle de statut standard
     for cp in ALL_POSSIBLE_CHECKPOINTS:
         key = cp['key']
         if cp.get('type') == 'status':
@@ -266,7 +275,7 @@ def apply_inspection_data(record, form, is_checkout=True):
             if hasattr(record, column):
                 setattr(record, column, get_val(key))
 
-    # 2. Handle Battery (Value type)
+    # 2. Gestion du niveau de batterie (valeur numérique)
     battery_val = form.get("battery_level") or form.get("battery")
     if battery_val is not None:
         try:
@@ -274,7 +283,7 @@ def apply_inspection_data(record, form, is_checkout=True):
         except (ValueError, TypeError):
             pass
 
-    # 3. Handle readiness state
+    # 3. Calcul de l'état de préparation (si TOUS les points critiques sont conformes)
     if is_checkout:
         record.vehicle_ready = _is_ready(
             form, vehicle_id, is_checkout=True)
@@ -287,32 +296,30 @@ def apply_inspection_data(record, form, is_checkout=True):
 
 def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
     """
-    Common formatter for CheckoutVehicle and CheckinVehicle.
+    Formateur commun pour les objets d'inspection (CheckoutVehicle et CheckinVehicle)
+    vers un dictionnaire prêt pour le frontend.
     """
-    is_checkout = isinstance(c, CheckoutVehicle)
-
     project_name = c.project.name if c.project else "—"
     v_data = vehicle_map.get(c.vehicle_id, {})
     vehicle_name = v_data.get("name", "—")
     unique_id = v_data.get("unique_id", "—")
 
-    # Use standardized relationship name: controller
+    # Utilise la relation standardisée 'controller'
     controller_obj = getattr(c, 'controller', None)
     controller_name = f"{(controller_obj.firstname or '') if controller_obj else ''} {(controller_obj.lastname or '') if controller_obj else ''}".strip() or "—"
 
     status_id = get_inspection_key(c.status)
     status_label = INSPECTION_STATUS_MAP.get(status_id, status_id)
 
-    # Handle readiness field
-    ready_field = 'vehicle_ready' if is_checkout else 'vehicle_ready'
-    ready = "true" if getattr(c, ready_field, False) else "false"
+    ready = "true" if getattr(c, 'vehicle_ready', False) else "false"
 
+    # Formatage des dates pour l'affichage FR
     c_date = format_date_fr(str(c.inspection_date)
-                            ) if c.inspection_date else "—"
+                             ) if c.inspection_date else "—"
     d_date = format_date_fr(str(c.project.departure_date)
-                            ) if c.project and c.project.departure_date else "—"
+                             ) if c.project and c.project.departure_date else "—"
     r_date = format_date_fr(str(c.project.return_date)
-                            ) if c.project and c.project.return_date else "—"
+                             ) if c.project and c.project.return_date else "—"
 
     data = {
         "id": c.id,
@@ -334,19 +341,19 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
         "controller_id": c.controller_id,
     }
 
+    # Texte de recherche pour le filtrage côté client
     data["search_text"] = f"{data['inspection_id']} {project_name} {controller_name} {status_label}".lower(
     )
+    # Récupère la configuration des points de contrôle spécifique au véhicule
     data["check_items"] = get_checkpoints_for_vehicle(
         c.vehicle_id, batch_configs=batch_configs)
 
-    # Detail fields (for backward compatibility / internal use)
     data["control_status"] = status_label
 
-    # Handle battery
     battery_val = getattr(c, 'battery_level', None)
     data["battery_level"] = battery_val if battery_val is not None else None
 
-    # Map all checkpoints dynamically
+    # Mappe dynamiquement tous les points de contrôle pour l'accès direct
     for cp in ALL_POSSIBLE_CHECKPOINTS:
         key = cp['key']
         if cp.get('type') == 'status':
@@ -367,8 +374,6 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
         data["project_id"] = str(c.project.id)
         data["project_id_unique"] = c.project.project_id
         data["project_name"] = c.project.name
-
-        # Cache vehicle name in data for convenience
         data["vehicle_name"] = vehicle_name
 
     return data
@@ -376,7 +381,8 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
 
 def get_unified_form_context(mode="checkout"):
     """
-    Unifies get_checkout_form_context and get_checkin_form_context.
+    Unifie la récupération du contexte pour les formulaires de départ et de retour.
+    Gère les blocages (interdire un nouveau départ si un retour n'a pas été effectué).
     """
     projects = Project.query.options(joinedload(
         Project.production)).order_by(Project.name).all()
@@ -386,10 +392,10 @@ def get_unified_form_context(mode="checkout"):
     checkouts = CheckoutVehicle.query.all()
     checkins = CheckinVehicle.query.all()
 
-    # Pre-calculate project names mapping
+    # Mapping des noms de projets pour un accès rapide
     project_names = {str(p.id): p.name for p in projects}
 
-    # Map for statuses: {vehicule_id: {project_id: status}}
+    # Mapping des statuts par véhicule et par projet : {vehicule_id: {project_id: status}}
     vehicle_checkout_statuses = {}
     for c in checkouts:
         if c.vehicle_id and c.status and c.project_id:
@@ -408,23 +414,24 @@ def get_unified_form_context(mode="checkout"):
                 vehicle_checkin_statuses[vid] = {}
             vehicle_checkin_statuses[vid][pid] = c.status
 
-    # Specifically for checkout: blocking projects logic
+    # Spécifiquement pour le départ (checkout) : logique des projets bloquants
     blocking_projects = {}
     if mode == "checkout":
         for vid, p_statuses in vehicle_checkout_statuses.items():
             for pid, status in p_statuses.items():
                 if get_inspection_key(status) in ["signed", "completed"]:
-                    # Has it been checked in?
+                    # Vérifie si le véhicule a été rendu pour ce projet
                     has_checkin = False
                     for ci in checkins:
                         if ci.vehicle_id == vid and str(ci.project_id) == pid and get_inspection_key(ci.status) in ["signed", "completed"]:
                             has_checkin = True
                             break
                     if not has_checkin:
+                        # Si non rendu, ce projet bloque un nouveau départ pour ce véhicule
                         blocking_projects[vid] = project_names.get(
                             pid, "Projet inconnu")
 
-    # Enrich vehicle data
+    # Enrichissement des données véhicules avec les statuts et blocages
     for v in vehicles:
         vid = v["id"]
         f = v.setdefault("fields", {})
@@ -434,14 +441,14 @@ def get_unified_form_context(mode="checkout"):
         if mode == "checkout" and vid in blocking_projects:
             f["_blocked_by"] = blocking_projects[vid]
 
-    # Format projects
+    # Formatage des projets pour l'affichage dans le sélecteur
     projects_formatted = []
     for p in projects:
         veh_ids = [v.strip() for v in (
             p.vehicles_to_check or "").split(",") if v.strip()]
         v_name = "—"
         if veh_ids:
-            # Simple match for the first vehicle name to show in select
+            # Récupère le nom du premier véhicule associé pour aider l'utilisateur
             for v in vehicles:
                 if v["id"] == veh_ids[0]:
                     v_name = v.get("fields", {}).get("name", "—")
@@ -463,7 +470,7 @@ def get_unified_form_context(mode="checkout"):
     users_formatted = [{"id": str(u.id), "fields": {
         "firstname": u.firstname, "lastname": u.lastname}} for u in users]
 
-    # Checkpoints mapping (for frontend filtering)
+    # Mapping des points de contrôle par véhicule (pour le filtrage dynamique côté frontend)
     checkpoints_mapping = {v["id"]: get_checkpoints_for_vehicle(
         v["id"], vehicle_name=v.get("fields", {}).get("name")) for v in vehicles}
 

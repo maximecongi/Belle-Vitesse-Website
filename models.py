@@ -8,12 +8,14 @@ db = SQLAlchemy()
 
 
 def generate_inspection_number(prefix):
+    """Génère un identifiant unique aléatoire avec un préfixe donné (ex: BVPR-XXXX)."""
     suffix = ''.join(random.choices(
         string.ascii_uppercase + string.digits, k=12))
     return f"{prefix}-{suffix}"
 
 
 class User(db.Model):
+    """Modèle représentant un utilisateur du système (Administrateur, Manager, etc.)."""
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -22,17 +24,20 @@ class User(db.Model):
     mail = db.Column(db.String(255), unique=True, nullable=False)
     phone = db.Column(db.String(50))
     job = db.Column(db.String(100))
-    role = db.Column(db.String(50))  # ex: Administrator, Manager
+    role = db.Column(db.String(50))  # ex: Administrateur, Manager
 
     # Relations
+    # Liste des check-outs effectués par cet utilisateur (contrôleur)
     controller_checkouts = db.relationship(
         "CheckoutVehicle", backref="controller", lazy=True)
 
     @property
     def role_lower(self):
+        """Retourne le rôle en minuscules (par défaut 'user')."""
         return self.role.lower() if self.role else 'user'
 
     def to_dict(self):
+        """Convertit l'objet en dictionnaire pour les réponses API."""
         return {
             "id": self.id,
             "firstname": self.firstname,
@@ -48,6 +53,7 @@ class User(db.Model):
 
 
 class Production(db.Model):
+    """Modèle représentant une société de production cliente."""
     __tablename__ = "productions"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -57,10 +63,13 @@ class Production(db.Model):
     phone = db.Column(db.String(50))
 
     # Relations
+    # Liste des projets associés à cette production
     projects = db.relationship("Project", backref="production", lazy=True)
+    # Liste des contacts professionnels rattachés à cette production
     contacts = db.relationship("Contact", backref="production_rel", lazy=True)
 
     def to_dict(self):
+        """Convertit l'objet en dictionnaire pour les réponses API."""
         return {
             "id": self.id,
             "name": self.name,
@@ -74,6 +83,7 @@ class Production(db.Model):
 
 
 class Contact(db.Model):
+    """Modèle représentant un contact physique (Pilote, Chargé de prod, etc.)."""
     __tablename__ = "contacts"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -86,6 +96,7 @@ class Contact(db.Model):
     job_title = db.Column(db.String(150))
 
     def to_dict(self):
+        """Convertit l'objet en dictionnaire pour les réponses API."""
         return {
             "id": self.id,
             "first_name": self.first_name,
@@ -101,6 +112,7 @@ class Contact(db.Model):
 
 
 class Project(db.Model):
+    """Modèle central représentant un projet (tournage)."""
     __tablename__ = "projects"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -113,28 +125,35 @@ class Project(db.Model):
         "contacts.id"), nullable=True, index=True)
     production_contact_id = db.Column(db.Integer, db.ForeignKey(
         "contacts.id"), nullable=True, index=True)
-    departure_date = db.Column(db.Date)
-    shoot_start_date = db.Column(db.Date)
-    shoot_end_date = db.Column(db.Date)
-    return_date = db.Column(db.Date)
-    # liste séparée par virgules ex: "eCar, eBike"
+    departure_date = db.Column(db.Date) # Date de départ (enlèvement)
+    shoot_start_date = db.Column(db.Date) # Date de début de tournage
+    shoot_end_date = db.Column(db.Date) # Date de fin de tournage
+    return_date = db.Column(db.Date) # Date de retour prévu
+    # Liste des identifiants de véhicules séparés par virgules ex: "3,5"
     vehicles_to_check = db.Column(db.String(500))
 
     # Relations
+    # Liste des contrôles au départ effectués pour ce projet
     checkout_vehicles = db.relationship(
         "CheckoutVehicle", backref="project", lazy=True)
+    # Liste des contrôles au retour effectués pour ce projet
     checkin_vehicles = db.relationship(
         "CheckinVehicle", backref="project", lazy=True)
+    # Contact pilote principal du projet
     pilot_contact = db.relationship(
         "Contact", foreign_keys=[pilot_contact_id], backref="pilot_projects", lazy=True)
+    # Contact production référent pour le projet
     production_contact = db.relationship(
         "Contact", foreign_keys=[production_contact_id], backref="production_projects", lazy=True)
+    # Décharge pilote associée (unique pour le projet)
     pilot_waiver = db.relationship(
         "PilotWaiver", backref="project", uselist=False, lazy=True)
+    # Décharge production associée (unique pour le projet)
     production_waiver = db.relationship(
         "ProductionWaiver", backref="project", uselist=False, lazy=True)
 
     def to_dict(self):
+        """Convertit l'objet en dictionnaire pour les réponses API."""
         return {
             "id": self.id,
             "project_id": self.project_id,
@@ -154,6 +173,7 @@ class Project(db.Model):
 
 
 class PilotWaiver(db.Model):
+    """Modèle représentant une décharge de responsabilité pour un pilote."""
     __tablename__ = "pilot_waivers"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -162,13 +182,13 @@ class PilotWaiver(db.Model):
     waiver_id = db.Column(
         db.String(50), unique=True, default=lambda: generate_inspection_number("BVDW"))
 
-    project_name = db.Column(db.String(255), nullable=True)
-    status = db.Column(db.String(20), default="to_generate", nullable=False)
+    project_name = db.Column(db.String(255), nullable=True) # Copie du nom du projet au moment de la génération
+    status = db.Column(db.String(20), default="to_generate", nullable=False) # Statut (to_generate, to_send, to_sign, signed)
     generated_at = db.Column(db.DateTime, nullable=True)
     sent_at = db.Column(db.DateTime, nullable=True)
     signed_at = db.Column(db.DateTime, nullable=True)
 
-    # Snapshot data
+    # Données figées (Snapshot) lors de la signature
     pilot_first_name = db.Column(db.String(100), nullable=True)
     pilot_last_name = db.Column(db.String(100), nullable=True)
     pilot_dob = db.Column(db.Date, nullable=True)
@@ -183,21 +203,22 @@ class PilotWaiver(db.Model):
 
     # Signature
     signature_data = db.Column(
-        db.Text(length=16777215), nullable=True)  # MEDIUMTEXT
-    signed_pdf_path = db.Column(db.String(500), nullable=True)
+        db.Text(length=16777215), nullable=True)  # Données de signature manuscrite (Base64)
+    signed_pdf_path = db.Column(db.String(500), nullable=True) # Chemin relatif du PDF signé
 
-    # Signature Traceability
+    # Traçabilité de la signature
     signer_ip = db.Column(db.String(45), nullable=True)
 
-    # Attachments
+    # Pièces jointes (photos/scans)
     pilot_license_path = db.Column(db.String(500), nullable=True)
     pilot_insurance_path = db.Column(db.String(500), nullable=True)
     pilot_identity_path = db.Column(db.String(500), nullable=True)
 
-    # Webhook
+    # Webhook (n8n)
     webhook_triggered_at = db.Column(db.DateTime, nullable=True)
 
     def to_dict(self):
+        """Convertit l'objet en dictionnaire pour les réponses API."""
         return {
             "id": self.id,
             "waiver_id": self.waiver_id,
@@ -215,6 +236,7 @@ class PilotWaiver(db.Model):
 
 
 class ProductionWaiver(db.Model):
+    """Modèle représentant une décharge de responsabilité pour la production."""
     __tablename__ = "production_waivers"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -229,7 +251,7 @@ class ProductionWaiver(db.Model):
     sent_at = db.Column(db.DateTime, nullable=True)
     signed_at = db.Column(db.DateTime, nullable=True)
 
-    # Snapshot data
+    # Données figées (Snapshot) lors de la signature
     production_name = db.Column(db.String(255), nullable=True)
     production_representative = db.Column(db.String(255), nullable=True)
     production_address = db.Column(db.Text, nullable=True)
@@ -249,16 +271,17 @@ class ProductionWaiver(db.Model):
         db.Text(length=16777215), nullable=True)  # MEDIUMTEXT
     signed_pdf_path = db.Column(db.String(500), nullable=True)
 
-    # Signature Traceability
+    # Traçabilité de la signature
     signer_ip = db.Column(db.String(45), nullable=True)
 
-    # Attachments
+    # Pièces jointes
     production_insurance_path = db.Column(db.String(500), nullable=True)
 
     # Webhook
     webhook_triggered_at = db.Column(db.DateTime, nullable=True)
 
     def to_dict(self):
+        """Convertit l'objet en dictionnaire pour les réponses API."""
         return {
             "id": self.id,
             "waiver_id": self.waiver_id,
@@ -275,26 +298,27 @@ class ProductionWaiver(db.Model):
 
 
 class CheckoutVehicle(db.Model):
-    """Inspection au départ du véhicule"""
+    """Modèle représentant le contrôle de sécurité (Inspection) au départ d'un véhicule."""
     __tablename__ = "checkout_vehicles"
 
     id = db.Column(db.Integer, primary_key=True)
     inspection_number = db.Column(
         db.String(50), unique=True, default=lambda: generate_inspection_number("BVCO"))
-    status = db.Column(db.String(50))  # in_progress, pending, signed, etc.
+    status = db.Column(db.String(50))  # in_progress (en cours), pending (en attente), signed (signé), etc.
     project_id = db.Column(
         db.Integer, db.ForeignKey("projects.id"), index=True)
     controller_id = db.Column(
         db.Integer, db.ForeignKey("users.id"), index=True)
     inspection_date = db.Column(db.Date)
-    # eCar, eBike, eTrike...
+    # Identifiant du véhicule concerné (eCar, eBike, eTrike, etc.)
     vehicle_id = db.Column(db.String(100), index=True)
     battery_level = db.Column(db.Integer)
+    
+    # États des points de contrôle (ok, damage, missing, N/A)
     tire_status = db.Column(db.String(50))
     brake_status = db.Column(db.String(50))
     exterior_lighting_status = db.Column(db.String(50))
     horn_status = db.Column(db.String(50))
-    # New checkpoints
     gearbox_status = db.Column(db.String(50))
     engine_assistance_status = db.Column(db.String(50))
     driving_test_status = db.Column(db.String(50))
@@ -308,16 +332,17 @@ class CheckoutVehicle(db.Model):
     communication_system_status = db.Column(db.String(50))
     accessories_case_status = db.Column(db.String(50))
 
-    interior_photos = db.Column(db.Text)  # JSON or paths
-    exterior_photos = db.Column(db.Text)
+    interior_photos = db.Column(db.Text)  # Stockage JSON des chemins de photos intérieures
+    exterior_photos = db.Column(db.Text) # Stockage JSON des chemins de photos extérieures
     notes = db.Column(db.Text)
-    vehicle_ready = db.Column(db.Boolean, default=False)
-    signed_pdf_path = db.Column(db.String(500))
+    vehicle_ready = db.Column(db.Boolean, default=False) # Indique si le véhicule est prêt pour le départ
+    signed_pdf_path = db.Column(db.String(500)) # Chemin du PDF d'inspection généré après signature
 
-    hash = db.Column(db.String(255))
+    hash = db.Column(db.String(255)) # Empreinte numérique pour l'intégrité
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 
     def to_dict(self):
+        """Convertit l'objet en dictionnaire pour les réponses API."""
         return {
             "id": self.id,
             "inspection_number": self.inspection_number,
@@ -337,7 +362,7 @@ class CheckoutVehicle(db.Model):
 
 
 class CheckinVehicle(db.Model):
-    """Inspection au retour du véhicule"""
+    """Modèle représentant le contrôle de sécurité (Inspection) au retour d'un véhicule."""
     __tablename__ = "checkin_vehicles"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -351,11 +376,12 @@ class CheckinVehicle(db.Model):
     inspection_date = db.Column(db.Date)
     vehicle_id = db.Column(db.String(100), index=True)
     battery_level = db.Column(db.Integer)
+    
+    # États des points de contrôle
     tire_status = db.Column(db.String(50))
     brake_status = db.Column(db.String(50))
     exterior_lighting_status = db.Column(db.String(50))
     horn_status = db.Column(db.String(50))
-    # New checkpoints
     gearbox_status = db.Column(db.String(50))
     engine_assistance_status = db.Column(db.String(50))
     driving_test_status = db.Column(db.String(50))
@@ -378,11 +404,12 @@ class CheckinVehicle(db.Model):
     hash = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 
-    # Relation vers user (responsable du contrôle)
+    # Relation vers l'utilisateur responsable du contrôle
     controller = db.relationship(
         "User", backref="controller_checkins", lazy=True)
 
     def to_dict(self):
+        """Convertit l'objet en dictionnaire pour les réponses API."""
         return {
             "id": self.id,
             "inspection_number": self.inspection_number,
@@ -402,6 +429,7 @@ class CheckinVehicle(db.Model):
 
 
 class NewsletterSubscriber(db.Model):
+    """Modèle représentant un abonné à la newsletter."""
     __tablename__ = "newsletter_subscribers"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -412,10 +440,10 @@ class NewsletterSubscriber(db.Model):
         return f"<NewsletterSubscriber {self.email}>"
 
 
-# ── Shared Mixins ──────────────────────────────────────────────
+# ── Mixins Partagés ──────────────────────────────────────────────
 
 class TokenMixin:
-    """Base for all time-limited signature tokens."""
+    """Base pour tous les jetons (tokens) de signature à durée limitée."""
     token = db.Column(db.String(36), primary_key=True)
     created_at = db.Column(db.DateTime, nullable=False,
                            default=datetime.utcnow)
@@ -424,32 +452,36 @@ class TokenMixin:
 
 
 class SignedDocumentMixin:
-    """Base for all archived signed documents."""
-    hash = db.Column(db.String(255), nullable=False)
-    pdf_file_hash = db.Column(db.String(64))
-    data_snapshot = db.Column(db.JSON, nullable=False)
-    signature = db.Column(db.Text(length=16777215))  # MEDIUMTEXT
-    pdf_url = db.Column(db.Text)
+    """Base pour tous les documents signés archivés."""
+    hash = db.Column(db.String(255), nullable=False) # Empreinte de l'intégrité des données
+    pdf_file_hash = db.Column(db.String(64)) # Hash SHA-256 du fichier PDF binaire
+    data_snapshot = db.Column(db.JSON, nullable=False) # Copie conforme des données au moment de la signature
+    signature = db.Column(db.Text(length=16777215)) # Données de la signature (MEDIUMTEXT)
+    pdf_url = db.Column(db.Text) # URL (ou chemin) vers le fichier PDF
     signed_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class PilotWaiverSignedDocument(db.Model, SignedDocumentMixin):
+    """Archive d'une décharge pilote signée."""
     __tablename__ = "pilot_waiver_signed_documents"
     waiver_id = db.Column(db.String(50), primary_key=True)
 
 
 class ProductionWaiverSignedDocument(db.Model, SignedDocumentMixin):
+    """Archive d'une décharge production signée."""
     __tablename__ = "production_waiver_signed_documents"
     waiver_id = db.Column(db.String(50), primary_key=True)
 
 
 class CheckoutSignedDocument(db.Model, SignedDocumentMixin):
+    """Archive d'une inspection au départ signée."""
     __tablename__ = "checkout_signed_documents"
     inspection_id = db.Column(db.String(255), primary_key=True)
 
 
 class CheckoutToken(db.Model, TokenMixin):
+    """Jeton de session pour la signature d'un check-out."""
     __tablename__ = "checkout_tokens"
     record_id = db.Column(db.String(255), nullable=False)
     inspection_id = db.Column(db.String(255), nullable=False)
@@ -457,11 +489,13 @@ class CheckoutToken(db.Model, TokenMixin):
 
 
 class CheckinSignedDocument(db.Model, SignedDocumentMixin):
+    """Archive d'une inspection au retour signée."""
     __tablename__ = "checkin_signed_documents"
     inspection_id = db.Column(db.String(255), primary_key=True)
 
 
 class CheckinToken(db.Model, TokenMixin):
+    """Jeton de session pour la signature d'un check-in."""
     __tablename__ = "checkin_tokens"
     record_id = db.Column(db.String(255), nullable=False)
     inspection_id = db.Column(db.String(255), nullable=False)
@@ -469,56 +503,65 @@ class CheckinToken(db.Model, TokenMixin):
 
 
 class PilotWaiverToken(db.Model, TokenMixin):
+    """Jeton de session pour la signature d'une décharge pilote."""
     __tablename__ = "pilot_waiver_tokens"
     waiver_id = db.Column(db.String(255), nullable=False)
 
 
 class ProductionWaiverToken(db.Model, TokenMixin):
+    """Jeton de session pour la signature d'une décharge production."""
     __tablename__ = "production_waiver_tokens"
     waiver_id = db.Column(db.String(255), nullable=False)
 
 
-# ── Dynamic Airtable-Sync Models ────────────────────────────────
+# ── Modèles de synchronisation dynamique Airtable ───────────────
 
 class SyncRecordMixin:
-    """Base for tables synchronised from Airtable."""
-    id = db.Column(db.String(255), primary_key=True)
+    """Base pour les tables synchronisées depuis Airtable."""
+    id = db.Column(db.String(255), primary_key=True) # ID d'enregistrement Airtable
     createdTime = db.Column(db.DateTime)
-    fields = db.Column(db.JSON)
+    fields = db.Column(db.JSON) # Contenu brut des champs Airtable
     updated_at = db.Column(
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 class Vehicle(db.Model, SyncRecordMixin):
+    """Véhicules synchronisés depuis Airtable."""
     __tablename__ = "vehicles"
 
 
 class Head(db.Model, SyncRecordMixin):
+    """Têtes de caméra synchronisées depuis Airtable."""
     __tablename__ = "heads"
 
 
 class GripCategory(db.Model, SyncRecordMixin):
+    """Catégories de matériel Grip (Airtable)."""
     __tablename__ = "grips_categories"
 
 
 class GripProduct(db.Model, SyncRecordMixin):
+    """Produits Grip individuels (Airtable)."""
     __tablename__ = "grip_products"
 
 
 class Config(db.Model, SyncRecordMixin):
+    """Configurations spécifiques (Airtable)."""
     __tablename__ = "configs"
 
 
 class Static(db.Model, SyncRecordMixin):
+    """Données statiques de contenu (Airtable)."""
     __tablename__ = "static"
 
 
 class VehicleCheckpointConfig(db.Model):
+    """Configuration personnalisée des points de contrôle par véhicule."""
     __tablename__ = "vehicle_checkpoint_configs"
 
     id = db.Column(db.Integer, primary_key=True)
     vehicle_id = db.Column(db.String(100), unique=True, nullable=False)
-    # Stores enabled keys: {"tires": true, "brakes": false, ...}
+    # Stocke les clés activées : {"tires": true, "brakes": false, ...}
     config = db.Column(db.JSON, nullable=False)
     updated_at = db.Column(
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -528,9 +571,9 @@ class VehicleCheckpointConfig(db.Model):
 
 
 class SqlQueryLog(db.Model):
+    """Journal des requêtes SQL (Monitoring de performance)."""
     __tablename__ = "sql_query_logs"
 
-    # BigInteger for ID, DateTime for timestamp
     id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
     timestamp = db.Column(db.DateTime(6), default=datetime.utcnow)
     user = db.Column(db.String(255), nullable=False, default='anonymous')

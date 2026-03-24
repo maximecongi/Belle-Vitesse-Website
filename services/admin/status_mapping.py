@@ -1,7 +1,7 @@
 """
-Centralized status mapping and formatting for the admin section.
-Handles labels for Waivers and Inspections (Check-ins/Check-outs).
-Using standardized English keys as Source of Truth.
+Mapping centralisé des statuts et formatage pour la section administration.
+Gère les labels pour les décharges et les inspections (Départs/Retours).
+Utilise des clés anglaises standardisées comme source de vérité.
 """
 
 # ── Waivers Mapping ──────────────────────────────────────────────
@@ -18,7 +18,7 @@ WAIVER_STATUS_MAP = {
 
 def format_waiver_status(status_id):
     """
-    Map an internal waiver status identifier to its French label.
+    Mappe un identifiant de statut de décharge interne vers son label français.
     """
     return WAIVER_STATUS_MAP.get(status_id, status_id)
 
@@ -34,8 +34,8 @@ INSPECTION_STATUS_MAP = {
 
 def get_inspection_key(status):
     """
-    Returns the English internal key for a given status.
-    Ensures that we always have a valid key (defaults to 'to_check').
+    Retourne la clé interne (anglaise) pour un statut donné.
+    Garantit toujours le retour d'une clé valide (par défaut 'warning' si inconnu).
     """
     if not status or status not in INSPECTION_STATUS_MAP:
         return "warning"
@@ -44,7 +44,7 @@ def get_inspection_key(status):
 
 def format_inspection_status(status_id):
     """
-    Map an internal inspection status identifier to its French label.
+    Mappe un identifiant de statut d'inspection interne vers son label français.
     """
     return INSPECTION_STATUS_MAP.get(status_id, status_id)
 
@@ -60,8 +60,8 @@ CHECKPOINT_STATUS_MAP = {
 
 def get_checkpoint_key(status):
     """
-    Standardize the internal key for a checkpoint status.
-    Handles None/Empty and maps common synonyms and legacy labels.
+    Standardise la clé interne pour le statut d'un point de contrôle.
+    Gère les valeurs vides et mappe les synonymes ou anciens labels.
     """
     if not status:
         return "pending"
@@ -85,7 +85,7 @@ def get_checkpoint_key(status):
 
 def format_checkpoint_status(status):
     """
-    Returns the French label for a checkpoint status.
+    Retourne le label français pour le statut d'un point de contrôle.
     """
     return CHECKPOINT_STATUS_MAP.get(status, status)
 

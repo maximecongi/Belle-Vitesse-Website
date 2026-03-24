@@ -6,16 +6,16 @@ from utils.mailer import send_magic_link_email
 
 
 def get_auth_serializer():
-    """Returns a serializer for generating and validating magic link tokens."""
+    """Retourne un sérialiseur pour générer et valider les jetons de liens magiques (Magic Links)."""
     secret_key = current_app.config.get("SECRET_KEY", "fallback_secret")
     return URLSafeTimedSerializer(secret_key)
 
 
 def request_magic_link(email):
     """
-    1. Checks if email ends with @bellevitesse.com.
-    2. Looks up the user in the database.
-    3. Generates a token and sends an email.
+    1. Vérifie si l'e-mail se termine par @bellevitesse.com.
+    2. Recherche l'utilisateur dans la base de données.
+    3. Génère un jeton et envoie un e-mail.
     """
     if not email.endswith("@bellevitesse.com"):
         current_app.logger.warning(
@@ -33,11 +33,11 @@ def request_magic_link(email):
             f"⚠️ Magic link requested for unknown domain email: {email}")
         return False
 
-    # Generate token
+    # Génération du jeton
     serializer = get_auth_serializer()
     token = serializer.dumps(email, salt="magic-link-salt")
 
-    # Generate URL
+    # Génération de l'URL
     try:
         base_url = request.host_url.rstrip('/')
     except Exception:
@@ -45,7 +45,7 @@ def request_magic_link(email):
 
     magic_link = f"{base_url}/admin/auth/{token}"
 
-    # Send email
+    # Envoi de l'e-mail
     success = send_magic_link_email(email, user.firstname, magic_link)
 
     if success:
@@ -58,22 +58,22 @@ def request_magic_link(email):
 
 def verify_magic_link(token):
     """
-    1. Validates the token and expiration.
-    2. Re-checks the DB for the user's latest data.
-    3. Returns the user dict to store in the session.
+    1. Valide le jeton et son expiration.
+    2. Vérifie à nouveau les données utilisateur en base.
+    3. Retourne un dictionnaire utilisateur pour stockage en session.
     """
     serializer = get_auth_serializer()
     try:
-        # Token expires in 15 minutes (900 seconds)
+        # Le jeton expire après 15 minutes (900 secondes)
         email = serializer.loads(token, salt="magic-link-salt", max_age=900)
     except SignatureExpired:
-        current_app.logger.warning("⚠️ Magic link token expired.")
+        current_app.logger.warning("⚠️ Jeton de lien magique expiré.")
         return None
     except BadSignature:
-        current_app.logger.warning("⚠️ Invalid magic link token.")
+        current_app.logger.warning("⚠️ Jeton de lien magique invalide.")
         return None
 
-    # Re-validate user in the database
+    # Re-validation de l'utilisateur en base de données
     try:
         user = User.query.filter_by(mail=email).first()
     except Exception as e:

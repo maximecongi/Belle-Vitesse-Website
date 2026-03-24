@@ -1,0 +1,57 @@
+{% extends "admin/docs/base.html" %}
+
+{% block content %}
+    <h1>Système de Signature & Scellement</h1>
+    
+    <p>La signature électronique est une fonctionnalité critique de la plateforme Belle Vitesse. Elle assure que les inspections et les décharges sont juridiquement valables et infalsifiables.</p>
+
+    <h2>Processus de Signature</h2>
+    <ol>
+        <li><strong>Génération</strong> : Un jeton unique (token) est généré pour le document.</li>
+        <li><strong>Invitation</strong> : Un email est envoyé au signataire avec un lien sécurisé.</li>
+        <li><strong>Capture</strong> : Le signataire dessine sa signature sur l'interface publique.</li>
+        <li><strong>Traitement</strong> : Le serveur capture la signature (base64 PNG), l'IP du signataire et l'horodatage.</li>
+        <li><strong>Finalisation</strong> : Les données sont figées dans un <code>Snapshot JSON</code>.</li>
+    </ol>
+
+    <h2>Scellement Cryptographique (Sealing)</h2>
+    <p>Pour garantir qu'un document signé n'a pas été modifié en base de données après sa création, nous utilisons un mécanisme de <strong>Sceau HMAC</strong>.</p>
+    
+    <pre><code># Logique de scellement (utils/document_utils.py)
+signature_hash = compute_hmac_seal(
+    "WAIVER", 
+    project_id, 
+    contact_email, 
+    signature_base64, 
+    timestamp
+)</code></pre>
+
+    <h3>Vérification d'Intégrité</h3>
+    <p>Chaque page de consultation de document (vérification) recalcule le sceau en direct. Si le sceau calculé ne correspond pas au sceau stocké, une alerte visuelle rouge <strong>"DOCUMENT INVALIDÉ"</strong> apparaît.</p>
+
+    <h2>Intégrité des fichiers PDF</h2>
+    <p>En plus du sceau de données, nous stockons une empreinte <strong>SHA-256</strong> du fichier binaire PDF lui-même au moment de sa génération.</p>
+    <ul>
+        <li><strong>Étape 1</strong> : Le PDF est généré par WeasyPrint.</li>
+        <li><strong>Étape 2</strong> : Son empreinte (hash) est calculée et stockée dans <code>pdf_file_hash</code>.</li>
+        <li><strong>Étape 3</strong> : Lors d'une vérification publique, l'utilisateur peut uploader son exemplaire PDF pour vérifier qu'il est identique bit-par-bit à l'original archivé.</li>
+    </ul>
+
+    <div class="callout callout-important">
+        <h4>Sécurité des URLs de téléchargement</h4>
+        <p>Les liens de téléchargement directs vers les PDF sont protégés par des jetons temporaires (TTL de 60 minutes) pour éviter le "scraping" ou l'accès non autorisé par simple devinement d'URL.</p>
+    </div>
+
+    <h2>Webhooks de Finalisation</h2>
+    <p>Une fois le document scellé et le PDF généré, un webhook <strong>n8n</strong> est déclenché. Ce flux externe se charge de l'archivage longue durée sur kDrive ou d'autres systèmes de production.</p>
+
+    <div class="mermaid">
+    sequenceDiagram
+        Signataire->>Serveur: Envoi Signature
+        Serveur->>Serveur: Calcul Snapshot + Sceau
+        Serveur->>Serveur: Génération PDF
+        Serveur->>Serveur: Archivage local
+        Serveur->>n8n: Trigger Webhook (Finalisé)
+        n8n->>kDrive: Copie Archive
+    </div>
+{% endblock %}

@@ -18,7 +18,7 @@ if not AIRTABLE_SECRET_TOKEN or not AIRTABLE_BASE_ID:
         "AIRTABLE_SECRET_TOKEN et AIRTABLE_BASE_ID doivent être définis dans le .env"
     )
 
-# ⚡ Créer les tables après avoir confirmé que les variables existent
+# ⚡ Créer les instances de tables après confirmation de l'existence des variables
 TABLE_STATIC = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "static")
 TABLE_VEHICLES = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "vehicles")
 TABLE_HEADS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "heads")
@@ -52,7 +52,7 @@ def get_static_by_lang(lang="en"):
 
 
 def get_all_static():
-    """Get all static content rows, keyed by language code."""
+    """Récupère toutes les lignes de contenu statique, indexées par code langue."""
     def fetcher():
         rows = TABLE_STATIC.all()
         return {
@@ -100,6 +100,7 @@ def get_vehicle_by_id(vehicle_id):
 
 
 def get_vehicle_by_slug(slug):
+    """Récupère un véhicule par son slug."""
     return get_cached(
         f"vehicle_{slug}",
         lambda: TABLE_VEHICLES.first(formula=f"{{slug}}='{slug}'")
@@ -107,6 +108,7 @@ def get_vehicle_by_slug(slug):
 
 
 def get_head_by_slug(slug):
+    """Récupère une tête par son slug."""
     return get_cached(
         f"head_{slug}",
         lambda: TABLE_HEADS.first(formula=f"{{slug}}='{slug}'")
@@ -139,7 +141,7 @@ def add_newsletter_subscriber(email):
 
 
 def remove_newsletter_subscriber(email):
-    """Remove a subscriber from Airtable."""
+    """Supprime un abonné d'Airtable."""
     records = TABLE_NEWSLETTER.all(formula=f"{{email}}='{email}'")
     for r in records:
         TABLE_NEWSLETTER.delete(r["id"])

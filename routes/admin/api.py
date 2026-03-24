@@ -18,7 +18,7 @@ from utils.decorators import require_roles
 
 
 def init_api_routes(app):
-    # ── Admin API ─────────────────────────────────────────────────
+    # ── API Administrative ────────────────────────────────────────
 
     @app.route("/admin/api/events")
     @require_roles('administrator', 'manager', 'user')
@@ -27,7 +27,7 @@ def init_api_routes(app):
             events = get_calendar_events()
             return jsonify(events)
         except Exception as e:
-            current_app.logger.error(f"❌ Error in admin_api_events: {e}")
+            current_app.logger.error(f"❌ Erreur dans admin_api_events : {e}")
             return jsonify([]), 500
 
     def _handle_status_update(model, record_id):
@@ -64,7 +64,7 @@ def init_api_routes(app):
             })
         except Exception as e:
             db.session.rollback()
-            current_app.logger.error(f"❌ Error in status update: {e}")
+            current_app.logger.error(f"❌ Erreur lors de la mise à jour du statut : {e}")
             return jsonify({"error": str(e)}), 500
 
     @app.route("/admin/api/checkouts/<int:record_id>/status", methods=["GET", "POST"])
@@ -90,7 +90,7 @@ def init_api_routes(app):
                 possible_checkpoints=ALL_POSSIBLE_CHECKPOINTS
             )
         except Exception as e:
-            current_app.logger.error(f"❌ Error in admin_vehicle_configs: {e}")
+            current_app.logger.error(f"❌ Erreur dans admin_vehicle_configs : {e}")
             flash(
                 f"Erreur lors du chargement des configurations: {e}", "error")
             return redirect(url_for('admin_dashboard'))
@@ -110,5 +110,5 @@ def init_api_routes(app):
             return jsonify({"success": True})
         except Exception as e:
             current_app.logger.error(
-                f"❌ Error in admin_api_save_vehicle_config: {e}")
+                f"❌ Erreur dans admin_api_save_vehicle_config : {e}")
             return jsonify({"error": str(e)}), 500

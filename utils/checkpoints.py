@@ -97,9 +97,9 @@ SPECIFIC_DETAILS = {
 
 def get_checkpoints_for_vehicle(vehicle_id: str, batch_configs=None, vehicle_name=None) -> list:
     """
-    Returns the list of checkpoints to display for a given vehicle.
-    vehicle_id can be an Airtable Record ID or a Vehicle Name.
-    batch_configs: optional dict {vehicle_id: config_dict} to avoid N+1 queries.
+    Retourne la liste des points de contrôle à afficher pour un véhicule donné.
+    'vehicle_id' peut être un ID d'enregistrement Airtable ou un Nom de Véhicule.
+    'batch_configs' : dict optionnel {vehicle_id: config_dict} pour éviter les requêtes N+1.
     """
     if not vehicle_id:
         return BASE_CHECKPOINTS
@@ -169,7 +169,7 @@ def get_checkpoints_for_vehicle(vehicle_id: str, batch_configs=None, vehicle_nam
 
 
 def _resolve_checkpoints(enabled_keys, vehicle_name=None) -> list:
-    """Helper to build list of checkpoint dicts, supporting optional detail overrides from SPECIFIC_DETAILS."""
+    """Aide pour construire la liste des dictionnaires de points de contrôle, supportant les surcharges de détails via SPECIFIC_DETAILS."""
     # Base enabled keys (usually just a set/list of strings from DB)
     enabled_keys_set = set()
     for item in enabled_keys:

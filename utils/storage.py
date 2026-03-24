@@ -8,17 +8,17 @@ from flask import current_app
 
 def sanitize_folder_name(name):
     """
-    Sanitize a name to be safe for a folder.
-    Removes accents, replaces spaces with underscores, removes special characters.
+    Assainit un nom pour qu'il soit sûr pour un dossier système.
+    Supprime les accents, remplace les espaces par des underscores, supprime les caractères spéciaux.
     """
     if not name:
         return "AUTRES"
 
     import unicodedata
-    # Normalize to NFC and remove accents
+    # Normaliser en NFC et supprimer les accents
     name = unicodedata.normalize('NFKD', name).encode(
         'ascii', 'ignore').decode('ascii')
-    # Replace spaces and multiple underscores with a single underscore
+    # Remplacer les espaces et les underscores multiples par un seul underscore
     name = re.sub(r'[^\w\s-]', '', name)
     name = re.sub(r'[\s_]+', '_', name)
     return name.strip('_').upper()
@@ -26,14 +26,14 @@ def sanitize_folder_name(name):
 
 def get_project_base_path(project):
     """
-    Returns the base path for a project in the output directory:
-    output / {year} / {month} / {production_name} / {project_name} /
+    Retourne le chemin de base pour un projet dans le répertoire de sortie :
+    output / {année} / {mois} / {nom_production} / {nom_projet} /
     """
     output_base = current_app.config.get(
         "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
 
-    # Use project start date if available, otherwise current date
-    # project is a models.Project instance
+    # Utiliser la date de départ du projet si disponible, sinon la date actuelle
+    # project est une instance de models.Project
     date = project.departure_date if (
         hasattr(project, 'departure_date') and project.departure_date) else None
 
@@ -73,7 +73,7 @@ def get_pilot_waiver_path(project):
 
 def get_pilot_attachments_path(project, doc_type):
     """
-    doc_type: insurance, license, identity
+    doc_type : assurance, licence, identité
     """
     mapping = {
         "insurance": "2_ATTESTATION_ASSURANCE",
@@ -90,7 +90,7 @@ def get_production_waiver_path(project):
 
 def get_production_attachments_path(project, doc_type):
     """
-    doc_type: insurance
+    doc_type : assurance
     """
     mapping = {
         "insurance": "2_ATTESTATION_ASSURANCE"
@@ -109,6 +109,6 @@ def get_checkin_photos_path(project, inspection_number):
 
 
 def ensure_dir(path):
-    """Ensure directory exists."""
+    """S'assure que le répertoire existe."""
     os.makedirs(path, exist_ok=True)
     return path

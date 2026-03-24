@@ -15,7 +15,7 @@ def _get_secret():
 
 
 def generate_token(user):
-    """Generate a JWT token for a given User."""
+    """Génère un jeton JWT pour un utilisateur donné."""
     payload = {
         "user_id": user.id,
         "role": user.role or "User",
@@ -26,7 +26,7 @@ def generate_token(user):
 
 
 def decode_token(token):
-    """Decode and validate a JWT token. Returns payload dict or None."""
+    """Décode et valide un jeton JWT. Retourne le contenu (payload) ou None."""
     try:
         return jwt.decode(token, _get_secret(), algorithms=[JWT_ALGORITHM])
     except jwt.ExpiredSignatureError:
@@ -37,9 +37,9 @@ def decode_token(token):
 
 def require_api_auth(*allowed_roles):
     """
-    Decorator for API routes. Validates JWT Bearer token and checks roles.
-    On success, sets g.current_user (User instance) and g.api_user_role.
-    Returns JSON 401/403 on failure.
+    Décorateur pour les routes API. Valide le jeton Bearer JWT et vérifie les rôles.
+    En cas de succès, définit g.current_user (instance User) et g.api_user_role.
+    Retourne une erreur JSON 401/403 en cas d'échec.
     """
     def decorator(f):
         @wraps(f)

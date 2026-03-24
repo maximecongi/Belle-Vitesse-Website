@@ -1,0 +1,71 @@
+{% extends "admin/docs/base.html" %}
+
+{% block content %}
+    <h1>Synchronisation Airtable</h1>
+    
+    <p>Le module <code>services/sync_airtable.py</code> est le pont vital entre la base de gestion administrative (Airtable) et le moteur de rendu web (MySQL).</p>
+
+    <h2>Mécanisme de Synchronisation</h2>
+    <p>La synchronisation suit un mode <strong>"Overwrite"</strong> (Écrasement) pour garantir que MySQL est toujours le reflet exact d'Airtable pour les catégories suivantes :</p>
+    <ul>
+        <li><strong>Véhicules</strong> (Equipements motorisés)</li>
+        <li><strong>Heads</strong> (Têtes stabilisées)</li>
+        <li><strong>Grips Categories & Products</strong> (Accessoires de fixation)</li>
+        <li><strong>Static Content</strong> (Traductions et textes fixes de l'UI)</li>
+    </ul>
+
+    <h2>Fréquence et Déclenchement</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Méthode</th>
+                <th>Cible</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Automatique</td>
+                <td>Webhook Airtable</td>
+                <td>Dès modification d'un enregistrement</td>
+            </tr>
+            <tr>
+                <td>Planifié</td>
+                <td>Scheduler (Tâches de fond)</td>
+                <td>Rafraîchissement complet toutes les ~24h</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="callout callout-important">
+        <h4>Note sur l'interface</h4>
+        <p>Il n'existe pas de bouton de synchronisation manuel dans l'interface administrative actuelle. Les données sont maintenues à jour de manière transparente par le serveur.</p>
+    </div>
+
+    <h2>Structure Technique</h2>
+    <p>Chaque ligne synchronisée contient :</p>
+    <ul>
+        <li><code>id</code> : L'ID Airtable original (ex: <code>recXvY...</code>).</li>
+        <li><code>createdTime</code> : Date de création originale.</li>
+        <li><code>fields</code> : Un champ JSON contenant toutes les colonnes d'Airtable indexées par leur nom (snake_case recommandé).</li>
+    </ul>
+
+    <h3>Exemple de code de synchro :</h3>
+    <pre><code># services/sync_airtable.py
+def sync_table(model, airtable_table_instance):
+    records = airtable_table_instance.all()
+    # 1. Clean local table
+    model.query.delete()
+    # 2. Add fresh records
+    for r in records:
+        new_row = model(
+            id=r['id'], 
+            createdTime=r['createdTime'], 
+            fields=r['fields']
+        )
+        db.session.add(new_row)
+    db.session.commit()</code></pre>
+
+    <h2>Cache Applicatif</h2>
+    <p>Après chaque synchronisation réussie, le cache <strong>Redis/In-Memory</strong> est vidé (flush) pour forcer le rechargement des données fraîches sur le front-end public.</p>
+{% endblock %}

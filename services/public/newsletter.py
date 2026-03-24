@@ -4,8 +4,8 @@ from models import NewsletterSubscriber, db
 
 
 def add_newsletter_subscriber(email):
-    """Add a new subscriber to MySQL database."""
-    # Check if subscriber already exists
+    """Ajoute un nouvel abonné à la base de données MySQL."""
+    # Vérifie si l'abonné existe déjà
     existing = NewsletterSubscriber.query.filter_by(email=email).first()
     if existing:
         return False
@@ -21,7 +21,7 @@ def add_newsletter_subscriber(email):
 
 
 def remove_newsletter_subscriber(email):
-    """Remove a subscriber from MySQL database."""
+    """Supprime un abonné de la base de données MySQL."""
     subscriber = NewsletterSubscriber.query.filter_by(email=email).first()
     if subscriber:
         db.session.delete(subscriber)
@@ -31,12 +31,12 @@ def remove_newsletter_subscriber(email):
 
 
 def list_newsletter_subscribers():
-    """List all subscribers sorted by date desc."""
+    """Liste tous les abonnés triés par date décroissante."""
     return NewsletterSubscriber.query.order_by(NewsletterSubscriber.subscribed_at.desc()).all()
 
 
 def remove_newsletter_subscriber_by_id(subscriber_id):
-    """Remove a subscriber by ID."""
+    """Supprime un abonné par son ID."""
     subscriber = db.session.get(NewsletterSubscriber, subscriber_id)
     if subscriber:
         db.session.delete(subscriber)

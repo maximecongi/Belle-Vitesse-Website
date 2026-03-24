@@ -14,17 +14,17 @@ from utils.document_utils import (
 
 def handle_document_download(filepath):
     """
-    Generic handler for secured document downloads.
-    Validates either the administrative 'X-Check-Token' header 
-    OR the time-limited HMAC token 't' from request args.
+    Gestionnaire générique pour les téléchargements de documents sécurisés.
+    Valide soit l'en-tête administratif 'X-Check-Token',
+    SOIT le jeton HMAC limité dans le temps 't' issu des arguments de la requête.
     """
-    # 1. Check Admin Secret (X-Check-Token)
+    # 1. Vérifier le secret Admin (X-Check-Token)
     token_header = request.headers.get("X-Check-Token")
     expected_header = os.getenv("CHECK_API_TOKEN")
     if expected_header and token_header and secrets.compare_digest(token_header, expected_header):
-        pass # Authorized by admin secret
+        pass # Autorisé par le secret admin
     else:
-        # 2. Check Time-limited Token (t)
+        # 2. Vérifier le jeton temporaire (t)
         access_token = request.args.get("t", "")
         if not access_token or not validate_pdf_access_token(filepath, access_token):
             abort(403)
@@ -39,15 +39,15 @@ def handle_document_download(filepath):
 
 def handle_document_verify(mode_config, identifier):
     """
-    Generic handler for document verification (Check-in, Check-out, Waivers).
+    Gestionnaire générique pour la vérification des documents (Retours, Départs, Décharges).
 
-    mode_config: dict containing:
-        - signed_model: The SQLAlchemy model for the signed document.
-        - seal_prefix: Prefix for HMAC (e.g., 'INSPECTION', 'WAIVER').
-        - template_verify: Path to the HTML template.
-        - route_base: Base URL for document links (e.g., 'pilot-waiver').
-        - get_seal_args: Callback (data, signed_doc) -> list of args for sealing.
-    identifier: The primary key (inspection_id or waiver_id).
+    mode_config : dict contenant :
+        - signed_model : Le modèle SQLAlchemy pour le document signé.
+        - seal_prefix : Préfixe pour le HMAC (ex: 'INSPECTION', 'WAIVER').
+        - template_verify : Chemin vers le template HTML.
+        - route_base : URL de base pour les liens du document (ex: 'pilot-waiver').
+        - get_seal_args : Callback (data, signed_doc) -> liste d'arguments pour le scellement.
+    identifier : La clé primaire (inspection_id ou waiver_id).
     """
     from models import db
     signed_doc = db.session.get(mode_config["signed_model"], identifier)
@@ -55,14 +55,14 @@ def handle_document_verify(mode_config, identifier):
         abort(404)
 
     data = signed_doc.data_snapshot
-    # Normalize date for template display
+    # Normaliser la date pour l'affichage dans le template
     if 'signed_at' in data and isinstance(data['signed_at'], str):
         try:
             data['signed_at'] = datetime.fromisoformat(data['signed_at'])
         except (ValueError, TypeError):
             pass
 
-    # 1. Verify Seal integrity
+    # 1. Vérifier l'intégrité du Sceau (Seal)
     seal_args = mode_config["get_seal_args"](data, signed_doc)
     seal_valid = verify_hmac_seal(
         signed_doc.hash, mode_config["seal_prefix"], *seal_args)
@@ -80,7 +80,7 @@ def handle_document_verify(mode_config, identifier):
                 pdf_valid = verify_pdf_hash(
                     uploaded_file.read(), signed_doc.pdf_file_hash)
 
-    # 2. PDF Download URL with fresh token
+    # 2. URL de téléchargement PDF avec un nouveau jeton frais
     pdf_download_url = None
     if signed_doc.pdf_url:
         # Extract relative path from stored URL

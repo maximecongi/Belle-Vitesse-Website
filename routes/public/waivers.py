@@ -21,7 +21,7 @@ from utils.storage import (
     get_production_attachments_path,
 )
 
-# ── Shared Helpers ──────────────────────────────────────────────
+# ── Aides Partagées ─────────────────────────────────────────────
 
 
 def _get_waiver_route_config(mode):
@@ -48,7 +48,7 @@ def _get_waiver_route_config(mode):
 
 def init_waiver_routes(app):
 
-    # ── Signing Routes ──────────────────────────────────────────
+    # ── Routes de Signature ──────────────────────────────────────
 
     @app.route("/sign/waiver/<token>", methods=["GET", "POST"])
     def sign_pilot_waiver(token):
@@ -61,20 +61,20 @@ def init_waiver_routes(app):
     def _handle_sign_waiver(mode, token):
         config = _get_waiver_route_config(mode)
 
-        # 1. Validate Token
+        # 1. Valider le jeton
         token_rec = config["token_model"].query.filter_by(token=token).first()
         if not token_rec:
             if request.method == "GET":
                 return render_template(config["template_sign"], waiver={"status": "invalid"})
-            return jsonify({"success": False, "error": "Token invalide."})
+            return jsonify({"success": False, "error": "Jeton invalide."})
 
-        # 2. Check Expiration (24h)
+        # 2. Vérifier l'expiration (24h)
         if token_rec.expires_at and token_rec.expires_at < datetime.utcnow():
             if request.method == "GET":
                 return render_template(config["template_sign"], waiver={"status": "expired"})
             return jsonify({"success": False, "error": "Ce lien de signature a expiré."})
 
-        # 3. Get Waiver
+        # 3. Récupérer la décharge
         waiver = config["model"].query.filter_by(
             waiver_id=token_rec.waiver_id).first()
         if not waiver:
@@ -100,7 +100,7 @@ def init_waiver_routes(app):
                 waiver.pilot_insurance_company = data.get("insurance_company")
                 waiver.pilot_insurance_policy = data.get("insurance_policy")
 
-                # Attachments Pilot
+                # Pièces jointes Pilote (Attachements)
                 for field, doc_type, attr in [('pilot_license', 'license', 'pilot_license_path'),
                                               ('pilot_insurance', 'insurance',
                                                'pilot_insurance_path'),
@@ -128,7 +128,7 @@ def init_waiver_routes(app):
                     "insurance_validity")
                 waiver.location_of_use = data.get("location_of_use")
 
-                # Attachment Production
+                # Pièces jointes Production (Attachements)
                 file = request.files.get('production_insurance')
                 if file and file.filename:
                     upload_dir = ensure_dir(
@@ -151,9 +151,9 @@ def init_waiver_routes(app):
             from services.common.signatures import finalize_signed_document
             finalize_signed_document(mode, waiver.id, waiver.signature_data, signer_ip)
 
-            # We don't delete the token immediately to allow the user
-            # to see the "signed" state if they reload the page.
-            # Token will expire naturally after 24h.
+            # Nous ne supprimons pas le jeton immédiatement pour permettre à l'utilisateur
+            # de voir l'état "signé" s'il recharge la page.
+            # Le jeton expirera naturellement après 24h.
             # db.session.delete(token_rec)
             # db.session.commit()
 
@@ -164,7 +164,7 @@ def init_waiver_routes(app):
                 f"Error processing {mode} waiver sign: {e}")
             return jsonify({"success": False, "error": "Une erreur serveur est survenue."}), 500
 
-    # ── Verification Routes ──────────────────────────────────────
+    # ── Routes de Vérification ───────────────────────────────────
 
     @app.route("/verify/waiver/<string:waiver_id>", methods=["GET", "POST"])
     @csrf.exempt
@@ -196,7 +196,7 @@ def init_waiver_routes(app):
         config["get_seal_args"] = get_seal_args
         return handle_document_verify(config, waiver_id)
 
-    # ── Download Routes ──────────────────────────────────────────
+    # ── Routes de Téléchargement ─────────────────────────────────
 
     @app.route("/pilot-waiver/document/<path:filepath>")
     @app.route("/production-waiver/document/<path:filepath>")

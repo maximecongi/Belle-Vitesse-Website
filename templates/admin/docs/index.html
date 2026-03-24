@@ -1,0 +1,76 @@
+{% extends "admin/docs/base.html" %}
+
+{% block content %}
+    <h1>Documentation Technique</h1>
+    
+    <div class="callout callout-important">
+        <p>Ce guide est destiné à l'équipe technique de <strong>Belle Vitesse</strong>. Il détaille le fonctionnement interne de la plateforme web, la gestion des données et les protocoles de sécurité.</p>
+    </div>
+    
+    <h2>Vue d'ensemble</h2>
+    <p>La plateforme Belle Vitesse est une application web robuste construite avec <strong>Flask</strong>, intégrée à <strong>Airtable</strong> pour la gestion flexible des actifs (véhicules, produits) et utilisant <strong>MySQL</strong> pour les données transactionnelles et la persistance locale.</p>
+
+    <h3>Objectifs du Système</h3>
+    <ul>
+        <li><strong>Gestion de Projets</strong> : Centralisation des tournages, productions et contacts.</li>
+        <li><strong>Sécurité & Conformité</strong> : Automatisation des décharges (Waivers) et des inspections (Check-in/Check-out).</li>
+        <li><strong>Communication</strong> : Système de newsletter intégré et notifications automatiques via Webhooks.</li>
+    </ul>
+
+    <h3>Technologies Clés</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Composant</th>
+                <th>Technologie</th>
+                <th>Rôle</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Framework Web</td>
+                <td>Flask (Python)</td>
+                <td>Logique serveur et routage</td>
+            </tr>
+            <tr>
+                <td>Base de Données</td>
+                <td>MySQL / SQLAlchemy</td>
+                <td>Stockage structuré et relations</td>
+            </tr>
+            <tr>
+                <td>Source de Vérité</td>
+                <td>Airtable API</td>
+                <td>Gestion du catalogue et des actifs</td>
+            </tr>
+            <tr>
+                <td>Génération PDF</td>
+                <td>WeasyPrint</td>
+                <td>Production de documents premium conformes</td>
+            </tr>
+            <tr>
+                <td>Automatisation</td>
+                <td>n8n</td>
+                <td>Webhooks et flux de travail externes</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Navigation Rapide</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+        <div class="callout" style="margin: 0;">
+            <h4>🏗️ Architecture</h4>
+            <p>Comprendre la structure globale et les flux de données.</p>
+            <a href="{{ url_for('admin_docs_chapter', chapter='architecture') }}" class="badge-bv" style="text-decoration: none;">Voir plus</a>
+        </div>
+        <div class="callout" style="margin: 0;">
+            <h4>💾 Modèles</h4>
+            <p>Détails du schéma de base de données et des relations.</p>
+            <a href="{{ url_for('admin_docs_chapter', chapter='data-models') }}" class="badge-bv" style="text-decoration: none;">Voir plus</a>
+        </div>
+        <div class="callout" style="margin: 0;">
+            <h4>✍️ Signatures</h4>
+            <p>Protocoles de signature électronique et scellement.</p>
+            <a href="{{ url_for('admin_docs_chapter', chapter='signatures') }}" class="badge-bv" style="text-decoration: none;">Voir plus</a>
+        </div>
+    </div>
+{% endblock %}

@@ -18,29 +18,29 @@ logger = logging.getLogger(__name__)
 
 
 def list_checkouts():
-    """Fetch all checkout records using unified logic."""
+    """Récupère tous les départs par la logique unifiée."""
     return list_inspections_unified("checkout")
 
 
 def get_checkout_detail(record_id):
-    """Fetch a single checkout record using unified logic."""
+    """Récupère un départ spécifique par la logique unifiée."""
     return get_inspection_detail_unified("checkout", record_id)
 
 
 def get_checkout_form_context():
-    """Get form context for checkout."""
+    """Récupère le contexte du formulaire pour un départ."""
     return get_unified_form_context(mode="checkout")
 
 
 @handle_admin_service_error
 def create_checkout(form, files=None):
-    """Create a new checkout record in the database."""
+    """Crée un nouvel enregistrement de départ dans la base de données."""
     pid = form.get("project_id")
     uid = form.get("controller_id")
     try:
         controller_id = int(uid) if uid and uid != "None" else None
     except (ValueError, TypeError):
-        current_app.logger.warning(f"⚠️ Invalid controller_id detected: {uid}")
+        current_app.logger.warning(f"⚠️ Identifiant contrôleur invalide : {uid}")
         controller_id = None
 
     record = CheckoutVehicle(
@@ -63,7 +63,7 @@ def create_checkout(form, files=None):
 
 @handle_admin_service_error
 def update_checkout(record_id, form, files=None):
-    """Update an existing checkout record."""
+    """Met à jour un départ existant."""
     record = db.session.get(CheckoutVehicle, record_id)
     if not record:
         return False
@@ -79,5 +79,5 @@ def update_checkout(record_id, form, files=None):
 
 @handle_admin_service_error
 def delete_checkout(record_id):
-    """Delete a checkout record using unified logic."""
+    """Supprime un départ par la logique unifiée."""
     return delete_inspection_unified("checkout", record_id)

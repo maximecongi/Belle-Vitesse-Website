@@ -20,7 +20,7 @@ from utils.decorators import require_roles
 
 
 def init_checkins_routes(app):
-    # ── Checkins CRUD ────────────────────────────────────────────
+    # ── CRUD Retours (Check-ins) ──────────────────────────────────
 
     @app.route("/admin/checkins")
     @require_roles('administrator', 'manager', 'user')
@@ -32,7 +32,7 @@ def init_checkins_routes(app):
                 checkins=result["checkins"],
             )
         except Exception as e:
-            current_app.logger.error(f"❌ Error in admin_checkins_list: {e}")
+            current_app.logger.error(f"❌ Erreur dans admin_checkins_list : {e}")
             flash("Erreur lors de la récupération de la liste.", "error")
             return render_template(
                 "admin/checkins_list.html",
@@ -48,7 +48,7 @@ def init_checkins_routes(app):
                 abort(404)
             return render_template("admin/checkin_detail.html", data=data, record_id=record_id)
         except Exception as e:
-            current_app.logger.error(f"❌ Error in admin_checkin_detail: {e}")
+            current_app.logger.error(f"❌ Erreur dans admin_checkin_detail : {e}")
             flash("Erreur lors de la récupération du détail.", "error")
             return redirect(url_for("admin_checkins_list"))
 
@@ -59,7 +59,7 @@ def init_checkins_routes(app):
 
         initial_data = {}
         if request.method == "GET":
-            # Prefill from URL params if provided
+            # Pré-remplissage depuis les paramètres URL si fournis
             if request.args.get("project_id"):
                 initial_data["project_id"] = request.args.get("project_id")
             if request.args.get("vehicle_id"):
@@ -71,7 +71,7 @@ def init_checkins_routes(app):
                 flash("Checkin créé avec succès !", "success")
                 return redirect(url_for("admin_checkins_list"))
             except Exception as e:
-                current_app.logger.error(f"❌ Error creating checkin: {e}")
+                current_app.logger.error(f"❌ Erreur lors de la création du retour : {e}")
                 flash(f"Erreur lors de la création : {str(e)}", "warning")
                 return render_template(
                     "admin/checkin_form.html",
@@ -101,7 +101,7 @@ def init_checkins_routes(app):
                 "admin/checkin_form.html", data=data, is_edit=True, **context
             )
         except Exception as e:
-            current_app.logger.error(f"❌ Error editing checkin: {e}")
+            current_app.logger.error(f"❌ Erreur lors de la modification du retour : {e}")
             flash(f"Erreur lors de la modification : {str(e)}", "error")
             return redirect(url_for("admin_checkin_detail", record_id=record_id))
 
@@ -113,7 +113,7 @@ def init_checkins_routes(app):
             flash("Checkin supprimé définitivement.", "success")
             return redirect(url_for("admin_checkins_list"))
         except Exception as e:
-            current_app.logger.error(f"❌ Error deleting checkin: {e}")
+            current_app.logger.error(f"❌ Erreur lors de la suppression du retour : {e}")
             flash(f"Erreur lors de la suppression : {str(e)}", "error")
             return redirect(url_for("admin_checkin_detail", record_id=record_id))
 
@@ -134,7 +134,7 @@ def init_checkins_routes(app):
             return redirect(url_for("checkin_sign_page", token=token["token"]))
 
         except Exception as e:
-            current_app.logger.error(f"❌ Error sealing checkin: {e}")
+            current_app.logger.error(f"❌ Erreur lors du scellement du retour : {e}")
             flash(
                 f"Erreur technique lors de la création du lien de signature : {str(e)}", "error")
             return redirect(url_for("admin_checkin_detail", record_id=record_id))

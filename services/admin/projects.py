@@ -15,28 +15,35 @@ logger = logging.getLogger(__name__)
 
 
 def _get_secured_document_url(path, doc_type):
+    """
+    Génère une URL sécurisée et tokenisée pour un document PDF.
+    Le token est limité dans le temps pour garantir la sécurité des accès.
+    """
     if not path:
         return None
+    # Nettoie le chemin des éventuels paramètres de requête existants
     clean_path = path.split('?')[0]
     segment = f"/{doc_type}/document/"
+    # Extrait uniquement le nom du fichier du chemin complet
     if segment in clean_path:
         clean_path = clean_path.split(segment)[-1]
     elif "/document/" in clean_path:
         clean_path = clean_path.split("/document/")[-1]
+    # Génère le token HMAC-SHA256 pour ce fichier
     token = generate_pdf_access_token(clean_path)
     return f"/{doc_type}/document/{clean_path}?t={token}"
 
 
-# ── Projects ─────────────────────────────────────────────────────
+# ── Projets (Gestion métier) ─────────────────────────────────────
 
 
 def _format_vehicle_state(project, vehicle_id, vehicle_map):
     """
-    Format the checkout/checkin state for a single vehicle in a project.
+    Formate l'état des contrôles (départ/retour) pour un véhicule spécifique au sein d'un projet.
     """
     from services.admin.status_mapping import get_inspection_key
 
-    # Find matching records in the pre-loaded project collections
+    # Recherche des enregistrements correspondants dans les collections pré-chargées du projet
     c_out = next(
         (c for c in project.checkout_vehicles if c.vehicle_id == vehicle_id), None)
     c_in = next(
@@ -62,7 +69,7 @@ def _format_vehicle_state(project, vehicle_id, vehicle_map):
 
 def _format_project_admin(p, vehicle_map):
     """
-    Format a single project record for the admin listing.
+    Formate un enregistrement de projet pour l'affichage dans la liste d'administration.
     """
     veh_ids = [v.strip()
                for v in (p.vehicles_to_check or "").split(",") if v.strip()]
@@ -101,7 +108,7 @@ def _format_project_admin(p, vehicle_map):
 
 def list_projects():
     """
-    Fetch all project records and format for listing.
+    Récupère tous les projets et les formate pour la liste d'administration (avec chargement lié optimisé).
     """
     projects = Project.query.options(
         joinedload(Project.production),
@@ -121,7 +128,7 @@ def list_projects():
 
 def get_project_form_context():
     """
-    Get context for project form (productions + vehicles selects).
+    Récupère le contexte nécessaire pour le formulaire de projet (listes de sélections).
     """
     prods = Production.query.order_by(Production.name).all()
     productions_formatted = [
@@ -140,11 +147,12 @@ def get_project_form_context():
 
 
 def _parse_date(d):
+    """Utilitaire pour parser les dates du formulaire (gère les vides)."""
     return d if d else None
 
 
 def create_project(form):
-    """Create a new project record in the database."""
+    """Crée un nouvel enregistrement de projet en base de données."""
     veh_ids = form.getlist("vehicle_ids") if hasattr(form, 'getlist') else []
     project = Project(
         name=form.get("name"),
@@ -161,17 +169,16 @@ def create_project(form):
         vehicles_to_check=",".join(veh_ids)
     )
     db.session.add(project)
-    # To get the project ID before commit if needed, though commit is fine too
-    db.session.flush()
+    db.session.flush() # Permet d'obtenir l'ID du projet avant le commit final
 
     db.session.commit()
 
-    # Automatically create associated waivers
+    # Création automatique des décharges associées au projet
     from services.admin.waivers import create_pilot_waiver, create_production_waiver
     create_pilot_waiver(project.id)
     create_production_waiver(project.id)
 
-    # Trigger n8n webhook
+    # Déclenchement du webhook n8n pour notifier d'autres services
     webhook_url = os.getenv("N8N_WEBHOOK_PROJECT")
     if webhook_url:
         trigger_n8n_webhook(
@@ -190,7 +197,7 @@ def create_project(form):
 
 
 def update_project(record_id, form):
-    """Update an existing project record in the database."""
+    """Met à jour un projet existant en base de données."""
     project = db.session.get(Project, record_id)
     if not project:
         return False
@@ -215,7 +222,7 @@ def update_project(record_id, form):
 
 def get_project_for_edit(record_id):
     """
-    Fetch a project record and format for editing.
+    Récupère un projet et le formate spécifiquement pour le pré-remplissage du formulaire d'édition.
     """
     p = db.session.get(Project, record_id)
     if not p:
@@ -239,7 +246,7 @@ def get_project_for_edit(record_id):
 
 
 def delete_project(record_id):
-    """Delete a project record from the database and its associated pilot waiver."""
+    """Supprime un projet et ses décharges associées de la base de données."""
     p = db.session.get(Project, record_id)
     if p:
 
@@ -247,7 +254,9 @@ def delete_project(record_id):
             delete_pilot_waiver_internal,
             delete_production_waiver_internal,
         )
+        # Supprime d'abord les décharges liées pour respecter l'intégrité
         delete_pilot_waiver_internal(record_id)
         delete_production_waiver_internal(record_id)
         db.session.delete(p)
         db.session.commit()
+    return True

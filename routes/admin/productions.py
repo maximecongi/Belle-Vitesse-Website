@@ -19,7 +19,7 @@ from utils.decorators import require_roles
 
 
 def init_productions_routes(app):
-    # ── Productions CRUD ──────────────────────────────────────────
+    # ── CRUD Productions ──────────────────────────────────────────
 
     @app.route("/admin/productions")
     @require_roles('administrator', 'manager')
@@ -29,7 +29,7 @@ def init_productions_routes(app):
             productions.sort(key=lambda p: p.get("name", "").lower())
             return render_template("admin/productions_list.html", productions=productions)
         except Exception as e:
-            current_app.logger.error(f"❌ Error fetching productions: {e}")
+            current_app.logger.error(f"❌ Erreur lors de la récupération des productions : {e}")
             flash(
                 f"Erreur lors de la récupération des productions : {str(e)}", "error")
             return render_template("admin/productions_list.html", productions=[])
@@ -43,7 +43,7 @@ def init_productions_routes(app):
                 flash("Production créée avec succès !", "success")
                 return redirect(url_for("admin_productions_list"))
             except Exception as e:
-                current_app.logger.error(f"❌ Error creating production: {e}")
+                current_app.logger.error(f"❌ Erreur lors de la création de la production : {e}")
                 flash(f"Erreur lors de la création : {str(e)}", "error")
                 return render_template(
                     "admin/production_form.html", data=request.form, is_edit=False
@@ -64,7 +64,7 @@ def init_productions_routes(app):
                 abort(404)
             return render_template("admin/production_form.html", data=data, is_edit=True)
         except Exception as e:
-            current_app.logger.error(f"❌ Error editing production: {e}")
+            current_app.logger.error(f"❌ Erreur lors de la modification de la production : {e}")
             flash(f"Erreur lors de la modification : {str(e)}", "error")
             return redirect(url_for("admin_productions_list"))
 
@@ -76,6 +76,6 @@ def init_productions_routes(app):
             flash("Production supprimée avec succès.", "success")
             return redirect(url_for("admin_productions_list"))
         except Exception as e:
-            current_app.logger.error(f"❌ Error deleting production: {e}")
+            current_app.logger.error(f"❌ Erreur lors de la suppression de la production : {e}")
             flash(f"Erreur lors de la suppression : {str(e)}", "error")
             return redirect(url_for("admin_productions_list"))

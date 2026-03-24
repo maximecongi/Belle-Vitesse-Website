@@ -20,10 +20,10 @@ from utils.decorators import require_roles
 
 
 def init_contacts_routes(app):
-    # ── Contacts CRUD ──────────────────────────────────────────
+    # ── CRUD Contacts ──────────────────────────────────────────
 
     def _build_vcf(c):
-        """Build a vCard 3.0 string for .vcf file download."""
+        """Génère une chaîne vCard 3.0 pour le téléchargement de fichier .vcf."""
         lines = [
             "BEGIN:VCARD",
             "VERSION:3.0",
@@ -57,7 +57,7 @@ def init_contacts_routes(app):
                     " ", "_")
             return render_template("admin/contacts_list.html", contacts=contacts)
         except Exception as e:
-            current_app.logger.error(f"❌ Error fetching contacts: {e}")
+            current_app.logger.error(f"❌ Erreur lors de la récupération des contacts : {e}")
             flash(
                 f"Erreur lors de la récupération des contacts : {str(e)}", "error")
             return render_template("admin/contacts_list.html", contacts=[])
@@ -71,7 +71,7 @@ def init_contacts_routes(app):
                 flash("Contact créé avec succès !", "success")
                 return redirect(url_for("admin_contacts_list"))
             except Exception as e:
-                current_app.logger.error(f"❌ Error creating contact: {e}")
+                current_app.logger.error(f"❌ Erreur lors de la création du contact : {e}")
                 flash(f"Erreur lors de la création : {str(e)}", "error")
                 return render_template(
                     "admin/contact_form.html",
@@ -104,7 +104,7 @@ def init_contacts_routes(app):
                 is_edit=True,
             )
         except Exception as e:
-            current_app.logger.error(f"❌ Error editing contact: {e}")
+            current_app.logger.error(f"❌ Erreur lors de la modification du contact : {e}")
             flash(f"Erreur lors de la modification : {str(e)}", "error")
             return redirect(url_for("admin_contacts_list"))
 
@@ -116,6 +116,6 @@ def init_contacts_routes(app):
             flash("Contact supprimé avec succès.", "success")
             return redirect(url_for("admin_contacts_list"))
         except Exception as e:
-            current_app.logger.error(f"❌ Error deleting contact: {e}")
+            current_app.logger.error(f"❌ Erreur lors de la suppression du contact : {e}")
             flash(f"Erreur lors de la suppression : {str(e)}", "error")
             return redirect(url_for("admin_contacts_list"))

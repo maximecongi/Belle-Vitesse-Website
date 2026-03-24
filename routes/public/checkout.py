@@ -1,8 +1,8 @@
 """
-Checkout routes — thin HTTP layer.
+Routes de départ (Check-out) — couche HTTP légère.
 
-Each handler: parse request → call service → render/redirect.
-All business logic lives in services.checkout.
+Chaque gestionnaire : analyse la requête → appelle le service → affiche/redirige.
+Toute la logique métier réside dans services.checkout (ou services.common.signatures).
 """
 
 import os
@@ -29,9 +29,9 @@ from services.common.signatures import (
 
 
 def init_checkout_routes(app):
-    """Public checkout flow: view, generate, sign, verify, download."""
+    """Flux de départ public : affichage, génération, signature, vérification, téléchargement."""
 
-    # ── Auth Guards ───────────────────────────────────────────────
+    # ── Protections d'Authentification ────────────────────────────
 
     def require_checkout_token():
         token = request.headers.get("X-Check-Token")
@@ -85,8 +85,8 @@ def init_checkout_routes(app):
         if not record:
             abort(404)
 
-        # If user reloaded the page, the abandon beacon might have set this to 'En cours'.
-        # We catch it here and revert it to 'À signer' since the user is still on the page.
+        # Si l'utilisateur a rechargé la page, la balise d'abandon a peut-être mis cela à 'En cours'.
+        # On le capture ici pour repasser en 'À signer' car l'utilisateur est toujours sur la page.
         if record.status == "in_progress":
             try:
                 record.status = "pending"
@@ -119,9 +119,9 @@ def init_checkout_routes(app):
         entry, error_code = validate_inspection_token(token, "checkout")
         if not entry:
             error_messages = {
-                404: "Invalid or expired token",
-                410: "Token expired",
-                400: "Already signed",
+                404: "Jeton invalide ou expiré",
+                410: "Jeton expiré",
+                400: "Déjà signé",
             }
             return jsonify({"error": error_messages.get(error_code, "Error")}), error_code
 

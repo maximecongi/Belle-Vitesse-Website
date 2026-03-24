@@ -19,7 +19,7 @@ from utils.decorators import require_roles
 
 
 def init_waivers_routes(app):
-    # --- PILOT WAIVERS ---
+    # --- DÉCHARGES PILOTES ---
     # ... existing pilot routes ...
     @app.route("/admin/waivers/pilots/new", methods=["GET", "POST"], endpoint='admin_pilot_waiver_new')
     @require_roles('administrator', 'manager')
@@ -87,7 +87,7 @@ def init_waivers_routes(app):
         q = request.args.get('q', '')
         return redirect(url_for('admin_pilot_waivers_list', q=q if q else None))
 
-    # --- PRODUCTION WAIVERS ---
+    # --- DÉCHARGES PRODUCTIONS ---
 
     @app.route("/admin/waivers/productions/new", methods=["GET", "POST"], endpoint='admin_production_waiver_new')
     @require_roles('administrator', 'manager')

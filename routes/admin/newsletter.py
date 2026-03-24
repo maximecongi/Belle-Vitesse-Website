@@ -26,7 +26,7 @@ def init_newsletter_routes(app):
             subscribers = list_newsletter_subscribers()
             return render_template("admin/newsletter_dashboard.html", subscribers=subscribers)
         except Exception as e:
-            current_app.logger.error(f"❌ Error in newsletter dashboard: {e}")
+            current_app.logger.error(f"❌ Erreur dans le tableau de bord newsletter : {e}")
             flash(
                 f"Erreur lors du chargement de la newsletter : {str(e)}", "error")
             return redirect(url_for("admin_dashboard"))
@@ -42,7 +42,7 @@ def init_newsletter_routes(app):
                 flash("Abonné non trouvé.", "error")
             return redirect(url_for("admin_newsletter_dashboard"))
         except Exception as e:
-            current_app.logger.error(f"❌ Error deleting subscriber: {e}")
+            current_app.logger.error(f"❌ Erreur lors de la suppression de l'abonné : {e}")
             flash(f"Erreur lors de la suppression : {str(e)}", "error")
             return redirect(url_for("admin_newsletter_dashboard"))
 
@@ -77,7 +77,7 @@ def init_newsletter_routes(app):
                 return redirect(url_for("admin_newsletter_dashboard"))
             except Exception as e:
                 current_app.logger.error(
-                    f"❌ Error sending newsletter campaign: {e}")
+                    f"❌ Erreur lors de l'envoi de la campagne newsletter : {e}")
                 flash(f"Erreur lors de l'envoi : {str(e)}", "error")
 
         return render_template("admin/newsletter_compose.html")

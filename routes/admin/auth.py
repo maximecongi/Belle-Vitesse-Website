@@ -14,7 +14,7 @@ from services.common.auth import request_magic_link, verify_magic_link
 
 
 def init_auth_routes(app):
-    # ── Login / Logout ────────────────────────────────────────────
+    # ── Connexion / Déconnexion ───────────────────────────────────
 
     @app.route("/admin/login", methods=["GET", "POST"])
     @limiter.limit("20 per minute")
