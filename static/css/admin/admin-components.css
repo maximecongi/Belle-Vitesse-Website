@@ -321,6 +321,17 @@
     content: "🚧 ";
 }
 
+.badge-pill[data-val="download-available"] {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.badge-pill[data-val="download-unavailable"] {
+    background: var(--neutral-bg);
+    color: var(--neutral-color);
+}
+
+
 /* Admin Badges (legacy) */
 .admin-badge {
     display: inline-block;
