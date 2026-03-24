@@ -28,7 +28,6 @@ body {
 }
 
 .docs-sidebar {
-    width: 280px;
     background-color: var(--bv-black);
     color: var(--bv-white);
     padding: 2rem 1.5rem;
