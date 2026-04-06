@@ -1,6 +1,6 @@
 import os
 
-from flask import g, render_template
+from flask import flash, g, redirect, render_template, request, url_for
 from werkzeug.exceptions import HTTPException
 
 from routes.admin import init_admin_routes
@@ -26,6 +26,13 @@ def init_error_handlers(app):
 
         @app.errorhandler(HTTPException)
         def handle_http_exception(e):
+            # Routes admin : redirige vers login au lieu d'afficher une page publique
+            if request.path.startswith('/admin'):
+                if e.code in (401, 403):
+                    flash("Session expirée. Veuillez vous reconnecter.", "error")
+                    return redirect(url_for('admin_login'))
+                app.logger.warning(
+                    f"⚠️ Erreur HTTP {e.code} sur {request.path}: {e.description}")
             return render_template(
                 "public/error.html",
                 error_title=f"{e.code} - {e.name}",
@@ -35,6 +42,10 @@ def init_error_handlers(app):
         @app.errorhandler(Exception)
         def handle_exception(e):
             app.logger.error(f"❌ Unhandled exception: {e}", exc_info=True)
+            # Routes admin : redirige vers login pour éviter la page blanche
+            if request.path.startswith('/admin'):
+                flash("Une erreur est survenue. Veuillez vous reconnecter.", "error")
+                return redirect(url_for('admin_login'))
             g._rendering_error = True
             return render_template(
                 "public/error.html",

@@ -202,18 +202,29 @@ def create_app():
             """Charge les données dynamiques depuis la base de données pour le contexte."""
             if is_admin:
                 user_id = session.get('admin_user_id')
-                user = None
+                user_dict = None
                 if user_id:
                     cache_key = f"user:{user_id}"
-                    user = cache.get(cache_key)
+                    user_dict = cache.get(cache_key)
 
-                    if not user:
-                        user = db.session.get(User, user_id)
-                        if user:
-                            cache.set(cache_key, user, timeout=300)
+                    if not user_dict:
+                        user_obj = db.session.get(User, user_id)
+                        if user_obj:
+                            # Stocke un dict, pas un objet ORM (évite DetachedInstanceError avec Redis)
+                            user_dict = {
+                                "id": user_obj.id,
+                                "firstname": user_obj.firstname,
+                                "lastname": user_obj.lastname,
+                                "role": user_obj.role,
+                                "role_lower": user_obj.role.lower() if user_obj.role else "user",
+                                "mail": user_obj.mail or "",
+                                "job": getattr(user_obj, 'job', '') or "",
+                                "phone": getattr(user_obj, 'phone', '') or "",
+                            }
+                            cache.set(cache_key, user_dict, timeout=300)
 
                 return {
-                    "current_user": user if user else {
+                    "current_user": user_dict if user_dict else {
                         "id": session.get('admin_user_id', 0),
                         "firstname": session.get('admin_user_firstname', ''),
                         "lastname": session.get('admin_user_lastname', ''),
@@ -327,9 +338,11 @@ if os.getenv("FLASK_ENV") == "production":
     # Exécute le warmup dans un thread séparé au démarrage
     threading.Thread(target=warm_cache, daemon=True).start()
 
-    # ── Scheduler : Re-warm du cache toutes les 23h50 ──────────
+    # ── Scheduler ──────────────────────────────────────────────
     from apscheduler.schedulers.background import BackgroundScheduler
     scheduler = BackgroundScheduler()
+
+    # Re-warm du cache toutes les 23h50
     scheduler.add_job(
         func=warm_cache,
         trigger="interval",
@@ -338,8 +351,27 @@ if os.getenv("FLASK_ENV") == "production":
         id="cache_warmup",
         replace_existing=True,
     )
+
+    # Heartbeat DB : garde les connexions du pool vivantes (évite les 90s timeout)
+    def db_heartbeat():
+        try:
+            with app.app_context():
+                from sqlalchemy import text
+                db.session.execute(text("SELECT 1"))
+                db.session.remove()
+        except Exception as e:
+            app.logger.warning(f"⚠️ Heartbeat DB échoué : {e}")
+
+    scheduler.add_job(
+        func=db_heartbeat,
+        trigger="interval",
+        minutes=5,
+        id="db_heartbeat",
+        replace_existing=True,
+    )
+
     scheduler.start()
-    app.logger.info("⏰ Scheduler de cache démarré")
+    app.logger.info("⏰ Scheduler démarré (cache + heartbeat DB)")
     # ───────────────────────────────────────────────────────────
 
 

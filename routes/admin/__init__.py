@@ -1,4 +1,4 @@
-from flask import redirect, url_for
+from flask import flash, redirect, url_for
 from flask_wtf.csrf import CSRFError
 
 from .api import init_api_routes
@@ -34,4 +34,5 @@ def init_admin_routes(app):
     @app.errorhandler(CSRFError)
     def handle_csrf_error(e):
         app.logger.warning(f"⚠️ CSRF Error: {e.description}")
-        return redirect(url_for('admin_dashboard'))
+        flash("Votre session a expiré. Veuillez vous reconnecter.", "error")
+        return redirect(url_for('admin_login'))

@@ -19,11 +19,19 @@ class Config:
 
     # Database settings
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_POOL_RECYCLE = 280
+    SQLALCHEMY_POOL_RECYCLE = 1800       # 30 min (au lieu de 280s)
     SQLALCHEMY_POOL_PRE_PING = True
     SQLALCHEMY_POOL_SIZE = 5
     SQLALCHEMY_MAX_OVERFLOW = 10
     SQLALCHEMY_POOL_TIMEOUT = 10
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "connect_args": {
+            "connect_timeout": 5,        # Timeout TCP connexion (au lieu de ~90s par défaut)
+            "read_timeout": 30,          # Timeout lecture socket
+            "write_timeout": 30,         # Timeout écriture socket
+        },
+        "pool_pre_ping": True,
+    }
 
     # Arclight settings
     ARCLIGHT_SECRET = os.getenv("ARCLIGHT_SECRET", "ton_token_secret")
