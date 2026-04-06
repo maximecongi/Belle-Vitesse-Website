@@ -27,8 +27,6 @@ class Config:
     SQLALCHEMY_ENGINE_OPTIONS = {
         "connect_args": {
             "connect_timeout": 5,        # Timeout TCP connexion (au lieu de ~90s par défaut)
-            "read_timeout": 30,          # Timeout lecture socket
-            "write_timeout": 30,         # Timeout écriture socket
         },
         "pool_pre_ping": True,
     }
