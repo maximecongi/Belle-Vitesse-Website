@@ -1,5 +1,6 @@
 import random
 import string
+import uuid
 from datetime import datetime
 
 from flask_sqlalchemy import SQLAlchemy
@@ -594,3 +595,33 @@ class SqlQueryLog(db.Model):
 
     def __repr__(self):
         return f"<SqlQueryLog {self.id} user={self.user} endpoint={self.endpoint}>"
+
+
+class CalendarSubscription(db.Model):
+    """Abonnement calendrier ICS sécurisé par token unique."""
+    __tablename__ = "calendar_subscriptions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey(
+        "users.id"), nullable=False, index=True)
+    token = db.Column(db.String(36), unique=True,
+                      nullable=False, default=lambda: str(uuid.uuid4()))
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_accessed_at = db.Column(db.DateTime, nullable=True)
+
+    user = db.relationship("User", backref="calendar_subscriptions")
+
+    def to_dict(self):
+        """Convertit l'objet en dictionnaire pour les réponses API."""
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "token": self.token,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "last_accessed_at": self.last_accessed_at.isoformat() if self.last_accessed_at else None,
+        }
+
+    def __repr__(self):
+        return f"<CalendarSubscription user={self.user_id} active={self.is_active}>"

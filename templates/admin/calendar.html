@@ -1,0 +1,184 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Calendrier ICS{% endblock %}
+{% block page_title %}📅 Abonnements Calendrier{% endblock %}
+
+{% block content %}
+<div class="admin-card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
+    <div style="display: flex; align-items: flex-start; gap: 1rem;">
+        <div style="font-size: 1.75rem; line-height: 1;">📱</div>
+        <div>
+            <div style="font-weight: 600; margin-bottom: 0.35rem; font-size: 1rem;">Comment ça marche ?</div>
+            <div style="color: var(--grey-2); font-size: 0.85rem; line-height: 1.5;">
+                Générez un lien calendrier pour chaque utilisateur. Ce lien permet de s'abonner au calendrier
+                des projets Belle Vitesse depuis <strong>iPhone</strong>, <strong>Android</strong>, <strong>Outlook</strong> ou <strong>Google Calendar</strong>.
+                Le calendrier se met à jour automatiquement lorsqu'un nouveau projet est créé.
+            </div>
+            <details style="margin-top: 0.75rem;">
+                <summary style="cursor: pointer; font-size: 0.8rem; color: var(--grey-2); font-weight: 500;">
+                    Instructions d'abonnement
+                </summary>
+                <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--grey-2); line-height: 1.6;">
+                    <strong>iPhone :</strong> Réglages → Calendrier → Comptes → Ajouter → Autre → Calendrier par abonnement → Coller l'URL<br>
+                    <strong>Android / Google Calendar :</strong> Depuis un PC → Google Calendar → "+" → "À partir d'une URL" → Coller l'URL<br>
+                    <strong>Outlook :</strong> Ajouter un calendrier → Depuis Internet → Coller l'URL<br>
+                    <em>Ou scannez le QR code directement depuis le téléphone.</em>
+                </div>
+            </details>
+        </div>
+    </div>
+</div>
+
+<div class="admin-card">
+    <div style="overflow-x: auto;">
+        <table class="admin-table" id="calendarTable">
+            <thead>
+                <tr>
+                    <th>Utilisateur</th>
+                    <th>Rôle</th>
+                    <th>Statut</th>
+                    <th>Dernier accès</th>
+                    <th>Lien / QR Code</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                {% set data = sub_data.get(u.id) %}
+                <tr>
+                    <td>
+                        <div class="admin-list-title">{{ u.firstname }} {{ u.lastname }}</div>
+                        <div style="font-size: 0.75rem; color: var(--grey-2);">{{ u.mail }}</div>
+                    </td>
+                    <td>
+                        <span class="badge-pill" data-val="{{ u.role or 'User' }}">
+                            {{ u.role or 'User' }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if data %}
+                        <span class="badge-pill" data-val="signed"
+                            style="font-size: 0.75rem;">Actif</span>
+                        {% else %}
+                        <span class="badge-pill" data-val="to_generate"
+                            style="font-size: 0.75rem;">Non configuré</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 0.8rem; color: var(--grey-2);">
+                        {% if data and data.subscription.last_accessed_at %}
+                        {{ data.subscription.last_accessed_at.strftime('%d/%m/%Y à %H:%M') }}
+                        {% else %}
+                        —
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if data %}
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <!-- URL avec copier -->
+                            <div style="position: relative; flex: 1; min-width: 0;">
+                                <input type="text" value="{{ data.feed_url }}" readonly
+                                    class="form-input cal-url-input"
+                                    id="calUrl-{{ u.id }}"
+                                    style="font-size: 0.7rem; padding: 0.35rem 2.5rem 0.35rem 0.5rem; width: 100%; font-family: monospace;">
+                                <button type="button" class="cal-copy-btn"
+                                    onclick="copyCalUrl({{ u.id }})"
+                                    title="Copier l'URL"
+                                    style="position: absolute; right: 0.25rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 0.25rem; font-size: 1rem;">
+                                    📋
+                                </button>
+                            </div>
+                            <!-- QR Code -->
+                            {% if data.qr_base64 %}
+                            <button type="button" class="admin-btn admin-btn-secondary"
+                                onclick="toggleQR({{ u.id }})"
+                                style="padding: 0.25rem 0.5rem; font-size: 0.75rem; white-space: nowrap;">
+                                QR Code
+                            </button>
+                            {% endif %}
+                        </div>
+                        {% if data.qr_base64 %}
+                        <div id="qr-{{ u.id }}" style="display: none; margin-top: 0.75rem; text-align: center;">
+                            <img src="data:image/png;base64,{{ data.qr_base64 }}"
+                                alt="QR Code calendrier {{ u.firstname }}"
+                                style="max-width: 160px; border-radius: 8px; border: 1px solid var(--grey-6);">
+                            <div style="font-size: 0.7rem; color: var(--grey-2); margin-top: 0.25rem;">
+                                Scannez pour s'abonner
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <span style="font-size: 0.8rem; color: var(--grey-3);">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
+                            {% if data %}
+                            <!-- Régénérer -->
+                            <form action="{{ url_for('admin_calendar_regenerate') }}" method="POST"
+                                style="display: inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="user_id" value="{{ u.id }}">
+                                <button type="submit" class="admin-btn admin-btn-secondary"
+                                    onclick="return confirm('Régénérer le lien calendrier ? L\'ancien lien cessera de fonctionner.')"
+                                    style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                                    🔄 Régénérer
+                                </button>
+                            </form>
+                            <!-- Révoquer -->
+                            <form action="{{ url_for('admin_calendar_revoke') }}" method="POST"
+                                style="display: inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="user_id" value="{{ u.id }}">
+                                <button type="submit" class="admin-btn admin-btn-danger"
+                                    onclick="return confirm('Révoquer le lien calendrier ? L\'utilisateur n\'aura plus accès au calendrier.')"
+                                    style="padding: 0.25rem 0.5rem; font-size: 0.75rem; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">
+                                    ✕ Révoquer
+                                </button>
+                            </form>
+                            {% else %}
+                            <!-- Générer -->
+                            <form action="{{ url_for('admin_calendar_generate') }}" method="POST"
+                                style="display: inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="user_id" value="{{ u.id }}">
+                                <button type="submit" class="admin-btn admin-btn-primary"
+                                    style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                                    + Générer
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function copyCalUrl(userId) {
+        const input = document.getElementById('calUrl-' + userId);
+        if (!input) return;
+
+        navigator.clipboard.writeText(input.value).then(() => {
+            // Feedback visuel
+            const btn = input.nextElementSibling;
+            const original = btn.textContent;
+            btn.textContent = '✅';
+            setTimeout(() => { btn.textContent = original; }, 1500);
+        }).catch(() => {
+            // Fallback
+            input.select();
+            document.execCommand('copy');
+        });
+    }
+
+    function toggleQR(userId) {
+        const el = document.getElementById('qr-' + userId);
+        if (el) {
+            el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        }
+    }
+</script>
+{% endblock %}

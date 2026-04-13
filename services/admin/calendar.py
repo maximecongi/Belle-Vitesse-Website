@@ -30,8 +30,8 @@ def get_calendar_events():
                 "url": url_for("admin_project_edit", record_id=r.id),
             })
 
-        """ Date de tournage 
-        
+        """ Date de tournage """
+
         if r.shoot_start_date:
             event = {
                 "title": f"🎬 {name}",
@@ -41,7 +41,7 @@ def get_calendar_events():
             }
             if r.shoot_end_date:
                 event["end"] = r.shoot_end_date.isoformat()
-            events.append(event) """
+            events.append(event)
 
         if r.return_date:
             events.append({

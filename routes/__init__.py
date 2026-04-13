@@ -8,6 +8,7 @@ from routes.api import init_api_v1_routes
 from routes.public.checkin import init_checkin_routes
 from routes.public.checkout import init_checkout_routes
 from routes.public.waivers import init_waiver_routes
+from routes.public.calendar_feed import cal_feed_bp
 from routes.public.web import init_web_routes
 
 
@@ -19,6 +20,11 @@ def init_routes(app):
     init_checkin_routes(app)
     init_waiver_routes(app)
     init_api_v1_routes(app)
+
+    # Flux calendrier ICS public (exempt CSRF — accédé par les apps calendrier)
+    from extensions import csrf
+    csrf.exempt(cal_feed_bp)
+    app.register_blueprint(cal_feed_bp)
 
 
 def init_error_handlers(app):

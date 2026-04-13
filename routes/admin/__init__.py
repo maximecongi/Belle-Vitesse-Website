@@ -3,6 +3,7 @@ from flask_wtf.csrf import CSRFError
 
 from .api import init_api_routes
 from .auth import init_auth_routes
+from .calendar import init_calendar_routes
 from .checkins import init_checkins_routes
 from .checkouts import init_checkouts_routes
 from .contacts import init_contacts_routes
@@ -30,6 +31,7 @@ def init_admin_routes(app):
     init_waivers_routes(app)
     init_tools_routes(app)
     init_users_routes(app)
+    init_calendar_routes(app)
 
     @app.errorhandler(CSRFError)
     def handle_csrf_error(e):
