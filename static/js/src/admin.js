@@ -52,9 +52,21 @@ document.addEventListener('click', e => {
     }
 
     // Existing dropdown logic
-    if (!e.target.closest('.badge-select') && !e.target.closest('.rich-select')) {
-        document.querySelectorAll('.badge-select.open, .rich-select.open')
+    if (!e.target.closest('.badge-select') && !e.target.closest('.rich-select') && !e.target.closest('.admin-tooltip-container')) {
+        document.querySelectorAll('.badge-select.open, .rich-select.open, .admin-tooltip-container.open')
             .forEach(s => s.classList.remove('open'));
+    }
+
+    // Tooltip toggle logic
+    const tooltipTrigger = e.target.closest('.note-tooltip-trigger');
+    if (tooltipTrigger) {
+        const container = tooltipTrigger.closest('.admin-tooltip-container');
+        const wasOpen = container.classList.contains('open');
+        // Close all other tooltips first
+        document.querySelectorAll('.admin-tooltip-container.open').forEach(c => c.classList.remove('open'));
+        if (!wasOpen) {
+            container.classList.add('open');
+        }
     }
 });
 
