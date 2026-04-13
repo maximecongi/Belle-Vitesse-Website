@@ -433,6 +433,12 @@
     text-align: center;
 }
 
+#calendarTable.admin-table td:last-child {
+    display: flex;
+    width: 20vw;
+    justify-content: center;
+}
+
 .admin-table tr:hover {
     background-color: rgba(0, 0, 0, 0.02);
 }
