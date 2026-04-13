@@ -126,6 +126,8 @@ class Project(db.Model):
         "contacts.id"), nullable=True, index=True)
     production_contact_id = db.Column(db.Integer, db.ForeignKey(
         "contacts.id"), nullable=True, index=True)
+    dop_contact_id = db.Column(db.Integer, db.ForeignKey(
+        "contacts.id"), nullable=True, index=True)
     departure_date = db.Column(db.Date) # Date de départ (enlèvement)
     shoot_start_date = db.Column(db.Date) # Date de début de tournage
     shoot_end_date = db.Column(db.Date) # Date de fin de tournage
@@ -146,6 +148,9 @@ class Project(db.Model):
     # Contact production référent pour le projet
     production_contact = db.relationship(
         "Contact", foreign_keys=[production_contact_id], backref="production_projects", lazy=True)
+    # Contact DOP du projet
+    dop_contact = db.relationship(
+        "Contact", foreign_keys=[dop_contact_id], backref="dop_projects", lazy=True)
     # Décharge pilote associée (unique pour le projet)
     pilot_waiver = db.relationship(
         "PilotWaiver", backref="project", uselist=False, lazy=True)

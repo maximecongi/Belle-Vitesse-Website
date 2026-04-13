@@ -219,6 +219,12 @@
                     </div>
                 </td>
                 <td>
+                    <div style="white-space: nowrap;"><span style="color: var(--grey-2);">📸</span>
+                        <a href="{{ url_for('admin_contacts_list', q=project.dop_contact_name) }}"
+                            style="text-decoration: none; color: inherit; font-weight: 500;">
+                            {{ project.dop_contact_name }}
+                        </a>
+                    </div><br>
                     <div style="white-space: nowrap;"><span style="color: var(--grey-2);">🏎️</span>
                         <a href="{{ url_for('admin_contacts_list', q=project.pilot_contact_name) }}"
                             style="text-decoration: none; color: inherit; font-weight: 500;">

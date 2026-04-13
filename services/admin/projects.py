@@ -88,6 +88,7 @@ def _format_project_admin(p, vehicle_map):
         "raw_checkin_date": str(p.return_date) if p.return_date else "",
         "pilot_contact_name": f"{p.pilot_contact.first_name} {p.pilot_contact.last_name}" if p.pilot_contact else "—",
         "production_contact_name": f"{p.production_contact.first_name} {p.production_contact.last_name}" if p.production_contact else "—",
+        "dop_contact_name": f"{p.dop_contact.first_name} {p.dop_contact.last_name}" if p.dop_contact else "—",
         "vehicles": [_format_vehicle_state(p, vid, vehicle_map) for vid in veh_ids],
         "pilot_waiver": {
             "id": p.pilot_waiver.id if p.pilot_waiver else None,
@@ -116,6 +117,7 @@ def list_projects():
         joinedload(Project.checkin_vehicles),
         joinedload(Project.pilot_contact),
         joinedload(Project.production_contact),
+        joinedload(Project.dop_contact),
         joinedload(Project.pilot_waiver),
         joinedload(Project.production_waiver)
     ).order_by(Project.name.desc()).all()
@@ -162,6 +164,8 @@ def create_project(form):
             "pilot_contact_id") else None,
         production_contact_id=form.get("production_contact_id") if form.get(
             "production_contact_id") else None,
+        dop_contact_id=form.get("dop_contact_id") if form.get(
+            "dop_contact_id") else None,
         departure_date=_parse_date(form.get("departure_date")),
         shoot_start_date=_parse_date(form.get("shoot_start")),
         shoot_end_date=_parse_date(form.get("shoot_end")),
@@ -210,6 +214,8 @@ def update_project(record_id, form):
         "pilot_contact_id") if form.get("pilot_contact_id") else None
     project.production_contact_id = form.get(
         "production_contact_id") if form.get("production_contact_id") else None
+    project.dop_contact_id = form.get(
+        "dop_contact_id") if form.get("dop_contact_id") else None
     project.departure_date = _parse_date(form.get("departure_date"))
     project.shoot_start_date = _parse_date(form.get("shoot_start"))
     project.shoot_end_date = _parse_date(form.get("shoot_end"))
@@ -241,6 +247,7 @@ def get_project_for_edit(record_id):
         "production_id": str(p.production_id) if p.production_id else "",
         "pilot_contact_id": str(p.pilot_contact_id) if p.pilot_contact_id else "",
         "production_contact_id": str(p.production_contact_id) if p.production_contact_id else "",
+        "dop_contact_id": str(p.dop_contact_id) if p.dop_contact_id else "",
         "vehicle_ids": veh_ids,
     }
 

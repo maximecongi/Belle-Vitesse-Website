@@ -17,26 +17,14 @@
             <input type="text" name="name" class="form-input" value="{{ data.name if data else '' }}" required>
         </div>
 
-        <div class="form-group">
-            <label class="form-label">Production</label>
-            <select name="production_id" class="form-input searchable-select">
-                <option value="">— Sélectionner une production —</option>
-                {% for p in productions %}
-                <option value="{{ p.id }}" {% if data and data.production_id==p.id %}selected{% endif %}>
-                    {{ p.fields.get('Nom', '—') }}
-                </option>
-                {% endfor %}
-            </select>
-        </div>
-
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 1rem;">
             <div class="form-group">
-                <label class="form-label">Contact Pilote</label>
-                <select name="pilot_contact_id" class="form-input searchable-select">
-                    <option value="">— Sélectionner un contact pilote —</option>
-                    {% for c in contacts %}
-                    <option value="{{ c.id }}" {% if data and data.pilot_contact_id==c.id %}selected{% endif %}>
-                        {{ c.name }}
+                <label class="form-label">Production</label>
+                <select name="production_id" class="form-input searchable-select">
+                    <option value="">— Sélectionner une production —</option>
+                    {% for p in productions %}
+                    <option value="{{ p.id }}" {% if data and data.production_id==p.id %}selected{% endif %}>
+                        {{ p.fields.get('Nom', '—') }}
                     </option>
                     {% endfor %}
                 </select>
@@ -48,6 +36,32 @@
                     <option value="">— Sélectionner un contact production —</option>
                     {% for c in contacts %}
                     <option value="{{ c.id }}" {% if data and data.production_contact_id==c.id %}selected{% endif %}>
+                        {{ c.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 1rem;">
+            <div class="form-group">
+                <label class="form-label">DOP (Directeur Photo)</label>
+                <select name="dop_contact_id" class="form-input searchable-select">
+                    <option value="">— Sélectionner un DOP —</option>
+                    {% for c in contacts %}
+                    <option value="{{ c.id }}" {% if data and data.dop_contact_id==c.id %}selected{% endif %}>
+                        {{ c.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Contact Pilote</label>
+                <select name="pilot_contact_id" class="form-input searchable-select">
+                    <option value="">— Sélectionner un contact pilote —</option>
+                    {% for c in contacts %}
+                    <option value="{{ c.id }}" {% if data and data.pilot_contact_id==c.id %}selected{% endif %}>
                         {{ c.name }}
                     </option>
                     {% endfor %}
