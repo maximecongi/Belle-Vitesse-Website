@@ -7,61 +7,71 @@
 
 {% block extra_css %}
 <style>
-/* Tooltip Popup */
-.admin-tooltip-container {
-    position: relative;
-    display: inline-block;
-}
+    /* Tooltip Popup */
+    .admin-tooltip-container {
+        position: relative;
+        display: inline-block;
+    }
 
-.note-tooltip-trigger {
-    cursor: pointer;
-    transition: color 0.2s;
-}
+    .note-tooltip-trigger {
+        cursor: pointer;
+        transition: color 0.2s;
+    }
 
-.note-tooltip-trigger:hover {
-    color: #ffc845; /* admin-accent */
-}
+    .note-tooltip-trigger:hover {
+        color: #ffc845;
+        /* admin-accent */
+    }
 
-.admin-tooltip-popup {
-    display: none;
-    position: absolute;
-    bottom: 110%;
-    left: 0;
-    min-width: 250px;
-    max-width: 400px;
-    background: white;
-    color: #333;
-    padding: 1rem;
-    border-radius: 8px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    z-index: 1000;
-    font-size: 0.85rem;
-    font-style: normal;
-    line-height: 1.4;
-    border: 1px solid #e5e7eb;
-    white-space: pre-wrap;
-    text-align: left;
-}
+    .admin-tooltip-popup {
+        display: none;
+        position: absolute;
+        bottom: 110%;
+        left: 0;
+        min-width: 250px;
+        max-width: 400px;
+        overflow-y: auto;
+        max-height: 250px;
+        background: white;
+        color: #333;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+        font-size: 0.85rem;
+        font-style: normal;
+        line-height: 1.4;
+        border: 1px solid #e5e7eb;
+        white-space: pre-wrap;
+        text-align: left;
+    }
 
-.admin-tooltip-popup::after {
-    content: "";
-    position: absolute;
-    top: 100%;
-    left: 20px;
-    border-width: 8px;
-    border-style: solid;
-    border-color: white transparent transparent transparent;
-}
+    .admin-tooltip-popup::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 20px;
+        border-width: 8px;
+        border-style: solid;
+        border-color: white transparent transparent transparent;
+    }
 
-.admin-tooltip-container.open .admin-tooltip-popup {
-    display: block;
-    animation: tooltipFadeIn 0.2s ease-out;
-}
+    .admin-tooltip-container.open .admin-tooltip-popup {
+        display: block;
+        animation: tooltipFadeIn 0.2s ease-out;
+    }
 
-@keyframes tooltipFadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+    @keyframes tooltipFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(5px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 </style>
 {% endblock %}
 
@@ -104,7 +114,8 @@
                     </div>
                     {% if project.notes %}
                     <div class="admin-tooltip-container" style="margin-top: 1rem;">
-                        <div class="note-tooltip-trigger" style="font-size: 0.7rem; color: #777; font-style: italic; border-left: 2px solid #e5e7eb; padding-left: 0.5rem; max-width: 250px; line-height: 1.3;">
+                        <div class="note-tooltip-trigger"
+                            style="font-size: 0.7rem; color: #777; font-style: italic; border-left: 2px solid #e5e7eb; padding-left: 0.5rem; max-width: 250px; line-height: 1.3;">
                             📝 {{ project.notes | truncate(80) }}
                         </div>
                         <div class="admin-tooltip-popup">
