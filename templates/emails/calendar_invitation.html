@@ -107,6 +107,21 @@
         .footer p {
             font-size: 11px;
         }
+
+        .qr-code-container {
+            background-color: #FFFFFF;
+            padding: 15px;
+            border-radius: 8px;
+            display: inline-block;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .qr-code-container img {
+            display: block;
+            width: 150px;
+            height: 150px;
+        }
     </style>
 </head>
 
@@ -126,6 +141,15 @@
                 Cliquez sur le bouton ci-dessous pour ouvrir le lien d'abonnement (ou copiez-le dans votre application de calendrier préférée).
             </p>
             <a class="button" href="{{ feed_url }}">S'abonner au calendrier</a>
+            
+            <div style="margin: 20px 0;">
+                <div class="qr-code-container">
+                    <img src="data:image/png;base64,{{ qrcode_base64 }}" alt="QR Code Abonnement">
+                </div>
+                <p style="font-size: 13px; color: #FFC845; margin-top: 10px; font-weight: 500;">
+                    Scannez ce code avec votre téléphone pour vous abonner instantanément.
+                </p>
+            </div>
             
             <div class="instructions">
                 <h2>Instructions d'abonnement :</h2>

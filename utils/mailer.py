@@ -8,6 +8,9 @@ from email.utils import formatdate, make_msgid
 
 from flask import current_app, render_template, request
 from itsdangerous import URLSafeSerializer
+import qrcode
+import io
+import base64
 
 
 def send_magic_link_email(to_email, firstname, magic_link):
@@ -431,6 +434,7 @@ def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path):
 def send_calendar_invitation_email(to_email, user_name, feed_url):
     """
     Envoie une invitation pour s'abonner au calendrier ICS Belle Vitesse.
+    Inclut un QR code pour faciliter l'abonnement sur mobile.
     """
     mail_server = os.getenv("MAIL_SERVER")
     mail_port = int(os.getenv("MAIL_PORT", 587))
@@ -447,6 +451,21 @@ def send_calendar_invitation_email(to_email, user_name, feed_url):
         current_app.logger.info(
             f"🚀 Sending calendar invitation email to {to_email}")
 
+        # Generation du QR Code
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(feed_url)
+        qr.make(fit=True)
+
+        img = qr.make_image(fill_color="black", back_color="white")
+        buffered = io.BytesIO()
+        img.save(buffered, format="PNG")
+        qrcode_base64 = base64.b64encode(buffered.getvalue()).decode()
+
         # Text fallback content
         text_content = f"Bonjour {user_name},\n\nVous pouvez désormais synchroniser le planning des projets Belle Vitesse directement sur votre téléphone ou ordinateur.\n\nLien d'abonnement : {feed_url}\n\nL'équipe Belle Vitesse."
 
@@ -455,6 +474,7 @@ def send_calendar_invitation_email(to_email, user_name, feed_url):
             "emails/calendar_invitation.html",
             user_name=user_name,
             feed_url=feed_url,
+            qrcode_base64=qrcode_base64,
             now_year=datetime.utcnow().year if 'datetime' in globals() else 2026
         )
 
