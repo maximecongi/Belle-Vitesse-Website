@@ -71,11 +71,11 @@
                         —
                         {% endif %}
                     </td>
-                    <td>
+                    <td style="text-align: center;">
                         {% if data %}
-                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; justify-content: center;">
                             <!-- URL avec copier -->
-                            <div style="position: relative; flex: 1; min-width: 0;">
+                            <div style="position: relative; flex: 1; min-width: 0; max-width: 200px;">
                                 <input type="text" value="{{ data.feed_url }}" readonly
                                     class="form-input cal-url-input"
                                     id="calUrl-{{ u.id }}"
@@ -87,25 +87,16 @@
                                     📋
                                 </button>
                             </div>
-                            <!-- QR Code -->
-                            {% if data.qr_base64 %}
-                            <button type="button" class="admin-btn admin-btn-secondary"
-                                onclick="toggleQR({{ u.id }})"
-                                style="padding: 0.25rem 0.5rem; font-size: 0.75rem; white-space: nowrap;">
-                                QR Code
-                            </button>
-                            {% endif %}
+                            <!-- QR Code Trigger (Same as contacts_list) -->
+                            <span class="qr-trigger" 
+                                  data-name="Calendrier : {{ u.firstname }} {{ u.lastname }}" 
+                                  data-url="{{ data.feed_url }}"
+                                  style="cursor:pointer; display: flex; align-items: center;"
+                                  title="Afficher le QR code">
+                                <img src="{{ url_for('static', filename='imgs/icons/qr_code.svg') }}" 
+                                     alt="QR Code" style="width: 24px; height: 24px;">
+                            </span>
                         </div>
-                        {% if data.qr_base64 %}
-                        <div id="qr-{{ u.id }}" style="display: none; margin-top: 0.75rem; text-align: center;">
-                            <img src="data:image/png;base64,{{ data.qr_base64 }}"
-                                alt="QR Code calendrier {{ u.firstname }}"
-                                style="max-width: 160px; border-radius: 8px; border: 1px solid var(--grey-6);">
-                            <div style="font-size: 0.7rem; color: var(--grey-2); margin-top: 0.25rem;">
-                                Scannez pour s'abonner
-                            </div>
-                        </div>
-                        {% endif %}
                         {% else %}
                         <span style="font-size: 0.8rem; color: var(--grey-3);">—</span>
                         {% endif %}
@@ -167,29 +158,79 @@
     </div>
 </div>
 
+<!-- QR Modal (Same as contacts_list) -->
+<div id="qrModal"
+    style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.6); backdrop-filter:blur(4px); justify-content:center; align-items:center;">
+    <div
+        style="background:#fff; border-radius:16px; padding:2.5rem; text-align:center; max-width:360px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,.3);">
+        <p id="qrModalName" style="font-weight:700; font-size:1.15rem; margin:0 0 1.25rem; color:#1a1a2e;"></p>
+        <div id="qrModalCode"
+            style="display:inline-block; padding:12px; background:#fff; border-radius:8px; border:1px solid #e5e7eb;">
+        </div>
+        <p style="margin-top:1.5rem; text-align: center; font-size:.85rem; color:#9ca3af;">
+            Scannez ce QR code avec votre téléphone pour vous abonner au calendrier.
+        </p>
+        <button type="button" class="admin-btn admin-btn-secondary" style="margin-top: 1rem; width: 100%;" onclick="document.getElementById('qrModal').style.display='none'">Fermer</button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script>
     function copyCalUrl(userId) {
         const input = document.getElementById('calUrl-' + userId);
         if (!input) return;
 
         navigator.clipboard.writeText(input.value).then(() => {
-            // Feedback visuel
             const btn = input.nextElementSibling;
             const original = btn.textContent;
             btn.textContent = '✅';
             setTimeout(() => { btn.textContent = original; }, 1500);
         }).catch(() => {
-            // Fallback
             input.select();
             document.execCommand('copy');
         });
     }
 
-    function toggleQR(userId) {
-        const el = document.getElementById('qr-' + userId);
-        if (el) {
-            el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('qrModal');
+        const modalName = document.getElementById('qrModalName');
+        const modalCode = document.getElementById('qrModalCode');
+
+        function renderQR(container, text, size) {
+            var qr = qrcode(0, 'L');
+            qr.addData(text);
+            qr.make();
+            var cellSize = Math.floor(size / qr.getModuleCount());
+            var img = document.createElement('img');
+            img.src = qr.createDataURL(cellSize, 0);
+            img.style.width = size + 'px';
+            img.style.height = size + 'px';
+            container.appendChild(img);
         }
-    }
+
+        document.querySelectorAll('.qr-trigger').forEach(trigger => {
+            trigger.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                modalName.textContent = trigger.dataset.name;
+                modalCode.innerHTML = '';
+                renderQR(modalCode, trigger.dataset.url, 260);
+                modal.style.display = 'flex';
+            });
+        });
+
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && modal.style.display === 'flex') {
+                modal.style.display = 'none';
+            }
+        });
+    });
 </script>
 {% endblock %}
