@@ -11,11 +11,13 @@ from flask import flash, redirect, render_template, request, url_for
 from models import User, db
 from services.admin.calendar_subscriptions import (
     create_subscription,
+    get_subscription_for_user,
     list_all_subscriptions,
     regenerate_subscription,
     revoke_subscription,
 )
 from utils.decorators import require_roles
+from utils.mailer import send_calendar_invitation_email
 
 
 def init_calendar_routes(app):
@@ -66,6 +68,14 @@ def init_calendar_routes(app):
             user = db.session.get(User, user_id)
             name = f"{user.firstname} {user.lastname}" if user else f"ID {user_id}"
             flash(f"Lien calendrier généré pour {name}.", "success")
+
+            # Envoyer l'email d'invitation automatiquement à la génération
+            if user and user.mail:
+                feed_url = url_for("cal_feed.calendar_feed", token=sub.token, _external=True)
+                if send_calendar_invitation_email(user.mail, f"{user.firstname} {user.lastname}", feed_url):
+                    flash(f"Email d'invitation envoyé à {user.mail}.", "info")
+                else:
+                    flash("Erreur lors de l'envoi de l'email d'invitation.", "warning")
         else:
             flash("Erreur lors de la génération du lien calendrier.", "error")
 
@@ -105,6 +115,31 @@ def init_calendar_routes(app):
             flash(f"Lien calendrier régénéré pour {name}. L'ancien lien ne fonctionne plus.", "success")
         else:
             flash("Erreur lors de la régénération du lien calendrier.", "error")
+
+        return redirect(url_for("admin_calendar"))
+
+    @app.route("/admin/calendar/send-email", methods=["POST"], endpoint="admin_calendar_send_email")
+    @require_roles("administrator", "manager")
+    def admin_calendar_send_email():
+        """Envoie manuellement le lien calendrier par email."""
+        user_id = request.form.get("user_id", type=int)
+        if not user_id:
+            flash("Utilisateur invalide.", "error")
+            return redirect(url_for("admin_calendar"))
+
+        user = db.session.get(User, user_id)
+        sub = get_subscription_for_user(user_id)
+
+        if not user or not user.mail:
+            flash("Utilisateur sans adresse email.", "error")
+        elif not sub or not sub.is_active:
+            flash("Aucun abonnement actif trouvé.", "error")
+        else:
+            feed_url = url_for("cal_feed.calendar_feed", token=sub.token, _external=True)
+            if send_calendar_invitation_email(user.mail, f"{user.firstname} {user.lastname}", feed_url):
+                flash(f"Lien calendrier envoyé à {user.mail}.", "success")
+            else:
+                flash("Erreur lors de l'envoi de l'email.", "error")
 
         return redirect(url_for("admin_calendar"))
 

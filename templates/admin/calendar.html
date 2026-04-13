@@ -113,6 +113,17 @@
                     <td>
                         <div style="display: flex; gap: 0.35rem; flex-wrap: wrap;">
                             {% if data %}
+                            <!-- Envoyer par email -->
+                            <form action="{{ url_for('admin_calendar_send_email') }}" method="POST"
+                                style="display: inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="user_id" value="{{ u.id }}">
+                                <button type="submit" class="admin-btn admin-btn-secondary"
+                                    title="Envoyer le lien par email à l'utilisateur"
+                                    style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                                    ✉️ Email
+                                </button>
+                            </form>
                             <!-- Régénérer -->
                             <form action="{{ url_for('admin_calendar_regenerate') }}" method="POST"
                                 style="display: inline;">

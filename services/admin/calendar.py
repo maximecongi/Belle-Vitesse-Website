@@ -1,3 +1,4 @@
+from datetime import timedelta
 import logging
 
 from flask import url_for
@@ -30,8 +31,7 @@ def get_calendar_events():
                 "url": url_for("admin_project_edit", record_id=r.id),
             })
 
-        """ Date de tournage """
-
+        # Date de tournage 
         if r.shoot_start_date:
             event = {
                 "title": f"🎬 {name}",
@@ -40,7 +40,9 @@ def get_calendar_events():
                 "url": url_for("admin_project_edit", record_id=r.id),
             }
             if r.shoot_end_date:
-                event["end"] = r.shoot_end_date.isoformat()
+                # FullCalendar end date is exclusive for all-day events
+                # We add 1 day to make it inclusive (e.g. 16th April included)
+                event["end"] = (r.shoot_end_date + timedelta(days=1)).isoformat()
             events.append(event)
 
         if r.return_date:

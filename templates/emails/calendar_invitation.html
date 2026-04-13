@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S'abonner au calendrier Belle Vitesse</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #151515;
+            color: #FFFFFF;
+            font-family: 'Poppins', Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #151515;
+        }
+
+        .header {
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .logo {
+            width: 200px;
+            max-width: 80%;
+        }
+
+        .content {
+            padding: 20px 40px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+            color: #FFFFFF;
+        }
+
+        .dot-before:before {
+            content: "■ ";
+            color: #FFC845;
+            font-size: 0.8em;
+            position: relative;
+            left: -0.2ch;
+            top: -0.2ch;
+        }
+
+        p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #A1A1A1;
+            margin-bottom: 20px;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 16px 32px;
+            background-color: #FFC845;
+            color: #151515;
+            text-decoration: none;
+            font-weight: 700;
+            text-transform: uppercase;
+            border-radius: 4px;
+            letter-spacing: 1px;
+            margin: 20px 0;
+        }
+
+        .instructions {
+            text-align: left;
+            background-color: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+            border: 1px solid #252525;
+        }
+
+        .instructions h2 {
+            font-size: 14px;
+            text-transform: uppercase;
+            color: #FFC845;
+            margin-top: 0;
+        }
+
+        .instructions li {
+            font-size: 13px;
+            color: #A1A1A1;
+            margin-bottom: 10px;
+        }
+
+        .footer {
+            padding: 40px 20px;
+            text-align: center;
+            color: #555555;
+            border-top: 1px solid #252525;
+            margin-top: 40px;
+        }
+
+        .footer p {
+            font-size: 11px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://bellevitesse.com/static/imgs/logos_and_name/blanc-fond-transparent.png"
+                alt="Belle Vitesse" class="logo">
+        </div>
+        <div class="content">
+            <h1 class="dot-before">Calendrier Projets.</h1>
+            <p>
+                Bonjour {{ user_name }},<br><br>
+                Vous pouvez désormais synchroniser le planning des projets Belle Vitesse directement sur votre téléphone ou ordinateur.
+            </p>
+            <p style="font-size: 14px;">
+                Cliquez sur le bouton ci-dessous pour ouvrir le lien d'abonnement (ou copiez-le dans votre application de calendrier préférée).
+            </p>
+            <a class="button" href="{{ feed_url }}">S'abonner au calendrier</a>
+            
+            <div class="instructions">
+                <h2>Instructions d'abonnement :</h2>
+                <ul style="padding-left: 20px; margin-bottom: 0;">
+                    <li><strong>iPhone / iPad :</strong> Cliquez sur le bouton ci-dessus, puis acceptez l'abonnement. Ou allez dans Réglages > Calendrier > Comptes > Ajouter > Autre > Ajouter un calendrier avec abonnement.</li>
+                    <li><strong>Android / Google Calendar :</strong> Sur votre ordinateur, ouvrez Google Calendar, cliquez sur le "+" à côté de "Autres agendas" et choisissez "À partir de l'URL".</li>
+                    <li><strong>Outlook :</strong> Allez dans Ajouter un calendrier > Depuis Internet et collez l'URL fournie.</li>
+                </ul>
+            </div>
+            
+            <p style="margin-top: 30px; font-size: 14px; font-style: italic;">
+                Lien direct : <br>
+                <code style="word-break: break-all; color: #FFC845;">{{ feed_url }}</code>
+            </p>
+        </div>
+        <div class="footer">
+            <p>
+                © Belle Vitesse {{ now_year }}. Tous droits réservés.<br>
+                Belle Vitesse — 33 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine, France
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>

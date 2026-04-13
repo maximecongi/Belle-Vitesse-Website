@@ -426,3 +426,62 @@ def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path):
         current_app.logger.error(
             f"❌ Erreur sending signed waiver email to {to_email}: {e}")
         return False
+
+
+def send_calendar_invitation_email(to_email, user_name, feed_url):
+    """
+    Envoie une invitation pour s'abonner au calendrier ICS Belle Vitesse.
+    """
+    mail_server = os.getenv("MAIL_SERVER")
+    mail_port = int(os.getenv("MAIL_PORT", 587))
+    mail_user = os.getenv("MAIL_ADMIN_USERNAME")
+    mail_password = os.getenv("MAIL_ADMIN_PASSWORD")
+    mail_use_tls = os.getenv("MAIL_USE_TLS", "true").lower() == "true"
+
+    if not all([mail_server, mail_user, mail_password]):
+        current_app.logger.error(
+            "❌ Email configuration missing in .env for calendar invitation.")
+        return False
+
+    try:
+        current_app.logger.info(
+            f"🚀 Sending calendar invitation email to {to_email}")
+
+        # Text fallback content
+        text_content = f"Bonjour {user_name},\n\nVous pouvez désormais synchroniser le planning des projets Belle Vitesse directement sur votre téléphone ou ordinateur.\n\nLien d'abonnement : {feed_url}\n\nL'équipe Belle Vitesse."
+
+        # Premium HTML content via template
+        html_content = render_template(
+            "emails/calendar_invitation.html",
+            user_name=user_name,
+            feed_url=feed_url,
+            now_year=datetime.utcnow().year if 'datetime' in globals() else 2026
+        )
+
+        # Create message
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = "Votre calendrier Belle Vitesse"
+        msg["From"] = f"Belle Vitesse <{mail_user}>"
+        msg["To"] = to_email
+        msg["Date"] = formatdate(localtime=True)
+        msg["Message-ID"] = make_msgid(domain="bellevitesse.com")
+        msg["Reply-To"] = mail_user
+
+        msg.attach(MIMEText(text_content, "plain", "utf-8"))
+        msg.attach(MIMEText(html_content, "html", "utf-8"))
+
+        server = smtplib.SMTP(mail_server, mail_port, timeout=10)
+
+        if mail_use_tls:
+            server.starttls()
+
+        server.login(mail_user, mail_password)
+        server.sendmail(mail_user, [to_email], msg.as_string())
+        server.quit()
+
+        return True
+
+    except Exception as e:
+        current_app.logger.error(
+            f"❌ Erreur sending calendar invitation email to {to_email}: {e}")
+        return False

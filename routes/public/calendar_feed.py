@@ -7,6 +7,8 @@ from datetime import datetime, timedelta
 from flask import Blueprint, Response, abort, current_app, request
 from icalendar import Calendar, Event
 
+from sqlalchemy.orm import joinedload
+
 from extensions import limiter
 from models import CalendarSubscription, Project, db
 
@@ -39,7 +41,11 @@ def calendar_feed(token):
     )
 
     # 3. Récupérer tous les projets avec au moins une date
-    projects = Project.query.filter(
+    projects = Project.query.options(
+        joinedload(Project.production),
+        joinedload(Project.pilot_contact),
+        joinedload(Project.production_contact)
+    ).filter(
         db.or_(
             Project.departure_date.isnot(None),
             Project.shoot_start_date.isnot(None),
@@ -90,14 +96,26 @@ def calendar_feed(token):
 
         # Construire la description
         desc_parts = [f"Projet : {name}"]
+        
+        if project.production:
+            desc_parts.append(f"Production : {project.production.name}")
+            
+        if project.pilot_contact:
+            desc_parts.append(f"Pilote : {project.pilot_contact.first_name} {project.pilot_contact.last_name}")
+            
+        if project.production_contact:
+            desc_parts.append(f"Contact Prod : {project.production_contact.first_name} {project.production_contact.last_name}")
+
+        desc_parts.append("") # Ligne vide pour aérer
+        
         if project.departure_date:
-            desc_parts.append(f"Départ : {project.departure_date.strftime('%d/%m/%Y')}")
+            desc_parts.append(f"🚚 Départ : {project.departure_date.strftime('%d/%m/%Y')}")
         if project.shoot_start_date:
-            desc_parts.append(f"Début tournage : {project.shoot_start_date.strftime('%d/%m/%Y')}")
+            desc_parts.append(f"🎬 Début tournage : {project.shoot_start_date.strftime('%d/%m/%Y')}")
         if project.shoot_end_date:
-            desc_parts.append(f"Fin tournage : {project.shoot_end_date.strftime('%d/%m/%Y')}")
+            desc_parts.append(f"🏁 Fin tournage : {project.shoot_end_date.strftime('%d/%m/%Y')}")
         if project.return_date:
-            desc_parts.append(f"Retour : {project.return_date.strftime('%d/%m/%Y')}")
+            desc_parts.append(f"📦 Retour : {project.return_date.strftime('%d/%m/%Y')}")
 
         event.add("description", "\n".join(desc_parts))
 
