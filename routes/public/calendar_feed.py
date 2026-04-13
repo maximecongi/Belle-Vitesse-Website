@@ -110,6 +110,9 @@ def calendar_feed(token):
         if project.production_contact:
             desc_parts.append(f"Contact Prod : {project.production_contact.first_name} {project.production_contact.last_name}")
 
+        if project.notes:
+            desc_parts.append(f"\n📝 NOTES / DEMANDES SPÉCIFIQUES :\n{project.notes}")
+
         desc_parts.append("") # Ligne vide pour aérer
         
         if project.departure_date:
