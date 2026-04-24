@@ -6,7 +6,7 @@ Handles salary_rates and logistics_rates CRUD operations.
 
 import logging
 
-from models import GripProduct, Head, LogisticsRate, SalaryRate, Vehicle, db
+from models import AppSetting, GripProduct, Head, LogisticsRate, SalaryRate, Vehicle, db
 
 logger = logging.getLogger(__name__)
 
@@ -18,8 +18,38 @@ SALARY_EDITABLE_FIELDS = {
 
 LOGISTICS_EDITABLE_FIELDS = {"item_name", "daily_rate", "notes"}
 
-# Facteur de conversion intermittent → facture
-INVOICE_FACTOR = 1.65
+# Clé de stockage et valeur par défaut du facteur de conversion
+INVOICE_FACTOR_KEY = "invoice_factor"
+INVOICE_FACTOR_DEFAULT = 1.65
+
+
+def get_invoice_factor():
+    """Récupère le facteur de conversion intermittent → facture depuis la DB."""
+    raw = AppSetting.get(INVOICE_FACTOR_KEY, INVOICE_FACTOR_DEFAULT)
+    try:
+        return round(float(raw), 4)
+    except (ValueError, TypeError):
+        return INVOICE_FACTOR_DEFAULT
+
+
+def update_invoice_factor(new_factor):
+    """Met à jour le facteur et recalcule TOUTES les lignes invoice existantes."""
+    new_factor = round(float(new_factor), 4)
+    if new_factor <= 0:
+        raise ValueError("Le facteur doit être positif")
+
+    AppSetting.set(INVOICE_FACTOR_KEY, new_factor)
+
+    # Recalcul global de toutes les lignes salaires
+    rates = SalaryRate.query.all()
+    for rate in rates:
+        if rate.inter_10h is not None:
+            rate.invoice_10h = round(float(rate.inter_10h) * new_factor, 2)
+        if rate.inter_8h is not None:
+            rate.invoice_8h = round(float(rate.inter_8h) * new_factor, 2)
+    db.session.commit()
+    logger.info(f"✅ Facteur invoice mis à jour : ×{new_factor} ({len(rates)} lignes recalculées)")
+    return new_factor
 
 
 # ── Helpers ──────────────────────────────────────────────────
@@ -159,10 +189,11 @@ def update_salary_rate(rate_id, field, value):
     setattr(rate, field, value)
 
     # Auto-calcul des colonnes Invoice à partir des colonnes Inter
+    factor = get_invoice_factor()
     if field == "inter_10h":
-        rate.invoice_10h = round(value * INVOICE_FACTOR, 2)
+        rate.invoice_10h = round(value * factor, 2)
     elif field == "inter_8h":
-        rate.invoice_8h = round(value * INVOICE_FACTOR, 2)
+        rate.invoice_8h = round(value * factor, 2)
 
     db.session.commit()
     return rate.to_dict()

@@ -60,7 +60,12 @@
         <div class="admin-card-header">
             <h3 class="pricing-section-title" style="margin: 0;">Grille des salaires</h3>
             {% if current_user.role_lower == 'administrator' %}
-            <button class="admin-btn admin-btn-primary btn-add-line" data-type="salary">+ Ajouter une ligne</button>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span class="factor-badge" id="factorBadge" title="Cliquez pour modifier le facteur de conversion">×{{ invoice_factor }}</span>
+                <button class="admin-btn admin-btn-primary btn-add-line" data-type="salary">+ Ajouter une ligne</button>
+            </div>
+            {% else %}
+            <span class="factor-badge" style="cursor: default;">×{{ invoice_factor }}</span>
             {% endif %}
         </div>
         <div class="admin-table-container">
@@ -191,7 +196,78 @@
         const csrfToken = '{{ csrf_token() }}';
         const isAdmin = {{ 'true' if current_user.role_lower == 'administrator' else 'false'
     }};
-    const INVOICE_FACTOR = 1.65;
+    let INVOICE_FACTOR = {{ invoice_factor }};
+
+    // ── Éditeur du facteur de conversion ────────────────────────
+    const factorBadge = document.getElementById('factorBadge');
+    if (factorBadge && isAdmin) {
+        factorBadge.style.cursor = 'pointer';
+        factorBadge.addEventListener('click', function () {
+            if (factorBadge.querySelector('input')) return;
+
+            const currentVal = INVOICE_FACTOR;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentVal;
+            input.style.cssText = 'width: 60px; text-align: center; font-size: 0.8rem; font-weight: 600; border: 2px solid var(--admin-accent); border-radius: 6px; padding: 0.2rem 0.4rem; background: #fffdf5; outline: none;';
+
+            factorBadge.textContent = '×';
+            factorBadge.appendChild(input);
+            input.focus();
+            input.select();
+
+            const saveFactor = () => {
+                const raw = input.value.trim().replace(',', '.');
+                const num = parseFloat(raw);
+                input.remove();
+
+                if (isNaN(num) || num <= 0) {
+                    factorBadge.textContent = '×' + currentVal;
+                    flash('Facteur invalide', 'error');
+                    return;
+                }
+
+                factorBadge.textContent = '×…';
+
+                fetch('/admin/api/pricing/invoice-factor', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ value: num }),
+                })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        INVOICE_FACTOR = res.factor;
+                        factorBadge.textContent = '×' + res.factor;
+                        flash('Facteur mis à jour — ' + res.salaries.length + ' lignes recalculées', 'success');
+
+                        // Mettre à jour toutes les cellules Invoice dans le tableau
+                        res.salaries.forEach(s => {
+                            const row = document.querySelector(`tr[data-row-id="${s.id}"]`);
+                            if (!row) return;
+                            const inv10 = row.querySelector('.computed-cell[data-computed-from="inter_10h"] .cell-value');
+                            const inv8 = row.querySelector('.computed-cell[data-computed-from="inter_8h"] .cell-value');
+                            if (inv10) inv10.textContent = parseFloat(s.invoice_10h || 0).toFixed(2) + ' €';
+                            if (inv8) inv8.textContent = parseFloat(s.invoice_8h || 0).toFixed(2) + ' €';
+                        });
+                    } else {
+                        factorBadge.textContent = '×' + currentVal;
+                        flash(res.error || 'Erreur', 'error');
+                    }
+                })
+                .catch(() => {
+                    factorBadge.textContent = '×' + currentVal;
+                    flash('Erreur réseau', 'error');
+                });
+            };
+
+            input.addEventListener('blur', saveFactor);
+            input.addEventListener('keydown', e => {
+                if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+                if (e.key === 'Escape') { input.remove(); factorBadge.textContent = '×' + currentVal; }
+            });
+        });
+    }
 
     // ── Restore active tab on reload ───────────────────────────
     const savedTab = localStorage.getItem('activePricingTab');

@@ -697,3 +697,34 @@ class CalendarSubscription(db.Model):
 
     def __repr__(self):
         return f"<CalendarSubscription user={self.user_id} active={self.is_active}>"
+
+
+class AppSetting(db.Model):
+    """Table clé/valeur pour les paramètres globaux de l'application."""
+    __tablename__ = "app_settings"
+
+    key = db.Column(db.String(100), primary_key=True)
+    value = db.Column(db.String(500), nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    @staticmethod
+    def get(key, default=None):
+        """Récupère une valeur par clé, avec fallback."""
+        setting = AppSetting.query.get(key)
+        return setting.value if setting else default
+
+    @staticmethod
+    def set(key, value):
+        """Crée ou met à jour un paramètre."""
+        setting = AppSetting.query.get(key)
+        if setting:
+            setting.value = str(value)
+        else:
+            setting = AppSetting(key=key, value=str(value))
+            db.session.add(setting)
+        db.session.commit()
+        return setting
+
+    def __repr__(self):
+        return f"<AppSetting {self.key}={self.value}>"
+

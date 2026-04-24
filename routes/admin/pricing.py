@@ -5,11 +5,13 @@ from services.admin.pricing import (
     add_salary_rate,
     delete_logistics_rate,
     delete_salary_rate,
+    get_invoice_factor,
     list_equipment_rates,
     list_logistics_rates,
     list_salary_rates,
     list_salary_groups,
     update_equipment_daily_rate,
+    update_invoice_factor,
     update_logistics_rate,
     update_salary_rate,
 )
@@ -55,6 +57,7 @@ def init_pricing_routes(app):
             salaries=salaries,
             logistics=logistics,
             salary_groups=salary_groups,
+            invoice_factor=get_invoice_factor(),
         )
 
     # ── API Équipement ───────────────────────────────────────────
@@ -137,4 +140,23 @@ def init_pricing_routes(app):
             return jsonify({"success": True})
         except Exception as e:
             current_app.logger.error(f"❌ DELETE logistics: {e}")
+            return jsonify({"success": False, "error": str(e)}), 400
+
+    # ── API Facteur Invoice ────────────────────────────────────────
+
+    @app.route("/admin/api/pricing/invoice-factor", methods=["PATCH"])
+    @require_roles('administrator')
+    def admin_api_pricing_invoice_factor():
+        try:
+            data = request.get_json()
+            new_factor = update_invoice_factor(data.get("value"))
+            # Renvoyer toutes les lignes recalculées pour mise à jour UI
+            salaries = list_salary_rates()
+            return jsonify({
+                "success": True,
+                "factor": new_factor,
+                "salaries": salaries,
+            })
+        except Exception as e:
+            current_app.logger.error(f"❌ PATCH invoice-factor: {e}")
             return jsonify({"success": False, "error": str(e)}), 400
