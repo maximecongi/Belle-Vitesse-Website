@@ -5,6 +5,17 @@
 
 {% block content %}
 
+{% if errors %}
+<div style="background: #fee2e2; color: #b91c1c; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid #fecaca; font-size: 0.85rem;">
+    <strong>⚠️ Erreurs de chargement :</strong>
+    <ul style="margin: 0.5rem 0 0 1rem; padding: 0;">
+    {% for err in errors %}
+        <li>{{ err }}</li>
+    {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
 <!-- ── Tabs ──────────────────────────────────────────────────── -->
 <div class="pricing-tabs">
     <button class="pricing-tab active" data-tab="equipment" id="tab-equipment">Équipement</button>
@@ -30,19 +41,19 @@
                 <tbody>
                     {% for item in cat_data.items %}
                     <tr>
-                        <td style="font-weight: 500;">{{ item.name }}</td>
+                        <td style="font-weight: 600;">{{ item.name }}</td>
                         <td class="editable-cell"
                             data-id="{{ item.id }}"
                             data-table="{{ cat_data.table }}"
                             data-type="equipment"
                             style="text-align: right;">
-                            <span class="cell-value" style="font-weight: 600;">{{ item.daily_rate }}</span>
+                            <span class="cell-value">{{ item.daily_rate }}</span>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="2" style="text-align: center; padding: 2rem; color: var(--grey-2);">
-                            Chargement... ou aucun élément trouvé.
+                        <td colspan="2" style="text-align: center; padding: 3rem; color: var(--grey-2);">
+                            Aucun élément dans cette catégorie.
                         </td>
                     </tr>
                     {% endfor %}
@@ -51,6 +62,14 @@
         </div>
     </div>
     {% endfor %}
+
+    {% if not equipment %}
+    <div class="admin-card">
+        <div style="text-align: center; padding: 3rem; color: var(--grey-2);">
+            Aucune donnée d'équipement. Vérifiez la connexion à la base de données.
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 <!-- ══════════════════════════════════════════════════════════ -->
@@ -58,11 +77,9 @@
 <!-- ══════════════════════════════════════════════════════════ -->
 <div class="pricing-tab-content" id="panel-salaries">
     <div class="admin-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <h3 class="pricing-section-title" style="margin: 0;">GRILLE DES SALAIRES</h3>
-            <button class="btn-add-line" data-type="salary" style="padding: 0.4rem 0.8rem; font-size: 0.75rem; background: var(--admin-accent); border: none; font-weight: 600; cursor: pointer;">
-                + Ajouter une ligne
-            </button>
+        <div class="admin-card-header">
+            <h3 class="pricing-section-title" style="margin: 0;">Grille des salaires</h3>
+            <button class="admin-btn admin-btn-primary btn-add-line" data-type="salary">+ Ajouter une ligne</button>
         </div>
         <div class="admin-table-container">
             <table class="admin-table">
@@ -77,14 +94,14 @@
                         <th style="width: 100px; text-align: right;">Inter (10H)</th>
                         <th style="width: 100px; text-align: right;">Inter (8H)</th>
                         <th>Notes</th>
-                        <th style="width: 40px;"></th>
+                        <th style="width: 50px;"></th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for rate in salaries %}
                     <tr data-row-id="{{ rate.id }}">
                         <td class="editable-cell" data-id="{{ rate.id }}" data-field="group_name" data-type="salary">
-                            <span class="cell-value" style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase;">{{ rate.group_name }}</span>
+                            <span class="cell-value">{{ rate.group_name }}</span>
                         </td>
                         <td class="editable-cell" data-id="{{ rate.id }}" data-field="position" data-type="salary">
                             <span class="cell-value" style="font-weight: 600;">{{ rate.position }}</span>
@@ -110,16 +127,14 @@
                         <td class="editable-cell" data-id="{{ rate.id }}" data-field="notes" data-type="salary">
                             <span class="cell-value">{{ rate.notes }}</span>
                         </td>
-                        <td>
-                            <button class="btn-delete-line" data-id="{{ rate.id }}" data-type="salary" style="background: none; border: none; color: #dc2626; cursor: pointer; padding: 0.2rem;">
-                                🗑️
-                            </button>
+                        <td style="text-align: center;">
+                            <button class="admin-btn admin-btn-secondary btn-delete-line" data-id="{{ rate.id }}" data-type="salary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">🗑️</button>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
                         <td colspan="10" style="text-align: center; padding: 3rem; color: var(--grey-2);">
-                            No data. Cliquez sur "+ Ajouter une ligne".
+                            Aucun tarif saisi. Cliquez sur "+ Ajouter une ligne".
                         </td>
                     </tr>
                     {% endfor %}
@@ -134,11 +149,9 @@
 <!-- ══════════════════════════════════════════════════════════ -->
 <div class="pricing-tab-content" id="panel-logistics">
     <div class="admin-card">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <h3 class="pricing-section-title" style="margin: 0;">FRAIS LOGISTIQUES</h3>
-            <button class="btn-add-line" data-type="logistics" style="padding: 0.4rem 0.8rem; font-size: 0.75rem; background: var(--admin-accent); border: none; font-weight: 600; cursor: pointer;">
-                + Ajouter une ligne
-            </button>
+        <div class="admin-card-header">
+            <h3 class="pricing-section-title" style="margin: 0;">Frais logistiques</h3>
+            <button class="admin-btn admin-btn-primary btn-add-line" data-type="logistics">+ Ajouter une ligne</button>
         </div>
         <div class="admin-table-container">
             <table class="admin-table">
@@ -147,7 +160,7 @@
                         <th>Désignation</th>
                         <th style="width: 140px; text-align: right;">Tarif €HT</th>
                         <th>Notes</th>
-                        <th style="width: 40px;"></th>
+                        <th style="width: 50px;"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -157,21 +170,19 @@
                             <span class="cell-value" style="font-weight: 600;">{{ item.item_name }}</span>
                         </td>
                         <td class="editable-cell" data-id="{{ item.id }}" data-field="daily_rate" data-type="logistics" style="text-align: right;">
-                            <span class="cell-value" style="font-weight: 600;">{{ item.daily_rate }}</span>
+                            <span class="cell-value">{{ item.daily_rate }}</span>
                         </td>
                         <td class="editable-cell" data-id="{{ item.id }}" data-field="notes" data-type="logistics">
                             <span class="cell-value">{{ item.notes }}</span>
                         </td>
-                        <td>
-                            <button class="btn-delete-line" data-id="{{ item.id }}" data-type="logistics" style="background: none; border: none; color: #dc2626; cursor: pointer; padding: 0.2rem;">
-                                🗑️
-                            </button>
+                        <td style="text-align: center;">
+                            <button class="admin-btn admin-btn-secondary btn-delete-line" data-id="{{ item.id }}" data-type="logistics" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">🗑️</button>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
                         <td colspan="4" style="text-align: center; padding: 3rem; color: var(--grey-2);">
-                            No data. Cliquez sur "+ Ajouter une ligne".
+                            Aucun élément logistique. Cliquez sur "+ Ajouter une ligne".
                         </td>
                     </tr>
                     {% endfor %}
@@ -182,11 +193,17 @@
 </div>
 
 <!-- ── Toast ─────────────────────────────────────────────────── -->
-<div class="pricing-toast" id="pricingToast"></div>
+<!-- (Utilise maintenant le système global admin.js via window.showFlash) -->
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = '{{ csrf_token() }}';
+
+    // ── Restore active tab on reload ───────────────────────────
+    const savedTab = localStorage.getItem('activePricingTab');
+    if (savedTab) {
+        document.querySelector(`[data-tab="${savedTab}"]`)?.click();
+    }
 
     // ── Tab Switching ──────────────────────────────────────────
     const tabs = document.querySelectorAll('.pricing-tab');
@@ -198,31 +215,19 @@ document.addEventListener('DOMContentLoaded', function () {
             panels.forEach(p => p.classList.remove('active'));
             tab.classList.add('active');
             document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+            localStorage.setItem('activePricingTab', tab.dataset.tab);
         });
     });
 
-    // ── Toast Helper ───────────────────────────────────────────
-    const toast = document.getElementById('pricingToast');
-    function showToast(msg, isError) {
-        toast.textContent = msg;
-        toast.className = 'pricing-toast show' + (isError ? ' error' : '');
-        clearTimeout(toast._timeout);
-        toast._timeout = setTimeout(() => {
-            toast.classList.remove('show');
-        }, 2000);
-    }
-
-    // ── Inline Editing ─────────────────────────────────────────
+    // ── Inline Editing (event delegation) ──────────────────────
     document.addEventListener('click', function(e) {
-        let cell = e.target.closest('.editable-cell');
+        const cell = e.target.closest('.editable-cell');
         if (!cell || cell.classList.contains('editing')) return;
 
         const valueSpan = cell.querySelector('.cell-value');
         const originalValue = valueSpan.textContent.trim();
-        const type = cell.dataset.type;
 
         cell.classList.add('editing');
-
         const input = document.createElement('input');
         input.type = 'text';
         input.className = 'cell-input';
@@ -237,11 +242,12 @@ document.addEventListener('DOMContentLoaded', function () {
             input.remove();
             valueSpan.style.display = '';
             cell.classList.remove('editing');
-
             if (newValue === originalValue) return;
-            valueSpan.textContent = newValue;
 
+            valueSpan.textContent = newValue;
+            const type = cell.dataset.type;
             let url, body;
+
             if (type === 'equipment') {
                 url = '/admin/api/pricing/equipment';
                 body = { table: cell.dataset.table, id: cell.dataset.id, value: newValue };
@@ -260,12 +266,16 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .then(r => r.json())
             .then(res => {
-                if (res.success) { showToast('✓ Sauvegardé', false); }
-                else { valueSpan.textContent = originalValue; showToast('✗ ' + (res.error || 'Erreur'), true); }
+                if (res.success) {
+                    if (window.showFlash) window.showFlash('Tarif sauvegardé', 'success');
+                } else {
+                    valueSpan.textContent = originalValue;
+                    if (window.showFlash) window.showFlash(res.error || 'Erreur lors de la sauvegarde', 'error');
+                }
             })
             .catch(() => {
                 valueSpan.textContent = originalValue;
-                showToast('✗ Erreur de connexion', true);
+                if (window.showFlash) window.showFlash('Erreur réseau', 'error');
             });
         };
 
@@ -276,7 +286,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // ── Add Line ───────────────────────────────────────────────
+    // ── Add Line ──────────────────────────────────────────────
     document.querySelectorAll('.btn-add-line').forEach(btn => {
         btn.addEventListener('click', function() {
             const type = this.dataset.type;
@@ -289,15 +299,21 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .then(r => r.json())
             .then(res => {
-                if (res.success) { window.location.reload(); }
-                else { showToast('✗ Erreur : ' + res.error, true); }
+                if (res.success) {
+                    location.reload();
+                } else {
+                    if (window.showFlash) window.showFlash(res.error || 'Erreur à l\'ajout', 'error');
+                }
+            })
+            .catch(() => {
+                if (window.showFlash) window.showFlash('Erreur réseau', 'error');
             });
         });
     });
 
-    // ── Delete Line ────────────────────────────────────────────
+    // ── Delete Line ───────────────────────────────────────────
     document.addEventListener('click', function(e) {
-        let btn = e.target.closest('.btn-delete-line');
+        const btn = e.target.closest('.btn-delete-line');
         if (!btn) return;
         if (!confirm('Supprimer cette ligne ?')) return;
 
@@ -308,8 +324,12 @@ document.addEventListener('DOMContentLoaded', function () {
         fetch(url, { method: 'DELETE', headers: { 'X-CSRFToken': csrfToken } })
         .then(r => r.json())
         .then(res => {
-            if (res.success) { btn.closest('tr').remove(); showToast('✓ Supprimé', false); }
-            else { showToast('✗ ' + (res.error || 'Erreur'), true); }
+            if (res.success) {
+                btn.closest('tr').remove();
+                if (window.showFlash) window.showFlash('Ligne supprimée', 'success');
+            } else {
+                if (window.showFlash) window.showFlash(res.error || 'Erreur à la suppression', 'error');
+            }
         });
     });
 });

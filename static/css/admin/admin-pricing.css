@@ -1,5 +1,14 @@
 /* ── Admin Pricing: Tabs, Editable Cells, Section Headers ───── */
 
+/* ── Card Header (title + action button) ─────────────────────── */
+
+.admin-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
 /* ── Tabs ─────────────────────────────────────────────────────── */
 
 .pricing-tabs {

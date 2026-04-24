@@ -613,8 +613,8 @@ class SalaryRate(db.Model):
     __tablename__ = "salary_rates"
 
     id = db.Column(db.Integer, primary_key=True)
-    group_name = db.Column(db.String(100), nullable=False, index=True)
-    position = db.Column(db.String(150), nullable=False)
+    group_name = db.Column(db.String(100), nullable=True, default='', index=True)
+    position = db.Column(db.String(150), nullable=True, default='')
     annexe = db.Column(db.String(255))
     base_hourly = db.Column(db.Numeric(10, 2))
     invoice_10h = db.Column(db.Numeric(10, 2))
@@ -651,8 +651,8 @@ class LogisticsRate(db.Model):
     __tablename__ = "logistics_rates"
 
     id = db.Column(db.Integer, primary_key=True)
-    item_name = db.Column(db.String(255), nullable=False)
-    daily_rate = db.Column(db.Numeric(10, 2), nullable=False, default=0)
+    item_name = db.Column(db.String(255), nullable=True, default='')
+    daily_rate = db.Column(db.Numeric(10, 2), nullable=True, default=0)
     notes = db.Column(db.Text)
     display_order = db.Column(db.Integer, nullable=False, default=0)
     updated_at = db.Column(

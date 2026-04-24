@@ -4,8 +4,11 @@ Reads daily_rate directly from vehicles, heads, grip_products tables.
 Handles salary_rates and logistics_rates CRUD operations.
 """
 
+import logging
+
 from models import GripProduct, Head, LogisticsRate, SalaryRate, Vehicle, db
 
+logger = logging.getLogger(__name__)
 
 # Champs éditables
 SALARY_EDITABLE_FIELDS = {
@@ -18,69 +21,98 @@ LOGISTICS_EDITABLE_FIELDS = {"item_name", "daily_rate", "notes"}
 
 # ── Helpers ──────────────────────────────────────────────────
 
+def _safe_float(val):
+    """Convertit en float de manière sécurisée."""
+    if val is None:
+        return 0
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return 0
+
+
 def _item_from_record(record):
-    """Convertit un record Airtable-synced en dict."""
+    """Convertit un record Airtable-synced en dict pour le template."""
     fields = record.fields or {}
+    rate = 0
+    try:
+        rate = _safe_float(record.daily_rate)
+    except AttributeError:
+        # La colonne daily_rate n'existe pas encore
+        pass
     return {
         "id": record.id,
         "name": fields.get("name") or fields.get("Label") or "Sans nom",
-        "daily_rate": float(record.daily_rate) if record.daily_rate else 0,
+        "daily_rate": rate,
         "order": fields.get("order", 999),
     }
 
 
-# ── Équipement ───────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════
+# ÉQUIPEMENT — lecture depuis vehicles, heads, grip_products
+# ══════════════════════════════════════════════════════════════
 
 def list_equipment_rates():
-    """Affiche TOUS les équipements, par ordre de tri Airtable."""
-    try:
-        vehicles = Vehicle.query.all()
-        heads = Head.query.all()
-        grips = GripProduct.query.all()
+    """Retourne les équipements groupés. Isolé des erreurs SQL."""
+    result = {
+        "vehicles": {"label": "Tracking Vehicles", "table": "vehicles", "items": []},
+        "heads": {"label": "Remote Heads", "table": "heads", "items": []},
+        "grip_products": {"label": "Grip & Accessoires", "table": "grip_products", "items": []},
+    }
 
-        def to_sorted_list(records):
+    # Chaque table est chargée indépendamment pour éviter qu'un crash
+    # sur une table ne bloque les autres
+    for key, model in [("vehicles", Vehicle), ("heads", Head), ("grip_products", GripProduct)]:
+        try:
+            records = model.query.all()
             items = [_item_from_record(r) for r in records]
             items.sort(key=lambda x: x["order"])
-            return items
+            result[key]["items"] = items
+        except Exception as e:
+            logger.error(f"Erreur chargement {key} pour tarification: {e}")
+            # On laisse items=[] pour cette catégorie
 
-        return {
-            "vehicles": {"label": "Tracking Vehicles", "table": "vehicles", "items": to_sorted_list(vehicles)},
-            "heads": {"label": "Remote Heads", "table": "heads", "items": to_sorted_list(heads)},
-            "grip_products": {"label": "Grip & Accessoires", "table": "grip_products", "items": to_sorted_list(grips)},
-        }
-    except Exception as e:
-        print(f"DEBUG: Error in list_equipment_rates: {e}")
-        return {}
+    return result
 
 
 def update_equipment_daily_rate(table_name, record_id, value):
-    _TABLE_MODELS = {"vehicles": Vehicle, "heads": Head, "grip_products": GripProduct}
-    model = _TABLE_MODELS.get(table_name)
+    """Met à jour le daily_rate d'un item dans sa table source."""
+    table_map = {"vehicles": Vehicle, "heads": Head, "grip_products": GripProduct}
+    model = table_map.get(table_name)
+    if not model:
+        raise ValueError(f"Table inconnue : {table_name}")
+
     record = model.query.get(record_id)
-    if record:
-        try:
-            record.daily_rate = float(value) if value not in (None, "") else None
-            db.session.commit()
-            return _item_from_record(record)
-        except: pass
-    return None
+    if not record:
+        raise ValueError(f"Enregistrement {record_id} introuvable dans {table_name}")
+
+    record.daily_rate = _safe_float(value) if value not in (None, "", "0") else float(value) if value == "0" else None
+    db.session.commit()
+    return _item_from_record(record)
 
 
-# ── Salaires ─────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════
+# SALAIRES
+# ══════════════════════════════════════════════════════════════
 
 def list_salary_rates():
-    """Affiche tous les salaires dans un seul tableau simple."""
-    rates = SalaryRate.query.order_by(SalaryRate.display_order, SalaryRate.id).all()
-    return [r.to_dict() for r in rates]
+    """Retourne tous les salaires triés."""
+    try:
+        rates = SalaryRate.query.order_by(SalaryRate.display_order, SalaryRate.id).all()
+        return [r.to_dict() for r in rates]
+    except Exception as e:
+        logger.error(f"Erreur chargement salary_rates: {e}")
+        return []
 
 
 def add_salary_rate():
-    """Ajoute une ligne de salaire vide."""
+    """Ajoute une nouvelle ligne de salaire."""
     max_order = db.session.query(db.func.max(SalaryRate.display_order)).scalar() or 0
     new_rate = SalaryRate(
-        group_name="PILOTE",
-        position="Nouvelle position",
-        display_order=max_order + 1
+        group_name="",
+        position="",
+        annexe="",
+        display_order=max_order + 1,
     )
     db.session.add(new_rate)
     db.session.commit()
@@ -88,23 +120,27 @@ def add_salary_rate():
 
 
 def delete_salary_rate(rate_id):
+    """Supprime une ligne de salaire."""
     rate = SalaryRate.query.get(rate_id)
-    if rate:
-        db.session.delete(rate)
-        db.session.commit()
-        return True
-    return False
+    if not rate:
+        raise ValueError(f"Salaire #{rate_id} introuvable")
+    db.session.delete(rate)
+    db.session.commit()
+    return True
 
 
 def update_salary_rate(rate_id, field, value):
-    if field not in SALARY_EDITABLE_FIELDS: return None
+    """Met à jour un champ spécifique d'un SalaryRate."""
+    if field not in SALARY_EDITABLE_FIELDS:
+        raise ValueError(f"Champ non autorisé : {field}")
+
     rate = SalaryRate.query.get(rate_id)
-    if not rate: return None
+    if not rate:
+        raise ValueError(f"Salaire #{rate_id} introuvable")
 
     numeric_fields = {"base_hourly", "invoice_10h", "invoice_8h", "inter_10h", "inter_8h"}
     if field in numeric_fields:
-        try: value = float(value) if value not in (None, "") else None
-        except: value = None
+        value = _safe_float(value) if value not in (None, "") else None
     else:
         value = str(value).strip() if value else ""
 
@@ -113,19 +149,27 @@ def update_salary_rate(rate_id, field, value):
     return rate.to_dict()
 
 
-# ── Logistique ───────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════
+# LOGISTIQUE
+# ══════════════════════════════════════════════════════════════
 
 def list_logistics_rates():
-    rates = LogisticsRate.query.order_by(LogisticsRate.display_order, LogisticsRate.id).all()
-    return [r.to_dict() for r in rates]
+    """Retourne tous les tarifs logistiques triés."""
+    try:
+        rates = LogisticsRate.query.order_by(LogisticsRate.display_order, LogisticsRate.id).all()
+        return [r.to_dict() for r in rates]
+    except Exception as e:
+        logger.error(f"Erreur chargement logistics_rates: {e}")
+        return []
 
 
 def add_logistics_rate():
+    """Ajoute une nouvelle ligne logistique."""
     max_order = db.session.query(db.func.max(LogisticsRate.display_order)).scalar() or 0
     new_rate = LogisticsRate(
-        item_name="Nouvel élément logistique",
+        item_name="",
         daily_rate=0,
-        display_order=max_order + 1
+        display_order=max_order + 1,
     )
     db.session.add(new_rate)
     db.session.commit()
@@ -133,22 +177,26 @@ def add_logistics_rate():
 
 
 def delete_logistics_rate(rate_id):
+    """Supprime une ligne logistique."""
     rate = LogisticsRate.query.get(rate_id)
-    if rate:
-        db.session.delete(rate)
-        db.session.commit()
-        return True
-    return False
+    if not rate:
+        raise ValueError(f"Logistique #{rate_id} introuvable")
+    db.session.delete(rate)
+    db.session.commit()
+    return True
 
 
 def update_logistics_rate(rate_id, field, value):
-    if field not in LOGISTICS_EDITABLE_FIELDS: return None
+    """Met à jour un champ spécifique d'un LogisticsRate."""
+    if field not in LOGISTICS_EDITABLE_FIELDS:
+        raise ValueError(f"Champ non autorisé : {field}")
+
     rate = LogisticsRate.query.get(rate_id)
-    if not rate: return None
+    if not rate:
+        raise ValueError(f"Logistique #{rate_id} introuvable")
 
     if field == "daily_rate":
-        try: value = float(value) if value not in (None, "") else 0
-        except: value = 0
+        value = _safe_float(value)
     else:
         value = str(value).strip() if value else ""
 

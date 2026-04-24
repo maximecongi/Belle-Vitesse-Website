@@ -17,54 +17,59 @@ from utils.decorators import require_roles
 
 def init_pricing_routes(app):
 
+    # ── Page principale ──────────────────────────────────────────
+
     @app.route("/admin/pricing")
     @require_roles('administrator')
     def admin_pricing():
+        """Page tarification avec 3 onglets indépendants."""
+        errors = []
+
+        # Chaque section est chargée indépendamment
         try:
             equipment = list_equipment_rates()
-            salaries = list_salary_rates()
-            logistics = list_logistics_rates()
-            
-            # Si le SQL n'est pas passé, list_equipment_rates peut retourner {}
-            # On s'assure d'avoir au moins les clés pour le template
-            if not equipment:
-                equipment = {
-                    "vehicles": {"label": "Tracking Vehicles", "items": []},
-                    "heads": {"label": "Remote Heads", "items": []},
-                    "grip_products": {"label": "Grip & Accessoires", "items": []},
-                }
-
-            return render_template(
-                "admin/pricing.html",
-                equipment=equipment,
-                salaries=salaries,
-                logistics=logistics,
-            )
         except Exception as e:
-            current_app.logger.error(f"❌ Erreur critique tarification : {e}")
-            return render_template(
-                "admin/pricing.html",
-                equipment={},
-                salaries=[],
-                logistics=[],
-                error=str(e)
-            )
+            current_app.logger.error(f"❌ Équipement: {e}")
+            equipment = {}
+            errors.append(f"Équipement: {e}")
 
-    # ── API PATCH : tarif équipement (daily_rate) ─────────────
+        try:
+            salaries = list_salary_rates()
+        except Exception as e:
+            current_app.logger.error(f"❌ Salaires: {e}")
+            salaries = []
+            errors.append(f"Salaires: {e}")
+
+        try:
+            logistics = list_logistics_rates()
+        except Exception as e:
+            current_app.logger.error(f"❌ Logistique: {e}")
+            logistics = []
+            errors.append(f"Logistique: {e}")
+
+        return render_template(
+            "admin/pricing.html",
+            equipment=equipment,
+            salaries=salaries,
+            logistics=logistics,
+            errors=errors,
+        )
+
+    # ── API Équipement ───────────────────────────────────────────
 
     @app.route("/admin/api/pricing/equipment", methods=["PATCH"])
     @require_roles('administrator')
     def admin_api_pricing_equipment():
         try:
             data = request.get_json(force=True)
-            updated = update_equipment_daily_rate(data.get("table"), data.get("id"), data.get("value"))
-            if not updated:
-                return jsonify({"success": False, "error": "Mise à jour impossible (SQL ?)"}), 400
+            updated = update_equipment_daily_rate(
+                data.get("table"), data.get("id"), data.get("value"))
             return jsonify({"success": True, "data": updated})
         except Exception as e:
+            current_app.logger.error(f"❌ PATCH equipment: {e}")
             return jsonify({"success": False, "error": str(e)}), 400
 
-    # ── Salaires ─────────────────────────────────────────────────
+    # ── API Salaires ─────────────────────────────────────────────
 
     @app.route("/admin/api/pricing/salary", methods=["POST"])
     @require_roles('administrator')
@@ -73,6 +78,7 @@ def init_pricing_routes(app):
             new_item = add_salary_rate()
             return jsonify({"success": True, "data": new_item})
         except Exception as e:
+            current_app.logger.error(f"❌ POST salary: {e}")
             return jsonify({"success": False, "error": str(e)}), 400
 
     @app.route("/admin/api/pricing/salary", methods=["PATCH"])
@@ -80,21 +86,24 @@ def init_pricing_routes(app):
     def admin_api_pricing_salary_update():
         try:
             data = request.get_json(force=True)
-            updated = update_salary_rate(data.get("id"), data.get("field"), data.get("value"))
+            updated = update_salary_rate(
+                data.get("id"), data.get("field"), data.get("value"))
             return jsonify({"success": True, "data": updated})
         except Exception as e:
+            current_app.logger.error(f"❌ PATCH salary: {e}")
             return jsonify({"success": False, "error": str(e)}), 400
 
     @app.route("/admin/api/pricing/salary/<int:rate_id>", methods=["DELETE"])
     @require_roles('administrator')
     def admin_api_pricing_salary_delete(rate_id):
         try:
-            success = delete_salary_rate(rate_id)
-            return jsonify({"success": success})
+            delete_salary_rate(rate_id)
+            return jsonify({"success": True})
         except Exception as e:
+            current_app.logger.error(f"❌ DELETE salary: {e}")
             return jsonify({"success": False, "error": str(e)}), 400
 
-    # ── Logistique ───────────────────────────────────────────────
+    # ── API Logistique ───────────────────────────────────────────
 
     @app.route("/admin/api/pricing/logistics", methods=["POST"])
     @require_roles('administrator')
@@ -103,6 +112,7 @@ def init_pricing_routes(app):
             new_item = add_logistics_rate()
             return jsonify({"success": True, "data": new_item})
         except Exception as e:
+            current_app.logger.error(f"❌ POST logistics: {e}")
             return jsonify({"success": False, "error": str(e)}), 400
 
     @app.route("/admin/api/pricing/logistics", methods=["PATCH"])
@@ -110,16 +120,19 @@ def init_pricing_routes(app):
     def admin_api_pricing_logistics_update():
         try:
             data = request.get_json(force=True)
-            updated = update_logistics_rate(data.get("id"), data.get("field"), data.get("value"))
+            updated = update_logistics_rate(
+                data.get("id"), data.get("field"), data.get("value"))
             return jsonify({"success": True, "data": updated})
         except Exception as e:
+            current_app.logger.error(f"❌ PATCH logistics: {e}")
             return jsonify({"success": False, "error": str(e)}), 400
 
     @app.route("/admin/api/pricing/logistics/<int:rate_id>", methods=["DELETE"])
     @require_roles('administrator')
     def admin_api_pricing_logistics_delete(rate_id):
         try:
-            success = delete_logistics_rate(rate_id)
-            return jsonify({"success": success})
+            delete_logistics_rate(rate_id)
+            return jsonify({"success": True})
         except Exception as e:
+            current_app.logger.error(f"❌ DELETE logistics: {e}")
             return jsonify({"success": False, "error": str(e)}), 400
