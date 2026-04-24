@@ -646,6 +646,29 @@ class SalaryRate(db.Model):
         return f"<SalaryRate {self.position} ({self.group_name})>"
 
 
+class LogisticsRate(db.Model):
+    """Tarifs logistiques (souvent ajoutés manuellement)."""
+    __tablename__ = "logistics_rates"
+
+    id = db.Column(db.Integer, primary_key=True)
+    item_name = db.Column(db.String(255), nullable=False)
+    daily_rate = db.Column(db.Numeric(10, 2), nullable=False, default=0)
+    notes = db.Column(db.Text)
+    display_order = db.Column(db.Integer, nullable=False, default=0)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "item_name": self.item_name,
+            "daily_rate": float(self.daily_rate) if self.daily_rate else 0,
+            "notes": self.notes or "",
+            "display_order": self.display_order,
+        }
+
+
+
 class CalendarSubscription(db.Model):
     """Abonnement calendrier ICS sécurisé par token unique."""
     __tablename__ = "calendar_subscriptions"

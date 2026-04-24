@@ -1,12 +1,12 @@
 """
 Service layer for the Pricing admin page.
 Reads daily_rate directly from vehicles, heads, grip_products tables.
-Handles salary_rates CRUD operations.
+Handles salary_rates and logistics_rates CRUD operations.
 """
 
 from collections import OrderedDict
 
-from models import GripProduct, Head, SalaryRate, Vehicle, db
+from models import GripProduct, Head, LogisticsRate, SalaryRate, Vehicle, db
 
 
 # ── Ordre d'affichage des groupes salaires ───────────────────
@@ -21,6 +21,8 @@ SALARY_EDITABLE_FIELDS = {
     "position", "annexe", "base_hourly",
     "invoice_10h", "invoice_8h", "inter_10h", "inter_8h", "notes",
 }
+
+LOGISTICS_EDITABLE_FIELDS = {"item_name", "daily_rate", "notes"}
 
 
 # ── Helpers ──────────────────────────────────────────────────
@@ -71,7 +73,6 @@ def list_equipment_rates():
     ])
 
 
-# Map table name → model class
 _TABLE_MODELS = {
     "vehicles": Vehicle,
     "heads": Head,
@@ -118,6 +119,34 @@ def list_salary_rates():
     return grouped
 
 
+def add_salary_rate(group_name):
+    """Ajoute une nouvelle ligne vide dans un groupe de salaires."""
+    if group_name not in SALARY_GROUPS_ORDER:
+        group_name = SALARY_GROUPS_ORDER[0]
+
+    # Trouver l'ordre max
+    max_order = db.session.query(db.func.max(SalaryRate.display_order)).filter_by(group_name=group_name).scalar() or 0
+
+    new_rate = SalaryRate(
+        group_name=group_name,
+        position="Nouvelle position",
+        display_order=max_order + 1
+    )
+    db.session.add(new_rate)
+    db.session.commit()
+    return new_rate.to_dict()
+
+
+def delete_salary_rate(rate_id):
+    """Supprime une ligne de salaire."""
+    rate = SalaryRate.query.get(rate_id)
+    if rate:
+        db.session.delete(rate)
+        db.session.commit()
+        return True
+    return False
+
+
 def update_salary_rate(rate_id, field, value):
     """Met à jour un champ spécifique d'un SalaryRate."""
     if field not in SALARY_EDITABLE_FIELDS:
@@ -127,14 +156,71 @@ def update_salary_rate(rate_id, field, value):
     if not rate:
         raise ValueError(f"Tarif salaire #{rate_id} introuvable")
 
-    # Coercition de type
     numeric_fields = {"base_hourly", "invoice_10h", "invoice_8h", "inter_10h", "inter_8h"}
     if field in numeric_fields:
-        value = float(value) if value not in (None, "") else None
+        try:
+            value = float(value) if value not in (None, "") else None
+        except ValueError:
+            value = None
     elif field == "position":
         value = str(value).strip()
         if not value:
             raise ValueError("La position ne peut pas être vide")
+    else:
+        value = str(value).strip() if value else ""
+
+    setattr(rate, field, value)
+    db.session.commit()
+    return rate.to_dict()
+
+
+# ── Logistique ───────────────────────────────────────────────
+
+def list_logistics_rates():
+    """Retourne tous les tarifs logistiques."""
+    rates = (LogisticsRate.query
+             .order_by(LogisticsRate.display_order)
+             .all())
+    return [r.to_dict() for r in rates]
+
+
+def add_logistics_rate():
+    """Ajoute une nouvelle ligne logistique vide."""
+    max_order = db.session.query(db.func.max(LogisticsRate.display_order)).scalar() or 0
+    new_rate = LogisticsRate(
+        item_name="Nouvel élément logistique",
+        daily_rate=0,
+        display_order=max_order + 1
+    )
+    db.session.add(new_rate)
+    db.session.commit()
+    return new_rate.to_dict()
+
+
+def delete_logistics_rate(rate_id):
+    """Supprime une ligne logistique."""
+    rate = LogisticsRate.query.get(rate_id)
+    if rate:
+        db.session.delete(rate)
+        db.session.commit()
+        return True
+    return False
+
+
+def update_logistics_rate(rate_id, field, value):
+    """Met à jour un champ spécifique d'un LogisticsRate."""
+    if field not in LOGISTICS_EDITABLE_FIELDS:
+        raise ValueError(f"Champ non autorisé : {field}")
+
+    rate = LogisticsRate.query.get(rate_id)
+    if not rate:
+        raise ValueError(f"Tarif logistique #{rate_id} introuvable")
+
+    if field == "daily_rate":
+        try:
+            value = float(value) if value not in (None, "") else 0
+        except ValueError:
+            value = 0
     else:
         value = str(value).strip() if value else ""
 
