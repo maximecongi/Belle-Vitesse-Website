@@ -35,9 +35,11 @@ def init_pricing_routes(app):
 
         try:
             salaries = list_salary_rates()
+            salary_groups = list_salary_groups() # <-- On récupère les groupes
         except Exception as e:
             current_app.logger.error(f"❌ Salaires: {e}")
             salaries = []
+            salary_groups = []
             errors.append(f"Salaires: {e}")
 
         try:
@@ -52,6 +54,7 @@ def init_pricing_routes(app):
             equipment=equipment,
             salaries=salaries,
             logistics=logistics,
+            salary_groups=salary_groups, # <-- On passe les groupes
             errors=errors,
         )
 

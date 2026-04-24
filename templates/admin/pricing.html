@@ -16,6 +16,13 @@
 </div>
 {% endif %}
 
+<!-- ── Data Lists ────────────────────────────────────────────── -->
+<datalist id="salaryGroups">
+    {% for g in salary_groups %}
+    <option value="{{ g }}">
+    {% endfor %}
+</datalist>
+
 <!-- ── Tabs ──────────────────────────────────────────────────── -->
 <div class="pricing-tabs">
     <button class="pricing-tab active" data-tab="equipment" id="tab-equipment">Équipement</button>
@@ -62,14 +69,6 @@
         </div>
     </div>
     {% endfor %}
-
-    {% if not equipment %}
-    <div class="admin-card">
-        <div style="text-align: center; padding: 3rem; color: var(--grey-2);">
-            Aucune donnée d'équipement. Vérifiez la connexion à la base de données.
-        </div>
-    </div>
-    {% endif %}
 </div>
 
 <!-- ══════════════════════════════════════════════════════════ -->
@@ -97,7 +96,7 @@
                         <th style="width: 50px;"></th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="salary-tbody">
                     {% for rate in salaries %}
                     <tr data-row-id="{{ rate.id }}">
                         <td class="editable-cell" data-id="{{ rate.id }}" data-field="group_name" data-type="salary">
@@ -131,12 +130,6 @@
                             <button class="admin-btn admin-btn-secondary btn-delete-line" data-id="{{ rate.id }}" data-type="salary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">🗑️</button>
                         </td>
                     </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="10" style="text-align: center; padding: 3rem; color: var(--grey-2);">
-                            Aucun tarif saisi. Cliquez sur "+ Ajouter une ligne".
-                        </td>
-                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -163,7 +156,7 @@
                         <th style="width: 50px;"></th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="logistics-tbody">
                     {% for item in logistics %}
                     <tr data-row-id="{{ item.id }}">
                         <td class="editable-cell" data-id="{{ item.id }}" data-field="item_name" data-type="logistics">
@@ -179,21 +172,12 @@
                             <button class="admin-btn admin-btn-secondary btn-delete-line" data-id="{{ item.id }}" data-type="logistics" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">🗑️</button>
                         </td>
                     </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="4" style="text-align: center; padding: 3rem; color: var(--grey-2);">
-                            Aucun élément logistique. Cliquez sur "+ Ajouter une ligne".
-                        </td>
-                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 </div>
-
-<!-- ── Toast ─────────────────────────────────────────────────── -->
-<!-- (Utilise maintenant le système global admin.js via window.showFlash) -->
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -219,7 +203,12 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // ── Inline Editing (event delegation) ──────────────────────
+    // ── Flash System ───────────────────────────────────────────
+    function flash(msg, category) {
+        if (window.showFlash) window.showFlash(msg, category);
+    }
+
+    // ── Inline Editing ─────────────────────────────────────────
     document.addEventListener('click', function(e) {
         const cell = e.target.closest('.editable-cell');
         if (!cell || cell.classList.contains('editing')) return;
@@ -232,6 +221,12 @@ document.addEventListener('DOMContentLoaded', function () {
         input.type = 'text';
         input.className = 'cell-input';
         input.value = originalValue;
+
+        // Dropdown evolutif pour les groupes de salaires
+        if (cell.dataset.field === 'group_name' && cell.dataset.type === 'salary') {
+            input.setAttribute('list', 'salaryGroups');
+        }
+
         valueSpan.style.display = 'none';
         cell.appendChild(input);
         input.focus();
@@ -267,15 +262,17 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(r => r.json())
             .then(res => {
                 if (res.success) {
-                    if (window.showFlash) window.showFlash('Tarif sauvegardé', 'success');
+                    flash('✓ Sauvegardé', 'success');
+                    // Si on a ajouté un nouveau groupe, on recharge pas la page mais on pourrait
+                    // idéalement mettre à jour le datalist localement ici.
                 } else {
                     valueSpan.textContent = originalValue;
-                    if (window.showFlash) window.showFlash(res.error || 'Erreur lors de la sauvegarde', 'error');
+                    flash('✗ ' + (res.error || 'Erreur'), 'error');
                 }
             })
             .catch(() => {
                 valueSpan.textContent = originalValue;
-                if (window.showFlash) window.showFlash('Erreur réseau', 'error');
+                flash('✗ Erreur réseau', 'error');
             });
         };
 
@@ -286,7 +283,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // ── Add Line ──────────────────────────────────────────────
+    // ── Add Line Dynamically ────────────────────────────────────
     document.querySelectorAll('.btn-add-line').forEach(btn => {
         btn.addEventListener('click', function() {
             const type = this.dataset.type;
@@ -300,16 +297,61 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(r => r.json())
             .then(res => {
                 if (res.success) {
-                    location.reload();
+                    flash('Ligne ajoutée', 'success');
+                    injectNewRow(type, res.data);
                 } else {
-                    if (window.showFlash) window.showFlash(res.error || 'Erreur à l\'ajout', 'error');
+                    flash('✗ ' + (res.error || 'Erreur'), 'error');
                 }
             })
-            .catch(() => {
-                if (window.showFlash) window.showFlash('Erreur réseau', 'error');
-            });
+            .catch(() => flash('✗ Erreur réseau', 'error'));
         });
     });
+
+    function injectNewRow(type, data) {
+        const tbody = document.getElementById(type + '-tbody');
+        if (!tbody) return;
+
+        let html = '';
+        if (type === 'salary') {
+            html = `
+                <tr data-row-id="${data.id}">
+                    <td class="editable-cell" data-id="${data.id}" data-field="group_name" data-type="salary"><span class="cell-value">${data.group_name || ''}</span></td>
+                    <td class="editable-cell" data-id="${data.id}" data-field="position" data-type="salary"><span class="cell-value" style="font-weight: 600;">${data.position || ''}</span></td>
+                    <td class="editable-cell" data-id="${data.id}" data-field="annexe" data-type="salary"><span class="cell-value">${data.annexe || ''}</span></td>
+                    <td class="editable-cell" data-id="${data.id}" data-field="base_hourly" data-type="salary" style="text-align: right;"><span class="cell-value">${data.base_hourly || ''}</span></td>
+                    <td class="editable-cell" data-id="${data.id}" data-field="invoice_10h" data-type="salary" style="text-align: right;"><span class="cell-value">${data.invoice_10h || ''}</span></td>
+                    <td class="editable-cell" data-id="${data.id}" data-field="invoice_8h" data-type="salary" style="text-align: right;"><span class="cell-value">${data.invoice_8h || ''}</span></td>
+                    <td class="editable-cell" data-id="${data.id}" data-field="inter_10h" data-type="salary" style="text-align: right;"><span class="cell-value">${data.inter_10h || ''}</span></td>
+                    <td class="editable-cell" data-id="${data.id}" data-field="inter_8h" data-type="salary" style="text-align: right;"><span class="cell-value">${data.inter_8h || ''}</span></td>
+                    <td class="editable-cell" data-id="${data.id}" data-field="notes" data-type="salary"><span class="cell-value">${data.notes || ''}</span></td>
+                    <td style="text-align: center;">
+                        <button class="admin-btn admin-btn-secondary btn-delete-line" data-id="${data.id}" data-type="salary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">🗑️</button>
+                    </td>
+                </tr>`;
+        } else {
+            html = `
+                <tr data-row-id="${data.id}">
+                    <td class="editable-cell" data-id="${data.id}" data-field="item_name" data-type="logistics"><span class="cell-value" style="font-weight: 600;">${data.item_name || ''}</span></td>
+                    <td class="editable-cell" data-id="${data.id}" data-field="daily_rate" data-type="logistics" style="text-align: right;"><span class="cell-value">${data.daily_rate || ''}</span></td>
+                    <td class="editable-cell" data-id="${data.id}" data-field="notes" data-type="logistics"><span class="cell-value">${data.notes || ''}</span></td>
+                    <td style="text-align: center;">
+                        <button class="admin-btn admin-btn-secondary btn-delete-line" data-id="${data.id}" data-type="logistics" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">🗑️</button>
+                    </td>
+                </tr>`;
+        }
+
+        // Si le tableau était vide (message "aucun élément"), on vide le tbody
+        if (tbody.querySelector('td[colspan]')) {
+            tbody.innerHTML = '';
+        }
+
+        tbody.insertAdjacentHTML('beforeend', html);
+
+        // Optionnel : On focus directement la première cellule de la nouvelle ligne
+        const newRow = tbody.lastElementChild;
+        const firstCell = newRow.querySelector('.editable-cell');
+        if (firstCell) firstCell.click();
+    }
 
     // ── Delete Line ───────────────────────────────────────────
     document.addEventListener('click', function(e) {
@@ -326,9 +368,9 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(res => {
             if (res.success) {
                 btn.closest('tr').remove();
-                if (window.showFlash) window.showFlash('Ligne supprimée', 'success');
+                flash('✓ Supprimé', 'success');
             } else {
-                if (window.showFlash) window.showFlash(res.error || 'Erreur à la suppression', 'error');
+                flash('✗ ' + (res.error || 'Erreur'), 'error');
             }
         });
     });

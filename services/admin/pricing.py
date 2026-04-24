@@ -105,6 +105,12 @@ def list_salary_rates():
         return []
 
 
+def list_salary_groups():
+    """Retourne la liste des groupes uniques existants pour l'autocomplétion."""
+    groups = db.session.query(SalaryRate.group_name).distinct().all()
+    return sorted([g[0] for g in groups if g[0]])
+
+
 def add_salary_rate():
     """Ajoute une nouvelle ligne de salaire."""
     max_order = db.session.query(db.func.max(SalaryRate.display_order)).scalar() or 0
