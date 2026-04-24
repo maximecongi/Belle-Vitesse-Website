@@ -30,19 +30,19 @@
                 <tbody>
                     {% for item in cat_data.items %}
                     <tr>
-                        <td style="font-weight: 600;">{{ item.name }}</td>
+                        <td style="font-weight: 500;">{{ item.name }}</td>
                         <td class="editable-cell"
                             data-id="{{ item.id }}"
                             data-table="{{ cat_data.table }}"
                             data-type="equipment"
                             style="text-align: right;">
-                            <span class="cell-value">{{ item.daily_rate }}</span>
+                            <span class="cell-value" style="font-weight: 600;">{{ item.daily_rate }}</span>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
                         <td colspan="2" style="text-align: center; padding: 2rem; color: var(--grey-2);">
-                            Aucun élément dans cette catégorie.
+                            Chargement... ou aucun élément trouvé.
                         </td>
                     </tr>
                     {% endfor %}
@@ -57,18 +57,18 @@
 <!-- TAB : Salaires                                            -->
 <!-- ══════════════════════════════════════════════════════════ -->
 <div class="pricing-tab-content" id="panel-salaries">
-    {% for group_name, rates in salaries.items() %}
     <div class="admin-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <h3 class="pricing-section-title" style="margin: 0;">{{ group_name }}</h3>
-            <button class="btn-add-line" data-type="salary" data-group="{{ group_name }}" style="padding: 0.4rem 0.8rem; font-size: 0.75rem; background: var(--admin-accent); border: none; font-weight: 600; cursor: pointer;">
+            <h3 class="pricing-section-title" style="margin: 0;">GRILLE DES SALAIRES</h3>
+            <button class="btn-add-line" data-type="salary" style="padding: 0.4rem 0.8rem; font-size: 0.75rem; background: var(--admin-accent); border: none; font-weight: 600; cursor: pointer;">
                 + Ajouter une ligne
             </button>
         </div>
         <div class="admin-table-container">
-            <table class="admin-table" id="table-salary-{{ loop.index }}">
+            <table class="admin-table">
                 <thead>
                     <tr>
+                        <th style="width: 120px;">Groupe</th>
                         <th>Position</th>
                         <th>Annexe</th>
                         <th style="width: 90px; text-align: right;">Base/H</th>
@@ -81,10 +81,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for rate in rates %}
+                    {% for rate in salaries %}
                     <tr data-row-id="{{ rate.id }}">
+                        <td class="editable-cell" data-id="{{ rate.id }}" data-field="group_name" data-type="salary">
+                            <span class="cell-value" style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase;">{{ rate.group_name }}</span>
+                        </td>
                         <td class="editable-cell" data-id="{{ rate.id }}" data-field="position" data-type="salary">
-                            <span class="cell-value">{{ rate.position }}</span>
+                            <span class="cell-value" style="font-weight: 600;">{{ rate.position }}</span>
                         </td>
                         <td class="editable-cell" data-id="{{ rate.id }}" data-field="annexe" data-type="salary">
                             <span class="cell-value">{{ rate.annexe }}</span>
@@ -113,12 +116,17 @@
                             </button>
                         </td>
                     </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="10" style="text-align: center; padding: 3rem; color: var(--grey-2);">
+                            No data. Cliquez sur "+ Ajouter une ligne".
+                        </td>
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
-    {% endfor %}
 </div>
 
 <!-- ══════════════════════════════════════════════════════════ -->
@@ -127,13 +135,13 @@
 <div class="pricing-tab-content" id="panel-logistics">
     <div class="admin-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <h3 class="pricing-section-title" style="margin: 0;">Frais Logistiques</h3>
+            <h3 class="pricing-section-title" style="margin: 0;">FRAIS LOGISTIQUES</h3>
             <button class="btn-add-line" data-type="logistics" style="padding: 0.4rem 0.8rem; font-size: 0.75rem; background: var(--admin-accent); border: none; font-weight: 600; cursor: pointer;">
                 + Ajouter une ligne
             </button>
         </div>
         <div class="admin-table-container">
-            <table class="admin-table" id="table-logistics">
+            <table class="admin-table">
                 <thead>
                     <tr>
                         <th>Désignation</th>
@@ -149,7 +157,7 @@
                             <span class="cell-value" style="font-weight: 600;">{{ item.item_name }}</span>
                         </td>
                         <td class="editable-cell" data-id="{{ item.id }}" data-field="daily_rate" data-type="logistics" style="text-align: right;">
-                            <span class="cell-value">{{ item.daily_rate }}</span>
+                            <span class="cell-value" style="font-weight: 600;">{{ item.daily_rate }}</span>
                         </td>
                         <td class="editable-cell" data-id="{{ item.id }}" data-field="notes" data-type="logistics">
                             <span class="cell-value">{{ item.notes }}</span>
@@ -158,6 +166,12 @@
                             <button class="btn-delete-line" data-id="{{ item.id }}" data-type="logistics" style="background: none; border: none; color: #dc2626; cursor: pointer; padding: 0.2rem;">
                                 🗑️
                             </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 3rem; color: var(--grey-2);">
+                            No data. Cliquez sur "+ Ajouter une ligne".
                         </td>
                     </tr>
                     {% endfor %}
@@ -198,7 +212,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 2000);
     }
 
-    // ── Event Delegation for Editable Cells ────────────────────
+    // ── Inline Editing ─────────────────────────────────────────
     document.addEventListener('click', function(e) {
         let cell = e.target.closest('.editable-cell');
         if (!cell || cell.classList.contains('editing')) return;
@@ -228,46 +242,26 @@ document.addEventListener('DOMContentLoaded', function () {
             valueSpan.textContent = newValue;
 
             let url, body;
-
             if (type === 'equipment') {
                 url = '/admin/api/pricing/equipment';
-                body = {
-                    table: cell.dataset.table,
-                    id: cell.dataset.id,
-                    value: newValue,
-                };
+                body = { table: cell.dataset.table, id: cell.dataset.id, value: newValue };
             } else if (type === 'salary') {
                 url = '/admin/api/pricing/salary';
-                body = {
-                    id: parseInt(cell.dataset.id),
-                    field: cell.dataset.field,
-                    value: newValue,
-                };
+                body = { id: parseInt(cell.dataset.id), field: cell.dataset.field, value: newValue };
             } else {
                 url = '/admin/api/pricing/logistics';
-                body = {
-                    id: parseInt(cell.dataset.id),
-                    field: cell.dataset.field,
-                    value: newValue,
-                };
+                body = { id: parseInt(cell.dataset.id), field: cell.dataset.field, value: newValue };
             }
 
             fetch(url, {
                 method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken,
-                },
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
                 body: JSON.stringify(body),
             })
             .then(r => r.json())
             .then(res => {
-                if (res.success) {
-                    showToast('✓ Enregistré', false);
-                } else {
-                    valueSpan.textContent = originalValue;
-                    showToast('✗ ' + (res.error || 'Erreur'), true);
-                }
+                if (res.success) { showToast('✓ Sauvegardé', false); }
+                else { valueSpan.textContent = originalValue; showToast('✗ ' + (res.error || 'Erreur'), true); }
             })
             .catch(() => {
                 valueSpan.textContent = originalValue;
@@ -278,11 +272,7 @@ document.addEventListener('DOMContentLoaded', function () {
         input.addEventListener('blur', save);
         input.addEventListener('keydown', e => {
             if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
-            if (e.key === 'Escape') {
-                input.value = originalValue;
-                input.focus(); // avoid immediate blur
-                input.blur();
-            }
+            if (e.key === 'Escape') { input.value = originalValue; input.blur(); }
         });
     });
 
@@ -290,24 +280,17 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.btn-add-line').forEach(btn => {
         btn.addEventListener('click', function() {
             const type = this.dataset.type;
-            const group = this.dataset.group;
             const url = type === 'salary' ? '/admin/api/pricing/salary' : '/admin/api/pricing/logistics';
 
             fetch(url, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken,
-                },
-                body: JSON.stringify({ group_name: group }),
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({}),
             })
             .then(r => r.json())
             .then(res => {
-                if (res.success) {
-                    window.location.reload(); // Simple reload for the new row with proper attributes
-                } else {
-                    showToast('✗ Erreur : ' + res.error, true);
-                }
+                if (res.success) { window.location.reload(); }
+                else { showToast('✗ Erreur : ' + res.error, true); }
             });
         });
     });
@@ -316,27 +299,17 @@ document.addEventListener('DOMContentLoaded', function () {
     document.addEventListener('click', function(e) {
         let btn = e.target.closest('.btn-delete-line');
         if (!btn) return;
-
         if (!confirm('Supprimer cette ligne ?')) return;
 
         const id = btn.dataset.id;
         const type = btn.dataset.type;
         const url = (type === 'salary' ? '/admin/api/pricing/salary/' : '/admin/api/pricing/logistics/') + id;
 
-        fetch(url, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRFToken': csrfToken,
-            },
-        })
+        fetch(url, { method: 'DELETE', headers: { 'X-CSRFToken': csrfToken } })
         .then(r => r.json())
         .then(res => {
-            if (res.success) {
-                btn.closest('tr').remove();
-                showToast('✓ Supprimé', false);
-            } else {
-                showToast('✗ ' + (res.error || 'Erreur'), true);
-            }
+            if (res.success) { btn.closest('tr').remove(); showToast('✓ Supprimé', false); }
+            else { showToast('✗ ' + (res.error || 'Erreur'), true); }
         });
     });
 });

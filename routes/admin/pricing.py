@@ -24,6 +24,16 @@ def init_pricing_routes(app):
             equipment = list_equipment_rates()
             salaries = list_salary_rates()
             logistics = list_logistics_rates()
+            
+            # Si le SQL n'est pas passé, list_equipment_rates peut retourner {}
+            # On s'assure d'avoir au moins les clés pour le template
+            if not equipment:
+                equipment = {
+                    "vehicles": {"label": "Tracking Vehicles", "items": []},
+                    "heads": {"label": "Remote Heads", "items": []},
+                    "grip_products": {"label": "Grip & Accessoires", "items": []},
+                }
+
             return render_template(
                 "admin/pricing.html",
                 equipment=equipment,
@@ -31,15 +41,16 @@ def init_pricing_routes(app):
                 logistics=logistics,
             )
         except Exception as e:
-            current_app.logger.error(f"❌ Erreur tarification : {e}")
+            current_app.logger.error(f"❌ Erreur critique tarification : {e}")
             return render_template(
                 "admin/pricing.html",
                 equipment={},
-                salaries={},
+                salaries=[],
                 logistics=[],
+                error=str(e)
             )
 
-    # ── Équipement ───────────────────────────────────────────────
+    # ── API PATCH : tarif équipement (daily_rate) ─────────────
 
     @app.route("/admin/api/pricing/equipment", methods=["PATCH"])
     @require_roles('administrator')
@@ -47,6 +58,8 @@ def init_pricing_routes(app):
         try:
             data = request.get_json(force=True)
             updated = update_equipment_daily_rate(data.get("table"), data.get("id"), data.get("value"))
+            if not updated:
+                return jsonify({"success": False, "error": "Mise à jour impossible (SQL ?)"}), 400
             return jsonify({"success": True, "data": updated})
         except Exception as e:
             return jsonify({"success": False, "error": str(e)}), 400
@@ -57,8 +70,7 @@ def init_pricing_routes(app):
     @require_roles('administrator')
     def admin_api_pricing_salary_add():
         try:
-            data = request.get_json(force=True)
-            new_item = add_salary_rate(data.get("group_name"))
+            new_item = add_salary_rate()
             return jsonify({"success": True, "data": new_item})
         except Exception as e:
             return jsonify({"success": False, "error": str(e)}), 400
