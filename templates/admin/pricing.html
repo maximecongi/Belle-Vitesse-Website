@@ -33,11 +33,8 @@
                     <tr>
                         <td style="font-weight: 600;">{{ item.name }}</td>
                         <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}"
-                            data-id="{{ item.id }}"
-                            data-table="{{ cat_data.table }}"
-                            data-type="equipment"
-                            data-field="daily_rate"
-                            style="text-align: right;">
+                            data-id="{{ item.id }}" data-table="{{ cat_data.table }}" data-type="equipment"
+                            data-field="daily_rate" style="text-align: right;">
                             <span class="cell-value">{{ "%.2f"|format(item.daily_rate | default(0) | float) }}</span>
                         </td>
                     </tr>
@@ -84,37 +81,49 @@
                 <tbody id="salary-tbody">
                     {% for rate in salaries %}
                     <tr data-row-id="{{ rate.id }}">
-                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="position" data-type="salary">
+                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}"
+                            data-id="{{ rate.id }}" data-field="position" data-type="salary">
                             <span class="cell-value" style="font-weight: 600;">{{ rate.position }}</span>
                         </td>
-                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="annexe" data-type="salary">
+                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}"
+                            data-id="{{ rate.id }}" data-field="annexe" data-type="salary">
                             <span class="cell-value">{{ rate.annexe }}</span>
                         </td>
-                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="base_hourly" data-type="salary" style="text-align: right;">
+                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}"
+                            data-id="{{ rate.id }}" data-field="base_hourly" data-type="salary"
+                            style="text-align: right;">
                             <span class="cell-value">{{ "%.2f"|format(rate.base_hourly | default(0) | float) }}</span>
                         </td>
                         <!-- Inter 10H (éditable) -->
-                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="inter_10h" data-type="salary" style="text-align: right;">
+                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}"
+                            data-id="{{ rate.id }}" data-field="inter_10h" data-type="salary"
+                            style="text-align: right;">
                             <span class="cell-value">{{ "%.2f"|format(rate.inter_10h | default(0) | float) }}</span>
                         </td>
                         <!-- Invoice 10H (calculé dynamiquement) -->
-                        <td class="computed-cell" data-computed-from="inter_10h" data-row-id="{{ rate.id }}" style="text-align: right; color: var(--grey-2);">
+                        <td class="computed-cell" data-computed-from="inter_10h" data-row-id="{{ rate.id }}"
+                            style="text-align: right; color: var(--grey-2);">
                             <span class="cell-value">{{ "%.2f"|format(rate.invoice_10h | default(0) | float) }}</span>
                         </td>
                         <!-- Inter 8H (éditable) -->
-                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="inter_8h" data-type="salary" style="text-align: right;">
+                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}"
+                            data-id="{{ rate.id }}" data-field="inter_8h" data-type="salary" style="text-align: right;">
                             <span class="cell-value">{{ "%.2f"|format(rate.inter_8h | default(0) | float) }}</span>
                         </td>
                         <!-- Invoice 8H (calculé dynamiquement) -->
-                        <td class="computed-cell" data-computed-from="inter_8h" data-row-id="{{ rate.id }}" style="text-align: right; color: var(--grey-2);">
+                        <td class="computed-cell" data-computed-from="inter_8h" data-row-id="{{ rate.id }}"
+                            style="text-align: right; color: var(--grey-2);">
                             <span class="cell-value">{{ "%.2f"|format(rate.invoice_8h | default(0) | float) }}</span>
                         </td>
-                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="notes" data-type="salary">
+                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}"
+                            data-id="{{ rate.id }}" data-field="notes" data-type="salary">
                             <span class="cell-value">{{ rate.notes }}</span>
                         </td>
                         <td style="text-align: center;">
                             {% if current_user.role_lower == 'administrator' %}
-                            <button class="admin-btn admin-btn-danger btn-delete-line" data-id="{{ rate.id }}" data-type="salary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">Supprimer</button>
+                            <button class="admin-btn admin-btn-danger btn-delete-line" data-id="{{ rate.id }}"
+                                data-type="salary"
+                                style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">Supprimer</button>
                             {% endif %}
                         </td>
                     </tr>
@@ -149,18 +158,24 @@
                 <tbody id="logistics-tbody">
                     {% for item in logistics %}
                     <tr data-row-id="{{ item.id }}">
-                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ item.id }}" data-field="item_name" data-type="logistics">
+                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}"
+                            data-id="{{ item.id }}" data-field="item_name" data-type="logistics">
                             <span class="cell-value" style="font-weight: 600;">{{ item.item_name }}</span>
                         </td>
-                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ item.id }}" data-field="daily_rate" data-type="logistics" style="text-align: right;">
+                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}"
+                            data-id="{{ item.id }}" data-field="daily_rate" data-type="logistics"
+                            style="text-align: right;">
                             <span class="cell-value">{{ "%.2f"|format(item.daily_rate | default(0) | float) }}</span>
                         </td>
-                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ item.id }}" data-field="notes" data-type="logistics">
+                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}"
+                            data-id="{{ item.id }}" data-field="notes" data-type="logistics">
                             <span class="cell-value">{{ item.notes }}</span>
                         </td>
                         <td style="text-align: center;">
                             {% if current_user.role_lower == 'administrator' %}
-                            <button class="admin-btn admin-btn-danger btn-delete-line" data-id="{{ item.id }}" data-type="logistics" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">Supprimer</button>
+                            <button class="admin-btn admin-btn-danger btn-delete-line" data-id="{{ item.id }}"
+                                data-type="logistics"
+                                style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">Supprimer</button>
                             {% endif %}
                         </td>
                     </tr>
@@ -172,9 +187,10 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const csrfToken = '{{ csrf_token() }}';
-    const isAdmin = {{ 'true' if current_user.role_lower == 'administrator' else 'false' }};
+    document.addEventListener('DOMContentLoaded', function () {
+        const csrfToken = '{{ csrf_token() }}';
+        const isAdmin = {{ 'true' if current_user.role_lower == 'administrator' else 'false'
+    }};
     const INVOICE_FACTOR = 1.65;
 
     // ── Restore active tab on reload ───────────────────────────
@@ -203,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ── Inline Editing ─────────────────────────────────────────
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (!isAdmin) return;
 
         const cell = e.target.closest('.editable-cell');
@@ -260,28 +276,28 @@ document.addEventListener('DOMContentLoaded', function () {
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
                 body: JSON.stringify(body),
             })
-            .then(r => r.json())
-            .then(res => {
-                if (res.success) {
-                    flash('✓ Sauvegardé', 'success');
-                    // Mettre à jour avec la valeur serveur (source de vérité)
-                    if (isInterField && res.data) {
-                        const invoiceField = cell.dataset.field.replace('inter_', 'invoice_');
-                        const computedCell = cell.closest('tr').querySelector(`.computed-cell[data-computed-from="${cell.dataset.field}"]`);
-                        if (computedCell) {
-                            const span = computedCell.querySelector('.cell-value');
-                            if (span) span.textContent = parseFloat(res.data[invoiceField] || 0).toFixed(2);
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        flash('Sauvegardé', 'success');
+                        // Mettre à jour avec la valeur serveur (source de vérité)
+                        if (isInterField && res.data) {
+                            const invoiceField = cell.dataset.field.replace('inter_', 'invoice_');
+                            const computedCell = cell.closest('tr').querySelector(`.computed-cell[data-computed-from="${cell.dataset.field}"]`);
+                            if (computedCell) {
+                                const span = computedCell.querySelector('.cell-value');
+                                if (span) span.textContent = parseFloat(res.data[invoiceField] || 0).toFixed(2);
+                            }
                         }
+                    } else {
+                        valueSpan.textContent = originalValue;
+                        flash('✗ ' + (res.error || 'Erreur'), 'error');
                     }
-                } else {
+                })
+                .catch(() => {
                     valueSpan.textContent = originalValue;
-                    flash('✗ ' + (res.error || 'Erreur'), 'error');
-                }
-            })
-            .catch(() => {
-                valueSpan.textContent = originalValue;
-                flash('✗ Erreur réseau', 'error');
-            });
+                    flash('✗ Erreur réseau', 'error');
+                });
         };
 
         input.addEventListener('blur', save);
@@ -293,7 +309,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ── Add Line Dynamically ────────────────────────────────────
     document.querySelectorAll('.btn-add-line').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             if (!isAdmin) return;
             const type = this.dataset.type;
             const url = type === 'salary' ? '/admin/api/pricing/salary' : '/admin/api/pricing/logistics';
@@ -303,16 +319,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
                 body: JSON.stringify({}),
             })
-            .then(r => r.json())
-            .then(res => {
-                if (res.success) {
-                    flash('Ligne ajoutée', 'success');
-                    injectNewRow(type, res.data);
-                } else {
-                    flash('✗ ' + (res.error || 'Erreur'), 'error');
-                }
-            })
-            .catch(() => flash('✗ Erreur réseau', 'error'));
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        flash('Ligne ajoutée', 'success');
+                        injectNewRow(type, res.data);
+                    } else {
+                        flash('✗ ' + (res.error || 'Erreur'), 'error');
+                    }
+                })
+                .catch(() => flash('✗ Erreur réseau', 'error'));
         });
     });
 
@@ -359,7 +375,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ── Delete Line ───────────────────────────────────────────
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         const btn = e.target.closest('.btn-delete-line');
         if (!btn) return;
         if (!isAdmin) return;
@@ -370,15 +386,15 @@ document.addEventListener('DOMContentLoaded', function () {
         const url = (type === 'salary' ? '/admin/api/pricing/salary/' : '/admin/api/pricing/logistics/') + id;
 
         fetch(url, { method: 'DELETE', headers: { 'X-CSRFToken': csrfToken } })
-        .then(r => r.json())
-        .then(res => {
-            if (res.success) {
-                btn.closest('tr').remove();
-                flash('✓ Supprimé', 'success');
-            } else {
-                flash('✗ ' + (res.error || 'Erreur'), 'error');
-            }
-        });
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    btn.closest('tr').remove();
+                    flash('✓ Supprimé', 'success');
+                } else {
+                    flash('✗ ' + (res.error || 'Erreur'), 'error');
+                }
+            });
     });
 });
 </script>
