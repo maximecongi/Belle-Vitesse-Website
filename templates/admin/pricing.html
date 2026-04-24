@@ -100,23 +100,23 @@
                             <span class="cell-value">{{ rate.annexe }}</span>
                         </td>
                         <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="base_hourly" data-type="salary" style="text-align: right;">
-                            <span class="cell-value">{{ rate.base_hourly }}</span>
+                            <span class="cell-value">{{ rate.base_hourly | default(0) }}</span>
                         </td>
                         <!-- Inter 10H (éditable) -->
                         <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="inter_10h" data-type="salary" style="text-align: right;">
-                            <span class="cell-value">{{ rate.inter_10h }}</span>
+                            <span class="cell-value">{{ rate.inter_10h | default(0) }}</span>
                         </td>
                         <!-- Invoice 10H (calculé dynamiquement) -->
                         <td class="computed-cell" data-computed-from="inter_10h" data-row-id="{{ rate.id }}" style="text-align: right; color: var(--grey-2);">
-                            <span class="cell-value">{{ rate.invoice_10h }}</span>
+                            <span class="cell-value">{{ rate.invoice_10h | default(0) }}</span>
                         </td>
                         <!-- Inter 8H (éditable) -->
                         <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="inter_8h" data-type="salary" style="text-align: right;">
-                            <span class="cell-value">{{ rate.inter_8h }}</span>
+                            <span class="cell-value">{{ rate.inter_8h | default(0) }}</span>
                         </td>
                         <!-- Invoice 8H (calculé dynamiquement) -->
                         <td class="computed-cell" data-computed-from="inter_8h" data-row-id="{{ rate.id }}" style="text-align: right; color: var(--grey-2);">
-                            <span class="cell-value">{{ rate.invoice_8h }}</span>
+                            <span class="cell-value">{{ rate.invoice_8h | default(0) }}</span>
                         </td>
                         <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="notes" data-type="salary">
                             <span class="cell-value">{{ rate.notes }}</span>
@@ -237,7 +237,14 @@ document.addEventListener('DOMContentLoaded', function () {
         const isInterField = (cell.dataset.field === 'inter_10h' || cell.dataset.field === 'inter_8h');
 
         const save = () => {
-            const newValue = input.value.trim();
+            let newValue = input.value.trim();
+            
+            // Si c'est un champ numérique et qu'il est vide, on force 0
+            const numericFields = ['base_hourly', 'inter_10h', 'inter_8h', 'daily_rate'];
+            if (numericFields.includes(cell.dataset.field) && newValue === '') {
+                newValue = '0';
+            }
+
             input.remove();
             valueSpan.style.display = '';
             cell.classList.remove('editing');
@@ -329,10 +336,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 <tr data-row-id="${data.id}">
                     <td class="editable-cell" data-id="${data.id}" data-field="position" data-type="salary"><span class="cell-value" style="font-weight: 600;"></span></td>
                     <td class="editable-cell" data-id="${data.id}" data-field="annexe" data-type="salary"><span class="cell-value"></span></td>
-                    <td class="editable-cell" data-id="${data.id}" data-field="base_hourly" data-type="salary" style="text-align: right;"><span class="cell-value"></span></td>
-                    <td class="editable-cell" data-id="${data.id}" data-field="inter_10h" data-type="salary" style="text-align: right;"><span class="cell-value"></span></td>
+                    <td class="editable-cell" data-id="${data.id}" data-field="base_hourly" data-type="salary" style="text-align: right;"><span class="cell-value">0</span></td>
+                    <td class="editable-cell" data-id="${data.id}" data-field="inter_10h" data-type="salary" style="text-align: right;"><span class="cell-value">0</span></td>
                     <td class="computed-cell" data-computed-from="inter_10h" data-row-id="${data.id}" style="text-align: right; color: var(--grey-2);"><span class="cell-value">0</span></td>
-                    <td class="editable-cell" data-id="${data.id}" data-field="inter_8h" data-type="salary" style="text-align: right;"><span class="cell-value"></span></td>
+                    <td class="editable-cell" data-id="${data.id}" data-field="inter_8h" data-type="salary" style="text-align: right;"><span class="cell-value">0</span></td>
                     <td class="computed-cell" data-computed-from="inter_8h" data-row-id="${data.id}" style="text-align: right; color: var(--grey-2);"><span class="cell-value">0</span></td>
                     <td class="editable-cell" data-id="${data.id}" data-field="notes" data-type="salary"><span class="cell-value"></span></td>
                     <td style="text-align: center;">
