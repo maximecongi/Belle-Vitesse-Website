@@ -25,7 +25,7 @@
                 <thead>
                     <tr>
                         <th>Item</th>
-                        <th style="width: 140px; text-align: right;">J/€HT</th>
+                        <th style="width: 140px; text-align: right;">Tarif journalier HT</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -35,7 +35,7 @@
                         <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}"
                             data-id="{{ item.id }}" data-table="{{ cat_data.table }}" data-type="equipment"
                             data-field="daily_rate" style="text-align: right;">
-                            <span class="cell-value">{{ "%.2f"|format(item.daily_rate | default(0) | float) }}</span>
+                            <span class="cell-value">{{ "%.2f"|format(item.daily_rate | default(0) | float) }} €</span>
                         </td>
                     </tr>
                     {% else %}
@@ -61,7 +61,8 @@
             <h3 class="pricing-section-title" style="margin: 0;">Grille des salaires</h3>
             {% if current_user.role_lower == 'administrator' %}
             <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <span class="factor-badge" id="factorBadge" title="Cliquez pour modifier le facteur de conversion">×{{ invoice_factor }}</span>
+                <span class="factor-badge" id="factorBadge" title="Cliquez pour modifier le facteur de conversion">×{{
+                    invoice_factor }}</span>
                 <button class="admin-btn admin-btn-primary btn-add-line" data-type="salary">+ Ajouter une ligne</button>
             </div>
             {% else %}
@@ -155,7 +156,7 @@
                 <thead>
                     <tr>
                         <th>Désignation</th>
-                        <th style="width: 140px; text-align: right;">Tarif €HT</th>
+                        <th style="width: 140px; text-align: right;">Tarif HT</th>
                         <th>Notes</th>
                         <th style="width: 50px;"></th>
                     </tr>
@@ -234,31 +235,31 @@
                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
                     body: JSON.stringify({ value: num }),
                 })
-                .then(r => r.json())
-                .then(res => {
-                    if (res.success) {
-                        INVOICE_FACTOR = res.factor;
-                        factorBadge.textContent = '×' + res.factor;
-                        flash('Facteur mis à jour — ' + res.salaries.length + ' lignes recalculées', 'success');
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.success) {
+                            INVOICE_FACTOR = res.factor;
+                            factorBadge.textContent = '×' + res.factor;
+                            flash('Facteur mis à jour — ' + res.salaries.length + ' lignes recalculées', 'success');
 
-                        // Mettre à jour toutes les cellules Invoice dans le tableau
-                        res.salaries.forEach(s => {
-                            const row = document.querySelector(`tr[data-row-id="${s.id}"]`);
-                            if (!row) return;
-                            const inv10 = row.querySelector('.computed-cell[data-computed-from="inter_10h"] .cell-value');
-                            const inv8 = row.querySelector('.computed-cell[data-computed-from="inter_8h"] .cell-value');
-                            if (inv10) inv10.textContent = parseFloat(s.invoice_10h || 0).toFixed(2) + ' €';
-                            if (inv8) inv8.textContent = parseFloat(s.invoice_8h || 0).toFixed(2) + ' €';
-                        });
-                    } else {
+                            // Mettre à jour toutes les cellules Invoice dans le tableau
+                            res.salaries.forEach(s => {
+                                const row = document.querySelector(`tr[data-row-id="${s.id}"]`);
+                                if (!row) return;
+                                const inv10 = row.querySelector('.computed-cell[data-computed-from="inter_10h"] .cell-value');
+                                const inv8 = row.querySelector('.computed-cell[data-computed-from="inter_8h"] .cell-value');
+                                if (inv10) inv10.textContent = parseFloat(s.invoice_10h || 0).toFixed(2) + ' €';
+                                if (inv8) inv8.textContent = parseFloat(s.invoice_8h || 0).toFixed(2) + ' €';
+                            });
+                        } else {
+                            factorBadge.textContent = '×' + currentVal;
+                            flash(res.error || 'Erreur', 'error');
+                        }
+                    })
+                    .catch(() => {
                         factorBadge.textContent = '×' + currentVal;
-                        flash(res.error || 'Erreur', 'error');
-                    }
-                })
-                .catch(() => {
-                    factorBadge.textContent = '×' + currentVal;
-                    flash('Erreur réseau', 'error');
-                });
+                        flash('Erreur réseau', 'error');
+                    });
             };
 
             input.addEventListener('blur', saveFactor);
@@ -338,9 +339,9 @@
                 return;
             }
 
-            // Ajouter le suffixe € pour les champs numériques de type salary
-            const isSalaryNumeric = cell.dataset.type === 'salary' && numericFields.includes(cell.dataset.field);
-            valueSpan.textContent = isSalaryNumeric ? newValue + ' €' : newValue;
+            // Ajouter le suffixe € pour les champs numériques
+            const hasEuroSuffix = numericFields.includes(cell.dataset.field) && (cell.dataset.type === 'salary' || cell.dataset.type === 'equipment');
+            valueSpan.textContent = hasEuroSuffix ? newValue + ' €' : newValue;
             const type = cell.dataset.type;
             let url, body;
 
