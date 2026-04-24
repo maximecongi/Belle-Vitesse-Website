@@ -20,10 +20,11 @@ def init_pricing_routes(app):
     # ── Page principale ──────────────────────────────────────────
 
     @app.route("/admin/pricing")
-    @require_roles('administrator')
+    @require_roles('administrator', 'manager')
     def admin_pricing():
         """Page tarification avec 3 onglets indépendants."""
         errors = []
+        is_admin = current_user.role.lower() == 'administrator'
 
         # Chaque section est chargée indépendamment
         try:
@@ -56,6 +57,7 @@ def init_pricing_routes(app):
             logistics=logistics,
             salary_groups=salary_groups, # <-- On passe les groupes
             errors=errors,
+            is_admin=is_admin,
         )
 
     # ── API Équipement ───────────────────────────────────────────
