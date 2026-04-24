@@ -101,6 +101,7 @@
 
                 {% call nav_group('🧰 Administration', 'admin', 'administrator', false) %}
                 {{ nav_item(url_for('admin_users_list'), 'Équipe', 'administrator') }}
+                {{ nav_item(url_for('admin_pricing'), 'Tarification', 'administrator') }}
                 {{ nav_item(url_for('admin_calendar'), 'Calendrier', 'manager') }}
                 {{ nav_item(url_for('admin_newsletter_dashboard'), 'Newsletter', 'administrator') }}
                 {% endcall %}

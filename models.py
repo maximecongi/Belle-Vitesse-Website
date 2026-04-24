@@ -603,6 +603,76 @@ class SqlQueryLog(db.Model):
         return f"<SqlQueryLog {self.id} user={self.user} endpoint={self.endpoint}>"
 
 
+class EquipmentRate(db.Model):
+    """Tarif jour HT pour un équipement (véhicule, tête, gimbal, grip, logistique)."""
+    __tablename__ = "equipment_rates"
+
+    id = db.Column(db.Integer, primary_key=True)
+    category = db.Column(db.String(50), nullable=False, index=True)
+    # Catégories : vehicle, head, gimbal, mount, logistics
+    item_name = db.Column(db.String(255), nullable=False)
+    quantity = db.Column(db.Integer, default=1)
+    daily_rate = db.Column(db.Numeric(10, 2), nullable=False, default=0)
+    notes = db.Column(db.Text)
+    source_record_id = db.Column(db.String(255), nullable=True)
+    display_order = db.Column(db.Integer, nullable=False, default=0)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        """Convertit l'objet en dictionnaire pour les réponses API."""
+        return {
+            "id": self.id,
+            "category": self.category,
+            "item_name": self.item_name,
+            "quantity": self.quantity,
+            "daily_rate": float(self.daily_rate) if self.daily_rate else 0,
+            "notes": self.notes or "",
+            "display_order": self.display_order,
+        }
+
+    def __repr__(self):
+        return f"<EquipmentRate {self.item_name} ({self.category})>"
+
+
+class SalaryRate(db.Model):
+    """Grille de salaire par position et type de contrat."""
+    __tablename__ = "salary_rates"
+
+    id = db.Column(db.Integer, primary_key=True)
+    group_name = db.Column(db.String(100), nullable=False, index=True)
+    position = db.Column(db.String(150), nullable=False)
+    annexe = db.Column(db.String(255))
+    base_hourly = db.Column(db.Numeric(10, 2))
+    invoice_10h = db.Column(db.Numeric(10, 2))
+    invoice_8h = db.Column(db.Numeric(10, 2))
+    inter_10h = db.Column(db.Numeric(10, 2))
+    inter_8h = db.Column(db.Numeric(10, 2))
+    notes = db.Column(db.Text)
+    display_order = db.Column(db.Integer, nullable=False, default=0)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        """Convertit l'objet en dictionnaire pour les réponses API."""
+        return {
+            "id": self.id,
+            "group_name": self.group_name,
+            "position": self.position,
+            "annexe": self.annexe or "",
+            "base_hourly": float(self.base_hourly) if self.base_hourly else 0,
+            "invoice_10h": float(self.invoice_10h) if self.invoice_10h else 0,
+            "invoice_8h": float(self.invoice_8h) if self.invoice_8h else 0,
+            "inter_10h": float(self.inter_10h) if self.inter_10h else 0,
+            "inter_8h": float(self.inter_8h) if self.inter_8h else 0,
+            "notes": self.notes or "",
+            "display_order": self.display_order,
+        }
+
+    def __repr__(self):
+        return f"<SalaryRate {self.position} ({self.group_name})>"
+
+
 class CalendarSubscription(db.Model):
     """Abonnement calendrier ICS sécurisé par token unique."""
     __tablename__ = "calendar_subscriptions"

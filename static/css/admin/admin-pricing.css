@@ -1,0 +1,158 @@
+/* ── Admin Pricing: Tabs, Editable Cells, Section Headers ───── */
+
+/* ── Tabs ─────────────────────────────────────────────────────── */
+
+.pricing-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--white-3);
+    margin-bottom: 1.5rem;
+}
+
+.pricing-tab {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--grey-2);
+    cursor: pointer;
+    border: none;
+    background: none;
+    position: relative;
+    transition: color 0.2s ease;
+}
+
+.pricing-tab:hover {
+    color: var(--grey-1);
+}
+
+.pricing-tab.active {
+    color: var(--grey-1);
+}
+
+.pricing-tab.active::after {
+    content: "";
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--admin-accent);
+}
+
+/* ── Tab Content Panels ──────────────────────────────────────── */
+
+.pricing-tab-content {
+    display: none;
+}
+
+.pricing-tab-content.active {
+    display: block;
+}
+
+/* ── Section Headers ─────────────────────────────────────────── */
+
+.pricing-section-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--grey-2);
+    margin: 0 0 0.25rem 0;
+    padding: 0;
+}
+
+/* ── Editable Cells ──────────────────────────────────────────── */
+
+.editable-cell {
+    cursor: text;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+    min-width: 60px;
+    position: relative;
+}
+
+.editable-cell:hover {
+    background-color: rgba(255, 200, 69, 0.08);
+}
+
+.editable-cell.editing {
+    padding: 0;
+    background-color: transparent;
+}
+
+.editable-cell .cell-value {
+    display: block;
+    width: 100%;
+    min-height: 1.2em;
+}
+
+.editable-cell .cell-input {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 2px solid var(--admin-accent);
+    background: #fffdf5;
+    font-family: var(--font-primary);
+    font-size: inherit;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.editable-cell .cell-input:focus {
+    box-shadow: 0 0 0 3px rgba(255, 200, 69, 0.2);
+}
+
+/* ── Save Feedback Toast ─────────────────────────────────────── */
+
+.pricing-toast {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    background: var(--grey-1);
+    color: white;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    z-index: 3000;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    pointer-events: none;
+}
+
+.pricing-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.pricing-toast.error {
+    background: #dc2626;
+}
+
+/* ── Empty State ─────────────────────────────────────────────── */
+
+.pricing-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--grey-2);
+    font-size: 0.95rem;
+}
+
+.pricing-empty-icon {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+    opacity: 0.5;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .pricing-tabs {
+        overflow-x: auto;
+    }
+
+    .pricing-tab {
+        padding: 0.6rem 1rem;
+        font-size: 0.8rem;
+    }
+}
