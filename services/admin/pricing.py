@@ -13,10 +13,13 @@ logger = logging.getLogger(__name__)
 # Champs éditables
 SALARY_EDITABLE_FIELDS = {
     "group_name", "position", "annexe", "base_hourly",
-    "invoice_10h", "invoice_8h", "inter_10h", "inter_8h", "notes",
+    "inter_10h", "inter_8h", "notes",
 }
 
 LOGISTICS_EDITABLE_FIELDS = {"item_name", "daily_rate", "notes"}
+
+# Facteur de conversion intermittent → facture
+INVOICE_FACTOR = 1.65
 
 
 # ── Helpers ──────────────────────────────────────────────────
@@ -136,7 +139,10 @@ def delete_salary_rate(rate_id):
 
 
 def update_salary_rate(rate_id, field, value):
-    """Met à jour un champ spécifique d'un SalaryRate."""
+    """Met à jour un champ spécifique d'un SalaryRate.
+    Si le champ est inter_10h ou inter_8h, recalcule automatiquement
+    le champ invoice correspondant (× INVOICE_FACTOR).
+    """
     if field not in SALARY_EDITABLE_FIELDS:
         raise ValueError(f"Champ non autorisé : {field}")
 
@@ -144,13 +150,20 @@ def update_salary_rate(rate_id, field, value):
     if not rate:
         raise ValueError(f"Salaire #{rate_id} introuvable")
 
-    numeric_fields = {"base_hourly", "invoice_10h", "invoice_8h", "inter_10h", "inter_8h"}
+    numeric_fields = {"base_hourly", "inter_10h", "inter_8h"}
     if field in numeric_fields:
         value = _safe_float(value) if value not in (None, "") else None
     else:
         value = str(value).strip() if value else ""
 
     setattr(rate, field, value)
+
+    # Auto-calcul des colonnes Invoice à partir des colonnes Inter
+    if field == "inter_10h":
+        rate.invoice_10h = round(value * INVOICE_FACTOR, 2) if value else None
+    elif field == "inter_8h":
+        rate.invoice_8h = round(value * INVOICE_FACTOR, 2) if value else None
+
     db.session.commit()
     return rate.to_dict()
 
