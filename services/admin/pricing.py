@@ -152,7 +152,7 @@ def update_salary_rate(rate_id, field, value):
 
     numeric_fields = {"base_hourly", "inter_10h", "inter_8h"}
     if field in numeric_fields:
-        value = _safe_float(value) if value not in (None, "") else None
+        value = round(_safe_float(value), 2)
     else:
         value = str(value).strip() if value else ""
 
@@ -160,9 +160,9 @@ def update_salary_rate(rate_id, field, value):
 
     # Auto-calcul des colonnes Invoice à partir des colonnes Inter
     if field == "inter_10h":
-        rate.invoice_10h = round(value * INVOICE_FACTOR, 2) if value else None
+        rate.invoice_10h = round(value * INVOICE_FACTOR, 2)
     elif field == "inter_8h":
-        rate.invoice_8h = round(value * INVOICE_FACTOR, 2) if value else None
+        rate.invoice_8h = round(value * INVOICE_FACTOR, 2)
 
     db.session.commit()
     return rate.to_dict()
@@ -215,7 +215,7 @@ def update_logistics_rate(rate_id, field, value):
         raise ValueError(f"Logistique #{rate_id} introuvable")
 
     if field == "daily_rate":
-        value = _safe_float(value)
+        value = round(_safe_float(value), 2)
     else:
         value = str(value).strip() if value else ""
 
