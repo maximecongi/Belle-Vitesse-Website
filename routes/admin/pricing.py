@@ -1,4 +1,4 @@
-from flask import current_app, jsonify, render_template, request
+from flask import current_app, flash, jsonify, render_template, request
 
 from services.admin.pricing import (
     add_logistics_rate,
@@ -24,7 +24,6 @@ def init_pricing_routes(app):
     @require_roles('administrator', 'manager')
     def admin_pricing():
         """Page tarification avec 3 onglets indépendants."""
-        errors = []
 
         # Chaque section est chargée indépendamment
         try:
@@ -32,7 +31,7 @@ def init_pricing_routes(app):
         except Exception as e:
             current_app.logger.error(f"❌ Équipement: {e}")
             equipment = {}
-            errors.append(f"Équipement: {e}")
+            flash(f"Erreur chargement Équipement : {e}", "error")
 
         try:
             salaries = list_salary_rates()
@@ -41,14 +40,14 @@ def init_pricing_routes(app):
             current_app.logger.error(f"❌ Salaires: {e}")
             salaries = []
             salary_groups = []
-            errors.append(f"Salaires: {e}")
+            flash(f"Erreur chargement Salaires : {e}", "error")
 
         try:
             logistics = list_logistics_rates()
         except Exception as e:
             current_app.logger.error(f"❌ Logistique: {e}")
             logistics = []
-            errors.append(f"Logistique: {e}")
+            flash(f"Erreur chargement Logistique : {e}", "error")
 
         return render_template(
             "admin/pricing.html",
@@ -56,7 +55,6 @@ def init_pricing_routes(app):
             salaries=salaries,
             logistics=logistics,
             salary_groups=salary_groups,
-            errors=errors,
         )
 
     # ── API Équipement ───────────────────────────────────────────

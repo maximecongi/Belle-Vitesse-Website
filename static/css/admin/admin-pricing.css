@@ -14,8 +14,6 @@
 .pricing-tabs {
     display: flex;
     gap: 0;
-    border-bottom: 2px solid var(--white-3);
-    margin-bottom: 1.5rem;
 }
 
 .pricing-tab {
@@ -111,46 +109,13 @@
     box-shadow: 0 0 0 3px rgba(255, 200, 69, 0.2);
 }
 
-/* ── Save Feedback Toast ─────────────────────────────────────── */
+/* ── Computed Cells (read-only) ──────────────────────────────── */
 
-.pricing-toast {
-    position: fixed;
-    bottom: 1.5rem;
-    right: 1.5rem;
-    background: var(--grey-1);
-    color: white;
-    padding: 0.75rem 1.25rem;
-    font-size: 0.85rem;
-    font-weight: 500;
-    z-index: 3000;
-    opacity: 0;
-    transform: translateY(10px);
-    transition: opacity 0.25s ease, transform 0.25s ease;
-    pointer-events: none;
-}
-
-.pricing-toast.show {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.pricing-toast.error {
-    background: #dc2626;
-}
-
-/* ── Empty State ─────────────────────────────────────────────── */
-
-.pricing-empty {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: var(--grey-2);
-    font-size: 0.95rem;
-}
-
-.pricing-empty-icon {
-    font-size: 2rem;
-    margin-bottom: 0.75rem;
-    opacity: 0.5;
+.computed-cell .cell-value {
+    display: block;
+    width: 100%;
+    min-height: 1.2em;
+    font-style: italic;
 }
 
 /* ── Responsive ──────────────────────────────────────────────── */
