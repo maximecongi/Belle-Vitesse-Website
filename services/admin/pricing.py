@@ -1,25 +1,15 @@
 """
 Service layer for the Pricing admin page.
-Handles equipment rates and salary rates CRUD operations.
+Reads daily_rate directly from vehicles, heads, grip_products tables.
+Handles salary_rates CRUD operations.
 """
 
 from collections import OrderedDict
 
-from models import EquipmentRate, SalaryRate, db
+from models import GripProduct, Head, SalaryRate, Vehicle, db
 
 
-# ── Catégories d'équipement avec labels d'affichage ──────────
-
-EQUIPMENT_CATEGORIES = OrderedDict([
-    ("vehicle", "Tracking Vehicles"),
-    ("head", "Remote Heads"),
-    ("gimbal", "Gimbals"),
-    ("mount", "Mounts & Support"),
-])
-
-LOGISTICS_CATEGORIES = OrderedDict([
-    ("logistics", "Delivery / Travel / Return"),
-])
+# ── Ordre d'affichage des groupes salaires ───────────────────
 
 SALARY_GROUPS_ORDER = [
     "Pilote",
@@ -27,74 +17,85 @@ SALARY_GROUPS_ORDER = [
     "Grip",
 ]
 
-# Champs éditables par type
-EQUIPMENT_EDITABLE_FIELDS = {"item_name", "quantity", "daily_rate", "notes"}
 SALARY_EDITABLE_FIELDS = {
     "position", "annexe", "base_hourly",
     "invoice_10h", "invoice_8h", "inter_10h", "inter_8h", "notes",
 }
 
 
-# ── Équipement ───────────────────────────────────────────────
+# ── Helpers ──────────────────────────────────────────────────
 
-def list_equipment_rates():
-    """Retourne les EquipmentRate groupés par catégorie (hors logistics)."""
-    rates = (EquipmentRate.query
-             .filter(EquipmentRate.category != "logistics")
-             .order_by(EquipmentRate.category, EquipmentRate.display_order)
-             .all())
-
-    grouped = OrderedDict()
-    for cat_key, cat_label in EQUIPMENT_CATEGORIES.items():
-        grouped[cat_key] = {
-            "label": cat_label,
-            "items": [],
-        }
-
-    for rate in rates:
-        if rate.category in grouped:
-            grouped[rate.category]["items"].append(rate.to_dict())
-
-    return grouped
-
-
-def list_logistics_rates():
-    """Retourne les EquipmentRate de catégorie 'logistics'."""
-    rates = (EquipmentRate.query
-             .filter_by(category="logistics")
-             .order_by(EquipmentRate.display_order)
-             .all())
-
+def _item_from_record(record):
+    """Convertit un record Airtable-synced en dict pour le template."""
+    fields = record.fields or {}
     return {
-        "logistics": {
-            "label": "Delivery / Travel / Return",
-            "items": [r.to_dict() for r in rates],
-        }
+        "id": record.id,
+        "name": fields.get("name", "Sans nom"),
+        "daily_rate": float(record.daily_rate) if record.daily_rate else 0,
+        "order": fields.get("order", 999),
     }
 
 
-def update_equipment_rate(rate_id, field, value):
-    """Met à jour un champ spécifique d'un EquipmentRate."""
-    if field not in EQUIPMENT_EDITABLE_FIELDS:
-        raise ValueError(f"Champ non autorisé : {field}")
+# ── Équipement ───────────────────────────────────────────────
 
-    rate = EquipmentRate.query.get(rate_id)
-    if not rate:
-        raise ValueError(f"Tarif équipement #{rate_id} introuvable")
+def list_equipment_rates():
+    """
+    Retourne les tarifs jour groupés par catégorie :
+    Tracking Vehicles / Remote Heads / Grip Products
+    """
+    vehicles = Vehicle.query.all()
+    heads = Head.query.all()
+    grips = GripProduct.query.all()
 
-    # Coercition de type
-    if field == "daily_rate":
-        value = float(value) if value not in (None, "") else 0
-    elif field == "quantity":
-        value = int(value) if value not in (None, "") else 1
-    elif field in ("item_name",):
-        value = str(value).strip()
-        if not value:
-            raise ValueError("Le nom ne peut pas être vide")
+    def to_sorted_list(records):
+        items = [_item_from_record(r) for r in records]
+        items.sort(key=lambda x: x["order"])
+        return items
 
-    setattr(rate, field, value)
+    return OrderedDict([
+        ("vehicles", {
+            "label": "Tracking Vehicles",
+            "table": "vehicles",
+            "items": to_sorted_list(vehicles),
+        }),
+        ("heads", {
+            "label": "Remote Heads",
+            "table": "heads",
+            "items": to_sorted_list(heads),
+        }),
+        ("grip_products", {
+            "label": "Grip & Accessoires",
+            "table": "grip_products",
+            "items": to_sorted_list(grips),
+        }),
+    ])
+
+
+# Map table name → model class
+_TABLE_MODELS = {
+    "vehicles": Vehicle,
+    "heads": Head,
+    "grip_products": GripProduct,
+}
+
+
+def update_equipment_daily_rate(table_name, record_id, value):
+    """Met à jour le daily_rate d'un item dans sa table source."""
+    model = _TABLE_MODELS.get(table_name)
+    if not model:
+        raise ValueError(f"Table inconnue : {table_name}")
+
+    record = model.query.get(record_id)
+    if not record:
+        raise ValueError(f"Enregistrement {record_id} introuvable dans {table_name}")
+
+    try:
+        record.daily_rate = float(value) if value not in (None, "") else None
+    except (ValueError, TypeError):
+        raise ValueError(f"Valeur invalide : {value}")
+
     db.session.commit()
-    return rate.to_dict()
+    return _item_from_record(record)
 
 
 # ── Salaires ─────────────────────────────────────────────────

@@ -535,11 +535,13 @@ class SyncRecordMixin:
 class Vehicle(db.Model, SyncRecordMixin):
     """Véhicules synchronisés depuis Airtable."""
     __tablename__ = "vehicles"
+    daily_rate = db.Column(db.Numeric(10, 2), nullable=True)
 
 
 class Head(db.Model, SyncRecordMixin):
     """Têtes de caméra synchronisées depuis Airtable."""
     __tablename__ = "heads"
+    daily_rate = db.Column(db.Numeric(10, 2), nullable=True)
 
 
 class GripCategory(db.Model, SyncRecordMixin):
@@ -550,6 +552,7 @@ class GripCategory(db.Model, SyncRecordMixin):
 class GripProduct(db.Model, SyncRecordMixin):
     """Produits Grip individuels (Airtable)."""
     __tablename__ = "grip_products"
+    daily_rate = db.Column(db.Numeric(10, 2), nullable=True)
 
 
 class Config(db.Model, SyncRecordMixin):
@@ -603,36 +606,6 @@ class SqlQueryLog(db.Model):
         return f"<SqlQueryLog {self.id} user={self.user} endpoint={self.endpoint}>"
 
 
-class EquipmentRate(db.Model):
-    """Tarif jour HT pour un équipement (véhicule, tête, gimbal, grip, logistique)."""
-    __tablename__ = "equipment_rates"
-
-    id = db.Column(db.Integer, primary_key=True)
-    category = db.Column(db.String(50), nullable=False, index=True)
-    # Catégories : vehicle, head, gimbal, mount, logistics
-    item_name = db.Column(db.String(255), nullable=False)
-    quantity = db.Column(db.Integer, default=1)
-    daily_rate = db.Column(db.Numeric(10, 2), nullable=False, default=0)
-    notes = db.Column(db.Text)
-    source_record_id = db.Column(db.String(255), nullable=True)
-    display_order = db.Column(db.Integer, nullable=False, default=0)
-    updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    def to_dict(self):
-        """Convertit l'objet en dictionnaire pour les réponses API."""
-        return {
-            "id": self.id,
-            "category": self.category,
-            "item_name": self.item_name,
-            "quantity": self.quantity,
-            "daily_rate": float(self.daily_rate) if self.daily_rate else 0,
-            "notes": self.notes or "",
-            "display_order": self.display_order,
-        }
-
-    def __repr__(self):
-        return f"<EquipmentRate {self.item_name} ({self.category})>"
 
 
 class SalaryRate(db.Model):

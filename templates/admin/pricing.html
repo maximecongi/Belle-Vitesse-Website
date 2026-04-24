@@ -23,31 +23,25 @@
             <table class="admin-table">
                 <thead>
                     <tr>
-                        <th style="width: 50px;">#</th>
                         <th>Item</th>
-                        <th style="width: 120px;">J/€HT</th>
-                        <th>Notes</th>
+                        <th style="width: 140px; text-align: right;">J/€HT</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in cat_data.items %}
                     <tr>
-                        <td>
-                            <span class="cell-value">{{ item.quantity }}</span>
-                        </td>
-                        <td class="editable-cell" data-id="{{ item.id }}" data-field="item_name" data-type="equipment">
-                            <span class="cell-value">{{ item.item_name }}</span>
-                        </td>
-                        <td class="editable-cell" data-id="{{ item.id }}" data-field="daily_rate" data-type="equipment">
+                        <td style="font-weight: 600;">{{ item.name }}</td>
+                        <td class="editable-cell"
+                            data-id="{{ item.id }}"
+                            data-table="{{ cat_data.table }}"
+                            data-type="equipment"
+                            style="text-align: right;">
                             <span class="cell-value">{{ item.daily_rate }}</span>
-                        </td>
-                        <td class="editable-cell" data-id="{{ item.id }}" data-field="notes" data-type="equipment">
-                            <span class="cell-value">{{ item.notes }}</span>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="4" style="text-align: center; padding: 2rem; color: var(--grey-2);">
+                        <td colspan="2" style="text-align: center; padding: 2rem; color: var(--grey-2);">
                             Aucun élément dans cette catégorie.
                         </td>
                     </tr>
@@ -72,11 +66,11 @@
                     <tr>
                         <th>Position</th>
                         <th>Annexe</th>
-                        <th style="width: 90px;">Base/H</th>
-                        <th style="width: 110px;">Invoice (10H)</th>
-                        <th style="width: 110px;">Invoice (8H)</th>
-                        <th style="width: 100px;">Inter (10H)</th>
-                        <th style="width: 100px;">Inter (8H)</th>
+                        <th style="width: 90px; text-align: right;">Base/H</th>
+                        <th style="width: 110px; text-align: right;">Invoice (10H)</th>
+                        <th style="width: 110px; text-align: right;">Invoice (8H)</th>
+                        <th style="width: 100px; text-align: right;">Inter (10H)</th>
+                        <th style="width: 100px; text-align: right;">Inter (8H)</th>
                         <th>Notes</th>
                     </tr>
                 </thead>
@@ -89,19 +83,19 @@
                         <td class="editable-cell" data-id="{{ rate.id }}" data-field="annexe" data-type="salary">
                             <span class="cell-value">{{ rate.annexe }}</span>
                         </td>
-                        <td class="editable-cell" data-id="{{ rate.id }}" data-field="base_hourly" data-type="salary">
+                        <td class="editable-cell" data-id="{{ rate.id }}" data-field="base_hourly" data-type="salary" style="text-align: right;">
                             <span class="cell-value">{{ rate.base_hourly }}</span>
                         </td>
-                        <td class="editable-cell" data-id="{{ rate.id }}" data-field="invoice_10h" data-type="salary">
+                        <td class="editable-cell" data-id="{{ rate.id }}" data-field="invoice_10h" data-type="salary" style="text-align: right;">
                             <span class="cell-value">{{ rate.invoice_10h }}</span>
                         </td>
-                        <td class="editable-cell" data-id="{{ rate.id }}" data-field="invoice_8h" data-type="salary">
+                        <td class="editable-cell" data-id="{{ rate.id }}" data-field="invoice_8h" data-type="salary" style="text-align: right;">
                             <span class="cell-value">{{ rate.invoice_8h }}</span>
                         </td>
-                        <td class="editable-cell" data-id="{{ rate.id }}" data-field="inter_10h" data-type="salary">
+                        <td class="editable-cell" data-id="{{ rate.id }}" data-field="inter_10h" data-type="salary" style="text-align: right;">
                             <span class="cell-value">{{ rate.inter_10h }}</span>
                         </td>
-                        <td class="editable-cell" data-id="{{ rate.id }}" data-field="inter_8h" data-type="salary">
+                        <td class="editable-cell" data-id="{{ rate.id }}" data-field="inter_8h" data-type="salary" style="text-align: right;">
                             <span class="cell-value">{{ rate.inter_8h }}</span>
                         </td>
                         <td class="editable-cell" data-id="{{ rate.id }}" data-field="notes" data-type="salary">
@@ -126,55 +120,12 @@
 <!-- TAB : Logistique                                          -->
 <!-- ══════════════════════════════════════════════════════════ -->
 <div class="pricing-tab-content" id="panel-logistics">
-    {% for cat_key, cat_data in logistics.items() %}
-    <div class="admin-card">
-        <h3 class="pricing-section-title">{{ cat_data.label }}</h3>
-        <div class="admin-table-container">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th style="width: 50px;">#</th>
-                        <th>Item</th>
-                        <th style="width: 120px;">J/€HT</th>
-                        <th>Notes</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in cat_data.items %}
-                    <tr>
-                        <td>
-                            <span class="cell-value">{{ item.quantity }}</span>
-                        </td>
-                        <td class="editable-cell" data-id="{{ item.id }}" data-field="item_name" data-type="equipment">
-                            <span class="cell-value">{{ item.item_name }}</span>
-                        </td>
-                        <td class="editable-cell" data-id="{{ item.id }}" data-field="daily_rate" data-type="equipment">
-                            <span class="cell-value">{{ item.daily_rate }}</span>
-                        </td>
-                        <td class="editable-cell" data-id="{{ item.id }}" data-field="notes" data-type="equipment">
-                            <span class="cell-value">{{ item.notes }}</span>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="4" class="pricing-empty">
-                            <div class="pricing-empty-icon">📦</div>
-                            Aucun élément logistique configuré.
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-    {% else %}
     <div class="admin-card">
         <div class="pricing-empty">
             <div class="pricing-empty-icon">📦</div>
-            Aucun élément logistique configuré.
+            Aucun élément logistique configuré pour le moment.
         </div>
     </div>
-    {% endfor %}
 </div>
 
 <!-- ── Toast ─────────────────────────────────────────────────── -->
@@ -209,25 +160,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ── Inline Editing ─────────────────────────────────────────
-    const API_URLS = {
-        equipment: '/admin/api/pricing/equipment',
-        salary: '/admin/api/pricing/salary',
-    };
-
     document.querySelectorAll('.editable-cell').forEach(cell => {
         cell.addEventListener('click', function () {
-            // Prevent double-editing
             if (this.classList.contains('editing')) return;
 
             const valueSpan = this.querySelector('.cell-value');
             const originalValue = valueSpan.textContent.trim();
-            const field = this.dataset.field;
-            const id = this.dataset.id;
             const type = this.dataset.type;
 
             this.classList.add('editing');
 
-            // Create input
             const input = document.createElement('input');
             input.type = 'text';
             input.className = 'cell-input';
@@ -243,19 +185,34 @@ document.addEventListener('DOMContentLoaded', function () {
                 valueSpan.style.display = '';
                 this.classList.remove('editing');
 
-                // No change — skip
                 if (newValue === originalValue) return;
-
                 valueSpan.textContent = newValue;
 
-                const url = API_URLS[type];
+                let url, body;
+
+                if (type === 'equipment') {
+                    url = '/admin/api/pricing/equipment';
+                    body = {
+                        table: this.dataset.table,
+                        id: this.dataset.id,
+                        value: newValue,
+                    };
+                } else {
+                    url = '/admin/api/pricing/salary';
+                    body = {
+                        id: parseInt(this.dataset.id),
+                        field: this.dataset.field,
+                        value: newValue,
+                    };
+                }
+
                 fetch(url, {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': csrfToken,
                     },
-                    body: JSON.stringify({ id: parseInt(id), field: field, value: newValue }),
+                    body: JSON.stringify(body),
                 })
                 .then(r => r.json())
                 .then(res => {
