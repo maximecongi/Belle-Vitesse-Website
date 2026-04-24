@@ -92,28 +92,28 @@
                         <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}"
                             data-id="{{ rate.id }}" data-field="base_hourly" data-type="salary"
                             style="text-align: right;">
-                            <span class="cell-value">{{ "%.2f"|format(rate.base_hourly | default(0) | float) }}</span>
+                            <span class="cell-value">{{ "%.2f"|format(rate.base_hourly | default(0) | float) }} €</span>
                         </td>
                         <!-- Inter 10H (éditable) -->
                         <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}"
                             data-id="{{ rate.id }}" data-field="inter_10h" data-type="salary"
                             style="text-align: right;">
-                            <span class="cell-value">{{ "%.2f"|format(rate.inter_10h | default(0) | float) }}</span>
+                            <span class="cell-value">{{ "%.2f"|format(rate.inter_10h | default(0) | float) }} €</span>
                         </td>
                         <!-- Invoice 10H (calculé dynamiquement) -->
                         <td class="computed-cell" data-computed-from="inter_10h" data-row-id="{{ rate.id }}"
                             style="text-align: right; color: var(--grey-2);">
-                            <span class="cell-value">{{ "%.2f"|format(rate.invoice_10h | default(0) | float) }}</span>
+                            <span class="cell-value">{{ "%.2f"|format(rate.invoice_10h | default(0) | float) }} €</span>
                         </td>
                         <!-- Inter 8H (éditable) -->
                         <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}"
                             data-id="{{ rate.id }}" data-field="inter_8h" data-type="salary" style="text-align: right;">
-                            <span class="cell-value">{{ "%.2f"|format(rate.inter_8h | default(0) | float) }}</span>
+                            <span class="cell-value">{{ "%.2f"|format(rate.inter_8h | default(0) | float) }} €</span>
                         </td>
                         <!-- Invoice 8H (calculé dynamiquement) -->
                         <td class="computed-cell" data-computed-from="inter_8h" data-row-id="{{ rate.id }}"
                             style="text-align: right; color: var(--grey-2);">
-                            <span class="cell-value">{{ "%.2f"|format(rate.invoice_8h | default(0) | float) }}</span>
+                            <span class="cell-value">{{ "%.2f"|format(rate.invoice_8h | default(0) | float) }} €</span>
                         </td>
                         <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}"
                             data-id="{{ rate.id }}" data-field="notes" data-type="salary">
@@ -232,7 +232,8 @@
         const input = document.createElement('input');
         input.type = 'text';
         input.className = 'cell-input';
-        input.value = originalValue;
+        // Retirer le suffixe " €" pour l'édition
+        input.value = originalValue.replace(/\s*€$/, '');
 
         valueSpan.style.display = 'none';
         cell.appendChild(input);
@@ -247,16 +248,23 @@
             // Si c'est un champ numérique, on force le format 2 décimales
             const numericFields = ['base_hourly', 'inter_10h', 'inter_8h', 'daily_rate'];
             if (numericFields.includes(cell.dataset.field)) {
-                const num = parseFloat(newValue.replace(',', '.') || 0);
+                const num = parseFloat(newValue.replace(/[^\d.,-]/g, '').replace(',', '.') || 0);
                 newValue = num.toFixed(2);
             }
 
             input.remove();
             valueSpan.style.display = '';
             cell.classList.remove('editing');
-            if (newValue === originalValue) return;
+            // Comparer sans le suffixe €
+            const cleanOriginal = originalValue.replace(/\s*€$/, '');
+            if (newValue === cleanOriginal) {
+                valueSpan.textContent = originalValue;
+                return;
+            }
 
-            valueSpan.textContent = newValue;
+            // Ajouter le suffixe € pour les champs numériques de type salary
+            const isSalaryNumeric = cell.dataset.type === 'salary' && numericFields.includes(cell.dataset.field);
+            valueSpan.textContent = isSalaryNumeric ? newValue + ' €' : newValue;
             const type = cell.dataset.type;
             let url, body;
 
@@ -286,12 +294,12 @@
                             const computedCell = cell.closest('tr').querySelector(`.computed-cell[data-computed-from="${cell.dataset.field}"]`);
                             if (computedCell) {
                                 const span = computedCell.querySelector('.cell-value');
-                                if (span) span.textContent = parseFloat(res.data[invoiceField] || 0).toFixed(2);
+                                if (span) span.textContent = parseFloat(res.data[invoiceField] || 0).toFixed(2) + ' €';
                             }
                         }
                     } else {
                         valueSpan.textContent = originalValue;
-                        flash('✗ ' + (res.error || 'Erreur'), 'error');
+                        flash((res.error || 'Erreur'), 'error');
                     }
                 })
                 .catch(() => {
@@ -342,11 +350,11 @@
                 <tr data-row-id="${data.id}">
                     <td class="editable-cell" data-id="${data.id}" data-field="position" data-type="salary"><span class="cell-value" style="font-weight: 600;"></span></td>
                     <td class="editable-cell" data-id="${data.id}" data-field="annexe" data-type="salary"><span class="cell-value"></span></td>
-                    <td class="editable-cell" data-id="${data.id}" data-field="base_hourly" data-type="salary" style="text-align: right;"><span class="cell-value">0.00</span></td>
-                    <td class="editable-cell" data-id="${data.id}" data-field="inter_10h" data-type="salary" style="text-align: right;"><span class="cell-value">0.00</span></td>
-                    <td class="computed-cell" data-computed-from="inter_10h" data-row-id="${data.id}" style="text-align: right; color: var(--grey-2);"><span class="cell-value">0.00</span></td>
-                    <td class="editable-cell" data-id="${data.id}" data-field="inter_8h" data-type="salary" style="text-align: right;"><span class="cell-value">0.00</span></td>
-                    <td class="computed-cell" data-computed-from="inter_8h" data-row-id="${data.id}" style="text-align: right; color: var(--grey-2);"><span class="cell-value">0.00</span></td>
+                    <td class="editable-cell" data-id="${data.id}" data-field="base_hourly" data-type="salary" style="text-align: right;"><span class="cell-value">0.00 €</span></td>
+                    <td class="editable-cell" data-id="${data.id}" data-field="inter_10h" data-type="salary" style="text-align: right;"><span class="cell-value">0.00 €</span></td>
+                    <td class="computed-cell" data-computed-from="inter_10h" data-row-id="${data.id}" style="text-align: right; color: var(--grey-2);"><span class="cell-value">0.00 €</span></td>
+                    <td class="editable-cell" data-id="${data.id}" data-field="inter_8h" data-type="salary" style="text-align: right;"><span class="cell-value">0.00 €</span></td>
+                    <td class="computed-cell" data-computed-from="inter_8h" data-row-id="${data.id}" style="text-align: right; color: var(--grey-2);"><span class="cell-value">0.00 €</span></td>
                     <td class="editable-cell" data-id="${data.id}" data-field="notes" data-type="salary"><span class="cell-value"></span></td>
                     <td style="text-align: center;">
                         <button class="admin-btn admin-btn-danger btn-delete-line" data-id="${data.id}" data-type="salary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">Supprimer</button>
