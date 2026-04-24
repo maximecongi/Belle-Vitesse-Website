@@ -8,6 +8,7 @@ from services.admin.pricing import (
     list_equipment_rates,
     list_logistics_rates,
     list_salary_rates,
+    list_salary_groups,
     update_equipment_daily_rate,
     update_logistics_rate,
     update_salary_rate,
@@ -24,7 +25,6 @@ def init_pricing_routes(app):
     def admin_pricing():
         """Page tarification avec 3 onglets indépendants."""
         errors = []
-        is_admin = current_user.role.lower() == 'administrator'
 
         # Chaque section est chargée indépendamment
         try:
@@ -36,7 +36,7 @@ def init_pricing_routes(app):
 
         try:
             salaries = list_salary_rates()
-            salary_groups = list_salary_groups() # <-- On récupère les groupes
+            salary_groups = list_salary_groups()
         except Exception as e:
             current_app.logger.error(f"❌ Salaires: {e}")
             salaries = []
@@ -55,9 +55,8 @@ def init_pricing_routes(app):
             equipment=equipment,
             salaries=salaries,
             logistics=logistics,
-            salary_groups=salary_groups, # <-- On passe les groupes
+            salary_groups=salary_groups,
             errors=errors,
-            is_admin=is_admin,
         )
 
     # ── API Équipement ───────────────────────────────────────────

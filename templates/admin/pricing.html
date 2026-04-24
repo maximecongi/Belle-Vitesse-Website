@@ -49,7 +49,7 @@
                     {% for item in cat_data['items'] %}
                     <tr>
                         <td style="font-weight: 600;">{{ item.name }}</td>
-                        <td class="{% if is_admin %}editable-cell{% endif %}"
+                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}"
                             data-id="{{ item.id }}"
                             data-table="{{ cat_data.table }}"
                             data-type="equipment"
@@ -78,7 +78,7 @@
     <div class="admin-card">
         <div class="admin-card-header">
             <h3 class="pricing-section-title" style="margin: 0;">Grille des salaires</h3>
-            {% if is_admin %}
+            {% if current_user.role_lower == 'administrator' %}
             <button class="admin-btn admin-btn-primary btn-add-line" data-type="salary">+ Ajouter une ligne</button>
             {% endif %}
         </div>
@@ -101,35 +101,35 @@
                 <tbody id="salary-tbody">
                     {% for rate in salaries %}
                     <tr data-row-id="{{ rate.id }}">
-                        <td class="{% if is_admin %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="group_name" data-type="salary">
+                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="group_name" data-type="salary">
                             <span class="cell-value">{{ rate.group_name }}</span>
                         </td>
-                        <td class="{% if is_admin %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="position" data-type="salary">
+                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="position" data-type="salary">
                             <span class="cell-value" style="font-weight: 600;">{{ rate.position }}</span>
                         </td>
-                        <td class="{% if is_admin %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="annexe" data-type="salary">
+                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="annexe" data-type="salary">
                             <span class="cell-value">{{ rate.annexe }}</span>
                         </td>
-                        <td class="{% if is_admin %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="base_hourly" data-type="salary" style="text-align: right;">
+                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="base_hourly" data-type="salary" style="text-align: right;">
                             <span class="cell-value">{{ rate.base_hourly }}</span>
                         </td>
-                        <td class="{% if is_admin %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="invoice_10h" data-type="salary" style="text-align: right;">
+                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="invoice_10h" data-type="salary" style="text-align: right;">
                             <span class="cell-value">{{ rate.invoice_10h }}</span>
                         </td>
-                        <td class="{% if is_admin %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="invoice_8h" data-type="salary" style="text-align: right;">
+                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="invoice_8h" data-type="salary" style="text-align: right;">
                             <span class="cell-value">{{ rate.invoice_8h }}</span>
                         </td>
-                        <td class="{% if is_admin %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="inter_10h" data-type="salary" style="text-align: right;">
+                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="inter_10h" data-type="salary" style="text-align: right;">
                             <span class="cell-value">{{ rate.inter_10h }}</span>
                         </td>
-                        <td class="{% if is_admin %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="inter_8h" data-type="salary" style="text-align: right;">
+                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="inter_8h" data-type="salary" style="text-align: right;">
                             <span class="cell-value">{{ rate.inter_8h }}</span>
                         </td>
-                        <td class="{% if is_admin %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="notes" data-type="salary">
+                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ rate.id }}" data-field="notes" data-type="salary">
                             <span class="cell-value">{{ rate.notes }}</span>
                         </td>
                         <td style="text-align: center;">
-                            {% if is_admin %}
+                            {% if current_user.role_lower == 'administrator' %}
                             <button class="admin-btn admin-btn-secondary btn-delete-line" data-id="{{ rate.id }}" data-type="salary" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">🗑️</button>
                             {% endif %}
                         </td>
@@ -148,7 +148,7 @@
     <div class="admin-card">
         <div class="admin-card-header">
             <h3 class="pricing-section-title" style="margin: 0;">Frais logistiques</h3>
-            {% if is_admin %}
+            {% if current_user.role_lower == 'administrator' %}
             <button class="admin-btn admin-btn-primary btn-add-line" data-type="logistics">+ Ajouter une ligne</button>
             {% endif %}
         </div>
@@ -165,17 +165,17 @@
                 <tbody id="logistics-tbody">
                     {% for item in logistics %}
                     <tr data-row-id="{{ item.id }}">
-                        <td class="{% if is_admin %}editable-cell{% endif %}" data-id="{{ item.id }}" data-field="item_name" data-type="logistics">
+                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ item.id }}" data-field="item_name" data-type="logistics">
                             <span class="cell-value" style="font-weight: 600;">{{ item.item_name }}</span>
                         </td>
-                        <td class="{% if is_admin %}editable-cell{% endif %}" data-id="{{ item.id }}" data-field="daily_rate" data-type="logistics" style="text-align: right;">
+                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ item.id }}" data-field="daily_rate" data-type="logistics" style="text-align: right;">
                             <span class="cell-value">{{ item.daily_rate }}</span>
                         </td>
-                        <td class="{% if is_admin %}editable-cell{% endif %}" data-id="{{ item.id }}" data-field="notes" data-type="logistics">
+                        <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}" data-id="{{ item.id }}" data-field="notes" data-type="logistics">
                             <span class="cell-value">{{ item.notes }}</span>
                         </td>
                         <td style="text-align: center;">
-                            {% if is_admin %}
+                            {% if current_user.role_lower == 'administrator' %}
                             <button class="admin-btn admin-btn-secondary btn-delete-line" data-id="{{ item.id }}" data-type="logistics" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">🗑️</button>
                             {% endif %}
                         </td>
@@ -190,7 +190,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const csrfToken = '{{ csrf_token() }}';
-    const isAdmin = {{ 'true' if is_admin else 'false' }};
+    const isAdmin = {{ 'true' if current_user.role_lower == 'administrator' else 'false' }};
 
     // ── Restore active tab on reload ───────────────────────────
     const savedTab = localStorage.getItem('activePricingTab');
@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ── Inline Editing ─────────────────────────────────────────
     document.addEventListener('click', function(e) {
-        if (!isAdmin) return; // Sécurité JS supplémentaire
+        if (!isAdmin) return;
 
         const cell = e.target.closest('.editable-cell');
         if (!cell || cell.classList.contains('editing')) return;
