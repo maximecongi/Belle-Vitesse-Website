@@ -12,8 +12,7 @@ logger = logging.getLogger(__name__)
 
 # Champs éditables
 SALARY_EDITABLE_FIELDS = {
-    "group_name", "position", "annexe", "base_hourly",
-    "inter_10h", "inter_8h", "notes",
+    "group_name", "position", "annexe", "base_hourly", "notes"
 }
 
 LOGISTICS_EDITABLE_FIELDS = {"item_name", "daily_rate", "notes"}
@@ -43,14 +42,31 @@ def update_invoice_factor(new_factor):
     # Recalcul global de toutes les lignes salaires
     rates = SalaryRate.query.all()
     for rate in rates:
-        if rate.inter_10h is not None:
-            rate.invoice_10h = round(float(rate.inter_10h) * new_factor, 2)
-        if rate.inter_8h is not None:
-            rate.invoice_8h = round(float(rate.inter_8h) * new_factor, 2)
+        _calculate_salary_columns(rate, new_factor)
     db.session.commit()
     logger.info(
-        "Coefficient de facturation mis à jour. Les tarifs facturés ont été mis à jour.")
+        "Coefficient de facturation mis à jour. Les tarifs ont été recalculés.")
     return new_factor
+
+
+def _calculate_salary_columns(rate, factor=None):
+    """Calcule toutes les colonnes à partir de base_hourly."""
+    if factor is None:
+        factor = get_invoice_factor()
+    
+    base = float(rate.base_hourly or 0)
+    
+    # Calculs Intermittents
+    rate.inter_8h = round(base * 8, 2)
+    rate.inter_10h = round(base * 12, 2)
+    rate.inter_hs = round(base * 3, 2)
+    
+    # Calculs Facture
+    rate.invoice_8h = round(float(rate.inter_8h) * factor, 2)
+    rate.invoice_10h = round(float(rate.inter_10h) * factor, 2)
+    rate.invoice_hs = round(float(rate.inter_hs) * factor, 2)
+    
+    return rate
 
 
 # ── Helpers ──────────────────────────────────────────────────
@@ -194,8 +210,10 @@ def add_salary_rate(group_name=""):
         group_name=group_name or "",
         position="",
         annexe="",
+        base_hourly=0,
         display_order=max_order + 1,
     )
+    _calculate_salary_columns(new_rate)
     db.session.add(new_rate)
     db.session.commit()
     return new_rate.to_dict()
@@ -259,8 +277,7 @@ def delete_salary_group(group_name):
 
 def update_salary_rate(rate_id, field, value):
     """Met à jour un champ spécifique d'un SalaryRate.
-    Si le champ est inter_10h ou inter_8h, recalcule automatiquement
-    le champ invoice correspondant (× INVOICE_FACTOR).
+    Si base_hourly est modifié, recalcule TOUTES les colonnes.
     """
     if field not in SALARY_EDITABLE_FIELDS:
         raise ValueError(f"Champ non autorisé : {field}")
@@ -269,20 +286,16 @@ def update_salary_rate(rate_id, field, value):
     if not rate:
         raise ValueError(f"Salaire #{rate_id} introuvable")
 
-    numeric_fields = {"base_hourly", "inter_10h", "inter_8h"}
-    if field in numeric_fields:
+    if field == "base_hourly":
         value = round(_safe_float(value), 2)
     else:
         value = str(value).strip() if value else ""
 
     setattr(rate, field, value)
 
-    # Auto-calcul des colonnes Invoice à partir des colonnes Inter
-    factor = get_invoice_factor()
-    if field == "inter_10h":
-        rate.invoice_10h = round(value * factor, 2)
-    elif field == "inter_8h":
-        rate.invoice_8h = round(value * factor, 2)
+    # Si c'est la base qui a changé, on recalcule tout
+    if field == "base_hourly":
+        _calculate_salary_columns(rate)
 
     db.session.commit()
     return rate.to_dict()

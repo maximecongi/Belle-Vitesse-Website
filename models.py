@@ -624,6 +624,8 @@ class SalaryRate(db.Model):
     invoice_8h = db.Column(db.Numeric(10, 2))
     inter_10h = db.Column(db.Numeric(10, 2))
     inter_8h = db.Column(db.Numeric(10, 2))
+    inter_hs = db.Column(db.Numeric(10, 2))
+    invoice_hs = db.Column(db.Numeric(10, 2))
     notes = db.Column(db.Text)
     display_order = db.Column(db.Integer, nullable=False, default=0)
     updated_at = db.Column(
@@ -641,6 +643,8 @@ class SalaryRate(db.Model):
             "invoice_8h": float(self.invoice_8h) if self.invoice_8h else 0,
             "inter_10h": float(self.inter_10h) if self.inter_10h else 0,
             "inter_8h": float(self.inter_8h) if self.inter_8h else 0,
+            "inter_hs": float(self.inter_hs) if self.inter_hs else 0,
+            "invoice_hs": float(self.invoice_hs) if self.invoice_hs else 0,
             "notes": self.notes or "",
             "display_order": self.display_order,
         }
