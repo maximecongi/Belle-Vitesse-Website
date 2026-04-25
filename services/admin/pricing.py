@@ -48,7 +48,8 @@ def update_invoice_factor(new_factor):
         if rate.inter_8h is not None:
             rate.invoice_8h = round(float(rate.inter_8h) * new_factor, 2)
     db.session.commit()
-    logger.info(f"✅ Facteur invoice mis à jour : ×{new_factor} ({len(rates)} lignes recalculées)")
+    logger.info(
+        "Coefficient de facturation mis à jour. Les tarifs facturés ont été mis à jour.")
     return new_factor
 
 
@@ -110,16 +111,19 @@ def list_equipment_rates():
 
 def update_equipment_daily_rate(table_name, record_id, value):
     """Met à jour le daily_rate d'un item dans sa table source."""
-    table_map = {"vehicles": Vehicle, "heads": Head, "grip_products": GripProduct}
+    table_map = {"vehicles": Vehicle,
+                 "heads": Head, "grip_products": GripProduct}
     model = table_map.get(table_name)
     if not model:
         raise ValueError(f"Table inconnue : {table_name}")
 
     record = model.query.get(record_id)
     if not record:
-        raise ValueError(f"Enregistrement {record_id} introuvable dans {table_name}")
+        raise ValueError(
+            f"Enregistrement {record_id} introuvable dans {table_name}")
 
-    record.daily_rate = _safe_float(value) if value not in (None, "", "0") else float(value) if value == "0" else None
+    record.daily_rate = _safe_float(value) if value not in (
+        None, "", "0") else float(value) if value == "0" else None
     db.session.commit()
     return _item_from_record(record)
 
@@ -129,13 +133,37 @@ def update_equipment_daily_rate(table_name, record_id, value):
 # ══════════════════════════════════════════════════════════════
 
 def list_salary_rates():
-    """Retourne tous les salaires triés."""
+    """Retourne tous les salaires triés (liste plate pour l'API)."""
     try:
-        rates = SalaryRate.query.order_by(SalaryRate.display_order, SalaryRate.id).all()
+        rates = SalaryRate.query.order_by(
+            SalaryRate.display_order, SalaryRate.id).all()
         return [r.to_dict() for r in rates]
     except Exception as e:
         logger.error(f"Erreur chargement salary_rates: {e}")
         return []
+
+
+def list_salary_rates_grouped():
+    """Retourne les salaires groupés par group_name (OrderedDict).
+    Les groupes sont triés par le display_order min de leurs membres.
+    Les rates sont triés par display_order au sein de chaque groupe.
+    """
+    from collections import OrderedDict
+    try:
+        rates = SalaryRate.query.order_by(
+            SalaryRate.display_order, SalaryRate.id).all()
+
+        grouped = OrderedDict()
+        for r in rates:
+            gname = r.group_name or "Sans groupe"
+            if gname not in grouped:
+                grouped[gname] = []
+            grouped[gname].append(r.to_dict())
+
+        return grouped
+    except Exception as e:
+        logger.error(f"Erreur chargement salary_rates groupés: {e}")
+        return OrderedDict()
 
 
 def list_salary_groups():
@@ -144,11 +172,13 @@ def list_salary_groups():
     return sorted([g[0] for g in groups if g[0]])
 
 
-def add_salary_rate():
-    """Ajoute une nouvelle ligne de salaire."""
-    max_order = db.session.query(db.func.max(SalaryRate.display_order)).scalar() or 0
+def add_salary_rate(group_name=""):
+    """Ajoute une nouvelle ligne de salaire dans un groupe donné."""
+    # display_order = max de ce groupe + 1
+    max_order = db.session.query(db.func.max(
+        SalaryRate.display_order)).scalar() or 0
     new_rate = SalaryRate(
-        group_name="",
+        group_name=group_name or "",
         position="",
         annexe="",
         display_order=max_order + 1,
@@ -166,6 +196,52 @@ def delete_salary_rate(rate_id):
     db.session.delete(rate)
     db.session.commit()
     return True
+
+
+def reorder_salary_rates(groups_order):
+    """Réordonne toutes les lignes de salaire.
+    groups_order = {"GroupeA": [id1, id2], "GroupeB": [id3, id4], ...}
+    Met à jour group_name et display_order pour chaque ligne.
+    """
+    order_counter = 0
+    for group_name, rate_ids in groups_order.items():
+        for rate_id in rate_ids:
+            rate = SalaryRate.query.get(int(rate_id))
+            if rate:
+                rate.group_name = group_name
+                rate.display_order = order_counter
+                order_counter += 1
+    db.session.commit()
+    logger.info(f"Réordonnement salaires: {order_counter} lignes mises à jour")
+    return True
+
+
+def rename_salary_group(old_name, new_name):
+    """Renomme toutes les lignes d'un groupe."""
+    new_name = new_name.strip()
+    if not new_name:
+        raise ValueError("Le nom du groupe ne peut pas être vide")
+    rates = SalaryRate.query.filter_by(group_name=old_name).all()
+    if not rates:
+        raise ValueError(f"Groupe '{old_name}' introuvable")
+    for rate in rates:
+        rate.group_name = new_name
+    db.session.commit()
+    logger.info(f"Groupe renommé: '{old_name}' → '{new_name}' ({len(rates)} lignes)")
+    return new_name
+
+
+def delete_salary_group(group_name):
+    """Supprime toutes les lignes d'un groupe."""
+    rates = SalaryRate.query.filter_by(group_name=group_name).all()
+    if not rates:
+        raise ValueError(f"Groupe '{group_name}' introuvable")
+    count = len(rates)
+    for rate in rates:
+        db.session.delete(rate)
+    db.session.commit()
+    logger.info(f"Groupe '{group_name}' supprimé ({count} lignes)")
+    return count
 
 
 def update_salary_rate(rate_id, field, value):
@@ -206,7 +282,8 @@ def update_salary_rate(rate_id, field, value):
 def list_logistics_rates():
     """Retourne tous les tarifs logistiques triés."""
     try:
-        rates = LogisticsRate.query.order_by(LogisticsRate.display_order, LogisticsRate.id).all()
+        rates = LogisticsRate.query.order_by(
+            LogisticsRate.display_order, LogisticsRate.id).all()
         return [r.to_dict() for r in rates]
     except Exception as e:
         logger.error(f"Erreur chargement logistics_rates: {e}")
@@ -215,7 +292,8 @@ def list_logistics_rates():
 
 def add_logistics_rate():
     """Ajoute une nouvelle ligne logistique."""
-    max_order = db.session.query(db.func.max(LogisticsRate.display_order)).scalar() or 0
+    max_order = db.session.query(db.func.max(
+        LogisticsRate.display_order)).scalar() or 0
     new_rate = LogisticsRate(
         item_name="",
         daily_rate=0,

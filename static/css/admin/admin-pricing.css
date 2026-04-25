@@ -140,6 +140,119 @@
     font-style: italic;
 }
 
+/* ── Salary Groups ───────────────────────────────────────────── */
+
+.salary-group {
+    margin-bottom: 1.5rem;
+    background: var(--white-1, #fff);
+    border: 1px solid var(--white-3, #e5e7eb);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.salary-group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--white-2, #f9fafb);
+    border-bottom: 1px solid var(--white-3, #e5e7eb);
+}
+
+.salary-group-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--grey-1);
+    letter-spacing: 0.02em;
+}
+
+.editable-group-title {
+    cursor: pointer;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    transition: background 0.15s ease;
+}
+
+.editable-group-title:hover {
+    background: rgba(255, 200, 69, 0.12);
+}
+
+.group-title-input {
+    font-size: 0.9rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    border: 2px solid var(--admin-accent);
+    border-radius: 4px;
+    background: #fffdf5;
+    outline: none;
+    min-width: 120px;
+}
+
+.group-title-input:focus {
+    box-shadow: 0 0 0 3px rgba(255, 200, 69, 0.2);
+}
+
+.salary-group-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--grey-2);
+    background: var(--white-3, #e5e7eb);
+    border-radius: 10px;
+}
+
+/* ── Drag Handle ─────────────────────────────────────────────── */
+
+.drag-handle {
+    cursor: grab;
+    text-align: center;
+    color: var(--grey-2);
+    font-size: 1rem;
+    user-select: none;
+    width: 30px;
+    padding: 0.5rem 0.25rem !important;
+    transition: color 0.15s ease;
+}
+
+.drag-handle:hover {
+    color: var(--grey-1);
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+/* ── Drag & Drop Feedback ────────────────────────────────────── */
+
+tr.dragging {
+    opacity: 0.4;
+}
+
+.salary-drop-zone.drag-over {
+    background: rgba(255, 200, 69, 0.04);
+}
+
+.drag-indicator td {
+    height: 3px !important;
+    padding: 0 !important;
+    background: var(--admin-accent) !important;
+    border: none !important;
+}
+
+/* Remove table borders inside group cards */
+.salary-group .admin-table-container {
+    border: none;
+}
+
+.salary-group .admin-table {
+    margin: 0;
+}
+
 /* ── Responsive ──────────────────────────────────────────────── */
 
 @media (max-width: 768px) {

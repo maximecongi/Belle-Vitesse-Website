@@ -5,11 +5,15 @@ from services.admin.pricing import (
     add_salary_rate,
     delete_logistics_rate,
     delete_salary_rate,
+    delete_salary_group,
     get_invoice_factor,
     list_equipment_rates,
     list_logistics_rates,
     list_salary_rates,
+    list_salary_rates_grouped,
     list_salary_groups,
+    rename_salary_group,
+    reorder_salary_rates,
     update_equipment_daily_rate,
     update_invoice_factor,
     update_logistics_rate,
@@ -36,12 +40,10 @@ def init_pricing_routes(app):
             flash(f"Erreur chargement Équipement : {e}", "error")
 
         try:
-            salaries = list_salary_rates()
-            salary_groups = list_salary_groups()
+            salary_grouped = list_salary_rates_grouped()
         except Exception as e:
             current_app.logger.error(f"❌ Salaires: {e}")
-            salaries = []
-            salary_groups = []
+            salary_grouped = {}
             flash(f"Erreur chargement Salaires : {e}", "error")
 
         try:
@@ -54,9 +56,8 @@ def init_pricing_routes(app):
         return render_template(
             "admin/pricing.html",
             equipment=equipment,
-            salaries=salaries,
+            salary_grouped=salary_grouped,
             logistics=logistics,
-            salary_groups=salary_groups,
             invoice_factor=get_invoice_factor(),
         )
 
@@ -80,7 +81,9 @@ def init_pricing_routes(app):
     @require_roles('administrator')
     def admin_api_pricing_salary_add():
         try:
-            new_item = add_salary_rate()
+            data = request.get_json(force=True) if request.data else {}
+            group_name = data.get('group_name', '') if data else ''
+            new_item = add_salary_rate(group_name)
             return jsonify({"success": True, "data": new_item})
         except Exception as e:
             current_app.logger.error(f"❌ POST salary: {e}")
@@ -106,6 +109,39 @@ def init_pricing_routes(app):
             return jsonify({"success": True})
         except Exception as e:
             current_app.logger.error(f"❌ DELETE salary: {e}")
+            return jsonify({"success": False, "error": str(e)}), 400
+
+    @app.route("/admin/api/pricing/salary/reorder", methods=["PATCH"])
+    @require_roles('administrator')
+    def admin_api_pricing_salary_reorder():
+        try:
+            data = request.get_json(force=True)
+            reorder_salary_rates(data.get("groups", {}))
+            return jsonify({"success": True})
+        except Exception as e:
+            current_app.logger.error(f"❌ PATCH salary reorder: {e}")
+            return jsonify({"success": False, "error": str(e)}), 400
+
+    @app.route("/admin/api/pricing/salary/rename-group", methods=["PATCH"])
+    @require_roles('administrator')
+    def admin_api_pricing_salary_rename_group():
+        try:
+            data = request.get_json(force=True)
+            new_name = rename_salary_group(data.get("old_name"), data.get("new_name"))
+            return jsonify({"success": True, "new_name": new_name})
+        except Exception as e:
+            current_app.logger.error(f"❌ PATCH salary rename-group: {e}")
+            return jsonify({"success": False, "error": str(e)}), 400
+
+    @app.route("/admin/api/pricing/salary/delete-group", methods=["DELETE"])
+    @require_roles('administrator')
+    def admin_api_pricing_salary_delete_group():
+        try:
+            data = request.get_json(force=True)
+            count = delete_salary_group(data.get("group_name"))
+            return jsonify({"success": True, "deleted_count": count})
+        except Exception as e:
+            current_app.logger.error(f"❌ DELETE salary group: {e}")
             return jsonify({"success": False, "error": str(e)}), 400
 
     # ── API Logistique ───────────────────────────────────────────
