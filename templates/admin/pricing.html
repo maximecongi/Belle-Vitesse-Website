@@ -61,8 +61,8 @@
         <h3 class="pricing-section-title" style="margin: 0;">Grille des salaires</h3>
         <div style="display: flex; align-items: center; gap: 0.75rem;">
             {% if current_user.role_lower == 'administrator' %}
-            <span class="factor-badge" id="factorBadge"
-                title="Cliquez pour modifier le facteur de conversion">×{{ invoice_factor }}</span>
+            <span class="factor-badge" id="factorBadge" title="Cliquez pour modifier le facteur de conversion">×{{
+                invoice_factor }}</span>
             <button class="admin-btn admin-btn-primary" id="btnAddGroup">+ Nouveau groupe</button>
             {% else %}
             <span class="factor-badge" style="cursor: default;">×{{ invoice_factor }}</span>
@@ -76,14 +76,16 @@
         <div class="salary-group" data-group-name="{{ group_name }}">
             <div class="salary-group-header">
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span class="salary-group-title {% if current_user.role_lower == 'administrator' %}editable-group-title{% endif %}"
-                        title="{% if current_user.role_lower == 'administrator' %}Cliquez pour renommer{% endif %}">{{ group_name }}</span>
+                    <span
+                        class="salary-group-title {% if current_user.role_lower == 'administrator' %}editable-group-title{% endif %}"
+                        title="{% if current_user.role_lower == 'administrator' %}Cliquez pour renommer{% endif %}">{{
+                        group_name }}</span>
                     <span class="salary-group-count">{{ rates | length }}</span>
                 </div>
                 {% if current_user.role_lower == 'administrator' %}
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
                     <button class="admin-btn admin-btn-primary btn-add-salary-line" data-group="{{ group_name }}"
-                        style="padding: 0.3rem 0.7rem; font-size: 0.8rem;">+ Ligne</button>
+                        style="padding: 0.3rem 0.7rem; font-size: 0.8rem;">+ Nouvelle position</button>
                     <button class="admin-btn admin-btn-danger btn-delete-group" data-group="{{ group_name }}"
                         style="padding: 0.3rem 0.7rem; font-size: 0.8rem; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">Supprimer</button>
                 </div>
@@ -107,7 +109,8 @@
                     </thead>
                     <tbody class="salary-drop-zone" data-group="{{ group_name }}">
                         {% for rate in rates %}
-                        <tr data-row-id="{{ rate.id }}" {% if current_user.role_lower == 'administrator' %}draggable="true"{% endif %}>
+                        <tr data-row-id="{{ rate.id }}" {% if current_user.role_lower=='administrator'
+                            %}draggable="true" {% endif %}>
                             {% if current_user.role_lower == 'administrator' %}
                             <td class="drag-handle" title="Glisser pour réordonner">⠿</td>
                             {% endif %}
@@ -122,25 +125,30 @@
                             <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}"
                                 data-id="{{ rate.id }}" data-field="base_hourly" data-type="salary"
                                 style="text-align: right;">
-                                <span class="cell-value">{{ "%.2f"|format(rate.base_hourly | default(0) | float) }} €</span>
+                                <span class="cell-value">{{ "%.2f"|format(rate.base_hourly | default(0) | float) }}
+                                    €</span>
                             </td>
                             <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}"
                                 data-id="{{ rate.id }}" data-field="inter_10h" data-type="salary"
                                 style="text-align: right;">
-                                <span class="cell-value">{{ "%.2f"|format(rate.inter_10h | default(0) | float) }} €</span>
+                                <span class="cell-value">{{ "%.2f"|format(rate.inter_10h | default(0) | float) }}
+                                    €</span>
                             </td>
                             <td class="computed-cell" data-computed-from="inter_10h" data-row-id="{{ rate.id }}"
                                 style="text-align: right; color: var(--grey-2);">
-                                <span class="cell-value">{{ "%.2f"|format(rate.invoice_10h | default(0) | float) }} €</span>
+                                <span class="cell-value">{{ "%.2f"|format(rate.invoice_10h | default(0) | float) }}
+                                    €</span>
                             </td>
                             <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}"
                                 data-id="{{ rate.id }}" data-field="inter_8h" data-type="salary"
                                 style="text-align: right;">
-                                <span class="cell-value">{{ "%.2f"|format(rate.inter_8h | default(0) | float) }} €</span>
+                                <span class="cell-value">{{ "%.2f"|format(rate.inter_8h | default(0) | float) }}
+                                    €</span>
                             </td>
                             <td class="computed-cell" data-computed-from="inter_8h" data-row-id="{{ rate.id }}"
                                 style="text-align: right; color: var(--grey-2);">
-                                <span class="cell-value">{{ "%.2f"|format(rate.invoice_8h | default(0) | float) }} €</span>
+                                <span class="cell-value">{{ "%.2f"|format(rate.invoice_8h | default(0) | float) }}
+                                    €</span>
                             </td>
                             <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}"
                                 data-id="{{ rate.id }}" data-field="notes" data-type="salary">
@@ -220,9 +228,10 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const csrfToken = '{{ csrf_token() }}';
-    const isAdmin = {{ 'true' if current_user.role_lower == 'administrator' else 'false' }};
+    document.addEventListener('DOMContentLoaded', function () {
+        const csrfToken = '{{ csrf_token() }}';
+        const isAdmin = {{ 'true' if current_user.role_lower == 'administrator' else 'false'
+    }};
     let INVOICE_FACTOR = {{ invoice_factor }};
 
     // ── Flash System ───────────────────────────────────────────
@@ -261,29 +270,29 @@ document.addEventListener('DOMContentLoaded', function () {
                     headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
                     body: JSON.stringify({ value: num }),
                 })
-                .then(r => r.json())
-                .then(res => {
-                    if (res.success) {
-                        INVOICE_FACTOR = res.factor;
-                        factorBadge.textContent = '×' + res.factor;
-                        flash('Facteur mis à jour — ' + res.salaries.length + ' lignes recalculées', 'success');
-                        res.salaries.forEach(s => {
-                            const row = document.querySelector(`tr[data-row-id="${s.id}"]`);
-                            if (!row) return;
-                            const inv10 = row.querySelector('.computed-cell[data-computed-from="inter_10h"] .cell-value');
-                            const inv8 = row.querySelector('.computed-cell[data-computed-from="inter_8h"] .cell-value');
-                            if (inv10) inv10.textContent = parseFloat(s.invoice_10h || 0).toFixed(2) + ' €';
-                            if (inv8) inv8.textContent = parseFloat(s.invoice_8h || 0).toFixed(2) + ' €';
-                        });
-                    } else {
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.success) {
+                            INVOICE_FACTOR = res.factor;
+                            factorBadge.textContent = '×' + res.factor;
+                            flash('Facteur mis à jour — ' + res.salaries.length + ' lignes recalculées', 'success');
+                            res.salaries.forEach(s => {
+                                const row = document.querySelector(`tr[data-row-id="${s.id}"]`);
+                                if (!row) return;
+                                const inv10 = row.querySelector('.computed-cell[data-computed-from="inter_10h"] .cell-value');
+                                const inv8 = row.querySelector('.computed-cell[data-computed-from="inter_8h"] .cell-value');
+                                if (inv10) inv10.textContent = parseFloat(s.invoice_10h || 0).toFixed(2) + ' €';
+                                if (inv8) inv8.textContent = parseFloat(s.invoice_8h || 0).toFixed(2) + ' €';
+                            });
+                        } else {
+                            factorBadge.textContent = '×' + currentVal;
+                            flash(res.error || 'Erreur', 'error');
+                        }
+                    })
+                    .catch(() => {
                         factorBadge.textContent = '×' + currentVal;
-                        flash(res.error || 'Erreur', 'error');
-                    }
-                })
-                .catch(() => {
-                    factorBadge.textContent = '×' + currentVal;
-                    flash('Erreur réseau', 'error');
-                });
+                        flash('Erreur réseau', 'error');
+                    });
             };
             input.addEventListener('blur', saveFactor);
             input.addEventListener('keydown', e => {
@@ -366,27 +375,27 @@ document.addEventListener('DOMContentLoaded', function () {
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
                 body: JSON.stringify(body),
             })
-            .then(r => r.json())
-            .then(res => {
-                if (res.success) {
-                    flash('Sauvegardé', 'success');
-                    if (isInterField && res.data) {
-                        const invoiceField = cell.dataset.field.replace('inter_', 'invoice_');
-                        const computedCell = cell.closest('tr').querySelector(`.computed-cell[data-computed-from="${cell.dataset.field}"]`);
-                        if (computedCell) {
-                            const span = computedCell.querySelector('.cell-value');
-                            if (span) span.textContent = parseFloat(res.data[invoiceField] || 0).toFixed(2) + ' €';
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        flash('Sauvegardé', 'success');
+                        if (isInterField && res.data) {
+                            const invoiceField = cell.dataset.field.replace('inter_', 'invoice_');
+                            const computedCell = cell.closest('tr').querySelector(`.computed-cell[data-computed-from="${cell.dataset.field}"]`);
+                            if (computedCell) {
+                                const span = computedCell.querySelector('.cell-value');
+                                if (span) span.textContent = parseFloat(res.data[invoiceField] || 0).toFixed(2) + ' €';
+                            }
                         }
+                    } else {
+                        valueSpan.textContent = originalValue;
+                        flash(res.error || 'Erreur', 'error');
                     }
-                } else {
+                })
+                .catch(() => {
                     valueSpan.textContent = originalValue;
-                    flash(res.error || 'Erreur', 'error');
-                }
-            })
-            .catch(() => {
-                valueSpan.textContent = originalValue;
-                flash('Erreur réseau', 'error');
-            });
+                    flash('Erreur réseau', 'error');
+                });
         };
         input.addEventListener('blur', save);
         input.addEventListener('keydown', e => {
@@ -407,24 +416,88 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!name || !name.trim()) return;
             const groupName = name.trim();
 
-            // Créer une première ligne dans ce groupe
             fetch('/admin/api/pricing/salary', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
                 body: JSON.stringify({ group_name: groupName }),
             })
-            .then(r => r.json())
-            .then(res => {
-                if (res.success) {
-                    flash('Groupe "' + groupName + '" créé', 'success');
-                    // Recharger pour afficher le nouveau groupe avec sa table
-                    location.reload();
-                } else {
-                    flash(res.error || 'Erreur', 'error');
-                }
-            })
-            .catch(() => flash('Erreur réseau', 'error'));
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        flash('Groupe "' + groupName + '" créé', 'success');
+                        injectNewGroup(groupName, res.data);
+                    } else {
+                        flash(res.error || 'Erreur', 'error');
+                    }
+                })
+                .catch(() => flash('Erreur réseau', 'error'));
         });
+    }
+
+    function injectNewGroup(groupName, firstRate) {
+        const container = document.getElementById('salary-groups-container');
+        // Remove empty state if present
+        const emptyCard = container.querySelector('.admin-card');
+        if (emptyCard && !emptyCard.classList.contains('salary-group')) emptyCard.remove();
+
+        const groupHtml = `
+        <div class="salary-group" data-group-name="${groupName}">
+            <div class="salary-group-header">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span class="salary-group-title editable-group-title" title="Cliquez pour renommer">${groupName}</span>
+                    <span class="salary-group-count">1</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <button class="admin-btn admin-btn-primary btn-add-salary-line" data-group="${groupName}"
+                        style="padding: 0.3rem 0.7rem; font-size: 0.8rem;">+ Ligne</button>
+                    <button class="admin-btn admin-btn-danger btn-delete-group" data-group="${groupName}"
+                        style="padding: 0.3rem 0.7rem; font-size: 0.8rem; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">Supprimer</button>
+                </div>
+            </div>
+            <div class="admin-table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 30px;"></th>
+                            <th>Position</th>
+                            <th>Annexe</th>
+                            <th style="width: 90px; text-align: right;">Base/H</th>
+                            <th style="width: 100px; text-align: right;">Inter (10H)</th>
+                            <th style="width: 110px; text-align: right; color: var(--grey-2);">Invoice (10H)</th>
+                            <th style="width: 100px; text-align: right;">Inter (8H)</th>
+                            <th style="width: 110px; text-align: right; color: var(--grey-2);">Invoice (8H)</th>
+                            <th>Notes</th>
+                            <th style="width: 80px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="salary-drop-zone" data-group="${groupName}">
+                        <tr data-row-id="${firstRate.id}" draggable="true">
+                            <td class="drag-handle" title="Glisser pour réordonner">⠿</td>
+                            <td class="editable-cell" data-id="${firstRate.id}" data-field="position" data-type="salary"><span class="cell-value" style="font-weight: 600;"></span></td>
+                            <td class="editable-cell" data-id="${firstRate.id}" data-field="annexe" data-type="salary"><span class="cell-value"></span></td>
+                            <td class="editable-cell" data-id="${firstRate.id}" data-field="base_hourly" data-type="salary" style="text-align: right;"><span class="cell-value">0.00 €</span></td>
+                            <td class="editable-cell" data-id="${firstRate.id}" data-field="inter_10h" data-type="salary" style="text-align: right;"><span class="cell-value">0.00 €</span></td>
+                            <td class="computed-cell" data-computed-from="inter_10h" data-row-id="${firstRate.id}" style="text-align: right; color: var(--grey-2);"><span class="cell-value">0.00 €</span></td>
+                            <td class="editable-cell" data-id="${firstRate.id}" data-field="inter_8h" data-type="salary" style="text-align: right;"><span class="cell-value">0.00 €</span></td>
+                            <td class="computed-cell" data-computed-from="inter_8h" data-row-id="${firstRate.id}" style="text-align: right; color: var(--grey-2);"><span class="cell-value">0.00 €</span></td>
+                            <td class="editable-cell" data-id="${firstRate.id}" data-field="notes" data-type="salary"><span class="cell-value"></span></td>
+                            <td style="text-align: center;">
+                                <button class="admin-btn admin-btn-danger btn-delete-line" data-id="${firstRate.id}" data-type="salary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">Supprimer</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>`;
+
+        container.insertAdjacentHTML('beforeend', groupHtml);
+        const newGroup = container.lastElementChild;
+        // Init drag & drop on the new group
+        newGroup.querySelectorAll('tr[draggable="true"]').forEach(initDragOnRow);
+        initDropZone(newGroup.querySelector('.salary-drop-zone'));
+        // Focus first editable cell
+        const firstCell = newGroup.querySelector('.editable-cell');
+        if (firstCell) firstCell.click();
     }
 
     // ── Rename Group ──────────────────────────────────────────
@@ -456,27 +529,27 @@ document.addEventListener('DOMContentLoaded', function () {
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
                 body: JSON.stringify({ old_name: currentName, new_name: newName }),
             })
-            .then(r => r.json())
-            .then(res => {
-                if (res.success) {
-                    title.textContent = res.new_name;
-                    // Mettre à jour data-group-name et data-group partout
-                    const groupDiv = title.closest('.salary-group');
-                    if (groupDiv) {
-                        groupDiv.dataset.groupName = res.new_name;
-                        groupDiv.querySelector('.salary-drop-zone').dataset.group = res.new_name;
-                        const addBtn = groupDiv.querySelector('.btn-add-salary-line');
-                        if (addBtn) addBtn.dataset.group = res.new_name;
-                        const delBtn = groupDiv.querySelector('.btn-delete-group');
-                        if (delBtn) delBtn.dataset.group = res.new_name;
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        title.textContent = res.new_name;
+                        // Mettre à jour data-group-name et data-group partout
+                        const groupDiv = title.closest('.salary-group');
+                        if (groupDiv) {
+                            groupDiv.dataset.groupName = res.new_name;
+                            groupDiv.querySelector('.salary-drop-zone').dataset.group = res.new_name;
+                            const addBtn = groupDiv.querySelector('.btn-add-salary-line');
+                            if (addBtn) addBtn.dataset.group = res.new_name;
+                            const delBtn = groupDiv.querySelector('.btn-delete-group');
+                            if (delBtn) delBtn.dataset.group = res.new_name;
+                        }
+                        flash('Groupe renommé', 'success');
+                    } else {
+                        title.textContent = currentName;
+                        flash(res.error || 'Erreur', 'error');
                     }
-                    flash('Groupe renommé', 'success');
-                } else {
-                    title.textContent = currentName;
-                    flash(res.error || 'Erreur', 'error');
-                }
-            })
-            .catch(() => { title.textContent = currentName; flash('Erreur réseau', 'error'); });
+                })
+                .catch(() => { title.textContent = currentName; flash('Erreur réseau', 'error'); });
         };
         input.addEventListener('blur', saveRename);
         input.addEventListener('keydown', e => {
@@ -497,15 +570,15 @@ document.addEventListener('DOMContentLoaded', function () {
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
             body: JSON.stringify({ group_name: groupName }),
         })
-        .then(r => r.json())
-        .then(res => {
-            if (res.success) {
-                btn.closest('.salary-group').remove();
-                flash('Groupe supprimé (' + res.deleted_count + ' lignes)', 'success');
-            } else {
-                flash(res.error || 'Erreur', 'error');
-            }
-        });
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    btn.closest('.salary-group').remove();
+                    flash('Groupe supprimé (' + res.deleted_count + ' lignes)', 'success');
+                } else {
+                    flash(res.error || 'Erreur', 'error');
+                }
+            });
     });
 
     // ── Add Line in Group ─────────────────────────────────────
@@ -519,16 +592,16 @@ document.addEventListener('DOMContentLoaded', function () {
             headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
             body: JSON.stringify({ group_name: groupName }),
         })
-        .then(r => r.json())
-        .then(res => {
-            if (res.success) {
-                flash('Ligne ajoutée', 'success');
-                injectSalaryRow(btn.closest('.salary-group').querySelector('.salary-drop-zone'), res.data);
-            } else {
-                flash(res.error || 'Erreur', 'error');
-            }
-        })
-        .catch(() => flash('Erreur réseau', 'error'));
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    flash('Ligne ajoutée', 'success');
+                    injectSalaryRow(btn.closest('.salary-group').querySelector('.salary-drop-zone'), res.data);
+                } else {
+                    flash(res.error || 'Erreur', 'error');
+                }
+            })
+            .catch(() => flash('Erreur réseau', 'error'));
     });
 
     function injectSalaryRow(tbody, data) {
@@ -576,12 +649,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
                 body: JSON.stringify({}),
             })
-            .then(r => r.json())
-            .then(res => {
-                if (res.success) {
-                    flash('Ligne ajoutée', 'success');
-                    const tbody = document.getElementById('logistics-tbody');
-                    const html = `
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        flash('Ligne ajoutée', 'success');
+                        const tbody = document.getElementById('logistics-tbody');
+                        const html = `
                         <tr data-row-id="${res.data.id}">
                             <td class="editable-cell" data-id="${res.data.id}" data-field="item_name" data-type="logistics"><span class="cell-value" style="font-weight: 600;"></span></td>
                             <td class="editable-cell" data-id="${res.data.id}" data-field="daily_rate" data-type="logistics" style="text-align: right;"><span class="cell-value">0.00</span></td>
@@ -590,15 +663,15 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <button class="admin-btn admin-btn-danger btn-delete-line" data-id="${res.data.id}" data-type="logistics" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">Supprimer</button>
                             </td>
                         </tr>`;
-                    if (tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
-                    tbody.insertAdjacentHTML('beforeend', html);
-                    const firstCell = tbody.lastElementChild.querySelector('.editable-cell');
-                    if (firstCell) firstCell.click();
-                } else {
-                    flash(res.error || 'Erreur', 'error');
-                }
-            })
-            .catch(() => flash('Erreur réseau', 'error'));
+                        if (tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
+                        tbody.insertAdjacentHTML('beforeend', html);
+                        const firstCell = tbody.lastElementChild.querySelector('.editable-cell');
+                        if (firstCell) firstCell.click();
+                    } else {
+                        flash(res.error || 'Erreur', 'error');
+                    }
+                })
+                .catch(() => flash('Erreur réseau', 'error'));
         });
     });
 
@@ -613,25 +686,25 @@ document.addEventListener('DOMContentLoaded', function () {
         const url = (type === 'salary' ? '/admin/api/pricing/salary/' : '/admin/api/pricing/logistics/') + id;
 
         fetch(url, { method: 'DELETE', headers: { 'X-CSRFToken': csrfToken } })
-        .then(r => r.json())
-        .then(res => {
-            if (res.success) {
-                const row = btn.closest('tr');
-                const tbody = row.closest('tbody');
-                row.remove();
-                flash('Supprimé', 'success');
-                // Update salary group count
-                if (type === 'salary' && tbody) {
-                    const groupDiv = tbody.closest('.salary-group');
-                    if (groupDiv) {
-                        const countBadge = groupDiv.querySelector('.salary-group-count');
-                        if (countBadge) countBadge.textContent = tbody.querySelectorAll('tr[data-row-id]').length;
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    const row = btn.closest('tr');
+                    const tbody = row.closest('tbody');
+                    row.remove();
+                    flash('Supprimé', 'success');
+                    // Update salary group count
+                    if (type === 'salary' && tbody) {
+                        const groupDiv = tbody.closest('.salary-group');
+                        if (groupDiv) {
+                            const countBadge = groupDiv.querySelector('.salary-group-count');
+                            if (countBadge) countBadge.textContent = tbody.querySelectorAll('tr[data-row-id]').length;
+                        }
                     }
+                } else {
+                    flash(res.error || 'Erreur', 'error');
                 }
-            } else {
-                flash(res.error || 'Erreur', 'error');
-            }
-        });
+            });
     });
 
     // ══════════════════════════════════════════════════════════
@@ -659,14 +732,13 @@ document.addEventListener('DOMContentLoaded', function () {
         // Init drag on existing rows
         document.querySelectorAll('.salary-drop-zone tr[draggable="true"]').forEach(initDragOnRow);
 
-        // Drop zones
-        document.querySelectorAll('.salary-drop-zone').forEach(zone => {
+        // Drop zone initializer (reusable for dynamically added groups)
+        function initDropZone(zone) {
             zone.addEventListener('dragover', function (e) {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
                 this.classList.add('drag-over');
 
-                // Find insertion point
                 const rows = [...this.querySelectorAll('tr[data-row-id]:not(.dragging)')];
                 const afterRow = rows.reduce((closest, row) => {
                     const box = row.getBoundingClientRect();
@@ -677,7 +749,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     return closest;
                 }, { offset: Number.NEGATIVE_INFINITY }).element;
 
-                // Show indicator
                 this.querySelectorAll('.drag-indicator').forEach(i => i.remove());
                 const indicator = document.createElement('tr');
                 indicator.className = 'drag-indicator';
@@ -703,7 +774,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (!draggedRow) return;
 
-                // Find insertion point
                 const rows = [...this.querySelectorAll('tr[data-row-id]:not(.dragging)')];
                 const afterRow = rows.reduce((closest, row) => {
                     const box = row.getBoundingClientRect();
@@ -714,7 +784,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     return closest;
                 }, { offset: Number.NEGATIVE_INFINITY }).element;
 
-                // Move the DOM element
                 const sourceZone = draggedRow.closest('.salary-drop-zone');
                 if (afterRow) {
                     this.insertBefore(draggedRow, afterRow);
@@ -722,20 +791,21 @@ document.addEventListener('DOMContentLoaded', function () {
                     this.appendChild(draggedRow);
                 }
 
-                // Update group counts
-                [sourceZone, this].forEach(zone => {
-                    if (!zone) return;
-                    const groupDiv = zone.closest('.salary-group');
+                [sourceZone, this].forEach(z => {
+                    if (!z) return;
+                    const groupDiv = z.closest('.salary-group');
                     if (groupDiv) {
                         const badge = groupDiv.querySelector('.salary-group-count');
-                        if (badge) badge.textContent = zone.querySelectorAll('tr[data-row-id]').length;
+                        if (badge) badge.textContent = z.querySelectorAll('tr[data-row-id]').length;
                     }
                 });
 
-                // Persist the new order to the server
                 saveReorder();
             });
-        });
+        }
+
+        // Init drop zones on existing groups
+        document.querySelectorAll('.salary-drop-zone').forEach(initDropZone);
 
         function saveReorder() {
             const groups = {};
@@ -752,15 +822,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
                 body: JSON.stringify({ groups }),
             })
-            .then(r => r.json())
-            .then(res => {
-                if (res.success) {
-                    flash('Ordre sauvegardé', 'success');
-                } else {
-                    flash(res.error || 'Erreur', 'error');
-                }
-            })
-            .catch(() => flash('Erreur réseau', 'error'));
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        flash('Ordre sauvegardé', 'success');
+                    } else {
+                        flash(res.error || 'Erreur', 'error');
+                    }
+                })
+                .catch(() => flash('Erreur réseau', 'error'));
         }
     }
 });
