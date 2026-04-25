@@ -22,7 +22,7 @@
         <div class="salary-group-header">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <span class="salary-group-title">{{ cat_data.label }}</span>
-                <span class="salary-group-count">{{ cat_data.items | length }}</span>
+                <span class="salary-group-count">{{ cat_data['items'] | length }}</span>
             </div>
         </div>
         <div class="admin-table-container">
@@ -36,7 +36,8 @@
                 </thead>
                 <tbody class="equipment-drop-zone" data-table="{{ cat_data.table }}">
                     {% for item in cat_data['items'] %}
-                    <tr data-row-id="{{ item.id }}" {% if current_user.role_lower == 'administrator' %}draggable="true"{% endif %}>
+                    <tr data-row-id="{{ item.id }}" {% if current_user.role_lower=='administrator' %}draggable="true" {%
+                        endif %}>
                         {% if current_user.role_lower == 'administrator' %}
                         <td class="drag-handle" title="Glisser pour réordonner">⠿</td>
                         {% endif %}
@@ -212,7 +213,8 @@
                 </thead>
                 <tbody id="logistics-tbody" class="logistics-drop-zone">
                     {% for item in logistics %}
-                    <tr data-row-id="{{ item.id }}" {% if current_user.role_lower == 'administrator' %}draggable="true"{% endif %}>
+                    <tr data-row-id="{{ item.id }}" {% if current_user.role_lower=='administrator' %}draggable="true" {%
+                        endif %}>
                         {% if current_user.role_lower == 'administrator' %}
                         <td class="drag-handle" title="Glisser pour réordonner">⠿</td>
                         {% endif %}
@@ -612,7 +614,7 @@
             .then(r => r.json())
             .then(res => {
                 if (res.success) {
-                    flash('Ligne ajoutée', 'success');
+                    flash('Position ajoutée', 'success');
                     injectSalaryRow(btn.closest('.salary-group').querySelector('.salary-drop-zone'), res.data);
                 } else {
                     flash(res.error || 'Erreur', 'error');
@@ -683,7 +685,7 @@
                         </tr>`;
                         if (tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
                         tbody.insertAdjacentHTML('beforeend', html);
-                        
+
                         // Update count
                         const groupDiv = tbody.closest('.salary-group');
                         if (groupDiv) {
@@ -810,8 +812,8 @@
 
                 // If equipment, restrict to the SAME table (as requested "au sein du tableau ( pas en dehors )")
                 if (this.classList.contains('equipment-drop-zone') && this !== sourceZone) {
-                   flash('Déplacement entre catégories non autorisé', 'error');
-                   return;
+                    flash('Déplacement entre catégories non autorisé', 'error');
+                    return;
                 }
 
                 const rows = [...this.querySelectorAll('tr[data-row-id]:not(.dragging)')];
