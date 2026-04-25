@@ -13,6 +13,8 @@ from services.admin.pricing import (
     list_salary_rates_grouped,
     list_salary_groups,
     rename_salary_group,
+    reorder_equipment,
+    reorder_logistics_rates,
     reorder_salary_rates,
     update_equipment_daily_rate,
     update_invoice_factor,
@@ -73,6 +75,17 @@ def init_pricing_routes(app):
             return jsonify({"success": True, "data": updated})
         except Exception as e:
             current_app.logger.error(f"❌ PATCH equipment: {e}")
+            return jsonify({"success": False, "error": str(e)}), 400
+
+    @app.route("/admin/api/pricing/equipment/reorder", methods=["PATCH"])
+    @require_roles('administrator')
+    def admin_api_pricing_equipment_reorder():
+        try:
+            data = request.get_json(force=True)
+            reorder_equipment(data.get("table"), data.get("ids", []))
+            return jsonify({"success": True})
+        except Exception as e:
+            current_app.logger.error(f"❌ PATCH equipment reorder: {e}")
             return jsonify({"success": False, "error": str(e)}), 400
 
     # ── API Salaires ─────────────────────────────────────────────
@@ -176,6 +189,17 @@ def init_pricing_routes(app):
             return jsonify({"success": True})
         except Exception as e:
             current_app.logger.error(f"❌ DELETE logistics: {e}")
+            return jsonify({"success": False, "error": str(e)}), 400
+
+    @app.route("/admin/api/pricing/logistics/reorder", methods=["PATCH"])
+    @require_roles('administrator')
+    def admin_api_pricing_logistics_reorder():
+        try:
+            data = request.get_json(force=True)
+            reorder_logistics_rates(data.get("ids", []))
+            return jsonify({"success": True})
+        except Exception as e:
+            current_app.logger.error(f"❌ PATCH logistics reorder: {e}")
             return jsonify({"success": False, "error": str(e)}), 400
 
     # ── API Facteur Invoice ────────────────────────────────────────

@@ -233,7 +233,9 @@ tr.dragging {
     opacity: 0.4;
 }
 
-.salary-drop-zone.drag-over {
+.salary-drop-zone.drag-over, 
+.equipment-drop-zone.drag-over, 
+.logistics-drop-zone.drag-over {
     background: rgba(255, 200, 69, 0.04);
 }
 

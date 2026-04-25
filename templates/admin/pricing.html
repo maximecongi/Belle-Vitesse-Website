@@ -18,19 +18,28 @@
 <!-- ══════════════════════════════════════════════════════════ -->
 <div class="pricing-tab-content active" id="panel-equipment">
     {% for cat_key, cat_data in equipment.items() %}
-    <div class="admin-card">
-        <h3 class="pricing-section-title">{{ cat_data.label }}</h3>
+    <div class="salary-group" data-group-name="{{ cat_key }}">
+        <div class="salary-group-header">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span class="salary-group-title">{{ cat_data.label }}</span>
+                <span class="salary-group-count">{{ cat_data.items | length }}</span>
+            </div>
+        </div>
         <div class="admin-table-container">
             <table class="admin-table">
                 <thead>
                     <tr>
+                        {% if current_user.role_lower == 'administrator' %}<th style="width: 30px;"></th>{% endif %}
                         <th>Item</th>
                         <th style="width: 140px; text-align: right;">Tarif journalier HT</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="equipment-drop-zone" data-table="{{ cat_data.table }}">
                     {% for item in cat_data['items'] %}
-                    <tr>
+                    <tr data-row-id="{{ item.id }}" {% if current_user.role_lower == 'administrator' %}draggable="true"{% endif %}>
+                        {% if current_user.role_lower == 'administrator' %}
+                        <td class="drag-handle" title="Glisser pour réordonner">⠿</td>
+                        {% endif %}
                         <td style="font-weight: 600;">{{ item.name }}</td>
                         <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}"
                             data-id="{{ item.id }}" data-table="{{ cat_data.table }}" data-type="equipment"
@@ -40,7 +49,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="2" style="text-align: center; padding: 3rem; color: var(--grey-2);">
+                        <td colspan="3" style="text-align: center; padding: 3rem; color: var(--grey-2);">
                             Aucun élément dans cette catégorie.
                         </td>
                     </tr>
@@ -179,26 +188,34 @@
 <!-- TAB : Logistique                                          -->
 <!-- ══════════════════════════════════════════════════════════ -->
 <div class="pricing-tab-content" id="panel-logistics">
-    <div class="admin-card">
-        <div class="admin-card-header">
-            <h3 class="pricing-section-title" style="margin: 0;">Frais logistiques</h3>
+    <div class="salary-group">
+        <div class="salary-group-header">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span class="salary-group-title">Frais logistiques</span>
+                <span class="salary-group-count">{{ logistics | length }}</span>
+            </div>
             {% if current_user.role_lower == 'administrator' %}
-            <button class="admin-btn admin-btn-primary btn-add-line" data-type="logistics">+ Ajouter une ligne</button>
+            <button class="admin-btn admin-btn-primary btn-add-line" data-type="logistics"
+                style="padding: 0.3rem 0.7rem; font-size: 0.8rem;">+ Nouvelle ligne</button>
             {% endif %}
         </div>
         <div class="admin-table-container">
             <table class="admin-table">
                 <thead>
                     <tr>
+                        {% if current_user.role_lower == 'administrator' %}<th style="width: 30px;"></th>{% endif %}
                         <th>Désignation</th>
                         <th style="width: 140px; text-align: right;">Tarif HT</th>
                         <th>Notes</th>
-                        <th style="width: 50px;"></th>
+                        <th style="width: 80px;"></th>
                     </tr>
                 </thead>
-                <tbody id="logistics-tbody">
+                <tbody id="logistics-tbody" class="logistics-drop-zone">
                     {% for item in logistics %}
-                    <tr data-row-id="{{ item.id }}">
+                    <tr data-row-id="{{ item.id }}" {% if current_user.role_lower == 'administrator' %}draggable="true"{% endif %}>
+                        {% if current_user.role_lower == 'administrator' %}
+                        <td class="drag-handle" title="Glisser pour réordonner">⠿</td>
+                        {% endif %}
                         <td class="{% if current_user.role_lower == 'administrator' %}editable-cell{% endif %}"
                             data-id="{{ item.id }}" data-field="item_name" data-type="logistics">
                             <span class="cell-value" style="font-weight: 600;">{{ item.item_name }}</span>
@@ -655,7 +672,8 @@
                         flash('Ligne ajoutée', 'success');
                         const tbody = document.getElementById('logistics-tbody');
                         const html = `
-                        <tr data-row-id="${res.data.id}">
+                        <tr data-row-id="${res.data.id}" draggable="true">
+                            <td class="drag-handle" title="Glisser pour réordonner">⠿</td>
                             <td class="editable-cell" data-id="${res.data.id}" data-field="item_name" data-type="logistics"><span class="cell-value" style="font-weight: 600;"></span></td>
                             <td class="editable-cell" data-id="${res.data.id}" data-field="daily_rate" data-type="logistics" style="text-align: right;"><span class="cell-value">0.00</span></td>
                             <td class="editable-cell" data-id="${res.data.id}" data-field="notes" data-type="logistics"><span class="cell-value"></span></td>
@@ -665,6 +683,15 @@
                         </tr>`;
                         if (tbody.querySelector('td[colspan]')) tbody.innerHTML = '';
                         tbody.insertAdjacentHTML('beforeend', html);
+                        
+                        // Update count
+                        const groupDiv = tbody.closest('.salary-group');
+                        if (groupDiv) {
+                            const badge = groupDiv.querySelector('.salary-group-count');
+                            if (badge) badge.textContent = tbody.querySelectorAll('tr[data-row-id]').length;
+                        }
+
+                        initDragOnRow(tbody.lastElementChild);
                         const firstCell = tbody.lastElementChild.querySelector('.editable-cell');
                         if (firstCell) firstCell.click();
                     } else {
@@ -693,8 +720,8 @@
                     const tbody = row.closest('tbody');
                     row.remove();
                     flash('Supprimé', 'success');
-                    // Update salary group count
-                    if (type === 'salary' && tbody) {
+                    // Update count (generic for all sections)
+                    if (tbody) {
                         const groupDiv = tbody.closest('.salary-group');
                         if (groupDiv) {
                             const countBadge = groupDiv.querySelector('.salary-group-count');
@@ -724,13 +751,13 @@
             row.addEventListener('dragend', function () {
                 this.classList.remove('dragging');
                 draggedRow = null;
-                document.querySelectorAll('.salary-drop-zone').forEach(z => z.classList.remove('drag-over'));
+                document.querySelectorAll('.salary-drop-zone, .equipment-drop-zone, .logistics-drop-zone').forEach(z => z.classList.remove('drag-over'));
                 document.querySelectorAll('.drag-indicator').forEach(i => i.remove());
             });
         }
 
         // Init drag on existing rows
-        document.querySelectorAll('.salary-drop-zone tr[draggable="true"]').forEach(initDragOnRow);
+        document.querySelectorAll('.salary-drop-zone tr[draggable="true"], .equipment-drop-zone tr[draggable="true"], .logistics-drop-zone tr[draggable="true"]').forEach(initDragOnRow);
 
         // Drop zone initializer (reusable for dynamically added groups)
         function initDropZone(zone) {
@@ -774,6 +801,19 @@
 
                 if (!draggedRow) return;
 
+                // Restrict drop to the same type of zone
+                const sourceZone = draggedRow.closest('tbody');
+                if (!this.classList.contains(sourceZone.className)) {
+                    flash('Impossible de déplacer d\'une section à une autre', 'error');
+                    return;
+                }
+
+                // If equipment, restrict to the SAME table (as requested "au sein du tableau ( pas en dehors )")
+                if (this.classList.contains('equipment-drop-zone') && this !== sourceZone) {
+                   flash('Déplacement entre catégories non autorisé', 'error');
+                   return;
+                }
+
                 const rows = [...this.querySelectorAll('tr[data-row-id]:not(.dragging)')];
                 const afterRow = rows.reduce((closest, row) => {
                     const box = row.getBoundingClientRect();
@@ -784,7 +824,6 @@
                     return closest;
                 }, { offset: Number.NEGATIVE_INFINITY }).element;
 
-                const sourceZone = draggedRow.closest('.salary-drop-zone');
                 if (afterRow) {
                     this.insertBefore(draggedRow, afterRow);
                 } else {
@@ -800,14 +839,20 @@
                     }
                 });
 
-                saveReorder();
+                if (this.classList.contains('salary-drop-zone')) {
+                    saveSalaryReorder();
+                } else if (this.classList.contains('equipment-drop-zone')) {
+                    saveEquipmentReorder(this);
+                } else if (this.classList.contains('logistics-drop-zone')) {
+                    saveLogisticsReorder();
+                }
             });
         }
 
-        // Init drop zones on existing groups
-        document.querySelectorAll('.salary-drop-zone').forEach(initDropZone);
+        // Init drop zones
+        document.querySelectorAll('.salary-drop-zone, .equipment-drop-zone, .logistics-drop-zone').forEach(initDropZone);
 
-        function saveReorder() {
+        function saveSalaryReorder() {
             const groups = {};
             document.querySelectorAll('.salary-drop-zone').forEach(zone => {
                 const groupName = zone.dataset.group;
@@ -826,6 +871,46 @@
                 .then(res => {
                     if (res.success) {
                         flash('Ordre sauvegardé', 'success');
+                    } else {
+                        flash(res.error || 'Erreur', 'error');
+                    }
+                })
+                .catch(() => flash('Erreur réseau', 'error'));
+        }
+
+        function saveEquipmentReorder(zone) {
+            const table = zone.dataset.table;
+            const ids = [...zone.querySelectorAll('tr[data-row-id]')].map(r => r.dataset.rowId);
+
+            fetch('/admin/api/pricing/equipment/reorder', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ table, ids }),
+            })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        flash('Ordre ' + table + ' sauvegardé', 'success');
+                    } else {
+                        flash(res.error || 'Erreur', 'error');
+                    }
+                })
+                .catch(() => flash('Erreur réseau', 'error'));
+        }
+
+        function saveLogisticsReorder() {
+            const zone = document.querySelector('.logistics-drop-zone');
+            const ids = [...zone.querySelectorAll('tr[data-row-id]')].map(r => parseInt(r.dataset.rowId));
+
+            fetch('/admin/api/pricing/logistics/reorder', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify({ ids }),
+            })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        flash('Ordre logistique sauvegardé', 'success');
                     } else {
                         flash(res.error || 'Erreur', 'error');
                     }

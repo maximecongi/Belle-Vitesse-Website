@@ -78,7 +78,7 @@ def _item_from_record(record):
         "id": record.id,
         "name": fields.get("name") or fields.get("Label") or "Sans nom",
         "daily_rate": rate,
-        "order": fields.get("order", 999),
+        "display_order": getattr(record, 'display_order', 0) or 0,
     }
 
 
@@ -100,13 +100,26 @@ def list_equipment_rates():
         try:
             records = model.query.all()
             items = [_item_from_record(r) for r in records]
-            items.sort(key=lambda x: x["order"])
+            items.sort(key=lambda x: (x["display_order"], x["name"]))
             result[key]["items"] = items
         except Exception as e:
             logger.error(f"Erreur chargement {key} pour tarification: {e}")
-            # On laisse items=[] pour cette catégorie
 
     return result
+
+
+def reorder_equipment(table_name, item_ids):
+    """Réordonne les items d'une catégorie d'équipement."""
+    table_map = {"vehicles": Vehicle, "heads": Head, "grip_products": GripProduct}
+    model = table_map.get(table_name)
+    if not model:
+        raise ValueError(f"Table inconnue : {table_name}")
+    for i, item_id in enumerate(item_ids):
+        record = model.query.get(item_id)
+        if record:
+            record.display_order = i
+    db.session.commit()
+    return True
 
 
 def update_equipment_daily_rate(table_name, record_id, value):
@@ -331,3 +344,13 @@ def update_logistics_rate(rate_id, field, value):
     setattr(rate, field, value)
     db.session.commit()
     return rate.to_dict()
+
+
+def reorder_logistics_rates(item_ids):
+    """Réordonne les tarifs logistiques."""
+    for i, rate_id in enumerate(item_ids):
+        rate = LogisticsRate.query.get(int(rate_id))
+        if rate:
+            rate.display_order = i
+    db.session.commit()
+    return True

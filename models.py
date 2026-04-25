@@ -536,12 +536,14 @@ class Vehicle(db.Model, SyncRecordMixin):
     """Véhicules synchronisés depuis Airtable."""
     __tablename__ = "vehicles"
     daily_rate = db.Column(db.Numeric(10, 2), nullable=True)
+    display_order = db.Column(db.Integer, nullable=False, default=0)
 
 
 class Head(db.Model, SyncRecordMixin):
     """Têtes de caméra synchronisées depuis Airtable."""
     __tablename__ = "heads"
     daily_rate = db.Column(db.Numeric(10, 2), nullable=True)
+    display_order = db.Column(db.Integer, nullable=False, default=0)
 
 
 class GripCategory(db.Model, SyncRecordMixin):
@@ -553,6 +555,7 @@ class GripProduct(db.Model, SyncRecordMixin):
     """Produits Grip individuels (Airtable)."""
     __tablename__ = "grip_products"
     daily_rate = db.Column(db.Numeric(10, 2), nullable=True)
+    display_order = db.Column(db.Integer, nullable=False, default=0)
 
 
 class Config(db.Model, SyncRecordMixin):
