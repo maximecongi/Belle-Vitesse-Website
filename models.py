@@ -83,6 +83,61 @@ class Production(db.Model):
         return f"<Production {self.name}>"
 
 
+class PreQuote(db.Model):
+    """Modèle représentant une pré-quote (devis rapide) pour une production."""
+    __tablename__ = "pre_quotes"
+
+    id = db.Column(db.Integer, primary_key=True)
+    reference = db.Column(db.String(50), unique=True, nullable=False)  # ex: PQ-2026-001
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
+
+    # Relation avec Production
+    production_id = db.Column(db.Integer, db.ForeignKey('productions.id'), nullable=False)
+    
+    # Informations projet
+    project_name = db.Column(db.String(200))
+    shoot_date = db.Column(db.Date)
+    shoot_location = db.Column(db.String(200))
+
+    # Lignes de prestation (JSON)
+    # [
+    #   {"category": "equipment", "description": "...", "quantity": 1, "unit": "jour", "unit_price": 850.00, "total": 850.00},
+    #   ...
+    # ]
+    prestations = db.Column(db.JSON, nullable=False)
+
+    # Totaux calculés
+    total_ht = db.Column(db.Numeric(10, 2), nullable=False, default=0)
+    tva_rate = db.Column(db.Numeric(5, 2), default=20.00)
+    tva_amount = db.Column(db.Numeric(10, 2), nullable=False, default=0)
+    total_ttc = db.Column(db.Numeric(10, 2), nullable=False, default=0)
+
+    # Statut et Tracking
+    status = db.Column(db.String(20), default='draft') # draft, sent, accepted
+    pdf_path = db.Column(db.String(500))
+    
+    # Relations
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id')) # Créé par
+    production = db.relationship('Production', backref=db.backref('pre_quotes', lazy=True))
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "reference": self.reference,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "production_name": self.production.name if self.production else "Inconnue",
+            "project_name": self.project_name,
+            "total_ht": float(self.total_ht),
+            "total_ttc": float(self.total_ttc),
+            "status": self.status,
+            "pdf_path": self.pdf_path
+        }
+
+    def __repr__(self):
+        return f"<PreQuote {self.reference} - {self.status}>"
+
+
 class Contact(db.Model):
     """Modèle représentant un contact physique (Pilote, Chargé de prod, etc.)."""
     __tablename__ = "contacts"

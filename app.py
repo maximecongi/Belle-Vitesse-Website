@@ -8,7 +8,7 @@ from flask import Flask, abort, g, request, session, url_for
 
 from config import config
 from extensions import cache, compress, csrf, limiter
-from models import User, db
+from models import PreQuote, User, db
 from routes import init_error_handlers, init_routes
 from services.admin.sql_logger import init_sql_logger
 from services.admin.status_mapping import (

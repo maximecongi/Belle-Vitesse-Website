@@ -12,6 +12,7 @@ from .files import init_files_routes
 from .newsletter import init_newsletter_routes
 from .productions import init_productions_routes
 from .projects import init_projects_routes
+from .pre_quotes import init_pre_quotes_routes
 from .pricing import init_pricing_routes
 from .tools import init_tools_routes
 from .users import init_users_routes
@@ -34,6 +35,7 @@ def init_admin_routes(app):
     init_users_routes(app)
     init_pricing_routes(app)
     init_calendar_routes(app)
+    init_pre_quotes_routes(app)
 
     @app.errorhandler(CSRFError)
     def handle_csrf_error(e):

@@ -1,0 +1,107 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Pré-Quotes{% endblock %}
+{% block page_title %}🚀 Pré-Quotes{% endblock %}
+
+{% block header_actions %}
+<div style="display: flex; gap: 1rem; align-items: center;">
+    <input type="text" id="searchInput" class="form-input" placeholder="🔍 Rechercher..."
+        style="width: 250px; font-size: 0.9rem;" autocomplete="off">
+    <a href="{{ url_for('admin_pre_quote_new') }}" class="admin-btn admin-btn-primary">+ Nouvelle Pré-Quote</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <div class="admin-table-container">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Référence</th>
+                    <th>Date</th>
+                    <th>Production / Projet</th>
+                    <th>Montant HT</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for quote in pre_quotes %}
+                <tr class="searchable-row" data-search="{{ quote.reference|lower }} {{ quote.production.name|lower }} {{ quote.project_name|lower }}">
+                    <td style="font-weight: 600;">{{ quote.reference }}</td>
+                    <td>{{ quote.created_at.strftime('%d/%m/%Y') }}</td>
+                    <td>
+                        <span style="font-weight: 600;">{{ quote.production.name }}</span><br>
+                        <span style="font-size: 0.85rem; color: var(--grey-2);">{{ quote.project_name or '—' }}</span>
+                    </td>
+                    <td style="font-weight: 600;">{{ "{:,.2f}".format(quote.total_ht)|replace(',', ' ') }} €</td>
+                    <td>
+                        {% if quote.status == 'draft' %}
+                            <span class="badge-pill" data-val="pending">Brouillon</span>
+                        {% elif quote.status == 'sent' %}
+                            <span class="badge-pill" data-val="to_sign">Envoyé</span>
+                        {% elif quote.status == 'accepted' %}
+                            <span class="badge-pill" data-val="signed">Accepté</span>
+                        {% else %}
+                            <span class="badge-pill">{{ quote.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <a href="{{ url_for('admin_pre_quote_pdf', quote_id=quote.id) }}" target="_blank" class="admin-btn admin-btn-secondary" title="Voir le PDF">
+                                📄 PDF
+                            </a>
+                            <a href="{{ url_for('admin_pre_quote_edit', quote_id=quote.id) }}" class="admin-btn admin-btn-secondary">
+                                Éditer
+                            </a>
+                            <button onclick="deletePreQuote({{ quote.id }}, '{{ quote.reference }}')" class="admin-btn" style="background: #fee2e2; color: #dc2626; border: none;">
+                                🗑️
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 3rem; color: var(--grey-2);">
+                        Aucune pré-quote trouvée. Commencez par en créer une !
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('searchInput').addEventListener('input', function(e) {
+        const term = e.target.value.toLowerCase();
+        document.querySelectorAll('.searchable-row').forEach(row => {
+            const text = row.getAttribute('data-search');
+            row.style.display = text.includes(term) ? '' : 'none';
+        });
+    });
+
+    function deletePreQuote(id, ref) {
+        if (!confirm(`Êtes-vous sûr de vouloir supprimer la pré-quote ${ref} ?`)) return;
+        
+        fetch(`/admin/pre-quotes/${id}/delete`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': "{{ csrf_token() }}",
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                window.location.reload();
+            } else {
+                alert("Erreur : " + data.message);
+            }
+        });
+    }
+</script>
+{% endblock %}
