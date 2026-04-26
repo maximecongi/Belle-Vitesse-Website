@@ -2,208 +2,144 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Pré-Quote {{ quote.reference }}</title>
+    <title>PRÉ-QUOTE {{ quote.reference }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-pilot-waivers.css') }}">
     <style>
-        @page {
-            size: A4;
-            margin: 1.5cm 2cm;
-        }
-        body {
-            font-family: 'Helvetica', 'Arial', sans-serif;
-            font-size: 10pt;
-            color: #111;
-            line-height: 1.4;
-            margin: 0;
-            padding: 0;
-        }
-        .header {
-            display: table;
+        .prequote-totals-table {
             width: 100%;
-            border-bottom: 2px solid #000;
-            margin-bottom: 30px;
-            padding-bottom: 10px;
-        }
-        .header-left { display: table-cell; vertical-align: bottom; }
-        .header-right { display: table-cell; text-align: right; vertical-align: bottom; }
-        
-        .logo-text { font-size: 24pt; font-weight: bold; letter-spacing: -1px; margin-bottom: 0; }
-        .logo-sub { font-size: 8pt; text-transform: uppercase; color: #666; letter-spacing: 2px; }
-        
-        .doc-title { font-size: 20pt; font-weight: bold; margin: 0; }
-        .doc-ref { font-size: 10pt; color: #444; }
-        
-        .info-grid { display: table; width: 100%; margin-bottom: 40px; }
-        .info-col { display: table-cell; width: 50%; }
-        
-        .label { font-size: 8pt; text-transform: uppercase; color: #666; margin-bottom: 5px; font-weight: bold; }
-        .value { margin-bottom: 15px; }
-        .company-name { font-weight: bold; font-size: 11pt; }
-        
-        .project-box {
-            background-color: #f3f4f6;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 30px;
-        }
-        
-        table.items {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 40px;
-        }
-        table.items th {
-            background-color: #000;
-            color: #fff;
-            padding: 10px;
-            text-align: left;
-            font-size: 9pt;
-            text-transform: uppercase;
-        }
-        table.items td {
-            padding: 12px 10px;
-            border-bottom: 1px solid #eee;
-        }
-        table.items tr:last-child td { border-bottom: 2px solid #000; }
-        
-        .text-right { text-align: right; }
-        .text-center { text-align: center; }
-        .qty-col { width: 60px; }
-        .unit-col { width: 80px; }
-        .price-col { width: 100px; }
-        .total-col { width: 120px; font-weight: bold; }
-        
-        .totals-container {
-            display: table;
-            width: 100%;
-        }
-        .totals-left { display: table-cell; width: 60%; vertical-align: top; }
-        .totals-right { display: table-cell; width: 40%; }
-        
-        .totals-table { width: 100%; border-collapse: collapse; }
-        .totals-table td { padding: 8px 10px; }
-        .total-row { background: #000; color: #fff; font-size: 14pt; font-weight: bold; }
-        
-        .legal-footer {
-            margin-top: 50px;
-            font-size: 7pt;
-            color: #777;
-            text-align: center;
-            border-top: 1px solid #eee;
-            padding-top: 20px;
-        }
-        
-        .bank-info {
-            font-size: 8pt;
             margin-top: 20px;
-            padding: 10px;
-            border: 1px dashed #ccc;
+        }
+        .prequote-totals-table td {
+            padding: 5px 0;
+        }
+        .prequote-total-row {
+            font-size: 14pt;
+            font-weight: bold;
+            color: var(--grey-1);
+            border-top: 2px solid var(--grey-1);
         }
     </style>
 </head>
-<body>
-    <div class="header">
-        <div class="header-left">
-            <div class="logo-text">BELLE VITESSE</div>
-            <div class="logo-sub">Cinematic Camera Movement Systems</div>
-        </div>
-        <div class="header-right">
-            <div class="doc-title">PRÉ-QUOTE</div>
-            <div class="doc-ref">#{{ quote.reference }} | {{ quote.created_at.strftime('%d/%m/%Y') }}</div>
-        </div>
-    </div>
-    
-    <div class="info-grid">
-        <div class="info-col">
-            <div class="label">Émis par</div>
-            <div class="value">
-                <span class="company-name">{{ settings.company_name }}</span><br>
-                {{ settings.company_address }}<br>
-                {{ settings.company_phone }}<br>
-                {{ settings.company_email }}<br>
-                SIRET: {{ settings.company_siret }}
+<body class="pilot-waiver-container">
+    <div class="pilot-waiver">
+        <!-- ═══════════ HEADER ═══════════ -->
+        <header class="pilot-waiver-header">
+            <div class="pilot-waiver-header-logo">
+                <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}" alt="Belle Vitesse">
             </div>
-        </div>
-        <div class="info-col" style="padding-left: 20px;">
-            <div class="label">Destinataire</div>
-            <div class="value">
-                <span class="company-name">{{ quote.production.name }}</span><br>
-                {{ quote.production.address or '' }}
+            <div class="pilot-waiver-header-meta">
+                <strong style="text-transform: uppercase; letter-spacing: 1px;">Document de Devis Préliminaire</strong><br>
+                <span class="pilot-waiver-doc-id">REF: {{ quote.reference }}</span><br>
+                Date d'émission : {{ quote.created_at.strftime('%d/%m/%Y') }}
             </div>
-        </div>
-    </div>
-    
-    <div class="project-box">
-        <div style="display: table; width: 100%;">
-            <div style="display: table-cell; width: 60%;">
-                <div class="label">Projet</div>
-                <div style="font-weight: bold; font-size: 12pt;">{{ quote.project_name or '—' }}</div>
-            </div>
-            <div style="display: table-cell; width: 40%;">
-                <div class="label">Tournage</div>
-                <div>{{ quote.shoot_date.strftime('%d/%m/%Y') if quote.shoot_date else '—' }}</div>
-                <div>{{ quote.shoot_location or '' }}</div>
-            </div>
-        </div>
-    </div>
-    
-    <table class="items">
-        <thead>
-            <tr>
-                <th>Description</th>
-                <th class="text-center qty-col">Qté</th>
-                <th class="text-center unit-col">Unité</th>
-                <th class="text-right price-col">P.U. HT</th>
-                <th class="text-right total-col">Total HT</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in quote.prestations %}
-            <tr>
-                <td>
-                    <span style="font-weight: bold;">{{ item.description }}</span>
-                </td>
-                <td class="text-center">{{ item.quantity }}</td>
-                <td class="text-center">{{ item.unit }}</td>
-                <td class="text-right">{{ "{:,.2f}".format(item.unit_price)|replace(',', ' ') }} €</td>
-                <td class="text-right">{{ "{:,.2f}".format(item.total)|replace(',', ' ') }} €</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    
-    <div class="totals-container">
-        <div class="totals-left">
-            <div class="label">Notes & Conditions</div>
-            <div style="font-size: 8pt; color: #444;">
-                Ce document est un pré-quote indicatif et ne constitue pas un devis définitif.<br>
-                Validité : 30 jours à compter de ce jour.<br>
-                <div class="bank-info">
-                    <strong>Règlement :</strong> Virement bancaire<br>
-                    <strong>IBAN :</strong> {{ settings.bank_iban }}<br>
-                    <strong>BIC :</strong> {{ settings.bank_bic }}
+        </header>
+
+        <h1 class="pilot-waiver-title">PRÉ-QUOTE</h1>
+        <p class="pilot-waiver-subtitle">Ceci est une estimation indicative basée sur les besoins exprimés.</p>
+
+        <!-- ═══════════ IDENTIFICATION ═══════════ -->
+        <section class="pilot-waiver-section">
+            <h2 class="pilot-waiver-section-title">Identification des parties</h2>
+            <div class="pilot-waiver-info-grid">
+                <div class="pilot-waiver-info-item">
+                    <span class="pilot-waiver-info-label">Émetteur</span>
+                    <span class="pilot-waiver-info-value">
+                        <strong>{{ settings.company_name }}</strong><br>
+                        {{ settings.company_address }}<br>
+                        SIRET : {{ settings.company_siret }}
+                    </span>
+                </div>
+                <div class="pilot-waiver-info-item">
+                    <span class="pilot-waiver-info-label">Destinataire (Production)</span>
+                    <span class="pilot-waiver-info-value">
+                        <strong>{{ quote.production.name }}</strong><br>
+                        {{ quote.production.address or '—' }}
+                    </span>
+                </div>
+                <div class="pilot-waiver-info-item">
+                    <span class="pilot-waiver-info-label">Projet & Lieu</span>
+                    <span class="pilot-waiver-info-value">
+                        <strong>{{ quote.project_name or '—' }}</strong><br>
+                        {{ quote.shoot_location or '—' }}
+                    </span>
                 </div>
             </div>
-        </div>
-        <div class="totals-right">
-            <table class="totals-table">
-                <tr>
-                    <td>Total HT</td>
-                    <td class="text-right">{{ "{:,.2f}".format(quote.total_ht)|replace(',', ' ') }} €</td>
-                </tr>
-                <tr>
-                    <td>TVA ({{ quote.tva_rate }}%)</td>
-                    <td class="text-right">{{ "{:,.2f}".format(quote.tva_amount)|replace(',', ' ') }} €</td>
-                </tr>
-                <tr class="total-row">
-                    <td> TOTAL TTC</td>
-                    <td class="text-right">{{ "{:,.2f}".format(quote.total_ttc)|replace(',', ' ') }} €</td>
-                </tr>
+        </section>
+
+        <!-- ═══════════ PRESTATIONS ═══════════ -->
+        <section class="pilot-waiver-section">
+            <h2 class="pilot-waiver-section-title">Détail des Prestations</h2>
+            <table class="pilot-waiver-table">
+                <thead>
+                    <tr>
+                        <th style="width: 60%;">Désignation</th>
+                        <th style="text-align: center;">Quantité</th>
+                        <th style="text-align: center;">Unité</th>
+                        <th style="text-align: right;">P.U. HT</th>
+                        <th style="text-align: right;">TOTAL HT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in quote.prestations %}
+                    <tr>
+                        <td>
+                            <div style="font-weight: 500;">{{ item.description }}</div>
+                            <div style="font-size: 7pt; color: var(--grey-2); text-transform: uppercase;">{{ item.category }}</div>
+                        </td>
+                        <td style="text-align: center;">{{ item.quantity }}</td>
+                        <td style="text-align: center;">{{ item.unit }}</td>
+                        <td style="text-align: right;">{{ "{:,.2f}".format(item.unit_price)|replace(',', ' ') }} €</td>
+                        <td style="text-align: right; font-weight: 600;">{{ "{:,.2f}".format(item.total)|replace(',', ' ') }} €</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
             </table>
-        </div>
-    </div>
-    
-    <div class="legal-footer">
-        {{ settings.company_name }} - {{ settings.company_address }} - SAS au capital de 10 000€ - RCS Paris 981 514 040
+        </section>
+
+        <!-- ═══════════ RÉCAPITULATIF ═══════════ -->
+        <section class="pilot-waiver-section" style="page-break-inside: avoid;">
+            <div style="display: flex; justify-content: flex-end;">
+                <div style="width: 250px;">
+                    <table class="prequote-totals-table">
+                        <tr>
+                            <td style="font-size: 8pt; color: var(--grey-2);">TOTAL HT</td>
+                            <td style="text-align: right; font-weight: 500;">{{ "{:,.2f}".format(quote.total_ht)|replace(',', ' ') }} €</td>
+                        </tr>
+                        <tr>
+                            <td style="font-size: 8pt; color: var(--grey-2);">TVA ({{ quote.tva_rate }}%)</td>
+                            <td style="text-align: right; font-weight: 500;">{{ "{:,.2f}".format(quote.tva_amount)|replace(',', ' ') }} €</td>
+                        </tr>
+                        <tr class="prequote-total-row">
+                            <td style="padding-top: 10px;">TOTAL TTC</td>
+                            <td style="text-align: right; padding-top: 10px;">{{ "{:,.2f}".format(quote.total_ttc)|replace(',', ' ') }} €</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════ NOTES ═══════════ -->
+        <section class="pilot-waiver-section">
+            <h2 class="pilot-waiver-section-title">Informations Règlement & Validité</h2>
+            <div class="pilot-waiver-notes">
+                <p>Ce document est une estimation tarifaire indicative. Il ne constitue pas une facture ni un contrat définitif. La réservation ferme du matériel et des équipes n'est effective qu'à réception d'un devis définitif signé et/ou d'un bon de commande.</p>
+                <p style="margin-top: 8px;"><strong>Conditions de règlement :</strong> Par virement bancaire sous 30 jours à réception de facture.</p>
+                <p style="margin-top: 8px;">
+                    <strong>Banque :</strong> {{ settings.bank_iban }} / BIC : {{ settings.bank_bic }}<br>
+                    <strong>Validité de l'offre :</strong> 30 jours à compter de la date d'émission.
+                </p>
+            </div>
+        </section>
+
+        <!-- ═══════════ FOOTER ═══════════ -->
+        <footer class="pilot-waiver-footer">
+            <p>
+                <strong>{{ settings.company_name }}</strong> — Cinematic Camera Movement Systems<br>
+                {{ settings.company_address }} — SIRET : {{ settings.company_siret }}
+            </p>
+        </footer>
     </div>
 </body>
 </html>

@@ -8,7 +8,7 @@ from flask import Flask, abort, g, request, session, url_for
 
 from config import config
 from extensions import cache, compress, csrf, limiter
-from models import PreQuote, User, db
+from models import AppSetting, PreQuote, User, db
 from routes import init_error_handlers, init_routes
 from services.admin.sql_logger import init_sql_logger
 from services.admin.status_mapping import (
@@ -183,12 +183,14 @@ def create_app():
             "t": t,
             "ts": ts,
             "alt_url": alt_url,
-            "company_name": "Belle Vitesse SAS",
-            "company_representative": "Simon Maignan",
-            "company_siret": "981 514 040 00014",
-            "company_address": "33 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine, France",
-            "company_phone": "+33 6 65 51 40 40",
-            "company_email": "contact@bellevitesse.com",
+            "company_name": AppSetting.get("company_name", "Belle Vitesse SAS"),
+            "company_representative": AppSetting.get("company_representative", "Simon Maignan"),
+            "company_siret": AppSetting.get("company_siret", "981 514 040 00014"),
+            "company_address": AppSetting.get("company_address", "33 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine, France"),
+            "company_phone": AppSetting.get("company_phone", "+33 6 65 51 40 40"),
+            "company_email": AppSetting.get("company_email", "contact@bellevitesse.com"),
+            "bank_iban": AppSetting.get("bank_iban", ""),
+            "bank_bic": AppSetting.get("bank_bic", ""),
             # Utilitaires de mapping de statuts
             "get_inspection_key": get_inspection_key,
             "get_checkpoint_key": get_checkpoint_key,

@@ -1,0 +1,40 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Paramètres Généraux{% endblock %}
+{% block page_title %}⚙️ Paramètres Belle Vitesse{% endblock %}
+
+{% block content %}
+<div class="admin-card" style="max-width: 800px;">
+    <div class="admin-card-title">Informations de la Société</div>
+    <p style="font-size: 0.9rem; color: var(--grey-2); margin-bottom: 2rem;">
+        Ces informations sont utilisées pour générer les en-têtes des décharges, les pré-quotes et les documents officiels.
+    </p>
+
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+            {% for key, label, help_text in setting_keys %}
+            <div class="form-group">
+                <label class="form-label">{{ label }}</label>
+                <input type="text" name="{{ key }}" class="form-input" value="{{ settings_data[key] }}" placeholder="{{ help_text }}">
+                <small style="font-size: 0.75rem; color: #9ca3af; margin-top: 4px; display: block;">{{ help_text }}</small>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div style="text-align: right; border-top: 1px solid #f3f4f6; padding-top: 1.5rem;">
+            <button type="submit" class="admin-btn admin-btn-primary">
+                Enregistrer les modifications
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="admin-card" style="max-width: 800px; margin-top: 2rem; border-left: 4px solid var(--yellow-1);">
+    <div class="admin-card-title">💡 Conseil</div>
+    <p style="font-size: 0.85rem; color: var(--grey-1); line-height: 1.5;">
+        Si vous modifiez le nom ou l'adresse de la société ici, les futurs documents générés (PDF) prendront automatiquement en compte ces nouvelles valeurs. Les anciens documents déjà signés et archivés ne seront pas modifiés pour garantir l'intégrité légale des archives.
+    </p>
+</div>
+{% endblock %}

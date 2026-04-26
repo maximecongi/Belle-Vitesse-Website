@@ -77,29 +77,31 @@
         <div class="left-col">
             <!-- Informations générales -->
             <div class="admin-card" style="margin-bottom: 2rem;">
-                <h2 class="admin-section-title">Informations Générales</h2>
-                <div class="form-group-inline">
-                    <div>
-                        <label class="form-label">Production</label>
-                        <select name="production_id" class="form-input select2" required>
-                            <option value="">Sélectionner une production...</option>
+                <div class="admin-card-title">Informations Générales</div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <div class="form-group">
+                        <label class="form-label">Production <span style="color: var(--red-error);">*</span></label>
+                        <select name="production_id" class="form-input searchable-select" required>
+                            <option value="">— Sélectionner une production —</option>
                             {% for prod in productions %}
-                            <option value="{{ prod.id }}" {% if quote and quote.production_id == prod.id %}selected{% endif %}>{{ prod.name }}</option>
+                            <option value="{{ prod.id }}" {% if quote and quote.production_id == prod.id %}selected{% endif %}>
+                                {{ prod.name }}
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
-                    <div>
+                    <div class="form-group">
                         <label class="form-label">Nom du Projet</label>
                         <input type="text" name="project_name" class="form-input" value="{{ quote.project_name if quote else '' }}" placeholder="Ex: Campagne Été 2026">
                     </div>
-                </div>
-                <div class="form-group-inline">
-                    <div>
+
+                    <div class="form-group">
                         <label class="form-label">Date de tournage (indicative)</label>
                         <input type="date" name="shoot_date" class="form-input" value="{{ quote.shoot_date.isoformat() if quote and quote.shoot_date else '' }}">
                     </div>
-                    <div>
-                        <label class="form-label">Lieu</label>
+                    <div class="form-group">
+                        <label class="form-label">Lieu du tournage</label>
                         <input type="text" name="shoot_location" class="form-input" value="{{ quote.shoot_location if quote else '' }}" placeholder="Ex: Paris, France">
                     </div>
                 </div>
@@ -193,7 +195,7 @@
 <script>
     // Initialisation
     $(document).ready(function() {
-        $('.select2').select2({
+        $('.searchable-select').select2({
             width: '100%',
             placeholder: "Sélectionner une option..."
         });
