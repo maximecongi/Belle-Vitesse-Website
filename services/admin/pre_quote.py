@@ -115,8 +115,10 @@ def get_pre_quote_pdf(quote_id):
                                'company_phone': AppSetting.get('company_phone', '+33 6 65 51 40 40'),
                                'company_email': AppSetting.get('company_email', 'contact@bellevitesse.com'),
                                'company_siret': AppSetting.get('company_siret', '981 514 040 00014'),
-                               'bank_iban': AppSetting.get('bank_iban', 'FR76 XXXX XXXX XXXX'),
-                               'bank_bic': AppSetting.get('bank_bic', 'XXXXXXXX'),
+                               'company_vat': AppSetting.get('company_vat', 'FR32981514040'),
+                               'bank_iban': AppSetting.get('bank_iban', ''),
+                               'bank_bic': AppSetting.get('bank_bic', ''),
+                               'company_representative': AppSetting.get('company_representative', 'Simon Maignan'),
                            })
 
     pdf_bytes = render_pdf_from_template(html, base_url=current_app.root_path)

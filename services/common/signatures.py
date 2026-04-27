@@ -250,6 +250,16 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
             "verification_url": verification_url,
             "signed_at_str": signed_at.strftime("%d/%m/%Y %H:%M"),
             "signed_ip": signed_ip,
+            # Données de l'entreprise tirées de la DB
+            "company_name": AppSetting.get("company_name", "Belle Vitesse SAS"),
+            "company_representative": AppSetting.get("company_representative", "Simon Maignan"),
+            "company_siret": AppSetting.get("company_siret", "981 514 040 00014"),
+            "company_vat": AppSetting.get("company_vat", "FR32981514040"),
+            "company_address": AppSetting.get("company_address", "33 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine, France"),
+            "company_phone": AppSetting.get("company_phone", "+33 6 65 51 40 40"),
+            "company_email": AppSetting.get("company_email", "contact@bellevitesse.com"),
+            "bank_iban": AppSetting.get("bank_iban", ""),
+            "bank_bic": AppSetting.get("bank_bic", ""),
         }
         # Ajout des données spécifiques au flux
         if mode in ["checkout", "checkin"]:

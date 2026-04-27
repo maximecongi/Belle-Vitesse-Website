@@ -9,7 +9,7 @@
   <link rel="icon" type="image/svg+xml" href="/static/imgs/favicons/favicon.svg" />
   <link rel="shortcut icon" href="/static/imgs/favicons/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/static/imgs/favicons/apple-touch-icon.png" />
-  <meta name="apple-mobile-web-app-title" content="Belle Vitesse" />
+  <meta name="apple-mobile-web-app-title" content="{{ company_name }}" />
   <link rel="manifest" href="/static/imgs/favicons/site.webmanifest" />
 
   {# SEO: hreflang for multilingual indexing #}
@@ -27,16 +27,13 @@
     {
       "@context": "https://schema.org",
       "@type": "LocalBusiness",
-      "name": "Belle Vitesse",
+      "name": "{{ company_name }}",
       "description": "Specialist in moving cinema. High-level cinematic movement for film and commercial productions.",
       "url": "https://bellevitesse.com",
-      "email": "contact@bellevitesse.com",
+      "email": "{{ company_email }}",
       "address": {
         "@type": "PostalAddress",
-        "streetAddress": "33 Rue Maurice Gunsbourg",
-        "addressLocality": "Ivry-sur-Seine",
-        "postalCode": "94200",
-        "addressCountry": "FR"
+        "streetAddress": "{{ company_address }}"
       },
       "areaServed": {
         "@type": "Place",

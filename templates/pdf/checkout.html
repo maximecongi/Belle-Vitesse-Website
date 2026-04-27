@@ -9,10 +9,10 @@
     <link rel="icon" type="image/svg+xml" href="/static/imgs/favicons/favicon.svg" />
     <link rel="shortcut icon" href="/static/imgs/favicons/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/static/imgs/favicons/apple-touch-icon.png" />
-    <meta name="apple-mobile-web-app-title" content="Belle Vitesse" />
+    <meta name="apple-mobile-web-app-title" content="{{ company_name }}" />
     <link rel="manifest" href="/static/imgs/favicons/site.webmanifest" />
 
-    <title>Checkout Véhicule — Belle Vitesse</title>
+    <title>Checkout Véhicule — {{ company_name }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/checkout.css') }}">
 </head>
@@ -25,7 +25,7 @@
         <header class="checkout-header">
             <div class="checkout-header-logo">
                 <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
-                    alt="Belle Vitesse">
+                    alt="{{ company_name }}">
             </div>
             <div class="checkout-header-meta">
                 <strong class="dot-before">Check-Out Véhicule</strong><br>

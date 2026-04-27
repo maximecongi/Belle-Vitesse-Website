@@ -1,5 +1,5 @@
-{% set mail = "contact@bellevitesse.com" %}
-{% set phone = "+33 1 89 71 20 54" %}
+{% set mail = company_email %}
+{% set phone = company_phone %}
 <section class="section-site">
     <div class="footer bg-color-grey-3">
         <div class="footer-wrapper">
@@ -7,7 +7,7 @@
                 <div class="footer-testimonials-logo">
                     <a href="/"><img
                             src="{{ url_for('static', filename='/imgs/logos_and_name/blanc-fond-transparent.png') }}"
-                            alt="Belle Vitesse Logo" /></a>
+                            alt="{{ company_name }} Logo" /></a>
                 </div>
                 <div class="footer-testimonials-text">
                     <div class="newsletter">
@@ -64,9 +64,8 @@
                     <h3 class="color-white-2"><a href="{{ url_for('contact') }}">{{ ts('menu.contact') }}</a></h3>
                     <p class="color-white-2 font-weight-300">
                         <a href="https://maps.app.goo.gl/WPGRFRjmoC7LKhZm6" target="_blank">
-                            {{company_name}}<br />
-                            33 rue Maurice Gunsbourg<br />
-                            94200 IVRY-SUR-SEINE<br />
+                            {{ company_name }}<br />
+                            {{ company_address }}<br />
                         </a>
                     </p>
                     {# <p>
@@ -79,7 +78,7 @@
             </div>
         </div>
         <div class="">
-            <p class="color-white-2 font-weight-300">@ Copyright Belle Vitesse {{ now.year }}. All rights reserved. Made
+            <p class="color-white-2 font-weight-300">@ Copyright {{ company_name }} {{ now.year }}. All rights reserved. Made
                 by Maxime Congi.</p>
         </div>
     </div>

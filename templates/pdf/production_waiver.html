@@ -17,7 +17,7 @@
         <header class="pilot-waiver-header">
             <div class="pilot-waiver-header-logo">
                 <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
-                    alt="Belle Vitesse">
+                    alt="{{ company_name }}">
             </div>
             <div class="pilot-waiver-header-meta">
                 <strong class="dot-before">Décharge de responsabilité Production</strong><br>
@@ -127,18 +127,18 @@
                     <tr>
                         <td>✓</td>
                         <td>N'autoriser la conduite des Véhicules qu'à des pilotes titulaires du permis requis,
-                            préalablement agréés par Belle Vitesse.</td>
+                            préalablement agréés par {{ company_name }}.</td>
                     </tr>
                     <tr>
                         <td>✓</td>
                         <td>Utiliser les Véhicules exclusivement dans le cadre de la prestation définie ci-dessus et
-                            dans les lieux déclarés, conformément aux consignes de sécurité remises par Belle Vitesse.
+                            dans les lieux déclarés, conformément aux consignes de sécurité remises par {{ company_name }}.
                         </td>
                     </tr>
                     <tr>
                         <td>✓</td>
                         <td>Respecter les contraintes techniques d'utilisation (charge, vitesse, conditions de tournage)
-                            définies par Belle Vitesse pour chaque Véhicule.</td>
+                            définies par {{ company_name }} pour chaque Véhicule.</td>
                     </tr>
                     <tr>
                         <td>✓</td>
@@ -147,7 +147,7 @@
                     </tr>
                     <tr>
                         <td>✓</td>
-                        <td>Signaler immédiatement à Belle Vitesse tout incident, accident ou dommage survenant sur les
+                        <td>Signaler immédiatement à {{ company_name }} tout incident, accident ou dommage survenant sur les
                             Véhicules ou à leur périphérie.</td>
                     </tr>
                     <tr>

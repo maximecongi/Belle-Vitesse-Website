@@ -189,6 +189,7 @@ def create_app():
             "company_address": AppSetting.get("company_address", "33 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine, France"),
             "company_phone": AppSetting.get("company_phone", "+33 6 65 51 40 40"),
             "company_email": AppSetting.get("company_email", "contact@bellevitesse.com"),
+            "company_vat": AppSetting.get("company_vat", "FR32981514040"),
             "bank_iban": AppSetting.get("bank_iban", ""),
             "bank_bic": AppSetting.get("bank_bic", ""),
             "PRE_QUOTE_CAT_MAP": {
