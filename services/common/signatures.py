@@ -58,7 +58,7 @@ FLOW_CONFIG = {
         "storage_func": get_checkout_path,
         "webhook_env": "N8N_WEBHOOK_CHECKOUT_SIGN",
         "stylesheets": ["css/styles.css", "css/checkout.css"],
-        "template": "public/checkout.html"
+        "template": "pdf/checkout.html"
     },
     "checkin": {
         "model": CheckinVehicle,
@@ -69,7 +69,7 @@ FLOW_CONFIG = {
         "storage_func": get_checkin_path,
         "webhook_env": "N8N_WEBHOOK_CHECKIN_SIGN",
         "stylesheets": ["css/styles.css", "css/checkin.css"],
-        "template": "public/checkin.html"
+        "template": "pdf/checkin.html"
     },
     "pilot": {
         "model": PilotWaiver,
@@ -80,7 +80,7 @@ FLOW_CONFIG = {
         "storage_func": get_pilot_waiver_path,
         "webhook_env": "N8N_WEBHOOK_PILOT_WAIVER",
         "stylesheets": [],  # Utilise des styles en ligne ou globaux pour les décharges
-        "template": "public/waivers/pilot_waiver_pdf.html"
+        "template": "pdf/pilot_waiver.html"
     },
     "production": {
         "model": ProductionWaiver,
@@ -91,7 +91,7 @@ FLOW_CONFIG = {
         "storage_func": get_production_waiver_path,
         "webhook_env": "N8N_WEBHOOK_PRODUCTION_WAIVER",
         "stylesheets": [],  # Utilise des styles en ligne ou globaux pour les décharges
-        "template": "public/waivers/production_waiver_pdf.html"
+        "template": "pdf/production_waiver.html"
     }
 }
 

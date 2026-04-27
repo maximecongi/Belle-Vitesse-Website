@@ -191,6 +191,12 @@ def create_app():
             "company_email": AppSetting.get("company_email", "contact@bellevitesse.com"),
             "bank_iban": AppSetting.get("bank_iban", ""),
             "bank_bic": AppSetting.get("bank_bic", ""),
+            "PRE_QUOTE_CAT_MAP": {
+                "equipment": "Équipement",
+                "salary": "Salaire",
+                "logistics": "Logistique",
+                "custom": "Autre"
+            },
             # Utilitaires de mapping de statuts
             "get_inspection_key": get_inspection_key,
             "get_checkpoint_key": get_checkpoint_key,

@@ -23,6 +23,7 @@ from services.admin.pre_quote import (
 from models import PreQuote, Production
 from utils.decorators import require_roles
 
+
 def init_pre_quotes_routes(app):
     @app.route("/admin/pre-quotes")
     @require_roles('administrator', 'manager')
@@ -31,7 +32,8 @@ def init_pre_quotes_routes(app):
             pre_quotes = list_pre_quotes()
             return render_template("admin/pre_quotes_list.html", pre_quotes=pre_quotes)
         except Exception as e:
-            current_app.logger.error(f"❌ Erreur lors de la récupération des pré-quotes : {e}")
+            current_app.logger.error(
+                f"❌ Erreur lors de la récupération des pré-devis : {e}")
             flash(f"Erreur : {str(e)}", "error")
             return render_template("admin/pre_quotes_list.html", pre_quotes=[])
 
@@ -46,13 +48,14 @@ def init_pre_quotes_routes(app):
                     # Traitement spécial si ce n'est pas du JSON (form classique)
                     # Mais l'interface sera probablement du JS/JSON
                     pass
-                
-                quote = create_pre_quote(data, user_id=None) # user_id à récupérer de la session
+
+                # user_id à récupérer de la session
+                quote = create_pre_quote(data, user_id=None)
                 return jsonify({"status": "success", "id": quote.id})
             except Exception as e:
-                current_app.logger.error(f"❌ Erreur création pré-quote : {e}")
+                current_app.logger.error(f"❌ Erreur création pré-devis : {e}")
                 return jsonify({"status": "error", "message": str(e)}), 400
-        
+
         productions = list_productions()
         return render_template("admin/pre_quote_form.html", is_edit=False, productions=productions)
 
@@ -66,11 +69,30 @@ def init_pre_quotes_routes(app):
                 update_pre_quote(quote_id, data)
                 return jsonify({"status": "success"})
             except Exception as e:
-                current_app.logger.error(f"❌ Erreur modification pré-quote : {e}")
+                current_app.logger.error(
+                    f"❌ Erreur modification pré-devis : {e}")
                 return jsonify({"status": "error", "message": str(e)}), 400
 
         productions = list_productions()
         return render_template("admin/pre_quote_form.html", quote=quote, is_edit=True, productions=productions)
+
+    @app.route("/admin/pre-quotes/<int:quote_id>/preview-html")
+    @require_roles('administrator', 'manager')
+    def admin_pre_quote_preview_html(quote_id):
+        """Affiche le template HTML du pré-devis directement dans le navigateur pour debug/edit."""
+        from datetime import datetime
+        from models import AppSetting
+        quote = PreQuote.query.get_or_404(quote_id)
+        return render_template('pdf/pre_devis.html', quote=quote,
+                               now=datetime.now(),
+                               settings={
+                                   'company_name': AppSetting.get('company_name', 'Belle Vitesse SAS'),
+                                   'company_address': AppSetting.get('company_address', '1 Rue de la Vitesse, 75000 Paris'),
+                                   'company_siret': AppSetting.get('company_siret', '123 456 789 00012'),
+                                   'company_vat': AppSetting.get('company_vat', 'FR123456789'),
+                                   'bank_iban': AppSetting.get('bank_iban', 'FR76 XXXX XXXX XXXX'),
+                                   'bank_bic': AppSetting.get('bank_bic', 'XXXXXXXX'),
+                               })
 
     @app.route("/admin/pre-quotes/<int:quote_id>/pdf")
     @require_roles('administrator', 'manager')
@@ -98,19 +120,32 @@ def init_pre_quotes_routes(app):
         except Exception as e:
             return jsonify({"status": "error", "message": str(e)}), 400
 
+    @app.route("/admin/api/pre-quotes/<int:quote_id>/status", methods=["POST"])
+    @require_roles('administrator', 'manager')
+    def admin_api_quote_status(quote_id):
+        try:
+            data = request.get_json()
+            if not data or 'status' not in data:
+                return jsonify({"status": "error", "message": "Missing status"}), 400
+            
+            update_pre_quote(quote_id, {'status': data['status']})
+            return jsonify({"status": "success"})
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
     @app.route("/admin/api/pre-quotes/all-rates")
     @require_roles('administrator', 'manager')
     def admin_api_all_rates():
         """Récupère tous les tarifs disponibles (équipement, salaires, logistique)."""
         from services.admin.pricing import list_equipment_rates, list_salary_rates, list_logistics_rates
-        
+
         equipment = list_equipment_rates()
         salaries = list_salary_rates()
         logistics = list_logistics_rates()
-        
+
         # Formatage simplifié pour le modal
         items = []
-        
+
         # Equipement
         for cat, data in equipment.items():
             for item in data['items']:
@@ -120,9 +155,9 @@ def init_pre_quotes_routes(app):
                     "sub_category": data['label'],
                     "name": item['name'],
                     "price": item['daily_rate'],
-                    "unit": "jour"
+                    "unit": "jour(s)"
                 })
-        
+
         # Salaires
         for s in salaries:
             items.append({
@@ -130,10 +165,10 @@ def init_pre_quotes_routes(app):
                 "category": "salary",
                 "sub_category": s['group_name'],
                 "name": s['position'],
-                "price": s['invoice_10h'], # Par défaut 10h
-                "unit": "jour"
+                "price": s['invoice_10h'],  # Par défaut 10h
+                "unit": "jour(s)"
             })
-            
+
         # Logistique
         for l in logistics:
             items.append({
@@ -142,7 +177,7 @@ def init_pre_quotes_routes(app):
                 "sub_category": "Logistique",
                 "name": l['item_name'],
                 "price": l['daily_rate'],
-                "unit": "unité"
+                "unit": "unité(s)"
             })
-            
+
         return jsonify(items)

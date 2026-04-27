@@ -54,7 +54,7 @@ def init_checkin_routes(app):
         vehicle_map = {v["id"]: v.get("fields", {}) for v in get_vehicles()}
         data = _format_base_inspection_admin(record, vehicle_map)
         return render_template(
-            "public/checkin.html", data=data, signature=None, qr=None, hash=None
+            "pdf/checkin.html", data=data, signature=None, qr=None, hash=None
         )
 
     @app.route("/checkin/generate", methods=["POST"])

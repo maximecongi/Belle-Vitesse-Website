@@ -39,7 +39,8 @@ def init_calendar_routes(app):
         # Générer les URLs et QR codes pour les abonnements actifs
         sub_data = {}
         for user_id, sub in sub_map.items():
-            feed_url = url_for("cal_feed.calendar_feed", token=sub.token, _external=True)
+            feed_url = url_for("cal_feed.calendar_feed",
+                               token=sub.token, _external=True)
             # Générer le QR code en base64
             qr_b64 = _generate_qr_base64(feed_url)
             sub_data[user_id] = {
@@ -71,7 +72,8 @@ def init_calendar_routes(app):
 
             # Envoyer l'email d'invitation automatiquement à la génération
             if user and user.mail:
-                feed_url = url_for("cal_feed.calendar_feed", token=sub.token, _external=True)
+                feed_url = url_for("cal_feed.calendar_feed",
+                                   token=sub.token, _external=True)
                 if send_calendar_invitation_email(user.mail, f"{user.firstname} {user.lastname}", feed_url):
                     flash(f"Email d'invitation envoyé à {user.mail}.", "info")
                 else:
@@ -112,7 +114,8 @@ def init_calendar_routes(app):
         if sub:
             user = db.session.get(User, user_id)
             name = f"{user.firstname} {user.lastname}" if user else f"ID {user_id}"
-            flash(f"Lien calendrier régénéré pour {name}. L'ancien lien ne fonctionne plus.", "success")
+            flash(
+                f"Lien calendrier régénéré pour {name}. L'ancien lien ne fonctionne plus.", "success")
         else:
             flash("Erreur lors de la régénération du lien calendrier.", "error")
 
@@ -135,7 +138,8 @@ def init_calendar_routes(app):
         elif not sub or not sub.is_active:
             flash("Aucun abonnement actif trouvé.", "error")
         else:
-            feed_url = url_for("cal_feed.calendar_feed", token=sub.token, _external=True)
+            feed_url = url_for("cal_feed.calendar_feed",
+                               token=sub.token, _external=True)
             if send_calendar_invitation_email(user.mail, f"{user.firstname} {user.lastname}", feed_url):
                 flash(f"Lien calendrier envoyé à {user.mail}.", "success")
             else:

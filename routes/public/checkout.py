@@ -58,7 +58,7 @@ def init_checkout_routes(app):
         data = _format_base_inspection_admin(record, vehicle_map)
 
         return render_template(
-            "public/checkout.html", data=data, signature=None, qr=None, hash=None
+            "pdf/checkout.html", data=data, signature=None, qr=None, hash=None
         )
 
     @app.route("/checkout/generate", methods=["POST"])

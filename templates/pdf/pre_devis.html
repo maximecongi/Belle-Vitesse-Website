@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
-    <title>PRÉ-QUOTE {{ quote.reference }}</title>
+    <title>PRÉ-DEVIS {{ quote.reference }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-pilot-waivers.css') }}">
@@ -11,9 +12,11 @@
             width: 100%;
             margin-top: 20px;
         }
+
         .prequote-totals-table td {
             padding: 5px 0;
         }
+
         .prequote-total-row {
             font-size: 14pt;
             font-weight: bold;
@@ -22,26 +25,29 @@
         }
     </style>
 </head>
+
 <body class="pilot-waiver-container">
     <div class="pilot-waiver">
         <!-- ═══════════ HEADER ═══════════ -->
         <header class="pilot-waiver-header">
             <div class="pilot-waiver-header-logo">
-                <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}" alt="Belle Vitesse">
+                <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
+                    alt="Belle Vitesse">
             </div>
             <div class="pilot-waiver-header-meta">
-                <strong style="text-transform: uppercase; letter-spacing: 1px;">Document de Devis Préliminaire</strong><br>
+                <strong style="text-transform: uppercase; letter-spacing: 1px;">Document de Devis
+                    Préliminaire</strong><br>
                 <span class="pilot-waiver-doc-id">REF: {{ quote.reference }}</span><br>
                 Date d'émission : {{ quote.created_at.strftime('%d/%m/%Y') }}
             </div>
         </header>
 
-        <h1 class="pilot-waiver-title">PRÉ-QUOTE</h1>
+        <h1 class="pilot-waiver-title">PRÉ-DEVIS</h1>
         <p class="pilot-waiver-subtitle">Ceci est une estimation indicative basée sur les besoins exprimés.</p>
 
         <!-- ═══════════ IDENTIFICATION ═══════════ -->
         <section class="pilot-waiver-section">
-            <h2 class="pilot-waiver-section-title">Identification des parties</h2>
+            <h2 class="pilot-waiver-section-title dot-before ">Identification des parties</h2>
             <div class="pilot-waiver-info-grid">
                 <div class="pilot-waiver-info-item">
                     <span class="pilot-waiver-info-label">Émetteur</span>
@@ -59,22 +65,19 @@
                     </span>
                 </div>
                 <div class="pilot-waiver-info-item">
-                    <span class="pilot-waiver-info-label">Projet & Lieu</span>
-                    <span class="pilot-waiver-info-value">
-                        <strong>{{ quote.project_name or '—' }}</strong><br>
-                        {{ quote.shoot_location or '—' }}
-                    </span>
+                    <span class="pilot-waiver-info-label">Projet</span>
+                    <span class="pilot-waiver-info-value"><strong>{{ quote.project_name or '—' }}</strong></span>
                 </div>
             </div>
         </section>
 
         <!-- ═══════════ PRESTATIONS ═══════════ -->
         <section class="pilot-waiver-section">
-            <h2 class="pilot-waiver-section-title">Détail des Prestations</h2>
+            <h2 class="pilot-waiver-section-title dot-before">Détail des Prestations</h2>
             <table class="pilot-waiver-table">
                 <thead>
                     <tr>
-                        <th style="width: 60%;">Désignation</th>
+                        <th style="width: 40%;">Désignation</th>
                         <th style="text-align: center;">Quantité</th>
                         <th style="text-align: center;">Unité</th>
                         <th style="text-align: right;">P.U. HT</th>
@@ -86,12 +89,14 @@
                     <tr>
                         <td>
                             <div style="font-weight: 500;">{{ item.description }}</div>
-                            <div style="font-size: 7pt; color: var(--grey-2); text-transform: uppercase;">{{ item.category }}</div>
+                            <div style="font-size: 7pt; color: var(--grey-2); text-transform: uppercase;">{{
+                                PRE_QUOTE_CAT_MAP.get(item.category, item.category) }}</div>
                         </td>
                         <td style="text-align: center;">{{ item.quantity }}</td>
                         <td style="text-align: center;">{{ item.unit }}</td>
                         <td style="text-align: right;">{{ "{:,.2f}".format(item.unit_price)|replace(',', ' ') }} €</td>
-                        <td style="text-align: right; font-weight: 600;">{{ "{:,.2f}".format(item.total)|replace(',', ' ') }} €</td>
+                        <td style="text-align: right; font-weight: 600;">{{ "{:,.2f}".format(item.total)|replace(',', '
+                            ') }} €</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -105,15 +110,18 @@
                     <table class="prequote-totals-table">
                         <tr>
                             <td style="font-size: 8pt; color: var(--grey-2);">TOTAL HT</td>
-                            <td style="text-align: right; font-weight: 500;">{{ "{:,.2f}".format(quote.total_ht)|replace(',', ' ') }} €</td>
+                            <td style="text-align: right; font-weight: 500;">{{
+                                "{:,.2f}".format(quote.total_ht)|replace(',', ' ') }} €</td>
                         </tr>
                         <tr>
                             <td style="font-size: 8pt; color: var(--grey-2);">TVA ({{ quote.tva_rate }}%)</td>
-                            <td style="text-align: right; font-weight: 500;">{{ "{:,.2f}".format(quote.tva_amount)|replace(',', ' ') }} €</td>
+                            <td style="text-align: right; font-weight: 500;">{{
+                                "{:,.2f}".format(quote.tva_amount)|replace(',', ' ') }} €</td>
                         </tr>
                         <tr class="prequote-total-row">
                             <td style="padding-top: 10px;">TOTAL TTC</td>
-                            <td style="text-align: right; padding-top: 10px;">{{ "{:,.2f}".format(quote.total_ttc)|replace(',', ' ') }} €</td>
+                            <td style="text-align: right; padding-top: 10px;">{{
+                                "{:,.2f}".format(quote.total_ttc)|replace(',', ' ') }} €</td>
                         </tr>
                     </table>
                 </div>
@@ -122,10 +130,13 @@
 
         <!-- ═══════════ NOTES ═══════════ -->
         <section class="pilot-waiver-section">
-            <h2 class="pilot-waiver-section-title">Informations Règlement & Validité</h2>
+            <h2 class="pilot-waiver-section-title dot-before">Informations Règlement & Validité</h2>
             <div class="pilot-waiver-notes">
-                <p>Ce document est une estimation tarifaire indicative. Il ne constitue pas une facture ni un contrat définitif. La réservation ferme du matériel et des équipes n'est effective qu'à réception d'un devis définitif signé et/ou d'un bon de commande.</p>
-                <p style="margin-top: 8px;"><strong>Conditions de règlement :</strong> Par virement bancaire sous 30 jours à réception de facture.</p>
+                <p>Ce document est une estimation tarifaire indicative. Il ne constitue pas une facture ni un contrat
+                    définitif. La réservation ferme du matériel et des équipes n'est effective qu'à réception d'un devis
+                    définitif signé et/ou d'un bon de commande.</p>
+                <p style="margin-top: 8px;"><strong>Conditions de règlement :</strong> Par virement bancaire sous 30
+                    jours à réception de facture.</p>
                 <p style="margin-top: 8px;">
                     <strong>Banque :</strong> {{ settings.bank_iban }} / BIC : {{ settings.bank_bic }}<br>
                     <strong>Validité de l'offre :</strong> 30 jours à compter de la date d'émission.
@@ -142,4 +153,5 @@
         </footer>
     </div>
 </body>
+
 </html>

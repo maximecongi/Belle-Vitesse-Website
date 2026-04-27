@@ -84,21 +84,21 @@ class Production(db.Model):
 
 
 class PreQuote(db.Model):
-    """Modèle représentant une pré-quote (devis rapide) pour une production."""
+    """Modèle représentant un pré-devis (devis rapide) pour une production."""
     __tablename__ = "pre_quotes"
 
     id = db.Column(db.Integer, primary_key=True)
-    reference = db.Column(db.String(50), unique=True, nullable=False)  # ex: PQ-2026-001
+    reference = db.Column(db.String(50), unique=True,
+                          nullable=False)  # ex: DP-2026-001
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
 
     # Relation avec Production
-    production_id = db.Column(db.Integer, db.ForeignKey('productions.id'), nullable=False)
-    
+    production_id = db.Column(db.Integer, db.ForeignKey(
+        'productions.id'), nullable=False)
+
     # Informations projet
     project_name = db.Column(db.String(200))
-    shoot_date = db.Column(db.Date)
-    shoot_location = db.Column(db.String(200))
 
     # Lignes de prestation (JSON)
     # [
@@ -114,12 +114,13 @@ class PreQuote(db.Model):
     total_ttc = db.Column(db.Numeric(10, 2), nullable=False, default=0)
 
     # Statut et Tracking
-    status = db.Column(db.String(20), default='draft') # draft, sent, accepted
+    status = db.Column(db.String(20), default='draft')  # draft, sent, accepted
     pdf_path = db.Column(db.String(500))
-    
+
     # Relations
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id')) # Créé par
-    production = db.relationship('Production', backref=db.backref('pre_quotes', lazy=True))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))  # Créé par
+    production = db.relationship(
+        'Production', backref=db.backref('pre_quotes', lazy=True))
 
     def to_dict(self):
         return {
@@ -183,13 +184,13 @@ class Project(db.Model):
         "contacts.id"), nullable=True, index=True)
     dop_contact_id = db.Column(db.Integer, db.ForeignKey(
         "contacts.id"), nullable=True, index=True)
-    departure_date = db.Column(db.Date) # Date de départ (enlèvement)
-    shoot_start_date = db.Column(db.Date) # Date de début de tournage
-    shoot_end_date = db.Column(db.Date) # Date de fin de tournage
-    return_date = db.Column(db.Date) # Date de retour prévu
+    departure_date = db.Column(db.Date)  # Date de départ (enlèvement)
+    shoot_start_date = db.Column(db.Date)  # Date de début de tournage
+    shoot_end_date = db.Column(db.Date)  # Date de fin de tournage
+    return_date = db.Column(db.Date)  # Date de retour prévu
     # Liste des identifiants de véhicules séparés par virgules ex: "3,5"
     vehicles_to_check = db.Column(db.String(500))
-    notes = db.Column(db.Text) # Demandes spécifiques
+    notes = db.Column(db.Text)  # Demandes spécifiques
 
     # Relations
     # Liste des contrôles au départ effectués pour ce projet
@@ -244,8 +245,10 @@ class PilotWaiver(db.Model):
     waiver_id = db.Column(
         db.String(50), unique=True, default=lambda: generate_inspection_number("BVDW"))
 
-    project_name = db.Column(db.String(255), nullable=True) # Copie du nom du projet au moment de la génération
-    status = db.Column(db.String(20), default="to_generate", nullable=False) # Statut (to_generate, to_send, to_sign, signed)
+    # Copie du nom du projet au moment de la génération
+    project_name = db.Column(db.String(255), nullable=True)
+    # Statut (to_generate, to_send, to_sign, signed)
+    status = db.Column(db.String(20), default="to_generate", nullable=False)
     generated_at = db.Column(db.DateTime, nullable=True)
     sent_at = db.Column(db.DateTime, nullable=True)
     signed_at = db.Column(db.DateTime, nullable=True)
@@ -265,8 +268,10 @@ class PilotWaiver(db.Model):
 
     # Signature
     signature_data = db.Column(
-        db.Text(length=16777215), nullable=True)  # Données de signature manuscrite (Base64)
-    signed_pdf_path = db.Column(db.String(500), nullable=True) # Chemin relatif du PDF signé
+        # Données de signature manuscrite (Base64)
+        db.Text(length=16777215), nullable=True)
+    # Chemin relatif du PDF signé
+    signed_pdf_path = db.Column(db.String(500), nullable=True)
 
     # Traçabilité de la signature
     signer_ip = db.Column(db.String(45), nullable=True)
@@ -366,7 +371,8 @@ class CheckoutVehicle(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     inspection_number = db.Column(
         db.String(50), unique=True, default=lambda: generate_inspection_number("BVCO"))
-    status = db.Column(db.String(50))  # in_progress (en cours), pending (en attente), signed (signé), etc.
+    # in_progress (en cours), pending (en attente), signed (signé), etc.
+    status = db.Column(db.String(50))
     project_id = db.Column(
         db.Integer, db.ForeignKey("projects.id"), index=True)
     controller_id = db.Column(
@@ -375,7 +381,7 @@ class CheckoutVehicle(db.Model):
     # Identifiant du véhicule concerné (eCar, eBike, eTrike, etc.)
     vehicle_id = db.Column(db.String(100), index=True)
     battery_level = db.Column(db.Integer)
-    
+
     # États des points de contrôle (ok, damage, missing, N/A)
     tire_status = db.Column(db.String(50))
     brake_status = db.Column(db.String(50))
@@ -394,13 +400,17 @@ class CheckoutVehicle(db.Model):
     communication_system_status = db.Column(db.String(50))
     accessories_case_status = db.Column(db.String(50))
 
-    interior_photos = db.Column(db.Text)  # Stockage JSON des chemins de photos intérieures
-    exterior_photos = db.Column(db.Text) # Stockage JSON des chemins de photos extérieures
+    # Stockage JSON des chemins de photos intérieures
+    interior_photos = db.Column(db.Text)
+    # Stockage JSON des chemins de photos extérieures
+    exterior_photos = db.Column(db.Text)
     notes = db.Column(db.Text)
-    vehicle_ready = db.Column(db.Boolean, default=False) # Indique si le véhicule est prêt pour le départ
-    signed_pdf_path = db.Column(db.String(500)) # Chemin du PDF d'inspection généré après signature
+    # Indique si le véhicule est prêt pour le départ
+    vehicle_ready = db.Column(db.Boolean, default=False)
+    # Chemin du PDF d'inspection généré après signature
+    signed_pdf_path = db.Column(db.String(500))
 
-    hash = db.Column(db.String(255)) # Empreinte numérique pour l'intégrité
+    hash = db.Column(db.String(255))  # Empreinte numérique pour l'intégrité
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 
     def to_dict(self):
@@ -438,7 +448,7 @@ class CheckinVehicle(db.Model):
     inspection_date = db.Column(db.Date)
     vehicle_id = db.Column(db.String(100), index=True)
     battery_level = db.Column(db.Integer)
-    
+
     # États des points de contrôle
     tire_status = db.Column(db.String(50))
     brake_status = db.Column(db.String(50))
@@ -515,11 +525,15 @@ class TokenMixin:
 
 class SignedDocumentMixin:
     """Base pour tous les documents signés archivés."""
-    hash = db.Column(db.String(255), nullable=False) # Empreinte de l'intégrité des données
-    pdf_file_hash = db.Column(db.String(64)) # Hash SHA-256 du fichier PDF binaire
-    data_snapshot = db.Column(db.JSON, nullable=False) # Copie conforme des données au moment de la signature
-    signature = db.Column(db.Text(length=16777215)) # Données de la signature (MEDIUMTEXT)
-    pdf_url = db.Column(db.Text) # URL (ou chemin) vers le fichier PDF
+    hash = db.Column(
+        db.String(255), nullable=False)  # Empreinte de l'intégrité des données
+    # Hash SHA-256 du fichier PDF binaire
+    pdf_file_hash = db.Column(db.String(64))
+    # Copie conforme des données au moment de la signature
+    data_snapshot = db.Column(db.JSON, nullable=False)
+    # Données de la signature (MEDIUMTEXT)
+    signature = db.Column(db.Text(length=16777215))
+    pdf_url = db.Column(db.Text)  # URL (ou chemin) vers le fichier PDF
     signed_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -580,9 +594,10 @@ class ProductionWaiverToken(db.Model, TokenMixin):
 
 class SyncRecordMixin:
     """Base pour les tables synchronisées depuis Airtable."""
-    id = db.Column(db.String(255), primary_key=True) # ID d'enregistrement Airtable
+    id = db.Column(
+        db.String(255), primary_key=True)  # ID d'enregistrement Airtable
     createdTime = db.Column(db.DateTime)
-    fields = db.Column(db.JSON) # Contenu brut des champs Airtable
+    fields = db.Column(db.JSON)  # Contenu brut des champs Airtable
     updated_at = db.Column(
         db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -664,14 +679,13 @@ class SqlQueryLog(db.Model):
         return f"<SqlQueryLog {self.id} user={self.user} endpoint={self.endpoint}>"
 
 
-
-
 class SalaryRate(db.Model):
     """Grille de salaire par position et type de contrat."""
     __tablename__ = "salary_rates"
 
     id = db.Column(db.Integer, primary_key=True)
-    group_name = db.Column(db.String(100), nullable=True, default='', index=True)
+    group_name = db.Column(db.String(100), nullable=True,
+                           default='', index=True)
     position = db.Column(db.String(150), nullable=True, default='')
     annexe = db.Column(db.String(255))
     base_hourly = db.Column(db.Numeric(10, 2))
@@ -730,7 +744,6 @@ class LogisticsRate(db.Model):
         }
 
 
-
 class CalendarSubscription(db.Model):
     """Abonnement calendrier ICS sécurisé par token unique."""
     __tablename__ = "calendar_subscriptions"
@@ -767,7 +780,8 @@ class AppSetting(db.Model):
 
     key = db.Column(db.String(100), primary_key=True)
     value = db.Column(db.String(500), nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     @staticmethod
     def get(key, default=None):
@@ -789,4 +803,3 @@ class AppSetting(db.Model):
 
     def __repr__(self):
         return f"<AppSetting {self.key}={self.value}>"
-

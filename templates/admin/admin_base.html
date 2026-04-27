@@ -80,7 +80,7 @@
                 {% call nav_group('🎬 Tournages', 'tournages', 'manager', false) %}
                 {{ nav_item(url_for('admin_projects_list'), 'Projets', 'manager') }}
                 {{ nav_item(url_for('admin_projects_archives'), 'Archives', 'manager') }}
-                {{ nav_item(url_for('admin_pre_quotes_list'), '🚀 Pré-Quotes', 'manager') }}
+                {{ nav_item(url_for('admin_pre_quotes_list'), 'Pré-Devis', 'manager') }}
                 {{ nav_item(url_for('admin_productions_list'), 'Productions', 'manager') }}
                 {{ nav_item(url_for('admin_contacts_list'), 'Contacts', 'manager') }}
                 {% endcall %}
@@ -103,7 +103,7 @@
                 {% call nav_group('🧰 Administration', 'admin', 'administrator', false) %}
                 {{ nav_item(url_for('admin_users_list'), 'Équipe', 'administrator') }}
                 {{ nav_item(url_for('admin_pricing'), 'Tarification', 'administrator') }}
-                {{ nav_item(url_for('admin_settings.admin_settings_edit'), '⚙️ Paramètres', 'administrator') }}
+                {{ nav_item(url_for('admin_settings.admin_settings_edit'), ' Paramètres', 'administrator') }}
                 {{ nav_item(url_for('admin_calendar'), 'Calendrier', 'manager') }}
                 {{ nav_item(url_for('admin_newsletter_dashboard'), 'Newsletter', 'administrator') }}
                 {% endcall %}
