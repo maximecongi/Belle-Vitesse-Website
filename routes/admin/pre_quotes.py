@@ -76,23 +76,6 @@ def init_pre_quotes_routes(app):
         productions = list_productions()
         return render_template("admin/pre_quote_form.html", quote=quote, is_edit=True, productions=productions)
 
-    @app.route("/admin/pre-quotes/<int:quote_id>/preview-html")
-    @require_roles('administrator', 'manager')
-    def admin_pre_quote_preview_html(quote_id):
-        """Affiche le template HTML du pré-devis directement dans le navigateur pour debug/edit."""
-        from datetime import datetime
-        from models import AppSetting
-        quote = PreQuote.query.get_or_404(quote_id)
-        return render_template('pdf/pre_devis.html', quote=quote,
-                               now=datetime.now(),
-                               settings={
-                                   'company_name': AppSetting.get('company_name', 'Belle Vitesse SAS'),
-                                   'company_address': AppSetting.get('company_address', '1 Rue de la Vitesse, 75000 Paris'),
-                                   'company_siret': AppSetting.get('company_siret', '123 456 789 00012'),
-                                   'company_vat': AppSetting.get('company_vat', 'FR123456789'),
-                                   'bank_iban': AppSetting.get('bank_iban', 'FR76 XXXX XXXX XXXX'),
-                                   'bank_bic': AppSetting.get('bank_bic', 'XXXXXXXX'),
-                               })
 
     @app.route("/admin/pre-quotes/<int:quote_id>/pdf")
     @require_roles('administrator', 'manager')
