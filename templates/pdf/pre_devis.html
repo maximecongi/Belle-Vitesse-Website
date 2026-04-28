@@ -77,10 +77,13 @@
             <table class="pilot-waiver-table">
                 <thead>
                     <tr>
-                        <th style="width: 40%;">Désignation</th>
+                        <th style="width: {% if quote.show_discounts %}35%{% else %}40%{% endif %};">Désignation</th>
                         <th style="text-align: center;">Quantité</th>
                         <th style="text-align: center;">Unité</th>
                         <th style="text-align: right;">P.U. HT</th>
+                        {% if quote.show_discounts %}
+                        <th style="text-align: center;">Remise</th>
+                        {% endif %}
                         <th style="text-align: right;">TOTAL HT</th>
                     </tr>
                 </thead>
@@ -94,7 +97,26 @@
                         </td>
                         <td style="text-align: center;">{{ item.quantity }}</td>
                         <td style="text-align: center;">{{ item.unit }}</td>
-                        <td style="text-align: right;">{{ "{:,.2f}".format(item.unit_price)|replace(',', ' ') }} €</td>
+                        <td style="text-align: right;">
+                            {% if quote.show_discounts %}
+                                {{ "{:,.2f}".format(item.unit_price)|replace(',', ' ') }} €
+                            {% else %}
+                                {% if item.discount_rate %}
+                                    {{ "{:,.2f}".format(item.unit_price * (1 - item.discount_rate / 100))|replace(',', ' ') }} €
+                                {% else %}
+                                    {{ "{:,.2f}".format(item.unit_price)|replace(',', ' ') }} €
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                        {% if quote.show_discounts %}
+                        <td style="text-align: center; font-weight: 500;">
+                            {% if item.discount_rate %}
+                                {{ item.discount_rate }}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </td>
+                        {% endif %}
                         <td style="text-align: right; font-weight: 600;">{{ "{:,.2f}".format(item.total)|replace(',', '
                             ') }} €</td>
                     </tr>

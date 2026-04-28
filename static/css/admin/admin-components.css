@@ -798,3 +798,34 @@ input[type="checkbox"]:checked {
     color: var(--grey-1);
     border: 1px solid var(--white-4);
 }
+
+/* ── TOGGLE SWITCH ─────────────────────────────────────────── */
+.toggle-track {
+    width: 36px;
+    height: 18px;
+    background: #e5e7eb;
+    border-radius: 10px;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.toggle-handle {
+    width: 14px;
+    height: 14px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.toggle-track.active {
+    background: var(--yellow-1);
+}
+
+.toggle-track.active .toggle-handle {
+    transform: translateX(18px);
+}

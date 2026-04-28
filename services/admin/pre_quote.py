@@ -38,7 +38,9 @@ def calculate_totals(prestations, tva_rate=20.00):
     for item in prestations:
         qty = Decimal(str(item.get('quantity', 0)))
         price = Decimal(str(item.get('unit_price', 0)))
-        line_total = qty * price
+        discount = Decimal(str(item.get('discount_rate', 0)))
+        
+        line_total = (qty * price) * (Decimal('1') - (discount / Decimal('100')))
         item['total'] = float(line_total)
         total_ht += line_total
 
@@ -69,6 +71,7 @@ def create_pre_quote(data, user_id=None):
         tva_amount=totals['tva_amount'],
         total_ttc=totals['total_ttc'],
         status=data.get('status', 'draft'),
+        show_discounts=data.get('show_discounts', True),
         user_id=user_id
     )
 
@@ -95,6 +98,8 @@ def update_pre_quote(quote_id, data):
         quote.total_ttc = totals['total_ttc']
     if 'status' in data:
         quote.status = data['status']
+    if 'show_discounts' in data:
+        quote.show_discounts = data['show_discounts']
 
     db.session.commit()
     return quote

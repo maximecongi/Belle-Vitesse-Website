@@ -115,6 +115,7 @@ class PreQuote(db.Model):
 
     # Statut et Tracking
     status = db.Column(db.String(20), default='draft')  # draft, sent, accepted
+    show_discounts = db.Column(db.Boolean, default=True)
     pdf_path = db.Column(db.String(500))
 
     # Relations

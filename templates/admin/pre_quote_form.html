@@ -17,11 +17,25 @@
         border: 1px solid var(--white-3);
     }
 
-    .line-item-row {
+    .line-item-row,
+    .line-item-header {
         display: grid;
         grid-template-columns: 30px 1fr 80px 80px 120px 80px;
         gap: 1rem;
         align-items: center;
+    }
+
+    .line-item-header {
+        padding: 0.5rem 0;
+        border-bottom: 2px solid var(--white-3);
+        font-size: 0.75rem;
+        color: var(--grey-2);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .line-item-row {
         padding: 1.65rem 0 1rem 0;
         border-bottom: 1px solid var(--white-3);
     }
@@ -181,6 +195,15 @@
                     </div>
                 </div>
 
+                <div class="line-item-header">
+                    <div></div>
+                    <div>Désignation</div>
+                    <div style="text-align: left;">Qté</div>
+                    <div style="text-align: left;">Remise (%)</div>
+                    <div style="text-align: left;">Prix U. HT</div>
+                    <div></div>
+                </div>
+
                 <div id="lineItemsList">
                     <!-- Les lignes seront injectées ici -->
                     {% if quote and quote.prestations %}
@@ -195,8 +218,12 @@
                         </div>
                         <div><input type="number" step="0.5" class="form-input text-center item-qty"
                                 value="{{ item.quantity }}" onchange="recalculate()"></div>
-                        <div><input type="text" class="form-input text-center item-unit" value="{{ item.unit }}"
-                                placeholder="Unité"></div>
+                        <input type="hidden" class="item-unit" value="{{ item.unit }}">
+                        <div>
+                            <input type="number" step="1" min="0" max="100" class="form-input text-center item-discount"
+                                value="{{ item.discount_rate if item.discount_rate else 0 }}" onchange="recalculate()"
+                                placeholder="0%">
+                        </div>
                         <div><input type="number" step="0.01" class="form-input text-right item-price"
                                 value="{{ item.unit_price }}" onchange="recalculate()"></div>
                         <div class="text-right">
@@ -238,13 +265,28 @@
                     <span id="totalTTC">0.00 €</span>
                 </div>
 
+                <!-- Toggle Affichage Remise -->
+                <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--white-3);">
+                    <label class="form-label"
+                        style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin: 0;">
+                        <span>Afficher remises (PDF)</span>
+                        <div class="status-toggle">
+                            <input type="checkbox" id="showDiscounts" {% if not quote or quote.show_discounts
+                                %}checked{% endif %} style="display: none;">
+                            <div class="toggle-track {% if not quote or quote.show_discounts %}active{% endif %}">
+                                <div class="toggle-handle"></div>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+
                 <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 0.75rem;">
                     <button type="button" onclick="saveQuote()" id="saveBtn" class="admin-btn admin-btn-primary"
                         style="justify-content: center; padding: 1rem;">
                         {{ 'Mettre à jour' if is_edit else 'Générer le Pré-Devis' }}
                     </button>
                     <a href="{{ url_for('admin_pre_quotes_list') }}" class="admin-btn admin-btn-secondary"
-                        style="text-align: center; justify-content: center;">Annuler</a>
+                        style="text-align: center; justify-content: center;">Retour</a>
                 </div>
             </div>
         </div>

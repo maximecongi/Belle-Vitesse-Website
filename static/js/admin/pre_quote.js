@@ -85,6 +85,22 @@ function renderModalList(search = '') {
     });
 }
 
+// Initialisation et listeners
+document.addEventListener('DOMContentLoaded', () => {
+    // Gestion visuelle du switch des remises
+    const showDiscountsCb = document.getElementById('showDiscounts');
+    if (showDiscountsCb) {
+        showDiscountsCb.addEventListener('change', () => {
+            const track = showDiscountsCb.closest('.status-toggle').querySelector('.toggle-track');
+            if (showDiscountsCb.checked) {
+                track.classList.add('active');
+            } else {
+                track.classList.remove('active');
+            }
+        });
+    }
+});
+
 function injectLine(item) {
     const container = document.getElementById('lineItemsList');
     const catLabel = PRE_QUOTE_CAT_MAP[item.category] || item.category;
@@ -97,7 +113,10 @@ function injectLine(item) {
                 <input type="text" class="form-input item-desc" value="${item.name}" placeholder="Description">
             </div>
             <div><input type="number" step="0.5" class="form-input text-center item-qty" value="1" onchange="recalculate()"></div>
-            <div><input type="text" class="form-input text-center item-unit" value="${item.unit}" placeholder="Unité"></div>
+            <input type="hidden" class="item-unit" value="${item.unit}">
+            <div>
+                <input type="number" step="1" min="0" max="100" class="form-input text-center item-discount" value="0" onchange="recalculate()" placeholder="0%">
+            </div>
             <div><input type="number" step="0.01" class="form-input text-right item-price" value="${item.price.toFixed(2)}" onchange="recalculate()"></div>
             <div class="text-right">
                 <button type="button" onclick="this.parentElement.parentElement.remove(); recalculate();" class="admin-btn" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">Supprimer</button>
@@ -117,7 +136,10 @@ function recalculate() {
     rows.forEach(row => {
         const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
         const price = parseFloat(row.querySelector('.item-price').value) || 0;
-        totalHT += qty * price;
+        const discount = parseFloat(row.querySelector('.item-discount').value) || 0;
+
+        const lineTotal = (qty * price) * (1 - (discount / 100));
+        totalHT += lineTotal;
     });
 
     const tvaRate = parseFloat(document.getElementById('tvaRate').value) || 0;
@@ -226,7 +248,8 @@ async function saveQuote() {
                 description: row.querySelector('.item-desc').value,
                 quantity: parseFloat(row.querySelector('.item-qty').value) || 0,
                 unit: row.querySelector('.item-unit').value,
-                unit_price: parseFloat(row.querySelector('.item-price').value) || 0
+                unit_price: parseFloat(row.querySelector('.item-price').value) || 0,
+                discount_rate: parseFloat(row.querySelector('.item-discount').value) || 0
             });
         });
 
@@ -234,6 +257,7 @@ async function saveQuote() {
             production_id: document.querySelector('select[name="production_id"]').value,
             project_name: document.querySelector('input[name="project_name"]').value,
             tva_rate: parseFloat(document.getElementById('tvaRate').value) || 20.00,
+            show_discounts: document.getElementById('showDiscounts').checked,
             prestations: prestations
         };
 
@@ -258,7 +282,18 @@ async function saveQuote() {
 
         const result = await res.json();
         if (result.status === 'success') {
-            window.location.href = '/admin/pre-quotes';
+            if (isEdit) {
+                if (window.showFlash) {
+                    window.showFlash("Pré-Devis mis à jour avec succès !", "success");
+                } else {
+                    alert("Pré-Devis mis à jour avec succès !");
+                }
+                btn.disabled = false;
+                btn.textContent = originalText;
+            } else {
+                // Pour un nouveau devis, on redirige vers l'édition du devis créé
+                window.location.href = `/admin/pre-quotes/${result.id}/edit`;
+            }
         } else {
             alert("Erreur : " + result.message);
             btn.disabled = false;
