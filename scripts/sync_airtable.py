@@ -19,9 +19,6 @@ _root = Path(__file__).parent.parent
 sys.path.append(str(_root))
 os.chdir(_root)
 
-from utils.scripts_helper import build_minimal_app
-from services.sync_airtable import run_sync
-
 
 def get_airtable_config():
     """Build Airtable-specific config."""
@@ -40,8 +37,7 @@ def get_airtable_config():
 def validate_airtable_config(config):
     """Validate required Airtable values."""
     if not config["airtable_token"] or not config["airtable_base_id"]:
-        raise RuntimeError(
-            "AIRTABLE_SECRET_TOKEN and AIRTABLE_BASE_ID must be set")
+        raise RuntimeError("AIRTABLE_SECRET_TOKEN and AIRTABLE_BASE_ID must be set")
 
 
 def interactive_menu():
@@ -71,20 +67,20 @@ def interactive_menu():
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Sync Airtable data to MySQL and download images")
-    parser.add_argument("--db", action="store_true",
-                        help="Sync database only")
-    parser.add_argument("--images", action="store_true",
-                        help="Download images only")
-    parser.add_argument("--both", action="store_true",
-                        help="Sync database + download images")
+    # IMPORTS LOCAUX pour éviter que Ruff ne les déplace et ne casse le sys.path
+    from services.sync_airtable import run_sync
+    from utils.scripts_helper import build_minimal_app
+
+    parser = argparse.ArgumentParser(description="Sync Airtable data to MySQL and download images")
+    parser.add_argument("--db", action="store_true", help="Sync database only")
+    parser.add_argument("--images", action="store_true", help="Download images only")
+    parser.add_argument("--both", action="store_true", help="Sync database + download images")
 
     args = parser.parse_args()
 
     # Initialize App & Tunnel
     app, tunnel = build_minimal_app()
-    
+
     with app.app_context():
         config = get_airtable_config()
         validate_airtable_config(config)

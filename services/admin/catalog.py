@@ -2,17 +2,18 @@ import os
 from datetime import datetime
 from flask import render_template, current_app
 from models import Vehicle, Head, AppSetting
-from utils.database import get_vehicles, get_heads, get_configs_for_vehicle
+from utils.database import get_configs_for_vehicle
 from utils.document_utils import render_pdf_from_template
 
 
 def get_catalog_data():
     """Récupère et formate les données pour le catalogue de prix."""
     from flask import request
-    base_url = request.url_root.rstrip('/')
+
+    base_url = request.url_root.rstrip("/")
 
     def ensure_absolute(url):
-        if url and url.startswith('/'):
+        if url and url.startswith("/"):
             return f"{base_url}{url}"
         return url
 
@@ -22,7 +23,7 @@ def get_catalog_data():
 
     for v in vehicles_objs:
         fields = v.fields or {}
-        if not fields.get('name'):
+        if not fields.get("name"):
             continue
 
         vehicle_id = v.id
@@ -31,55 +32,78 @@ def get_catalog_data():
         # Groupement des configs avec photos (on utilise 'small' pour compresser le PDF)
         configs_grouped = {}
         for c in configs_raw:
-            c_fields = c.get('fields', {})
-            c_type = c_fields.get('type', 'Other')
+            c_fields = c.get("fields", {})
+            c_type = c_fields.get("type", "Other")
             if c_type not in configs_grouped:
                 configs_grouped[c_type] = []
 
             # Utilisation de 'large' pour les configs selon votre demande
-            img_url = c_fields.get('image', [{}])[0].get(
-                'thumbnails', {}).get('large', {}).get('url')
+            img_url = (
+                c_fields.get("image", [{}])[0]
+                .get("thumbnails", {})
+                .get("large", {})
+                .get("url")
+            )
 
-            configs_grouped[c_type].append({
-                'name': c_fields.get('name'),
-                'image': ensure_absolute(img_url)
-            })
+            configs_grouped[c_type].append(
+                {"name": c_fields.get("name"), "image": ensure_absolute(img_url)}
+            )
 
-        vehicles.append({
-            'name': fields.get('name'),
-            'daily_rate': float(v.daily_rate) if v.daily_rate else 0.0,
-            'thumbnail': ensure_absolute(fields.get('thumbnail', [{}])[0].get('thumbnails', {}).get('large', {}).get('url') or
-                        fields.get('gallery', [{}])[0].get('thumbnails', {}).get('large', {}).get('url')),
-            'specs': {
-                'vitesse': fields.get('max_speed'),
-                'passengers': fields.get('passengers'),
-                'setups': fields.get('setups')
-            },
-            'configs': configs_grouped
-        })
+        vehicles.append(
+            {
+                "name": fields.get("name"),
+                "daily_rate": float(v.daily_rate) if v.daily_rate else 0.0,
+                "thumbnail": ensure_absolute(
+                    fields.get("thumbnail", [{}])[0]
+                    .get("thumbnails", {})
+                    .get("large", {})
+                    .get("url")
+                    or fields.get("gallery", [{}])[0]
+                    .get("thumbnails", {})
+                    .get("large", {})
+                    .get("url")
+                ),
+                "specs": {
+                    "vitesse": fields.get("max_speed"),
+                    "passengers": fields.get("passengers"),
+                    "setups": fields.get("setups"),
+                },
+                "configs": configs_grouped,
+            }
+        )
 
     # Récupération des têtes via l'ORM
     heads_objs = Head.query.order_by(Head.display_order).all()
     heads = []
     for h in heads_objs:
         fields = h.fields or {}
-        if not fields.get('name'):
+        if not fields.get("name"):
             continue
 
-        heads.append({
-            'name': fields.get('name'),
-            'daily_rate': float(h.daily_rate) if h.daily_rate else 0.0,
-            'thumbnail': ensure_absolute(fields.get('thumbnail', [{}])[0].get('thumbnails', {}).get('large', {}).get('url') or
-                                         fields.get('gallery', [{}])[0].get('thumbnails', {}).get('large', {}).get('url'))
-        })
+        heads.append(
+            {
+                "name": fields.get("name"),
+                "daily_rate": float(h.daily_rate) if h.daily_rate else 0.0,
+                "thumbnail": ensure_absolute(
+                    fields.get("thumbnail", [{}])[0]
+                    .get("thumbnails", {})
+                    .get("large", {})
+                    .get("url")
+                    or fields.get("gallery", [{}])[0]
+                    .get("thumbnails", {})
+                    .get("large", {})
+                    .get("url")
+                ),
+            }
+        )
 
     # Paramètres de l'entreprise
     settings = {
-        'company_name': AppSetting.get('company_name', 'Belle Vitesse SAS'),
-        'company_address': AppSetting.get('company_address', ''),
-        'company_siret': AppSetting.get('company_siret', ''),
-        'company_phone': AppSetting.get('company_phone', ''),
-        'company_email': AppSetting.get('company_email', '')
+        "company_name": AppSetting.get("company_name", "Belle Vitesse SAS"),
+        "company_address": AppSetting.get("company_address", ""),
+        "company_siret": AppSetting.get("company_siret", ""),
+        "company_phone": AppSetting.get("company_phone", ""),
+        "company_email": AppSetting.get("company_email", ""),
     }
 
     # Calcul de la hauteur estimée (en mm) pour un PDF "infini"
@@ -89,25 +113,26 @@ def get_catalog_data():
 
     h_header = 80
     h_vehicles = ((nb_v + 1) // 2) * 180  # 2 colonnes
-    h_heads = ((nb_h + 2) // 3) * 150    # 3 colonnes
+    h_heads = ((nb_h + 2) // 3) * 150  # 3 colonnes
     h_footer = 80
 
-    estimated_height = h_header + h_vehicles + h_heads + \
-        h_footer + 50  # +50 de marge de sécurité
+    estimated_height = (
+        h_header + h_vehicles + h_heads + h_footer + 50
+    )  # +50 de marge de sécurité
 
     return {
-        'vehicles': vehicles,
-        'heads': heads,
-        'settings': settings,
-        'now': datetime.now(),
-        'estimated_height': estimated_height
+        "vehicles": vehicles,
+        "heads": heads,
+        "settings": settings,
+        "now": datetime.now(),
+        "estimated_height": estimated_height,
     }
 
 
 def generate_catalog_pdf():
     """Génère le PDF du catalogue de prix."""
     data = get_catalog_data()
-    html = render_template('pdf/catalog.html', **data)
+    html = render_template("pdf/catalog.html", **data)
     pdf_bytes = render_pdf_from_template(html, base_url=current_app.root_path)
     return pdf_bytes
 
@@ -116,13 +141,13 @@ def update_stored_catalog():
     """Génère et sauvegarde le PDF du catalogue sur le disque."""
     try:
         # Chemin de stockage
-        upload_dir = os.path.join(
-            current_app.static_folder, 'uploads', 'catalog')
+        upload_dir = os.path.join(current_app.static_folder, "uploads", "catalog")
         if not os.path.exists(upload_dir):
             os.makedirs(upload_dir)
 
         file_path = os.path.join(
-            upload_dir, f'Belle_Vitesse_CATALOGUE_{datetime.now().strftime("%Y%m")}.pdf')
+            upload_dir, f"Belle_Vitesse_CATALOGUE_{datetime.now().strftime('%Y%m')}.pdf"
+        )
 
         # Génération
         pdf_bytes = generate_catalog_pdf()
@@ -148,16 +173,16 @@ def update_stored_catalog():
             current_app.logger.info("✅ PDF compressé avec succès via pypdf.")
         except ImportError:
             current_app.logger.warning(
-                "⚠️ pypdf non installé, le catalogue ne sera pas compressé logiciellement.")
+                "⚠️ pypdf non installé, le catalogue ne sera pas compressé logiciellement."
+            )
         except Exception as e:
             current_app.logger.error(f"⚠️ Échec de la compression PDF : {e}")
 
         # Écriture
-        with open(file_path, 'wb') as f:
+        with open(file_path, "wb") as f:
             f.write(pdf_bytes)
 
         return True, "Catalogue mis à jour avec succès."
     except Exception as e:
-        current_app.logger.error(
-            f"❌ Erreur lors de la sauvegarde du catalogue : {e}")
+        current_app.logger.error(f"❌ Erreur lors de la sauvegarde du catalogue : {e}")
         return False, str(e)
