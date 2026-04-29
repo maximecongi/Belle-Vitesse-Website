@@ -288,7 +288,7 @@
 
 /* --- User Roles & Contacts --- */
 .badge-pill[data-val="Super Administrator"] {
-    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    background: #fde68a;
     color: #92400e;
 }
 

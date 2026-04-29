@@ -44,30 +44,36 @@
 
         <div class="form-group" style="margin-bottom: 2rem;">
             <label class="form-label">Rôle <span style="color: var(--red-error);">*</span></label>
-            {% set current_role = data.role if data and data.role else 'user' %}
+            {% set current_role = data.role if data and data.role else (assignable_roles[0] if assignable_roles else 'User') %}
+            {% if editing_self is defined and editing_self %}
+            {# Édition de son propre profil : rôle verrouillé #}
+            <div>
+                <span class="badge-pill" data-val="{{ current_role }}">{{ current_role }}</span>
+                <input type="hidden" name="role" value="{{ current_role }}">
+            </div>
+            {% elif assignable_roles %}
             <div class="badge-select">
-                <input type="text" name="role" value="{{ data.role if data.role else 'User' }}"
-                    data-value="{{ data.role if data.role else 'User' }}" required
+                <input type="text" name="role" value="{{ current_role }}"
+                    data-value="{{ current_role }}" required
                     style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;">
                 <div class="badge-select-trigger" style="max-width: 200px;">
                     <span class="badge-pill" data-val="{{ current_role }}">{{ current_role }}</span>
                     <span class="arrow">▼</span>
                 </div>
                 <div class="badge-select-dropdown" style="max-width: 200px;">
-                    <button type="button" class="badge-select-option" data-value="Super Administrator">
-                        <span class="badge-pill" data-val="Super Administrator">Super Administrator</span>
+                    {% for role_option in assignable_roles %}
+                    <button type="button" class="badge-select-option" data-value="{{ role_option }}">
+                        <span class="badge-pill" data-val="{{ role_option }}">{{ role_option }}</span>
                     </button>
-                    <button type="button" class="badge-select-option" data-value="Administrator">
-                        <span class="badge-pill" data-val="Administrator">Administrator</span>
-                    </button>
-                    <button type="button" class="badge-select-option" data-value="Manager">
-                        <span class="badge-pill" data-val="Manager">Manager</span>
-                    </button>
-                    <button type="button" class="badge-select-option" data-value="User">
-                        <span class="badge-pill" data-val="User">User</span>
-                    </button>
+                    {% endfor %}
                 </div>
             </div>
+            {% else %}
+            <div>
+                <span class="badge-pill" data-val="{{ current_role }}">{{ current_role }}</span>
+                <input type="hidden" name="role" value="{{ current_role }}">
+            </div>
+            {% endif %}
         </div>
 
         <div style="text-align: right; margin-top: 2rem;">

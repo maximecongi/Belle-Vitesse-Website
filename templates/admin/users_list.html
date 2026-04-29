@@ -42,6 +42,15 @@
                         </span>
                     </td>
                     <td>
+                        {% set target_level = role_hierarchy.get((u.role or 'User')|lower, 0) %}
+                        {% set is_self = (u.id == session.get('admin_user_id')) %}
+                        {% if is_self %}
+                        <div>
+                            <a href="{{ url_for('admin_user_edit', record_id=u.id) }}"
+                                class="admin-btn admin-btn-secondary"
+                                style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Modifier</a>
+                        </div>
+                        {% elif current_level > target_level %}
                         <div>
                             <a href="{{ url_for('admin_user_edit', record_id=u.id) }}"
                                 class="admin-btn admin-btn-secondary"
@@ -54,6 +63,9 @@
                                     style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">Supprimer</button>
                             </form>
                         </div>
+                        {% else %}
+                        <span style="color: var(--grey-3); font-size: 0.8rem;">—</span>
+                        {% endif %}
                     </td>
                 </tr>
                 {% else %}
