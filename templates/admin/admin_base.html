@@ -103,6 +103,7 @@
                 {% call nav_group('🧰 Administration', 'admin', 'administrator', false) %}
                 {{ nav_item(url_for('admin_users_list'), 'Équipe', 'administrator') }}
                 {{ nav_item(url_for('admin_pricing'), 'Tarification', 'administrator') }}
+                {{ nav_item(url_for('admin_catalog_pdf'), 'Catalogue de prix', 'manager') }}
                 {{ nav_item(url_for('admin_settings.admin_settings_edit'), ' Paramètres', 'administrator') }}
                 {{ nav_item(url_for('admin_calendar'), 'Calendrier', 'manager') }}
                 {{ nav_item(url_for('admin_newsletter_dashboard'), 'Newsletter', 'administrator') }}
@@ -112,6 +113,7 @@
                 {{ nav_item(url_for('admin_signature_generator'), 'Générateur de signature mail', 'user') }}
                 {{ nav_item(url_for('admin_docs_index'), 'Documentation technique', 'administrator') }}
                 {{ nav_item(url_for('admin_api_docs'), 'Documentation API', 'administrator') }}
+                {{ nav_item(url_for('admin_catalog_preview'), 'Mise à jour du catalogue', 'administrator') }}
                 {% endcall %}
             </nav>
 
