@@ -165,7 +165,7 @@
                 <div class="form-input" style="background: #f0f0f0; cursor: not-allowed; color: #555;">
                     {{ data.controller.name if data and data.controller else '—' }}
                 </div>
-                {% elif session.get('admin_user_role') != 'Administrator' %}
+                {% elif session.get('admin_user_role') not in ['Administrator', 'Super Administrator'] %}
                 <!-- Auto-select for non-admin users -->
                 <input type="text" name="controller_id"
                     value="{{ data.controller_id if (data and data.controller_id) else (data.controller.id if (data and data.controller and data.controller.id) else session.get('admin_user_id', '')) }}"

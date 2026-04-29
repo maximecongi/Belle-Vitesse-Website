@@ -37,6 +37,11 @@ class User(db.Model):
         """Retourne le rôle en minuscules (par défaut 'user')."""
         return self.role.lower() if self.role else 'user'
 
+    @property
+    def is_admin(self):
+        """Retourne True si l'utilisateur est Administrator ou Super Administrator."""
+        return self.role_lower in ('administrator', 'super administrator')
+
     def to_dict(self):
         """Convertit l'objet en dictionnaire pour les réponses API."""
         return {

@@ -48,7 +48,7 @@
 
             <nav class="admin-nav">
                 {% set user_role = current_user.role_lower %}
-                {% set role_levels = {'user': 1, 'manager': 2, 'administrator': 3} %}
+                {% set role_levels = {'user': 1, 'manager': 2, 'administrator': 3, 'super administrator': 4} %}
                 {% set current_level = role_levels.get(user_role, 0) %}
 
                 {% macro nav_group(title, id_suffix, min_role='user', default_open=false) %}
@@ -113,7 +113,8 @@
                 {{ nav_item(url_for('admin_signature_generator'), 'Générateur de signature mail', 'user') }}
                 {{ nav_item(url_for('admin_docs_index'), 'Documentation technique', 'administrator') }}
                 {{ nav_item(url_for('admin_api_docs'), 'Documentation API', 'administrator') }}
-                {{ nav_item(url_for('admin_catalog_preview'), 'Mise à jour du catalogue', 'administrator', target='_blank') }}
+                {{ nav_item(url_for('admin_catalog_preview'), 'Mise à jour du catalogue', 'super administrator',
+                target='_blank') }}
                 {% endcall %}
             </nav>
 

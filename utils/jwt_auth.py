@@ -59,11 +59,12 @@ def require_api_auth(*allowed_roles):
             if not user:
                 return jsonify({"error": "Utilisateur introuvable"}), 401
 
-            # Check role
+            # Check role — Super Administrator bypasse toutes les vérifications
             user_role = (user.role or "User").lower()
-            allowed = [r.lower() for r in allowed_roles]
-            if allowed and user_role not in allowed:
-                return jsonify({"error": "Permissions insuffisantes"}), 403
+            if user_role != "super administrator":
+                allowed = [r.lower() for r in allowed_roles]
+                if allowed and user_role not in allowed:
+                    return jsonify({"error": "Permissions insuffisantes"}), 403
 
             g.current_user = user
             g.api_user_role = user_role

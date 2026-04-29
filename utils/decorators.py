@@ -35,6 +35,11 @@ def require_roles(*allowed_roles):
 
             # 2. Vérifier le rôle
             user_role = session.get("admin_user_role", "User").lower()
+
+            # Super Administrator a accès à tout
+            if user_role == "super administrator":
+                return f(*args, **kwargs)
+
             allowed = [r.lower() for r in allowed_roles]
 
             if user_role not in allowed:
