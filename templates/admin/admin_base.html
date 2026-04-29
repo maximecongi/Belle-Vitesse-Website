@@ -66,9 +66,9 @@
                 {% endif %}
                 {% endmacro %}
 
-                {% macro nav_item(href, title, min_role='user') %}
+                {% macro nav_item(href, title, min_role='user', target=none) %}
                 {% if current_level >= role_levels.get(min_role, 3) %}
-                <a href="{{ href }}" class="admin-nav-item">
+                <a href="{{ href }}" class="admin-nav-item" {% if target %}target="{{ target }}" {% endif %}>
                     {{ title }} {% if href == "#"%} <span class="badge-pill" data-val="incoming">Bientôt</span>{% endif
                     %}
                 </a>
