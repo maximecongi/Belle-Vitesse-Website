@@ -19,19 +19,20 @@ def init_catalog_routes(app):
     def admin_catalog_pdf():
         """Sert le dernier catalogue de prix généré en téléchargement."""
         import datetime
-
         filename = (
             f"Belle_Vitesse_CATALOGUE_{datetime.datetime.now().strftime('%Y%m')}.pdf"
         )
-        directory = os.path.join(current_app.static_folder, "uploads", "catalog")
+        
+        output_base = os.getenv('OUTPUT_FOLDER', os.path.join(current_app.root_path, 'output'))
+        directory = os.path.join(output_base, "catalog")
         file_path = os.path.join(directory, filename)
-
+        
         if not os.path.exists(file_path):
             # Si le fichier du mois n'existe pas, on le génère
             success, msg = update_stored_catalog()
             if not success:
                 return f"Erreur génération initiale : {msg}", 500
-
+        
         return send_from_directory(
             directory,
             filename,

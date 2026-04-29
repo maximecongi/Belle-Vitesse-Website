@@ -140,14 +140,16 @@ def generate_catalog_pdf():
 def update_stored_catalog():
     """Génère et sauvegarde le PDF du catalogue sur le disque."""
     try:
-        # Chemin de stockage
-        upload_dir = os.path.join(current_app.static_folder, "uploads", "catalog")
+        # Chemin de stockage via variable d'environnement
+        output_base = os.getenv('OUTPUT_FOLDER', os.path.join(current_app.root_path, 'output'))
+        upload_dir = os.path.join(output_base, 'catalog')
+        
         if not os.path.exists(upload_dir):
             os.makedirs(upload_dir)
 
-        file_path = os.path.join(
-            upload_dir, f"Belle_Vitesse_CATALOGUE_{datetime.now().strftime('%Y%m')}.pdf"
-        )
+        import datetime
+        filename = f'Belle_Vitesse_CATALOGUE_{datetime.datetime.now().strftime("%Y%m")}.pdf'
+        file_path = os.path.join(upload_dir, filename)
 
         # Génération
         pdf_bytes = generate_catalog_pdf()
