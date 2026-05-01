@@ -84,6 +84,28 @@ def create_app():
     init_routes(app)
     init_error_handlers(app)
 
+    # ── Validation de connexion DB par worker ─────────────────
+    # Garantit que chaque worker Gunicorn valide sa connexion DB
+    # après une période d'inactivité, éliminant les 90s de timeout TCP.
+    import time
+    _last_db_check = {}
+
+    @app.before_request
+    def _ensure_db_connection():
+        """Valide la connexion DB si le worker est inactif depuis > 60s."""
+        worker_id = id(db.engine)  # Unique par worker
+        now = time.monotonic()
+        last = _last_db_check.get(worker_id, 0)
+
+        if now - last > 60:  # Vérifie max 1 fois par minute
+            try:
+                from sqlalchemy import text
+                db.session.execute(text("SELECT 1"))
+            except Exception:
+                db.session.rollback()
+                app.logger.warning("⚠️ Connexion DB recyclée après inactivité")
+            _last_db_check[worker_id] = now
+
     # Filtres Jinja2 personnalisés
     import ast
     import json
@@ -361,26 +383,11 @@ if os.getenv("FLASK_ENV") == "production":
         replace_existing=True,
     )
 
-    # Heartbeat DB : garde les connexions du pool vivantes (évite les 90s timeout)
-    def db_heartbeat():
-        try:
-            with app.app_context():
-                from sqlalchemy import text
-                db.session.execute(text("SELECT 1"))
-                db.session.remove()
-        except Exception as e:
-            app.logger.warning(f"⚠️ Heartbeat DB échoué : {e}")
-
-    scheduler.add_job(
-        func=db_heartbeat,
-        trigger="interval",
-        minutes=5,
-        id="db_heartbeat",
-        replace_existing=True,
-    )
+    # Heartbeat DB : la validation est maintenant gérée par before_request
+    # dans chaque worker Gunicorn (voir _ensure_db_connection ci-dessus).
 
     scheduler.start()
-    app.logger.info("⏰ Scheduler démarré (cache + heartbeat DB)")
+    app.logger.info("⏰ Scheduler démarré (cache warmup)")
     # ───────────────────────────────────────────────────────────
 
 

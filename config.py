@@ -19,16 +19,18 @@ class Config:
 
     # Database settings
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_POOL_RECYCLE = 1800       # 30 min (au lieu de 280s)
     SQLALCHEMY_POOL_PRE_PING = True
-    SQLALCHEMY_POOL_SIZE = 5
-    SQLALCHEMY_MAX_OVERFLOW = 10
-    SQLALCHEMY_POOL_TIMEOUT = 10
     SQLALCHEMY_ENGINE_OPTIONS = {
-        "connect_args": {
-            "connect_timeout": 5,        # Timeout TCP connexion (au lieu de ~90s par défaut)
-        },
+        "pool_size": 5,
+        "max_overflow": 10,
+        "pool_timeout": 10,
+        "pool_recycle": 280,             # Recycle avant le wait_timeout MySQL (défaut 28800s)
         "pool_pre_ping": True,
+        "connect_args": {
+            "connect_timeout": 5,        # Timeout TCP connexion initiale
+            "read_timeout": 30,          # Timeout lecture (évite les 90s TCP mort)
+            "write_timeout": 30,         # Timeout écriture
+        },
     }
 
     # Arclight settings
