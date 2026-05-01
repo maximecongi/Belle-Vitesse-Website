@@ -61,7 +61,7 @@ def create_app():
             mysql_pass = os.getenv("MYSQL_PASSWORD", "")
             mysql_db = os.getenv("MYSQL_DATABASE", "bellevitesse")
             app.config["SQLALCHEMY_DATABASE_URI"] = (
-                f"mysql+mysqlconnector://{mysql_user}:{mysql_pass}"
+                f"mysql+mysqldb://{mysql_user}:{mysql_pass}"
                 f"@127.0.0.1:{local_port}/{mysql_db}"
             )
     # S'assurer que les dossiers nécessaires existent sur le serveur

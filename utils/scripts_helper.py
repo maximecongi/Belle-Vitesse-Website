@@ -34,7 +34,7 @@ def build_minimal_app(template_folder=None):
         mysql_port = local_port
 
     default_uri = (
-        f"mysql+mysqlconnector://{mysql_user}:{mysql_pass}"
+        f"mysql+mysqldb://{mysql_user}:{mysql_pass}"
         f"@{mysql_host}:{mysql_port}/{mysql_db}"
     )
 

@@ -27,7 +27,7 @@ THUMBNAIL_SIZES = ["small", "large", "full"]
 def get_sqlalchemy_engine(host, user, password, database, port=3306):
     """Crée et retourne un moteur SQLAlchemy."""
     try:
-        url = f"mysql+mysqlconnector://{user}:{password}@{host}:{port}/{database}"
+        url = f"mysql+mysqldb://{user}:{password}@{host}:{port}/{database}"
         engine = create_engine(url)
         return engine
     except Exception as e:

@@ -55,7 +55,7 @@ class DevelopmentConfig(Config):
 
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "SQLALCHEMY_DATABASE_URI",
-        f"mysql+mysqlconnector://{os.getenv('MYSQL_USER', 'root')}:{os.getenv('MYSQL_PASSWORD', '')}@{os.getenv('MYSQL_HOST', '127.0.0.1')}:3306/{os.getenv('MYSQL_DATABASE', 'bellevitesse')}"
+        f"mysql+mysqldb://{os.getenv('MYSQL_USER', 'root')}:{os.getenv('MYSQL_PASSWORD', '')}@{os.getenv('MYSQL_HOST', '127.0.0.1')}:3306/{os.getenv('MYSQL_DATABASE', 'bellevitesse')}"
     )
 
 
@@ -81,7 +81,7 @@ class ProductionConfig(Config):
 
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "SQLALCHEMY_DATABASE_URI",
-        f"mysql+mysqlconnector://{os.getenv('MYSQL_USER', 'Maxcongi')}:{os.getenv('MYSQL_PASSWORD', '')}@{os.getenv('MYSQL_HOST', 'bv_mysql')}:3306/{os.getenv('MYSQL_DATABASE', 'BelleVitesse')}"
+        f"mysql+mysqldb://{os.getenv('MYSQL_USER', 'Maxcongi')}:{os.getenv('MYSQL_PASSWORD', '')}@{os.getenv('MYSQL_HOST', 'bv_mysql')}:3306/{os.getenv('MYSQL_DATABASE', 'BelleVitesse')}"
     )
 
 
