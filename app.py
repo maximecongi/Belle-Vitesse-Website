@@ -84,8 +84,30 @@ def create_app():
     init_routes(app)
     init_error_handlers(app)
 
-    # La validation de connexion DB est gérée nativement par
-    # pool_pre_ping=True + pool_recycle=60 dans SQLALCHEMY_ENGINE_OPTIONS.
+    # ── TCP Keepalive sur les connexions DB ─────────────────────
+    # Détecte les connexions mortes en ~30s au lieu de ~90s (timeout TCP par défaut).
+    # Combiné avec pool_pre_ping=True et pool_recycle=60 dans SQLALCHEMY_ENGINE_OPTIONS.
+    import socket as _socket
+    from sqlalchemy import event
+
+    @event.listens_for(db.engine, "connect")
+    def _set_tcp_keepalive(dbapi_connection, connection_record):
+        """Active le TCP keepalive sur chaque nouvelle connexion MySQL."""
+        try:
+            fd = dbapi_connection.fileno()
+            sock = _socket.fromfd(fd, _socket.AF_INET, _socket.SOCK_STREAM)
+            # Active le keepalive
+            sock.setsockopt(_socket.SOL_SOCKET, _socket.SO_KEEPALIVE, 1)
+            try:
+                # Linux (Docker) : probe après 10s d'idle, toutes les 10s, 3 essais max
+                sock.setsockopt(_socket.IPPROTO_TCP, _socket.TCP_KEEPIDLE, 10)
+                sock.setsockopt(_socket.IPPROTO_TCP, _socket.TCP_KEEPINTVL, 10)
+                sock.setsockopt(_socket.IPPROTO_TCP, _socket.TCP_KEEPCNT, 3)
+            except (AttributeError, OSError):
+                pass  # macOS : utilise les valeurs keepalive par défaut du système
+            sock.close()  # Ferme le fd dupliqué, pas la connexion originale
+        except Exception as e:
+            app.logger.warning(f"⚠️ TCP keepalive non configuré : {e}")
 
     # Filtres Jinja2 personnalisés
     import ast
