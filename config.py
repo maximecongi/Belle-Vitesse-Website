@@ -24,7 +24,7 @@ class Config:
         "pool_size": 5,
         "max_overflow": 10,
         "pool_timeout": 10,
-        "pool_recycle": 280,
+        "pool_recycle": 60,
         "pool_pre_ping": True,
         "connect_args": {
             "connect_timeout": 5,

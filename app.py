@@ -84,27 +84,8 @@ def create_app():
     init_routes(app)
     init_error_handlers(app)
 
-    # ── Validation de connexion DB par worker ─────────────────
-    # Garantit que chaque worker Gunicorn valide sa connexion DB
-    # après une période d'inactivité, éliminant les 90s de timeout TCP.
-    import time
-    _last_db_check = {}
-
-    @app.before_request
-    def _ensure_db_connection():
-        """Valide la connexion DB si le worker est inactif depuis > 60s."""
-        worker_id = id(db.engine)  # Unique par worker
-        now = time.monotonic()
-        last = _last_db_check.get(worker_id, 0)
-
-        if now - last > 60:  # Vérifie max 1 fois par minute
-            try:
-                from sqlalchemy import text
-                db.session.execute(text("SELECT 1"))
-            except Exception:
-                db.session.rollback()
-                app.logger.warning("⚠️ Connexion DB recyclée après inactivité")
-            _last_db_check[worker_id] = now
+    # La validation de connexion DB est gérée nativement par
+    # pool_pre_ping=True + pool_recycle=60 dans SQLALCHEMY_ENGINE_OPTIONS.
 
     # Filtres Jinja2 personnalisés
     import ast
