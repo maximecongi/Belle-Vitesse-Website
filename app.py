@@ -242,12 +242,14 @@ def create_app():
                         user_obj = db.session.get(User, user_id)
                         if user_obj:
                             # Stocke un dict, pas un objet ORM (évite DetachedInstanceError avec Redis)
+                            role_lower = user_obj.role.lower() if user_obj.role else "user"
                             user_dict = {
                                 "id": user_obj.id,
                                 "firstname": user_obj.firstname,
                                 "lastname": user_obj.lastname,
                                 "role": user_obj.role,
-                                "role_lower": user_obj.role.lower() if user_obj.role else "user",
+                                "role_lower": role_lower,
+                                "is_admin": role_lower in ('administrator', 'super administrator'),
                                 "mail": user_obj.mail or "",
                                 "job": getattr(user_obj, 'job', '') or "",
                                 "phone": getattr(user_obj, 'phone', '') or "",
@@ -261,6 +263,7 @@ def create_app():
                         "lastname": session.get('admin_user_lastname', ''),
                         "role": session.get('admin_user_role', 'User'),
                         "role_lower": session.get('admin_user_role', 'User').lower(),
+                        "is_admin": session.get('admin_user_role', 'User').lower() in ('administrator', 'super administrator'),
                         "mail": "",
                         "job": "",
                         "phone": ""
@@ -288,7 +291,7 @@ def create_app():
                     f"❌ Erreur DB dans le context processor (abandon) : {e}")
                 if is_admin:
                     ctx["current_user"] = {
-                        "firstname": "", "lastname": "", "role": "User", "role_lower": "user"}
+                        "firstname": "", "lastname": "", "role": "User", "role_lower": "user", "is_admin": False}
                     ctx["vehicles"] = []
                 else:
                     ctx.update({"vehicles": [], "heads": [],

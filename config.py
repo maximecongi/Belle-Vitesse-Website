@@ -15,7 +15,7 @@ class Config:
 
     # Cache settings
     CACHE_KEY_PREFIX = "bv_cache_"
-    CACHE_DEFAULT_TIMEOUT = 86400  # 24h
+    CACHE_DEFAULT_TIMEOUT = 86400
 
     # Database settings
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -24,12 +24,12 @@ class Config:
         "pool_size": 5,
         "max_overflow": 10,
         "pool_timeout": 10,
-        "pool_recycle": 280,             # Recycle avant le wait_timeout MySQL (défaut 28800s)
+        "pool_recycle": 280,
         "pool_pre_ping": True,
         "connect_args": {
-            "connect_timeout": 5,        # Timeout TCP connexion initiale
-            "read_timeout": 30,          # Timeout lecture (évite les 90s TCP mort)
-            "write_timeout": 30,         # Timeout écriture
+            "connect_timeout": 5,
+            "read_timeout": 30,
+            "write_timeout": 30,
         },
     }
 
