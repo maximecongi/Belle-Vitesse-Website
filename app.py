@@ -88,15 +88,14 @@ def create_app():
     # Détecte les connexions mortes en ~30s au lieu de ~90s (timeout TCP par défaut).
     # Combiné avec pool_pre_ping=True et pool_recycle=60 dans SQLALCHEMY_ENGINE_OPTIONS.
     import socket as _socket
-    from sqlalchemy import event
+    from sqlalchemy import event, engine as _sa_engine
 
-    @event.listens_for(db.engine, "connect")
+    @event.listens_for(_sa_engine.Engine, "connect")
     def _set_tcp_keepalive(dbapi_connection, connection_record):
         """Active le TCP keepalive sur chaque nouvelle connexion MySQL."""
         try:
             fd = dbapi_connection.fileno()
             sock = _socket.fromfd(fd, _socket.AF_INET, _socket.SOCK_STREAM)
-            # Active le keepalive
             sock.setsockopt(_socket.SOL_SOCKET, _socket.SO_KEEPALIVE, 1)
             try:
                 # Linux (Docker) : probe après 10s d'idle, toutes les 10s, 3 essais max
