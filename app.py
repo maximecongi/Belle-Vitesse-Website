@@ -92,10 +92,16 @@ def create_app():
 
     @event.listens_for(_sa_engine.Engine, "connect")
     def _set_tcp_keepalive(dbapi_connection, connection_record):
-        """Active le TCP keepalive sur chaque nouvelle connexion MySQL."""
+        """Active le TCP keepalive sur chaque nouvelle connexion MySQL.
+
+        Utilise le FD natif de mysqlclient sans le dupliquer via fromfd().
+        On appelle setsockopt directement sur le FD via socket.socket(fileno=fd),
+        avec detach() pour éviter de fermer le FD quand le wrapper Python est GC'd.
+        """
         try:
             fd = dbapi_connection.fileno()
-            sock = _socket.fromfd(fd, _socket.AF_INET, _socket.SOCK_STREAM)
+            # Crée un wrapper autour du FD existant SANS le dupliquer
+            sock = _socket.socket(fileno=fd)
             sock.setsockopt(_socket.SOL_SOCKET, _socket.SO_KEEPALIVE, 1)
             try:
                 # Linux (Docker) : probe après 10s d'idle, toutes les 10s, 3 essais max
@@ -104,7 +110,8 @@ def create_app():
                 sock.setsockopt(_socket.IPPROTO_TCP, _socket.TCP_KEEPCNT, 3)
             except (AttributeError, OSError):
                 pass  # macOS : utilise les valeurs keepalive par défaut du système
-            sock.close()  # Ferme le fd dupliqué, pas la connexion originale
+            # IMPORTANT : detach() empêche Python de fermer le FD quand sock est GC'd
+            sock.detach()
         except Exception as e:
             app.logger.warning(f"⚠️ TCP keepalive non configuré : {e}")
 
@@ -388,8 +395,8 @@ if os.getenv("FLASK_ENV") == "production":
         replace_existing=True,
     )
 
-    # Heartbeat DB : la validation est maintenant gérée par before_request
-    # dans chaque worker Gunicorn (voir _ensure_db_connection ci-dessus).
+    # Heartbeat DB : géré par TCP keepalive + pool_pre_ping + pool_recycle
+    # et post_fork dans gunicorn.conf.py pour les workers.
 
     scheduler.start()
     app.logger.info("⏰ Scheduler démarré (cache warmup)")

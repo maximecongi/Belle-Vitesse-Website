@@ -7,6 +7,7 @@ services:
       - ../.env
     volumes:
       - ./data:/var/lib/mysql
+      - ./conf.d:/etc/mysql/conf.d
     networks:
       - bv_network
     ports:
@@ -17,3 +18,4 @@ networks:
   bv_network:
     name: bv_network
     external: true
+

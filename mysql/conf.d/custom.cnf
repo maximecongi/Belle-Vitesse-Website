@@ -1,0 +1,11 @@
+[mysqld]
+# ── Timeouts ──────────────────────────────────────────────
+# Ferme les connexions idle après 5 minutes (au lieu de 8h par défaut).
+# Cela force l'app à recycler ses connexions régulièrement, en synergie
+# avec pool_recycle=60 côté SQLAlchemy.
+wait_timeout        = 300
+interactive_timeout = 300
+
+# ── Réseau ────────────────────────────────────────────────
+# Nombre max de connexions simultanées (5 workers × pool_size 5 + overhead)
+max_connections     = 100

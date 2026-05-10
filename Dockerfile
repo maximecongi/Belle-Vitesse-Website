@@ -32,4 +32,5 @@ COPY . .
 EXPOSE 5001
 
 # Commande pour démarrer l'application avec Gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:5001", "app:app", "--workers", "5", "--threads", "2", "--timeout", "120", "--forwarded-allow-ips=*"]
+# Utilise le fichier de configuration (post_fork, max_requests, etc.)
+CMD ["gunicorn", "-c", "gunicorn.conf.py", "--forwarded-allow-ips=*", "app:app"]
