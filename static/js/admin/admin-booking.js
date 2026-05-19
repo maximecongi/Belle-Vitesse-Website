@@ -251,10 +251,10 @@ $(document).ready(function () {
                         </div>
                     `);
 
-                    // Clic sur la barre pour aller sur la liste filtrée du projet
+                    // Clic sur la barre pour aller sur la liste filtrée du projet (nouvel onglet)
                     $bar.on('click', function () {
                         const q = $(this).attr('data-project-code') || booking.project_code || '';
-                        window.location.href = `/admin/projects?q=${encodeURIComponent(q)}`;
+                        window.open(`/admin/projects?q=${encodeURIComponent(q)}`, '_blank');
                     });
 
                     // Hover Event pour Tooltip Custom
