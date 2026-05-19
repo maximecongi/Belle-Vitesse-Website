@@ -1,0 +1,81 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Calendrier des Bookings{% endblock %}
+{% block page_title %}📦 Calendrier matériel{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-booking.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-card booking-controls-card">
+    <div class="booking-filters">
+        <!-- Catégories (Véhicules / Têtes) -->
+        <div class="category-tabs">
+            <button type="button" class="tab-btn active" data-category="vehicle">
+                🏎️ Véhicules
+            </button>
+            <button type="button" class="tab-btn" data-category="head">
+                🤖 Têtes
+            </button>
+        </div>
+
+        <!-- Filtre équipement spécifique -->
+        <div class="item-filter-group">
+            <label for="itemSelect" class="form-label">Filtrer par équipement :</label>
+            <select id="itemSelect" class="form-input searchable-select">
+                <option value="">— Tous —</option>
+            </select>
+        </div>
+
+        <!-- Navigation dans le temps -->
+        <div class="date-navigation">
+            <button type="button" class="admin-btn admin-btn-secondary nav-btn" id="prevMonthBtn">
+                ◀
+            </button>
+            <span class="current-month-display" id="monthDisplay">
+                Mai 2026
+            </span>
+            <button type="button" class="admin-btn admin-btn-secondary nav-btn" id="nextMonthBtn">
+                ▶
+            </button>
+            <button type="button" class="admin-btn admin-btn-secondary" id="todayBtn">
+                Aujourd'hui
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Gantt Chart Container -->
+<div class="admin-card gantt-card">
+    <div class="gantt-outer-container">
+        <!-- Liste des équipements (Sticky à gauche) -->
+        <div class="gantt-sidebar">
+            <div class="gantt-sidebar-header">Équipement</div>
+            <div class="gantt-sidebar-rows" id="ganttSidebarRows">
+                <!-- Rempli dynamiquement par JS -->
+            </div>
+        </div>
+
+        <!-- Grille de la timeline (Scrollable) -->
+        <div class="gantt-timeline-container" id="ganttTimelineContainer">
+            <div class="gantt-timeline-header" id="ganttTimelineHeader">
+                <!-- Rempli dynamiquement par JS (jours du mois) -->
+            </div>
+            <div class="gantt-timeline-grid" id="ganttTimelineGrid">
+                <!-- Grille de fond et barres de booking (dynamique) -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tooltip Custom -->
+<div id="ganttTooltip" class="gantt-tooltip" style="display: none;"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="{{ url_for('static', filename='js/admin/admin-booking.js') }}"></script>
+{% endblock %}

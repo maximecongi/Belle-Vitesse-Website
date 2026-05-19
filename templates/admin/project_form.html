@@ -100,7 +100,7 @@
         </div>
 
         <div class="form-group" style="margin-top: 1rem;">
-            <label class="form-label">Véhicules à contrôler</label>
+            <label class="form-label">Véhicules</label>
             <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
                 {% for v in vehicles %}
                 {% set vf = v.fields %}
@@ -114,6 +114,26 @@
                         style="width: 32px; height: 32px; border-radius: 4px; object-fit: cover;">
                     {% endif %}
                     <span style="font-weight: 500;">{{ vf.get('name', '—') }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 1rem;">
+            <label class="form-label">Têtes</label>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+                {% for h in heads %}
+                {% set hf = h.fields %}
+                <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem;
+                    border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer;
+                    {% if data and h.id in data.head_ids %}background: #f8f9fa; border-color: #858585;{% endif %}">
+                    <input type="checkbox" name="head_ids" value="{{ h.id }}" {% if data and h.id in data.head_ids
+                        %}checked{% endif %} style="display: none;">
+                    {% if hf.get('thumbnail') %}
+                    <img src="{{ hf.thumbnail[0].thumbnails.small.url }}"
+                        style="width: 32px; height: 32px; border-radius: 4px; object-fit: cover;">
+                    {% endif %}
+                    <span style="font-weight: 500;">{{ hf.get('name', '—') }}</span>
                 </label>
                 {% endfor %}
             </div>

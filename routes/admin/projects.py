@@ -29,6 +29,15 @@ def init_projects_routes(app):
     def admin_projects_list():
         try:
             projects = list_projects()
+            q = request.args.get('q', '').strip().lower()
+            if q:
+                matching_projects = []
+                for p in projects:
+                    search_text = f"{p.get('project_id') or ''} {p.get('name') or ''} {p.get('production') or ''}".lower()
+                    if q in search_text:
+                        matching_projects.append(p)
+                return render_template("admin/projects_list.html", projects=matching_projects, is_archive=False)
+
             today_iso = datetime.now().strftime('%Y-%m-%d')
             upcoming_projects = [p for p in projects
                                  if not p.get("raw_return_date") or p.get("raw_return_date") >= today_iso]

@@ -196,6 +196,8 @@ class Project(db.Model):
     return_date = db.Column(db.Date)  # Date de retour prévu
     # Liste des identifiants de véhicules séparés par virgules ex: "3,5"
     vehicles_to_check = db.Column(db.String(500))
+    # Liste des identifiants de têtes séparés par virgules ex: "recXX,recYY"
+    heads_to_check = db.Column(db.String(500))
     notes = db.Column(db.Text)  # Demandes spécifiques
 
     # Relations

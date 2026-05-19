@@ -5,7 +5,7 @@ from sqlalchemy.orm import joinedload
 
 from models import Contact, Production, Project, db
 from services.admin.status_mapping import format_waiver_status
-from utils.database import get_vehicles
+from utils.database import get_vehicles, get_heads
 from utils.formatting import format_date_fr
 from utils.n8n import trigger_n8n_webhook
 
@@ -67,12 +67,14 @@ def _format_vehicle_state(project, vehicle_id, vehicle_map):
     }
 
 
-def _format_project_admin(p, vehicle_map):
+def _format_project_admin(p, vehicle_map, heads_map):
     """
     Formate un enregistrement de projet pour l'affichage dans la liste d'administration.
     """
     veh_ids = [v.strip()
                for v in (p.vehicles_to_check or "").split(",") if v.strip()]
+    head_ids = [h.strip()
+                for h in (p.heads_to_check or "").split(",") if h.strip()]
 
     return {
         "id": p.id,
@@ -91,6 +93,10 @@ def _format_project_admin(p, vehicle_map):
         "production_contact_name": f"{p.production_contact.first_name} {p.production_contact.last_name}" if p.production_contact else "—",
         "dop_contact_name": f"{p.dop_contact.first_name} {p.dop_contact.last_name}" if p.dop_contact else "—",
         "vehicles": [_format_vehicle_state(p, vid, vehicle_map) for vid in veh_ids],
+        "heads": [{
+            "id": hid,
+            "name": heads_map.get(hid, {}).get("name", "Sans nom")
+        } for hid in head_ids],
         "pilot_waiver": {
             "id": p.pilot_waiver.id if p.pilot_waiver else None,
             "waiver_num": p.pilot_waiver.waiver_id if p.pilot_waiver else "",
@@ -126,7 +132,10 @@ def list_projects():
     vehicles = get_vehicles()
     vehicle_map = {v["id"]: v.get("fields", {}) for v in vehicles}
 
-    return [_format_project_admin(p, vehicle_map) for p in projects]
+    heads = get_heads()
+    heads_map = {h["id"]: h.get("fields", {}) for h in heads}
+
+    return [_format_project_admin(p, vehicle_map, heads_map) for p in projects]
 
 
 def get_project_form_context():
@@ -146,6 +155,7 @@ def get_project_form_context():
         "productions": productions_formatted,
         "contacts": contacts_formatted,
         "vehicles": get_vehicles(),
+        "heads": get_heads(),
     }
 
 
@@ -157,6 +167,7 @@ def _parse_date(d):
 def create_project(form):
     """Crée un nouvel enregistrement de projet en base de données."""
     veh_ids = form.getlist("vehicle_ids") if hasattr(form, 'getlist') else []
+    head_ids = form.getlist("head_ids") if hasattr(form, 'getlist') else []
     project = Project(
         name=form.get("name"),
         production_id=form.get("production_id") if form.get(
@@ -172,7 +183,8 @@ def create_project(form):
         shoot_start_date=_parse_date(form.get("shoot_start")),
         shoot_end_date=_parse_date(form.get("shoot_end")),
         return_date=_parse_date(form.get("return_date")),
-        vehicles_to_check=",".join(veh_ids)
+        vehicles_to_check=",".join(veh_ids),
+        heads_to_check=",".join(head_ids)
     )
     db.session.add(project)
     db.session.flush() # Permet d'obtenir l'ID du projet avant le commit final
@@ -209,6 +221,7 @@ def update_project(record_id, form):
         return False
 
     veh_ids = form.getlist("vehicle_ids") if hasattr(form, 'getlist') else []
+    head_ids = form.getlist("head_ids") if hasattr(form, 'getlist') else []
     project.name = form.get("name")
     project.production_id = form.get(
         "production_id") if form.get("production_id") else None
@@ -224,6 +237,7 @@ def update_project(record_id, form):
     project.shoot_end_date = _parse_date(form.get("shoot_end"))
     project.return_date = _parse_date(form.get("return_date"))
     project.vehicles_to_check = ",".join(veh_ids)
+    project.heads_to_check = ",".join(head_ids)
 
     db.session.commit()
     return True
@@ -239,6 +253,8 @@ def get_project_for_edit(record_id):
 
     veh_ids = [v.strip() for v in (p.vehicles_to_check or "").split(
         ",")] if p.vehicles_to_check else []
+    head_ids = [h.strip() for h in (p.heads_to_check or "").split(
+        ",")] if p.heads_to_check else []
 
     return {
         "project_id": p.project_id,
@@ -253,6 +269,7 @@ def get_project_for_edit(record_id):
         "dop_contact_id": str(p.dop_contact_id) if p.dop_contact_id else "",
         "notes": p.notes or "",
         "vehicle_ids": veh_ids,
+        "head_ids": head_ids,
     }
 
 

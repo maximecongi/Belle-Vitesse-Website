@@ -101,7 +101,7 @@
         <tbody>
             {% for project in project_list %}
             <tr class="searchable-row"
-                data-search="{{ project.name|lower }} {{ project.production|lower }} {{ project.project_id|lower }} {{ project.notes|lower if project.notes else '' }}">
+                data-search="{{ project.name|lower }} {{ project.production|lower }} {{ project.project_id|lower }} {{ project.notes|lower if project.notes else '' }} {% for h in project.heads %}{{ h.name|lower }} {% endfor %}">
                 <td style="font-weight: 600;">{{ project.name }}<br><span
                         style="font-size: 0.6rem; color: var(--grey-2);">{{
                         project.production }}</span><br><br>
@@ -112,6 +112,16 @@
                         🎥 {{ project.shoot_start }}<br> → {{ project.shoot_end }}<br><br>
                         📦 {{ project.return_date }}
                     </div>
+                    {% if project.heads %}
+                    <div style="margin-top: 0.8rem; display: flex; flex-wrap: wrap; gap: 0.3rem;">
+                        {% for h in project.heads %}
+                        <span
+                            style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-size: 0.65rem; padding: 0.15rem 0.4rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.2rem; white-space: nowrap;">
+                            🤖 {{ h.name }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                     {% if project.notes %}
                     <div class="admin-tooltip-container" style="margin-top: 1rem;">
                         <div class="note-tooltip-trigger"

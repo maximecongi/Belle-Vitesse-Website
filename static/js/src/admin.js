@@ -559,9 +559,9 @@ function init() {
 
 
     // ─────────────────────────────────────────────
-    // 7. Vehicle checkbox highlight (project form)
+    // 7. Vehicle & Head checkbox highlight (project form)
     // ─────────────────────────────────────────────
-    document.querySelectorAll('input[name="vehicle_ids"]').forEach(cb => {
+    document.querySelectorAll('input[name="vehicle_ids"], input[name="head_ids"]').forEach(cb => {
         cb.addEventListener('change', () => {
             const label = cb.closest('label');
             if (cb.checked) {

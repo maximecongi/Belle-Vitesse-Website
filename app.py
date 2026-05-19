@@ -1,6 +1,17 @@
 import os
 from dotenv import load_dotenv
 
+load_dotenv()
+
+# En développement local sur macOS, utiliser PyMySQL comme pilote MySQLdb
+# pour contourner l'erreur de chargement de mysql_native_password présente sur MySQL 9+
+if os.getenv("FLASK_ENV") != "production":
+    try:
+        import pymysql
+        pymysql.install_as_MySQLdb()
+    except ImportError:
+        pass
+
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -29,8 +40,6 @@ from utils.database import (
 
 SUPPORTED_LANGS = ('en', 'fr')
 DEFAULT_LANG = 'en'
-
-load_dotenv()
 
 # Configuration
 
@@ -350,6 +359,20 @@ def create_app():
                             db.session.rollback()
                             app.logger.warning(
                                 f"⚠️ Échec de la migration pour {table} : {e}")
+
+            # Migration pour la colonne heads_to_check sur la table projects
+            if inspector.has_table('projects'):
+                columns = [c['name'] for c in inspector.get_columns('projects')]
+                if 'heads_to_check' not in columns:
+                    try:
+                        db.session.execute(
+                            text("ALTER TABLE projects ADD COLUMN heads_to_check VARCHAR(500) NULL"))
+                        db.session.commit()
+                        app.logger.info("✅ Migration : projects.heads_to_check ajoutée.")
+                    except Exception as e:
+                        db.session.rollback()
+                        app.logger.warning(
+                            f"⚠️ Échec de la migration pour projects.heads_to_check : {e}")
 
     try:
         _init_database_schema()
