@@ -54,7 +54,9 @@
                     <span class="pilot-waiver-info-value">
                         <strong>{{ settings.company_name }}</strong><br>
                         {{ settings.company_address }}<br>
+                        {% if settings.company_siret %}
                         SIRET : {{ settings.company_siret }}
+                        {% endif %}
                     </span>
                 </div>
                 <div class="pilot-waiver-info-item">
@@ -99,21 +101,21 @@
                         <td style="text-align: center;">{{ item.unit }}</td>
                         <td style="text-align: right;">
                             {% if quote.show_discounts %}
-                                {{ "{:,.2f}".format(item.unit_price)|replace(',', ' ') }} €
+                            {{ "{:,.2f}".format(item.unit_price)|replace(',', ' ') }} €
                             {% else %}
-                                {% if item.discount_rate %}
-                                    {{ "{:,.2f}".format(item.unit_price * (1 - item.discount_rate / 100))|replace(',', ' ') }} €
-                                {% else %}
-                                    {{ "{:,.2f}".format(item.unit_price)|replace(',', ' ') }} €
-                                {% endif %}
+                            {% if item.discount_rate %}
+                            {{ "{:,.2f}".format(item.unit_price * (1 - item.discount_rate / 100))|replace(',', ' ') }} €
+                            {% else %}
+                            {{ "{:,.2f}".format(item.unit_price)|replace(',', ' ') }} €
+                            {% endif %}
                             {% endif %}
                         </td>
                         {% if quote.show_discounts %}
                         <td style="text-align: center; font-weight: 500;">
                             {% if item.discount_rate %}
-                                {{ item.discount_rate }}%
+                            {{ item.discount_rate }}%
                             {% else %}
-                                0%
+                            0%
                             {% endif %}
                         </td>
                         {% endif %}
@@ -152,25 +154,22 @@
 
         <!-- ═══════════ NOTES ═══════════ -->
         <section class="pilot-waiver-section">
-            <h2 class="pilot-waiver-section-title dot-before">Informations Règlement & Validité</h2>
+            <h2 class="pilot-waiver-section-title dot-before">Informations Validité</h2>
             <div class="pilot-waiver-notes">
                 <p>Ce document est une estimation tarifaire indicative. Il ne constitue pas une facture ni un contrat
                     définitif. La réservation ferme du matériel et des équipes n'est effective qu'à réception d'un devis
                     définitif signé et/ou d'un bon de commande.</p>
-                <p style="margin-top: 8px;"><strong>Conditions de règlement :</strong> Par virement bancaire sous 30
-                    jours à réception de facture.</p>
-                <p style="margin-top: 8px;">
-                    <strong>Banque :</strong> {{ settings.bank_iban }} / BIC : {{ settings.bank_bic }}<br>
-                    <strong>Validité de l'offre :</strong> 30 jours à compter de la date d'émission.
-                </p>
             </div>
         </section>
 
         <!-- ═══════════ FOOTER ═══════════ -->
         <footer class="pilot-waiver-footer">
             <p>
-                <strong>{{ settings.company_name }}</strong> — Cinematic Camera Movement Systems<br>
-                {{ settings.company_address }} — SIRET : {{ settings.company_siret }}
+                <strong>{{ settings.company_name }}</strong><br>
+                {{ settings.company_address }}<br>
+                {% if settings.company_siret %}
+                SIRET : {{ settings.company_siret }}
+                {% endif %}
             </p>
         </footer>
     </div>

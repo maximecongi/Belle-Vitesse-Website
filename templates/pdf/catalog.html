@@ -9,7 +9,14 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-pilot-waivers.css') }}">
     <style>
         @page {
-            size: 210mm {{ estimated_height }}mm; /* Hauteur calculée dynamiquement */
+            size: 210mm {
+                    {
+                    estimated_height
+                }
+            }
+
+            mm;
+            /* Hauteur calculée dynamiquement */
             margin: 0;
             padding: 0;
         }
@@ -376,8 +383,11 @@
                 {{ settings.company_address }}
             </div>
             <div style="text-align: right;">
+                {% if settings.company_siret %}
                 SIRET : {{ settings.company_siret }}<br>
-                {{ settings.company_email }} | {{ settings.company_phone }}
+                {% endif %}
+                {% if settings.company_email %} {{ settings.company_email }}{% endif %}
+                {% if settings.company_phone %}| {{ settings.company_phone }}{% endif %}
             </div>
         </footer>
     </div>
