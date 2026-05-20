@@ -6,6 +6,7 @@ const PRE_QUOTE_CAT_MAP = {
     'equipment': 'Équipement',
     'salary': 'Salaire',
     'logistics': 'Logistique',
+    'insurance': 'Assurances',
     'custom': 'Autre',
     'all': 'Tout'
 };
@@ -17,6 +18,16 @@ async function addItem(category) {
     if (category === 'custom') {
         injectLine({
             category: 'custom',
+            name: '',
+            price: 0,
+            unit: 'unité'
+        });
+        return;
+    }
+
+    if (category === 'insurance') {
+        injectLine({
+            category: 'insurance',
             name: '',
             price: 0,
             unit: 'unité'
@@ -105,11 +116,18 @@ function injectLine(item) {
     const container = document.getElementById('lineItemsList');
     const catLabel = PRE_QUOTE_CAT_MAP[item.category] || item.category;
 
+    let badgeHtml = '';
+    if (item.category === 'custom') {
+        badgeHtml = `<input type="text" class="category-badge category-custom item-custom-cat" value="${item.custom_category || 'Autre'}" style="border: 1px dashed #d1d5db; background: #f3f4f6; color: #374151; width: 90px; text-align: center; text-transform: uppercase; font-size: 0.65rem; font-weight: 600; padding: 0.15rem 0.4rem; border-radius: 2px; margin-bottom: 4px;" placeholder="Autre">`;
+    } else {
+        badgeHtml = `<span class="category-badge category-${item.category}">${catLabel}</span>`;
+    }
+
     const html = `
         <div class="line-item-row" data-category="${item.category}" draggable="true">
             <div class="drag-handle">⠿</div>
             <div style="position: relative; bottom: 0.65rem;">
-                <span class="category-badge category-${item.category}">${catLabel}</span>
+                ${badgeHtml}
                 <input type="text" class="form-input item-desc" value="${item.name}" placeholder="Description">
             </div>
             <div><input type="number" step="0.5" class="form-input text-center item-qty" value="1" onchange="recalculate()"></div>
@@ -243,8 +261,11 @@ async function saveQuote() {
     try {
         const prestations = [];
         document.querySelectorAll('.line-item-row').forEach(row => {
+            const category = row.dataset.category;
+            const customCatInput = row.querySelector('.item-custom-cat');
             prestations.push({
-                category: row.dataset.category,
+                category: category,
+                custom_category: customCatInput ? customCatInput.value : null,
                 description: row.querySelector('.item-desc').value,
                 quantity: parseFloat(row.querySelector('.item-qty').value) || 0,
                 unit: row.querySelector('.item-unit').value,

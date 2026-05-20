@@ -236,6 +236,7 @@ def create_app():
                 "equipment": "Équipement",
                 "salary": "Salaire",
                 "logistics": "Logistique",
+                "insurance": "Assurances",
                 "custom": "Autre"
             },
             # Utilitaires de mapping de statuts

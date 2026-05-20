@@ -95,7 +95,7 @@
                         <td>
                             <div style="font-weight: 500;">{{ item.description }}</div>
                             <div style="font-size: 7pt; color: var(--grey-2); text-transform: uppercase;">{{
-                                PRE_QUOTE_CAT_MAP.get(item.category, item.category) }}</div>
+                                item.custom_category or PRE_QUOTE_CAT_MAP.get(item.category, item.category) }}</div>
                         </td>
                         <td style="text-align: center;">{{ item.quantity }}</td>
                         <td style="text-align: center;">{{ item.unit }}</td>
