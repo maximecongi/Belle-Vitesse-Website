@@ -3,7 +3,7 @@ $(document).ready(function () {
     let currentDate = new Date(); // Date de référence (défaut: aujourd'hui)
     let currentCategory = 'vehicle'; // Catégorie courante ('vehicle' ou 'head')
     let selectedItemId = ''; // ID de l'équipement sélectionné (optionnel)
-    const DAY_COLUMN_WIDTH = 55; // Largeur d'une colonne jour en pixels
+    const DAY_COLUMN_WIDTH = 40; // Largeur d'une colonne jour en pixels
 
     // Noms des jours et mois en français
     const MONTH_NAMES = [
