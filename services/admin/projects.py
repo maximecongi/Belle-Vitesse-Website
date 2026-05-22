@@ -127,7 +127,7 @@ def list_projects():
         joinedload(Project.dop_contact),
         joinedload(Project.pilot_waiver),
         joinedload(Project.production_waiver)
-    ).order_by(Project.name.desc()).all()
+    ).order_by(Project.departure_date.desc(), Project.name.asc()).all()
 
     vehicles = get_vehicles()
     vehicle_map = {v["id"]: v.get("fields", {}) for v in vehicles}

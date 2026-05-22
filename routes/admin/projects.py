@@ -36,11 +36,25 @@ def init_projects_routes(app):
                     search_text = f"{p.get('project_id') or ''} {p.get('name') or ''} {p.get('production') or ''}".lower()
                     if q in search_text:
                         matching_projects.append(p)
+                matching_projects.sort(
+                    key=lambda x: (
+                        0 if x.get("raw_departure_date") else 1,
+                        x.get("raw_departure_date") or "",
+                        x.get("name") or ""
+                    )
+                )
                 return render_template("admin/projects_list.html", projects=matching_projects, is_archive=False)
 
             today_iso = datetime.now().strftime('%Y-%m-%d')
             upcoming_projects = [p for p in projects
                                  if not p.get("raw_return_date") or p.get("raw_return_date") >= today_iso]
+            upcoming_projects.sort(
+                key=lambda x: (
+                    0 if x.get("raw_departure_date") else 1,
+                    x.get("raw_departure_date") or "",
+                    x.get("name") or ""
+                )
+            )
             return render_template("admin/projects_list.html", projects=upcoming_projects, is_archive=False)
         except Exception as e:
             current_app.logger.error(f"❌ Erreur dans admin_projects_list : {e}")
@@ -55,6 +69,14 @@ def init_projects_routes(app):
             today_iso = datetime.now().strftime('%Y-%m-%d')
             past_projects = [p for p in projects
                              if p.get("raw_return_date") and p.get("raw_return_date") < today_iso]
+            past_projects.sort(
+                key=lambda x: (
+                    1 if x.get("raw_departure_date") else 0,
+                    x.get("raw_departure_date") or "",
+                    x.get("name") or ""
+                ),
+                reverse=True
+            )
             return render_template("admin/projects_list.html", projects=past_projects, is_archive=True)
         except Exception as e:
             current_app.logger.error(
