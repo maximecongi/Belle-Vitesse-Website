@@ -28,7 +28,16 @@ def get_sqlalchemy_engine(host, user, password, database, port=3306):
     """Crée et retourne un moteur SQLAlchemy."""
     try:
         url = f"mysql+mysqldb://{user}:{password}@{host}:{port}/{database}"
-        engine = create_engine(url)
+        engine = create_engine(
+            url,
+            pool_recycle=60,
+            pool_pre_ping=True,
+            connect_args={
+                "connect_timeout": 5,
+                "read_timeout": 30,
+                "write_timeout": 30,
+            }
+        )
         return engine
     except Exception as e:
         print(f"Erreur lors de la création du moteur SQLAlchemy : {e}")

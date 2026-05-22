@@ -103,26 +103,42 @@ def create_app():
     def _set_tcp_keepalive(dbapi_connection, connection_record):
         """Active le TCP keepalive sur chaque nouvelle connexion MySQL.
 
-        Utilise le FD natif de mysqlclient sans le dupliquer via fromfd().
-        On appelle setsockopt directement sur le FD via socket.socket(fileno=fd),
-        avec detach() pour éviter de fermer le FD quand le wrapper Python est GC'd.
+        Détecte automatiquement s'il faut utiliser l'objet socket natif (PyMySQL)
+        ou recréer un wrapper à partir du file descriptor (mysqlclient).
         """
+        sock = None
+        should_detach = False
         try:
-            fd = dbapi_connection.fileno()
-            # Crée un wrapper autour du FD existant SANS le dupliquer
-            sock = _socket.socket(fileno=fd)
-            sock.setsockopt(_socket.SOL_SOCKET, _socket.SO_KEEPALIVE, 1)
-            try:
-                # Linux (Docker) : probe après 10s d'idle, toutes les 10s, 3 essais max
-                sock.setsockopt(_socket.IPPROTO_TCP, _socket.TCP_KEEPIDLE, 10)
-                sock.setsockopt(_socket.IPPROTO_TCP, _socket.TCP_KEEPINTVL, 10)
-                sock.setsockopt(_socket.IPPROTO_TCP, _socket.TCP_KEEPCNT, 3)
-            except (AttributeError, OSError):
-                pass  # macOS : utilise les valeurs keepalive par défaut du système
-            # IMPORTANT : detach() empêche Python de fermer le FD quand sock est GC'd
-            sock.detach()
+            # 1. Utilise l'objet socket s'il est déjà disponible (PyMySQL)
+            if hasattr(dbapi_connection, '_sock') and dbapi_connection._sock is not None:
+                sock = dbapi_connection._sock
+            elif hasattr(dbapi_connection, 'sock') and dbapi_connection.sock is not None:
+                sock = dbapi_connection.sock
+            # 2. Sinon, récupère le FD natif (mysqlclient)
+            elif hasattr(dbapi_connection, 'fileno'):
+                try:
+                    fd = dbapi_connection.fileno()
+                    if fd is not None and fd >= 0:
+                        sock = _socket.socket(fileno=fd)
+                        should_detach = True
+                except AttributeError:
+                    pass
+
+            if sock is not None:
+                sock.setsockopt(_socket.SOL_SOCKET, _socket.SO_KEEPALIVE, 1)
+                try:
+                    # Linux (Docker) : probe après 10s d'idle, toutes les 10s, 3 essais max
+                    sock.setsockopt(_socket.IPPROTO_TCP, _socket.TCP_KEEPIDLE, 10)
+                    sock.setsockopt(_socket.IPPROTO_TCP, _socket.TCP_KEEPINTVL, 10)
+                    sock.setsockopt(_socket.IPPROTO_TCP, _socket.TCP_KEEPCNT, 3)
+                except (AttributeError, OSError):
+                    pass  # macOS ou autre OS non-Linux
+
+                # N'appeler detach() que si on a créé un nouveau wrapper socket temporaire
+                if should_detach:
+                    sock.detach()
         except Exception as e:
-            app.logger.warning(f"⚠️ TCP keepalive non configuré : {e}")
+            app.logger.debug(f"ℹ️ TCP keepalive non configuré pour cette connexion : {e}")
 
     # Filtres Jinja2 personnalisés
     import ast
@@ -375,11 +391,15 @@ def create_app():
                         app.logger.warning(
                             f"⚠️ Échec de la migration pour projects.heads_to_check : {e}")
 
-    try:
-        _init_database_schema()
-        app.logger.info("✅ Schéma de base de données initialisé.")
-    except Exception as e:
-        app.logger.error(f"❌ Erreur d'initialisation DB : {e}")
+    # Initialise le schéma uniquement en développement ou si explicitement demandé (migrations)
+    if os.getenv("FLASK_ENV") != "production" or os.getenv("RUN_MIGRATIONS") == "true":
+        try:
+            _init_database_schema()
+            app.logger.info("✅ Schéma de base de données initialisé.")
+        except Exception as e:
+            app.logger.error(f"❌ Erreur d'initialisation DB : {e}")
+    else:
+        app.logger.info("ℹ️ Initialisation du schéma de base de données ignorée en production.")
 
     return app
 
@@ -400,7 +420,7 @@ def warm_cache():
         app.logger.error(f"❌ Erreur lors du pré-chargement du cache : {e}")
 
 
-if os.getenv("FLASK_ENV") == "production":
+if os.getenv("FLASK_ENV") == "production" and os.getenv("RUN_SCHEDULER") == "true":
     import threading
     # Exécute le warmup dans un thread séparé au démarrage
     threading.Thread(target=warm_cache, daemon=True).start()

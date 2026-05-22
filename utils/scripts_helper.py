@@ -43,8 +43,10 @@ def build_minimal_app(template_folder=None):
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
         "SQLALCHEMY_DATABASE_URI", default_uri)
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["SQLALCHEMY_POOL_RECYCLE"] = 280
-    app.config["SQLALCHEMY_POOL_PRE_PING"] = True
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "pool_recycle": 280,
+        "pool_pre_ping": True,
+    }
 
     db.init_app(app)
 
