@@ -61,7 +61,7 @@ def create_app():
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
     # Tunnel SSH (uniquement en développement pour accéder à la DB distante)
-    if env != "production":
+    if env == "development":
         from utils.ssh_helper import get_ssh_tunnel
         tunnel, local_port = get_ssh_tunnel()
 

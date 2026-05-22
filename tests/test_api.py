@@ -12,18 +12,17 @@ mock_weasyprint.HTML = MagicMock()
 mock_weasyprint.CSS = MagicMock()
 sys.modules["weasyprint"] = mock_weasyprint
 
-os.environ.setdefault("FLASK_ENV", "dev")
+os.environ.setdefault("FLASK_ENV", "testing")
 os.environ.setdefault("CHECK_API_TOKEN", "test-token-123")
 
 
 class APIRouteSmokeTest(unittest.TestCase):
 
     def setUp(self):
+        os.environ["FLASK_ENV"] = "testing"
         from app import create_app
         from models import db
         self.app = create_app()
-        self.app.config["TESTING"] = True
-        self.app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
         self.client = self.app.test_client()
 
         with self.app.app_context():

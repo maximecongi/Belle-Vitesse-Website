@@ -14,7 +14,7 @@ def get_ssh_tunnel():
     global _tunnel
     env = os.getenv("FLASK_ENV", "development")
     
-    if env == "production":
+    if env in ("production", "testing"):
         return None, None
 
     if _tunnel and _tunnel.is_active:
