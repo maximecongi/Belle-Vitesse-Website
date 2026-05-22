@@ -24,7 +24,7 @@ def init_calendar_routes(app):
     """Initialise les routes de gestion des abonnements calendrier."""
 
     @app.route("/admin/calendar", endpoint="admin_calendar")
-    @require_roles("administrator", "manager")
+    @require_roles("administrator", "manager", "commercial")
     def admin_calendar():
         """Page de gestion des abonnements calendrier ICS."""
         users = User.query.order_by(User.firstname).all()
@@ -56,7 +56,7 @@ def init_calendar_routes(app):
         )
 
     @app.route("/admin/calendar/generate", methods=["POST"], endpoint="admin_calendar_generate")
-    @require_roles("administrator", "manager")
+    @require_roles("administrator", "manager", "commercial")
     def admin_calendar_generate():
         """Crée un nouveau token calendrier pour un utilisateur."""
         user_id = request.form.get("user_id", type=int)
@@ -84,7 +84,7 @@ def init_calendar_routes(app):
         return redirect(url_for("admin_calendar"))
 
     @app.route("/admin/calendar/revoke", methods=["POST"], endpoint="admin_calendar_revoke")
-    @require_roles("administrator", "manager")
+    @require_roles("administrator", "manager", "commercial")
     def admin_calendar_revoke():
         """Révoque le token calendrier actif d'un utilisateur."""
         user_id = request.form.get("user_id", type=int)
@@ -102,7 +102,7 @@ def init_calendar_routes(app):
         return redirect(url_for("admin_calendar"))
 
     @app.route("/admin/calendar/regenerate", methods=["POST"], endpoint="admin_calendar_regenerate")
-    @require_roles("administrator", "manager")
+    @require_roles("administrator", "manager", "commercial")
     def admin_calendar_regenerate():
         """Régénère le token calendrier d'un utilisateur (révoque + recrée)."""
         user_id = request.form.get("user_id", type=int)
@@ -122,7 +122,7 @@ def init_calendar_routes(app):
         return redirect(url_for("admin_calendar"))
 
     @app.route("/admin/calendar/send-email", methods=["POST"], endpoint="admin_calendar_send_email")
-    @require_roles("administrator", "manager")
+    @require_roles("administrator", "manager", "commercial")
     def admin_calendar_send_email():
         """Envoie manuellement le lien calendrier par email."""
         user_id = request.form.get("user_id", type=int)

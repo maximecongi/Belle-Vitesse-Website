@@ -29,7 +29,7 @@ def init_pricing_routes(app):
     # ── Page principale ──────────────────────────────────────────
 
     @app.route("/admin/pricing")
-    @require_roles('administrator', 'manager')
+    @require_roles('administrator', 'manager', 'commercial')
     def admin_pricing():
         """Page tarification avec 3 onglets indépendants."""
 

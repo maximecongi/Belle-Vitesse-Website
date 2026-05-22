@@ -12,16 +12,18 @@ from utils.decorators import require_roles
 # Hiérarchie des rôles (plus le nombre est élevé, plus le rôle est privilégié)
 ROLE_HIERARCHY = {
     'user': 1,
-    'manager': 2,
-    'administrator': 3,
-    'super administrator': 4,
+    'commercial': 2,
+    'manager': 3,
+    'administrator': 4,
+    'super administrator': 5,
 }
 
 # Rôles assignables par chaque rôle (rôle-1 et en dessous)
 ASSIGNABLE_ROLES = {
-    'super administrator': ['Administrator', 'Manager', 'User'],
-    'administrator': ['Manager', 'User'],
+    'super administrator': ['Administrator', 'Manager', 'Commercial', 'User'],
+    'administrator': ['Manager', 'Commercial', 'User'],
     'manager': [],
+    'commercial': [],
     'user': [],
 }
 
@@ -58,7 +60,7 @@ def _can_manage_user(target_user):
 def init_users_routes(app):
 
     @app.route("/admin/users")
-    @require_roles('administrator')
+    @require_roles('administrator', 'commercial')
     def admin_users_list():
         users = list_users()
         current_level = _get_current_role_level()

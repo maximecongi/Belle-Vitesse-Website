@@ -287,22 +287,32 @@
 }
 
 /* --- User Roles & Contacts --- */
-.badge-pill[data-val="Super Administrator"] {
+.badge-pill[data-val="Super Administrator"],
+.badge-pill[data-val="super administrator"] {
     background: #fde68a;
     color: #92400e;
 }
 
-.badge-pill[data-val="Administrator"] {
+.badge-pill[data-val="Administrator"],
+.badge-pill[data-val="administrator"] {
     background: #ede9fe;
     color: #5b21b6;
 }
 
-.badge-pill[data-val="Manager"] {
+.badge-pill[data-val="Manager"],
+.badge-pill[data-val="manager"] {
     background: #dbeafe;
     color: #1e40af;
 }
 
-.badge-pill[data-val="User"] {
+.badge-pill[data-val="Commercial"],
+.badge-pill[data-val="commercial"] {
+    background: #ccfbf1;
+    color: #115e59;
+}
+
+.badge-pill[data-val="User"],
+.badge-pill[data-val="user"] {
     background: #f3f4f6;
     color: #374151;
 }

@@ -26,7 +26,7 @@ from utils.decorators import require_roles
 
 def init_pre_quotes_routes(app):
     @app.route("/admin/pre-quotes")
-    @require_roles('administrator', 'manager')
+    @require_roles('administrator', 'manager', 'commercial')
     def admin_pre_quotes_list():
         try:
             pre_quotes = list_pre_quotes()
@@ -38,7 +38,7 @@ def init_pre_quotes_routes(app):
             return render_template("admin/pre_quotes_list.html", pre_quotes=[])
 
     @app.route("/admin/pre-quotes/new", methods=["GET", "POST"])
-    @require_roles('administrator', 'manager')
+    @require_roles('administrator', 'manager', 'commercial')
     def admin_pre_quote_new():
         if request.method == "POST":
             try:
@@ -60,7 +60,7 @@ def init_pre_quotes_routes(app):
         return render_template("admin/pre_quote_form.html", is_edit=False, productions=productions)
 
     @app.route("/admin/pre-quotes/<int:quote_id>/edit", methods=["GET", "POST"])
-    @require_roles('administrator', 'manager')
+    @require_roles('administrator', 'manager', 'commercial')
     def admin_pre_quote_edit(quote_id):
         quote = PreQuote.query.get_or_404(quote_id)
         if request.method == "POST":
@@ -78,7 +78,7 @@ def init_pre_quotes_routes(app):
 
 
     @app.route("/admin/pre-quotes/<int:quote_id>/pdf")
-    @require_roles('administrator', 'manager')
+    @require_roles('administrator', 'manager', 'commercial')
     def admin_pre_quote_pdf(quote_id):
         try:
             pdf_bytes = get_pre_quote_pdf(quote_id)
@@ -95,7 +95,7 @@ def init_pre_quotes_routes(app):
             return redirect(url_for('admin_pre_quotes_list'))
 
     @app.route("/admin/pre-quotes/<int:quote_id>/delete", methods=["POST"])
-    @require_roles('administrator', 'manager')
+    @require_roles('administrator', 'manager', 'commercial')
     def admin_pre_quote_delete(quote_id):
         try:
             delete_pre_quote(quote_id)
@@ -104,7 +104,7 @@ def init_pre_quotes_routes(app):
             return jsonify({"status": "error", "message": str(e)}), 400
 
     @app.route("/admin/api/pre-quotes/<int:quote_id>/status", methods=["POST"])
-    @require_roles('administrator', 'manager')
+    @require_roles('administrator', 'manager', 'commercial')
     def admin_api_quote_status(quote_id):
         try:
             data = request.get_json()
@@ -117,7 +117,7 @@ def init_pre_quotes_routes(app):
             return jsonify({"status": "error", "message": str(e)}), 400
 
     @app.route("/admin/api/pre-quotes/all-rates")
-    @require_roles('administrator', 'manager')
+    @require_roles('administrator', 'manager', 'commercial')
     def admin_api_all_rates():
         """Récupère tous les tarifs disponibles (équipement, salaires, logistique)."""
         from services.admin.pricing import list_equipment_rates, list_salary_rates, list_logistics_rates

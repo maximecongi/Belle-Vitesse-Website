@@ -21,7 +21,7 @@ def init_api_routes(app):
     # ── API Administrative ────────────────────────────────────────
 
     @app.route("/admin/api/events")
-    @require_roles('administrator', 'manager', 'user')
+    @require_roles('administrator', 'manager', 'commercial', 'user')
     def admin_api_events():
         try:
             events = get_calendar_events()

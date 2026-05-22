@@ -25,7 +25,7 @@ def init_projects_routes(app):
     # ── CRUD Projets ──────────────────────────────────────────────
 
     @app.route("/admin/projects")
-    @require_roles('administrator', 'manager')
+    @require_roles('administrator', 'manager', 'commercial')
     def admin_projects_list():
         try:
             projects = list_projects()
@@ -48,7 +48,7 @@ def init_projects_routes(app):
             return render_template("admin/projects_list.html", projects=[], is_archive=False)
 
     @app.route("/admin/projects/archives")
-    @require_roles('administrator', 'manager')
+    @require_roles('administrator', 'manager', 'commercial')
     def admin_projects_archives():
         try:
             projects = list_projects()
@@ -63,7 +63,7 @@ def init_projects_routes(app):
             return render_template("admin/projects_list.html", projects=[], is_archive=True)
 
     @app.route("/admin/projects/new", methods=["GET", "POST"])
-    @require_roles('administrator', 'manager')
+    @require_roles('administrator', 'manager', 'commercial')
     def admin_project_new():
         context = get_project_form_context()
 
@@ -87,7 +87,7 @@ def init_projects_routes(app):
         return render_template("admin/project_form.html", is_edit=False, **context)
 
     @app.route("/admin/projects/<record_id>/edit", methods=["GET", "POST"])
-    @require_roles('administrator', 'manager')
+    @require_roles('administrator', 'manager', 'commercial')
     def admin_project_edit(record_id):
         context = get_project_form_context()
 
@@ -107,7 +107,7 @@ def init_projects_routes(app):
             return redirect(url_for("admin_projects_list"))
 
     @app.route("/admin/projects/<record_id>/delete", methods=["POST"])
-    @require_roles('administrator', 'manager')
+    @require_roles('administrator', 'manager', 'commercial')
     def admin_project_delete(record_id):
         try:
             delete_project(record_id)

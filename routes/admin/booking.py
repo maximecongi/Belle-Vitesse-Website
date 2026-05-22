@@ -25,13 +25,13 @@ def init_booking_routes(app):
     """Initialise les routes du calendrier de booking matériel."""
 
     @app.route("/admin/booking", endpoint="admin_booking")
-    @require_roles("administrator", "manager")
+    @require_roles("administrator", "manager", "commercial")
     def admin_booking():
         """Page du calendrier de booking matériel (Gantt)."""
         return render_template("admin/booking_calendar.html")
 
     @app.route("/admin/api/booking-data", endpoint="admin_booking_data")
-    @require_roles("administrator", "manager")
+    @require_roles("administrator", "manager", "commercial")
     def admin_booking_data():
         """
         API JSON retournant les données de booking pour le Gantt.

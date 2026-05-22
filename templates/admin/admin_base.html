@@ -48,11 +48,37 @@
 
             <nav class="admin-nav">
                 {% set user_role = current_user.role_lower %}
-                {% set role_levels = {'user': 1, 'manager': 2, 'administrator': 3, 'super administrator': 4} %}
-                {% set current_level = role_levels.get(user_role, 0) %}
 
-                {% macro nav_group(title, id_suffix, min_role='user', default_open=false) %}
-                {% if current_level >= role_levels.get(min_role, 3) %}
+                {# ── Permissions par rôle : chaque rôle liste les sections et items visibles ── #}
+                {% set role_permissions = {
+                    'user':                {'sections': ['dashboard','departs','retours','tools'],
+                                            'nav': ['dashboard','checkouts','production_waivers','pilot_waivers',
+                                                      'checkins','incidents','signature','docs','api_docs','catalog_update']},
+                    'commercial':          {'sections': ['dashboard','tournages','admin'],
+                                            'nav': ['dashboard','projects','archives','booking','pre_quotes',
+                                                      'productions','contacts','users','pricing','catalog_pdf',
+                                                      'settings','calendar']},
+                    'manager':             {'sections': ['dashboard','tournages','departs','retours','admin','tools'],
+                                            'nav': ['dashboard','projects','archives','booking','pre_quotes',
+                                                      'productions','contacts','checkouts','production_waivers',
+                                                      'pilot_waivers','checkins','incidents','catalog_pdf',
+                                                      'calendar','signature','docs','api_docs']},
+                    'administrator':       {'sections': ['dashboard','tournages','departs','retours','flotte','admin','tools'],
+                                            'nav': ['dashboard','projects','archives','booking','pre_quotes',
+                                                      'productions','contacts','checkouts','production_waivers',
+                                                      'pilot_waivers','checkins','incidents','vehicles',
+                                                      'users','pricing','catalog_pdf','settings','calendar',
+                                                      'newsletter','signature','docs','api_docs']},
+                    'super administrator': {'sections': ['all'], 'nav': ['all']}
+                } %}
+
+                {% set perms = role_permissions.get(user_role, {'sections': [], 'nav': []}) %}
+
+                {% macro has_section(section) %}{{ 'all' in perms['sections'] or section in perms['sections'] }}{% endmacro %}
+                {% macro has_item(item) %}{{ 'all' in perms['nav'] or item in perms['nav'] }}{% endmacro %}
+
+                {% macro nav_group(title, id_suffix, section, default_open=false) %}
+                {% if has_section(section)|trim == 'True' %}
                 <div class="admin-nav-group {% if default_open %}default-open{% endif %}"
                     data-nav-group="{{ id_suffix }}">
                     <div class="admin-nav-group-trigger">
@@ -66,8 +92,8 @@
                 {% endif %}
                 {% endmacro %}
 
-                {% macro nav_item(href, title, min_role='user', target=none) %}
-                {% if current_level >= role_levels.get(min_role, 3) %}
+                {% macro nav_item(href, title, item_key, target=none) %}
+                {% if has_item(item_key)|trim == 'True' %}
                 <a href="{{ href }}" class="admin-nav-item" {% if target %}target="{{ target }}" {% endif %}>
                     {{ title }} {% if href == "#"%} <span class="badge-pill" data-val="incoming">Bientôt</span>{% endif
                     %}
@@ -75,46 +101,46 @@
                 {% endif %}
                 {% endmacro %}
 
-                {{ nav_item(url_for('admin_dashboard'), '🗓️ Tableau de bord', 'user') }}
+                {{ nav_item(url_for('admin_dashboard'), '🗓️ Tableau de bord', 'dashboard') }}
 
-                {% call nav_group('🎬 Tournages', 'tournages', 'manager', false) %}
-                {{ nav_item(url_for('admin_projects_list'), 'Projets', 'manager') }}
-                {{ nav_item(url_for('admin_projects_archives'), 'Archives', 'manager') }}
-                {{ nav_item(url_for('admin_booking'), 'Calendrier Matériel', 'manager') }}
-                {{ nav_item(url_for('admin_pre_quotes_list'), 'Pré-Devis', 'manager') }}
-                {{ nav_item(url_for('admin_productions_list'), 'Productions', 'manager') }}
-                {{ nav_item(url_for('admin_contacts_list'), 'Contacts', 'manager') }}
+                {% call nav_group('🎬 Tournages', 'tournages', 'tournages', false) %}
+                {{ nav_item(url_for('admin_projects_list'), 'Projets', 'projects') }}
+                {{ nav_item(url_for('admin_projects_archives'), 'Archives', 'archives') }}
+                {{ nav_item(url_for('admin_booking'), 'Calendrier Matériel', 'booking') }}
+                {{ nav_item(url_for('admin_pre_quotes_list'), 'Pré-Devis', 'pre_quotes') }}
+                {{ nav_item(url_for('admin_productions_list'), 'Productions', 'productions') }}
+                {{ nav_item(url_for('admin_contacts_list'), 'Contacts', 'contacts') }}
                 {% endcall %}
 
-                {% call nav_group('🚚 Départs', 'departs', 'user', false) %}
-                {{ nav_item(url_for('admin_checkouts_list'), 'Checkouts', 'user') }}
-                {{ nav_item(url_for('admin_production_waivers_list'), 'Décharge Production', 'manager') }}
-                {{ nav_item(url_for('admin_pilot_waivers_list'), 'Décharge Pilote', 'manager') }}
+                {% call nav_group('🚚 Départs', 'departs', 'departs', false) %}
+                {{ nav_item(url_for('admin_checkouts_list'), 'Checkouts', 'checkouts') }}
+                {{ nav_item(url_for('admin_production_waivers_list'), 'Décharge Production', 'production_waivers') }}
+                {{ nav_item(url_for('admin_pilot_waivers_list'), 'Décharge Pilote', 'pilot_waivers') }}
                 {% endcall %}
 
-                {% call nav_group('📦 Retours', 'retours', 'user', false) %}
-                {{ nav_item(url_for('admin_checkins_list'), 'Checkins', 'user') }}
-                {{ nav_item('#', 'Gestion des incidents', 'manager') }}
+                {% call nav_group('📦 Retours', 'retours', 'retours', false) %}
+                {{ nav_item(url_for('admin_checkins_list'), 'Checkins', 'checkins') }}
+                {{ nav_item('#', 'Gestion des incidents', 'incidents') }}
                 {% endcall %}
 
-                {% call nav_group('🏎️ Flotte', 'flotte', 'administrator', false) %}
-                {{ nav_item(url_for('admin_vehicle_configs'), 'Config. Véhicules', 'administrator') }}
+                {% call nav_group('🏎️ Flotte', 'flotte', 'flotte', false) %}
+                {{ nav_item(url_for('admin_vehicle_configs'), 'Config. Véhicules', 'vehicles') }}
                 {% endcall %}
 
-                {% call nav_group('🧰 Administration', 'admin', 'administrator', false) %}
-                {{ nav_item(url_for('admin_users_list'), 'Équipe', 'administrator') }}
-                {{ nav_item(url_for('admin_pricing'), 'Tarification', 'administrator') }}
-                {{ nav_item(url_for('admin_catalog_pdf'), 'Catalogue de prix', 'manager') }}
-                {{ nav_item(url_for('admin_settings.admin_settings_edit'), ' Paramètres', 'administrator') }}
-                {{ nav_item(url_for('admin_calendar'), 'Calendrier', 'manager') }}
-                {{ nav_item(url_for('admin_newsletter_dashboard'), 'Newsletter', 'administrator') }}
+                {% call nav_group('🧰 Administration', 'admin', 'admin', false) %}
+                {{ nav_item(url_for('admin_users_list'), 'Équipe', 'users') }}
+                {{ nav_item(url_for('admin_pricing'), 'Tarification', 'pricing') }}
+                {{ nav_item(url_for('admin_catalog_pdf'), 'Catalogue de prix', 'catalog_pdf') }}
+                {{ nav_item(url_for('admin_settings.admin_settings_edit'), ' Paramètres', 'settings') }}
+                {{ nav_item(url_for('admin_calendar'), 'Calendrier', 'calendar') }}
+                {{ nav_item(url_for('admin_newsletter_dashboard'), 'Newsletter', 'newsletter') }}
                 {% endcall %}
 
-                {% call nav_group('🛠️ Outils', 'tools', 'user', false) %}
-                {{ nav_item(url_for('admin_signature_generator'), 'Générateur de signature mail', 'user') }}
-                {{ nav_item(url_for('admin_docs_index'), 'Documentation technique', 'administrator') }}
-                {{ nav_item(url_for('admin_api_docs'), 'Documentation API', 'administrator') }}
-                {{ nav_item(url_for('admin_catalog_preview'), 'Mise à jour du catalogue', 'super administrator',
+                {% call nav_group('🛠️ Outils', 'tools', 'tools', false) %}
+                {{ nav_item(url_for('admin_signature_generator'), 'Générateur de signature mail', 'signature') }}
+                {{ nav_item(url_for('admin_docs_index'), 'Documentation technique', 'docs') }}
+                {{ nav_item(url_for('admin_api_docs'), 'Documentation API', 'api_docs') }}
+                {{ nav_item(url_for('admin_catalog_preview'), 'Mise à jour du catalogue', 'catalog_update',
                 target='_blank') }}
                 {% endcall %}
             </nav>

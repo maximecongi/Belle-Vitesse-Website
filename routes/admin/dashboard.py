@@ -16,7 +16,7 @@ def init_dashboard_routes(app):
 
     @app.route("/admin")
     @app.route("/admin/dashboard")
-    @require_roles('administrator', 'manager', 'user')
+    @require_roles('administrator', 'manager', 'commercial', 'user')
     def admin_dashboard():
         try:
             projects_data = list_projects()

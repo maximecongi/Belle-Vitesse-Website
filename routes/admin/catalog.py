@@ -15,7 +15,7 @@ def init_catalog_routes(app):
     """Initialise les routes pour le catalogue de prix."""
 
     @app.route("/admin/catalog/pdf", endpoint="admin_catalog_pdf")
-    @require_roles("administrator", "manager")
+    @require_roles("administrator", "manager", "commercial")
     def admin_catalog_pdf():
         """Sert le dernier catalogue de prix généré en téléchargement."""
         import datetime
@@ -42,7 +42,7 @@ def init_catalog_routes(app):
         )
 
     @app.route("/admin/catalog/update", endpoint="admin_catalog_update")
-    @require_roles("administrator", "manager")
+    @require_roles("administrator", "manager", "commercial")
     def admin_catalog_update():
         """Force la mise à jour du fichier PDF du catalogue."""
         success, msg = update_stored_catalog()
@@ -53,7 +53,7 @@ def init_catalog_routes(app):
         return redirect(url_for("admin_catalog_preview"))
 
     @app.route("/admin/catalog/preview", endpoint="admin_catalog_preview")
-    @require_roles("administrator", "manager")
+    @require_roles("administrator", "manager", "commercial")
     def admin_catalog_preview():
         """Affiche la version HTML du catalogue pour le développement et la prévisualisation."""
         try:

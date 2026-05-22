@@ -22,7 +22,7 @@ def init_productions_routes(app):
     # ── CRUD Productions ──────────────────────────────────────────
 
     @app.route("/admin/productions")
-    @require_roles('administrator', 'manager')
+    @require_roles('administrator', 'manager', 'commercial')
     def admin_productions_list():
         try:
             productions = list_productions()
@@ -35,7 +35,7 @@ def init_productions_routes(app):
             return render_template("admin/productions_list.html", productions=[])
 
     @app.route("/admin/productions/new", methods=["GET", "POST"])
-    @require_roles('administrator', 'manager')
+    @require_roles('administrator', 'manager', 'commercial')
     def admin_production_new():
         if request.method == "POST":
             try:
@@ -51,7 +51,7 @@ def init_productions_routes(app):
         return render_template("admin/production_form.html", is_edit=False)
 
     @app.route("/admin/productions/<record_id>/edit", methods=["GET", "POST"])
-    @require_roles('administrator', 'manager')
+    @require_roles('administrator', 'manager', 'commercial')
     def admin_production_edit(record_id):
         try:
             if request.method == "POST":
@@ -69,7 +69,7 @@ def init_productions_routes(app):
             return redirect(url_for("admin_productions_list"))
 
     @app.route("/admin/productions/<record_id>/delete", methods=["POST"])
-    @require_roles('administrator', 'manager')
+    @require_roles('administrator', 'manager', 'commercial')
     def admin_production_delete(record_id):
         try:
             delete_production(record_id)
