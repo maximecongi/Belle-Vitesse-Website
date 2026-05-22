@@ -19,8 +19,13 @@
 
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 1rem;">
             <div class="form-group">
-                <label class="form-label">Production</label>
-                <select name="production_id" class="form-input searchable-select">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <label class="form-label" style="margin-bottom: 0;">Production</label>
+                    <button type="button" id="quickAddProductionBtn" class="admin-btn admin-btn-secondary" style="padding: 0.2rem 0.5rem; font-size: 0.75rem; line-height: 1; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; background: transparent; color: var(--grey-1); border-color: var(--white-3);">
+                        ➕ Nouvelle production
+                    </button>
+                </div>
+                <select name="production_id" id="productionSelect" class="form-input searchable-select">
                     <option value="">— Sélectionner une production —</option>
                     {% for p in productions %}
                     <option value="{{ p.id }}" {% if data and data.production_id==p.id %}selected{% endif %}>
@@ -172,6 +177,43 @@
             placeholder: function () {
                 $(this).data('placeholder');
             }
+        });
+
+        $('#quickAddProductionBtn').on('click', function() {
+            const prodName = prompt("Saisissez le nom de la nouvelle production :");
+            if (!prodName || prodName.trim() === "") {
+                return;
+            }
+
+            const csrfToken = $('input[name="csrf_token"]').val();
+
+            $.ajax({
+                url: "/admin/api/productions/quick",
+                type: "POST",
+                contentType: "application/json",
+                headers: {
+                    "X-CSRFToken": csrfToken
+                },
+                data: JSON.stringify({ name: prodName.trim() }),
+                success: function(response) {
+                    if (response && response.id) {
+                        const $select = $('#productionSelect');
+                        if ($select.find("option[value='" + response.id + "']").length === 0) {
+                            const newOption = new Option(response.name, response.id, true, true);
+                            $select.append(newOption);
+                        } else {
+                            $select.val(response.id);
+                        }
+                        $select.trigger('change');
+                    } else {
+                        alert("Une erreur est survenue lors de la création de la production.");
+                    }
+                },
+                error: function(xhr) {
+                    const errorMsg = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : "Erreur serveur";
+                    alert("Impossible de créer la production : " + errorMsg);
+                }
+            });
         });
     });
 </script>

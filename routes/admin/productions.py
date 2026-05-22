@@ -2,12 +2,14 @@ from flask import (
     abort,
     current_app,
     flash,
+    jsonify,
     redirect,
     render_template,
     request,
     url_for,
 )
 
+from models import Production, db
 from services.admin import (
     create_production,
     delete_production,
@@ -79,3 +81,26 @@ def init_productions_routes(app):
             current_app.logger.error(f"❌ Erreur lors de la suppression de la production : {e}")
             flash(f"Erreur lors de la suppression : {str(e)}", "error")
             return redirect(url_for("admin_productions_list"))
+
+    @app.route("/admin/api/productions/quick", methods=["POST"])
+    @require_roles('administrator', 'manager', 'commercial')
+    def admin_api_production_quick_create():
+        try:
+            data = request.get_json() or {}
+            name = data.get("name", "").strip()
+            if not name:
+                return jsonify({"error": "Le nom de la production est requis."}), 400
+
+            existing = Production.query.filter(Production.name.ilike(name)).first()
+            if existing:
+                return jsonify({"id": str(existing.id), "name": existing.name})
+
+            prod = Production(name=name)
+            db.session.add(prod)
+            db.session.commit()
+
+            return jsonify({"id": str(prod.id), "name": prod.name})
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"❌ Erreur lors de la création rapide de production : {e}")
+            return jsonify({"error": str(e)}), 500
