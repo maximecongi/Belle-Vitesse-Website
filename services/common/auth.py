@@ -11,13 +11,16 @@ def get_auth_serializer():
     return URLSafeTimedSerializer(secret_key)
 
 
+ALLOWED_DOMAINS = ("@bellevitesse.com", "@rvz.fr")
+
+
 def request_magic_link(email):
     """
-    1. Vérifie si l'e-mail se termine par @bellevitesse.com.
+    1. Vérifie si l'e-mail se termine par un domaine autorisé.
     2. Recherche l'utilisateur dans la base de données.
     3. Génère un jeton et envoie un e-mail.
     """
-    if not email.endswith("@bellevitesse.com"):
+    if not any(email.endswith(domain) for domain in ALLOWED_DOMAINS):
         current_app.logger.warning(
             f"⚠️ Magic link requested for non-domain email: {email}")
         return False

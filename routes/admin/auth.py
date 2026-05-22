@@ -10,7 +10,7 @@ from flask import (
 )
 
 from extensions import limiter
-from services.common.auth import request_magic_link, verify_magic_link
+from services.common.auth import ALLOWED_DOMAINS, request_magic_link, verify_magic_link
 
 
 def init_auth_routes(app):
@@ -28,7 +28,7 @@ def init_auth_routes(app):
                 flash("L'adresse email est requise.", "error")
                 return render_template("admin/login.html")
 
-            if request_magic_link(email) or email.endswith('@bellevitesse.com'):
+            if request_magic_link(email) or any(email.endswith(d) for d in ALLOWED_DOMAINS):
                 flash("Un lien de connexion vous a été envoyé par email.", "success")
 
             else:
