@@ -12,11 +12,12 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(hours=12)
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
+    RATELIMIT_SWALLOW_ERRORS = True
 
     # Cache settings
     CACHE_KEY_PREFIX = "bv_cache_"
     CACHE_DEFAULT_TIMEOUT = 86400
-
+    
     # Database settings
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_POOL_PRE_PING = True
@@ -70,7 +71,20 @@ class ProductionConfig(Config):
         "REDIS_URL", f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}")
 
     CACHE_REDIS_URL = REDIS_URL
+    CACHE_OPTIONS = {
+        "socket_timeout": 3.0,
+        "socket_connect_timeout": 3.0,
+        "socket_keepalive": True,
+        "health_check_interval": 30,
+    }
+
     RATELIMIT_STORAGE_URI = REDIS_URL
+    RATELIMIT_STORAGE_OPTIONS = {
+        "socket_timeout": 3.0,
+        "socket_connect_timeout": 3.0,
+        "socket_keepalive": True,
+        "health_check_interval": 30,
+    }
 
     # Path settings (Docker paths)
     OUTPUT_FOLDER = Path("/app/output")

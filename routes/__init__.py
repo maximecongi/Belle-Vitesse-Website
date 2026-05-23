@@ -34,7 +34,10 @@ def init_error_handlers(app):
         def handle_http_exception(e):
             # Routes admin : redirige vers login au lieu d'afficher une page publique
             if request.path.startswith('/admin'):
+                is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.accept_mimetypes.accept_json
                 if e.code in (401, 403):
+                    if is_ajax:
+                        return {"status": "error", "message": "Session expirée. Veuillez vous reconnecter."}, 401
                     flash("Session expirée. Veuillez vous reconnecter.", "error")
                     return redirect(url_for('admin_login'))
                 app.logger.warning(
@@ -50,6 +53,19 @@ def init_error_handlers(app):
             app.logger.error(f"❌ Unhandled exception: {e}", exc_info=True)
             # Routes admin : redirige vers login pour éviter la page blanche
             if request.path.startswith('/admin'):
+                is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.accept_mimetypes.accept_json
+                if is_ajax:
+                    return {"status": "error", "message": "Une erreur serveur interne est survenue."}, 500
+
+                # Évite les boucles de redirection infinies si l'erreur survient sur la page de connexion elle-même
+                if request.endpoint == 'admin_login' or request.path == '/admin/login':
+                    g._rendering_error = True
+                    return render_template(
+                        "public/error.html",
+                        error_title="500 - Internal Server Error",
+                        error_message="Une erreur critique est survenue dans le panneau d'administration.",
+                    ), 500
+
                 flash("Une erreur est survenue. Veuillez vous reconnecter.", "error")
                 return redirect(url_for('admin_login'))
             g._rendering_error = True
