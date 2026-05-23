@@ -60,7 +60,7 @@ def _can_manage_user(target_user):
 def init_users_routes(app):
 
     @app.route("/admin/users")
-    @require_roles('administrator', 'commercial')
+    @require_roles('administrator')
     def admin_users_list():
         users = list_users()
         current_level = _get_current_role_level()

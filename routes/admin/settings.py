@@ -5,7 +5,7 @@ from utils.decorators import require_roles
 settings_bp = Blueprint('admin_settings', __name__, url_prefix='/admin/settings')
 
 @settings_bp.route('/', methods=['GET', 'POST'])
-@require_roles('Administrator', 'Commercial')
+@require_roles('Administrator')
 def admin_settings_edit():
     """
     Vue pour éditer les paramètres globaux de l'application (Belle Vitesse).
