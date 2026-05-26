@@ -219,8 +219,10 @@ def create_app():
     # Processeurs de Contexte (Variables Globales pour les Templates)
     @app.context_processor
     def inject_globals():
-        # Évite les appels DB lourds pour les pages d'erreur afin de prévenir les pannes en cascade
-        if getattr(g, '_rendering_error', False):
+        # Évite les appels DB lourds pour les pages d'erreur et les pages d'authentification
+        # afin de prévenir les pannes en cascade et les blocages au login.
+        is_auth_page = request.path in ('/admin/login', '/admin/logout') or request.path.startswith('/admin/auth/')
+        if getattr(g, '_rendering_error', False) or is_auth_page:
             return {
                 "now": datetime.now(timezone.utc),
                 "is_admin": request.path.startswith('/admin'),
