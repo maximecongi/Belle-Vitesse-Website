@@ -107,18 +107,18 @@ def get_catalog_data():
     }
 
     # Calcul de la hauteur estimée (en mm) pour un PDF "infini"
-    # Estimations : Header(100) + Véhicules(N/2 * 180) + Têtes(N/3 * 150) + Footer(100)
+    # Estimations optimisées : Header(70) + Véhicules(N/2 * 160) + Têtes(N/3 * 85) + Footer(40)
     nb_v = len(vehicles)
     nb_h = len(heads)
 
-    h_header = 80
-    h_vehicles = ((nb_v + 1) // 2) * 180  # 2 colonnes
-    h_heads = ((nb_h + 2) // 3) * 150  # 3 colonnes
-    h_footer = 80
+    h_header = 70
+    h_vehicles = ((nb_v + 1) // 2) * 160  # 2 colonnes (160mm par ligne)
+    h_heads = ((nb_h + 2) // 3) * 85  # 3 colonnes (85mm par ligne)
+    h_footer = 40
 
     estimated_height = (
-        h_header + h_vehicles + h_heads + h_footer + 50
-    )  # +50 de marge de sécurité
+        h_header + h_vehicles + h_heads + h_footer + 20
+    )  # +20 de marge de sécurité
 
     return {
         "vehicles": vehicles,
