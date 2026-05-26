@@ -20,6 +20,11 @@ def admin_settings_edit():
         ('company_email', 'Email Contact', 'Email principal'),
         ('bank_iban', 'IBAN', 'Coordonnées bancaires pour les virements'),
         ('bank_bic', 'BIC / SWIFT', 'Code banque'),
+        ('delivery_base_distance', 'Distance livraison base (km)', 'Seuil forfait de base (ex: 100)'),
+        ('delivery_base_price', 'Tarif livraison base (€)', 'Forfait de base (ex: 200)'),
+        ('delivery_mid_distance', 'Distance livraison moyenne (km)', 'Seuil max tarif intermédiaire (ex: 250)'),
+        ('delivery_mid_rate', 'Tarif kilométrique interm. (€/km)', 'Tarif simple course (ex: 1.00)'),
+        ('delivery_high_rate', 'Tarif kilométrique sup. (€/km)', 'Tarif simple course (ex: 0.50)'),
     ]
 
     if request.method == 'POST':

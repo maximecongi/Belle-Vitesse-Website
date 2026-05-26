@@ -163,4 +163,14 @@ def init_pre_quotes_routes(app):
                 "unit": "unité(s)"
             })
 
+        # Option de livraison à distance virtuelle
+        items.append({
+            "id": "delivery_distance",
+            "category": "logistics",
+            "sub_category": "Logistique",
+            "name": "Livraison/Retour ( distance )",
+            "price": 200.00,
+            "unit": "km"
+        })
+
         return jsonify(items)

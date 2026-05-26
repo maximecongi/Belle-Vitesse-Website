@@ -81,12 +81,20 @@ function renderModalList(search = '') {
         const div = document.createElement('div');
         div.className = 'modal-item';
         const catLabel = PRE_QUOTE_CAT_MAP[item.category] || item.category;
+        
+        let priceHtml = '';
+        if (item.unit === 'km') {
+            priceHtml = `À partir de ${item.price.toFixed(2)} €`;
+        } else {
+            priceHtml = `${item.price.toFixed(2)} € / ${item.unit}`;
+        }
+
         div.innerHTML = `
             <div class="modal-item-info">
                 <span class="category-badge category-${item.category}">${item.sub_category}</span>
                 <span class="modal-item-name">${item.name}</span>
             </div>
-            <div class="modal-item-price">${item.price.toFixed(2)} € / ${item.unit}</div>
+            <div class="modal-item-price">${priceHtml}</div>
         `;
         div.onclick = () => {
             injectLine(item);
@@ -123,6 +131,11 @@ function injectLine(item) {
         badgeHtml = `<span class="category-badge category-${item.category}">${catLabel}</span>`;
     }
 
+    let readonlyAttr = '';
+    if (item.unit === 'km') {
+        readonlyAttr = 'readonly style="background-color: #f3f4f6; cursor: not-allowed;"';
+    }
+
     const html = `
         <div class="line-item-row" data-category="${item.category}" draggable="true">
             <div class="drag-handle">⠿</div>
@@ -135,7 +148,7 @@ function injectLine(item) {
             <div>
                 <input type="number" step="1" min="0" max="100" class="form-input text-center item-discount" value="0" onchange="recalculate()" placeholder="0%">
             </div>
-            <div><input type="number" step="0.01" class="form-input text-right item-price" value="${item.price.toFixed(2)}" onchange="recalculate()"></div>
+            <div><input type="number" step="0.01" class="form-input text-right item-price" value="${item.price.toFixed(2)}" onchange="recalculate()" ${readonlyAttr}></div>
             <div class="text-right">
                 <button type="button" onclick="this.parentElement.parentElement.remove(); recalculate();" class="admin-btn" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">Supprimer</button>
             </div>
@@ -156,10 +169,35 @@ function recalculate() {
             return; // Skip legacy insurance rows to avoid double insurance
         }
         const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-        const price = parseFloat(row.querySelector('.item-price').value) || 0;
         const discount = parseFloat(row.querySelector('.item-discount').value) || 0;
+        const unit = row.querySelector('.item-unit').value;
 
-        const lineTotal = (qty * price) * (1 - (discount / 100));
+        let lineTotal = 0;
+        if (unit === 'km') {
+            const baseDist = DELIVERY_CONFIG.baseDistance;
+            const basePrice = DELIVERY_CONFIG.basePrice;
+            const midDist = DELIVERY_CONFIG.midDistance;
+            const midRate = DELIVERY_CONFIG.midRate;
+            const highRate = DELIVERY_CONFIG.highRate;
+
+            let totalItemPrice = 0;
+            if (qty <= baseDist) {
+                totalItemPrice = basePrice;
+            } else if (qty <= midDist) {
+                totalItemPrice = basePrice + (qty - baseDist) * midRate * 2;
+            } else {
+                totalItemPrice = basePrice + (midDist - baseDist) * midRate * 2 + (qty - midDist) * highRate * 2;
+            }
+
+            lineTotal = totalItemPrice * (1 - (discount / 100));
+
+            // Mettre à jour le prix unitaire pour afficher le total de la livraison
+            row.querySelector('.item-price').value = totalItemPrice.toFixed(2);
+        } else {
+            const price = parseFloat(row.querySelector('.item-price').value) || 0;
+            lineTotal = (qty * price) * (1 - (discount / 100));
+        }
+
         baseRentalHT += lineTotal;
     });
 

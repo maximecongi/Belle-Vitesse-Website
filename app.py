@@ -233,6 +233,13 @@ def create_app():
         is_admin = request.path.startswith('/admin')
         lang = g.get('lang', DEFAULT_LANG)
 
+        def _safe_setting_float(key, default):
+            try:
+                val = AppSetting.get(key)
+                return float(val) if val is not None else float(default)
+            except (ValueError, TypeError):
+                return float(default)
+
         # Variables globales de base
         ctx = {
             "now": datetime.now(timezone.utc),
@@ -250,6 +257,13 @@ def create_app():
             "company_vat": AppSetting.get("company_vat", "FR32981514040"),
             "bank_iban": AppSetting.get("bank_iban", ""),
             "bank_bic": AppSetting.get("bank_bic", ""),
+            "DELIVERY_CONFIG": {
+                "base_distance": _safe_setting_float("delivery_base_distance", 100),
+                "base_price": _safe_setting_float("delivery_base_price", 200),
+                "mid_distance": _safe_setting_float("delivery_mid_distance", 250),
+                "mid_rate": _safe_setting_float("delivery_mid_rate", 1.0),
+                "high_rate": _safe_setting_float("delivery_high_rate", 0.5)
+            },
             "PRE_QUOTE_CAT_MAP": {
                 "equipment": "Équipement",
                 "salary": "Salaire",

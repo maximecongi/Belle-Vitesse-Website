@@ -30,22 +30,66 @@ def generate_reference():
     return f"{prefix}{next_number:03d}"
 
 
+def get_delivery_config():
+    """Récupère les paramètres de livraison globaux depuis AppSetting."""
+    def _safe_float(key, default):
+        try:
+            val = AppSetting.get(key)
+            return float(val) if val is not None else float(default)
+        except (ValueError, TypeError):
+            return float(default)
+            
+    return {
+        "base_distance": _safe_float("delivery_base_distance", 100.0),
+        "base_price": _safe_float("delivery_base_price", 200.0),
+        "mid_distance": _safe_float("delivery_mid_distance", 250.0),
+        "mid_rate": _safe_float("delivery_mid_rate", 1.0),
+        "high_rate": _safe_float("delivery_high_rate", 0.5)
+    }
+
+
 def calculate_totals(prestations, tva_rate=20.00, insurance_rate=10.00):
     """Calcule les totaux HT, TVA et TTC pour une liste de prestations."""
     total_rental_ht = Decimal('0.00')
     tva_rate = Decimal(str(tva_rate))
     insurance_rate = Decimal(str(insurance_rate))
 
+    # Récupérer la configuration de livraison
+    deliv_cfg = get_delivery_config()
+    base_dist = Decimal(str(deliv_cfg["base_distance"]))
+    base_price = Decimal(str(deliv_cfg["base_price"]))
+    mid_dist = Decimal(str(deliv_cfg["mid_distance"]))
+    mid_rate = Decimal(str(deliv_cfg["mid_rate"]))
+    high_rate = Decimal(str(deliv_cfg["high_rate"]))
+
     # On calcule la base de location HT (en excluant d'éventuels anciens items 'insurance')
     for item in prestations:
         if item.get('category') == 'insurance':
             continue
         qty = Decimal(str(item.get('quantity', 0)))
-        price = Decimal(str(item.get('unit_price', 0)))
         discount = Decimal(str(item.get('discount_rate', 0)))
         
-        line_total = (qty * price) * (Decimal('1') - (discount / Decimal('100')))
-        item['total'] = float(line_total)
+        if item.get('unit') == 'km':
+            # Formule progressive avec le multiplicateur x2 pour aller/retour sur les tarifs kilométriques
+            if qty <= base_dist:
+                total_item_price = base_price
+            elif qty <= mid_dist:
+                total_item_price = base_price + (qty - base_dist) * mid_rate * Decimal('2')
+            else:
+                total_item_price = (
+                    base_price + 
+                    (mid_dist - base_dist) * mid_rate * Decimal('2') + 
+                    (qty - mid_dist) * high_rate * Decimal('2')
+                )
+            
+            line_total = total_item_price * (Decimal('1') - (discount / Decimal('100')))
+            item['total'] = float(line_total)
+            item['unit_price'] = float(total_item_price)
+        else:
+            price = Decimal(str(item.get('unit_price', 0)))
+            line_total = (qty * price) * (Decimal('1') - (discount / Decimal('100')))
+            item['total'] = float(line_total)
+            
         total_rental_ht += line_total
 
     insurance_amount = total_rental_ht * (insurance_rate / Decimal('100'))

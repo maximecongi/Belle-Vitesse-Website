@@ -234,7 +234,8 @@
                                 placeholder="0%">
                         </div>
                         <div><input type="number" step="0.01" class="form-input text-right item-price"
-                                value="{{ item.unit_price }}" onchange="recalculate()"></div>
+                                value="{{ item.unit_price }}" onchange="recalculate()"
+                                {% if item.unit == 'km' %}readonly style="background-color: #f3f4f6; cursor: not-allowed;"{% endif %}></div>
                         <div class="text-right">
                             <button type="button" onclick="this.parentElement.parentElement.remove(); recalculate();"
                                 class="admin-btn"
@@ -342,6 +343,16 @@
 {% endblock %}
 
 {% block extra_js %}
+<script>
+    // Configuration globale de la livraison injectée depuis Flask
+    const DELIVERY_CONFIG = {
+        baseDistance: {{ DELIVERY_CONFIG.base_distance }},
+        basePrice: {{ DELIVERY_CONFIG.base_price }},
+        midDistance: {{ DELIVERY_CONFIG.mid_distance }},
+        midRate: {{ DELIVERY_CONFIG.mid_rate }},
+        highRate: {{ DELIVERY_CONFIG.high_rate }}
+    };
+</script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="{{ url_for('static', filename='js/admin/pre_quote.js') }}"></script>
