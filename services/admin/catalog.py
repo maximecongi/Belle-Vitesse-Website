@@ -106,19 +106,32 @@ def get_catalog_data():
         "company_email": AppSetting.get("company_email", ""),
     }
 
-    # Calcul de la hauteur estimée (en mm) pour un PDF "infini"
-    # Estimations optimisées : Header(70) + Véhicules(N/2 * 160) + Têtes(N/3 * 85) + Footer(40)
-    nb_v = len(vehicles)
-    nb_h = len(heads)
-
+    # Calcul de la hauteur estimée (en mm) de manière dynamique pour un PDF "infini"
     h_header = 70
-    h_vehicles = ((nb_v + 1) // 2) * 160  # 2 colonnes (160mm par ligne)
-    h_heads = ((nb_h + 2) // 3) * 85  # 3 colonnes (85mm par ligne)
-    h_footer = 40
+    h_footer = 45
 
-    estimated_height = (
-        h_header + h_vehicles + h_heads + h_footer + 20
-    )  # +20 de marge de sécurité
+    h_vehicles = 0
+    # Regroupe les véhicules par ligne de 2
+    for i in range(0, len(vehicles), 2):
+        row_vehicles = vehicles[i:i+2]
+        row_max = 0
+        for v in row_vehicles:
+            card_h = 85  # Hauteur de base d'une carte véhicule sans config
+            if v.get("configs"):
+                nb_configs = sum(len(items) for items in v["configs"].values())
+                if nb_configs > 0:
+                    config_rows = (nb_configs + 2) // 3
+                    card_h += 15 + (config_rows * 40)
+            if card_h > row_max:
+                row_max = card_h
+        h_vehicles += row_max + 10  # +10 pour l'espacement (grid gap)
+
+    h_heads = 0
+    # Regroupe les têtes par ligne de 3
+    for i in range(0, len(heads), 3):
+        h_heads += 55 + 10  # 65mm hauteur + 10mm espacement (grid gap)
+
+    estimated_height = h_header + h_vehicles + h_heads + h_footer + 15  # +15 de marge de sécurité
 
     return {
         "vehicles": vehicles,
@@ -146,9 +159,21 @@ def update_stored_catalog():
         
         if not os.path.exists(upload_dir):
             os.makedirs(upload_dir)
+        else:
+            # Nettoyer l'ancien catalogue pour ne pas accumuler les fichiers avec lettres aléatoires
+            for f in os.listdir(upload_dir):
+                if f.startswith("Belle_Vitesse_CATALOGUE_") and f.endswith(".pdf"):
+                    try:
+                        os.remove(os.path.join(upload_dir, f))
+                    except Exception as err:
+                        current_app.logger.warning(f"Impossible de supprimer l'ancien catalogue {f}: {err}")
 
         import datetime
-        filename = f'Belle_Vitesse_CATALOGUE_{datetime.datetime.now().strftime("%Y%m")}.pdf'
+        import random
+        import string
+        
+        rand_str = "".join(random.choices(string.ascii_uppercase, k=4))
+        filename = f'Belle_Vitesse_CATALOGUE_{datetime.datetime.now().strftime("%Y%m")}_{rand_str}.pdf'
         file_path = os.path.join(upload_dir, filename)
 
         # Génération

@@ -19,19 +19,30 @@ def init_catalog_routes(app):
     def admin_catalog_pdf():
         """Sert le dernier catalogue de prix généré en téléchargement."""
         import datetime
-        filename = (
-            f"Belle_Vitesse_CATALOGUE_{datetime.datetime.now().strftime('%Y%m')}.pdf"
-        )
+        import glob
         
         output_base = os.getenv('OUTPUT_FOLDER', os.path.join(current_app.root_path, 'output'))
         directory = os.path.join(output_base, "catalog")
-        file_path = os.path.join(directory, filename)
         
-        if not os.path.exists(file_path):
-            # Si le fichier du mois n'existe pas, on le génère
+        pattern = os.path.join(directory, "Belle_Vitesse_CATALOGUE_*.pdf")
+        matching_files = glob.glob(pattern)
+        
+        if not matching_files:
+            # Si aucun fichier catalogue n'existe, on le génère
             success, msg = update_stored_catalog()
             if not success:
                 return f"Erreur génération initiale : {msg}", 500
+            
+            matching_files = glob.glob(pattern)
+            if not matching_files:
+                return "Erreur : Fichier catalogue généré introuvable.", 500
+        
+        # Trier les fichiers par date de modification (mtime) décroissante pour prendre le plus récent
+        matching_files.sort(key=os.path.getmtime, reverse=True)
+        
+        # Servir le fichier correspondant trouvé
+        file_path = matching_files[0]
+        filename = os.path.basename(file_path)
         
         return send_from_directory(
             directory,
