@@ -25,6 +25,8 @@ def admin_settings_edit():
         ('delivery_mid_distance', 'Distance livraison moyenne (km)', 'Seuil max tarif intermédiaire (ex: 250)'),
         ('delivery_mid_rate', 'Tarif kilométrique interm. (€/km)', 'Tarif simple course (ex: 1.00)'),
         ('delivery_high_rate', 'Tarif kilométrique sup. (€/km)', 'Tarif simple course (ex: 0.50)'),
+        ('ilovepdf_public_key', 'Clé publique iLovePDF', 'Clé publique API du projet iLovePDF'),
+        ('ilovepdf_secret_key', 'Clé secrète iLovePDF', 'Clé secrète API du projet iLovePDF'),
     ]
 
     if request.method == 'POST':

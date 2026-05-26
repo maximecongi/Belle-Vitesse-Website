@@ -195,7 +195,7 @@
 .badge-pill:before {
     content: "";
     font-size: 0.9em;
-    /* margin-right: 0.3rem; */
+    margin-right: 0.5ch;
 }
 
 /* --- Global Statuses --- */
