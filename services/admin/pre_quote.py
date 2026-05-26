@@ -30,24 +30,33 @@ def generate_reference():
     return f"{prefix}{next_number:03d}"
 
 
-def calculate_totals(prestations, tva_rate=20.00):
+def calculate_totals(prestations, tva_rate=20.00, insurance_rate=10.00):
     """Calcule les totaux HT, TVA et TTC pour une liste de prestations."""
-    total_ht = Decimal('0.00')
+    total_rental_ht = Decimal('0.00')
     tva_rate = Decimal(str(tva_rate))
+    insurance_rate = Decimal(str(insurance_rate))
 
+    # On calcule la base de location HT (en excluant d'éventuels anciens items 'insurance')
     for item in prestations:
+        if item.get('category') == 'insurance':
+            continue
         qty = Decimal(str(item.get('quantity', 0)))
         price = Decimal(str(item.get('unit_price', 0)))
         discount = Decimal(str(item.get('discount_rate', 0)))
         
         line_total = (qty * price) * (Decimal('1') - (discount / Decimal('100')))
         item['total'] = float(line_total)
-        total_ht += line_total
+        total_rental_ht += line_total
 
+    insurance_amount = total_rental_ht * (insurance_rate / Decimal('100'))
+    total_ht = total_rental_ht + insurance_amount
     tva_amount = total_ht * (tva_rate / Decimal('100'))
     total_ttc = total_ht + tva_amount
 
     return {
+        'total_rental_ht': total_rental_ht,
+        'insurance_rate': insurance_rate,
+        'insurance_amount': insurance_amount,
         'total_ht': total_ht,
         'tva_amount': tva_amount,
         'total_ttc': total_ttc,
@@ -59,13 +68,18 @@ def create_pre_quote(data, user_id=None):
     """Crée un nouveau pré-devis."""
     reference = generate_reference()
     totals = calculate_totals(
-        data.get('prestations', []), data.get('tva_rate', 20.00))
+        data.get('prestations', []),
+        tva_rate=data.get('tva_rate', 20.00),
+        insurance_rate=data.get('insurance_rate', 10.00)
+    )
 
     quote = PreQuote(
         reference=reference,
         production_id=data['production_id'],
         project_name=data.get('project_name'),
-        prestations=data.get('prestations', []),
+        prestations=[p for p in data.get('prestations', []) if p.get('category') != 'insurance'],
+        insurance_rate=totals['insurance_rate'],
+        insurance_amount=totals['insurance_amount'],
         total_ht=totals['total_ht'],
         tva_rate=totals['tva_rate'],
         tva_amount=totals['tva_amount'],
@@ -88,14 +102,25 @@ def update_pre_quote(quote_id, data):
         quote.production_id = data['production_id']
     if 'project_name' in data:
         quote.project_name = data['project_name']
-    if 'prestations' in data:
-        quote.prestations = data['prestations']
-        totals = calculate_totals(
-            quote.prestations, data.get('tva_rate', quote.tva_rate))
+    
+    if 'prestations' in data or 'tva_rate' in data or 'insurance_rate' in data:
+        prestations = data.get('prestations', quote.prestations)
+        tva_rate = data.get('tva_rate', quote.tva_rate)
+        insurance_rate = data.get('insurance_rate', quote.insurance_rate)
+        
+        # Filtrer les anciens items d'assurance si présents
+        clean_prestations = [p for p in prestations if p.get('category') != 'insurance']
+        
+        totals = calculate_totals(clean_prestations, tva_rate=tva_rate, insurance_rate=insurance_rate)
+        
+        quote.prestations = clean_prestations
+        quote.insurance_rate = totals['insurance_rate']
+        quote.insurance_amount = totals['insurance_amount']
         quote.total_ht = totals['total_ht']
         quote.tva_rate = totals['tva_rate']
         quote.tva_amount = totals['tva_amount']
         quote.total_ttc = totals['total_ttc']
+
     if 'status' in data:
         quote.status = data['status']
     if 'show_discounts' in data:

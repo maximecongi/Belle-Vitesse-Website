@@ -132,6 +132,18 @@
             <div style="display: flex; justify-content: flex-end;">
                 <div style="width: 250px;">
                     <table class="prequote-totals-table">
+                        {% if quote.insurance_rate is not none %}
+                        <tr>
+                            <td style="font-size: 8pt; color: var(--grey-2);">BASE LOCATION HT</td>
+                            <td style="text-align: right; font-weight: 500;">{{
+                                "{:,.2f}".format(quote.total_ht - quote.insurance_amount)|replace(',', ' ') }} €</td>
+                        </tr>
+                        <tr>
+                            <td style="font-size: 8pt; color: var(--grey-2);">ASSURANCE ({{ quote.insurance_rate }}%)</td>
+                            <td style="text-align: right; font-weight: 500;">{{
+                                "{:,.2f}".format(quote.insurance_amount)|replace(',', ' ') }} €</td>
+                        </tr>
+                        {% endif %}
                         <tr>
                             <td style="font-size: 8pt; color: var(--grey-2);">TOTAL HT</td>
                             <td style="text-align: right; font-weight: 500;">{{

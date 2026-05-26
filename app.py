@@ -393,6 +393,30 @@ def create_app():
                         app.logger.warning(
                             f"⚠️ Échec de la migration pour projects.heads_to_check : {e}")
 
+            # Migration pour la colonne insurance_rate et insurance_amount sur la table pre_quotes
+            if inspector.has_table('pre_quotes'):
+                columns = [c['name'] for c in inspector.get_columns('pre_quotes')]
+                if 'insurance_rate' not in columns:
+                    try:
+                        db.session.execute(
+                            text("ALTER TABLE pre_quotes ADD COLUMN insurance_rate DECIMAL(5, 2) DEFAULT 10.00"))
+                        db.session.commit()
+                        app.logger.info("✅ Migration : pre_quotes.insurance_rate ajoutée.")
+                    except Exception as e:
+                        db.session.rollback()
+                        app.logger.warning(
+                            f"⚠️ Échec de la migration pour pre_quotes.insurance_rate : {e}")
+                if 'insurance_amount' not in columns:
+                    try:
+                        db.session.execute(
+                            text("ALTER TABLE pre_quotes ADD COLUMN insurance_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00"))
+                        db.session.commit()
+                        app.logger.info("✅ Migration : pre_quotes.insurance_amount ajoutée.")
+                    except Exception as e:
+                        db.session.rollback()
+                        app.logger.warning(
+                            f"⚠️ Échec de la migration pour pre_quotes.insurance_amount : {e}")
+
     # Initialise le schéma uniquement en développement ou si explicitement demandé (migrations)
     if os.getenv("FLASK_ENV") != "production" or os.getenv("RUN_MIGRATIONS") == "true":
         try:

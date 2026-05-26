@@ -148,21 +148,34 @@ function injectLine(item) {
 }
 
 function recalculate() {
-    let totalHT = 0;
+    let baseRentalHT = 0;
     const rows = document.querySelectorAll('.line-item-row');
 
     rows.forEach(row => {
+        if (row.dataset.category === 'insurance') {
+            return; // Skip legacy insurance rows to avoid double insurance
+        }
         const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
         const price = parseFloat(row.querySelector('.item-price').value) || 0;
         const discount = parseFloat(row.querySelector('.item-discount').value) || 0;
 
         const lineTotal = (qty * price) * (1 - (discount / 100));
-        totalHT += lineTotal;
+        baseRentalHT += lineTotal;
     });
+
+    const insuranceRate = parseFloat(document.getElementById('insuranceRate').value) || 0;
+    const insuranceAmount = baseRentalHT * (insuranceRate / 100);
+    const totalHT = baseRentalHT + insuranceAmount;
 
     const tvaRate = parseFloat(document.getElementById('tvaRate').value) || 0;
     const tvaAmount = totalHT * (tvaRate / 100);
     const totalTTC = totalHT + tvaAmount;
+
+    const baseRentalHTEl = document.getElementById('baseRentalHT');
+    if (baseRentalHTEl) baseRentalHTEl.textContent = baseRentalHT.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+
+    const insuranceAmountEl = document.getElementById('insuranceAmount');
+    if (insuranceAmountEl) insuranceAmountEl.textContent = insuranceAmount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 
     document.getElementById('totalHT').textContent = totalHT.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
     document.getElementById('tvaAmount').textContent = tvaAmount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
@@ -278,6 +291,7 @@ async function saveQuote() {
             production_id: document.querySelector('select[name="production_id"]').value,
             project_name: document.querySelector('input[name="project_name"]').value,
             tva_rate: parseFloat(document.getElementById('tvaRate').value) || 20.00,
+            insurance_rate: parseFloat(document.getElementById('insuranceRate').value) || 10.00,
             show_discounts: document.getElementById('showDiscounts').checked,
             prestations: prestations
         };

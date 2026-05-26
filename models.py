@@ -113,6 +113,8 @@ class PreQuote(db.Model):
     prestations = db.Column(db.JSON, nullable=False)
 
     # Totaux calculés
+    insurance_rate = db.Column(db.Numeric(5, 2), default=10.00)
+    insurance_amount = db.Column(db.Numeric(10, 2), nullable=False, default=0)
     total_ht = db.Column(db.Numeric(10, 2), nullable=False, default=0)
     tva_rate = db.Column(db.Numeric(5, 2), default=20.00)
     tva_amount = db.Column(db.Numeric(10, 2), nullable=False, default=0)
@@ -138,7 +140,11 @@ class PreQuote(db.Model):
             "total_ht": float(self.total_ht),
             "total_ttc": float(self.total_ttc),
             "status": self.status,
-            "pdf_path": self.pdf_path
+            "pdf_path": self.pdf_path,
+            "insurance_rate": float(self.insurance_rate) if self.insurance_rate is not None else 10.0,
+            "insurance_amount": float(self.insurance_amount) if self.insurance_amount is not None else 0.0,
+            "tva_rate": float(self.tva_rate) if self.tva_rate is not None else 20.0,
+            "tva_amount": float(self.tva_amount) if self.tva_amount is not None else 0.0
         }
 
     def __repr__(self):

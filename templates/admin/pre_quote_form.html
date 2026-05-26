@@ -195,8 +195,6 @@
                             style="font-size: 0.8rem;">+ Salaire</button>
                         <button type="button" onclick="addItem('logistics')" class="admin-btn admin-btn-secondary"
                             style="font-size: 0.8rem;">+ Logistique</button>
-                        <button type="button" onclick="addItem('insurance')" class="admin-btn admin-btn-secondary"
-                            style="font-size: 0.8rem;">+ Assurances</button>
                         <button type="button" onclick="addItem('custom')" class="admin-btn admin-btn-secondary"
                             style="font-size: 0.8rem;">+ Autre</button>
                     </div>
@@ -257,6 +255,20 @@
                 </div>
 
                 <div class="summary-row">
+                    <span>Base Location HT</span>
+                    <span id="baseRentalHT">0.00 €</span>
+                </div>
+                <div class="summary-row" style="align-items: center; margin-bottom: 1rem;">
+                    <span>Assurance (%)</span>
+                    <input type="number" name="insurance_rate" id="insuranceRate" class="form-input"
+                        style="width: 100px; text-align: right; border-color: var(--white-4);"
+                        value="{{ quote.insurance_rate if (quote and quote.insurance_rate is not none) else 10.00 }}" onchange="recalculate()">
+                </div>
+                <div class="summary-row">
+                    <span>Montant Assurance</span>
+                    <span id="insuranceAmount">0.00 €</span>
+                </div>
+                <div class="summary-row" style="border-top: 1px solid var(--white-3); padding-top: 0.5rem; margin-top: 0.5rem;">
                     <span>Total HT</span>
                     <span id="totalHT">0.00 €</span>
                 </div>
