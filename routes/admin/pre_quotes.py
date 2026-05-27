@@ -79,14 +79,21 @@ def init_pre_quotes_routes(app):
             all_salaries = SalaryRate.query.all()
             salary_by_full_name = {}
             salary_by_position_only = {}
+            
+            from services.admin.pricing import _make_renfort_rate_dict
+            all_salaries_dicts = []
             for s in all_salaries:
-                if not s.position:
+                all_salaries_dicts.append(s.to_dict())
+                if s.annexe == "Annexe 1":
+                    all_salaries_dicts.append(_make_renfort_rate_dict(s))
+
+            for s_dict in all_salaries_dicts:
+                if not s_dict.get('position'):
                     continue
-                pos_lower = s.position.lower().strip()
-                annexe_lower = s.annexe.lower().strip() if s.annexe else ""
+                pos_lower = s_dict['position'].lower().strip()
+                annexe_lower = s_dict['annexe'].lower().strip() if s_dict['annexe'] else ""
                 full_name = f"{pos_lower} ({annexe_lower})" if annexe_lower else pos_lower
                 
-                s_dict = s.to_dict()
                 salary_by_full_name[full_name] = s_dict
                 if pos_lower not in salary_by_position_only:
                     salary_by_position_only[pos_lower] = s_dict
@@ -132,7 +139,7 @@ def init_pre_quotes_routes(app):
                     else:
                         if 'annexe' not in new_item:
                             desc = new_item.get('description', '')
-                            for possible in ['Facture', 'Annexe 1', 'Annexe 2', 'USPA', 'Court-métrage']:
+                            for possible in ['Facture', 'Annexe 1', 'Annexe 2', 'Annexe 1 renfort', 'USPA', 'Court-métrage', 'Publicité']:
                                 if f"({possible})" in desc:
                                     new_item['annexe'] = possible
                                     break

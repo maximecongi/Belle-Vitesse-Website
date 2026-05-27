@@ -207,7 +207,7 @@ class PricingAdmin {
         if (field === 'annexe') {
             input = document.createElement('select');
             input.className = 'cell-input';
-            const options = ['Annexe 1', 'Annexe 2', 'USPA', 'Court-métrage', 'Facture'];
+            const options = ['Annexe 1', 'Annexe 2', 'Annexe 1 renfort', 'USPA', 'Court-métrage', 'Publicité', 'Facture'];
             options.forEach(opt => {
                 const el = document.createElement('option');
                 el.value = opt;
@@ -500,8 +500,8 @@ class PricingAdmin {
     }
 
     injectSalaryRowUI(tbody, data, startEditing = true) {
-        const isFacture = data.annexe === 'Facture';
-        const baseClass = isFacture ? 'computed-cell' : 'editable-cell';
+        const isComputed = data.annexe === 'Facture' || data.annexe === 'Annexe 1 renfort';
+        const baseClass = isComputed ? 'computed-cell' : 'editable-cell';
         const html = `
             <tr data-row-id="${data.id}" data-position-id="${data.position_id}" data-annexe="${data.annexe || 'Annexe 1'}" draggable="true">
                 <td class="drag-handle">⠿</td>

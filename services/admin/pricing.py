@@ -32,7 +32,7 @@ def get_invoice_factor():
 
 
 def update_invoice_factor(new_factor):
-    """Met à jour le facteur et recalcule TOUTES les lignes Facture à partir d'Annexe 1."""
+    """Met à jour le facteur et recalcule TOUTES les lignes Facture à partir de Publicité."""
     new_factor = round(float(new_factor), 4)
     if new_factor <= 0:
         raise ValueError("Le facteur doit être positif")
@@ -42,12 +42,12 @@ def update_invoice_factor(new_factor):
     # Recalcul global de toutes les lignes Facture
     facture_rates = SalaryRate.query.filter_by(annexe="Facture").all()
     for f_rate in facture_rates:
-        annexe_1_rate = SalaryRate.query.filter_by(
+        publicite_rate = SalaryRate.query.filter_by(
             position_id=f_rate.position_id,
-            annexe="Annexe 1"
+            annexe="Publicité"
         ).first()
-        if annexe_1_rate:
-            f_rate.base_hourly = round(float(annexe_1_rate.base_hourly or 0) * new_factor, 2)
+        if publicite_rate:
+            f_rate.base_hourly = round(float(publicite_rate.base_hourly or 0) * new_factor, 2)
             _calculate_salary_columns(f_rate)
 
     db.session.commit()
@@ -64,8 +64,12 @@ def _calculate_salary_columns(rate, factor=None):
     base = float(rate.base_hourly or 0)
     
     # Calculs Intermittents
-    rate.inter_8h = round(base * 8, 2)
-    rate.inter_10h = round(base * 12, 2)
+    if rate.annexe == "Annexe 1 renfort":
+        rate.inter_8h = round(base * 10.25, 2)
+        rate.inter_10h = round(base * 13.25, 2)
+    else:
+        rate.inter_8h = round(base * 8, 2)
+        rate.inter_10h = round(base * 12, 2)
     rate.inter_hs = round(base * 3, 2)
     
     # Calculs Facture
@@ -168,12 +172,38 @@ def update_equipment_daily_rate(table_name, record_id, value):
 # SALAIRES
 # ══════════════════════════════════════════════════════════════
 
+def _make_renfort_rate_dict(rate):
+    """Génère le dictionnaire d'un tarif Annexe 1 renfort à partir d'un SalaryRate."""
+    d = rate.to_dict() if hasattr(rate, 'to_dict') else dict(rate)
+    d["id"] = f"renfort_{d['id']}"
+    d["annexe"] = "Annexe 1 renfort"
+    
+    # Calculs Intermittents spécifiques (8h = 10.25x, 10h = 13.25x)
+    base = float(d["base_hourly"] or 0)
+    d["inter_8h"] = round(base * 10.25, 2)
+    d["inter_10h"] = round(base * 13.25, 2)
+    d["inter_hs"] = round(base * 3, 2)
+    
+    # Calculs Facture
+    factor = get_invoice_factor()
+    d["invoice_8h"] = round(d["inter_8h"] * factor, 2)
+    d["invoice_10h"] = round(d["inter_10h"] * factor, 2)
+    d["invoice_hs"] = round(d["inter_hs"] * factor, 2)
+    
+    return d
+
+
 def list_salary_rates():
     """Retourne tous les salaires triés (liste plate pour l'API)."""
     try:
         rates = SalaryRate.query.join(SalaryPosition).order_by(
             SalaryPosition.display_order, SalaryRate.id).all()
-        return [r.to_dict() for r in rates]
+        results = []
+        for r in rates:
+            results.append(r.to_dict())
+            if r.annexe == "Annexe 1":
+                results.append(_make_renfort_rate_dict(r))
+        return results
     except Exception as e:
         logger.error(f"Erreur chargement salary_rates: {e}")
         return []
@@ -195,6 +225,8 @@ def list_salary_rates_grouped():
             if gname not in grouped:
                 grouped[gname] = []
             grouped[gname].append(r.to_dict())
+            if r.annexe == "Annexe 1":
+                grouped[gname].append(_make_renfort_rate_dict(r))
 
         return grouped
     except Exception as e:
@@ -226,8 +258,8 @@ def add_salary_rate(group_name="", annexe="Annexe 1"):
     db.session.add(pos_obj)
     db.session.flush()
     
-    # Créer les 5 annexes pour cette nouvelle position
-    annexes = ["Annexe 1", "Annexe 2", "USPA", "Court-métrage", "Facture"]
+    # Créer les 6 annexes pour cette nouvelle position
+    annexes = ["Annexe 1", "Annexe 2", "USPA", "Court-métrage", "Publicité", "Facture"]
     new_rates = []
     
     for ann in annexes:
@@ -251,6 +283,8 @@ def add_salary_rate(group_name="", annexe="Annexe 1"):
 
 def delete_salary_rate(rate_id):
     """Supprime une position (et toutes ses déclinaisons d'annexes)."""
+    if str(rate_id).startswith("renfort_"):
+        rate_id = int(str(rate_id).replace("renfort_", ""))
     rate = SalaryRate.query.get(rate_id)
     if not rate:
         raise ValueError(f"Salaire #{rate_id} introuvable")
@@ -269,7 +303,10 @@ def reorder_salary_rates(groups_order):
     order_counter = 0
     for group_name, rate_ids in groups_order.items():
         for rate_id in rate_ids:
-            rate = SalaryRate.query.get(int(rate_id))
+            clean_id = rate_id
+            if str(clean_id).startswith("renfort_"):
+                clean_id = str(clean_id).replace("renfort_", "")
+            rate = SalaryRate.query.get(int(clean_id))
             if rate and rate.position_ref:
                 rate.position_ref.group_name = group_name
                 rate.position_ref.display_order = order_counter
@@ -315,6 +352,8 @@ def update_salary_rate(rate_id, field, value):
     if field not in SALARY_EDITABLE_FIELDS:
         raise ValueError(f"Champ non autorisé : {field}")
 
+    if str(rate_id).startswith("renfort_"):
+        rate_id = int(str(rate_id).replace("renfort_", ""))
     rate = SalaryRate.query.get(rate_id)
     if not rate:
         raise ValueError(f"Salaire #{rate_id} introuvable")
@@ -346,13 +385,13 @@ def update_salary_rate(rate_id, field, value):
     db.session.flush()
 
     if rate.position_ref:
-        # Trouver la ligne Annexe 1 correspondante
-        annexe_1_rate = next((r for r in rate.position_ref.rates if r.annexe == "Annexe 1"), None)
-        if annexe_1_rate:
+        # Trouver la ligne Publicité correspondante
+        publicite_rate = next((r for r in rate.position_ref.rates if r.annexe == "Publicité"), None)
+        if publicite_rate:
             facture_rate = next((r for r in rate.position_ref.rates if r.annexe == "Facture"), None)
             
             factor = get_invoice_factor()
-            expected_facture_base = round(float(annexe_1_rate.base_hourly or 0) * factor, 2)
+            expected_facture_base = round(float(publicite_rate.base_hourly or 0) * factor, 2)
 
             if not facture_rate:
                 facture_rate = SalaryRate(
@@ -364,7 +403,7 @@ def update_salary_rate(rate_id, field, value):
                 db.session.add(facture_rate)
                 if facture_rate not in affected_rates:
                     affected_rates.append(facture_rate)
-            elif field == "base_hourly" and rate.annexe == "Annexe 1":
+            elif field == "base_hourly" and rate.annexe == "Publicité":
                 facture_rate.base_hourly = expected_facture_base
                 _calculate_salary_columns(facture_rate)
                 if facture_rate not in affected_rates:

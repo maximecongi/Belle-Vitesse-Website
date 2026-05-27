@@ -81,8 +81,10 @@
         <div class="annexe-tabs" style="margin-bottom: 0; padding-bottom: 0; border-bottom: none;">
             <button class="annexe-tab active" data-annexe="Annexe 1">Annexe 1</button>
             <button class="annexe-tab" data-annexe="Annexe 2">Annexe 2</button>
+            <button class="annexe-tab" data-annexe="Annexe 1 renfort">Annexe 1 renfort</button>
             <button class="annexe-tab" data-annexe="USPA">USPA</button>
             <button class="annexe-tab" data-annexe="Court-métrage">Court-métrage</button>
+            <button class="annexe-tab" data-annexe="Publicité">Publicité</button>
             <button class="annexe-tab" data-annexe="Facture">Facture</button>
         </div>
         <div id="factorContainer" style="display: none; align-items: center; gap: 0.5rem;">
@@ -135,7 +137,7 @@
                                 data-id="{{ rate.id }}" data-field="position" data-type="salary">
                                 <span class="cell-value" style="font-weight: 600;">{{ rate.position }}</span>
                             </td>
-                            {% if rate.annexe == 'Facture' %}
+                            {% if rate.annexe == 'Facture' or rate.annexe == 'Annexe 1 renfort' %}
                             <td class="computed-cell"
                                 data-id="{{ rate.id }}" data-field="base_hourly" data-type="salary"
                                 style="text-align: right;">
