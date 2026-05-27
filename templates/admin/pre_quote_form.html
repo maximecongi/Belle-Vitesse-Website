@@ -150,10 +150,162 @@
         font-weight: 700;
         color: var(--grey-1);
     }
+
+    /* ── Annexe Tabs inside Modal ─────────────────────────────── */
+    .modal-annexe-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 0;
+        padding: 0.75rem 1rem;
+        background: var(--white-1, #fff);
+        border-bottom: 1px solid var(--white-3, #e5e7eb);
+    }
+
+    .modal-annexe-tab {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--grey-2);
+        cursor: pointer;
+        border: 1px solid var(--white-3, #e5e7eb);
+        background: var(--white-2, #f9fafb);
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        outline: none;
+    }
+
+    .modal-annexe-tab:hover {
+        color: var(--grey-1);
+        background: var(--white-3, #e5e7eb);
+    }
+
+    .modal-annexe-tab.active {
+        color: #fff;
+        background: var(--admin-accent);
+        border-color: var(--admin-accent);
+        box-shadow: 0 2px 4px rgba(255, 200, 69, 0.2);
+    }
+
+    .item-mad-checkbox {
+        width: 16px !important;
+        min-width: 16px !important;
+        height: 16px !important;
+        cursor: pointer;
+    }
+
+    .category-section {
+        margin-bottom: 2rem;
+        border: 1px solid var(--white-3);
+        border-radius: 4px;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        overflow: hidden;
+    }
+
+    .category-section-header {
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-bottom: 1px solid var(--white-3);
+    }
+
+    .category-section-header.category-equipment-header {
+        background: #f0f7ff;
+        color: #1e40af;
+        border-left: 4px solid #3b82f6;
+    }
+    .category-section-header.category-salary-header {
+        background: #f0fdf4;
+        color: #15803d;
+        border-left: 4px solid #22c55e;
+    }
+    .category-section-header.category-logistics-header {
+        background: #fffbeb;
+        color: #b45309;
+        border-left: 4px solid #f59e0b;
+    }
+    .category-section-header.category-custom-header {
+        background: #f9fafb;
+        color: #374151;
+        border-left: 4px solid #9ca3af;
+    }
+
+    .category-list-dropzone {
+        min-height: 60px;
+        padding: 0 1rem;
+        background: #fcfcfc;
+    }
+
+    .category-list-dropzone:empty {
+        background: #fafafa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .category-list-dropzone:empty::after {
+        content: "Aucun élément dans cette catégorie. Ajoutez-en ou glissez-en un ici.";
+        display: block;
+        padding: 1.5rem;
+        text-align: center;
+        color: var(--white-4);
+        font-size: 0.8rem;
+        font-style: italic;
+    }
+
+    .category-list-dropzone .line-item-row:last-child {
+        border-bottom: none;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
+{% macro render_line_item(item) %}
+<div class="line-item-row" data-category="{{ item.category }}" data-annexe="{{ item.annexe or '' }}" {% if item.category == 'salary' and item.rates %}data-rates='{{ item.rates | tojson | safe }}'{% endif %}>
+    <div class="drag-handle">⠿</div>
+    <div style="position: relative; {% if item.category == 'salary' %}bottom: 0.2rem;{% else %}bottom: 0.65rem;{% endif %}">
+        {% if item.category == 'custom' %}
+        <input type="text" class="category-badge category-custom item-custom-cat" value="{{ item.custom_category or 'Autre' }}" style="border: 1px dashed #d1d5db; background: #f3f4f6; color: #374151; width: 90px; text-align: center; text-transform: uppercase; font-size: 0.65rem; font-weight: 600; padding: 0.15rem 0.4rem; border-radius: 2px; margin-bottom: 4px;" placeholder="Autre">
+        {% else %}
+        <span class="category-badge category-{{ item.category }}">{{ PRE_QUOTE_CAT_MAP.get(item.category, item.category) }}</span>
+        {% endif %}
+        
+        {% if item.category == 'equipment' %}
+        <label class="mad-label" style="display: inline-flex; align-items: center; font-size: 0.7rem; color: #b91c1c; margin-left: 8px; cursor: pointer; font-weight: 500; vertical-align: middle;">
+            <input type="checkbox" class="item-mad-checkbox" onchange="toggleMAD(this)" {% if item.is_mad %}checked{% endif %} style="margin-right: 3px; accent-color: #b91c1c; vertical-align: middle;">
+            M.A.D.
+        </label>
+        {% endif %}
+        
+        {% if item.category == 'salary' %}
+        <select class="form-input salary-rate-select" onchange="changeSalaryRate(this)" style="display: inline-block; width: auto; font-size: 0.75rem; padding: 0.15rem 0.4rem; height: auto; margin-left: 8px; vertical-align: middle;">
+            <option value="10h" {% if item.salary_rate_type == '10h' or not item.salary_rate_type %}selected{% endif %}>10h</option>
+            <option value="8h" {% if item.salary_rate_type == '8h' %}selected{% endif %}>8h</option>
+        </select>
+        {% endif %}
+        <input type="text" class="form-input item-desc" value="{{ item.description }}" placeholder="Description" style="margin-bottom: 4px;">
+        {% if item.category == 'salary' %}
+        <input type="text" class="form-input item-employee" value="{{ item.employee_name or '' }}" placeholder="Nom de l'intervenant / technicien" style="font-size: 0.75rem; padding: 0.2rem 0.4rem; height: auto; display: block; width: 100%; border-color: #d1d5db; background-color: #f9fafb;">
+        {% endif %}
+    </div>
+    <div><input type="number" step="0.5" class="form-input text-center item-qty" value="{{ item.quantity }}" onchange="recalculate()"></div>
+    <input type="hidden" class="item-unit" value="{{ item.unit }}">
+    <div>
+        <input type="number" step="1" min="0" max="100" class="form-input text-center item-discount" value="{{ item.discount_rate if item.discount_rate else 0 }}" onchange="recalculate()" placeholder="0%">
+    </div>
+    <div><input type="number" step="0.01" class="form-input text-right item-price" value="{{ item.unit_price }}" onchange="recalculate()" {% if item.unit == 'km' %}readonly style="background-color: #f3f4f6; cursor: not-allowed;"{% endif %}></div>
+    <div class="text-right">
+        <button type="button" onclick="this.parentElement.parentElement.remove(); recalculate();" class="admin-btn" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">Supprimer</button>
+    </div>
+</div>
+{% endmacro %}
+
 <form id="preQuoteForm" onsubmit="return false;">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
@@ -209,47 +361,62 @@
                     <div></div>
                 </div>
 
-                <div id="lineItemsList">
-                    <!-- Les lignes seront injectées ici -->
-                    {% if quote and quote.prestations %}
-                    {% for item in quote.prestations %}
-                    <div class="line-item-row" data-category="{{ item.category }}" {% if item.category == 'salary' and item.rates %}data-rates='{{ item.rates | tojson | safe }}'{% endif %}>
-                        <div class="drag-handle">⠿</div>
-                        <div style="position: relative; bottom: 0.65rem;">
-                            {% if item.category == 'custom' %}
-                            <input type="text" class="category-badge category-custom item-custom-cat" value="{{ item.custom_category or 'Autre' }}" style="border: 1px dashed #d1d5db; background: #f3f4f6; color: #374151; width: 90px; text-align: center; text-transform: uppercase; font-size: 0.65rem; font-weight: 600; padding: 0.15rem 0.4rem; border-radius: 2px; margin-bottom: 4px;" placeholder="Autre">
-                            {% else %}
-                            <span class="category-badge category-{{ item.category }}">{{
-                                PRE_QUOTE_CAT_MAP.get(item.category, item.category) }}</span>
-                            {% endif %}
-                            {% if item.category == 'salary' %}
-                            <select class="form-input salary-rate-select" onchange="changeSalaryRate(this)" style="display: inline-block; width: auto; font-size: 0.75rem; padding: 0.15rem 0.4rem; height: auto; margin-left: 8px; vertical-align: middle;">
-                                <option value="10h" {% if item.salary_rate_type == '10h' or not item.salary_rate_type %}selected{% endif %}>10h</option>
-                                <option value="8h" {% if item.salary_rate_type == '8h' %}selected{% endif %}>8h</option>
-                            </select>
-                            {% endif %}
-                            <input type="text" class="form-input item-desc" value="{{ item.description }}"
-                                placeholder="Description">
+                <div id="lineItemsGrouped">
+                    <!-- Équipement -->
+                    <div class="category-section" id="section-equipment">
+                        <div class="category-section-header category-equipment-header">
+                            Équipements
                         </div>
-                        <div><input type="number" step="0.5" class="form-input text-center item-qty"
-                                value="{{ item.quantity }}" onchange="recalculate()"></div>
-                        <input type="hidden" class="item-unit" value="{{ item.unit }}">
-                        <div>
-                            <input type="number" step="1" min="0" max="100" class="form-input text-center item-discount"
-                                value="{{ item.discount_rate if item.discount_rate else 0 }}" onchange="recalculate()"
-                                placeholder="0%">
-                        </div>
-                        <div><input type="number" step="0.01" class="form-input text-right item-price"
-                                value="{{ item.unit_price }}" onchange="recalculate()"
-                                {% if item.unit == 'km' %}readonly style="background-color: #f3f4f6; cursor: not-allowed;"{% endif %}></div>
-                        <div class="text-right">
-                            <button type="button" onclick="this.parentElement.parentElement.remove(); recalculate();"
-                                class="admin-btn"
-                                style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">Supprimer</button>
+                        <div class="category-list-dropzone" id="list-equipment" data-category="equipment">
+                            {% if quote and quote.prestations %}
+                            {% for item in quote.prestations if item.category == 'equipment' %}
+                            {{ render_line_item(item) }}
+                            {% endfor %}
+                            {% endif %}
                         </div>
                     </div>
-                    {% endfor %}
-                    {% endif %}
+
+                    <!-- Salaire -->
+                    <div class="category-section" id="section-salary">
+                        <div class="category-section-header category-salary-header">
+                            Salaires
+                        </div>
+                        <div class="category-list-dropzone" id="list-salary" data-category="salary">
+                            {% if quote and quote.prestations %}
+                            {% for item in quote.prestations if item.category == 'salary' %}
+                            {{ render_line_item(item) }}
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Logistique -->
+                    <div class="category-section" id="section-logistics">
+                        <div class="category-section-header category-logistics-header">
+                            Logistique
+                        </div>
+                        <div class="category-list-dropzone" id="list-logistics" data-category="logistics">
+                            {% if quote and quote.prestations %}
+                            {% for item in quote.prestations if item.category == 'logistics' %}
+                            {{ render_line_item(item) }}
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Autre -->
+                    <div class="category-section" id="section-custom">
+                        <div class="category-section-header category-custom-header">
+                            Autre / Divers
+                        </div>
+                        <div class="category-list-dropzone" id="list-custom" data-category="custom">
+                            {% if quote and quote.prestations %}
+                            {% for item in quote.prestations if item.category == 'custom' or item.category == 'insurance' %}
+                            {{ render_line_item(item) }}
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -315,6 +482,12 @@
                         style="justify-content: center; padding: 1rem;">
                         {{ 'Mettre à jour' if is_edit else 'Générer le Pré-Devis' }}
                     </button>
+                    {% if is_edit %}
+                    <a href="{{ url_for('admin_pre_quote_pdf', quote_id=quote.id) }}" target="_blank" class="admin-btn admin-btn-secondary"
+                        style="text-align: center; justify-content: center; background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; font-weight: 600;">
+                        Voir le PDF
+                    </a>
+                    {% endif %}
                     <a href="{{ url_for('admin_pre_quotes_list') }}" class="admin-btn admin-btn-secondary"
                         style="text-align: center; justify-content: center;">Retour</a>
                 </div>
@@ -336,6 +509,15 @@
             <div class="form-group" style="margin: 0;">
                 <input type="text" id="modalSearch" class="form-input" placeholder="Rechercher..."
                     style="border-radius: 4px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);">
+            </div>
+        </div>
+        <div id="modalAnnexeTabsContainer" style="display: none;">
+            <div class="modal-annexe-tabs">
+                <button type="button" class="modal-annexe-tab active" data-modal-annexe="Annexe 1">Annexe 1</button>
+                <button type="button" class="modal-annexe-tab" data-modal-annexe="Annexe 2">Annexe 2</button>
+                <button type="button" class="modal-annexe-tab" data-modal-annexe="USPA">USPA</button>
+                <button type="button" class="modal-annexe-tab" data-modal-annexe="Court-métrage">Court-métrage</button>
+                <button type="button" class="modal-annexe-tab" data-modal-annexe="Facture">Facture</button>
             </div>
         </div>
         <div class="admin-modal-content" style="padding: 0;">

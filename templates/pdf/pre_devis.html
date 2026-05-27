@@ -23,6 +23,39 @@
             color: var(--grey-1);
             border-top: 2px solid var(--grey-1);
         }
+
+        .pdf-category-header td {
+            font-weight: 700 !important;
+            font-size: 9pt !important;
+            padding: 8px 10px !important;
+            letter-spacing: 0.5px !important;
+            text-transform: uppercase !important;
+            border-bottom: 2px solid var(--white-3) !important;
+        }
+
+        .pdf-category-equipment td {
+            background-color: #eff6ff !important;
+            color: #1e40af !important;
+            border-left: 4px solid #2563eb !important;
+        }
+
+        .pdf-category-salary td {
+            background-color: #f0fdf4 !important;
+            color: #166534 !important;
+            border-left: 4px solid #16a34a !important;
+        }
+
+        .pdf-category-logistics td {
+            background-color: #fffbeb !important;
+            color: #92400e !important;
+            border-left: 4px solid #ea580c !important;
+        }
+
+        .pdf-category-custom td {
+            background-color: #f3f4f6 !important;
+            color: #374151 !important;
+            border-left: 4px solid #4b5563 !important;
+        }
     </style>
 </head>
 
@@ -91,17 +124,33 @@
                 </thead>
                 <tbody>
                     {% set rate_type_labels = {
-                        '10h': '10h',
-                        '8h': '8h'
+                    '10h': '10h',
+                    '8h': '8h'
                     } %}
-                    {% for item in quote.prestations %}
+                    {% for cat_key, items in grouped_prestations %}
+                    <tr class="pdf-category-header pdf-category-{{ cat_key }}">
+                        <td colspan="{% if quote.show_discounts %}6{% else %}5{% endif %}">
+                            {{ PRE_QUOTE_CAT_MAP.get(cat_key, cat_key) }}
+                        </td>
+                    </tr>
+                    {% for item in items %}
                     <tr>
                         <td>
-                            <div style="font-weight: 500;">{{ item.description }}</div>
+                            <div style="font-weight: 500;">
+                                {{ item.description }}<br>
+                                {% if item.employee_name %}
+                                <span style="font-weight: 400; font-style: italic; color: #4b5563;">({{
+                                    item.employee_name }})</span>
+                                {% endif %}
+                                <br>
+                                {% if item.is_mad %}
+                                <span style="color: #dc262693; font-weight: bold; font-size: 5.5pt;">(MISE À
+                                    DISPOSITION)</span>
+                                {% endif %}
+                            </div>
                             <div style="font-size: 7pt; color: var(--grey-2); text-transform: uppercase;">
-                                {{ item.custom_category or PRE_QUOTE_CAT_MAP.get(item.category, item.category) }}
                                 {% if item.category == 'salary' and item.salary_rate_type %}
-                                 | {{ rate_type_labels.get(item.salary_rate_type, item.salary_rate_type) }}
+                                {{ rate_type_labels.get(item.salary_rate_type, item.salary_rate_type) }}
                                 {% endif %}
                             </div>
                         </td>
@@ -120,7 +169,10 @@
                         </td>
                         {% if quote.show_discounts %}
                         <td style="text-align: center; font-weight: 500;">
-                            {% if item.discount_rate %}
+                            {% if item.is_mad %}
+                            100%<br>
+                            <span style="color: #dc262693; font-weight: bold; font-size: 5.5pt;">(MAD)</span>
+                            {% elif item.discount_rate %}
                             {{ item.discount_rate }}%
                             {% else %}
                             0%
@@ -130,6 +182,7 @@
                         <td style="text-align: right; font-weight: 600;">{{ "{:,.2f}".format(item.total)|replace(',', '
                             ') }} €</td>
                     </tr>
+                    {% endfor %}
                     {% endfor %}
                 </tbody>
             </table>
@@ -147,7 +200,8 @@
                                 "{:,.2f}".format(quote.total_ht - quote.insurance_amount)|replace(',', ' ') }} €</td>
                         </tr>
                         <tr>
-                            <td style="font-size: 8pt; color: var(--grey-2);">ASSURANCE ({{ quote.insurance_rate }}%)</td>
+                            <td style="font-size: 8pt; color: var(--grey-2);">ASSURANCE ({{ quote.insurance_rate }}%)
+                            </td>
                             <td style="text-align: right; font-weight: 500;">{{
                                 "{:,.2f}".format(quote.insurance_amount)|replace(',', ' ') }} €</td>
                         </tr>
@@ -173,6 +227,72 @@
         </section>
 
         <!-- ═══════════ NOTES ═══════════ -->
+        {% set ns = namespace(has_mad=false) %}
+        {% for item in quote.prestations %}
+        {% if item.is_mad %}
+        {% set ns.has_mad = true %}
+        {% endif %}
+        {% endfor %}
+
+        {% if ns.has_mad %}
+        <section class="pilot-waiver-section">
+            <h2 class="pilot-waiver-section-title dot-before">
+                Informations Mises à Disposition</h2>
+            <div class="pilot-waiver-notes"
+                style="border-left-color: #dc2626; background-color: #fef2f2; color: #7f1d1d;">
+                <p>Les éléments identifiés sous la mention <strong>(MISE À DISPOSITION)</strong> bénéficient d'une
+                    remise de 100% sur cette estimation. Ils ne seront facturés au client que s'ils sont effectivement
+                    utilisés le jour du tournage.</p>
+            </div>
+        </section>
+        {% endif %}
+
+        {% if intermittent_salaries %}
+        <section class="pilot-waiver-section" style="page-break-before: always;">
+            <h2 class="pilot-waiver-section-title dot-before">Annexe : Salaires Intermittents (Engagés par la
+                Production)</h2>
+            <p style="font-size: 8pt; color: var(--grey-2); margin-bottom: 12pt;">
+                Les tarifs ci-dessous correspondent aux barèmes des conventions collectives. Ces salaires sont à payer
+                directement aux techniciens intermittents par la production et ne font pas partie de la facturation de
+                Belle Vitesse.
+            </p>
+            <table class="pilot-waiver-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50%;">Désignation (Poste)</th>
+                        <th style="text-align: center;">Quantité</th>
+                        <th style="text-align: center;">Base</th>
+                        <th style="text-align: right;">Tarif</th>
+                        <th style="text-align: right;">Total Estimé</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in intermittent_salaries %}
+                    <tr>
+                        <td>
+                            <div style="font-weight: 500;">
+                                {{ item.description }}<br>
+                                {% if item.employee_name %}
+                                <span style="font-weight: 400; font-style: italic; color: #4b5563;">({{
+                                    item.employee_name }})</span>
+                                {% endif %}
+                            </div>
+                            <div style="font-size: 7pt; color: var(--grey-2); text-transform: uppercase;">
+                                {{ item.annexe }}
+                            </div>
+                        </td>
+                        <td style="text-align: center;">{{ item.quantity }}</td>
+                        <td style="text-align: center;">{{ item.salary_rate_type or '10h' }}</td>
+                        <td style="text-align: right;">{{ "{:,.2f}".format(item.unit_price)|replace(',', ' ') }} €</td>
+                        <td style="text-align: right; font-weight: 600;">{{ "{:,.2f}".format(item.total)|replace(',', '
+                            ') }} €</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+        {% endif %}
+
         <section class="pilot-waiver-section">
             <h2 class="pilot-waiver-section-title dot-before">Informations Validité</h2>
             <div class="pilot-waiver-notes">

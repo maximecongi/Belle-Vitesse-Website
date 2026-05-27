@@ -67,6 +67,8 @@ def calculate_totals(prestations, tva_rate=20.00, insurance_rate=10.00):
         if item.get('category') == 'insurance':
             continue
         qty = Decimal(str(item.get('quantity', 0)))
+        if item.get('is_mad'):
+            item['discount_rate'] = 100.0
         discount = Decimal(str(item.get('discount_rate', 0)))
         
         if item.get('unit') == 'km':
@@ -90,6 +92,10 @@ def calculate_totals(prestations, tva_rate=20.00, insurance_rate=10.00):
             line_total = (qty * price) * (Decimal('1') - (discount / Decimal('100')))
             item['total'] = float(line_total)
             
+        # Exclude non-Facture salary items from the main HT sum
+        if item.get('category') == 'salary' and item.get('annexe') not in [None, '', 'Facture']:
+            continue
+
         total_rental_ht += line_total
 
     insurance_amount = total_rental_ht * (insurance_rate / Decimal('100'))
@@ -178,10 +184,34 @@ def get_pre_quote_pdf(quote_id):
     """Génère le PDF s'il n'existe pas ou le retourne."""
     quote = PreQuote.query.get_or_404(quote_id)
 
+    # Group prestations for the PDF layout
+    category_order = ['equipment', 'salary', 'logistics', 'custom']
+    by_cat = {}
+    intermittent_salaries = []
+    for item in (quote.prestations or []):
+        if item.get('category') == 'salary' and item.get('annexe') not in [None, '', 'Facture']:
+            intermittent_salaries.append(item)
+            continue
+        cat = item.get('category', 'custom')
+        if cat not in by_cat:
+            by_cat[cat] = []
+        by_cat[cat].append(item)
+        
+    grouped_prestations = []
+    for cat in category_order:
+        if cat in by_cat and by_cat[cat]:
+            grouped_prestations.append((cat, by_cat[cat]))
+            
+    for cat, items in by_cat.items():
+        if cat not in category_order and items:
+            grouped_prestations.append((cat, items))
+
     # On pourrait mettre en cache le PDF, mais pour l'instant on le génère à chaque fois ou on le stocke
     # Le plan indique de le stocker.
 
     html = render_template('pdf/pre_devis.html', quote=quote,
+                           grouped_prestations=grouped_prestations,
+                           intermittent_salaries=intermittent_salaries,
                            now=datetime.now(),
                            settings={
                                'company_name': AppSetting.get('company_name', 'Belle Vitesse SAS'),

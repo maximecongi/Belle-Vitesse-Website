@@ -108,6 +108,8 @@ def init_pre_quotes_routes(app):
                                 break
                     
                     if matched_rate:
+                        if 'annexe' not in new_item:
+                            new_item['annexe'] = matched_rate['annexe']
                         if 'rates' not in new_item:
                             new_item['rates'] = {
                                 "10h": float(matched_rate['inter_10h']) if matched_rate['inter_10h'] else 0.0,
@@ -128,6 +130,14 @@ def init_pre_quotes_routes(app):
                                         break
                                 new_item['salary_rate_type'] = guessed
                     else:
+                        if 'annexe' not in new_item:
+                            desc = new_item.get('description', '')
+                            for possible in ['Facture', 'Annexe 1', 'Annexe 2', 'USPA', 'Court-métrage']:
+                                if f"({possible})" in desc:
+                                    new_item['annexe'] = possible
+                                    break
+                            else:
+                                new_item['annexe'] = 'Facture'
                         if 'rates' not in new_item:
                             new_item['rates'] = {
                                 "10h": new_item.get('unit_price', 0.0),
@@ -218,6 +228,8 @@ def init_pre_quotes_routes(app):
                 "category": "salary",
                 "sub_category": s['group_name'],
                 "name": name_with_annexe,
+                "position": s['position'],
+                "annexe": s['annexe'],
                 "price": price_10h,  # Par défaut 10h
                 "unit": "jour(s)",
                 "rates": {

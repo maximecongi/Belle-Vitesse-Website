@@ -66,9 +66,11 @@ class PreQuoteSalaryTest(unittest.TestCase):
         cadreur_rate = next((item for item in data if item["category"] == "salary" and "Cadreur" in item["name"]), None)
         self.assertIsNotNone(cadreur_rate)
         self.assertEqual(cadreur_rate["name"], "Cadreur (Annexe 1)")
+        self.assertEqual(cadreur_rate["position"], "Cadreur")
+        self.assertEqual(cadreur_rate["annexe"], "Annexe 1")
         self.assertIn("rates", cadreur_rate)
-        self.assertEqual(cadreur_rate["rates"]["invoice_8h"], 480.0)
-        self.assertEqual(cadreur_rate["rates"]["inter_8h"], 280.0)
+        self.assertEqual(cadreur_rate["rates"]["10h"], 350.0)
+        self.assertEqual(cadreur_rate["rates"]["8h"], 280.0)
 
     def test_edit_enrichment(self):
         # Insert a SalaryRate
@@ -126,6 +128,136 @@ class PreQuoteSalaryTest(unittest.TestCase):
         html = response.data.decode("utf-8")
         self.assertIn("salary-rate-select", html)
         self.assertIn('option value="invoice_8h" selected', html)
+
+    def test_mad_pricing_calculation(self):
+        from services.admin.pre_quote import calculate_totals
+        prestations = [
+            {
+                "category": "equipment",
+                "description": "Caméra",
+                "quantity": 1.0,
+                "unit": "jour(s)",
+                "unit_price": 500.0,
+                "discount_rate": 0.0,
+                "is_mad": True
+            },
+            {
+                "category": "equipment",
+                "description": "Objectif",
+                "quantity": 1.0,
+                "unit": "jour(s)",
+                "unit_price": 200.0,
+                "discount_rate": 10.0,
+                "is_mad": False
+            }
+        ]
+        totals = calculate_totals(prestations, tva_rate=20.00, insurance_rate=10.00)
+        # Check that Caméra has discount_rate = 100
+        self.assertEqual(prestations[0]["discount_rate"], 100.0)
+        # Check that Caméra total is 0.0
+        self.assertEqual(prestations[0]["total"], 0.0)
+        # Objectif total should be 200 * 0.9 = 180.0
+        self.assertEqual(prestations[1]["total"], 180.0)
+        # Base rental should be 180.0
+        self.assertEqual(float(totals["total_rental_ht"]), 180.0)
+
+    def test_grouped_prestations_pdf(self):
+        from services.admin.pre_quote import get_pre_quote_pdf
+        with self.app.app_context():
+            prod = Production(name="Prod Test PDF")
+            db.session.add(prod)
+            db.session.commit()
+            
+            quote = PreQuote(
+                reference="DP-2026-888",
+                production_id=prod.id,
+                project_name="Test PDF Grouping",
+                prestations=[
+                    {
+                        "category": "salary",
+                        "description": "Cadreur",
+                        "quantity": 1,
+                        "unit": "jour(s)",
+                        "unit_price": 300.0,
+                        "total": 300.0
+                    },
+                    {
+                        "category": "equipment",
+                        "description": "Caméra",
+                        "quantity": 1,
+                        "unit": "jour(s)",
+                        "unit_price": 500.0,
+                        "total": 500.0
+                    }
+                ],
+                total_ht=800.0,
+                total_ttc=960.0
+            )
+            db.session.add(quote)
+            db.session.commit()
+            quote_id = quote.id
+
+        # Since weasyprint is mocked, get_pre_quote_pdf should call render_template and return mock bytes
+        # Let's verify it compiles without errors
+        try:
+            pdf_bytes = get_pre_quote_pdf(quote_id)
+            self.assertIsNotNone(pdf_bytes)
+        except Exception as e:
+            self.fail(f"get_pre_quote_pdf raised an exception: {e}")
+
+    def test_intermittent_salaries_exclusion_and_annex(self):
+        from services.admin.pre_quote import calculate_totals, get_pre_quote_pdf
+        
+        prestations = [
+            {
+                "category": "salary",
+                "annexe": "Facture",
+                "description": "Cadreur (Facture)",
+                "quantity": 1.0,
+                "unit": "jour(s)",
+                "unit_price": 500.0,
+                "discount_rate": 0.0,
+                "employee_name": "Jean Dupont"
+            },
+            {
+                "category": "salary",
+                "annexe": "Annexe 1",
+                "description": "Assistant Caméra (Annexe 1)",
+                "quantity": 2.0,
+                "unit": "jour(s)",
+                "unit_price": 300.0,
+                "discount_rate": 0.0,
+                "employee_name": "Alice Martin"
+            }
+        ]
+        
+        totals = calculate_totals(prestations, tva_rate=20.00, insurance_rate=10.00)
+        # Assistant Caméra (Annexe 1) should be excluded from HT total
+        # So only Cadreur (Facture) total 500.0 counts!
+        self.assertEqual(float(totals["total_rental_ht"]), 500.0)
+        
+        with self.app.app_context():
+            prod = Production(name="Prod Test Intermittent")
+            db.session.add(prod)
+            db.session.commit()
+            
+            quote = PreQuote(
+                reference="DP-2026-777",
+                production_id=prod.id,
+                project_name="Test Intermittent PDF",
+                prestations=prestations,
+                total_ht=500.0,
+                total_ttc=600.0
+            )
+            db.session.add(quote)
+            db.session.commit()
+            quote_id = quote.id
+            
+        try:
+            pdf_bytes = get_pre_quote_pdf(quote_id)
+            self.assertIsNotNone(pdf_bytes)
+        except Exception as e:
+            self.fail(f"get_pre_quote_pdf raised an exception: {e}")
 
 if __name__ == "__main__":
     unittest.main()

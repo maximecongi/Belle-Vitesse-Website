@@ -13,8 +13,33 @@ const PRE_QUOTE_CAT_MAP = {
 
 let allRates = [];
 let filteredRates = [];
+let activeCategory = '';
+let activeModalAnnexe = 'Annexe 1';
+
+function toggleMAD(checkbox) {
+    const row = checkbox.closest('.line-item-row');
+    if (!row) return;
+    const discountInput = row.querySelector('.item-discount');
+    if (discountInput) {
+        if (checkbox.checked) {
+            discountInput.value = 100;
+            discountInput.disabled = true;
+            discountInput.style.backgroundColor = '#fef2f2';
+            discountInput.style.color = '#b91c1c';
+            discountInput.style.fontWeight = '500';
+        } else {
+            discountInput.value = 0;
+            discountInput.disabled = false;
+            discountInput.style.backgroundColor = '';
+            discountInput.style.color = '';
+            discountInput.style.fontWeight = '';
+        }
+    }
+    recalculate();
+}
 
 async function addItem(category) {
+    activeCategory = category;
     if (category === 'custom') {
         injectLine({
             category: 'custom',
@@ -46,12 +71,28 @@ async function addItem(category) {
 
 function openModal(category) {
     const modal = document.getElementById('selectionModal');
-    const list = document.getElementById('modalList');
     const title = document.getElementById('modalTitle');
 
     const catLabel = PRE_QUOTE_CAT_MAP[category] || category;
     title.textContent = `Sélectionner : ${catLabel}`;
     modal.style.display = 'flex';
+
+    // Show/hide modal annexe tabs
+    const modalTabsContainer = document.getElementById('modalAnnexeTabsContainer');
+    if (modalTabsContainer) {
+        if (category === 'salary') {
+            modalTabsContainer.style.display = 'block';
+            modalTabsContainer.querySelectorAll('.modal-annexe-tab').forEach(btn => {
+                if (btn.dataset.modalAnnexe === activeModalAnnexe) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        } else {
+            modalTabsContainer.style.display = 'none';
+        }
+    }
 
     renderModalList();
 
@@ -77,29 +118,61 @@ function renderModalList(search = '') {
         ? filteredRates.filter(r => r.name.toLowerCase().includes(search) || r.sub_category.toLowerCase().includes(search))
         : filteredRates;
 
-    displayItems.forEach(item => {
+    let itemsToDisplay = displayItems;
+    if (activeCategory === 'salary') {
+        itemsToDisplay = displayItems.filter(r => r.annexe === activeModalAnnexe);
+    }
+
+    itemsToDisplay.forEach(item => {
         const div = document.createElement('div');
         div.className = 'modal-item';
-        const catLabel = PRE_QUOTE_CAT_MAP[item.category] || item.category;
         
-        let priceHtml = '';
-        if (item.unit === 'km') {
-            priceHtml = `À partir de ${item.price.toFixed(2)} €`;
+        if (item.category === 'salary') {
+            const price8h = item.rates['8h'] || 0;
+            const price10h = item.rates['10h'] || 0;
+            
+            div.innerHTML = `
+                <div class="modal-item-info">
+                    <span class="category-badge category-${item.category}">${item.sub_category}</span>
+                    <span class="modal-item-name">${item.position || item.name.replace(/\s*\(.*\)$/, '')}</span>
+                </div>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <button type="button" class="modal-annexe-tab btn-select-rate-8h" style="margin: 0; padding: 0.4rem 0.8rem; font-size: 0.75rem;">8h (${price8h.toFixed(2)} €)</button>
+                    <button type="button" class="modal-annexe-tab btn-select-rate-10h" style="margin: 0; padding: 0.4rem 0.8rem; font-size: 0.75rem;">10h (${price10h.toFixed(2)} €)</button>
+                </div>
+            `;
+            
+            div.querySelector('.btn-select-rate-8h').onclick = (e) => {
+                e.stopPropagation();
+                injectLine(item, '8h');
+                closeModal();
+            };
+            div.querySelector('.btn-select-rate-10h').onclick = (e) => {
+                e.stopPropagation();
+                injectLine(item, '10h');
+                closeModal();
+            };
         } else {
-            priceHtml = `${item.price.toFixed(2)} € / ${item.unit}`;
-        }
+            const catLabel = PRE_QUOTE_CAT_MAP[item.category] || item.category;
+            let priceHtml = '';
+            if (item.unit === 'km') {
+                priceHtml = `À partir de ${item.price.toFixed(2)} €`;
+            } else {
+                priceHtml = `${item.price.toFixed(2)} € / ${item.unit}`;
+            }
 
-        div.innerHTML = `
-            <div class="modal-item-info">
-                <span class="category-badge category-${item.category}">${item.sub_category}</span>
-                <span class="modal-item-name">${item.name}</span>
-            </div>
-            <div class="modal-item-price">${priceHtml}</div>
-        `;
-        div.onclick = () => {
-            injectLine(item);
-            closeModal();
-        };
+            div.innerHTML = `
+                <div class="modal-item-info">
+                    <span class="category-badge category-${item.category}">${item.sub_category}</span>
+                    <span class="modal-item-name">${item.name}</span>
+                </div>
+                <div class="modal-item-price">${priceHtml}</div>
+            `;
+            div.onclick = () => {
+                injectLine(item);
+                closeModal();
+            };
+        }
         list.appendChild(div);
     });
 }
@@ -118,10 +191,44 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Onglets annexe du modal
+    const modalTabsContainer = document.getElementById('modalAnnexeTabsContainer');
+    if (modalTabsContainer) {
+        modalTabsContainer.querySelectorAll('.modal-annexe-tab').forEach(btn => {
+            btn.addEventListener('click', () => {
+                modalTabsContainer.querySelectorAll('.modal-annexe-tab').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                activeModalAnnexe = btn.dataset.modalAnnexe;
+                renderModalList(document.getElementById('modalSearch').value.toLowerCase());
+            });
+        });
+    }
+
+    // Initialisation des items en Mise à Disposition (M.A.D.)
+    document.querySelectorAll('.item-mad-checkbox').forEach(cb => {
+        if (cb.checked) {
+            const row = cb.closest('.line-item-row');
+            if (row) {
+                const discountInput = row.querySelector('.item-discount');
+                if (discountInput) {
+                    discountInput.value = 100;
+                    discountInput.disabled = true;
+                    discountInput.style.backgroundColor = '#fef2f2';
+                    discountInput.style.color = '#b91c1c';
+                    discountInput.style.fontWeight = '500';
+                }
+            }
+        }
+    });
 });
 
-function injectLine(item) {
-    const container = document.getElementById('lineItemsList');
+function injectLine(item, rateType = '10h') {
+    const container = document.getElementById(`list-${item.category}`);
+    if (!container) {
+        console.error("No dropzone found for category:", item.category);
+        return;
+    }
     const catLabel = PRE_QUOTE_CAT_MAP[item.category] || item.category;
 
     let badgeHtml = '';
@@ -130,12 +237,20 @@ function injectLine(item) {
         badgeHtml = `<input type="text" class="category-badge category-custom item-custom-cat" value="${item.custom_category || 'Autre'}" style="border: 1px dashed #d1d5db; background: #f3f4f6; color: #374151; width: 90px; text-align: center; text-transform: uppercase; font-size: 0.65rem; font-weight: 600; padding: 0.15rem 0.4rem; border-radius: 2px; margin-bottom: 4px;" placeholder="Autre">`;
     } else {
         badgeHtml = `<span class="category-badge category-${item.category}">${catLabel}</span>`;
+        if (item.category === 'equipment') {
+            badgeHtml += `
+                <label class="mad-label" style="display: inline-flex; align-items: center; font-size: 0.7rem; color: #b91c1c; margin-left: 8px; cursor: pointer; font-weight: 500; vertical-align: middle;">
+                    <input type="checkbox" class="item-mad-checkbox" onchange="toggleMAD(this)" ${item.is_mad ? 'checked' : ''} style="margin-right: 3px; accent-color: #b91c1c; vertical-align: middle;">
+                    M.A.D.
+                </label>
+            `;
+        }
         if (item.category === 'salary') {
             rowDataAttr = `data-rates='${JSON.stringify(item.rates || {})}'`;
             badgeHtml += `
                 <select class="form-input salary-rate-select" onchange="changeSalaryRate(this)" style="display: inline-block; width: auto; font-size: 0.75rem; padding: 0.15rem 0.4rem; height: auto; margin-left: 8px; vertical-align: middle;">
-                    <option value="10h" selected>10h</option>
-                    <option value="8h">8h</option>
+                    <option value="10h" ${rateType === '10h' ? 'selected' : ''}>10h</option>
+                    <option value="8h" ${rateType === '8h' ? 'selected' : ''}>8h</option>
                 </select>
             `;
         }
@@ -146,19 +261,28 @@ function injectLine(item) {
         readonlyAttr = 'readonly style="background-color: #f3f4f6; cursor: not-allowed;"';
     }
 
+    const initialPrice = item.category === 'salary' ? (parseFloat(item.rates[rateType]) || 0) : item.price;
+
+    const isSalary = item.category === 'salary';
+    const positionStyle = isSalary ? 'bottom: 0.2rem;' : 'bottom: 0.65rem;';
+    const employeeInputHtml = isSalary 
+        ? `<input type="text" class="form-input item-employee" value="${item.employee_name || ''}" placeholder="Nom de l'intervenant / technicien" style="font-size: 0.75rem; padding: 0.2rem 0.4rem; height: auto; display: block; width: 100%; border-color: #d1d5db; background-color: #f9fafb;">`
+        : '';
+
     const html = `
-        <div class="line-item-row" data-category="${item.category}" ${rowDataAttr} draggable="true">
+        <div class="line-item-row" data-category="${item.category}" data-annexe="${item.annexe || ''}" ${rowDataAttr} draggable="true">
             <div class="drag-handle">⠿</div>
-            <div style="position: relative; bottom: 0.65rem;">
+            <div style="position: relative; ${positionStyle}">
                 ${badgeHtml}
-                <input type="text" class="form-input item-desc" value="${item.name}" placeholder="Description">
+                <input type="text" class="form-input item-desc" value="${item.name}" placeholder="Description" style="margin-bottom: 4px;">
+                ${employeeInputHtml}
             </div>
             <div><input type="number" step="0.5" class="form-input text-center item-qty" value="1" onchange="recalculate()"></div>
             <input type="hidden" class="item-unit" value="${item.unit}">
             <div>
                 <input type="number" step="1" min="0" max="100" class="form-input text-center item-discount" value="0" onchange="recalculate()" placeholder="0%">
             </div>
-            <div><input type="number" step="0.01" class="form-input text-right item-price" value="${item.price.toFixed(2)}" onchange="recalculate()" ${readonlyAttr}></div>
+            <div><input type="number" step="0.01" class="form-input text-right item-price" value="${initialPrice.toFixed(2)}" onchange="recalculate()" ${readonlyAttr}></div>
             <div class="text-right">
                 <button type="button" onclick="this.parentElement.parentElement.remove(); recalculate();" class="admin-btn" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">Supprimer</button>
             </div>
@@ -230,6 +354,11 @@ function recalculate() {
             lineTotal = (qty * price) * (1 - (discount / 100));
         }
 
+        // Exclude non-Facture salary items from client-side totals
+        if (row.dataset.category === 'salary' && row.dataset.annexe && row.dataset.annexe !== 'Facture') {
+            return;
+        }
+
         baseRentalHT += lineTotal;
     });
 
@@ -257,16 +386,19 @@ function recalculate() {
 let draggedRow = null;
 
 function initDragAndDrop() {
-    const list = document.getElementById('lineItemsList');
-    if (!list) return;
+    const zones = ['equipment', 'salary', 'logistics', 'custom'];
+    zones.forEach(zoneKey => {
+        const zone = document.getElementById(`list-${zoneKey}`);
+        if (!zone) return;
 
-    // Initialize existing rows
-    list.querySelectorAll('.line-item-row').forEach(row => {
-        row.setAttribute('draggable', 'true');
-        initDragOnRow(row);
+        // Initialize existing rows in this zone
+        zone.querySelectorAll('.line-item-row').forEach(row => {
+            row.setAttribute('draggable', 'true');
+            initDragOnRow(row);
+        });
+
+        initDropZone(zone);
     });
-
-    initDropZone(list);
 }
 
 function initDragOnRow(row) {
@@ -286,6 +418,14 @@ function initDragOnRow(row) {
 function initDropZone(zone) {
     zone.addEventListener('dragover', (e) => {
         e.preventDefault();
+        
+        // Prevent cross-category drag and drop
+        if (!draggedRow || draggedRow.dataset.category !== zone.dataset.category) {
+            e.dataTransfer.dropEffect = 'none';
+            return;
+        }
+
+        e.dataTransfer.dropEffect = 'move';
         const afterElement = getDragAfterElement(zone, e.clientY);
 
         // Visual indicator
@@ -307,7 +447,7 @@ function initDropZone(zone) {
         e.preventDefault();
         document.querySelectorAll('.drag-indicator').forEach(i => i.remove());
 
-        if (!draggedRow) return;
+        if (!draggedRow || draggedRow.dataset.category !== zone.dataset.category) return;
 
         const afterElement = getDragAfterElement(zone, e.clientY);
         if (afterElement == null) {
@@ -316,8 +456,7 @@ function initDropZone(zone) {
             zone.insertBefore(draggedRow, afterElement);
         }
 
-        // Maintain calculations if needed (though order doesn't change totals)
-        // But it's good for the final document order
+        recalculate();
     });
 }
 
@@ -345,6 +484,7 @@ async function saveQuote() {
         const prestations = [];
         document.querySelectorAll('.line-item-row').forEach(row => {
             const category = row.dataset.category;
+            const annexe = row.dataset.annexe || null;
             const customCatInput = row.querySelector('.item-custom-cat');
             
             const salaryRateSelect = row.querySelector('.salary-rate-select');
@@ -352,8 +492,15 @@ async function saveQuote() {
             const ratesAttr = row.getAttribute('data-rates');
             const rates = ratesAttr ? JSON.parse(ratesAttr) : null;
 
+            const madCheckbox = row.querySelector('.item-mad-checkbox');
+            const isMad = madCheckbox ? madCheckbox.checked : false;
+
+            const employeeInput = row.querySelector('.item-employee');
+            const employeeName = employeeInput ? employeeInput.value : null;
+
             prestations.push({
                 category: category,
+                annexe: annexe,
                 custom_category: customCatInput ? customCatInput.value : null,
                 description: row.querySelector('.item-desc').value,
                 quantity: parseFloat(row.querySelector('.item-qty').value) || 0,
@@ -361,7 +508,9 @@ async function saveQuote() {
                 unit_price: parseFloat(row.querySelector('.item-price').value) || 0,
                 discount_rate: parseFloat(row.querySelector('.item-discount').value) || 0,
                 salary_rate_type: salaryRateType,
-                rates: rates
+                rates: rates,
+                is_mad: isMad,
+                employee_name: employeeName
             });
         });
 
