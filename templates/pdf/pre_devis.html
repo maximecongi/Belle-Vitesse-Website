@@ -56,6 +56,19 @@
             color: #374151 !important;
             border-left: 4px solid #4b5563 !important;
         }
+
+        /* Allow table and sections to split across pages */
+        .pilot-waiver-section.allow-break,
+        .pilot-waiver-section.allow-break .pilot-waiver-table {
+            page-break-inside: auto !important;
+            break-inside: auto !important;
+        }
+
+        /* Keep table rows atomic (no breaking inside a row) */
+        .pilot-waiver-table tr {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
     </style>
 </head>
 
@@ -107,7 +120,7 @@
         </section>
 
         <!-- ═══════════ PRESTATIONS ═══════════ -->
-        <section class="pilot-waiver-section">
+        <section class="pilot-waiver-section allow-break">
             <h2 class="pilot-waiver-section-title dot-before">Détail des Prestations</h2>
             <table class="pilot-waiver-table">
                 <thead>
@@ -248,19 +261,21 @@
         {% endif %}
 
         {% if intermittent_salaries %}
-        <section class="pilot-waiver-section" style="page-break-before: always;">
-            <h2 class="pilot-waiver-section-title dot-before">Annexe : Salaires Intermittents (Engagés par la
-                Production)</h2>
-            <p style="font-size: 8pt; color: var(--grey-2); margin-bottom: 12pt;">
-                Les tarifs ci-dessous correspondent aux barèmes des conventions collectives. Ces salaires sont à payer
-                directement aux techniciens intermittents par la production et ne font pas partie de la facturation de
-                Belle Vitesse.
+        <section class="pilot-waiver-section allow-break" style="page-break-before: always;">
+            <h2 class="pilot-waiver-section-title dot-before">Annexe : Salaires</h2>
+            <p style="font-size: 8pt; color: var(--grey-2); margin-bottom: 12pt; line-height: 1.4;">
+                Les tarifs ci-dessous correspondent aux estimations des salaires. Ces montants ne font pas partie de la
+                base de location facturée par Belle Vitesse :<br>
+                • Les intervenants sous statut <strong>Facture</strong> factureront directement leurs prestations à la
+                production.<br>
+                • Les intervenants sous statut <strong>Intermittent</strong> (Annexe 1, Annexe 2, USPA, etc.) devront
+                être embauchés, payés et déclarés directement par la production de son côté.
             </p>
             <table class="pilot-waiver-table">
                 <thead>
                     <tr>
-                        <th style="width: 50%;">Désignation (Poste)</th>
-                        <th style="text-align: center;">Quantité</th>
+                        <th style="width: 40%;">Désignation (Poste)</th>
+                        <th style="text-align: center;">Jour(s)</th>
                         <th style="text-align: center;">Base</th>
                         <th style="text-align: right;">Tarif</th>
                         <th style="text-align: right;">Total Estimé</th>

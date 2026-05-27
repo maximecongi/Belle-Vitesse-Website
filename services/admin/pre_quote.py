@@ -92,8 +92,8 @@ def calculate_totals(prestations, tva_rate=20.00, insurance_rate=10.00):
             line_total = (qty * price) * (Decimal('1') - (discount / Decimal('100')))
             item['total'] = float(line_total)
             
-        # Exclude non-Facture salary items from the main HT sum
-        if item.get('category') == 'salary' and item.get('annexe') not in [None, '', 'Facture']:
+        # Exclude all salary items from the main HT sum
+        if item.get('category') == 'salary':
             continue
 
         total_rental_ht += line_total
@@ -189,7 +189,7 @@ def get_pre_quote_pdf(quote_id):
     by_cat = {}
     intermittent_salaries = []
     for item in (quote.prestations or []):
-        if item.get('category') == 'salary' and item.get('annexe') not in [None, '', 'Facture']:
+        if item.get('category') == 'salary':
             intermittent_salaries.append(item)
             continue
         cat = item.get('category', 'custom')

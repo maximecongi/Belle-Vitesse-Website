@@ -232,9 +232,9 @@ class PreQuoteSalaryTest(unittest.TestCase):
         ]
         
         totals = calculate_totals(prestations, tva_rate=20.00, insurance_rate=10.00)
-        # Assistant Caméra (Annexe 1) should be excluded from HT total
-        # So only Cadreur (Facture) total 500.0 counts!
-        self.assertEqual(float(totals["total_rental_ht"]), 500.0)
+        # All salary items are excluded from HT total
+        # So the total rental HT should be 0.0!
+        self.assertEqual(float(totals["total_rental_ht"]), 0.0)
         
         with self.app.app_context():
             prod = Production(name="Prod Test Intermittent")
@@ -246,8 +246,8 @@ class PreQuoteSalaryTest(unittest.TestCase):
                 production_id=prod.id,
                 project_name="Test Intermittent PDF",
                 prestations=prestations,
-                total_ht=500.0,
-                total_ttc=600.0
+                total_ht=0.0,
+                total_ttc=0.0
             )
             db.session.add(quote)
             db.session.commit()

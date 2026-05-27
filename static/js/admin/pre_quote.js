@@ -354,8 +354,8 @@ function recalculate() {
             lineTotal = (qty * price) * (1 - (discount / 100));
         }
 
-        // Exclude non-Facture salary items from client-side totals
-        if (row.dataset.category === 'salary' && row.dataset.annexe && row.dataset.annexe !== 'Facture') {
+        // Exclude all salary items from client-side totals
+        if (row.dataset.category === 'salary') {
             return;
         }
 
