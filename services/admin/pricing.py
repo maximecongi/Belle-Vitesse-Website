@@ -6,7 +6,7 @@ Handles salary_rates and logistics_rates CRUD operations.
 
 import logging
 
-from models import AppSetting, GripProduct, Head, LogisticsRate, SalaryRate, Vehicle, db
+from models import AppSetting, GripProduct, Head, LogisticsRate, SalaryPosition, SalaryRate, Vehicle, db
 
 logger = logging.getLogger(__name__)
 
@@ -32,20 +32,27 @@ def get_invoice_factor():
 
 
 def update_invoice_factor(new_factor):
-    """Met à jour le facteur et recalcule TOUTES les lignes invoice existantes."""
+    """Met à jour le facteur et recalcule TOUTES les lignes Facture à partir d'Annexe 1."""
     new_factor = round(float(new_factor), 4)
     if new_factor <= 0:
         raise ValueError("Le facteur doit être positif")
 
     AppSetting.set(INVOICE_FACTOR_KEY, new_factor)
 
-    # Recalcul global de toutes les lignes salaires
-    rates = SalaryRate.query.all()
-    for rate in rates:
-        _calculate_salary_columns(rate, new_factor)
+    # Recalcul global de toutes les lignes Facture
+    facture_rates = SalaryRate.query.filter_by(annexe="Facture").all()
+    for f_rate in facture_rates:
+        annexe_1_rate = SalaryRate.query.filter_by(
+            position_id=f_rate.position_id,
+            annexe="Annexe 1"
+        ).first()
+        if annexe_1_rate:
+            f_rate.base_hourly = round(float(annexe_1_rate.base_hourly or 0) * new_factor, 2)
+            _calculate_salary_columns(f_rate)
+
     db.session.commit()
     logger.info(
-        "Coefficient de facturation mis à jour. Les tarifs ont été recalculés.")
+        f"Coefficient de facturation mis à jour à {new_factor}. Les tarifs Facture ont été recalculés.")
     return new_factor
 
 
@@ -164,8 +171,8 @@ def update_equipment_daily_rate(table_name, record_id, value):
 def list_salary_rates():
     """Retourne tous les salaires triés (liste plate pour l'API)."""
     try:
-        rates = SalaryRate.query.order_by(
-            SalaryRate.display_order, SalaryRate.id).all()
+        rates = SalaryRate.query.join(SalaryPosition).order_by(
+            SalaryPosition.display_order, SalaryRate.id).all()
         return [r.to_dict() for r in rates]
     except Exception as e:
         logger.error(f"Erreur chargement salary_rates: {e}")
@@ -179,8 +186,8 @@ def list_salary_rates_grouped():
     """
     from collections import OrderedDict
     try:
-        rates = SalaryRate.query.order_by(
-            SalaryRate.display_order, SalaryRate.id).all()
+        rates = SalaryRate.query.join(SalaryPosition).order_by(
+            SalaryPosition.display_order, SalaryRate.id).all()
 
         grouped = OrderedDict()
         for r in rates:
@@ -197,53 +204,78 @@ def list_salary_rates_grouped():
 
 def list_salary_groups():
     """Retourne la liste des groupes uniques existants pour l'autocomplétion."""
-    groups = db.session.query(SalaryRate.group_name).distinct().all()
+    groups = db.session.query(SalaryPosition.group_name).distinct().all()
     return sorted([g[0] for g in groups if g[0]])
 
 
-def add_salary_rate(group_name=""):
-    """Ajoute une nouvelle ligne de salaire dans un groupe donné."""
-    # display_order = max de ce groupe + 1
+def add_salary_rate(group_name="", annexe="Annexe 1"):
+    """Ajoute une nouvelle position (avec toutes ses annexes) dans un groupe donné."""
+    # display_order = max global + 1
     max_order = db.session.query(db.func.max(
-        SalaryRate.display_order)).scalar() or 0
-    new_rate = SalaryRate(
+        SalaryPosition.display_order)).scalar() or 0
+    
+    import random
+    temp_position = f"Nouvelle position ({random.randint(1000, 9999)})"
+    
+    pos_obj = SalaryPosition(
         group_name=group_name or "",
-        position="",
-        annexe="",
-        base_hourly=0,
-        display_order=max_order + 1,
+        position=temp_position,
+        notes="",
+        display_order=max_order + 1
     )
-    _calculate_salary_columns(new_rate)
-    db.session.add(new_rate)
+    db.session.add(pos_obj)
+    db.session.flush()
+    
+    # Créer les 5 annexes pour cette nouvelle position
+    annexes = ["Annexe 1", "Annexe 2", "USPA", "Court-métrage", "Facture"]
+    new_rates = []
+    
+    for ann in annexes:
+        rate = SalaryRate(
+            position_id=pos_obj.id,
+            annexe=ann,
+            base_hourly=0
+        )
+        _calculate_salary_columns(rate)
+        db.session.add(rate)
+        new_rates.append(rate)
+        
     db.session.commit()
-    return new_rate.to_dict()
+    
+    # Retourner le dictionnaire de la ligne correspondant à l'annexe demandée
+    target_rate = next((r for r in new_rates if r.annexe == annexe), new_rates[0])
+    res_dict = target_rate.to_dict()
+    res_dict["all_rates"] = [r.to_dict() for r in new_rates]
+    return res_dict
 
 
 def delete_salary_rate(rate_id):
-    """Supprime une ligne de salaire."""
+    """Supprime une position (et toutes ses déclinaisons d'annexes)."""
     rate = SalaryRate.query.get(rate_id)
     if not rate:
         raise ValueError(f"Salaire #{rate_id} introuvable")
-    db.session.delete(rate)
+
+    if rate.position_ref:
+        db.session.delete(rate.position_ref)
+
     db.session.commit()
     return True
 
 
 def reorder_salary_rates(groups_order):
     """Réordonne toutes les lignes de salaire.
-    groups_order = {"GroupeA": [id1, id2], "GroupeB": [id3, id4], ...}
-    Met à jour group_name et display_order pour chaque ligne.
+    Synchronise display_order pour toutes les annexes de chaque position.
     """
     order_counter = 0
     for group_name, rate_ids in groups_order.items():
         for rate_id in rate_ids:
             rate = SalaryRate.query.get(int(rate_id))
-            if rate:
-                rate.group_name = group_name
-                rate.display_order = order_counter
+            if rate and rate.position_ref:
+                rate.position_ref.group_name = group_name
+                rate.position_ref.display_order = order_counter
                 order_counter += 1
     db.session.commit()
-    logger.info(f"Réordonnement salaires: {order_counter} lignes mises à jour")
+    logger.info(f"Réordonnement salaires: {order_counter} positions synchronisées")
     return True
 
 
@@ -252,27 +284,28 @@ def rename_salary_group(old_name, new_name):
     new_name = new_name.strip()
     if not new_name:
         raise ValueError("Le nom du groupe ne peut pas être vide")
-    rates = SalaryRate.query.filter_by(group_name=old_name).all()
-    if not rates:
+    positions = SalaryPosition.query.filter_by(group_name=old_name).all()
+    if not positions:
         raise ValueError(f"Groupe '{old_name}' introuvable")
-    for rate in rates:
-        rate.group_name = new_name
+    for pos in positions:
+        pos.group_name = new_name
     db.session.commit()
-    logger.info(f"Groupe renommé: '{old_name}' → '{new_name}' ({len(rates)} lignes)")
+    logger.info(f"Groupe renommé: '{old_name}' → '{new_name}' ({len(positions)} positions)")
     return new_name
 
 
 def delete_salary_group(group_name):
     """Supprime toutes les lignes d'un groupe."""
-    rates = SalaryRate.query.filter_by(group_name=group_name).all()
-    if not rates:
+    positions = SalaryPosition.query.filter_by(group_name=group_name).all()
+    if not positions:
         raise ValueError(f"Groupe '{group_name}' introuvable")
-    count = len(rates)
-    for rate in rates:
-        db.session.delete(rate)
+    count = len(positions)
+    for pos in positions:
+        db.session.delete(pos)
     db.session.commit()
-    logger.info(f"Groupe '{group_name}' supprimé ({count} lignes)")
+    logger.info(f"Groupe '{group_name}' supprimé ({count} positions)")
     return count
+
 
 
 def update_salary_rate(rate_id, field, value):
@@ -291,14 +324,58 @@ def update_salary_rate(rate_id, field, value):
     else:
         value = str(value).strip() if value else ""
 
-    setattr(rate, field, value)
+    affected_rates = []
 
-    # Si c'est la base qui a changé, on recalcule tout
-    if field == "base_hourly":
+    if field in ("position", "group_name", "notes"):
+        setattr(rate, field, value)
+        if rate.position_ref:
+            affected_rates.extend(rate.position_ref.rates)
+    elif field == "base_hourly":
+        if rate.annexe == "Facture":
+            raise ValueError("Le taux horaire de base de la facture est calculé et ne peut pas être modifié directement.")
+        rate.base_hourly = value
         _calculate_salary_columns(rate)
+        if rate not in affected_rates:
+            affected_rates.append(rate)
+    else:
+        setattr(rate, field, value)
+        if rate not in affected_rates:
+            affected_rates.append(rate)
+
+    # Appliquer les modifications temporaires pour les requêtes suivantes
+    db.session.flush()
+
+    if rate.position_ref:
+        # Trouver la ligne Annexe 1 correspondante
+        annexe_1_rate = next((r for r in rate.position_ref.rates if r.annexe == "Annexe 1"), None)
+        if annexe_1_rate:
+            facture_rate = next((r for r in rate.position_ref.rates if r.annexe == "Facture"), None)
+            
+            factor = get_invoice_factor()
+            expected_facture_base = round(float(annexe_1_rate.base_hourly or 0) * factor, 2)
+
+            if not facture_rate:
+                facture_rate = SalaryRate(
+                    position_id=rate.position_ref.id,
+                    annexe="Facture",
+                    base_hourly=expected_facture_base
+                )
+                _calculate_salary_columns(facture_rate)
+                db.session.add(facture_rate)
+                if facture_rate not in affected_rates:
+                    affected_rates.append(facture_rate)
+            elif field == "base_hourly" and rate.annexe == "Annexe 1":
+                facture_rate.base_hourly = expected_facture_base
+                _calculate_salary_columns(facture_rate)
+                if facture_rate not in affected_rates:
+                    affected_rates.append(facture_rate)
 
     db.session.commit()
-    return rate.to_dict()
+    
+    return {
+        "rate": rate.to_dict(),
+        "updated_rates": [r.to_dict() for r in affected_rates]
+    }
 
 
 # ══════════════════════════════════════════════════════════════

@@ -66,17 +66,28 @@
 <!-- TAB : Salaires                                            -->
 <!-- ══════════════════════════════════════════════════════════ -->
 <div class="pricing-tab-content" id="panel-salaries">
-    <!-- Header global : facteur + bouton nouveau groupe -->
+    <!-- Header global : bouton nouveau groupe -->
     <div class="admin-card-header" style="margin-bottom: 1rem;">
         <h3 class="pricing-section-title" style="margin: 0;">Grille des salaires</h3>
         <div style="display: flex; align-items: center; gap: 0.75rem;">
             {% if current_user.is_admin %}
-            <span class="factor-badge" id="factorBadge" title="Cliquez pour modifier le facteur de conversion">×{{
-                invoice_factor }}</span>
             <button class="admin-btn admin-btn-primary" id="btnAddGroup">+ Nouveau groupe</button>
-            {% else %}
-            <span class="factor-badge" style="cursor: default;">×{{ invoice_factor }}</span>
             {% endif %}
+        </div>
+    </div>
+
+    <!-- Sélecteur d'Annexe Global et Coefficient -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--white-3, #e5e7eb); padding-bottom: 0.75rem;">
+        <div class="annexe-tabs" style="margin-bottom: 0; padding-bottom: 0; border-bottom: none;">
+            <button class="annexe-tab active" data-annexe="Annexe 1">Annexe 1</button>
+            <button class="annexe-tab" data-annexe="Annexe 2">Annexe 2</button>
+            <button class="annexe-tab" data-annexe="USPA">USPA</button>
+            <button class="annexe-tab" data-annexe="Court-métrage">Court-métrage</button>
+            <button class="annexe-tab" data-annexe="Facture">Facture</button>
+        </div>
+        <div id="factorContainer" style="display: none; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 0.85rem; font-weight: 600; color: var(--grey-2);">Coeff. Facture :</span>
+            <span id="factorBadge" class="factor-badge" style="cursor: pointer;">×{{ invoice_factor }}</span>
         </div>
     </div>
 
@@ -107,20 +118,15 @@
                         <tr>
                             {% if current_user.is_admin %}<th style="width: 30px;"></th>{% endif %}
                             <th>Position</th>
-                            <th>Annexe</th>
                             <th style="width: 80px; text-align: right;">Base/H</th>
-                            <th style="width: 90px; text-align: right;">Inter (8H)</th>
-                            <th style="width: 100px; text-align: right; color: var(--grey-2);">Invoice (8H)</th>
-                            <th style="width: 90px; text-align: right;">Inter (10H)</th>
-                            <th style="width: 100px; text-align: right; color: var(--grey-2);">Invoice (10H)</th>
-                            <th style="width: 90px; text-align: right;">Inter (HS)</th>
-                            <th style="width: 100px; text-align: right; color: var(--grey-2);">Invoice (HS)</th>
+                            <th style="width: 100px; text-align: right;">8h</th>
+                            <th style="width: 100px; text-align: right;">10h</th>
                             <th style="width: 80px;"></th>
                         </tr>
                     </thead>
                     <tbody class="salary-drop-zone" data-group="{{ group_name }}">
                         {% for rate in rates %}
-                        <tr data-row-id="{{ rate.id }}" {% if current_user.is_admin
+                        <tr data-row-id="{{ rate.id }}" data-position-id="{{ rate.position_id }}" data-annexe="{{ rate.annexe or 'Annexe 1' }}" {% if current_user.is_admin
                             %}draggable="true" {% endif %}>
                             {% if current_user.is_admin %}
                             <td class="drag-handle" title="Glisser pour réordonner">⠿</td>
@@ -129,44 +135,30 @@
                                 data-id="{{ rate.id }}" data-field="position" data-type="salary">
                                 <span class="cell-value" style="font-weight: 600;">{{ rate.position }}</span>
                             </td>
-                            <td class="{% if current_user.is_admin %}editable-cell{% endif %}"
-                                data-id="{{ rate.id }}" data-field="annexe" data-type="salary">
-                                <span class="cell-value">{{ rate.annexe }}</span>
+                            {% if rate.annexe == 'Facture' %}
+                            <td class="computed-cell"
+                                data-id="{{ rate.id }}" data-field="base_hourly" data-type="salary"
+                                style="text-align: right;">
+                                <span class="cell-value">{{ "%.2f"|format(rate.base_hourly | default(0) | float) }} €</span>
                             </td>
+                            {% else %}
                             <td class="{% if current_user.is_admin %}editable-cell{% endif %}"
                                 data-id="{{ rate.id }}" data-field="base_hourly" data-type="salary"
                                 style="text-align: right;">
                                 <span class="cell-value">{{ "%.2f"|format(rate.base_hourly | default(0) | float) }} €</span>
                             </td>
+                            {% endif %}
                             
                             <!-- 8H -->
                             <td class="computed-cell" data-computed-from="base_hourly" data-field="inter_8h" data-row-id="{{ rate.id }}"
                                 style="text-align: right;">
                                 <span class="cell-value">{{ "%.2f"|format(rate.inter_8h | default(0) | float) }} €</span>
                             </td>
-                            <td class="computed-cell" data-computed-from="base_hourly" data-field="invoice_8h" data-row-id="{{ rate.id }}"
-                                style="text-align: right; color: var(--grey-2);">
-                                <span class="cell-value">{{ "%.2f"|format(rate.invoice_8h | default(0) | float) }} €</span>
-                            </td>
 
                             <!-- 10H -->
                             <td class="computed-cell" data-computed-from="base_hourly" data-field="inter_10h" data-row-id="{{ rate.id }}"
                                 style="text-align: right;">
                                 <span class="cell-value">{{ "%.2f"|format(rate.inter_10h | default(0) | float) }} €</span>
-                            </td>
-                            <td class="computed-cell" data-computed-from="base_hourly" data-field="invoice_10h" data-row-id="{{ rate.id }}"
-                                style="text-align: right; color: var(--grey-2);">
-                                <span class="cell-value">{{ "%.2f"|format(rate.invoice_10h | default(0) | float) }} €</span>
-                            </td>
-
-                            <!-- HS -->
-                            <td class="computed-cell" data-computed-from="base_hourly" data-field="inter_hs" data-row-id="{{ rate.id }}"
-                                style="text-align: right;">
-                                <span class="cell-value">{{ "%.2f"|format(rate.inter_hs | default(0) | float) }} €</span>
-                            </td>
-                            <td class="computed-cell" data-computed-from="base_hourly" data-field="invoice_hs" data-row-id="{{ rate.id }}"
-                                style="text-align: right; color: var(--grey-2);">
-                                <span class="cell-value">{{ "%.2f"|format(rate.invoice_hs | default(0) | float) }} €</span>
                             </td>
 
                             <td style="text-align: center;">

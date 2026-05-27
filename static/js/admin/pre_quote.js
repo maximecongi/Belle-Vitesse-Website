@@ -134,13 +134,8 @@ function injectLine(item) {
             rowDataAttr = `data-rates='${JSON.stringify(item.rates || {})}'`;
             badgeHtml += `
                 <select class="form-input salary-rate-select" onchange="changeSalaryRate(this)" style="display: inline-block; width: auto; font-size: 0.75rem; padding: 0.15rem 0.4rem; height: auto; margin-left: 8px; vertical-align: middle;">
-                    <option value="invoice_10h" selected>Invoice 10h</option>
-                    <option value="invoice_8h">Invoice 8h</option>
-                    <option value="inter_10h">Inter 10h</option>
-                    <option value="inter_8h">Inter 8h</option>
-                    <option value="inter_hs">Inter HS</option>
-                    <option value="invoice_hs">Invoice HS</option>
-                    <option value="base_hourly">Base horaire</option>
+                    <option value="10h" selected>10h</option>
+                    <option value="8h">8h</option>
                 </select>
             `;
         }

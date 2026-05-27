@@ -91,13 +91,8 @@
                 </thead>
                 <tbody>
                     {% set rate_type_labels = {
-                        'invoice_10h': 'Invoice 10h',
-                        'invoice_8h': 'Invoice 8h',
-                        'inter_10h': 'Inter 10h',
-                        'inter_8h': 'Inter 8h',
-                        'inter_hs': 'Inter HS',
-                        'invoice_hs': 'Invoice HS',
-                        'base_hourly': 'Base horaire'
+                        '10h': '10h',
+                        '8h': '8h'
                     } %}
                     {% for item in quote.prestations %}
                     <tr>

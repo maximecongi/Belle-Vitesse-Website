@@ -110,35 +110,31 @@ def init_pre_quotes_routes(app):
                     if matched_rate:
                         if 'rates' not in new_item:
                             new_item['rates'] = {
-                                "invoice_10h": matched_rate['invoice_10h'],
-                                "invoice_8h": matched_rate['invoice_8h'],
-                                "inter_10h": matched_rate['inter_10h'],
-                                "inter_8h": matched_rate['inter_8h'],
-                                "inter_hs": matched_rate['inter_hs'],
-                                "invoice_hs": matched_rate['invoice_hs'],
-                                "base_hourly": matched_rate['base_hourly']
+                                "10h": float(matched_rate['inter_10h']) if matched_rate['inter_10h'] else 0.0,
+                                "8h": float(matched_rate['inter_8h']) if matched_rate['inter_8h'] else 0.0
                             }
                         if 'salary_rate_type' not in new_item:
-                            price = new_item.get('unit_price', 0.0)
-                            guessed = 'invoice_10h'
-                            for k, v in new_item['rates'].items():
-                                if abs(float(v) - float(price)) < 0.01:
-                                    guessed = k
-                                    break
-                            new_item['salary_rate_type'] = guessed
+                            old_type = new_item.get('salary_rate_type', '')
+                            if '10h' in old_type:
+                                new_item['salary_rate_type'] = '10h'
+                            elif '8h' in old_type:
+                                new_item['salary_rate_type'] = '8h'
+                            else:
+                                price = new_item.get('unit_price', 0.0)
+                                guessed = '10h'
+                                for k, v in new_item['rates'].items():
+                                    if abs(float(v) - float(price)) < 0.01:
+                                        guessed = k
+                                        break
+                                new_item['salary_rate_type'] = guessed
                     else:
                         if 'rates' not in new_item:
                             new_item['rates'] = {
-                                "invoice_10h": new_item.get('unit_price', 0.0),
-                                "invoice_8h": 0.0,
-                                "inter_10h": 0.0,
-                                "inter_8h": 0.0,
-                                "inter_hs": 0.0,
-                                "invoice_hs": 0.0,
-                                "base_hourly": 0.0
+                                "10h": new_item.get('unit_price', 0.0),
+                                "8h": 0.0
                             }
                         if 'salary_rate_type' not in new_item:
-                            new_item['salary_rate_type'] = 'invoice_10h'
+                            new_item['salary_rate_type'] = '10h'
                 enriched.append(new_item)
             quote.prestations = enriched
         except Exception as e:
@@ -215,21 +211,18 @@ def init_pre_quotes_routes(app):
         # Salaires
         for s in salaries:
             name_with_annexe = f"{s['position']} ({s['annexe']})" if s['annexe'] else s['position']
+            price_10h = float(s['inter_10h']) if s['inter_10h'] else 0.0
+            price_8h = float(s['inter_8h']) if s['inter_8h'] else 0.0
             items.append({
                 "id": s['id'],
                 "category": "salary",
                 "sub_category": s['group_name'],
                 "name": name_with_annexe,
-                "price": s['invoice_10h'],  # Par défaut 10h
+                "price": price_10h,  # Par défaut 10h
                 "unit": "jour(s)",
                 "rates": {
-                    "invoice_10h": float(s['invoice_10h']) if s['invoice_10h'] else 0.0,
-                    "invoice_8h": float(s['invoice_8h']) if s['invoice_8h'] else 0.0,
-                    "inter_10h": float(s['inter_10h']) if s['inter_10h'] else 0.0,
-                    "inter_8h": float(s['inter_8h']) if s['inter_8h'] else 0.0,
-                    "inter_hs": float(s['inter_hs']) if s['inter_hs'] else 0.0,
-                    "invoice_hs": float(s['invoice_hs']) if s['invoice_hs'] else 0.0,
-                    "base_hourly": float(s['base_hourly']) if s['base_hourly'] else 0.0
+                    "10h": price_10h,
+                    "8h": price_8h
                 }
             })
 

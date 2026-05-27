@@ -9,12 +9,14 @@ class PricingAdmin {
         this.isAdmin = config.isAdmin;
         this.invoiceFactor = config.invoiceFactor;
         this.draggedRow = null;
+        this.activeAnnexe = 'Annexe 1';
 
         if (this.isAdmin) {
             this.initEvents();
             this.initDragAndDrop();
         }
         this.initTabs();
+        this.initAnnexeTabs();
     }
 
     // ── Helper API ─────────────────────────────────────────────
@@ -60,6 +62,59 @@ class PricingAdmin {
                 if (panel) panel.classList.add('active');
                 localStorage.setItem('activePricingTab', tab.dataset.tab);
             });
+        });
+    }
+
+    // ── Annexe Tabs ───────────────────────────────────────────
+    initAnnexeTabs() {
+        const savedAnnexe = localStorage.getItem('activePricingAnnexe') || 'Annexe 1';
+        this.activeAnnexe = savedAnnexe;
+
+        const tabs = document.querySelectorAll('.annexe-tab');
+        tabs.forEach(tab => {
+            if (tab.dataset.annexe === this.activeAnnexe) {
+                tab.classList.add('active');
+            } else {
+                tab.classList.remove('active');
+            }
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                this.activeAnnexe = tab.dataset.annexe;
+                localStorage.setItem('activePricingAnnexe', this.activeAnnexe);
+                this.filterSalaryRows();
+            });
+        });
+
+        this.filterSalaryRows();
+    }
+
+    filterSalaryRows() {
+        const isFacture = this.activeAnnexe === 'Facture';
+
+        // Show/hide factor badge container
+        const factorContainer = document.getElementById('factorContainer');
+        if (factorContainer) {
+            factorContainer.style.display = isFacture ? 'flex' : 'none';
+        }
+
+
+
+        document.querySelectorAll('#panel-salaries tr[data-row-id]').forEach(row => {
+            const annexe = row.dataset.annexe || 'Annexe 1';
+            if (annexe === this.activeAnnexe) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // Update group visible counts
+        document.querySelectorAll('.salary-group').forEach(group => {
+            const tbody = group.querySelector('.salary-drop-zone');
+            if (tbody) {
+                this.updateGroupCount(tbody);
+            }
         });
     }
 
@@ -141,19 +196,37 @@ class PricingAdmin {
             if (e.key === 'Escape') { input.remove(); badge.textContent = '×' + currentVal; }
         });
     }
-
     handleInlineEdit(cell) {
         const valueSpan = cell.querySelector('.cell-value');
         const originalValue = valueSpan.textContent.trim();
         cell.classList.add('editing');
 
-        const input = document.createElement('input');
-        input.className = 'cell-input';
-        input.value = originalValue.replace(/\s*€$/, '');
+        const field = cell.dataset.field;
+        let input;
+
+        if (field === 'annexe') {
+            input = document.createElement('select');
+            input.className = 'cell-input';
+            const options = ['Annexe 1', 'Annexe 2', 'USPA', 'Court-métrage', 'Facture'];
+            options.forEach(opt => {
+                const el = document.createElement('option');
+                el.value = opt;
+                el.textContent = opt;
+                if (opt === originalValue) el.selected = true;
+                input.appendChild(el);
+            });
+        } else {
+            input = document.createElement('input');
+            input.className = 'cell-input';
+            input.value = originalValue.replace(/\s*€$/, '');
+        }
+
         valueSpan.style.display = 'none';
         cell.appendChild(input);
         input.focus();
-        input.select();
+        if (field !== 'annexe') {
+            input.select();
+        }
 
         const save = async () => {
             let newValue = input.value.trim();
@@ -189,7 +262,9 @@ class PricingAdmin {
             const res = await this.fetchAPI(urlMap[type], 'PATCH', body);
             if (res.success) {
                 this.flash('Sauvegardé', 'success');
-                if (field === 'base_hourly' && res.data) {
+                if (res.updated_rates) {
+                    this.updateSalaryRows(res.updated_rates);
+                } else if (field === 'base_hourly' && res.data) {
                     this.updateSalaryRow(cell.closest('tr'), res.data);
                 }
             } else {
@@ -259,7 +334,16 @@ class PricingAdmin {
         if (res.success) {
             const row = btn.closest('tr');
             const tbody = row.closest('tbody');
-            row.remove();
+            if (type === 'salary') {
+                const positionId = row.dataset.positionId;
+                if (positionId) {
+                    document.querySelectorAll(`tr[data-position-id="${positionId}"]`).forEach(r => r.remove());
+                } else {
+                    row.remove();
+                }
+            } else {
+                row.remove();
+            }
             this.updateGroupCount(tbody);
             this.flash('Supprimé', 'success');
         }
@@ -269,19 +353,38 @@ class PricingAdmin {
         const name = prompt('Nom du nouveau groupe :');
         if (!name?.trim()) return;
 
-        const res = await this.fetchAPI('/admin/api/pricing/salary', 'POST', { group_name: name.trim() });
+        const res = await this.fetchAPI('/admin/api/pricing/salary', 'POST', { 
+            group_name: name.trim(),
+            annexe: this.activeAnnexe
+        });
         if (res.success) {
             this.injectNewGroupUI(name.trim(), res.data);
+            this.filterSalaryRows();
             this.flash('Groupe créé', 'success');
         }
     }
 
     async handleAddSalaryLine(btn) {
         const group = btn.dataset.group;
-        const res = await this.fetchAPI('/admin/api/pricing/salary', 'POST', { group_name: group });
+        const res = await this.fetchAPI('/admin/api/pricing/salary', 'POST', { 
+            group_name: group,
+            annexe: this.activeAnnexe
+        });
         if (res.success) {
             const tbody = btn.closest('.salary-group').querySelector('.salary-drop-zone');
-            this.injectSalaryRowUI(tbody, res.data);
+            if (res.data && res.data.all_rates) {
+                res.data.all_rates.forEach(rateData => {
+                    this.injectSalaryRowUI(tbody, rateData, false);
+                });
+                this.filterSalaryRows();
+                const activeRow = tbody.querySelector(`tr[data-row-id="${res.data.id}"][data-annexe="${this.activeAnnexe}"]`);
+                if (activeRow) {
+                    activeRow.querySelector('.editable-cell[data-field="position"]')?.click();
+                }
+            } else {
+                this.injectSalaryRowUI(tbody, res.data, true);
+                this.filterSalaryRows();
+            }
             this.flash('Position ajoutée', 'success');
         }
     }
@@ -306,7 +409,17 @@ class PricingAdmin {
     }
 
     updateSalaryRow(row, data) {
-        const fields = ['inter_8h', 'invoice_8h', 'inter_10h', 'invoice_10h', 'inter_hs', 'invoice_hs'];
+        const posCell = row.querySelector(`[data-field="position"] .cell-value`);
+        if (posCell && data.position !== undefined) {
+            posCell.textContent = data.position;
+        }
+
+        const baseCell = row.querySelector(`[data-field="base_hourly"] .cell-value`);
+        if (baseCell && data.base_hourly !== undefined) {
+            baseCell.textContent = parseFloat(data.base_hourly || 0).toFixed(2) + ' €';
+        }
+
+        const fields = ['inter_8h', 'inter_10h'];
         fields.forEach(f => {
             const cell = row.querySelector(`.computed-cell[data-field="${f}"] .cell-value`);
             if (cell) cell.textContent = parseFloat(data[f] || 0).toFixed(2) + ' €';
@@ -318,7 +431,11 @@ class PricingAdmin {
         const groupDiv = tbody.closest('.salary-group');
         if (groupDiv) {
             const badge = groupDiv.querySelector('.salary-group-count');
-            if (badge) badge.textContent = tbody.querySelectorAll('tr[data-row-id]').length;
+            if (badge) {
+                const isSalary = tbody.classList.contains('salary-drop-zone');
+                const selector = isSalary ? 'tr[data-row-id]:not([style*="display: none"])' : 'tr[data-row-id]';
+                badge.textContent = tbody.querySelectorAll(selector).length;
+            }
         }
     }
 
@@ -355,14 +472,10 @@ class PricingAdmin {
                     <thead>
                         <tr>
                             <th style="width: 30px;"></th>
-                            <th>Position</th><th>Annexe</th>
+                            <th>Position</th>
                             <th style="width: 80px; text-align: right;">Base/H</th>
-                            <th style="width: 90px; text-align: right;">Inter (8H)</th>
-                            <th style="width: 100px; text-align: right; color: var(--grey-2);">Invoice (8H)</th>
-                            <th style="width: 90px; text-align: right;">Inter (10H)</th>
-                            <th style="width: 100px; text-align: right; color: var(--grey-2);">Invoice (10H)</th>
-                            <th style="width: 90px; text-align: right;">Inter (HS)</th>
-                            <th style="width: 100px; text-align: right; color: var(--grey-2);">Invoice (HS)</th>
+                            <th style="width: 100px; text-align: right;">8h</th>
+                            <th style="width: 100px; text-align: right;">10h</th>
                             <th style="width: 80px;"></th>
                         </tr>
                     </thead>
@@ -372,30 +485,39 @@ class PricingAdmin {
         </div>`;
         container.insertAdjacentHTML('beforeend', html);
         const tbody = container.lastElementChild.querySelector('tbody');
-        this.injectSalaryRowUI(tbody, firstRate);
+        if (firstRate && firstRate.all_rates) {
+            firstRate.all_rates.forEach(rateData => {
+                this.injectSalaryRowUI(tbody, rateData, false);
+            });
+            const activeRow = tbody.querySelector(`tr[data-row-id="${firstRate.id}"][data-annexe="${this.activeAnnexe}"]`);
+            if (activeRow) {
+                activeRow.querySelector('.editable-cell[data-field="position"]')?.click();
+            }
+        } else {
+            this.injectSalaryRowUI(tbody, firstRate, true);
+        }
         this.initDropZone(tbody);
     }
 
-    injectSalaryRowUI(tbody, data) {
+    injectSalaryRowUI(tbody, data, startEditing = true) {
+        const isFacture = data.annexe === 'Facture';
+        const baseClass = isFacture ? 'computed-cell' : 'editable-cell';
         const html = `
-            <tr data-row-id="${data.id}" draggable="true">
+            <tr data-row-id="${data.id}" data-position-id="${data.position_id}" data-annexe="${data.annexe || 'Annexe 1'}" draggable="true">
                 <td class="drag-handle">⠿</td>
-                <td class="editable-cell" data-id="${data.id}" data-field="position" data-type="salary"><span class="cell-value" style="font-weight: 600;"></span></td>
-                <td class="editable-cell" data-id="${data.id}" data-field="annexe" data-type="salary"><span class="cell-value"></span></td>
-                <td class="editable-cell" data-id="${data.id}" data-field="base_hourly" data-type="salary" style="text-align: right;"><span class="cell-value">0.00 €</span></td>
-                <td class="computed-cell" data-field="inter_8h" style="text-align: right;"><span class="cell-value">0.00 €</span></td>
-                <td class="computed-cell" data-field="invoice_8h" style="text-align: right; color: var(--grey-2);"><span class="cell-value">0.00 €</span></td>
-                <td class="computed-cell" data-field="inter_10h" style="text-align: right;"><span class="cell-value">0.00 €</span></td>
-                <td class="computed-cell" data-field="invoice_10h" style="text-align: right; color: var(--grey-2);"><span class="cell-value">0.00 €</span></td>
-                <td class="computed-cell" data-field="inter_hs" style="text-align: right;"><span class="cell-value">0.00 €</span></td>
-                <td class="computed-cell" data-field="invoice_hs" style="text-align: right; color: var(--grey-2);"><span class="cell-value">0.00 €</span></td>
+                <td class="editable-cell" data-id="${data.id}" data-field="position" data-type="salary"><span class="cell-value" style="font-weight: 600;">${data.position || ''}</span></td>
+                <td class="${baseClass}" data-id="${data.id}" data-field="base_hourly" data-type="salary" style="text-align: right;"><span class="cell-value">${parseFloat(data.base_hourly || 0).toFixed(2)} €</span></td>
+                <td class="computed-cell" data-field="inter_8h" style="text-align: right;"><span class="cell-value">${parseFloat(data.inter_8h || 0).toFixed(2)} €</span></td>
+                <td class="computed-cell" data-field="inter_10h" style="text-align: right;"><span class="cell-value">${parseFloat(data.inter_10h || 0).toFixed(2)} €</span></td>
                 <td style="text-align: center;"><button class="admin-btn admin-btn-danger btn-delete-line" data-id="${data.id}" data-type="salary">Supprimer</button></td>
             </tr>`;
         tbody.insertAdjacentHTML('beforeend', html);
         const row = tbody.lastElementChild;
         this.initDragOnRow(row);
         this.updateGroupCount(tbody);
-        row.querySelector('.editable-cell').click();
+        if (startEditing) {
+            row.querySelector('.editable-cell[data-field="position"]')?.click();
+        }
     }
 
     injectLogisticsRowUI(tbody, data) {

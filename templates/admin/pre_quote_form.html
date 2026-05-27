@@ -224,13 +224,8 @@
                             {% endif %}
                             {% if item.category == 'salary' %}
                             <select class="form-input salary-rate-select" onchange="changeSalaryRate(this)" style="display: inline-block; width: auto; font-size: 0.75rem; padding: 0.15rem 0.4rem; height: auto; margin-left: 8px; vertical-align: middle;">
-                                <option value="invoice_10h" {% if item.salary_rate_type == 'invoice_10h' or not item.salary_rate_type %}selected{% endif %}>Invoice 10h</option>
-                                <option value="invoice_8h" {% if item.salary_rate_type == 'invoice_8h' %}selected{% endif %}>Invoice 8h</option>
-                                <option value="inter_10h" {% if item.salary_rate_type == 'inter_10h' %}selected{% endif %}>Inter 10h</option>
-                                <option value="inter_8h" {% if item.salary_rate_type == 'inter_8h' %}selected{% endif %}>Inter 8h</option>
-                                <option value="inter_hs" {% if item.salary_rate_type == 'inter_hs' %}selected{% endif %}>Inter HS</option>
-                                <option value="invoice_hs" {% if item.salary_rate_type == 'invoice_hs' %}selected{% endif %}>Invoice HS</option>
-                                <option value="base_hourly" {% if item.salary_rate_type == 'base_hourly' %}selected{% endif %}>Base horaire</option>
+                                <option value="10h" {% if item.salary_rate_type == '10h' or not item.salary_rate_type %}selected{% endif %}>10h</option>
+                                <option value="8h" {% if item.salary_rate_type == '8h' %}selected{% endif %}>8h</option>
                             </select>
                             {% endif %}
                             <input type="text" class="form-input item-desc" value="{{ item.description }}"

@@ -267,3 +267,38 @@ tr.dragging {
         font-size: 0.8rem;
     }
 }
+
+/* ── Annexe Tabs (Nested inside Salaries) ────────────────────── */
+
+.annexe-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--white-3, #e5e7eb);
+}
+
+.annexe-tab {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--grey-2);
+    cursor: pointer;
+    border: 1px solid var(--white-3, #e5e7eb);
+    background: var(--white-2, #f9fafb);
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.annexe-tab:hover {
+    color: var(--grey-1);
+    background: var(--white-3, #e5e7eb);
+}
+
+.annexe-tab.active {
+    color: #fff;
+    background: var(--admin-accent);
+    border-color: var(--admin-accent);
+    box-shadow: 0 2px 4px rgba(255, 200, 69, 0.2);
+}

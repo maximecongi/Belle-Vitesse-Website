@@ -96,7 +96,8 @@ def init_pricing_routes(app):
         try:
             data = request.get_json(force=True) if request.data else {}
             group_name = data.get('group_name', '') if data else ''
-            new_item = add_salary_rate(group_name)
+            annexe = data.get('annexe', 'Annexe 1') if data else 'Annexe 1'
+            new_item = add_salary_rate(group_name, annexe)
             return jsonify({"success": True, "data": new_item})
         except Exception as e:
             current_app.logger.error(f"❌ POST salary: {e}")
@@ -107,9 +108,13 @@ def init_pricing_routes(app):
     def admin_api_pricing_salary_update():
         try:
             data = request.get_json(force=True)
-            updated = update_salary_rate(
+            result = update_salary_rate(
                 data.get("id"), data.get("field"), data.get("value"))
-            return jsonify({"success": True, "data": updated})
+            return jsonify({
+                "success": True,
+                "data": result["rate"],
+                "updated_rates": result["updated_rates"]
+            })
         except Exception as e:
             current_app.logger.error(f"❌ PATCH salary: {e}")
             return jsonify({"success": False, "error": str(e)}), 400

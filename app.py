@@ -368,6 +368,13 @@ def create_app():
         with app.app_context():
             db.create_all()
 
+            # Migration pour la normalisation des salaires (Option 1)
+            try:
+                from utils.db_migration import migrate_salaries_schema
+                migrate_salaries_schema(app)
+            except Exception as e:
+                app.logger.error(f"❌ Erreur lors de la migration des salaires : {e}")
+
             # Migrations manuelles pour les tables existantes (colonnes manquantes)
             from sqlalchemy import inspect, text
             inspector = inspect(db.engine)
