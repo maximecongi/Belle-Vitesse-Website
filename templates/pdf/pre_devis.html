@@ -90,12 +90,25 @@
                     </tr>
                 </thead>
                 <tbody>
+                    {% set rate_type_labels = {
+                        'invoice_10h': 'Invoice 10h',
+                        'invoice_8h': 'Invoice 8h',
+                        'inter_10h': 'Inter 10h',
+                        'inter_8h': 'Inter 8h',
+                        'inter_hs': 'Inter HS',
+                        'invoice_hs': 'Invoice HS',
+                        'base_hourly': 'Base horaire'
+                    } %}
                     {% for item in quote.prestations %}
                     <tr>
                         <td>
                             <div style="font-weight: 500;">{{ item.description }}</div>
-                            <div style="font-size: 7pt; color: var(--grey-2); text-transform: uppercase;">{{
-                                item.custom_category or PRE_QUOTE_CAT_MAP.get(item.category, item.category) }}</div>
+                            <div style="font-size: 7pt; color: var(--grey-2); text-transform: uppercase;">
+                                {{ item.custom_category or PRE_QUOTE_CAT_MAP.get(item.category, item.category) }}
+                                {% if item.category == 'salary' and item.salary_rate_type %}
+                                 | {{ rate_type_labels.get(item.salary_rate_type, item.salary_rate_type) }}
+                                {% endif %}
+                            </div>
                         </td>
                         <td style="text-align: center;">{{ item.quantity }}</td>
                         <td style="text-align: center;">{{ item.unit }}</td>

@@ -125,10 +125,25 @@ function injectLine(item) {
     const catLabel = PRE_QUOTE_CAT_MAP[item.category] || item.category;
 
     let badgeHtml = '';
+    let rowDataAttr = '';
     if (item.category === 'custom') {
         badgeHtml = `<input type="text" class="category-badge category-custom item-custom-cat" value="${item.custom_category || 'Autre'}" style="border: 1px dashed #d1d5db; background: #f3f4f6; color: #374151; width: 90px; text-align: center; text-transform: uppercase; font-size: 0.65rem; font-weight: 600; padding: 0.15rem 0.4rem; border-radius: 2px; margin-bottom: 4px;" placeholder="Autre">`;
     } else {
         badgeHtml = `<span class="category-badge category-${item.category}">${catLabel}</span>`;
+        if (item.category === 'salary') {
+            rowDataAttr = `data-rates='${JSON.stringify(item.rates || {})}'`;
+            badgeHtml += `
+                <select class="form-input salary-rate-select" onchange="changeSalaryRate(this)" style="display: inline-block; width: auto; font-size: 0.75rem; padding: 0.15rem 0.4rem; height: auto; margin-left: 8px; vertical-align: middle;">
+                    <option value="invoice_10h" selected>Invoice 10h</option>
+                    <option value="invoice_8h">Invoice 8h</option>
+                    <option value="inter_10h">Inter 10h</option>
+                    <option value="inter_8h">Inter 8h</option>
+                    <option value="inter_hs">Inter HS</option>
+                    <option value="invoice_hs">Invoice HS</option>
+                    <option value="base_hourly">Base horaire</option>
+                </select>
+            `;
+        }
     }
 
     let readonlyAttr = '';
@@ -137,7 +152,7 @@ function injectLine(item) {
     }
 
     const html = `
-        <div class="line-item-row" data-category="${item.category}" draggable="true">
+        <div class="line-item-row" data-category="${item.category}" ${rowDataAttr} draggable="true">
             <div class="drag-handle">⠿</div>
             <div style="position: relative; bottom: 0.65rem;">
                 ${badgeHtml}
@@ -158,6 +173,28 @@ function injectLine(item) {
     const newRow = container.lastElementChild;
     initDragOnRow(newRow);
     recalculate();
+}
+
+function changeSalaryRate(selectElement) {
+    const row = selectElement.closest('.line-item-row');
+    if (!row) return;
+
+    const ratesData = row.getAttribute('data-rates');
+    if (!ratesData) return;
+
+    try {
+        const rates = JSON.parse(ratesData);
+        const rateType = selectElement.value;
+        const price = parseFloat(rates[rateType]) || 0;
+
+        const priceInput = row.querySelector('.item-price');
+        if (priceInput) {
+            priceInput.value = price.toFixed(2);
+        }
+        recalculate();
+    } catch (e) {
+        console.error("Error parsing rates in changeSalaryRate:", e);
+    }
 }
 
 function recalculate() {
@@ -314,6 +351,12 @@ async function saveQuote() {
         document.querySelectorAll('.line-item-row').forEach(row => {
             const category = row.dataset.category;
             const customCatInput = row.querySelector('.item-custom-cat');
+            
+            const salaryRateSelect = row.querySelector('.salary-rate-select');
+            const salaryRateType = salaryRateSelect ? salaryRateSelect.value : null;
+            const ratesAttr = row.getAttribute('data-rates');
+            const rates = ratesAttr ? JSON.parse(ratesAttr) : null;
+
             prestations.push({
                 category: category,
                 custom_category: customCatInput ? customCatInput.value : null,
@@ -321,7 +364,9 @@ async function saveQuote() {
                 quantity: parseFloat(row.querySelector('.item-qty').value) || 0,
                 unit: row.querySelector('.item-unit').value,
                 unit_price: parseFloat(row.querySelector('.item-price').value) || 0,
-                discount_rate: parseFloat(row.querySelector('.item-discount').value) || 0
+                discount_rate: parseFloat(row.querySelector('.item-discount').value) || 0,
+                salary_rate_type: salaryRateType,
+                rates: rates
             });
         });
 

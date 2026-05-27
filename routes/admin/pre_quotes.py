@@ -73,6 +73,77 @@ def init_pre_quotes_routes(app):
                     f"❌ Erreur modification pré-devis : {e}")
                 return jsonify({"status": "error", "message": str(e)}), 400
 
+        # Enrichissement des prestations de type salaire pour compatibilité
+        from models import SalaryRate
+        try:
+            all_salaries = SalaryRate.query.all()
+            salary_by_full_name = {}
+            salary_by_position_only = {}
+            for s in all_salaries:
+                if not s.position:
+                    continue
+                pos_lower = s.position.lower().strip()
+                annexe_lower = s.annexe.lower().strip() if s.annexe else ""
+                full_name = f"{pos_lower} ({annexe_lower})" if annexe_lower else pos_lower
+                
+                s_dict = s.to_dict()
+                salary_by_full_name[full_name] = s_dict
+                if pos_lower not in salary_by_position_only:
+                    salary_by_position_only[pos_lower] = s_dict
+
+            enriched = []
+            for item in (quote.prestations or []):
+                new_item = dict(item)
+                if new_item.get('category') == 'salary':
+                    desc_lower = new_item.get('description', '').lower().strip()
+                    matched_rate = None
+                    if desc_lower in salary_by_full_name:
+                        matched_rate = salary_by_full_name[desc_lower]
+                    elif desc_lower in salary_by_position_only:
+                        matched_rate = salary_by_position_only[desc_lower]
+                    else:
+                        for full_name, rate in salary_by_full_name.items():
+                            if full_name in desc_lower or desc_lower in full_name:
+                                matched_rate = rate
+                                break
+                    
+                    if matched_rate:
+                        if 'rates' not in new_item:
+                            new_item['rates'] = {
+                                "invoice_10h": matched_rate['invoice_10h'],
+                                "invoice_8h": matched_rate['invoice_8h'],
+                                "inter_10h": matched_rate['inter_10h'],
+                                "inter_8h": matched_rate['inter_8h'],
+                                "inter_hs": matched_rate['inter_hs'],
+                                "invoice_hs": matched_rate['invoice_hs'],
+                                "base_hourly": matched_rate['base_hourly']
+                            }
+                        if 'salary_rate_type' not in new_item:
+                            price = new_item.get('unit_price', 0.0)
+                            guessed = 'invoice_10h'
+                            for k, v in new_item['rates'].items():
+                                if abs(float(v) - float(price)) < 0.01:
+                                    guessed = k
+                                    break
+                            new_item['salary_rate_type'] = guessed
+                    else:
+                        if 'rates' not in new_item:
+                            new_item['rates'] = {
+                                "invoice_10h": new_item.get('unit_price', 0.0),
+                                "invoice_8h": 0.0,
+                                "inter_10h": 0.0,
+                                "inter_8h": 0.0,
+                                "inter_hs": 0.0,
+                                "invoice_hs": 0.0,
+                                "base_hourly": 0.0
+                            }
+                        if 'salary_rate_type' not in new_item:
+                            new_item['salary_rate_type'] = 'invoice_10h'
+                enriched.append(new_item)
+            quote.prestations = enriched
+        except Exception as e:
+            current_app.logger.error(f"❌ Erreur lors de l'enrichissement des salaires : {e}")
+
         productions = list_productions()
         return render_template("admin/pre_quote_form.html", quote=quote, is_edit=True, productions=productions)
 
@@ -143,13 +214,23 @@ def init_pre_quotes_routes(app):
 
         # Salaires
         for s in salaries:
+            name_with_annexe = f"{s['position']} ({s['annexe']})" if s['annexe'] else s['position']
             items.append({
                 "id": s['id'],
                 "category": "salary",
                 "sub_category": s['group_name'],
-                "name": s['position'],
+                "name": name_with_annexe,
                 "price": s['invoice_10h'],  # Par défaut 10h
-                "unit": "jour(s)"
+                "unit": "jour(s)",
+                "rates": {
+                    "invoice_10h": float(s['invoice_10h']) if s['invoice_10h'] else 0.0,
+                    "invoice_8h": float(s['invoice_8h']) if s['invoice_8h'] else 0.0,
+                    "inter_10h": float(s['inter_10h']) if s['inter_10h'] else 0.0,
+                    "inter_8h": float(s['inter_8h']) if s['inter_8h'] else 0.0,
+                    "inter_hs": float(s['inter_hs']) if s['inter_hs'] else 0.0,
+                    "invoice_hs": float(s['invoice_hs']) if s['invoice_hs'] else 0.0,
+                    "base_hourly": float(s['base_hourly']) if s['base_hourly'] else 0.0
+                }
             })
 
         # Logistique
