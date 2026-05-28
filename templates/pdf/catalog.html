@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>CATALOGUE DE PRIX - BELLE VITESSE</title>
+    <title>{% if with_prices %}CATALOGUE DE PRIX{% else %}CATALOGUE FLOTTE{% endif %} - BELLE VITESSE</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-pilot-waivers.css') }}">
@@ -257,15 +257,26 @@
 <body class="pilot-waiver-container" style="padding-top: 60px;">
     <!-- Barre de contrôle visible uniquement en HTML -->
     <div class="preview-controls no-print">
-        <div>
+        <div style="display: flex; align-items: center; gap: 15px;">
             <strong>Mode Aperçu Catalogue</strong>
-            <span style="font-size: 11px; color: #aaa; margin-left: 10px;">Le PDF ne sera mis à jour que si vous cliquez
-                sur "Générer"</span>
+            <div style="display: flex; background: #2d2d2d; border-radius: 4px; padding: 2px; gap: 2px;">
+                <a href="{{ url_for('admin_catalog_preview', prices='1') }}"
+                    style="padding: 4px 12px; font-size: 12px; text-decoration: none; border-radius: 3px; font-weight: 600; color: {% if with_prices %}#1d1d1d{% else %}#fff{% endif %}; background: {% if with_prices %}var(--yellow-1){% else %}transparent{% endif %}; transition: all 0.2s;">
+                    Avec prix
+                </a>
+                <a href="{{ url_for('admin_catalog_preview', prices='0') }}"
+                    style="padding: 4px 12px; font-size: 12px; text-decoration: none; border-radius: 3px; font-weight: 600; color: {% if not with_prices %}#1d1d1d{% else %}#fff{% endif %}; background: {% if not with_prices %}var(--yellow-1){% else %}transparent{% endif %}; transition: all 0.2s;">
+                    Sans prix
+                </a>
+            </div>
+            <span style="font-size: 11px; color: #aaa;">Le PDF ne sera mis à jour que si vous cliquez sur "Mettre à jour
+                le PDF"</span>
         </div>
         <div>
-            <a href="{{ url_for('admin_catalog_pdf') }}" class="preview-btn preview-btn--secondary"
-                target="_blank">Télécharger le PDF</a>
-            <a href="{{ url_for('admin_catalog_update') }}" class="preview-btn">Mettre à jour le PDF</a>
+            <a href="{{ url_for('admin_catalog_pdf', prices='1' if with_prices else '0') }}"
+                class="preview-btn preview-btn--secondary" target="_blank">Télécharger le PDF</a>
+            <a href="{{ url_for('admin_catalog_update', prices='1' if with_prices else '0') }}"
+                class="preview-btn">Mettre à jour le PDF</a>
         </div>
     </div>
     <div class="pilot-waiver">
@@ -276,7 +287,9 @@
                     alt="Belle Vitesse">
             </div>
             <div class="pilot-waiver-header-meta">
-                <strong style="text-transform: uppercase; letter-spacing: 1px;">Catalogue de Prix Officiel</strong><br>
+                <strong style="text-transform: uppercase; letter-spacing: 1px;">
+                    {% if with_prices %}Catalogue de Prix Officiel{% else %}Catalogue Officiel{% endif %}
+                </strong><br>
                 <span class="pilot-waiver-doc-id">Édition : {{ now.strftime('%d/%m/%Y') }}</span><br>
                 Belle Vitesse SAS
             </div>
@@ -294,8 +307,10 @@
                     <img src="{{ vehicle.thumbnail }}" class="catalog-card-img" alt="{{ vehicle.name }}">
                     <div class="catalog-card-header">
                         <h3 class="catalog-card-title">{{ vehicle.name }}</h3>
+                        {% if with_prices %}
                         <div class="catalog-card-price">{{ "{:,.0f}".format(vehicle.daily_rate |
                             default(0))|replace(',', ' ') }} € <small>HT /jr</small></div>
+                        {% endif %}
                     </div>
 
                     <div class="catalog-card-specs">
@@ -362,9 +377,11 @@
                 <div class="catalog-head-card">
                     <img src="{{ head.thumbnail }}" class="catalog-head-img" alt="{{ head.name }}">
                     <span class="catalog-head-name">{{ head.name }}</span>
+                    {% if with_prices %}
                     <span class="catalog-card-price">{{ "{:,.0f}".format(head.daily_rate | default(0))|replace(',', '
                         ')
                         }} € HT</span>
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>

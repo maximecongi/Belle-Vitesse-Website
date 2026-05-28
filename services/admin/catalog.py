@@ -6,7 +6,7 @@ from utils.database import get_configs_for_vehicle
 from utils.document_utils import render_pdf_from_template
 
 
-def get_catalog_data():
+def get_catalog_data(with_prices=True):
     """Récupère et formate les données pour le catalogue de prix."""
     from flask import request
 
@@ -139,30 +139,34 @@ def get_catalog_data():
         "settings": settings,
         "now": datetime.now(),
         "estimated_height": estimated_height,
+        "with_prices": with_prices,
     }
 
 
-def generate_catalog_pdf():
+def generate_catalog_pdf(with_prices=True):
     """Génère le PDF du catalogue de prix."""
-    data = get_catalog_data()
+    data = get_catalog_data(with_prices=with_prices)
     html = render_template("pdf/catalog.html", **data)
     pdf_bytes = render_pdf_from_template(html, base_url=current_app.root_path)
     return pdf_bytes
 
 
-def update_stored_catalog():
+def update_stored_catalog(with_prices=True):
     """Génère et sauvegarde le PDF du catalogue sur le disque."""
     try:
         # Chemin de stockage via variable d'environnement
         output_base = os.getenv('OUTPUT_FOLDER', os.path.join(current_app.root_path, 'output'))
         upload_dir = os.path.join(output_base, 'catalog')
         
+        prefix = "Belle_Vitesse_CATALOGUE_P_" if with_prices else "Belle_Vitesse_CATALOGUE_WP_"
+        
         if not os.path.exists(upload_dir):
             os.makedirs(upload_dir)
         else:
             # Nettoyer l'ancien catalogue pour ne pas accumuler les fichiers avec lettres aléatoires
+            prefixes_to_clean = [prefix, "Belle_Vitesse_CATALOGUE_PRIX_", "Belle_Vitesse_CATALOGUE_SANS_PRIX_"]
             for f in os.listdir(upload_dir):
-                if f.startswith("Belle_Vitesse_CATALOGUE_") and f.endswith(".pdf"):
+                if any(f.startswith(p) for p in prefixes_to_clean) and f.endswith(".pdf"):
                     try:
                         os.remove(os.path.join(upload_dir, f))
                     except Exception as err:
@@ -173,11 +177,11 @@ def update_stored_catalog():
         import string
         
         rand_str = "".join(random.choices(string.ascii_uppercase, k=4))
-        filename = f'Belle_Vitesse_CATALOGUE_{datetime.datetime.now().strftime("%Y%m")}_{rand_str}.pdf'
+        filename = f'{prefix}{datetime.datetime.now().strftime("%Y%m")}_{rand_str}.pdf'
         file_path = os.path.join(upload_dir, filename)
 
         # Génération
-        pdf_bytes = generate_catalog_pdf()
+        pdf_bytes = generate_catalog_pdf(with_prices=with_prices)
 
         # Compression avec iLovePDF (repli sur pypdf en cas d'échec)
         compressed_successfully = False

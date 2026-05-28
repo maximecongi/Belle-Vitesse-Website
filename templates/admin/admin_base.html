@@ -130,7 +130,8 @@
                 {% call nav_group('🧰 Administration', 'admin', 'admin', false) %}
                 {{ nav_item(url_for('admin_users_list'), 'Équipe', 'users') }}
                 {{ nav_item(url_for('admin_pricing'), 'Tarification', 'pricing') }}
-                {{ nav_item(url_for('admin_catalog_pdf'), 'Catalogue de prix', 'catalog_pdf') }}
+                {{ nav_item(url_for('admin_catalog_pdf', prices='1'), 'Catalogue (avec prix)', 'catalog_pdf') }}
+                {{ nav_item(url_for('admin_catalog_pdf', prices='0'), 'Catalogue (sans prix)', 'catalog_pdf') }}
                 {{ nav_item(url_for('admin_settings.admin_settings_edit'), ' Paramètres', 'settings') }}
                 {{ nav_item(url_for('admin_calendar'), 'Calendrier', 'calendar') }}
                 {{ nav_item(url_for('admin_newsletter_dashboard'), 'Newsletter', 'newsletter') }}

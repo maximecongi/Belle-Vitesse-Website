@@ -17,19 +17,24 @@ def init_catalog_routes(app):
     @app.route("/admin/catalog/pdf", endpoint="admin_catalog_pdf")
     @require_roles("administrator", "manager", "commercial")
     def admin_catalog_pdf():
-        """Sert le dernier catalogue de prix généré en téléchargement."""
+        """Sert le dernier catalogue (avec ou sans prix) généré en téléchargement."""
         import datetime
         import glob
+        from flask import request
+        
+        prices_param = request.args.get("prices", "1")
+        with_prices = prices_param != "0"
         
         output_base = os.getenv('OUTPUT_FOLDER', os.path.join(current_app.root_path, 'output'))
         directory = os.path.join(output_base, "catalog")
         
-        pattern = os.path.join(directory, "Belle_Vitesse_CATALOGUE_*.pdf")
+        prefix = "Belle_Vitesse_CATALOGUE_P_" if with_prices else "Belle_Vitesse_CATALOGUE_WP_"
+        pattern = os.path.join(directory, f"{prefix}*.pdf")
         matching_files = glob.glob(pattern)
         
         if not matching_files:
             # Si aucun fichier catalogue n'existe, on le génère
-            success, msg = update_stored_catalog()
+            success, msg = update_stored_catalog(with_prices=with_prices)
             if not success:
                 return f"Erreur génération initiale : {msg}", 500
             
@@ -56,19 +61,26 @@ def init_catalog_routes(app):
     @require_roles("administrator", "manager", "commercial")
     def admin_catalog_update():
         """Force la mise à jour du fichier PDF du catalogue."""
-        success, msg = update_stored_catalog()
+        from flask import request
+        prices_param = request.args.get("prices", "1")
+        with_prices = prices_param != "0"
+        
+        success, msg = update_stored_catalog(with_prices=with_prices)
         if success:
             flash("Le catalogue PDF a été mis à jour avec succès !", "success")
         else:
             flash(f"Erreur lors de la mise à jour : {msg}", "error")
-        return redirect(url_for("admin_catalog_preview"))
+        return redirect(url_for("admin_catalog_preview", prices=prices_param))
 
     @app.route("/admin/catalog/preview", endpoint="admin_catalog_preview")
     @require_roles("administrator", "manager", "commercial")
     def admin_catalog_preview():
         """Affiche la version HTML du catalogue pour le développement et la prévisualisation."""
+        from flask import request
+        prices_param = request.args.get("prices", "1")
+        with_prices = prices_param != "0"
         try:
-            data = get_catalog_data()
+            data = get_catalog_data(with_prices=with_prices)
             return render_template("pdf/catalog.html", **data)
         except Exception as e:
             current_app.logger.error(f"❌ Erreur prévisualisation catalogue : {e}")
