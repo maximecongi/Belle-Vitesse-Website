@@ -22,11 +22,7 @@ def admin_settings_edit():
         ('bank_bic', 'BIC / SWIFT', 'Code banque'),
         ('delivery_base_distance', 'Distance livraison base (km)', 'Seuil forfait de base (ex: 100)'),
         ('delivery_base_price', 'Tarif livraison base (€)', 'Forfait de base (ex: 200)'),
-        ('delivery_mid_distance', 'Distance livraison moyenne (km)', 'Seuil max tarif intermédiaire (ex: 250)'),
-        ('delivery_mid_rate', 'Tarif kilométrique interm. (€/km)', 'Tarif simple course (ex: 1.00)'),
         ('delivery_high_rate', 'Tarif kilométrique sup. (€/km)', 'Tarif simple course (ex: 0.50)'),
-        ('ilovepdf_public_key', 'Clé publique iLovePDF', 'Clé publique API du projet iLovePDF'),
-        ('ilovepdf_secret_key', 'Clé secrète iLovePDF', 'Clé secrète API du projet iLovePDF'),
     ]
 
     if request.method == 'POST':

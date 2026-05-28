@@ -260,8 +260,6 @@ def create_app():
             "DELIVERY_CONFIG": {
                 "base_distance": _safe_setting_float("delivery_base_distance", 100),
                 "base_price": _safe_setting_float("delivery_base_price", 200),
-                "mid_distance": _safe_setting_float("delivery_mid_distance", 250),
-                "mid_rate": _safe_setting_float("delivery_mid_rate", 1.0),
                 "high_rate": _safe_setting_float("delivery_high_rate", 0.5)
             },
             "PRE_QUOTE_CAT_MAP": {

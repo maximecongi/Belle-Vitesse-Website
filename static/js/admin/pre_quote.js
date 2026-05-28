@@ -332,17 +332,13 @@ function recalculate() {
         if (unit === 'km') {
             const baseDist = DELIVERY_CONFIG.baseDistance;
             const basePrice = DELIVERY_CONFIG.basePrice;
-            const midDist = DELIVERY_CONFIG.midDistance;
-            const midRate = DELIVERY_CONFIG.midRate;
             const highRate = DELIVERY_CONFIG.highRate;
 
             let totalItemPrice = 0;
             if (qty <= baseDist) {
                 totalItemPrice = basePrice;
-            } else if (qty <= midDist) {
-                totalItemPrice = basePrice + (qty - baseDist) * midRate * 2;
             } else {
-                totalItemPrice = basePrice + (midDist - baseDist) * midRate * 2 + (qty - midDist) * highRate * 2;
+                totalItemPrice = basePrice + (qty - baseDist) * highRate * 2;
             }
 
             lineTotal = totalItemPrice * (1 - (discount / 100));

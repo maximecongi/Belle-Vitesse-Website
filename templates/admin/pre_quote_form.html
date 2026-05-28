@@ -619,10 +619,8 @@
     // Configuration globale de la livraison injectée depuis Flask
     const DELIVERY_CONFIG = {
         baseDistance: {{ DELIVERY_CONFIG.base_distance }},
-    basePrice: { { DELIVERY_CONFIG.base_price } },
-    midDistance: { { DELIVERY_CONFIG.mid_distance } },
-    midRate: { { DELIVERY_CONFIG.mid_rate } },
-    highRate: { { DELIVERY_CONFIG.high_rate } }
+        basePrice: {{ DELIVERY_CONFIG.base_price }},
+        highRate: {{ DELIVERY_CONFIG.high_rate }}
     };
 </script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
