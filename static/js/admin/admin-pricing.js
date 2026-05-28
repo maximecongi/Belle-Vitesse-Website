@@ -183,7 +183,8 @@ class PricingAdmin {
             if (res.success) {
                 this.invoiceFactor = res.factor;
                 badge.textContent = '×' + res.factor;
-                this.flash(`Facteur mis à jour (${res.salaries.length} lignes recalculées)`, 'success');
+                const updatedCount = res.salaries.filter(s => s.annexe === 'Facture').length;
+                this.flash(`Facteur mis à jour (${updatedCount} lignes recalculées)`, 'success');
                 this.updateSalaryRows(res.salaries);
             } else {
                 badge.textContent = '×' + currentVal;
@@ -207,7 +208,7 @@ class PricingAdmin {
         if (field === 'annexe') {
             input = document.createElement('select');
             input.className = 'cell-input';
-            const options = ['Annexe 1', 'Annexe 2', 'Annexe 1 renfort', 'USPA', 'Court-métrage', 'Publicité', 'Facture'];
+            const options = ['Annexe 1', 'Annexe 3', 'Annexe 1 renfort', 'USPA', 'USPA renfort', 'Court-métrage', 'Publicité', 'Facture'];
             options.forEach(opt => {
                 const el = document.createElement('option');
                 el.value = opt;

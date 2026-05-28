@@ -139,7 +139,7 @@ def init_pre_quotes_routes(app):
                     else:
                         if 'annexe' not in new_item:
                             desc = new_item.get('description', '')
-                            for possible in ['Facture', 'Annexe 1', 'Annexe 2', 'Annexe 1 renfort', 'USPA', 'Court-métrage', 'Publicité']:
+                            for possible in ['Facture', 'Annexe 1', 'Annexe 3', 'Annexe 1 renfort', 'USPA', 'USPA renfort', 'Court-métrage', 'Publicité']:
                                 if f"({possible})" in desc:
                                     new_item['annexe'] = possible
                                     break

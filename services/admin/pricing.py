@@ -67,6 +67,12 @@ def _calculate_salary_columns(rate, factor=None):
     if rate.annexe == "Annexe 1 renfort":
         rate.inter_8h = round(base * 10.25, 2)
         rate.inter_10h = round(base * 13.25, 2)
+    elif rate.annexe == "USPA":
+        rate.inter_8h = round(base * 8, 2)
+        rate.inter_10h = round(base * 10, 2)
+    elif rate.annexe == "USPA renfort":
+        rate.inter_8h = round(base * 8, 2)
+        rate.inter_10h = round(base * 10.5, 2)
     else:
         rate.inter_8h = round(base * 8, 2)
         rate.inter_10h = round(base * 12, 2)
@@ -258,8 +264,8 @@ def add_salary_rate(group_name="", annexe="Annexe 1"):
     db.session.add(pos_obj)
     db.session.flush()
     
-    # Créer les 6 annexes pour cette nouvelle position
-    annexes = ["Annexe 1", "Annexe 2", "USPA", "Court-métrage", "Publicité", "Facture"]
+    # Créer les 7 annexes pour cette nouvelle position
+    annexes = ["Annexe 1", "Annexe 3", "USPA", "USPA renfort", "Court-métrage", "Publicité", "Facture"]
     new_rates = []
     
     for ann in annexes:

@@ -36,15 +36,14 @@
                 </thead>
                 <tbody class="equipment-drop-zone" data-table="{{ cat_data.table }}">
                     {% for item in cat_data['items'] %}
-                    <tr data-row-id="{{ item.id }}" {% if current_user.is_admin %}draggable="true" {%
-                        endif %}>
+                    <tr data-row-id="{{ item.id }}" {% if current_user.is_admin %}draggable="true" {% endif %}>
                         {% if current_user.is_admin %}
                         <td class="drag-handle" title="Glisser pour réordonner">⠿</td>
                         {% endif %}
                         <td style="font-weight: 600;">{{ item.name }}</td>
-                        <td class="{% if current_user.is_admin %}editable-cell{% endif %}"
-                            data-id="{{ item.id }}" data-table="{{ cat_data.table }}" data-type="equipment"
-                            data-field="daily_rate" style="text-align: right;">
+                        <td class="{% if current_user.is_admin %}editable-cell{% endif %}" data-id="{{ item.id }}"
+                            data-table="{{ cat_data.table }}" data-type="equipment" data-field="daily_rate"
+                            style="text-align: right;">
                             <span class="cell-value">{{ "%.2f"|format(item.daily_rate | default(0) | float) }} €</span>
                         </td>
                     </tr>
@@ -77,12 +76,14 @@
     </div>
 
     <!-- Sélecteur d'Annexe Global et Coefficient -->
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--white-3, #e5e7eb); padding-bottom: 0.75rem;">
+    <div
+        style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--white-3, #e5e7eb); padding-bottom: 0.75rem;">
         <div class="annexe-tabs" style="margin-bottom: 0; padding-bottom: 0; border-bottom: none;">
             <button class="annexe-tab active" data-annexe="Annexe 1">Annexe 1</button>
-            <button class="annexe-tab" data-annexe="Annexe 2">Annexe 2</button>
             <button class="annexe-tab" data-annexe="Annexe 1 renfort">Annexe 1 renfort</button>
+            <button class="annexe-tab" data-annexe="Annexe 3">Annexe 3</button>
             <button class="annexe-tab" data-annexe="USPA">USPA</button>
+            <button class="annexe-tab" data-annexe="USPA renfort">USPA renfort</button>
             <button class="annexe-tab" data-annexe="Court-métrage">Court-métrage</button>
             <button class="annexe-tab" data-annexe="Publicité">Publicité</button>
             <button class="annexe-tab" data-annexe="Facture">Facture</button>
@@ -99,8 +100,7 @@
         <div class="salary-group" data-group-name="{{ group_name }}">
             <div class="salary-group-header">
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span
-                        class="salary-group-title {% if current_user.is_admin %}editable-group-title{% endif %}"
+                    <span class="salary-group-title {% if current_user.is_admin %}editable-group-title{% endif %}"
                         title="{% if current_user.is_admin %}Cliquez pour renommer{% endif %}">{{
                         group_name }}</span>
                     <span class="salary-group-count">{{ rates | length }}</span>
@@ -128,39 +128,42 @@
                     </thead>
                     <tbody class="salary-drop-zone" data-group="{{ group_name }}">
                         {% for rate in rates %}
-                        <tr data-row-id="{{ rate.id }}" data-position-id="{{ rate.position_id }}" data-annexe="{{ rate.annexe or 'Annexe 1' }}" {% if current_user.is_admin
-                            %}draggable="true" {% endif %}>
+                        <tr data-row-id="{{ rate.id }}" data-position-id="{{ rate.position_id }}"
+                            data-annexe="{{ rate.annexe or 'Annexe 1' }}" {% if current_user.is_admin %}draggable="true"
+                            {% endif %}>
                             {% if current_user.is_admin %}
                             <td class="drag-handle" title="Glisser pour réordonner">⠿</td>
                             {% endif %}
-                            <td class="{% if current_user.is_admin %}editable-cell{% endif %}"
-                                data-id="{{ rate.id }}" data-field="position" data-type="salary">
+                            <td class="{% if current_user.is_admin %}editable-cell{% endif %}" data-id="{{ rate.id }}"
+                                data-field="position" data-type="salary">
                                 <span class="cell-value" style="font-weight: 600;">{{ rate.position }}</span>
                             </td>
                             {% if rate.annexe == 'Facture' or rate.annexe == 'Annexe 1 renfort' %}
-                            <td class="computed-cell"
-                                data-id="{{ rate.id }}" data-field="base_hourly" data-type="salary"
-                                style="text-align: right;">
-                                <span class="cell-value">{{ "%.2f"|format(rate.base_hourly | default(0) | float) }} €</span>
+                            <td class="computed-cell" data-id="{{ rate.id }}" data-field="base_hourly"
+                                data-type="salary" style="text-align: right;">
+                                <span class="cell-value">{{ "%.2f"|format(rate.base_hourly | default(0) | float) }}
+                                    €</span>
                             </td>
                             {% else %}
-                            <td class="{% if current_user.is_admin %}editable-cell{% endif %}"
-                                data-id="{{ rate.id }}" data-field="base_hourly" data-type="salary"
-                                style="text-align: right;">
-                                <span class="cell-value">{{ "%.2f"|format(rate.base_hourly | default(0) | float) }} €</span>
+                            <td class="{% if current_user.is_admin %}editable-cell{% endif %}" data-id="{{ rate.id }}"
+                                data-field="base_hourly" data-type="salary" style="text-align: right;">
+                                <span class="cell-value">{{ "%.2f"|format(rate.base_hourly | default(0) | float) }}
+                                    €</span>
                             </td>
                             {% endif %}
-                            
+
                             <!-- 8H -->
-                            <td class="computed-cell" data-computed-from="base_hourly" data-field="inter_8h" data-row-id="{{ rate.id }}"
-                                style="text-align: right;">
-                                <span class="cell-value">{{ "%.2f"|format(rate.inter_8h | default(0) | float) }} €</span>
+                            <td class="computed-cell" data-computed-from="base_hourly" data-field="inter_8h"
+                                data-row-id="{{ rate.id }}" style="text-align: right;">
+                                <span class="cell-value">{{ "%.2f"|format(rate.inter_8h | default(0) | float) }}
+                                    €</span>
                             </td>
 
                             <!-- 10H -->
-                            <td class="computed-cell" data-computed-from="base_hourly" data-field="inter_10h" data-row-id="{{ rate.id }}"
-                                style="text-align: right;">
-                                <span class="cell-value">{{ "%.2f"|format(rate.inter_10h | default(0) | float) }} €</span>
+                            <td class="computed-cell" data-computed-from="base_hourly" data-field="inter_10h"
+                                data-row-id="{{ rate.id }}" style="text-align: right;">
+                                <span class="cell-value">{{ "%.2f"|format(rate.inter_10h | default(0) | float) }}
+                                    €</span>
                             </td>
 
                             <td style="text-align: center;">
@@ -212,22 +215,20 @@
                 </thead>
                 <tbody id="logistics-tbody" class="logistics-drop-zone">
                     {% for item in logistics %}
-                    <tr data-row-id="{{ item.id }}" {% if current_user.is_admin %}draggable="true" {%
-                        endif %}>
+                    <tr data-row-id="{{ item.id }}" {% if current_user.is_admin %}draggable="true" {% endif %}>
                         {% if current_user.is_admin %}
                         <td class="drag-handle" title="Glisser pour réordonner">⠿</td>
                         {% endif %}
-                        <td class="{% if current_user.is_admin %}editable-cell{% endif %}"
-                            data-id="{{ item.id }}" data-field="item_name" data-type="logistics">
+                        <td class="{% if current_user.is_admin %}editable-cell{% endif %}" data-id="{{ item.id }}"
+                            data-field="item_name" data-type="logistics">
                             <span class="cell-value" style="font-weight: 600;">{{ item.item_name }}</span>
                         </td>
-                        <td class="{% if current_user.is_admin %}editable-cell{% endif %}"
-                            data-id="{{ item.id }}" data-field="daily_rate" data-type="logistics"
-                            style="text-align: right;">
+                        <td class="{% if current_user.is_admin %}editable-cell{% endif %}" data-id="{{ item.id }}"
+                            data-field="daily_rate" data-type="logistics" style="text-align: right;">
                             <span class="cell-value">{{ "%.2f"|format(item.daily_rate | default(0) | float) }}</span>
                         </td>
-                        <td class="{% if current_user.is_admin %}editable-cell{% endif %}"
-                            data-id="{{ item.id }}" data-field="notes" data-type="logistics">
+                        <td class="{% if current_user.is_admin %}editable-cell{% endif %}" data-id="{{ item.id }}"
+                            data-field="notes" data-type="logistics">
                             <span class="cell-value">{{ item.notes }}</span>
                         </td>
                         <td style="text-align: center;">
@@ -251,7 +252,7 @@
         initPricing({
             csrfToken: '{{ csrf_token() }}',
             isAdmin: {{ 'true' if current_user.is_admin else 'false' }},
-            invoiceFactor: {{ invoice_factor }}
+        invoiceFactor: {{ invoice_factor }}
         });
     });
 </script>
