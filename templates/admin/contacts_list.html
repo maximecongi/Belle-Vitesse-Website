@@ -4,9 +4,9 @@
 {% block page_title %}Contacts{% endblock %}
 
 {% block header_actions %}
-<div style="display: flex; gap: 1rem; align-items: center;">
-    <input type="text" id="searchInput" class="form-input" placeholder="🔍 Rechercher un contact..."
-        style="width: 250px; font-size: 0.9rem;" autocomplete="off">
+<div class="u-flex u-gap-2 u-align-center">
+    <input type="text" id="searchInput" class="form-input u-w-250 u-text-sm" placeholder="🔍 Rechercher un contact..."
+        autocomplete="off">
     <a href="{{ url_for('admin_contact_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Contact</a>
 </div>
 {% endblock %}
@@ -22,14 +22,14 @@
                     <th class="sortable" data-col="2">Production</th>
                     <th>Téléphone</th>
                     <th>Email</th>
-                    <th style="width: 60px; text-align: center;">VCF</th>
-                    <th style="width: 100px;">Actions</th>
+                    <th class="u-w-90 u-text-center">VCF</th>
+                    <th class="u-w-100px">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for c in contacts %}
                 <tr class="searchable-row">
-                    <td style="font-weight: 600;" data-sort="{{ c.last_name }} {{ c.first_name }}">{{ c.first_name }} {{ c.last_name | upper
+                    <td class="u-text-semibold" data-sort="{{ c.last_name }} {{ c.first_name }}">{{ c.first_name }} {{ c.last_name | upper
                         }}</td>
                     <td>{{ c.job_title }}</td>
                     <td>
@@ -41,9 +41,9 @@
                     </td>
                     <td><a href="tel:{{ c.phone }}">{{ c.phone }}</a></td>
                     <td><a href="mailto:{{ c.mail }}">{{ c.mail }}</a></td>
-                    <td style="text-align: center;">
-                        <span class="qr-trigger" data-name="{{ c.first_name }} {{ c.last_name }}" data-vcf="{{ c.vcf_b64 }}"
-                            data-filename="{{ c.vcf_filename }}" style="cursor:pointer; font-size:1.2rem;"
+                    <td class="u-text-center">
+                        <span class="qr-trigger u-cursor-pointer u-text-xl" data-name="{{ c.first_name }} {{ c.last_name }}" data-vcf="{{ c.vcf_b64 }}"
+                            data-filename="{{ c.vcf_filename }}"
                             title="Afficher le QR code"><img
                                 src="{{ url_for('static', filename='imgs/icons/qr_code.svg') }}" alt="QR Code"></span>
                     </td>
@@ -54,7 +54,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="7" style="text-align: center; padding: 3rem; color: var(--grey-2);">
+                    <td colspan="7" class="u-text-center u-p-5 u-text-muted">
                         Aucun contact trouvé.
                     </td>
                 </tr>
@@ -65,21 +65,16 @@
 </div>
 
 <!-- QR Modal -->
-<div id="qrModal"
-    style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.6); backdrop-filter:blur(4px); justify-content:center; align-items:center;">
-    <div
-        style="background:#fff; border-radius:16px; padding:2.5rem; text-align:center; max-width:360px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,.3);">
-        <p id="qrModalName" style="font-weight:700; font-size:1.15rem; margin:0 0 1.25rem; color:#1a1a2e;"></p>
-        <div id="qrModalCode"
-            style="display:inline-block; padding:12px; background:#fff; border-radius:8px; border:1px solid #e5e7eb;">
-        </div>
-        <div style="margin-top:1.5rem;">
-            <button id="qrModalDownload" class="admin-btn admin-btn-primary" style="font-size:.85rem;">
+<div id="qrModal" class="contact-modal-overlay">
+    <div class="contact-modal-card">
+        <p id="qrModalName" class="contact-modal-name"></p>
+        <div id="qrModalCode" class="contact-modal-qrcode-container"></div>
+        <div class="u-mt-3">
+            <button id="qrModalDownload" class="admin-btn admin-btn-primary u-text-sm">
                 ⬇ Télécharger la VCard
             </button>
         </div>
-        <p style="margin-top:1rem; text-align: center; font-size:.75rem; color:#9ca3af;">Scannez le QR code pour
-            importer le contact</p>
+        <p class="u-mt-2 u-text-center u-text-xs u-text-muted-light">Scannez le QR code pour importer le contact</p>
     </div>
 </div>
 

@@ -15,19 +15,19 @@
 
         <div class="admin-card-title">Informations de base</div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+        <div class="u-grid u-grid-2 u-gap-3 u-mb-4">
             <div class="form-group">
-                <label class="form-label">Projet <span style="color: var(--red-error);">*</span></label>
+                <label class="form-label">Projet <span class="u-text-error">*</span></label>
                 {% if is_edit %}
                 <input type="hidden" name="project_id" value="{{ data.project_id if data else '' }}">
-                <div class="form-input" style="background: #f0f0f0; cursor: not-allowed; color: #555;">
+                <div class="form-input form-input-readonly u-text-muted">
                     {{ data.project_name if data and data.project_name else '—' }}
                 </div>
                 {% else %}
                 <div class="rich-select" id="projectSelect">
                     <input type="text" name="project_id"
                         value="{{ data.project_id if data and data.project_id else '' }}" required
-                        style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;">
+                        class="u-hidden-input">
                     <div class="badge-select-trigger" id="projectTrigger">
                         <span id="projectLabel">
                             {% if data and data.project_id %}
@@ -41,13 +41,12 @@
                         <span class="arrow">▼</span>
                     </div>
                     <div class="rich-select-dropdown" id="projectDropdown">
-                        <div style="padding: 0.5rem;">
-                            <input type="text" class="form-input" id="projectSearch" placeholder="Rechercher un projet…"
-                                style="width: 100%; font-size: 0.85rem; padding: 0.4rem 0.6rem;" autocomplete="off">
+                        <div class="u-p-1">
+                            <input type="text" class="form-input u-w-100 u-text-sm" id="projectSearch" placeholder="Rechercher un projet…" autocomplete="off">
                         </div>
                         <div class="rich-select-options" id="projectOptions">
                             <button type="button" class="rich-select-option" data-id="" data-name="— Aucun projet —">
-                                <div class="rich-option-name" style="color: var(--grey-2);">— Aucun projet —</div>
+                                <div class="rich-option-name u-text-muted">— Aucun projet —</div>
                             </button>
                             {% for p in projects %}
                             {% set pf = p.fields %}
@@ -58,8 +57,7 @@
                                 <div class="rich-option-name">{{ pf.get('Nom', '—') }}</div>
                                 <div class="rich-option-meta">
                                     {% if pf.get('_production_name') %}
-                                    <span class="badge-pill" data-val="neutral" style="font-size: 0.7rem;">{{
-                                        pf.get('_production_name') }}</span>
+                                    <span class="badge-pill u-text-xs" data-val="neutral">{{ pf.get('_production_name') }}</span>
                                     {% endif %}
                                     {% if pf.get('Date de retour') %}
                                     <span class="rich-meta-item">🚚 {{ pf.get('Date de retour', '') }}</span>
@@ -79,27 +77,24 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label" style="display: flex; align-items: center; justify-content: space-between;">
-                    <span>Véhicule <span style="color: var(--red-error);">*</span></span>
-                    <button type="button" class="admin-btn admin-btn-secondary" id="lookupVehicles"
-                        style="padding: 0.2rem 0.5rem; font-size: 0.7rem; border-radius: 4px; display: flex; align-items: center; gap: 0.3rem;">
+                <label class="form-label u-flex u-align-center u-justify-between">
+                    <span>Véhicule <span class="u-text-error">*</span></span>
+                    <button type="button" class="admin-btn admin-btn-secondary admin-btn-quick-add" id="lookupVehicles">
                         🔍 protocoles freins et pneus
                     </button>
                 </label>
-                <div class="rich-select" id="vehicleSelect" {% if not (data and data.project_id) %}data-disabled="true"
-                    style="opacity: 0.5; pointer-events: none;" {% endif %}>
+                <div class="rich-select {% if not (data and data.project_id) %}u-disabled-select{% endif %}" id="vehicleSelect" {% if not (data and data.project_id) %}data-disabled="true"{% endif %}>
                     <input type="text" name="vehicle_id"
                         value="{{ data.vehicle_id if data and data.vehicle_id else '' }}" required
-                        style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;">
+                        class="u-hidden-input">
                     <div class="badge-select-trigger" id="vehicleTrigger">
                         <span id="vehicleLabel">
                             {% if data and data.vehicle_id %}
                             {% for v in vehicles %}
                             {% if v.id == data.vehicle_id %}
-                            <span style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="u-flex u-align-center u-gap-1">
                                 {% if v.fields.thumbnail %}
-                                <img src="{{ v.fields.thumbnail[0].thumbnails.small.url }}"
-                                    style="width: 28px; height: 28px; border-radius: 4px; object-fit: cover;">
+                                <img src="{{ v.fields.thumbnail[0].thumbnails.small.url }}" class="vehicle-small-thumbnail">
                                 {% endif %}
                                 {{ v.fields.get('name', '—') }}
                             </span>
@@ -112,14 +107,13 @@
                         <span class="arrow">▼</span>
                     </div>
                     <div class="rich-select-dropdown" id="vehicleDropdown">
-                        <div style="padding: 0.5rem;">
-                            <input type="text" class="form-input" id="vehicleSearch"
-                                placeholder="Rechercher un véhicule…"
-                                style="width: 100%; font-size: 0.85rem; padding: 0.4rem 0.6rem;" autocomplete="off">
+                        <div class="u-p-1">
+                            <input type="text" class="form-input u-w-100 u-text-sm" id="vehicleSearch"
+                                placeholder="Rechercher un véhicule…" autocomplete="off">
                         </div>
                         <div class="rich-select-options" id="vehicleOptions">
                             <button type="button" class="rich-select-option" data-id="" data-name="— Aucun véhicule —">
-                                <div class="rich-option-name" style="color: var(--grey-2);">— Aucun véhicule —</div>
+                                <div class="rich-option-name u-text-muted">— Aucun véhicule —</div>
                             </button>
                             {% for v in vehicles %}
                             {% set vf = v.fields %}
@@ -131,19 +125,15 @@
                                 data-search="{{ vf.get('name', '') }}"
                                 data-checkout-statuses='{{ vf.get("_checkout_statuses", {}) | tojson | forceescape }}'
                                 data-checkin-statuses='{{ vf.get("_checkin_statuses", {}) | tojson | forceescape }}'>
-                                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                <div class="u-flex u-align-center u-gap-2">
                                     {% if thumb_url %}
-                                    <img src="{{ thumb_url }}"
-                                        style="width: 40px; height: 40px; border-radius: 6px; object-fit: cover; flex-shrink: 0;">
+                                    <img src="{{ thumb_url }}" class="vehicle-med-thumbnail">
                                     {% else %}
-                                    <div
-                                        style="width: 40px; height: 40px; border-radius: 6px; background: #eee; flex-shrink: 0;">
-                                    </div>
+                                    <div class="vehicle-med-thumbnail u-bg-gray-light"></div>
                                     {% endif %}
-                                    <div style="display: flex; align-items: center; gap: 0.4rem;">
+                                    <div class="u-flex u-align-center u-gap-1">
                                         <span class="rich-option-name">{{ vf.get('name', '—') }}</span>
-                                        <span class="badge-pill vehicle-status-badge" data-val="neutral"
-                                            style="font-size: 0.7rem; background: #eee; color: #999;">
+                                        <span class="badge-pill vehicle-status-badge u-text-xs" data-val="neutral">
                                             Sélectionnez un projet
                                         </span>
                                     </div>
@@ -156,21 +146,19 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label">Responsable du contrôle <span
-                        style="color: var(--red-error);">*</span></label>
+                <label class="form-label">Responsable du contrôle <span class="u-text-error">*</span></label>
                 {% if is_edit %}
                 <input type="hidden" name="controller_id"
                     value="{{ data.controller.id if data and data.controller and data.controller.id else '' }}">
-                <div class="form-input" style="background: #f0f0f0; cursor: not-allowed; color: #555;">
+                <div class="form-input form-input-readonly u-text-muted">
                     {{ data.controller.name if data and data.controller else '—' }}
                 </div>
                 {% elif session.get('admin_user_role') not in ['Administrator', 'Super Administrator'] %}
                 <!-- Auto-select for non-admin users -->
                 <input type="text" name="controller_id"
                     value="{{ data.controller_id if (data and data.controller_id) else (data.controller.id if (data and data.controller and data.controller.id) else session.get('admin_user_id', '')) }}"
-                    required style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;">
-                <div class="form-input"
-                    style="background: #f0f0f0; cursor: not-allowed; color: #555; display: flex; align-items: center; justify-content: space-between;">
+                    required class="u-hidden-input">
+                <div class="form-input form-input-readonly u-text-muted u-flex u-align-center u-justify-between">
                     <span>{{ session.get('admin_user_firstname') }} {{ session.get('admin_user_lastname') }}</span>
                 </div>
                 {% else %}
@@ -178,7 +166,7 @@
                 <div class="rich-select" id="controllerSelect">
                     <input type="text" name="controller_id"
                         value="{{ data.controller_id if (data and data.controller_id) else (data.controller.id if (data and data.controller and data.controller.id) else session.get('admin_user_id', '')) }}"
-                        required style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;">
+                        required class="u-hidden-input">
                     <div class="badge-select-trigger" id="controllerTrigger">
                         <span id="controllerLabel">
                             {% if data and data.controller_id %}
@@ -195,14 +183,14 @@
                     <div class="rich-select-dropdown" id="controllerDropdown">
                         <div class="rich-select-options" id="controllerOptions">
                             <button type="button" class="rich-select-option" data-id="" data-name="— Aucun —">
-                                <div class="rich-option-name" style="color: var(--grey-2);">— Aucun —</div>
+                                <div class="rich-option-name u-text-muted">— Aucun —</div>
                             </button>
                             {% for u in users %}
                             {% set uf = u.fields %}
                             <button type="button" class="rich-select-option" data-id="{{ u.id }}"
                                 data-name="{{ uf.get('firstname', '') }} {{ uf.get('lastname', '') }}"
                                 data-search="{{ uf.get('firstname', '') }} {{ uf.get('lastname', '') }}">
-                                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                <div class="u-flex u-align-center u-gap-2">
                                     <div>
                                         <div class="rich-option-name">{{ uf.get('firstname', '') }} {{
                                             uf.get('lastname', '') }}</div>
@@ -227,52 +215,41 @@
         {% endfor %}
 
         {% for cat, items in grouped_checkpoints.items() %}
-        {% set bg_style = "background: hsl(45, 100%, 96%); border: 1px solid hsl(45, 100%, 85%);" if cat == "Sécurité"
-        else "background: hsl(210, 100%, 96%); border: 1px solid hsl(210, 100%, 85%);" %}
-        <div class="checkpoint-group" style="{{ bg_style }} padding: 1.5rem; margin-bottom: 2rem;">
-            <div class="admin-card-title"
-                style="margin-top: 0; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 0.5rem;">
-                {{ cat }}</div>
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+        {% set group_class = "checkpoint-group-security" if cat == "Sécurité" else "checkpoint-group-equipment" %}
+        <div class="checkpoint-group {{ group_class }} u-p-3 u-mb-4">
+            <div class="admin-card-title checkpoint-group-title">{{ cat }}</div>
+            <div class="checkpoint-form-grid">
                 {% for item in items %}
                 {% set field = item.key %}
                 {% set label = item.label %}
-                <div class="form-group checkpoint-field" data-key="{{ field }}"
-                    style="background: white; padding: 1.25rem; border-radius: 10px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-                    <label class="form-label"
-                        style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.25rem; font-weight: 700;">
+                <div class="form-group checkpoint-field checkpoint-form-card" data-key="{{ field }}">
+                    <label class="form-label u-flex u-align-center u-justify-between u-mb-1 u-text-bold">
                         <span>
-                            {{ label }} <span style="color: var(--red-error);">*</span>
+                            {{ label }} <span class="u-text-error">*</span>
                             {% if field in ['tires', 'brakes'] %}
-                            <span class="vehicle-modal-trigger"
-                                style="cursor: pointer; margin-left: 0.4rem; font-size: 1rem; vertical-align: middle;"
-                                title="Voir l'protocoles freins et pneus">ℹ<img
+                            <span class="vehicle-modal-trigger u-cursor-pointer u-ml-1 u-text-lg u-vertical-middle"
+                                title="Voir l'protocoles freins et pneus"><img
                                     src="{{ url_for('static', filename='imgs/icons/information.svg') }}"
-                                    alt="Information" style="width: 1rem; height: 1rem;"></span>
+                                    alt="Information" class="u-w-1rem u-h-1rem"></span>
                             {% endif %}
                         </span>
                     </label>
-                    <div class="checkpoint-detail"
-                        style="font-size: 0.75rem; color: var(--grey-2); margin-bottom: 0.75rem; line-height: 1.3; font-style: italic;">
+                    <div class="checkpoint-detail checkpoint-form-detail">
                         {{ item.detail if item.detail else "" }}
                     </div>
 
                     {% if item.type == 'value' %}
-                    <div
-                        style="display: flex; align-items: center; gap: 0.5rem; background: #f9f9f9; padding: 0.5rem; border-radius: 8px;">
-                        <input type="number" name="battery_level" class="form-input"
+                    <div class="checkpoint-value-container">
+                        <input type="number" name="battery_level" class="form-input checkpoint-value-input"
                             value="{{ data.battery_level if data and data.battery_level is not none else '' }}" {% if
-                            field=='battery_level' %}min="0" max="100" {% endif %}
-                            style="background: white; border: 1px solid #ddd; height: 38px;" required>
-                        {% if item.unit %}<span style="font-weight: 600; color: var(--grey-1);">{{ item.unit }}</span>{%
-                        endif %}
+                            field=='battery_level' %}min="0" max="100" {% endif %} required>
+                        {% if item.unit %}<span class="u-text-semibold">{{ item.unit }}</span>{% endif %}
                     </div>
                     {% else %}
                     {% set current = get_checkpoint_key(data[field]) if data and data[field] else 'warning' %}
                     <div class="badge-select" data-field="{{ field }}">
-                        <input type="text" name="{{ field }}" value="{{ current }}" required
-                            style="position: absolute; opacity: 0; pointer-events: none; width: 0; height: 0;">
-                        <div class="badge-select-trigger" style="background: white; border-color: #ddd;">
+                        <input type="text" name="{{ field }}" value="{{ current }}" required class="u-hidden-input">
+                        <div class="badge-select-trigger badge-trigger-white">
                             <span class="badge-pill" data-val="{{ current }}">{{ CHECKPOINT_STATUS_MAP.get(current,
                                 current) }}</span>
                             <span class="arrow">▼</span>
@@ -293,7 +270,7 @@
         {% endfor %}
 
         <div class="admin-card-title">Observations</div>
-        <div class="form-group" style="margin-bottom: 2rem;">
+        <div class="form-group u-mb-4">
             <textarea name="notes" class="form-input" rows="5">{{ data.notes if data else '' }}</textarea>
         </div>
 
@@ -303,42 +280,36 @@
         ('exterior_photos', 'Photos extérieur véhicule', 'exterior_photos'),
         ('interior_photos', 'Photos intérieur véhicule', 'interior_photos')
         ] %}
-        <div class="form-group" style="margin-bottom: 1.5rem;">
-            <label class="form-label">{{ label }} <span style="color: var(--red-error);">*</span></label>
+        <div class="form-group u-mb-3">
+            <label class="form-label">{{ label }} <span class="u-text-error">*</span></label>
 
             {% set photos = data.get(data_key, []) if data else [] %}
             {% if is_edit and photos %}
-            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <div class="u-flex u-flex-wrap u-gap-1 u-mb-1">
                 {% for photo in photos %}
-                <a href="{{ photo.url }}" target="_blank"
-                    style="display: block; width: 80px; height: 80px; border-radius: 6px; overflow: hidden; border: 1px solid #e0e0e0;">
-                    <img src="{{ photo.url }}" alt="{{ photo.label }}"
-                        style="width: 100%; height: 100%; object-fit: cover;">
+                <a href="{{ photo.url }}" target="_blank" class="form-photo-thumbnail-link">
+                    <img src="{{ photo.url }}" alt="{{ photo.label }}" class="form-photo-thumbnail-img">
                 </a>
                 {% endfor %}
             </div>
             {% endif %}
 
-            <label
-                style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; border: 2px dashed #d0d0d0; border-radius: 8px; cursor: pointer; transition: border-color 0.2s; background: var(--admin-bg, #f8f9fa); position: relative;"
-                onmouseout="this.style.borderColor='#d0d0d0'">
-                <span style="font-size: 1.5rem;">📷</span>
+            <label class="photo-upload-label">
+                <span class="u-text-xl">📷</span>
                 <div>
-                    <div style="font-weight: 500; font-size: 0.85rem;">Ajouter des photos</div>
-                    <div style="font-size: 0.75rem; color: var(--grey-2);">Cliquez ou glissez-déposez • JPG, PNG</div>
+                    <div class="u-text-semibold u-text-sm">Ajouter des photos</div>
+                    <div class="u-text-xs u-text-muted">Cliquez ou glissez-déposez • JPG, PNG</div>
                 </div>
                 <input type="file" name="{{ field_name }}" multiple accept="image/*"
-                    style="width: 0.1px; height: 0.1px; opacity: 0; overflow: hidden; position: absolute; z-1;"
+                    class="u-file-input-hidden"
                     onchange="updatePhotoLabel(this)" {% if not photos %}required{% endif %}>
             </label>
-            <div class="photo-preview" data-for="{{ field_name }}"
-                style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;"></div>
+            <div class="photo-preview u-flex u-flex-wrap u-gap-1 u-mt-1" data-for="{{ field_name }}"></div>
         </div>
         {% endfor %}
 
-        <div style="margin-top: 2rem; text-align: right;">
-            <a href="{{ url_for('admin_checkins_list') }}" class="admin-btn admin-btn-secondary"
-                style="margin-right: 1rem;">Annuler</a>
+        <div class="u-mt-4 u-text-right">
+            <a href="{{ url_for('admin_checkins_list') }}" class="admin-btn admin-btn-secondary u-mr-2">Annuler</a>
             <button type="submit" class="admin-btn admin-btn-primary">
                 {% if is_edit %}Enregistrer les modifications{% else %}Créer le Checkin{% endif %}
             </button>

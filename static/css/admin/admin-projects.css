@@ -1,0 +1,183 @@
+/* ── Admin Projects Stylesheet ────────────────────────────── */
+
+/* Tooltip Popup */
+.admin-tooltip-container {
+    position: relative;
+    display: inline-block;
+}
+
+.note-tooltip-trigger {
+    cursor: pointer;
+    transition: color 0.2s;
+    white-space: pre-line;
+}
+
+.note-tooltip-trigger:hover {
+    color: #ffc845;
+}
+
+.admin-tooltip-popup {
+    display: none;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    min-width: 250px;
+    max-width: 400px;
+    overflow-y: auto;
+    max-height: 250px;
+    background: white;
+    color: #333;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    font-size: 0.85rem;
+    font-style: normal;
+    line-height: 1.4;
+    border: 1px solid #e5e7eb;
+    white-space: pre-line;
+    text-align: left;
+}
+
+.admin-tooltip-popup strong {
+    display: block;
+    line-height: 0;
+}
+
+.admin-tooltip-popup::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 20px;
+    border-width: 8px;
+    border-style: solid;
+    border-color: white transparent transparent transparent;
+}
+
+.admin-tooltip-container.open .admin-tooltip-popup {
+    display: block;
+    animation: tooltipFadeIn 0.2s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Projects specific page elements */
+.projects-badge-link {
+    text-decoration: none;
+    width: fit-content;
+    display: inline-block;
+}
+
+.projects-prequote-badge {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    white-space: nowrap;
+}
+.projects-prequote-badge.draft {
+    background: #fef3c7;
+    color: #d97706;
+    border: 1px solid #fde68a;
+}
+.projects-prequote-badge.sent {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+}
+.projects-prequote-badge.accepted {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+.projects-prequote-badge.rejected {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+.projects-prequote-badge-version {
+    opacity: 0.85;
+    font-weight: 600;
+    margin-left: 2px;
+}
+.projects-prequote-badge-status-label {
+    font-size: 0.6rem;
+    opacity: 0.85;
+    margin-left: 4px;
+    font-weight: bold;
+}
+
+.projects-dates-info {
+    font-size: 0.6rem;
+    color: var(--grey-2);
+}
+
+.projects-heads-container {
+    margin-top: 0.8rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+}
+
+.projects-head-badge {
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    font-size: 0.65rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    white-space: nowrap;
+}
+
+.projects-note-trigger {
+    font-size: 0.7rem;
+    color: #777;
+    font-style: italic;
+    border-left: 2px solid #e5e7eb;
+    padding-left: 0.5rem;
+    max-width: 250px;
+    line-height: 1.3;
+}
+
+.projects-cell-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    flex-direction: row-reverse;
+}
+.projects-cell-item a {
+    display: inline-flex;
+    text-decoration: none;
+}
+.projects-cell-item span.disabled {
+    display: inline-flex;
+    text-decoration: none;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.projects-contacts-cell-item {
+    white-space: nowrap;
+}
+.projects-contacts-cell-item span {
+    color: var(--grey-2);
+}
+.projects-contacts-cell-item a {
+    text-decoration: none;
+    color: inherit;
+    font-weight: 500;
+}

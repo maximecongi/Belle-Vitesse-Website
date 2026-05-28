@@ -5,23 +5,21 @@
 
 {% block content %}
 <div class="admin-card">
-    <div class="admin-card-title">Gestion des Points de Contrôle par Véhicule <span class="vehicle-modal-trigger"
-            style="cursor: pointer; margin-left: 0.4rem; font-size: 1rem; vertical-align: middle;"
+    <div class="admin-card-title">Gestion des Points de Contrôle par Véhicule <span class="vehicle-modal-trigger u-cursor-pointer u-ml-1 u-text-lg u-vertical-middle"
             title="Voir l'protocoles freins et pneus"><img
                 src="{{ url_for('static', filename='imgs/icons/information.svg') }}" alt="Information"
-                style="width: 1rem; height: 1rem;"></span></div>
-    <p style="color: var(--grey-2); margin-bottom: 2rem; font-size: 0.9rem;">
+                class="u-w-1rem u-h-1rem"></span></div>
+    <p class="u-text-muted u-mb-4 u-text-sm">
         Cochez les points de contrôle qui doivent apparaître pour chaque véhicule lors des Checkouts et Checkins.
     </p>
 
-    <div style="overflow-x: auto;">
+    <div class="u-overflow-x-auto">
         <table class="admin-table">
             <thead>
                 <tr>
-                    <th style="min-width: 150px;">Véhicule</th>
+                    <th class="u-min-w-150">Véhicule</th>
                     {% for cp in possible_checkpoints %}
-                    <th
-                        style="cursor: default; text-align: center; font-size: 0.7rem; writing-mode: vertical-lr; transform: rotate(180deg); padding: 1rem 0.5rem;">
+                    <th class="th-vertical-header">
                         {{ cp.label }}
                     </th>
                     {% endfor %}
@@ -31,18 +29,17 @@
             <tbody>
                 {% for vehicle in vehicles %}
                 <tr>
-                    <td style="font-weight: 600;">{{ vehicle.name }}</td>
+                    <td class="u-text-bold">{{ vehicle.name }}</td>
 
                     {% for cp in possible_checkpoints %}
-                    <td style="text-align: center;">
+                    <td class="u-text-center">
                         <input type="checkbox" class="checkpoint-toggle" data-vehicle="{{ vehicle.id }}"
                             data-key="{{ cp.key }}" {% if vehicle.config[cp.key] %}checked{% endif %}>
                     </td>
                     {% endfor %}
 
                     <td>
-                        <button class="admin-btn admin-btn-primary save-vehicle-btn" data-vehicle="{{ vehicle.id }}"
-                            style="padding: 5px 10px; font-size: 0.8rem;">
+                        <button class="admin-btn admin-btn-primary admin-btn-sm save-vehicle-btn" data-vehicle="{{ vehicle.id }}">
                             Enregistrer
                         </button>
                     </td>
@@ -86,11 +83,11 @@
                     .then(res => {
                         if (res.success) {
                             btn.innerText = 'C\'est fait !';
-                            btn.style.background = '#059669';
+                            btn.classList.add('admin-btn-success-state');
                             setTimeout(() => {
                                 btn.disabled = false;
                                 btn.innerText = 'Enregistrer';
-                                btn.style.background = '';
+                                btn.classList.remove('admin-btn-success-state');
                             }, 2000);
                         } else {
                             alert('Erreur: ' + res.error);

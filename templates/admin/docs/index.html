@@ -56,21 +56,21 @@
     </table>
 
     <h3>Navigation Rapide</h3>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
-        <div class="callout" style="margin: 0;">
+    <div class="docs-grid">
+        <div class="callout u-m-0">
             <h4>🏗️ Architecture</h4>
             <p>Comprendre la structure globale et les flux de données.</p>
-            <a href="{{ url_for('admin_docs_chapter', chapter='architecture') }}" class="badge-bv" style="text-decoration: none;">Voir plus</a>
+            <a href="{{ url_for('admin_docs_chapter', chapter='architecture') }}" class="badge-bv">Voir plus</a>
         </div>
-        <div class="callout" style="margin: 0;">
+        <div class="callout u-m-0">
             <h4>💾 Modèles</h4>
             <p>Détails du schéma de base de données et des relations.</p>
-            <a href="{{ url_for('admin_docs_chapter', chapter='data-models') }}" class="badge-bv" style="text-decoration: none;">Voir plus</a>
+            <a href="{{ url_for('admin_docs_chapter', chapter='data-models') }}" class="badge-bv">Voir plus</a>
         </div>
-        <div class="callout" style="margin: 0;">
+        <div class="callout u-m-0">
             <h4>✍️ Signatures</h4>
             <p>Protocoles de signature électronique et scellement.</p>
-            <a href="{{ url_for('admin_docs_chapter', chapter='signatures') }}" class="badge-bv" style="text-decoration: none;">Voir plus</a>
+            <a href="{{ url_for('admin_docs_chapter', chapter='signatures') }}" class="badge-bv">Voir plus</a>
         </div>
     </div>
 {% endblock %}

@@ -27,14 +27,13 @@
                 {% for sub in subscribers %}
                 <tr>
                     <td><strong>{{ sub.email }}</strong></td>
-                    <td style="color: var(--grey-2); font-size: 0.9rem;">
+                    <td class="u-text-muted u-text-sm">
                         {{ sub.subscribed_at.strftime('%d/%m/%Y %H:%M') }}
                     </td>
                     <td>
                         <form action="{{ url_for('admin_newsletter_delete', subscriber_id=sub.id) }}" method="POST"
-                            style="display: inline;" onsubmit="return confirm('Supprimer cet abonné ?');">
-                            <button type="submit" class="admin-btn admin-btn-danger"
-                                style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">
+                            class="u-d-inline" onsubmit="return confirm('Supprimer cet abonné ?');">
+                            <button type="submit" class="admin-btn admin-btn-danger admin-btn-sm">
                                 Supprimer
                             </button>
                         </form>
@@ -45,7 +44,7 @@
         </table>
     </div>
     {% else %}
-    <div style="padding: 3rem; text-align: center; color: var(--grey-2);">
+    <div class="u-p-5 u-text-center u-text-muted">
         Aucun abonné pour le moment.
     </div>
     {% endif %}

@@ -14,9 +14,7 @@
     <div id='calendar'></div>
 </div>
 
-<h2
-    style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--grey-2); font-weight: 600;">
-    Agenda du jour</h2>
+<h2 class="dashboard-section-header">Agenda du jour</h2>
 
 {% if agenda %}
 <div class="dashboard-split-layout">
@@ -45,12 +43,11 @@
         {% endif %}
 
         <div class="admin-card {{ border_class }}">
-            <div class="admin-card-title"
-                style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.25rem;">
+            <div class="admin-card-title admin-card-header">
                 <span>{{ project.name }}</span>
-                <span style="font-weight: 400; font-size: 0.8rem; color: var(--grey-2);">{{ project.production }}</span>
+                <span class="admin-card-header-sub">{{ project.production }}</span>
             </div>
-            <div class="today-row-dates" style="margin-bottom: 1.5rem;">
+            <div class="today-row-dates u-mb-3">
                 Tournage du {{ project.shoot_start }} au {{ project.shoot_end }}
             </div>
 
@@ -58,25 +55,23 @@
                 <!-- Logistique - Focus Checkout -->
                 <div class="agenda-section">
                     <div class="agenda-section-title">Logistique</div>
-                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div class="u-flex u-flex-column u-gap-2">
                         <div>
-                            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            <div class="u-flex u-flex-wrap u-gap-1">
                                 {% for vehicle in project.vehicles %}
                                 {% if vehicle.checkout_status %}
                                 <a class="today-row-vehicle-link"
                                     href="{{ url_for('admin_checkout_detail', record_id=vehicle.checkout_id) }}">
-                                    <span style="font-weight: 500;">{{ vehicle.fields.name }}</span>
-                                    <span class="badge-pill" data-val="{{ vehicle.checkout_status_id }}"
-                                        data-conform="{{ vehicle.checkout_ready }}"
-                                        style="margin: 0; font-size: 0.65rem;">{{
+                                    <span class="u-text-medium">{{ vehicle.fields.name }}</span>
+                                    <span class="badge-pill u-badge-agenda" data-val="{{ vehicle.checkout_status_id }}"
+                                        data-conform="{{ vehicle.checkout_ready }}">{{
                                         format_inspection_status(vehicle.checkout_status) }}</span>
                                 </a>
                                 {% else %}
                                 <a href="{{ url_for('admin_checkout_new', project_id=project.id, vehicle_id=vehicle.id) }}"
                                     class="today-row-vehicle-link">
                                     <span>{{ vehicle.fields.name }}</span>
-                                    <span class="badge-pill" data-val="to_check"
-                                        style="margin: 0; font-size: 0.65rem;">À
+                                    <span class="badge-pill u-badge-agenda" data-val="to_check">À
                                         contrôler</span>
                                 </a>
                                 {% endif %}
@@ -89,32 +84,28 @@
                 <!-- Administratif -->
                 <div class="agenda-section">
                     <div class="agenda-section-title">Administratif</div>
-                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                        <div
-                            style="display: flex; align-items: center; justify-content: space-between; background: var(--admin-bg); padding: 0.6rem 0.8rem; border-radius: 8px;">
-                            <span style="font-size: 0.8rem; font-weight: 500;">Décharge Pilote</span>
+                    <div class="u-flex u-flex-column u-gap-2">
+                        <div class="agenda-admin-row">
+                            <span class="u-text-sm u-text-medium">Décharge Pilote</span>
                             {% if project.pilot_waiver.id %}
                             <a href="{{ url_for('admin_pilot_waivers_list') }}?q={{ project.pilot_waiver.waiver_num|urlencode }}"
-                                class="badge-pill" data-val="{{ project.pilot_waiver.raw_status }}"
-                                style="margin: 0; font-size: 0.65rem;">
+                                class="badge-pill u-badge-agenda" data-val="{{ project.pilot_waiver.raw_status }}">
                                 {{ project.pilot_waiver.status }}
                             </a>
                             {% else %}
-                            <span class="badge-pill" data-val="pending" style="margin: 0; font-size: 0.65rem;">Non
+                            <span class="badge-pill u-badge-agenda" data-val="pending">Non
                                 générée</span>
                             {% endif %}
                         </div>
-                        <div
-                            style="display: flex; align-items: center; justify-content: space-between; background: var(--admin-bg); padding: 0.6rem 0.8rem; border-radius: 8px;">
-                            <span style="font-size: 0.8rem; font-weight: 500;">Décharge Prod.</span>
+                        <div class="agenda-admin-row">
+                            <span class="u-text-sm u-text-medium">Décharge Prod.</span>
                             {% if project.production_waiver.id %}
                             <a href="{{ url_for('admin_production_waivers_list') }}?q={{ project.production_waiver.waiver_num|urlencode }}"
-                                class="badge-pill" data-val="{{ project.production_waiver.raw_status }}"
-                                style="margin: 0; font-size: 0.65rem;">
+                                class="badge-pill u-badge-agenda" data-val="{{ project.production_waiver.raw_status }}">
                                 {{ project.production_waiver.status }}
                             </a>
                             {% else %}
-                            <span class="badge-pill" data-val="pending" style="margin: 0; font-size: 0.65rem;">Non
+                            <span class="badge-pill u-badge-agenda" data-val="pending">Non
                                 générée</span>
                             {% endif %}
                         </div>
@@ -125,8 +116,7 @@
         {% endif %}
         {% endfor %}
         {% if not ns.has_checkout %}
-        <div
-            style="text-align: center; padding: 2rem; opacity: 0.5; font-size: 0.8rem; border: 1px dashed #ddd; border-radius: 12px; background: #fafafa;">
+        <div class="dashboard-card-empty">
             Aucun départ prévu
         </div>
         {% endif %}
@@ -158,12 +148,11 @@
         {% endif %}
 
         <div class="admin-card {{ border_class_in }}">
-            <div class="admin-card-title"
-                style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.25rem;">
+            <div class="admin-card-title admin-card-header">
                 <span>{{ project.name }}</span>
-                <span style="font-weight: 400; font-size: 0.8rem; color: var(--grey-2);">{{ project.production }}</span>
+                <span class="admin-card-header-sub">{{ project.production }}</span>
             </div>
-            <div class="today-row-dates" style="margin-bottom: 1.5rem;">
+            <div class="today-row-dates u-mb-3">
                 Tournage du {{ project.shoot_start }} au {{ project.shoot_end }}
             </div>
 
@@ -171,24 +160,22 @@
                 <!-- Logistique - Focus Checkin -->
                 <div class="agenda-section">
                     <div class="agenda-section-title">Logistique</div>
-                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <div class="u-flex u-flex-column u-gap-2">
                         <div>
-                            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            <div class="u-flex u-flex-wrap u-gap-1">
                                 {% for vehicle in project.vehicles %}
                                 {% if vehicle.checkin_status %}
                                 <a class="today-row-vehicle-link"
                                     href="{{ url_for('admin_checkin_detail', record_id=vehicle.checkin_id) }}">
-                                    <span style="font-weight: 500;">{{ vehicle.fields.name }}</span>
-                                    <span class="badge-pill" data-val="{{ vehicle.checkin_status_id }}"
-                                        style="margin: 0; font-size: 0.65rem;">{{
+                                    <span class="u-text-medium">{{ vehicle.fields.name }}</span>
+                                    <span class="badge-pill u-badge-agenda" data-val="{{ vehicle.checkin_status_id }}">{{
                                         format_inspection_status(vehicle.checkin_status) }}</span>
                                 </a>
                                 {% else %}
                                 <a href="{{ url_for('admin_checkin_new', project_id=project.id, vehicle_id=vehicle.id) }}"
                                     class="today-row-vehicle-link">
                                     <span>{{ vehicle.fields.name }}</span>
-                                    <span class="badge-pill" data-val="to_check"
-                                        style="margin: 0; font-size: 0.65rem;">À
+                                    <span class="badge-pill u-badge-agenda" data-val="to_check">À
                                         contrôler</span>
                                 </a>
                                 {% endif %}
@@ -201,32 +188,28 @@
                 <!-- Administratif -->
                 <div class="agenda-section">
                     <div class="agenda-section-title">Administratif</div>
-                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                        <div
-                            style="display: flex; align-items: center; justify-content: space-between; background: var(--admin-bg); padding: 0.6rem 0.8rem; border-radius: 8px;">
-                            <span style="font-size: 0.8rem; font-weight: 500;">Décharge Pilote</span>
+                    <div class="u-flex u-flex-column u-gap-2">
+                        <div class="agenda-admin-row">
+                            <span class="u-text-sm u-text-medium">Décharge Pilote</span>
                             {% if project.pilot_waiver.id %}
                             <a href="{{ url_for('admin_pilot_waivers_list') }}?q={{ project.pilot_waiver.waiver_num|urlencode }}"
-                                class="badge-pill" data-val="{{ project.pilot_waiver.raw_status }}"
-                                style="margin: 0; font-size: 0.65rem;">
+                                class="badge-pill u-badge-agenda" data-val="{{ project.pilot_waiver.raw_status }}">
                                 {{ project.pilot_waiver.status }}
                             </a>
                             {% else %}
-                            <span class="badge-pill" data-val="pending" style="margin: 0; font-size: 0.65rem;">Non
+                            <span class="badge-pill u-badge-agenda" data-val="pending">Non
                                 générée</span>
                             {% endif %}
                         </div>
-                        <div
-                            style="display: flex; align-items: center; justify-content: space-between; background: var(--admin-bg); padding: 0.6rem 0.8rem; border-radius: 8px;">
-                            <span style="font-size: 0.8rem; font-weight: 500;">Décharge Prod.</span>
+                        <div class="agenda-admin-row">
+                            <span class="u-text-sm u-text-medium">Décharge Prod.</span>
                             {% if project.production_waiver.id %}
                             <a href="{{ url_for('admin_production_waivers_list') }}?q={{ project.production_waiver.waiver_num|urlencode }}"
-                                class="badge-pill" data-val="{{ project.production_waiver.raw_status }}"
-                                style="margin: 0; font-size: 0.65rem;">
+                                class="badge-pill u-badge-agenda" data-val="{{ project.production_waiver.raw_status }}">
                                 {{ project.production_waiver.status }}
                             </a>
                             {% else %}
-                            <span class="badge-pill" data-val="pending" style="margin: 0; font-size: 0.65rem;">Non
+                            <span class="badge-pill u-badge-agenda" data-val="pending">Non
                                 générée</span>
                             {% endif %}
                         </div>
@@ -237,28 +220,15 @@
         {% endif %}
         {% endfor %}
         {% if not ns_in.has_checkin %}
-        <div
-            style="text-align: center; padding: 2rem; opacity: 0.5; font-size: 0.8rem; border: 1px dashed #ddd; border-radius: 12px; background: #fafafa;">
+        <div class="dashboard-card-empty">
             Aucun retour prévu
         </div>
         {% endif %}
     </div>
 </div>
 {% else %}
-<div class="admin-card" style="text-align: center; padding: 4rem 2rem;">
-    <p style="color: var(--grey-2); font-size: 0.95rem;">Aucun départ ou retour prévu aujourd'hui.</p>
+<div class="admin-card dashboard-no-events">
+    <p class="u-text-muted u-text-sm">Aucun départ ou retour prévu aujourd'hui.</p>
 </div>
 {% endif %}
-
-{# <div
-    style="margin-top: 3rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; border-top: 1px solid #eee; padding-top: 2rem;">
-    <a href="{{ url_for('admin_checkouts_list') }}" class="admin-btn admin-btn-secondary"
-        style="text-align: center; font-size: 0.8rem;">Tous les check-outs</a>
-    <a href="{{ url_for('admin_checkins_list') }}" class="admin-btn admin-btn-secondary"
-        style="text-align: center; font-size: 0.8rem;">Tous les check-ins</a>
-    <a href="{{ url_for('admin_pilot_waivers_list') }}" class="admin-btn admin-btn-secondary"
-        style="text-align: center; font-size: 0.8rem;">Décharges pilote</a>
-    <a href="{{ url_for('admin_production_waivers_list') }}" class="admin-btn admin-btn-secondary"
-        style="text-align: center; font-size: 0.8rem;">Décharges production</a>
-</div> #}
 {% endblock %}

@@ -11,7 +11,7 @@
 <div class="sig-editor-layout">
     <!-- FORM -->
     <div class="admin-card">
-        <h3 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.1rem;">Informations</h3>
+        <h3 class="u-mt-0 u-mb-3 u-text-lg">Informations</h3>
 
         <div class="form-group">
             <label class="form-label" for="f-name">Nom complet</label>
@@ -26,11 +26,10 @@
 
         <div class="form-group">
             <label class="form-label" for="f-email">Email (préfixe)</label>
-            <div style="display: flex; align-items: center;">
-                <input type="text" id="f-email" class="form-input" style="flex: 1;"
+            <div class="u-flex u-align-center">
+                <input type="text" id="f-email" class="form-input u-flex-1"
                     value="{{ current_user.mail.split('@')[0] }}" oninput="update()">
-                <span
-                    style="padding: 0 0.5rem;;color: var(--white-4);font-size: 0.7rem;backgrou;background-color: var(--neutral-bg);display: flex;height: 100%;font-family: monospace;align-items: center;justify-content: flex-start;">@bellevitesse.com</span>
+                <span class="sig-email-suffix">@bellevitesse.com</span>
             </div>
         </div>
 
@@ -43,7 +42,7 @@
     <!-- PREVIEW & CODE -->
     <div>
         <div class="admin-card">
-            <h3 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.1rem;">Aperçu</h3>
+            <h3 class="u-mt-0 u-mb-3 u-text-lg">Aperçu</h3>
             <div class="sig-preview-card">
                 <div id="sig-preview" class="sig-preview-container">
                     <!-- Preview will be injected here -->
@@ -52,8 +51,8 @@
         </div>
 
         <div class="admin-card sig-code-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3 style="margin: 0; font-size: 1.1rem;">Code HTML</h3>
+            <div class="u-flex u-justify-between u-align-center u-mb-2">
+                <h3 class="u-m-0 u-text-lg">Code HTML</h3>
                 <button type="button" class="admin-btn admin-btn-secondary" id="copy-btn" onclick="copyHtml()">Copier le
                     code</button>
             </div>

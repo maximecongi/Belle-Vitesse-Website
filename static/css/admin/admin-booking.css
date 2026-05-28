@@ -244,6 +244,7 @@
 
 /* Custom Tooltip */
 .gantt-tooltip {
+    display: none;
     position: absolute;
     background: var(--grey-3);
     color: white;

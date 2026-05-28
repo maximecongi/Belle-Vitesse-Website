@@ -20,41 +20,41 @@
 
 {% block content %}
 
-<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+<div class="u-grid u-grid-2-1 u-gap-3">
     <!-- Main Info -->
-    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+    <div class="u-flex u-flex-column u-gap-3">
         <div class="admin-card">
             <div class="admin-card-title">Informations générales</div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="u-grid u-grid-2 u-gap-2">
                 <div>
-                    <div style="font-size: 0.85rem; color: var(--grey-2);">ID</div>
-                    <div style="font-weight: 500;">{{ data.inspection_id or '—' }}</div>
+                    <div class="u-text-sm u-text-muted">ID</div>
+                    <div class="u-text-medium">{{ data.inspection_id or '—' }}</div>
                 </div>
                 <div>
-                    <div style="font-size: 0.85rem; color: var(--grey-2);">Véhicule</div>
-                    <div style="font-weight: 500;">{{ data.vehicle.fields.name if data.vehicle else '—' }} <span
+                    <div class="u-text-sm u-text-muted">Véhicule</div>
+                    <div class="u-text-medium">{{ data.vehicle.fields.name if data.vehicle else '—' }} <span
                             class="checkout-doc-id">{{
                             data.vehicle.fields.unique_id }}</span></div>
                 </div>
                 <div>
-                    <div style="font-size: 0.85rem; color: var(--grey-2);">Production</div>
-                    <div style="font-weight: 500;">{{ data.production or '—' }}</div>
+                    <div class="u-text-sm u-text-muted">Production</div>
+                    <div class="u-text-medium">{{ data.production or '—' }}</div>
                 </div>
                 <div>
-                    <div style="font-size: 0.85rem; color: var(--grey-2);">Projet</div>
-                    <div style="font-weight: 500;">{{ data.project or '—' }}</div>
+                    <div class="u-text-sm u-text-muted">Projet</div>
+                    <div class="u-text-medium">{{ data.project or '—' }}</div>
                 </div>
                 <div>
-                    <div style="font-size: 0.85rem; color: var(--grey-2);">Responsable</div>
-                    <div style="font-weight: 500;">{{ data.controller.name if data.controller else '—' }}</div>
+                    <div class="u-text-sm u-text-muted">Responsable</div>
+                    <div class="u-text-medium">{{ data.controller.name if data.controller else '—' }}</div>
                 </div>
                 <div>
-                    <div style="font-size: 0.85rem; color: var(--grey-2);">Date du contrôle</div>
-                    <div style="font-weight: 500;">{{ data.control_date or '—' }}</div>
+                    <div class="u-text-sm u-text-muted">Date du contrôle</div>
+                    <div class="u-text-medium">{{ data.control_date or '—' }}</div>
                 </div>
                 <div>
                     {% from "admin/macros.html" import status_badge %}
-                    <div style="font-size: 0.85rem; color: var(--grey-2);">État</div>
+                    <div class="u-text-sm u-text-muted">État</div>
                     <div>
                         {{ status_badge(data.status, data.status_id, **{'data-conform': 'true' if data.ready=='true'
                         else 'false' if data.ready=='false' else None}) }}
@@ -62,8 +62,8 @@
 
                 </div>
                 <div>
-                    <div style="font-size: 0.85rem; color: var(--grey-2);">Charge batterie</div>
-                    <div style="font-weight: 500;">
+                    <div class="u-text-sm u-text-muted">Charge batterie</div>
+                    <div class="u-text-medium">
                         <span class="badge-pill" data-val="neutral">
                             {{ data.battery_level if data.battery_level is not none else '—' }}%
                         </span>
@@ -72,30 +72,26 @@
             </div>
         </div>
 
-
-
         <div class="admin-card">
             {% if data.ready=="true" %}
-            <div
-                style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem 1.25rem; border-radius: 8px; background: #ecfdf5; border: 1px solid #a7f3d0; margin: 1rem 0;">
-                <span style="font-size: 1.5rem;">✅</span>
+            <div class="alert-banner-success">
+                <span class="u-text-xl">✅</span>
                 <div>
-                    <div style="font-weight: 600; color: #065f46;">Restitution conforme, aucun dommage relevé.</div><br>
-                    <div style="font-size: 0.85rem; color: #047857;">Tous les points de contrôle sont OK.</div>
+                    <div class="alert-banner-title-success">Restitution conforme, aucun dommage relevé.</div><br>
+                    <div class="alert-banner-desc-success">Tous les points de contrôle sont OK.</div>
                 </div>
             </div>
             {% else %}
-            <div
-                style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 1rem 1.25rem; border-radius: 8px; background: #fef2f2; border: 1px solid #fecaca;">
-                <span style="font-size: 1.5rem;">⚠️</span>
+            <div class="alert-banner-danger">
+                <span class="u-text-xl">⚠️</span>
                 <div>
-                    <div style="font-weight: 600; color: #991b1b;">Restitution non conforme, dommages constatés.</div>
+                    <div class="alert-banner-title-danger">Restitution non conforme, dommages constatés.</div>
                     <br>
-                    <div style="font-size: 0.85rem; color: #b91c1c;">
+                    <div class="alert-banner-desc-danger">
                         Points à noter :
-                        <ul style=" margin: 0.75rem 0 0 1rem; padding: 0;">
+                        <ul class="alert-banner-list">
                             {% for failure in ns.failures %}
-                            <li style="font-size: 0.65rem;">{{ failure }}</li>
+                            <li class="u-text-xs">{{ failure }}</li>
                             {% endfor %}
                         </ul>
                     </div>
@@ -114,17 +110,12 @@
             {% endfor %}
 
             {% for cat, items in grouped_check_items.items() %}
-            <div class="admin-card-title"
-                style="font-size: 0.9rem; margin-top: 1rem; border-bottom: 1px solid var(--admin-border);">{{ cat }}
-            </div>
-            <div
-                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="admin-card-title checkpoint-category-title">{{ cat }}</div>
+            <div class="checkpoint-grid">
                 {% for item in items %}
-                <div
-                    style="display: flex; flex-direction: column; justify-content: space-between;background: var(--admin-bg); padding: 0.8rem; border-radius: 6px;">
-                    <div style="font-size: 0.75rem; color: var(--grey-2); text-transform: uppercase;">{{ item.label }}
-                    </div>
-                    <div style="font-weight: 600;">
+                <div class="checkpoint-card">
+                    <div class="u-text-xs u-text-muted u-text-uppercase">{{ item.label }}</div>
+                    <div class="u-text-semibold">
                         {% set val = data[item.key] %}
                         {{ status_badge(format_checkpoint_status(val), val) }}
                     </div>
@@ -136,18 +127,16 @@
             {% if data.notes %}
             <div class="admin-card">
                 <div class="admin-card-title">Observations</div>
-                <div style="white-space: pre-wrap; font-size: 0.95rem; line-height: 1.6;">{{ data.notes }}</div>
+                <div class="notes-preview-content">{{ data.notes }}</div>
             </div>
             {% endif %}
             {% if data.exterior_photos %}
             <div class="admin-card">
                 <div class="admin-card-title">Photos extérieur</div>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem;">
+                <div class="photos-grid">
                     {% for photo in data.exterior_photos %}
-                    <a href="{{ photo.url }}" target="_blank"
-                        style="display: block; aspect-ratio: 1; overflow: hidden; border-radius: 4px;">
-                        <img src="{{ photo.url }}" alt="{{ photo.label }}"
-                            style="width: 100%; height: 100%; object-fit: cover;">
+                    <a href="{{ photo.url }}" target="_blank" class="photo-thumbnail-link">
+                        <img src="{{ photo.url }}" alt="{{ photo.label }}" class="photo-thumbnail-img">
                     </a>
                     {% endfor %}
                 </div>
@@ -157,12 +146,10 @@
             {% if data.interior_photos %}
             <div class="admin-card">
                 <div class="admin-card-title">Photos intérieur</div>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem;">
+                <div class="photos-grid">
                     {% for photo in data.interior_photos %}
-                    <a href="{{ photo.url }}" target="_blank"
-                        style="display: block; aspect-ratio: 1; overflow: hidden; border-radius: 4px;">
-                        <img src="{{ photo.url }}" alt="{{ photo.label }}"
-                            style="width: 100%; height: 100%; object-fit: cover;">
+                    <a href="{{ photo.url }}" target="_blank" class="photo-thumbnail-link">
+                        <img src="{{ photo.url }}" alt="{{ photo.label }}" class="photo-thumbnail-img">
                     </a>
                     {% endfor %}
                 </div>
@@ -176,14 +163,12 @@
         {% if data.hash %}
         <div class="admin-card">
             <div class="admin-card-title">Sceau numérique</div>
-            <div
-                style="word-break: break-all; font-family: monospace; font-size: 0.8rem; background: var(--admin-bg); padding: 0.8rem; border-left: 3px solid #000;">
+            <div class="seal-hash-container">
                 {{ data.hash }}
             </div>
             {% if data.pdf_url %}
-            <div style="margin-top: 1rem;">
-                <a href="{{ data.pdf_url }}" target="_blank" class="admin-btn admin-btn-secondary"
-                    style="width: 90%; text-align: center; padding:5%;">Télécharger le PDF 📄</a>
+            <div class="u-mt-2">
+                <a href="{{ data.pdf_url }}" target="_blank" class="admin-btn admin-btn-secondary btn-download-pdf-sidebar">Télécharger le PDF 📄</a>
             </div>
             {% endif %}
         </div>
@@ -191,8 +176,7 @@
         {% if data.status_id == 'in_progress' %}
         <div class="admin-card">
             <div class="admin-card-title">Sceau numérique</div>
-            <button type="button" id="sealCheckinBtn" class="admin-btn"
-                style="width: 100%; background: #ffc84526; color: #ffc845; border-color: #ffc8453d; transition: all 0.2s;">
+            <button type="button" id="sealCheckinBtn" class="admin-btn admin-btn-seal-yellow">
                 Sceller ce checkin
             </button>
         </div>
@@ -202,25 +186,18 @@
             <form action="{{ url_for('admin_checkin_seal', record_id=record_id) }}" target="_blank" method="POST"
                 onsubmit="const btn = this.querySelector('button[type=submit]'); btn.disabled = true; btn.classList.add('btn-disabled'); btn.innerText = 'Ouverture de la signature...'; return true;">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                <button type="submit" class="admin-btn"
-                    style="width: 100%; background: #0e629226; color: #0e6292; border-color: #0e62923d; transition: all 0.2s;">Signer
-                    ce
-                    checkin</button>
+                <button type="submit" class="admin-btn admin-btn-sign-blue">Signer ce checkin</button>
             </form>
         </div>
         {% endif %}
         {% endif %}
-        <div class="admin-card" style="border-top: 4px solid #ff4b2b;">
-            <div class="admin-card-title" style="color: #ff4b2b;">Actions de sécurité</div>
-            <p style="font-size: 0.85rem; color: var(--grey-2); margin-bottom: 1rem;">Ces actions sont
-                irréversibles.
-            </p>
+        <div class="admin-card danger-card-top">
+            <div class="admin-card-title danger-card-title">Actions de sécurité</div>
+            <p class="u-text-sm u-text-muted u-mb-2">Ces actions sont irréversibles.</p>
             <form action="{{ url_for('admin_checkin_delete', record_id=record_id) }}" method="POST"
                 onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce checkin ? Cette action est irréversible.');">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                <button type="submit" class="admin-btn"
-                    style="width: 100%; background: #fee2e2; color: #b91c1c; border-color: #fecaca;">Supprimer ce
-                    checkin</button>
+                <button type="submit" class="admin-btn admin-btn-danger u-w-100">Supprimer ce checkin</button>
             </form>
         </div>
         <a href="{{ url_for('admin_checkins_list') }}" class="admin-btn admin-btn-secondary">← Retour à la liste</a>
@@ -238,7 +215,7 @@
         if (sealBtn) {
             sealBtn.addEventListener('click', function () {
                 if (!confirm('Êtes-vous sûr de vouloir sceller ce checkin ? Cette action est irréversible.')) return;
-
+ 
                 sealBtn.disabled = true;
                 sealBtn.classList.add('btn-disabled');
                 sealBtn.innerText = 'Scellage en cours...';

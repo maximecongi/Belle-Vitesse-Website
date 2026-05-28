@@ -3,282 +3,15 @@
 {% block title %}{{ 'Modifier' if is_edit else 'Nouvelle' }} Pré-Devis{% endblock %}
 {% block page_title %}{{ 'Modifier' if is_edit else 'Nouvelle' }} Pré-Devis{% endblock %}
 
-{% block extra_css %}
-<style>
-    .prequote-form-grid {
-        display: grid;
-        grid-template-columns: 1fr 350px;
-        gap: 2rem;
-    }
-
-    .line-items-container {
-        background: white;
-        padding: 1.5rem;
-        border: 1px solid var(--white-3);
-    }
-
-    .line-item-row,
-    .line-item-header {
-        display: grid;
-        grid-template-columns: 30px 1fr 80px 80px 120px 80px;
-        gap: 1rem;
-        align-items: center;
-    }
-
-    .line-item-header {
-        padding: 0.5rem 0;
-        border-bottom: 2px solid var(--white-3);
-        font-size: 0.75rem;
-        color: var(--grey-2);
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .line-item-row {
-        padding: 1.65rem 0 1rem 0;
-        border-bottom: 1px solid var(--white-3);
-    }
-
-    .line-item-row:last-child {
-        border-bottom: none;
-    }
-
-    .line-item-row .drag-handle {
-        cursor: move;
-        color: var(--white-4);
-        font-size: 1.2rem;
-    }
-
-    .summary-card {
-        background: white;
-        padding: 1.5rem;
-        border: 1px solid var(--white-3);
-        position: sticky;
-        top: 2rem;
-    }
-
-    .summary-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 0.75rem;
-        font-size: 0.9rem;
-        color: var(--grey-2);
-    }
-
-    .summary-total {
-        border-top: 2px solid var(--grey-1);
-        padding-top: 1rem;
-        margin-top: 1rem;
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: var(--grey-1);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .summary-total span:last-child {
-        color: var(--grey-1);
-        background: var(--yellow-1);
-        padding: 0.5rem 1rem;
-    }
-
-    .category-badge {
-        font-size: 0.65rem;
-        padding: 0.15rem 0.4rem;
-        border-radius: 2px;
-        text-transform: uppercase;
-        font-weight: 600;
-        display: inline-block;
-        margin-bottom: 4px;
-        width: fit-content;
-    }
-
-    .category-equipment {
-        background: #eff6ff;
-        color: #1e40af;
-    }
-
-    .category-salary {
-        background: #f0fdf4;
-        color: #166534;
-    }
-
-    .category-logistics {
-        background: #fffbeb;
-        color: #92400e;
-    }
-
-    .category-custom {
-        background: #f3f4f6;
-        color: #374151;
-    }
-
-    .category-insurance {
-        background: #faf5ff;
-        color: #6b21a8;
-    }
-
-    .modal-item {
-        padding: 1rem;
-        border-bottom: 1px solid var(--white-3);
-        cursor: pointer;
-        transition: all 0.2s;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .modal-item:hover {
-        background: var(--white-2);
-        padding-left: 1.5rem;
-    }
-
-    .modal-item-info {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-
-    .modal-item-name {
-        font-weight: 600;
-        color: var(--grey-1);
-    }
-
-    .modal-item-price {
-        font-weight: 700;
-        color: var(--grey-1);
-    }
-
-    /* ── Annexe Tabs inside Modal ─────────────────────────────── */
-    .modal-annexe-tabs {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-bottom: 0;
-        padding: 0.75rem 1rem;
-        background: var(--white-1, #fff);
-        border-bottom: 1px solid var(--white-3, #e5e7eb);
-    }
-
-    .modal-annexe-tab {
-        padding: 0.4rem 0.8rem;
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: var(--grey-2);
-        cursor: pointer;
-        border: 1px solid var(--white-3, #e5e7eb);
-        background: var(--white-2, #f9fafb);
-        border-radius: 6px;
-        transition: all 0.2s ease;
-        outline: none;
-    }
-
-    .modal-annexe-tab:hover {
-        color: var(--grey-1);
-        background: var(--white-3, #e5e7eb);
-    }
-
-    .modal-annexe-tab.active {
-        color: #fff;
-        background: var(--admin-accent);
-        border-color: var(--admin-accent);
-        box-shadow: 0 2px 4px rgba(255, 200, 69, 0.2);
-    }
-
-    .item-mad-checkbox {
-        width: 16px !important;
-        min-width: 16px !important;
-        height: 16px !important;
-        cursor: pointer;
-    }
-
-    .category-section {
-        margin-bottom: 2rem;
-        border: 1px solid var(--white-3);
-        border-radius: 4px;
-        background: #fff;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-        overflow: hidden;
-    }
-
-    .category-section-header {
-        font-size: 0.8rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        padding: 0.75rem 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        border-bottom: 1px solid var(--white-3);
-    }
-
-    .category-section-header.category-equipment-header {
-        background: #f0f7ff;
-        color: #1e40af;
-        border-left: 4px solid #3b82f6;
-    }
-
-    .category-section-header.category-salary-header {
-        background: #f0fdf4;
-        color: #15803d;
-        border-left: 4px solid #22c55e;
-    }
-
-    .category-section-header.category-logistics-header {
-        background: #fffbeb;
-        color: #b45309;
-        border-left: 4px solid #f59e0b;
-    }
-
-    .category-section-header.category-custom-header {
-        background: #f9fafb;
-        color: #374151;
-        border-left: 4px solid #9ca3af;
-    }
-
-    .category-list-dropzone {
-        min-height: 60px;
-        padding: 0 1rem;
-        background: #fcfcfc;
-    }
-
-    .category-list-dropzone:empty {
-        background: #fafafa;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .category-list-dropzone:empty::after {
-        content: "Aucun élément dans cette catégorie. Ajoutez-en ou glissez-en un ici.";
-        display: block;
-        padding: 1.5rem;
-        text-align: center;
-        color: var(--white-4);
-        font-size: 0.8rem;
-        font-style: italic;
-    }
-
-    .category-list-dropzone .line-item-row:last-child {
-        border-bottom: none;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
 {% macro render_line_item(item) %}
 <div class="line-item-row" data-category="{{ item.category }}" data-annexe="{{ item.annexe or '' }}" {% if
     item.category=='salary' and item.rates %}data-rates='{{ item.rates | tojson | safe }}' {% endif %}>
     <div class="drag-handle">⠿</div>
-    <div
-        style="position: relative; {% if item.category == 'salary' %}bottom: 0.2rem;{% else %}bottom: 0.65rem;{% endif %}">
+    <div class="badge-container">
         {% if item.category == 'custom' %}
-        <input type="text" class="category-badge category-custom item-custom-cat"
+        <input type="text" class="category-badge category-custom item-custom-cat item-custom-badge-input"
             value="{{ item.custom_category or 'Autre' }}"
-            style="border: 1px dashed #d1d5db; background: #f3f4f6; color: #374151; width: 90px; text-align: center; text-transform: uppercase; font-size: 0.65rem; font-weight: 600; padding: 0.15rem 0.4rem; border-radius: 2px; margin-bottom: 4px;"
             placeholder="Autre">
         {% else %}
         <span class="category-badge category-{{ item.category }}">{{ PRE_QUOTE_CAT_MAP.get(item.category, item.category)
@@ -286,43 +19,37 @@
         {% endif %}
 
         {% if item.category == 'equipment' %}
-        <label class="mad-label"
-            style="display: inline-flex; align-items: center; font-size: 0.7rem; color: #b91c1c; margin-left: 8px; cursor: pointer; font-weight: 500; vertical-align: middle;">
-            <input type="checkbox" class="item-mad-checkbox" onchange="toggleMAD(this)" {% if item.is_mad %}checked{%
-                endif %} style="margin-right: 3px; accent-color: #b91c1c; vertical-align: middle;">
+        <label class="mad-label u-flex-inline u-align-center u-text-xs u-text-error u-ml-1 u-cursor-pointer u-text-medium u-vertical-middle">
+            <input type="checkbox" class="item-mad-checkbox u-mr-1 u-accent-red u-vertical-middle" onchange="toggleMAD(this)" {% if item.is_mad %}checked{%
+                endif %}>
             M.A.D.
         </label>
         {% endif %}
 
         {% if item.category == 'salary' %}
-        <select class="form-input salary-rate-select" onchange="changeSalaryRate(this)"
-            style="display: inline-block; width: auto; font-size: 0.75rem; padding: 0.15rem 0.4rem; height: auto; margin-left: 8px; vertical-align: middle;">
+        <select class="form-input salary-rate-select" onchange="changeSalaryRate(this)">
             <option value="10h" {% if item.salary_rate_type=='10h' or not item.salary_rate_type %}selected{% endif %}>
                 10h</option>
             <option value="8h" {% if item.salary_rate_type=='8h' %}selected{% endif %}>8h</option>
         </select>
         {% endif %}
-        <input type="text" class="form-input item-desc" value="{{ item.description }}" placeholder="Description"
-            style="margin-bottom: 4px;">
+        <input type="text" class="form-input item-desc u-mb-1" value="{{ item.description }}" placeholder="Description">
         {% if item.category == 'salary' %}
-        <input type="text" class="form-input item-employee" value="{{ item.employee_name or '' }}"
-            placeholder="Nom de l'intervenant / technicien"
-            style="font-size: 0.75rem; padding: 0.2rem 0.4rem; height: auto; display: block; width: 100%; border-color: #d1d5db; background-color: #f9fafb;">
+        <input type="text" class="form-input item-employee salary-employee-input" value="{{ item.employee_name or '' }}"
+            placeholder="Nom de l'intervenant / technicien">
         {% endif %}
     </div>
-    <div><input type="number" step="0.5" class="form-input text-center item-qty" value="{{ item.quantity }}"
+    <div><input type="number" step="0.5" class="form-input u-text-center item-qty" value="{{ item.quantity }}"
             onchange="recalculate()"></div>
     <input type="hidden" class="item-unit" value="{{ item.unit }}">
     <div>
-        <input type="number" step="1" min="0" max="100" class="form-input text-center item-discount"
+        <input type="number" step="1" min="0" max="100" class="form-input u-text-center item-discount"
             value="{{ item.discount_rate if item.discount_rate else 0 }}" onchange="recalculate()" placeholder="0%">
     </div>
-    <div><input type="number" step="0.01" class="form-input text-right item-price" value="{{ item.unit_price }}"
-            onchange="recalculate()" {% if item.unit=='km' %}readonly
-            style="background-color: #f3f4f6; cursor: not-allowed;" {% endif %}></div>
-    <div class="text-right">
-        <button type="button" onclick="this.parentElement.parentElement.remove(); recalculate();" class="admin-btn"
-            style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">Supprimer</button>
+    <div><input type="number" step="0.01" class="form-input u-text-right item-price {% if item.unit=='km' %}form-input-readonly{% endif %}" value="{{ item.unit_price }}"
+            onchange="recalculate()" {% if item.unit=='km' %}readonly{% endif %}></div>
+    <div class="u-text-right">
+        <button type="button" onclick="this.parentElement.parentElement.remove(); recalculate();" class="admin-btn admin-btn-sm admin-btn-danger">Supprimer</button>
     </div>
 </div>
 {% endmacro %}
@@ -333,12 +60,12 @@
     <div class="prequote-form-grid">
         <div class="left-col">
             <!-- Informations générales -->
-            <div class="admin-card" style="margin-bottom: 2rem; margin-top: 0">
+            <div class="admin-card u-mb-4 u-mt-0">
                 <div class="admin-card-title">Informations Générales</div>
 
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;">
+                <div class="u-grid u-grid-3 u-gap-3">
                     <div class="form-group">
-                        <label class="form-label">Production <span style="color: var(--red-error);">*</span></label>
+                        <label class="form-label">Production <span class="u-text-error">*</span></label>
                         <select name="production_id" class="form-input searchable-select" required>
                             <option value="">— Sélectionner une production —</option>
                             {% for prod in productions %}
@@ -360,7 +87,8 @@
                             <option value="">— Ne lier à aucun projet —</option>
                             <option value="new">✨ Créer automatiquement un nouveau projet</option>
                             {% for proj in projects %}
-                            <option value="{{ proj.id }}" {% if quote and quote.project_id==proj.id %}selected{% endif %}>
+                            <option value="{{ proj.id }}" {% if quote and quote.project_id==proj.id %}selected{% endif
+                                %}>
                                 {{ proj.name }} ({{ proj.project_id }})
                             </option>
                             {% endfor %}
@@ -371,26 +99,22 @@
 
             <!-- Lignes de prestation -->
             <div class="line-items-container">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                    <h2 class="admin-section-title" style="margin: 0;">Prestations</h2>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <button type="button" onclick="addItem('equipment')" class="admin-btn admin-btn-secondary"
-                            style="font-size: 0.8rem;">+ Équipement</button>
-                        <button type="button" onclick="addItem('salary')" class="admin-btn admin-btn-secondary"
-                            style="font-size: 0.8rem;">+ Salaire</button>
-                        <button type="button" onclick="addItem('logistics')" class="admin-btn admin-btn-secondary"
-                            style="font-size: 0.8rem;">+ Logistique</button>
-                        <button type="button" onclick="addItem('custom')" class="admin-btn admin-btn-secondary"
-                            style="font-size: 0.8rem;">+ Autre</button>
+                <div class="u-flex u-justify-between u-align-center u-mb-3">
+                    <h2 class="admin-section-title u-m-0">Prestations</h2>
+                    <div class="u-flex u-gap-1">
+                        <button type="button" onclick="addItem('equipment')" class="admin-btn admin-btn-secondary admin-btn-sm">+ Équipement</button>
+                        <button type="button" onclick="addItem('salary')" class="admin-btn admin-btn-secondary admin-btn-sm">+ Salaire</button>
+                        <button type="button" onclick="addItem('logistics')" class="admin-btn admin-btn-secondary admin-btn-sm">+ Logistique</button>
+                        <button type="button" onclick="addItem('custom')" class="admin-btn admin-btn-secondary admin-btn-sm">+ Autre</button>
                     </div>
                 </div>
 
                 <div class="line-item-header">
                     <div></div>
                     <div>Désignation</div>
-                    <div style="text-align: left;">Qté</div>
-                    <div style="text-align: left;">Remise (%)</div>
-                    <div style="text-align: left;">Prix U. HT</div>
+                    <div class="u-text-left">Qté</div>
+                    <div class="u-text-left">Remise (%)</div>
+                    <div class="u-text-left">Prix U. HT</div>
                     <div></div>
                 </div>
 
@@ -453,36 +177,42 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Historique des versions -->
             {% if is_edit and quote.versions %}
-            <div class="admin-card" style="margin-top: 2rem;">
+            <div class="admin-card u-mt-4">
                 <div class="admin-card-title">Historique des Versions</div>
-                <div class="timeline-container" style="position: relative; padding-left: 2rem; margin-top: 1.5rem;">
+                <div class="timeline-container">
                     <!-- Ligne verticale de la timeline -->
-                    <div style="position: absolute; left: 7px; top: 5px; bottom: 5px; width: 2px; background: #e5e7eb;"></div>
-                    
+                    <div class="timeline-line"></div>
+
                     {% for version in quote.versions | reverse %}
-                    <div class="timeline-item" style="position: relative; margin-bottom: 1.5rem;">
+                    <div class="timeline-item">
                         <!-- Point sur la ligne -->
-                        <div style="position: absolute; left: -29px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: #6b21a8; border: 2px solid white; box-shadow: 0 0 0 2px #e9d5ff;"></div>
-                        
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; background: #fcfcfc; border: 1px solid var(--white-3); padding: 1rem; border-radius: 6px;">
+                        <div class="timeline-badge"></div>
+
+                        <div class="timeline-content-card">
                             <div>
-                                <span style="font-weight: 700; color: #6b21a8;">Version {{ version.version_number }}</span>
-                                <span style="font-size: 0.75rem; color: var(--grey-2); margin-left: 0.5rem;">🕒 {{ version.created_at.strftime('%d/%m/%Y à %H:%M') }}</span>
-                                <div style="font-size: 0.85rem; font-weight: 600; margin-top: 0.25rem;">Montant : {{ "{:,.2f}".format(version.total_ttc)|replace(',', ' ') }} € TTC</div>
+                                <span class="timeline-version-title">Version {{ version.version_number
+                                    }}</span>
+                                <span class="u-text-xs u-text-muted u-ml-1">🕒 {{
+                                    version.created_at.strftime('%d/%m/%Y à %H:%M') }}</span>
+                                <div class="u-text-sm u-text-semibold u-mt-1">Montant : {{
+                                    "{:,.2f}".format(version.total_ttc)|replace(',', ' ') }} € TTC</div>
                                 {% if version.version_note %}
-                                <div style="font-size: 0.8rem; font-style: italic; color: var(--grey-2); margin-top: 0.5rem; background: #f3f4f6; padding: 0.5rem; border-radius: 4px;">
+                                <div class="timeline-note-box">
                                     💬 {{ version.version_note }}
                                 </div>
                                 {% endif %}
                             </div>
-                            <div style="display: flex; gap: 0.5rem;">
-                                <a href="/files/{{ version.pdf_path }}" target="_blank" class="admin-btn admin-btn-secondary" style="font-size: 0.75rem; padding: 0.3rem 0.6rem;">
+                            <div class="u-flex u-gap-1">
+                                <a href="/files/{{ version.pdf_path }}" target="_blank"
+                                    class="admin-btn admin-btn-secondary admin-btn-sm">
                                     📄 PDF
                                 </a>
-                                <button type="button" onclick="restoreVersion({{ version.id }}, {{ version.version_number }})" class="admin-btn" style="font-size: 0.75rem; padding: 0.3rem 0.6rem; background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe;">
+                                <button type="button"
+                                    onclick="restoreVersion({{ version.id }}, {{ version.version_number }})"
+                                    class="admin-btn admin-btn-sm admin-btn-info">
                                     🔄 Restaurer
                                 </button>
                             </div>
@@ -496,8 +226,7 @@
 
         <div class="right-col">
             <div class="summary-card">
-                <div class="admin-card-title"
-                    style="margin-bottom: 1.5rem; font-size: 0.9rem; border-bottom: 1px solid var(--white-3); padding-bottom: 0.5rem;">
+                <div class="admin-card-title summary-card-title">
                     Résumé du Devis
                 </div>
 
@@ -505,10 +234,9 @@
                     <span>Base Location HT</span>
                     <span id="baseRentalHT">0.00 €</span>
                 </div>
-                <div class="summary-row" style="align-items: center; margin-bottom: 1rem;">
+                <div class="summary-row u-align-center u-mb-2">
                     <span>Assurance (%)</span>
-                    <input type="number" name="insurance_rate" id="insuranceRate" class="form-input"
-                        style="width: 100px; text-align: right; border-color: var(--white-4);"
+                    <input type="number" name="insurance_rate" id="insuranceRate" class="form-input summary-input"
                         value="{{ quote.insurance_rate if (quote and quote.insurance_rate is not none) else 10.00 }}"
                         onchange="recalculate()">
                 </div>
@@ -516,15 +244,13 @@
                     <span>Montant Assurance</span>
                     <span id="insuranceAmount">0.00 €</span>
                 </div>
-                <div class="summary-row"
-                    style="border-top: 1px solid var(--white-3); padding-top: 0.5rem; margin-top: 0.5rem;">
+                <div class="summary-row summary-row-divider">
                     <span>Total HT</span>
                     <span id="totalHT">0.00 €</span>
                 </div>
-                <div class="summary-row" style="align-items: center; margin-bottom: 1.5rem;">
+                <div class="summary-row u-align-center u-mb-3">
                     <span>TVA (%)</span>
-                    <input type="number" name="tva_rate" id="tvaRate" class="form-input"
-                        style="width: 100px; text-align: right; border-color: var(--white-4);"
+                    <input type="number" name="tva_rate" id="tvaRate" class="form-input summary-input"
                         value="{{ quote.tva_rate if quote else 20.00 }}" onchange="recalculate()">
                 </div>
                 <div class="summary-row">
@@ -538,13 +264,12 @@
                 </div>
 
                 <!-- Toggle Affichage Remise -->
-                <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--white-3);">
-                    <label class="form-label"
-                        style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; margin: 0;">
+                <div class="summary-bottom-section">
+                    <label class="form-label u-flex u-justify-between u-align-center u-cursor-pointer u-m-0">
                         <span>Afficher remises (PDF)</span>
                         <div class="status-toggle">
                             <input type="checkbox" id="showDiscounts" {% if not quote or quote.show_discounts
-                                %}checked{% endif %} style="display: none;">
+                                %}checked{% endif %} class="u-d-none">
                             <div class="toggle-track {% if not quote or quote.show_discounts %}active{% endif %}">
                                 <div class="toggle-handle"></div>
                             </div>
@@ -552,24 +277,20 @@
                     </label>
                 </div>
 
-                <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 0.75rem;">
-                    <button type="button" onclick="saveQuote()" id="saveBtn" class="admin-btn admin-btn-primary"
-                        style="justify-content: center; padding: 1rem;">
+                <div class="u-mt-4 u-flex u-flex-column u-gap-2">
+                    <button type="button" onclick="saveQuote()" id="saveBtn" class="admin-btn admin-btn-primary u-justify-center admin-btn-lg">
                         {{ 'Mettre à jour' if is_edit else 'Générer le Pré-Devis' }}
                     </button>
                     {% if is_edit %}
-                    <button type="button" onclick="createVersion()" id="versionBtn" class="admin-btn"
-                        style="justify-content: center; padding: 0.75rem; background: #faf5ff; color: #6b21a8; border: 1px solid #e9d5ff; font-weight: 600;">
+                    <button type="button" onclick="createVersion()" id="versionBtn" class="admin-btn admin-btn-purple u-justify-center u-p-2">
                         💾 Figer une Version
                     </button>
                     <a href="{{ url_for('admin_pre_quote_pdf', quote_id=quote.id) }}" target="_blank"
-                        class="admin-btn admin-btn-secondary"
-                        style="text-align: center; justify-content: center; background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; font-weight: 600;">
+                        class="admin-btn admin-btn-info u-text-center u-justify-center u-text-semibold">
                         Voir le PDF
                     </a>
                     {% endif %}
-                    <a href="{{ url_for('admin_pre_quotes_list') }}" class="admin-btn admin-btn-secondary"
-                        style="text-align: center; justify-content: center;">Retour</a>
+                    <a href="{{ url_for('admin_pre_quotes_list') }}" class="admin-btn admin-btn-secondary u-text-center u-justify-center">Retour</a>
                 </div>
             </div>
         </div>
@@ -578,25 +299,22 @@
 
 <!-- Modals pour sélection de prix -->
 <div id="selectionModal" class="admin-modal-overlay">
-    <div class="admin-modal-container" style="max-width: 700px; height: 80vh; border-radius: 4px;">
-        <div class="admin-modal-header"
-            style="background: white; border-bottom: 1px solid var(--white-3); padding: 1.5rem;">
-            <div class="admin-card-title" id="modalTitle" style="margin: 0; font-size: 1rem;">Sélectionner un item</div>
-            <button onclick="closeModal()" class="admin-modal-close"
-                style="top: 0.75rem; right: 1rem; width: 32px; height: 32px; font-size: 1.2rem;">&times;</button>
+    <div class="admin-modal-container prequote-modal-container">
+        <div class="admin-modal-header prequote-modal-header">
+            <div class="admin-card-title id-modalTitle u-m-0 u-text-lg" id="modalTitle">Sélectionner un item</div>
+            <button onclick="closeModal()" class="admin-modal-close prequote-modal-close">&times;</button>
         </div>
-        <div style="padding: 1rem; background: var(--white-2); border-bottom: 1px solid var(--white-3);">
-            <div class="form-group" style="margin: 0;">
-                <input type="text" id="modalSearch" class="form-input" placeholder="Rechercher..."
-                    style="border-radius: 4px; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);">
+        <div class="prequote-modal-search-box">
+            <div class="form-group u-m-0">
+                <input type="text" id="modalSearch" class="form-input prequote-modal-search-input" placeholder="Rechercher...">
             </div>
         </div>
-        <div id="modalAnnexeTabsContainer" style="display: none;">
+        <div id="modalAnnexeTabsContainer" class="u-d-none">
             <div class="modal-annexe-tabs">
                 <button type="button" class="modal-annexe-tab active" data-modal-annexe="Annexe 1">Annexe 1</button>
                 <button type="button" class="modal-annexe-tab" data-modal-annexe="Annexe 3">Annexe 3</button>
                 <button type="button" class="modal-annexe-tab" data-modal-annexe="Annexe 1 renfort">Annexe 1
-                    renfort</button>
+                     renfort</button>
                 <button type="button" class="modal-annexe-tab" data-modal-annexe="USPA">USPA</button>
                 <button type="button" class="modal-annexe-tab" data-modal-annexe="USPA renfort">USPA renfort</button>
                 <button type="button" class="modal-annexe-tab" data-modal-annexe="Court-métrage">Court-métrage</button>
@@ -604,7 +322,7 @@
                 <button type="button" class="modal-annexe-tab" data-modal-annexe="Facture">Facture</button>
             </div>
         </div>
-        <div class="admin-modal-content" style="padding: 0;">
+        <div class="admin-modal-content u-p-0">
             <div id="modalList">
                 <!-- Liste injectée -->
             </div>

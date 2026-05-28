@@ -141,7 +141,16 @@ code {
     border-radius: 4px;
     background-color: var(--bv-yellow);
     color: var(--bv-black);
+    text-decoration: none;
 }
+
+.docs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
 
 .callout {
     padding: 1.5rem;
@@ -206,4 +215,17 @@ td {
     .docs-main {
         padding: 1.5rem;
     }
+}
+
+.docs-footer {
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--bv-gray-200);
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.docs-yellow-heading {
+    color: var(--bv-yellow) !important;
+    margin-top: 1rem !important;
 }

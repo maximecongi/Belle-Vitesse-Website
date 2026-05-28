@@ -17,13 +17,12 @@
             <input type="text" name="name" class="form-input" value="{{ data.name if data else '' }}" required>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 1rem;">
+        <div class="u-grid u-grid-2 u-gap-3 u-mb-2">
             <div class="form-group">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                    <label class="form-label" style="margin-bottom: 0;">Production <span
-                            style="color: var(--red-error);">*</span></label>
-                    <button type="button" id="quickAddProductionBtn" class="admin-btn admin-btn-secondary"
-                        style="padding: 0.2rem 0.5rem; font-size: 0.75rem; line-height: 1; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; background: transparent; color: var(--grey-1); border-color: var(--white-3);">
+                <div class="u-flex u-justify-between u-align-center u-mb-1">
+                    <label class="form-label u-mb-0">Production <span
+                            class="u-text-error">*</span></label>
+                    <button type="button" id="quickAddProductionBtn" class="admin-btn admin-btn-quick-add">
                         ➕ Nouvelle production
                     </button>
                 </div>
@@ -50,7 +49,7 @@
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 1rem;">
+        <div class="u-grid u-grid-2 u-gap-3 u-mb-2">
             <div class="form-group">
                 <label class="form-label">DOP (Directeur Photo)</label>
                 <select name="dop_contact_id" class="form-input searchable-select">
@@ -76,7 +75,7 @@
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem;">
+        <div class="u-grid u-grid-4 u-gap-3">
             <div class="form-group">
                 <label class="form-label">Date de départ</label>
                 <input type="date" name="departure_date" class="form-input"
@@ -100,66 +99,58 @@
                     value="{{ data.return_date_raw if data else '' }}">
             </div>
         </div>
-        <div class="form-group" style="margin-top: 1.5rem;">
+        <div class="form-group u-mt-3">
             <label class="form-label">Notes - Demandes spécifiques</label>
-            <textarea name="notes" class="form-input" rows="4" style="resize: vertical; min-height: 100px;"
+            <textarea name="notes" class="form-input u-resize-y u-min-h-100" rows="4"
                 placeholder="Ex: Lumières additionnelles, contraintes d'accès, besoins spécifiques batterie...">{{ data.notes if data else '' }}</textarea>
         </div>
 
-        <div class="form-group" style="margin-top: 1rem;">
+        <div class="form-group u-mt-2">
             <label class="form-label">Véhicules</label>
-            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+            <div class="u-flex u-flex-wrap u-gap-1">
                 {% for v in vehicles %}
                 {% set vf = v.fields %}
-                <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem;
-                    border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer;
-                    {% if data and v.id in data.vehicle_ids %}background: #f8f9fa; border-color: #858585;{% endif %}">
+                <label class="project-checkbox-card {% if data and v.id in data.vehicle_ids %}selected{% endif %}">
                     <input type="checkbox" name="vehicle_ids" value="{{ v.id }}" {% if data and v.id in data.vehicle_ids
-                        %}checked{% endif %} style="display: none;">
+                        %}checked{% endif %} class="u-d-none">
                     {% if vf.get('thumbnail') %}
-                    <img src="{{ vf.thumbnail[0].thumbnails.small.url }}"
-                        style="width: 32px; height: 32px; border-radius: 4px; object-fit: cover;">
+                    <img src="{{ vf.thumbnail[0].thumbnails.small.url }}" class="project-checkbox-card-img">
                     {% endif %}
-                    <span style="font-weight: 500;">{{ vf.get('name', '—') }}</span>
+                    <span class="u-text-medium">{{ vf.get('name', '—') }}</span>
                 </label>
                 {% endfor %}
             </div>
         </div>
 
-        <div class="form-group" style="margin-top: 1rem;">
+        <div class="form-group u-mt-2">
             <label class="form-label">Têtes</label>
-            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+            <div class="u-flex u-flex-wrap u-gap-1">
                 {% for h in heads %}
                 {% set hf = h.fields %}
-                <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem;
-                    border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer;
-                    {% if data and h.id in data.head_ids %}background: #f8f9fa; border-color: #858585;{% endif %}">
+                <label class="project-checkbox-card {% if data and h.id in data.head_ids %}selected{% endif %}">
                     <input type="checkbox" name="head_ids" value="{{ h.id }}" {% if data and h.id in data.head_ids
-                        %}checked{% endif %} style="display: none;">
+                        %}checked{% endif %} class="u-d-none">
                     {% if hf.get('thumbnail') %}
-                    <img src="{{ hf.thumbnail[0].thumbnails.small.url }}"
-                        style="width: 32px; height: 32px; border-radius: 4px; object-fit: cover;">
+                    <img src="{{ hf.thumbnail[0].thumbnails.small.url }}" class="project-checkbox-card-img">
                     {% endif %}
-                    <span style="font-weight: 500;">{{ hf.get('name', '—') }}</span>
+                    <span class="u-text-medium">{{ hf.get('name', '—') }}</span>
                 </label>
                 {% endfor %}
             </div>
         </div>
 
-        <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center;">
+        <div class="u-mt-4 u-flex u-justify-between u-align-center">
             <div>
                 {% if is_edit %}
                 <button type="submit"
                     formaction="{{ url_for('admin_project_delete', record_id=request.view_args.get('record_id')) }}"
-                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce projet ?');" class="admin-btn"
-                    style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca;" formnovalidate>
+                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce projet ?');" class="admin-btn admin-btn-danger" formnovalidate>
                     Supprimer
                 </button>
                 {% endif %}
             </div>
             <div>
-                <a href="{{ url_for('admin_projects_list') }}" class="admin-btn admin-btn-secondary"
-                    style="margin-right: 1rem;">Annuler</a>
+                <a href="{{ url_for('admin_projects_list') }}" class="admin-btn admin-btn-secondary u-mr-2">Annuler</a>
                 <button type="submit" class="admin-btn admin-btn-primary">
                     {% if is_edit %}Enregistrer{% else %}Créer le Projet{% endif %}
                 </button>

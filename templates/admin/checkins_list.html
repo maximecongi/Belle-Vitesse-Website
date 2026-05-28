@@ -8,9 +8,9 @@
 {% endblock %}
 
 {% block header_actions %}
-<div style="display: flex; gap: 1rem; align-items: center;">
-    <input type="text" id="search-input" class="form-input" placeholder="🔍 Rechercher un checkin..."
-        style="width: 250px; font-size: 0.9rem;" autocomplete="off">
+<div class="u-flex u-align-center u-gap-2">
+    <input type="text" id="search-input" class="form-input u-w-250 u-text-sm" placeholder="🔍 Rechercher un checkin..."
+        autocomplete="off">
     <a href="{{ url_for('admin_checkin_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Checkin</a>
 </div>
 {% endblock %}
@@ -18,8 +18,8 @@
 {% block content %}
 <!-- Search & Table -->
 <div class="admin-card">
-    <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 1rem;">
-        <div style="font-size: 0.9rem; color: var(--grey-2);">
+    <div class="u-flex u-justify-end u-align-center u-mb-2">
+        <div class="u-text-sm u-text-muted">
             <span id="result-count">{{ checkins|length }}</span> résultats
         </div>
     </div>
@@ -42,7 +42,7 @@
             <tbody id="checkins-tbody">
                 {% for checkin in checkins %}
                 <tr data-search="{{ checkin.search_text }}">
-                    <td style="font-weight: 600;">{{ checkin.inspection_id }}</td>
+                    <td class="u-text-semibold">{{ checkin.inspection_id }}</td>
                     <td>{{ checkin.project }}</td>
                     <td>{{ checkin.vehicle.fields.name }} <span class="checkin-doc-id">{{
                             checkin.vehicle.fields.unique_id }}</span></td>
@@ -59,7 +59,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="7" style="text-align: center; padding: 2rem; color: var(--grey-2);">
+                    <td colspan="7" class="u-text-center u-p-4 u-text-muted">
                         Aucun checkin trouvé.
                     </td>
                 </tr>
@@ -67,7 +67,7 @@
             </tbody>
         </table>
 
-        <div id="no-results" style="display: none; text-align: center; padding: 2rem; color: var(--grey-2);">
+        <div id="no-results" class="u-text-center u-p-4 u-text-muted">
             Aucun résultat pour cette recherche.
         </div>
     </div>

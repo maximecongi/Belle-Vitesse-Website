@@ -19,7 +19,7 @@
     <form method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <div class="u-grid u-grid-2 u-gap-3">
             <div class="form-group">
                 <label class="form-label">Prénom</label>
                 <input type="text" name="first_name" class="form-input" value="{{ data.first_name if data else '' }}" required>
@@ -148,7 +148,7 @@
         </div>
 
         <div class="form-group">
-            <label class="form-label">Production <span style="color: var(--grey-2); font-weight: 400;">(optionnel —
+            <label class="form-label">Production <span class="u-text-muted">(optionnel —
                     laisser vide si freelance)</span></label>
             <select name="production_id" class="form-input">
                 <option value="">— Freelance / Aucune —</option>
@@ -160,7 +160,7 @@
             </select>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <div class="u-grid u-grid-2 u-gap-3">
             <div class="form-group">
                 <label class="form-label">Email</label>
                 <input type="email" name="mail" class="form-input" value="{{ data.mail if data else '' }}">
@@ -173,20 +173,18 @@
             </div>
         </div>
 
-        <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center;">
+        <div class="u-mt-4 u-flex u-justify-between u-align-center">
             <div>
                 {% if is_edit %}
                 <button type="submit"
                     formaction="{{ url_for('admin_contact_delete', record_id=request.view_args.get('record_id')) }}"
-                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce contact ?');" class="admin-btn"
-                    style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca;">
+                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce contact ?');" class="admin-btn admin-btn-danger">
                     Supprimer
                 </button>
                 {% endif %}
             </div>
             <div>
-                <a href="{{ url_for('admin_contacts_list') }}" class="admin-btn admin-btn-secondary"
-                    style="margin-right: 1rem;">Annuler</a>
+                <a href="{{ url_for('admin_contacts_list') }}" class="admin-btn admin-btn-secondary u-mr-2">Annuler</a>
                 <button type="submit" class="admin-btn admin-btn-primary">
                     {% if is_edit %}Enregistrer{% else %}Créer le Contact{% endif %}
                 </button>

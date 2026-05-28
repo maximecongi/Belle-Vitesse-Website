@@ -302,3 +302,8 @@ tr.dragging {
     border-color: var(--admin-accent);
     box-shadow: 0 2px 4px rgba(255, 200, 69, 0.2);
 }
+
+#factorContainer {
+    display: none;
+}
+

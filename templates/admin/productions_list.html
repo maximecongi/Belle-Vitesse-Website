@@ -4,9 +4,9 @@
 {% block page_title %}Productions{% endblock %}
 
 {% block header_actions %}
-<div style="display: flex; gap: 1rem; align-items: center;">
-    <input type="text" id="searchInput" class="form-input" placeholder="🔍 Rechercher une production..."
-        style="width: 250px; font-size: 0.9rem;" autocomplete="off">
+<div class="u-flex u-gap-2 u-align-center">
+    <input type="text" id="searchInput" class="form-input u-w-250 u-text-sm" placeholder="🔍 Rechercher une production..."
+        autocomplete="off">
     <a href="{{ url_for('admin_production_new') }}" class="admin-btn admin-btn-primary">+ Nouvelle Production</a>
 </div>
 {% endblock %}
@@ -21,13 +21,13 @@
                     <th class="sortable" data-col="1">Adresse</th>
                     <th>Email</th>
                     <th>Téléphone</th>
-                    <th style="width: 100px;">Actions</th>
+                    <th class="u-w-100px">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for prod in productions %}
                 <tr class="searchable-row">
-                    <td style="font-weight: 600;">{{ prod.name }}</td>
+                    <td class="u-text-semibold">{{ prod.name }}</td>
                     <td>{{ prod.address }}</td>
                     <td>{{ prod.email }}</td>
                     <td>{{ prod.phone }}</td>
@@ -38,7 +38,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="5" style="text-align: center; padding: 3rem; color: var(--grey-2);">
+                    <td colspan="5" class="u-text-center u-p-5 u-text-muted">
                         Aucune production trouvée.
                     </td>
                 </tr>

@@ -4,9 +4,9 @@
 {% block page_title %}Pré-Devis{% endblock %}
 
 {% block header_actions %}
-<div style="display: flex; gap: 1rem; align-items: center;">
-    <input type="text" id="searchInput" class="form-input" placeholder="🔍 Rechercher..."
-        style="width: 250px; font-size: 0.9rem;" autocomplete="off">
+<div class="u-flex u-gap-2 u-align-center">
+    <input type="text" id="searchInput" class="form-input u-w-250 u-text-sm" placeholder="🔍 Rechercher..."
+        autocomplete="off">
     <a href="{{ url_for('admin_pre_quote_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Pré-Devis</a>
 </div>
 {% endblock %}
@@ -30,19 +30,19 @@
                 {% for quote in pre_quotes %}
                 <tr class="searchable-row"
                     data-search="{{ quote.reference|lower }} {{ quote.production.name|lower }} {{ quote.project_name|lower }}">
-                    <td style="font-weight: 600;">{{ quote.reference }}</td>
+                    <td class="u-text-semibold">{{ quote.reference }}</td>
                     <td>{{ quote.created_at.strftime('%d/%m/%Y') }}</td>
                     <td>
-                        <span style="font-weight: 600;">{{ quote.production.name }}</span><br>
-                        <span style="font-size: 0.85rem; color: var(--grey-2);">{{ quote.project_name or '—' }}</span>
+                        <span class="u-text-semibold">{{ quote.production.name }}</span><br>
+                        <span class="u-text-sm u-text-muted">{{ quote.project_name or '—' }}</span>
                         {% if quote.project %}
                         <br>
-                        <a href="{{ url_for('admin_project_edit', record_id=quote.project.id) }}" style="text-decoration: none; display: inline-flex; align-items: center; gap: 0.2rem; margin-top: 0.3rem;">
-                            📅 <span class="checkout-doc-id" style="margin-top: 0;">{{ quote.project.project_id }}</span>
+                        <a href="{{ url_for('admin_project_edit', record_id=quote.project.id) }}" class="u-flex-inline u-align-center u-gap-1 u-mt-1">
+                            📅 <span class="checkout-doc-id u-mt-0">{{ quote.project.project_id }}</span>
                         </a>
                         {% endif %}
                     </td>
-                    <td style="font-weight: 600;">{{ "{:,.2f}".format(quote.total_ht)|replace(',', ' ') }} €</td>
+                    <td class="u-text-semibold">{{ "{:,.2f}".format(quote.total_ht)|replace(',', ' ') }} €</td>
                     <td>
                         {% set status_val = 'pending' %}
                         {% set status_label = 'Brouillon' %}
@@ -54,30 +54,28 @@
                             {% set status_val = 'critical' %}{% set status_label = 'Refusé' %}
                         {% endif %}
                         
-                        <div class="badge-pill" data-val="{{ status_val }}" style="position: relative; display: inline-flex; align-items: center; cursor: pointer; padding-right: 1.5rem;">
+                        <div class="badge-pill badge-select-pill" data-val="{{ status_val }}">
                             <span class="status-label">{{ status_label }}</span>
-                            <select onchange="updateStatus({{ quote.id }}, this)" 
-                                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: none;">
+                            <select onchange="updateStatus({{ quote.id }}, this)">
                                 <option value="draft" {{ 'selected' if quote.status == 'draft' }}>Brouillon</option>
                                 <option value="sent" {{ 'selected' if quote.status == 'sent' }}>Envoyé</option>
                                 <option value="accepted" {{ 'selected' if quote.status == 'accepted' }}>Accepté</option>
                                 <option value="rejected" {{ 'selected' if quote.status == 'rejected' }}>Refusé</option>
                             </select>
-                            <span style="position: absolute; right: 0.4rem; font-size: 0.6rem; opacity: 0.6;">▼</span>
+                            <span class="badge-select-pill-arrow">▼</span>
                         </div>
                     </td>
                     <td>
-                        <div style="display: flex; gap: 0.5rem;">
+                        <div class="u-flex u-gap-1">
                             <a href="{{ url_for('admin_pre_quote_pdf', quote_id=quote.id) }}" target="_blank"
-                                class="admin-btn admin-btn-secondary" title="Voir le PDF">
+                                class="admin-btn admin-btn-secondary admin-btn-sm" title="Voir le PDF">
                                 📄 PDF
                             </a>
                             <a href="{{ url_for('admin_pre_quote_edit', quote_id=quote.id) }}"
-                                class="admin-btn admin-btn-secondary">
+                                class="admin-btn admin-btn-secondary admin-btn-sm">
                                 Éditer
                             </a>
-                            <button onclick="deletePreQuote({{ quote.id }}, '{{ quote.reference }}')" class="admin-btn"
-                                style="padding: 0.25rem 0.5rem; font-size: 0.8rem; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">
+                            <button onclick="deletePreQuote({{ quote.id }}, '{{ quote.reference }}')" class="admin-btn admin-btn-sm admin-btn-danger">
                                 Supprimer
                             </button>
                         </div>
@@ -85,7 +83,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="6" style="text-align: center; padding: 3rem; color: var(--grey-2);">
+                    <td colspan="6" class="u-text-center u-p-5 u-text-muted">
                         Aucun pré-devis trouvé. Commencez par en créer un !
                     </td>
                 </tr>

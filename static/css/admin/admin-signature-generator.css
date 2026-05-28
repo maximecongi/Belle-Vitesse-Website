@@ -74,3 +74,15 @@
 }
 
 /* Grey */
+
+.sig-email-suffix {
+    padding: 0 0.5rem;
+    color: var(--white-4);
+    font-size: 0.7rem;
+    background-color: var(--neutral-bg);
+    display: flex;
+    height: 100%;
+    font-family: monospace;
+    align-items: center;
+    justify-content: flex-start;
+}

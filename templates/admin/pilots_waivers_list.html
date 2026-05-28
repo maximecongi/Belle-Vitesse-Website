@@ -8,9 +8,8 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-pilot-waivers.css') }}">{% endblock %}
 
 {% block header_actions %}
-<div style="display: flex; gap: 1rem; align-items: center;">
-    <input type="text" id="searchInput" class="form-input" placeholder="🔍 Rechercher..."
-        style="width: 250px; font-size: 0.9rem;" autocomplete="off">
+<div class="u-flex u-align-center u-gap-2">
+    <input type="text" id="searchInput" class="form-input u-w-250 u-text-sm" placeholder="🔍 Rechercher..." autocomplete="off">
     <a href="{{ url_for('admin_pilot_waiver_new') }}" class="admin-btn admin-btn-primary">+ Nouvelle décharge</a>
 </div>
 {% endblock %}
@@ -18,7 +17,7 @@
 
 {% block content %}
 <div class="admin-card">
-    <div class="admin-table-container">
+    <div class="u-overflow-x-auto">
         <table class="admin-table">
             <thead>
                 <tr>
@@ -33,7 +32,7 @@
             <tbody>
                 {% for w in waivers %}
                 <tr class="searchable-row">
-                    <td style="font-weight: 600; white-space: nowrap;">{{ w.id or '—' }}</td>
+                    <td class="u-text-semibold u-nowrap">{{ w.id or '—' }}</td>
                     <td>{{ w.project_name }}</td>
                     <td>{{ w.pilot_name }}</td>
                     <td>{{ w.shooting_dates }}</td>
@@ -41,25 +40,25 @@
                         {{ status_badge(w.status, w.raw_status) }}
                     </td>
                     <td>
-                        <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: center;">
+                        <div class="u-flex u-align-center u-justify-center u-gap-1">
                             {% if w.raw_status == 'to_generate' %}
                             <form
                                 action="{{ url_for('admin_pilot_waiver_generate', waiver_id=w.id, q=request.args.get('q')) }}"
-                                method="POST" style="margin: 0;">
+                                method="POST" class="u-m-0">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="admin-btn admin-btn-primary">Générer</button>
                             </form>
                             {% elif w.raw_status == 'to_send' %}
                             <form
                                 action="{{ url_for('admin_pilot_waiver_send', waiver_id=w.id, q=request.args.get('q')) }}"
-                                method="POST" style="margin: 0;">
+                                method="POST" class="u-m-0">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="admin-btn admin-btn-primary">Envoyer</button>
                             </form>
                             {% elif w.raw_status == 'to_sign' %}
                             <form
                                 action="{{ url_for('admin_pilot_waiver_send', waiver_id=w.id, q=request.args.get('q')) }}"
-                                method="POST" style="margin: 0;">
+                                method="POST" class="u-m-0">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="admin-btn admin-btn-secondary">Relancer</button>
                             </form>
@@ -72,18 +71,17 @@
 
                             <form
                                 action="{{ url_for('admin_pilot_waiver_reset', waiver_id=w.id, q=request.args.get('q')) }}"
-                                method="POST" style="display:inline;"
+                                method="POST" class="u-d-inline"
                                 onsubmit="return confirm('Êtes-vous sûr de vouloir réinitialiser cette décharge ? Tous les fichiers et données scellées seront supprimés, mais la décharge pourra être générée à nouveau.');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="admin-btn"
-                                    style="background: #fee2e2; color: #b91c1c; border-color: #fecaca;">Réinitialiser</button>
+                                <button type="submit" class="admin-btn admin-btn-danger">Réinitialiser</button>
                             </form>
                         </div>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="6" style="text-align: center; padding: 2rem; color: var(--grey-2);">
+                    <td colspan="6" class="u-text-center u-p-4 u-text-muted">
                         Aucune décharge trouvée.
                     </td>
                 </tr>

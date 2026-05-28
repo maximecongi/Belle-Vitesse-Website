@@ -10,3 +10,40 @@
     width: 24px;
     height: 24px;
 }
+
+/* Contact QR Modal styling */
+.contact-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0,0,0,.6);
+    backdrop-filter: blur(4px);
+    justify-content: center;
+    align-items: center;
+}
+
+.contact-modal-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 2.5rem;
+    text-align: center;
+    max-width: 360px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0,0,0,.3);
+}
+
+.contact-modal-name {
+    font-weight: 700;
+    font-size: 1.15rem;
+    margin: 0 0 1.25rem;
+    color: #1a1a2e;
+}
+
+.contact-modal-qrcode-container {
+    display: inline-block;
+    padding: 12px;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}

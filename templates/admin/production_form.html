@@ -23,7 +23,7 @@
             <input type="text" name="address" class="form-input" value="{{ data.address if data else '' }}">
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <div class="u-grid u-grid-2 u-gap-3">
             <div class="form-group">
                 <label class="form-label">Email</label>
                 <input type="email" name="email" class="form-input" value="{{ data.email if data else '' }}">
@@ -37,20 +37,18 @@
         </div>
 
 
-        <div style="margin-top: 2rem; display: flex; justify-content: space-between; align-items: center;">
+        <div class="u-mt-4 u-flex u-justify-between u-align-center">
             <div>
                 {% if is_edit %}
                 <button type="submit"
                     formaction="{{ url_for('admin_production_delete', record_id=request.view_args.get('record_id')) }}"
-                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette production ?');" class="admin-btn"
-                    style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca;">
+                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette production ?');" class="admin-btn admin-btn-danger">
                     Supprimer
                 </button>
                 {% endif %}
             </div>
             <div>
-                <a href="{{ url_for('admin_productions_list') }}" class="admin-btn admin-btn-secondary"
-                    style="margin-right: 1rem;">Annuler</a>
+                <a href="{{ url_for('admin_productions_list') }}" class="admin-btn admin-btn-secondary u-mr-2">Annuler</a>
                 <button type="submit" class="admin-btn admin-btn-primary">
                     {% if is_edit %}Enregistrer{% else %}Créer la Production{% endif %}
                 </button>

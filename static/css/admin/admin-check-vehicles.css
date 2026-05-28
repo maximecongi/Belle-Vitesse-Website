@@ -38,6 +38,13 @@ header {
     border-bottom: 1px solid var(--border);
 }
 
+.header-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 20px;
+}
+
 .brand {
     display: flex;
     flex-direction: column;
