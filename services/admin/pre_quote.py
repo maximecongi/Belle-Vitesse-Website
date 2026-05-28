@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 from decimal import Decimal
 from flask import current_app, render_template
-from models import PreQuote, db, AppSetting, Production
+from models import PreQuote, PreQuoteVersion, db, AppSetting, Production
 from utils.document_utils import render_pdf_from_template
 import logging
 
@@ -114,6 +114,42 @@ def calculate_totals(prestations, tva_rate=20.00, insurance_rate=10.00):
     }
 
 
+def extract_vehicle_ids_from_prestations(prestations):
+    from utils.database import get_vehicles
+    vehicles = get_vehicles()
+    name_to_id = {}
+    for v in vehicles:
+        name = v.get("fields", {}).get("name")
+        if name:
+            name_to_id[name.strip().lower()] = v["id"]
+            
+    matched_ids = []
+    for item in prestations:
+        if item.get("category") == "equipment":
+            desc = item.get("description", "").strip().lower()
+            if desc in name_to_id:
+                matched_ids.append(name_to_id[desc])
+    return matched_ids
+
+
+def extract_head_ids_from_prestations(prestations):
+    from utils.database import get_heads
+    heads = get_heads()
+    name_to_id = {}
+    for h in heads:
+        name = h.get("fields", {}).get("name")
+        if name:
+            name_to_id[name.strip().lower()] = h["id"]
+            
+    matched_ids = []
+    for item in prestations:
+        if item.get("category") == "equipment":
+            desc = item.get("description", "").strip().lower()
+            if desc in name_to_id:
+                matched_ids.append(name_to_id[desc])
+    return matched_ids
+
+
 def create_pre_quote(data, user_id=None):
     """Crée un nouveau pré-devis."""
     reference = generate_reference()
@@ -140,6 +176,30 @@ def create_pre_quote(data, user_id=None):
     )
 
     db.session.add(quote)
+    db.session.flush()
+
+    # Liaison ou création automatique de projet
+    project_id = data.get('project_id')
+    if project_id == 'new':
+        from models import Project
+        from services.admin.waivers import create_pilot_waiver, create_production_waiver
+        veh_ids = extract_vehicle_ids_from_prestations(quote.prestations)
+        head_ids = extract_head_ids_from_prestations(quote.prestations)
+        project = Project(
+            name=quote.project_name or f"Projet {quote.reference}",
+            production_id=quote.production_id,
+            vehicles_to_check=",".join(veh_ids),
+            heads_to_check=",".join(head_ids)
+        )
+        db.session.add(project)
+        db.session.flush()
+        
+        create_pilot_waiver(project.id)
+        create_production_waiver(project.id)
+        quote.project_id = project.id
+    elif project_id:
+        quote.project_id = int(project_id)
+
     db.session.commit()
     return quote
 
@@ -176,6 +236,89 @@ def update_pre_quote(quote_id, data):
     if 'show_discounts' in data:
         quote.show_discounts = data['show_discounts']
 
+    # Liaison ou création automatique de projet
+    if 'project_id' in data:
+        project_id = data['project_id']
+        if project_id == 'new':
+            from models import Project
+            from services.admin.waivers import create_pilot_waiver, create_production_waiver
+            veh_ids = extract_vehicle_ids_from_prestations(quote.prestations)
+            head_ids = extract_head_ids_from_prestations(quote.prestations)
+            project = Project(
+                name=quote.project_name or f"Projet {quote.reference}",
+                production_id=quote.production_id,
+                vehicles_to_check=",".join(veh_ids),
+                heads_to_check=",".join(head_ids)
+            )
+            db.session.add(project)
+            db.session.flush()
+            
+            create_pilot_waiver(project.id)
+            create_production_waiver(project.id)
+            quote.project_id = project.id
+        elif project_id:
+            quote.project_id = int(project_id)
+        else:
+            quote.project_id = None
+
+    db.session.commit()
+    return quote
+
+
+def create_pre_quote_version(quote_id, note):
+    """Crée une nouvelle version (snapshot) pour un pré-devis."""
+    quote = PreQuote.query.get_or_404(quote_id)
+    
+    # Numéro de la version
+    last_version = PreQuoteVersion.query.filter_by(pre_quote_id=quote_id).order_by(PreQuoteVersion.version_number.desc()).first()
+    next_version = (last_version.version_number + 1) if last_version else 1
+    
+    # Dossier de sortie pour les PDF des pré-devis
+    output_base = current_app.config.get("OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
+    pre_quotes_dir = os.path.join(output_base, "pre-quotes")
+    os.makedirs(pre_quotes_dir, exist_ok=True)
+    
+    # Génération du PDF
+    pdf_bytes = get_pre_quote_pdf(quote_id)
+    relative_pdf_path = f"pre-quotes/{quote.reference}_v{next_version}.pdf"
+    full_pdf_path = os.path.join(output_base, relative_pdf_path)
+    
+    with open(full_pdf_path, 'wb') as f:
+        f.write(pdf_bytes)
+        
+    # Création du record de version
+    version = PreQuoteVersion(
+        pre_quote_id=quote.id,
+        version_number=next_version,
+        prestations=quote.prestations,
+        total_ht=quote.total_ht,
+        total_ttc=quote.total_ttc,
+        insurance_rate=quote.insurance_rate,
+        insurance_amount=quote.insurance_amount,
+        tva_rate=quote.tva_rate,
+        tva_amount=quote.tva_amount,
+        pdf_path=relative_pdf_path,
+        version_note=note or f"Version {next_version}"
+    )
+    
+    db.session.add(version)
+    db.session.commit()
+    return version
+
+
+def restore_pre_quote_version(version_id):
+    """Restaure les données d'une version spécifique dans le pré-devis parent."""
+    version = PreQuoteVersion.query.get_or_404(version_id)
+    quote = version.pre_quote
+    
+    quote.prestations = version.prestations
+    quote.total_ht = version.total_ht
+    quote.total_ttc = version.total_ttc
+    quote.insurance_rate = version.insurance_rate
+    quote.insurance_amount = version.insurance_amount
+    quote.tva_rate = version.tva_rate
+    quote.tva_amount = version.tva_amount
+    
     db.session.commit()
     return quote
 

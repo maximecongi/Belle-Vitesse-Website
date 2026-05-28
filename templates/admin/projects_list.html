@@ -112,6 +112,35 @@
                         style="font-size: 0.6rem; color: var(--grey-2);">{{
                         project.production }}</span><br><br>
                     <span class="checkout-doc-id">{{ project.project_id }}</span>
+                    {% if project.pre_quotes %}
+                    <div style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.35rem;">
+                        {% for pq in project.pre_quotes %}
+                            {% set status_label = 'Brouillon' %}
+                            {% set badge_color = 'background: #fef3c7; color: #d97706; border: 1px solid #fde68a;' %}
+                            
+                            {% if pq.status == 'sent' %}
+                                {% set status_label = 'Envoyé' %}
+                                {% set badge_color = 'background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;' %}
+                            {% elif pq.status == 'accepted' %}
+                                {% set status_label = 'Accepté' %}
+                                {% set badge_color = 'background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;' %}
+                            {% elif pq.status == 'rejected' %}
+                                {% set status_label = 'Refusé' %}
+                                {% set badge_color = 'background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;' %}
+                            {% endif %}
+                            
+                            <a href="{{ url_for('admin_pre_quote_edit', quote_id=pq.id) }}" style="text-decoration: none; width: fit-content; display: inline-block;">
+                                <span style="{{ badge_color }} font-size: 0.65rem; padding: 0.15rem 0.4rem; border-radius: 4px; display: inline-flex; align-items: center; gap: 0.2rem; white-space: nowrap;" title="Statut du pré-devis : {{ status_label }}">
+                                    📄 {{ pq.reference }} 
+                                    {% if pq.latest_version %}
+                                    <span style="opacity: 0.85; font-weight: 600; margin-left: 2px;">(v{{ pq.latest_version }})</span>
+                                    {% endif %}
+                                    <span style="font-size: 0.6rem; opacity: 0.85; margin-left: 4px; font-weight: bold;">[{{ status_label }}]</span>
+                                </span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                     <br><br>
                     <div style="font-size: 0.6rem; color: var(--grey-2);">
                         🚚 {{ project.departure_date }}<br><br>

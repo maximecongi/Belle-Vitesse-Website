@@ -517,6 +517,7 @@ async function saveQuote() {
         const data = {
             production_id: document.querySelector('select[name="production_id"]').value,
             project_name: document.querySelector('input[name="project_name"]').value,
+            project_id: document.querySelector('select[name="project_id"]').value,
             tva_rate: parseFloat(document.getElementById('tvaRate').value) || 20.00,
             insurance_rate: parseFloat(document.getElementById('insuranceRate').value) || 10.00,
             show_discounts: document.getElementById('showDiscounts').checked,
@@ -566,5 +567,77 @@ async function saveQuote() {
         alert("Une erreur est survenue lors de l'enregistrement.");
         btn.disabled = false;
         btn.textContent = originalText;
+    }
+}
+
+async function createVersion() {
+    const note = prompt("Saisissez une note de version pour vous rappeler ce qui a été fait (ex: Ajout du chauffeur, rabais matériel) :");
+    if (note === null) return; // user cancelled
+
+    const btn = document.getElementById('versionBtn');
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Enregistrement...';
+
+    // D'abord on sauvegarde les modifications actuelles du devis
+    await saveQuote();
+
+    const quoteId = window.location.pathname.split('/').filter(Boolean).find(p => !isNaN(p));
+    if (!quoteId) {
+        alert("Impossible de déterminer l'identifiant du devis.");
+        btn.disabled = false;
+        btn.textContent = originalText;
+        return;
+    }
+
+    try {
+        const res = await fetch(`/admin/api/pre-quotes/${quoteId}/version`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+            },
+            body: JSON.stringify({ note: note.trim() })
+        });
+        const result = await res.json();
+        if (result.status === 'success') {
+            alert(`Version ${result.version_number} figée avec succès !`);
+            window.location.reload();
+        } else {
+            alert("Erreur lors de la création de la version : " + result.message);
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Une erreur est survenue lors de l'enregistrement de la version.");
+        btn.disabled = false;
+        btn.textContent = originalText;
+    }
+}
+
+async function restoreVersion(versionId, versionNumber) {
+    if (!confirm(`Êtes-vous sûr de vouloir restaurer la version ${versionNumber} ? Les modifications non enregistrées seront perdues.`)) {
+        return;
+    }
+
+    try {
+        const res = await fetch(`/admin/api/pre-quotes/version/${versionId}/restore`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+            }
+        });
+        const result = await res.json();
+        if (result.status === 'success') {
+            alert(`Version ${versionNumber} restaurée avec succès !`);
+            window.location.reload();
+        } else {
+            alert("Erreur lors de la restauration : " + result.message);
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Une erreur est survenue lors de la restauration de la version.");
     }
 }

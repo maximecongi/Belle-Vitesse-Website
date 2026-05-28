@@ -7,7 +7,8 @@ from flask import (
     request,
     url_for,
     send_file,
-    jsonify
+    jsonify,
+    session
 )
 from io import BytesIO
 from services.admin import (
@@ -18,9 +19,11 @@ from services.admin.pre_quote import (
     create_pre_quote,
     update_pre_quote,
     delete_pre_quote,
-    get_pre_quote_pdf
+    get_pre_quote_pdf,
+    create_pre_quote_version,
+    restore_pre_quote_version
 )
-from models import PreQuote, Production
+from models import PreQuote, Production, Project, PreQuoteVersion
 from utils.decorators import require_roles
 
 
@@ -50,14 +53,16 @@ def init_pre_quotes_routes(app):
                     pass
 
                 # user_id à récupérer de la session
-                quote = create_pre_quote(data, user_id=None)
+                user_id = session.get('admin_user_id')
+                quote = create_pre_quote(data, user_id=user_id)
                 return jsonify({"status": "success", "id": quote.id})
             except Exception as e:
                 current_app.logger.error(f"❌ Erreur création pré-devis : {e}")
                 return jsonify({"status": "error", "message": str(e)}), 400
 
         productions = list_productions()
-        return render_template("admin/pre_quote_form.html", is_edit=False, productions=productions)
+        projects = Project.query.order_by(Project.departure_date.desc(), Project.name).all()
+        return render_template("admin/pre_quote_form.html", is_edit=False, productions=productions, projects=projects)
 
     @app.route("/admin/pre-quotes/<int:quote_id>/edit", methods=["GET", "POST"])
     @require_roles('administrator', 'manager', 'commercial')
@@ -158,7 +163,8 @@ def init_pre_quotes_routes(app):
             current_app.logger.error(f"❌ Erreur lors de l'enrichissement des salaires : {e}")
 
         productions = list_productions()
-        return render_template("admin/pre_quote_form.html", quote=quote, is_edit=True, productions=productions)
+        projects = Project.query.order_by(Project.departure_date.desc(), Project.name).all()
+        return render_template("admin/pre_quote_form.html", quote=quote, is_edit=True, productions=productions, projects=projects)
 
 
     @app.route("/admin/pre-quotes/<int:quote_id>/pdf")
@@ -191,13 +197,49 @@ def init_pre_quotes_routes(app):
     @require_roles('administrator', 'manager', 'commercial')
     def admin_api_quote_status(quote_id):
         try:
-            data = request.get_json()
+            data = request.get_json() or {}
             if not data or 'status' not in data:
                 return jsonify({"status": "error", "message": "Missing status"}), 400
             
             update_pre_quote(quote_id, {'status': data['status']})
+            
+            # Versionner automatiquement si le statut change vers envoyé, accepté, refusé
+            new_status = data['status']
+            if new_status in ['sent', 'accepted', 'rejected']:
+                note = data.get('note')
+                if not note:
+                    status_labels = {
+                        'sent': 'Envoyé',
+                        'accepted': 'Accepté',
+                        'rejected': 'Refusé'
+                    }
+                    note = f"Changement de statut en {status_labels.get(new_status, new_status)}"
+                create_pre_quote_version(quote_id, note)
+                
             return jsonify({"status": "success"})
         except Exception as e:
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/admin/api/pre-quotes/<int:quote_id>/version", methods=["POST"])
+    @require_roles('administrator', 'manager', 'commercial')
+    def admin_api_quote_create_version(quote_id):
+        try:
+            data = request.get_json() or {}
+            note = data.get('note', '')
+            version = create_pre_quote_version(quote_id, note)
+            return jsonify({"status": "success", "version_number": version.version_number})
+        except Exception as e:
+            current_app.logger.error(f"❌ Erreur création version pré-devis : {e}")
+            return jsonify({"status": "error", "message": str(e)}), 400
+
+    @app.route("/admin/api/pre-quotes/version/<int:version_id>/restore", methods=["POST"])
+    @require_roles('administrator', 'manager', 'commercial')
+    def admin_api_quote_restore_version(version_id):
+        try:
+            quote = restore_pre_quote_version(version_id)
+            return jsonify({"status": "success", "quote_id": quote.id})
+        except Exception as e:
+            current_app.logger.error(f"❌ Erreur restauration version pré-devis : {e}")
             return jsonify({"status": "error", "message": str(e)}), 400
 
     @app.route("/admin/api/pre-quotes/all-rates")

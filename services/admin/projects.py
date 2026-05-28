@@ -3,7 +3,7 @@ import os
 
 from sqlalchemy.orm import joinedload
 
-from models import Contact, Production, Project, db
+from models import Contact, Production, Project, PreQuote, db
 from services.admin.status_mapping import format_waiver_status
 from utils.database import get_vehicles, get_heads
 from utils.formatting import format_date_fr
@@ -110,7 +110,14 @@ def _format_project_admin(p, vehicle_map, heads_map):
             "status": format_waiver_status(p.production_waiver.status) if p.production_waiver else "",
             "raw_status": p.production_waiver.status if p.production_waiver else "",
             "pdf_path": _get_secured_document_url(p.production_waiver.signed_pdf_path, "production-waiver") if p.production_waiver else None,
-        }
+        },
+        "pre_quotes": [{
+            "id": pq.id,
+            "reference": pq.reference,
+            "total_ht": float(pq.total_ht),
+            "status": pq.status,
+            "latest_version": max([v.version_number for v in pq.versions]) if pq.versions else None
+        } for pq in p.pre_quotes] if getattr(p, 'pre_quotes', None) else []
     }
 
 
@@ -126,7 +133,8 @@ def list_projects():
         joinedload(Project.production_contact),
         joinedload(Project.dop_contact),
         joinedload(Project.pilot_waiver),
-        joinedload(Project.production_waiver)
+        joinedload(Project.production_waiver),
+        joinedload(Project.pre_quotes).joinedload(PreQuote.versions)
     ).order_by(Project.departure_date.desc(), Project.name.asc()).all()
 
     vehicles = get_vehicles()

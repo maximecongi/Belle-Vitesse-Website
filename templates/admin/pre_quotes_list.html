@@ -35,6 +35,12 @@
                     <td>
                         <span style="font-weight: 600;">{{ quote.production.name }}</span><br>
                         <span style="font-size: 0.85rem; color: var(--grey-2);">{{ quote.project_name or '—' }}</span>
+                        {% if quote.project %}
+                        <br>
+                        <a href="{{ url_for('admin_project_edit', record_id=quote.project.id) }}" style="text-decoration: none; display: inline-flex; align-items: center; gap: 0.2rem; margin-top: 0.3rem;">
+                            📅 <span class="checkout-doc-id" style="margin-top: 0;">{{ quote.project.project_id }}</span>
+                        </a>
+                        {% endif %}
                     </td>
                     <td style="font-weight: 600;">{{ "{:,.2f}".format(quote.total_ht)|replace(',', ' ') }} €</td>
                     <td>
@@ -123,6 +129,22 @@
 
     function updateStatus(id, select) {
         const newStatus = select.value;
+        
+        let note = "";
+        if (newStatus === 'sent' || newStatus === 'accepted' || newStatus === 'rejected') {
+            const statusLabels = {
+                'sent': 'Envoyé',
+                'accepted': 'Accepté',
+                'rejected': 'Refusé'
+            };
+            note = prompt(`Ajouter une note de version pour le passage en "${statusLabels[newStatus]}" (facultatif) :`);
+            if (note === null) {
+                // User clicked cancel, reset select to old value
+                window.location.reload();
+                return;
+            }
+        }
+
         const container = select.parentElement;
         const labelSpan = container.querySelector('.status-label');
         
@@ -151,13 +173,17 @@
                 'X-CSRFToken': "{{ csrf_token() }}",
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ status: newStatus })
+            body: JSON.stringify({ status: newStatus, note: note.trim() })
         })
             .then(res => res.json())
             .then(data => {
                 if (data.status !== 'success') {
                     alert("Erreur lors de la mise à jour : " + data.message);
                     window.location.reload(); // Revert on failure
+                } else {
+                    if (newStatus === 'sent' || newStatus === 'accepted' || newStatus === 'rejected') {
+                        window.location.reload(); // Reload to refresh list/PDF
+                    }
                 }
             })
             .catch(err => {

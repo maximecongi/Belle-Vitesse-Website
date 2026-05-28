@@ -19,7 +19,7 @@ from flask import Flask, abort, g, request, session, url_for
 
 from config import config
 from extensions import cache, compress, csrf, limiter
-from models import AppSetting, PreQuote, User, db
+from models import AppSetting, PreQuote, PreQuoteVersion, User, db
 from routes import init_error_handlers, init_routes
 from services.admin.sql_logger import init_sql_logger
 from services.admin.status_mapping import (
@@ -430,6 +430,24 @@ def create_app():
                         db.session.rollback()
                         app.logger.warning(
                             f"⚠️ Échec de la migration pour pre_quotes.insurance_amount : {e}")
+
+                if 'project_id' not in columns:
+                    try:
+                        db.session.execute(
+                            text("ALTER TABLE pre_quotes ADD COLUMN project_id INT NULL, ADD CONSTRAINT fk_pre_quotes_projects FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE SET NULL"))
+                        db.session.commit()
+                        app.logger.info("✅ Migration : pre_quotes.project_id ajoutée.")
+                    except Exception as e:
+                        db.session.rollback()
+                        try:
+                            db.session.execute(
+                                text("ALTER TABLE pre_quotes ADD COLUMN project_id INT NULL"))
+                            db.session.commit()
+                            app.logger.info("✅ Migration (sans FK brute) : pre_quotes.project_id ajoutée.")
+                        except Exception as e2:
+                            db.session.rollback()
+                            app.logger.warning(
+                                f"⚠️ Échec de la migration pour pre_quotes.project_id : {e2}")
 
     # Initialise le schéma uniquement en développement ou si explicitement demandé (migrations)
     if os.getenv("FLASK_ENV") != "production" or os.getenv("RUN_MIGRATIONS") == "true":
