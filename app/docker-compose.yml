@@ -20,6 +20,7 @@ services:
       - traefik_default
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=traefik_default"
       # Site principal
       - "traefik.http.routers.bv_app.rule=Host(`bellevitesse.com`)"
       - "traefik.http.routers.bv_app.entrypoints=websecure"
