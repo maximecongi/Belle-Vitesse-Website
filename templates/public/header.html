@@ -2,39 +2,45 @@
     <div class="header">
         <div class="header-menu">
             {# Menu mobile #}
-            <input type="checkbox" id="active">
-            <label for="active" class="menu-btn" id="header-menu-mobile"><span></span></label>
-            <label for="active" class="close"></label>
+            <input type="checkbox" id="active" aria-label="Toggle menu">
+            <label for="active" class="menu-btn" id="header-menu-mobile" aria-label="Menu"><span></span></label>
+            <label for="active" class="close" aria-label="Close menu"></label>
             <div class="wrapper">
                 <ul>
                     <li><a href="{{ url_for('home') }}">{{ ts('menu.home') }}</a></li>
-                    <li><a href="{{ url_for('vehicles') }}">{{ ts('menu.vehicles') }}</a></li>
-                    <ul>
-                        {% for vehicle in vehicles %}
-                        {% if vehicle.fields.status == "Online" %}
-                        <li><a href="{{ url_for('vehicle', slug=vehicle.fields.slug) }}">{{vehicle.fields.name}}</a>
-                        </li>
-                        {% endif %}
-                        {% endfor %}
-                    </ul>
-                    <li><a href="{{ url_for('heads') }}">{{ ts('menu.heads') }}</a></li>
-                    <ul>
-                        {% for head in heads %}
-                        {% if head.fields.status == "Online" %}
-                        <li><a href="{{ url_for('head', slug=head.fields.slug) }}">{{head.fields.name}}</a></li>
-                        {% endif %}
-                        {% endfor %}
-                    </ul>
-                    <li><a href="{{ url_for('grips') }}">{{ ts('menu.supports') }}</a></li>
-                    <ul>
-                        {% for grips_category in grips_categories %}
-                        {% if grips_category.fields.status == "Online" %}
-                        <li><a href="{{ url_for('grip_products', slug=grips_category.fields.slug)}}">{{
-                                t(grips_category.fields, 'name') }}</a>
-                        </li>
-                        {% endif %}
-                        {% endfor %}
-                    </ul>
+                    <li>
+                        <a href="{{ url_for('vehicles') }}">{{ ts('menu.vehicles') }}</a>
+                        <ul>
+                            {% for vehicle in vehicles %}
+                            {% if vehicle.fields.status == "Online" %}
+                            <li><a href="{{ url_for('vehicle', slug=vehicle.fields.slug) }}">{{vehicle.fields.name}}</a>
+                            </li>
+                            {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('heads') }}">{{ ts('menu.heads') }}</a>
+                        <ul>
+                            {% for head in heads %}
+                            {% if head.fields.status == "Online" %}
+                            <li><a href="{{ url_for('head', slug=head.fields.slug) }}">{{head.fields.name}}</a></li>
+                            {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('grips') }}">{{ ts('menu.supports') }}</a>
+                        <ul>
+                            {% for grips_category in grips_categories %}
+                            {% if grips_category.fields.status == "Online" %}
+                            <li><a href="{{ url_for('grip_products', slug=grips_category.fields.slug)}}">{{
+                                    t(grips_category.fields, 'name') }}</a>
+                            </li>
+                            {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </li>
                     <li><a href="{{ url_for('about_us') }}">{{ ts('menu.about_us') }}</a></li>
                     <li><a href="{{ url_for('contact') }}">{{ ts('menu.contact') }}</a></li>
                 </ul>
@@ -145,7 +151,7 @@
             </div>
         </div>
         <div class="header-logo">
-            <a href="{{ url_for('home') }}">
+            <a href="{{ url_for('home') }}" aria-label="Belle Vitesse - Home">
                 <?xml version="1.0" encoding="UTF-8"?>
                 <svg xmlns="http://www.w3.org/2000/svg" class="header-logo-icon" viewBox="0 0 1000 813">
                     <path fill="currentColor"
@@ -161,7 +167,7 @@
                 <a href="{{ alt_url('fr') }}" class="header-lang-link{% if lang == 'fr' %} active{% endif %}"
                     data-no-swup>FR</a>
             </div>
-            <a href="https://www.instagram.com/">
+            <a href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram">
                 <svg xmlns="http://www.w3.org/2000/svg" class="header-social_links-icon" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                     class="lucide lucide-instagram-icon lucide-instagram">

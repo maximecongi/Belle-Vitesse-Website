@@ -74,10 +74,9 @@
     <div class="home-references-wrapper">
       <div class="home-references-group">
         {% for brand in brands %}
-        <a href="{{ brand.url }}" target="_blank">
+        <a href="{{ brand.url }}" target="_blank" rel="noopener" aria-label="{{ brand.label }}">
           <div class="logo"
-            style="--logo-url: url('{{ url_for('static', filename='imgs/brands/' ~ brand.slug ~ '-logo.svg') }}')"
-            aria-label="{{ brand.label }}"></div>
+            style="--logo-url: url('{{ url_for('static', filename='imgs/brands/' ~ brand.slug ~ '-logo.svg') }}')"></div>
         </a>
         {% endfor %}
       </div>
