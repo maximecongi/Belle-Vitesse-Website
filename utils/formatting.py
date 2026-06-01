@@ -22,18 +22,3 @@ def format_date_fr(date_str: str) -> str:
         return f"{day} {MOIS_FR[month]} {year}"
     except (ValueError, IndexError):
         return date_str
-
-
-def format_date_slash(date_str: str) -> str:
-    if not date_str or date_str == "—":
-        return "—"
-    try:
-        parts = date_str.strip().split()
-        day = int(parts[0])
-        month_name = parts[1].lower()
-        year = parts[2]
-
-        month = MOIS_FR.index(month_name)
-        return f"{day:02d}/{month:02d}/{year}"
-    except (ValueError, IndexError):
-        return date_str

@@ -476,31 +476,11 @@ def warm_cache():
         app.logger.error(f"❌ Erreur lors du pré-chargement du cache : {e}")
 
 
-if os.getenv("FLASK_ENV") == "production" and os.getenv("RUN_SCHEDULER") == "true":
+
+if os.getenv("FLASK_ENV") == "production":
+    # Warm le cache une seule fois au démarrage (pas de scheduler récurrent)
     import threading
-    # Exécute le warmup dans un thread séparé au démarrage
     threading.Thread(target=warm_cache, daemon=True).start()
-
-    # ── Scheduler ──────────────────────────────────────────────
-    from apscheduler.schedulers.background import BackgroundScheduler
-    scheduler = BackgroundScheduler()
-
-    # Re-warm du cache toutes les 23h50
-    scheduler.add_job(
-        func=warm_cache,
-        trigger="interval",
-        hours=23,
-        minutes=50,
-        id="cache_warmup",
-        replace_existing=True,
-    )
-
-    # Heartbeat DB : géré par TCP keepalive + pool_pre_ping + pool_recycle
-    # et post_fork dans gunicorn.conf.py pour les workers.
-
-    scheduler.start()
-    app.logger.info("⏰ Scheduler démarré (cache warmup)")
-    # ───────────────────────────────────────────────────────────
 
 
 if __name__ == "__main__":

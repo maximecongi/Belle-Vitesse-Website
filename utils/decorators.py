@@ -2,18 +2,6 @@ from functools import wraps
 
 from flask import current_app, flash, redirect, request, session, url_for
 
-
-def format_date_fr(date_str: str) -> str:
-    """Convertit une chaîne de date au format français (ex: 16 février 2026)."""
-    if not date_str or date_str == "—":
-        return "—"
-    try:
-        from utils.formatting import format_date_fr as _format
-        return _format(date_str)
-    except Exception:
-        return date_str
-
-
 def require_roles(*allowed_roles):
     """
     Décorateur pour restreindre l'accès à des rôles spécifiques.

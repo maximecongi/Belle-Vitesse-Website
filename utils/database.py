@@ -149,15 +149,6 @@ def get_vehicle_by_slug(slug):
 def get_head_by_slug(slug):
     """Récupère une tête par son slug."""
     return get_cached(f"head_{slug}", lambda: _fetch_by_field("heads", "slug", slug))
-
-
-def get_static_by_lang(lang="en"):
-    """Récupère le contenu statique pour une langue spécifique."""
-    return get_cached(
-        f"static_{lang}", lambda: _fetch_by_field("static", "language", lang)
-    )
-
-
 def get_all_static():
     """Récupère toutes les lignes de contenu statique, indexées par code langue.
 

@@ -27,8 +27,6 @@ TABLE_GRIPS_CATEGORIES = Table(
 TABLE_GRIP_PRODUCTS = Table(AIRTABLE_SECRET_TOKEN,
                             AIRTABLE_BASE_ID, "grip_products")
 TABLE_CONFIGS = Table(AIRTABLE_SECRET_TOKEN, AIRTABLE_BASE_ID, "configs")
-TABLE_NEWSLETTER = Table(AIRTABLE_SECRET_TOKEN,
-                         AIRTABLE_BASE_ID, "newsletter_subscribers")
 
 
 def init_cache(app_cache: Cache):
@@ -42,13 +40,6 @@ def get_cached(key, fetcher, timeout=3600):
         value = fetcher()
         cache.set(key, value, timeout=timeout)
     return value
-
-
-def get_static_by_lang(lang="en"):
-    return get_cached(
-        f"static_{lang}",
-        lambda: TABLE_STATIC.first(formula=f"{{language}}='{lang}'")
-    )
 
 
 def get_all_static():
@@ -91,14 +82,6 @@ def get_grips_products_for_category(category_id):
     )
 
 
-def get_vehicle_by_id(vehicle_id):
-    """Fetch a vehicle by its Airtable record ID (recXXX)."""
-    return get_cached(
-        f"vehicle_id_{vehicle_id}",
-        lambda: TABLE_VEHICLES.get(vehicle_id)
-    )
-
-
 def get_vehicle_by_slug(slug):
     """Récupère un véhicule par son slug."""
     return get_cached(
@@ -125,24 +108,3 @@ def get_configs_for_vehicle(vehicle_id):
     )
 
 
-# Newsletter Helpers
-def add_newsletter_subscriber(email):
-    """Add a new subscriber to Airtable."""
-    # Check if subscriber already exists
-    existing = TABLE_NEWSLETTER.first(formula=f"{{email}}='{email}'")
-    if existing:
-        return False
-
-    # Airtable handles 'subscribed_at' automatically
-    TABLE_NEWSLETTER.create({
-        "email": email
-    })
-    return True
-
-
-def remove_newsletter_subscriber(email):
-    """Supprime un abonné d'Airtable."""
-    records = TABLE_NEWSLETTER.all(formula=f"{{email}}='{email}'")
-    for r in records:
-        TABLE_NEWSLETTER.delete(r["id"])
-    return len(records) > 0
