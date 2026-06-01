@@ -38,6 +38,32 @@ services:
     ports:
       - "5001:5001"
 
+  # ───── Static File Server (Nginx) ─────
+  nginx_static:
+    image: nginx:alpine
+    container_name: bv_nginx_static
+    restart: always
+    volumes:
+      - /srv/bellevitesse/website/static:/usr/share/nginx/html/static:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - traefik_default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_default"
+      # Route /static/ requests to Nginx (higher priority than Flask)
+      - "traefik.http.routers.bv_static.rule=Host(`bellevitesse.com`) && PathPrefix(`/static/`)"
+      - "traefik.http.routers.bv_static.entrypoints=websecure"
+      - "traefik.http.routers.bv_static.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.bv_static.priority=100"
+      - "traefik.http.services.bv_static.loadbalancer.server.port=80"
+      # Also serve static for team.bellevitesse.com
+      - "traefik.http.routers.bv_static_admin.rule=Host(`team.bellevitesse.com`) && PathPrefix(`/static/`)"
+      - "traefik.http.routers.bv_static_admin.entrypoints=websecure"
+      - "traefik.http.routers.bv_static_admin.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.bv_static_admin.priority=100"
+      - "traefik.http.routers.bv_static_admin.service=bv_static"
+
   # ───── Worker RQ ─────
   worker:
     build:
