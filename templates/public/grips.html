@@ -50,7 +50,7 @@
     <div class="categories-solutions-filters-dropdown" style="visibility: hidden;">
       <p class="categories-solutions-filters-dropdown-button slider-dropdown-button"><span
           class="categories-solutions-filters-dropdown-icon"><img
-            src="{{ url_for('static', filename='imgs/icons/filter.svg') }}" /></span><span
+            src="{{ url_for('static', filename='imgs/icons/filter.svg') }}" alt="" /></span><span
           class="categories-solutions-filters-dropdown-text">{{ ts('.filters_button') }}</span></p>
     </div>
     <div class="categories-solutions-categories">
@@ -61,9 +61,9 @@
         <a class="categories-solutions-categories-img-link"
           href="{{ url_for('grip_products', slug=grip.fields.slug) }}">
           {% if grip.fields.thumbnail is defined %}
-          <img src="{{ grip.fields.thumbnail[0].thumbnails.large.url }}" />
+          <img src="{{ grip.fields.thumbnail[0].thumbnails.large.url }}" alt="{{ t(grip.fields, 'name') }} - Belle Vitesse" />
           {% else %}
-          <img src="{{ url_for('static', filename='/imgs/icons/gimbal.svg') }}" />
+          <img src="{{ url_for('static', filename='/imgs/icons/gimbal.svg') }}" alt="{{ t(grip.fields, 'name') }} - Image indisponible" />
           {% endif %}
         </a>
       </div>

@@ -206,15 +206,15 @@ def create_app():
                 or static_all.get('en', {}).get(key, key))
 
     def alt_url(target_lang):
-        """Génère l'URL de la page courante dans une autre langue."""
+        """Génère l'URL de la page courante dans une autre langue (absolue pour le SEO)."""
         if request.endpoint and request.view_args is not None:
             try:
                 args = dict(request.view_args)
                 args['lang'] = target_lang
-                return url_for(request.endpoint, **args)
+                return url_for(request.endpoint, _external=True, **args)
             except Exception:
                 pass
-        return url_for('home', lang=target_lang)
+        return url_for('home', lang=target_lang, _external=True)
 
     # Processeurs de Contexte (Variables Globales pour les Templates)
     @app.context_processor
