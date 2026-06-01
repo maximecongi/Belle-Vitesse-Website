@@ -900,13 +900,29 @@ class AppSetting(db.Model):
 
     @staticmethod
     def get(key, default=None):
-        """Récupère une valeur par clé, avec fallback."""
+        """Récupère une valeur par clé, avec fallback (mise en cache)."""
+        from extensions import cache
+        cache_key = f"setting:{key}"
+        try:
+            val = cache.get(cache_key)
+            if val is not None:
+                return val
+        except Exception:
+            pass
+
         setting = AppSetting.query.get(key)
-        return setting.value if setting else default
+        val = setting.value if setting else default
+
+        try:
+            cache.set(cache_key, val, timeout=3600)
+        except Exception:
+            pass
+        return val
 
     @staticmethod
     def set(key, value):
-        """Crée ou met à jour un paramètre."""
+        """Crée ou met à jour un paramètre (et met à jour le cache)."""
+        from extensions import cache
         setting = AppSetting.query.get(key)
         if setting:
             setting.value = str(value)
@@ -914,6 +930,10 @@ class AppSetting(db.Model):
             setting = AppSetting(key=key, value=str(value))
             db.session.add(setting)
         db.session.commit()
+        try:
+            cache.set(f"setting:{key}", str(value), timeout=3600)
+        except Exception:
+            pass
         return setting
 
     def __repr__(self):
