@@ -3,6 +3,7 @@ services:
     image: redis:latest
     container_name: bv_redis
     restart: always
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --save ""
     volumes:
       - redis_data:/data
     networks:
