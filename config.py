@@ -5,7 +5,7 @@ from pathlib import Path
 
 class Config:
     """Base configuration."""
-    SECRET_KEY = os.getenv("SECRET_KEY", "bv_super_secret_key_2026")
+    SECRET_KEY = os.getenv("SECRET_KEY")
 
     # Flask settings
     PREFERRED_URL_SCHEME = "https"
@@ -35,7 +35,7 @@ class Config:
     }
 
     # Arclight settings
-    ARCLIGHT_SECRET = os.getenv("ARCLIGHT_SECRET", "ton_token_secret")
+    ARCLIGHT_SECRET = os.getenv("ARCLIGHT_SECRET")
 
     @staticmethod
     def init_app(app):
@@ -63,6 +63,7 @@ class DevelopmentConfig(Config):
 class ProductionConfig(Config):
     DEBUG = False
     CACHE_TYPE = "RedisCache"
+    SESSION_COOKIE_SECURE = True
 
     REDIS_HOST = os.getenv("REDIS_HOST", "bv_redis")
     REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))

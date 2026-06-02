@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from datetime import datetime
 from pathlib import Path
 
 from flask import current_app, url_for
@@ -79,7 +80,10 @@ def list_inspections_unified(mode):
     resp_attr = config["responsible_attr"]
 
     # Chargement lié optimisé pour éviter le problème N+1
-    records = record_model.query.options(
+    records = record_model.query.join(Project).filter(
+        record_model.deleted_at == None,
+        Project.deleted_at == None
+    ).options(
         joinedload(record_model.project).joinedload(Project.production),
         joinedload(getattr(record_model, resp_attr))
     ).order_by(record_model.created_at.desc()).all()
@@ -119,10 +123,14 @@ def get_inspection_detail_unified(mode, record_id):
     record_model = config["model"]
     resp_attr = config["responsible_attr"]
 
-    record = record_model.query.options(
+    record = record_model.query.join(Project).filter(
+        record_model.id == record_id,
+        record_model.deleted_at == None,
+        Project.deleted_at == None
+    ).options(
         joinedload(record_model.project).joinedload(Project.production),
         joinedload(getattr(record_model, resp_attr))
-    ).filter_by(id=record_id).first()
+    ).first()
 
     if not record:
         return None
@@ -175,7 +183,7 @@ def delete_inspection_unified(mode, record_id):
     """
     config = get_inspection_config(mode)
     record = db.session.get(config["model"], record_id)
-    if not record:
+    if not record or record.deleted_at is not None:
         return False
 
     from utils.n8n import trigger_n8n_webhook
@@ -198,8 +206,8 @@ def delete_inspection_unified(mode, record_id):
     # 3. Suppression des fichiers physiques (photos, PDF)
     _delete_inspection_files(record)
 
-    # 4. Suppression de l'enregistrement principal
-    db.session.delete(record)
+    # 4. Suppression via soft-delete
+    record.deleted_at = datetime.utcnow()
     db.session.commit()
     return True
 
@@ -384,13 +392,13 @@ def get_unified_form_context(mode="checkout"):
     Unifie la récupération du contexte pour les formulaires de départ et de retour.
     Gère les blocages (interdire un nouveau départ si un retour n'a pas été effectué).
     """
-    projects = Project.query.options(joinedload(
+    projects = Project.query.filter(Project.deleted_at == None).options(joinedload(
         Project.production)).order_by(Project.name).all()
     vehicles = get_vehicles()
     users = User.query.order_by(User.firstname).all()
 
-    checkouts = CheckoutVehicle.query.all()
-    checkins = CheckinVehicle.query.all()
+    checkouts = CheckoutVehicle.query.filter(CheckoutVehicle.deleted_at == None).all()
+    checkins = CheckinVehicle.query.filter(CheckinVehicle.deleted_at == None).all()
 
     # Mapping des noms de projets pour un accès rapide
     project_names = {str(p.id): p.name for p in projects}

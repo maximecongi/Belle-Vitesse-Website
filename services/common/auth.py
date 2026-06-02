@@ -44,7 +44,7 @@ def request_magic_link(email):
     try:
         base_url = request.host_url.rstrip('/')
     except Exception:
-        base_url = "https://www.bellevitesse.com"
+        base_url = "https://bellevitesse.com"
 
     magic_link = f"{base_url}/admin/auth/{token}"
 

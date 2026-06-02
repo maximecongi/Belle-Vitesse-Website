@@ -65,7 +65,7 @@ def init_booking_routes(app):
             filtered_items = item_map
 
         # Récupérer tous les projets avec dates
-        all_projects = Project.query.options(
+        all_projects = Project.query.filter(Project.deleted_at == None).options(
             joinedload(Project.production)
         ).all()
 

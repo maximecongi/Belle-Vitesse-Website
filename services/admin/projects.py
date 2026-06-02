@@ -125,7 +125,7 @@ def list_projects():
     """
     Récupère tous les projets et les formate pour la liste d'administration (avec chargement lié optimisé).
     """
-    projects = Project.query.options(
+    projects = Project.query.filter(Project.deleted_at == None).options(
         joinedload(Project.production),
         joinedload(Project.checkout_vehicles),
         joinedload(Project.checkin_vehicles),
@@ -282,10 +282,10 @@ def get_project_for_edit(record_id):
 
 
 def delete_project(record_id):
-    """Supprime un projet et ses décharges associées de la base de données."""
+    """Supprime un projet et ses décharges associées de la base de données via soft-delete."""
     p = db.session.get(Project, record_id)
     if p:
-
+        from models.db import _utcnow
         from services.admin.waivers import (
             delete_pilot_waiver_internal,
             delete_production_waiver_internal,
@@ -293,6 +293,6 @@ def delete_project(record_id):
         # Supprime d'abord les décharges liées pour respecter l'intégrité
         delete_pilot_waiver_internal(record_id)
         delete_production_waiver_internal(record_id)
-        db.session.delete(p)
+        p.deleted_at = _utcnow()
         db.session.commit()
     return True

@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Sitemaps
-Sitemap: https://www.bellevitesse.com/sitemap.xml
+Sitemap: https://bellevitesse.com/sitemap.xml
 
 # Disallow admin paths
 Disallow: /admin/

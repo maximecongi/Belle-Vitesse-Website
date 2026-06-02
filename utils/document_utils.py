@@ -15,8 +15,6 @@ from urllib.parse import unquote, urlparse
 
 import qrcode
 from dotenv import load_dotenv
-from flask import current_app
-from weasyprint import CSS, HTML
 
 load_dotenv()
 
@@ -180,6 +178,8 @@ def render_pdf_from_template(html_content: str, base_url: str, stylesheets: list
         base_url (str) : URL de base pour les ressources.
         stylesheets (list[str]) : Liste des fichiers statiques CSS (ex: ['css/styles.css']).
     """
+    from flask import current_app
+    from weasyprint import CSS, HTML
     fetcher = make_url_fetcher(current_app)
     html = HTML(string=html_content, base_url=base_url, url_fetcher=fetcher)
 

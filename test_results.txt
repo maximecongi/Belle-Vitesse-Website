@@ -1,0 +1,55 @@
+test_api_calendar_no_auth (test_api.APIRouteSmokeTest.test_api_calendar_no_auth)
+GET /api/v1/calendar/events without JWT returns 401. ... ok
+test_api_checkins_no_auth (test_api.APIRouteSmokeTest.test_api_checkins_no_auth)
+GET /api/v1/checkins without JWT returns 401. ... ok
+test_api_checkouts_no_auth (test_api.APIRouteSmokeTest.test_api_checkouts_no_auth)
+GET /api/v1/checkouts without JWT returns 401. ... ok
+test_api_contacts_no_auth (test_api.APIRouteSmokeTest.test_api_contacts_no_auth)
+GET /api/v1/contacts without JWT returns 401. ... ok
+test_api_login_no_email (test_api.APIRouteSmokeTest.test_api_login_no_email)
+POST /api/v1/auth/login without email returns 400. ... ok
+test_api_me_no_auth (test_api.APIRouteSmokeTest.test_api_me_no_auth)
+GET /api/v1/auth/me without JWT returns 401. ... ok
+test_api_me_with_valid_jwt (test_api.APIRouteSmokeTest.test_api_me_with_valid_jwt)
+GET /api/v1/auth/me with valid JWT returns user profile. ... ok
+test_api_productions_no_auth (test_api.APIRouteSmokeTest.test_api_productions_no_auth)
+GET /api/v1/productions without JWT returns 401. ... ok
+test_api_projects_no_auth (test_api.APIRouteSmokeTest.test_api_projects_no_auth)
+GET /api/v1/projects without JWT returns 401. ... ok
+test_api_with_invalid_token (test_api.APIRouteSmokeTest.test_api_with_invalid_token)
+GET /api/v1/checkouts with invalid token returns 401. ... ok
+test_api_with_valid_jwt (test_api.APIRouteSmokeTest.test_api_with_valid_jwt)
+GET /api/v1/checkouts with valid JWT returns 200. ... ok
+test_list_and_details (test_inspections.InspectionsTest.test_list_and_details) ... ok
+test_soft_delete (test_inspections.InspectionsTest.test_soft_delete) ... ok
+test_unified_form_context (test_inspections.InspectionsTest.test_unified_form_context) ... ok
+test_all_rates_api (test_pre_quote_salary.PreQuoteSalaryTest.test_all_rates_api) ... ok
+test_edit_enrichment (test_pre_quote_salary.PreQuoteSalaryTest.test_edit_enrichment) ... ok
+test_grouped_prestations_pdf (test_pre_quote_salary.PreQuoteSalaryTest.test_grouped_prestations_pdf) ... ok
+test_intermittent_salaries_exclusion_and_annex (test_pre_quote_salary.PreQuoteSalaryTest.test_intermittent_salaries_exclusion_and_annex) ... ok
+test_mad_pricing_calculation (test_pre_quote_salary.PreQuoteSalaryTest.test_mad_pricing_calculation) ... ok
+test_about_us_page (test_routes.RouteSmokeTest.test_about_us_page)
+Test that the about us page is accessible. ... ok
+test_admin_login_page (test_routes.RouteSmokeTest.test_admin_login_page)
+Test that the admin login page is accessible. ... ok
+test_contact_page (test_routes.RouteSmokeTest.test_contact_page)
+Test that the contact page is accessible. ... ok
+test_home_page (test_routes.RouteSmokeTest.test_home_page)
+Test that the home page is accessible. ... ok
+test_public_checkin_view_404 (test_routes.RouteSmokeTest.test_public_checkin_view_404)
+Test that public checkin view returns 404 for non-existent record. ... ok
+test_public_checkout_view_404 (test_routes.RouteSmokeTest.test_public_checkout_view_404)
+Test that public checkout view returns 404 for non-existent record. ... ok
+test_public_waiver_sign_page_404 (test_routes.RouteSmokeTest.test_public_waiver_sign_page_404)
+Test that public waiver sign page returns 404 for invalid token. ... ok
+test_create_and_list_waivers (test_waivers.WaiversTest.test_create_and_list_waivers) ... ok
+test_soft_delete_waivers (test_waivers.WaiversTest.test_soft_delete_waivers) ... ok
+
+----------------------------------------------------------------------
+Ran 28 tests in 1.548s
+
+OK
+
+=== DETAILED ERRORS ===
+
+=== DETAILED FAILURES ===

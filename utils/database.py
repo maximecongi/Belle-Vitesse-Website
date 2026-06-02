@@ -74,20 +74,24 @@ def _fetch_all_from_table(table_name, order_by=None):
 
 
 def _fetch_by_field(table_name, field_name, field_value):
-    """Récupère un seul enregistrement par valeur de champ via un scan ORM (les champs sont en JSON)."""
+    """Récupère un seul enregistrement par valeur de champ via une requête JSON MySQL."""
     try:
         model = TABLE_MODELS.get(table_name)
         if not model:
             return None
 
-        # Scan all (since columns are hidden in JSON 'fields')
-        for row in model.query.all():
-            if row.fields.get(field_name) == field_value:
-                return {
-                    "id": row.id,
-                    "createdTime": str(row.createdTime) if row.createdTime else None,
-                    "fields": row.fields
-                }
+        # Requête JSON native MySQL au lieu d'un scan complet de la table
+        from sqlalchemy import func
+        row = model.query.filter(
+            func.json_unquote(func.json_extract(model.fields, f'$.{field_name}')) == field_value
+        ).first()
+
+        if row:
+            return {
+                "id": row.id,
+                "createdTime": str(row.createdTime) if row.createdTime else None,
+                "fields": row.fields
+            }
         return None
     except Exception as e:
         logging.error(f"Error fetching by field from {table_name}: {e}")

@@ -140,8 +140,10 @@ def create_production_waiver(project_id):
 
 def list_production_waivers():
     """Liste et formate toutes les décharges production pour l'administration."""
-    waivers = ProductionWaiver.query.options(
-        joinedload(ProductionWaiver.project)).all()
+    waivers = ProductionWaiver.query.join(Project).filter(
+        ProductionWaiver.deleted_at == None,
+        Project.deleted_at == None
+    ).options(joinedload(ProductionWaiver.project)).all()
     # Tri par date de départ du projet (décroissant)
     waivers.sort(key=lambda w: (
         w.project.departure_date or datetime.min.date(), w.project.name), reverse=True)
@@ -300,7 +302,7 @@ def delete_production_waiver_internal(project_id):
             trigger_n8n_webhook(webhook_url, method="DELETE",
                                 waiver_id=waiver.waiver_id, project_id=waiver.project.project_id)
         _cleanup_waiver_assets("production", waiver)
-        db.session.delete(waiver)
+        waiver.deleted_at = datetime.utcnow()
         db.session.commit()
     except Exception as e:
         logger.error(f"❌ Erreur suppression décharge production : {e}")
@@ -323,7 +325,10 @@ def create_pilot_waiver(project_id):
 
 def list_pilot_waivers():
     """Liste et formate toutes les décharges pilote pour l'administration."""
-    waivers = PilotWaiver.query.options(
+    waivers = PilotWaiver.query.join(Project).filter(
+        PilotWaiver.deleted_at == None,
+        Project.deleted_at == None
+    ).options(
         joinedload(PilotWaiver.project).joinedload(Project.pilot_contact)
     ).all()
     # Tri par date de départ du projet (décroissant)
@@ -502,7 +507,7 @@ def delete_pilot_waiver_internal(project_id):
             trigger_n8n_webhook(webhook_url, method="DELETE",
                                 waiver_id=waiver.waiver_id, project_id=waiver.project.project_id)
         _cleanup_waiver_assets("pilot", waiver)
-        db.session.delete(waiver)
+        waiver.deleted_at = datetime.utcnow()
         db.session.commit()
     except Exception as e:
         logger.error(

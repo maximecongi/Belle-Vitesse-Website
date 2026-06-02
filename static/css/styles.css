@@ -12,7 +12,7 @@
 @import url("contact.css");
 @import url("terms-and-conditions.css");
 @import url("animation.css");
-@import url("mouse-srolling-animation.css");
+@import url("mouse-scrolling-animation.css");
 @import url("filtersliders.css");
 @import url("newsletter.css");
 
@@ -66,7 +66,6 @@ body {
     margin-left: auto;
     font-weight: 500;
     font-style: normal;
-    caret-color: transparent;
 }
 
 p {

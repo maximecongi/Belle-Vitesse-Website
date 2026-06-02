@@ -73,6 +73,7 @@
                 </p>
             </div>
         </div>
+    </div>
 </section>
 
 <section class="section-site">
@@ -97,7 +98,7 @@
                             <ul class="splide__list">
                                 {% for image in head.fields.gallery %}
                                 <li class="splide__slide"><img src="{{ image.thumbnails.full.url }}"
-                                        alt="Gallery image" />
+                                        alt="{{ t(head.fields, 'name') }} - Photo {{ loop.index }}" />
                                 </li>
                                 {% endfor %}
                             </ul>

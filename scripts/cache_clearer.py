@@ -17,7 +17,7 @@ def clear_cache():
 
     # We only keep the relevant production URLs to avoid connection errors in logs
     urls = [
-        "https://www.bellevitesse.com/admin/cache/clear",
+        "https://bellevitesse.com/admin/cache/clear",
         "http://127.0.0.1:5001/admin/cache/clear",  # Port used by Gunicorn in Docker
     ]
 

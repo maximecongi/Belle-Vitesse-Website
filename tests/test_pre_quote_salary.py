@@ -105,12 +105,12 @@ class PreQuoteSalaryTest(unittest.TestCase):
                         "description": "Cadreur (Annexe 1)",
                         "quantity": 2,
                         "unit": "jour(s)",
-                        "unit_price": 480.0,
-                        "total": 960.0
+                        "unit_price": 280.0,
+                        "total": 560.0
                     }
                 ],
-                total_ht=960.0,
-                total_ttc=1152.0
+                total_ht=560.0,
+                total_ttc=672.0
             )
             db.session.add(quote)
             db.session.commit()
@@ -124,10 +124,10 @@ class PreQuoteSalaryTest(unittest.TestCase):
         # Load the edit page to trigger the enrichment code
         response = self.client.get(f"/admin/pre-quotes/{quote_id}/edit")
         self.assertEqual(response.status_code, 200)
-        # Verify the HTML rendered includes the select dropdown and selected value for invoice_8h
+        # Verify the HTML rendered includes the select dropdown and selected value for 8h
         html = response.data.decode("utf-8")
         self.assertIn("salary-rate-select", html)
-        self.assertIn('option value="invoice_8h" selected', html)
+        self.assertIn('option value="8h" selected', html)
 
     def test_mad_pricing_calculation(self):
         from services.admin.pre_quote import calculate_totals
@@ -151,7 +151,8 @@ class PreQuoteSalaryTest(unittest.TestCase):
                 "is_mad": False
             }
         ]
-        totals = calculate_totals(prestations, tva_rate=20.00, insurance_rate=10.00)
+        with self.app.app_context():
+            totals = calculate_totals(prestations, tva_rate=20.00, insurance_rate=10.00)
         # Check that Caméra has discount_rate = 100
         self.assertEqual(prestations[0]["discount_rate"], 100.0)
         # Check that Caméra total is 0.0
@@ -200,7 +201,8 @@ class PreQuoteSalaryTest(unittest.TestCase):
         # Since weasyprint is mocked, get_pre_quote_pdf should call render_template and return mock bytes
         # Let's verify it compiles without errors
         try:
-            pdf_bytes = get_pre_quote_pdf(quote_id)
+            with self.app.test_request_context():
+                pdf_bytes = get_pre_quote_pdf(quote_id)
             self.assertIsNotNone(pdf_bytes)
         except Exception as e:
             self.fail(f"get_pre_quote_pdf raised an exception: {e}")
@@ -231,7 +233,8 @@ class PreQuoteSalaryTest(unittest.TestCase):
             }
         ]
         
-        totals = calculate_totals(prestations, tva_rate=20.00, insurance_rate=10.00)
+        with self.app.app_context():
+            totals = calculate_totals(prestations, tva_rate=20.00, insurance_rate=10.00)
         # All salary items are excluded from HT total
         # So the total rental HT should be 0.0!
         self.assertEqual(float(totals["total_rental_ht"]), 0.0)
@@ -254,10 +257,12 @@ class PreQuoteSalaryTest(unittest.TestCase):
             quote_id = quote.id
             
         try:
-            pdf_bytes = get_pre_quote_pdf(quote_id)
+            with self.app.test_request_context():
+                pdf_bytes = get_pre_quote_pdf(quote_id)
             self.assertIsNotNone(pdf_bytes)
         except Exception as e:
             self.fail(f"get_pre_quote_pdf raised an exception: {e}")
 
 if __name__ == "__main__":
     unittest.main()
+

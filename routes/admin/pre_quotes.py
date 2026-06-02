@@ -61,7 +61,7 @@ def init_pre_quotes_routes(app):
                 return jsonify({"status": "error", "message": str(e)}), 400
 
         productions = list_productions()
-        projects = Project.query.order_by(Project.departure_date.desc(), Project.name).all()
+        projects = Project.query.filter(Project.deleted_at == None).order_by(Project.departure_date.desc(), Project.name).all()
         return render_template("admin/pre_quote_form.html", is_edit=False, productions=productions, projects=projects)
 
     @app.route("/admin/pre-quotes/<int:quote_id>/edit", methods=["GET", "POST"])
@@ -163,7 +163,7 @@ def init_pre_quotes_routes(app):
             current_app.logger.error(f"❌ Erreur lors de l'enrichissement des salaires : {e}")
 
         productions = list_productions()
-        projects = Project.query.order_by(Project.departure_date.desc(), Project.name).all()
+        projects = Project.query.filter(Project.deleted_at == None).order_by(Project.departure_date.desc(), Project.name).all()
         return render_template("admin/pre_quote_form.html", quote=quote, is_edit=True, productions=productions, projects=projects)
 
 

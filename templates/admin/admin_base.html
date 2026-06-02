@@ -7,8 +7,21 @@
     <title>{% block title %}{% endblock %} - Admin Belle Vitesse</title>
 
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    
+    <!-- Fonts preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Stylesheets -->
+    {% if config.FLASK_ENV == 'production' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.bundle.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.bundle.css') }}">
+    {% else %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.css') }}">
+    {% endif %}
+    
     <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
     {% block extra_css %}{% endblock %}
 </head>

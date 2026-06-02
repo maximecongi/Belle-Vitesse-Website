@@ -40,8 +40,8 @@ def calendar_feed(token):
         f"user_id={sub.user_id} IP={request.remote_addr}"
     )
 
-    # 3. Récupérer tous les projets avec au moins une date
-    projects = Project.query.options(
+    # 3. Récupérer tous les projets avec au moins une date (et non archivés/supprimés)
+    projects = Project.query.filter(Project.deleted_at == None).options(
         joinedload(Project.production),
         joinedload(Project.pilot_contact),
         joinedload(Project.production_contact),

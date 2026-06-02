@@ -45,7 +45,7 @@ ts('seo.grip.description_suffix') }}{% endblock %}
                             <ul class="splide__list">
                                 {% for image in grip.fields.gallery %}
                                 <li class="splide__slide"><img src="{{ image.thumbnails.full.url }}"
-                                        alt="Gallery image" />
+                                        alt="{{ t(grip.fields, 'name') }} - Photo {{ loop.index }}" />
                                 </li>
                                 {% endfor %}
                             </ul>
