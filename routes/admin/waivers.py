@@ -36,9 +36,10 @@ def init_waivers_routes(app):
                 flash(msg, "error")
 
         from models import PilotWaiver as PW
-        projects_with_waiver = [w.project_id for w in PW.query.all()]
         available_projects = Project.query.filter(
-            ~Project.id.in_(projects_with_waiver)).all()
+            Project.deleted_at == None,
+            ~Project.id.in_(projects_with_waiver)
+        ).all()
         return render_template("admin/pilot_wai_form.html" if os.path.exists("templates/admin/pilot_wai_form.html") else "admin/pilot_waiver_form.html", projects=available_projects)
 
     @app.route("/admin/waivers/pilots", endpoint='admin_pilot_waivers_list')
@@ -104,9 +105,10 @@ def init_waivers_routes(app):
                 flash(msg, "error")
 
         from models import ProductionWaiver as PW
-        projects_with_waiver = [w.project_id for w in PW.query.all()]
         available_projects = Project.query.filter(
-            ~Project.id.in_(projects_with_waiver)).all()
+            Project.deleted_at == None,
+            ~Project.id.in_(projects_with_waiver)
+        ).all()
         return render_template("admin/production_waiver_form.html", projects=available_projects)
 
     @app.route("/admin/waivers/productions", endpoint='admin_production_waivers_list')

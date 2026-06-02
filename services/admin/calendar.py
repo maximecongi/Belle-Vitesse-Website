@@ -12,7 +12,7 @@ def get_calendar_events():
     """
     Récupère tous les projets et les formate comme événements FullCalendar.
     """
-    records = Project.query.all()
+    records = Project.query.filter(Project.deleted_at == None).all()
     events = []
     colors = [
         "#618b4acc", "#5299d3cc", "#f59e0bcc", "#e05c5ccc", "#8b5cf6cc",
