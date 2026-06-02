@@ -36,6 +36,7 @@ def init_waivers_routes(app):
                 flash(msg, "error")
 
         from models import PilotWaiver as PW
+        projects_with_waiver = [w.project_id for w in PW.query.all()]
         available_projects = Project.query.filter(
             Project.deleted_at == None,
             ~Project.id.in_(projects_with_waiver)
@@ -105,6 +106,7 @@ def init_waivers_routes(app):
                 flash(msg, "error")
 
         from models import ProductionWaiver as PW
+        projects_with_waiver = [w.project_id for w in PW.query.all()]
         available_projects = Project.query.filter(
             Project.deleted_at == None,
             ~Project.id.in_(projects_with_waiver)
