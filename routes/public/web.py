@@ -242,7 +242,7 @@ def init_web_routes(app):
             if request.method == "POST":
                 return jsonify({"status": "error", "message": "Jeton invalide"}), 400
             return render_template(
-                "unsubscribe_confirmation.html",
+                "public/unsubscribe_confirmation.html",
                 status="error",
                 message="Lien de désinscription invalide ou expiré.",
             )
@@ -263,7 +263,7 @@ def init_web_routes(app):
             removed = remove_newsletter_subscriber(email)
             current_app.logger.info(f"🗑️ Enregistrement supprimé : {removed}")
             return render_template(
-                "unsubscribe_confirmation.html",
+                "public/unsubscribe_confirmation.html",
                 status="success",
                 message="Vous avez été désinscrit avec succès de notre newsletter.",
             )
@@ -271,7 +271,7 @@ def init_web_routes(app):
             current_app.logger.error(
                 f"❌ Error during unsubscription ({email}): {e}")
             return render_template(
-                "unsubscribe_confirmation.html",
+                "public/unsubscribe_confirmation.html",
                 status="error",
                 message="Une erreur serveur est survenue. Veuillez réessayer plus tard.",
             )

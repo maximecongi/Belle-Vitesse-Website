@@ -82,6 +82,24 @@ class RouteSmokeTest(unittest.TestCase):
         response = self.client.get("/waiver/sign/invalid-token")
         self.assertEqual(response.status_code, 404)
 
+    def test_unsubscribe_success(self):
+        """Test that unsubscribing with a valid token works and does not 500."""
+        from itsdangerous import URLSafeSerializer
+        from models.newsletter import NewsletterSubscriber
+
+        with self.app.app_context():
+            sub = NewsletterSubscriber(email="test_unsub@example.com")
+            db.session.add(sub)
+            db.session.commit()
+
+        secret_key = self.app.config.get("SECRET_KEY") or "bv_super_secret_key_2026"
+        serializer = URLSafeSerializer(secret_key)
+        token = serializer.dumps("test_unsub@example.com")
+
+        response = self.client.get(f"/unsubscribe/{token}")
+        self.assertEqual(response.status_code, 200)
+
 
 if __name__ == "__main__":
     unittest.main()
+

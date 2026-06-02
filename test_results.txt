@@ -42,11 +42,13 @@ test_public_checkout_view_404 (test_routes.RouteSmokeTest.test_public_checkout_v
 Test that public checkout view returns 404 for non-existent record. ... ok
 test_public_waiver_sign_page_404 (test_routes.RouteSmokeTest.test_public_waiver_sign_page_404)
 Test that public waiver sign page returns 404 for invalid token. ... ok
+test_unsubscribe_success (test_routes.RouteSmokeTest.test_unsubscribe_success)
+Test that unsubscribing with a valid token works and does not 500. ... ok
 test_create_and_list_waivers (test_waivers.WaiversTest.test_create_and_list_waivers) ... ok
 test_soft_delete_waivers (test_waivers.WaiversTest.test_soft_delete_waivers) ... ok
 
 ----------------------------------------------------------------------
-Ran 28 tests in 1.548s
+Ran 29 tests in 1.517s
 
 OK
 
