@@ -25,6 +25,7 @@ from models import (
     ProductionWaiver,
     ProductionWaiverSignedDocument,
     ProductionWaiverToken,
+    AppSetting,
     db,
 )
 from utils.database import get_vehicles
