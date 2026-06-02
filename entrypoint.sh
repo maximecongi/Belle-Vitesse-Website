@@ -25,6 +25,9 @@ cat static/css/normalize.css \
     static/css/newsletter.css \
     > static/css/styles.bundle.css
 
+# Ajouter le contenu de styles.css en filtrant les lignes @import pour éviter d'invalider le CSS
+grep -v "^@import" static/css/styles.css >> static/css/styles.bundle.css
+
 cat static/css/admin/admin-base.css \
     static/css/admin/admin-sidebar.css \
     static/css/admin/admin-components.css \
