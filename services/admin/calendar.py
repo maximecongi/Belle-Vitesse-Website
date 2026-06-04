@@ -28,7 +28,7 @@ def get_calendar_events():
                 "title": f"🚚 Départ : {name}",
                 "start": r.departure_date.isoformat(),
                 "color": color,
-                "url": url_for("admin_project_edit", record_id=r.id),
+                "url": url_for("admin_projects_list", q=r.project_id),
             })
 
         # Date de tournage 
@@ -37,7 +37,7 @@ def get_calendar_events():
                 "title": f"🎬 {name}",
                 "start": r.shoot_start_date.isoformat(),
                 "color": color,
-                "url": url_for("admin_project_edit", record_id=r.id),
+                "url": url_for("admin_projects_list", q=r.project_id),
             }
             if r.shoot_end_date:
                 # FullCalendar end date is exclusive for all-day events
@@ -50,7 +50,7 @@ def get_calendar_events():
                 "title": f"📦 Retour : {name}",
                 "start": r.return_date.isoformat(),
                 "color": color,
-                "url": url_for("admin_project_edit", record_id=r.id),
+                "url": url_for("admin_projects_list", q=r.project_id),
             })
 
     return events
