@@ -172,6 +172,11 @@
             }
         });
 
+        // Toggle selected class on project-checkbox-card when checkbox state changes
+        $('.project-checkbox-card input[type="checkbox"]').on('change', function () {
+            $(this).closest('.project-checkbox-card').toggleClass('selected', this.checked);
+        });
+
         $('#quickAddProductionBtn').on('click', function () {
             const prodName = prompt("Saisissez le nom de la nouvelle production :");
             if (!prodName || prodName.trim() === "") {
