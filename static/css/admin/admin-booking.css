@@ -85,6 +85,7 @@
     padding: 0;
     overflow: hidden;
     border-radius: 8px;
+    margin-bottom: 80px;
 }
 
 .gantt-outer-container {
@@ -288,9 +289,17 @@
 }
 
 @keyframes pulse-border {
-    0% { border-color: var(--red-error); }
-    50% { border-color: rgba(185, 28, 28, 0.4); }
-    100% { border-color: var(--red-error); }
+    0% {
+        border-color: var(--red-error);
+    }
+
+    50% {
+        border-color: rgba(185, 28, 28, 0.4);
+    }
+
+    100% {
+        border-color: var(--red-error);
+    }
 }
 
 /* ── Legend ── */
@@ -395,4 +404,3 @@
     width: 18px;
     text-align: center;
 }
-
