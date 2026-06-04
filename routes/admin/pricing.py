@@ -1,4 +1,4 @@
-from flask import current_app, flash, jsonify, render_template, request
+from flask import current_app, flash, jsonify, render_template, request, redirect, url_for
 
 from services.admin.pricing import (
     add_logistics_rate,
@@ -20,6 +20,7 @@ from services.admin.pricing import (
     update_invoice_factor,
     update_logistics_rate,
     update_salary_rate,
+    generate_salaries_pdf,
 )
 from utils.decorators import require_roles
 
@@ -62,6 +63,29 @@ def init_pricing_routes(app):
             logistics=logistics,
             invoice_factor=get_invoice_factor(),
         )
+
+    @app.route("/admin/pricing/salaries/pdf")
+    @require_roles('administrator', 'manager', 'commercial')
+    def admin_pricing_salaries_pdf():
+        """Génère et télécharge le PDF de la grille de salaires pour l'annexe spécifiée."""
+        annexe = request.args.get("annexe", "Annexe 1")
+        try:
+            pdf_bytes = generate_salaries_pdf(annexe)
+            
+            # Nom de fichier propre (ex: Belle_Vitesse_Salaires_Annexe_1_20260604.pdf)
+            import datetime
+            clean_annexe = "".join(c if c.isalnum() else "_" for c in annexe)
+            filename = f"Belle_Vitesse_Salaires_{clean_annexe}_{datetime.datetime.now().strftime('%Y%m%d')}.pdf"
+            
+            from flask import make_response
+            response = make_response(pdf_bytes)
+            response.headers['Content-Type'] = 'application/pdf'
+            response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+        except Exception as e:
+            current_app.logger.error(f"❌ Erreur génération PDF Salaires ({annexe}) : {e}")
+            flash(f"Erreur lors de la génération du PDF : {e}", "error")
+            return redirect(url_for("admin_pricing"))
 
     # ── API Équipement ───────────────────────────────────────────
 

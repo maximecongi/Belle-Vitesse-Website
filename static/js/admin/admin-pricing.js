@@ -17,6 +17,7 @@ class PricingAdmin {
         }
         this.initTabs();
         this.initAnnexeTabs();
+        this.initExportButton();
     }
 
     // ── Helper API ─────────────────────────────────────────────
@@ -87,6 +88,16 @@ class PricingAdmin {
         });
 
         this.filterSalaryRows();
+    }
+
+    initExportButton() {
+        const btnExportPDF = document.getElementById('btnExportPDF');
+        if (btnExportPDF) {
+            btnExportPDF.addEventListener('click', () => {
+                const annexe = this.activeAnnexe || 'Annexe 1';
+                window.open(`/admin/pricing/salaries/pdf?annexe=${encodeURIComponent(annexe)}`, '_blank');
+            });
+        }
     }
 
     filterSalaryRows() {

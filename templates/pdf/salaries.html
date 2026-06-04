@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>GRILLE DES SALAIRES - {{ annexe | upper }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-pilot-waivers.css') }}">
+    <style>
+        @page {
+            size: A4;
+            margin: 15mm;
+        }
+
+        .pilot-waiver-container {
+            background-color: white;
+            color: var(--grey-1);
+        }
+
+        .salary-pdf-title-container {
+            margin-bottom: 25px;
+            page-break-after: avoid;
+        }
+
+        .salary-pdf-title {
+            font-size: 18pt;
+            font-weight: 700;
+            color: var(--grey-1);
+            margin: 0 0 5px 0;
+            text-transform: uppercase;
+            letter-spacing: -0.01em;
+        }
+
+        .salary-pdf-subtitle {
+            font-size: 10pt;
+            color: var(--grey-2);
+            margin: 0;
+            font-weight: 300;
+        }
+
+        .coef-info {
+            background-color: #fffbeb;
+            border-left: 4px solid var(--yellow-1);
+            padding: 12px 16px;
+            font-size: 9pt;
+            color: var(--grey-1);
+            margin-bottom: 25px;
+            border-radius: 4px;
+            page-break-inside: avoid;
+        }
+
+        .coef-info p {
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .salary-group-section {
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+        }
+
+        .salary-group-title {
+            font-size: 11pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--grey-1);
+            border-bottom: 2px solid var(--grey-1);
+            padding-bottom: 6px;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .salary-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9pt;
+        }
+
+        .salary-table th {
+            background-color: var(--grey-1);
+            color: white;
+            text-align: left;
+            padding: 8px 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 7.5pt;
+            letter-spacing: 0.5px;
+        }
+
+        .salary-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--white-3);
+            vertical-align: middle;
+        }
+
+        .salary-table tr:nth-child(even) td {
+            background-color: var(--white-2);
+        }
+
+        .salary-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .text-right {
+            text-align: right !important;
+        }
+
+        .font-semibold {
+            font-weight: 600;
+        }
+
+        .w-position {
+            width: 50%;
+        }
+
+        .w-rate {
+            width: 15%;
+        }
+
+        .salary-footer {
+            margin-top: 40px;
+            padding-top: 15px;
+            border-top: 2px solid var(--grey-1);
+            display: flex;
+            justify-content: space-between;
+            font-size: 8pt;
+            color: var(--grey-2);
+            page-break-inside: avoid;
+        }
+    </style>
+</head>
+
+<body class="pilot-waiver-container">
+    <div class="pilot-waiver">
+        <!-- ═══════════ HEADER ═══════════ -->
+        <header class="pilot-waiver-header" style="margin-bottom: 30px;">
+            <div class="pilot-waiver-header-logo">
+                <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
+                    alt="Belle Vitesse">
+            </div>
+            <div class="pilot-waiver-header-meta">
+                <strong style="text-transform: uppercase; letter-spacing: 1px;">Grille des Salaires Officielle</strong><br>
+                <span class="pilot-waiver-doc-id">{{ annexe }}</span><br>
+                Édition : {{ now.strftime('%d/%m/%Y') }}
+            </div>
+        </header>
+
+        <!-- Title -->
+        <div class="salary-pdf-title-container">
+            <h1 class="salary-pdf-title">Grille des Salaires</h1>
+            <p class="salary-pdf-subtitle">Tarifs applicables pour le statut : <strong>{{ annexe }}</strong></p>
+        </div>
+
+        <!-- Coef Info (Only for Facture) -->
+        {% if annexe == 'Facture' %}
+        <div class="coef-info">
+            <p><strong>Coefficient de Facturation appliqué : ×{{ invoice_factor }}</strong><br>
+            Les tarifs facturés ci-dessous sont calculés automatiquement à partir des tarifs de l'annexe Publicité en appliquant ce coefficient.</p>
+        </div>
+        {% endif %}
+
+        <!-- Salary Groups -->
+        {% for group_name, rates in grouped_salaries.items() %}
+        {% if rates %}
+        <section class="salary-group-section">
+            <h2 class="salary-group-title">{{ group_name }}</h2>
+            <table class="salary-table">
+                <thead>
+                    <tr>
+                        <th class="w-position">Position / Poste</th>
+                        <th class="w-rate text-right">Base / H</th>
+                        <th class="w-rate text-right">Tarif 8h</th>
+                        <th class="w-rate text-right">Tarif 10h</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rate in rates %}
+                    <tr>
+                        <td class="font-semibold">{{ rate.position }}</td>
+                        <td class="text-right">{{ "%.2f"|format(rate.base_hourly | float) }} €</td>
+                        <td class="text-right">{{ "%.2f"|format(rate.inter_8h | float) }} €</td>
+                        <td class="text-right">{{ "%.2f"|format(rate.inter_10h | float) }} €</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+        {% endif %}
+        {% endfor %}
+
+        <!-- ═══════════ FOOTER ═══════════ -->
+        <footer class="salary-footer">
+            <div>
+                <strong>{{ settings.company_name }}</strong><br>
+                {{ settings.company_address }}
+            </div>
+            <div style="text-align: right;">
+                {% if settings.company_siret %}
+                SIRET : {{ settings.company_siret }}<br>
+                {% endif %}
+                {% if settings.company_email %}{{ settings.company_email }}{% endif %}
+                {% if settings.company_phone %} | {{ settings.company_phone }}{% endif %}
+            </div>
+        </footer>
+    </div>
+</body>
+
+</html>

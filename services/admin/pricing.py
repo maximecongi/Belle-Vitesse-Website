@@ -489,3 +489,47 @@ def reorder_logistics_rates(item_ids):
             rate.display_order = i
     db.session.commit()
     return True
+
+
+def generate_salaries_pdf(annexe):
+    """Génère le binaire PDF de la grille des salaires pour une annexe donnée."""
+    from collections import OrderedDict
+    from datetime import datetime
+    from flask import render_template, current_app
+    from utils.document_utils import render_pdf_from_template
+    
+    # 1. Récupérer tous les salaires groupés
+    all_grouped = list_salary_rates_grouped()
+    
+    # 2. Filtrer par l'annexe demandée
+    grouped_filtered = OrderedDict()
+    for gname, rates in all_grouped.items():
+        filtered_rates = [r for r in rates if r.get("annexe") == annexe]
+        if filtered_rates:
+            grouped_filtered[gname] = filtered_rates
+            
+    # 3. Paramètres de l'entreprise
+    settings = {
+        "company_name": AppSetting.get("company_name", "Belle Vitesse SAS"),
+        "company_address": AppSetting.get("company_address", ""),
+        "company_siret": AppSetting.get("company_siret", ""),
+        "company_phone": AppSetting.get("company_phone", ""),
+        "company_email": AppSetting.get("company_email", ""),
+    }
+    
+    # 4. Préparer les données pour le template
+    data = {
+        "annexe": annexe,
+        "grouped_salaries": grouped_filtered,
+        "invoice_factor": get_invoice_factor(),
+        "settings": settings,
+        "now": datetime.now(),
+    }
+    
+    # 5. Rendre le HTML
+    html = render_template("pdf/salaries.html", **data)
+    
+    # 6. Générer le PDF
+    pdf_bytes = render_pdf_from_template(html, base_url=current_app.root_path)
+    return pdf_bytes
+

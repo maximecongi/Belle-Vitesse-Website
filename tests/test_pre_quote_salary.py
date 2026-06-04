@@ -263,6 +263,36 @@ class PreQuoteSalaryTest(unittest.TestCase):
         except Exception as e:
             self.fail(f"get_pre_quote_pdf raised an exception: {e}")
 
+    def test_salaries_pdf_route(self):
+        """Test the salaries PDF export route with authorization."""
+        # Insert a SalaryRate
+        with self.app.app_context():
+            rate = SalaryRate(
+                position="Monteur",
+                annexe="Annexe 1",
+                group_name="Post-prod",
+                base_hourly=40.0,
+                display_order=1
+            )
+            db.session.add(rate)
+            db.session.commit()
+
+        # 1. Without auth: should redirect to login
+        response = self.client.get("/admin/pricing/salaries/pdf?annexe=Annexe 1")
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/admin/login", response.location)
+
+        # 2. With auth: should return the PDF bytes
+        with self.client.session_transaction() as sess:
+            sess["admin_authenticated"] = True
+            sess["admin_user_role"] = "administrator"
+
+        response = self.client.get("/admin/pricing/salaries/pdf?annexe=Annexe 1")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content_type, "application/pdf")
+        self.assertIn("attachment; filename=", response.headers.get("Content-Disposition", ""))
+
+
 if __name__ == "__main__":
     unittest.main()
 
