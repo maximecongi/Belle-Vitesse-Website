@@ -189,7 +189,8 @@ def render_pdf_from_template(html_content: str, base_url: str, stylesheets: list
         for ss in stylesheets:
             css_file = static_path / ss.lstrip("/")
             if css_file.exists():
-                css_list.append(CSS(filename=str(css_file), url_fetcher=fetcher))
+                css_list.append(
+                    CSS(filename=str(css_file), url_fetcher=fetcher))
 
     return html.write_pdf(stylesheets=css_list)
 

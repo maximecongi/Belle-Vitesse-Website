@@ -35,7 +35,8 @@ class EmailService:
     @classmethod
     def _send_smtp_message(cls, msg, recipients, sender_type="contact", timeout=10):
         """Crée une connexion SMTP temporaire, s'authentifie et envoie le message."""
-        mail_server, mail_port, mail_user, mail_password, mail_use_tls = cls._get_credentials(sender_type)
+        mail_server, mail_port, mail_user, mail_password, mail_use_tls = cls._get_credentials(
+            sender_type)
 
         if not all([mail_server, mail_user, mail_password]):
             current_app.logger.error(
@@ -109,10 +110,11 @@ def send_magic_link_email(to_email, firstname, magic_link):
 def send_subscription_email(to_email):
     """Envoie un email de bienvenue lors de l'inscription à la newsletter."""
     try:
-        current_app.logger.info(f"🚀 Démarrage de l'envoi d'email de bienvenue pour {to_email}")
+        current_app.logger.info(
+            f"🚀 Démarrage de l'envoi d'email de bienvenue pour {to_email}")
 
         # Generate unsubscribe token
-        secret_key = current_app.config.get("SECRET_KEY") or "bv_super_secret_key_2026"
+        secret_key = current_app.config.get("SECRET_KEY")
         serializer = URLSafeSerializer(secret_key)
         token = serializer.dumps(to_email)
 
@@ -123,7 +125,8 @@ def send_subscription_email(to_email):
             base_url = "https://bellevitesse.com"  # Fallback
 
         unsubscribe_url = f"{base_url}/unsubscribe/{token}"
-        current_app.logger.info(f"🔗 Unsubscribe URL générée: {unsubscribe_url}")
+        current_app.logger.info(
+            f"🔗 Unsubscribe URL générée: {unsubscribe_url}")
 
         # Load HTML template
         html_content = render_template(
@@ -171,7 +174,8 @@ def send_newsletter_campaign(subject, body, subscribers):
     Envoie une campagne newsletter groupée à une liste d'abonnés.
     'subscribers' est une liste d'objets NewsletterSubscriber.
     """
-    mail_server, mail_port, mail_user, mail_password, mail_use_tls = EmailService._get_credentials("contact")
+    mail_server, mail_port, mail_user, mail_password, mail_use_tls = EmailService._get_credentials(
+        "contact")
 
     if not all([mail_server, mail_user, mail_password]):
         current_app.logger.error("❌ Email configuration missing in .env")
@@ -185,7 +189,7 @@ def send_newsletter_campaign(subject, body, subscribers):
             server.starttls()
         server.login(mail_user, mail_password)
 
-        secret_key = current_app.config.get("SECRET_KEY") or "bv_super_secret_key_2026"
+        secret_key = current_app.config.get("SECRET_KEY")
         serializer = URLSafeSerializer(secret_key)
 
         for sub in subscribers:
@@ -243,7 +247,8 @@ def send_newsletter_campaign(subject, body, subscribers):
 def send_waiver_invitation_email(to_email, pilot_name, project_name, signature_link):
     """Envoie une invitation à un pilote pour signer sa décharge."""
     try:
-        current_app.logger.info(f"🚀 Sending waiver invitation email to {to_email}")
+        current_app.logger.info(
+            f"🚀 Sending waiver invitation email to {to_email}")
 
         # Text fallback content
         text_content = (
@@ -282,7 +287,8 @@ def send_waiver_invitation_email(to_email, pilot_name, project_name, signature_l
 def send_production_waiver_invitation_email(to_email, prod_contact_name, project_name, signature_link):
     """Envoie une invitation à un contact de production pour signer sa décharge."""
     try:
-        current_app.logger.info(f"🚀 Sending production waiver invitation email to {to_email}")
+        current_app.logger.info(
+            f"🚀 Sending production waiver invitation email to {to_email}")
 
         # Text fallback content
         text_content = (
@@ -326,7 +332,8 @@ def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path):
     admin_mail = os.getenv("SUPER_ADMIN_MAIL", "contact@bellevitesse.com")
 
     try:
-        current_app.logger.info(f"🚀 Sending signed waiver PDF to {to_email} and {admin_mail}")
+        current_app.logger.info(
+            f"🚀 Sending signed waiver PDF to {to_email} and {admin_mail}")
 
         # Text fallback content
         text_content = (
@@ -359,7 +366,8 @@ def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path):
         # Attach PDF
         if os.path.exists(pdf_path):
             with open(pdf_path, "rb") as f:
-                part = MIMEApplication(f.read(), Name=os.path.basename(pdf_path))
+                part = MIMEApplication(
+                    f.read(), Name=os.path.basename(pdf_path))
             part['Content-Disposition'] = f'attachment; filename="{os.path.basename(pdf_path)}"'
             msg.attach(part)
         else:
@@ -381,7 +389,8 @@ def send_calendar_invitation_email(to_email, user_name, feed_url):
     Inclut un QR code pour faciliter l'abonnement sur mobile.
     """
     try:
-        current_app.logger.info(f"🚀 Sending calendar invitation email to {to_email}")
+        current_app.logger.info(
+            f"🚀 Sending calendar invitation email to {to_email}")
 
         # Generation du QR Code
         qr = qrcode.QRCode(

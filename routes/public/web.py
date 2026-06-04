@@ -233,8 +233,7 @@ def init_web_routes(app):
 
     @app.route("/unsubscribe/<token>", methods=["GET", "POST"])
     def unsubscribe(token):
-        secret_key = current_app.config.get(
-            "SECRET_KEY") or "bv_super_secret_key_2026"
+        secret_key = current_app.config.get("SECRET_KEY")
         serializer = URLSafeSerializer(secret_key)
         try:
             email = serializer.loads(token)
