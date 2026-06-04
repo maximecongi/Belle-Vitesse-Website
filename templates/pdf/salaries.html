@@ -140,7 +140,7 @@
                     alt="Belle Vitesse">
             </div>
             <div class="pilot-waiver-header-meta">
-                <strong style="text-transform: uppercase; letter-spacing: 1px;">Grille des Salaires Officielle</strong><br>
+                <strong style="text-transform: uppercase; letter-spacing: 1px;">Grille des Salaire</strong><br>
                 <span class="pilot-waiver-doc-id">{{ annexe }}</span><br>
                 Édition : {{ now.strftime('%d/%m/%Y') }}
             </div>
@@ -156,7 +156,8 @@
         {% if annexe == 'Facture' %}
         <div class="coef-info">
             <p><strong>Coefficient de Facturation appliqué : ×{{ invoice_factor }}</strong><br>
-            Les tarifs facturés ci-dessous sont calculés automatiquement à partir des tarifs de l'annexe Publicité en appliquant ce coefficient.</p>
+                Les tarifs facturés ci-dessous sont calculés automatiquement à partir des tarifs de l'annexe Publicité
+                en appliquant ce coefficient.</p>
         </div>
         {% endif %}
 
