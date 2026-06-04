@@ -107,6 +107,10 @@ def init_booking_routes(app):
                         "production": project.production.name if project.production else "—",
                         "start": start.isoformat(),
                         "end": end.isoformat(),
+                        "departure_date": project.departure_date.isoformat() if project.departure_date else None,
+                        "shoot_start": project.shoot_start_date.isoformat() if project.shoot_start_date else None,
+                        "shoot_end": project.shoot_end_date.isoformat() if project.shoot_end_date else None,
+                        "return_date": project.return_date.isoformat() if project.return_date else None,
                         "color": color,
                     })
 

@@ -203,22 +203,22 @@
     border-right: 1px solid rgba(255, 200, 69, 0.3);
 }
 
-/* Booking Bars */
+/* Booking Bars — Base */
 .gantt-booking-bar {
     position: absolute;
     box-sizing: border-box;
-    height: 34px;
-    top: 11px; /* Center inside 56px row: (56 - 34) / 2 */
+    height: 30px;
+    top: 13px;
     border-radius: 6px;
     color: white;
     font-weight: 600;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     display: flex;
     align-items: center;
-    padding: 0 10px;
+    padding: 0 8px;
     cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.15s, box-shadow 0.15s;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -227,12 +227,63 @@
 
 .gantt-booking-bar:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+/* ── Phase-specific bars ── */
+
+/* Départ (🚚) — Outlined style with amber accent */
+.gantt-dep-bar {
+    background: #fffbeb !important;
+    border: 2px solid #f59e0b !important;
+    color: #92400e !important;
+    justify-content: center;
+    padding: 0;
+    font-size: 0.95rem;
+    box-shadow: 0 1px 3px rgba(245, 158, 11, 0.2);
+}
+
+.gantt-dep-bar:hover {
+    background: #fef3c7 !important;
+    box-shadow: 0 3px 8px rgba(245, 158, 11, 0.3);
+}
+
+/* Tournage (🎬) — Solid bar, uses the project color */
+.gantt-shoot-bar {
+    font-size: 0.78rem;
+    letter-spacing: 0.01em;
+}
+
+/* Retour (📦) — Outlined style with teal accent */
+.gantt-ret-bar {
+    background: #f0fdfa !important;
+    border: 2px solid #14b8a6 !important;
+    color: #134e4a !important;
+    justify-content: center;
+    padding: 0;
+    font-size: 0.95rem;
+    box-shadow: 0 1px 3px rgba(20, 184, 166, 0.2);
+}
+
+.gantt-ret-bar:hover {
+    background: #ccfbf1 !important;
+    box-shadow: 0 3px 8px rgba(20, 184, 166, 0.3);
+}
+
+/* Connection line between phases */
+.gantt-booking-connection {
+    position: absolute;
+    height: 3px;
+    top: 26px;
+    border-radius: 2px;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.25;
 }
 
 /* Double booking / Conflict indicator */
 .gantt-booking-bar.has-conflict {
-    border: 2px dashed var(--red-error);
+    border: 2px dashed var(--red-error) !important;
     animation: pulse-border 2s infinite;
 }
 
@@ -242,37 +293,106 @@
     100% { border-color: var(--red-error); }
 }
 
-/* Custom Tooltip */
+/* ── Legend ── */
+.gantt-legend {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0.75rem 1.25rem;
+    background: var(--grey-bg);
+    border-top: 1px solid var(--white-3);
+    font-size: 0.8rem;
+    color: var(--grey-2);
+}
+
+.gantt-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 500;
+}
+
+.gantt-legend-swatch {
+    width: 22px;
+    height: 14px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.gantt-legend-swatch.swatch-dep {
+    background: #fffbeb;
+    border: 2px solid #f59e0b;
+}
+
+.gantt-legend-swatch.swatch-shoot {
+    background: #618b4acc;
+}
+
+.gantt-legend-swatch.swatch-ret {
+    background: #f0fdfa;
+    border: 2px solid #14b8a6;
+}
+
+.gantt-legend-swatch.swatch-line {
+    background: rgba(100, 100, 100, 0.25);
+    height: 3px;
+    border-radius: 2px;
+}
+
+.gantt-legend-swatch.swatch-conflict {
+    background: white;
+    border: 2px dashed var(--red-error);
+}
+
+/* ── Custom Tooltip ── */
 .gantt-tooltip {
     display: none;
     position: absolute;
     background: var(--grey-3);
     color: white;
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    line-height: 1.4;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+    padding: 0.85rem 1.1rem;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
     z-index: 1000;
     pointer-events: none;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    max-width: 280px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    max-width: 300px;
+    min-width: 200px;
 }
 
 .gantt-tooltip strong {
     color: var(--admin-accent);
     display: block;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     font-size: 0.9rem;
 }
 
 .gantt-tooltip .tooltip-prod {
     font-size: 0.75rem;
-    color: var(--white-3);
-    margin-bottom: 4px;
+    color: #aaa;
+    margin-bottom: 8px;
 }
 
-.gantt-tooltip .tooltip-dates {
-    font-family: monospace;
+.gantt-tooltip .tooltip-phases {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
     font-size: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 6px;
 }
+
+.gantt-tooltip .tooltip-phase {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.gantt-tooltip .tooltip-phase-icon {
+    flex-shrink: 0;
+    width: 18px;
+    text-align: center;
+}
+

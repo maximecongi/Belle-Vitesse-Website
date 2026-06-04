@@ -69,7 +69,7 @@ $(document).ready(function () {
         $.getJSON('/admin/api/booking-data', { category: currentCategory, t: Date.now() }, function (data) {
             // Remplir le dropdown
             const $select = $('#itemSelect');
-            
+
             // Désactiver l'écouteur d'événement pour éviter la double requête lors de la mise à jour
             $select.off('change');
 
@@ -77,7 +77,7 @@ $(document).ready(function () {
             data.items.forEach(function (item) {
                 $select.append(new Option(item.name, item.id));
             });
-            
+
             $select.val(selectedItemId || '').trigger('change.select2');
 
             // Ré-attacher l'écouteur d'événement après remplissage
@@ -118,8 +118,8 @@ $(document).ready(function () {
             const dayName = DAY_NAMES[dateObj.getDay()];
             const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
             const isToday = dateObj.getDate() === today.getDate() &&
-                            dateObj.getMonth() === today.getMonth() &&
-                            dateObj.getFullYear() === today.getFullYear();
+                dateObj.getMonth() === today.getMonth() &&
+                dateObj.getFullYear() === today.getFullYear();
 
             const weekendClass = isWeekend ? 'weekend' : '';
             const todayClass = isToday ? 'today' : '';
@@ -184,8 +184,8 @@ $(document).ready(function () {
                     const dateObj = new Date(year, month, day);
                     const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
                     const isToday = dateObj.getDate() === today.getDate() &&
-                                    dateObj.getMonth() === today.getMonth() &&
-                                    dateObj.getFullYear() === today.getFullYear();
+                        dateObj.getMonth() === today.getMonth() &&
+                        dateObj.getFullYear() === today.getFullYear();
 
                     const weekendClass = isWeekend ? 'weekend' : '';
                     const todayClass = isToday ? 'today' : '';
@@ -203,7 +203,6 @@ $(document).ready(function () {
             // Détection et marquage des conflits de booking (chevauchement de dates par équipement)
             detectAndMarkConflicts(data.bookings);
 
-            // Placer les barres de booking absolument
             const monthStart = new Date(year, month, 1);
             const monthEnd = new Date(year, month, daysCount);
 
@@ -219,64 +218,138 @@ $(document).ready(function () {
                     return;
                 }
 
-                // Cadrage du booking sur la fenêtre temporelle du mois
-                const renderStart = bookStart < monthStart ? monthStart : bookStart;
-                const renderEnd = bookEnd > monthEnd ? monthEnd : bookEnd;
-
-                // Calcul du jour de départ (1-indexed) et de la durée dans la fenêtre
-                const startDay = renderStart.getDate();
-                
-                // Différence en jours résistant aux changements d'heure (DST)
-                const diffTime = renderEnd.getTime() - renderStart.getTime();
-                const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
-
-                // Calcul des positions horizontales absolues
-                const leftPos = (startDay - 1) * DAY_COLUMN_WIDTH + 2;
-                const widthVal = (diffDays * DAY_COLUMN_WIDTH) - 4;
-
                 // Trouver la ligne correspondante à cet équipement
                 const $row = $grid.find(`.gantt-grid-row[data-item-id="${booking.item_id}"]`);
-                if ($row.length > 0) {
+                if ($row.length === 0) return;
+
+                // Helper pour calculer la position et largeur d'une plage de dates dans le mois
+                function getPosAndWidth(dStart, dEnd) {
+                    if (!dStart || !dEnd) return null;
+                    if (dEnd < monthStart || dStart > monthEnd) return null;
+
+                    const rStart = dStart < monthStart ? monthStart : dStart;
+                    const rEnd = dEnd > monthEnd ? monthEnd : dEnd;
+
+                    const startDay = rStart.getDate();
+                    const diffTime = rEnd.getTime() - rStart.getTime();
+                    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+                    const left = (startDay - 1) * DAY_COLUMN_WIDTH + 2;
+                    const width = (diffDays * DAY_COLUMN_WIDTH) - 4;
+
+                    return { left, width };
+                }
+
+                // Parse des dates individuelles
+                const depD = booking.departure_date ? parseLocalDate(booking.departure_date.split('T')[0]) : null;
+                const retD = booking.return_date ? parseLocalDate(booking.return_date.split('T')[0]) : null;
+                const sStart = booking.shoot_start ? parseLocalDate(booking.shoot_start.split('T')[0]) : null;
+                const sEnd = booking.shoot_end ? parseLocalDate(booking.shoot_end.split('T')[0]) : sStart;
+
+                // Construire le texte du tooltip avec le détail des phases
+                function buildTooltipHtml() {
+                    let phases = '';
+                    if (depD) {
+                        phases += `<div class="tooltip-phase"><span class="tooltip-phase-icon">🚚</span> Départ : ${formatDateString(depD)}</div>`;
+                    }
+                    if (sStart) {
+                        const shootLabel = sEnd && sEnd.getTime() !== sStart.getTime()
+                            ? `${formatDateString(sStart)} → ${formatDateString(sEnd)}`
+                            : formatDateString(sStart);
+                        phases += `<div class="tooltip-phase"><span class="tooltip-phase-icon">🎬</span> Tournage : ${shootLabel}</div>`;
+                    }
+                    if (retD) {
+                        phases += `<div class="tooltip-phase"><span class="tooltip-phase-icon">📦</span> Retour : ${formatDateString(retD)}</div>`;
+                    }
+
+                    return `
+                        <strong>${booking.project_name}</strong>
+                        <div class="tooltip-prod">Production : ${booking.production}</div>
+                        <div class="tooltip-phases">${phases}</div>
+                    `;
+                }
+
+                const tooltipHtml = buildTooltipHtml();
+
+                // Helper pour créer un élément HTML de barre
+                function createBarElement(dateS, dateE, content, extraClass) {
+                    const pos = getPosAndWidth(dateS, dateE);
+                    if (!pos) return null;
+
                     const conflictClass = booking.hasConflict ? 'has-conflict' : '';
+
                     const $bar = $(`
-                        <div class="gantt-booking-bar ${conflictClass}" 
-                             style="left: ${leftPos}px; width: ${widthVal}px; background-color: ${booking.color};"
-                             data-project="${booking.project_name}"
-                             data-production="${booking.production}"
-                             data-start="${formatDateString(bookStart)}"
-                             data-end="${formatDateString(bookEnd)}"
-                             data-project-id="${booking.project_id}"
+                        <div class="gantt-booking-bar ${extraClass} ${conflictClass}"
+                             style="left: ${pos.left}px; width: ${pos.width}px; z-index: 2; background-color: ${booking.color};"
                              data-project-code="${booking.project_code || ''}">
-                            ${booking.project_name}
+                             ${content}
                         </div>
                     `);
 
-                    // Clic sur la barre pour aller sur la liste filtrée du projet (nouvel onglet)
+                    // Clic pour aller sur la liste filtrée
                     $bar.on('click', function () {
                         const q = $(this).attr('data-project-code') || booking.project_code || '';
                         window.open(`/admin/projects?q=${encodeURIComponent(q)}`, '_blank');
                     });
 
-                    // Hover Event pour Tooltip Custom
+                    // Tooltip au survol
                     $bar.hover(
-                        function () {
-                            const proj = $(this).data('project');
-                            const prod = $(this).data('production');
-                            const startStr = $(this).data('start');
-                            const endStr = $(this).data('end');
-
-                            $tooltip.html(`
-                                <strong>${proj}</strong>
-                                <div class="tooltip-prod">Production : ${prod}</div>
-                                <div class="tooltip-dates">${startStr} ➔ ${endStr}</div>
-                            `).show();
-                        },
-                        function () {
-                            $tooltip.hide();
-                        }
+                        function () { $tooltip.html(tooltipHtml).show(); },
+                        function () { $tooltip.hide(); }
                     );
 
-                    $row.append($bar);
+                    return $bar;
+                }
+
+                // Détermination des blocs à dessiner
+                const hasAnyPhaseDate = depD || sStart || retD;
+                const drawDepBlock = depD && (!sStart || depD.getTime() < sStart.getTime());
+                const drawRetBlock = retD && (!sEnd || retD.getTime() > sEnd.getTime());
+                const drawShootBlock = !!sStart;
+
+                // Si aucune date individuelle, afficher un bloc unique (fallback)
+                if (!hasAnyPhaseDate) {
+                    const $fallback = createBarElement(bookStart, bookEnd, `🎬 ${booking.project_name}`, 'gantt-shoot-bar');
+                    if ($fallback) $row.append($fallback);
+                    return;
+                }
+
+                // 1. Ligne de connexion entre toutes les phases
+                const globalPos = getPosAndWidth(bookStart, bookEnd);
+                if (globalPos) {
+                    const $connLine = $(`
+                        <div class="gantt-booking-connection"
+                             style="left: ${globalPos.left}px; width: ${globalPos.width}px; background-color: ${booking.color};">
+                        </div>
+                    `);
+                    $row.append($connLine);
+                }
+
+                // 2. Bloc Départ (🚚) — jour unique, style outlined amber
+                if (drawDepBlock) {
+                    const $depBar = createBarElement(depD, depD, '🚚', 'gantt-dep-bar');
+                    if ($depBar) $row.append($depBar);
+                }
+
+                // 3. Bloc Tournage (🎬) — barre pleine, couleur du projet
+                if (drawShootBlock) {
+                    let label = booking.project_name;
+                    // Ajouter les icônes si départ/retour coïncident avec le tournage
+                    if (depD && depD.getTime() === sStart.getTime()) {
+                        label = '🚚 ' + label;
+                    }
+                    if (retD && sEnd && retD.getTime() === sEnd.getTime()) {
+                        label = label + ' 📦';
+                    }
+
+                    const $shootBar = createBarElement(sStart, sEnd, `🎬 ${label}`, 'gantt-shoot-bar');
+                    if ($shootBar) $row.append($shootBar);
+                }
+
+                // 4. Bloc Retour (📦) — jour unique, style outlined teal
+                if (drawRetBlock) {
+                    const $retBar = createBarElement(retD, retD, '📦', 'gantt-ret-bar');
+                    if ($retBar) $row.append($retBar);
                 }
             });
         });
