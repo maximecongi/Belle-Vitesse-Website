@@ -141,7 +141,8 @@
                     '8h': '8h'
                     } %}
                     {% for cat_key, items in grouped_prestations %}
-                    <tr class="pdf-category-header {% if cat_key in ['equipment', 'salary', 'logistics'] %}pdf-category-{{ cat_key }}{% else %}pdf-category-custom{% endif %}">
+                    <tr
+                        class="pdf-category-header {% if cat_key in ['equipment', 'salary', 'logistics'] %}pdf-category-{{ cat_key }}{% else %}pdf-category-custom{% endif %}">
                         <td colspan="{% if quote.show_discounts %}6{% else %}5{% endif %}">
                             {{ PRE_QUOTE_CAT_MAP.get(cat_key, cat_key) }}
                         </td>
@@ -212,7 +213,8 @@
                                 "{:,.2f}".format(quote.total_ht - quote.insurance_amount)|replace(',', ' ') }} €</td>
                         </tr>
                         <tr>
-                            <td style="font-size: 8pt; color: var(--grey-2);">ASSURANCE ({{ '%g' % (quote.insurance_rate | float) }}%)
+                            <td style="font-size: 8pt; color: var(--grey-2);">ASSURANCE ({{ '%g' % (quote.insurance_rate
+                                | float) }}%)
                             </td>
                             <td style="text-align: right; font-weight: 500;">{{
                                 "{:,.2f}".format(quote.insurance_amount)|replace(',', ' ') }} €</td>
@@ -223,7 +225,8 @@
                                 "{:,.2f}".format(quote.total_ht)|replace(',', ' ') }} €</td>
                         </tr>
                         <tr>
-                            <td style="font-size: 8pt; color: var(--grey-2);">TVA ({{ '%g' % (quote.tva_rate | float) }}%)</td>
+                            <td style="font-size: 8pt; color: var(--grey-2);">TVA ({{ '%g' % (quote.tva_rate | float)
+                                }}%)</td>
                             <td style="text-align: right; font-weight: 500;">{{
                                 "{:,.2f}".format(quote.tva_amount)|replace(',', ' ') }} €</td>
                         </tr>
@@ -265,9 +268,9 @@
                 Les tarifs ci-dessous correspondent aux estimations des salaires. Ces montants ne font pas partie de la
                 base de location facturée par Belle Vitesse :<br>
                 • Les intervenants sous statut <strong>Facture</strong> factureront directement leurs prestations à la
-                production.<br>
+                société deproduction.<br>
                 • Les intervenants sous statut <strong>Intermittent</strong> (Annexe 1, Annexe 3, USPA, etc.) devront
-                être embauchés, payés et déclarés directement par la production de son côté.
+                être embauchés, payés et déclarés directement par la société de production.
             </p>
             <table class="pilot-waiver-table">
                 <thead>
