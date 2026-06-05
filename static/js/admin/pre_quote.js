@@ -81,7 +81,7 @@ function openModal(category) {
     const modalTabsContainer = document.getElementById('modalAnnexeTabsContainer');
     if (modalTabsContainer) {
         if (category === 'salary') {
-            modalTabsContainer.style.display = 'block';
+            modalTabsContainer.classList.remove('u-d-none');
             modalTabsContainer.querySelectorAll('.modal-annexe-tab').forEach(btn => {
                 if (btn.dataset.modalAnnexe === activeModalAnnexe) {
                     btn.classList.add('active');
@@ -90,7 +90,7 @@ function openModal(category) {
                 }
             });
         } else {
-            modalTabsContainer.style.display = 'none';
+            modalTabsContainer.classList.add('u-d-none');
         }
     }
 
