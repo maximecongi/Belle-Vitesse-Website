@@ -322,7 +322,7 @@ def get_pre_quote_pdf(quote_id):
     quote = PreQuote.query.get_or_404(quote_id)
 
     # Group prestations for the PDF layout
-    category_order = ['equipment', 'salary', 'logistics', 'custom']
+    category_order = ['equipment', 'salary', 'logistics']
     by_cat = {}
     intermittent_salaries = []
     for item in (quote.prestations or []):
@@ -330,6 +330,15 @@ def get_pre_quote_pdf(quote_id):
             intermittent_salaries.append(item)
             continue
         cat = item.get('category', 'custom')
+        if cat == 'custom':
+            # Use item's custom_category if defined, fallback to 'Autre'
+            custom_cat = item.get('custom_category')
+            if custom_cat:
+                custom_cat = custom_cat.strip()
+            if not custom_cat:
+                custom_cat = 'Autre'
+            cat = custom_cat
+            
         if cat not in by_cat:
             by_cat[cat] = []
         by_cat[cat].append(item)

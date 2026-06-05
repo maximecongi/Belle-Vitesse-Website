@@ -141,7 +141,7 @@
                     '8h': '8h'
                     } %}
                     {% for cat_key, items in grouped_prestations %}
-                    <tr class="pdf-category-header pdf-category-{{ cat_key }}">
+                    <tr class="pdf-category-header {% if cat_key in ['equipment', 'salary', 'logistics'] %}pdf-category-{{ cat_key }}{% else %}pdf-category-custom{% endif %}">
                         <td colspan="{% if quote.show_discounts %}6{% else %}5{% endif %}">
                             {{ PRE_QUOTE_CAT_MAP.get(cat_key, cat_key) }}
                         </td>
