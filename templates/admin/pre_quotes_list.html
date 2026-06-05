@@ -29,12 +29,12 @@
             <tbody>
                 {% for quote in pre_quotes %}
                 <tr class="searchable-row"
-                    data-search="{{ quote.reference|lower }} {{ quote.production.name|lower }} {{ quote.project_name|lower }}">
+                    data-search="{{ quote.reference|lower }} {% if quote.project %}{{ quote.project.production.name|lower }} {{ quote.project.name|lower }}{% else %}{{ quote.production.name|lower }} {{ quote.project_name|lower }}{% endif %}">
                     <td class="u-text-semibold">{{ quote.reference }}</td>
                     <td>{{ quote.created_at.strftime('%d/%m/%Y') }}</td>
                     <td>
-                        <span class="u-text-semibold">{{ quote.production.name }}</span><br>
-                        <span class="u-text-sm u-text-muted">{{ quote.project_name or '—' }}</span>
+                        <span class="u-text-semibold">{% if quote.project %}{{ quote.project.production.name }}{% else %}{{ quote.production.name }}{% endif %}</span><br>
+                        <span class="u-text-sm u-text-muted">{% if quote.project %}{{ quote.project.name }}{% else %}{{ quote.project_name or '—' }}{% endif %}</span>
                         {% if quote.project %}
                         <br>
                         <a href="{{ url_for('admin_project_edit', record_id=quote.project.id) }}" class="u-flex-inline u-align-center u-gap-1 u-mt-1">

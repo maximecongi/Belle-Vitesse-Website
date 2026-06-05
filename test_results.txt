@@ -28,6 +28,8 @@ test_edit_enrichment (test_pre_quote_salary.PreQuoteSalaryTest.test_edit_enrichm
 test_grouped_prestations_pdf (test_pre_quote_salary.PreQuoteSalaryTest.test_grouped_prestations_pdf) ... ok
 test_intermittent_salaries_exclusion_and_annex (test_pre_quote_salary.PreQuoteSalaryTest.test_intermittent_salaries_exclusion_and_annex) ... ok
 test_mad_pricing_calculation (test_pre_quote_salary.PreQuoteSalaryTest.test_mad_pricing_calculation) ... ok
+test_salaries_pdf_route (test_pre_quote_salary.PreQuoteSalaryTest.test_salaries_pdf_route)
+Test the salaries PDF export route with authorization. ... ok
 test_about_us_page (test_routes.RouteSmokeTest.test_about_us_page)
 Test that the about us page is accessible. ... ok
 test_admin_login_page (test_routes.RouteSmokeTest.test_admin_login_page)
@@ -48,7 +50,7 @@ test_create_and_list_waivers (test_waivers.WaiversTest.test_create_and_list_waiv
 test_soft_delete_waivers (test_waivers.WaiversTest.test_soft_delete_waivers) ... ok
 
 ----------------------------------------------------------------------
-Ran 29 tests in 1.517s
+Ran 30 tests in 1.806s
 
 OK
 
