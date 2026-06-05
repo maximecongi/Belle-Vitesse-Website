@@ -37,7 +37,7 @@
                         <span class="u-text-sm u-text-muted">{% if quote.project %}{{ quote.project.name }}{% else %}{{ quote.project_name or '—' }}{% endif %}</span>
                         {% if quote.project %}
                         <br>
-                        <a href="{{ url_for('admin_project_edit', record_id=quote.project.id) }}" class="u-flex-inline u-align-center u-gap-1 u-mt-1">
+                        <a href="{{ url_for('admin_projects_list', q=quote.project.project_id) }}" class="u-flex-inline u-align-center u-gap-1 u-mt-1">
                             📅 <span class="checkout-doc-id u-mt-0">{{ quote.project.project_id }}</span>
                         </a>
                         {% endif %}
