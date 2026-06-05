@@ -511,11 +511,19 @@ async function saveQuote() {
         });
 
         const data = {
-            production_id: document.querySelector('select[name="production_id"]').value,
+            production_id: (function() {
+                // Temporarily enable production select to read its value (disabled selects return empty)
+                const prodSelect = document.querySelector('select[name="production_id"]');
+                const wasDisabled = prodSelect.disabled;
+                prodSelect.disabled = false;
+                const val = prodSelect.value;
+                prodSelect.disabled = wasDisabled;
+                return val;
+            })(),
             project_name: document.querySelector('input[name="project_name"]').value,
             project_id: document.querySelector('select[name="project_id"]').value,
-            tva_rate: parseFloat(document.getElementById('tvaRate').value) || 20.00,
-            insurance_rate: parseFloat(document.getElementById('insuranceRate').value) || 10.00,
+            tva_rate: (() => { const v = parseFloat(document.getElementById('tvaRate').value); return isNaN(v) ? 20.00 : v; })(),
+            insurance_rate: (() => { const v = parseFloat(document.getElementById('insuranceRate').value); return isNaN(v) ? 10.00 : v; })(),
             show_discounts: document.getElementById('showDiscounts').checked,
             prestations: prestations
         };

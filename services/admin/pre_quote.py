@@ -208,6 +208,8 @@ def update_pre_quote(quote_id, data):
         tva_rate = data.get('tva_rate', quote.tva_rate)
         insurance_rate = data.get('insurance_rate', quote.insurance_rate)
         
+        logger.info(f"📊 Mise à jour pré-devis #{quote_id}: insurance_rate reçu={insurance_rate}, tva_rate reçu={tva_rate}")
+        
         # Filtrer les anciens items d'assurance si présents
         clean_prestations = [p for p in prestations if p.get('category') != 'insurance']
         
@@ -220,6 +222,8 @@ def update_pre_quote(quote_id, data):
         quote.tva_rate = totals['tva_rate']
         quote.tva_amount = totals['tva_amount']
         quote.total_ttc = totals['total_ttc']
+        
+        logger.info(f"📊 Pré-devis #{quote_id} sauvegardé: insurance_rate={quote.insurance_rate}, insurance_amount={quote.insurance_amount}")
 
     if 'status' in data:
         quote.status = data['status']

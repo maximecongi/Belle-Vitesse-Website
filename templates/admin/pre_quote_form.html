@@ -65,8 +65,23 @@
 
                 <div class="u-grid u-grid-3 u-gap-3">
                     <div class="form-group">
+                        <label class="form-label">Projet lié</label>
+                        <select name="project_id" id="projectSelect" class="form-input searchable-select">
+                            <option value="">— Ne lier à aucun projet —</option>
+                            <option value="new">✨ Créer automatiquement un nouveau projet</option>
+                            {% for proj in projects %}
+                            <option value="{{ proj.id }}"
+                                data-production-id="{{ proj.production_id }}"
+                                data-project-name="{{ proj.name }}"
+                                {% if quote and quote.project_id==proj.id %}selected{% endif %}>
+                                {{ proj.name }} ({{ proj.project_id }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group" id="productionGroup">
                         <label class="form-label">Production <span class="u-text-error">*</span></label>
-                        <select name="production_id" class="form-input searchable-select" required>
+                        <select name="production_id" id="productionSelect" class="form-input searchable-select" required>
                             <option value="">— Sélectionner une production —</option>
                             {% for prod in productions %}
                             <option value="{{ prod.id }}" {% if quote and quote.production_id==prod.id %}selected{%
@@ -76,23 +91,10 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" id="projectNameGroup">
                         <label class="form-label">Nom du Projet</label>
-                        <input type="text" name="project_name" class="form-input"
+                        <input type="text" name="project_name" id="projectNameInput" class="form-input"
                             value="{{ quote.project_name if quote else '' }}" placeholder="Ex: Campagne Été 2026">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Projet lié</label>
-                        <select name="project_id" id="projectSelect" class="form-input searchable-select">
-                            <option value="">— Ne lier à aucun projet —</option>
-                            <option value="new">✨ Créer automatiquement un nouveau projet</option>
-                            {% for proj in projects %}
-                            <option value="{{ proj.id }}" {% if quote and quote.project_id==proj.id %}selected{% endif
-                                %}>
-                                {{ proj.name }} ({{ proj.project_id }})
-                            </option>
-                            {% endfor %}
-                        </select>
                     </div>
                 </div>
             </div>
@@ -236,8 +238,8 @@
                 </div>
                 <div class="summary-row u-align-center u-mb-2">
                     <span>Assurance (%)</span>
-                    <input type="number" name="insurance_rate" id="insuranceRate" class="form-input summary-input"
-                        value="{{ quote.insurance_rate if (quote and quote.insurance_rate is not none) else 10.00 }}"
+                    <input type="number" step="1" name="insurance_rate" id="insuranceRate" class="form-input summary-input"
+                        value="{{ '%g' % (quote.insurance_rate | float) if quote else '10' }}"
                         onchange="recalculate()">
                 </div>
                 <div class="summary-row">
@@ -250,8 +252,8 @@
                 </div>
                 <div class="summary-row u-align-center u-mb-3">
                     <span>TVA (%)</span>
-                    <input type="number" name="tva_rate" id="tvaRate" class="form-input summary-input"
-                        value="{{ quote.tva_rate if quote else 20.00 }}" onchange="recalculate()">
+                    <input type="number" step="1" name="tva_rate" id="tvaRate" class="form-input summary-input"
+                        value="{{ '%g' % (quote.tva_rate | float) if quote else '20' }}" onchange="recalculate()">
                 </div>
                 <div class="summary-row">
                     <span>Montant TVA</span>
@@ -354,6 +356,55 @@
 
         recalculate();
         initDragAndDrop();
+
+        // ── Auto-fill Production & Nom du Projet quand un projet est lié ──
+        const projectSelect = document.getElementById('projectSelect');
+        const productionSelect = document.getElementById('productionSelect');
+        const projectNameInput = document.getElementById('projectNameInput');
+
+        function syncFromProject() {
+            const selectedOption = projectSelect.options[projectSelect.selectedIndex];
+            const val = projectSelect.value;
+
+            if (val && val !== '' && val !== 'new') {
+                // Un projet existant est sélectionné
+                const prodId = selectedOption.dataset.productionId;
+                const projName = selectedOption.dataset.projectName;
+
+                // Set production
+                if (prodId) {
+                    $('#productionSelect').val(prodId).trigger('change.select2');
+                }
+                // Set project name
+                if (projName) {
+                    projectNameInput.value = projName;
+                }
+
+                // Disable the fields
+                $('#productionSelect').prop('disabled', true);
+                projectNameInput.readOnly = true;
+                projectNameInput.style.backgroundColor = '#f3f4f6';
+                projectNameInput.style.cursor = 'not-allowed';
+            } else {
+                // Aucun projet ou nouveau projet → libérer les champs
+                $('#productionSelect').prop('disabled', false);
+                projectNameInput.readOnly = false;
+                projectNameInput.style.backgroundColor = '';
+                projectNameInput.style.cursor = '';
+
+                if (val === 'new') {
+                    // Garder la production et le nom courants
+                } else {
+                    // Optionnel: vider si on délie
+                }
+            }
+        }
+
+        // Listen on Select2 change event
+        $('#projectSelect').on('change', syncFromProject);
+
+        // Initial sync on page load
+        syncFromProject();
     });
 </script>
 {% endblock %}
