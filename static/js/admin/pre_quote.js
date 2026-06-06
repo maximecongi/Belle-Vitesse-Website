@@ -192,6 +192,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Gestion visuelle du switch de base de calcul d'assurance
+    const insuranceBasedOnUndiscountedCb = document.getElementById('insuranceBasedOnUndiscounted');
+    if (insuranceBasedOnUndiscountedCb) {
+        insuranceBasedOnUndiscountedCb.addEventListener('change', () => {
+            const track = insuranceBasedOnUndiscountedCb.closest('.status-toggle').querySelector('.toggle-track');
+            if (insuranceBasedOnUndiscountedCb.checked) {
+                track.classList.add('active');
+            } else {
+                track.classList.remove('active');
+            }
+        });
+    }
+
     // Onglets annexe du modal
     const modalTabsContainer = document.getElementById('modalAnnexeTabsContainer');
     if (modalTabsContainer) {
@@ -318,6 +331,8 @@ function changeSalaryRate(selectElement) {
 
 function recalculate() {
     let baseRentalHT = 0;
+    let insuranceBaseHT = 0;
+    let insuranceBaseHTUndiscounted = 0;
     const rows = document.querySelectorAll('.line-item-row');
 
     rows.forEach(row => {
@@ -329,6 +344,7 @@ function recalculate() {
         const unit = row.querySelector('.item-unit').value;
 
         let lineTotal = 0;
+        let lineTotalUndiscounted = 0;
         if (unit === 'km') {
             const baseDist = DELIVERY_CONFIG.baseDistance;
             const basePrice = DELIVERY_CONFIG.basePrice;
@@ -342,12 +358,14 @@ function recalculate() {
             }
 
             lineTotal = totalItemPrice * (1 - (discount / 100));
+            lineTotalUndiscounted = totalItemPrice;
 
             // Mettre à jour le prix unitaire pour afficher le total de la livraison
             row.querySelector('.item-price').value = totalItemPrice.toFixed(2);
         } else {
             const price = parseFloat(row.querySelector('.item-price').value) || 0;
             lineTotal = (qty * price) * (1 - (discount / 100));
+            lineTotalUndiscounted = qty * price;
         }
 
         // Exclude all salary items from client-side totals
@@ -356,10 +374,18 @@ function recalculate() {
         }
 
         baseRentalHT += lineTotal;
+
+        if (row.dataset.category === 'equipment') {
+            insuranceBaseHT += lineTotal;
+            insuranceBaseHTUndiscounted += lineTotalUndiscounted;
+        }
     });
 
     const insuranceRate = parseFloat(document.getElementById('insuranceRate').value) || 0;
-    const insuranceAmount = baseRentalHT * (insuranceRate / 100);
+    const insuranceBasedOnUndiscountedCb = document.getElementById('insuranceBasedOnUndiscounted');
+    const useUndiscounted = insuranceBasedOnUndiscountedCb ? insuranceBasedOnUndiscountedCb.checked : false;
+
+    const insuranceAmount = (useUndiscounted ? insuranceBaseHTUndiscounted : insuranceBaseHT) * (insuranceRate / 100);
     const totalHT = baseRentalHT + insuranceAmount;
 
     const tvaRate = parseFloat(document.getElementById('tvaRate').value) || 0;
@@ -524,6 +550,7 @@ async function saveQuote() {
             project_id: document.querySelector('select[name="project_id"]').value,
             tva_rate: (() => { const v = parseFloat(document.getElementById('tvaRate').value); return isNaN(v) ? 20.00 : v; })(),
             insurance_rate: (() => { const v = parseFloat(document.getElementById('insuranceRate').value); return isNaN(v) ? 10.00 : v; })(),
+            insurance_based_on_undiscounted: (() => { const el = document.getElementById('insuranceBasedOnUndiscounted'); return el ? el.checked : false; })(),
             show_discounts: document.getElementById('showDiscounts').checked,
             prestations: prestations
         };

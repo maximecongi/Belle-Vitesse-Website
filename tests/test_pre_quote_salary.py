@@ -292,6 +292,124 @@ class PreQuoteSalaryTest(unittest.TestCase):
         self.assertEqual(response.content_type, "application/pdf")
         self.assertIn("attachment; filename=", response.headers.get("Content-Disposition", ""))
 
+    def test_insurance_calculation_based_on_undiscounted(self):
+        from services.admin.pre_quote import calculate_totals
+        prestations = [
+            {
+                "category": "equipment",
+                "description": "Caméra",
+                "quantity": 2.0,
+                "unit": "jour(s)",
+                "unit_price": 500.0,
+                "discount_rate": 50.0,  # 50% remise
+                "is_mad": False
+            },
+            {
+                "category": "logistics",
+                "description": "Transport",
+                "quantity": 1.0,
+                "unit": "unité(s)",
+                "unit_price": 200.0,
+                "discount_rate": 0.0,
+                "is_mad": False
+            }
+        ]
+        # 1. Option assurance avec remise (par défaut / False)
+        # Location avec remise = (2.0 * 500.0 * 0.5) + (1.0 * 200.0) = 500.0 + 200.0 = 700.0
+        # Assurance (10% sur équipement uniquement) = 10% de 500.0 = 50.0
+        # Total HT = 700.0 + 50.0 = 750.0
+        with self.app.app_context():
+            totals_discounted = calculate_totals(prestations, tva_rate=20.00, insurance_rate=10.00, insurance_based_on_undiscounted=False)
+        self.assertEqual(float(totals_discounted["total_rental_ht"]), 700.0)
+        self.assertEqual(float(totals_discounted["insurance_amount"]), 50.0)
+        self.assertEqual(float(totals_discounted["total_ht"]), 750.0)
+
+        # 2. Option assurance sans remise (True)
+        # Location avec remise = 700.0
+        # Équipement brut (sans remise) = 2.0 * 500.0 = 1000.0
+        # Assurance (10% sur équipement brut uniquement) = 10% de 1000.0 = 100.0
+        # Total HT = 700.0 + 100.0 = 800.0
+        with self.app.app_context():
+            totals_undiscounted = calculate_totals(prestations, tva_rate=20.00, insurance_rate=10.00, insurance_based_on_undiscounted=True)
+        self.assertEqual(float(totals_undiscounted["total_rental_ht"]), 700.0)
+        self.assertEqual(float(totals_undiscounted["insurance_amount"]), 100.0)
+        self.assertEqual(float(totals_undiscounted["total_ht"]), 800.0)
+
+    def test_pre_quote_creation_with_undiscounted_insurance(self):
+        from services.admin.pre_quote import create_pre_quote, update_pre_quote, create_pre_quote_version, restore_pre_quote_version
+        with self.app.app_context():
+            prod = Production(name="Prod Test")
+            db.session.add(prod)
+            db.session.commit()
+            
+            data = {
+                "production_id": prod.id,
+                "project_name": "Test Project",
+                "prestations": [
+                    {
+                        "category": "equipment",
+                        "description": "Projecteur",
+                        "quantity": 1.0,
+                        "unit": "jour(s)",
+                        "unit_price": 200.0,
+                        "discount_rate": 100.0,  # Gratuit
+                        "is_mad": False
+                    }
+                ],
+                "insurance_rate": 10.00,
+                "tva_rate": 20.00,
+                "insurance_based_on_undiscounted": True
+            }
+            
+            # Create pre-quote
+            quote = create_pre_quote(data)
+            self.assertTrue(quote.insurance_based_on_undiscounted)
+            # Location avec remise = 0.0
+            # Brut = 200.0
+            # Assurance = 10% de 200.0 = 20.0
+            # Total HT = 20.0
+            # Total TTC = 20.0 * 1.2 = 24.0
+            self.assertEqual(float(quote.insurance_amount), 20.0)
+            self.assertEqual(float(quote.total_ht), 20.0)
+            self.assertEqual(float(quote.total_ttc), 24.0)
+
+            # Update pre-quote to False
+            update_pre_quote(quote.id, {"insurance_based_on_undiscounted": False})
+            self.assertFalse(quote.insurance_based_on_undiscounted)
+            # Assurance = 10% de 0.0 = 0.0
+            # Total HT = 0.0
+            self.assertEqual(float(quote.insurance_amount), 0.0)
+            self.assertEqual(float(quote.total_ht), 0.0)
+            self.assertEqual(float(quote.total_ttc), 0.0)
+
+            # Re-update to True
+            update_pre_quote(quote.id, {"insurance_based_on_undiscounted": True})
+            self.assertTrue(quote.insurance_based_on_undiscounted)
+
+            # Figer une version directement sans générer de PDF sur le disque
+            version = PreQuoteVersion(
+                pre_quote_id=quote.id,
+                version_number=1,
+                prestations=quote.prestations,
+                total_ht=quote.total_ht,
+                total_ttc=quote.total_ttc,
+                insurance_rate=quote.insurance_rate,
+                insurance_amount=quote.insurance_amount,
+                insurance_based_on_undiscounted=quote.insurance_based_on_undiscounted,
+                tva_rate=quote.tva_rate,
+                tva_amount=quote.tva_amount,
+                pdf_path="pre-quotes/test_v1.pdf"
+            )
+            db.session.add(version)
+            db.session.commit()
+            self.assertTrue(version.insurance_based_on_undiscounted)
+            self.assertEqual(float(version.insurance_amount), 20.0)
+
+            # Restore version
+            restore_pre_quote_version(version.id)
+            self.assertTrue(quote.insurance_based_on_undiscounted)
+            self.assertEqual(float(quote.insurance_amount), 20.0)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -246,6 +246,17 @@
                     <span>Montant Assurance</span>
                     <span id="insuranceAmount">0.00 €</span>
                 </div>
+                <div class="summary-row u-align-center u-mb-2">
+                    <label class="form-label u-flex u-justify-between u-align-center u-cursor-pointer u-m-0 u-w-full">
+                        <span style="font-size: 0.85rem; font-weight: normal;">Assurance sur brut (sans remise)</span>
+                        <div class="status-toggle">
+                            <input type="checkbox" id="insuranceBasedOnUndiscounted" {% if quote and quote.insurance_based_on_undiscounted %}checked{% endif %} class="u-d-none" onchange="recalculate()">
+                            <div class="toggle-track {% if quote and quote.insurance_based_on_undiscounted %}active{% endif %}">
+                                <div class="toggle-handle"></div>
+                            </div>
+                        </div>
+                    </label>
+                </div>
                 <div class="summary-row summary-row-divider">
                     <span>Total HT</span>
                     <span id="totalHT">0.00 €</span>

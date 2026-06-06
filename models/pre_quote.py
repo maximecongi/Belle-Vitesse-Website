@@ -28,6 +28,7 @@ class PreQuote(db.Model):
     # Totaux calculés
     insurance_rate = db.Column(db.Numeric(5, 2), default=10.00)
     insurance_amount = db.Column(db.Numeric(10, 2), nullable=False, default=0)
+    insurance_based_on_undiscounted = db.Column(db.Boolean, default=False, nullable=False)
     total_ht = db.Column(db.Numeric(10, 2), nullable=False, default=0)
     tva_rate = db.Column(db.Numeric(5, 2), default=20.00)
     tva_amount = db.Column(db.Numeric(10, 2), nullable=False, default=0)
@@ -58,6 +59,7 @@ class PreQuote(db.Model):
             "pdf_path": self.pdf_path,
             "insurance_rate": float(self.insurance_rate) if self.insurance_rate is not None else 10.0,
             "insurance_amount": float(self.insurance_amount) if self.insurance_amount is not None else 0.0,
+            "insurance_based_on_undiscounted": self.insurance_based_on_undiscounted,
             "tva_rate": float(self.tva_rate) if self.tva_rate is not None else 20.0,
             "tva_amount": float(self.tva_amount) if self.tva_amount is not None else 0.0,
             "project_id": self.project_id
@@ -82,6 +84,7 @@ class PreQuoteVersion(db.Model):
     total_ttc = db.Column(db.Numeric(10, 2), nullable=False)
     insurance_rate = db.Column(db.Numeric(5, 2))
     insurance_amount = db.Column(db.Numeric(10, 2))
+    insurance_based_on_undiscounted = db.Column(db.Boolean, default=False, nullable=False)
     tva_rate = db.Column(db.Numeric(5, 2))
     tva_amount = db.Column(db.Numeric(10, 2))
 
@@ -100,7 +103,8 @@ class PreQuoteVersion(db.Model):
             "total_ht": float(self.total_ht),
             "total_ttc": float(self.total_ttc),
             "pdf_path": self.pdf_path,
-            "version_note": self.version_note or ""
+            "version_note": self.version_note or "",
+            "insurance_based_on_undiscounted": self.insurance_based_on_undiscounted
         }
 
     def __repr__(self):

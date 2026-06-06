@@ -46,9 +46,11 @@ def get_delivery_config():
     }
 
 
-def calculate_totals(prestations, tva_rate=20.00, insurance_rate=10.00):
+def calculate_totals(prestations, tva_rate=20.00, insurance_rate=10.00, insurance_based_on_undiscounted=False):
     """Calcule les totaux HT, TVA et TTC pour une liste de prestations."""
     total_rental_ht = Decimal('0.00')
+    insurance_base_ht = Decimal('0.00')
+    insurance_base_ht_undiscounted = Decimal('0.00')
     tva_rate = Decimal(str(tva_rate))
     insurance_rate = Decimal(str(insurance_rate))
 
@@ -75,11 +77,13 @@ def calculate_totals(prestations, tva_rate=20.00, insurance_rate=10.00):
                 total_item_price = base_price + (qty - base_dist) * high_rate * Decimal('2')
             
             line_total = total_item_price * (Decimal('1') - (discount / Decimal('100')))
+            undiscounted_line_total = total_item_price
             item['total'] = float(line_total)
             item['unit_price'] = float(total_item_price)
         else:
             price = Decimal(str(item.get('unit_price', 0)))
             line_total = (qty * price) * (Decimal('1') - (discount / Decimal('100')))
+            undiscounted_line_total = qty * price
             item['total'] = float(line_total)
             
         # Exclude all salary items from the main HT sum
@@ -88,7 +92,16 @@ def calculate_totals(prestations, tva_rate=20.00, insurance_rate=10.00):
 
         total_rental_ht += line_total
 
-    insurance_amount = total_rental_ht * (insurance_rate / Decimal('100'))
+        # L'assurance ne s'applique que sur les équipements
+        if item.get('category') == 'equipment':
+            insurance_base_ht += line_total
+            insurance_base_ht_undiscounted += undiscounted_line_total
+
+    if insurance_based_on_undiscounted:
+        insurance_amount = insurance_base_ht_undiscounted * (insurance_rate / Decimal('100'))
+    else:
+        insurance_amount = insurance_base_ht * (insurance_rate / Decimal('100'))
+        
     total_ht = total_rental_ht + insurance_amount
     tva_amount = total_ht * (tva_rate / Decimal('100'))
     total_ttc = total_ht + tva_amount
@@ -146,7 +159,8 @@ def create_pre_quote(data, user_id=None):
     totals = calculate_totals(
         data.get('prestations', []),
         tva_rate=data.get('tva_rate', 20.00),
-        insurance_rate=data.get('insurance_rate', 10.00)
+        insurance_rate=data.get('insurance_rate', 10.00),
+        insurance_based_on_undiscounted=data.get('insurance_based_on_undiscounted', False)
     )
 
     quote = PreQuote(
@@ -156,6 +170,7 @@ def create_pre_quote(data, user_id=None):
         prestations=[p for p in data.get('prestations', []) if p.get('category') != 'insurance'],
         insurance_rate=totals['insurance_rate'],
         insurance_amount=totals['insurance_amount'],
+        insurance_based_on_undiscounted=data.get('insurance_based_on_undiscounted', False),
         total_ht=totals['total_ht'],
         tva_rate=totals['tva_rate'],
         tva_amount=totals['tva_amount'],
@@ -203,27 +218,34 @@ def update_pre_quote(quote_id, data):
     if 'project_name' in data:
         quote.project_name = data['project_name']
     
-    if 'prestations' in data or 'tva_rate' in data or 'insurance_rate' in data:
+    if 'prestations' in data or 'tva_rate' in data or 'insurance_rate' in data or 'insurance_based_on_undiscounted' in data:
         prestations = data.get('prestations', quote.prestations)
         tva_rate = data.get('tva_rate', quote.tva_rate)
         insurance_rate = data.get('insurance_rate', quote.insurance_rate)
+        insurance_based_on_undiscounted = data.get('insurance_based_on_undiscounted', quote.insurance_based_on_undiscounted)
         
-        logger.info(f"📊 Mise à jour pré-devis #{quote_id}: insurance_rate reçu={insurance_rate}, tva_rate reçu={tva_rate}")
+        logger.info(f"📊 Mise à jour pré-devis #{quote_id}: insurance_rate reçu={insurance_rate}, tva_rate reçu={tva_rate}, insurance_based_on_undiscounted={insurance_based_on_undiscounted}")
         
         # Filtrer les anciens items d'assurance si présents
         clean_prestations = [p for p in prestations if p.get('category') != 'insurance']
         
-        totals = calculate_totals(clean_prestations, tva_rate=tva_rate, insurance_rate=insurance_rate)
+        totals = calculate_totals(
+            clean_prestations,
+            tva_rate=tva_rate,
+            insurance_rate=insurance_rate,
+            insurance_based_on_undiscounted=insurance_based_on_undiscounted
+        )
         
         quote.prestations = clean_prestations
         quote.insurance_rate = totals['insurance_rate']
         quote.insurance_amount = totals['insurance_amount']
+        quote.insurance_based_on_undiscounted = insurance_based_on_undiscounted
         quote.total_ht = totals['total_ht']
         quote.tva_rate = totals['tva_rate']
         quote.tva_amount = totals['tva_amount']
         quote.total_ttc = totals['total_ttc']
         
-        logger.info(f"📊 Pré-devis #{quote_id} sauvegardé: insurance_rate={quote.insurance_rate}, insurance_amount={quote.insurance_amount}")
+        logger.info(f"📊 Pré-devis #{quote_id} sauvegardé: insurance_rate={quote.insurance_rate}, insurance_amount={quote.insurance_amount}, insurance_based_on_undiscounted={quote.insurance_based_on_undiscounted}")
 
     if 'status' in data:
         quote.status = data['status']
@@ -289,6 +311,7 @@ def create_pre_quote_version(quote_id, note):
         total_ttc=quote.total_ttc,
         insurance_rate=quote.insurance_rate,
         insurance_amount=quote.insurance_amount,
+        insurance_based_on_undiscounted=quote.insurance_based_on_undiscounted,
         tva_rate=quote.tva_rate,
         tva_amount=quote.tva_amount,
         pdf_path=relative_pdf_path,
@@ -310,6 +333,7 @@ def restore_pre_quote_version(version_id):
     quote.total_ttc = version.total_ttc
     quote.insurance_rate = version.insurance_rate
     quote.insurance_amount = version.insurance_amount
+    quote.insurance_based_on_undiscounted = version.insurance_based_on_undiscounted or False
     quote.tva_rate = version.tva_rate
     quote.tva_amount = version.tva_amount
     
