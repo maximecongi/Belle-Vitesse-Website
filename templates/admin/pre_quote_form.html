@@ -11,17 +11,17 @@
     <div class="badge-container">
         {% if item.category == 'custom' %}
         <input type="text" class="category-badge category-custom item-custom-cat item-custom-badge-input"
-            value="{{ item.custom_category or 'Autre' }}"
-            placeholder="Autre">
+            value="{{ item.custom_category or 'Autre' }}" placeholder="Autre">
         {% else %}
         <span class="category-badge category-{{ item.category }}">{{ PRE_QUOTE_CAT_MAP.get(item.category, item.category)
             }}</span>
         {% endif %}
 
         {% if item.category == 'equipment' %}
-        <label class="mad-label u-flex-inline u-align-center u-text-xs u-text-error u-ml-1 u-cursor-pointer u-text-medium u-vertical-middle">
-            <input type="checkbox" class="item-mad-checkbox u-mr-1 u-accent-red u-vertical-middle" onchange="toggleMAD(this)" {% if item.is_mad %}checked{%
-                endif %}>
+        <label
+            class="mad-label u-flex-inline u-align-center u-text-xs u-text-error u-ml-1 u-cursor-pointer u-text-medium u-vertical-middle">
+            <input type="checkbox" class="item-mad-checkbox u-mr-1 u-accent-red u-vertical-middle"
+                onchange="toggleMAD(this)" {% if item.is_mad %}checked{% endif %}>
             M.A.D.
         </label>
         {% endif %}
@@ -46,10 +46,12 @@
         <input type="number" step="1" min="0" max="100" class="form-input u-text-center item-discount"
             value="{{ item.discount_rate if item.discount_rate else 0 }}" onchange="recalculate()" placeholder="0%">
     </div>
-    <div><input type="number" step="0.01" class="form-input u-text-right item-price {% if item.unit=='km' %}form-input-readonly{% endif %}" value="{{ item.unit_price }}"
-            onchange="recalculate()" {% if item.unit=='km' %}readonly{% endif %}></div>
+    <div><input type="number" step="0.01"
+            class="form-input u-text-right item-price {% if item.unit=='km' %}form-input-readonly{% endif %}"
+            value="{{ item.unit_price }}" onchange="recalculate()" {% if item.unit=='km' %}readonly{% endif %}></div>
     <div class="u-text-right">
-        <button type="button" onclick="this.parentElement.parentElement.remove(); recalculate();" class="admin-btn admin-btn-sm admin-btn-danger">Supprimer</button>
+        <button type="button" onclick="this.parentElement.parentElement.remove(); recalculate();"
+            class="admin-btn admin-btn-sm admin-btn-danger">Supprimer</button>
     </div>
 </div>
 {% endmacro %}
@@ -70,10 +72,9 @@
                             <option value="">— Ne lier à aucun projet —</option>
                             <option value="new">✨ Créer automatiquement un nouveau projet</option>
                             {% for proj in projects %}
-                            <option value="{{ proj.id }}"
-                                data-production-id="{{ proj.production_id }}"
-                                data-project-name="{{ proj.name }}"
-                                {% if quote and quote.project_id==proj.id %}selected{% endif %}>
+                            <option value="{{ proj.id }}" data-production-id="{{ proj.production_id }}"
+                                data-project-name="{{ proj.name }}" {% if quote and quote.project_id==proj.id
+                                %}selected{% endif %}>
                                 {{ proj.name }} ({{ proj.project_id }})
                             </option>
                             {% endfor %}
@@ -81,7 +82,8 @@
                     </div>
                     <div class="form-group" id="productionGroup">
                         <label class="form-label">Production <span class="u-text-error">*</span></label>
-                        <select name="production_id" id="productionSelect" class="form-input searchable-select" required>
+                        <select name="production_id" id="productionSelect" class="form-input searchable-select"
+                            required>
                             <option value="">— Sélectionner une production —</option>
                             {% for prod in productions %}
                             <option value="{{ prod.id }}" {% if quote and quote.production_id==prod.id %}selected{%
@@ -104,10 +106,14 @@
                 <div class="u-flex u-justify-between u-align-center u-mb-3">
                     <h2 class="admin-section-title u-m-0">Prestations</h2>
                     <div class="u-flex u-gap-1">
-                        <button type="button" onclick="addItem('equipment')" class="admin-btn admin-btn-secondary admin-btn-sm">+ Équipement</button>
-                        <button type="button" onclick="addItem('salary')" class="admin-btn admin-btn-secondary admin-btn-sm">+ Salaire</button>
-                        <button type="button" onclick="addItem('logistics')" class="admin-btn admin-btn-secondary admin-btn-sm">+ Logistique</button>
-                        <button type="button" onclick="addItem('custom')" class="admin-btn admin-btn-secondary admin-btn-sm">+ Autre</button>
+                        <button type="button" onclick="addItem('equipment')"
+                            class="admin-btn admin-btn-secondary admin-btn-sm">+ Équipement</button>
+                        <button type="button" onclick="addItem('salary')"
+                            class="admin-btn admin-btn-secondary admin-btn-sm">+ Salaire</button>
+                        <button type="button" onclick="addItem('logistics')"
+                            class="admin-btn admin-btn-secondary admin-btn-sm">+ Logistique</button>
+                        <button type="button" onclick="addItem('custom')"
+                            class="admin-btn admin-btn-secondary admin-btn-sm">+ Autre</button>
                     </div>
                 </div>
 
@@ -238,9 +244,9 @@
                 </div>
                 <div class="summary-row u-align-center u-mb-2">
                     <span>Assurance (%)</span>
-                    <input type="number" step="1" name="insurance_rate" id="insuranceRate" class="form-input summary-input"
-                        value="{{ '%g' % (quote.insurance_rate | float) if quote else '10' }}"
-                        onchange="recalculate()">
+                    <input type="number" step="1" name="insurance_rate" id="insuranceRate"
+                        class="form-input summary-input"
+                        value="{{ '%g' % (quote.insurance_rate | float) if quote else '10' }}" onchange="recalculate()">
                 </div>
                 <div class="summary-row">
                     <span>Montant Assurance</span>
@@ -250,8 +256,11 @@
                     <label class="form-label u-flex u-justify-between u-align-center u-cursor-pointer u-m-0 u-w-full">
                         <span style="font-size: 0.85rem; font-weight: normal;">Assurance sur brut (sans remise)</span>
                         <div class="status-toggle">
-                            <input type="checkbox" id="insuranceBasedOnUndiscounted" {% if quote and quote.insurance_based_on_undiscounted %}checked{% endif %} class="u-d-none" onchange="recalculate()">
-                            <div class="toggle-track {% if quote and quote.insurance_based_on_undiscounted %}active{% endif %}">
+                            <input type="checkbox" id="insuranceBasedOnUndiscounted" {% if quote and
+                                quote.insurance_based_on_undiscounted %}checked{% endif %} class="u-d-none"
+                                onchange="recalculate()">
+                            <div
+                                class="toggle-track {% if quote and quote.insurance_based_on_undiscounted %}active{% endif %}">
                                 <div class="toggle-handle"></div>
                             </div>
                         </div>
@@ -291,11 +300,13 @@
                 </div>
 
                 <div class="u-mt-4 u-flex u-flex-column u-gap-2">
-                    <button type="button" onclick="saveQuote()" id="saveBtn" class="admin-btn admin-btn-primary u-justify-center admin-btn-lg">
+                    <button type="button" onclick="saveQuote()" id="saveBtn"
+                        class="admin-btn admin-btn-primary u-justify-center admin-btn-lg">
                         {{ 'Mettre à jour' if is_edit else 'Générer le Pré-Devis' }}
                     </button>
                     {% if is_edit %}
-                    <button type="button" onclick="createVersion()" id="versionBtn" class="admin-btn admin-btn-purple u-justify-center u-p-2">
+                    <button type="button" onclick="createVersion()" id="versionBtn"
+                        class="admin-btn admin-btn-purple u-justify-center u-p-2">
                         💾 Figer une Version
                     </button>
                     <a href="{{ url_for('admin_pre_quote_pdf', quote_id=quote.id) }}" target="_blank"
@@ -303,7 +314,8 @@
                         Voir le PDF
                     </a>
                     {% endif %}
-                    <a href="{{ url_for('admin_pre_quotes_list') }}" class="admin-btn admin-btn-secondary u-text-center u-justify-center">Retour</a>
+                    <a href="{{ url_for('admin_pre_quotes_list') }}"
+                        class="admin-btn admin-btn-secondary u-text-center u-justify-center">Retour</a>
                 </div>
             </div>
         </div>
@@ -319,7 +331,8 @@
         </div>
         <div class="prequote-modal-search-box">
             <div class="form-group u-m-0">
-                <input type="text" id="modalSearch" class="form-input prequote-modal-search-input" placeholder="Rechercher...">
+                <input type="text" id="modalSearch" class="form-input prequote-modal-search-input"
+                    placeholder="Rechercher...">
             </div>
         </div>
         <div id="modalAnnexeTabsContainer" class="u-d-none">
@@ -327,7 +340,7 @@
                 <button type="button" class="modal-annexe-tab active" data-modal-annexe="Annexe 1">Annexe 1</button>
                 <button type="button" class="modal-annexe-tab" data-modal-annexe="Annexe 3">Annexe 3</button>
                 <button type="button" class="modal-annexe-tab" data-modal-annexe="Annexe 1 renfort">Annexe 1
-                     renfort</button>
+                    renfort</button>
                 <button type="button" class="modal-annexe-tab" data-modal-annexe="USPA">USPA</button>
                 <button type="button" class="modal-annexe-tab" data-modal-annexe="USPA renfort">USPA renfort</button>
                 <button type="button" class="modal-annexe-tab" data-modal-annexe="Court-métrage">Court-métrage</button>
@@ -350,8 +363,8 @@
     // Configuration globale de la livraison injectée depuis Flask
     const DELIVERY_CONFIG = {
         baseDistance: {{ DELIVERY_CONFIG.base_distance }},
-        basePrice: {{ DELIVERY_CONFIG.base_price }},
-        highRate: {{ DELIVERY_CONFIG.high_rate }}
+    basePrice: { { DELIVERY_CONFIG.base_price } },
+    highRate: { { DELIVERY_CONFIG.high_rate } }
     };
 </script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
