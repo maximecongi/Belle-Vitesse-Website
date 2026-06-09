@@ -51,6 +51,7 @@
 .header-social_links-icon {
     height: 3svh;
     width: auto;
+    display: none;
 }
 
 /* Language Selector */
