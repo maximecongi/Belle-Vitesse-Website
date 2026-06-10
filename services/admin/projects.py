@@ -172,7 +172,7 @@ def _parse_date(d):
     return d if d else None
 
 
-def create_project(form):
+def create_project(form, user_id=None):
     """Crée un nouvel enregistrement de projet en base de données."""
     veh_ids = form.getlist("vehicle_ids") if hasattr(form, 'getlist') else []
     head_ids = form.getlist("head_ids") if hasattr(form, 'getlist') else []
@@ -192,7 +192,8 @@ def create_project(form):
         shoot_end_date=_parse_date(form.get("shoot_end")),
         return_date=_parse_date(form.get("return_date")),
         vehicles_to_check=",".join(veh_ids),
-        heads_to_check=",".join(head_ids)
+        heads_to_check=",".join(head_ids),
+        last_action_by_id=user_id
     )
     db.session.add(project)
     db.session.flush() # Permet d'obtenir l'ID du projet avant le commit final
@@ -222,7 +223,7 @@ def create_project(form):
     return True
 
 
-def update_project(record_id, form):
+def update_project(record_id, form, user_id=None):
     """Met à jour un projet existant en base de données."""
     project = db.session.get(Project, record_id)
     if not project:
@@ -246,6 +247,7 @@ def update_project(record_id, form):
     project.return_date = _parse_date(form.get("return_date"))
     project.vehicles_to_check = ",".join(veh_ids)
     project.heads_to_check = ",".join(head_ids)
+    project.last_action_by_id = user_id
 
     db.session.commit()
     return True
@@ -281,7 +283,7 @@ def get_project_for_edit(record_id):
     }
 
 
-def delete_project(record_id):
+def delete_project(record_id, user_id=None):
     """Supprime un projet et ses décharges associées de la base de données via soft-delete."""
     p = db.session.get(Project, record_id)
     if p:
@@ -294,5 +296,6 @@ def delete_project(record_id):
         delete_pilot_waiver_internal(record_id)
         delete_production_waiver_internal(record_id)
         p.deleted_at = _utcnow()
+        p.last_action_by_id = user_id
         db.session.commit()
     return True

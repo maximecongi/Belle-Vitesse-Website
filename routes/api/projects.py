@@ -1,4 +1,4 @@
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, current_app, g, jsonify, request
 
 from services.admin.projects import (
     create_project,
@@ -41,7 +41,8 @@ def api_get_project(record_id):
 def api_create_project():
     try:
         data = request.get_json(silent=True) or {}
-        create_project(data)
+        user_id = g.current_user.id if hasattr(g, "current_user") and g.current_user else None
+        create_project(data, user_id=user_id)
         return jsonify({"message": "Projet créé avec succès"}), 201
     except Exception as e:
         current_app.logger.error(f"❌ API create_project error: {e}")
@@ -53,7 +54,8 @@ def api_create_project():
 def api_update_project(record_id):
     try:
         data = request.get_json(silent=True) or {}
-        update_project(record_id, data)
+        user_id = g.current_user.id if hasattr(g, "current_user") and g.current_user else None
+        update_project(record_id, data, user_id=user_id)
         return jsonify({"message": "Projet mis à jour"})
     except Exception as e:
         current_app.logger.error(f"❌ API update_project error: {e}")
@@ -64,7 +66,8 @@ def api_update_project(record_id):
 @require_api_auth("administrator", "manager")
 def api_delete_project(record_id):
     try:
-        delete_project(record_id)
+        user_id = g.current_user.id if hasattr(g, "current_user") and g.current_user else None
+        delete_project(record_id, user_id=user_id)
         return jsonify({"message": "Projet supprimé"})
     except Exception as e:
         current_app.logger.error(f"❌ API delete_project error: {e}")

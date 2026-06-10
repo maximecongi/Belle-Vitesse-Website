@@ -7,6 +7,7 @@ from flask import (
     redirect,
     render_template,
     request,
+    session,
     url_for,
 )
 
@@ -96,7 +97,7 @@ def init_projects_routes(app):
                     return render_template(
                         "admin/project_form.html", data=request.form, is_edit=False, **context
                     )
-                create_project(request.form)
+                create_project(request.form, user_id=session.get("admin_user_id"))
                 flash("Projet créé avec succès !", "success")
                 return redirect(url_for("admin_projects_list"))
             except Exception as e:
@@ -115,7 +116,7 @@ def init_projects_routes(app):
 
         try:
             if request.method == "POST":
-                update_project(record_id, request.form)
+                update_project(record_id, request.form, user_id=session.get("admin_user_id"))
                 flash("Projet modifié avec succès !", "success")
                 return redirect(url_for("admin_projects_list"))
 
@@ -132,7 +133,7 @@ def init_projects_routes(app):
     @require_roles('administrator', 'manager', 'commercial')
     def admin_project_delete(record_id):
         try:
-            delete_project(record_id)
+            delete_project(record_id, user_id=session.get("admin_user_id"))
             flash("Projet supprimé avec succès.", "success")
             return redirect(url_for("admin_projects_list"))
         except Exception as e:

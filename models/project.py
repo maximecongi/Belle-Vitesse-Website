@@ -89,6 +89,10 @@ class Project(db.Model):
     # Soft-delete support
     deleted_at = db.Column(db.DateTime, nullable=True)
 
+    # Tracking de la dernière action
+    last_action_by_id = db.Column(
+        db.Integer, db.ForeignKey("users.id"), nullable=True, index=True)
+
     # Relations
     # Liste des contrôles au départ effectués pour ce projet
     checkout_vehicles = db.relationship(
@@ -111,6 +115,9 @@ class Project(db.Model):
     # Décharge production associée (unique pour le projet)
     production_waiver = db.relationship(
         "ProductionWaiver", backref="project", uselist=False, lazy=True)
+    # Utilisateur ayant effectué la dernière action
+    last_action_by = db.relationship(
+        "User", foreign_keys=[last_action_by_id], lazy=True)
 
     def to_dict(self):
         """Convertit l'objet en dictionnaire pour les réponses API."""

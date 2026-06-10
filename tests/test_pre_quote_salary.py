@@ -13,7 +13,7 @@ mock_weasyprint.CSS = MagicMock()
 sys.modules["weasyprint"] = mock_weasyprint
 
 from app import create_app
-from models import db, SalaryRate, PreQuote, Production
+from models import db, SalaryRate, PreQuote, Production, PreQuoteVersion
 
 class PreQuoteSalaryTest(unittest.TestCase):
     def setUp(self):
