@@ -2,6 +2,24 @@ import os
 import sys
 from pathlib import Path
 
+# En développement / scripts autonomes, utiliser PyMySQL comme pilote MySQLdb
+# pour contourner l'erreur de chargement de mysql_native_password présente sur MySQL 9+
+try:
+    import pymysql
+    pymysql.install_as_MySQLdb()
+except ImportError:
+    try:
+        import MySQLdb
+    except ImportError:
+        print("\n❌ Erreur : Les packages de connexion MySQL (mysqlclient ou pymysql) ne sont pas installés.")
+        print("Il semble que vous n'utilisez pas l'environnement virtuel du projet.")
+        print("Veuillez lancer le script avec le Python de l'environnement virtuel :\n")
+        if os.path.basename(os.getcwd()) == "scripts":
+            print("  ../.venv/bin/python sync_airtable.py\n")
+        else:
+            print("  .venv/bin/python scripts/sync_airtable.py\n")
+        sys.exit(1)
+
 from dotenv import load_dotenv
 from flask import Flask
 
