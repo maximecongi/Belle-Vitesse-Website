@@ -241,7 +241,7 @@ def check_alerts():
 
             # ── 4. Activité hors heures de bureau ─────────────────────────────
             current_hour = now.hour
-            if current_hour < heure_debut or current_hour >= heure_fin:
+            if heure_debut != heure_fin and (current_hour < heure_debut or current_hour >= heure_fin):
                 out_of_hours = (
                     db.session.query(
                         SqlQueryLog.user,
