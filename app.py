@@ -182,10 +182,6 @@ def warm_cache():
 
 
 
-if os.getenv("FLASK_ENV") == "production":
-    # Warm le cache une seule fois au démarrage (pas de scheduler récurrent)
-    import threading
-    threading.Thread(target=warm_cache, daemon=True).start()
 
 
 if __name__ == "__main__":

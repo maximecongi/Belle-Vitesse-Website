@@ -55,7 +55,7 @@ else:
     def enqueue(func, record):
         try:
             rq_queue.enqueue(
-                "services.sql_logger.worker.process_sql_log",
+                "services.admin.sql_logger.worker.process_sql_log",
                 record,
                 job_timeout=10,
                 result_ttl=0
