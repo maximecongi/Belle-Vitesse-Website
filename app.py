@@ -58,9 +58,9 @@ def create_app():
         app.config["SECRET_KEY"] = "dev-only-insecure-key-change-in-production"
         app.logger.warning("⚠️ SECRET_KEY non définie — clé par défaut utilisée (dev uniquement)")
 
-    # Correction de Proxy pour SSL derrière Traefik (nécessaire pour url_for HTTPS)
+    # Correction de Proxy pour SSL derrière Traefik (nécessaire pour url_for HTTPS et détection d'IP)
     from werkzeug.middleware.proxy_fix import ProxyFix
-    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     # Tunnel SSH (uniquement en développement pour accéder à la DB distante)
     if env == "development":
