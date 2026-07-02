@@ -44,4 +44,6 @@ def purge_logs():
 
 
 if __name__ == "__main__":
-    purge_logs()
+    from utils.cron_helper import monitor_cron_job
+    with monitor_cron_job("purge_sql_logs"):
+        purge_logs()

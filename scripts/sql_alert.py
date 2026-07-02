@@ -323,4 +323,6 @@ def check_alerts():
 
 
 if __name__ == "__main__":
-    check_alerts()
+    from utils.cron_helper import monitor_cron_job
+    with monitor_cron_job("sql_alert"):
+        check_alerts()

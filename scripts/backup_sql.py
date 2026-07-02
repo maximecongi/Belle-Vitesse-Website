@@ -57,13 +57,22 @@ def run_backup(host, port):
         exit(1)
 
 
-if os.getenv("FLASK_ENV", "production").lower() != "production":
-    print("🔗 Ensuring SSH Tunnel via centralized helper...")
-    tunnel, local_port = get_ssh_tunnel()
-    if tunnel:
-        run_backup("127.0.0.1", local_port)
+from utils.cron_helper import monitor_cron_job
+
+
+def main():
+    if os.getenv("FLASK_ENV", "production").lower() != "production":
+        print("🔗 Ensuring SSH Tunnel via centralized helper...")
+        tunnel, local_port = get_ssh_tunnel()
+        if tunnel:
+            run_backup("127.0.0.1", local_port)
+        else:
+            print("⚠️ SSH Tunnel not available, attempting direct connection...")
+            run_backup(MYSQL_HOST, 3306)
     else:
-        print("⚠️ SSH Tunnel not available, attempting direct connection...")
         run_backup(MYSQL_HOST, 3306)
-else:
-    run_backup(MYSQL_HOST, 3306)
+
+
+if __name__ == "__main__":
+    with monitor_cron_job("backup_sql"):
+        main()

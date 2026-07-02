@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport Quotidien des Crons — Belle Vitesse</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #151515;
+            color: #FFFFFF;
+            font-family: 'Poppins', Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            margin: 40px auto;
+            background-color: #151515;
+        }
+
+        .header {
+            padding: 40px 20px 20px 20px;
+            text-align: center;
+        }
+
+        .logo {
+            width: 180px;
+            max-width: 80%;
+        }
+
+        .content {
+            padding: 20px 30px;
+        }
+
+        h1 {
+            font-size: 22px;
+            font-weight: 500;
+            margin-bottom: 25px;
+            letter-spacing: 1px;
+            color: #FFFFFF;
+            text-align: center;
+        }
+
+        .dot-before:before {
+            content: "■ ";
+            color: #FFC845;
+            font-size: 0.8em;
+            position: relative;
+            left: -0.2ch;
+            top: -0.2ch;
+        }
+
+        p {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #A1A1A1;
+            margin-bottom: 25px;
+        }
+
+        /* Status Banner */
+        .status-banner {
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 30px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .status-ok {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: #4CAF50;
+            border: 1px solid #4CAF50;
+        }
+
+        .status-warning {
+            background-color: rgba(255, 152, 0, 0.1);
+            color: #FF9800;
+            border: 1px solid #FF9800;
+        }
+
+        .status-danger {
+            background-color: rgba(244, 67, 54, 0.1);
+            color: #F44336;
+            border: 1px solid #F44336;
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 35px;
+            background-color: #1a1a1a;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        th {
+            background-color: #222222;
+            color: #A1A1A1;
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #282828;
+            font-size: 14px;
+            color: #DDDDDD;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .badge-success {
+            background-color: #4CAF50;
+            color: #FFFFFF;
+        }
+
+        .badge-failed {
+            background-color: #F44336;
+            color: #FFFFFF;
+        }
+
+        .badge-warning {
+            background-color: #FF9800;
+            color: #FFFFFF;
+        }
+
+        .badge-missing {
+            background-color: #777777;
+            color: #FFFFFF;
+        }
+
+        /* Error Details */
+        .error-section {
+            margin-top: 35px;
+        }
+
+        .error-title {
+            color: #F44336;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #F44336;
+            padding-bottom: 5px;
+        }
+
+        .error-box {
+            background-color: #222222;
+            border-left: 4px solid #F44336;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .error-job-name {
+            font-weight: bold;
+            color: #FFFFFF;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .error-body {
+            color: #FFCACA;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            background-color: #181818;
+            padding: 12px;
+            border-radius: 3px;
+            overflow-x: auto;
+            margin: 0;
+        }
+
+        .footer {
+            padding: 40px 20px;
+            text-align: center;
+            color: #555555;
+            border-top: 1px solid #252525;
+            margin-top: 40px;
+        }
+
+        .footer p {
+            font-size: 11px;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://bellevitesse.com/static/imgs/logos_and_name/blanc-fond-transparent.png"
+                alt="Belle Vitesse" class="logo">
+        </div>
+        
+        <div class="content">
+            <h1 class="dot-before">Statut Quotidien des Tâches Planifiées</h1>
+            
+            <p style="text-align: center; margin-top: -15px; font-size: 14px;">
+                Rapport du {{ date_str }} généré à {{ time_str }} UTC
+            </p>
+
+            <!-- Global Status Banner -->
+            {% if global_status == 'OK' %}
+            <div class="status-banner status-ok">
+                ✓ TOUT EST EN ORDRE — 100% DES CRONS OPÉRATIONNELS
+            </div>
+            {% elif global_status == 'WARNING' %}
+            <div class="status-banner status-warning">
+                ⚠ ATTENTION — DES TÂCHES SONT EN RETARD OU MANQUANTES
+            </div>
+            {% else %}
+            <div class="status-banner status-danger">
+                ❌ ALERTE — DES ÉCHECS ONT ÉTÉ DÉTECTÉS
+            </div>
+            {% endif %}
+
+            <!-- Table of Jobs -->
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tâche</th>
+                        <th>Fréquence attendue</th>
+                        <th>Dernière exécution (UTC)</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in jobs %}
+                    <tr>
+                        <td><strong>{{ job.display_name }}</strong></td>
+                        <td>{{ job.expected_freq }}</td>
+                        <td>{{ job.last_run_display }}</td>
+                        <td>
+                            {% if job.status == 'success' %}
+                            <span class="badge badge-success">OK</span>
+                            {% elif job.status == 'failed' %}
+                            <span class="badge badge-failed">Échec</span>
+                            {% elif job.status == 'stale' %}
+                            <span class="badge badge-warning">En retard</span>
+                            {% else %}
+                            <span class="badge badge-missing">Manquant</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Failures / Error Tracebacks Details -->
+            {% if failures %}
+            <div class="error-section">
+                <div class="error-title">Détail des erreurs et échecs</div>
+                {% for fail in failures %}
+                <div class="error-box">
+                    <div class="error-job-name">🚨 {{ fail.display_name }} ({{ fail.job_name }})</div>
+                    <p style="font-size: 13px; margin: 5px 0 10px 0; color: #CCCCCC;">
+                        Status : <strong>{{ fail.status_label }}</strong> | Dernière exécution : {{ fail.last_run_display }}
+                    </p>
+                    <pre class="error-body">{{ fail.error_message }}</pre>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <p style="margin-top: 40px; font-size: 13px; font-style: italic; text-align: center;">
+                Ce rapport a été généré automatiquement par le serveur de production de Belle Vitesse.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>
+                © Belle Vitesse {{ now_year }}. Tous droits réservés.<br>
+                Belle Vitesse — 33 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine, France
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>

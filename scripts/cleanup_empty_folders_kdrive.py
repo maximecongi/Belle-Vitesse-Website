@@ -132,5 +132,59 @@ def main():
     log.info("Terminé.")
 
 
+def log_cron_status(job_name, status, error=None):
+    import json
+    from datetime import datetime, timezone
+    from pathlib import Path
+
+    possible_paths = [
+        Path("/srv/bellevitesse/logs"),
+        Path("/app/logs"),
+        Path(__file__).parent.parent.parent / "logs",
+        Path(__file__).parent.parent / "logs",
+    ]
+    logs_dir = None
+    for p in possible_paths:
+        if p.exists() and p.is_dir():
+            logs_dir = p
+            break
+
+    if not logs_dir:
+        logs_dir = Path(__file__).parent.parent / "logs"
+        logs_dir.mkdir(parents=True, exist_ok=True)
+
+    status_file = logs_dir / "cron_status.json"
+
+    data = {}
+    if status_file.exists():
+        try:
+            with open(status_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception:
+            pass
+
+    data[job_name] = {
+        "last_run": datetime.now(timezone.utc).isoformat(),
+        "status": status,
+        "error": error
+    }
+
+    try:
+        temp_file = status_file.with_suffix(".tmp")
+        with open(temp_file, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        temp_file.replace(status_file)
+    except Exception as e:
+        print(f"Failed to write cron status for {job_name}: {e}")
+
+
 if __name__ == "__main__":
-    main()
+    import traceback
+    log_cron_status("cleanup_empty_folders_kdrive", "running")
+    try:
+        main()
+        log_cron_status("cleanup_empty_folders_kdrive", "success")
+    except Exception as e:
+        tb = traceback.format_exc()
+        log_cron_status("cleanup_empty_folders_kdrive", "failed", error=tb)
+        raise e
