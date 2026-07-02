@@ -20,21 +20,68 @@ from utils.scripts_helper import build_minimal_app
 # Load environment variables
 load_dotenv(_root / '.env')
 
+_redis_conn = None
+try:
+    from redis import Redis
+    _redis_conn = Redis(
+        host=os.getenv("REDIS_HOST", "localhost") if os.getenv("FLASK_ENV") == "production" else "127.0.0.1",
+        port=int(os.getenv("REDIS_PORT", 6379)),
+        db=int(os.getenv("REDIS_DB_SQLLOG", 1)),
+        password=os.getenv("REDIS_PASSWORD", None),
+        socket_timeout=2.0,
+        socket_connect_timeout=2.0
+    )
+except Exception:
+    pass
+
 
 @lru_cache(maxsize=128)
 def get_geolocation(ip_address):
     if not ip_address or ip_address in ("127.0.0.1", "::1", "localhost", "None"):
         return "Local"
+        
+    # 1. Tenter de lire depuis le cache Redis
+    global _redis_conn
+    redis_key = f"ip_loc:{ip_address}"
+    if _redis_conn:
+        try:
+            cached_loc = _redis_conn.get(redis_key)
+            if cached_loc:
+                return cached_loc.decode('utf-8')
+        except Exception:
+            pass
+
+    # 2. Cache miss -> Appel API
+    loc = "Unknown"
     try:
         response = requests.get(
             f"http://ip-api.com/json/{ip_address}?fields=status,country,city", timeout=2.0)
         if response.status_code == 200:
             data = response.json()
             if data.get("status") == "success":
-                return f"{data.get('city', '')}, {data.get('country', '')}".strip(', ')
+                loc = f"{data.get('city', '')}, {data.get('country', '')}".strip(', ')
+                if not loc:
+                    loc = "Unknown"
+            elif data.get("status") == "fail" and data.get("message") == "private range":
+                loc = "Private IP"
+        elif response.status_code == 429:
+            loc = "Rate Limited"
     except Exception:
         pass
-    return "Unknown"
+
+    # 3. Écrire dans le cache Redis si disponible
+    if _redis_conn:
+        try:
+            if loc == "Rate Limited":
+                # Cache pour 5 minutes
+                _redis_conn.setex(redis_key, 300, loc)
+            elif loc != "Unknown":
+                # Cache pour 30 jours (2592000 secondes)
+                _redis_conn.setex(redis_key, 2592000, loc)
+        except Exception:
+            pass
+
+    return loc
 
 
 def render_query(query: str, parameters: str | None) -> str:

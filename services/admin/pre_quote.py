@@ -379,21 +379,24 @@ def get_pre_quote_pdf(quote_id):
     # On pourrait mettre en cache le PDF, mais pour l'instant on le génère à chaque fois ou on le stocke
     # Le plan indique de le stocker.
 
+    # Batch load settings for the PDF template to avoid 9 separate cache/DB lookups
+    company_settings = AppSetting.get_all_as_dict({
+        'company_name': 'Belle Vitesse SAS',
+        'company_address': '33 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine',
+        'company_phone': '+33 6 65 51 40 40',
+        'company_email': 'contact@bellevitesse.com',
+        'company_siret': '981 514 040 00014',
+        'company_vat': 'FR32981514040',
+        'bank_iban': '',
+        'bank_bic': '',
+        'company_representative': 'Simon Maignan'
+    })
+
     html = render_template('pdf/pre_devis.html', quote=quote,
                            grouped_prestations=grouped_prestations,
                            intermittent_salaries=intermittent_salaries,
                            now=datetime.now(),
-                           settings={
-                               'company_name': AppSetting.get('company_name', 'Belle Vitesse SAS'),
-                               'company_address': AppSetting.get('company_address', '33 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine'),
-                               'company_phone': AppSetting.get('company_phone', '+33 6 65 51 40 40'),
-                               'company_email': AppSetting.get('company_email', 'contact@bellevitesse.com'),
-                               'company_siret': AppSetting.get('company_siret', '981 514 040 00014'),
-                               'company_vat': AppSetting.get('company_vat', 'FR32981514040'),
-                               'bank_iban': AppSetting.get('bank_iban', ''),
-                               'bank_bic': AppSetting.get('bank_bic', ''),
-                               'company_representative': AppSetting.get('company_representative', 'Simon Maignan'),
-                           })
+                           settings=company_settings)
 
     pdf_bytes = render_pdf_from_template(html, base_url=current_app.root_path)
 

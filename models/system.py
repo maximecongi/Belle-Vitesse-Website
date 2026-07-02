@@ -17,7 +17,7 @@ class SqlQueryLog(db.Model):
     duration_ms = db.Column(db.Float)
 
     __table_args__ = (
-        db.Index('idx_user_ts', 'user', 'timestamp'),
+        db.Index('idx_timestamp_user', 'timestamp', 'user'),
         {
             'mysql_engine': 'InnoDB',
             'mysql_charset': 'utf8mb4',
@@ -87,6 +87,42 @@ class AppSetting(db.Model):
         except Exception:
             pass
         return val
+
+    @staticmethod
+    def get_all_as_dict(keys_defaults: dict) -> dict:
+        """Récupère plusieurs paramètres d'un coup de manière optimisée."""
+        from extensions import cache
+        keys = list(keys_defaults.keys())
+        
+        # 1. Tenter de lire depuis le cache en lot
+        cache_keys = [f"setting:{k}" for k in keys]
+        cached_results = {}
+        try:
+            vals = cache.get_many(*cache_keys)
+            for k, val in zip(keys, vals):
+                if val is not None:
+                    cached_results[k] = val
+        except Exception:
+            pass
+            
+        # 2. S'il manque des clés, les charger de la DB d'un coup
+        missing_keys = [k for k in keys if k not in cached_results]
+        if missing_keys:
+            try:
+                db_settings = AppSetting.query.filter(AppSetting.key.in_(missing_keys)).all()
+                db_dict = {s.key: s.value for s in db_settings}
+                for k in missing_keys:
+                    val = db_dict.get(k, keys_defaults[k])
+                    cached_results[k] = val
+                    try:
+                        cache.set(f"setting:{k}", val, timeout=3600)
+                    except Exception:
+                        pass
+            except Exception:
+                for k in missing_keys:
+                    cached_results[k] = keys_defaults[k]
+                    
+        return cached_results
 
     @staticmethod
     def set(key, value):
