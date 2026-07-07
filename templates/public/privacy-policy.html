@@ -7,17 +7,19 @@
         <p>
             <span class="dot-before">1 – Responsable du traitement</span>
 
-            Le responsable du traitement des données personnelles est la société RVZ, société par actions simplifiée au
-            capital de 100.000€, immatriculée au RCS de CRETEIL sous le n°348.257.197, dont le siège social est situé au
-            39 rue Maurice Gunsbourg – 94200 IVRY SUR SEINE (ci-après « RVZ »).
+            Le responsable du traitement des données personnelles est la société <strong>{{ company_name }}</strong>,
+            {% if company_siret %}immatriculée sous le numéro SIRET {{ company_siret }}{% endif %}, dont le siège social
+            est situé au {{ company_address }}.
 
-            Contact : contact@bellevitesse.com
+            Représentant légal : {{ company_representative }}.
+            Contact : {{ company_email }}.
 
 
 
             <span class="dot-before">2 – Données collectées</span>
 
-            Dans le cadre de son activité, RVZ est amenée à collecter et traiter les données personnelles suivantes :
+            Dans le cadre de son activité, <strong>{{ company_name }}</strong> est amenée à collecter et traiter les
+            données personnelles suivantes :
 
             • Données d'identification : nom, prénom, adresse postale, adresse e-mail, numéro de téléphone.
             • Données de connexion : adresse IP, données de navigation (cookies), type de navigateur, pages consultées.
@@ -45,7 +47,8 @@
 
             • L'exécution d'un contrat ou de mesures précontractuelles (article 6.1.b du RGPD).
             • Le consentement de la personne concernée (article 6.1.a du RGPD), notamment pour l'envoi de newsletters.
-            • L'intérêt légitime de RVZ (article 6.1.f du RGPD), notamment pour l'amélioration de ses services.
+            • L'intérêt légitime de <strong>{{ company_name }}</strong> (article 6.1.f du RGPD), notamment pour
+            l'amélioration de ses services.
             • Le respect d'une obligation légale (article 6.1.c du RGPD).
 
 
@@ -54,11 +57,12 @@
 
             Les données personnelles peuvent être communiquées aux catégories de destinataires suivantes :
 
-            • Le personnel habilité de RVZ.
+            • Le personnel habilité de <strong>{{ company_name }}</strong>.
             • Les sous-traitants et prestataires techniques (hébergement, maintenance du site, envoi d'e-mails).
             • Les autorités administratives ou judiciaires, dans le cadre des obligations légales.
 
-            RVZ s'engage à ne pas vendre ni louer les données personnelles de ses utilisateurs à des tiers.
+            <strong>{{ company_name }}</strong> s'engage à ne pas vendre ni louer les données personnelles de ses
+            utilisateurs à des tiers.
 
 
 
@@ -77,7 +81,8 @@
 
             <span class="dot-before">7 – Cookies</span>
 
-            Le site internet de RVZ utilise des cookies afin d'améliorer l'expérience de navigation. Les cookies
+            Le site internet de <strong>{{ company_name }}</strong> utilise des cookies afin d'améliorer l'expérience de
+            navigation. Les cookies
             utilisés
             sont les suivants :
 
@@ -104,7 +109,7 @@
             • Droit de retrait du consentement : retirer à tout moment son consentement pour les traitements fondés sur
             celui-ci.
 
-            Ces droits peuvent être exercés en adressant une demande à : contact@bellevitesse.com
+            Ces droits peuvent être exercés en adressant une demande à : <strong>{{ company_email }}</strong>
 
             En cas de réclamation, l'utilisateur peut s'adresser à la Commission Nationale de l'Informatique et des
             Libertés (CNIL) : www.cnil.fr.
@@ -113,7 +118,8 @@
 
             <span class="dot-before">9 – Sécurité des données</span>
 
-            RVZ met en œuvre les mesures techniques et organisationnelles appropriées afin de garantir la sécurité, la
+            <strong>{{ company_name }}</strong> met en œuvre les mesures techniques et organisationnelles appropriées
+            afin de garantir la sécurité, la
             confidentialité et l'intégrité des données personnelles, et de les protéger contre tout accès non autorisé,
             toute altération, divulgation ou destruction.
 
@@ -121,11 +127,12 @@
 
             <span class="dot-before">10 – Modification de la politique de confidentialité</span>
 
-            RVZ se réserve le droit de modifier la présente politique de confidentialité à tout moment. Les
+            <strong>{{ company_name }}</strong> se réserve le droit de modifier la présente politique de confidentialité
+            à tout moment. Les
             modifications
             entreront en vigueur dès leur publication sur le site internet.
 
-            Dernière mise à jour : Mars 2026
+            Dernière mise à jour : Juillet 2026
         </p>
     </div>
 </section>
