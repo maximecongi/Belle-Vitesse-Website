@@ -193,45 +193,63 @@ def init_web_routes(app):
     @csrf.exempt
     def subscribe():
         from utils.mailer import send_subscription_email
+        
+        # Déterminer la langue pour les messages de feedback
+        # Toujours forcer l'anglais si la requête vient de la page /launch
+        referrer = request.referrer or ""
+        if "/launch" in referrer or request.form.get("lang") == "en":
+            req_lang = "en"
+        else:
+            req_lang = g.get('lang', 'en')
+
+        messages = {
+            "fr": {
+                "email_required": "L'adresse email est requise.",
+                "invalid_email": "Adresse email invalide.",
+                "too_many_requests": "Trop de requêtes. Veuillez réessayer plus tard.",
+                "already_subscribed": "Vous êtes déjà inscrit !",
+                "success": "Merci pour votre inscription !",
+                "error": "Une erreur inattendue est survenue."
+            },
+            "en": {
+                "email_required": "Email address is required.",
+                "invalid_email": "Invalid email address.",
+                "too_many_requests": "Too many requests. Please try again later.",
+                "already_subscribed": "You are already subscribed!",
+                "success": "Thank you for subscribing!",
+                "error": "An unexpected error occurred."
+            }
+        }
+        msg = messages.get(req_lang, messages["en"])
+
         email = request.form.get("email")
         if not email:
-            return jsonify({"status": "error", "message": "L'email est requis"}), 400
+            return jsonify({"status": "error", "message": msg["email_required"]}), 400
 
         email_regex = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
         if not re.match(email_regex, email):
-            return jsonify({"status": "error", "message": "Adresse email invalide"}), 400
+            return jsonify({"status": "error", "message": msg["invalid_email"]}), 400
 
         ip = request.headers.get("X-Forwarded-For", request.remote_addr)
         rate_key = f"rate_limit_{ip}"
         requests_count = cache.get(rate_key) or 0
 
         if requests_count >= 10:
-            return jsonify(
-                {
-                    "status": "error",
-                    "message": "Trop de requêtes. Veuillez réessayer plus tard.",
-                }
-            ), 429
+            return jsonify({"status": "error", "message": msg["too_many_requests"]}), 429
 
         cache.set(rate_key, requests_count + 1, timeout=3600)
 
         try:
             success = add_newsletter_subscriber(email)
             if not success:
-                return jsonify(
-                    {"status": "error", "message": "Vous êtes déjà inscrit !"}
-                ), 400
+                return jsonify({"status": "error", "message": msg["already_subscribed"]}), 400
 
             send_subscription_email(email)
-            return jsonify(
-                {"status": "success", "message": "Merci pour votre inscription !"}
-            ), 200
+            return jsonify({"status": "success", "message": msg["success"]}), 200
 
         except Exception as e:
             current_app.logger.error(f"Unexpected error: {e}")
-            return jsonify(
-                {"status": "error", "message": "Une erreur inattendue est survenue."}
-            ), 500
+            return jsonify({"status": "error", "message": msg["error"]}), 500
 
     @app.route("/unsubscribe/<token>", methods=["GET", "POST"])
     def unsubscribe(token):

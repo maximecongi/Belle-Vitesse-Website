@@ -79,6 +79,7 @@
                     try {
                         const formData = new FormData();
                         formData.append('email', email);
+                        formData.append('lang', 'en');
 
                         const response = await fetch('/subscribe', {
                             method: 'POST',

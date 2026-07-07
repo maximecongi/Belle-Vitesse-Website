@@ -88,15 +88,18 @@ function initNewsletterForm() {
             e.preventDefault();
 
             const email = input.value;
+            const isFr = window.location.pathname.startsWith('/fr/');
+            
             // 🚀 Add loading state
             messageDiv.className = 'newsletter-message';
-            messageDiv.textContent = 'Subscribing...';
+            messageDiv.textContent = isFr ? 'Inscription en cours...' : 'Subscribing...';
             messageDiv.classList.add('show');
             if (button) button.disabled = true;
 
             try {
                 const formData = new FormData();
                 formData.append('email', email);
+                formData.append('lang', isFr ? 'fr' : 'en');
 
                 const response = await fetch('/subscribe', {
                     method: 'POST',
