@@ -36,7 +36,8 @@ def get_ssh_tunnel():
             (ssh_host, 22),
             ssh_username=ssh_user,
             ssh_password=ssh_pass,
-            remote_bind_address=(mysql_host, 3306)
+            remote_bind_address=(mysql_host, 3306),
+            keepalive=30.0
         )
         _tunnel.start()
         logger.info(f"✅ SSH Tunnel started on port {_tunnel.local_bind_port}")

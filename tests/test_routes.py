@@ -22,6 +22,7 @@ class RouteSmokeTest(unittest.TestCase):
         os.environ["FLASK_ENV"] = "testing"
         os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
         os.environ["WTF_CSRF_ENABLED"] = "False"
+        os.environ["LAUNCH_MODE"] = "false"
 
         # Prevent SSH tunnel or other prod-only things if possible
         os.environ["USE_SSH_TUNNEL"] = "false"

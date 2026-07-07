@@ -68,4 +68,8 @@ def build_minimal_app(template_folder=None):
 
     db.init_app(app)
 
+    # TCP Keepalive sur les connexions DB
+    from utils.keepalive import init_tcp_keepalive
+    init_tcp_keepalive(app)
+
     return app, tunnel

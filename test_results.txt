@@ -26,10 +26,13 @@ test_unified_form_context (test_inspections.InspectionsTest.test_unified_form_co
 test_all_rates_api (test_pre_quote_salary.PreQuoteSalaryTest.test_all_rates_api) ... ok
 test_edit_enrichment (test_pre_quote_salary.PreQuoteSalaryTest.test_edit_enrichment) ... ok
 test_grouped_prestations_pdf (test_pre_quote_salary.PreQuoteSalaryTest.test_grouped_prestations_pdf) ... ok
+test_insurance_calculation_based_on_undiscounted (test_pre_quote_salary.PreQuoteSalaryTest.test_insurance_calculation_based_on_undiscounted) ... ok
 test_intermittent_salaries_exclusion_and_annex (test_pre_quote_salary.PreQuoteSalaryTest.test_intermittent_salaries_exclusion_and_annex) ... ok
 test_mad_pricing_calculation (test_pre_quote_salary.PreQuoteSalaryTest.test_mad_pricing_calculation) ... ok
+test_pre_quote_creation_with_undiscounted_insurance (test_pre_quote_salary.PreQuoteSalaryTest.test_pre_quote_creation_with_undiscounted_insurance) ... ok
 test_salaries_pdf_route (test_pre_quote_salary.PreQuoteSalaryTest.test_salaries_pdf_route)
 Test the salaries PDF export route with authorization. ... ok
+test_project_crud_tracking (test_projects.ProjectsTest.test_project_crud_tracking) ... ok
 test_about_us_page (test_routes.RouteSmokeTest.test_about_us_page)
 Test that the about us page is accessible. ... ok
 test_admin_login_page (test_routes.RouteSmokeTest.test_admin_login_page)
@@ -50,7 +53,7 @@ test_create_and_list_waivers (test_waivers.WaiversTest.test_create_and_list_waiv
 test_soft_delete_waivers (test_waivers.WaiversTest.test_soft_delete_waivers) ... ok
 
 ----------------------------------------------------------------------
-Ran 30 tests in 1.806s
+Ran 33 tests in 1.794s
 
 OK
 

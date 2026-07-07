@@ -31,13 +31,21 @@ def init_tcp_keepalive(app):
 
             if sock is not None:
                 sock.setsockopt(_socket.SOL_SOCKET, _socket.SO_KEEPALIVE, 1)
-                try:
-                    # Linux (Docker) : probe après 10s d'idle, toutes les 10s, 3 essais max
-                    sock.setsockopt(_socket.IPPROTO_TCP, _socket.TCP_KEEPIDLE, 10)
-                    sock.setsockopt(_socket.IPPROTO_TCP, _socket.TCP_KEEPINTVL, 10)
-                    sock.setsockopt(_socket.IPPROTO_TCP, _socket.TCP_KEEPCNT, 3)
-                except (AttributeError, OSError):
-                    pass  # macOS ou autre OS non-Linux
+                
+                # Configurer les options TCP Keepalive de manière robuste selon l'OS
+                # Sur macOS, TCP_KEEPIDLE n'existe pas et est remplacé par TCP_KEEPALIVE.
+                # On configure chaque option individuellement pour éviter qu'une erreur n'annule les autres.
+                for opt_name, val in [
+                    ('TCP_KEEPIDLE', 10),
+                    ('TCP_KEEPALIVE', 10),
+                    ('TCP_KEEPINTVL', 10),
+                    ('TCP_KEEPCNT', 3)
+                ]:
+                    if hasattr(_socket, opt_name):
+                        try:
+                            sock.setsockopt(_socket.IPPROTO_TCP, getattr(_socket, opt_name), val)
+                        except (AttributeError, OSError):
+                            pass
 
                 # N'appeler detach() que si on a créé un nouveau wrapper socket temporaire
                 if should_detach:

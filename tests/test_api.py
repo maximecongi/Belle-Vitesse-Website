@@ -20,6 +20,7 @@ class APIRouteSmokeTest(unittest.TestCase):
 
     def setUp(self):
         os.environ["FLASK_ENV"] = "testing"
+        os.environ["LAUNCH_MODE"] = "false"
         from app import create_app
         from models import db
         self.app = create_app()
