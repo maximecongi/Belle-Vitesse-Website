@@ -18,12 +18,15 @@ def init_context_processors(app):
     """Enregistre les processeurs de contexte globaux pour les templates Jinja2."""
     @app.context_processor
     def inject_globals():
+        import os
+        launch_mode = os.getenv("LAUNCH_MODE") == "true"
         if not has_request_context():
             return {
                 "now": datetime.now(timezone.utc),
                 "is_admin": False,
                 "lang": DEFAULT_LANG,
                 "t": t, "ts": ts, "alt_url": alt_url,
+                "launch_mode": launch_mode,
             }
 
         # Évite les appels DB lourds pour les pages d'erreur et les pages d'authentification
@@ -35,6 +38,7 @@ def init_context_processors(app):
                 "is_admin": request.path.startswith('/admin'),
                 "lang": g.get('lang', DEFAULT_LANG),
                 "t": t, "ts": ts, "alt_url": alt_url,
+                "launch_mode": launch_mode,
             }
 
         is_admin = request.path.startswith('/admin')
@@ -55,6 +59,7 @@ def init_context_processors(app):
             "t": t,
             "ts": ts,
             "alt_url": alt_url,
+            "launch_mode": launch_mode,
             "company_name": AppSetting.get("company_name", "Belle Vitesse SAS"),
             "company_representative": AppSetting.get("company_representative", "Simon Maignan"),
             "company_siret": AppSetting.get("company_siret", "981 514 040 00014"),

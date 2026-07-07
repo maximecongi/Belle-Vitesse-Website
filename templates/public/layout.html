@@ -27,7 +27,8 @@
   <meta property="og:url" content="{{ request.url }}">
   <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}">
   <meta property="og:description" content="{% block og_description %}{{ self.description() }}{% endblock %}">
-  <meta property="og:image" content="{% block og_image %}{{ request.url_root.rstrip('/') }}/static/imgs/logos/blanc-fond-noir.png{% endblock %}">
+  <meta property="og:image"
+    content="{% block og_image %}{{ request.url_root.rstrip('/') }}/static/imgs/logos/blanc-fond-noir.png{% endblock %}">
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
@@ -60,14 +61,23 @@
   <!-- Fonts & Icons preconnect -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Space+Grotesk:wght@300..700&display=swap"
+    rel="stylesheet">
 
   <!-- Pinned CDNs with SRI -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/swup/4.8.2/Swup.umd.min.js" integrity="sha512-tDj7BK9qw1O9oWHQMNMuJI5oMz8SWG+qh/NvurdK7m2xUOvmdQhi/7xQxOcSqdX1j9yxg+8nA9l6k2oQgbKJuQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@swup/preload-plugin@3.2.11/dist/index.umd.js" integrity="sha256-ldbt6MFDhtfpbTXesf/SCwVV0uECKTikaeGCscNIJsI=" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" integrity="sha512-c42qTSw/wPZ3/5LBzD+Bw5f7bSF2oxou6wEb+I/lqeaKV5FDIfMvvRp772y4jcJLKuGUOpbJMdg/BTl50fJYAw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/js/splide.min.js" integrity="sha256-FZsW7H2V5X9TGinSjjwYJ419Xka27I8XPDmWryGlWtw=" crossorigin="anonymous"></script>
-  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/css/splide.min.css" rel="stylesheet" integrity="sha256-5uKiXEwbaQh9cgd2/5Vp6WmMnsUr3VZZw0a8rKnOKNU=" crossorigin="anonymous">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/swup/4.8.2/Swup.umd.min.js"
+    integrity="sha512-tDj7BK9qw1O9oWHQMNMuJI5oMz8SWG+qh/NvurdK7m2xUOvmdQhi/7xQxOcSqdX1j9yxg+8nA9l6k2oQgbKJuQ=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@swup/preload-plugin@3.2.11/dist/index.umd.js"
+    integrity="sha256-ldbt6MFDhtfpbTXesf/SCwVV0uECKTikaeGCscNIJsI=" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+    integrity="sha512-c42qTSw/wPZ3/5LBzD+Bw5f7bSF2oxou6wEb+I/lqeaKV5FDIfMvvRp772y4jcJLKuGUOpbJMdg/BTl50fJYAw=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/js/splide.min.js"
+    integrity="sha256-FZsW7H2V5X9TGinSjjwYJ419Xka27I8XPDmWryGlWtw=" crossorigin="anonymous"></script>
+  <link href="https://cdn.jsdelivr.net/npm/@splidejs/splide@4.1.4/dist/css/splide.min.css" rel="stylesheet"
+    integrity="sha256-5uKiXEwbaQh9cgd2/5Vp6WmMnsUr3VZZw0a8rKnOKNU=" crossorigin="anonymous">
 
   <!-- Application Stylesheet -->
   {% if config.FLASK_ENV == 'production' %}
@@ -79,10 +89,27 @@
 </head>
 
 <body id="home">
+  {% if launch_mode %}
+  <div class="launch-back-bar"
+    style="padding: 20px 5vw; border-bottom: 1px solid rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: flex-start; z-index: 1000; position: relative;">
+    <a href="{{ url_for('launch') }}"
+      style="text-decoration: none; font-size: clamp(0.8rem, 0.9vw, 1.2rem); font-family: 'Poppins', sans-serif; font-weight: 500; display: flex; align-items: center; gap: 8px; transition: opacity 0.3s;"
+      onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+      {% if g.lang == 'fr' %}
+      ← Retour à l'écran de lancement
+      {% else %}
+      ← Back to launch screen
+      {% endif %}
+    </a>
+  </div>
+  {% else %}
   {% include "public/header.html" %}
+  {% endif %}
   <main id="swup" class="transition-fade">
     {% block content %}{% endblock %}
+    {% if not launch_mode %}
     {% include "public/footer.html" %}
+    {% endif %}
   </main>
   <script src="{{ url_for('static', filename='js/src/initialization.js')}}"></script>
   <script src="{{ url_for('static', filename='js/src/splide.js')}}"></script>
