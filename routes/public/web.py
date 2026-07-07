@@ -5,6 +5,7 @@ from collections import defaultdict
 from flask import (
     abort,
     current_app,
+    g,
     jsonify,
     redirect,
     render_template,
