@@ -83,3 +83,29 @@
 .newsletter-message.error {
     color: var(--red-1)
 }
+
+.newsletter-legal {
+    margin-top: 10px;
+    font-size: 0.7rem;
+    color: var(--white-4);
+    opacity: 0.8;
+    line-height: 1.3;
+    font-weight: 300;
+}
+
+.newsletter-legal a {
+    color: var(--white-2);
+    text-decoration: underline;
+}
+
+.newsletter-legal a:hover {
+    color: var(--yellow-1);
+}
+
+.newsletter-contact .newsletter-legal {
+    color: var(--grey-2);
+}
+
+.newsletter-contact .newsletter-legal a {
+    color: var(--grey-1);
+}

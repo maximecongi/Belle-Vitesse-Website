@@ -86,7 +86,7 @@ def init_web_routes(app):
     @app.before_request
     def redirect_to_launch():
         if os.getenv("LAUNCH_MODE") == "true" \
-                and request.endpoint != 'launch' \
+                and request.endpoint not in ('launch', 'privacy_policy', 'terms_and_conditions') \
                 and not request.path.startswith('/static') \
                 and not request.path.startswith('/subscribe') \
                 and not request.path.startswith('/unsubscribe') \

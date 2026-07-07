@@ -22,6 +22,13 @@
                                 </svg>
                             </button>
                         </form>
+                        <p class="newsletter-legal">
+                            {% if g.lang == 'fr' %}
+                            En renseignant votre email, vous acceptez de recevoir notre newsletter. Vous pouvez vous désinscrire à tout moment. Consultez notre <a href="{{ url_for('privacy_policy', lang='fr') }}" target="_blank">Politique de confidentialité</a>.
+                            {% else %}
+                            By entering your email, you agree to receive our newsletter. You can unsubscribe at any time. View our <a href="{{ url_for('privacy_policy', lang='en') }}" target="_blank">Privacy Policy</a>.
+                            {% endif %}
+                        </p>
                         <div class="newsletter-message"></div>
                     </div>
                 </div>

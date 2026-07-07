@@ -252,3 +252,22 @@ html {
         opacity: 0.5;
     }
 }
+
+.newsletter-legal {
+    margin-top: 10px;
+    font-size: clamp(0.4rem, 0.75vw, 1rem);
+    color: var(--white-4);
+    opacity: 0.8;
+    line-height: 1.35;
+    font-weight: 300;
+    text-align: center;
+}
+
+.newsletter-legal a {
+    color: var(--white-2);
+    text-decoration: underline;
+}
+
+.newsletter-legal a:hover {
+    color: var(--yellow-1);
+}
