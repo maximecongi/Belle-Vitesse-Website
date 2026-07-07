@@ -4,6 +4,8 @@
 <section class="section-site">
     <div class="main-wrapper terms-container">
         <h1 class="title-textual-section font-56 marg-tb-3">{{ ts('footer.privacy_policy') }}</h1>
+        
+        {% if g.lang == 'fr' %}
         <p>
             <span class="dot-before">1 – Responsable du traitement</span>
 
@@ -96,6 +98,100 @@
 
             Dernière mise à jour : Juillet 2026
         </p>
+        {% else %}
+        <p>
+            <span class="dot-before">1 – Data Controller</span>
+
+            The data controller responsible for the processing of personal data is the company <strong>{{ company_name }}</strong>, a simplified joint-stock company (société par actions simplifiée) with a share capital of {{ company_capital }}, {% if company_siret %}registered under SIRET number {{ company_siret }}{% endif %}{% if company_rcs %} (RCS {{ company_rcs }}){% endif %}, with its registered office located at {{ company_address }}.
+
+            Legal representative: {{ company_representative }}.
+            Contact: {{ company_email }}.
+
+            <span class="dot-before">2 – Collected Data</span>
+
+            In the course of its activity, <strong>{{ company_name }}</strong> collects and processes the following personal data:
+
+            • Identification data: name, first name, postal address, email address, telephone number.
+            • Connection data: IP address, navigation data, browser type, pages viewed.
+            • Order-related data: rental history.
+            • Communication data: messages sent via the contact form, newsletter subscriptions.
+
+            <span class="dot-before">3 – Purposes of Processing</span>
+
+            Personal data is collected for the following purposes:
+
+            • Management of contact requests and quotes.
+            • Execution of rental agreements.
+            • Sending commercial communications (newsletter), subject to the user's prior consent.
+            • Improvement of the user experience and the website.
+            • Compliance with legal and regulatory obligations.
+
+            <span class="dot-before">4 – Legal Basis for Processing</span>
+
+            The processing of personal data is based on the following legal bases:
+
+            • The performance of a contract or pre-contractual measures (Article 6.1.b of the GDPR).
+            • The consent of the data subject (Article 6.1.a of the GDPR), particularly for sending newsletters.
+            • The legitimate interest of <strong>{{ company_name }}</strong> (Article 6.1.f of the GDPR), in particular to improve its services.
+            • Compliance with a legal obligation (Article 6.1.c of the GDPR).
+
+            <span class="dot-before">5 – Data Recipients</span>
+
+            Personal data may be shared with the following categories of recipients:
+
+            • Authorized personnel of <strong>{{ company_name }}</strong>.
+            • Subcontractors and technical service providers (hosting, website maintenance, email sending).
+            • Administrative or judicial authorities, in the context of legal obligations.
+
+            <strong>{{ company_name }}</strong> undertakes not to sell or rent its users' personal data to third parties.
+
+            <span class="dot-before">6 – Retention Period</span>
+
+            Personal data is kept for a period proportionate to the purposes for which it was collected:
+
+            • Data relating to customers: during the contractual relationship, then for 5 years from the end of the contract.
+            • Data relating to prospects: 3 years from the last contact.
+            • Data relating to the newsletter: until consent is withdrawn (unsubscription).
+
+            <span class="dot-before">7 – Cookies</span>
+
+            The website of <strong>{{ company_name }}</strong> only uses cookies strictly necessary for the proper functioning of the site (user session management, language preferences). These cookies, essential for navigation, do not require the prior consent of the user in accordance with CNIL recommendations.
+
+            No advertising, tracking, or analytical cookies are placed by the site.
+
+            The user can change their cookie preferences at any time through their browser settings.
+
+            <span class="dot-before">8 – Data Hosting</span>
+
+            Personal data collected by <strong>{{ company_name }}</strong> is hosted within the European Union by the company <strong>{{ host_name }}</strong> (address: {{ host_address }}). In the event of recourse to subcontractors located outside the EU, <strong>{{ company_name }}</strong> ensures that appropriate safeguards are put in place in accordance with the GDPR (standard contractual clauses, adequacy decision).
+
+            <span class="dot-before">9 – Rights of Data Subjects</span>
+
+            In accordance with the General Data Protection Regulation (GDPR) and the French Data Protection Act (Loi Informatique et Libertés), every individual has the following rights:
+
+            • Right of access: to obtain confirmation of the processing of their data and a copy of it.
+            • Right to rectification: to request the correction of inaccurate or incomplete data.
+            • Right to erasure: to request the deletion of their data under the conditions provided by law.
+            • Right to restriction of processing: to obtain restriction of processing in certain circumstances.
+            • Right to data portability: to receive their data in a structured, commonly used format.
+            • Right to object: to object to the processing of their data for legitimate reasons.
+            • Right to withdraw consent: to withdraw their consent at any time for processing based on it.
+
+            These rights can be exercised by sending a request to: <strong>{{ company_email }}</strong>
+
+            In the event of a complaint, the user can contact the French Commission Nationale de l'Informatique et des Libertés (CNIL): <a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer">www.cnil.fr</a>.
+
+            <span class="dot-before">10 – Data Security</span>
+
+            <strong>{{ company_name }}</strong> implements appropriate technical and organizational measures to guarantee the security, confidentiality, and integrity of personal data, and to protect it against unauthorized access, alteration, disclosure, or destruction.
+
+            <span class="dot-before">11 – Modification of the Privacy Policy</span>
+
+            <strong>{{ company_name }}</strong> reserves the right to modify this privacy policy at any time. Changes will take effect immediately upon publication on the website.
+
+            Last updated: July 2026
+        </p>
+        {% endif %}
     </div>
 </section>
 {% endblock %}
