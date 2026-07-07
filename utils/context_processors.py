@@ -67,6 +67,10 @@ def init_context_processors(app):
             "company_phone": AppSetting.get("company_phone", "+33 6 65 51 40 40"),
             "company_email": AppSetting.get("company_email", "contact@bellevitesse.com"),
             "company_vat": AppSetting.get("company_vat", "FR32981514040"),
+            "company_capital": AppSetting.get("company_capital", "10 000 €"),
+            "company_rcs": AppSetting.get("company_rcs", "Créteil"),
+            "host_name": AppSetting.get("host_name", "Infomaniak Network SA"),
+            "host_address": AppSetting.get("host_address", "Rue Eugène-Marziano 25, 1227 Genève, Suisse"),
             "bank_iban": AppSetting.get("bank_iban", ""),
             "bank_bic": AppSetting.get("bank_bic", ""),
             "DELIVERY_CONFIG": {

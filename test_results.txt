@@ -53,7 +53,7 @@ test_create_and_list_waivers (test_waivers.WaiversTest.test_create_and_list_waiv
 test_soft_delete_waivers (test_waivers.WaiversTest.test_soft_delete_waivers) ... ok
 
 ----------------------------------------------------------------------
-Ran 33 tests in 1.730s
+Ran 33 tests in 1.683s
 
 OK
 

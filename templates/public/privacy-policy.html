@@ -7,26 +7,19 @@
         <p>
             <span class="dot-before">1 – Responsable du traitement</span>
 
-            Le responsable du traitement des données personnelles est la société <strong>{{ company_name }}</strong>,
-            {% if company_siret %}immatriculée sous le numéro SIRET {{ company_siret }}{% endif %}, dont le siège social
-            est situé au {{ company_address }}.
+            Le responsable du traitement des données personnelles est la société <strong>{{ company_name }}</strong>, société par actions simplifiée au capital de {{ company_capital }}, {% if company_siret %}immatriculée sous le numéro SIRET {{ company_siret }}{% endif %}{% if company_rcs %} (RCS {{ company_rcs }}){% endif %}, dont le siège social est situé au {{ company_address }}.
 
             Représentant légal : {{ company_representative }}.
             Contact : {{ company_email }}.
 
-
-
             <span class="dot-before">2 – Données collectées</span>
 
-            Dans le cadre de son activité, <strong>{{ company_name }}</strong> est amenée à collecter et traiter les
-            données personnelles suivantes :
+            Dans le cadre de son activité, <strong>{{ company_name }}</strong> est amenée à collecter et traiter les données personnelles suivantes :
 
             • Données d'identification : nom, prénom, adresse postale, adresse e-mail, numéro de téléphone.
-            • Données de connexion : adresse IP, données de navigation (cookies), type de navigateur, pages consultées.
-            • Données relatives aux commandes : historique des locations, informations de paiement.
+            • Données de connexion : adresse IP, données de navigation, type de navigateur, pages consultées.
+            • Données relatives aux commandes : historique des locations.
             • Données de communication : messages envoyés via le formulaire de contact, inscriptions à la newsletter.
-
-
 
             <span class="dot-before">3 – Finalités du traitement</span>
 
@@ -34,12 +27,9 @@
 
             • Gestion des demandes de contact et des devis.
             • Exécution des contrats de location.
-            • Envoi de communications commerciales (newsletter), sous réserve du consentement préalable de
-            l'utilisateur.
+            • Envoi de communications commerciales (newsletter), sous réserve du consentement préalable de l'utilisateur.
             • Amélioration de l'expérience utilisateur et du site internet.
             • Respect des obligations légales et réglementaires.
-
-
 
             <span class="dot-before">4 – Base légale du traitement</span>
 
@@ -47,11 +37,8 @@
 
             • L'exécution d'un contrat ou de mesures précontractuelles (article 6.1.b du RGPD).
             • Le consentement de la personne concernée (article 6.1.a du RGPD), notamment pour l'envoi de newsletters.
-            • L'intérêt légitime de <strong>{{ company_name }}</strong> (article 6.1.f du RGPD), notamment pour
-            l'amélioration de ses services.
+            • L'intérêt légitime de <strong>{{ company_name }}</strong> (article 6.1.f du RGPD), notamment pour l'amélioration de ses services.
             • Le respect d'une obligation légale (article 6.1.c du RGPD).
-
-
 
             <span class="dot-before">5 – Destinataires des données</span>
 
@@ -61,44 +48,31 @@
             • Les sous-traitants et prestataires techniques (hébergement, maintenance du site, envoi d'e-mails).
             • Les autorités administratives ou judiciaires, dans le cadre des obligations légales.
 
-            <strong>{{ company_name }}</strong> s'engage à ne pas vendre ni louer les données personnelles de ses
-            utilisateurs à des tiers.
-
-
+            <strong>{{ company_name }}</strong> s'engage à ne pas vendre ni louer les données personnelles de ses utilisateurs à des tiers.
 
             <span class="dot-before">6 – Durée de conservation</span>
 
-            Les données personnelles sont conservées pendant une durée proportionnée aux finalités pour lesquelles elles
-            ont été collectées :
+            Les données personnelles sont conservées pendant une durée proportionnée aux finalités pour lesquelles elles ont été collectées :
 
-            • Données relatives aux clients : pendant la durée de la relation contractuelle, puis 5 ans à compter de la
-            fin du contrat.
+            • Données relatives aux clients : pendant la durée de la relation contractuelle, puis 5 ans à compter de la fin du contrat.
             • Données relatives aux prospects : 3 ans à compter du dernier contact.
-            • Données de connexion (cookies) : 13 mois maximum.
             • Données relatives à la newsletter : jusqu'au retrait du consentement (désinscription).
-
-
 
             <span class="dot-before">7 – Cookies</span>
 
-            Le site internet de <strong>{{ company_name }}</strong> utilise des cookies afin d'améliorer l'expérience de
-            navigation. Les cookies
-            utilisés
-            sont les suivants :
+            Le site internet de <strong>{{ company_name }}</strong> utilise uniquement des cookies strictement nécessaires au bon fonctionnement du site (gestion de la session utilisateur, préférences de langue). Ces cookies, indispensables à la navigation, ne nécessitent pas le recueil du consentement préalable de l'utilisateur conformément aux recommandations de la CNIL.
 
-            • Cookies strictement nécessaires : indispensables au fonctionnement du site.
-            • Cookies analytiques : permettent de mesurer l'audience du site (ex : nombre de visiteurs, pages les plus
-            consultées).
+            Aucun cookie publicitaire, de suivi ou analytique n'est déposé par le site.
 
-            L'utilisateur peut à tout moment modifier ses préférences en matière de cookies via les paramètres de son
-            navigateur.
+            L'utilisateur peut à tout moment modifier ses préférences en matière de cookies via les paramètres de son navigateur.
 
+            <span class="dot-before">8 – Hébergement des données</span>
 
+            Les données personnelles collectées par <strong>{{ company_name }}</strong> sont hébergées par la société <strong>{{ host_name }}</strong> (adresse : {{ host_address }}), sur des serveurs situés au sein de l'Union européenne. En cas de recours à des sous-traitants situés en dehors de l'UE, <strong>{{ company_name }}</strong> s'assure que des garanties appropriées sont mises en place conformément au RGPD (clauses contractuelles types, décision d'adéquation).
 
-            <span class="dot-before">8 – Droits des personnes concernées</span>
+            <span class="dot-before">9 – Droits des personnes concernées</span>
 
-            Conformément au Règlement Général sur la Protection des Données (RGPD) et à la loi Informatique et Libertés
-            modifiée, toute personne dispose des droits suivants :
+            Conformément au Règlement Général sur la Protection des Données (RGPD) et à la loi Informatique et Libertés modifiée, toute personne dispose des droits suivants :
 
             • Droit d'accès : obtenir la confirmation du traitement de ses données et en obtenir une copie.
             • Droit de rectification : demander la correction de données inexactes ou incomplètes.
@@ -106,31 +80,19 @@
             • Droit à la limitation du traitement : obtenir la limitation du traitement dans certaines circonstances.
             • Droit à la portabilité : recevoir ses données dans un format structuré et couramment utilisé.
             • Droit d'opposition : s'opposer au traitement de ses données pour des motifs légitimes.
-            • Droit de retrait du consentement : retirer à tout moment son consentement pour les traitements fondés sur
-            celui-ci.
+            • Droit de retrait du consentement : retirer à tout moment son consentement pour les traitements fondés sur celui-ci.
 
             Ces droits peuvent être exercés en adressant une demande à : <strong>{{ company_email }}</strong>
 
-            En cas de réclamation, l'utilisateur peut s'adresser à la Commission Nationale de l'Informatique et des
-            Libertés (CNIL) : www.cnil.fr.
+            En cas de réclamation, l'utilisateur peut s'adresser à la Commission Nationale de l'Informatique et des Libertés (CNIL) : <a href="https://www.cnil.fr" target="_blank" rel="noopener noreferrer">www.cnil.fr</a>.
 
+            <span class="dot-before">10 – Sécurité des données</span>
 
+            <strong>{{ company_name }}</strong> met en œuvre les mesures techniques et organisationnelles appropriées afin de garantir la sécurité, la confidentialité et l'intégrité des données personnelles, et de les protéger contre tout accès non autorisé, toute altération, divulgation ou destruction.
 
-            <span class="dot-before">9 – Sécurité des données</span>
+            <span class="dot-before">11 – Modification de la politique de confidentialité</span>
 
-            <strong>{{ company_name }}</strong> met en œuvre les mesures techniques et organisationnelles appropriées
-            afin de garantir la sécurité, la
-            confidentialité et l'intégrité des données personnelles, et de les protéger contre tout accès non autorisé,
-            toute altération, divulgation ou destruction.
-
-
-
-            <span class="dot-before">10 – Modification de la politique de confidentialité</span>
-
-            <strong>{{ company_name }}</strong> se réserve le droit de modifier la présente politique de confidentialité
-            à tout moment. Les
-            modifications
-            entreront en vigueur dès leur publication sur le site internet.
+            <strong>{{ company_name }}</strong> se réserve le droit de modifier la présente politique de confidentialité à tout moment. Les modifications entreront en vigueur dès leur publication sur le site internet.
 
             Dernière mise à jour : Juillet 2026
         </p>
