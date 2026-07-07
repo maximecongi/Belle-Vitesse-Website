@@ -101,6 +101,8 @@ def init_web_routes(app):
 
     @app.route("/launch")
     def launch():
+        if os.getenv("LAUNCH_MODE") != "true":
+            return redirect(url_for('root'))
         return render_template("public/launch.html")
 
     @app.route("/<lang>/")
