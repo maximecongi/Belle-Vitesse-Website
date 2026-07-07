@@ -20,6 +20,30 @@ def init_context_processors(app):
     def inject_globals():
         import os
         launch_mode = os.getenv("LAUNCH_MODE") == "true"
+
+        # Calculer la date de dernière mise à jour de la politique de confidentialité
+        try:
+            template_path = os.path.join(app.root_path, 'templates', 'public', 'privacy-policy.html')
+            if os.path.exists(template_path):
+                mtime = os.path.getmtime(template_path)
+                privacy_date = datetime.fromtimestamp(mtime)
+            else:
+                privacy_date = datetime.now()
+        except Exception:
+            privacy_date = datetime.now()
+
+        lang = g.get('lang', DEFAULT_LANG) if has_request_context() else DEFAULT_LANG
+        months_fr = {
+            1: "Janvier", 2: "Février", 3: "Mars", 4: "Avril", 5: "Mai", 6: "Juin",
+            7: "Juillet", 8: "Août", 9: "Septembre", 10: "Octobre", 11: "Novembre", 12: "Décembre"
+        }
+        months_en = {
+            1: "January", 2: "February", 3: "March", 4: "April", 5: "May", 6: "June",
+            7: "July", 8: "August", 9: "September", 10: "October", 11: "November", 12: "December"
+        }
+        months = months_fr if lang == 'fr' else months_en
+        privacy_last_update = f"{months[privacy_date.month]} {privacy_date.year}"
+
         if not has_request_context():
             return {
                 "now": datetime.now(timezone.utc),
@@ -27,6 +51,7 @@ def init_context_processors(app):
                 "lang": DEFAULT_LANG,
                 "t": t, "ts": ts, "alt_url": alt_url,
                 "launch_mode": launch_mode,
+                "privacy_last_update": privacy_last_update,
             }
 
         # Évite les appels DB lourds pour les pages d'erreur et les pages d'authentification
@@ -39,6 +64,7 @@ def init_context_processors(app):
                 "lang": g.get('lang', DEFAULT_LANG),
                 "t": t, "ts": ts, "alt_url": alt_url,
                 "launch_mode": launch_mode,
+                "privacy_last_update": privacy_last_update,
             }
 
         is_admin = request.path.startswith('/admin')
@@ -60,6 +86,7 @@ def init_context_processors(app):
             "ts": ts,
             "alt_url": alt_url,
             "launch_mode": launch_mode,
+            "privacy_last_update": privacy_last_update,
             "company_name": AppSetting.get("company_name", "Belle Vitesse SAS"),
             "company_representative": AppSetting.get("company_representative", "Simon Maignan"),
             "company_siret": AppSetting.get("company_siret", "981 514 040 00014"),
