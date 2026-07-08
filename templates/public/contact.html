@@ -49,9 +49,13 @@
                     </form>
                     <p class="newsletter-legal">
                         {% if g.lang == 'fr' %}
-                        En renseignant votre email, vous acceptez de recevoir notre newsletter. Vous pouvez vous désinscrire à tout moment. Consultez notre <a href="{{ url_for('privacy_policy', lang='fr') }}">Politique de confidentialité</a>.
+                        En renseignant votre email, vous acceptez de recevoir notre newsletter. Vous pouvez vous
+                        désinscrire à tout moment.
+                        <br>Consultez notre <a href="{{ url_for('privacy_policy', lang='fr') }}">Politique de
+                            confidentialité</a>.
                         {% else %}
-                        By entering your email, you agree to receive our newsletter. You can unsubscribe at any time. View our <a href="{{ url_for('privacy_policy', lang='en') }}">Privacy Policy</a>.
+                        By entering your email, you agree to receive our newsletter. You can unsubscribe at any time.
+                        <br>View our <a href="{{ url_for('privacy_policy', lang='en') }}">Privacy Policy</a>.
                         {% endif %}
                     </p>
                     <div class="newsletter-message"></div>
@@ -60,7 +64,8 @@
             <div class="contact-container-columns-right">
                 <div id="map" class="contact-container-columns-right-map">
                     <a href="https://maps.app.goo.gl/WPGRFRjmoC7LKhZm6" target="_blank"><img
-                            src="{{ url_for('static', filename='/imgs/maps/map_33.png') }}" alt="Carte de localisation de Belle Vitesse"></a>
+                            src="{{ url_for('static', filename='/imgs/maps/map_33.png') }}"
+                            alt="Carte de localisation de Belle Vitesse"></a>
                 </div>
             </div>
         </div>
