@@ -131,6 +131,10 @@ html {
     gap: 1rem;
 }
 
+.newsletter-form:focus-within~.newsletter-legal {
+    opacity: 1;
+}
+
 .input-group {
     position: relative;
     width: 100%;
@@ -261,6 +265,8 @@ html {
     line-height: 1.35;
     font-weight: 300;
     text-align: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .newsletter-legal a {
