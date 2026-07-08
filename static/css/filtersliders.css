@@ -1,7 +1,6 @@
-
 .filtersliders-container {
     display: flex;
-    column-gap: 2vw;
+    column-gap: 4vw;
     max-height: 0;
     overflow: hidden;
     opacity: 0;
@@ -17,7 +16,7 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    /* background-color: var(--white-2); */
+    background-color: var(--white-2);
     padding: 1.5vw 4vw;
 }
 
@@ -38,7 +37,8 @@
     width: clamp(0.8rem, 0.8vw, 1.6rem);
     display: flex;
 }
-.slider-container-wrapper-labels > img {
+
+.slider-container-wrapper-labels>img {
     height: 100%;
     object-fit: contain;
 }
@@ -109,6 +109,7 @@
     .slider-container {
         width: 90%;
         padding: 0;
+        background: none;
     }
 
     .filterslider-is-open {
