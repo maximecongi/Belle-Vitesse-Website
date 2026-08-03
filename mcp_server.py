@@ -27,7 +27,10 @@ flask_app = create_app()
 mcp = FastMCP("BV-MCP", host="0.0.0.0", port=int(os.getenv("MCP_SERVER_PORT", "8080")))
 
 
-# ── Middleware d'authentification ──────────────────────────────────
+# Registres en mémoire pour suivre les sessions SSE authentifiées (utile pour Claude Web)
+ACTIVE_MCP_SESSIONS: Dict[str, Any] = {}
+RECENT_AUTH_BY_IP: Dict[str, Any] = {}
+
 
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request, call_next):
@@ -42,7 +45,10 @@ class AuthMiddleware(BaseHTTPMiddleware):
             except Exception as e:
                 return JSONResponse({"status": "unhealthy", "error": str(e)}, status_code=500)
 
-        # Extraction du Token (Header Authorization: Bearer <token> ou Paramètre URL ?token=<token>)
+        client_ip = request.client.host if request.client else "unknown"
+        session_id = request.query_params.get("session_id")
+
+        # 1. Extraction du Token s'il est présent (Header Authorization ou Paramètre URL)
         raw_token = None
         auth_header = request.headers.get("Authorization") or request.headers.get("authorization")
         if auth_header and auth_header.startswith("Bearer "):
@@ -52,19 +58,37 @@ class AuthMiddleware(BaseHTTPMiddleware):
         elif "api_key" in request.query_params:
             raw_token = request.query_params.get("api_key")
 
-        if not raw_token:
-            logger.warning(f"⛔ Tentative d'accès MCP sans token depuis {request.client.host if request.client else 'inconnu'}")
+        user = None
+
+        if raw_token:
+            with flask_app.app_context():
+                user = authenticate_mcp_token(raw_token)
+                if not user:
+                    logger.warning(f"⛔ Token MCP invalide fourni depuis {client_ip}")
+                    return JSONResponse({"error": "Token API MCP invalide, révoqué ou expiré."}, status_code=401)
+                
+                # Mémoriser l'utilisateur pour cet IP et ce session_id
+                RECENT_AUTH_BY_IP[client_ip] = user
+                if session_id:
+                    ACTIVE_MCP_SESSIONS[session_id] = user
+
+        # 2. Si pas de token direct mais session_id connu (ex: requêtes POST de Claude)
+        elif session_id and session_id in ACTIVE_MCP_SESSIONS:
+            user = ACTIVE_MCP_SESSIONS[session_id]
+
+        # 3. Fallback : Si POST /messages sans token mais IP a ouvert un SSE récent
+        elif client_ip in RECENT_AUTH_BY_IP:
+            user = RECENT_AUTH_BY_IP[client_ip]
+            if session_id:
+                ACTIVE_MCP_SESSIONS[session_id] = user
+
+        if not user:
+            logger.warning(f"⛔ Tentative d'accès MCP sans authentification valide depuis {client_ip}")
             return JSONResponse({"error": "Authentification requise. Token manquant via Header Authorization ou paramètre URL ?token=<token>."}, status_code=401)
 
-        with flask_app.app_context():
-            user = authenticate_mcp_token(raw_token)
-            if not user:
-                logger.warning(f"⛔ Token MCP invalide fourni par {request.client.host if request.client else 'inconnu'}")
-                return JSONResponse({"error": "Token API MCP invalide, révoqué ou expiré."}, status_code=401)
-
-            # Attacher l'utilisateur au state de la requête Starlette
-            request.state.user = user
-            logger.info(f"🔑 Connexion MCP autorisée : User #{user.id} ({user.mail}) - Rôle: {user.role}")
+        # Attacher l'utilisateur au state de la requête Starlette
+        request.state.user = user
+        logger.info(f"🔑 Connexion MCP autorisée : User #{user.id} ({user.mail}) - Rôle: {user.role} [{request.method} {request.url.path}]")
 
         response = await call_next(request)
         return response
