@@ -200,7 +200,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     mcpRawTokenInput.value = data.raw_token;
 
                     const isLocal = window.location.origin.includes('127.0.0.1') || window.location.origin.includes('localhost');
-                    const mcpUrl = isLocal ? "http://127.0.0.1:8080/mcp" : "https://mcp.bellevitesse.com/mcp";
+                    const mcpUrl = isLocal ? "http://127.0.0.1:8080/mcp" : "https://team.bellevitesse.com/mcp";
                     const directClaudeUrl = `${mcpUrl}?token=${data.raw_token}`;
 
                     const claudeInput = document.getElementById('mcpClaudeUrlInput');

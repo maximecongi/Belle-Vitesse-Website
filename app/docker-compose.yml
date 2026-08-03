@@ -103,10 +103,11 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik_default"
-      # MCP Server sur mcp.bellevitesse.com
-      - "traefik.http.routers.bv_mcp.rule=Host(`mcp.bellevitesse.com`)"
+      # MCP Server sur mcp.bellevitesse.com ou team.bellevitesse.com/mcp
+      - "traefik.http.routers.bv_mcp.rule=Host(`mcp.bellevitesse.com`) || (Host(`team.bellevitesse.com`) && PathPrefix(`/mcp`))"
       - "traefik.http.routers.bv_mcp.entrypoints=websecure"
       - "traefik.http.routers.bv_mcp.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.bv_mcp.priority=200"
       - "traefik.http.services.bv_mcp.loadbalancer.server.port=8080"
     ports:
       - "8080:8080"
