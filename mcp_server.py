@@ -1,6 +1,6 @@
 """
 Serveur MCP (Model Context Protocol) Admin — Belle Vitesse (BV-MCP)
-Expose les services d'administration de l'application Flask aux agents IA via SSE.
+Expose les services d'administration de l'application Flask aux agents IA via Streamable HTTP.
 """
 import os
 import json
@@ -913,21 +913,15 @@ def get_checkpoints_for_vehicle(vehicle_id: str) -> List[Dict[str, Any]]:
     return _get(vehicle_id)
 
 
-# ── Configuration du serveur Starlette avec le middleware d'auth ───
+# ── Lancement du serveur MCP (Streamable HTTP) ────────────────────
 
 if __name__ == "__main__":
     port = int(os.getenv("MCP_SERVER_PORT", "8080"))
-    logger.info(f"🚀 Lancement du serveur BV-MCP sur 0.0.0.0:{port}...")
+    logger.info(f"🚀 Lancement du serveur BV-MCP (Streamable HTTP) sur 0.0.0.0:{port}/mcp ...")
 
-    # FastMCP SSE app initialization with AuthMiddleware
-    try:
-        import uvicorn
-        sse_app = getattr(mcp, "_sse_app", None) or getattr(mcp, "sse_app", None)
-        if callable(sse_app):
-            asgi_app = AuthMiddleware(sse_app())
-            uvicorn.run(asgi_app, host="0.0.0.0", port=port)
-        else:
-            mcp.run(transport="sse")
-    except Exception as err:
-        logger.warning(f"⚠️ Démarrage avec fallback mcp.run: {err}")
-        mcp.run(transport="sse")
+    mcp.run(
+        transport="streamable-http",
+        host="0.0.0.0",
+        port=port,
+        path="/mcp",
+    )
