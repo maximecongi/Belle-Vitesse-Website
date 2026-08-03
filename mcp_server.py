@@ -918,17 +918,19 @@ def get_checkpoints_for_vehicle(vehicle_id: str) -> List[Dict[str, Any]]:
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("MCP_SERVER_PORT", "8080"))
-    logger.info(f"🚀 Lancement du serveur BV-MCP (Streamable HTTP) sur 0.0.0.0:{port}...")
+    logger.info(f"🚀 Lancement du serveur BV-MCP (Streamable HTTP) sur 0.0.0.0:{port}/mcp ...")
 
-    # FastMCP Streamable HTTP app initialization on path "/"
     try:
         asgi_fn = getattr(mcp, "streamable_http_app", None) or getattr(mcp, "http_app", None) or getattr(mcp, "_http_app", None)
         if callable(asgi_fn):
-            raw_app = asgi_fn()
+            try:
+                raw_app = asgi_fn(path="/mcp")
+            except TypeError:
+                raw_app = asgi_fn()
             app = AuthMiddleware(raw_app)
             uvicorn.run(app, host="0.0.0.0", port=port)
         else:
-            mcp.run(transport="streamable-http", host="0.0.0.0", port=port, path="/")
+            mcp.run(transport="streamable-http", host="0.0.0.0", port=port, path="/mcp")
     except Exception as err:
-        logger.warning(f"⚠️ Démarrage avec fallback mcp.run: {err}")
-        mcp.run(transport="streamable-http", host="0.0.0.0", port=port, path="/")
+        logger.warning(f"⚠️ Lancement avec mcp.run Streamable HTTP: {err}")
+        mcp.run(transport="streamable-http", host="0.0.0.0", port=port, path="/mcp")
