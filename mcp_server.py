@@ -918,19 +918,17 @@ def get_checkpoints_for_vehicle(vehicle_id: str) -> List[Dict[str, Any]]:
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("MCP_SERVER_PORT", "8080"))
-    logger.info(f"🚀 Lancement du serveur BV-MCP sur 0.0.0.0:{port}...")
+    logger.info(f"🚀 Lancement du serveur BV-MCP (Streamable HTTP) sur 0.0.0.0:{port}...")
 
-    # Récupération de l'application ASGI FastMCP et application du middleware d'authentification/CORS
-    asgi_builder = (
-        getattr(mcp, "http_app", None)
-        or getattr(mcp, "_http_app", None)
-        or getattr(mcp, "sse_app", None)
-        or getattr(mcp, "_sse_app", None)
-    )
-
-    if callable(asgi_builder):
-        raw_app = asgi_builder()
-        app = AuthMiddleware(raw_app)
-        uvicorn.run(app, host="0.0.0.0", port=port)
-    else:
-        mcp.run(transport="streamable-http", host="0.0.0.0", port=port, path="/mcp")
+    # FastMCP Streamable HTTP app initialization on path "/"
+    try:
+        asgi_fn = getattr(mcp, "streamable_http_app", None) or getattr(mcp, "http_app", None) or getattr(mcp, "_http_app", None)
+        if callable(asgi_fn):
+            raw_app = asgi_fn()
+            app = AuthMiddleware(raw_app)
+            uvicorn.run(app, host="0.0.0.0", port=port)
+        else:
+            mcp.run(transport="streamable-http", host="0.0.0.0", port=port, path="/")
+    except Exception as err:
+        logger.warning(f"⚠️ Démarrage avec fallback mcp.run: {err}")
+        mcp.run(transport="streamable-http", host="0.0.0.0", port=port, path="/")
