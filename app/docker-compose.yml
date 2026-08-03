@@ -108,6 +108,8 @@ services:
       - "traefik.http.routers.bv_mcp.entrypoints=websecure"
       - "traefik.http.routers.bv_mcp.tls.certresolver=letsencrypt"
       - "traefik.http.routers.bv_mcp.priority=200"
+      - "traefik.http.routers.bv_mcp.middlewares=mcp-strip"
+      - "traefik.http.middlewares.mcp-strip.stripprefix.prefixes=/mcp"
       - "traefik.http.services.bv_mcp.loadbalancer.server.port=8080"
     ports:
       - "8080:8080"

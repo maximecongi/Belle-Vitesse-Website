@@ -57,7 +57,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             )
 
         # 2. Laisser passer le healthcheck
-        if request.url.path == "/health":
+        if request.url.path in ("/health", "/mcp/health"):
             try:
                 with flask_app.app_context():
                     from models import db
@@ -66,6 +66,19 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 return JSONResponse({"status": "healthy", "service": "BV-MCP"}, status_code=200)
             except Exception as e:
                 return JSONResponse({"status": "unhealthy", "error": str(e)}, status_code=500)
+
+        # 3. Réponse d'information sur la racine (évite les 404 sur les requêtes de test)
+        if request.url.path in ("/", "/mcp", "/mcp/"):
+            return JSONResponse({
+                "service": "BV-MCP",
+                "status": "online",
+                "version": "1.0.0",
+                "endpoints": {
+                    "sse": "/mcp/sse",
+                    "messages": "/mcp/messages/",
+                    "health": "/mcp/health"
+                }
+            }, status_code=200)
 
         client_ip = request.client.host if request.client else "unknown"
         session_id = request.query_params.get("session_id")
