@@ -18,8 +18,12 @@ def list_tokens():
 @require_roles("user", "commercial", "manager", "administrator", "super administrator")
 def generate_token():
     user_id = session.get("admin_user_id")
-    name = (request.form.get("name") or request.json.get("name") if request.is_json else request.form.get("name")) or "Mon Agent IA"
-    name = name.strip()[:100]
+    name = None
+    if request.is_json and request.json:
+        name = request.json.get("name")
+    if not name:
+        name = request.form.get("name")
+    name = (name or "Mon Agent IA").strip()[:100]
 
     raw_token = McpApiToken.generate_token_raw()
     token_prefix = raw_token[:12] + "..."
