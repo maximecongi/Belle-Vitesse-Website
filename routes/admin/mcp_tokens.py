@@ -1,12 +1,20 @@
 from datetime import datetime
-from flask import Blueprint, jsonify, request, session, flash, redirect, url_for
+from flask import Blueprint, jsonify, render_template, request, session, flash, redirect, url_for
 from models import McpApiToken, db
 from utils.decorators import require_roles
 
-mcp_tokens_bp = Blueprint("admin_mcp_tokens", __name__, url_prefix="/admin/settings/mcp-tokens")
+mcp_tokens_bp = Blueprint("admin_mcp_tokens", __name__, url_prefix="/admin/mcp-connector")
 
 
 @mcp_tokens_bp.route("", methods=["GET"])
+@require_roles("user", "commercial", "manager", "administrator", "super administrator")
+def mcp_connector_page():
+    user_id = session.get("admin_user_id")
+    tokens = McpApiToken.query.filter_by(user_id=user_id).order_by(McpApiToken.created_at.desc()).all()
+    return render_template("admin/mcp_connector.html", tokens=tokens)
+
+
+@mcp_tokens_bp.route("/api/tokens", methods=["GET"])
 @require_roles("user", "commercial", "manager", "administrator", "super administrator")
 def list_tokens():
     user_id = session.get("admin_user_id")
@@ -42,12 +50,10 @@ def generate_token():
         db.session.commit()
     except Exception:
         db.session.rollback()
-        # Auto-fix : augmenter automatiquement la colonne en base de données si elle était en VARCHAR(12)
         try:
             from sqlalchemy import text
             db.session.execute(text("ALTER TABLE mcp_api_tokens MODIFY token_prefix VARCHAR(30) NOT NULL"))
             db.session.commit()
-            # Réessayer l'insertion
             db.session.add(token_record)
             db.session.commit()
         except Exception as retry_err:
@@ -58,12 +64,12 @@ def generate_token():
         return jsonify({
             "status": "success",
             "token": token_record.to_dict(),
-            "raw_token": raw_token,  # Contenu affiché UNE SEULE FOIS à l'utilisateur
+            "raw_token": raw_token,
             "message": "Token généré avec succès. Conservez-le précieusement, il ne sera plus réaffiché !"
         }), 201
 
-    flash("Token généré avec succès. Copiez le token : " + raw_token, "success")
-    return redirect(url_for("admin_settings.admin_settings_edit"))
+    flash("Token généré avec succès.", "success")
+    return redirect(url_for("admin_mcp_tokens.mcp_connector_page"))
 
 
 @mcp_tokens_bp.route("/<int:token_id>/revoke", methods=["POST"])
@@ -76,7 +82,7 @@ def revoke_token(token_id):
         if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return jsonify({"status": "error", "message": "Token introuvable"}), 404
         flash("Token introuvable", "error")
-        return redirect(url_for("admin_settings.admin_settings_edit"))
+        return redirect(url_for("admin_mcp_tokens.mcp_connector_page"))
 
     token_rec.is_active = not token_rec.is_active
     db.session.commit()
@@ -86,7 +92,7 @@ def revoke_token(token_id):
         return jsonify({"status": "success", "message": f"Token {status_str} avec succès.", "is_active": token_rec.is_active})
 
     flash(f"Token {status_str} avec succès.", "success")
-    return redirect(url_for("admin_settings.admin_settings_edit"))
+    return redirect(url_for("admin_mcp_tokens.mcp_connector_page"))
 
 
 @mcp_tokens_bp.route("/<int:token_id>/delete", methods=["POST", "DELETE"])
@@ -99,7 +105,7 @@ def delete_token(token_id):
         if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return jsonify({"status": "error", "message": "Token introuvable"}), 404
         flash("Token introuvable", "error")
-        return redirect(url_for("admin_settings.admin_settings_edit"))
+        return redirect(url_for("admin_mcp_tokens.mcp_connector_page"))
 
     db.session.delete(token_rec)
     db.session.commit()
@@ -108,4 +114,5 @@ def delete_token(token_id):
         return jsonify({"status": "success", "message": "Token supprimé avec succès."})
 
     flash("Token supprimé avec succès.", "success")
-    return redirect(url_for("admin_settings.admin_settings_edit"))
+    return redirect(url_for("admin_mcp_tokens.mcp_connector_page"))
+

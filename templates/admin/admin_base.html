@@ -69,18 +69,18 @@
                                                       'checkins','incidents','signature','docs','api_docs','catalog_update']},
                     'commercial':          {'sections': ['dashboard','tournages','admin'],
                                             'nav': ['dashboard','projects','archives','booking','pre_quotes',
-                                                      'productions','contacts','pricing','catalog_pdf',
+                                                      'productions','contacts','pricing','catalog_pdf','mcp_connector',
                                                       'calendar']},
                     'manager':             {'sections': ['dashboard','tournages','departs','retours','admin','tools'],
                                             'nav': ['dashboard','projects','archives','booking','pre_quotes',
                                                       'productions','contacts','checkouts','production_waivers',
-                                                      'pilot_waivers','checkins','incidents','catalog_pdf',
+                                                      'pilot_waivers','checkins','incidents','catalog_pdf','mcp_connector',
                                                       'calendar','signature','docs','api_docs']},
                     'administrator':       {'sections': ['dashboard','tournages','departs','retours','flotte','admin','tools'],
                                             'nav': ['dashboard','projects','archives','booking','pre_quotes',
                                                       'productions','contacts','checkouts','production_waivers',
                                                       'pilot_waivers','checkins','incidents','vehicles',
-                                                      'users','pricing','catalog_pdf','settings','calendar',
+                                                      'users','pricing','catalog_pdf','mcp_connector','settings','calendar',
                                                       'newsletter','signature','docs','api_docs']},
                     'super administrator': {'sections': ['all'], 'nav': ['all']}
                 } %}
@@ -145,10 +145,12 @@
                 {{ nav_item(url_for('admin_pricing'), 'Tarification', 'pricing') }}
                 {{ nav_item(url_for('admin_catalog_pdf', prices='1'), 'Catalogue (avec prix)', 'catalog_pdf') }}
                 {{ nav_item(url_for('admin_catalog_pdf', prices='0'), 'Catalogue (sans prix)', 'catalog_pdf') }}
+                {{ nav_item(url_for('admin_mcp_tokens.mcp_connector_page'), '🤖 Connecteur IA (MCP)', 'mcp_connector') }}
                 {{ nav_item(url_for('admin_settings.admin_settings_edit'), ' Paramètres', 'settings') }}
                 {{ nav_item(url_for('admin_calendar'), 'Calendrier', 'calendar') }}
                 {{ nav_item(url_for('admin_newsletter_dashboard'), 'Newsletter', 'newsletter') }}
                 {% endcall %}
+
 
                 {% call nav_group('🛠️ Outils', 'tools', 'tools', false) %}
                 {{ nav_item(url_for('admin_signature_generator'), 'Générateur de signature mail', 'signature') }}
