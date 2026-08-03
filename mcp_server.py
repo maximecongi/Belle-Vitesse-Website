@@ -916,12 +916,21 @@ def get_checkpoints_for_vehicle(vehicle_id: str) -> List[Dict[str, Any]]:
 # ── Lancement du serveur MCP (Streamable HTTP) ────────────────────
 
 if __name__ == "__main__":
+    import uvicorn
     port = int(os.getenv("MCP_SERVER_PORT", "8080"))
-    logger.info(f"🚀 Lancement du serveur BV-MCP (Streamable HTTP) sur 0.0.0.0:{port}/mcp ...")
+    logger.info(f"🚀 Lancement du serveur BV-MCP sur 0.0.0.0:{port}...")
 
-    mcp.run(
-        transport="streamable-http",
-        host="0.0.0.0",
-        port=port,
-        path="/mcp",
+    # Récupération de l'application ASGI FastMCP et application du middleware d'authentification/CORS
+    asgi_builder = (
+        getattr(mcp, "http_app", None)
+        or getattr(mcp, "_http_app", None)
+        or getattr(mcp, "sse_app", None)
+        or getattr(mcp, "_sse_app", None)
     )
+
+    if callable(asgi_builder):
+        raw_app = asgi_builder()
+        app = AuthMiddleware(raw_app)
+        uvicorn.run(app, host="0.0.0.0", port=port)
+    else:
+        mcp.run(transport="streamable-http", host="0.0.0.0", port=port, path="/mcp")
