@@ -1,0 +1,40 @@
+# Image de base Python officielle
+FROM python:3.14-slim
+
+# Répertoire de travail
+WORKDIR /app
+
+# Installer les dépendances système nécessaires
+RUN apt-get update && apt-get install -y \
+    default-libmysqlclient-dev \
+    default-mysql-client \
+    build-essential \
+    pkg-config \
+    libffi-dev \
+    libssl-dev \
+    python3-dev \
+    libgobject-2.0-0 \
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    libcairo2 \
+    fonts-liberation \
+    fonts-dejavu-core \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copier et installer les dépendances Python
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copier le code de l'application
+COPY . .
+
+# Exposer le port du serveur MCP (SSE)
+EXPOSE 8080
+
+# Healthcheck pour le conteneur MCP
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8080/health || exit 1
+
+# Lancer le serveur MCP
+CMD ["python", "mcp_server.py"]

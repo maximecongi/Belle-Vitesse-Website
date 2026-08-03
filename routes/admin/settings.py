@@ -1,5 +1,5 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, g
-from models import AppSetting, db
+from flask import Blueprint, render_template, request, flash, redirect, url_for, g, session
+from models import AppSetting, McpApiToken, db
 from utils.decorators import require_roles
 
 settings_bp = Blueprint('admin_settings', __name__, url_prefix='/admin/settings')
@@ -8,7 +8,7 @@ settings_bp = Blueprint('admin_settings', __name__, url_prefix='/admin/settings'
 @require_roles('Administrator')
 def admin_settings_edit():
     """
-    Vue pour éditer les paramètres globaux de l'application (Belle Vitesse).
+    Vue pour éditer les paramètres globaux de l'application (Belle Vitesse) et gérer ses tokens MCP.
     """
     # Liste ordonnée des clés de settings pour le formulaire
     setting_keys = [
@@ -41,6 +41,11 @@ def admin_settings_edit():
     # Récupération des valeurs actuelles
     settings_data = {key: AppSetting.get(key, '') for key, label, help_text in setting_keys}
 
+    # Récupération des tokens MCP de l'utilisateur connecté
+    user_id = session.get("admin_user_id")
+    mcp_tokens = McpApiToken.query.filter_by(user_id=user_id).order_by(McpApiToken.created_at.desc()).all() if user_id else []
+
     return render_template('admin/settings.html', 
                            setting_keys=setting_keys, 
-                           settings_data=settings_data)
+                           settings_data=settings_data,
+                           mcp_tokens=mcp_tokens)

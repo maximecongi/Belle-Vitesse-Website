@@ -16,6 +16,7 @@ from .projects import init_projects_routes
 from .pre_quotes import init_pre_quotes_routes
 from .pricing import init_pricing_routes
 from .settings import settings_bp
+from .mcp_tokens import mcp_tokens_bp
 from .tools import init_tools_routes
 from .users import init_users_routes
 from .waivers import init_waivers_routes
@@ -42,6 +43,7 @@ def init_admin_routes(app):
     init_pre_quotes_routes(app)
     init_catalog_routes(app)
     app.register_blueprint(settings_bp)
+    app.register_blueprint(mcp_tokens_bp)
 
 
     @app.errorhandler(CSRFError)
