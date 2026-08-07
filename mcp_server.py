@@ -108,9 +108,10 @@ class AuthMiddleware(BaseHTTPMiddleware):
             if not user:
                 user = DummyGuestUser()
 
-        # Attacher l'utilisateur au state de la requête Starlette
+        # Attacher l'utilisateur au state de la requête Starlette et au contexte Flask
         request.state.user = user
-        logger.info(f"🔑 Connexion MCP autorisée : User #{getattr(user, 'id', 0)} ({getattr(user, 'mail', 'guest')}) - Rôle: {getattr(user, 'role', 'admin')} [{request.method} {request.url.path}]")
+        flask_app.current_mcp_user = user
+        logger.info(f"🔑 Connexion MCP autorisée : User #{getattr(user, 'id', 0)} ({getattr(user, 'mail', 'guest')}) - Scope: {getattr(user, 'mcp_scope', 'read_only')} [{request.method} {request.url.path}]")
 
         response = await call_next(request)
         response.headers["Access-Control-Allow-Origin"] = "*"
@@ -119,8 +120,34 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
 
 from functools import wraps
+from mcp_auth.auth import check_mcp_scope
 
-# ── Décorateur d'exécution sécurisée dans le contexte Flask ─────────
+def require_mcp_scope(required_scope: str = "read_only"):
+    """
+    Décorateur de sécurité MCP : Vérifie que la clé API possède le scope nécessaire.
+    - 'read_only' : consultation des données
+    - 'write' : création et édition de données
+    - 'admin' : suppressions et modifications système
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            user = getattr(flask_app, "current_mcp_user", None)
+            if user and not check_mcp_scope(user, required_scope):
+                user_scope = getattr(user, "mcp_scope", "read_only")
+                return {
+                    "status": "error",
+                    "error_code": 403,
+                    "message": (
+                        f"⛔ ACCÈS REFUSÉ : L'outil '{func.__name__}' exige le niveau de privilège MCP '{required_scope}'. "
+                        f"Votre clé d'accès possède actuellement le scope '{user_scope}'. "
+                        "Veuillez utiliser une clé API IA avec des privilèges supérieurs."
+                    )
+                }
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
+
 
 def run_in_flask_context(func):
     """Exécute une fonction dans le contexte d'application Flask."""
@@ -137,6 +164,7 @@ def run_in_flask_context(func):
 
 @mcp.tool()
 @run_in_flask_context
+@require_mcp_scope("read_only")
 def list_projects() -> List[Dict[str, Any]]:
     """Liste tous les projets actifs avec détails complets (véhicules, décharges, contacts, pré-devis)."""
     from services.admin.projects import list_projects as _list_projects
@@ -145,6 +173,7 @@ def list_projects() -> List[Dict[str, Any]]:
 
 @mcp.tool()
 @run_in_flask_context
+@require_mcp_scope("read_only")
 def get_project(project_id: int) -> Optional[Dict[str, Any]]:
     """Récupère les détails d'un projet par son ID pour édition/affichage."""
     from services.admin.projects import get_project_for_edit
@@ -153,6 +182,7 @@ def get_project(project_id: int) -> Optional[Dict[str, Any]]:
 
 @mcp.tool()
 @run_in_flask_context
+@require_mcp_scope("write")
 def create_project(
     name: str,
     production_id: Optional[int] = None,
@@ -197,6 +227,7 @@ def create_project(
 
 @mcp.tool()
 @run_in_flask_context
+@require_mcp_scope("write")
 def update_project(
     project_id: int,
     name: str,
@@ -242,15 +273,39 @@ def update_project(
 
 @mcp.tool()
 @run_in_flask_context
-def delete_project(project_id: int) -> Dict[str, Any]:
-    """Supprime un projet par soft-delete et nettoie ses décharges associées."""
-    from services.admin.projects import delete_project as _delete_project
+@require_mcp_scope("admin")
+def delete_project(project_id: int, confirm: bool = False) -> Dict[str, Any]:
+    """
+    Supprime un projet par soft-delete et nettoie ses décharges associées.
+    ATTENTION: Action destructrice (Scope 'admin' requis).
+    L'IA doit obligatoirement l'exécuter d'abord avec confirm=False pour simuler l'impact et demander la confirmation à l'utilisateur humain.
+    """
+    from services.admin.projects import get_project_for_edit, delete_project as _delete_project
+    proj = get_project_for_edit(project_id)
+    if not proj:
+        return {"success": False, "message": f"Projet #{project_id} introuvable."}
+
+    if not confirm:
+        proj_name = proj.get("name", "Sans nom")
+        return {
+            "success": False,
+            "status": "requires_confirmation",
+            "project_id": project_id,
+            "project_name": proj_name,
+            "message": (
+                f"⚠️ ATTENTION : Vous êtes sur le point de supprimer le projet #{project_id} '{proj_name}'. "
+                "Veuillez demander la confirmation explicite à l'utilisateur humain devant son écran, "
+                "puis ré-exécutez cet outil avec confirm=True."
+            )
+        }
+
     success = _delete_project(project_id)
-    return {"success": success, "message": "Projet supprimé." if success else "Projet introuvable."}
+    return {"success": success, "message": f"Projet #{project_id} supprimé avec succès." if success else "Échec de la suppression."}
 
 
 @mcp.tool()
 @run_in_flask_context
+@require_mcp_scope("read_only")
 def get_project_form_context() -> Dict[str, Any]:
     """Récupère le contexte nécessaire aux formulaires de projet (listes de sélections)."""
     from services.admin.projects import get_project_form_context as _context
@@ -263,6 +318,7 @@ def get_project_form_context() -> Dict[str, Any]:
 
 @mcp.tool()
 @run_in_flask_context
+@require_mcp_scope("read_only")
 def list_checkouts() -> Dict[str, Any]:
     """Liste toutes les inspections de départ (Checkouts) avec leurs statistiques."""
     from services.admin.inspections import list_inspections_unified
@@ -271,6 +327,7 @@ def list_checkouts() -> Dict[str, Any]:
 
 @mcp.tool()
 @run_in_flask_context
+@require_mcp_scope("read_only")
 def list_checkins() -> Dict[str, Any]:
     """Liste toutes les inspections de retour (Checkins) avec leurs statistiques."""
     from services.admin.inspections import list_inspections_unified
@@ -279,6 +336,7 @@ def list_checkins() -> Dict[str, Any]:
 
 @mcp.tool()
 @run_in_flask_context
+@require_mcp_scope("read_only")
 def get_inspection_detail(mode: str, record_id: int) -> Optional[Dict[str, Any]]:
     """Récupère les détails d'une inspection ('checkout' ou 'checkin') par ID."""
     from services.admin.inspections import get_inspection_detail_unified
@@ -287,11 +345,34 @@ def get_inspection_detail(mode: str, record_id: int) -> Optional[Dict[str, Any]]
 
 @mcp.tool()
 @run_in_flask_context
-def delete_inspection(mode: str, record_id: int) -> Dict[str, Any]:
-    """Supprime une inspection ('checkout' ou 'checkin') et ses fichiers associés."""
-    from services.admin.inspections import delete_inspection_unified
+@require_mcp_scope("admin")
+def delete_inspection(mode: str, record_id: int, confirm: bool = False) -> Dict[str, Any]:
+    """
+    Supprime une inspection ('checkout' ou 'checkin') et ses fichiers associés.
+    ATTENTION: Action destructrice (Scope 'admin' requis).
+    L'IA doit l'exécuter d'abord avec confirm=False pour demander la confirmation explicite à l'utilisateur humain.
+    """
+    from services.admin.inspections import get_inspection_detail_unified, delete_inspection_unified
+    insp = get_inspection_detail_unified(mode, record_id)
+    if not insp:
+        return {"success": False, "message": f"Inspection {mode} #{record_id} introuvable."}
+
+    if not confirm:
+        return {
+            "success": False,
+            "status": "requires_confirmation",
+            "mode": mode,
+            "record_id": record_id,
+            "message": (
+                f"⚠️ ATTENTION : Vous êtes sur le point de supprimer l'inspection {mode.upper()} #{record_id}. "
+                "Veuillez demander la confirmation explicite à l'utilisateur humain devant son écran, "
+                "puis ré-exécutez cet outil avec confirm=True."
+            )
+        }
+
     success = delete_inspection_unified(mode, record_id)
-    return {"success": success, "message": "Inspection supprimée." if success else "Inspection introuvable."}
+    return {"success": success, "message": f"Inspection {mode} #{record_id} supprimée avec succès." if success else "Échec de la suppression."}
+
 
 
 @mcp.tool()

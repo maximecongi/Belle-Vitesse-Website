@@ -51,6 +51,7 @@
                 <tr>
                     <th>Nom / Libellé</th>
                     <th>Préfixe de la clé</th>
+                    <th>Scope / Niveau d'accès</th>
                     <th>Date de création</th>
                     <th>Dernière utilisation</th>
                     <th>Statut</th>
@@ -65,6 +66,15 @@
                     </td>
                     <td>
                         <code style="font-family: monospace; font-size: 12px; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">{{ t.token_prefix }}</code>
+                    </td>
+                    <td>
+                        {% if t.scope == 'admin' %}
+                        <span class="badge-pill" style="background: #f3e8ff; color: #7e22ce; font-weight: 600;">🛡️ Admin</span>
+                        {% elif t.scope == 'write' %}
+                        <span class="badge-pill" style="background: #dbeafe; color: #1e40af; font-weight: 600;">✏️ Write</span>
+                        {% else %}
+                        <span class="badge-pill" style="background: #f1f5f9; color: #475569; font-weight: 600;">👁️ Read-Only</span>
+                        {% endif %}
                     </td>
                     <td class="u-text-xs u-text-muted">
                         {{ t.created_at.strftime('%d/%m/%Y à %H:%M') if t.created_at else '—' }}
@@ -157,10 +167,19 @@
                 <label class="form-label u-text-xs u-fw-bold">Nom / Libellé de l'agent (ex: Claude Web, Cursor Maxime)</label>
                 <input type="text" name="name" class="form-input" placeholder="Mon Agent Claude" required autocomplete="off" />
             </div>
+            <div class="form-group u-mb-3">
+                <label class="form-label u-text-xs u-fw-bold">Scope / Niveau de privilèges des outils :</label>
+                <select name="scope" class="form-input" style="background: #fff;">
+                    <option value="read_only" selected>👁️ Consultation seule (Read-Only) — Recommandé &amp; Sécurisé</option>
+                    <option value="write">✏️ Consultation &amp; Édition (Read / Write)</option>
+                    <option value="admin">🛡️ Administrateur (Accès complet &amp; Suppressions avec confirmation)</option>
+                </select>
+            </div>
             <div class="u-text-right">
                 <button type="submit" class="admin-btn admin-btn-primary">Générer la clé</button>
             </div>
         </form>
+
 
         <div id="modalResultBlock" style="display: none;">
             <div class="u-p-3 u-bg-light u-rounded u-mb-3" style="border-left: 4px solid #10b981;">

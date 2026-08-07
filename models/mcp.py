@@ -19,6 +19,8 @@ class McpApiToken(db.Model):
     last_used_at = db.Column(db.DateTime, nullable=True)
     expires_at = db.Column(db.DateTime, nullable=True)
 
+    scope = db.Column(db.String(20), default="read_only", nullable=False) # 'read_only', 'write', 'admin'
+
     user = db.relationship("User", backref=db.backref("mcp_tokens", lazy=True, cascade="all, delete-orphan"))
 
     @staticmethod
@@ -38,6 +40,7 @@ class McpApiToken(db.Model):
             "user_id": self.user_id,
             "name": self.name,
             "token_prefix": self.token_prefix,
+            "scope": self.scope or "read_only",
             "is_active": self.is_active,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "last_used_at": self.last_used_at.isoformat() if self.last_used_at else None,

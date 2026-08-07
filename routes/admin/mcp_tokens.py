@@ -33,6 +33,14 @@ def generate_token():
         name = request.form.get("name")
     name = (name or "Mon Agent IA").strip()[:100]
 
+    scope = None
+    if request.is_json and request.json:
+        scope = request.json.get("scope")
+    if not scope:
+        scope = request.form.get("scope")
+    if scope not in ("read_only", "write", "admin"):
+        scope = "read_only"
+
     raw_token = McpApiToken.generate_token_raw()
     token_prefix = raw_token[:12] + "..."
     token_hash = McpApiToken.hash_token(raw_token)
@@ -42,6 +50,7 @@ def generate_token():
         name=name,
         token_prefix=token_prefix,
         token_hash=token_hash,
+        scope=scope,
         is_active=True,
     )
 
@@ -52,13 +61,14 @@ def generate_token():
         db.session.rollback()
         try:
             from sqlalchemy import text
-            db.session.execute(text("ALTER TABLE mcp_api_tokens MODIFY token_prefix VARCHAR(30) NOT NULL"))
+            db.session.execute(text("ALTER TABLE mcp_api_tokens ADD COLUMN scope VARCHAR(20) NOT NULL DEFAULT 'read_only'"))
             db.session.commit()
             db.session.add(token_record)
             db.session.commit()
         except Exception as retry_err:
             db.session.rollback()
             raise retry_err
+
 
     if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return jsonify({

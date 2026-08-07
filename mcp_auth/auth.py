@@ -57,7 +57,30 @@ def authenticate_mcp_token(raw_token: str) -> User | None:
         logger.warning(f"⚠️ Token MCP #{token_rec.id} référencie un utilisateur introuvable.")
         return None
 
+    user.mcp_scope = getattr(token_rec, "scope", None) or "read_only"
     return user
+
+
+SCOPE_LEVELS = {
+    "read_only": 1,
+    "write": 2,
+    "admin": 3,
+}
+
+
+def check_mcp_scope(user: User, required_scope: str) -> bool:
+    """
+    Vérifie si le token de l'utilisateur a au moins le niveau de scope requis.
+    - read_only: 1 (consultation uniquement)
+    - write: 2 (création/modification)
+    - admin: 3 (suppression/actions critiques)
+    """
+    if not user:
+        return False
+    user_scope = getattr(user, "mcp_scope", "read_only") or "read_only"
+    user_level = SCOPE_LEVELS.get(user_scope, 1)
+    req_level = SCOPE_LEVELS.get(required_scope, 1)
+    return user_level >= req_level
 
 
 def check_user_has_role(user: User, min_role: str) -> bool:
@@ -73,3 +96,4 @@ def check_user_has_role(user: User, min_role: str) -> bool:
     min_level = ROLE_LEVELS.get(min_role_clean, 1)
 
     return user_level >= min_level
+
