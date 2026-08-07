@@ -6,11 +6,27 @@ from utils.decorators import require_roles
 mcp_tokens_bp = Blueprint("admin_mcp_tokens", __name__, url_prefix="/admin/mcp-connector")
 
 
+def _ensure_scope_column_exists():
+    """Vérifie et ajoute automatiquement la colonne 'scope' dans mcp_api_tokens si elle manque."""
+    try:
+        from sqlalchemy import text
+        db.session.execute(text("ALTER TABLE mcp_api_tokens ADD COLUMN scope VARCHAR(20) NOT NULL DEFAULT 'read_only'"))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+
 @mcp_tokens_bp.route("", methods=["GET"])
 @require_roles("user", "commercial", "manager", "administrator", "super administrator")
 def mcp_connector_page():
     user_id = session.get("admin_user_id")
-    tokens = McpApiToken.query.filter_by(user_id=user_id).order_by(McpApiToken.created_at.desc()).all()
+    try:
+        tokens = McpApiToken.query.filter_by(user_id=user_id).order_by(McpApiToken.created_at.desc()).all()
+    except Exception:
+        db.session.rollback()
+        _ensure_scope_column_exists()
+        tokens = McpApiToken.query.filter_by(user_id=user_id).order_by(McpApiToken.created_at.desc()).all()
+
     return render_template("admin/mcp_connector.html", tokens=tokens)
 
 
@@ -18,8 +34,15 @@ def mcp_connector_page():
 @require_roles("user", "commercial", "manager", "administrator", "super administrator")
 def list_tokens():
     user_id = session.get("admin_user_id")
-    tokens = McpApiToken.query.filter_by(user_id=user_id).order_by(McpApiToken.created_at.desc()).all()
+    try:
+        tokens = McpApiToken.query.filter_by(user_id=user_id).order_by(McpApiToken.created_at.desc()).all()
+    except Exception:
+        db.session.rollback()
+        _ensure_scope_column_exists()
+        tokens = McpApiToken.query.filter_by(user_id=user_id).order_by(McpApiToken.created_at.desc()).all()
+
     return jsonify({"tokens": [t.to_dict() for t in tokens]})
+
 
 
 @mcp_tokens_bp.route("/generate", methods=["POST"])
