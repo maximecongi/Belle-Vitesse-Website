@@ -136,74 +136,79 @@
 
 {% if session.get('admin_user_role', '').lower() == 'super administrator' %}
 <!-- Journal d'Audit MCP (Exclusif Super Administrator) -->
-<div class="admin-card u-mb-4">
-    <div class="u-flex u-align-center u-justify-between u-mb-3">
-        <h3 class="admin-card-title u-text-md u-fw-bold u-mb-0">📊 Journal d'Audit &amp; Activité des Agents IA</h3>
+<details class="admin-card u-mb-4">
+    <summary style="cursor: pointer; user-select: none;" class="u-flex u-align-center u-justify-between">
+        <div class="u-flex u-align-center u-gap-2">
+            <h3 class="admin-card-title u-text-md u-fw-bold u-mb-0" style="display: inline-block;">📊 Journal d'Audit &amp; Activité des Agents IA</h3>
+            <span class="u-text-xs u-text-muted" style="background: #f1f5f9; padding: 2px 8px; border-radius: 12px; font-weight: 500;">▶ Afficher / Plier</span>
+        </div>
         <span class="u-text-xs u-text-muted">50 derniers appels d'outils enregistrés (Vue SuperAdmin)</span>
-    </div>
+    </summary>
 
-    {% if audit_logs %}
-    <div class="table-responsive">
-        <table class="admin-table">
-            <thead>
-                <tr>
-                    <th>Horodatage</th>
-                    <th>Outil Invoqué</th>
-                    <th>Paramètres</th>
-                    <th>Statut</th>
-                    <th>Durée</th>
-                    <th>IP Client</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for log in audit_logs %}
-                <tr>
-                    <td class="u-text-xs u-text-muted">
-                        {{ log.created_at.strftime('%d/%m/%Y à %H:%M:%S') if log.created_at else '—' }}
-                    </td>
-                    <td>
-                        <code
-                            style="font-family: monospace; font-size: 12px; font-weight: bold; color: #0284c7;">{{ log.tool_name }}</code>
-                    </td>
-                    <td>
-                        <div class="u-text-xs"
-                            style="max-width: 320px; max-height: 50px; overflow-y: auto; font-family: monospace; background: #f8fafc; padding: 4px; border-radius: 4px; color: #334155;">
-                            {{ log.arguments_json or '{}' }}
-                        </div>
-                    </td>
-                    <td>
-                        {% if log.status == 'success' %}
-                        <span class="badge-pill"
-                            style="background: #dcfce7; color: #15803d; font-weight: 600;">Success</span>
-                        {% elif log.status == 'requires_confirmation' %}
-                        <span class="badge-pill" style="background: #fef3c7; color: #d97706; font-weight: 600;">⚠️
-                            Confirmation Exigée</span>
-                        {% elif log.status == 'blocked_403' %}
-                        <span class="badge-pill" style="background: #fee2e2; color: #b91c1c; font-weight: 600;">⛔ Bloqué
-                            (403)</span>
-                        {% else %}
-                        <span class="badge-pill"
-                            style="background: #fee2e2; color: #b91c1c; font-weight: 600;">Erreur</span>
-                        {% endif %}
-                    </td>
-                    <td class="u-text-xs u-text-muted">
-                        {{ log.execution_time_ms }} ms
-                    </td>
-                    <td class="u-text-xs u-text-muted">
-                        {{ log.ip_address or '—' }}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="u-mt-3">
+        {% if audit_logs %}
+        <div class="table-responsive">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Horodatage</th>
+                        <th>Outil Invoqué</th>
+                        <th>Paramètres</th>
+                        <th>Statut</th>
+                        <th>Durée</th>
+                        <th>IP Client</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in audit_logs %}
+                    <tr>
+                        <td class="u-text-xs u-text-muted">
+                            {{ log.created_at.strftime('%d/%m/%Y à %H:%M:%S') if log.created_at else '—' }}
+                        </td>
+                        <td>
+                            <code
+                                style="font-family: monospace; font-size: 12px; font-weight: bold; color: #0284c7;">{{ log.tool_name }}</code>
+                        </td>
+                        <td>
+                            <div class="u-text-xs"
+                                style="max-width: 320px; max-height: 50px; overflow-y: auto; font-family: monospace; background: #f8fafc; padding: 4px; border-radius: 4px; color: #334155;">
+                                {{ log.arguments_json or '{}' }}
+                            </div>
+                        </td>
+                        <td>
+                            {% if log.status == 'success' %}
+                            <span class="badge-pill"
+                                style="background: #dcfce7; color: #15803d; font-weight: 600;">Success</span>
+                            {% elif log.status == 'requires_confirmation' %}
+                            <span class="badge-pill" style="background: #fef3c7; color: #d97706; font-weight: 600;">⚠️
+                                Confirmation Exigée</span>
+                            {% elif log.status == 'blocked_403' %}
+                            <span class="badge-pill" style="background: #fee2e2; color: #b91c1c; font-weight: 600;">⛔ Bloqué
+                                (403)</span>
+                            {% else %}
+                            <span class="badge-pill"
+                                style="background: #fee2e2; color: #b91c1c; font-weight: 600;">Erreur</span>
+                            {% endif %}
+                        </td>
+                        <td class="u-text-xs u-text-muted">
+                            {{ log.execution_time_ms }} ms
+                        </td>
+                        <td class="u-text-xs u-text-muted">
+                            {{ log.ip_address or '—' }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="u-text-center u-p-4 u-bg-light u-rounded">
+            <p class="u-text-sm u-text-muted">Aucune activité enregistrée pour le moment. Les futurs appels d'outils
+                s'afficheront ici en temps réel.</p>
+        </div>
+        {% endif %}
     </div>
-    {% else %}
-    <div class="u-text-center u-p-4 u-bg-light u-rounded">
-        <p class="u-text-sm u-text-muted">Aucune activité enregistrée pour le moment. Les futurs appels d'outils
-            s'afficheront ici en temps réel.</p>
-    </div>
-    {% endif %}
-</div>
+</details>
 {% endif %}
 
 
