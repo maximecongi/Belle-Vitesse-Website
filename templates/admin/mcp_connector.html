@@ -16,10 +16,11 @@
     <div class="u-flex u-flex-wrap u-align-center u-justify-between u-gap-4">
         <div>
             <div class="u-flex u-align-center u-gap-2 u-mb-2">
-                <span class="badge-pill"
+                <span id="mcpStatusBadge" class="badge-pill"
                     style="background: #10b981; color: #ffffff; font-weight: 700; font-size: 11px;">
                     🟢 EN LIGNE (Streamable HTTP)
                 </span>
+
                 <span class="u-text-xs" style="color: #94a3b8;">Protocol Model Context Protocol v1.0</span>
             </div>
             <h3 class="u-text-lg u-fw-bold u-mb-1" style="color: #f8fafc;">Passerelle d'Interconnexion Agents IA</h3>
@@ -387,6 +388,28 @@
                 copyClaudeUrlBtn.textContent = '✅ Copié !';
                 setTimeout(() => copyClaudeUrlBtn.textContent = '📋 Copier l\'URL', 2000);
             });
+        }
+
+        // Verification dynamique du statut du serveur MCP
+        const statusBadge = document.getElementById('mcpStatusBadge');
+        if (statusBadge) {
+            const isLocal = window.location.origin.includes('127.0.0.1') || window.location.origin.includes('localhost');
+            const healthUrl = isLocal ? 'http://127.0.0.1:8080/health' : 'https://team.bellevitesse.com/mcp/health';
+            fetch(healthUrl, { method: 'GET' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.status === 'healthy') {
+                        statusBadge.style.background = '#10b981';
+                        statusBadge.textContent = '🟢 EN LIGNE (Streamable HTTP)';
+                    } else {
+                        statusBadge.style.background = '#ef4444';
+                        statusBadge.textContent = '🔴 SERVEUR NON DISPONIBLE';
+                    }
+                })
+                .catch(() => {
+                    statusBadge.style.background = '#ef4444';
+                    statusBadge.textContent = '🔴 HORS LIGNE';
+                });
         }
 
         // Gestion des Onglets

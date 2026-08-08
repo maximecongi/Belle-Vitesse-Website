@@ -43,100 +43,121 @@ class DummyGuestUser:
         return {"id": self.id, "mail": self.mail, "role": self.role}
 
 
-class AuthMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request, call_next):
-        # 1. Gestion des requêtes OPTIONS / CORS Preflight
-        if request.method == "OPTIONS":
-            return Response(
-                status_code=200,
-                headers={
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Methods": "GET, POST, OPTIONS, PUT, DELETE",
-                    "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Requested-With",
-                }
-            )
+class PureAsgiAuthMiddleware:
+    """
+    Middleware ASGI pur (sans BaseHTTPMiddleware) pour préserver le streaming HTTP (Streamable HTTP / SSE)
+    sans altérer le protocole MCP ni provoquer d'erreur HTTP 501.
+    """
+    def __init__(self, app):
+        self.app = app
 
-        # 2. Laisser passer le healthcheck
-        if request.url.path in ("/health", "/mcp/health"):
-            try:
-                with flask_app.app_context():
-                    from models import db
-                    from sqlalchemy import text
-                    db.session.execute(text("SELECT 1"))
-                return JSONResponse({"status": "healthy", "service": "BV-MCP"}, status_code=200)
-            except Exception as e:
-                return JSONResponse({"status": "unhealthy", "error": str(e)}, status_code=500)
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            path = scope.get("path", "")
+            method = scope.get("method", "GET")
 
-        client_ip = request.client.host if request.client else "unknown"
-        session_id = request.query_params.get("session_id")
-        flask_app.current_mcp_ip = client_ip
+            # 1. Preflight CORS OPTIONS
+            if method == "OPTIONS":
+                response_headers = [
+                    (b"access-control-allow-origin", b"*"),
+                    (b"access-control-allow-methods", b"GET, POST, OPTIONS, PUT, DELETE"),
+                    (b"access-control-allow-headers", b"Authorization, Content-Type, X-Requested-With, MCP-Protocol-Version"),
+                ]
+                await send({
+                    "type": "http.response.start",
+                    "status": 200,
+                    "headers": response_headers,
+                })
+                await send({"type": "http.response.body", "body": b""})
+                return
 
-        # Rate Limiting check (max 30 requêtes/minute par IP ou Session)
-        rate_key = session_id or client_ip
-        now = time.time()
-        timestamps = [t for t in MCP_RATE_LIMITER[rate_key] if now - t < 60]
-        MCP_RATE_LIMITER[rate_key] = timestamps
+            # 2. Healthcheck
+            if path in ("/health", "/mcp/health"):
+                try:
+                    with flask_app.app_context():
+                        from models import db
+                        from sqlalchemy import text
+                        db.session.execute(text("SELECT 1"))
+                    body = json.dumps({"status": "healthy", "service": "BV-MCP"}).encode("utf-8")
+                    status = 200
+                except Exception as e:
+                    body = json.dumps({"status": "unhealthy", "error": str(e)}).encode("utf-8")
+                    status = 500
 
-        if len(timestamps) >= MAX_MCP_REQUESTS_PER_MINUTE:
-            logger.warning(f"⛔ Rate limit MCP dépassé pour {rate_key} ({len(timestamps)} req/min).")
-            return JSONResponse(
-                {
+                await send({
+                    "type": "http.response.start",
+                    "status": status,
+                    "headers": [(b"content-type", b"application/json"), (b"access-control-allow-origin", b"*")],
+                })
+                await send({"type": "http.response.body", "body": body})
+                return
+
+            # 3. Rate limiting & Token extraction
+            client_ip = scope.get("client", ("unknown", 0))[0] if scope.get("client") else "unknown"
+            query_string = scope.get("query_string", b"").decode("utf-8")
+            from urllib.parse import parse_qs
+            query_params = parse_qs(query_string)
+
+            session_id = query_params.get("session_id", [None])[0]
+            raw_token = None
+
+            headers_dict = dict(scope.get("headers", []))
+            auth_header = headers_dict.get(b"authorization", b"").decode("utf-8")
+            if auth_header and auth_header.startswith("Bearer "):
+                raw_token = auth_header.split("Bearer ")[-1].strip()
+            elif "token" in query_params:
+                raw_token = query_params["token"][0]
+            elif "api_key" in query_params:
+                raw_token = query_params["api_key"][0]
+
+            rate_key = session_id or client_ip
+            now = time.time()
+            timestamps = [t for t in MCP_RATE_LIMITER[rate_key] if now - t < 60]
+            MCP_RATE_LIMITER[rate_key] = timestamps
+
+            if len(timestamps) >= MAX_MCP_REQUESTS_PER_MINUTE:
+                logger.warning(f"⛔ Rate limit MCP dépassé pour {rate_key}.")
+                body = json.dumps({
                     "status": "error",
                     "error_code": 429,
-                    "message": "⛔ Rate limit dépassé (maximum 30 requêtes par minute). Veuillez espacer les requêtes de l'agent IA."
-                },
-                status_code=429
-            )
+                    "message": "⛔ Rate limit dépassé (max 30 requêtes/min). Veuillez ralentir l'agent IA."
+                }).encode("utf-8")
+                await send({
+                    "type": "http.response.start",
+                    "status": 429,
+                    "headers": [(b"content-type", b"application/json"), (b"access-control-allow-origin", b"*")],
+                })
+                await send({"type": "http.response.body", "body": body})
+                return
 
-        MCP_RATE_LIMITER[rate_key].append(now)
+            MCP_RATE_LIMITER[rate_key].append(now)
 
-        # 3. Extraction du Token s'il est présent (Header Authorization ou Paramètre URL)
-        raw_token = None
-        auth_header = request.headers.get("Authorization") or request.headers.get("authorization")
-        if auth_header and auth_header.startswith("Bearer "):
-            raw_token = auth_header.split("Bearer ")[-1].strip()
-        elif "token" in request.query_params:
-            raw_token = request.query_params.get("token")
-        elif "api_key" in request.query_params:
-            raw_token = request.query_params.get("api_key")
+            user = None
+            if raw_token:
+                with flask_app.app_context():
+                    user = authenticate_mcp_token(raw_token)
+                    if user:
+                        RECENT_AUTH_BY_IP[client_ip] = user
+                        if session_id:
+                            ACTIVE_MCP_SESSIONS[session_id] = user
+            elif session_id and session_id in ACTIVE_MCP_SESSIONS:
+                user = ACTIVE_MCP_SESSIONS[session_id]
+            elif client_ip in RECENT_AUTH_BY_IP:
+                user = RECENT_AUTH_BY_IP[client_ip]
 
-        user = None
-
-        if raw_token:
-            with flask_app.app_context():
-                user = authenticate_mcp_token(raw_token)
-                if user:
-                    RECENT_AUTH_BY_IP[client_ip] = user
-                    if session_id:
-                        ACTIVE_MCP_SESSIONS[session_id] = user
-
-        # 4. Si pas de token direct mais session_id connu
-        elif session_id and session_id in ACTIVE_MCP_SESSIONS:
-            user = ACTIVE_MCP_SESSIONS[session_id]
-
-        # 5. Fallback IP récente
-        elif client_ip in RECENT_AUTH_BY_IP:
-            user = RECENT_AUTH_BY_IP[client_ip]
-            if session_id:
-                ACTIVE_MCP_SESSIONS[session_id] = user
-
-        # 6. Fallback pour sondage / connexion sans token (ex: Claude Web)
-        if not user:
-            with flask_app.app_context():
-                from models import User
-                user = User.query.first()
             if not user:
-                user = DummyGuestUser()
+                with flask_app.app_context():
+                    from models import User
+                    user = User.query.first()
+                if not user:
+                    user = DummyGuestUser()
 
-        # Attacher l'utilisateur au state de la requête Starlette et au contexte Flask
-        request.state.user = user
-        flask_app.current_mcp_user = user
-        logger.info(f"🔑 Connexion MCP autorisée : User #{getattr(user, 'id', 0)} ({getattr(user, 'mail', 'guest')}) - Scope: {getattr(user, 'mcp_scope', 'read_only')} [{request.method} {request.url.path}]")
+            flask_app.current_mcp_user = user
+            flask_app.current_mcp_ip = client_ip
+            logger.info(f"🔑 Connexion MCP autorisée : User #{getattr(user, 'id', 0)} ({getattr(user, 'mail', 'guest')}) [{method} {path}]")
 
-        response = await call_next(request)
-        response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers["Access-Control-Allow-Headers"] = "*"
-        return response
+        await self.app(scope, receive, send)
+
 
 
 from functools import wraps
@@ -1084,8 +1105,9 @@ if __name__ == "__main__":
                 raw_app = asgi_fn(path="/mcp")
             except TypeError:
                 raw_app = asgi_fn()
-            app = AuthMiddleware(raw_app)
+            app = PureAsgiAuthMiddleware(raw_app)
             uvicorn.run(app, host="0.0.0.0", port=port)
+
         else:
             mcp.run(transport="streamable-http", host="0.0.0.0", port=port, path="/mcp")
     except Exception as err:
