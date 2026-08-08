@@ -4,8 +4,8 @@ import json
 import logging
 import contextvars
 from functools import wraps
+from collections import defaultdict
 from typing import Optional, List, Dict, Any
-
 
 from mcp.server.fastmcp import FastMCP, Context
 from starlette.applications import Starlette
@@ -19,6 +19,11 @@ from mcp_auth.auth import authenticate_mcp_token, check_user_has_role, check_mcp
 # ContextVars pour la traçabilité asynchrone sécurisée par requête
 CURRENT_MCP_USER: contextvars.ContextVar[Any] = contextvars.ContextVar("CURRENT_MCP_USER", default=None)
 CURRENT_MCP_IP: contextvars.ContextVar[str] = contextvars.ContextVar("CURRENT_MCP_IP", default="unknown")
+
+# Rate Limiter en mémoire (30 req/min)
+MCP_RATE_LIMITER: Dict[str, List[float]] = defaultdict(list)
+MAX_MCP_REQUESTS_PER_MINUTE = 30
+
 
 
 
