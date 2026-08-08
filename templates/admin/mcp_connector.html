@@ -11,8 +11,7 @@
 
 {% block content %}
 <!-- Banner Statut Serveur MCP -->
-<div class="admin-card u-mb-4"
-    style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; border-radius: 12px; padding: 1.5rem;">
+<div class="admin-card u-mb-4" style="background: var(--grey-3); color: #ffffff; border-radius: 12px; padding: 1.5rem;">
     <div class="u-flex u-flex-wrap u-align-center u-justify-between u-gap-4">
         <div>
             <div class="u-flex u-align-center u-gap-2 u-mb-2">
@@ -30,7 +29,7 @@
             </p>
         </div>
         <div class="u-bg-dark u-p-3 u-rounded"
-            style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.1); min-width: 320px;">
+            style="background: var(--grey-1); border: 1px solid rgba(255,255,255,0.1); min-width: 320px;">
             <div class="u-text-xs u-fw-bold u-mb-1" style="color: #94a3b8;">URL D'ENDPOINT MCP DÉDIÉE :</div>
             <div class="u-flex u-align-center u-gap-2">
                 <code id="mcpServerEndpoint"
@@ -139,8 +138,11 @@
 <details class="admin-card u-mb-4">
     <summary style="cursor: pointer; user-select: none;" class="u-flex u-align-center u-justify-between">
         <div class="u-flex u-align-center u-gap-2">
-            <h3 class="admin-card-title u-text-md u-fw-bold u-mb-0" style="display: inline-block;">📊 Journal d'Audit &amp; Activité des Agents IA</h3>
-            <span class="u-text-xs u-text-muted" style="background: #f1f5f9; padding: 2px 8px; border-radius: 12px; font-weight: 500;">▶ Afficher / Plier</span>
+            <h3 class="admin-card-title u-text-md u-fw-bold u-mb-0" style="display: inline-block;">📊 Journal d'Audit
+                &amp; Activité des Agents IA</h3>
+            <span class="u-text-xs u-text-muted"
+                style="background: #f1f5f9; padding: 2px 8px; border-radius: 12px; font-weight: 500;">▶ Afficher /
+                Plier</span>
         </div>
         <span class="u-text-xs u-text-muted">50 derniers appels d'outils enregistrés (Vue SuperAdmin)</span>
     </summary>
@@ -183,7 +185,8 @@
                             <span class="badge-pill" style="background: #fef3c7; color: #d97706; font-weight: 600;">⚠️
                                 Confirmation Exigée</span>
                             {% elif log.status == 'blocked_403' %}
-                            <span class="badge-pill" style="background: #fee2e2; color: #b91c1c; font-weight: 600;">⛔ Bloqué
+                            <span class="badge-pill" style="background: #fee2e2; color: #b91c1c; font-weight: 600;">⛔
+                                Bloqué
                                 (403)</span>
                             {% else %}
                             <span class="badge-pill"
