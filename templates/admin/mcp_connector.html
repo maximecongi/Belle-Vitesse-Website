@@ -133,11 +133,12 @@
     {% endif %}
 </div>
 
-<!-- Journal d'Audit MCP -->
+{% if session.get('admin_user_role', '').lower() == 'super administrator' %}
+<!-- Journal d'Audit MCP (Exclusif Super Administrator) -->
 <div class="admin-card u-mb-4">
     <div class="u-flex u-align-center u-justify-between u-mb-3">
         <h3 class="admin-card-title u-text-md u-fw-bold u-mb-0">📊 Journal d'Audit &amp; Activité des Agents IA</h3>
-        <span class="u-text-xs u-text-muted">50 derniers appels d'outils enregistrés</span>
+        <span class="u-text-xs u-text-muted">50 derniers appels d'outils enregistrés (Vue SuperAdmin)</span>
     </div>
 
     {% if audit_logs %}
@@ -195,6 +196,8 @@
     </div>
     {% endif %}
 </div>
+{% endif %}
+
 
 <!-- Guides de connexion rapide -->
 <div class="admin-card u-mb-4">

@@ -47,26 +47,48 @@ def _ensure_audit_table_exists():
 @require_roles("user", "commercial", "manager", "administrator", "super administrator")
 def mcp_connector_page():
     user_id = session.get("admin_user_id")
+    user_role = (session.get("admin_user_role") or "").lower()
+
+    if not user_role and user_id:
+        try:
+            from models import User
+            u = db.session.get(User, user_id)
+            if u and u.role:
+                user_role = u.role.lower()
+        except Exception:
+            pass
+
+    tokens = []
     try:
         tokens = McpApiToken.query.filter_by(user_id=user_id).order_by(McpApiToken.created_at.desc()).all()
     except Exception:
         db.session.rollback()
         _ensure_scope_column_exists()
-        tokens = McpApiToken.query.filter_by(user_id=user_id).order_by(McpApiToken.created_at.desc()).all()
-
-    from models import McpAuditLog
-    try:
-        audit_logs = McpAuditLog.query.order_by(McpAuditLog.created_at.desc()).limit(50).all()
-    except Exception:
-        db.session.rollback()
-        _ensure_audit_table_exists()
         try:
+            tokens = McpApiToken.query.filter_by(user_id=user_id).order_by(McpApiToken.created_at.desc()).all()
+        except Exception:
+            db.session.rollback()
+            tokens = []
+
+    audit_logs = []
+    if user_role == "super administrator":
+        try:
+            from models import McpAuditLog
             audit_logs = McpAuditLog.query.order_by(McpAuditLog.created_at.desc()).limit(50).all()
         except Exception:
             db.session.rollback()
-            audit_logs = []
+            _ensure_audit_table_exists()
+            try:
+                from models import McpAuditLog
+                audit_logs = McpAuditLog.query.order_by(McpAuditLog.created_at.desc()).limit(50).all()
+            except Exception:
+                db.session.rollback()
+                audit_logs = []
 
     return render_template("admin/mcp_connector.html", tokens=tokens, audit_logs=audit_logs)
+
+
+
 
 
 
