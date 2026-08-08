@@ -69,6 +69,26 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         client_ip = request.client.host if request.client else "unknown"
         session_id = request.query_params.get("session_id")
+        flask_app.current_mcp_ip = client_ip
+
+        # Rate Limiting check (max 30 requêtes/minute par IP ou Session)
+        rate_key = session_id or client_ip
+        now = time.time()
+        timestamps = [t for t in MCP_RATE_LIMITER[rate_key] if now - t < 60]
+        MCP_RATE_LIMITER[rate_key] = timestamps
+
+        if len(timestamps) >= MAX_MCP_REQUESTS_PER_MINUTE:
+            logger.warning(f"⛔ Rate limit MCP dépassé pour {rate_key} ({len(timestamps)} req/min).")
+            return JSONResponse(
+                {
+                    "status": "error",
+                    "error_code": 429,
+                    "message": "⛔ Rate limit dépassé (maximum 30 requêtes par minute). Veuillez espacer les requêtes de l'agent IA."
+                },
+                status_code=429
+            )
+
+        MCP_RATE_LIMITER[rate_key].append(now)
 
         # 3. Extraction du Token s'il est présent (Header Authorization ou Paramètre URL)
         raw_token = None
@@ -150,12 +170,68 @@ def require_mcp_scope(required_scope: str = "read_only"):
 
 
 def run_in_flask_context(func):
-    """Exécute une fonction dans le contexte d'application Flask."""
+    """Exécute une fonction d'outil MCP dans le contexte Flask avec enregistrement automatique d'audit."""
     @wraps(func)
     def wrapper(*args, **kwargs):
+        start_time = time.time()
+        user = getattr(flask_app, "current_mcp_user", None)
+        status = "success"
+        error_msg = None
+        result = None
+
         with flask_app.app_context():
-            return func(*args, **kwargs)
+            try:
+                result = func(*args, **kwargs)
+                if isinstance(result, dict):
+                    if result.get("status") == "requires_confirmation":
+                        status = "requires_confirmation"
+                    elif result.get("status") == "error" or result.get("success") is False:
+                        status = "error"
+                        error_msg = result.get("message") or result.get("error")
+            except PermissionError as pe:
+                status = "blocked_403"
+                error_msg = str(pe)
+                raise pe
+            except Exception as ex:
+                status = "error"
+                error_msg = str(ex)
+                raise ex
+            finally:
+                exec_time_ms = int((time.time() - start_time) * 1000)
+                try:
+                    from models import McpAuditLog, db
+                    user_id = getattr(user, "id", None)
+                    token_id = getattr(user, "current_token_id", None)
+                    args_json = None
+                    if kwargs or args:
+                        try:
+                            args_payload = {"args": args, "kwargs": kwargs} if args else kwargs
+                            args_json = json.dumps(args_payload, ensure_ascii=False, default=str)[:2000]
+                        except Exception:
+                            args_json = str(kwargs or args)[:2000]
+
+                    audit_entry = McpAuditLog(
+                        user_id=user_id,
+                        token_id=token_id,
+                        tool_name=func.__name__,
+                        arguments_json=args_json,
+                        status=status,
+                        error_message=error_msg[:1000] if error_msg else None,
+                        ip_address=getattr(flask_app, "current_mcp_ip", "unknown"),
+                        execution_time_ms=exec_time_ms,
+                    )
+                    db.session.add(audit_entry)
+                    db.session.commit()
+                except Exception as audit_err:
+                    logger.error(f"❌ Erreur enregistrement audit MCP: {audit_err}")
+                    try:
+                        db.session.rollback()
+                    except Exception:
+                        pass
+
+            return result
     return wrapper
+
 
 
 # ══════════════════════════════════════════════════════════════════

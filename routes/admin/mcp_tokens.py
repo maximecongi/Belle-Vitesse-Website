@@ -16,6 +16,33 @@ def _ensure_scope_column_exists():
         db.session.rollback()
 
 
+def _ensure_audit_table_exists():
+    """Vérifie et crée automatiquement la table mcp_audit_logs si elle manque."""
+    try:
+        from sqlalchemy import text
+        db.session.execute(text("""
+            CREATE TABLE IF NOT EXISTS mcp_audit_logs (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                user_id INT NULL,
+                token_id INT NULL,
+                tool_name VARCHAR(100) NOT NULL,
+                arguments_json TEXT NULL,
+                status VARCHAR(30) NOT NULL DEFAULT 'success',
+                error_message TEXT NULL,
+                ip_address VARCHAR(45) NULL,
+                execution_time_ms INT NULL,
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                INDEX ix_mcp_audit_logs_user_id (user_id),
+                INDEX ix_mcp_audit_logs_token_id (token_id),
+                INDEX ix_mcp_audit_logs_tool_name (tool_name),
+                INDEX ix_mcp_audit_logs_created_at (created_at)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        """))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
+
 @mcp_tokens_bp.route("", methods=["GET"])
 @require_roles("user", "commercial", "manager", "administrator", "super administrator")
 def mcp_connector_page():
@@ -27,7 +54,20 @@ def mcp_connector_page():
         _ensure_scope_column_exists()
         tokens = McpApiToken.query.filter_by(user_id=user_id).order_by(McpApiToken.created_at.desc()).all()
 
-    return render_template("admin/mcp_connector.html", tokens=tokens)
+    from models import McpAuditLog
+    try:
+        audit_logs = McpAuditLog.query.order_by(McpAuditLog.created_at.desc()).limit(50).all()
+    except Exception:
+        db.session.rollback()
+        _ensure_audit_table_exists()
+        try:
+            audit_logs = McpAuditLog.query.order_by(McpAuditLog.created_at.desc()).limit(50).all()
+        except Exception:
+            db.session.rollback()
+            audit_logs = []
+
+    return render_template("admin/mcp_connector.html", tokens=tokens, audit_logs=audit_logs)
+
 
 
 @mcp_tokens_bp.route("/api/tokens", methods=["GET"])

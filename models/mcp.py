@@ -49,3 +49,40 @@ class McpApiToken(db.Model):
 
     def __repr__(self):
         return f"<McpApiToken id={self.id} user_id={self.user_id} name={self.name} active={self.is_active}>"
+
+
+class McpAuditLog(db.Model):
+    """Journal d'audit des appels d'outils MCP exécutés par les agents IA."""
+    __tablename__ = "mcp_audit_logs"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True, index=True)
+    token_id = db.Column(db.Integer, db.ForeignKey("mcp_api_tokens.id", ondelete="SET NULL"), nullable=True, index=True)
+    tool_name = db.Column(db.String(100), nullable=False, index=True)
+    arguments_json = db.Column(db.Text, nullable=True)
+    status = db.Column(db.String(30), nullable=False, default="success") # 'success', 'error', 'blocked_403', 'requires_confirmation'
+    error_message = db.Column(db.Text, nullable=True)
+    ip_address = db.Column(db.String(45), nullable=True)
+    execution_time_ms = db.Column(db.Integer, nullable=True)
+    created_at = db.Column(db.DateTime, default=_utcnow, nullable=False, index=True)
+
+    user = db.relationship("User", backref=db.backref("mcp_audit_logs", lazy=True))
+    token = db.relationship("McpApiToken", backref=db.backref("audit_logs", lazy=True))
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "token_id": self.token_id,
+            "tool_name": self.tool_name,
+            "arguments_json": self.arguments_json,
+            "status": self.status,
+            "error_message": self.error_message,
+            "ip_address": self.ip_address,
+            "execution_time_ms": self.execution_time_ms,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+    def __repr__(self):
+        return f"<McpAuditLog id={self.id} tool={self.tool_name} status={self.status}>"
+
