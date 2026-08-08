@@ -43,6 +43,13 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
+.tab-btn-ai-logo {
+    height: 12px;
+    padding-right: 8px;
+    position: relative;
+    top: 1px;
+}
+
 /* Dropdown filter */
 .item-filter-group {
     display: flex;

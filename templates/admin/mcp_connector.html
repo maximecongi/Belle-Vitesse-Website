@@ -162,22 +162,28 @@
                         {{ log.created_at.strftime('%d/%m/%Y à %H:%M:%S') if log.created_at else '—' }}
                     </td>
                     <td>
-                        <code style="font-family: monospace; font-size: 12px; font-weight: bold; color: #0284c7;">{{ log.tool_name }}</code>
+                        <code
+                            style="font-family: monospace; font-size: 12px; font-weight: bold; color: #0284c7;">{{ log.tool_name }}</code>
                     </td>
                     <td>
-                        <div class="u-text-xs" style="max-width: 320px; max-height: 50px; overflow-y: auto; font-family: monospace; background: #f8fafc; padding: 4px; border-radius: 4px; color: #334155;">
+                        <div class="u-text-xs"
+                            style="max-width: 320px; max-height: 50px; overflow-y: auto; font-family: monospace; background: #f8fafc; padding: 4px; border-radius: 4px; color: #334155;">
                             {{ log.arguments_json or '{}' }}
                         </div>
                     </td>
                     <td>
                         {% if log.status == 'success' %}
-                        <span class="badge-pill" style="background: #dcfce7; color: #15803d; font-weight: 600;">Success</span>
+                        <span class="badge-pill"
+                            style="background: #dcfce7; color: #15803d; font-weight: 600;">Success</span>
                         {% elif log.status == 'requires_confirmation' %}
-                        <span class="badge-pill" style="background: #fef3c7; color: #d97706; font-weight: 600;">⚠️ Confirmation Exigée</span>
+                        <span class="badge-pill" style="background: #fef3c7; color: #d97706; font-weight: 600;">⚠️
+                            Confirmation Exigée</span>
                         {% elif log.status == 'blocked_403' %}
-                        <span class="badge-pill" style="background: #fee2e2; color: #b91c1c; font-weight: 600;">⛔ Bloqué (403)</span>
+                        <span class="badge-pill" style="background: #fee2e2; color: #b91c1c; font-weight: 600;">⛔ Bloqué
+                            (403)</span>
                         {% else %}
-                        <span class="badge-pill" style="background: #fee2e2; color: #b91c1c; font-weight: 600;">Erreur</span>
+                        <span class="badge-pill"
+                            style="background: #fee2e2; color: #b91c1c; font-weight: 600;">Erreur</span>
                         {% endif %}
                     </td>
                     <td class="u-text-xs u-text-muted">
@@ -193,7 +199,8 @@
     </div>
     {% else %}
     <div class="u-text-center u-p-4 u-bg-light u-rounded">
-        <p class="u-text-sm u-text-muted">Aucune activité enregistrée pour le moment. Les futurs appels d'outils s'afficheront ici en temps réel.</p>
+        <p class="u-text-sm u-text-muted">Aucune activité enregistrée pour le moment. Les futurs appels d'outils
+            s'afficheront ici en temps réel.</p>
     </div>
     {% endif %}
 </div>
@@ -207,23 +214,28 @@
 
     <div class="u-flex u-gap-2 u-mb-3 border-bottom pb-2">
         <button type="button" class="tab-btn active admin-btn admin-btn-secondary admin-btn-sm"
-            data-tab="tab-claude-web">🌐 Claude Web (claude.ai)</button>
-        <button type="button" class="tab-btn admin-btn admin-btn-secondary admin-btn-sm" data-tab="tab-claude-code">💻
-            Claude Code CLI</button>
+            data-tab="tab-claude-web"><img class="tab-btn-ai-logo" src="/static/imgs/brands/claude_logo.svg"
+                alt="Claude">Claude</button>
+        {# <button type="button" class="tab-btn admin-btn admin-btn-secondary admin-btn-sm"
+            data-tab="tab-claude-code"><img class="tab-btn-ai-logo" src="/static/imgs/brands/chatgpt_logo.svg"
+                alt="Chat GPT">Chat GPT</button>
         <button type="button" class="tab-btn admin-btn admin-btn-secondary admin-btn-sm"
-            data-tab="tab-claude-desktop">🖥️ Claude Desktop / Cursor</button>
+            data-tab="tab-claude-desktop"><img class="tab-btn-ai-logo" src="/static/imgs/brands/gemini_logo.svg"
+                alt="Gemini">Gemini</button> #}
     </div>
 
     <div id="tab-claude-web" class="tab-content">
-        <p class="u-text-sm u-mb-2">1. Dans <strong>Claude Web</strong> (<code>claude.ai</code>), rendez-vous dans
-            <strong>Paramètres</strong> ➔ <strong>Connecteurs personnalisés</strong>.</p>
-        <p class="u-text-sm u-mb-2">2. Cliquez sur <strong>Ajouter un connecteur</strong> et collez l'URL avec votre clé
+        <p class="u-text-sm u-mb-2">1. Dans <strong>Claude</strong>, rendez-vous dans
+            <strong>Paramètres</strong> ➔ <strong>Connecteurs</strong>.
+        </p>
+        <p class="u-text-sm u-mb-2">2. Cliquez sur <strong>Ajouter</strong> en haut à droite et collez l'URL avec votre
+            clé
             d'accès :</p>
         <pre class="u-text-xs u-bg-dark u-text-white u-p-3 u-rounded"
             style="overflow-x: auto;"><code>https://team.bellevitesse.com/mcp?token=&lt;VOTRE_CLÉ_API_IA&gt;</code></pre>
     </div>
 
-    <div id="tab-claude-code" class="tab-content u-d-none">
+    {# <div id="tab-claude-code" class="tab-content u-d-none">
         <p class="u-text-sm u-mb-2">Dans votre terminal Mac, exécutez la commande d'enregistrement officielle :</p>
         <pre class="u-text-xs u-bg-dark u-text-white u-p-3 u-rounded"
             style="overflow-x: auto;"><code>claude mcp add --transport http --header "Authorization: Bearer &lt;VOTRE_CLÉ_API_IA&gt;" bv-mcp https://team.bellevitesse.com/mcp</code></pre>
@@ -242,7 +254,7 @@
     }
   }
 }</code></pre>
-    </div>
+    </div> #}
 </div>
 
 <!-- Modal Génération de Clé -->
