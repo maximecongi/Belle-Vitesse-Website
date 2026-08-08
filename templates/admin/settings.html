@@ -33,19 +33,6 @@
         </div>
     </form>
 </div>
-
-<!-- Card Connecteur IA (MCP) -->
-<div class="admin-card u-max-w-800 u-mt-4">
-    <div class="admin-card-title">🤖 Connecteur IA (BV-MCP)</div>
-    <p class="u-text-sm u-text-muted u-mb-3">
-        Générez et gérez vos clés d'accès API pour connecter votre agent IA (Claude Web, Claude Desktop, Claude Code CLI, Cursor) aux 68 outils d'administration Belle Vitesse.
-    </p>
-    <a href="{{ url_for('admin_mcp_tokens.mcp_connector_page') }}" class="admin-btn admin-btn-primary">
-        👉 Accéder à la page dédiée du Connecteur IA
-    </a>
-</div>
-
-
 <div class="admin-card u-max-w-800 u-mt-4 u-border-left-warning">
     <div class="admin-card-title">💡 Conseil</div>
     <p class="u-text-sm">
@@ -56,114 +43,114 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const mcpForm = document.getElementById('generateMcpTokenForm');
-    const mcpModal = document.getElementById('mcpTokenModal');
-    const mcpRawTokenInput = document.getElementById('mcpRawTokenInput');
-    const mcpConfigPreview = document.getElementById('mcpConfigPreview');
-    const copyBtn = document.getElementById('copyMcpTokenBtn');
-    const closeBtn = document.getElementById('closeMcpModal');
-    const confirmCloseBtn = document.getElementById('confirmMcpModalClose');
+    document.addEventListener('DOMContentLoaded', function () {
+        const mcpForm = document.getElementById('generateMcpTokenForm');
+        const mcpModal = document.getElementById('mcpTokenModal');
+        const mcpRawTokenInput = document.getElementById('mcpRawTokenInput');
+        const mcpConfigPreview = document.getElementById('mcpConfigPreview');
+        const copyBtn = document.getElementById('copyMcpTokenBtn');
+        const closeBtn = document.getElementById('closeMcpModal');
+        const confirmCloseBtn = document.getElementById('confirmMcpModalClose');
 
-    if (mcpForm) {
-        mcpForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
+        if (mcpForm) {
+            mcpForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
 
-            const formData = new FormData(mcpForm);
-            try {
-                const response = await fetch(mcpForm.action, {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: formData
-                });
+                const formData = new FormData(mcpForm);
+                try {
+                    const response = await fetch(mcpForm.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: formData
+                    });
 
-                const data = await response.json();
-                if (response.ok && data.raw_token) {
-                    mcpRawTokenInput.value = data.raw_token;
+                    const data = await response.json();
+                    if (response.ok && data.raw_token) {
+                        mcpRawTokenInput.value = data.raw_token;
 
-                    const isLocal = window.location.origin.includes('127.0.0.1') || window.location.origin.includes('localhost');
-                    const mcpUrl = isLocal ? "http://127.0.0.1:8080/mcp" : "https://team.bellevitesse.com/mcp";
-                    const directClaudeUrl = `${mcpUrl}?token=${data.raw_token}`;
+                        const isLocal = window.location.origin.includes('127.0.0.1') || window.location.origin.includes('localhost');
+                        const mcpUrl = isLocal ? "http://127.0.0.1:8080/mcp" : "https://team.bellevitesse.com/mcp";
+                        const directClaudeUrl = `${mcpUrl}?token=${data.raw_token}`;
 
-                    const claudeInput = document.getElementById('mcpClaudeUrlInput');
-                    if (claudeInput) claudeInput.value = directClaudeUrl;
+                        const claudeInput = document.getElementById('mcpClaudeUrlInput');
+                        if (claudeInput) claudeInput.value = directClaudeUrl;
 
-                    mcpConfigPreview.textContent = JSON.stringify({
-                        "mcpServers": {
-                            "BV-MCP": {
-                                "url": mcpUrl,
-                                "headers": {
-                                    "Authorization": `Bearer ${data.raw_token}`
+                        mcpConfigPreview.textContent = JSON.stringify({
+                            "mcpServers": {
+                                "BV-MCP": {
+                                    "url": mcpUrl,
+                                    "headers": {
+                                        "Authorization": `Bearer ${data.raw_token}`
+                                    }
                                 }
                             }
-                        }
-                    }, null, 2);
+                        }, null, 2);
 
-                    mcpModal.style.display = 'flex';
-                } else {
-                    alert(data.message || "Erreur lors de la génération du token.");
+                        mcpModal.style.display = 'flex';
+                    } else {
+                        alert(data.message || "Erreur lors de la génération du token.");
+                    }
+                } catch (err) {
+                    console.error("Erreur génération MCP token:", err);
+                    alert("Erreur lors de la communication avec le serveur.");
                 }
-            } catch (err) {
-                console.error("Erreur génération MCP token:", err);
-                alert("Erreur lors de la communication avec le serveur.");
-            }
-        });
-    }
-
-    if (copyBtn) {
-        copyBtn.addEventListener('click', function() {
-            mcpRawTokenInput.select();
-            navigator.clipboard.writeText(mcpRawTokenInput.value).then(() => {
-                const originalText = copyBtn.innerHTML;
-                copyBtn.innerHTML = '✅ Copié !';
-                copyBtn.classList.remove('admin-btn-primary');
-                copyBtn.classList.add('admin-btn-success');
-                setTimeout(() => {
-                    copyBtn.innerHTML = originalText;
-                    copyBtn.classList.remove('admin-btn-success');
-                    copyBtn.classList.add('admin-btn-primary');
-                }, 2500);
-            }).catch(err => {
-                console.error("Erreur copie presse-papier:", err);
             });
-        });
-    }
+        }
 
-    const copyClaudeBtn = document.getElementById('copyClaudeUrlBtn');
-    const claudeInput = document.getElementById('mcpClaudeUrlInput');
-    if (copyClaudeBtn && claudeInput) {
-        copyClaudeBtn.addEventListener('click', function() {
-            claudeInput.select();
-            navigator.clipboard.writeText(claudeInput.value).then(() => {
-                const originalText = copyClaudeBtn.innerHTML;
-                copyClaudeBtn.innerHTML = '✅ URL Copiée !';
-                copyClaudeBtn.classList.remove('admin-btn-secondary');
-                copyClaudeBtn.classList.add('admin-btn-success');
-                setTimeout(() => {
-                    copyClaudeBtn.innerHTML = originalText;
-                    copyClaudeBtn.classList.remove('admin-btn-success');
-                    copyClaudeBtn.classList.add('admin-btn-secondary');
-                }, 2500);
-            }).catch(err => {
-                console.error("Erreur copie presse-papier:", err);
+        if (copyBtn) {
+            copyBtn.addEventListener('click', function () {
+                mcpRawTokenInput.select();
+                navigator.clipboard.writeText(mcpRawTokenInput.value).then(() => {
+                    const originalText = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '✅ Copié !';
+                    copyBtn.classList.remove('admin-btn-primary');
+                    copyBtn.classList.add('admin-btn-success');
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalText;
+                        copyBtn.classList.remove('admin-btn-success');
+                        copyBtn.classList.add('admin-btn-primary');
+                    }, 2500);
+                }).catch(err => {
+                    console.error("Erreur copie presse-papier:", err);
+                });
             });
-        });
-    }
+        }
 
-    function closeModalAndReload() {
-        mcpModal.style.display = 'none';
-        window.location.reload();
-    }
+        const copyClaudeBtn = document.getElementById('copyClaudeUrlBtn');
+        const claudeInput = document.getElementById('mcpClaudeUrlInput');
+        if (copyClaudeBtn && claudeInput) {
+            copyClaudeBtn.addEventListener('click', function () {
+                claudeInput.select();
+                navigator.clipboard.writeText(claudeInput.value).then(() => {
+                    const originalText = copyClaudeBtn.innerHTML;
+                    copyClaudeBtn.innerHTML = '✅ URL Copiée !';
+                    copyClaudeBtn.classList.remove('admin-btn-secondary');
+                    copyClaudeBtn.classList.add('admin-btn-success');
+                    setTimeout(() => {
+                        copyClaudeBtn.innerHTML = originalText;
+                        copyClaudeBtn.classList.remove('admin-btn-success');
+                        copyClaudeBtn.classList.add('admin-btn-secondary');
+                    }, 2500);
+                }).catch(err => {
+                    console.error("Erreur copie presse-papier:", err);
+                });
+            });
+        }
 
-    if (closeBtn) closeBtn.addEventListener('click', closeModalAndReload);
-    if (confirmCloseBtn) confirmCloseBtn.addEventListener('click', closeModalAndReload);
-    if (mcpModal) {
-        mcpModal.addEventListener('click', function(e) {
-            if (e.target === mcpModal) closeModalAndReload();
-        });
-    }
-});
+        function closeModalAndReload() {
+            mcpModal.style.display = 'none';
+            window.location.reload();
+        }
+
+        if (closeBtn) closeBtn.addEventListener('click', closeModalAndReload);
+        if (confirmCloseBtn) confirmCloseBtn.addEventListener('click', closeModalAndReload);
+        if (mcpModal) {
+            mcpModal.addEventListener('click', function (e) {
+                if (e.target === mcpModal) closeModalAndReload();
+            });
+        }
+    });
 </script>
 {% endblock %}
