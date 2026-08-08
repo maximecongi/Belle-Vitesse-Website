@@ -93,5 +93,5 @@ def delete_production(production_id: int, confirm: bool = False) -> Dict[str, An
 @require_mcp_scope("read_only")
 def get_production_form_context() -> Dict[str, Any]:
     """Récupère le contexte du formulaire de production."""
-    from services.admin.productions import get_production_form_context as _context
-    return _context()
+    return {"fields": ["name", "address", "email", "phone"]}
+

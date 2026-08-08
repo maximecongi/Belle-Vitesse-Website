@@ -20,8 +20,8 @@ def list_users() -> List[Dict[str, Any]]:
 @require_mcp_scope("read_only")
 def get_user(user_id: int) -> Optional[Dict[str, Any]]:
     """Récupère le profil d'un utilisateur par son ID."""
-    from services.admin.users import get_user_by_id
-    u = get_user_by_id(user_id)
+    from services.admin.users import get_user as _get_user
+    u = _get_user(user_id)
     return u.to_dict() if u and hasattr(u, "to_dict") else None
 
 
@@ -78,8 +78,8 @@ def delete_user(user_id: int, confirm: bool = False) -> Dict[str, Any]:
     ATTENTION: Action destructrice (Scope 'admin' requis).
     L'IA doit obligatoirement l'exécuter d'abord avec confirm=False pour simuler l'impact et demander la confirmation à l'utilisateur humain.
     """
-    from services.admin.users import get_user_by_id, delete_user as _delete
-    u = get_user_by_id(user_id)
+    from services.admin.users import get_user as _get_user, delete_user as _delete
+    u = _get_user(user_id)
     if not u:
         return {"success": False, "message": f"Utilisateur #{user_id} introuvable."}
 
@@ -99,3 +99,4 @@ def delete_user(user_id: int, confirm: bool = False) -> Dict[str, Any]:
 
     success = _delete(user_id)
     return {"success": success, "message": f"Utilisateur #{user_id} supprimé." if success else "Échec de suppression."}
+

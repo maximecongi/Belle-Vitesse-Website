@@ -19,7 +19,7 @@ def list_checkouts() -> List[Dict[str, Any]]:
 @require_mcp_scope("read_only")
 def list_checkins() -> List[Dict[str, Any]]:
     """Liste tous les formulaires d'inspection Checkin (retour véhicule)."""
-    from services.admin.checkouts import list_checkins as _list
+    from services.admin.checkins import list_checkins as _list
     return _list()
 
 
@@ -32,10 +32,11 @@ def get_inspection_detail(mode: str, record_id: int) -> Optional[Dict[str, Any]]
     - mode: 'checkout' ou 'checkin'
     - record_id: ID de la fiche d'inspection
     """
-    from services.admin.checkouts import get_checkout_detail, get_checkin_detail
     if mode.lower() == "checkout":
+        from services.admin.checkouts import get_checkout_detail
         return get_checkout_detail(record_id)
     elif mode.lower() == "checkin":
+        from services.admin.checkins import get_checkin_detail
         return get_checkin_detail(record_id)
     return None
 
@@ -49,7 +50,7 @@ def delete_inspection(mode: str, record_id: int, confirm: bool = False) -> Dict[
     ATTENTION: Action destructrice (Scope 'admin' requis).
     L'IA doit obligatoirement l'exécuter d'abord avec confirm=False pour simuler l'impact et demander la confirmation à l'utilisateur humain.
     """
-    from services.admin.checkouts import delete_inspection as _delete
+    from services.admin.inspections import delete_inspection_unified as _delete
     if mode.lower() not in ("checkout", "checkin"):
         return {"success": False, "message": "Mode invalide. Utilisez 'checkout' ou 'checkin'."}
 
@@ -77,3 +78,4 @@ def get_inspection_form_context(mode: str = "checkout") -> Dict[str, Any]:
     """Récupère le contexte nécessaire à la création/édition d'un Checkout ou Checkin (véhicules, projets)."""
     from services.admin.checkouts import get_checkout_form_context
     return get_checkout_form_context()
+
