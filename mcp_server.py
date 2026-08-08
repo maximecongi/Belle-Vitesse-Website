@@ -1,10 +1,8 @@
-"""
-Serveur MCP (Model Context Protocol) Admin — Belle Vitesse (BV-MCP)
-Expose les services d'administration de l'application Flask aux agents IA via Streamable HTTP.
-"""
 import os
 import json
 import logging
+import contextvars
+from functools import wraps
 from typing import Optional, List, Dict, Any
 
 from mcp.server.fastmcp import FastMCP, Context
@@ -13,7 +11,13 @@ from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse, Response
 
-from mcp_auth.auth import authenticate_mcp_token, check_user_has_role, McpUserContext
+from app import create_app
+from mcp_auth.auth import authenticate_mcp_token, check_user_has_role, check_mcp_scope, McpUserContext
+
+# ContextVars pour la traçabilité asynchrone sécurisée par requête
+CURRENT_MCP_USER: contextvars.ContextVar[Any] = contextvars.ContextVar("CURRENT_MCP_USER", default=None)
+CURRENT_MCP_IP: contextvars.ContextVar[str] = contextvars.ContextVar("CURRENT_MCP_IP", default="unknown")
+
 
 
 # Configure logging
@@ -24,7 +28,8 @@ logger = logging.getLogger("BV-MCP")
 flask_app = create_app()
 
 # Initialisation de FastMCP
-mcp = FastMCP("BV-MCP", host="0.0.0.0", port=int(os.getenv("MCP_SERVER_PORT", "8080")))
+mcp = FastMCP("BV-MCP", host="0.0.0.0",
+              port=int(os.getenv("MCP_SERVER_PORT", "8080")))
 
 
 # Registres en mémoire pour suivre les sessions SSE authentifiées (utile pour Claude Web)
@@ -48,6 +53,7 @@ class PureAsgiAuthMiddleware:
     Middleware ASGI pur (sans BaseHTTPMiddleware) pour préserver le streaming HTTP (Streamable HTTP / SSE)
     sans altérer le protocole MCP ni provoquer d'erreur HTTP 501.
     """
+
     def __init__(self, app):
         self.app = app
 
@@ -60,8 +66,10 @@ class PureAsgiAuthMiddleware:
             if method == "OPTIONS":
                 response_headers = [
                     (b"access-control-allow-origin", b"*"),
-                    (b"access-control-allow-methods", b"GET, POST, OPTIONS, PUT, DELETE"),
-                    (b"access-control-allow-headers", b"Authorization, Content-Type, X-Requested-With, MCP-Protocol-Version"),
+                    (b"access-control-allow-methods",
+                     b"GET, POST, OPTIONS, PUT, DELETE"),
+                    (b"access-control-allow-headers",
+                     b"Authorization, Content-Type, X-Requested-With, MCP-Protocol-Version"),
                 ]
                 await send({
                     "type": "http.response.start",
@@ -78,10 +86,12 @@ class PureAsgiAuthMiddleware:
                         from models import db
                         from sqlalchemy import text
                         db.session.execute(text("SELECT 1"))
-                    body = json.dumps({"status": "healthy", "service": "BV-MCP"}).encode("utf-8")
+                    body = json.dumps(
+                        {"status": "healthy", "service": "BV-MCP"}).encode("utf-8")
                     status = 200
                 except Exception as e:
-                    body = json.dumps({"status": "unhealthy", "error": str(e)}).encode("utf-8")
+                    body = json.dumps(
+                        {"status": "unhealthy", "error": str(e)}).encode("utf-8")
                     status = 500
 
                 await send({
@@ -93,7 +103,8 @@ class PureAsgiAuthMiddleware:
                 return
 
             # 3. Rate limiting & Token extraction
-            client_ip = scope.get("client", ("unknown", 0))[0] if scope.get("client") else "unknown"
+            client_ip = scope.get("client", ("unknown", 0))[
+                0] if scope.get("client") else "unknown"
             query_string = scope.get("query_string", b"").decode("utf-8")
             from urllib.parse import parse_qs
             query_params = parse_qs(query_string)
@@ -102,7 +113,8 @@ class PureAsgiAuthMiddleware:
             raw_token = None
 
             headers_dict = dict(scope.get("headers", []))
-            auth_header = headers_dict.get(b"authorization", b"").decode("utf-8")
+            auth_header = headers_dict.get(
+                b"authorization", b"").decode("utf-8")
             if auth_header and auth_header.startswith("Bearer "):
                 raw_token = auth_header.split("Bearer ")[-1].strip()
             elif "token" in query_params:
@@ -112,7 +124,8 @@ class PureAsgiAuthMiddleware:
 
             rate_key = session_id or client_ip
             now = time.time()
-            timestamps = [t for t in MCP_RATE_LIMITER[rate_key] if now - t < 60]
+            timestamps = [
+                t for t in MCP_RATE_LIMITER[rate_key] if now - t < 60]
             MCP_RATE_LIMITER[rate_key] = timestamps
 
             if len(timestamps) >= MAX_MCP_REQUESTS_PER_MINUTE:
@@ -168,17 +181,15 @@ class PureAsgiAuthMiddleware:
                         scope="admin",
                     )
 
-
+            CURRENT_MCP_USER.set(user)
+            CURRENT_MCP_IP.set(client_ip)
             flask_app.current_mcp_user = user
             flask_app.current_mcp_ip = client_ip
-            logger.info(f"🔑 Connexion MCP autorisée : User #{getattr(user, 'id', 0)} ({getattr(user, 'mail', 'guest')}) [{method} {path}]")
+            logger.info(
+                f"🔑 Connexion MCP autorisée : User #{getattr(user, 'id', 0)} ({getattr(user, 'mail', 'guest')}) [{method} {path}]")
 
         await self.app(scope, receive, send)
 
-
-
-from functools import wraps
-from mcp_auth.auth import check_mcp_scope
 
 def require_mcp_scope(required_scope: str = "read_only"):
     """
@@ -190,7 +201,7 @@ def require_mcp_scope(required_scope: str = "read_only"):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            user = getattr(flask_app, "current_mcp_user", None)
+            user = CURRENT_MCP_USER.get() or getattr(flask_app, "current_mcp_user", None)
             if user and not check_mcp_scope(user, required_scope):
                 user_scope = getattr(user, "mcp_scope", "read_only")
                 return {
@@ -212,7 +223,8 @@ def run_in_flask_context(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         start_time = time.time()
-        user = getattr(flask_app, "current_mcp_user", None)
+        user = CURRENT_MCP_USER.get() or getattr(flask_app, "current_mcp_user", None)
+        client_ip = CURRENT_MCP_IP.get() or getattr(flask_app, "current_mcp_ip", "unknown")
         status = "success"
         error_msg = None
         result = None
@@ -225,7 +237,8 @@ def run_in_flask_context(func):
                         status = "requires_confirmation"
                     elif result.get("status") == "error" or result.get("success") is False:
                         status = "error"
-                        error_msg = result.get("message") or result.get("error")
+                        error_msg = result.get(
+                            "message") or result.get("error")
             except PermissionError as pe:
                 status = "blocked_403"
                 error_msg = str(pe)
@@ -243,8 +256,10 @@ def run_in_flask_context(func):
                     args_json = None
                     if kwargs or args:
                         try:
-                            args_payload = {"args": args, "kwargs": kwargs} if args else kwargs
-                            args_json = json.dumps(args_payload, ensure_ascii=False, default=str)[:2000]
+                            args_payload = {
+                                "args": args, "kwargs": kwargs} if args else kwargs
+                            args_json = json.dumps(
+                                args_payload, ensure_ascii=False, default=str)[:2000]
                         except Exception:
                             args_json = str(kwargs or args)[:2000]
 
@@ -255,13 +270,14 @@ def run_in_flask_context(func):
                         arguments_json=args_json,
                         status=status,
                         error_message=error_msg[:1000] if error_msg else None,
-                        ip_address=getattr(flask_app, "current_mcp_ip", "unknown"),
+                        ip_address=client_ip,
                         execution_time_ms=exec_time_ms,
                     )
                     db.session.add(audit_entry)
                     db.session.commit()
                 except Exception as audit_err:
-                    logger.error(f"❌ Erreur enregistrement audit MCP: {audit_err}")
+                    logger.error(
+                        f"❌ Erreur enregistrement audit MCP: {audit_err}")
                     try:
                         db.session.rollback()
                     except Exception:
@@ -488,7 +504,6 @@ def delete_inspection(mode: str, record_id: int, confirm: bool = False) -> Dict[
     return {"success": success, "message": f"Inspection {mode} #{record_id} supprimée avec succès." if success else "Échec de la suppression."}
 
 
-
 @mcp.tool()
 @run_in_flask_context
 def get_inspection_form_context(mode: str = "checkout") -> Dict[str, Any]:
@@ -659,7 +674,8 @@ def create_production(
 ) -> Dict[str, Any]:
     """Crée une nouvelle société de production."""
     from services.admin.productions import create_production as _create
-    form = {"name": name, "address": address or "", "email": email or "", "phone": phone or ""}
+    form = {"name": name, "address": address or "",
+            "email": email or "", "phone": phone or ""}
     success = _create(form)
     return {"success": success, "message": "Production créée." if success else "Échec de création."}
 
@@ -675,7 +691,8 @@ def update_production(
 ) -> Dict[str, Any]:
     """Met à jour une société de production."""
     from services.admin.productions import update_production as _update
-    form = {"name": name, "address": address or "", "email": email or "", "phone": phone or ""}
+    form = {"name": name, "address": address or "",
+            "email": email or "", "phone": phone or ""}
     success = _update(production_id, form)
     return {"success": success, "message": "Production mise à jour." if success else "Production introuvable."}
 
@@ -723,7 +740,8 @@ def create_user(
 ) -> Dict[str, Any]:
     """Crée un nouvel utilisateur."""
     from services.admin.users import create_user as _create
-    data = {"firstname": firstname, "lastname": lastname, "mail": mail, "role": role, "phone": phone, "job": job}
+    data = {"firstname": firstname, "lastname": lastname,
+            "mail": mail, "role": role, "phone": phone, "job": job}
     u = _create(data)
     return {"success": u is not None, "user": u.to_dict() if u else None}
 
@@ -742,12 +760,18 @@ def update_user(
     """Met à jour les informations d'un utilisateur."""
     from services.admin.users import update_user as _update
     data = {}
-    if firstname is not None: data["firstname"] = firstname
-    if lastname is not None: data["lastname"] = lastname
-    if mail is not None: data["mail"] = mail
-    if role is not None: data["role"] = role
-    if phone is not None: data["phone"] = phone
-    if job is not None: data["job"] = job
+    if firstname is not None:
+        data["firstname"] = firstname
+    if lastname is not None:
+        data["lastname"] = lastname
+    if mail is not None:
+        data["mail"] = mail
+    if role is not None:
+        data["role"] = role
+    if phone is not None:
+        data["phone"] = phone
+    if job is not None:
+        data["job"] = job
 
     u = _update(user_id, data)
     return {"success": u is not None, "user": u.to_dict() if u else None}
@@ -1113,10 +1137,12 @@ def get_checkpoints_for_vehicle(vehicle_id: str) -> List[Dict[str, Any]]:
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("MCP_SERVER_PORT", "8080"))
-    logger.info(f"🚀 Lancement du serveur BV-MCP (Streamable HTTP) sur 0.0.0.0:{port}/mcp ...")
+    logger.info(
+        f"🚀 Lancement du serveur BV-MCP (Streamable HTTP) sur 0.0.0.0:{port}/mcp ...")
 
     try:
-        asgi_fn = getattr(mcp, "streamable_http_app", None) or getattr(mcp, "http_app", None) or getattr(mcp, "_http_app", None)
+        asgi_fn = getattr(mcp, "streamable_http_app", None) or getattr(
+            mcp, "http_app", None) or getattr(mcp, "_http_app", None)
         if callable(asgi_fn):
             try:
                 raw_app = asgi_fn(path="/mcp")
@@ -1126,7 +1152,9 @@ if __name__ == "__main__":
             uvicorn.run(app, host="0.0.0.0", port=port)
 
         else:
-            mcp.run(transport="streamable-http", host="0.0.0.0", port=port, path="/mcp")
+            mcp.run(transport="streamable-http",
+                    host="0.0.0.0", port=port, path="/mcp")
     except Exception as err:
         logger.warning(f"⚠️ Lancement avec mcp.run Streamable HTTP: {err}")
-        mcp.run(transport="streamable-http", host="0.0.0.0", port=port, path="/mcp")
+        mcp.run(transport="streamable-http",
+                host="0.0.0.0", port=port, path="/mcp")
