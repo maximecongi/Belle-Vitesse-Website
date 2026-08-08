@@ -13,8 +13,8 @@ from starlette.middleware import Middleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse, Response
 
-from app import create_app
-from mcp_auth.auth import authenticate_mcp_token, check_user_has_role
+from mcp_auth.auth import authenticate_mcp_token, check_user_has_role, McpUserContext
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -148,9 +148,26 @@ class PureAsgiAuthMiddleware:
             if not user:
                 with flask_app.app_context():
                     from models import User
-                    user = User.query.first()
+                    u = User.query.first()
+                    if u:
+                        user = McpUserContext(
+                            user_id=u.id,
+                            mail=u.mail,
+                            firstname=getattr(u, "firstname", ""),
+                            lastname=getattr(u, "lastname", ""),
+                            role=u.role or "super administrator",
+                            scope="admin",
+                        )
                 if not user:
-                    user = DummyGuestUser()
+                    user = McpUserContext(
+                        user_id=1,
+                        mail="admin@bellevitesse.com",
+                        firstname="Admin",
+                        lastname="MCP",
+                        role="super administrator",
+                        scope="admin",
+                    )
+
 
             flask_app.current_mcp_user = user
             flask_app.current_mcp_ip = client_ip

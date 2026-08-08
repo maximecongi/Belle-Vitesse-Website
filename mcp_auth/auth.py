@@ -16,14 +16,39 @@ ROLE_LEVELS = {
 }
 
 
-def authenticate_mcp_token(raw_token: str) -> User | None:
+class McpUserContext:
+    """Conteneur utilisateur léger et autonome sans dépendance à la session SQLAlchemy."""
+    def __init__(self, user_id: int, mail: str, firstname: str, lastname: str, role: str, scope: str = "read_only", token_id: int = None):
+        self.id = user_id
+        self.mail = mail or "user@bellevitesse.com"
+        self.firstname = firstname or "User"
+        self.lastname = lastname or "MCP"
+        self.role = role or "user"
+        self.mcp_scope = scope or "read_only"
+        self.current_token_id = token_id
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "mail": self.mail,
+            "firstname": self.firstname,
+            "lastname": self.lastname,
+            "role": self.role,
+            "scope": self.mcp_scope,
+        }
+
+    def __repr__(self):
+        return f"<McpUserContext id={self.id} mail={self.mail} role={self.role} scope={self.mcp_scope}>"
+
+
+def authenticate_mcp_token(raw_token: str) -> McpUserContext | None:
     """
     Vérifie un token API MCP brut :
     - Hache le token brut avec SHA-256
     - Recherche le token dans la table mcp_api_tokens
     - Vérifie is_active et expires_at
     - Met à jour last_used_at
-    - Retourne l'instance User si valide, None sinon.
+    - Retourne une instance McpUserContext si valide, None sinon.
     """
     if not raw_token or not raw_token.startswith("bv_mcp_"):
         return None
@@ -57,8 +82,17 @@ def authenticate_mcp_token(raw_token: str) -> User | None:
         logger.warning(f"⚠️ Token MCP #{token_rec.id} référencie un utilisateur introuvable.")
         return None
 
-    user.mcp_scope = getattr(token_rec, "scope", None) or "read_only"
-    return user
+    user_scope = getattr(token_rec, "scope", None) or "read_only"
+    return McpUserContext(
+        user_id=user.id,
+        mail=user.mail,
+        firstname=getattr(user, "firstname", ""),
+        lastname=getattr(user, "lastname", ""),
+        role=user.role,
+        scope=user_scope,
+        token_id=token_rec.id,
+    )
+
 
 
 SCOPE_LEVELS = {
