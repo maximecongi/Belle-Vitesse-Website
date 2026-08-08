@@ -109,6 +109,26 @@ class PureAsgiAuthMiddleware:
                 await send({"type": "http.response.body", "body": body})
                 return
 
+            headers_dict = dict(scope.get("headers", []))
+            accept_header = headers_dict.get(b"accept", b"").decode("utf-8").lower()
+
+            # 2.5 Navigateur / Sondage sans en-tête SSE (Évite l'erreur 406 Not Acceptable en accès direct)
+            if method == "GET" and path in ("/mcp", "/mcp/") and "text/event-stream" not in accept_header and "application/x-ndjson" not in accept_header:
+                body = json.dumps({
+                    "status": "healthy",
+                    "service": "BV-MCP",
+                    "transport": "Streamable HTTP / SSE",
+                    "endpoint": "https://team.bellevitesse.com/mcp",
+                    "message": "Le serveur MCP est opérationnel. Connectez votre agent IA via Claude Web, Claude Code ou Cursor."
+                }).encode("utf-8")
+                await send({
+                    "type": "http.response.start",
+                    "status": 200,
+                    "headers": [(b"content-type", b"application/json"), (b"access-control-allow-origin", b"*")],
+                })
+                await send({"type": "http.response.body", "body": body})
+                return
+
             # 3. Rate limiting & Token extraction
             client_ip = scope.get("client", ("unknown", 0))[
                 0] if scope.get("client") else "unknown"
@@ -119,7 +139,6 @@ class PureAsgiAuthMiddleware:
             session_id = query_params.get("session_id", [None])[0]
             raw_token = None
 
-            headers_dict = dict(scope.get("headers", []))
             auth_header = headers_dict.get(
                 b"authorization", b"").decode("utf-8")
             if auth_header and auth_header.startswith("Bearer "):
@@ -128,6 +147,7 @@ class PureAsgiAuthMiddleware:
                 raw_token = query_params["token"][0]
             elif "api_key" in query_params:
                 raw_token = query_params["api_key"][0]
+
 
             rate_key = session_id or client_ip
             now = time.time()
