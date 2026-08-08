@@ -7,11 +7,12 @@
     <title>{% block title %}{% endblock %} - Admin Belle Vitesse</title>
 
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    
+
     <!-- Fonts preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
 
     <!-- Stylesheets -->
     {% if config.FLASK_ENV == 'production' %}
@@ -21,7 +22,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.css') }}">
     {% endif %}
-    
+
     <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
     {% block extra_css %}{% endblock %}
 </head>
@@ -64,30 +65,31 @@
 
                 {# ── Permissions par rôle : chaque rôle liste les sections et items visibles ── #}
                 {% set role_permissions = {
-                    'user':                {'sections': ['dashboard','departs','retours','tools'],
-                                            'nav': ['dashboard','checkouts','production_waivers','pilot_waivers',
-                                                      'checkins','incidents','signature','docs','api_docs','catalog_update']},
-                    'commercial':          {'sections': ['dashboard','tournages','admin'],
-                                            'nav': ['dashboard','projects','archives','booking','pre_quotes',
-                                                      'productions','contacts','pricing','catalog_pdf','mcp_connector',
-                                                      'calendar']},
-                    'manager':             {'sections': ['dashboard','tournages','departs','retours','admin','tools'],
-                                            'nav': ['dashboard','projects','archives','booking','pre_quotes',
-                                                      'productions','contacts','checkouts','production_waivers',
-                                                      'pilot_waivers','checkins','incidents','catalog_pdf','mcp_connector',
-                                                      'calendar','signature','docs','api_docs']},
-                    'administrator':       {'sections': ['dashboard','tournages','departs','retours','flotte','admin','tools'],
-                                            'nav': ['dashboard','projects','archives','booking','pre_quotes',
-                                                      'productions','contacts','checkouts','production_waivers',
-                                                      'pilot_waivers','checkins','incidents','vehicles',
-                                                      'users','pricing','catalog_pdf','mcp_connector','settings','calendar',
-                                                      'newsletter','signature','docs','api_docs']},
-                    'super administrator': {'sections': ['all'], 'nav': ['all']}
+                'user': {'sections': ['dashboard','departs','retours','tools'],
+                'nav': ['dashboard','checkouts','production_waivers','pilot_waivers',
+                'checkins','incidents','signature','docs','api_docs','catalog_update']},
+                'commercial': {'sections': ['dashboard','tournages','admin'],
+                'nav': ['dashboard','projects','archives','booking','pre_quotes',
+                'productions','contacts','pricing','catalog_pdf','mcp_connector',
+                'calendar']},
+                'manager': {'sections': ['dashboard','tournages','departs','retours','admin','tools'],
+                'nav': ['dashboard','projects','archives','booking','pre_quotes',
+                'productions','contacts','checkouts','production_waivers',
+                'pilot_waivers','checkins','incidents','catalog_pdf','mcp_connector',
+                'calendar','signature','docs','api_docs']},
+                'administrator': {'sections': ['dashboard','tournages','departs','retours','flotte','admin','tools'],
+                'nav': ['dashboard','projects','archives','booking','pre_quotes',
+                'productions','contacts','checkouts','production_waivers',
+                'pilot_waivers','checkins','incidents','vehicles',
+                'users','pricing','catalog_pdf','mcp_connector','settings','calendar',
+                'newsletter','signature','docs','api_docs']},
+                'super administrator': {'sections': ['all'], 'nav': ['all']}
                 } %}
 
                 {% set perms = role_permissions.get(user_role, {'sections': [], 'nav': []}) %}
 
-                {% macro has_section(section) %}{{ 'all' in perms['sections'] or section in perms['sections'] }}{% endmacro %}
+                {% macro has_section(section) %}{{ 'all' in perms['sections'] or section in perms['sections'] }}{%
+                endmacro %}
                 {% macro has_item(item) %}{{ 'all' in perms['nav'] or item in perms['nav'] }}{% endmacro %}
 
                 {% macro nav_group(title, id_suffix, section, default_open=false) %}
@@ -145,7 +147,7 @@
                 {{ nav_item(url_for('admin_pricing'), 'Tarification', 'pricing') }}
                 {{ nav_item(url_for('admin_catalog_pdf', prices='1'), 'Catalogue (avec prix)', 'catalog_pdf') }}
                 {{ nav_item(url_for('admin_catalog_pdf', prices='0'), 'Catalogue (sans prix)', 'catalog_pdf') }}
-                {{ nav_item(url_for('admin_mcp_tokens.mcp_connector_page'), '🤖 Connecteur IA (MCP)', 'mcp_connector') }}
+                {{ nav_item(url_for('admin_mcp_tokens.mcp_connector_page'), 'Connecteur IA (MCP)', 'mcp_connector') }}
                 {{ nav_item(url_for('admin_settings.admin_settings_edit'), ' Paramètres', 'settings') }}
                 {{ nav_item(url_for('admin_calendar'), 'Calendrier', 'calendar') }}
                 {{ nav_item(url_for('admin_newsletter_dashboard'), 'Newsletter', 'newsletter') }}

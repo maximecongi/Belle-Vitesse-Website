@@ -28,6 +28,13 @@ class User(db.Model):
         """Retourne True si l'utilisateur est Administrator ou Super Administrator."""
         return self.role_lower in ('administrator', 'super administrator')
 
+    def is_mcp_capable(self):
+        """Retourne True si l'utilisateur est autorisé à générer/utiliser des clés API MCP."""
+        # Les MCP tokens ne sont autorisés que pour les utilisateurs avec un rôle explicite
+        # Exclut les rôles génériques comme 'user' et les rôles sans droits administratifs
+        excluded_roles = ['user', 'guest', 'pilot']
+        return self.is_admin and self.role_lower not in excluded_roles
+
     def to_dict(self):
         """Convertit l'objet en dictionnaire pour les réponses API."""
         return {
