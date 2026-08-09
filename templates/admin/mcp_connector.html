@@ -154,6 +154,8 @@
                 <thead>
                     <tr>
                         <th>Horodatage</th>
+                        <th>Utilisateur</th>
+                        <th>Clé / Agent IA</th>
                         <th>Outil Invoqué</th>
                         <th>Paramètres</th>
                         <th>Statut</th>
@@ -166,6 +168,20 @@
                     <tr>
                         <td class="u-text-xs u-text-muted">
                             {{ log.created_at.strftime('%d/%m/%Y à %H:%M:%S') if log.created_at else '—' }}
+                        </td>
+                        <td class="u-text-xs u-fw-bold">
+                            {% if log.user %}
+                            {{ log.user.firstname }} {{ log.user.lastname }}
+                            {% else %}
+                            <span class="u-text-muted">Invité MCP</span>
+                            {% endif %}
+                        </td>
+                        <td class="u-text-xs">
+                            {% if log.token %}
+                            🔑 <strong>{{ log.token.name }}</strong> <span class="u-text-muted">({{ log.token.token_prefix }})</span>
+                            {% else %}
+                            <span class="u-text-muted">—</span>
+                            {% endif %}
                         </td>
                         <td>
                             <code
