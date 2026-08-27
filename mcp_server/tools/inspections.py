@@ -8,8 +8,8 @@ from mcp_server.decorators import run_in_flask_context, require_mcp_scope
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
-def list_checkouts() -> List[Dict[str, Any]]:
-    """Liste tous les formulaires d'inspection Checkout (départ véhicule)."""
+def list_checkouts() -> Dict[str, Any]:
+    """Liste tous les formulaires d'inspection Checkout (départ véhicule) et statistiques."""
     from services.admin.checkouts import list_checkouts as _list
     return _list()
 
@@ -17,8 +17,8 @@ def list_checkouts() -> List[Dict[str, Any]]:
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
-def list_checkins() -> List[Dict[str, Any]]:
-    """Liste tous les formulaires d'inspection Checkin (retour véhicule)."""
+def list_checkins() -> Dict[str, Any]:
+    """Liste tous les formulaires d'inspection Checkin (retour véhicule) et statistiques."""
     from services.admin.checkins import list_checkins as _list
     return _list()
 

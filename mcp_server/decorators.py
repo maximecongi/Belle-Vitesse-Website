@@ -64,10 +64,14 @@ def run_in_flask_context(func):
                         status = "error"
                         error_msg = result.get("message") or result.get("error")
             except PermissionError as pe:
+                from models import db
+                db.session.rollback()
                 status = "blocked_403"
                 error_msg = str(pe)
                 raise pe
             except Exception as ex:
+                from models import db
+                db.session.rollback()
                 status = "error"
                 error_msg = str(ex)
                 raise ex

@@ -51,6 +51,12 @@ def create_project(
                 return head_ids or []
             return []
 
+    if not production_id:
+        from models import Production
+        first_prod = Production.query.first()
+        if first_prod:
+            production_id = first_prod.id
+
     form_data = MultiDictMock({
         "name": name,
         "production_id": str(production_id) if production_id else "",
@@ -96,6 +102,12 @@ def update_project(
             if key == "head_ids":
                 return head_ids or []
             return []
+
+    if not production_id:
+        from models import Project
+        existing = Project.query.get(project_id)
+        if existing and existing.production_id:
+            production_id = existing.production_id
 
     form_data = MultiDictMock({
         "name": name,

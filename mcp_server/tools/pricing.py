@@ -8,8 +8,8 @@ from mcp_server.decorators import run_in_flask_context, require_mcp_scope
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
-def get_equipment_rates() -> List[Dict[str, Any]]:
-    """Récupère la grille tarifaire complète des équipements et véhicules."""
+def get_equipment_rates() -> Dict[str, Any]:
+    """Récupère la grille tarifaire complète des équipements et véhicules (véhicules, têtes, accessoires)."""
     from services.admin.pricing import list_equipment_rates as _list
     return _list()
 
@@ -17,11 +17,11 @@ def get_equipment_rates() -> List[Dict[str, Any]]:
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("write")
-def update_equipment_daily_rate(table_name: str, record_id: int, value: float) -> Dict[str, Any]:
+def update_equipment_daily_rate(table_name: str, record_id: str, value: float) -> Dict[str, Any]:
     """Met à jour le tarif journalier d'un équipement ou d'un véhicule."""
     from services.admin.pricing import update_equipment_daily_rate as _update
-    success = _update(table_name, record_id, value)
-    return {"success": success, "message": f"Tarif mis à jour à {value} €." if success else "Échec."}
+    res = _update(table_name, str(record_id), value)
+    return {"success": res is not None, "item": res, "message": f"Tarif mis à jour à {value} €." if res else "Échec."}
 
 
 @mcp.tool()

@@ -392,6 +392,16 @@ def get_pre_quote_pdf(quote_id):
         'company_representative': 'Simon Maignan'
     })
 
+    from flask import has_request_context
+    if not has_request_context():
+        with current_app.test_request_context(base_url="https://team.bellevitesse.com"):
+            html = render_template('pdf/pre_devis.html', quote=quote,
+                                   grouped_prestations=grouped_prestations,
+                                   intermittent_salaries=intermittent_salaries,
+                                   now=datetime.now(),
+                                   settings=company_settings)
+            return render_pdf_from_template(html, base_url=current_app.root_path)
+
     html = render_template('pdf/pre_devis.html', quote=quote,
                            grouped_prestations=grouped_prestations,
                            intermittent_salaries=intermittent_salaries,

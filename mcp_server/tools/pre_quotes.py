@@ -5,13 +5,27 @@ from mcp_server.core import mcp
 from mcp_server.decorators import run_in_flask_context, require_mcp_scope
 
 
+def _format_pre_quote(pq) -> Dict[str, Any]:
+    if not pq:
+        return {}
+    data = pq.to_dict() if hasattr(pq, "to_dict") else dict(pq)
+    data["versions"] = [
+        v.to_dict() if hasattr(v, "to_dict") else dict(v)
+        for v in getattr(pq, "versions", [])
+    ]
+    return data
+
+
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
 def list_pre_quotes(project_id: Optional[int] = None) -> List[Dict[str, Any]]:
     """Liste tous les pré-devis, facultativement filtrés par ID de projet."""
-    from services.admin.pre_quotes import list_pre_quotes as _list
-    return _list(project_id)
+    from services.admin.pre_quote import list_pre_quotes as _list
+    quotes = _list()
+    if project_id:
+        quotes = [q for q in quotes if q.project_id == project_id]
+    return [_format_pre_quote(q) for q in quotes]
 
 
 @mcp.tool()
@@ -19,29 +33,44 @@ def list_pre_quotes(project_id: Optional[int] = None) -> List[Dict[str, Any]]:
 @require_mcp_scope("read_only")
 def get_pre_quote(pre_quote_id: int) -> Optional[Dict[str, Any]]:
     """Récupère le détail d'un pré-devis par son ID."""
-    from services.admin.pre_quotes import get_pre_quote_detail
-    return get_pre_quote_detail(pre_quote_id)
+    from models import PreQuote
+    pq = PreQuote.query.get(pre_quote_id)
+    return _format_pre_quote(pq) if pq else None
 
 
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("write")
 def create_pre_quote(
-    project_id: int,
+    project_id: Optional[int] = None,
+    production_id: Optional[int] = None,
     version_label: Optional[str] = "V1",
     items: Optional[List[Dict[str, Any]]] = None,
     notes: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Crée un nouveau pré-devis pour un projet avec ses lignes d'équipements / prestations."""
-    from services.admin.pre_quotes import create_pre_quote as _create
+    """Crée un nouveau pré-devis pour un projet ou une société de production avec ses lignes d'équipements / prestations."""
+    from services.admin.pre_quote import create_pre_quote as _create
+    if project_id and not production_id:
+        from models import Project
+        proj = Project.query.get(project_id)
+        if proj:
+            production_id = proj.production_id
+
+    if not production_id:
+        from models import Production
+        first_prod = Production.query.first()
+        if first_prod:
+            production_id = first_prod.id
+
     form_data = {
         "project_id": project_id,
+        "production_id": production_id,
         "version_label": version_label or "V1",
-        "items": items or [],
+        "prestations": items or [],
         "notes": notes or "",
     }
-    pq_id = _create(form_data)
-    return {"success": pq_id is not None, "pre_quote_id": pq_id}
+    pq = _create(form_data)
+    return {"success": pq is not None, "pre_quote_id": pq.id if pq else None, "reference": pq.reference if pq else None, "message": "Pré-devis créé avec succès." if pq else "Échec de création."}
 
 
 @mcp.tool()
@@ -53,10 +82,10 @@ def update_pre_quote(
     notes: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Met à jour les lignes ou notes d'un pré-devis existant."""
-    from services.admin.pre_quotes import update_pre_quote as _update
-    form_data = {"items": items or [], "notes": notes or ""}
-    success = _update(pre_quote_id, form_data)
-    return {"success": success, "message": "Pré-devis mis à jour." if success else "Échec."}
+    from services.admin.pre_quote import update_pre_quote as _update
+    form_data = {"prestations": items or [], "notes": notes or ""}
+    pq = _update(pre_quote_id, form_data)
+    return {"success": pq is not None, "message": "Pré-devis mis à jour." if pq else "Échec de mise à jour."}
 
 
 @mcp.tool()
@@ -67,8 +96,9 @@ def delete_pre_quote(pre_quote_id: int, confirm: bool = False) -> Dict[str, Any]
     Supprime un pré-devis par son ID.
     ATTENTION: Action destructrice (Scope 'admin' requis).
     """
-    from services.admin.pre_quotes import get_pre_quote_detail, delete_pre_quote as _delete
-    pq = get_pre_quote_detail(pre_quote_id)
+    from models import PreQuote
+    from services.admin.pre_quote import delete_pre_quote as _delete
+    pq = PreQuote.query.get(pre_quote_id)
     if not pq:
         return {"success": False, "message": f"Pré-devis #{pre_quote_id} introuvable."}
 
@@ -77,11 +107,12 @@ def delete_pre_quote(pre_quote_id: int, confirm: bool = False) -> Dict[str, Any]
             "success": False,
             "status": "requires_confirmation",
             "pre_quote_id": pre_quote_id,
-            "message": f"⚠️ ATTENTION : Vous êtes sur le point de supprimer le pré-devis #{pre_quote_id}. Confirmez avec confirm=True."
+            "reference": pq.reference,
+            "message": f"⚠️ ATTENTION : Vous êtes sur le point de supprimer le pré-devis #{pre_quote_id} ({pq.reference}). Confirmez avec confirm=True."
         }
 
     success = _delete(pre_quote_id)
-    return {"success": success, "message": f"Pré-devis #{pre_quote_id} supprimé." if success else "Échec."}
+    return {"success": success, "message": f"Pré-devis #{pre_quote_id} supprimé avec succès." if success else "Échec de suppression."}
 
 
 @mcp.tool()
@@ -89,15 +120,24 @@ def delete_pre_quote(pre_quote_id: int, confirm: bool = False) -> Dict[str, Any]
 @require_mcp_scope("write")
 def create_pre_quote_version(pre_quote_id: int, version_label: str) -> Dict[str, Any]:
     """Duplique un pré-devis sous une nouvelle version (ex: V2, V3)."""
-    from services.admin.pre_quotes import create_pre_quote_version as _version
-    new_pq_id = _version(pre_quote_id, version_label)
-    return {"success": new_pq_id is not None, "new_pre_quote_id": new_pq_id}
+    from services.admin.pre_quote import create_pre_quote_version as _version
+    ver = _version(pre_quote_id, version_label)
+    return {"success": ver is not None, "new_version_id": ver.id if ver else None, "version_number": ver.version_number if ver else None, "message": f"Version {version_label} créée." if ver else "Échec."}
 
 
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
 def get_pre_quote_form_context(project_id: Optional[int] = None) -> Dict[str, Any]:
-    """Récupère le contexte du formulaire pré-devis (grilles de prix, projets)."""
-    from services.admin.pre_quotes import get_pre_quote_form_context as _context
-    return _context(project_id)
+    """Récupère le contexte du formulaire pré-devis (grilles de prix, projets, paramètres livraison)."""
+    from services.admin.pre_quote import get_delivery_config
+    from services.admin.projects import list_projects
+    from services.admin.pricing import list_equipment_rates, list_salary_rates, list_logistics_rates
+    return {
+        "delivery_config": get_delivery_config(),
+        "projects": list_projects(),
+        "equipment_rates": list_equipment_rates(),
+        "salary_rates": list_salary_rates(),
+        "logistics_rates": list_logistics_rates(),
+    }
+
