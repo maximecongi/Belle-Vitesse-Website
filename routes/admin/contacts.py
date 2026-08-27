@@ -2,6 +2,7 @@ from flask import (
     abort,
     current_app,
     flash,
+    jsonify,
     redirect,
     render_template,
     request,
@@ -119,3 +120,50 @@ def init_contacts_routes(app):
             current_app.logger.error(f"❌ Erreur lors de la suppression du contact : {e}")
             flash(f"Erreur lors de la suppression : {str(e)}", "error")
             return redirect(url_for("admin_contacts_list"))
+
+    @app.route("/admin/api/contacts/quick", methods=["POST"])
+    @require_roles('administrator', 'manager', 'commercial')
+    def admin_api_contact_quick_create():
+        try:
+            from models import Contact, db
+
+            data = request.get_json() or {}
+            first_name = data.get("first_name", "").strip()
+            last_name = data.get("last_name", "").strip()
+            job_title = data.get("job_title", "").strip()
+            mail = data.get("mail", "").strip()
+            phone = data.get("phone", "").strip()
+            production_id = data.get("production_id")
+
+            if not first_name or not last_name:
+                return jsonify({"error": "Le prénom et le nom sont requis."}), 400
+
+            prod_id_int = int(production_id) if production_id and str(production_id).isdigit() else None
+
+            contact = Contact(
+                first_name=first_name,
+                last_name=last_name,
+                job_title=job_title if job_title else None,
+                mail=mail if mail else None,
+                phone=phone if phone else None,
+                production_id=prod_id_int
+            )
+            db.session.add(contact)
+            db.session.commit()
+
+            display_name = f"{contact.first_name} {contact.last_name} ({contact.job_title})" if contact.job_title else f"{contact.first_name} {contact.last_name}"
+
+            return jsonify({
+                "id": str(contact.id),
+                "name": display_name,
+                "first_name": contact.first_name,
+                "last_name": contact.last_name,
+                "job_title": contact.job_title or "",
+                "mail": contact.mail or "",
+                "phone": contact.phone or "",
+                "production_id": str(contact.production_id) if contact.production_id else ""
+            }), 201
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(f"❌ Erreur lors de la création rapide de contact : {e}")
+            return jsonify({"error": str(e)}), 500

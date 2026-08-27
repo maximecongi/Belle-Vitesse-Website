@@ -36,7 +36,12 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label">Production</label>
+                <div class="u-flex u-justify-between u-align-center u-mb-1">
+                    <label class="form-label u-mb-0">Contact de Production</label>
+                    <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn" data-target="production_contact_id" data-job="Chargé.e de production">
+                        ➕ Nouveau contact
+                    </button>
+                </div>
                 <select name="production_contact_id" class="form-input searchable-select">
                     <option value="">— Sélectionner un contact de production —</option>
                     {% for c in contacts %}
@@ -50,7 +55,12 @@
 
         <div class="u-grid u-grid-2 u-gap-3 u-mb-2">
             <div class="form-group">
-                <label class="form-label">DOP (Directeur Photo)</label>
+                <div class="u-flex u-justify-between u-align-center u-mb-1">
+                    <label class="form-label u-mb-0">DOP (Directeur Photo)</label>
+                    <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn" data-target="dop_contact_id" data-job="Directeur.rice de la photographie">
+                        ➕ Nouveau contact
+                    </button>
+                </div>
                 <select name="dop_contact_id" class="form-input searchable-select">
                     <option value="">— Sélectionner un DOP —</option>
                     {% for c in contacts %}
@@ -62,7 +72,12 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label">Pilote</label>
+                <div class="u-flex u-justify-between u-align-center u-mb-1">
+                    <label class="form-label u-mb-0">Pilote</label>
+                    <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn" data-target="pilot_contact_id" data-job="Pilote de précision">
+                        ➕ Nouveau contact
+                    </button>
+                </div>
                 <select name="pilot_contact_id" class="form-input searchable-select">
                     <option value="">— Sélectionner un pilote —</option>
                     {% for c in contacts %}
@@ -76,7 +91,12 @@
 
         <div class="u-grid u-grid-2 u-gap-3 u-mb-2">
             <div class="form-group">
-                <label class="form-label">1er Assistant Caméra</label>
+                <div class="u-flex u-justify-between u-align-center u-mb-1">
+                    <label class="form-label u-mb-0">1er Assistant Caméra</label>
+                    <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn" data-target="first_ac_contact_id" data-job="Premier.ère assistant.e caméra">
+                        ➕ Nouveau contact
+                    </button>
+                </div>
                 <select name="first_ac_contact_id" class="form-input searchable-select">
                     <option value="">— Sélectionner un 1er assistant caméra —</option>
                     {% for c in contacts %}
@@ -88,7 +108,12 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label">Chef Machiniste</label>
+                <div class="u-flex u-justify-between u-align-center u-mb-1">
+                    <label class="form-label u-mb-0">Chef Machiniste</label>
+                    <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn" data-target="key_grip_contact_id" data-job="Chef.fe machiniste">
+                        ➕ Nouveau contact
+                    </button>
+                </div>
                 <select name="key_grip_contact_id" class="form-input searchable-select">
                     <option value="">— Sélectionner un chef machiniste —</option>
                     {% for c in contacts %}
@@ -184,6 +209,145 @@
         </div>
     </form>
 </div>
+
+<!-- Modal Nouvelle Production -->
+<div id="quickProductionModal" class="admin-modal-overlay" style="display: none;">
+    <div class="admin-modal-container" style="max-width: 550px; height: auto; max-height: 90vh; border-radius: 12px; box-shadow: 0 15px 50px rgba(0,0,0,0.35);">
+        <button type="button" class="admin-modal-close" id="closeProductionModalBtn" title="Fermer">&times;</button>
+        <div class="admin-modal-content u-p-4" style="overflow-y: auto;">
+            <h2 class="admin-section-title u-mt-0 u-mb-3" style="font-size: 1.25rem;">
+                🏢 Nouvelle Production
+            </h2>
+            <form id="quickProductionForm">
+                <div class="form-group u-mb-2">
+                    <label class="form-label">Nom de la société <span class="u-text-error">*</span></label>
+                    <input type="text" id="modalProdName" class="form-input" required placeholder="Ex: Studio 2026">
+                </div>
+
+                <div class="form-group u-mb-2">
+                    <label class="form-label">Adresse</label>
+                    <input type="text" id="modalProdAddress" class="form-input" placeholder="Ex: 123 Rue de la République, 75001 Paris">
+                </div>
+
+                <div class="u-grid u-grid-2 u-gap-2 u-mb-3">
+                    <div class="form-group">
+                        <label class="form-label">E-mail</label>
+                        <input type="email" id="modalProdMail" class="form-input" placeholder="contact@production.fr">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Téléphone</label>
+                        <input type="tel" id="modalProdPhone" class="form-input" placeholder="+33 1 ...">
+                    </div>
+                </div>
+
+                <div class="u-flex u-justify-end u-gap-2 u-mt-4">
+                    <button type="button" id="cancelProductionModalBtn" class="admin-btn admin-btn-secondary">Annuler</button>
+                    <button type="submit" id="submitProductionModalBtn" class="admin-btn admin-btn-primary">Créer la production</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nouveau Contact -->
+<div id="quickContactModal" class="admin-modal-overlay" style="display: none;">
+    <div class="admin-modal-container" style="max-width: 550px; height: auto; max-height: 90vh; border-radius: 12px; box-shadow: 0 15px 50px rgba(0,0,0,0.35);">
+        <button type="button" class="admin-modal-close" id="closeContactModalBtn" title="Fermer">&times;</button>
+        <div class="admin-modal-content u-p-4" style="overflow-y: auto;">
+            <h2 class="admin-section-title u-mt-0 u-mb-3" style="font-size: 1.25rem;">
+                👤 Nouveau Contact
+            </h2>
+            <form id="quickContactForm">
+                <input type="hidden" id="modalTargetSelect" value="">
+                
+                <div class="u-grid u-grid-2 u-gap-2 u-mb-2">
+                    <div class="form-group">
+                        <label class="form-label">Prénom <span class="u-text-error">*</span></label>
+                        <input type="text" id="modalContactFirstName" class="form-input" required placeholder="Ex: Jean">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nom <span class="u-text-error">*</span></label>
+                        <input type="text" id="modalContactLastName" class="form-input" required placeholder="Ex: Dupont">
+                    </div>
+                </div>
+
+                <div class="form-group u-mb-2">
+                    <label class="form-label">Métier / Rôle</label>
+                    <select id="modalContactJob" class="form-input">
+                        <option value="">— Sélectionner un métier —</option>
+                        <optgroup label="🎬 Réalisation">
+                            <option value="Réalisateur.rice">Réalisateur.rice</option>
+                            <option value="Premier.ère assistant.e réalisateur.rice">Premier.ère assistant.e réalisateur.rice</option>
+                            <option value="Second.e assistant.e réalisateur.rice">Second.e assistant.e réalisateur.rice</option>
+                            <option value="Scripte">Scripte</option>
+                        </optgroup>
+                        <optgroup label="📷 Caméra">
+                            <option value="Directeur.rice de la photographie">Directeur.rice de la photographie</option>
+                            <option value="Opérateur.rice caméra">Opérateur.rice caméra</option>
+                            <option value="Opérateur.rice Steadicam">Opérateur.rice Steadicam</option>
+                            <option value="Premier.ère assistant.e caméra">Premier.ère assistant.e caméra</option>
+                            <option value="Second.e assistant.e caméra">Second.e assistant.e caméra</option>
+                            <option value="DIT">DIT</option>
+                            <option value="Data manager">Data manager</option>
+                            <option value="Gimbal tech">Gimbal tech</option>
+                            <option value="Pilote de drone">Pilote de drone</option>
+                        </optgroup>
+                        <optgroup label="💡 Électricité">
+                            <option value="Chef.fe électricien.ne">Chef.fe électricien.ne</option>
+                            <option value="Électricien.ne de plateau">Électricien.ne de plateau</option>
+                        </optgroup>
+                        <optgroup label="🔧 Machinerie">
+                            <option value="Chef.fe machiniste">Chef.fe machiniste</option>
+                            <option value="Machiniste">Machiniste</option>
+                        </optgroup>
+                        <optgroup label="🏎️ Automobile">
+                            <option value="Pilote de précision">Pilote de précision</option>
+                            <option value="Mécanicien.ne">Mécanicien.ne</option>
+                            <option value="Pilote de course">Pilote de course</option>
+                        </optgroup>
+                        <optgroup label="🎯 Production">
+                            <option value="Directeur.rice de production">Directeur.rice de production</option>
+                            <option value="Chargé.e de production">Chargé.e de production</option>
+                            <option value="Coordinateur.rice de production">Coordinateur.rice de production</option>
+                            <option value="Assistant.e de production">Assistant.e de production</option>
+                            <option value="Producteur.rice">Producteur.rice</option>
+                        </optgroup>
+                        <optgroup label="🎙️ Son">
+                            <option value="Chef.fe opérateur.rice du son">Chef.fe opérateur.rice du son</option>
+                            <option value="Perchiste">Perchiste</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="u-grid u-grid-2 u-gap-2 u-mb-2">
+                    <div class="form-group">
+                        <label class="form-label">E-mail</label>
+                        <input type="email" id="modalContactMail" class="form-input" placeholder="jean.dupont@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Téléphone</label>
+                        <input type="tel" id="modalContactPhone" class="form-input" placeholder="+33 6 ...">
+                    </div>
+                </div>
+
+                <div class="form-group u-mb-3">
+                    <label class="form-label">Production rattachée</label>
+                    <select id="modalContactProduction" class="form-input">
+                        <option value="">— Aucune / Freelance —</option>
+                        {% for p in productions %}
+                        <option value="{{ p.id }}">{{ p.fields.get('Nom', '—') }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="u-flex u-justify-end u-gap-2 u-mt-4">
+                    <button type="button" id="cancelContactModalBtn" class="admin-btn admin-btn-secondary">Annuler</button>
+                    <button type="submit" id="submitContactModalBtn" class="admin-btn admin-btn-primary">Créer le contact</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -203,13 +367,52 @@
             $(this).closest('.project-checkbox-card').toggleClass('selected', this.checked);
         });
 
+        // ── Gestion de la Modale Production Rapide ───────────────
+        function openProductionModal() {
+            $('#modalProdName').val('');
+            $('#modalProdAddress').val('');
+            $('#modalProdMail').val('');
+            $('#modalProdPhone').val('');
+            $('#quickProductionModal').css('display', 'flex');
+            setTimeout(function () {
+                $('#modalProdName').focus();
+            }, 100);
+        }
+
+        function closeProductionModal() {
+            $('#quickProductionModal').css('display', 'none');
+        }
+
         $('#quickAddProductionBtn').on('click', function () {
-            const prodName = prompt("Saisissez le nom de la nouvelle production :");
-            if (!prodName || prodName.trim() === "") {
+            openProductionModal();
+        });
+
+        $('#closeProductionModalBtn, #cancelProductionModalBtn').on('click', function () {
+            closeProductionModal();
+        });
+
+        $('#quickProductionModal').on('click', function (e) {
+            if (e.target === this) {
+                closeProductionModal();
+            }
+        });
+
+        $('#quickProductionForm').on('submit', function (e) {
+            e.preventDefault();
+
+            const prodName = $('#modalProdName').val().trim();
+            const prodAddress = $('#modalProdAddress').val().trim();
+            const prodMail = $('#modalProdMail').val().trim();
+            const prodPhone = $('#modalProdPhone').val().trim();
+
+            if (!prodName) {
+                alert("Le nom de la production est requis.");
                 return;
             }
 
             const csrfToken = $('input[name="csrf_token"]').val();
+            const $submitBtn = $('#submitProductionModalBtn');
+            $submitBtn.prop('disabled', true).text('Création...');
 
             $.ajax({
                 url: "/admin/api/productions/quick",
@@ -218,8 +421,14 @@
                 headers: {
                     "X-CSRFToken": csrfToken
                 },
-                data: JSON.stringify({ name: prodName.trim() }),
+                data: JSON.stringify({
+                    name: prodName,
+                    address: prodAddress || null,
+                    mail: prodMail || null,
+                    phone: prodPhone || null
+                }),
                 success: function (response) {
+                    $submitBtn.prop('disabled', false).text('Créer la production');
                     if (response && response.id) {
                         const $select = $('#productionSelect');
                         if ($select.find("option[value='" + response.id + "']").length === 0) {
@@ -229,19 +438,150 @@
                             $select.val(response.id);
                         }
                         $select.trigger('change');
+
+                        // Update production select in contact modal as well
+                        const $modalProd = $('#modalContactProduction');
+                        if ($modalProd.find("option[value='" + response.id + "']").length === 0) {
+                            $modalProd.append(new Option(response.name, response.id));
+                        }
+
+                        closeProductionModal();
                     } else {
                         alert("Une erreur est survenue lors de la création de la production.");
                     }
                 },
                 error: function (xhr) {
+                    $submitBtn.prop('disabled', false).text('Créer la production');
                     const errorMsg = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : "Erreur serveur";
                     alert("Impossible de créer la production : " + errorMsg);
                 }
             });
         });
 
+        // ── Gestion de la Modale Contact Rapide ─────────────────
+        $('.quick-add-contact-btn').on('click', function () {
+            const targetSelectName = $(this).data('target');
+            const defaultJob = $(this).data('job') || '';
+
+            $('#modalTargetSelect').val(targetSelectName);
+            $('#modalContactFirstName').val('');
+            $('#modalContactLastName').val('');
+            $('#modalContactMail').val('');
+            $('#modalContactPhone').val('');
+            $('#modalContactProduction').val(''); // Non pré-rempli
+
+            if (defaultJob) {
+                $('#modalContactJob').val(defaultJob);
+            } else {
+                $('#modalContactJob').val('');
+            }
+
+            $('#quickContactModal').css('display', 'flex');
+            setTimeout(function () {
+                $('#modalContactFirstName').focus();
+            }, 100);
+        });
+
+        function closeContactModal() {
+            $('#quickContactModal').css('display', 'none');
+        }
+
+        $('#closeContactModalBtn, #cancelContactModalBtn').on('click', function () {
+            closeContactModal();
+        });
+
+        $('#quickContactModal').on('click', function (e) {
+            if (e.target === this) {
+                closeContactModal();
+            }
+        });
+
+        $(document).on('keydown', function (e) {
+            if (e.key === 'Escape') {
+                if ($('#quickProductionModal').is(':visible')) {
+                    closeProductionModal();
+                } else if ($('#quickContactModal').is(':visible')) {
+                    closeContactModal();
+                }
+            }
+        });
+
+        $('#quickContactForm').on('submit', function (e) {
+            e.preventDefault();
+
+            const firstName = $('#modalContactFirstName').val().trim();
+            const lastName = $('#modalContactLastName').val().trim();
+            const jobTitle = $('#modalContactJob').val();
+            const mail = $('#modalContactMail').val().trim();
+            const phone = $('#modalContactPhone').val().trim();
+            const productionId = $('#modalContactProduction').val();
+            const targetSelectName = $('#modalTargetSelect').val();
+
+            if (!firstName || !lastName) {
+                alert("Le prénom et le nom sont requis.");
+                return;
+            }
+
+            const csrfToken = $('input[name="csrf_token"]').val();
+            const $submitBtn = $('#submitContactModalBtn');
+            $submitBtn.prop('disabled', true).text('Création...');
+
+            $.ajax({
+                url: "/admin/api/contacts/quick",
+                type: "POST",
+                contentType: "application/json",
+                headers: {
+                    "X-CSRFToken": csrfToken
+                },
+                data: JSON.stringify({
+                    first_name: firstName,
+                    last_name: lastName,
+                    job_title: jobTitle,
+                    mail: mail,
+                    phone: phone,
+                    production_id: productionId || null
+                }),
+                success: function (response) {
+                    $submitBtn.prop('disabled', false).text('Créer le contact');
+                    if (response && response.id) {
+                        const contactSelectNames = [
+                            'production_contact_id',
+                            'dop_contact_id',
+                            'pilot_contact_id',
+                            'first_ac_contact_id',
+                            'key_grip_contact_id'
+                        ];
+
+                        contactSelectNames.forEach(function (name) {
+                            const $sel = $('select[name="' + name + '"]');
+                            if ($sel.length) {
+                                const isTarget = (name === targetSelectName);
+                                if ($sel.find("option[value='" + response.id + "']").length === 0) {
+                                    const newOpt = new Option(response.name, response.id, isTarget, isTarget);
+                                    $sel.append(newOpt);
+                                }
+                                if (isTarget) {
+                                    $sel.val(response.id);
+                                }
+                                $sel.trigger('change');
+                            }
+                        });
+
+                        closeContactModal();
+                    } else {
+                        alert("Une erreur est survenue lors de la création du contact.");
+                    }
+                },
+                error: function (xhr) {
+                    $submitBtn.prop('disabled', false).text('Créer le contact');
+                    const errorMsg = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : "Erreur serveur";
+                    alert("Impossible de créer le contact : " + errorMsg);
+                }
+            });
+        });
+
         // Validation front-end pour s'assurer qu'une production est sélectionnée
-        $('form').on('submit', function (e) {
+        $('form:not(#quickContactForm):not(#quickProductionForm)').on('submit', function (e) {
             // Si la soumission vient du bouton de suppression, on ignore la validation
             if (document.activeElement && document.activeElement.getAttribute('formaction') && document.activeElement.getAttribute('formaction').includes('/delete')) {
                 return;

@@ -28,6 +28,7 @@ class RouteSmokeTest(unittest.TestCase):
         os.environ["USE_SSH_TUNNEL"] = "false"
 
         self.app = create_app()
+        self.app.config["WTF_CSRF_ENABLED"] = False
         self.client = self.app.test_client()
 
         with self.app.app_context():
@@ -99,6 +100,50 @@ class RouteSmokeTest(unittest.TestCase):
 
         response = self.client.get(f"/unsubscribe/{token}")
         self.assertEqual(response.status_code, 200)
+
+    def test_quick_contact_creation(self):
+        """Test the /admin/api/contacts/quick endpoint."""
+        from models import User, Contact, Production
+        with self.app.app_context():
+            user = User(firstname="Admin", lastname="User", mail="admin@test.com", role="administrator")
+            prod = Production(name="Prod Alpha")
+            db.session.add_all([user, prod])
+            db.session.commit()
+            user_id = user.id
+            prod_id = prod.id
+
+        with self.client.session_transaction() as sess:
+            sess["admin_authenticated"] = True
+            sess["admin_user_id"] = user_id
+            sess["admin_user_role"] = "administrator"
+
+        # Missing names validation
+        resp = self.client.post("/admin/api/contacts/quick", json={"first_name": "", "last_name": ""})
+        self.assertEqual(resp.status_code, 400)
+
+        # Success creation
+        resp = self.client.post("/admin/api/contacts/quick", json={
+            "first_name": "Sophie",
+            "last_name": "Lumière",
+            "job_title": "Directeur.rice de la photographie",
+            "mail": "sophie@example.com",
+            "phone": "0601020304",
+            "production_id": prod_id
+        })
+        self.assertEqual(resp.status_code, 201)
+        data = resp.get_json()
+        self.assertIn("id", data)
+        self.assertEqual(data["first_name"], "Sophie")
+        self.assertEqual(data["last_name"], "Lumière")
+        self.assertEqual(data["name"], "Sophie Lumière (Directeur.rice de la photographie)")
+        self.assertEqual(data["mail"], "sophie@example.com")
+        self.assertEqual(data["phone"], "0601020304")
+        self.assertEqual(data["production_id"], str(prod_id))
+
+        with self.app.app_context():
+            c = db.session.get(Contact, int(data["id"]))
+            self.assertIsNotNone(c)
+            self.assertEqual(c.first_name, "Sophie")
 
 
 if __name__ == "__main__":

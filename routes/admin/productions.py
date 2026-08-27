@@ -88,6 +88,10 @@ def init_productions_routes(app):
         try:
             data = request.get_json() or {}
             name = data.get("name", "").strip()
+            address = data.get("address", "").strip()
+            mail = data.get("mail", "").strip()
+            phone = data.get("phone", "").strip()
+
             if not name:
                 return jsonify({"error": "Le nom de la production est requis."}), 400
 
@@ -95,7 +99,12 @@ def init_productions_routes(app):
             if existing:
                 return jsonify({"id": str(existing.id), "name": existing.name})
 
-            prod = Production(name=name)
+            prod = Production(
+                name=name,
+                address=address or None,
+                mail=mail or None,
+                phone=phone or None
+            )
             db.session.add(prod)
             db.session.commit()
 
