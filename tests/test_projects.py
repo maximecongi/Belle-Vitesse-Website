@@ -13,8 +13,8 @@ mock_weasyprint.CSS = MagicMock()
 sys.modules["weasyprint"] = mock_weasyprint
 
 from app import create_app
-from models import db, Project, Production, User
-from services.admin.projects import create_project, update_project, delete_project
+from models import db, Project, Production, User, Contact
+from services.admin.projects import create_project, update_project, delete_project, get_project_for_edit, list_projects
 
 class ProjectsTest(unittest.TestCase):
     def setUp(self):
@@ -46,10 +46,22 @@ class ProjectsTest(unittest.TestCase):
             db.session.add(prod)
             db.session.flush()
 
-            # 1. Test create_project records user_id
+            # Create contacts
+            contact_pilot = Contact(first_name="Jean", last_name="Pilote", mail="pilot@example.com")
+            contact_dop = Contact(first_name="Claire", last_name="DOP", mail="dop@example.com")
+            contact_first_ac = Contact(first_name="Marc", last_name="Assistant", mail="ac@example.com")
+            contact_key_grip = Contact(first_name="Paul", last_name="Machino", mail="grip@example.com")
+            db.session.add_all([contact_pilot, contact_dop, contact_first_ac, contact_key_grip])
+            db.session.flush()
+
+            # 1. Test create_project records user_id and technical contacts
             form_data = {
                 "name": "Project X",
                 "production_id": str(prod.id),
+                "pilot_contact_id": str(contact_pilot.id),
+                "dop_contact_id": str(contact_dop.id),
+                "first_ac_contact_id": str(contact_first_ac.id),
+                "key_grip_contact_id": str(contact_key_grip.id),
                 "departure_date": date(2026, 6, 15),
                 "shoot_start": date(2026, 6, 16),
                 "shoot_end": date(2026, 6, 20),
@@ -67,13 +79,33 @@ class ProjectsTest(unittest.TestCase):
             proj = Project.query.filter_by(name="Project X").first()
             self.assertIsNotNone(proj)
             self.assertEqual(proj.last_action_by_id, user.id)
+            self.assertEqual(proj.first_ac_contact_id, contact_first_ac.id)
+            self.assertEqual(proj.key_grip_contact_id, contact_key_grip.id)
+            self.assertEqual(proj.first_ac_contact.first_name, "Marc")
+            self.assertEqual(proj.key_grip_contact.first_name, "Paul")
 
-            # 2. Test update_project records updated user_id
+            # Check to_dict & get_project_for_edit & list_projects
+            proj_dict = proj.to_dict()
+            self.assertEqual(proj_dict["first_ac_contact_id"], contact_first_ac.id)
+            self.assertEqual(proj_dict["key_grip_contact_id"], contact_key_grip.id)
+
+            edit_data = get_project_for_edit(proj.id)
+            self.assertEqual(edit_data["first_ac_contact_id"], str(contact_first_ac.id))
+            self.assertEqual(edit_data["key_grip_contact_id"], str(contact_key_grip.id))
+
+            all_p = list_projects()
+            p_admin = next((p for p in all_p if p["id"] == proj.id), None)
+            self.assertIsNotNone(p_admin)
+            self.assertEqual(p_admin["first_ac_contact_name"], "Marc Assistant")
+            self.assertEqual(p_admin["key_grip_contact_name"], "Paul Machino")
+
+            # 2. Test update_project records updated user_id and modified contacts
             user2 = User(firstname="Bob", lastname="Jones", mail="bob.jones@example.com", role="administrator")
             db.session.add(user2)
             db.session.flush()
 
             form_data["name"] = "Project X Updated"
+            form_data["first_ac_contact_id"] = ""
             form = MockForm(form_data)
             success = update_project(proj.id, form, user_id=user2.id)
             self.assertTrue(success)
@@ -81,6 +113,8 @@ class ProjectsTest(unittest.TestCase):
             proj = db.session.get(Project, proj.id)
             self.assertEqual(proj.name, "Project X Updated")
             self.assertEqual(proj.last_action_by_id, user2.id)
+            self.assertIsNone(proj.first_ac_contact_id)
+            self.assertEqual(proj.key_grip_contact_id, contact_key_grip.id)
 
             # 3. Test delete_project records user_id who deleted
             success = delete_project(proj.id, user_id=user.id)

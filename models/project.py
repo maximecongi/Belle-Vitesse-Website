@@ -76,6 +76,10 @@ class Project(db.Model):
         "contacts.id"), nullable=True, index=True)
     dop_contact_id = db.Column(db.Integer, db.ForeignKey(
         "contacts.id"), nullable=True, index=True)
+    first_ac_contact_id = db.Column(db.Integer, db.ForeignKey(
+        "contacts.id"), nullable=True, index=True)
+    key_grip_contact_id = db.Column(db.Integer, db.ForeignKey(
+        "contacts.id"), nullable=True, index=True)
     departure_date = db.Column(db.Date)  # Date de départ (enlèvement)
     shoot_start_date = db.Column(db.Date)  # Date de début de tournage
     shoot_end_date = db.Column(db.Date)  # Date de fin de tournage
@@ -109,6 +113,12 @@ class Project(db.Model):
     # Contact DOP du projet
     dop_contact = db.relationship(
         "Contact", foreign_keys=[dop_contact_id], backref="dop_projects", lazy=True)
+    # Contact 1er Assistant Caméra du projet
+    first_ac_contact = db.relationship(
+        "Contact", foreign_keys=[first_ac_contact_id], backref="first_ac_projects", lazy=True)
+    # Contact Chef Machiniste du projet
+    key_grip_contact = db.relationship(
+        "Contact", foreign_keys=[key_grip_contact_id], backref="key_grip_projects", lazy=True)
     # Décharge pilote associée (unique pour le projet)
     pilot_waiver = db.relationship(
         "PilotWaiver", backref="project", uselist=False, lazy=True)
@@ -128,6 +138,9 @@ class Project(db.Model):
             "production_id": self.production_id,
             "pilot_contact_id": self.pilot_contact_id,
             "production_contact_id": self.production_contact_id,
+            "dop_contact_id": self.dop_contact_id,
+            "first_ac_contact_id": self.first_ac_contact_id,
+            "key_grip_contact_id": self.key_grip_contact_id,
             "departure_date": self.departure_date.isoformat() if self.departure_date else None,
             "shoot_start_date": self.shoot_start_date.isoformat() if self.shoot_start_date else None,
             "shoot_end_date": self.shoot_end_date.isoformat() if self.shoot_end_date else None,

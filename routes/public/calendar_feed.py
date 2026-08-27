@@ -45,7 +45,9 @@ def calendar_feed(token):
         joinedload(Project.production),
         joinedload(Project.pilot_contact),
         joinedload(Project.production_contact),
-        joinedload(Project.dop_contact)
+        joinedload(Project.dop_contact),
+        joinedload(Project.first_ac_contact),
+        joinedload(Project.key_grip_contact)
     ).filter(
         db.or_(
             Project.departure_date.isnot(None),
@@ -106,6 +108,12 @@ def calendar_feed(token):
             
         if project.dop_contact:
             desc_parts.append(f"DOP : {project.dop_contact.first_name} {project.dop_contact.last_name}")
+
+        if project.first_ac_contact:
+            desc_parts.append(f"1er Ass. Caméra : {project.first_ac_contact.first_name} {project.first_ac_contact.last_name}")
+
+        if project.key_grip_contact:
+            desc_parts.append(f"Chef Machiniste : {project.key_grip_contact.first_name} {project.key_grip_contact.last_name}")
             
         if project.production_contact:
             desc_parts.append(f"Contact Prod : {project.production_contact.first_name} {project.production_contact.last_name}")

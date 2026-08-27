@@ -92,6 +92,8 @@ def _format_project_admin(p, vehicle_map, heads_map):
         "pilot_contact_name": f"{p.pilot_contact.first_name} {p.pilot_contact.last_name}" if p.pilot_contact else "—",
         "production_contact_name": f"{p.production_contact.first_name} {p.production_contact.last_name}" if p.production_contact else "—",
         "dop_contact_name": f"{p.dop_contact.first_name} {p.dop_contact.last_name}" if p.dop_contact else "—",
+        "first_ac_contact_name": f"{p.first_ac_contact.first_name} {p.first_ac_contact.last_name}" if p.first_ac_contact else "—",
+        "key_grip_contact_name": f"{p.key_grip_contact.first_name} {p.key_grip_contact.last_name}" if p.key_grip_contact else "—",
         "vehicles": [_format_vehicle_state(p, vid, vehicle_map) for vid in veh_ids],
         "heads": [{
             "id": hid,
@@ -132,6 +134,8 @@ def list_projects():
         joinedload(Project.pilot_contact),
         joinedload(Project.production_contact),
         joinedload(Project.dop_contact),
+        joinedload(Project.first_ac_contact),
+        joinedload(Project.key_grip_contact),
         joinedload(Project.pilot_waiver),
         joinedload(Project.production_waiver),
         joinedload(Project.pre_quotes).joinedload(PreQuote.versions)
@@ -186,6 +190,10 @@ def create_project(form, user_id=None):
             "production_contact_id") else None,
         dop_contact_id=form.get("dop_contact_id") if form.get(
             "dop_contact_id") else None,
+        first_ac_contact_id=form.get("first_ac_contact_id") if form.get(
+            "first_ac_contact_id") else None,
+        key_grip_contact_id=form.get("key_grip_contact_id") if form.get(
+            "key_grip_contact_id") else None,
         notes=form.get("notes"),
         departure_date=_parse_date(form.get("departure_date")),
         shoot_start_date=_parse_date(form.get("shoot_start")),
@@ -240,6 +248,10 @@ def update_project(record_id, form, user_id=None):
         "production_contact_id") if form.get("production_contact_id") else None
     project.dop_contact_id = form.get(
         "dop_contact_id") if form.get("dop_contact_id") else None
+    project.first_ac_contact_id = form.get(
+        "first_ac_contact_id") if form.get("first_ac_contact_id") else None
+    project.key_grip_contact_id = form.get(
+        "key_grip_contact_id") if form.get("key_grip_contact_id") else None
     project.notes = form.get("notes")
     project.departure_date = _parse_date(form.get("departure_date"))
     project.shoot_start_date = _parse_date(form.get("shoot_start"))
@@ -277,6 +289,8 @@ def get_project_for_edit(record_id):
         "pilot_contact_id": str(p.pilot_contact_id) if p.pilot_contact_id else "",
         "production_contact_id": str(p.production_contact_id) if p.production_contact_id else "",
         "dop_contact_id": str(p.dop_contact_id) if p.dop_contact_id else "",
+        "first_ac_contact_id": str(p.first_ac_contact_id) if p.first_ac_contact_id else "",
+        "key_grip_contact_id": str(p.key_grip_contact_id) if p.key_grip_contact_id else "",
         "notes": p.notes or "",
         "vehicle_ids": veh_ids,
         "head_ids": head_ids,

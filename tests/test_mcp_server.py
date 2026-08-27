@@ -18,7 +18,7 @@ sys.modules["weasyprint"] = mock_weasyprint
 from mcp_server.core import flask_app
 from mcp_server.context import CURRENT_MCP_USER, CURRENT_MCP_IP
 from mcp_auth.auth import McpUserContext
-from models import db, McpAuditLog, McpApiToken, Production, Vehicle
+from models import db, McpAuditLog, McpApiToken, Production, Vehicle, Contact
 from mcp_server.tools import (
     calendars,
     contacts,
@@ -152,9 +152,14 @@ class MCPServerFullTestSuite(unittest.TestCase):
         first_prod = Production.query.first()
         prod_id = first_prod.id if first_prod else 1
 
+        first_contact = Contact.query.first()
+        contact_id = first_contact.id if first_contact else None
+
         res_c = projects.create_project(
             name="PyTest Tournage MCP",
             production_id=prod_id,
+            first_ac_contact_id=contact_id,
+            key_grip_contact_id=contact_id,
             notes="Projet test PyTest"
         )
         self.assertTrue(res_c.get("success"))
@@ -166,8 +171,16 @@ class MCPServerFullTestSuite(unittest.TestCase):
 
         det = projects.get_project(proj_id)
         self.assertEqual(det.get("name"), "PyTest Tournage MCP")
+        if contact_id:
+            self.assertEqual(det.get("first_ac_contact_id"), str(contact_id))
+            self.assertEqual(det.get("key_grip_contact_id"), str(contact_id))
 
-        res_u = projects.update_project(proj_id, name="PyTest Tournage MCP V2")
+        res_u = projects.update_project(
+            proj_id,
+            name="PyTest Tournage MCP V2",
+            first_ac_contact_id=None,
+            key_grip_contact_id=contact_id
+        )
         self.assertTrue(res_u.get("success"))
 
         # Delete Guard & Confirm

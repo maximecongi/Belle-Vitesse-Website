@@ -75,6 +75,32 @@
             </div>
         </div>
 
+        <div class="u-grid u-grid-2 u-gap-3 u-mb-2">
+            <div class="form-group">
+                <label class="form-label">1er Assistant Caméra</label>
+                <select name="first_ac_contact_id" class="form-input searchable-select">
+                    <option value="">— Sélectionner un 1er assistant caméra —</option>
+                    {% for c in contacts %}
+                    <option value="{{ c.id }}" {% if data and data.first_ac_contact_id==c.id %}selected{% endif %}>
+                        {{ c.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Chef Machiniste</label>
+                <select name="key_grip_contact_id" class="form-input searchable-select">
+                    <option value="">— Sélectionner un chef machiniste —</option>
+                    {% for c in contacts %}
+                    <option value="{{ c.id }}" {% if data and data.key_grip_contact_id==c.id %}selected{% endif %}>
+                        {{ c.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
         <div class="u-grid u-grid-4 u-gap-3">
             <div class="form-group">
                 <label class="form-label">Date de départ</label>

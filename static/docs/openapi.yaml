@@ -65,6 +65,9 @@ components:
         production_id: { type: integer }
         pilot_contact_id: { type: integer }
         production_contact_id: { type: integer }
+        dop_contact_id: { type: integer }
+        first_ac_contact_id: { type: integer }
+        key_grip_contact_id: { type: integer }
         departure_date: { type: string, format: date }
         shoot_start_date: { type: string, format: date }
         shoot_end_date: { type: string, format: date }

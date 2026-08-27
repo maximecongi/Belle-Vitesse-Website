@@ -251,20 +251,40 @@
                     </div>
                 </td>
                 <td>
-                    <div class="projects-contacts-cell-item"><span>📸</span>
-                        <a href="{{ url_for('admin_contacts_list', q=project.dop_contact_name) }}">
-                            {{ project.dop_contact_name }}
-                        </a>
+                    <div class="projects-contacts-cell-item" title="DOP"><span>📸</span>
+                        {% if project.dop_contact_name and project.dop_contact_name != '—' %}
+                        <a href="{{ url_for('admin_contacts_list', q=project.dop_contact_name) }}">{{ project.dop_contact_name }}</a>
+                        {% else %}
+                        <span>—</span>
+                        {% endif %}
                     </div><br>
-                    <div class="projects-contacts-cell-item"><span>🏎️</span>
-                        <a href="{{ url_for('admin_contacts_list', q=project.pilot_contact_name) }}">
-                            {{ project.pilot_contact_name }}
-                        </a>
+                    <div class="projects-contacts-cell-item" title="1er Assistant Caméra"><span>🎥</span>
+                        {% if project.first_ac_contact_name and project.first_ac_contact_name != '—' %}
+                        <a href="{{ url_for('admin_contacts_list', q=project.first_ac_contact_name) }}">{{ project.first_ac_contact_name }}</a>
+                        {% else %}
+                        <span>—</span>
+                        {% endif %}
                     </div><br>
-                    <div class="projects-contacts-cell-item u-mt-1"><span>🎬</span>
-                        <a href="{{ url_for('admin_contacts_list', q=project.production_contact_name) }}">
-                            {{ project.production_contact_name }}
-                        </a>
+                    <div class="projects-contacts-cell-item" title="Chef Machiniste"><span>🔧</span>
+                        {% if project.key_grip_contact_name and project.key_grip_contact_name != '—' %}
+                        <a href="{{ url_for('admin_contacts_list', q=project.key_grip_contact_name) }}">{{ project.key_grip_contact_name }}</a>
+                        {% else %}
+                        <span>—</span>
+                        {% endif %}
+                    </div><br>
+                    <div class="projects-contacts-cell-item" title="Pilote"><span>🏎️</span>
+                        {% if project.pilot_contact_name and project.pilot_contact_name != '—' %}
+                        <a href="{{ url_for('admin_contacts_list', q=project.pilot_contact_name) }}">{{ project.pilot_contact_name }}</a>
+                        {% else %}
+                        <span>—</span>
+                        {% endif %}
+                    </div><br>
+                    <div class="projects-contacts-cell-item u-mt-1" title="Contact Production"><span>🎬</span>
+                        {% if project.production_contact_name and project.production_contact_name != '—' %}
+                        <a href="{{ url_for('admin_contacts_list', q=project.production_contact_name) }}">{{ project.production_contact_name }}</a>
+                        {% else %}
+                        <span>—</span>
+                        {% endif %}
                     </div>
                 </td>
                 <td>
