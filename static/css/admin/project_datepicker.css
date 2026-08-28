@@ -1,0 +1,425 @@
+/* ── Project Timeline Date Picker CSS ───────────────────────────── */
+
+.project-datepicker-container {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+/* ── Top Bar: Milestone Cards & Step Selector ───────────────── */
+.pdp-milestones-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
+@media (max-width: 900px) {
+    .pdp-milestones-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 550px) {
+    .pdp-milestones-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.pdp-milestone-card {
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 0.75rem 0.85rem;
+    cursor: pointer;
+    background: #fdfdfd;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    user-select: none;
+}
+
+.pdp-milestone-card:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+    transform: translateY(-1px);
+}
+
+.pdp-milestone-card.active {
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Specific Milestone Colors when Active */
+.pdp-milestone-card.type-departure.active {
+    border-color: #3b82f6;
+}
+.pdp-milestone-card.type-shoot_start.active {
+    border-color: #f97316;
+}
+.pdp-milestone-card.type-shoot_end.active {
+    border-color: #f97316;
+}
+.pdp-milestone-card.type-return.active {
+    border-color: #10b981;
+}
+
+/* Header inside Card */
+.pdp-milestone-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.35rem;
+}
+
+.pdp-milestone-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.type-departure .pdp-milestone-label { color: #2563eb; }
+.type-shoot_start .pdp-milestone-label { color: #ea580c; }
+.type-shoot_end .pdp-milestone-label { color: #ea580c; }
+.type-return .pdp-milestone-label { color: #059669; }
+
+.pdp-step-badge {
+    font-size: 0.7rem;
+    background: #f1f5f9;
+    color: #64748b;
+    padding: 0.15rem 0.45rem;
+    border-radius: 9999px;
+    font-weight: 600;
+}
+
+.pdp-milestone-card.active .pdp-step-badge {
+    background: #0f172a;
+    color: #ffffff;
+}
+
+/* Value & Date text */
+.pdp-milestone-date {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 0.25rem;
+}
+
+.pdp-milestone-date.empty {
+    color: #94a3b8;
+    font-weight: 400;
+    font-style: italic;
+}
+
+/* Sub-actions (+/- days, clear) */
+.pdp-milestone-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
+}
+
+.pdp-mini-btn {
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    font-size: 0.7rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    cursor: pointer;
+    line-height: 1;
+    transition: all 0.15s ease;
+}
+
+.pdp-mini-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+
+.pdp-mini-btn.btn-clear {
+    color: #ef4444;
+}
+.pdp-mini-btn.btn-clear:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+}
+
+/* ── Toolbar: Presets, Modes & Clear All ───────────────────────── */
+.pdp-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.6rem 0.8rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 1.25rem;
+}
+
+.pdp-presets-group {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.pdp-preset-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-right: 0.2rem;
+}
+
+.pdp-preset-btn {
+    font-size: 0.78rem;
+    padding: 0.35rem 0.65rem;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.15s ease;
+}
+
+.pdp-preset-btn:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    color: #0f172a;
+}
+
+.pdp-preset-btn.btn-highlight {
+    background: #fffbeb;
+    border-color: #fde68a;
+    color: #b45309;
+}
+
+.pdp-preset-btn.btn-highlight:hover {
+    background: #fef3c7;
+    border-color: #fcd34d;
+}
+
+.pdp-actions-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ── Calendar Viewport (Double Months Responsive) ─────────────── */
+.pdp-calendar-container {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+}
+
+@media (max-width: 768px) {
+    .pdp-calendar-container {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+
+.pdp-month-card {
+    flex: 1;
+    min-width: 280px;
+    max-width: 420px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 1rem;
+}
+
+.pdp-month-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.pdp-month-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0f172a;
+    text-transform: capitalize;
+}
+
+.pdp-nav-btn {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 1rem;
+}
+
+.pdp-nav-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+/* ── Weekdays Grid ────────────────────────────────────────────── */
+.pdp-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-bottom: 0.4rem;
+}
+
+/* ── Days Grid ────────────────────────────────────────────────── */
+.pdp-days-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    row-gap: 4px;
+}
+
+.pdp-day-cell {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #334155;
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+    transition: all 0.1s ease;
+}
+
+.pdp-day-cell:hover:not(.empty):not(.disabled) {
+    background: #f1f5f9;
+    color: #0f172a;
+    font-weight: 700;
+}
+
+.pdp-day-cell.empty {
+    cursor: default;
+    background: transparent;
+}
+
+.pdp-day-cell.is-today {
+    font-weight: 800;
+    border: 1px solid #cbd5e1;
+}
+
+/* Range & Milestone Day Styling */
+.pdp-day-cell.in-shoot-range,
+.pdp-day-cell.shoot-start-day,
+.pdp-day-cell.shoot-end-day {
+    background: #f97316 !important;
+    color: #ffffff !important;
+    font-weight: 700;
+    border-radius: 0;
+}
+
+.pdp-day-cell.shoot-start-day {
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+}
+
+.pdp-day-cell.shoot-end-day {
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+.pdp-day-cell.shoot-start-day.shoot-end-day {
+    border-radius: 6px !important;
+}
+
+.pdp-day-cell.departure-day {
+    background: #3b82f6 !important;
+    color: #ffffff !important;
+    font-weight: 700;
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.4);
+}
+
+.pdp-day-cell.return-day {
+    background: #10b981 !important;
+    color: #ffffff !important;
+    font-weight: 700;
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+}
+
+/* Dots / Indicators below day number if overlap occurs */
+.pdp-day-badges {
+    display: flex;
+    gap: 2px;
+    position: absolute;
+    bottom: 2px;
+}
+
+.pdp-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+}
+.pdp-dot.dot-dep { background: #3b82f6; }
+.pdp-dot.dot-shoot { background: #f97316; }
+.pdp-dot.dot-ret { background: #10b981; }
+
+/* ── Help / Legend Footer ─────────────────────────────────────── */
+.pdp-footer-legend {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #f1f5f9;
+    font-size: 0.78rem;
+    color: #64748b;
+}
+
+.pdp-legend-items {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.pdp-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.pdp-legend-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+}
+
+.pdp-legend-swatch.swatch-dep { background: #3b82f6; }
+.pdp-legend-swatch.swatch-shoot { background: #f97316; }
+.pdp-legend-swatch.swatch-ret { background: #10b981; }

@@ -4,6 +4,10 @@
 {% if is_edit %}Modifier le Projet{% else %}Nouveau Projet{% endif %}
 {% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/project_datepicker.css') }}">
+{% endblock %}
+
 {% block page_title %}
 {% if is_edit %}Modifier le Projet{% else %}Nouveau Projet{% endif %}
 {% endblock %}
@@ -125,29 +129,17 @@
             </div>
         </div>
 
-        <div class="u-grid u-grid-4 u-gap-3">
-            <div class="form-group">
-                <label class="form-label">Date de départ</label>
-                <input type="date" name="departure_date" class="form-input"
-                    value="{{ data.departure_date_raw if data else '' }}">
-            </div>
+        <!-- Sélecteur de Dates Unifié (Timeline & Double Calendrier) -->
+        <div class="form-group u-mb-3">
+            <label class="form-label u-mb-2">Planning & Dates du Projet</label>
+            
+            <!-- Inputs cachés pour soumission formulaire (rétrocompatibilité totale) -->
+            <input type="hidden" name="departure_date" id="departure_date_input" value="{{ data.departure_date_raw if data else '' }}">
+            <input type="hidden" name="shoot_start" id="shoot_start_input" value="{{ data.shoot_start_raw if data else '' }}">
+            <input type="hidden" name="shoot_end" id="shoot_end_input" value="{{ data.shoot_end_raw if data else '' }}">
+            <input type="hidden" name="return_date" id="return_date_input" value="{{ data.return_date_raw if data else '' }}">
 
-            <div class="form-group">
-                <label class="form-label">Début tournage</label>
-                <input type="date" name="shoot_start" class="form-input"
-                    value="{{ data.shoot_start_raw if data else '' }}">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Fin tournage</label>
-                <input type="date" name="shoot_end" class="form-input" value="{{ data.shoot_end_raw if data else '' }}">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Date de retour</label>
-                <input type="date" name="return_date" class="form-input"
-                    value="{{ data.return_date_raw if data else '' }}">
-            </div>
+            <div id="projectDatePickerContainer"></div>
         </div>
         <div class="form-group u-mt-3">
             <label class="form-label">Notes - Demandes spécifiques</label>
@@ -353,8 +345,20 @@
 {% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="{{ url_for('static', filename='js/admin/project_datepicker.js') }}"></script>
 <script>
     $(document).ready(function () {
+        // Initialisation du DatePicker Timeline unifié pour les projets
+        if (document.getElementById('projectDatePickerContainer')) {
+            new ProjectTimelineDatePicker({
+                container: '#projectDatePickerContainer',
+                inputDepartureId: 'departure_date_input',
+                inputShootStartId: 'shoot_start_input',
+                inputShootEndId: 'shoot_end_input',
+                inputReturnId: 'return_date_input'
+            });
+        }
+
         $('.searchable-select').select2({
             width: '100%',
             placeholder: function () {
