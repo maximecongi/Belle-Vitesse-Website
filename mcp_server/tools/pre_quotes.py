@@ -9,6 +9,7 @@ def _format_pre_quote(pq) -> Dict[str, Any]:
     if not pq:
         return {}
     data = pq.to_dict() if hasattr(pq, "to_dict") else dict(pq)
+    data["prestations"] = pq.prestations or []
     data["versions"] = [
         v.to_dict() if hasattr(v, "to_dict") else dict(v)
         for v in getattr(pq, "versions", [])
@@ -80,12 +81,35 @@ def update_pre_quote(
     pre_quote_id: int,
     items: Optional[List[Dict[str, Any]]] = None,
     notes: Optional[str] = None,
+    production_id: Optional[int] = None,
+    project_name: Optional[str] = None,
+    status: Optional[str] = None,
+    show_discounts: Optional[bool] = None,
 ) -> Dict[str, Any]:
-    """Met à jour les lignes ou notes d'un pré-devis existant."""
+    """Met à jour un pré-devis existant (mode patch : conserve les champs non spécifiés)."""
+    from models import PreQuote, db
     from services.admin.pre_quote import update_pre_quote as _update
-    form_data = {"prestations": items or [], "notes": notes or ""}
-    pq = _update(pre_quote_id, form_data)
-    return {"success": pq is not None, "message": "Pré-devis mis à jour." if pq else "Échec de mise à jour."}
+
+    pq = db.session.get(PreQuote, pre_quote_id)
+    if not pq:
+        return {"success": False, "message": f"Pré-devis #{pre_quote_id} introuvable."}
+
+    form_data = {}
+    if items is not None:
+        form_data["prestations"] = items
+    if notes is not None:
+        form_data["notes"] = notes
+    if production_id is not None:
+        form_data["production_id"] = production_id
+    if project_name is not None:
+        form_data["project_name"] = project_name
+    if status is not None:
+        form_data["status"] = status
+    if show_discounts is not None:
+        form_data["show_discounts"] = show_discounts
+
+    updated_pq = _update(pre_quote_id, form_data)
+    return {"success": updated_pq is not None, "message": "Pré-devis mis à jour." if updated_pq else "Échec de mise à jour."}
 
 
 @mcp.tool()

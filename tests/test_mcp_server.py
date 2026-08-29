@@ -99,12 +99,15 @@ class MCPServerFullTestSuite(unittest.TestCase):
         self.assertIsNotNone(prod)
         prod_id = prod["id"]
 
-        # Get & Update
+        # Get & Update (Test Patch mode: only updating phone preserves name and address)
         det = productions.get_production(prod_id)
         self.assertEqual(det.get("name"), "PyTest Studio Production")
 
-        res_u = productions.update_production(prod_id, name="PyTest Studio Production V2")
+        res_u = productions.update_production(prod_id, phone="0699999999")
         self.assertTrue(res_u.get("success"))
+        det_after = productions.get_production(prod_id)
+        self.assertEqual(det_after.get("name"), "PyTest Studio Production")
+        self.assertEqual(det_after.get("phone"), "0699999999")
 
         # Delete Guard & Confirm
         guard = productions.delete_production(prod_id, confirm=False)
@@ -135,8 +138,13 @@ class MCPServerFullTestSuite(unittest.TestCase):
         det = contacts.get_contact(cnt_id)
         self.assertEqual(det.get("first_name"), "PyTest")
 
-        res_u = contacts.update_contact(cnt_id, first_name="PyTestUpdated", last_name="ContactMCP")
+        # Test Patch mode: only update job without passing first_name/last_name
+        res_u = contacts.update_contact(cnt_id, job="Chef Opérateur")
         self.assertTrue(res_u.get("success"))
+        det_after = contacts.get_contact(cnt_id)
+        self.assertEqual(det_after.get("first_name"), "PyTest")
+        self.assertEqual(det_after.get("last_name"), "ContactMCP")
+        self.assertEqual(det_after.get("job"), "Chef Opérateur")
 
         guard = contacts.delete_contact(cnt_id, confirm=False)
         self.assertEqual(guard.get("status"), "requires_confirmation")
@@ -175,13 +183,18 @@ class MCPServerFullTestSuite(unittest.TestCase):
             self.assertEqual(det.get("first_ac_contact_id"), str(contact_id))
             self.assertEqual(det.get("key_grip_contact_id"), str(contact_id))
 
+        # Test Patch mode: only updating notes without passing name or contacts
         res_u = projects.update_project(
             proj_id,
-            name="PyTest Tournage MCP V2",
-            first_ac_contact_id=None,
-            key_grip_contact_id=contact_id
+            notes="Notes patchées uniquement"
         )
         self.assertTrue(res_u.get("success"))
+        det_after = projects.get_project(proj_id)
+        self.assertEqual(det_after.get("name"), "PyTest Tournage MCP")
+        self.assertEqual(det_after.get("notes"), "Notes patchées uniquement")
+        if contact_id:
+            self.assertEqual(det_after.get("first_ac_contact_id"), str(contact_id))
+            self.assertEqual(det_after.get("key_grip_contact_id"), str(contact_id))
 
         # Delete Guard & Confirm
         guard = projects.delete_project(proj_id, confirm=False)
@@ -217,9 +230,14 @@ class MCPServerFullTestSuite(unittest.TestCase):
 
         det = pre_quotes.get_pre_quote(pq_id)
         self.assertEqual(det.get("id"), pq_id)
+        self.assertEqual(len(det.get("prestations", [])), 1)
 
-        res_u = pre_quotes.update_pre_quote(pq_id, notes="Pré-devis actualisé")
+        # Test Patch mode: only update project_name without passing items, prestations should be preserved
+        res_u = pre_quotes.update_pre_quote(pq_id, project_name="Projet PyTest Patché")
         self.assertTrue(res_u.get("success"))
+        det_after = pre_quotes.get_pre_quote(pq_id)
+        self.assertEqual(det_after.get("project_name"), "Projet PyTest Patché")
+        self.assertEqual(len(det_after.get("prestations", [])), 1)
 
         res_v = pre_quotes.create_pre_quote_version(pq_id, "V2")
         self.assertTrue(res_v.get("success"))

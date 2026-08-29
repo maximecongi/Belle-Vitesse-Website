@@ -83,7 +83,7 @@ def create_project(
 @require_mcp_scope("write")
 def update_project(
     project_id: int,
-    name: str,
+    name: Optional[str] = None,
     production_id: Optional[int] = None,
     pilot_contact_id: Optional[int] = None,
     production_contact_id: Optional[int] = None,
@@ -98,36 +98,48 @@ def update_project(
     vehicle_ids: Optional[List[str]] = None,
     head_ids: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
-    """Met à jour un projet existant par son ID."""
+    """Met à jour un projet existant par son ID (mode patch : conserve les champs non spécifiés)."""
+    from models import Project, db
     from services.admin.projects import update_project as _update_project
+
+    project = db.session.get(Project, project_id)
+    if not project:
+        return {"success": False, "message": f"Projet #{project_id} introuvable."}
+
+    # Récupérer les identifiants existants pour les véhicules et têtes
+    existing_veh_ids = [v.strip() for v in (project.vehicles_to_check or "").split(",") if v.strip()]
+    existing_head_ids = [h.strip() for h in (project.heads_to_check or "").split(",") if h.strip()]
+
+    final_veh_ids = vehicle_ids if vehicle_ids is not None else existing_veh_ids
+    final_head_ids = head_ids if head_ids is not None else existing_head_ids
 
     class MultiDictMock(dict):
         def getlist(self, key):
             if key == "vehicle_ids":
-                return vehicle_ids or []
+                return final_veh_ids
             if key == "head_ids":
-                return head_ids or []
+                return final_head_ids
             return []
 
-    if not production_id:
-        from models import Project
-        existing = Project.query.get(project_id)
-        if existing and existing.production_id:
-            production_id = existing.production_id
+    # Dates existantes
+    existing_dep = project.departure_date.strftime("%Y-%m-%d") if project.departure_date else ""
+    existing_start = project.shoot_start_date.strftime("%Y-%m-%d") if project.shoot_start_date else ""
+    existing_end = project.shoot_end_date.strftime("%Y-%m-%d") if project.shoot_end_date else ""
+    existing_ret = project.return_date.strftime("%Y-%m-%d") if project.return_date else ""
 
     form_data = MultiDictMock({
-        "name": name,
-        "production_id": str(production_id) if production_id else "",
-        "pilot_contact_id": str(pilot_contact_id) if pilot_contact_id else "",
-        "production_contact_id": str(production_contact_id) if production_contact_id else "",
-        "dop_contact_id": str(dop_contact_id) if dop_contact_id else "",
-        "first_ac_contact_id": str(first_ac_contact_id) if first_ac_contact_id else "",
-        "key_grip_contact_id": str(key_grip_contact_id) if key_grip_contact_id else "",
-        "notes": notes or "",
-        "departure_date": departure_date or "",
-        "shoot_start": shoot_start or "",
-        "shoot_end": shoot_end or "",
-        "return_date": return_date or "",
+        "name": name if name is not None else (project.name or ""),
+        "production_id": str(production_id) if production_id is not None else (str(project.production_id) if project.production_id else ""),
+        "pilot_contact_id": str(pilot_contact_id) if pilot_contact_id is not None else (str(project.pilot_contact_id) if project.pilot_contact_id else ""),
+        "production_contact_id": str(production_contact_id) if production_contact_id is not None else (str(project.production_contact_id) if project.production_contact_id else ""),
+        "dop_contact_id": str(dop_contact_id) if dop_contact_id is not None else (str(project.dop_contact_id) if project.dop_contact_id else ""),
+        "first_ac_contact_id": str(first_ac_contact_id) if first_ac_contact_id is not None else (str(project.first_ac_contact_id) if project.first_ac_contact_id else ""),
+        "key_grip_contact_id": str(key_grip_contact_id) if key_grip_contact_id is not None else (str(project.key_grip_contact_id) if project.key_grip_contact_id else ""),
+        "notes": notes if notes is not None else (project.notes or ""),
+        "departure_date": departure_date if departure_date is not None else existing_dep,
+        "shoot_start": shoot_start if shoot_start is not None else existing_start,
+        "shoot_end": shoot_end if shoot_end is not None else existing_end,
+        "return_date": return_date if return_date is not None else existing_ret,
     })
 
     success = _update_project(project_id, form_data)

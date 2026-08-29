@@ -32,9 +32,9 @@ def create_contact(form):
         first_name=form.get("first_name", ""),
         last_name=form.get("last_name", ""),
         phone=form.get("phone", ""),
-        mail=form.get("mail", ""),
+        mail=form.get("mail", "") or form.get("email", ""),
         production_id=int(pid) if pid and pid != "None" else None,
-        job_title=form.get("job_title", ""),
+        job_title=form.get("job_title", "") or form.get("job", ""),
     )
     db.session.add(contact)
     db.session.commit()
@@ -52,9 +52,9 @@ def update_contact(record_id, form):
     contact.first_name = form.get("first_name", "")
     contact.last_name = form.get("last_name", "")
     contact.phone = form.get("phone", "")
-    contact.mail = form.get("mail", "")
+    contact.mail = form.get("mail", "") or form.get("email", "")
     contact.production_id = int(pid) if pid and pid != "None" else None
-    contact.job_title = form.get("job_title", "")
+    contact.job_title = form.get("job_title", "") or form.get("job", "")
 
     db.session.commit()
     return True

@@ -44,14 +44,25 @@ def create_production(
 @require_mcp_scope("write")
 def update_production(
     production_id: int,
-    name: str,
+    name: Optional[str] = None,
     address: Optional[str] = None,
     email: Optional[str] = None,
     phone: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Met à jour une société de production."""
+    """Met à jour une société de production (mode patch : conserve les champs non spécifiés)."""
+    from models import Production, db
     from services.admin.productions import update_production as _update
-    form = {"name": name, "address": address or "", "email": email or "", "phone": phone or ""}
+
+    prod = db.session.get(Production, production_id)
+    if not prod:
+        return {"success": False, "message": f"Production #{production_id} introuvable."}
+
+    form = {
+        "name": name if name is not None else prod.name,
+        "address": address if address is not None else (prod.address or ""),
+        "email": email if email is not None else (prod.mail or ""),
+        "phone": phone if phone is not None else (prod.phone or ""),
+    }
     success = _update(production_id, form)
     return {"success": success, "message": "Production mise à jour." if success else "Production introuvable."}
 
