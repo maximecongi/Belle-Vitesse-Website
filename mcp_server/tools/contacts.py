@@ -151,6 +151,18 @@ def delete_contact(contact_id: int, confirm: bool = False) -> Dict[str, Any]:
 @require_mcp_scope("read_only")
 def get_contact_form_context() -> Dict[str, Any]:
     """Récupère la liste des sociétés de production pour alimenter le formulaire de contact."""
-    from services.admin.contacts import get_productions_for_select
-    return {"productions": get_productions_for_select()}
+    from models import Production
+    prods = Production.query.order_by(Production.name).all()
+    return {
+        "productions": [
+            {
+                "id": p.id,
+                "name": p.name,
+                "email": p.mail or "",
+                "phone": p.phone or "",
+                "address": p.address or "",
+            }
+            for p in prods
+        ]
+    }
 

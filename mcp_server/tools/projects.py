@@ -363,10 +363,39 @@ def delete_project(project_id: int, confirm: bool = False) -> Dict[str, Any]:
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
-def get_project_form_context() -> Dict[str, Any]:
-    """Récupère le contexte nécessaire aux formulaires de projet (listes de sélections)."""
+def get_project_form_context(compact: Optional[bool] = True) -> Dict[str, Any]:
+    """
+    Récupère le contexte nécessaire aux formulaires de projet (listes de sélections).
+    - compact: Si True (par défaut), retourne un payload allégé (id, nom, tarif) pour économiser les tokens. Si False, retourne l'intégralité des attributs catalogue.
+    """
     from services.admin.projects import get_project_form_context as _context
-    return _context()
+    raw = _context()
+    if not compact:
+        return raw
+
+    compact_vehicles = [
+        {
+            "id": v.get("id"),
+            "name": v.get("fields", {}).get("name") or v.get("id"),
+            "daily_rate": v.get("fields", {}).get("daily_rate"),
+        }
+        for v in raw.get("vehicles", [])
+    ]
+    compact_heads = [
+        {
+            "id": h.get("id"),
+            "name": h.get("fields", {}).get("name") or h.get("id"),
+            "daily_rate": h.get("fields", {}).get("daily_rate"),
+        }
+        for h in raw.get("heads", [])
+    ]
+
+    return {
+        "productions": raw.get("productions", []),
+        "contacts": raw.get("contacts", []),
+        "vehicles": compact_vehicles,
+        "heads": compact_heads,
+    }
 
 
 @mcp.tool()
