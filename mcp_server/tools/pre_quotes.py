@@ -223,16 +223,114 @@ def create_pre_quote_version(pre_quote_id: int, version_label: str) -> Dict[str,
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
-def get_pre_quote_form_context(project_id: Optional[int] = None) -> Dict[str, Any]:
-    """Récupère le contexte du formulaire pré-devis (grilles de prix, projets, paramètres livraison)."""
+def get_pre_quote_form_context(
+    project_id: Optional[int] = None,
+    category: Optional[str] = None,
+    compact: Optional[bool] = True,
+) -> Dict[str, Any]:
+    """
+    Récupère le contexte du formulaire pré-devis (paramètres livraison, projets, tarifs).
+    - project_id: ID du projet spécifique (évite de charger tous les projets de la base)
+    - category: Filtrer sur un domaine précis ('delivery', 'projects', 'equipment', 'salaries', 'logistics') ou None pour tout
+    - compact: Si True (par défaut), optimise et allège le volume de données retourné pour économiser les tokens
+    """
     from services.admin.pre_quote import get_delivery_config
     from services.admin.projects import list_projects
     from services.admin.pricing import list_equipment_rates, list_salary_rates, list_logistics_rates
-    return {
-        "delivery_config": get_delivery_config(),
-        "projects": list_projects(),
-        "equipment_rates": list_equipment_rates(),
-        "salary_rates": list_salary_rates(),
-        "logistics_rates": list_logistics_rates(),
+
+    # Projets
+    raw_projects = list_projects()
+    if project_id:
+        selected_projects = [p for p in raw_projects if p.get("id") == project_id]
+    else:
+        selected_projects = raw_projects
+
+    if compact:
+        proj_data = [
+            {
+                "id": p.get("id"),
+                "project_id": p.get("project_id"),
+                "name": p.get("name"),
+                "production_name": p.get("production_name"),
+                "departure_date": p.get("departure_date"),
+                "shoot_start": p.get("shoot_start"),
+                "shoot_end": p.get("shoot_end"),
+                "return_date": p.get("return_date"),
+                "vehicles": p.get("vehicles", []),
+                "heads": p.get("heads", []),
+            }
+            for p in selected_projects
+        ]
+    else:
+        proj_data = selected_projects
+
+    # Équipements
+    raw_eq = list_equipment_rates()
+    if compact:
+        eq_data = {}
+        for cat_key, cat_val in raw_eq.items():
+            eq_data[cat_key] = [
+                {"id": it.get("id"), "name": it.get("name"), "daily_rate": it.get("daily_rate")}
+                for it in cat_val.get("items", [])
+            ]
+    else:
+        eq_data = raw_eq
+
+    # Salaires
+    raw_sal = list_salary_rates()
+    if compact:
+        sal_data = [
+            {
+                "id": r.get("id"),
+                "position": r.get("position"),
+                "group_name": r.get("group_name"),
+                "annexe": r.get("annexe"),
+                "invoice_8h": r.get("invoice_8h"),
+                "invoice_10h": r.get("invoice_10h"),
+            }
+            for r in raw_sal
+        ]
+    else:
+        sal_data = raw_sal
+
+    # Logistique
+    raw_log = list_logistics_rates()
+    if compact:
+        log_data = [
+            {"id": l.get("id"), "name": l.get("name") or l.get("label"), "amount": l.get("amount") or l.get("rate")}
+            for l in raw_log
+        ]
+    else:
+        log_data = raw_log
+
+    delivery_data = get_delivery_config()
+
+    full_response = {
+        "delivery_config": delivery_data,
+        "projects": proj_data,
+        "equipment_rates": eq_data,
+        "salary_rates": sal_data,
+        "logistics_rates": log_data,
     }
+
+    # Mapping category
+    cat_map = {
+        "delivery": "delivery_config",
+        "delivery_config": "delivery_config",
+        "projects": "projects",
+        "project": "projects",
+        "equipment": "equipment_rates",
+        "equipment_rates": "equipment_rates",
+        "salaries": "salary_rates",
+        "salary_rates": "salary_rates",
+        "logistics": "logistics_rates",
+        "logistics_rates": "logistics_rates",
+    }
+
+    if category:
+        key = cat_map.get(category.lower())
+        if key and key in full_response:
+            return {key: full_response[key]}
+
+    return full_response
 

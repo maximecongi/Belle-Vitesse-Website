@@ -58,10 +58,13 @@ def _fetch_all_from_table(table_name, order_by=None):
 
         records = []
         for row in model.query.all():
+            f = dict(row.fields) if row.fields else {}
+            if hasattr(row, "daily_rate") and row.daily_rate is not None:
+                f["daily_rate"] = float(row.daily_rate)
             records.append({
                 "id": row.id,
                 "createdTime": str(row.createdTime) if row.createdTime else None,
-                "fields": row.fields
+                "fields": f,
             })
 
         if order_by:
@@ -87,10 +90,13 @@ def _fetch_by_field(table_name, field_name, field_value):
         ).first()
 
         if row:
+            f = dict(row.fields) if row.fields else {}
+            if hasattr(row, "daily_rate") and row.daily_rate is not None:
+                f["daily_rate"] = float(row.daily_rate)
             return {
                 "id": row.id,
                 "createdTime": str(row.createdTime) if row.createdTime else None,
-                "fields": row.fields
+                "fields": f,
             }
         return None
     except Exception as e:
