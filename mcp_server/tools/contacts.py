@@ -8,10 +8,36 @@ from mcp_server.decorators import run_in_flask_context, require_mcp_scope
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
-def list_contacts() -> List[Dict[str, Any]]:
-    """Liste tous les contacts professionnels enregistrés."""
+def list_contacts(
+    query: Optional[str] = None,
+    production_id: Optional[int] = None,
+    limit: Optional[int] = 50,
+    offset: Optional[int] = 0,
+) -> List[Dict[str, Any]]:
+    """
+    Liste les contacts professionnels avec recherche textuelle et pagination.
+    - query: Recherche par nom, prénom, poste, email, téléphone ou nom de production
+    - production_id: Filtrer par identifiant de société de production
+    - limit: Nombre maximum d'enregistrements retournés (défaut 50, max 500)
+    - offset: Décalage pour la pagination
+    """
     from services.admin.contacts import list_contacts as _list
-    return _list()
+    from mcp_server.utils import matches_search_query, apply_pagination
+
+    all_contacts = _list()
+    filtered = []
+    for c in all_contacts:
+        if production_id is not None:
+            c_pid = c.get("production_id")
+            if c_pid != production_id and str(c_pid) != str(production_id):
+                continue
+        if query and not matches_search_query(
+            c, query, ["first_name", "last_name", "job", "job_title", "mail", "email", "phone", "production_name"]
+        ):
+            continue
+        filtered.append(c)
+
+    return apply_pagination(filtered, limit=limit, offset=offset)
 
 
 @mcp.tool()

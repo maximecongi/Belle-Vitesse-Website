@@ -353,5 +353,126 @@ class MCPServerFullTestSuite(unittest.TestCase):
         self.assertGreater(len(logs), 0)
 
 
+    # ── 12. PARSING DE DATES, FILTRES, PAGINATION & ENRICHISSEMENT ──
+    def test_flexible_date_parsing(self):
+        from mcp_server.utils import parse_flexible_date
+        self.assertEqual(parse_flexible_date("15/09/2026"), "2026-09-15")
+        self.assertEqual(parse_flexible_date("2026-09-15"), "2026-09-15")
+        self.assertEqual(parse_flexible_date("15-09-2026"), "2026-09-15")
+        self.assertEqual(parse_flexible_date("2026/09/15"), "2026-09-15")
+        self.assertEqual(parse_flexible_date("2026-09-15T10:30:00"), "2026-09-15")
+        self.assertIsNone(parse_flexible_date(""))
+        self.assertIsNone(parse_flexible_date(None))
+
+    def test_search_filters_and_pagination(self):
+        # 1. Contacts
+        c_list = contacts.list_contacts(limit=5, offset=0)
+        self.assertLessEqual(len(c_list), 5)
+        c_search = contacts.list_contacts(query="NonExistentContactName999")
+        self.assertEqual(len(c_search), 0)
+
+        # 2. Productions
+        p_list = productions.list_productions(limit=3, offset=0)
+        self.assertLessEqual(len(p_list), 3)
+        p_search = productions.list_productions(query="NonExistentProdName999")
+        self.assertEqual(len(p_search), 0)
+
+        # 3. Projets
+        pr_list = projects.list_projects(limit=5, offset=0)
+        self.assertLessEqual(len(pr_list), 5)
+        pr_search = projects.list_projects(query="NonExistentProjectName999")
+        self.assertEqual(len(pr_search), 0)
+
+        # 4. Devis
+        q_list = pre_quotes.list_pre_quotes(limit=5, offset=0)
+        self.assertLessEqual(len(q_list), 5)
+
+    def test_enriched_details(self):
+        # Production enrichie
+        first_p = productions.list_productions(limit=1)
+        if first_p:
+            p_id = first_p[0]["id"]
+            p_det = productions.get_production(p_id)
+            self.assertIsNotNone(p_det)
+            self.assertIn("contacts", p_det)
+            self.assertIn("recent_projects", p_det)
+            self.assertIsInstance(p_det["contacts"], list)
+            self.assertIsInstance(p_det["recent_projects"], list)
+
+        # Projet enrichi
+        first_proj = projects.list_projects(limit=1)
+        if first_proj:
+            proj_id = first_proj[0]["id"]
+            proj_det = projects.get_project(proj_id)
+            self.assertIsNotNone(proj_det)
+            self.assertIn("assigned_contacts", proj_det)
+            self.assertIn("vehicles", proj_det)
+            self.assertIn("heads", proj_det)
+            self.assertIn("waivers", proj_det)
+
+    def test_vehicle_availability(self):
+        first_v = Vehicle.query.first()
+        v_id = first_v.id if first_v else "mercedes-c63"
+
+        # Période valide
+        res = vehicles.check_vehicle_availability(v_id, "2030-01-01", "2030-01-05")
+        self.assertTrue(res.get("success"))
+        self.assertTrue(res.get("available"))
+
+        # Dates françaises
+        res_fr = vehicles.check_vehicle_availability(v_id, "01/01/2030", "05/01/2030")
+        self.assertTrue(res_fr.get("success"))
+        self.assertTrue(res_fr.get("available"))
+
+        # Date de fin antérieure
+        res_err = vehicles.check_vehicle_availability(v_id, "2030-01-10", "2030-01-05")
+        self.assertFalse(res_err.get("success"))
+
+    def test_dashboard_summary_and_pre_quote_duplicate(self):
+        # Dashboard summary
+        dash = projects.get_dashboard_summary()
+        self.assertIsInstance(dash, dict)
+        self.assertIn("active_shoots", dash)
+        self.assertIn("upcoming_shoots_15d", dash)
+        self.assertIn("pending_waivers", dash)
+
+        # Pre-quote duplicate
+        first_pq = pre_quotes.list_pre_quotes(limit=1)
+        if first_pq:
+            orig_id = first_pq[0]["id"]
+            res_dup = pre_quotes.duplicate_pre_quote(orig_id, new_project_name="Duplicated Project Test")
+            self.assertTrue(res_dup.get("success"))
+            dup_id = res_dup.get("new_pre_quote_id")
+            self.assertIsNotNone(dup_id)
+
+            # Cleanup duplicated pre-quote
+            pre_quotes.delete_pre_quote(dup_id, confirm=True)
+
+    def test_mcp_resources_and_prompts(self):
+        from mcp_server import resources, prompts
+
+        # Resources
+        rates_json = resources.resource_pricing_rates()
+        self.assertIn("equipment", rates_json)
+        self.assertIn("salaries", rates_json)
+
+        dash_json = resources.resource_dashboard_summary()
+        self.assertIn("active_shoots", dash_json)
+
+        veh_json = resources.resource_vehicles_catalog()
+        self.assertIsInstance(veh_json, str)
+
+        # Prompts
+        p_tournage = prompts.prompt_nouveau_tournage("Projet Test", "Prod Test")
+        self.assertIn("Projet Test", p_tournage)
+
+        p_devis = prompts.prompt_chiffrer_devis("Projet Test", 3, "Mercedes Travelling")
+        self.assertIn("Projet Test", p_devis)
+
+        p_audit = prompts.prompt_audit_tournage(123)
+        self.assertIn("123", p_audit)
+
+
 if __name__ == "__main__":
     unittest.main()
+

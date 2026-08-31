@@ -20,13 +20,43 @@ def _format_pre_quote(pq) -> Dict[str, Any]:
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
-def list_pre_quotes(project_id: Optional[int] = None) -> List[Dict[str, Any]]:
-    """Liste tous les pré-devis, facultativement filtrés par ID de projet."""
+def list_pre_quotes(
+    project_id: Optional[int] = None,
+    production_id: Optional[int] = None,
+    status: Optional[str] = None,
+    query: Optional[str] = None,
+    limit: Optional[int] = 50,
+    offset: Optional[int] = 0,
+) -> List[Dict[str, Any]]:
+    """
+    Liste les pré-devis avec filtres et pagination.
+    - project_id: Filtrer par ID de projet associé
+    - production_id: Filtrer par ID de société de production
+    - status: 'draft', 'sent', 'accepted', etc.
+    - query: Recherche par référence (DP-...), nom de projet ou nom de production
+    - limit: Nombre max d'éléments (défaut 50, max 500)
+    - offset: Décalage de pagination
+    """
     from services.admin.pre_quote import list_pre_quotes as _list
+    from mcp_server.utils import matches_search_query, apply_pagination
+
     quotes = _list()
-    if project_id:
-        quotes = [q for q in quotes if q.project_id == project_id]
-    return [_format_pre_quote(q) for q in quotes]
+    filtered = []
+    for q in quotes:
+        if project_id is not None and getattr(q, "project_id", None) != project_id:
+            continue
+        if production_id is not None and getattr(q, "production_id", None) != production_id:
+            continue
+        if status and status.lower() != "all" and getattr(q, "status", "").lower() != status.lower():
+            continue
+
+        formatted = _format_pre_quote(q)
+        if query and not matches_search_query(formatted, query, ["reference", "project_name", "production_name", "status"]):
+            continue
+
+        filtered.append(formatted)
+
+    return apply_pagination(filtered, limit=limit, offset=offset)
 
 
 @mcp.tool()
@@ -34,8 +64,8 @@ def list_pre_quotes(project_id: Optional[int] = None) -> List[Dict[str, Any]]:
 @require_mcp_scope("read_only")
 def get_pre_quote(pre_quote_id: int) -> Optional[Dict[str, Any]]:
     """Récupère le détail d'un pré-devis par son ID."""
-    from models import PreQuote
-    pq = PreQuote.query.get(pre_quote_id)
+    from models import PreQuote, db
+    pq = db.session.get(PreQuote, pre_quote_id)
     return _format_pre_quote(pq) if pq else None
 
 
@@ -52,8 +82,8 @@ def create_pre_quote(
     """Crée un nouveau pré-devis pour un projet ou une société de production avec ses lignes d'équipements / prestations."""
     from services.admin.pre_quote import create_pre_quote as _create
     if project_id and not production_id:
-        from models import Project
-        proj = Project.query.get(project_id)
+        from models import Project, db
+        proj = db.session.get(Project, project_id)
         if proj:
             production_id = proj.production_id
 
@@ -72,6 +102,47 @@ def create_pre_quote(
     }
     pq = _create(form_data)
     return {"success": pq is not None, "pre_quote_id": pq.id if pq else None, "reference": pq.reference if pq else None, "message": "Pré-devis créé avec succès." if pq else "Échec de création."}
+
+
+@mcp.tool()
+@run_in_flask_context
+@require_mcp_scope("write")
+def duplicate_pre_quote(
+    pre_quote_id: int,
+    new_project_name: Optional[str] = None,
+    production_id: Optional[int] = None,
+) -> Dict[str, Any]:
+    """
+    Duplique un pré-devis existant avec l'ensemble de ses lignes de prestations pour créer un nouveau devis distinct.
+    """
+    from models import PreQuote, db
+    from services.admin.pre_quote import create_pre_quote as _create
+
+    orig = db.session.get(PreQuote, pre_quote_id)
+    if not orig:
+        return {"success": False, "message": f"Pré-devis source #{pre_quote_id} introuvable."}
+
+    target_prod_id = production_id if production_id is not None else orig.production_id
+    target_project_name = new_project_name if new_project_name is not None else f"{orig.project_name or 'Projet'} (Copie)"
+
+    form_data = {
+        "production_id": target_prod_id,
+        "project_name": target_project_name,
+        "version_label": "V1",
+        "prestations": list(orig.prestations or []),
+        "tva_rate": float(orig.tva_rate) if orig.tva_rate is not None else 20.0,
+        "insurance_rate": float(orig.insurance_rate) if orig.insurance_rate is not None else 10.0,
+        "insurance_based_on_undiscounted": bool(orig.insurance_based_on_undiscounted),
+        "notes": f"Dupliqué depuis {orig.reference}",
+    }
+
+    new_pq = _create(form_data)
+    return {
+        "success": new_pq is not None,
+        "new_pre_quote_id": new_pq.id if new_pq else None,
+        "reference": new_pq.reference if new_pq else None,
+        "message": f"Pré-devis dupliqué avec succès : {new_pq.reference}" if new_pq else "Échec de la duplication.",
+    }
 
 
 @mcp.tool()
@@ -120,9 +191,9 @@ def delete_pre_quote(pre_quote_id: int, confirm: bool = False) -> Dict[str, Any]
     Supprime un pré-devis par son ID.
     ATTENTION: Action destructrice (Scope 'admin' requis).
     """
-    from models import PreQuote
+    from models import PreQuote, db
     from services.admin.pre_quote import delete_pre_quote as _delete
-    pq = PreQuote.query.get(pre_quote_id)
+    pq = db.session.get(PreQuote, pre_quote_id)
     if not pq:
         return {"success": False, "message": f"Pré-devis #{pre_quote_id} introuvable."}
 

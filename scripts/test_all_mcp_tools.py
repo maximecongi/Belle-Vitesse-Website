@@ -638,7 +638,7 @@ def run_all_tests():
             suite.record("documents.update_catalog_pdf", "FAIL", str(e))
 
         # ----------------------------------------------------
-        # 11. DOMAINE VÉHICULES & CONFIG CHECKPOINTS (3 outils)
+        # 11. DOMAINE VÉHICULES & CONFIG CHECKPOINTS (4 outils)
         # ----------------------------------------------------
         print("\n🚗 --- 11. Domaine Véhicules & Checkpoints ---")
         try:
@@ -666,10 +666,76 @@ def run_all_tests():
         except Exception as e:
             suite.record("vehicles.save_vehicle_checkpoint_config", "FAIL", str(e))
 
+        try:
+            first_v = Vehicle.query.first()
+            v_id = first_v.id if first_v else "mercedes-c63"
+            avail = vehicles.check_vehicle_availability(v_id, "15/06/2030", "20/06/2030")
+            assert avail.get("success") is True and avail.get("available") is True
+            suite.record("vehicles.check_vehicle_availability", "PASS", f"Disponibilité validée pour '{v_id}'")
+        except Exception as e:
+            suite.record("vehicles.check_vehicle_availability", "FAIL", str(e))
+
         # ----------------------------------------------------
-        # 12. SÉCURITÉ & RESTRICTIONS DE SCOPES (2 tests)
+        # 12. DOMAINE DASHBOARD, DUPLICATION & UTILITAIRES (3 tests)
         # ----------------------------------------------------
-        print("\n🛡️  --- 12. Sécurité & Scopes de Privilèges MCP ---")
+        print("\n📊 --- 12. Dashboard, Duplication & Utilitaires MCP ---")
+        try:
+            dash = projects.get_dashboard_summary()
+            assert isinstance(dash, dict) and "active_shoots" in dash
+            suite.record("projects.get_dashboard_summary", "PASS", f"Synthèse: {dash.get('active_shoots_count', 0)} tournages actifs, {dash.get('upcoming_shoots_15d_count', 0)} à 15j")
+        except Exception as e:
+            suite.record("projects.get_dashboard_summary", "FAIL", str(e))
+
+        try:
+            from mcp_server.utils import parse_flexible_date
+            assert parse_flexible_date("25/12/2026") == "2026-12-25"
+            assert parse_flexible_date("2026-12-25") == "2026-12-25"
+            suite.record("utils.parse_flexible_date", "PASS", "Parsing dates FR/ISO validé")
+        except Exception as e:
+            suite.record("utils.parse_flexible_date", "FAIL", str(e))
+
+        try:
+            first_pq = pre_quotes.list_pre_quotes(limit=1)
+            if first_pq:
+                orig_id = first_pq[0]["id"]
+                dup = pre_quotes.duplicate_pre_quote(orig_id, new_project_name="Duplication Test Script")
+                assert dup.get("success") is True
+                new_id = dup.get("new_pre_quote_id")
+                pre_quotes.delete_pre_quote(new_id, confirm=True)
+                suite.record("pre_quotes.duplicate_pre_quote", "PASS", f"Duplication pré-devis #{orig_id} réussie ({dup.get('reference')})")
+            else:
+                suite.record("pre_quotes.duplicate_pre_quote", "PASS", "Aucun pré-devis source (ignoré)")
+        except Exception as e:
+            suite.record("pre_quotes.duplicate_pre_quote", "FAIL", str(e))
+
+        # ----------------------------------------------------
+        # 13. RESSOURCES & PROMPTS MCP (2 tests)
+        # ----------------------------------------------------
+        print("\n📚 --- 13. Ressources & Prompts MCP ---")
+        try:
+            from mcp_server import resources
+            r_rates = resources.resource_pricing_rates()
+            r_dash = resources.resource_dashboard_summary()
+            r_veh = resources.resource_vehicles_catalog()
+            assert len(r_rates) > 50 and len(r_dash) > 20 and len(r_veh) > 20
+            suite.record("resources.mcp_resources", "PASS", "Ressources tarifaires, dashboard et catalogue validées")
+        except Exception as e:
+            suite.record("resources.mcp_resources", "FAIL", str(e))
+
+        try:
+            from mcp_server import prompts
+            p1 = prompts.prompt_nouveau_tournage("Projet Script")
+            p2 = prompts.prompt_chiffrer_devis("Projet Script", 2)
+            p3 = prompts.prompt_audit_tournage(99)
+            assert len(p1) > 20 and len(p2) > 20 and len(p3) > 20
+            suite.record("prompts.mcp_prompts", "PASS", "Prompts nouveau_tournage, chiffrer_devis et audit validés")
+        except Exception as e:
+            suite.record("prompts.mcp_prompts", "FAIL", str(e))
+
+        # ----------------------------------------------------
+        # 14. SÉCURITÉ & RESTRICTIONS DE SCOPES (2 tests)
+        # ----------------------------------------------------
+        print("\n🛡️  --- 14. Sécurité & Scopes de Privilèges MCP ---")
         try:
             suite.set_user(scope="read_only")
             blocked = contacts.create_contact(first_name="Illegal", last_name="Write")
@@ -687,9 +753,9 @@ def run_all_tests():
             suite.record("security.scope_write_blocks_admin", "FAIL", str(e))
 
         # ----------------------------------------------------
-        # 13. AUDIT TRAIL & TRAÇABILITÉ (1 test)
+        # 15. AUDIT TRAIL & TRAÇABILITÉ (1 test)
         # ----------------------------------------------------
-        print("\n📝 --- 13. Traçabilité & Enregistrement d'Audit ---")
+        print("\n📝 --- 15. Traçabilité & Enregistrement d'Audit ---")
         try:
             logs = McpAuditLog.query.order_by(McpAuditLog.created_at.desc()).limit(10).all()
             assert len(logs) > 0

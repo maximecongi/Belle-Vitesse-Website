@@ -148,7 +148,7 @@ def reorder_equipment(table_name, item_ids):
     if not model:
         raise ValueError(f"Table inconnue : {table_name}")
     for i, item_id in enumerate(item_ids):
-        record = model.query.get(item_id)
+        record = db.session.get(model, item_id)
         if record:
             record.display_order = i
     db.session.commit()
@@ -163,7 +163,7 @@ def update_equipment_daily_rate(table_name, record_id, value):
     if not model:
         raise ValueError(f"Table inconnue : {table_name}")
 
-    record = model.query.get(record_id)
+    record = db.session.get(model, record_id)
     if not record:
         raise ValueError(
             f"Enregistrement {record_id} introuvable dans {table_name}")
@@ -291,7 +291,7 @@ def delete_salary_rate(rate_id):
     """Supprime une position (et toutes ses déclinaisons d'annexes)."""
     if str(rate_id).startswith("renfort_"):
         rate_id = int(str(rate_id).replace("renfort_", ""))
-    rate = SalaryRate.query.get(rate_id)
+    rate = db.session.get(SalaryRate, rate_id)
     if not rate:
         raise ValueError(f"Salaire #{rate_id} introuvable")
 
@@ -312,7 +312,7 @@ def reorder_salary_rates(groups_order):
             clean_id = rate_id
             if str(clean_id).startswith("renfort_"):
                 clean_id = str(clean_id).replace("renfort_", "")
-            rate = SalaryRate.query.get(int(clean_id))
+            rate = db.session.get(SalaryRate, int(clean_id))
             if rate and rate.position_ref:
                 rate.position_ref.group_name = group_name
                 rate.position_ref.display_order = order_counter
@@ -360,7 +360,7 @@ def update_salary_rate(rate_id, field, value):
 
     if str(rate_id).startswith("renfort_"):
         rate_id = int(str(rate_id).replace("renfort_", ""))
-    rate = SalaryRate.query.get(rate_id)
+    rate = db.session.get(SalaryRate, rate_id)
     if not rate:
         raise ValueError(f"Salaire #{rate_id} introuvable")
 
@@ -454,7 +454,7 @@ def add_logistics_rate():
 
 def delete_logistics_rate(rate_id):
     """Supprime une ligne logistique."""
-    rate = LogisticsRate.query.get(rate_id)
+    rate = db.session.get(LogisticsRate, rate_id)
     if not rate:
         raise ValueError(f"Logistique #{rate_id} introuvable")
     db.session.delete(rate)
@@ -467,7 +467,7 @@ def update_logistics_rate(rate_id, field, value):
     if field not in LOGISTICS_EDITABLE_FIELDS:
         raise ValueError(f"Champ non autorisé : {field}")
 
-    rate = LogisticsRate.query.get(rate_id)
+    rate = db.session.get(LogisticsRate, rate_id)
     if not rate:
         raise ValueError(f"Logistique #{rate_id} introuvable")
 
@@ -484,7 +484,7 @@ def update_logistics_rate(rate_id, field, value):
 def reorder_logistics_rates(item_ids):
     """Réordonne les tarifs logistiques."""
     for i, rate_id in enumerate(item_ids):
-        rate = LogisticsRate.query.get(int(rate_id))
+        rate = db.session.get(LogisticsRate, int(rate_id))
         if rate:
             rate.display_order = i
     db.session.commit()

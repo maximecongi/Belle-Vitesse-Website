@@ -57,7 +57,7 @@ def revoke_calendar_subscription(token_id: int, confirm: bool = False) -> Dict[s
     ATTENTION: Action destructrice (Scope 'admin' requis).
     """
     from models import CalendarSubscription, db
-    sub = CalendarSubscription.query.get(token_id)
+    sub = db.session.get(CalendarSubscription, token_id)
     if not sub:
         return {"success": False, "message": f"Abonnement #{token_id} introuvable."}
 

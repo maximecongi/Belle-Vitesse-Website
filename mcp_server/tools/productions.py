@@ -8,19 +8,77 @@ from mcp_server.decorators import run_in_flask_context, require_mcp_scope
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
-def list_productions() -> List[Dict[str, Any]]:
-    """Liste toutes les sociétés de production cliente enregistrées."""
+def list_productions(
+    query: Optional[str] = None,
+    limit: Optional[int] = 50,
+    offset: Optional[int] = 0,
+) -> List[Dict[str, Any]]:
+    """
+    Liste les sociétés de production avec recherche textuelle et pagination.
+    - query: Recherche par nom, email, téléphone ou adresse
+    - limit: Nombre maximum d'enregistrements retournés (défaut 50, max 500)
+    - offset: Décalage pour la pagination
+    """
     from services.admin.productions import list_productions as _list
-    return _list()
+    from mcp_server.utils import matches_search_query, apply_pagination
+
+    all_prods = _list()
+    filtered = []
+    for p in all_prods:
+        if query and not matches_search_query(p, query, ["name", "email", "phone", "address"]):
+            continue
+        filtered.append(p)
+
+    return apply_pagination(filtered, limit=limit, offset=offset)
 
 
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
 def get_production(production_id: int) -> Optional[Dict[str, Any]]:
-    """Récupère les détails d'une société de production par son ID."""
-    from services.admin.productions import get_production_for_edit
-    return get_production_for_edit(production_id)
+    """Récupère les détails complets d'une société de production par son ID, incluant ses contacts et projets récents."""
+    from models import Production, db
+
+    prod = db.session.get(Production, production_id)
+    if not prod:
+        return None
+
+    contacts_list = [
+        {
+            "id": c.id,
+            "first_name": c.first_name,
+            "last_name": c.last_name,
+            "job": c.job_title or "",
+            "job_title": c.job_title or "",
+            "email": c.mail or "",
+            "phone": c.phone or "",
+        }
+        for c in (prod.contacts or [])
+    ]
+
+    recent_projects = [
+        {
+            "id": p.id,
+            "project_id": p.project_id,
+            "name": p.name,
+            "shoot_start": p.shoot_start_date.strftime("%Y-%m-%d") if p.shoot_start_date else None,
+            "shoot_end": p.shoot_end_date.strftime("%Y-%m-%d") if p.shoot_end_date else None,
+        }
+        for p in (prod.projects or [])
+        if not getattr(p, "deleted_at", None)
+    ][:5]
+
+    return {
+        "id": prod.id,
+        "name": prod.name,
+        "address": prod.address or "",
+        "email": prod.mail or "",
+        "phone": prod.phone or "",
+        "contacts": contacts_list,
+        "contacts_count": len(contacts_list),
+        "recent_projects": recent_projects,
+        "projects_count": len(prod.projects or []),
+    }
 
 
 @mcp.tool()

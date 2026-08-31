@@ -18,7 +18,10 @@ def list_contacts():
         "last_name": "last_name",
         "phone": "phone",
         "mail": "mail",
+        "email": "mail",
         "job_title": "job_title",
+        "job": "job_title",
+        "production_id": "production_id",
         "production_name": lambda r: r.production_rel.name if r.production_rel else "Freelance",
     }
     return generic_list_records(Contact, fields_map, order_by_attr=Contact.last_name)

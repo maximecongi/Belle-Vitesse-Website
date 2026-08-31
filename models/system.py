@@ -79,7 +79,7 @@ class AppSetting(db.Model):
         except Exception:
             pass
 
-        setting = AppSetting.query.get(key)
+        setting = db.session.get(AppSetting, key)
         val = setting.value if setting else default
 
         try:
@@ -128,7 +128,7 @@ class AppSetting(db.Model):
     def set(key, value):
         """Crée ou met à jour un paramètre (et met à jour le cache)."""
         from extensions import cache
-        setting = AppSetting.query.get(key)
+        setting = db.session.get(AppSetting, key)
         if setting:
             setting.value = str(value)
         else:

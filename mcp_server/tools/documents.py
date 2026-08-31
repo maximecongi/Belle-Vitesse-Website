@@ -10,9 +10,9 @@ from mcp_server.decorators import run_in_flask_context, require_mcp_scope
 @require_mcp_scope("read_only")
 def get_vehicle_sheet_data(vehicle_id: str) -> Optional[Dict[str, Any]]:
     """Récupère les caractéristiques techniques et données complètes d'une fiche véhicule PDF par son identifiant."""
-    from models import Vehicle
+    from models import Vehicle, db
     from utils.database import get_configs_for_vehicle
-    v = Vehicle.query.get(vehicle_id)
+    v = db.session.get(Vehicle, vehicle_id)
     if not v:
         return None
     configs = get_configs_for_vehicle(vehicle_id)

@@ -172,7 +172,7 @@ def init_pre_quotes_routes(app):
     def admin_pre_quote_pdf(quote_id):
         try:
             pdf_bytes = get_pre_quote_pdf(quote_id)
-            quote = PreQuote.query.get(quote_id)
+            quote = db.session.get(PreQuote, quote_id)
             return send_file(
                 BytesIO(pdf_bytes),
                 mimetype='application/pdf',

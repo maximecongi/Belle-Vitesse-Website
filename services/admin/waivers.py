@@ -1,7 +1,7 @@
 import logging
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy.orm import joinedload
 
@@ -302,7 +302,7 @@ def delete_production_waiver_internal(project_id):
             trigger_n8n_webhook(webhook_url, method="DELETE",
                                 waiver_id=waiver.waiver_id, project_id=waiver.project.project_id)
         _cleanup_waiver_assets("production", waiver)
-        waiver.deleted_at = datetime.utcnow()
+        waiver.deleted_at = datetime.now(timezone.utc)
         db.session.commit()
     except Exception as e:
         logger.error(f"❌ Erreur suppression décharge production : {e}")
@@ -507,7 +507,7 @@ def delete_pilot_waiver_internal(project_id):
             trigger_n8n_webhook(webhook_url, method="DELETE",
                                 waiver_id=waiver.waiver_id, project_id=waiver.project.project_id)
         _cleanup_waiver_assets("pilot", waiver)
-        waiver.deleted_at = datetime.utcnow()
+        waiver.deleted_at = datetime.now(timezone.utc)
         db.session.commit()
     except Exception as e:
         logger.error(
