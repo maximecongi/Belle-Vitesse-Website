@@ -31,16 +31,21 @@ def get_system_status() -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"❌ Erreur de ping MySQL : {e}")
         mysql_status = f"error: {str(e)}"
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
 
     # 2. Métriques Système (Espace disque, charge)
     disk_total_gb = 0
     disk_free_gb = 0
     disk_used_percent = 0
     try:
-        total, used, free = shutil.disk_usage("/")
+        path_to_check = "/" if os.path.exists("/") else os.getcwd()
+        total, used, free = shutil.disk_usage(path_to_check)
         disk_total_gb = round(total / (1024 ** 3), 2)
         disk_free_gb = round(free / (1024 ** 3), 2)
-        disk_used_percent = round((used / total) * 100, 1)
+        disk_used_percent = round((used / total) * 100, 1) if total > 0 else 0
     except Exception as e:
         logger.warning(f"⚠️ Erreur lecture disque : {e}")
 
@@ -58,9 +63,21 @@ def get_system_status() -> Dict[str, Any]:
     total_mcp_audits = 0
     try:
         active_mcp_tokens = McpApiToken.query.filter_by(is_active=True).count()
+    except Exception as e:
+        logger.warning(f"⚠️ Erreur lecture tokens MCP : {e}")
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+
+    try:
         total_mcp_audits = McpAuditLog.query.count()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"⚠️ Erreur lecture logs audit MCP : {e}")
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
 
     return {
         "status": "healthy" if mysql_status == "connected" else "degraded",

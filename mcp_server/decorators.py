@@ -65,16 +65,30 @@ def run_in_flask_context(func):
                         error_msg = result.get("message") or result.get("error")
             except PermissionError as pe:
                 from models import db
-                db.session.rollback()
+                try:
+                    db.session.rollback()
+                except Exception:
+                    pass
                 status = "blocked_403"
                 error_msg = str(pe)
-                raise pe
+                result = {
+                    "status": "error",
+                    "error_code": 403,
+                    "message": f"⛔ ACCÈS REFUSÉ : {str(pe)}",
+                }
             except Exception as ex:
                 from models import db
-                db.session.rollback()
+                try:
+                    db.session.rollback()
+                except Exception:
+                    pass
                 status = "error"
                 error_msg = str(ex)
-                raise ex
+                result = {
+                    "status": "error",
+                    "error_code": 500,
+                    "message": f"❌ Erreur lors de l'exécution de l'outil '{func.__name__}' : {str(ex)}",
+                }
             finally:
                 exec_time_ms = int((time.time() - start_time) * 1000)
                 try:
