@@ -74,8 +74,87 @@ def delete_inspection(mode: str, record_id: int, confirm: bool = False) -> Dict[
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
-def get_inspection_form_context(mode: str = "checkout") -> Dict[str, Any]:
-    """Récupère le contexte nécessaire à la création/édition d'un Checkout ou Checkin (véhicules, projets)."""
+def get_inspection_form_context(
+    mode: str = "checkout",
+    project_id: Optional[int] = None,
+    category: Optional[str] = None,
+    compact: Optional[bool] = True,
+) -> Dict[str, Any]:
+    """
+    Récupère le contexte nécessaire à la création/édition d'un départ (checkout) ou retour (checkin).
+    - mode: 'checkout' (départ) ou 'checkin' (retour)
+    - project_id: Filtrer sur un projet spécifique
+    - category: Filtrer un seul sous-ensemble ('projects', 'vehicles', 'users')
+    - compact: True par défaut pour optimiser l'usage des tokens
+    """
     from services.admin.checkouts import get_checkout_form_context
-    return get_checkout_form_context()
+
+    raw = get_checkout_form_context()
+    if not compact:
+        if category and category.lower() in raw:
+            return {category.lower(): raw[category.lower()]}
+        return raw
+
+    # Version compacte épurée
+    raw_projects = raw.get("projects", [])
+    if project_id:
+        selected_projects = [p for p in raw_projects if str(p.get("id")) == str(project_id)]
+    else:
+        selected_projects = raw_projects
+
+    compact_projects = [
+        {
+            "id": int(p["id"]) if str(p.get("id", "")).isdigit() else p.get("id"),
+            "name": p.get("fields", {}).get("Nom") or p.get("name"),
+            "production": p.get("fields", {}).get("_production_name"),
+            "departure_date": p.get("fields", {}).get("Date de départ"),
+            "shoot_start": p.get("fields", {}).get("Date de début de tournage"),
+            "shoot_end": p.get("fields", {}).get("Date de fin de tournage"),
+            "vehicles_to_check": p.get("fields", {}).get("Véhicules à contrôler", []),
+            "main_vehicle_name": p.get("fields", {}).get("_vehicle_name"),
+        }
+        for p in selected_projects
+    ]
+
+    compact_vehicles = [
+        {
+            "id": v.get("id"),
+            "name": v.get("fields", {}).get("name") or v.get("id"),
+            "is_blocked": bool(v.get("fields", {}).get("_blocked_by")),
+            "blocked_by": v.get("fields", {}).get("_blocked_by"),
+        }
+        for v in raw.get("vehicles", [])
+    ]
+
+    compact_users = [
+        {
+            "id": int(u["id"]) if str(u.get("id", "")).isdigit() else u.get("id"),
+            "name": f"{u.get('fields', {}).get('firstname', '')} {u.get('fields', {}).get('lastname', '')}".strip(),
+        }
+        for u in raw.get("users", [])
+    ]
+
+    res = {
+        "mode": mode.lower(),
+        "projects": compact_projects,
+        "vehicles": compact_vehicles,
+        "users": compact_users,
+        "checkpoints_note": "Utilisez l'outil 'get_checkpoints_for_vehicle(vehicle_id)' pour obtenir les points de contrôle d'un véhicule spécifique.",
+    }
+
+    cat_map = {
+        "projects": "projects",
+        "project": "projects",
+        "vehicles": "vehicles",
+        "vehicle": "vehicles",
+        "users": "users",
+        "user": "users",
+    }
+
+    if category:
+        key = cat_map.get(category.lower())
+        if key and key in res:
+            return {key: res[key]}
+
+    return res
 
