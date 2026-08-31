@@ -62,9 +62,9 @@ def get_salary_rates(
 ) -> List[Dict[str, Any]]:
     """
     Récupère les tarifs salariaux des techniciens / pilotes avec recherche, filtres et pagination.
-    - query: Recherche par nom de poste/rôle (ex: 'pilote', 'cadreur', 'assistant')
-    - annexe: Filtrer par convention ('Annexe 1', 'Annexe 2', 'Annexe 3', 'Annexe 1 renfort')
-    - group_name: Filtrer par groupe de métier (ex: 'PILOTES', 'CADRAGE', 'RÉGIE')
+    - query: Recherche par intitulé de poste ou rôle (ex: 'Pilote', 'Cadreur', 'Machiniste', 'Remote head', 'spécialisé')
+    - annexe: Filtrer par convention ('Annexe 1', 'Annexe 3', 'Court-métrage', 'Publicité', 'USPA', 'Facture', 'USPA renfort', 'Annexe 1 renfort')
+    - group_name: Filtrer par famille de métier ('Pilote', 'Cadreur', 'Grip', 'Remote head')
     - limit: Nombre max de résultats retournés (défaut 50, max 500)
     - offset: Décalage de pagination
     """
