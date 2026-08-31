@@ -363,16 +363,30 @@ def delete_project(project_id: int, confirm: bool = False) -> Dict[str, Any]:
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
-def get_project_form_context(compact: Optional[bool] = True) -> Dict[str, Any]:
+def get_project_form_context(
+    category: Optional[str] = None,
+    compact: Optional[bool] = True,
+) -> Dict[str, Any]:
     """
     Récupère le contexte nécessaire aux formulaires de projet (listes de sélections).
-    - compact: Si True (par défaut), retourne un payload allégé (id, nom, tarif) pour économiser les tokens. Si False, retourne l'intégralité des attributs catalogue.
+    - category: Filtrer sur un domaine précis ('productions', 'contacts', 'vehicles', 'heads') ou None pour tout
+    - compact: Si True (par défaut), retourne un payload ultra-léger (id, nom) pour économiser les tokens. Si False, retourne l'intégralité des attributs catalogue.
     """
     from services.admin.projects import get_project_form_context as _context
     raw = _context()
     if not compact:
+        if category and category.lower() in raw:
+            return {category.lower(): raw[category.lower()]}
         return raw
 
+    compact_prods = [
+        {"id": int(p["id"]) if str(p.get("id", "")).isdigit() else p.get("id"), "name": p.get("fields", {}).get("Nom") or p.get("name", "")}
+        for p in raw.get("productions", [])
+    ]
+    compact_contacts = [
+        {"id": int(c["id"]) if str(c.get("id", "")).isdigit() else c.get("id"), "name": c.get("name", "")}
+        for c in raw.get("contacts", [])
+    ]
     compact_vehicles = [
         {
             "id": v.get("id"),
@@ -390,12 +404,17 @@ def get_project_form_context(compact: Optional[bool] = True) -> Dict[str, Any]:
         for h in raw.get("heads", [])
     ]
 
-    return {
-        "productions": raw.get("productions", []),
-        "contacts": raw.get("contacts", []),
+    res = {
+        "productions": compact_prods,
+        "contacts": compact_contacts,
         "vehicles": compact_vehicles,
         "heads": compact_heads,
     }
+
+    if category and category.lower() in res:
+        return {category.lower(): res[category.lower()]}
+
+    return res
 
 
 @mcp.tool()
