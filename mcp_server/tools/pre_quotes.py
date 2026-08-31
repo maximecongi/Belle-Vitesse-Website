@@ -226,19 +226,21 @@ def create_pre_quote_version(pre_quote_id: int, version_label: str) -> Dict[str,
 def get_pre_quote_form_context(
     project_id: Optional[int] = None,
     category: Optional[str] = None,
+    include_salaries: Optional[bool] = False,
     compact: Optional[bool] = True,
 ) -> Dict[str, Any]:
     """
-    Récupère le contexte du formulaire pré-devis (paramètres livraison, projets, tarifs).
-    - project_id: ID du projet spécifique (évite de charger tous les projets de la base)
-    - category: Filtrer sur un domaine précis ('delivery', 'projects', 'equipment', 'salaries', 'logistics') ou None pour tout
-    - compact: Si True (par défaut), optimise et allège le volume de données retourné pour économiser les tokens
+    Récupère le contexte allégé pour la création/chiffrage d'un pré-devis.
+    - project_id: ID d'un projet spécifique (recommandé, évite de charger tous les projets)
+    - category: Filtrer un seul bloc ('delivery', 'projects', 'equipment', 'salaries', 'logistics')
+    - include_salaries: False par défaut (utiliser get_salary_rates(query=...) pour chercher un métier précis)
+    - compact: True par défaut pour optimiser l'usage des tokens
     """
     from services.admin.pre_quote import get_delivery_config
     from services.admin.projects import list_projects
     from services.admin.pricing import list_equipment_rates, list_salary_rates, list_logistics_rates
 
-    # Projets
+    # 1. Projets (nettoyés des images lourdes)
     raw_projects = list_projects()
     if project_id:
         selected_projects = [p for p in raw_projects if p.get("id") == project_id]
@@ -246,74 +248,111 @@ def get_pre_quote_form_context(
         selected_projects = raw_projects
 
     if compact:
-        proj_data = [
-            {
+        clean_projects = []
+        for p in selected_projects:
+            v_names = []
+            for v in p.get("vehicles", []):
+                if isinstance(v, dict):
+                    v_obj = v.get("vehicle", {})
+                    v_name = (
+                        v_obj.get("fields", {}).get("name")
+                        or v_obj.get("name")
+                        or v_obj.get("id")
+                        if isinstance(v_obj, dict)
+                        else v.get("name")
+                    )
+                    if v_name:
+                        v_names.append(v_name)
+                elif isinstance(v, str):
+                    v_names.append(v)
+
+            h_names = []
+            for h in p.get("heads", []):
+                if isinstance(h, dict):
+                    h_name = h.get("name") or h.get("id")
+                    if h_name:
+                        h_names.append(h_name)
+                elif isinstance(h, str):
+                    h_names.append(h)
+
+            clean_projects.append({
                 "id": p.get("id"),
                 "project_id": p.get("project_id"),
                 "name": p.get("name"),
-                "production_name": p.get("production_name"),
-                "departure_date": p.get("departure_date"),
-                "shoot_start": p.get("shoot_start"),
-                "shoot_end": p.get("shoot_end"),
-                "return_date": p.get("return_date"),
-                "vehicles": p.get("vehicles", []),
-                "heads": p.get("heads", []),
-            }
-            for p in selected_projects
-        ]
+                "production": p.get("production"),
+                "departure_date": p.get("raw_departure_date") or p.get("departure_date"),
+                "return_date": p.get("raw_return_date") or p.get("return_date"),
+                "vehicles": v_names,
+                "heads": h_names,
+            })
+        proj_data = clean_projects
     else:
         proj_data = selected_projects
 
-    # Équipements
+    # 2. Équipements & Tarifs journaliers
     raw_eq = list_equipment_rates()
     if compact:
         eq_data = {}
         for cat_key, cat_val in raw_eq.items():
             eq_data[cat_key] = [
-                {"id": it.get("id"), "name": it.get("name"), "daily_rate": it.get("daily_rate")}
+                {
+                    "id": it.get("id"),
+                    "name": it.get("name"),
+                    "daily_rate": it.get("daily_rate"),
+                }
                 for it in cat_val.get("items", [])
             ]
     else:
         eq_data = raw_eq
 
-    # Salaires
-    raw_sal = list_salary_rates()
-    if compact:
-        sal_data = [
-            {
-                "id": r.get("id"),
-                "position": r.get("position"),
-                "group_name": r.get("group_name"),
-                "annexe": r.get("annexe"),
-                "invoice_8h": r.get("invoice_8h"),
-                "invoice_10h": r.get("invoice_10h"),
-            }
-            for r in raw_sal
-        ]
-    else:
-        sal_data = raw_sal
-
-    # Logistique
+    # 3. Logistique
     raw_log = list_logistics_rates()
     if compact:
         log_data = [
-            {"id": l.get("id"), "name": l.get("name") or l.get("label"), "amount": l.get("amount") or l.get("rate")}
+            {
+                "id": l.get("id"),
+                "name": l.get("item_name") or l.get("name") or l.get("label"),
+                "daily_rate": l.get("daily_rate") or l.get("amount"),
+            }
             for l in raw_log
         ]
     else:
         log_data = raw_log
 
+    # 4. Paramètres livraison
     delivery_data = get_delivery_config()
 
     full_response = {
         "delivery_config": delivery_data,
         "projects": proj_data,
         "equipment_rates": eq_data,
-        "salary_rates": sal_data,
         "logistics_rates": log_data,
     }
 
-    # Mapping category
+    # 5. Salaires (uniquement si demandé ou si category='salaries')
+    if include_salaries or (category and category.lower() in ("salaries", "salary_rates")):
+        raw_sal = list_salary_rates()
+        if compact:
+            full_response["salary_rates"] = [
+                {
+                    "id": r.get("id"),
+                    "position": r.get("position"),
+                    "group_name": r.get("group_name"),
+                    "annexe": r.get("annexe"),
+                    "invoice_8h": r.get("invoice_8h"),
+                    "invoice_10h": r.get("invoice_10h"),
+                }
+                for r in raw_sal
+            ]
+        else:
+            full_response["salary_rates"] = raw_sal
+    else:
+        full_response["salary_rates_note"] = (
+            "Pour consulter ou chiffrer les postes techniciens, utilisez l'outil dédié 'get_salary_rates(query=...)' "
+            "ou passez include_salaries=True / category='salaries'."
+        )
+
+    # Filtrage par category si demandé
     cat_map = {
         "delivery": "delivery_config",
         "delivery_config": "delivery_config",
