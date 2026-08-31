@@ -56,12 +56,21 @@ def parse_flexible_date(val: Union[str, date, datetime, None]) -> Optional[str]:
     return None
 
 
+def _normalize_text(txt: Any) -> str:
+    """Normalise un texte en minuscules et sans accents pour une recherche tolérante."""
+    if txt is None:
+        return ""
+    import unicodedata
+    nfkd = unicodedata.normalize("NFD", str(txt).lower())
+    return "".join(c for c in nfkd if not unicodedata.combining(c))
+
+
 def matches_search_query(item: Union[Dict[str, Any], Any], query: Optional[str], fields: Sequence[str]) -> bool:
-    """Vérifie si au moins un des champs spécifiés contient la requête de recherche (insensible à la casse)."""
+    """Vérifie si au moins un des champs spécifiés contient la requête de recherche (insensible à la casse et aux accents)."""
     if not query:
         return True
-    q = query.strip().lower()
-    if not q:
+    q_norm = _normalize_text(query).strip()
+    if not q_norm:
         return True
 
     for field in fields:
@@ -72,7 +81,8 @@ def matches_search_query(item: Union[Dict[str, Any], Any], query: Optional[str],
             val = getattr(item, field)
 
         if val is not None:
-            if q in str(val).lower():
+            val_norm = _normalize_text(val)
+            if q_norm in val_norm:
                 return True
     return False
 

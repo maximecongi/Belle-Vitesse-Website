@@ -78,7 +78,7 @@ def get_salary_rates(
             continue
         if group_name and r.get("group_name", "").lower() != group_name.strip().lower():
             continue
-        if query and not matches_search_query(r, query, ["position_name", "name", "group_name", "annexe", "notes"]):
+        if query and not matches_search_query(r, query, ["position", "position_name", "name", "group_name", "annexe", "notes", "role"]):
             continue
         filtered.append(r)
 
