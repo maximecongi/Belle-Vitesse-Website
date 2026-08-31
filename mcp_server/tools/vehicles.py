@@ -19,18 +19,44 @@ def get_vehicles_with_config() -> List[Dict[str, Any]]:
 @require_mcp_scope("write")
 def save_vehicle_checkpoint_config(vehicle_id: str, enabled_keys: List[str]) -> Dict[str, Any]:
     """Sauvegarde la configuration des points de contrôle activés pour un véhicule."""
+    from utils.database import get_vehicles
     from services.admin.vehicle_config import save_vehicle_checkpoint_config as _save
-    success = _save(vehicle_id, enabled_keys)
-    return {"success": success, "message": "Configuration sauvegardée."}
+
+    all_v = get_vehicles()
+    matching_v = next(
+        (v for v in all_v if v.get("id") == vehicle_id or v.get("fields", {}).get("name") == vehicle_id),
+        None,
+    )
+    if not matching_v:
+        return {"success": False, "message": f"Véhicule '{vehicle_id}' introuvable."}
+
+    actual_id = matching_v.get("id") or vehicle_id
+    success = _save(actual_id, enabled_keys)
+    return {"success": success, "message": "Configuration sauvegardée." if success else "Échec de sauvegarde."}
 
 
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
 def get_checkpoints_for_vehicle(vehicle_id: str) -> List[Dict[str, Any]]:
-    """Récupère la liste des points de contrôle applicables pour un véhicule spécifique."""
+    """
+    Récupère la liste des points de contrôle applicables pour un véhicule spécifique.
+    Retourne une liste vide si le véhicule est introuvable ou invalide.
+    """
+    from utils.database import get_vehicles
     from utils.checkpoints import get_checkpoints_for_vehicle as _get
-    return _get(vehicle_id)
+
+    all_v = get_vehicles()
+    matching_v = next(
+        (v for v in all_v if v.get("id") == vehicle_id or v.get("fields", {}).get("name") == vehicle_id),
+        None,
+    )
+    if not matching_v:
+        return []
+
+    actual_id = matching_v.get("id") or vehicle_id
+    vehicle_name = matching_v.get("fields", {}).get("name") or vehicle_id
+    return _get(actual_id, vehicle_name=vehicle_name)
 
 
 @mcp.tool()
@@ -63,9 +89,22 @@ def check_vehicle_availability(
             "message": "Format de date invalide pour start_date ou end_date. Utilisez 'YYYY-MM-DD' ou 'DD/MM/YYYY'.",
         }
 
-    # Récupérer nom du véhicule
+    # Récupérer et valider le véhicule
     all_v = {v.get("id"): v for v in get_vehicles()}
-    v_data = all_v.get(vehicle_id, {})
+    if vehicle_id not in all_v:
+        by_name = next((v for v in all_v.values() if v.get("fields", {}).get("name") == vehicle_id), None)
+        if by_name:
+            v_data = by_name
+            vehicle_id = by_name.get("id")
+        else:
+            return {
+                "success": False,
+                "available": False,
+                "message": f"Véhicule '{vehicle_id}' introuvable dans le catalogue.",
+            }
+    else:
+        v_data = all_v[vehicle_id]
+
     vehicle_name = v_data.get("fields", {}).get("name") or vehicle_id
 
     req_start = datetime.strptime(parsed_start, "%Y-%m-%d").date()

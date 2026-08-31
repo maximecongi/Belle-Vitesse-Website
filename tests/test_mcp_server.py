@@ -332,6 +332,10 @@ class MCPServerFullTestSuite(unittest.TestCase):
         save_chk = vehicles.save_vehicle_checkpoint_config(v_id, ["exterior_cleanliness"])
         self.assertTrue(save_chk.get("success"))
 
+        # Test véhicule invalide : renvoie [] proprement
+        invalid_cps = vehicles.get_checkpoints_for_vehicle("recINVALIDE999")
+        self.assertEqual(invalid_cps, [])
+
     # ── 11. SÉCURITÉ & AUDIT ─────────────────────────────────────
     def test_security_scopes_and_audit(self):
         # Read-only scope blocks write
@@ -427,6 +431,11 @@ class MCPServerFullTestSuite(unittest.TestCase):
         # Date de fin antérieure
         res_err = vehicles.check_vehicle_availability(v_id, "2030-01-10", "2030-01-05")
         self.assertFalse(res_err.get("success"))
+
+        # Véhicule inexistant
+        res_inv = vehicles.check_vehicle_availability("recINVALIDE999", "2030-01-01", "2030-01-05")
+        self.assertFalse(res_inv.get("success"))
+        self.assertFalse(res_inv.get("available"))
 
     def test_dashboard_summary_and_pre_quote_duplicate(self):
         # Dashboard summary
