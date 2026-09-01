@@ -319,8 +319,8 @@
 .badge-pill[data-val="technicien"],
 .badge-pill[data-val="User"],
 .badge-pill[data-val="user"] {
-    background: #f3f4f6;
-    color: #374151;
+    background: #ffedd5;
+    color: #c2410c;
 }
 
 .badge-pill[data-val="Freelance"] {
