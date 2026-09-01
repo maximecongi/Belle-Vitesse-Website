@@ -37,12 +37,12 @@
                     <td class="searchable">{{ u.mail or '—' }}</td>
                     <td class="searchable">{{ u.job or '—' }}</td>
                     <td class="searchable">
-                        <span class="badge-pill" data-val="{{ u.role or 'user' }}">
-                            {{ u.role or 'user' }}
+                        <span class="badge-pill" data-val="{{ u.role_display if u.role_display is defined else (u.role or 'Technicien') }}">
+                            {{ u.role_display if u.role_display is defined else (u.role or 'Technicien') }}
                         </span>
                     </td>
                     <td>
-                        {% set target_level = role_hierarchy.get((u.role or 'User')|lower, 0) %}
+                        {% set target_level = role_hierarchy.get((u.role or 'Technicien')|lower, 0) %}
                         {% set is_self = (u.id == session.get('admin_user_id')) %}
                         {% if is_self and current_level >= target_level %}
                         <div>

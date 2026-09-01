@@ -110,7 +110,7 @@ class APIRouteSmokeTest(unittest.TestCase):
         with self.app.app_context():
             unique_mail = f"me-{uuid.uuid4().hex[:8]}@bellevitesse.com"
             user = User(firstname="Simon", lastname="Maignan",
-                        mail=unique_mail, role="Administrator")
+                        mail=unique_mail, role="Administrateur")
             db.session.add(user)
             db.session.commit()
 
@@ -121,7 +121,7 @@ class APIRouteSmokeTest(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         data = resp.get_json()
         self.assertEqual(data["firstname"], "Simon")
-        self.assertEqual(data["role"], "Administrator")
+        self.assertEqual(data["role"], "Administrateur")
 
 
 if __name__ == "__main__":

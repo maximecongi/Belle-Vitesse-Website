@@ -1,6 +1,18 @@
 from models.db import db
 
 
+ROLE_TRANSLATION = {
+    'super administrator': 'Super Administrateur',
+    'super administrateur': 'Super Administrateur',
+    'administrator': 'Administrateur',
+    'administrateur': 'Administrateur',
+    'manager': 'Manager',
+    'commercial': 'Commercial',
+    'user': 'Technicien',
+    'technicien': 'Technicien',
+}
+
+
 class User(db.Model):
     """Modèle représentant un utilisateur du système (Administrateur, Manager, etc.)."""
     __tablename__ = "users"
@@ -33,6 +45,11 @@ class User(db.Model):
         return r
 
     @property
+    def role_display(self):
+        """Retourne le libellé officiel français du rôle pour l'affichage."""
+        return ROLE_TRANSLATION.get(self.role_lower, self.role or 'Technicien')
+
+    @property
     def is_admin(self):
         """Retourne True si l'utilisateur est Administrateur ou Super Administrateur."""
         return self.role_lower in ('administrateur', 'super administrateur', 'administrator', 'super administrator')
@@ -51,7 +68,7 @@ class User(db.Model):
             "mail": self.mail,
             "phone": self.phone,
             "job": self.job,
-            "role": self.role,
+            "role": self.role_display,
         }
 
     def __repr__(self):

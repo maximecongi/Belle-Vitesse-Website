@@ -55,8 +55,8 @@
                         <div class="u-text-xs u-text-muted">{{ u.mail }}</div>
                     </td>
                     <td>
-                        <span class="badge-pill" data-val="{{ u.role or 'User' }}">
-                            {{ u.role or 'User' }}
+                        <span class="badge-pill" data-val="{{ u.role_display if u.role_display is defined else (u.role or 'Technicien') }}">
+                            {{ u.role_display if u.role_display is defined else (u.role or 'Technicien') }}
                         </span>
                     </td>
                     <td>
