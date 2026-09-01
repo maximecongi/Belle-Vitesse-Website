@@ -132,6 +132,29 @@ class DevRoleSwitcherTestCase(unittest.TestCase):
         with self.client.session_transaction() as sess:
             self.assertEqual(sess["admin_user_role"], "Super Administrator")
 
+    def test_user_cannot_access_or_see_catalog_update(self):
+        """User role should not see catalog_update in sidebar nav and should be forbidden on catalog preview/update."""
+        self._login()
+        self.app.config["FLASK_ENV"] = "development"
+
+        # Switch to User
+        self.client.post("/admin/dev/switch-role", data={"role": "User"})
+
+        # Dashboard sidebar check: 'Mise à jour du catalogue' should NOT be present
+        resp_dash = self.client.get("/admin/dashboard")
+        self.assertEqual(resp_dash.status_code, 200)
+        self.assertNotIn("Mise à jour du catalogue", resp_dash.data.decode("utf-8"))
+
+        # Accessing /admin/catalog/preview directly should redirect to dashboard
+        resp_prev = self.client.get("/admin/catalog/preview", follow_redirects=False)
+        self.assertEqual(resp_prev.status_code, 302)
+        self.assertIn("/admin/dashboard", resp_prev.location)
+
+        # Accessing /admin/catalog/update directly should redirect to dashboard
+        resp_up = self.client.get("/admin/catalog/update", follow_redirects=False)
+        self.assertEqual(resp_up.status_code, 302)
+        self.assertIn("/admin/dashboard", resp_up.location)
+
 
 if __name__ == "__main__":
     unittest.main()

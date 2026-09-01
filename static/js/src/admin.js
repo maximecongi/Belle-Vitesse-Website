@@ -669,6 +669,10 @@ function init() {
         vTriggers.forEach(trigger => {
             trigger.addEventListener('click', (e) => {
                 e.preventDefault();
+                const iframe = vehiclesModal.querySelector('iframe');
+                if (iframe && !iframe.getAttribute('src') && iframe.dataset.src) {
+                    iframe.setAttribute('src', iframe.dataset.src);
+                }
                 vehiclesModal.style.display = 'flex';
             });
         });

@@ -54,13 +54,16 @@
                         {{ current_user.firstname }} {{ current_user.lastname }}
                     </div>
                     {% if config.FLASK_ENV != 'production' %}
-                    <form action="{{ url_for('admin_dev_switch_role') }}" method="POST" class="admin-dev-role-form" id="devRoleForm" title="Mode Développement : Tester un autre rôle">
+                    <form action="{{ url_for('admin_dev_switch_role') }}" method="POST" class="admin-dev-role-form"
+                        id="devRoleForm" title="Mode Développement : Tester un autre rôle">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <input type="hidden" name="next" value="{{ request.full_path if request.query_string else request.path }}">
+                        <input type="hidden" name="next"
+                            value="{{ request.full_path if request.query_string else request.path }}">
                         <div class="admin-dev-role-wrapper">
-                            <select name="role" class="badge-pill admin-header-user-role admin-dev-role-select" data-val="{{ current_user.role }}" onchange="this.form.submit()">
+                            <select name="role" class="badge-pill admin-header-user-role admin-dev-role-select"
+                                data-val="{{ current_user.role }}" onchange="this.form.submit()">
                                 {% for r in ['Super Administrator', 'Administrator', 'Manager', 'Commercial', 'User'] %}
-                                <option value="{{ r }}" {% if current_user.role_lower == r.lower() %}selected{% endif %}>
+                                <option value="{{ r }}" {% if current_user.role_lower==r.lower() %}selected{% endif %}>
                                     {{ r }}
                                 </option>
                                 {% endfor %}
@@ -83,22 +86,22 @@
                 {% set role_permissions = {
                 'user': {'sections': ['dashboard','departs','retours','tools'],
                 'nav': ['dashboard','checkouts','production_waivers','pilot_waivers',
-                'checkins','incidents','signature','docs','api_docs','catalog_update']},
-                'commercial': {'sections': ['dashboard','tournages','admin'],
+                'checkins','incidents','signature']},
+                'commercial': {'sections': ['dashboard','tournages','admin','tools'],
                 'nav': ['dashboard','projects','archives','booking','pre_quotes',
                 'productions','contacts','pricing','catalog_pdf','mcp_connector',
-                'calendar']},
+                'calendar','signature','docs','api_docs','catalog_update']},
                 'manager': {'sections': ['dashboard','tournages','departs','retours','admin','tools'],
                 'nav': ['dashboard','projects','archives','booking','pre_quotes',
                 'productions','contacts','checkouts','production_waivers',
                 'pilot_waivers','checkins','incidents','catalog_pdf','mcp_connector',
-                'calendar','signature','docs','api_docs']},
+                'calendar','signature','docs','api_docs','catalog_update']},
                 'administrator': {'sections': ['dashboard','tournages','departs','retours','flotte','admin','tools'],
                 'nav': ['dashboard','projects','archives','booking','pre_quotes',
                 'productions','contacts','checkouts','production_waivers',
                 'pilot_waivers','checkins','incidents','vehicles',
                 'users','pricing','catalog_pdf','mcp_connector','settings','calendar',
-                'newsletter','signature','docs','api_docs']},
+                'newsletter','signature','docs','api_docs','catalog_update']},
                 'super administrator': {'sections': ['all'], 'nav': ['all']}
                 } %}
 
@@ -222,7 +225,7 @@
         <div class="admin-modal-container">
             <button type="button" class="admin-modal-close" id="closeVehiclesModal">&times;</button>
             <div class="admin-modal-content">
-                <iframe src="{{ url_for('admin_check_vehicles') }}" class="admin-modal-iframe"></iframe>
+                <iframe src="" data-src="{{ url_for('admin_check_vehicles') }}" class="admin-modal-iframe"></iframe>
             </div>
         </div>
     </div>
