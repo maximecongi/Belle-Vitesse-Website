@@ -22,7 +22,7 @@ ROLE_HIERARCHY = {
 ASSIGNABLE_ROLES = {
     'super administrator': ['Administrator', 'Manager', 'Commercial', 'User'],
     'administrator': ['Manager', 'Commercial', 'User'],
-    'manager': ['User'],
+    'manager': ['Commercial', 'User'],
     'commercial': [],
     'user': [],
 }
@@ -53,8 +53,13 @@ def _is_self(target_user):
 
 def _can_manage_user(target_user):
     """Vérifie si l'utilisateur connecté peut modifier/supprimer un utilisateur cible.
-    On peut gérer soi-même ou les utilisateurs de niveau strictement inférieur."""
-    return _is_self(target_user) or _get_current_role_level() > _get_target_role_level(target_user)
+    On peut gérer soi-même (si notre rôle actif est au moins égal au rôle cible)
+    ou les utilisateurs de niveau strictement inférieur."""
+    current_level = _get_current_role_level()
+    target_level = _get_target_role_level(target_user)
+    if _is_self(target_user):
+        return current_level >= target_level
+    return current_level > target_level
 
 
 def init_users_routes(app):

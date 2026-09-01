@@ -201,6 +201,62 @@ class DevRoleSwitcherTestCase(unittest.TestCase):
         self.assertEqual(resp_comm_api.status_code, 302)
         self.assertIn("/admin/dashboard", resp_comm_api.location)
 
+    def test_manager_can_modify_only_users_and_commercials(self):
+        """Manager can only edit users with role User or Commercial, and cannot edit other Managers or Admins."""
+        self._login()
+        self.app.config["FLASK_ENV"] = "development"
+
+        with self.app.app_context():
+            u_user = User(firstname="Tech", lastname="User", mail="tech@test.com", role="User")
+            u_comm = User(firstname="Sales", lastname="Commercial", mail="sales@test.com", role="Commercial")
+            u_other_mgr = User(firstname="Other", lastname="Manager", mail="mgr@test.com", role="Manager")
+            u_admin = User(firstname="Big", lastname="Admin", mail="admin@test.com", role="Administrator")
+            db.session.add_all([u_user, u_comm, u_other_mgr, u_admin])
+            db.session.commit()
+            u_user_id = u_user.id
+            u_comm_id = u_comm.id
+            u_other_mgr_id = u_other_mgr.id
+            u_admin_id = u_admin.id
+
+        # Switch to Manager
+        self.client.post("/admin/dev/switch-role", data={"role": "Manager"})
+
+        # 1. Can access edit page for User
+        resp = self.client.get(f"/admin/users/{u_user_id}/edit")
+        self.assertEqual(resp.status_code, 200)
+
+        # 2. Can access edit page for Commercial
+        resp = self.client.get(f"/admin/users/{u_comm_id}/edit")
+        self.assertEqual(resp.status_code, 200)
+
+        # 3. CANNOT access edit page for another Manager
+        resp = self.client.get(f"/admin/users/{u_other_mgr_id}/edit", follow_redirects=False)
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("/admin/users", resp.location)
+
+        # 4. CANNOT access edit page for Administrator
+        resp = self.client.get(f"/admin/users/{u_admin_id}/edit", follow_redirects=False)
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn("/admin/users", resp.location)
+
+        # 5. CANNOT delete another Manager or Admin
+        resp = self.client.post(f"/admin/users/{u_other_mgr_id}/delete", follow_redirects=False)
+        self.assertEqual(resp.status_code, 302)
+
+        resp = self.client.post(f"/admin/users/{u_admin_id}/delete", follow_redirects=False)
+        self.assertEqual(resp.status_code, 302)
+
+        # 6. CANNOT edit own Super Admin account when simulated role is Manager
+        resp_self_edit = self.client.get(f"/admin/users/{self.user_id}/edit", follow_redirects=False)
+        self.assertEqual(resp_self_edit.status_code, 302)
+        self.assertIn("/admin/users", resp_self_edit.location)
+
+        # In users list HTML, Super Admin row should show '—' and NOT 'Modifier'
+        resp_list = self.client.get("/admin/users")
+        self.assertEqual(resp_list.status_code, 200)
+        # Should not have edit link for self.user_id
+        self.assertNotIn(f"/admin/users/{self.user_id}/edit", resp_list.data.decode("utf-8"))
+
 
 if __name__ == "__main__":
     unittest.main()

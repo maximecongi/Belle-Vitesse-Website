@@ -44,7 +44,7 @@
                     <td>
                         {% set target_level = role_hierarchy.get((u.role or 'User')|lower, 0) %}
                         {% set is_self = (u.id == session.get('admin_user_id')) %}
-                        {% if is_self %}
+                        {% if is_self and current_level >= target_level %}
                         <div>
                             <a href="{{ url_for('admin_user_edit', record_id=u.id) }}"
                                 class="admin-btn admin-btn-secondary admin-btn-sm">Modifier</a>
