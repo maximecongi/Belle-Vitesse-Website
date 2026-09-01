@@ -8,10 +8,13 @@ from models import McpApiToken, User, db
 logger = logging.getLogger(__name__)
 
 ROLE_LEVELS = {
+    "technicien": 1,
     "user": 1,
     "commercial": 2,
     "manager": 3,
+    "administrateur": 4,
     "administrator": 4,
+    "super administrateur": 5,
     "super administrator": 5,
 }
 

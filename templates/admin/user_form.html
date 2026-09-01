@@ -44,7 +44,7 @@
 
         <div class="form-group u-mb-4">
             <label class="form-label">Rôle <span class="u-text-error">*</span></label>
-            {% set current_role = data.role if data and data.role else (assignable_roles[0] if assignable_roles else 'User') %}
+            {% set current_role = data.role if data and data.role else (assignable_roles[0] if assignable_roles else 'Technicien') %}
             {% if editing_self is defined and editing_self %}
             {# Édition de son propre profil : rôle verrouillé #}
             <div>

@@ -287,12 +287,16 @@
 }
 
 /* --- User Roles & Contacts --- */
+.badge-pill[data-val="Super Administrateur"],
+.badge-pill[data-val="super administrateur"],
 .badge-pill[data-val="Super Administrator"],
 .badge-pill[data-val="super administrator"] {
     background: #fde68a;
     color: #92400e;
 }
 
+.badge-pill[data-val="Administrateur"],
+.badge-pill[data-val="administrateur"],
 .badge-pill[data-val="Administrator"],
 .badge-pill[data-val="administrator"] {
     background: #ede9fe;
@@ -311,6 +315,8 @@
     color: #115e59;
 }
 
+.badge-pill[data-val="Technicien"],
+.badge-pill[data-val="technicien"],
 .badge-pill[data-val="User"],
 .badge-pill[data-val="user"] {
     background: #f3f4f6;

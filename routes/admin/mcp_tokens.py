@@ -44,17 +44,18 @@ def _ensure_audit_table_exists():
 
 
 @mcp_tokens_bp.route("", methods=["GET"])
-@require_roles("user", "commercial", "manager", "administrator", "super administrator")
+@require_roles("technicien", "commercial", "manager", "administrateur", "super administrateur")
 def mcp_connector_page():
+    from utils.decorators import normalize_role
     user_id = session.get("admin_user_id")
-    user_role = (session.get("admin_user_role") or "").lower()
+    user_role = normalize_role(session.get("admin_user_role"))
 
     if not user_role and user_id:
         try:
             from models import User
             u = db.session.get(User, user_id)
             if u and u.role:
-                user_role = u.role.lower()
+                user_role = normalize_role(u.role)
         except Exception:
             pass
 
@@ -71,7 +72,7 @@ def mcp_connector_page():
             tokens = []
 
     audit_logs = []
-    if user_role == "super administrator":
+    if user_role == "super administrateur":
         try:
             from models import McpAuditLog
             audit_logs = McpAuditLog.query.order_by(McpAuditLog.created_at.desc()).limit(50).all()

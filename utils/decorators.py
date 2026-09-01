@@ -2,13 +2,28 @@ from functools import wraps
 
 from flask import current_app, flash, redirect, request, session, url_for
 
+
+def normalize_role(role_name):
+    """Normalise les libellés de rôles (français et anglais) en minuscules standard."""
+    if not role_name:
+        return "technicien"
+    r = str(role_name).strip().lower()
+    if r in ("super administrator", "super administrateur"):
+        return "super administrateur"
+    if r in ("administrator", "administrateur"):
+        return "administrateur"
+    if r in ("user", "technicien"):
+        return "technicien"
+    return r
+
+
 def require_roles(*allowed_roles):
     """
     Décorateur pour restreindre l'accès à des rôles spécifiques.
     Suppose que `session.get('admin_user_role')` contient le rôle de l'utilisateur.
 
     Usage :
-    @require_roles('administrator', 'manager')
+    @require_roles('administrateur', 'manager')
     """
     def decorator(f):
         @wraps(f)
@@ -22,7 +37,7 @@ def require_roles(*allowed_roles):
                     session["admin_user_id"] = dev_user.id if dev_user else None
                     session["admin_user_firstname"] = dev_user.firstname if dev_user else "Dev"
                     session["admin_user_lastname"] = dev_user.lastname if dev_user else "User"
-                    session["admin_user_role"] = "super administrator"
+                    session["admin_user_role"] = "super administrateur"
                 else:
                     return redirect(url_for("admin_login", next=request.url))
 
@@ -31,13 +46,13 @@ def require_roles(*allowed_roles):
                 pass
 
             # 2. Vérifier le rôle
-            user_role = session.get("admin_user_role", "User").lower()
+            user_role = normalize_role(session.get("admin_user_role", "Technicien"))
 
-            # Super Administrator a accès à tout
-            if user_role == "super administrator":
+            # Super Administrateur a accès à tout
+            if user_role == "super administrateur":
                 return f(*args, **kwargs)
 
-            allowed = [r.lower() for r in allowed_roles]
+            allowed = [normalize_role(r) for r in allowed_roles]
 
             if user_role not in allowed:
                 current_app.logger.warning(

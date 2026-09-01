@@ -31,12 +31,12 @@ class DevRoleSwitcherTestCase(unittest.TestCase):
         with self.app.app_context():
             db.create_all()
 
-            # Create a user with database role Super Administrator
+            # Create a user with database role Super Administrateur
             self.user = User(
                 firstname="Maxime",
                 lastname="Admin",
                 mail="maxime@bellevitesse.com",
-                role="Super Administrator"
+                role="Super Administrateur"
             )
             db.session.add(self.user)
             db.session.commit()
@@ -71,7 +71,7 @@ class DevRoleSwitcherTestCase(unittest.TestCase):
 
         # Ensure session role was NOT modified
         with self.client.session_transaction() as sess:
-            self.assertEqual(sess["admin_user_role"], "Super Administrator")
+            self.assertEqual(sess["admin_user_role"], "Super Administrateur")
 
     def test_switch_role_in_dev_updates_session_only(self):
         """Switching role updates session role without altering the database."""
@@ -90,13 +90,13 @@ class DevRoleSwitcherTestCase(unittest.TestCase):
         with self.client.session_transaction() as sess:
             self.assertEqual(sess["admin_user_role"], "Commercial")
 
-        # Check DB role remains untouched (Super Administrator)
+        # Check DB role remains untouched (Super Administrateur)
         with self.app.app_context():
             db_user = db.session.get(User, self.user_id)
-            self.assertEqual(db_user.role, "Super Administrator")
+            self.assertEqual(db_user.role, "Super Administrateur")
 
     def test_switch_role_affects_template_context_and_permissions(self):
-        """After switching to User, accessing restricted pages like calendar is blocked by require_roles."""
+        """After switching to Technicien, accessing restricted pages like calendar is blocked by require_roles."""
         self._login()
         self.app.config["FLASK_ENV"] = "development"
 
@@ -104,10 +104,10 @@ class DevRoleSwitcherTestCase(unittest.TestCase):
         resp1 = self.client.get("/admin/calendar")
         self.assertEqual(resp1.status_code, 200)
 
-        # 2. Switch role to User
-        self.client.post("/admin/dev/switch-role", data={"role": "User"})
+        # 2. Switch role to Technicien
+        self.client.post("/admin/dev/switch-role", data={"role": "Technicien"})
 
-        # 3. Accessing /admin/calendar is now redirected to dashboard (forbidden for role 'user')
+        # 3. Accessing /admin/calendar is now redirected to dashboard (forbidden for role 'technicien')
         resp2 = self.client.get("/admin/calendar", follow_redirects=False)
         self.assertEqual(resp2.status_code, 302)
         self.assertIn("/admin/dashboard", resp2.location)
@@ -122,23 +122,23 @@ class DevRoleSwitcherTestCase(unittest.TestCase):
         self._login()
         self.app.config["FLASK_ENV"] = "development"
 
-        # Switch to User
-        self.client.post("/admin/dev/switch-role", data={"role": "User"})
+        # Switch to Technicien
+        self.client.post("/admin/dev/switch-role", data={"role": "Technicien"})
         with self.client.session_transaction() as sess:
-            self.assertEqual(sess["admin_user_role"], "User")
+            self.assertEqual(sess["admin_user_role"], "Technicien")
 
         # Reset role
         self.client.post("/admin/dev/switch-role", data={"role": "reset"})
         with self.client.session_transaction() as sess:
-            self.assertEqual(sess["admin_user_role"], "Super Administrator")
+            self.assertEqual(sess["admin_user_role"], "Super Administrateur")
 
     def test_user_cannot_access_or_see_catalog_update(self):
-        """User role should not see catalog_update in sidebar nav and should be forbidden on catalog preview/update."""
+        """Technicien role should not see catalog_update in sidebar nav and should be forbidden on catalog preview/update."""
         self._login()
         self.app.config["FLASK_ENV"] = "development"
 
-        # Switch to User
-        self.client.post("/admin/dev/switch-role", data={"role": "User"})
+        # Switch to Technicien
+        self.client.post("/admin/dev/switch-role", data={"role": "Technicien"})
 
         # Dashboard sidebar check: 'Mise à jour du catalogue' should NOT be present
         resp_dash = self.client.get("/admin/dashboard")

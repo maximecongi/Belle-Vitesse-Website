@@ -16,18 +16,18 @@ from services.admin.calendar_subscriptions import (
     regenerate_subscription,
     revoke_subscription,
 )
-from utils.decorators import require_roles
+from utils.decorators import normalize_role, require_roles
 from utils.mailer import send_calendar_invitation_email
 
 
 def _get_target_user_id(request_form):
     """
     Détermine l'ID utilisateur cible pour les actions calendrier.
-    Seul le Super Administrator peut cibler un autre utilisateur.
+    Seul le Super Administrateur peut cibler un autre utilisateur.
     Pour les autres rôles, force l'ID de l'utilisateur connecté en session.
     """
-    user_role = (session.get("admin_user_role") or "").lower()
-    if user_role == "super administrator":
+    user_role = normalize_role(session.get("admin_user_role"))
+    if user_role == "super administrateur":
         return request_form.get("user_id", type=int)
     return session.get("admin_user_id")
 
@@ -36,11 +36,11 @@ def init_calendar_routes(app):
     """Initialise les routes de gestion des abonnements calendrier."""
 
     @app.route("/admin/calendar", endpoint="admin_calendar")
-    @require_roles("administrator", "manager", "commercial")
+    @require_roles("administrateur", "manager", "commercial")
     def admin_calendar():
         """Page de gestion des abonnements calendrier ICS."""
-        user_role = (session.get("admin_user_role") or "").lower()
-        is_super_admin = (user_role == "super administrator")
+        user_role = normalize_role(session.get("admin_user_role"))
+        is_super_admin = (user_role == "super administrateur")
 
         if is_super_admin:
             users = User.query.order_by(User.firstname).all()

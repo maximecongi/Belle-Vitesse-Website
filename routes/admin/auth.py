@@ -91,11 +91,14 @@ def init_auth_routes(app):
 
         target_role = request.values.get("role", "").strip()
         valid_roles = {
-            "super administrator": "Super Administrator",
-            "administrator": "Administrator",
+            "super administrateur": "Super Administrateur",
+            "super administrator": "Super Administrateur",
+            "administrateur": "Administrateur",
+            "administrator": "Administrateur",
             "manager": "Manager",
             "commercial": "Commercial",
-            "user": "User",
+            "technicien": "Technicien",
+            "user": "Technicien",
         }
 
         user_id = session.get("admin_user_id")

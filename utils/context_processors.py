@@ -135,8 +135,9 @@ def init_context_processors(app):
                     if not user_dict:
                         user_obj = db.session.get(User, user_id)
                         if user_obj:
-                            effective_role = session_role if session_role else (user_obj.role if user_obj.role else "User")
-                            role_lower = effective_role.lower()
+                            from utils.decorators import normalize_role
+                            effective_role = session_role if session_role else (user_obj.role if user_obj.role else "Technicien")
+                            role_lower = normalize_role(effective_role)
                             # Stocke un dict, pas un objet ORM (évite DetachedInstanceError avec Redis)
                             user_dict = {
                                 "id": user_obj.id,
@@ -144,22 +145,25 @@ def init_context_processors(app):
                                 "lastname": user_obj.lastname,
                                 "role": effective_role,
                                 "role_lower": role_lower,
-                                "is_admin": role_lower in ('administrator', 'super administrator'),
-                                "db_role": user_obj.role or "User",
+                                "is_admin": role_lower in ('administrateur', 'super administrateur', 'administrator', 'super administrator'),
+                                "db_role": user_obj.role or "Technicien",
                                 "mail": user_obj.mail or "",
                                 "job": getattr(user_obj, 'job', '') or "",
                                 "phone": getattr(user_obj, 'phone', '') or "",
                             }
                             cache.set(cache_key, user_dict, timeout=300)
 
+                from utils.decorators import normalize_role
+                fallback_role = session.get('admin_user_role', 'Technicien')
+                fallback_role_lower = normalize_role(fallback_role)
                 return {
                     "current_user": user_dict if user_dict else {
                         "id": session.get('admin_user_id', 0),
                         "firstname": session.get('admin_user_firstname', ''),
                         "lastname": session.get('admin_user_lastname', ''),
-                        "role": session.get('admin_user_role', 'User'),
-                        "role_lower": session.get('admin_user_role', 'User').lower(),
-                        "is_admin": session.get('admin_user_role', 'User').lower() in ('administrator', 'super administrator'),
+                        "role": fallback_role,
+                        "role_lower": fallback_role_lower,
+                        "is_admin": fallback_role_lower in ('administrateur', 'super administrateur', 'administrator', 'super administrator'),
                         "mail": "",
                         "job": "",
                         "phone": ""

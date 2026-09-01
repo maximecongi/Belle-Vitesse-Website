@@ -7,42 +7,48 @@ from services.admin.users import (
     list_users,
     update_user,
 )
-from utils.decorators import require_roles
+from utils.decorators import normalize_role, require_roles
 
 # Hiérarchie des rôles (plus le nombre est élevé, plus le rôle est privilégié)
 ROLE_HIERARCHY = {
+    'technicien': 1,
     'user': 1,
     'commercial': 2,
     'manager': 3,
+    'administrateur': 4,
     'administrator': 4,
+    'super administrateur': 5,
     'super administrator': 5,
 }
 
 # Rôles assignables par chaque rôle (rôle-1 et en dessous)
 ASSIGNABLE_ROLES = {
-    'super administrator': ['Administrator', 'Manager', 'Commercial', 'User'],
-    'administrator': ['Manager', 'Commercial', 'User'],
-    'manager': ['Commercial', 'User'],
+    'super administrateur': ['Administrateur', 'Manager', 'Commercial', 'Technicien'],
+    'super administrator': ['Administrateur', 'Manager', 'Commercial', 'Technicien'],
+    'administrateur': ['Manager', 'Commercial', 'Technicien'],
+    'administrator': ['Manager', 'Commercial', 'Technicien'],
+    'manager': ['Commercial', 'Technicien'],
     'commercial': [],
+    'technicien': [],
     'user': [],
 }
 
 
 def _get_current_role_level():
     """Retourne le niveau hiérarchique du rôle de l'utilisateur connecté."""
-    role = session.get("admin_user_role", "User").lower()
+    role = normalize_role(session.get("admin_user_role", "Technicien"))
     return ROLE_HIERARCHY.get(role, 0)
 
 
 def _get_assignable_roles():
     """Retourne la liste des rôles que l'utilisateur connecté peut attribuer."""
-    role = session.get("admin_user_role", "User").lower()
+    role = normalize_role(session.get("admin_user_role", "Technicien"))
     return ASSIGNABLE_ROLES.get(role, [])
 
 
 def _get_target_role_level(user):
     """Retourne le niveau hiérarchique du rôle d'un utilisateur cible."""
-    role = (user.role or "User").lower()
+    role = normalize_role(user.role if user else "Technicien")
     return ROLE_HIERARCHY.get(role, 0)
 
 
@@ -82,7 +88,7 @@ def init_users_routes(app):
         assignable = _get_assignable_roles()
 
         if request.method == "POST":
-            role = request.form.get("role", "User")
+            role = request.form.get("role", "Technicien")
 
             # Validation : le rôle demandé doit être dans la liste autorisée
             if role not in assignable:

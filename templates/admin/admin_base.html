@@ -62,7 +62,7 @@
                         <div class="admin-dev-role-wrapper">
                             <select name="role" class="badge-pill admin-header-user-role admin-dev-role-select"
                                 data-val="{{ current_user.role }}" onchange="this.form.submit()">
-                                {% for r in ['Super Administrator', 'Administrator', 'Manager', 'Commercial', 'User'] %}
+                                {% for r in ['Super Administrateur', 'Administrateur', 'Manager', 'Commercial', 'Technicien'] %}
                                 <option value="{{ r }}" {% if current_user.role_lower==r.lower() %}selected{% endif %}>
                                     {{ r }}
                                 </option>
@@ -84,6 +84,9 @@
 
                 {# ── Permissions par rôle : chaque rôle liste les sections et items visibles ── #}
                 {% set role_permissions = {
+                'technicien': {'sections': ['dashboard','departs','retours','tools'],
+                'nav': ['dashboard','checkouts','production_waivers','pilot_waivers',
+                'checkins','incidents','signature']},
                 'user': {'sections': ['dashboard','departs','retours','tools'],
                 'nav': ['dashboard','checkouts','production_waivers','pilot_waivers',
                 'checkins','incidents','signature']},
@@ -97,12 +100,19 @@
                 'pilot_waivers','checkins','incidents','users','pricing',
                 'catalog_pdf','mcp_connector','calendar','newsletter',
                 'signature','catalog_update']},
+                'administrateur': {'sections': ['dashboard','tournages','departs','retours','flotte','admin','tools'],
+                'nav': ['dashboard','projects','archives','booking','pre_quotes',
+                'productions','contacts','checkouts','production_waivers',
+                'pilot_waivers','checkins','incidents','vehicles',
+                'users','pricing','catalog_pdf','mcp_connector','settings','calendar',
+                'newsletter','signature','docs','api_docs','catalog_update']},
                 'administrator': {'sections': ['dashboard','tournages','departs','retours','flotte','admin','tools'],
                 'nav': ['dashboard','projects','archives','booking','pre_quotes',
                 'productions','contacts','checkouts','production_waivers',
                 'pilot_waivers','checkins','incidents','vehicles',
                 'users','pricing','catalog_pdf','mcp_connector','settings','calendar',
                 'newsletter','signature','docs','api_docs','catalog_update']},
+                'super administrateur': {'sections': ['all'], 'nav': ['all']},
                 'super administrator': {'sections': ['all'], 'nav': ['all']}
                 } %}
 

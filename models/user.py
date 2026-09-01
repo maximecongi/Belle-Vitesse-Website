@@ -20,19 +20,26 @@ class User(db.Model):
 
     @property
     def role_lower(self):
-        """Retourne le rôle en minuscules (par défaut 'user')."""
-        return self.role.lower() if self.role else 'user'
+        """Retourne le rôle en minuscules (par défaut 'technicien')."""
+        if not self.role:
+            return 'technicien'
+        r = self.role.lower().strip()
+        if r in ('super administrator', 'super administrateur'):
+            return 'super administrateur'
+        if r in ('administrator', 'administrateur'):
+            return 'administrateur'
+        if r in ('user', 'technicien'):
+            return 'technicien'
+        return r
 
     @property
     def is_admin(self):
-        """Retourne True si l'utilisateur est Administrator ou Super Administrator."""
-        return self.role_lower in ('administrator', 'super administrator')
+        """Retourne True si l'utilisateur est Administrateur ou Super Administrateur."""
+        return self.role_lower in ('administrateur', 'super administrateur', 'administrator', 'super administrator')
 
     def is_mcp_capable(self):
         """Retourne True si l'utilisateur est autorisé à générer/utiliser des clés API MCP."""
-        # Les MCP tokens ne sont autorisés que pour les utilisateurs avec un rôle explicite
-        # Exclut les rôles génériques comme 'user' et les rôles sans droits administratifs
-        excluded_roles = ['user', 'guest', 'pilot']
+        excluded_roles = ['technicien', 'user', 'guest', 'pilot']
         return self.is_admin and self.role_lower not in excluded_roles
 
     def to_dict(self):
