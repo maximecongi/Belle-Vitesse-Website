@@ -6,7 +6,7 @@ import base64
 import io
 
 import qrcode
-from flask import flash, redirect, render_template, request, url_for
+from flask import flash, redirect, render_template, request, session, url_for
 
 from models import User, db
 from services.admin.calendar_subscriptions import (
@@ -20,6 +20,18 @@ from utils.decorators import require_roles
 from utils.mailer import send_calendar_invitation_email
 
 
+def _get_target_user_id(request_form):
+    """
+    Détermine l'ID utilisateur cible pour les actions calendrier.
+    Seul le Super Administrator peut cibler un autre utilisateur.
+    Pour les autres rôles, force l'ID de l'utilisateur connecté en session.
+    """
+    user_role = (session.get("admin_user_role") or "").lower()
+    if user_role == "super administrator":
+        return request_form.get("user_id", type=int)
+    return session.get("admin_user_id")
+
+
 def init_calendar_routes(app):
     """Initialise les routes de gestion des abonnements calendrier."""
 
@@ -27,13 +39,23 @@ def init_calendar_routes(app):
     @require_roles("administrator", "manager", "commercial")
     def admin_calendar():
         """Page de gestion des abonnements calendrier ICS."""
-        users = User.query.order_by(User.firstname).all()
-        subscriptions = list_all_subscriptions()
+        user_role = (session.get("admin_user_role") or "").lower()
+        is_super_admin = (user_role == "super administrator")
+
+        if is_super_admin:
+            users = User.query.order_by(User.firstname).all()
+            subscriptions = list_all_subscriptions()
+        else:
+            current_user_id = session.get("admin_user_id")
+            user = db.session.get(User, current_user_id) if current_user_id else None
+            users = [user] if user else []
+            sub = get_subscription_for_user(current_user_id) if current_user_id else None
+            subscriptions = [sub] if sub else []
 
         # Construire un dict {user_id: subscription} pour accès rapide
         sub_map = {}
         for sub in subscriptions:
-            if sub.is_active:
+            if sub and sub.is_active:
                 sub_map[sub.user_id] = sub
 
         # Générer les URLs et QR codes pour les abonnements actifs
@@ -53,13 +75,14 @@ def init_calendar_routes(app):
             "admin/calendar.html",
             users=users,
             sub_data=sub_data,
+            is_super_admin=is_super_admin,
         )
 
     @app.route("/admin/calendar/generate", methods=["POST"], endpoint="admin_calendar_generate")
     @require_roles("administrator", "manager", "commercial")
     def admin_calendar_generate():
         """Crée un nouveau token calendrier pour un utilisateur."""
-        user_id = request.form.get("user_id", type=int)
+        user_id = _get_target_user_id(request.form)
         if not user_id:
             flash("Utilisateur invalide.", "error")
             return redirect(url_for("admin_calendar"))
@@ -87,7 +110,7 @@ def init_calendar_routes(app):
     @require_roles("administrator", "manager", "commercial")
     def admin_calendar_revoke():
         """Révoque le token calendrier actif d'un utilisateur."""
-        user_id = request.form.get("user_id", type=int)
+        user_id = _get_target_user_id(request.form)
         if not user_id:
             flash("Utilisateur invalide.", "error")
             return redirect(url_for("admin_calendar"))
@@ -105,7 +128,7 @@ def init_calendar_routes(app):
     @require_roles("administrator", "manager", "commercial")
     def admin_calendar_regenerate():
         """Régénère le token calendrier d'un utilisateur (révoque + recrée)."""
-        user_id = request.form.get("user_id", type=int)
+        user_id = _get_target_user_id(request.form)
         if not user_id:
             flash("Utilisateur invalide.", "error")
             return redirect(url_for("admin_calendar"))
@@ -125,7 +148,7 @@ def init_calendar_routes(app):
     @require_roles("administrator", "manager", "commercial")
     def admin_calendar_send_email():
         """Envoie manuellement le lien calendrier par email."""
-        user_id = request.form.get("user_id", type=int)
+        user_id = _get_target_user_id(request.form)
         if not user_id:
             flash("Utilisateur invalide.", "error")
             return redirect(url_for("admin_calendar"))

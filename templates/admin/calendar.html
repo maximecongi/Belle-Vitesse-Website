@@ -10,9 +10,13 @@
         <div>
             <div class="cal-info-title">Comment ça marche ?</div>
             <div class="cal-info-desc">
-                Générez un lien calendrier pour chaque utilisateur. Ce lien permet de s'abonner au calendrier
+                {% if is_super_admin %}
+                Générez et gérez les liens calendrier pour chaque membre de l'équipe. Ces liens permettent de s'abonner au calendrier
                 des projets Belle Vitesse depuis <strong>iPhone</strong>, <strong>Android</strong>, <strong>Outlook</strong> ou <strong>Google Calendar</strong>.
-                Le calendrier se met à jour automatiquement lorsqu'un nouveau projet est créé.
+                {% else %}
+                Générez et configurez votre lien calendrier personnel pour synchroniser les projets Belle Vitesse directement dans votre <strong>iPhone</strong>, <strong>Android</strong>, <strong>Outlook</strong> ou <strong>Google Calendar</strong>.
+                {% endif %}
+                Le calendrier se met à jour automatiquement lorsqu'un projet est créé ou modifié.
             </div>
             <details class="cal-info-details">
                 <summary class="cal-info-summary">
@@ -141,6 +145,12 @@
                             </form>
                             {% endif %}
                         </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="u-text-center u-text-muted" style="padding: 2rem;">
+                        Aucun utilisateur trouvé.
                     </td>
                 </tr>
                 {% endfor %}
