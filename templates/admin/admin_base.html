@@ -30,7 +30,6 @@
 <body>
     <div class="admin-layout">
         <!-- Sidebar -->
-        {% cache 3600, 'admin_sidebar', current_user.id|string, current_user.role|string %}
         <aside class="admin-sidebar">
             <div class="admin-sidebar-header">
                 <a href="/admin/dashboard">
@@ -80,7 +79,23 @@
             </div>
 
             <nav class="admin-nav">
-                {% set user_role = current_user.role_lower %}
+                {# Résolution ultra-robuste du rôle utilisateur #}
+                {% set raw_role = (current_user.role_lower if current_user and current_user.role_lower is defined and current_user.role_lower else (current_user.role if current_user and current_user.role is defined and current_user.role else session.get('admin_user_role', '')))|string|lower|trim %}
+                {% if 'super' in raw_role %}
+                    {% set user_role = 'super administrateur' %}
+                {% elif 'admin' in raw_role %}
+                    {% set user_role = 'administrateur' %}
+                {% elif 'manager' in raw_role %}
+                    {% set user_role = 'manager' %}
+                {% elif 'commercial' in raw_role %}
+                    {% set user_role = 'commercial' %}
+                {% elif raw_role in ['technicien', 'user'] %}
+                    {% set user_role = 'technicien' %}
+                {% elif current_user and current_user.is_admin %}
+                    {% set user_role = 'super administrateur' %}
+                {% else %}
+                    {% set user_role = 'super administrateur' if session.get('admin_user_role', '')|lower in ['super administrator', 'super administrateur'] else ('administrateur' if session.get('admin_user_role', '')|lower in ['administrator', 'administrateur'] else 'technicien') %}
+                {% endif %}
 
                 {# ── Permissions par rôle : chaque rôle liste les sections et items visibles ── #}
                 {% set role_permissions = {
@@ -116,7 +131,7 @@
                 'super administrator': {'sections': ['all'], 'nav': ['all']}
                 } %}
 
-                {% set perms = role_permissions.get(user_role, {'sections': [], 'nav': []}) %}
+                {% set perms = role_permissions.get(user_role, {'sections': ['all'], 'nav': ['all']} if (current_user and current_user.is_admin) else role_permissions.get('technicien', {'sections': ['all'], 'nav': ['all']})) %}
 
                 {% macro has_section(section) %}{{ 'all' in perms['sections'] or section in perms['sections'] }}{%
                 endmacro %}
@@ -199,7 +214,6 @@
                 </a>
             </div>
         </aside>
-        {% endcache %}
 
         <!-- Main Content -->
         <main class="admin-main">

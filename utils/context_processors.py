@@ -129,10 +129,10 @@ def init_context_processors(app):
                 user_dict = None
                 if user_id:
                     role_cache_part = session_role.lower() if session_role else "default"
-                    cache_key = f"user:{user_id}:{role_cache_part}"
+                    cache_key = f"user_v3:{user_id}:{role_cache_part}"
                     user_dict = cache.get(cache_key)
 
-                    if not user_dict:
+                    if not user_dict or not isinstance(user_dict, dict) or "role_lower" not in user_dict:
                         user_obj = db.session.get(User, user_id)
                         if user_obj:
                             from models.user import ROLE_TRANSLATION
