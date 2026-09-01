@@ -155,6 +155,52 @@ class DevRoleSwitcherTestCase(unittest.TestCase):
         self.assertEqual(resp_up.status_code, 302)
         self.assertIn("/admin/dashboard", resp_up.location)
 
+    def test_docs_restricted_to_admin_and_super_admin(self):
+        """Technical and API docs should only be accessible/visible to Administrator and Super Administrator."""
+        self._login()
+        self.app.config["FLASK_ENV"] = "development"
+
+        # 1. Super Administrator has access
+        resp_sa_docs = self.client.get("/admin/docs")
+        self.assertEqual(resp_sa_docs.status_code, 200)
+        resp_sa_api = self.client.get("/admin/api-docs")
+        self.assertEqual(resp_sa_api.status_code, 200)
+
+        # 2. Administrator has access
+        self.client.post("/admin/dev/switch-role", data={"role": "Administrator"})
+        resp_admin_docs = self.client.get("/admin/docs")
+        self.assertEqual(resp_admin_docs.status_code, 200)
+        resp_admin_api = self.client.get("/admin/api-docs")
+        self.assertEqual(resp_admin_api.status_code, 200)
+
+        # 3. Manager is blocked and does not see docs in sidebar
+        self.client.post("/admin/dev/switch-role", data={"role": "Manager"})
+        resp_mgr_dash = self.client.get("/admin/dashboard")
+        self.assertNotIn("Documentation technique", resp_mgr_dash.data.decode("utf-8"))
+        self.assertNotIn("Documentation API", resp_mgr_dash.data.decode("utf-8"))
+
+        resp_mgr_docs = self.client.get("/admin/docs", follow_redirects=False)
+        self.assertEqual(resp_mgr_docs.status_code, 302)
+        self.assertIn("/admin/dashboard", resp_mgr_docs.location)
+
+        resp_mgr_api = self.client.get("/admin/api-docs", follow_redirects=False)
+        self.assertEqual(resp_mgr_api.status_code, 302)
+        self.assertIn("/admin/dashboard", resp_mgr_api.location)
+
+        # 4. Commercial is blocked and does not see docs in sidebar
+        self.client.post("/admin/dev/switch-role", data={"role": "Commercial"})
+        resp_comm_dash = self.client.get("/admin/dashboard")
+        self.assertNotIn("Documentation technique", resp_comm_dash.data.decode("utf-8"))
+        self.assertNotIn("Documentation API", resp_comm_dash.data.decode("utf-8"))
+
+        resp_comm_docs = self.client.get("/admin/docs", follow_redirects=False)
+        self.assertEqual(resp_comm_docs.status_code, 302)
+        self.assertIn("/admin/dashboard", resp_comm_docs.location)
+
+        resp_comm_api = self.client.get("/admin/api-docs", follow_redirects=False)
+        self.assertEqual(resp_comm_api.status_code, 302)
+        self.assertIn("/admin/dashboard", resp_comm_api.location)
+
 
 if __name__ == "__main__":
     unittest.main()

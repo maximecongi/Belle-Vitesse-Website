@@ -20,7 +20,7 @@ def init_newsletter_routes(app):
     # ── Newsletter ────────────────────────────────────────────────
 
     @app.route("/admin/newsletter")
-    @require_roles('administrator')
+    @require_roles('administrator', 'manager')
     def admin_newsletter_dashboard():
         try:
             subscribers = list_newsletter_subscribers()
@@ -33,7 +33,7 @@ def init_newsletter_routes(app):
 
     @app.route("/admin/newsletter/delete/<int:subscriber_id>", methods=["POST"])
     @csrf.exempt
-    @require_roles('administrator')
+    @require_roles('administrator', 'manager')
     def admin_newsletter_delete(subscriber_id):
         try:
             if remove_newsletter_subscriber_by_id(subscriber_id):
@@ -48,7 +48,7 @@ def init_newsletter_routes(app):
 
     @app.route("/admin/newsletter/compose", methods=["GET", "POST"])
     @csrf.exempt
-    @require_roles('administrator')
+    @require_roles('administrator', 'manager')
     def admin_newsletter_compose():
         if request.method == "POST":
             subject = request.form.get("subject")

@@ -22,7 +22,7 @@ ROLE_HIERARCHY = {
 ASSIGNABLE_ROLES = {
     'super administrator': ['Administrator', 'Manager', 'Commercial', 'User'],
     'administrator': ['Manager', 'Commercial', 'User'],
-    'manager': [],
+    'manager': ['User'],
     'commercial': [],
     'user': [],
 }
@@ -60,7 +60,7 @@ def _can_manage_user(target_user):
 def init_users_routes(app):
 
     @app.route("/admin/users")
-    @require_roles('administrator')
+    @require_roles('administrator', 'manager')
     def admin_users_list():
         users = list_users()
         current_level = _get_current_role_level()
@@ -72,7 +72,7 @@ def init_users_routes(app):
         )
 
     @app.route("/admin/users/new", methods=["GET", "POST"])
-    @require_roles('administrator')
+    @require_roles('administrator', 'manager')
     def admin_user_create():
         assignable = _get_assignable_roles()
 
@@ -100,7 +100,7 @@ def init_users_routes(app):
         return render_template("admin/user_form.html", is_edit=False, data=None, assignable_roles=assignable)
 
     @app.route("/admin/users/<record_id>/edit", methods=["GET", "POST"])
-    @require_roles('administrator')
+    @require_roles('administrator', 'manager')
     def admin_user_edit(record_id):
         user = get_user(record_id)
         if not user:
@@ -144,7 +144,7 @@ def init_users_routes(app):
         return render_template("admin/user_form.html", is_edit=True, data=user, record_id=record_id, assignable_roles=assignable, editing_self=editing_self)
 
     @app.route("/admin/users/<record_id>/delete", methods=["POST"])
-    @require_roles('administrator')
+    @require_roles('administrator', 'manager')
     def admin_user_delete(record_id):
         user = get_user(record_id)
         if not user:
