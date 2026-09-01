@@ -9,7 +9,8 @@ from flask import (
     url_for,
 )
 
-from extensions import limiter
+from extensions import cache, limiter
+from models import User, db
 from services.common.auth import ALLOWED_DOMAINS, request_magic_link, verify_magic_link
 
 
@@ -23,7 +24,6 @@ def init_auth_routes(app):
             return redirect(url_for("admin_dashboard"))
 
         if app.config.get("FLASK_ENV") == "development" and app.config.get("DEBUG") is True:
-            from models import User
             dev_user = User.query.first()
             session["admin_authenticated"] = True
             session["admin_user_id"] = dev_user.id if dev_user else None
@@ -75,4 +75,56 @@ def init_auth_routes(app):
         session.pop("admin_login_time", None)
         flash("Vous avez été déconnecté.", "info")
         return redirect(url_for("admin_login"))
+
+    @app.route("/admin/dev/switch-role", methods=["POST", "GET"], endpoint="admin_dev_switch_role")
+    def admin_dev_switch_role():
+        """
+        Permet de simuler un autre rôle en mode développement/testing sans toucher à la base de données.
+        Désactivé en production.
+        """
+        if app.config.get("FLASK_ENV") == "production":
+            flash("Cette fonctionnalité est désactivée en production.", "error")
+            return redirect(url_for("admin_dashboard"))
+
+        if not session.get("admin_authenticated"):
+            return redirect(url_for("admin_login"))
+
+        target_role = request.values.get("role", "").strip()
+        valid_roles = {
+            "super administrator": "Super Administrator",
+            "administrator": "Administrator",
+            "manager": "Manager",
+            "commercial": "Commercial",
+            "user": "User",
+        }
+
+        user_id = session.get("admin_user_id")
+
+        if target_role.lower() in valid_roles:
+            new_role = valid_roles[target_role.lower()]
+            session["admin_user_role"] = new_role
+
+            if user_id:
+                cache.delete(f"user:{user_id}")
+                for r in list(valid_roles.keys()) + ["default"]:
+                    cache.delete(f"user:{user_id}:{r}")
+
+            flash(f"🛠️ Rôle simulé : {new_role} (session temporaire)", "info")
+        elif target_role.lower() == "reset":
+            if user_id:
+                user = db.session.get(User, user_id)
+                if user and user.role:
+                    session["admin_user_role"] = user.role
+                    cache.delete(f"user:{user_id}")
+                    for r in list(valid_roles.keys()) + ["default"]:
+                        cache.delete(f"user:{user_id}:{r}")
+                    flash(f"Rôle réinitialisé : {user.role}", "info")
+        else:
+            flash("Rôle invalide spécifié.", "warning")
+
+        next_url = request.values.get("next") or request.referrer or url_for("admin_dashboard")
+        if not next_url.startswith("/") or next_url.startswith("//"):
+            next_url = url_for("admin_dashboard")
+
+        return redirect(next_url)
 

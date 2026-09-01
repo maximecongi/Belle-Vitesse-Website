@@ -142,3 +142,34 @@
     font-size: 0.6rem !important;
     text-transform: capitalize;
 }
+
+.admin-dev-role-form {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+}
+
+.admin-dev-role-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.admin-dev-role-select {
+    cursor: pointer;
+    border: 1px dashed rgba(0, 0, 0, 0.25) !important;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 1rem !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 24 24' fill='none' stroke='%23444' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.25rem center;
+    transition: all 0.2s ease;
+}
+
+.admin-dev-role-select:hover,
+.admin-dev-role-select:focus {
+    border-color: rgba(0, 0, 0, 0.6) !important;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+}

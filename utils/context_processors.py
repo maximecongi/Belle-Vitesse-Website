@@ -125,23 +125,27 @@ def init_context_processors(app):
             """Charge les données dynamiques depuis la base de données pour le contexte."""
             if is_admin:
                 user_id = session.get('admin_user_id')
+                session_role = session.get('admin_user_role')
                 user_dict = None
                 if user_id:
-                    cache_key = f"user:{user_id}"
+                    role_cache_part = session_role.lower() if session_role else "default"
+                    cache_key = f"user:{user_id}:{role_cache_part}"
                     user_dict = cache.get(cache_key)
 
                     if not user_dict:
                         user_obj = db.session.get(User, user_id)
                         if user_obj:
+                            effective_role = session_role if session_role else (user_obj.role if user_obj.role else "User")
+                            role_lower = effective_role.lower()
                             # Stocke un dict, pas un objet ORM (évite DetachedInstanceError avec Redis)
-                            role_lower = user_obj.role.lower() if user_obj.role else "user"
                             user_dict = {
                                 "id": user_obj.id,
                                 "firstname": user_obj.firstname,
                                 "lastname": user_obj.lastname,
-                                "role": user_obj.role,
+                                "role": effective_role,
                                 "role_lower": role_lower,
                                 "is_admin": role_lower in ('administrator', 'super administrator'),
+                                "db_role": user_obj.role or "User",
                                 "mail": user_obj.mail or "",
                                 "job": getattr(user_obj, 'job', '') or "",
                                 "phone": getattr(user_obj, 'phone', '') or "",

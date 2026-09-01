@@ -53,9 +53,25 @@
                     <div class="admin-header-user-name">
                         {{ current_user.firstname }} {{ current_user.lastname }}
                     </div>
+                    {% if config.FLASK_ENV != 'production' %}
+                    <form action="{{ url_for('admin_dev_switch_role') }}" method="POST" class="admin-dev-role-form" id="devRoleForm" title="Mode Développement : Tester un autre rôle">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="next" value="{{ request.full_path if request.query_string else request.path }}">
+                        <div class="admin-dev-role-wrapper">
+                            <select name="role" class="badge-pill admin-header-user-role admin-dev-role-select" data-val="{{ current_user.role }}" onchange="this.form.submit()">
+                                {% for r in ['Super Administrator', 'Administrator', 'Manager', 'Commercial', 'User'] %}
+                                <option value="{{ r }}" {% if current_user.role_lower == r.lower() %}selected{% endif %}>
+                                    {{ r }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </form>
+                    {% else %}
                     <div class="badge-pill admin-header-user-role" data-val="{{ current_user.role }}">
                         {{ current_user.role }}
                     </div>
+                    {% endif %}
                 </div>
                 {% endif %}
             </div>

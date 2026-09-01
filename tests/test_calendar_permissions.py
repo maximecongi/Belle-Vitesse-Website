@@ -110,11 +110,11 @@ class CalendarPermissionsTestCase(unittest.TestCase):
         response = self.client.get("/admin/calendar")
         self.assertEqual(response.status_code, 200)
         html = response.data.decode("utf-8")
-        self.assertIn("Alice Commercial", html)
-        self.assertNotIn("Bob Manager", html)
-        self.assertNotIn("Charlie Admin", html)
-        self.assertNotIn("Super Admin", html)
-        self.assertNotIn("Regular Technician", html)
+        self.assertIn("alice@bellevitesse.com", html)
+        self.assertNotIn("bob@bellevitesse.com", html)
+        self.assertNotIn("charlie@bellevitesse.com", html)
+        self.assertNotIn("super@bellevitesse.com", html)
+        self.assertNotIn("tech@bellevitesse.com", html)
 
     def test_manager_sees_only_own_calendar(self):
         """Manager user should only see their own calendar entry."""
@@ -122,9 +122,10 @@ class CalendarPermissionsTestCase(unittest.TestCase):
         response = self.client.get("/admin/calendar")
         self.assertEqual(response.status_code, 200)
         html = response.data.decode("utf-8")
-        self.assertIn("Bob Manager", html)
-        self.assertNotIn("Alice Commercial", html)
-        self.assertNotIn("Charlie Admin", html)
+        self.assertIn("bob@bellevitesse.com", html)
+        self.assertNotIn("alice@bellevitesse.com", html)
+        self.assertNotIn("charlie@bellevitesse.com", html)
+        self.assertNotIn("super@bellevitesse.com", html)
 
     def test_administrator_sees_only_own_calendar(self):
         """Administrator user should only see their own calendar entry."""
@@ -132,9 +133,10 @@ class CalendarPermissionsTestCase(unittest.TestCase):
         response = self.client.get("/admin/calendar")
         self.assertEqual(response.status_code, 200)
         html = response.data.decode("utf-8")
-        self.assertIn("Charlie Admin", html)
-        self.assertNotIn("Alice Commercial", html)
-        self.assertNotIn("Bob Manager", html)
+        self.assertIn("charlie@bellevitesse.com", html)
+        self.assertNotIn("alice@bellevitesse.com", html)
+        self.assertNotIn("bob@bellevitesse.com", html)
+        self.assertNotIn("super@bellevitesse.com", html)
 
     def test_super_administrator_sees_all_users(self):
         """Super Administrator user should see all users."""
@@ -142,11 +144,11 @@ class CalendarPermissionsTestCase(unittest.TestCase):
         response = self.client.get("/admin/calendar")
         self.assertEqual(response.status_code, 200)
         html = response.data.decode("utf-8")
-        self.assertIn("Super Admin", html)
-        self.assertIn("Alice Commercial", html)
-        self.assertIn("Bob Manager", html)
-        self.assertIn("Charlie Admin", html)
-        self.assertIn("Regular Technician", html)
+        self.assertIn("super@bellevitesse.com", html)
+        self.assertIn("alice@bellevitesse.com", html)
+        self.assertIn("bob@bellevitesse.com", html)
+        self.assertIn("charlie@bellevitesse.com", html)
+        self.assertIn("tech@bellevitesse.com", html)
 
     def test_non_super_admin_cannot_generate_for_other_user(self):
         """If a commercial tries to generate a subscription with another user_id, it is forced to their own."""
