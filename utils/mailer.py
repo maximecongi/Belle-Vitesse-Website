@@ -35,6 +35,19 @@ class EmailService:
     @classmethod
     def _send_smtp_message(cls, msg, recipients, sender_type="contact", timeout=10):
         """Crée une connexion SMTP temporaire, s'authentifie et envoie le message."""
+        # En mode test, interdire tout appel SMTP réel vers les boîtes mail
+        if (
+            os.getenv("FLASK_ENV") == "testing"
+            or os.getenv("TESTING") == "True"
+            or (current_app and current_app.config.get("TESTING"))
+            or (current_app and getattr(current_app, "testing", False))
+        ):
+            if current_app:
+                current_app.logger.info(
+                    f"🧪 [TESTING] Email SMTP intercepté (non envoyé) pour : {recipients}"
+                )
+            return True
+
         mail_server, mail_port, mail_user, mail_password, mail_use_tls = cls._get_credentials(
             sender_type)
 
@@ -174,6 +187,18 @@ def send_newsletter_campaign(subject, body, subscribers):
     Envoie une campagne newsletter groupée à une liste d'abonnés.
     'subscribers' est une liste d'objets NewsletterSubscriber.
     """
+    if (
+        os.getenv("FLASK_ENV") == "testing"
+        or os.getenv("TESTING") == "True"
+        or (current_app and current_app.config.get("TESTING"))
+        or (current_app and getattr(current_app, "testing", False))
+    ):
+        if current_app:
+            current_app.logger.info(
+                f"🧪 [TESTING] Campagne newsletter interceptée (non envoyée) pour {len(subscribers)} abonnés"
+            )
+        return len(subscribers), 0
+
     mail_server, mail_port, mail_user, mail_password, mail_use_tls = EmailService._get_credentials(
         "contact")
 
