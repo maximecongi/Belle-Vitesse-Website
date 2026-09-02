@@ -222,6 +222,13 @@
                     <h1>{% block page_title %}{% endblock %}</h1>
                 </div>
                 <div class="admin-header-actions">
+                    <button type="button" class="admin-cmdk-trigger" id="cmdkTrigger" title="Recherche rapide (⌘K)">
+                        <svg class="cmdk-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <span>Rechercher...</span>
+                        <kbd class="admin-cmdk-kbd">⌘K</kbd>
+                    </button>
                     {% block header_actions %}{% endblock %}
                 </div>
             </header>
@@ -251,6 +258,28 @@
             <button type="button" class="admin-modal-close" id="closeVehiclesModal">&times;</button>
             <div class="admin-modal-content">
                 <iframe src="" data-src="{{ url_for('admin_check_vehicles') }}" class="admin-modal-iframe"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- Command Palette (Cmd+K) Modal -->
+    <div class="admin-cmdk-overlay" id="cmdkOverlay" aria-hidden="true">
+        <div class="admin-cmdk-dialog" role="dialog" aria-modal="true" aria-label="Palette de commande">
+            <div class="admin-cmdk-header">
+                <svg class="admin-cmdk-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" class="admin-cmdk-input" id="cmdkInput" placeholder="Rechercher un projet, véhicule, contact ou action..." autocomplete="off" spellcheck="false">
+                <span class="admin-cmdk-close-hint" id="cmdkCloseBtn">ESC</span>
+            </div>
+            <div class="admin-cmdk-results" id="cmdkResults"></div>
+            <div class="admin-cmdk-footer">
+                <div class="admin-cmdk-shortcuts">
+                    <span class="admin-cmdk-shortcut-item"><kbd class="admin-cmdk-kbd">↑</kbd><kbd class="admin-cmdk-kbd">↓</kbd> Naviguer</span>
+                    <span class="admin-cmdk-shortcut-item"><kbd class="admin-cmdk-kbd">↵</kbd> Ouvrir</span>
+                    <span class="admin-cmdk-shortcut-item"><kbd class="admin-cmdk-kbd">esc</kbd> Fermer</span>
+                </div>
+                <span>Belle Vitesse</span>
             </div>
         </div>
     </div>

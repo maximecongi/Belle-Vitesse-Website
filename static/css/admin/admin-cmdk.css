@@ -1,0 +1,281 @@
+/* ── Command Palette (Cmd+K) Modal & Trigger ───────────────────────────── */
+
+/* Trigger Button dans le Header */
+.admin-cmdk-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #a1a1aa;
+    font-size: 0.85rem;
+    padding: 6px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.admin-cmdk-trigger:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fafafa;
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.admin-cmdk-trigger .cmdk-icon {
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+}
+
+.admin-cmdk-kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 0.72rem;
+    font-family: inherit;
+    color: #e4e4e7;
+    margin-left: 4px;
+}
+
+/* Modal Overlay */
+.admin-cmdk-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 99999;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 12vh;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.admin-cmdk-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Modal Container */
+.admin-cmdk-dialog {
+    width: 100%;
+    max-width: 620px;
+    background: #18181b;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 14px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.96) translateY(-10px);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.admin-cmdk-overlay.active .admin-cmdk-dialog {
+    transform: scale(1) translateY(0);
+}
+
+/* Input Bar */
+.admin-cmdk-header {
+    display: flex;
+    align-items: center;
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    gap: 12px;
+}
+
+.admin-cmdk-search-icon {
+    width: 18px;
+    height: 18px;
+    color: #71717a;
+    flex-shrink: 0;
+}
+
+.admin-cmdk-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 1.05rem;
+    color: #fafafa;
+    font-family: inherit;
+}
+
+.admin-cmdk-input::placeholder {
+    color: #71717a;
+}
+
+.admin-cmdk-close-hint {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 0.72rem;
+    color: #a1a1aa;
+    cursor: pointer;
+}
+
+/* Results List */
+.admin-cmdk-results {
+    max-height: 380px;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.admin-cmdk-results:empty {
+    display: none;
+}
+
+.admin-cmdk-empty {
+    padding: 32px 16px;
+    text-align: center;
+    color: #71717a;
+    font-size: 0.9rem;
+}
+
+/* Result Item */
+.admin-cmdk-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.15s ease;
+    gap: 12px;
+}
+
+.admin-cmdk-item:hover,
+.admin-cmdk-item.selected {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.admin-cmdk-item-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.admin-cmdk-item-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #d4d4d8;
+}
+
+.admin-cmdk-item.selected .admin-cmdk-item-icon {
+    background: rgba(229, 120, 39, 0.2);
+    color: #f59e0b;
+}
+
+.admin-cmdk-item-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.admin-cmdk-item-title {
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: #fafafa;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-cmdk-item-sub {
+    font-size: 0.78rem;
+    color: #71717a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-cmdk-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 3px 7px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.admin-cmdk-badge-projet {
+    background: rgba(59, 130, 246, 0.18);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.admin-cmdk-badge-véhicule {
+    background: rgba(245, 158, 11, 0.18);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.admin-cmdk-badge-action {
+    background: rgba(16, 185, 129, 0.18);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.admin-cmdk-badge-page {
+    background: rgba(168, 85, 247, 0.18);
+    color: #c084fc;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.admin-cmdk-badge-outil {
+    background: rgba(236, 72, 153, 0.18);
+    color: #f472b6;
+    border: 1px solid rgba(236, 72, 153, 0.3);
+}
+
+.admin-cmdk-badge-contact {
+    background: rgba(20, 184, 166, 0.18);
+    color: #2dd4bf;
+    border: 1px solid rgba(20, 184, 166, 0.3);
+}
+
+/* Footer Instructions */
+.admin-cmdk-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: #141417;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 0.75rem;
+    color: #71717a;
+}
+
+.admin-cmdk-shortcuts {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.admin-cmdk-shortcut-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
