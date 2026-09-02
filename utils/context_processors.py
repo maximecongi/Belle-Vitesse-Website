@@ -1,7 +1,11 @@
+import os
+from functools import lru_cache
 from datetime import datetime, timezone
 from flask import g, request, session, has_request_context
 from extensions import cache
 from models import AppSetting, User, db
+from models.user import ROLE_TRANSLATION
+from utils.decorators import normalize_role
 from utils.i18n import t, ts, alt_url, DEFAULT_LANG
 from utils.database import get_vehicles, get_heads, get_grips_categories
 from services.admin.status_mapping import (
@@ -13,35 +17,66 @@ from services.admin.status_mapping import (
     get_inspection_key,
 )
 
+MONTHS_FR = {
+    1: "Janvier", 2: "Février", 3: "Mars", 4: "Avril", 5: "Mai", 6: "Juin",
+    7: "Juillet", 8: "Août", 9: "Septembre", 10: "Octobre", 11: "Novembre", 12: "Décembre"
+}
+MONTHS_EN = {
+    1: "January", 2: "February", 3: "March", 4: "April", 5: "May", 6: "June",
+    7: "July", 8: "August", 9: "September", 10: "October", 11: "November", 12: "December"
+}
+
+DEFAULT_SETTINGS = {
+    "company_name": "Belle Vitesse SAS",
+    "company_representative": "Simon Maignan",
+    "company_siret": "981 514 040 00014",
+    "company_address": "33 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine, France",
+    "company_phone": "+33 6 65 51 40 40",
+    "company_email": "contact@bellevitesse.com",
+    "company_vat": "FR32981514040",
+    "company_capital": "10 000 €",
+    "company_rcs": "Créteil",
+    "host_name": "Infomaniak Network SA",
+    "host_address": "Rue Eugène-Marziano 25, 1227 Genève, Suisse",
+    "bank_iban": "",
+    "bank_bic": "",
+    "delivery_base_distance": "100",
+    "delivery_base_price": "200",
+    "delivery_high_rate": "0.5",
+}
+
+
+@lru_cache(maxsize=1)
+def _get_privacy_date(template_path: str) -> datetime:
+    """Récupère la date de modification du template de politique de confidentialité (mise en cache)."""
+    try:
+        if os.path.exists(template_path):
+            mtime = os.path.getmtime(template_path)
+            return datetime.fromtimestamp(mtime)
+    except Exception:
+        pass
+    return datetime.now()
+
+
+def _safe_float(val, default):
+    """Convertit une valeur en float de manière sécurisée."""
+    try:
+        return float(val) if val is not None else float(default)
+    except (ValueError, TypeError):
+        return float(default)
+
 
 def init_context_processors(app):
     """Enregistre les processeurs de contexte globaux pour les templates Jinja2."""
+    template_path = os.path.join(app.root_path, 'templates', 'public', 'privacy-policy.html')
+
     @app.context_processor
     def inject_globals():
-        import os
         launch_mode = os.getenv("LAUNCH_MODE") == "true"
-
-        # Calculer la date de dernière mise à jour de la politique de confidentialité
-        try:
-            template_path = os.path.join(app.root_path, 'templates', 'public', 'privacy-policy.html')
-            if os.path.exists(template_path):
-                mtime = os.path.getmtime(template_path)
-                privacy_date = datetime.fromtimestamp(mtime)
-            else:
-                privacy_date = datetime.now()
-        except Exception:
-            privacy_date = datetime.now()
+        privacy_date = _get_privacy_date(template_path)
 
         lang = g.get('lang', DEFAULT_LANG) if has_request_context() else DEFAULT_LANG
-        months_fr = {
-            1: "Janvier", 2: "Février", 3: "Mars", 4: "Avril", 5: "Mai", 6: "Juin",
-            7: "Juillet", 8: "Août", 9: "Septembre", 10: "Octobre", 11: "Novembre", 12: "Décembre"
-        }
-        months_en = {
-            1: "January", 2: "February", 3: "March", 4: "April", 5: "May", 6: "June",
-            7: "July", 8: "August", 9: "September", 10: "October", 11: "November", 12: "December"
-        }
-        months = months_fr if lang == 'fr' else months_en
+        months = MONTHS_FR if lang == 'fr' else MONTHS_EN
         privacy_last_update = f"{months[privacy_date.month]} {privacy_date.year}"
 
         if not has_request_context():
@@ -70,12 +105,8 @@ def init_context_processors(app):
         is_admin = request.path.startswith('/admin')
         lang = g.get('lang', DEFAULT_LANG)
 
-        def _safe_setting_float(key, default):
-            try:
-                val = AppSetting.get(key)
-                return float(val) if val is not None else float(default)
-            except (ValueError, TypeError):
-                return float(default)
+        # Récupération groupée optimisée de tous les paramètres d'application
+        settings = AppSetting.get_all_as_dict(DEFAULT_SETTINGS)
 
         # Variables globales de base
         ctx = {
@@ -87,23 +118,23 @@ def init_context_processors(app):
             "alt_url": alt_url,
             "launch_mode": launch_mode,
             "privacy_last_update": privacy_last_update,
-            "company_name": AppSetting.get("company_name", "Belle Vitesse SAS"),
-            "company_representative": AppSetting.get("company_representative", "Simon Maignan"),
-            "company_siret": AppSetting.get("company_siret", "981 514 040 00014"),
-            "company_address": AppSetting.get("company_address", "33 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine, France"),
-            "company_phone": AppSetting.get("company_phone", "+33 6 65 51 40 40"),
-            "company_email": AppSetting.get("company_email", "contact@bellevitesse.com"),
-            "company_vat": AppSetting.get("company_vat", "FR32981514040"),
-            "company_capital": AppSetting.get("company_capital", "10 000 €"),
-            "company_rcs": AppSetting.get("company_rcs", "Créteil"),
-            "host_name": AppSetting.get("host_name", "Infomaniak Network SA"),
-            "host_address": AppSetting.get("host_address", "Rue Eugène-Marziano 25, 1227 Genève, Suisse"),
-            "bank_iban": AppSetting.get("bank_iban", ""),
-            "bank_bic": AppSetting.get("bank_bic", ""),
+            "company_name": settings.get("company_name", DEFAULT_SETTINGS["company_name"]),
+            "company_representative": settings.get("company_representative", DEFAULT_SETTINGS["company_representative"]),
+            "company_siret": settings.get("company_siret", DEFAULT_SETTINGS["company_siret"]),
+            "company_address": settings.get("company_address", DEFAULT_SETTINGS["company_address"]),
+            "company_phone": settings.get("company_phone", DEFAULT_SETTINGS["company_phone"]),
+            "company_email": settings.get("company_email", DEFAULT_SETTINGS["company_email"]),
+            "company_vat": settings.get("company_vat", DEFAULT_SETTINGS["company_vat"]),
+            "company_capital": settings.get("company_capital", DEFAULT_SETTINGS["company_capital"]),
+            "company_rcs": settings.get("company_rcs", DEFAULT_SETTINGS["company_rcs"]),
+            "host_name": settings.get("host_name", DEFAULT_SETTINGS["host_name"]),
+            "host_address": settings.get("host_address", DEFAULT_SETTINGS["host_address"]),
+            "bank_iban": settings.get("bank_iban", ""),
+            "bank_bic": settings.get("bank_bic", ""),
             "DELIVERY_CONFIG": {
-                "base_distance": _safe_setting_float("delivery_base_distance", 100),
-                "base_price": _safe_setting_float("delivery_base_price", 200),
-                "high_rate": _safe_setting_float("delivery_high_rate", 0.5)
+                "base_distance": _safe_float(settings.get("delivery_base_distance"), 100),
+                "base_price": _safe_float(settings.get("delivery_base_price"), 200),
+                "high_rate": _safe_float(settings.get("delivery_high_rate"), 0.5)
             },
             "PRE_QUOTE_CAT_MAP": {
                 "equipment": "Équipement",
@@ -135,8 +166,6 @@ def init_context_processors(app):
                     if not user_dict or not isinstance(user_dict, dict) or "role_lower" not in user_dict:
                         user_obj = db.session.get(User, user_id)
                         if user_obj:
-                            from models.user import ROLE_TRANSLATION
-                            from utils.decorators import normalize_role
                             effective_role = session_role if session_role else (user_obj.role if user_obj.role else "Technicien")
                             role_lower = normalize_role(effective_role)
                             role_display = ROLE_TRANSLATION.get(role_lower, effective_role)
@@ -155,8 +184,6 @@ def init_context_processors(app):
                             }
                             cache.set(cache_key, user_dict, timeout=300)
 
-                from models.user import ROLE_TRANSLATION
-                from utils.decorators import normalize_role
                 fallback_role = session.get('admin_user_role', 'Technicien')
                 fallback_role_lower = normalize_role(fallback_role)
                 fallback_role_display = ROLE_TRANSLATION.get(fallback_role_lower, fallback_role)
@@ -190,6 +217,10 @@ def init_context_processors(app):
                 if attempt == 0:
                     app.logger.warning(
                         f"⚠️ Erreur DB dans le context processor (nouvelle tentative) : {e}")
+                    try:
+                        db.session.rollback()
+                    except Exception:
+                        pass
                     continue
                 app.logger.error(
                     f"❌ Erreur DB dans le context processor (abandon) : {e}")

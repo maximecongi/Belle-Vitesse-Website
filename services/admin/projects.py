@@ -1,7 +1,7 @@
 import logging
 import os
 
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 
 from models import Contact, Production, Project, PreQuote, db
 from services.admin.status_mapping import format_waiver_status
@@ -127,10 +127,10 @@ def list_projects():
     """
     Récupère tous les projets et les formate pour la liste d'administration (avec chargement lié optimisé).
     """
-    projects = Project.query.filter(Project.deleted_at == None).options(
+    projects = Project.query.filter(Project.deleted_at.is_(None)).options(
         joinedload(Project.production),
-        joinedload(Project.checkout_vehicles),
-        joinedload(Project.checkin_vehicles),
+        selectinload(Project.checkout_vehicles),
+        selectinload(Project.checkin_vehicles),
         joinedload(Project.pilot_contact),
         joinedload(Project.production_contact),
         joinedload(Project.dop_contact),
@@ -138,7 +138,7 @@ def list_projects():
         joinedload(Project.key_grip_contact),
         joinedload(Project.pilot_waiver),
         joinedload(Project.production_waiver),
-        joinedload(Project.pre_quotes).joinedload(PreQuote.versions)
+        selectinload(Project.pre_quotes).selectinload(PreQuote.versions)
     ).order_by(Project.departure_date.desc(), Project.name.asc()).all()
 
     vehicles = get_vehicles()

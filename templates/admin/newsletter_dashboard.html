@@ -33,6 +33,7 @@
                     <td>
                         <form action="{{ url_for('admin_newsletter_delete', subscriber_id=sub.id) }}" method="POST"
                             class="u-d-inline" onsubmit="return confirm('Supprimer cet abonné ?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="admin-btn admin-btn-danger admin-btn-sm">
                                 Supprimer
                             </button>

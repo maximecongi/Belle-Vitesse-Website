@@ -7,7 +7,6 @@ from flask import (
     url_for,
 )
 
-from extensions import csrf
 from services.public.newsletter import (
     list_newsletter_subscribers,
     remove_newsletter_subscriber_by_id,
@@ -32,7 +31,6 @@ def init_newsletter_routes(app):
             return redirect(url_for("admin_dashboard"))
 
     @app.route("/admin/newsletter/delete/<int:subscriber_id>", methods=["POST"])
-    @csrf.exempt
     @require_roles('administrator', 'manager')
     def admin_newsletter_delete(subscriber_id):
         try:
@@ -47,7 +45,6 @@ def init_newsletter_routes(app):
             return redirect(url_for("admin_newsletter_dashboard"))
 
     @app.route("/admin/newsletter/compose", methods=["GET", "POST"])
-    @csrf.exempt
     @require_roles('administrator', 'manager')
     def admin_newsletter_compose():
         if request.method == "POST":

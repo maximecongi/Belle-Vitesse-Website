@@ -6,6 +6,7 @@
 {% block content %}
 <div class="admin-card">
     <form action="{{ url_for('admin_newsletter_compose') }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group">
             <label for="subject">Sujet de l'email</label>
             <input type="text" id="subject" name="subject" class="admin-input"
