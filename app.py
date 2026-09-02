@@ -143,6 +143,13 @@ def create_app():
         )
         response.headers['Content-Security-Policy'] = csp
 
+        # Gestion de la politique de cache HTTP pour les assets statiques
+        if request.path.startswith('/static/'):
+            if os.getenv("FLASK_ENV") == "production":
+                response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+            else:
+                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+
         return response
 
     # Initialisation de la DB et migrations de schéma

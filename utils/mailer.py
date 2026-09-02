@@ -7,6 +7,7 @@ from email.mime.text import MIMEText
 from email.utils import formatdate, make_msgid
 import io
 import base64
+import threading
 
 from flask import current_app, render_template, request
 from itsdangerous import URLSafeSerializer
@@ -75,9 +76,36 @@ class EmailService:
 
         except Exception as e:
             current_app.logger.error(
-                f"❌ Erreur SMTP lors de l'envoi (expéditeur: {sender_type}): {e}"
+                f"❌ Error sending email to {recipients}: {e}"
             )
             return False
+
+
+def run_async_email(target_func, *args, **kwargs):
+    """
+    Exécute une fonction d'envoi d'email dans un thread d'arrière-plan avec le contexte applicatif Flask.
+    En mode de test (testing), l'envoi s'exécute de manière synchrone.
+    """
+    if (
+        os.getenv("FLASK_ENV") == "testing"
+        or os.getenv("TESTING") == "True"
+        or (current_app and current_app.config.get("TESTING"))
+        or (current_app and getattr(current_app, "testing", False))
+    ):
+        return target_func(*args, **kwargs)
+
+    app = current_app._get_current_object()
+
+    def _worker():
+        with app.app_context():
+            try:
+                target_func(*args, **kwargs)
+            except Exception as err:
+                app.logger.error(f"❌ Erreur lors de l'envoi d'email en arrière-plan : {err}")
+
+    thread = threading.Thread(target=_worker, daemon=True)
+    thread.start()
+    return True
 
 
 def send_magic_link_email(to_email, firstname, magic_link):
@@ -182,7 +210,7 @@ def send_subscription_email(to_email):
         return False
 
 
-def send_newsletter_campaign(subject, body, subscribers):
+def send_newsletter_campaign(subject, body, subscribers, base_url=None):
     """
     Envoie une campagne newsletter groupée à une liste d'abonnés.
     'subscribers' est une liste d'objets NewsletterSubscriber.
@@ -221,10 +249,11 @@ def send_newsletter_campaign(subject, body, subscribers):
             try:
                 # Generate unique unsubscribe for each
                 token = serializer.dumps(sub.email)
-                try:
-                    base_url = request.host_url.rstrip('/')
-                except Exception:
-                    base_url = "https://bellevitesse.com"
+                if not base_url:
+                    try:
+                        base_url = request.host_url.rstrip('/')
+                    except Exception:
+                        base_url = "https://bellevitesse.com"
 
                 unsubscribe_url = f"{base_url}/unsubscribe/{token}"
 
@@ -267,6 +296,16 @@ def send_newsletter_campaign(subject, body, subscribers):
     except Exception as e:
         current_app.logger.error(f"❌ critical SMTP error during campaign: {e}")
         return results["success"], results["failed"]
+
+
+def send_newsletter_campaign_async(subject, body, subscribers, base_url=None):
+    """Lance l'envoi d'une campagne newsletter groupée en arrière-plan."""
+    if not base_url:
+        try:
+            base_url = request.host_url.rstrip('/')
+        except Exception:
+            base_url = "https://bellevitesse.com"
+    return run_async_email(send_newsletter_campaign, subject, body, subscribers, base_url=base_url)
 
 
 def send_waiver_invitation_email(to_email, pilot_name, project_name, signature_link):

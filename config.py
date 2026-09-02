@@ -46,6 +46,7 @@ class DevelopmentConfig(Config):
     DEBUG = True
     CACHE_TYPE = "SimpleCache"
     RATELIMIT_STORAGE_URI = "memory://"
+    SEND_FILE_MAX_AGE_DEFAULT = timedelta(seconds=0)
 
     # Path settings
     BASE_DIR = Path(__file__).parent
@@ -64,6 +65,7 @@ class ProductionConfig(Config):
     DEBUG = False
     CACHE_TYPE = "RedisCache"
     SESSION_COOKIE_SECURE = True
+    SEND_FILE_MAX_AGE_DEFAULT = timedelta(days=365)
 
     REDIS_HOST = os.getenv("REDIS_HOST", "bv_redis")
     REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))

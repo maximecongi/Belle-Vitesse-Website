@@ -12,7 +12,7 @@ from services.public.newsletter import (
     remove_newsletter_subscriber_by_id,
 )
 from utils.decorators import require_roles
-from utils.mailer import send_newsletter_campaign
+from utils.mailer import send_newsletter_campaign_async
 
 
 def init_newsletter_routes(app):
@@ -61,15 +61,9 @@ def init_newsletter_routes(app):
                     flash("Aucun abonné dans la liste.", "error")
                     return redirect(url_for("admin_newsletter_dashboard"))
 
-                success_count, failed_count = send_newsletter_campaign(
-                    subject, body, subscribers)
-
-                if success_count > 0:
-                    flash(
-                        f"Newsletter envoyée avec succès à {success_count} abonnés.", "success")
-                if failed_count > 0:
-                    flash(
-                        f"Échec de l'envoi pour {failed_count} abonnés.", "warning")
+                send_newsletter_campaign_async(subject, body, subscribers)
+                flash(
+                    f"Campagne de newsletter lancée en arrière-plan pour {len(subscribers)} abonnés.", "success")
 
                 return redirect(url_for("admin_newsletter_dashboard"))
             except Exception as e:
