@@ -222,7 +222,7 @@
                     <h1>{% block page_title %}{% endblock %}</h1>
                 </div>
                 <div class="admin-header-actions">
-                    <button type="button" class="admin-cmdk-trigger" id="cmdkTrigger" title="Recherche rapide (⌘K)">
+                    <button type="button" class="admin-cmdk-trigger" id="cmdkTrigger" onclick="window.openCmdK &amp;&amp; window.openCmdK()" title="Recherche rapide (⌘K)">
                         <svg class="cmdk-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
@@ -269,7 +269,7 @@
                 <svg class="admin-cmdk-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
-                <input type="text" class="admin-cmdk-input" id="cmdkInput" placeholder="Rechercher un projet, véhicule, contact ou action..." autocomplete="off" spellcheck="false">
+                <input type="text" class="admin-cmdk-input" id="cmdkInput" placeholder="Rechercher un projet, production, contact, véhicule... (ex: prod:..., contact:...)" autocomplete="off" spellcheck="false">
                 <span class="admin-cmdk-close-hint" id="cmdkCloseBtn">ESC</span>
             </div>
             <div class="admin-cmdk-results" id="cmdkResults"></div>

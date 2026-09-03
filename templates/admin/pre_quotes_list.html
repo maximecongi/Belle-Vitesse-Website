@@ -4,11 +4,7 @@
 {% block page_title %}Pré-Devis{% endblock %}
 
 {% block header_actions %}
-<div class="u-flex u-gap-2 u-align-center">
-    <input type="text" id="searchInput" class="form-input u-w-250 u-text-sm" placeholder="🔍 Rechercher..."
-        autocomplete="off">
-    <a href="{{ url_for('admin_pre_quote_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Pré-Devis</a>
-</div>
+<a href="{{ url_for('admin_pre_quote_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Pré-Devis</a>
 {% endblock %}
 
 {% block content %}

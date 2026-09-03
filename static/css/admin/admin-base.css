@@ -68,6 +68,11 @@ body {
     z-index: 900;
 }
 
+.admin-header-actions {
+    display: flex;
+    gap: 1vw;
+}
+
 .admin-header-title h1 {
     margin: 0;
     font-size: 1.25rem;

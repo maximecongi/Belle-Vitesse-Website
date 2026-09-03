@@ -4,11 +4,7 @@
 {% block page_title %}Contacts{% endblock %}
 
 {% block header_actions %}
-<div class="u-flex u-gap-2 u-align-center">
-    <input type="text" id="searchInput" class="form-input u-w-250 u-text-sm" placeholder="🔍 Rechercher un contact..."
-        autocomplete="off">
-    <a href="{{ url_for('admin_contact_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Contact</a>
-</div>
+<a href="{{ url_for('admin_contact_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Contact</a>
 {% endblock %}
 
 {% block content %}
@@ -28,7 +24,7 @@
             </thead>
             <tbody>
                 {% for c in contacts %}
-                <tr class="searchable-row">
+                <tr class="searchable-row" data-search="{{ c.first_name|lower }} {{ c.last_name|lower }} {{ c.job_title|lower if c.job_title else '' }} {{ c.production_name|lower if c.production_name else '' }} {{ c.mail|lower if c.mail else '' }} {{ c.phone if c.phone else '' }}">
                     <td class="u-text-semibold" data-sort="{{ c.last_name }} {{ c.first_name }}">{{ c.first_name }} {{ c.last_name | upper
                         }}</td>
                     <td>{{ c.job_title }}</td>
