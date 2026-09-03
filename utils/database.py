@@ -77,27 +77,49 @@ def _fetch_all_from_table(table_name, order_by=None):
 
 
 def _fetch_by_field(table_name, field_name, field_value):
-    """Récupère un seul enregistrement par valeur de champ via une requête JSON MySQL."""
+    """Récupère un seul enregistrement par valeur de champ via une requête JSON MySQL (ou fallback Python sous SQLite)."""
     try:
         model = TABLE_MODELS.get(table_name)
         if not model:
             return None
 
-        # Requête JSON native MySQL au lieu d'un scan complet de la table
-        from sqlalchemy import func
-        row = model.query.filter(
-            func.json_unquote(func.json_extract(model.fields, f'$.{field_name}')) == field_value
-        ).first()
+        from models import db
+        dialect_name = getattr(getattr(db, "engine", None), "name", "mysql")
 
-        if row:
-            f = dict(row.fields) if row.fields else {}
-            if hasattr(row, "daily_rate") and row.daily_rate is not None:
-                f["daily_rate"] = float(row.daily_rate)
-            return {
-                "id": row.id,
-                "createdTime": str(row.createdTime) if row.createdTime else None,
-                "fields": f,
-            }
+        if dialect_name != "sqlite":
+            try:
+                # Requête JSON native MySQL au lieu d'un scan complet de la table
+                from sqlalchemy import func
+                row = model.query.filter(
+                    func.json_unquote(func.json_extract(model.fields, f'$.{field_name}')) == field_value
+                ).first()
+
+                if row:
+                    f = dict(row.fields) if row.fields else {}
+                    if hasattr(row, "daily_rate") and row.daily_rate is not None:
+                        f["daily_rate"] = float(row.daily_rate)
+                    return {
+                        "id": row.id,
+                        "createdTime": str(row.createdTime) if row.createdTime else None,
+                        "fields": f,
+                    }
+                return None
+            except Exception:
+                pass  # Repli Python ci-dessous
+
+        # Fallback universel Python (compatible SQLite in-memory)
+        rows = model.query.all()
+        for row in rows:
+            fields = row.fields or {}
+            if fields.get(field_name) == field_value:
+                f = dict(fields)
+                if hasattr(row, "daily_rate") and row.daily_rate is not None:
+                    f["daily_rate"] = float(row.daily_rate)
+                return {
+                    "id": row.id,
+                    "createdTime": str(row.createdTime) if row.createdTime else None,
+                    "fields": f,
+                }
         return None
     except Exception as e:
         logging.error(f"Error fetching by field from {table_name}: {e}")
@@ -146,26 +168,32 @@ def get_grips_products_for_category(category_id):
         model = TABLE_MODELS.get("grip_products")
         if not model:
             return []
-        try:
-            candidate = json.dumps(category_id)
-            rows = model.query.filter(
-                func.json_contains(model.fields, candidate, '$.category')
-            ).all()
-            
-            records = []
-            for row in rows:
-                records.append({
-                    "id": row.id,
-                    "createdTime": str(row.createdTime) if row.createdTime else None,
-                    "fields": row.fields
-                })
-            return records
-        except Exception as e:
-            logging.error(f"Error fetching grip_products for category {category_id} via JSON: {e}")
-            all_products = _fetch_all_from_table("grip_products")
-            return [
-                p for p in all_products if category_id in p["fields"].get("category", [])
-            ]
+
+        from models import db
+        dialect_name = getattr(getattr(db, "engine", None), "name", "mysql")
+
+        if dialect_name != "sqlite":
+            try:
+                candidate = json.dumps(category_id)
+                rows = model.query.filter(
+                    func.json_contains(model.fields, candidate, '$.category')
+                ).all()
+
+                records = []
+                for row in rows:
+                    records.append({
+                        "id": row.id,
+                        "createdTime": str(row.createdTime) if row.createdTime else None,
+                        "fields": row.fields
+                    })
+                return records
+            except Exception as e:
+                logging.debug(f"JSON query error on grip_products, falling back: {e}")
+
+        all_products = _fetch_all_from_table("grip_products")
+        return [
+            p for p in all_products if category_id in (p["fields"].get("category") or [])
+        ]
 
     return get_cached(f"grips_products_{category_id}", fetcher)
 
@@ -180,6 +208,8 @@ def get_vehicle_by_slug(slug):
 def get_head_by_slug(slug):
     """Récupère une tête par son slug."""
     return get_cached(f"head_{slug}", lambda: _fetch_by_field("heads", "slug", slug))
+
+
 def get_all_static():
     """Récupère toutes les lignes de contenu statique, indexées par code langue.
 
@@ -203,24 +233,30 @@ def get_configs_for_vehicle(vehicle_id):
         model = TABLE_MODELS.get("configs")
         if not model:
             return []
-        try:
-            candidate = json.dumps(vehicle_id)
-            rows = model.query.filter(
-                func.json_contains(model.fields, candidate, '$.vehicle')
-            ).all()
-            
-            records = []
-            for row in rows:
-                records.append({
-                    "id": row.id,
-                    "createdTime": str(row.createdTime) if row.createdTime else None,
-                    "fields": row.fields
-                })
-            return records
-        except Exception as e:
-            logging.error(f"Error fetching configs for vehicle {vehicle_id} via JSON: {e}")
-            all_configs = _fetch_all_from_table("configs")
-            return [c for c in all_configs if vehicle_id in c["fields"].get("vehicle", [])]
+
+        from models import db
+        dialect_name = getattr(getattr(db, "engine", None), "name", "mysql")
+
+        if dialect_name != "sqlite":
+            try:
+                candidate = json.dumps(vehicle_id)
+                rows = model.query.filter(
+                    func.json_contains(model.fields, candidate, '$.vehicle')
+                ).all()
+
+                records = []
+                for row in rows:
+                    records.append({
+                        "id": row.id,
+                        "createdTime": str(row.createdTime) if row.createdTime else None,
+                        "fields": row.fields
+                    })
+                return records
+            except Exception as e:
+                logging.debug(f"JSON query error on configs, falling back: {e}")
+
+        all_configs = _fetch_all_from_table("configs")
+        return [c for c in all_configs if vehicle_id in (c["fields"].get("vehicle") or [])]
 
     return get_cached(f"configs_vehicle_{vehicle_id}", fetcher)
 

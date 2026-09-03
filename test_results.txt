@@ -20,9 +20,60 @@ test_api_with_invalid_token (test_api.APIRouteSmokeTest.test_api_with_invalid_to
 GET /api/v1/checkouts with invalid token returns 401. ... ok
 test_api_with_valid_jwt (test_api.APIRouteSmokeTest.test_api_with_valid_jwt)
 GET /api/v1/checkouts with valid JWT returns 200. ... ok
+test_administrator_sees_only_own_calendar (test_calendar_permissions.CalendarPermissionsTestCase.test_administrator_sees_only_own_calendar)
+Administrator user should only see their own calendar entry. ... ok
+test_commercial_sees_only_own_calendar (test_calendar_permissions.CalendarPermissionsTestCase.test_commercial_sees_only_own_calendar)
+Commercial user should only see their own calendar entry. ... ok
+test_manager_sees_only_own_calendar (test_calendar_permissions.CalendarPermissionsTestCase.test_manager_sees_only_own_calendar)
+Manager user should only see their own calendar entry. ... ok
+test_non_super_admin_cannot_generate_for_other_user (test_calendar_permissions.CalendarPermissionsTestCase.test_non_super_admin_cannot_generate_for_other_user)
+If a commercial tries to generate a subscription with another user_id, it is forced to their own. ... ok
+test_super_admin_can_generate_for_other_user (test_calendar_permissions.CalendarPermissionsTestCase.test_super_admin_can_generate_for_other_user)
+Super admin can generate subscription for any user specified in form. ... ok
+test_super_administrator_sees_all_users (test_calendar_permissions.CalendarPermissionsTestCase.test_super_administrator_sees_all_users)
+Super Administrator user should see all users. ... ok
+test_unauthenticated_access_redirects_to_login (test_calendar_permissions.CalendarPermissionsTestCase.test_unauthenticated_access_redirects_to_login)
+Unauthenticated user should be redirected to login page. ... ok
+test_user_role_cannot_access_calendar (test_calendar_permissions.CalendarPermissionsTestCase.test_user_role_cannot_access_calendar)
+User with role 'user' should be forbidden / redirected to dashboard. ... ok
+test_docs_restricted_to_admin_and_super_admin (test_dev_role_switcher.DevRoleSwitcherTestCase.test_docs_restricted_to_admin_and_super_admin)
+Technical and API docs should only be accessible/visible to Administrator and Super Administrator. ... ok
+test_manager_can_modify_only_users_and_commercials (test_dev_role_switcher.DevRoleSwitcherTestCase.test_manager_can_modify_only_users_and_commercials)
+Manager can only edit users with role User or Commercial, and cannot edit other Managers or Admins. ... ok
+test_reset_role_restores_db_role (test_dev_role_switcher.DevRoleSwitcherTestCase.test_reset_role_restores_db_role)
+Resetting role restores the original role from the database. ... ok
+test_switch_role_affects_template_context_and_permissions (test_dev_role_switcher.DevRoleSwitcherTestCase.test_switch_role_affects_template_context_and_permissions)
+After switching to Technicien, accessing restricted pages like calendar is blocked by require_roles. ... ok
+test_switch_role_in_dev_updates_session_only (test_dev_role_switcher.DevRoleSwitcherTestCase.test_switch_role_in_dev_updates_session_only)
+Switching role updates session role without altering the database. ... ok
+test_switch_role_in_production_blocked (test_dev_role_switcher.DevRoleSwitcherTestCase.test_switch_role_in_production_blocked)
+In production environment, role switching is forbidden. ... ok
+test_switch_role_unauthenticated (test_dev_role_switcher.DevRoleSwitcherTestCase.test_switch_role_unauthenticated)
+Unauthenticated call to switch role redirects to login. ... ok
+test_user_cannot_access_or_see_catalog_update (test_dev_role_switcher.DevRoleSwitcherTestCase.test_user_cannot_access_or_see_catalog_update)
+Technicien role should not see catalog_update in sidebar nav and should be forbidden on catalog preview/update. ... ok
 test_list_and_details (test_inspections.InspectionsTest.test_list_and_details) ... ok
 test_soft_delete (test_inspections.InspectionsTest.test_soft_delete) ... ok
 test_unified_form_context (test_inspections.InspectionsTest.test_unified_form_context) ... ok
+test_calendars_lifecycle (test_mcp_server.MCPServerFullTestSuite.test_calendars_lifecycle) ... ok
+test_contacts_lifecycle (test_mcp_server.MCPServerFullTestSuite.test_contacts_lifecycle) ... ok
+test_dashboard_summary_and_pre_quote_duplicate (test_mcp_server.MCPServerFullTestSuite.test_dashboard_summary_and_pre_quote_duplicate) ... ok
+test_documents_and_vehicles (test_mcp_server.MCPServerFullTestSuite.test_documents_and_vehicles) ... ok
+test_enriched_details (test_mcp_server.MCPServerFullTestSuite.test_enriched_details) ... ok
+test_flexible_date_parsing (test_mcp_server.MCPServerFullTestSuite.test_flexible_date_parsing) ... ok
+test_inspections (test_mcp_server.MCPServerFullTestSuite.test_inspections) ... ok
+test_mcp_resources_and_prompts (test_mcp_server.MCPServerFullTestSuite.test_mcp_resources_and_prompts) ... ok
+test_newsletter_subscribers (test_mcp_server.MCPServerFullTestSuite.test_newsletter_subscribers) ... ok
+test_pre_quotes_lifecycle (test_mcp_server.MCPServerFullTestSuite.test_pre_quotes_lifecycle) ... ok
+test_pricing (test_mcp_server.MCPServerFullTestSuite.test_pricing) ... ok
+test_productions_lifecycle (test_mcp_server.MCPServerFullTestSuite.test_productions_lifecycle) ... ok
+test_projects_lifecycle (test_mcp_server.MCPServerFullTestSuite.test_projects_lifecycle) ... ok
+test_purge_system_cache (test_mcp_server.MCPServerFullTestSuite.test_purge_system_cache) ... ok
+test_search_filters_and_pagination (test_mcp_server.MCPServerFullTestSuite.test_search_filters_and_pagination) ... ok
+test_security_scopes_and_audit (test_mcp_server.MCPServerFullTestSuite.test_security_scopes_and_audit) ... ok
+test_system_status (test_mcp_server.MCPServerFullTestSuite.test_system_status) ... ok
+test_users_lifecycle (test_mcp_server.MCPServerFullTestSuite.test_users_lifecycle) ... ok
+test_vehicle_availability (test_mcp_server.MCPServerFullTestSuite.test_vehicle_availability) ... ok
 test_all_rates_api (test_pre_quote_salary.PreQuoteSalaryTest.test_all_rates_api) ... ok
 test_edit_enrichment (test_pre_quote_salary.PreQuoteSalaryTest.test_edit_enrichment) ... ok
 test_grouped_prestations_pdf (test_pre_quote_salary.PreQuoteSalaryTest.test_grouped_prestations_pdf) ... ok
@@ -47,16 +98,14 @@ test_public_checkout_view_404 (test_routes.RouteSmokeTest.test_public_checkout_v
 Test that public checkout view returns 404 for non-existent record. ... ok
 test_public_waiver_sign_page_404 (test_routes.RouteSmokeTest.test_public_waiver_sign_page_404)
 Test that public waiver sign page returns 404 for invalid token. ... ok
+test_quick_contact_creation (test_routes.RouteSmokeTest.test_quick_contact_creation)
+Test the /admin/api/contacts/quick endpoint. ... ok
 test_unsubscribe_success (test_routes.RouteSmokeTest.test_unsubscribe_success)
 Test that unsubscribing with a valid token works and does not 500. ... ok
 test_create_and_list_waivers (test_waivers.WaiversTest.test_create_and_list_waivers) ... ok
 test_soft_delete_waivers (test_waivers.WaiversTest.test_soft_delete_waivers) ... ok
 
 ----------------------------------------------------------------------
-Ran 33 tests in 1.693s
+Ran 69 tests in 5.918s
 
 OK
-
-=== DETAILED ERRORS ===
-
-=== DETAILED FAILURES ===

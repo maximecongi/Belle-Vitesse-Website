@@ -34,14 +34,14 @@ class CalendarSubscription(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey(
-        "users.id"), nullable=False, index=True)
+        "users.id", ondelete="CASCADE"), nullable=False, index=True)
     token = db.Column(db.String(36), unique=True,
                       nullable=False, default=lambda: str(uuid.uuid4()))
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=_utcnow)
     last_accessed_at = db.Column(db.DateTime, nullable=True)
 
-    user = db.relationship("User", backref="calendar_subscriptions")
+    user = db.relationship("User", backref=db.backref("calendar_subscriptions", cascade="all, delete-orphan", passive_deletes=True))
 
     def to_dict(self):
         """Convertit l'objet en dictionnaire pour les réponses API."""

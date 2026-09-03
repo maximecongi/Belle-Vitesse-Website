@@ -2,7 +2,6 @@
 Suite de tests unitaires et d'intégration PyTest pour le serveur MCP (BV-MCP).
 Vérifie la conformité de tous les outils MCP, la sécurité par scopes et les garde-fous.
 """
-import os
 import sys
 import unittest
 from unittest.mock import MagicMock
@@ -15,11 +14,11 @@ mock_weasyprint.HTML.return_value = mock_html_inst
 mock_weasyprint.CSS = MagicMock()
 sys.modules["weasyprint"] = mock_weasyprint
 
-from mcp_server.core import flask_app
-from mcp_server.context import CURRENT_MCP_USER, CURRENT_MCP_IP
-from mcp_auth.auth import McpUserContext
-from models import db, McpAuditLog, McpApiToken, Production, Vehicle, Contact
-from mcp_server.tools import (
+from mcp_server.core import flask_app  # noqa: E402
+from mcp_server.context import CURRENT_MCP_USER, CURRENT_MCP_IP  # noqa: E402
+from mcp_auth.auth import McpUserContext  # noqa: E402
+from models import db, McpAuditLog, McpApiToken, Production, Vehicle, Contact  # noqa: E402
+from mcp_server.tools import (  # noqa: E402
     calendars,
     contacts,
     documents,
@@ -47,6 +46,7 @@ class MCPServerFullTestSuite(unittest.TestCase):
         cls.app_context.pop()
 
     def setUp(self):
+        db.create_all()
         token = McpApiToken.query.filter_by(is_active=True).first()
         token_id = token.id if token else None
         self.admin_user = McpUserContext(
@@ -60,6 +60,25 @@ class MCPServerFullTestSuite(unittest.TestCase):
         )
         CURRENT_MCP_USER.set(self.admin_user)
         CURRENT_MCP_IP.set("127.0.0.1")
+
+        if not Vehicle.query.filter_by(id="test-veh-01").first():
+            test_v = Vehicle(
+                id="test-veh-01",
+                daily_rate=1500,
+                fields={
+                    "name": "Mercedes C63 AMG Test",
+                    "max_speed": "250 km/h",
+                    "passengers": "4",
+                    "setups": "Standard",
+                    "power": "510 ch",
+                    "weight": "1800 kg",
+                }
+            )
+            db.session.add(test_v)
+            try:
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
 
     # ── 1. SYSTÈME ───────────────────────────────────────────────
     def test_system_status(self):
@@ -209,7 +228,11 @@ class MCPServerFullTestSuite(unittest.TestCase):
         self.assertIn("delivery_config", pre_quotes.get_pre_quote_form_context())
 
         first_prod = Production.query.first()
-        prod_id = first_prod.id if first_prod else 1
+        if not first_prod:
+            first_prod = Production(name="Production Test Pré-Devis")
+            db.session.add(first_prod)
+            db.session.commit()
+        prod_id = first_prod.id
 
         res_c = pre_quotes.create_pre_quote(
             production_id=prod_id,
@@ -355,6 +378,9 @@ class MCPServerFullTestSuite(unittest.TestCase):
         # Audit logs recorded in database
         logs = McpAuditLog.query.order_by(McpAuditLog.created_at.desc()).limit(5).all()
         self.assertGreater(len(logs), 0)
+
+        # Réinitialiser le contexte utilisateur sur admin
+        CURRENT_MCP_USER.set(self.admin_user)
 
 
     # ── 12. PARSING DE DATES, FILTRES, PAGINATION & ENRICHISSEMENT ──
