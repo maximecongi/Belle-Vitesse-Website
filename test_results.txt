@@ -52,6 +52,22 @@ test_switch_role_unauthenticated (test_dev_role_switcher.DevRoleSwitcherTestCase
 Unauthenticated call to switch role redirects to login. ... ok
 test_user_cannot_access_or_see_catalog_update (test_dev_role_switcher.DevRoleSwitcherTestCase.test_user_cannot_access_or_see_catalog_update)
 Technicien role should not see catalog_update in sidebar nav and should be forbidden on catalog preview/update. ... ok
+test_auto_reporter_and_project_equipment_context (test_incidents.IncidentsTestCase.test_auto_reporter_and_project_equipment_context)
+Vérifie l'assignation automatique du déclarant et le filtrage des véhicules/têtes par projet. ... ok
+test_create_incident (test_incidents.IncidentsTestCase.test_create_incident)
+Vérifie la création d'un incident avec calcul automatique du numéro BVIC. ... ok
+test_delete_incident_soft_delete (test_incidents.IncidentsTestCase.test_delete_incident_soft_delete)
+Vérifie le soft-delete et le mécanisme de confirmation. ... ok
+test_generate_incident_pdf (test_incidents.IncidentsTestCase.test_generate_incident_pdf)
+Vérifie la génération du rapport PDF officiel selon la DA Belle Vitesse. ... ok
+test_get_incident_detail (test_incidents.IncidentsTestCase.test_get_incident_detail)
+Vérifie la restitution des données enrichies d'un incident. ... ok
+test_list_incidents_and_kpi_stats (test_incidents.IncidentsTestCase.test_list_incidents_and_kpi_stats)
+Vérifie le calcul des statistiques KPI et les filtres de recherche. ... ok
+test_mcp_incident_tools (test_incidents.IncidentsTestCase.test_mcp_incident_tools)
+Vérifie l'exposition et le fonctionnement des outils MCP pour l'IA. ... ok
+test_update_incident_and_resolution (test_incidents.IncidentsTestCase.test_update_incident_and_resolution)
+Vérifie la mise à jour et l'horodatage de résolution. ... ok
 test_list_and_details (test_inspections.InspectionsTest.test_list_and_details) ... ok
 test_soft_delete (test_inspections.InspectionsTest.test_soft_delete) ... ok
 test_unified_form_context (test_inspections.InspectionsTest.test_unified_form_context) ... ok
@@ -106,6 +122,6 @@ test_create_and_list_waivers (test_waivers.WaiversTest.test_create_and_list_waiv
 test_soft_delete_waivers (test_waivers.WaiversTest.test_soft_delete_waivers) ... ok
 
 ----------------------------------------------------------------------
-Ran 69 tests in 5.918s
+Ran 77 tests in 5.736s
 
 OK

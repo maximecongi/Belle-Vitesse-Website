@@ -1,0 +1,492 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}
+{% if is_edit %}Modifier l'Incident {{ incident.incident_number }}{% else %}Déclarer un Incident de Tournage{% endif %}
+{% endblock %}
+
+{% block page_title %}
+{% if is_edit %}Modifier l'Incident {{ incident.incident_number }}{% else %}Déclaration d'Incident{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .incident-header-status-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        padding-bottom: 1.25rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--white-3, #e9ecef);
+    }
+
+    .badge-select-pill-lg {
+        font-size: 0.85rem !important;
+        padding: 0.35rem 1.75rem 0.35rem 0.75rem !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    <form method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        <!-- ═══════════ STATUT & GRAVITÉ DU DOSSIER (BADGE-PILLS COMPACTS) ═══════════ -->
+        {% set status_meta = {
+        'signale': {'val': 'neutral', 'icon': '📣'},
+        'en_expertise': {'val': 'warning', 'icon': '🔍'},
+        'en_reparation': {'val': 'in_progress', 'icon': '🔧'},
+        'assurance': {'val': 'assurance', 'icon': '📋'},
+        'resolu': {'val': 'ok', 'icon': '✅'},
+        'cloture': {'val': 'cloture', 'icon': '🔒'}
+        } %}
+        {% set current_status = incident.status or 'signale' %}
+        {% set current_meta = status_meta.get(current_status, {'val': 'neutral', 'icon': '📣'}) %}
+        {% set ns_status = namespace(label='Signalé') %}
+        {% for key, label in context.statuses %}
+        {% if key == current_status %}{% set ns_status.label = label %}{% endif %}
+        {% endfor %}
+
+        {% set severity_meta = {
+        'mineur': {'val': 'neutral', 'icon': 'ℹ️'},
+        'modere': {'val': 'warning', 'icon': '⚠️'},
+        'critique': {'val': 'critique', 'icon': '🚨'}
+        } %}
+        {% set current_severity = incident.severity or 'modere' %}
+        {% set current_sev_meta = severity_meta.get(current_severity, {'val': 'warning', 'icon': '⚠️'}) %}
+        {% set ns_sev = namespace(label='Modéré') %}
+        {% for key, label in context.severities %}
+        {% if key == current_severity %}{% set ns_sev.label = label %}{% endif %}
+        {% endfor %}
+
+        <div class="incident-header-status-bar">
+            <div class="u-flex u-align-center u-gap-3 u-flex-wrap">
+                <!-- STATUT DU DOSSIER -->
+                <div class="u-flex u-align-center u-gap-2">
+                    <span class="form-label u-m-0 u-font-semibold">Statut :</span>
+                    <div class="badge-pill badge-select-pill badge-select-pill-lg" data-val="{{ current_meta.val }}"
+                        id="incidentStatusPill" title="Cliquer pour changer le statut">
+                        <span class="status-label" id="incidentStatusLabel">{{ current_meta.icon }} {{ ns_status.label
+                            }}</span>
+                        <select name="status" id="incidentStatusSelect" onchange="updateIncidentStatusPill(this)">
+                            {% for key, label in context.statuses %}
+                            {% set opt_meta = status_meta.get(key, {'val': 'neutral', 'icon': '📣'}) %}
+                            <option value="{{ key }}" data-val="{{ opt_meta.val }}" {% if current_status==key
+                                %}selected{% endif %}>{{ opt_meta.icon }} {{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <span class="badge-select-pill-arrow">▼</span>
+                    </div>
+                </div>
+
+                <!-- NIVEAU DE GRAVITÉ -->
+                <div class="u-flex u-align-center u-gap-2">
+                    <span class="form-label u-m-0 u-font-semibold">Gravité :</span>
+                    <div class="badge-pill badge-select-pill badge-select-pill-lg" data-val="{{ current_sev_meta.val }}"
+                        id="incidentSeverityPill" title="Cliquer pour changer le niveau de gravité">
+                        <span class="status-label" id="incidentSeverityLabel">{{ current_sev_meta.icon }} {{
+                            ns_sev.label }}</span>
+                        <select name="severity" id="incidentSeveritySelect" onchange="updateIncidentSeverityPill(this)">
+                            {% for key, label in context.severities %}
+                            {% set opt_sev = severity_meta.get(key, {'val': 'neutral', 'icon': 'ℹ️'}) %}
+                            <option value="{{ key }}" data-val="{{ opt_sev.val }}" {% if current_severity==key
+                                %}selected{% endif %}>{{ opt_sev.icon }} {{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <span class="badge-select-pill-arrow">▼</span>
+                    </div>
+                </div>
+            </div>
+
+            <span class="u-text-xs u-text-muted">
+            </span>
+        </div>
+
+        <!-- ═══════════ 1. CONTEXTE TOURNAGE & MATÉRIEL ═══════════ -->
+        <div class="admin-card-title">1. Contexte du Tournage & Matériel Concerné</div>
+
+        <div class="form-group">
+            <label class="form-label" for="project_id">Projet (Tournage) <span class="u-text-error">*</span></label>
+            <select name="project_id" id="project_id" class="form-input" required
+                onchange="updateProjectEquipment(this.value)">
+                <option value="">— Sélectionner un projet —</option>
+                {% for p in context.projects %}
+                <option value="{{ p.id }}" {% if incident.project_id|string==p.id|string or (incident.project and
+                    incident.project.id|string==p.id|string) %}selected{% endif %}>
+                    {{ p.name }} {% if p.production_name %}({{ p.production_name }}){% endif %}
+                </option>
+                {% endfor %}
+            </select>
+            <span class="u-text-xs u-text-muted u-mt-1">
+                La sélection du projet filtre automatiquement les véhicules et têtes assignés au tournage.
+            </span>
+        </div>
+
+        <div class="u-grid u-grid-2 u-gap-3">
+            <div class="form-group">
+                <label class="form-label" for="vehicle_id">Véhicule du projet</label>
+                <select name="vehicle_id" id="vehicle_id" class="form-input">
+                    <option value="">— Sélectionnez d'abord un projet —</option>
+                </select>
+                <span class="u-text-xs u-text-muted u-mt-1">Seuls les véhicules prévus sur ce tournage sont
+                    listés.</span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="head_select">Tête gyrostabilisée du projet</label>
+                <select id="head_select" class="form-input" onchange="onHeadSelectChange(this.value)">
+                    <option value="">— Sélectionnez d'abord un projet —</option>
+                </select>
+                <span class="u-text-xs u-text-muted u-mt-1">Seules les têtes prévues sur ce tournage sont
+                    listées.</span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="equipment_name">Détail équipement / Accessoire concerné</label>
+            <input type="text" name="equipment_name" id="equipment_name" class="form-input"
+                value="{{ incident.equipment_name or '' }}"
+                placeholder="Ex: Tête Flight Head, Bras remote, Objectif 24-70mm...">
+            <span class="u-text-xs u-text-muted u-mt-1">Renseigné automatiquement si vous sélectionnez une tête, ou
+                personnalisable pour un accessoire précis.</span>
+        </div>
+
+        <div class="u-grid u-grid-3 u-gap-3">
+            <div class="form-group">
+                <label class="form-label" for="incident_date">Date de survenance <span
+                        class="u-text-error">*</span></label>
+                <input type="date" name="incident_date" id="incident_date" class="form-input" required
+                    value="{{ incident.incident_date_raw or incident.incident_date or '' }}">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="incident_time">Heure approximative</label>
+                <input type="text" name="incident_time" id="incident_time" class="form-input"
+                    value="{{ incident.incident_time or '' }}" placeholder="Ex: 14h30">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="location">Lieu du sinistre / Plateau</label>
+                <input type="text" name="location" id="location" class="form-input"
+                    value="{{ incident.location or '' }}" placeholder="Ex: Circuit, Plateau 2, Route de...">
+            </div>
+        </div>
+
+        <!-- ═══════════ 2. QUALIFICATION & CIRCONSTANCES ═══════════ -->
+        <div class="admin-card-title u-mt-4">2. Qualification & Circonstances</div>
+
+        <div class="form-group">
+            <label class="form-label" for="title">Intitulé court de l'incident <span
+                    class="u-text-error">*</span></label>
+            <input type="text" name="title" id="title" class="form-input" required value="{{ incident.title or '' }}"
+                placeholder="Ex: Fissure jupe avant gauche suite choc vibreur">
+        </div>
+
+        <div class="u-grid u-grid-2 u-gap-3">
+            <div class="form-group">
+                <label class="form-label" for="category">Catégorie</label>
+                <select name="category" id="category" class="form-input">
+                    {% for key, label in context.categories %}
+                    <option value="{{ key }}" {% if incident.category==key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="shooting_impact">Impact sur le Tournage</label>
+                <select name="shooting_impact" id="shooting_impact" class="form-input">
+                    {% for key, label in context.shooting_impacts %}
+                    <option value="{{ key }}" {% if incident.shooting_impact==key %}selected{% endif %}>{{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="description">Circonstances précises & Dommages constatés</label>
+            <textarea name="description" id="description" rows="4" class="form-input u-resize-y"
+                placeholder="Décrire précisément ce qui s'est passé, les conditions météo, le type de prise de vue, les parties endommagées...">{{ incident.description or '' }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="immediate_actions">Actions immédiates prises sur le plateau</label>
+            <textarea name="immediate_actions" id="immediate_actions" rows="2" class="form-input u-resize-y"
+                placeholder="Ex: Mise en sécurité du véhicule, remplacement par véhicule mulet, contrôle télémétrie...">{{ incident.immediate_actions or '' }}</textarea>
+        </div>
+
+        <!-- ═══════════ 3. FINANCIER & ASSURANCE ═══════════ -->
+        <div class="admin-card-title u-mt-4">3. Suivi Financier & Assurance</div>
+
+        <div class="u-grid u-grid-3 u-gap-3">
+            <div class="form-group">
+                <label class="form-label" for="estimated_cost">Coût estimé (€ HT)</label>
+                <input type="number" step="0.01" name="estimated_cost" id="estimated_cost" class="form-input"
+                    value="{{ incident.estimated_cost or '' }}" placeholder="Ex: 1500.00">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="actual_cost">Coût réel facturé (€ HT)</label>
+                <input type="number" step="0.01" name="actual_cost" id="actual_cost" class="form-input"
+                    value="{{ incident.actual_cost or '' }}" placeholder="Ex: 1420.50">
+            </div>
+
+            <div class="form-group u-flex u-flex-column u-justify-center">
+                <label class="u-flex u-align-center u-gap-2 u-mt-3 u-cursor-pointer">
+                    <input type="checkbox" name="insurance_declared" value="1" {% if incident.insurance_declared
+                        %}checked{% endif %}>
+                    <span class="u-text-medium u-text-sm">Déclaration de sinistre assurance effectuée</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="u-grid u-grid-2 u-gap-3">
+            <div class="form-group">
+                <label class="form-label" for="insurance_reference">N° de dossier sinistre assurance</label>
+                <input type="text" name="insurance_reference" id="insurance_reference" class="form-input"
+                    value="{{ incident.insurance_reference or '' }}" placeholder="Ex: SIN-2026-98124">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="insurance_notes">Notes assurance / franchise / recours</label>
+                <input type="text" name="insurance_notes" id="insurance_notes" class="form-input"
+                    value="{{ incident.insurance_notes or '' }}"
+                    placeholder="Ex: Franchise 1 000 € refacturée à la production">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="resolution_notes">Notes de résolution & Clôture</label>
+            <textarea name="resolution_notes" id="resolution_notes" rows="2" class="form-input u-resize-y"
+                placeholder="Ex: Réparation effectuée par le carrossier le 18/09. Test piste validé, véhicule réintégré à la flotte.">{{ incident.resolution_notes or '' }}</textarea>
+        </div>
+
+        <!-- ═══════════ 4. PHOTOS & JUSTIFICATIFS ═══════════ -->
+        <div class="admin-card-title u-mt-4">4. Photos des Dégâts & Pièces Jointes</div>
+
+        {% if is_edit and incident.photos %}
+        <div class="form-group">
+            <label class="form-label">Photos actuelles des dommages (Cocher pour supprimer) :</label>
+            <div class="u-grid u-grid-4 u-gap-3 u-mt-1">
+                {% for p in incident.photos %}
+                <div style="border: 1px solid var(--white-3); padding: 6px; background-color: var(--white-1);">
+                    <img src="{{ p.url }}" alt="Photo dégât"
+                        style="width: 100%; height: 110px; object-fit: cover; display: block;">
+                    <label class="u-flex u-align-center u-gap-1 u-mt-2 u-text-xs u-text-error u-cursor-pointer">
+                        <input type="checkbox" name="remove_photos" value="{{ p.rel_path }}"> Supprimer
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="u-grid u-grid-2 u-gap-3">
+            <div class="form-group">
+                <label class="form-label" for="photos">Ajouter des photos des dommages (JPEG, PNG)</label>
+                <input type="file" name="photos" id="photos" multiple accept="image/*" class="form-input"
+                    onchange="previewFiles(this, 'photos-preview')">
+                <span class="u-text-xs u-text-muted u-mt-1">Sélectionnez une ou plusieurs photos du plateau ou de
+                    l'atelier.</span>
+                <div id="photos-preview" class="u-flex u-flex-wrap u-gap-2 u-mt-2"></div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="documents">Devis, factures ou constats scannés (PDF, images)</label>
+                <input type="file" name="documents" id="documents" multiple accept=".pdf,image/*" class="form-input"
+                    onchange="previewDocs(this, 'docs-preview')">
+                <span class="u-text-xs u-text-muted u-mt-1">Justificatifs réparateurs ou rapport d'intervention.</span>
+                <div id="docs-preview" class="u-flex u-flex-wrap u-gap-1 u-mt-2"></div>
+            </div>
+        </div>
+
+        <!-- ═══════════ BOUTONS D'ACTION ═══════════ -->
+        <div class="u-mt-4 u-flex u-justify-between u-align-center">
+            <div>
+                {% if is_edit %}
+                <button type="submit" formaction="{{ url_for('admin_incident_delete', record_id=incident.id) }}"
+                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet incident ? Cette action est irréversible.');"
+                    class="admin-btn admin-btn-danger" formnovalidate>
+                    Supprimer
+                </button>
+                {% endif %}
+            </div>
+            <div>
+                <a href="{{ url_for('admin_incident_detail', record_id=incident.id) if is_edit else url_for('admin_incidents_list') }}"
+                    class="admin-btn admin-btn-secondary u-mr-2">Annuler</a>
+                <button type="submit" class="admin-btn admin-btn-primary">
+                    {% if is_edit %}Enregistrer les modifications{% else %}Déclarer l'incident{% endif %}
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Données des projets injectées depuis le backend
+    const projectsData = {{ context.projects | tojson | safe }};
+    const initialVehicleId = "{{ incident.vehicle_id or (incident.vehicle and incident.vehicle.id) or '' }}";
+    const initialEquipmentName = "{{ incident.equipment_name or '' }}";
+
+    function updateProjectEquipment(projectId) {
+        const vehicleSelect = document.getElementById('vehicle_id');
+        const headSelect = document.getElementById('head_select');
+        const equipmentInput = document.getElementById('equipment_name');
+
+        if (!projectId) {
+            vehicleSelect.innerHTML = '<option value="">— Sélectionnez d\'abord un projet —</option>';
+            vehicleSelect.disabled = true;
+            headSelect.innerHTML = '<option value="">— Sélectionnez d\'abord un projet —</option>';
+            headSelect.disabled = true;
+            return;
+        }
+
+        const project = projectsData.find(p => String(p.id) === String(projectId));
+        if (!project) {
+            vehicleSelect.innerHTML = '<option value="">— Aucun véhicule —</option>';
+            vehicleSelect.disabled = false;
+            headSelect.innerHTML = '<option value="">— Aucune tête —</option>';
+            headSelect.disabled = false;
+            return;
+        }
+
+        // 1. Peupler les véhicules du projet
+        vehicleSelect.disabled = false;
+        let vehOptions = '<option value="">— Aucun véhicule concerné —</option>';
+        if (project.vehicles && project.vehicles.length > 0) {
+            project.vehicles.forEach(v => {
+                const isSelected = (v.id === initialVehicleId) ? 'selected' : '';
+                vehOptions += `<option value="${v.id}" ${isSelected}>${v.name}</option>`;
+            });
+        } else {
+            vehOptions += '<option value="" disabled>Aucun véhicule rattaché à ce projet</option>';
+        }
+        vehicleSelect.innerHTML = vehOptions;
+
+        // 2. Peupler les têtes du projet
+        headSelect.disabled = false;
+        let headOptions = '<option value="">— Aucune tête concernée —</option>';
+        let matchedHead = false;
+
+        if (project.heads && project.heads.length > 0) {
+            project.heads.forEach(h => {
+                const isSelected = (h.name === initialEquipmentName) ? 'selected' : '';
+                if (isSelected) matchedHead = true;
+                headOptions += `<option value="${h.name}" ${isSelected}>${h.name}</option>`;
+            });
+        } else {
+            headOptions += '<option value="" disabled>Aucune tête rattachée à ce projet</option>';
+        }
+        headOptions += '<option value="__custom__">Autre équipement / accessoire libre…</option>';
+        headSelect.innerHTML = headOptions;
+
+        if (initialEquipmentName && !matchedHead && headSelect.querySelector('option[value="__custom__"]')) {
+            headSelect.value = '__custom__';
+        }
+    }
+
+    function onHeadSelectChange(val) {
+        const equipmentInput = document.getElementById('equipment_name');
+        if (val && val !== '__custom__') {
+            equipmentInput.value = val;
+        } else if (val === '__custom__') {
+            if (equipmentInput.value === '') {
+                equipmentInput.placeholder = "Précisez l'équipement concerné...";
+            }
+            equipmentInput.focus();
+        }
+    }
+
+    function previewFiles(input, containerId) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        if (input.files) {
+            Array.from(input.files).forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.style.cssText = 'width: 70px; height: 70px; object-fit: cover; border: 1px solid var(--white-3);';
+                        container.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    }
+
+    function previewDocs(input, containerId) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        if (input.files) {
+            Array.from(input.files).forEach(file => {
+                const tag = document.createElement('span');
+                tag.className = 'admin-badge u-text-xs';
+                tag.style.cssText = 'background: var(--white-2); color: var(--grey-1); padding: 4px 8px; margin-right: 4px;';
+                tag.innerText = '📄 ' + file.name;
+                container.appendChild(tag);
+            });
+        }
+    }
+
+    // Mise à jour visuelle dynamique du badge de statut
+    const STATUS_MAP = {
+        'signale': 'neutral',
+        'en_expertise': 'warning',
+        'en_reparation': 'in_progress',
+        'assurance': 'assurance',
+        'resolu': 'ok',
+        'cloture': 'cloture'
+    };
+
+    function updateIncidentStatusPill(selectElem) {
+        const pill = document.getElementById('incidentStatusPill');
+        const label = document.getElementById('incidentStatusLabel');
+        const selectedVal = selectElem.value;
+        const selectedText = selectElem.options[selectElem.selectedIndex].text;
+        const dataVal = STATUS_MAP[selectedVal] || 'neutral';
+
+        if (pill) {
+            pill.setAttribute('data-val', dataVal);
+        }
+        if (label) {
+            label.textContent = selectedText;
+        }
+    }
+
+    // Mise à jour visuelle dynamique du badge de gravité
+    const SEVERITY_MAP = {
+        'mineur': 'neutral',
+        'modere': 'warning',
+        'critique': 'critique'
+    };
+
+    function updateIncidentSeverityPill(selectElem) {
+        const pill = document.getElementById('incidentSeverityPill');
+        const label = document.getElementById('incidentSeverityLabel');
+        if (!pill || !selectElem) return;
+
+        const selectedVal = selectElem.value;
+        const selectedText = selectElem.options[selectElem.selectedIndex].text;
+        const dataVal = SEVERITY_MAP[selectedVal] || 'neutral';
+
+        pill.setAttribute('data-val', dataVal);
+        if (label) {
+            label.textContent = selectedText;
+        }
+    }
+
+    // Initialisation au chargement
+    document.addEventListener('DOMContentLoaded', () => {
+        const projectSelect = document.getElementById('project_id');
+        if (projectSelect && projectSelect.value) {
+            updateProjectEquipment(projectSelect.value);
+        } else {
+            updateProjectEquipment('');
+        }
+    });
+</script>
+{% endblock %}

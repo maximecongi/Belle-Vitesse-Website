@@ -161,6 +161,14 @@ def init_api_routes(app):
                 "icon": "clipboard"
             })
 
+            default_suggestions.append({
+                "title": "Déclarer un Incident",
+                "subtitle": "Signaler une panne ou dommage en tournage",
+                "url": url_for("admin_incident_new"),
+                "category": "Action",
+                "icon": "alert"
+            })
+
             if is_manager_or_higher or role_norm == 'commercial':
                 default_suggestions.append({
                     "title": "Projets (En cours)",
@@ -276,6 +284,8 @@ def init_api_routes(app):
                 {"title": "Check-outs", "subtitle": "Historique des contrôles de départ", "url": url_for("admin_checkouts_list"), "category": "Page", "icon": "clipboard", "roles": ['all']},
                 {"title": "Nouveau Check-in", "subtitle": "Effectuer un contrôle de retour", "url": url_for("admin_checkin_new"), "category": "Action", "icon": "check-circle", "roles": ['all']},
                 {"title": "Check-ins", "subtitle": "Historique des contrôles de retour", "url": url_for("admin_checkins_list"), "category": "Page", "icon": "clipboard", "roles": ['all']},
+                {"title": "Gestion des Incidents", "subtitle": "Suivi des pannes, dommages et sinistres", "url": url_for("admin_incidents_list"), "category": "Page", "icon": "alert", "roles": ['all']},
+                {"title": "Déclarer un Incident", "subtitle": "Signaler une anomalie en tournage", "url": url_for("admin_incident_new"), "category": "Action", "icon": "alert", "roles": ['all']},
                 {"title": "Calendrier Matériel", "subtitle": "Disponibilités et planning des équipements", "url": url_for("admin_booking"), "category": "Page", "icon": "calendar", "roles": ['manager', 'commercial', 'admin']},
                 {"title": "Abonnements Calendrier (ICS)", "subtitle": "Flux iCal et synchronisation des agendas", "url": url_for("admin_calendar"), "category": "Page", "icon": "calendar", "roles": ['manager', 'commercial', 'admin']},
                 {"title": "Tarification & Pre-quotes", "subtitle": "Grille tarifaire et devis", "url": url_for("admin_pricing"), "category": "Page", "icon": "tag", "roles": ['manager', 'commercial', 'admin']},
@@ -429,5 +439,27 @@ def init_api_routes(app):
                             break
             except Exception as e:
                 current_app.logger.warning(f"⚠️ Erreur recherche véhicules : {e}")
+
+        # 6. Incidents de tournage
+        if scope in ('all', 'incident'):
+            try:
+                from models.incident import Incident
+                incidents = Incident.query.filter(Incident.deleted_at.is_(None)).order_by(Incident.incident_date.desc()).limit(30).all()
+                for inc in incidents:
+                    inc_num = inc.incident_number or ""
+                    inc_title = inc.title or ""
+                    searchable = f"{inc_num} {inc_title} {inc.severity} {inc.status}".lower()
+                    if not query_lower or query_lower in searchable:
+                        results.append({
+                            "title": f"{inc_num} — {inc_title}",
+                            "subtitle": f"{inc.severity.capitalize()} • {inc.status} • {inc.incident_date.strftime('%d/%m/%Y') if inc.incident_date else ''}",
+                            "url": url_for("admin_incident_detail", record_id=inc.id),
+                            "category": "Incident",
+                            "icon": "alert"
+                        })
+                        if len(results) >= 45:
+                            break
+            except Exception as e:
+                current_app.logger.warning(f"⚠️ Erreur recherche incidents : {e}")
 
         return jsonify({"results": results[:20]})

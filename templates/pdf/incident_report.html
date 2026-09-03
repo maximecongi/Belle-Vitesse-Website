@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/static/imgs/favicons/favicon.svg" />
+    <link rel="shortcut icon" href="/static/imgs/favicons/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/imgs/favicons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="{{ company_name }}" />
+    <link rel="manifest" href="/static/imgs/favicons/site.webmanifest" />
+
+    <title>CONSTAT D'INCIDENT — {{ incident.incident_number }}</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/checkout.css">
+    <link rel="stylesheet" href="/static/css/incident_pdf.css">
+</head>
+
+<body>
+
+    <div class="checkout">
+
+        <!-- ═══════════ HEADER ═══════════ -->
+        <header class="checkout-header">
+            <div class="checkout-header-logo">
+                <img src="/static/imgs/logos_and_name/noir-fond-transparent.png"
+                    alt="{{ company_name }}">
+            </div>
+            <div class="checkout-header-meta">
+                <strong class="dot-before">Constat & Déclaration d'Incident</strong><br>
+                <span class="checkout-doc-id">{{ incident.incident_number }}</span><br>
+                {{ today }}
+            </div>
+        </header>
+
+        <!-- ═══════════ DOCUMENT TITLE ═══════════ -->
+        <h1 class="checkout-title">{{ incident.title }}</h1>
+        <p class="checkout-subtitle">
+            Fiche officielle de constatation d'anomalie, dommage ou sinistre survenu en opération de tournage.
+        </p>
+
+        <!-- ═══════════ 1. CONTEXTE TOURNAGE & PRODUCTION ═══════════ -->
+        <section class="checkout-section">
+            <h2 class="checkout-section-title dot-before">Production & Tournage</h2>
+            <div class="checkout-info-grid">
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Projet (Tournage)</span>
+                    <span class="checkout-info-value">{{ incident.project.name if incident.project else '—' }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Société de Production</span>
+                    <span class="checkout-info-value">{{ incident.project.production_name if incident.project else '—' }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Déclarant</span>
+                    <span class="checkout-info-value">{{ incident.reporter.name if incident.reporter else '—' }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Date & Heure de survenance</span>
+                    <span class="checkout-info-value">{{ incident.incident_date }} à {{ incident.incident_time }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Lieu du sinistre / Plateau</span>
+                    <span class="checkout-info-value">{{ incident.location }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Contrôle rattaché</span>
+                    <span class="checkout-info-value">
+                        {% if incident.checkout %}
+                        Check-out {{ incident.checkout.inspection_number }}
+                        {% elif incident.checkin %}
+                        Check-in {{ incident.checkin.inspection_number }}
+                        {% else %}
+                        En cours d'opération
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════ 2. MATÉRIEL & VÉHICULE CONCERNÉ ═══════════ -->
+        <section class="checkout-section">
+            <h2 class="checkout-section-title dot-before">Véhicule & Matériel</h2>
+            <div class="checkout-info-grid">
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Véhicule Belle Vitesse</span>
+                    <span class="checkout-info-value">
+                        {% if incident.vehicle %}
+                            {{ incident.vehicle.name }}
+                            {% if incident.vehicle.unique_id %}
+                                <span class="checkout-doc-id" style="margin-left: 3pt;">{{ incident.vehicle.unique_id }}</span>
+                            {% endif %}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Équipement / Tête / Bras</span>
+                    <span class="checkout-info-value">{{ incident.equipment_name or '—' }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Catégorie de l'incident</span>
+                    <span class="checkout-info-value">
+                        <span class="checkout-badge checkout-badge--status">{{ incident.category_label }}</span>
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════ 3. QUALIFICATION & IMPACT OPÉRATIONNEL ═══════════ -->
+        <section class="checkout-section">
+            <h2 class="checkout-section-title dot-before">Qualification & Impact</h2>
+            <div class="checkout-info-grid">
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Niveau de Gravité</span>
+                    <span class="checkout-info-value">
+                        {% if incident.severity == 'critique' %}
+                        <span class="checkout-badge checkout-badge--critique">Critique</span>
+                        {% elif incident.severity == 'modere' %}
+                        <span class="checkout-badge checkout-badge--modere">Modéré</span>
+                        {% else %}
+                        <span class="checkout-badge checkout-badge--mineur">Mineur</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Statut du dossier</span>
+                    <span class="checkout-info-value">
+                        {% if incident.status in ('resolu', 'cloture') %}
+                        <span class="checkout-badge checkout-badge--resolu">{{ incident.status_label }}</span>
+                        {% else %}
+                        <span class="checkout-badge checkout-badge--in_progress">{{ incident.status_label }}</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Impact sur le Tournage</span>
+                    <span class="checkout-info-value">
+                        <span class="checkout-badge {% if incident.shooting_impact in ('arret', 'interruption') %}checkout-badge--critique{% elif incident.shooting_impact == 'retard' %}checkout-badge--modere{% else %}checkout-badge--mineur{% endif %}">
+                            {{ incident.shooting_impact_label }}
+                        </span>
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════ 4. CIRCONSTANCES & ACTIONS ═══════════ -->
+        <section class="checkout-section">
+            <h2 class="checkout-section-title dot-before">Circonstances & Dommages Constatés</h2>
+            <div class="checkout-notes">
+                {{ incident.description or "Aucune description circonstanciée renseignée." }}
+            </div>
+
+            {% if incident.immediate_actions %}
+            <div class="checkout-info-label" style="margin-top: 6pt; margin-bottom: 2pt;">Mesures d'urgence et actions immédiates :</div>
+            <div class="checkout-notes checkout-notes--urgent">
+                {{ incident.immediate_actions }}
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- ═══════════ 5. ÉVALUATION FINANCIÈRE & ASSURANCE ═══════════ -->
+        <section class="checkout-section">
+            <h2 class="checkout-section-title dot-before">Évaluation Financière & Assurance</h2>
+            <div class="checkout-info-grid">
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Coût estimé réparations</span>
+                    <span class="checkout-info-value">
+                        {% if incident.estimated_cost is not none %}
+                            {{ "%.2f" | format(incident.estimated_cost) }} € HT
+                        {% else %}
+                            En attente de chiffrage
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Coût réel facturé</span>
+                    <span class="checkout-info-value">
+                        {% if incident.actual_cost is not none %}
+                            {{ "%.2f" | format(incident.actual_cost) }} € HT
+                        {% else %}
+                            —
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Déclaration Sinistre Assurance</span>
+                    <span class="checkout-info-value">
+                        {% if incident.insurance_declared %}
+                            <span class="checkout-badge checkout-badge--resolu">Déclaré</span>
+                            {% if incident.insurance_reference %}
+                            <span class="checkout-doc-id" style="margin-left: 3pt;">{{ incident.insurance_reference }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="checkout-badge checkout-badge--mineur">Non requis</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            {% if incident.insurance_notes %}
+            <div class="checkout-info-label" style="margin-top: 6pt; margin-bottom: 2pt;">Notes de suivi assurance / franchise :</div>
+            <p style="font-size: 8pt; color: var(--grey-2); line-height: 1.4;">{{ incident.insurance_notes }}</p>
+            {% endif %}
+        </section>
+
+        <!-- ═══════════ 6. CONSTAT PHOTOGRAPHIQUE ═══════════ -->
+        {% if incident.photos %}
+        <section class="checkout-section">
+            <h2 class="checkout-section-title dot-before">Constat Photographique des Dégâts</h2>
+            <div class="checkout-photos">
+                {% for p in incident.photos[:6] %}
+                <div class="checkout-photo-item">
+                    <img src="{{ p.url }}" alt="Photo dégât">
+                    <div class="checkout-photo-caption">Pièce jointe #{{ loop.index }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- ═══════════ SIGNATURES & VISAS ═══════════ -->
+        <div class="checkout-signature">
+            <div class="checkout-signature-block">
+                <div class="checkout-signature-label">Pour Belle Vitesse</div>
+                <div class="checkout-signature-pad">
+                    <span style="font-size: 7pt; color: var(--grey-2);">Visa & Signature Responsable Technique</span>
+                </div>
+                <div class="checkout-signature-info">
+                    {{ incident.reporter.name if incident.reporter else company_name }}<br>
+                    Document certifié conforme aux constatations du plateau.
+                </div>
+            </div>
+            <div class="checkout-signature-block">
+                <div class="checkout-signature-label">Pour la Production</div>
+                <div class="checkout-signature-pad">
+                    <span style="font-size: 7pt; color: var(--grey-2);">Visa & Signature Chargé de Production / Régie</span>
+                </div>
+                <div class="checkout-signature-info">
+                    {{ incident.project.production_name if incident.project else 'Représentant Production' }}<br>
+                    Pris acte de la déclaration et des dommages constatés.
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════ FOOTER ═══════════ -->
+        <footer class="checkout-footer">
+            <p>
+                <strong>{{ company_name }}</strong><br>
+                {{ company_address }}<br>
+                Ce document est confidentiel et destiné uniquement à un usage interne.
+            </p>
+        </footer>
+
+    </div>
+
+</body>
+
+</html>

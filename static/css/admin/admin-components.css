@@ -200,12 +200,14 @@
 
 /* --- Global Statuses --- */
 .badge-pill[data-val="ok"],
-.badge-pill[data-val="signed"] {
+.badge-pill[data-val="signed"],
+.badge-pill[data-val="cloture"] {
     background: #d1fae5;
     color: #065f46;
 }
 
-.badge-pill[data-val="critical"] {
+.badge-pill[data-val="critical"],
+.badge-pill[data-val="critique"] {
     background: #fee2e2;
     color: #991b1b;
 }
@@ -267,7 +269,8 @@
 }
 
 .badge-pill[data-val="to_sign"],
-.badge-pill[data-val="pending"] {
+.badge-pill[data-val="pending"],
+.badge-pill[data-val="assurance"] {
     background: #dce8fd;
     color: #0e6292;
 }

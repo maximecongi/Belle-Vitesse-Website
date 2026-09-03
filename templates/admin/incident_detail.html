@@ -1,0 +1,275 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Incident {{ incident.incident_number }} — {{ incident.title }}{% endblock %}
+{% block page_title %}Incident {{ incident.incident_number }}{% endblock %}
+
+{% block header_actions %}
+<div class="u-flex u-align-center u-gap-2">
+    <a href="{{ url_for('admin_incident_pdf', record_id=incident.id) }}" target="_blank" class="admin-btn admin-btn-secondary">📄 Rapport PDF ↗</a>
+    <a href="{{ url_for('admin_incident_edit', record_id=incident.id) }}" class="admin-btn admin-btn-primary">Modifier</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- ═══════════ EN-TÊTE RÉCAPITULATIF ═══════════ -->
+<div class="admin-card u-mb-3" style="border-left: 5px solid {% if incident.severity == 'critique' %}var(--red-error, #b91c1c){% elif incident.severity == 'modere' %}var(--admin-accent, #FFC845){% else %}var(--blue-info, #0369a1){% endif %};">
+    <div class="u-flex u-justify-between u-align-start u-flex-wrap u-gap-3">
+        <div>
+            <div class="u-flex u-align-center u-gap-2">
+                <span class="checkout-doc-id u-mt-0">{{ incident.incident_number }}</span>
+                <span class="u-text-xs u-text-muted">Déclaré le {{ incident.created_at }}</span>
+            </div>
+            <h1 class="u-text-2xl u-font-bold u-mt-2 u-mb-1">{{ incident.title }}</h1>
+            <p class="u-text-sm u-text-muted u-m-0">
+                📍 {{ incident.location }} &nbsp;•&nbsp; 🗓️ Survenu le {{ incident.incident_date }} à {{ incident.incident_time }}
+            </p>
+        </div>
+
+        <div class="u-flex u-flex-column u-align-end u-gap-2">
+            <div class="u-flex u-gap-2">
+                {% if incident.severity == 'critique' %}
+                <span class="badge-pill" data-val="critique">🚨 Critique</span>
+                {% elif incident.severity == 'modere' %}
+                <span class="badge-pill" data-val="warning">⚠️ Modéré</span>
+                {% else %}
+                <span class="badge-pill" data-val="neutral">ℹ️ Mineur</span>
+                {% endif %}
+
+                {% if incident.status == 'cloture' %}
+                <span class="badge-pill" data-val="cloture">🔒 {{ incident.status_label }}</span>
+                {% elif incident.status == 'resolu' %}
+                <span class="badge-pill" data-val="ok">✅ {{ incident.status_label }}</span>
+                {% elif incident.status == 'en_reparation' %}
+                <span class="badge-pill" data-val="in_progress">🔧 {{ incident.status_label }}</span>
+                {% elif incident.status == 'en_expertise' %}
+                <span class="badge-pill" data-val="warning">🔍 {{ incident.status_label }}</span>
+                {% elif incident.status == 'assurance' %}
+                <span class="badge-pill" data-val="assurance">📋 {{ incident.status_label }}</span>
+                {% else %}
+                <span class="badge-pill" data-val="neutral">📣 {{ incident.status_label }}</span>
+                {% endif %}
+            </div>
+
+            <div class="u-text-xs u-font-semibold u-text-muted">
+                Impact :
+                {% if incident.shooting_impact in ('arret', 'interruption') %}
+                <span style="color: var(--red-error, #b91c1c);">🛑 {{ incident.shooting_impact_label }}</span>
+                {% elif incident.shooting_impact == 'retard' %}
+                <span style="color: #d97706;">⏳ {{ incident.shooting_impact_label }}</span>
+                {% else %}
+                <span style="color: var(--green-success, #28a745);">✅ {{ incident.shooting_impact_label }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="u-grid u-grid-2-1 u-gap-3">
+    <!-- COLONNE PRINCIPALE (2fr) -->
+    <div class="u-flex u-flex-column u-gap-3">
+
+        <!-- 1. Circonstances -->
+        <div class="admin-card">
+            <div class="admin-card-title">Circonstances & Dommages Constatés</div>
+            <div class="u-p-3" style="background-color: var(--admin-bg, #f8f9fa); border: 1px solid var(--white-3, #e9ecef); font-size: 14px; line-height: 1.6; white-space: pre-wrap;">{{ incident.description or "Aucun descriptif renseigné." }}</div>
+
+            {% if incident.immediate_actions %}
+            <div class="u-mt-3">
+                <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Actions immédiates prises sur le plateau :</span>
+                <div class="u-p-3 u-mt-1" style="background-color: #fffbeb; border-left: 4px solid var(--admin-accent, #FFC845); font-size: 13px; color: #92400e;">
+                    {{ incident.immediate_actions }}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- 2. Galerie Photos -->
+        <div class="admin-card">
+            <div class="u-flex u-justify-between u-align-center u-mb-3">
+                <div class="admin-card-title u-m-0">Photos des Dommages ({{ incident.photos|length }})</div>
+                <a href="{{ url_for('admin_incident_edit', record_id=incident.id) }}" class="u-text-xs u-font-semibold" style="color: var(--blue-info, #0369a1);">+ Ajouter des photos</a>
+            </div>
+
+            {% if incident.photos %}
+            <div class="u-grid u-grid-3 u-gap-3">
+                {% for p in incident.photos %}
+                <div style="border: 1px solid var(--white-3, #e9ecef); overflow: hidden; background-color: #000;">
+                    <a href="{{ p.url }}" target="_blank" title="Ouvrir l'image en grand">
+                        <img src="{{ p.url }}" alt="Photo dégât" style="width: 100%; height: 160px; object-fit: cover; display: block; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                    </a>
+                    <div class="u-p-2 u-text-xs u-text-center u-text-muted" style="background-color: #ffffff;">
+                        Pièce jointe #{{ loop.index }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="u-text-sm u-text-muted u-p-3 u-text-center u-m-0">Aucune photo enregistrée pour cet incident.</p>
+            {% endif %}
+        </div>
+
+        <!-- 3. Documents joints -->
+        {% if incident.documents %}
+        <div class="admin-card">
+            <div class="admin-card-title">Justificatifs & Pièces Jointes ({{ incident.documents|length }})</div>
+            <div class="u-flex u-flex-column u-gap-2">
+                {% for doc in incident.documents %}
+                <div class="u-flex u-justify-between u-align-center u-p-2" style="background-color: var(--admin-bg, #f8f9fa); border: 1px solid var(--white-3, #e9ecef);">
+                    <span class="u-text-sm u-font-semibold">📄 {{ doc.filename }}</span>
+                    <a href="{{ doc.url }}" target="_blank" class="admin-btn admin-btn-secondary admin-btn-sm">Télécharger ↗</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- 4. Notes de Résolution -->
+        {% if incident.resolution_notes or incident.resolved_at %}
+        <div class="admin-card">
+            <div class="admin-card-title" style="color: var(--green-success, #28a745);">Résolution & Clôture du Dossier</div>
+            {% if incident.resolved_at %}
+            <div class="u-text-xs u-text-muted u-mb-2">Date de clôture : <strong>{{ incident.resolved_at }}</strong></div>
+            {% endif %}
+            <div class="u-p-3" style="background-color: #f0fdf4; border: 1px solid #bbf7d0; font-size: 13px; color: #166534;">
+                {{ incident.resolution_notes or "Dossier clôturé." }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- COLONNE LATÉRALE / SIDEBAR (1fr) -->
+    <div class="u-flex u-flex-column u-gap-3">
+        <!-- Contexte Tournage -->
+        <div class="admin-card">
+            <div class="admin-card-title">Contexte Tournage</div>
+
+            <div class="u-mb-3">
+                <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Projet :</span>
+                <div class="u-font-semibold u-mt-1">
+                    {% if incident.project %}
+                    <a href="{{ url_for('admin_projects_list', q=incident.project.name) }}">
+                        {{ incident.project.name }}
+                    </a>
+                    <div class="u-text-xs u-text-muted u-mt-1">Prod : {{ incident.project.production_name }}</div>
+                    {% else %}
+                    <span class="u-text-muted">—</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="u-mb-3">
+                <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Véhicule Belle Vitesse :</span>
+                <div class="u-font-semibold u-mt-1">
+                    {% if incident.vehicle %}
+                    {{ incident.vehicle.name }}
+                    {% if incident.vehicle.unique_id %}
+                    <span class="checkout-doc-id">{{ incident.vehicle.unique_id }}</span>
+                    {% endif %}
+                    {% else %}
+                    <span class="u-text-muted">—</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if incident.equipment_name %}
+            <div class="u-mb-3">
+                <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Équipement concerné :</span>
+                <div class="u-font-semibold u-mt-1">{{ incident.equipment_name }}</div>
+            </div>
+            {% endif %}
+
+            <div class="u-mb-3">
+                <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Déclarant :</span>
+                <div class="u-font-semibold u-mt-1">
+                    {% if incident.reporter %}
+                    {{ incident.reporter.name }}
+                    <div class="u-text-xs u-text-muted">{{ incident.reporter.role }} • {{ incident.reporter.mail }}</div>
+                    {% else %}
+                    <span class="u-text-muted">—</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if incident.checkout %}
+            <div class="u-mt-3 u-pt-2" style="border-top: 1px solid var(--white-3, #e9ecef);">
+                <span class="u-text-xs u-text-muted">Lié au Check-out :</span>
+                <a href="{{ url_for('admin_checkout_detail', record_id=incident.checkout.id) }}" class="u-text-xs u-font-semibold u-ml-1" style="color: var(--blue-info, #0369a1);">
+                    {{ incident.checkout.inspection_number }} →
+                </a>
+            </div>
+            {% endif %}
+
+            {% if incident.checkin %}
+            <div class="u-mt-2 u-pt-2" style="border-top: 1px solid var(--white-3, #e9ecef);">
+                <span class="u-text-xs u-text-muted">Lié au Check-in :</span>
+                <a href="{{ url_for('admin_checkin_detail', record_id=incident.checkin.id) }}" class="u-text-xs u-font-semibold u-ml-1" style="color: var(--blue-info, #0369a1);">
+                    {{ incident.checkin.inspection_number }} →
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Suivi Financier & Assurance -->
+        <div class="admin-card">
+            <div class="admin-card-title">Finances & Assurance</div>
+
+            <div class="u-mb-3">
+                <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Coût estimé :</span>
+                <div class="u-text-xl u-font-bold u-mt-1">
+                    {% if incident.estimated_cost is not none %}
+                    {{ "{:,.2f}".format(incident.estimated_cost)|replace(',', ' ') }} € HT
+                    {% else %}
+                    <span class="u-text-muted u-text-sm">En attente de chiffrage</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if incident.actual_cost is not none %}
+            <div class="u-mb-3">
+                <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Coût réel facturé :</span>
+                <div class="u-text-xl u-font-bold u-mt-1" style="color: var(--green-success, #28a745);">
+                    {{ "{:,.2f}".format(incident.actual_cost)|replace(',', ' ') }} € HT
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="u-pt-3 u-mt-3" style="border-top: 1px solid var(--white-3, #e9ecef);">
+                <div class="u-flex u-align-center u-gap-2">
+                    <span class="u-text-sm">Déclaration Assurance :</span>
+                    {% if incident.insurance_declared %}
+                    <strong style="color: var(--green-success, #28a745);">OUI</strong>
+                    {% else %}
+                    <strong class="u-text-muted">NON</strong>
+                    {% endif %}
+                </div>
+
+                {% if incident.insurance_reference and incident.insurance_reference != '—' %}
+                <div class="u-text-xs u-mt-2">
+                    <span class="u-text-muted">N° Sinistre :</span>
+                    <span class="checkout-doc-id u-mt-0">{{ incident.insurance_reference }}</span>
+                </div>
+                {% endif %}
+
+                {% if incident.insurance_notes %}
+                <div class="u-text-xs u-mt-2 u-p-2" style="background-color: var(--admin-bg, #f8f9fa);">
+                    {{ incident.insurance_notes }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Actions de sécurité (Suppression conforme à la DA) -->
+        <div class="admin-card danger-card-top">
+            <div class="admin-card-title danger-card-title">Actions de sécurité</div>
+            <p class="u-text-sm u-text-muted u-mb-2">Ces actions sont irréversibles.</p>
+            <form action="{{ url_for('admin_incident_delete', record_id=incident.id) }}" method="POST"
+                onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet incident ? Cette action est irréversible.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button type="submit" class="admin-btn admin-btn-danger u-w-100">Supprimer cet incident</button>
+            </form>
+        </div>
+
+        <a href="{{ url_for('admin_incidents_list') }}" class="admin-btn admin-btn-secondary">← Retour à la liste</a>
+    </div>
+</div>
+{% endblock %}

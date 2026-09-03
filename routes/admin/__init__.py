@@ -21,6 +21,7 @@ from .tools import init_tools_routes
 from .users import init_users_routes
 from .waivers import init_waivers_routes
 from .productions import init_productions_routes
+from .incidents import init_incidents_routes
 
 
 def init_admin_routes(app):
@@ -29,6 +30,7 @@ def init_admin_routes(app):
     init_dashboard_routes(app)
     init_checkouts_routes(app)
     init_checkins_routes(app)
+    init_incidents_routes(app)
     init_projects_routes(app)
     init_booking_routes(app)
     init_productions_routes(app)

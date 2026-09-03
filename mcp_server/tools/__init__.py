@@ -10,6 +10,7 @@ from mcp_server.tools import calendars
 from mcp_server.tools import documents
 from mcp_server.tools import system
 from mcp_server.tools import vehicles
+from mcp_server.tools import incidents
 
 __all__ = [
     "projects",
@@ -23,4 +24,5 @@ __all__ = [
     "documents",
     "system",
     "vehicles",
+    "incidents",
 ]

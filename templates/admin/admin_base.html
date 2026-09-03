@@ -180,7 +180,7 @@
 
                 {% call nav_group('📦 Retours', 'retours', 'retours', false) %}
                 {{ nav_item(url_for('admin_checkins_list'), 'Checkins', 'checkins') }}
-                {{ nav_item('#', 'Gestion des incidents', 'incidents') }}
+                {{ nav_item(url_for('admin_incidents_list'), 'Gestion des incidents', 'incidents') }}
                 {% endcall %}
 
                 {% call nav_group('🏎️ Flotte', 'flotte', 'flotte', false) %}

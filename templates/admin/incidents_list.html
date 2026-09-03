@@ -1,0 +1,193 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Gestion des Incidents de Tournage{% endblock %}
+{% block page_title %}Incidents de Tournage{% endblock %}
+
+{% block header_actions %}
+<a href="{{ url_for('admin_incident_new') }}" class="admin-btn admin-btn-primary">+ Déclarer un Incident</a>
+{% endblock %}
+
+{% block content %}
+<!-- ═══════════ KPI SUMMARY CARDS ═══════════ -->
+<div class="u-grid u-grid-4 u-gap-3 u-mb-3">
+    <div class="admin-card u-p-3" style="border-left: 4px solid var(--blue-info, #0369a1);">
+        <div class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Total Actifs</div>
+        <div class="u-text-2xl u-font-bold u-mt-1">{{ stats.in_progress }}</div>
+        <div class="u-text-xs u-text-muted u-mt-1">Dossiers en cours de traitement</div>
+    </div>
+
+    <div class="admin-card u-p-3" style="border-left: 4px solid var(--red-error, #b91c1c);">
+        <div class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Critiques / Arrêt Tournage</div>
+        <div class="u-text-2xl u-font-bold u-mt-1" style="color: var(--red-error, #b91c1c);">{{ stats.critical }}</div>
+        <div class="u-text-xs u-text-muted u-mt-1">Véhicule ou matériel immobilisé</div>
+    </div>
+
+    <div class="admin-card u-p-3" style="border-left: 4px solid var(--admin-accent, #FFC845);">
+        <div class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">En Réparation Atelier</div>
+        <div class="u-text-2xl u-font-bold u-mt-1">{{ stats.reparation }}</div>
+        <div class="u-text-xs u-text-muted u-mt-1">Travaux mécaniques / carrosserie</div>
+    </div>
+
+    <div class="admin-card u-p-3" style="border-left: 4px solid var(--green-success, #28a745);">
+        <div class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Coût Estimé Actif</div>
+        <div class="u-text-2xl u-font-bold u-mt-1" style="color: var(--green-success, #28a745);">
+            {{ "{:,.2f}".format(stats.total_estimated_cost)|replace(',', ' ') }} €
+        </div>
+        <div class="u-text-xs u-text-muted u-mt-1">Estimation totale des dommages</div>
+    </div>
+</div>
+
+<!-- ═══════════ FILTRES & LISTE ═══════════ -->
+<div class="admin-card">
+    <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
+        <form method="GET" action="{{ url_for('admin_incidents_list') }}" class="u-flex u-align-center u-gap-2 u-flex-wrap" id="incident-filter-form">
+            <select name="severity" class="form-input form-input-sm form-input-inline" onchange="this.form.submit()">
+                <option value="">Toutes gravités</option>
+                {% for key, label in context.severities %}
+                <option value="{{ key }}" {% if filters.severity == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="status" class="form-input form-input-sm form-input-inline" onchange="this.form.submit()">
+                <option value="">Tous statuts</option>
+                {% set status_icons = {
+                    'signale': '📣',
+                    'en_expertise': '🔍',
+                    'en_reparation': '🔧',
+                    'assurance': '📋',
+                    'resolu': '✅',
+                    'cloture': '🔒'
+                } %}
+                {% for key, label in context.statuses %}
+                <option value="{{ key }}" {% if filters.status == key %}selected{% endif %}>{{ status_icons.get(key, '') }} {{ label }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="category" class="form-input form-input-sm form-input-inline" onchange="this.form.submit()">
+                <option value="">Toutes catégories</option>
+                {% for key, label in context.categories %}
+                <option value="{{ key }}" {% if filters.category == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+
+            {% if filters.severity or filters.status or filters.category %}
+            <a href="{{ url_for('admin_incidents_list') }}" class="admin-btn admin-btn-secondary admin-btn-sm">✕ Réinitialiser</a>
+            {% endif %}
+        </form>
+
+        <div class="u-text-sm u-text-muted">
+            <span id="result-count">{{ incidents|length }}</span> incident(s) répertorié(s)
+        </div>
+    </div>
+
+    <div class="admin-table-container">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>N° Incident</th>
+                    <th>Date</th>
+                    <th>Titre & Circonstances</th>
+                    <th>Projet / Production</th>
+                    <th>Véhicule / Équipement</th>
+                    <th>Gravité</th>
+                    <th>Statut</th>
+                    <th>Impact Tournage</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="incidents-tbody">
+                {% for incident in incidents %}
+                <tr data-search="{{ incident.search_text }}">
+                    <td class="u-text-semibold">
+                        <span class="checkout-doc-id u-mt-0">{{ incident.incident_number }}</span>
+                    </td>
+                    <td class="u-text-nowrap">{{ incident.date }}</td>
+                    <td>
+                        <strong class="u-text-sm">{{ incident.title }}</strong><br>
+                        <span class="u-text-xs u-text-muted">{{ incident.category_label }}</span>
+                        {% if incident.photos_count > 0 %}
+                        <span class="u-text-xs u-font-semibold u-ml-1" style="color: var(--blue-info, #0369a1);">📷 {{ incident.photos_count }} photo(s)</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if incident.project_id %}
+                        <span class="u-font-semibold">{{ incident.project_name }}</span>
+                        {% else %}
+                        <span class="u-text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if incident.vehicle_name != '—' %}
+                        <span class="u-font-semibold">{{ incident.vehicle_name }}</span>
+                        {% elif incident.equipment_name != '—' %}
+                        <span>{{ incident.equipment_name }}</span>
+                        {% else %}
+                        <span class="u-text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if incident.severity == 'critique' %}
+                        <span class="badge-pill" data-val="critique">🚨 Critique</span>
+                        {% elif incident.severity == 'modere' %}
+                        <span class="badge-pill" data-val="warning">⚠️ Modéré</span>
+                        {% else %}
+                        <span class="badge-pill" data-val="neutral">ℹ️ Mineur</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if incident.status == 'cloture' %}
+                        <span class="badge-pill" data-val="cloture">🔒 {{ incident.status_label }}</span>
+                        {% elif incident.status == 'resolu' %}
+                        <span class="badge-pill" data-val="ok">✅ {{ incident.status_label }}</span>
+                        {% elif incident.status == 'en_reparation' %}
+                        <span class="badge-pill" data-val="in_progress">🔧 {{ incident.status_label }}</span>
+                        {% elif incident.status == 'en_expertise' %}
+                        <span class="badge-pill" data-val="warning">🔍 {{ incident.status_label }}</span>
+                        {% elif incident.status == 'assurance' %}
+                        <span class="badge-pill" data-val="assurance">📋 {{ incident.status_label }}</span>
+                        {% else %}
+                        <span class="badge-pill" data-val="neutral">📣 {{ incident.status_label }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if incident.shooting_impact == 'arret' or incident.shooting_impact == 'interruption' %}
+                        <span class="u-text-xs u-font-semibold" style="color: var(--red-error, #b91c1c);">🛑 {{ incident.shooting_impact_label }}</span>
+                        {% elif incident.shooting_impact == 'retard' %}
+                        <span class="u-text-xs u-font-semibold" style="color: #d97706;">⏳ {{ incident.shooting_impact_label }}</span>
+                        {% else %}
+                        <span class="u-text-xs u-text-muted">✅ {{ incident.shooting_impact_label }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="u-text-nowrap">
+                        <div class="u-flex u-align-center u-gap-1">
+                            <a href="{{ url_for('admin_incident_detail', record_id=incident.id) }}"
+                               class="admin-btn admin-btn-secondary admin-btn-sm">Détails →</a>
+                            <a href="{{ url_for('admin_incident_edit', record_id=incident.id) }}"
+                               class="admin-btn admin-btn-secondary admin-btn-sm">Modifier</a>
+                            <a href="{{ url_for('admin_incident_pdf', record_id=incident.id) }}" target="_blank"
+                               class="admin-btn admin-btn-secondary admin-btn-sm" title="Télécharger le rapport PDF">📄 PDF</a>
+                            <form action="{{ url_for('admin_incident_delete', record_id=incident.id) }}" method="POST"
+                                  class="u-d-inline"
+                                  onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet incident ({{ incident.incident_number }}) ? Cette action est irréversible.');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="admin-btn admin-btn-danger admin-btn-sm">Supprimer</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="u-text-center u-p-4 u-text-muted">
+                        Aucun incident enregistré ou correspondant aux critères sélectionnés.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div id="no-results" class="u-text-center u-p-4 u-text-muted" style="display: none;">
+            Aucun résultat pour cette recherche.
+        </div>
+    </div>
+</div>
+{% endblock %}
