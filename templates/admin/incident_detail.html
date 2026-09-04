@@ -26,15 +26,28 @@
         </div>
 
         <div class="u-flex u-flex-column u-align-end u-gap-2">
-            <div class="u-flex u-gap-2">
+            <div class="u-flex u-gap-2 u-flex-wrap u-justify-end">
+                <!-- Gravité -->
                 {% if incident.severity == 'critique' %}
-                <span class="badge-pill" data-val="critique">🚨 Critique</span>
+                <span class="badge-pill" data-val="critique">🚨 {{ incident.severity_label or 'Critique' }}</span>
                 {% elif incident.severity == 'modere' %}
-                <span class="badge-pill" data-val="warning">⚠️ Modéré</span>
+                <span class="badge-pill" data-val="warning">⚠️ {{ incident.severity_label or 'Modéré' }}</span>
                 {% else %}
-                <span class="badge-pill" data-val="neutral">ℹ️ Mineur</span>
+                <span class="badge-pill" data-val="neutral">ℹ️ {{ incident.severity_label or 'Mineur' }}</span>
                 {% endif %}
 
+                <!-- Impact Tournage -->
+                {% if incident.shooting_impact in ('annulation', 'arret') %}
+                <span class="badge-pill" data-val="critique">🛑 {{ incident.shooting_impact_label or 'Annulation de session' }}</span>
+                {% elif incident.shooting_impact == 'interruption' %}
+                <span class="badge-pill" data-val="in_progress">⏸️ {{ incident.shooting_impact_label or 'Interruption temporaire' }}</span>
+                {% elif incident.shooting_impact == 'retard' %}
+                <span class="badge-pill" data-val="warning">⏳ {{ incident.shooting_impact_label or 'Retard sur planning' }}</span>
+                {% else %}
+                <span class="badge-pill" data-val="ok">✅ {{ incident.shooting_impact_label or 'Aucun impact' }}</span>
+                {% endif %}
+
+                <!-- Statut Dossier -->
                 {% if incident.status == 'cloture' %}
                 <span class="badge-pill" data-val="cloture">🔒 {{ incident.status_label }}</span>
                 {% elif incident.status == 'resolu' %}
@@ -47,17 +60,6 @@
                 <span class="badge-pill" data-val="assurance">📋 {{ incident.status_label }}</span>
                 {% else %}
                 <span class="badge-pill" data-val="neutral">📣 {{ incident.status_label }}</span>
-                {% endif %}
-            </div>
-
-            <div class="u-text-xs u-font-semibold u-text-muted">
-                Impact :
-                {% if incident.shooting_impact in ('arret', 'interruption') %}
-                <span style="color: var(--red-error, #b91c1c);">🛑 {{ incident.shooting_impact_label }}</span>
-                {% elif incident.shooting_impact == 'retard' %}
-                <span style="color: #d97706;">⏳ {{ incident.shooting_impact_label }}</span>
-                {% else %}
-                <span style="color: var(--green-success, #28a745);">✅ {{ incident.shooting_impact_label }}</span>
                 {% endif %}
             </div>
         </div>

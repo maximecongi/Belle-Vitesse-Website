@@ -33,7 +33,7 @@
     <form method="POST" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
-        <!-- ═══════════ STATUT & GRAVITÉ DU DOSSIER (BADGE-PILLS COMPACTS) ═══════════ -->
+        <!-- ═══════════ STATUT, GRAVITÉ & IMPACT DU DOSSIER (BADGE-PILLS COMPACTS) ═══════════ -->
         {% set status_meta = {
         'signale': {'val': 'neutral', 'icon': '📣'},
         'en_expertise': {'val': 'warning', 'icon': '🔍'},
@@ -59,6 +59,19 @@
         {% set ns_sev = namespace(label='Modéré') %}
         {% for key, label in context.severities %}
         {% if key == current_severity %}{% set ns_sev.label = label %}{% endif %}
+        {% endfor %}
+
+        {% set impact_meta = {
+        'aucun': {'val': 'ok', 'icon': '✅'},
+        'retard': {'val': 'warning', 'icon': '⏳'},
+        'interruption': {'val': 'in_progress', 'icon': '⏸️'},
+        'annulation': {'val': 'critique', 'icon': '🛑'}
+        } %}
+        {% set current_impact = incident.shooting_impact or 'aucun' %}
+        {% set current_imp_meta = impact_meta.get(current_impact, {'val': 'ok', 'icon': '✅'}) %}
+        {% set ns_imp = namespace(label='Aucun impact') %}
+        {% for key, label in context.shooting_impacts %}
+        {% if key == current_impact %}{% set ns_imp.label = label %}{% endif %}
         {% endfor %}
 
         <div class="incident-header-status-bar">
@@ -93,6 +106,24 @@
                             {% set opt_sev = severity_meta.get(key, {'val': 'neutral', 'icon': 'ℹ️'}) %}
                             <option value="{{ key }}" data-val="{{ opt_sev.val }}" {% if current_severity==key
                                 %}selected{% endif %}>{{ opt_sev.icon }} {{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <span class="badge-select-pill-arrow">▼</span>
+                    </div>
+                </div>
+
+                <!-- IMPACT SUR LE TOURNAGE -->
+                <div class="u-flex u-align-center u-gap-2">
+                    <span class="form-label u-m-0 u-font-semibold">Impact :</span>
+                    <div class="badge-pill badge-select-pill badge-select-pill-lg" data-val="{{ current_imp_meta.val }}"
+                        id="incidentImpactPill" title="Cliquer pour changer l'impact sur le tournage">
+                        <span class="status-label" id="incidentImpactLabel">{{ current_imp_meta.icon }} {{
+                            ns_imp.label }}</span>
+                        <select name="shooting_impact" id="incidentImpactSelect" onchange="updateIncidentImpactPill(this)">
+                            {% for key, label in context.shooting_impacts %}
+                            {% set opt_imp = impact_meta.get(key, {'val': 'ok', 'icon': '✅'}) %}
+                            <option value="{{ key }}" data-val="{{ opt_imp.val }}" {% if current_impact==key
+                                %}selected{% endif %}>{{ opt_imp.icon }} {{ label }}</option>
                             {% endfor %}
                         </select>
                         <span class="badge-select-pill-arrow">▼</span>
@@ -184,25 +215,13 @@
                 placeholder="Ex: Fissure jupe avant gauche suite choc vibreur">
         </div>
 
-        <div class="u-grid u-grid-2 u-gap-3">
-            <div class="form-group">
-                <label class="form-label" for="category">Catégorie</label>
-                <select name="category" id="category" class="form-input">
-                    {% for key, label in context.categories %}
-                    <option value="{{ key }}" {% if incident.category==key %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="shooting_impact">Impact sur le Tournage</label>
-                <select name="shooting_impact" id="shooting_impact" class="form-input">
-                    {% for key, label in context.shooting_impacts %}
-                    <option value="{{ key }}" {% if incident.shooting_impact==key %}selected{% endif %}>{{ label }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
+        <div class="form-group">
+            <label class="form-label" for="category">Catégorie de l'incident</label>
+            <select name="category" id="category" class="form-input">
+                {% for key, label in context.categories %}
+                <option value="{{ key }}" {% if incident.category==key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
         </div>
 
         <div class="form-group">
@@ -472,6 +491,29 @@
         const selectedVal = selectElem.value;
         const selectedText = selectElem.options[selectElem.selectedIndex].text;
         const dataVal = SEVERITY_MAP[selectedVal] || 'neutral';
+
+        pill.setAttribute('data-val', dataVal);
+        if (label) {
+            label.textContent = selectedText;
+        }
+    }
+
+    // Mise à jour visuelle dynamique du badge d'impact sur le tournage
+    const IMPACT_MAP = {
+        'aucun': 'ok',
+        'retard': 'warning',
+        'interruption': 'in_progress',
+        'annulation': 'critique'
+    };
+
+    function updateIncidentImpactPill(selectElem) {
+        const pill = document.getElementById('incidentImpactPill');
+        const label = document.getElementById('incidentImpactLabel');
+        if (!pill || !selectElem) return;
+
+        const selectedVal = selectElem.value;
+        const selectedText = selectElem.options[selectElem.selectedIndex].text;
+        const dataVal = IMPACT_MAP[selectedVal] || 'neutral';
 
         pill.setAttribute('data-val', dataVal);
         if (label) {
