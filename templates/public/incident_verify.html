@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/static/imgs/favicons/favicon.svg" />
+    <link rel="shortcut icon" href="/static/imgs/favicons/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/imgs/favicons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Belle Vitesse" />
+    <link rel="manifest" href="/static/imgs/favicons/site.webmanifest" />
+
+    <title>Vérification Constat d'Incident {{ data.incident_number or '—' }} — Belle Vitesse</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/checkout.css') }}">
+</head>
+
+<body>
+
+    <div class="checkout">
+
+        <!-- ═══════════ HEADER ═══════════ -->
+        <header class="checkout-header">
+            <div class="checkout-header-logo">
+                <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
+                    alt="Belle Vitesse">
+            </div>
+            <div class="checkout-header-meta">
+                <strong class="dot-before">Contrôle d'Intégrité Légale</strong><br>
+                <span class="checkout-doc-id">{{ data.incident_number or '—' }}</span>
+            </div>
+        </header>
+
+        <!-- ── Badge sceau de données ── -->
+        <section class="checkout-section checkout-text-center">
+            <div style="margin-bottom: 2rem;">
+                {% if seal_valid %}
+                <span class="checkout-badge checkout-badge--ok"
+                    style="font-size: 1rem; padding: 10px 24px; background-color: var(--green-1); color: white;">
+                    ✅ Données Scellées & Intactes
+                </span>
+                <p style="font-size: 0.75rem; color: var(--grey-2); margin-top: 0.75rem; text-align: center;">
+                    Le sceau cryptographique correspond. Les constatations contradictoires n'ont pas été modifiées depuis la signature.
+                </p>
+                {% else %}
+                <span class="checkout-badge checkout-badge--critical" style="font-size: 1rem; padding: 10px 24px;">
+                    🚨 Sceau Invalide — Données Altérées
+                </span>
+                <p style="font-size: 0.75rem; color: var(--grey-2); margin-top: 0.75rem; max-width: 420px; margin-left: auto; margin-right: auto; text-align: center;">
+                    Le sceau ne correspond pas à l'archive originale. Les données peuvent avoir été altérées.
+                </p>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- ── Badge résultat vérification PDF (après upload éventuel) ── -->
+        {% if pdf_valid is not none %}
+        <section class="checkout-section checkout-text-center">
+            <div style="margin-bottom: 1.5rem;">
+                {% if pdf_valid %}
+                <span class="checkout-badge checkout-badge--ok"
+                    style="font-size: 1rem; padding: 10px 24px; background-color: var(--green-1); color: white;">
+                    ✅ Fichier PDF authentique
+                </span>
+                <p style="font-size: 0.75rem; color: var(--grey-2); margin-top: 0.75rem; text-align: center;">
+                    L'empreinte SHA-256 du fichier analysé correspond exactement au document scellé original.
+                </p>
+                {% else %}
+                <span class="checkout-badge checkout-badge--critical"
+                    style="font-size: 1rem; padding: 10px 24px; text-align: center;">
+                    🚨 Fichier PDF non authentique
+                </span>
+                <p style="font-size: 0.75rem; color: var(--grey-2); margin-top: 0.75rem; text-align: center;">
+                    Ce fichier PDF ne correspond pas à l'original scellé lors de la signature.
+                </p>
+                {% endif %}
+            </div>
+        </section>
+        {% endif %}
+
+        {% if pdf_error %}
+        <section class="checkout-section checkout-text-center">
+            <div style="background: #fee2e2; color: #991b1b; padding: 12px; border-radius: 4px; text-align: center; margin-bottom: 1.5rem; font-size: 0.85rem;">
+                ⚠️ {{ pdf_error }}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- ── 1. Données du constat d'incident ── -->
+        <section class="checkout-section">
+            <h2 class="checkout-section-title dot-before">Données Scellées du Constat</h2>
+            <div class="checkout-info-grid">
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">N° de Constat</span>
+                    <span class="checkout-info-value">{{ data.incident_number or '—' }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Intitulé</span>
+                    <span class="checkout-info-value">{{ data.title or '—' }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Date & Heure</span>
+                    <span class="checkout-info-value">{{ data.incident_date }} à {{ data.incident_time }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Lieu</span>
+                    <span class="checkout-info-value">{{ data.location or '—' }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Gravité</span>
+                    <span class="checkout-info-value">{{ data.severity_label or data.severity }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Impact Tournage</span>
+                    <span class="checkout-info-value">{{ data.shooting_impact_label or data.shooting_impact }}</span>
+                </div>
+            </div>
+
+            {% if data.description %}
+            <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--white-3);">
+                <span class="checkout-info-label">Constatations matérielles scellées :</span>
+                <div class="checkout-notes" style="margin-top: 0.5rem; white-space: pre-wrap;">{{ data.description }}</div>
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- ── 2. Visas & Signatures Contradictoires ── -->
+        <section class="checkout-section">
+            <h2 class="checkout-section-title dot-before">Visas & Signatures Contradictoires</h2>
+            <div class="checkout-signature">
+                <div class="checkout-signature-item" style="flex: 1;">
+                    <span class="checkout-signature-label">Visa Belle Vitesse</span>
+                    <div style="font-size: 0.9rem; font-weight: 600; color: var(--grey-1);">
+                        {{ data.bv_signer_name or '—' }}
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--grey-2); margin-top: 2px;">
+                        {{ data.bv_signer_role or 'Responsable Technique Belle Vitesse' }}
+                    </div>
+                    {% if data.bv_signed_at %}
+                    <div style="font-size: 0.75rem; color: var(--green-1); margin-top: 4px;">
+                        ✓ Apposé le {{ data.bv_signed_at }}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="checkout-signature-item" style="flex: 1;">
+                    <span class="checkout-signature-label">Signature Production</span>
+                    <div style="font-size: 0.9rem; font-weight: 600; color: var(--grey-1);">
+                        {{ data.prod_signer_name or '—' }}
+                    </div>
+                    <div style="font-size: 0.75rem; color: var(--grey-2); margin-top: 2px;">
+                        {{ data.prod_signer_role or 'Représentant Production' }}
+                    </div>
+                    {% if data.prod_signed_at %}
+                    <div style="font-size: 0.75rem; color: var(--green-1); margin-top: 4px;">
+                        ✓ Apposée le {{ data.prod_signed_at }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <!-- ── 3. Empreintes cryptographiques ── -->
+        <section class="checkout-section">
+            <h2 class="checkout-section-title dot-before">Sécurité Numérique & Sceau</h2>
+            <div style="background: var(--white-3); padding: 1.5rem; border-radius: 4px;">
+                <p style="font-size: 0.75rem; color: var(--white-4); margin-bottom: 0.5rem; text-transform: uppercase;">
+                    Empreinte d'intégrité (HMAC-SHA256)
+                </p>
+                <code style="display: block; word-break: break-all; font-size: 0.75rem; color: var(--grey-2); font-family: monospace;">
+                    {{ document_hash }}
+                </code>
+                {% if pdf_file_hash %}
+                <p style="font-size: 0.75rem; color: var(--white-4); margin-top: 1rem; margin-bottom: 0.5rem; text-transform: uppercase;">
+                    Empreinte PDF scellé (SHA-256)
+                </p>
+                <code style="display: block; word-break: break-all; font-size: 0.75rem; color: var(--grey-2); font-family: monospace;">
+                    {{ pdf_file_hash }}
+                </code>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- ═══════════ UPLOAD VÉRIFICATION PDF ═══════════ -->
+        {% if has_pdf_hash %}
+        <section class="checkout-section" style="margin-top: 3rem;">
+            <h2 class="checkout-section-title dot-before">Vérifier le fichier PDF</h2>
+            <p style="font-size: 0.85rem; color: var(--grey-2); margin-bottom: 1.5rem; line-height: 1.6;">
+                Uploadez l'exemplaire PDF que vous souhaitez authentifier. Son empreinte SHA-256 sera calculée et comparée à celle scellée lors de la finalisation contradictoire. Si le fichier a été altéré, la vérification échouera.
+            </p>
+
+            <form method="POST" enctype="multipart/form-data">
+                <label for="pdf-input" style="cursor: pointer; display: block;">
+                    <div id="upload-area" style="
+                        border: 2px dashed var(--white-4);
+                        border-radius: 4px;
+                        padding: 2.5rem 1.5rem;
+                        text-align: center;
+                        transition: border-color 0.2s, background 0.2s;
+                        margin-bottom: 1.25rem;
+                    ">
+                        <p style="font-size: 1.5rem; margin-bottom: 0.5rem;">📎</p>
+                        <p style="font-size: 0.9rem; color: var(--grey-2);">
+                            <strong style="color: var(--black-1);">Cliquez pour sélectionner</strong>
+                            ou glissez le PDF ici
+                        </p>
+                        <p id="file-name"
+                            style="display: none; margin-top: 0.5rem; font-size: 0.85rem; color: var(--green-1); font-weight: 500;">
+                        </p>
+                    </div>
+                </label>
+
+                <input type="file" id="pdf-input" name="pdf" accept=".pdf" style="display: none;">
+
+                <button type="submit" id="submit-btn" class="checkout-btn checkout-btn--primary"
+                    style="width: 100%; border: none; cursor: pointer; border-radius: 4px; opacity: 0.35;" disabled>
+                    Vérifier l'authenticité du PDF
+                </button>
+            </form>
+
+            <p style="font-size: 0.75rem; color: var(--white-4); text-align: center; margin-top: 1rem;">
+                Le fichier est analysé sur le serveur et n'est pas conservé.
+            </p>
+        </section>
+
+        <script>
+            const pdfInput = document.getElementById('pdf-input');
+            const fileNameDisp = document.getElementById('file-name');
+            const submitBtn = document.getElementById('submit-btn');
+            const uploadArea = document.getElementById('upload-area');
+
+            pdfInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    const name = e.target.files[0].name;
+                    fileNameDisp.textContent = "Fichier sélectionné : " + name;
+                    fileNameDisp.style.display = 'block';
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                    uploadArea.style.borderColor = 'var(--green-1)';
+                    uploadArea.style.background = 'rgba(46, 204, 113, 0.05)';
+                } else {
+                    fileNameDisp.style.display = 'none';
+                    submitBtn.disabled = true;
+                    submitBtn.style.opacity = '0.35';
+                    uploadArea.style.borderColor = 'var(--white-4)';
+                    uploadArea.style.background = 'none';
+                }
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    uploadArea.style.borderColor = 'var(--green-1)';
+                    uploadArea.style.background = 'rgba(46, 204, 113, 0.05)';
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    if (!pdfInput.files.length) {
+                        uploadArea.style.borderColor = 'var(--white-4)';
+                        uploadArea.style.background = 'none';
+                    }
+                });
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                if (e.dataTransfer.files.length > 0) {
+                    pdfInput.files = e.dataTransfer.files;
+                    const event = new Event('change');
+                    pdfInput.dispatchEvent(event);
+                }
+            });
+        </script>
+        {% endif %}
+
+        <footer class="checkout-footer" style="margin-top: 4rem;">
+            <p>
+                <strong>Belle Vitesse</strong><br>
+                Service de vérification et scellement électronique conforme eIDAS.
+            </p>
+        </footer>
+
+    </div>
+
+</body>
+
+</html>

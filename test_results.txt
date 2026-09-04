@@ -52,6 +52,20 @@ test_switch_role_unauthenticated (test_dev_role_switcher.DevRoleSwitcherTestCase
 Unauthenticated call to switch role redirects to login. ... ok
 test_user_cannot_access_or_see_catalog_update (test_dev_role_switcher.DevRoleSwitcherTestCase.test_user_cannot_access_or_see_catalog_update)
 Technicien role should not see catalog_update in sidebar nav and should be forbidden on catalog preview/update. ... ok
+test_bv_signature (test_incident_signatures.IncidentSignaturesTestCase.test_bv_signature)
+Vérifie l'enregistrement du visa Belle Vitesse. ... ok
+test_contradictory_double_signature_and_sealing (test_incident_signatures.IncidentSignaturesTestCase.test_contradictory_double_signature_and_sealing)
+Vérifie le cycle complet BV + Production menant au scellement contradictoire. ... ok
+test_incident_emails_rendering (test_incident_signatures.IncidentSignaturesTestCase.test_incident_emails_rendering)
+Vérifie le bon rendu des templates d'email d'invitation et de confirmation scellée avec la DA Belle Vitesse. ... ok
+test_pdf_download_security (test_incident_signatures.IncidentSignaturesTestCase.test_pdf_download_security)
+Vérifie les permissions d'accès au PDF signé (Admin, Token public, et Rejet si non autorisé). ... ok
+test_production_signs_first_no_sealing_until_bv_signs (test_incident_signatures.IncidentSignaturesTestCase.test_production_signs_first_no_sealing_until_bv_signs)
+Vérifie que si la Production signe en premier, le document N'EST PAS scellé tant que BV n'a pas visé. ... ok
+test_public_routes_sign_and_verify (test_incident_signatures.IncidentSignaturesTestCase.test_public_routes_sign_and_verify)
+Vérifie le fonctionnement des endpoints HTTP publics. ... ok
+test_token_generation_and_validation (test_incident_signatures.IncidentSignaturesTestCase.test_token_generation_and_validation)
+Vérifie la génération d'un jeton 48h et sa validation. ... ok
 test_auto_reporter_and_project_equipment_context (test_incidents.IncidentsTestCase.test_auto_reporter_and_project_equipment_context)
 Vérifie l'assignation automatique du déclarant et le filtrage des véhicules/têtes par projet. ... ok
 test_create_incident (test_incidents.IncidentsTestCase.test_create_incident)
@@ -134,6 +148,6 @@ test_create_and_list_waivers (test_waivers.WaiversTest.test_create_and_list_waiv
 test_soft_delete_waivers (test_waivers.WaiversTest.test_soft_delete_waivers) ... ok
 
 ----------------------------------------------------------------------
-Ran 83 tests in 5.700s
+Ran 90 tests in 5.969s
 
 OK

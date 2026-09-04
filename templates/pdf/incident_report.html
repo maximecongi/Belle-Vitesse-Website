@@ -221,29 +221,83 @@
         </section>
         {% endif %}
 
-        <!-- ═══════════ SIGNATURES & VISAS ═══════════ -->
-        <div class="checkout-signature">
-            <div class="checkout-signature-block">
-                <div class="checkout-signature-label">Pour Belle Vitesse</div>
-                <div class="checkout-signature-pad">
-                    <span style="font-size: 7pt; color: var(--grey-2);">Visa & Signature Responsable Technique</span>
+        <!-- ═══════════ SIGNATURES & VISAS CONTRADICTOIRES ═══════════ -->
+        <section class="checkout-section">
+            <h2 class="checkout-section-title dot-before">Signatures & Visas Contradictoires</h2>
+            <div class="checkout-signature">
+                <!-- Signature Belle Vitesse -->
+                <div class="checkout-signature-block">
+                    <div class="checkout-signature-label">Pour Belle Vitesse</div>
+                    <div class="checkout-signature-pad">
+                        {% if incident.bv_signature_data %}
+                        <img src="{{ incident.bv_signature_data }}" alt="Signature Belle Vitesse" style="max-height: 50pt; max-width: 140pt; display: block; margin: 0 auto;">
+                        {% else %}
+                        <span style="font-size: 7.5pt; color: var(--grey-2); line-height: 40pt; display: block; text-align: center;">Visa Responsable Technique</span>
+                        {% endif %}
+                    </div>
+                    <div class="checkout-signature-info">
+                        <strong>{{ incident.bv_signer_name or (incident.reporter.name if incident.reporter else company_name) }}</strong><br>
+                        <span style="font-size: 7pt; color: var(--grey-2);">{{ incident.bv_signer_role or "Responsable Technique" }}</span><br>
+                        {% if incident.bv_signed_at %}
+                        <span style="font-size: 6.5pt; color: var(--green);">Signé le {{ incident.bv_signed_at }}</span>
+                        {% else %}
+                        <span style="font-size: 6.5pt; color: var(--grey-2);">Document certifié conforme aux constatations du plateau.</span>
+                        {% endif %}
+                    </div>
                 </div>
-                <div class="checkout-signature-info">
-                    {{ incident.reporter.name if incident.reporter else company_name }}<br>
-                    Document certifié conforme aux constatations du plateau.
+
+                <!-- Signature Production -->
+                <div class="checkout-signature-block">
+                    <div class="checkout-signature-label">Pour la Production</div>
+                    <div class="checkout-signature-pad">
+                        {% if incident.prod_signature_data %}
+                        <img src="{{ incident.prod_signature_data }}" alt="Signature Production" style="max-height: 50pt; max-width: 140pt; display: block; margin: 0 auto;">
+                        {% else %}
+                        <span style="font-size: 7.5pt; color: var(--grey-2); line-height: 40pt; display: block; text-align: center;">Visa Chargé de Production / Régie</span>
+                        {% endif %}
+                    </div>
+                    <div class="checkout-signature-info">
+                        <strong>{{ incident.prod_signer_name or (incident.project.production_name if incident.project else "Représentant Production") }}</strong><br>
+                        <span style="font-size: 7pt; color: var(--grey-2);">{{ incident.prod_signer_role or "Production / Régie" }}</span><br>
+                        {% if incident.prod_signed_at %}
+                        <span style="font-size: 6.5pt; color: var(--green);">Signé le {{ incident.prod_signed_at }}</span>
+                        {% else %}
+                        <span style="font-size: 6.5pt; color: var(--grey-2);">Pris acte de la déclaration et des dommages constatés.</span>
+                        {% endif %}
+                    </div>
                 </div>
+
+                <!-- QR Code de Vérification (si scellé) -->
+                {% if qr %}
+                <div class="checkout-signature-block" style="max-width: 110pt; text-align: center;">
+                    <div class="checkout-signature-label">Authenticité</div>
+                    <div class="checkout-qr" style="margin-top: 4pt;">
+                        <a href="{{ verification_url }}" target="_blank">
+                            <img src="{{ qr }}" alt="QR Code de vérification" style="width: 55pt; height: 55pt;">
+                        </a>
+                    </div>
+                    <div style="font-size: 6pt; color: var(--grey-2); margin-top: 2pt;">Scanner pour vérifier</div>
+                </div>
+                {% endif %}
             </div>
-            <div class="checkout-signature-block">
-                <div class="checkout-signature-label">Pour la Production</div>
-                <div class="checkout-signature-pad">
-                    <span style="font-size: 7pt; color: var(--grey-2);">Visa & Signature Chargé de Production / Régie</span>
-                </div>
-                <div class="checkout-signature-info">
-                    {{ incident.project.production_name if incident.project else 'Représentant Production' }}<br>
-                    Pris acte de la déclaration et des dommages constatés.
-                </div>
+        </section>
+
+        <!-- ═══════════ SCELLÉ HMAC & CONFORMITÉ ═══════════ -->
+        {% if hash or is_sealed %}
+        <div class="checkout-verification" style="margin-top: 10pt; margin-bottom: 12pt; padding: 6pt 10pt; background: #f8fafc; border: 1px solid var(--grey-3); border-radius: 4px;">
+            <div>
+                <p class="checkout-verification-text" style="font-size: 7.5pt; margin: 0; line-height: 1.3;">
+                    <strong style="color: var(--green);">✔ Constat contradictoire scellé électroniquement.</strong><br>
+                    L'intégrité et la conformité légale de ce document peuvent être vérifiées en scannant le QR code.
+                </p>
+                {% if hash %}
+                <p class="checkout-hash" style="font-size: 6pt; font-family: monospace; color: var(--grey-2); margin: 3pt 0 0 0; word-break: break-all;">
+                    Sceau d'intégrité HMAC-SHA256 : {{ hash }}
+                </p>
+                {% endif %}
             </div>
         </div>
+        {% endif %}
 
         <!-- ═══════════ FOOTER ═══════════ -->
         <footer class="checkout-footer">

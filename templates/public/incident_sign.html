@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/static/imgs/favicons/favicon.svg" />
+    <link rel="shortcut icon" href="/static/imgs/favicons/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/imgs/favicons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Belle Vitesse" />
+    <link rel="manifest" href="/static/imgs/favicons/site.webmanifest" />
+
+    <title>Signature Constat d'Incident — {{ incident.incident_number }} - Belle Vitesse</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-pilot-waivers.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-components.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="{{ url_for('static', filename='js/src/ui-utils.js') }}"></script>
+</head>
+
+<body class="pilot-waiver-container">
+
+    <div class="pilot-waiver">
+        <!-- ═══════════ HEADER ═══════════ -->
+        <header class="pilot-waiver-header">
+            <div class="pilot-waiver-header-logo">
+                <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
+                    alt="Belle Vitesse">
+            </div>
+            <div class="pilot-waiver-header-meta">
+                <strong class="dot-before">Constat d'Incident</strong><br>
+                <span class="pilot-waiver-doc-id">{{ incident.incident_number }}</span>
+            </div>
+        </header>
+
+        {% if is_already_signed %}
+        <!-- ── État : déjà signé ────────────────────────────────────── -->
+        <section class="pilot-waiver-section" style="text-align: center; margin-top: 4rem;">
+            <div style="font-size: 4rem; margin-bottom: 1rem; color: var(--green-1);">✓</div>
+            <h2 class="pilot-waiver-section-title">Constat d'incident signé</h2>
+            <p style="color: var(--grey-2); margin-top: 1rem; text-align: center;">
+                Ce document a déjà été signé électroniquement par la Production.<br>
+                {% if incident.is_fully_signed %}
+                Il est désormais contradictoirement validé et scellé de manière immuable.
+                {% else %}
+                En attente du visa technique de Belle Vitesse pour le scellement définitif.
+                {% endif %}
+            </p>
+            {% if incident.signed_pdf_path %}
+            <div style="margin-top: 2rem;">
+                <a href="{{ incident.signed_pdf_url or ('/incidents/document/' + incident.signed_pdf_path) }}" target="_blank" class="pilot-waiver-btn pilot-waiver-btn--primary">
+                    Télécharger le PDF Scellé Authentique
+                </a>
+            </div>
+            {% endif %}
+            <div style="margin-top: 1.5rem;">
+                <a href="/incidents/verify/{{ incident.incident_number }}" style="font-size: 0.85rem; color: var(--grey-2); text-decoration: underline;">
+                    🔍 Consulter le certificat d'intégrité
+                </a>
+            </div>
+        </section>
+
+        {% else %}
+        <!-- ── Formulaire de signature contradictoire ─────────────────────────────── -->
+        <form id="incident-form" novalidate>
+
+            <!-- 1. Informations du tournage & de l'incident -->
+            <section class="pilot-waiver-section">
+                <h2 class="pilot-waiver-section-title dot-before">Informations de l'incident</h2>
+                <div class="pilot-waiver-info-grid">
+                    <div class="pilot-waiver-info-item">
+                        <span class="pilot-waiver-info-label">Projet</span>
+                        <span class="pilot-waiver-info-value">{{ incident.project_name if incident.project_name and incident.project_name != '—' else (incident.project.name if incident.project else '—') }}</span>
+                    </div>
+                    <div class="pilot-waiver-info-item">
+                        <span class="pilot-waiver-info-label">Production</span>
+                        <span class="pilot-waiver-info-value">{{ incident.production_name if incident.production_name and incident.production_name != '—' else (incident.project.production_name if incident.project else '—') }}</span>
+                    </div>
+                    <div class="pilot-waiver-info-item">
+                        <span class="pilot-waiver-info-label">Date & Heure</span>
+                        <span class="pilot-waiver-info-value">{{ incident.incident_date }} à {{ incident.incident_time }}</span>
+                    </div>
+                    <div class="pilot-waiver-info-item">
+                        <span class="pilot-waiver-info-label">Lieu</span>
+                        <span class="pilot-waiver-info-value">{{ incident.location or '—' }}</span>
+                    </div>
+                    <div class="pilot-waiver-info-item">
+                        <span class="pilot-waiver-info-label">Véhicule / Équipement</span>
+                        <span class="pilot-waiver-info-value">
+                            {% if incident.vehicle_name and incident.vehicle_name != '—' %}
+                                {{ incident.vehicle_name }}
+                            {% elif incident.equipment_name and incident.equipment_name != '—' %}
+                                {{ incident.equipment_name }}
+                            {% else %}—{% endif %}
+                        </span>
+                    </div>
+                    <div class="pilot-waiver-info-item">
+                        <span class="pilot-waiver-info-label">Gravité</span>
+                        <span class="pilot-waiver-info-value">
+                            {% if incident.severity == 'critique' %}
+                            <span class="badge-pill" data-val="critique">🚨 {{ incident.severity_label or 'Critique' }}</span>
+                            {% elif incident.severity == 'modere' %}
+                            <span class="badge-pill" data-val="warning">⚠️ {{ incident.severity_label or 'Modéré' }}</span>
+                            {% else %}
+                            <span class="badge-pill" data-val="neutral">ℹ️ {{ incident.severity_label or 'Mineur' }}</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="pilot-waiver-info-item">
+                        <span class="pilot-waiver-info-label">Impact Tournage</span>
+                        <span class="pilot-waiver-info-value">
+                            {% if incident.shooting_impact in ('annulation', 'arret') %}
+                            <span class="badge-pill" data-val="critique">🛑 {{ incident.shooting_impact_label or 'Annulation de session' }}</span>
+                            {% elif incident.shooting_impact == 'interruption' %}
+                            <span class="badge-pill" data-val="in_progress">⏸️ {{ incident.shooting_impact_label or 'Interruption temporaire' }}</span>
+                            {% elif incident.shooting_impact == 'retard' %}
+                            <span class="badge-pill" data-val="warning">⏳ {{ incident.shooting_impact_label or 'Retard sur planning' }}</span>
+                            {% else %}
+                            <span class="badge-pill" data-val="ok">✅ {{ incident.shooting_impact_label or 'Aucun impact' }}</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. Circonstances & Dommages Constatés -->
+            <section class="pilot-waiver-section">
+                <h2 class="pilot-waiver-section-title dot-before">Circonstances & Dommages Constatés</h2>
+                <div class="pilot-waiver-notes" style="background: var(--white-3); border-radius: 4px; padding: 16px; margin-bottom: 1.5rem; font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap; color: var(--grey-1);">{{ incident.description or "Aucun descriptif renseigné." }}</div>
+
+                {% if incident.immediate_actions %}
+                <div style="margin-bottom: 1.5rem;">
+                    <span class="pilot-waiver-info-label" style="color: var(--amber-text, #92400e);">Mesures conservatoires immédiates :</span>
+                    <div style="background: #fffbeb; border-left: 3px solid #FFC845; padding: 12px 16px; margin-top: 6px; font-size: 0.9rem; color: #92400e; border-radius: 2px;">
+                        {{ incident.immediate_actions }}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if incident.photos %}
+                <div>
+                    <span class="pilot-waiver-info-label">Photographies des dommages constatés ({{ incident.photos|length }}) :</span>
+                    <div class="pilot-waiver-photos" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-top: 10px;">
+                        {% for p in incident.photos %}
+                        <div style="border: 1px solid var(--white-3); border-radius: 4px; overflow: hidden; background: #000;">
+                            <a href="{{ p.url }}" target="_blank" title="Agrandir la photo">
+                                <img src="{{ p.url }}" alt="Photo dégât constat" style="width: 100%; height: 120px; object-fit: cover; display: block; transition: transform 0.2s;">
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </section>
+
+            <!-- 3. Visa Belle Vitesse -->
+            <section class="pilot-waiver-section">
+                <h2 class="pilot-waiver-section-title dot-before">Constat & Visa Belle Vitesse</h2>
+                <div style="background: var(--white-3); border-radius: 4px; padding: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                    {% if incident.is_signed_bv %}
+                    <div>
+                        <strong style="font-size: 0.95rem; color: var(--grey-1);">{{ incident.bv_signer_name or (incident.reporter.name if incident.reporter else 'Responsable Technique Belle Vitesse') }}</strong>
+                        <div style="font-size: 0.8rem; color: var(--grey-2);">{{ incident.bv_signer_role or 'Responsable Technique Belle Vitesse' }}</div>
+                        {% if incident.bv_signed_at %}
+                        <div style="font-size: 0.8rem; color: var(--green-1, #16a34a); margin-top: 4px;">✓ Visé le {{ incident.bv_signed_at }}</div>
+                        {% endif %}
+                    </div>
+                    {% if incident.bv_signature_data %}
+                    <div>
+                        <img src="{{ incident.bv_signature_data }}" alt="Signature Belle Vitesse"
+                            style="max-height: 60px; max-width: 160px; background: #ffffff; border: 1px solid var(--white-3); border-radius: 4px; padding: 4px; display: block;">
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div style="width: 100%; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <span class="badge-pill" data-val="in_progress" style="margin-bottom: 6px; display: inline-block;">⏳ En attente</span>
+                            <div style="font-size: 0.95rem; color: var(--grey-1); font-weight: 500;">
+                                ⏳ Visa technique Belle Vitesse en attente de validation.
+                            </div>
+                            <div style="font-size: 0.8rem; color: var(--grey-2); margin-top: 2px;">
+                                Rédacteur : {{ incident.reporter.name if incident.reporter else 'Équipe Technique Belle Vitesse' }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <!-- 4. Informations & Signature Production -->
+            <section class="pilot-waiver-section">
+                <h2 class="pilot-waiver-section-title dot-before">Signature de la Production</h2>
+                <p style="font-size: 0.9rem; color: var(--grey-2); margin-bottom: 1.5rem;">
+                    Veuillez renseigner vos coordonnées et apposer votre signature contradictoire ci-dessous.
+                </p>
+
+                <div class="pilot-form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                    <div class="form-group">
+                        <label for="signer_name" style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--grey-2); display: block; margin-bottom: 4px;">Nom & Prénom du Signataire <span style="color:red;">*</span></label>
+                        <input class="form-input" type="text" id="signer_name" name="signer_name"
+                            value="{{ default_signer_name or '' }}" required autocomplete="name" placeholder="Ex: Marie Laurent">
+                    </div>
+                    <div class="form-group">
+                        <label for="signer_role" style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--grey-2); display: block; margin-bottom: 4px;">Qualité / Fonction sur le tournage <span style="color:red;">*</span></label>
+                        <input class="form-input" type="text" id="signer_role" name="signer_role"
+                            required placeholder="Ex: Directrice de Production / Régisseur Général">
+                    </div>
+                </div>
+
+                <div class="checkbox-container" style="margin-bottom: 1.5rem;">
+                    <input type="checkbox" id="accept_terms">
+                    <label for="accept_terms">
+                        <strong>J'ai pris connaissance de l'intégralité du présent constat d'incident contradictoire, des faits et des dommages matériels constatés.</strong><br>
+                        Je certifie l'exactitude des informations fournies et avoir qualité pour engager la Production.
+                    </label>
+                </div>
+
+                <div class="pilot-waiver-sign-canvas-wrapper" style="margin-top: 1rem;">
+                    <canvas id="signature-canvas"></canvas>
+                </div>
+
+                <div class="pilot-waiver-sign-actions" style="margin-top: 1rem;">
+                    <button type="button" class="pilot-waiver-btn pilot-waiver-btn--secondary" id="btn-clear">
+                        Effacer
+                    </button>
+                    <button type="button" class="pilot-waiver-btn pilot-waiver-btn--primary" id="btn-sign">
+                        Signer le document
+                    </button>
+                </div>
+            </section>
+
+            <div id="feedback" class="feedback-box"></div>
+
+        </form>
+        {% endif %}
+
+        <footer class="pilot-waiver-footer" style="margin-top: 4rem;">
+            <p>
+                <strong>Belle Vitesse</strong><br>
+                Ce document sera scellé électroniquement après validation.
+            </p>
+        </footer>
+    </div>
+
+    {% if not is_already_signed %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const canvas = document.getElementById('signature-canvas');
+            if (!canvas) return;
+
+            const wrapper = canvas.parentElement;
+            let signaturePad = null;
+
+            function resizeCanvas() {
+                const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                canvas.width = wrapper.offsetWidth * ratio;
+                canvas.height = wrapper.offsetHeight * ratio;
+                canvas.getContext('2d').scale(ratio, ratio);
+                if (signaturePad) signaturePad.clear();
+            }
+
+            signaturePad = new SignaturePad(canvas, {
+                backgroundColor: 'rgb(250, 250, 250)',
+                penColor: 'rgb(21, 21, 21)',
+            });
+
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            document.getElementById('btn-clear').addEventListener('click', function () {
+                signaturePad.clear();
+                hideFeedback();
+            });
+
+            document.getElementById('btn-sign').addEventListener('click', async function () {
+                hideFeedback();
+                const btnSign = this;
+
+                const nameInput = document.getElementById('signer_name');
+                const roleInput = document.getElementById('signer_role');
+                const acceptTerms = document.getElementById('accept_terms');
+
+                const nameVal = (nameInput.value || '').trim();
+                const roleVal = (roleInput.value || '').trim();
+
+                if (!nameVal) {
+                    showFeedback('Veuillez renseigner votre nom et prénom.', 'error');
+                    nameInput.focus();
+                    return;
+                }
+
+                if (!roleVal) {
+                    showFeedback('Veuillez renseigner votre qualité / fonction sur le tournage.', 'error');
+                    roleInput.focus();
+                    return;
+                }
+
+                if (!acceptTerms.checked) {
+                    showFeedback('Vous devez attester avoir pris connaissance du constat d\'incident.', 'error');
+                    return;
+                }
+
+                if (signaturePad.isEmpty()) {
+                    showFeedback('Veuillez apposer votre signature manuscrite dans le cadre prévu avant de valider.', 'error');
+                    return;
+                }
+
+                btnSign.disabled = true;
+                btnSign.textContent = 'Envoi en cours…';
+
+                const signatureData = signaturePad.toDataURL('image/png');
+
+                try {
+                    const response = await fetch(window.location.href, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            signer_name: nameVal,
+                            signer_role: roleVal,
+                            signature: signatureData,
+                        }),
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success || result.status === 'signed') {
+                        showFeedback('✅ Constat d\'incident signé avec succès.', 'success');
+                        btnSign.textContent = 'Signé ✓';
+                        canvas.style.pointerEvents = 'none';
+                        setTimeout(function () {
+                            window.location.reload();
+                        }, 2000);
+                    } else {
+                        showFeedback(result.error || result.message || 'Erreur lors de la signature.', 'error');
+                        btnSign.disabled = false;
+                        btnSign.textContent = 'Signer le document';
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showFeedback('Erreur réseau. Vérifiez votre connexion et réessayez.', 'error');
+                    btnSign.disabled = false;
+                    btnSign.textContent = 'Signer le document';
+                }
+            });
+        });
+    </script>
+    {% endif %}
+
+</body>
+
+</html>

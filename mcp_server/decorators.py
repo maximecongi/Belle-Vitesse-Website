@@ -10,6 +10,12 @@ from mcp_server.context import CURRENT_MCP_USER, CURRENT_MCP_IP
 
 def get_flask_app():
     """Import dynamique réutilisable de l'instance de l'application Flask."""
+    try:
+        from flask import current_app
+        if current_app:
+            return current_app._get_current_object()
+    except Exception:
+        pass
     from mcp_server.core import flask_app
     return flask_app
 

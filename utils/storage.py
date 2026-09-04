@@ -108,6 +108,21 @@ def get_checkin_photos_path(project, inspection_number):
     return get_checkin_path(project) / "PHOTOS" / inspection_number
 
 
+def get_incident_path(project):
+    """output / ... / 1_SÉCURITÉ / 5_INCIDENTS"""
+    if project:
+        return get_security_path(project) / "5_INCIDENTS"
+    output_base = current_app.config.get(
+        "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
+    now = datetime.now()
+    return Path(output_base) / now.strftime("%Y") / now.strftime("%m") / "INCIDENTS"
+
+
+def get_incident_photos_path(project, incident_number):
+    """output / ... / 1_SÉCURITÉ / 5_INCIDENTS / PHOTOS / {incident_number}"""
+    return get_incident_path(project) / "PHOTOS" / incident_number
+
+
 def ensure_dir(path):
     """S'assure que le répertoire existe."""
     os.makedirs(path, exist_ok=True)

@@ -18,6 +18,9 @@ from services.admin.incidents import (
     delete_incident,
     get_incident_form_context,
     generate_incident_pdf,
+    sign_incident_bv,
+    sign_incident_prod,
+    generate_incident_token,
 )
 from utils.decorators import require_roles
 
@@ -202,3 +205,71 @@ def init_incidents_routes(app):
             current_app.logger.error(f"❌ Erreur génération PDF incident : {e}")
             flash(f"Erreur lors de la génération du PDF : {e}", "error")
             return redirect(url_for("admin_incident_detail", record_id=record_id))
+
+    @app.route("/admin/incidents/<record_id>/sign/bv", methods=["POST"])
+    @require_roles("administrator", "manager", "user")
+    def admin_incident_sign_bv(record_id):
+        try:
+            signer_name = request.form.get("signer_name", "").strip()
+            signer_role = request.form.get("signer_role", "").strip()
+            if not signer_name:
+                first = session.get("admin_user_firstname", "")
+                last = session.get("admin_user_lastname", "")
+                signer_name = f"{first} {last}".strip() or "Responsable Technique Belle Vitesse"
+            if not signer_role:
+                signer_role = session.get("admin_user_role", "").strip() or "Responsable Technique Belle Vitesse"
+            signature_data = request.form.get("signature_data", "").strip()
+            ip_addr = request.remote_addr
+
+            res = sign_incident_bv(
+                incident_id=record_id,
+                signer_name=signer_name,
+                signer_role=signer_role,
+                signature_data=signature_data,
+                ip_address=ip_addr,
+            )
+            flash(res.get("message", "Visa Belle Vitesse enregistré avec succès."), "success")
+        except Exception as e:
+            current_app.logger.error(f"❌ Erreur visa Belle Vitesse : {e}")
+            flash(f"Erreur lors de l'enregistrement du visa : {e}", "error")
+
+        return redirect(url_for("admin_incident_detail", record_id=record_id))
+
+    @app.route("/admin/incidents/<record_id>/sign/prod", methods=["POST"])
+    @require_roles("administrator", "manager", "user")
+    def admin_incident_sign_prod(record_id):
+        try:
+            signer_name = request.form.get("signer_name", "").strip()
+            signer_role = request.form.get("signer_role", "").strip()
+            signature_data = request.form.get("signature_data", "").strip()
+            ip_addr = request.remote_addr
+
+            res = sign_incident_prod(
+                incident_id=record_id,
+                signer_name=signer_name,
+                signer_role=signer_role,
+                signature_data=signature_data,
+                ip_address=ip_addr,
+            )
+            flash(res.get("message", "Signature Production enregistrée et constat scellé avec succès."), "success")
+        except Exception as e:
+            current_app.logger.error(f"❌ Erreur signature Production : {e}")
+            flash(f"Erreur lors de la signature : {e}", "error")
+
+        return redirect(url_for("admin_incident_detail", record_id=record_id))
+
+    @app.route("/admin/incidents/<record_id>/send-token", methods=["POST"])
+    @require_roles("administrator", "manager", "user")
+    def admin_incident_send_token(record_id):
+        try:
+            recipient_email = request.form.get("recipient_email", "").strip()
+            res = generate_incident_token(record_id, recipient_email=recipient_email)
+            if res.get("email_sent"):
+                flash(f"Invitation envoyée par email avec succès à {recipient_email}.", "success")
+            else:
+                flash(f"Lien de signature généré : {res.get('signing_url')}", "info")
+        except Exception as e:
+            current_app.logger.error(f"❌ Erreur envoi jeton signature incident : {e}")
+            flash(f"Erreur lors de la génération du lien : {e}", "error")
+
+        return redirect(url_for("admin_incident_detail", record_id=record_id))

@@ -1,5 +1,6 @@
 import json
 from models.db import db, generate_inspection_number, _utcnow
+from models.waiver import TokenMixin, SignedDocumentMixin
 
 
 class Incident(db.Model):
@@ -75,6 +76,28 @@ class Incident(db.Model):
     resolution_notes = db.Column(db.Text, nullable=True)
     resolved_at = db.Column(db.DateTime, nullable=True)
 
+    # ═══════════ DOUBLE SIGNATURE & SCELLEMENT ═══════════
+    # 1. Visa & Signature Belle Vitesse (Technicien / Déclarant)
+    bv_signer_name = db.Column(db.String(150), nullable=True)
+    bv_signer_role = db.Column(db.String(150), nullable=True)
+    bv_signature_data = db.Column(db.Text(length=16777215), nullable=True)
+    bv_signed_at = db.Column(db.DateTime, nullable=True)
+    bv_signer_ip = db.Column(db.String(45), nullable=True)
+
+    # 2. Visa & Signature Production (Sur place ou à distance)
+    prod_signer_name = db.Column(db.String(150), nullable=True)
+    prod_signer_role = db.Column(db.String(150), nullable=True)
+    prod_signature_data = db.Column(db.Text(length=16777215), nullable=True)
+    prod_signed_at = db.Column(db.DateTime, nullable=True)
+    prod_signer_ip = db.Column(db.String(45), nullable=True)
+
+    # 3. Statut de signature, empreinte d'intégrité & archive
+    # "unsigned" (non signé), "signed_bv" (signé BV), "pending_prod" (invitation envoyée), "signed" (scellé)
+    signature_status = db.Column(db.String(30), default="unsigned", nullable=False)
+    signed_pdf_path = db.Column(db.String(500), nullable=True)
+    hash = db.Column(db.String(255), nullable=True)
+    pdf_file_hash = db.Column(db.String(64), nullable=True)
+
     # Horodatages & Soft-Delete
     created_at = db.Column(db.DateTime, default=_utcnow, index=True)
     updated_at = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow)
@@ -112,6 +135,37 @@ class Incident(db.Model):
         except Exception:
             return []
 
+    @property
+    def is_signed_bv(self) -> bool:
+        """Indique si Belle Vitesse a visé et signé le constat."""
+        return bool(self.bv_signed_at and self.bv_signature_data)
+
+    @property
+    def is_signed_prod(self) -> bool:
+        """Indique si la Production a visé et signé le constat."""
+        return bool(self.prod_signed_at and self.prod_signature_data)
+
+    @property
+    def is_fully_signed(self) -> bool:
+        """Indique si la double signature contradictoire est complète."""
+        return self.signature_status == "signed" or (self.is_signed_bv and self.is_signed_prod)
+
+    @property
+    def signature_status_label(self) -> str:
+        if self.is_fully_signed:
+            return "Signé & Scellé"
+        if self.signature_status == "signed_bv":
+            return "Visé BV (En attente Prod)"
+        if self.signature_status == "signed_prod":
+            return "Signé Prod (En attente BV)"
+        if self.signature_status == "pending_prod":
+            return "En attente Production"
+        if self.is_signed_bv:
+            return "Signé par BV"
+        if self.is_signed_prod:
+            return "Signé par la Production"
+        return "Non signé"
+
     def to_dict(self):
         return {
             "id": self.id,
@@ -141,9 +195,49 @@ class Incident(db.Model):
             "documents": self.documents_list,
             "resolution_notes": self.resolution_notes,
             "resolved_at": self.resolved_at.isoformat() if self.resolved_at else None,
+            # Données de signature
+            "bv_signer_name": self.bv_signer_name,
+            "bv_signer_role": self.bv_signer_role,
+            "bv_signature_data": self.bv_signature_data,
+            "bv_signed_at": self.bv_signed_at.isoformat() if self.bv_signed_at else None,
+            "prod_signer_name": self.prod_signer_name,
+            "prod_signer_role": self.prod_signer_role,
+            "prod_signature_data": self.prod_signature_data,
+            "prod_signed_at": self.prod_signed_at.isoformat() if self.prod_signed_at else None,
+            "signature_status": self.signature_status,
+            "signature_status_label": self.signature_status_label,
+            "is_signed_bv": self.is_signed_bv,
+            "is_signed_prod": self.is_signed_prod,
+            "is_fully_signed": self.is_fully_signed,
+            "signed_pdf_path": self.signed_pdf_path,
+            "hash": self.hash,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
     def __repr__(self):
         return f"<Incident {self.incident_number} - {self.title}>"
+
+
+class IncidentToken(db.Model, TokenMixin):
+    """Jeton de session sécurisé pour la signature d'un incident par la Production."""
+    __tablename__ = "incident_tokens"
+
+    incident_id = db.Column(
+        db.Integer,
+        db.ForeignKey("incidents.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    recipient_email = db.Column(db.String(255), nullable=True)
+    signature = db.Column(db.Text(length=16777215), nullable=True)
+
+    incident = db.relationship("Incident", backref=db.backref("tokens", lazy=True, cascade="all, delete-orphan"))
+
+
+class IncidentSignedDocument(db.Model, SignedDocumentMixin):
+    """Archive certifiée d'un incident contradictoirement signé et scellé."""
+    __tablename__ = "incident_signed_documents"
+
+    incident_number = db.Column(db.String(50), primary_key=True)
+    incident_id = db.Column(db.Integer, nullable=True, index=True)

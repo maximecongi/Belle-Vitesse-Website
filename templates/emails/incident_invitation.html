@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signature Constat d'Incident - Belle Vitesse</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #151515;
+            color: #FFFFFF;
+            font-family: 'Poppins', Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #151515;
+        }
+
+        .header {
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .logo {
+            width: 200px;
+            max-width: 80%;
+        }
+
+        .content {
+            padding: 20px 40px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+            color: #FFFFFF;
+        }
+
+        .dot-before:before {
+            content: "■ ";
+            color: #FFC845;
+            font-size: 0.8em;
+            position: relative;
+            left: -0.2ch;
+            top: -0.2ch;
+        }
+
+        p {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #A1A1A1;
+            margin-bottom: 30px;
+        }
+
+        .info-card {
+            background-color: #1a1a1a;
+            border: 1px solid #282828;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 25px 0 30px;
+            text-align: left;
+        }
+
+        .info-line {
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #A1A1A1;
+        }
+
+        .info-line:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-line strong {
+            color: #FFFFFF;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 16px 32px;
+            background-color: #FFC845;
+            color: #151515;
+            text-decoration: none;
+            font-weight: 700;
+            text-transform: uppercase;
+            border-radius: 4px;
+            letter-spacing: 1px;
+        }
+
+        .footer {
+            padding: 40px 20px;
+            text-align: center;
+            color: #555555;
+            border-top: 1px solid #252525;
+            margin-top: 40px;
+        }
+
+        .footer p {
+            font-size: 11px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://bellevitesse.com/static/imgs/logos_and_name/blanc-fond-transparent.png"
+                alt="Belle Vitesse" class="logo">
+        </div>
+        <div class="content">
+            <h1 class="dot-before">Signature Constat d'Incident.</h1>
+            <p>
+                Bonjour,<br><br>
+                Vous êtes invité à viser et signer électroniquement le <strong>constat d'incident contradictoire</strong> pour le projet :<br>
+                <strong>{{ project_name }}</strong>.
+            </p>
+
+            <div class="info-card">
+                <div class="info-line"><strong>N° de dossier :</strong> {{ incident_number }}</div>
+                <div class="info-line"><strong>Objet :</strong> {{ incident_title }}</div>
+                <div class="info-line"><strong>Date :</strong> {{ incident_date }}</div>
+                {% if location %}
+                <div class="info-line"><strong>Lieu :</strong> {{ location }}</div>
+                {% endif %}
+            </div>
+
+            <a class="button" href="{{ signature_link }}">Consulter et Signer</a>
+
+            <p style="margin-top: 30px; font-size: 14px; font-style: italic;">
+                Ce lien sécurisé est valable pendant 48 heures.<br>
+                Dès signature des deux parties, l'exemplaire officiel scellé vous sera automatiquement transmis.
+            </p>
+        </div>
+        <div class="footer">
+            <p>
+                © Belle Vitesse {{ now_year }}. Tous droits réservés.<br>
+                Belle Vitesse — 33 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine, France
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>

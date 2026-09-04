@@ -503,3 +503,119 @@ def send_calendar_invitation_email(to_email, user_name, feed_url):
             f"❌ Erreur sending calendar invitation email to {to_email}: {e}"
         )
         return False
+
+
+def send_incident_signature_request_email(incident, to_email, signing_url):
+    """
+    Envoie un email officiel à la Production l'invitant à viser et signer le constat d'incident.
+    """
+    try:
+        current_app.logger.info(
+            f"🚀 Envoi de l'invitation à signer l'incident {incident.incident_number} vers {to_email}"
+        )
+
+        project_name = incident.project.name if incident.project else "Tournage"
+        incident_num = incident.incident_number
+        incident_title = incident.title
+
+        text_content = (
+            f"Bonjour,\n\n"
+            f"Dans le cadre du projet '{project_name}', un constat d'incident ({incident_num} - {incident_title}) "
+            f"a été établi par l'équipe technique Belle Vitesse.\n\n"
+            f"Afin de valider contradictoirement ce constat, merci de bien vouloir apposer votre visa électronique "
+            f"en cliquant sur le lien suivant (valide 48 heures) :\n"
+            f"{signing_url}\n\n"
+            f"L'équipe Belle Vitesse reste à votre disposition pour tout échange.\n\n"
+            f"Bien cordialement,\n"
+            f"L'équipe Belle Vitesse\n"
+            f"https://bellevitesse.com"
+        )
+
+        html_content = render_template(
+            "emails/incident_invitation.html",
+            incident=incident,
+            incident_number=incident_num,
+            incident_title=incident_title,
+            incident_date=incident.incident_date,
+            location=incident.location,
+            project_name=project_name,
+            signature_link=signing_url,
+            now_year=datetime.now(timezone.utc).year,
+        )
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = f"Action requise : Visa du constat d'incident {incident_num} ({project_name})"
+        msg["To"] = to_email
+        msg["Date"] = formatdate(localtime=True)
+        msg["Message-ID"] = make_msgid(domain="bellevitesse.com")
+
+        msg.attach(MIMEText(text_content, "plain", "utf-8"))
+        msg.attach(MIMEText(html_content, "html", "utf-8"))
+
+        return EmailService._send_smtp_message(msg, [to_email], sender_type="admin")
+
+    except Exception as e:
+        current_app.logger.error(
+            f"❌ Erreur lors de l'envoi de l'invitation de signature d'incident à {to_email}: {e}"
+        )
+        return False
+
+
+def send_incident_signed_confirmation_email(incident, to_email, pdf_path):
+    """
+    Envoie l'exemplaire certifié scellé du rapport d'incident avec le PDF en pièce jointe.
+    """
+    admin_mail = os.getenv("SUPER_ADMIN_MAIL", "contact@bellevitesse.com")
+    try:
+        current_app.logger.info(
+            f"🚀 Envoi de la confirmation d'incident scellé {incident.incident_number} à {to_email}"
+        )
+
+        project_name = incident.project.name if incident.project else "Tournage"
+        incident_num = incident.incident_number
+
+        text_content = (
+            f"Bonjour,\n\n"
+            f"Le constat d'incident {incident_num} relatif au projet '{project_name}' a été "
+            f"visé par l'ensemble des parties et scellé électroniquement.\n\n"
+            f"Veuillez trouver ci-joint l'exemplaire officiel certifié (PDF scellé avec sceau d'intégrité).\n\n"
+            f"Bien cordialement,\n"
+            f"L'équipe Belle Vitesse"
+        )
+
+        html_content = render_template(
+            "emails/incident_signed_confirmation.html",
+            incident=incident,
+            incident_number=incident_num,
+            incident_title=incident.title,
+            project_name=project_name,
+            now_year=datetime.now(timezone.utc).year,
+        )
+
+        msg = MIMEMultipart("mixed")
+        msg["Subject"] = f"Constat scellé et signé - {incident_num} ({project_name})"
+        msg["To"] = to_email
+        msg["Cc"] = admin_mail
+        msg["Date"] = formatdate(localtime=True)
+        msg["Message-ID"] = make_msgid(domain="bellevitesse.com")
+
+        body = MIMEMultipart("alternative")
+        body.attach(MIMEText(text_content, "plain", "utf-8"))
+        body.attach(MIMEText(html_content, "html", "utf-8"))
+        msg.attach(body)
+
+        if pdf_path and os.path.exists(pdf_path):
+            with open(pdf_path, "rb") as f:
+                part = MIMEApplication(f.read(), Name=os.path.basename(pdf_path))
+            part["Content-Disposition"] = f'attachment; filename="{os.path.basename(pdf_path)}"'
+            msg.attach(part)
+
+        recipients = [to_email, admin_mail]
+        return EmailService._send_smtp_message(msg, recipients, sender_type="contact", timeout=15)
+
+    except Exception as e:
+        current_app.logger.error(
+            f"❌ Erreur lors de l'envoi de la confirmation d'incident scellé à {to_email}: {e}"
+        )
+        return False
+

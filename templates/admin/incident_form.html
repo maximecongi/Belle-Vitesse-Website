@@ -194,8 +194,8 @@
 
             <div class="form-group">
                 <label class="form-label" for="incident_time">Heure approximative</label>
-                <input type="text" name="incident_time" id="incident_time" class="form-input"
-                    value="{{ incident.incident_time or '' }}" placeholder="Ex: 14h30">
+                <input type="time" name="incident_time" id="incident_time" class="form-input"
+                    value="{{ incident.incident_time_raw or incident.incident_time or '' }}">
             </div>
 
             <div class="form-group">
