@@ -146,18 +146,19 @@ def get_catalog_data(with_prices=True):
     }
 
 
-def generate_catalog_pdf(with_prices=True):
+def generate_catalog_pdf(with_prices=True, filename: str = None):
     """Génère le PDF du catalogue de prix."""
+    target_filename = filename or f"Belle_Vitesse_CATALOGUE_{'P' if with_prices else 'WP'}.pdf"
     from flask import has_request_context
     if not has_request_context():
         with current_app.test_request_context(base_url="https://team.bellevitesse.com"):
             data = get_catalog_data(with_prices=with_prices)
             html = render_template("pdf/catalog.html", **data)
-            return render_pdf_from_template(html, base_url=current_app.root_path)
+            return render_pdf_from_template(html, base_url=current_app.root_path, filename=target_filename)
 
     data = get_catalog_data(with_prices=with_prices)
     html = render_template("pdf/catalog.html", **data)
-    pdf_bytes = render_pdf_from_template(html, base_url=current_app.root_path)
+    pdf_bytes = render_pdf_from_template(html, base_url=current_app.root_path, filename=target_filename)
     return pdf_bytes
 
 
@@ -191,7 +192,7 @@ def update_stored_catalog(with_prices=True):
         file_path = os.path.join(upload_dir, filename)
 
         # Génération (inclut la compression PDF optimisée via render_pdf_from_template)
-        pdf_bytes = generate_catalog_pdf(with_prices=with_prices)
+        pdf_bytes = generate_catalog_pdf(with_prices=with_prices, filename=filename)
 
         # Écriture
         with open(file_path, "wb") as f:

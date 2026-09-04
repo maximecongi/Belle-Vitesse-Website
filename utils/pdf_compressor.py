@@ -104,14 +104,18 @@ def compress_pdf(
     try:
         from pypdf import PdfReader, PdfWriter
 
-        reader = PdfReader(io.BytesIO(pdf_bytes))
-        writer = PdfWriter()
+        # Initialisation via clone_from pour que toutes les pages appartiennent au PdfWriter
+        try:
+            writer = PdfWriter(clone_from=io.BytesIO(pdf_bytes))
+        except Exception:
+            reader = PdfReader(io.BytesIO(pdf_bytes))
+            writer = PdfWriter()
+            for p in reader.pages:
+                writer.add_page(p)
 
         images_processed = 0
 
-        for page in reader.pages:
-            writer.add_page(page)
-
+        for page in writer.pages:
             # Optimisation des images intégrées à la page
             try:
                 for img_obj in page.images:
@@ -121,7 +125,10 @@ def compress_pdf(
                 pass
 
             # Compression des flux vectoriels et textuels
-            page.compress_content_streams()
+            try:
+                page.compress_content_streams()
+            except Exception:
+                pass
 
         # Déduplication des objets récurrents (polices, ressources partagées)
         writer.compress_identical_objects()
