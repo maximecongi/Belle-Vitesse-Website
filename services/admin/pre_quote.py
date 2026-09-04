@@ -392,6 +392,8 @@ def get_pre_quote_pdf(quote_id):
         'company_representative': 'Simon Maignan'
     })
 
+    quote_ref = getattr(quote, 'reference', None) or str(quote_id)
+    filename = f"Belle_Vitesse_Pre_Devis_{quote_ref}.pdf"
     from flask import has_request_context
     if not has_request_context():
         with current_app.test_request_context(base_url="https://team.bellevitesse.com"):
@@ -400,7 +402,7 @@ def get_pre_quote_pdf(quote_id):
                                    intermittent_salaries=intermittent_salaries,
                                    now=datetime.now(),
                                    settings=company_settings)
-            return render_pdf_from_template(html, base_url=current_app.root_path)
+            return render_pdf_from_template(html, base_url=current_app.root_path, filename=filename)
 
     html = render_template('pdf/pre_devis.html', quote=quote,
                            grouped_prestations=grouped_prestations,
@@ -408,7 +410,7 @@ def get_pre_quote_pdf(quote_id):
                            now=datetime.now(),
                            settings=company_settings)
 
-    pdf_bytes = render_pdf_from_template(html, base_url=current_app.root_path)
+    pdf_bytes = render_pdf_from_template(html, base_url=current_app.root_path, filename=filename)
 
     return pdf_bytes
 

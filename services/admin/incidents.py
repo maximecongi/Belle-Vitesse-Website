@@ -702,13 +702,14 @@ def generate_incident_pdf(record_id):
         today=_format_date(date.today()),
     )
 
+    filename = f"Belle_Vitesse_INCIDENT_{incident_data['incident_number']}.pdf"
     pdf_bytes = render_pdf_from_template(
         html_content=html,
         base_url=current_app.root_path,
-        stylesheets=["css/styles.css", "css/checkout.css", "css/incident_pdf.css"]
+        stylesheets=["css/styles.css", "css/checkout.css", "css/incident_pdf.css"],
+        filename=filename,
     )
 
-    filename = f"Belle_Vitesse_INCIDENT_{incident_data['incident_number']}.pdf"
     return pdf_bytes, filename
 
 

@@ -90,6 +90,18 @@ test_security_scopes_and_audit (test_mcp_server.MCPServerFullTestSuite.test_secu
 test_system_status (test_mcp_server.MCPServerFullTestSuite.test_system_status) ... ok
 test_users_lifecycle (test_mcp_server.MCPServerFullTestSuite.test_users_lifecycle) ... ok
 test_vehicle_availability (test_mcp_server.MCPServerFullTestSuite.test_vehicle_availability) ... ok
+test_compress_pdf_resilience_on_corruption (test_pdf_compression.PDFCompressionTestCase.test_compress_pdf_resilience_on_corruption)
+Vérifie que le compresseur renvoie l'original sans lever d'exception en cas de corruption. ... ok
+test_compress_pdf_short_or_empty_bytes (test_pdf_compression.PDFCompressionTestCase.test_compress_pdf_short_or_empty_bytes)
+Vérifie qu'un contenu trop court ou vide est renvoyé tel quel. ... ok
+test_compress_pdf_testing_mode_bypass (test_pdf_compression.PDFCompressionTestCase.test_compress_pdf_testing_mode_bypass)
+Vérifie que la compression est ignorée en mode test pour préserver les perfs. ... ok
+test_compress_pdf_valid_document (test_pdf_compression.PDFCompressionTestCase.test_compress_pdf_valid_document)
+Vérifie la compression locale effective d'un document PDF valide. ... ok
+test_optimize_image_downscaling_and_rgba (test_pdf_compression.PDFCompressionTestCase.test_optimize_image_downscaling_and_rgba)
+Vérifie la conversion et le redimensionnement d'une image avec canal alpha. ... ok
+test_render_pdf_from_template_invokes_compress_pdf (test_pdf_compression.PDFCompressionTestCase.test_render_pdf_from_template_invokes_compress_pdf)
+Vérifie que render_pdf_from_template appelle bien compress_pdf du nouveau module. ... ok
 test_all_rates_api (test_pre_quote_salary.PreQuoteSalaryTest.test_all_rates_api) ... ok
 test_edit_enrichment (test_pre_quote_salary.PreQuoteSalaryTest.test_edit_enrichment) ... ok
 test_grouped_prestations_pdf (test_pre_quote_salary.PreQuoteSalaryTest.test_grouped_prestations_pdf) ... ok
@@ -122,6 +134,6 @@ test_create_and_list_waivers (test_waivers.WaiversTest.test_create_and_list_waiv
 test_soft_delete_waivers (test_waivers.WaiversTest.test_soft_delete_waivers) ... ok
 
 ----------------------------------------------------------------------
-Ran 77 tests in 6.939s
+Ran 83 tests in 5.485s
 
 OK

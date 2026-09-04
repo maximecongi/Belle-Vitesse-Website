@@ -530,6 +530,10 @@ def generate_salaries_pdf(annexe):
     html = render_template("pdf/salaries.html", **data)
     
     # 6. Générer le PDF
-    pdf_bytes = render_pdf_from_template(html, base_url=current_app.root_path)
+    pdf_bytes = render_pdf_from_template(
+        html,
+        base_url=current_app.root_path,
+        filename=f"Belle_Vitesse_Salaires_{annexe}.pdf",
+    )
     return pdf_bytes
 

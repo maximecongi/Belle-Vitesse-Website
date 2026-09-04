@@ -268,16 +268,16 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         else:
             render_ctx["waiver"] = record
 
-        html_content = render_template(config["template"], **render_ctx)
-        pdf_bytes = render_pdf_from_template(
-            html_content, base_url, config["stylesheets"])
-
-        # 4. Stockage physique
         project_obj = getattr(record, "project", None)
         pdf_dir = ensure_dir(config["storage_func"](project_obj))
         filename = f"{document_id}_{secrets.token_hex(8)}.pdf"
         file_path = os.path.join(pdf_dir, filename)
 
+        html_content = render_template(config["template"], **render_ctx)
+        pdf_bytes = render_pdf_from_template(
+            html_content, base_url, config["stylesheets"], filename=filename)
+
+        # 4. Stockage physique
         output_base = current_app.config.get(
             "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
         rel_pdf_path = os.path.relpath(file_path, output_base)

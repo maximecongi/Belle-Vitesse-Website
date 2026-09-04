@@ -190,45 +190,8 @@ def update_stored_catalog(with_prices=True):
         filename = f'{prefix}{datetime.datetime.now().strftime("%Y%m")}_{rand_str}.pdf'
         file_path = os.path.join(upload_dir, filename)
 
-        # Génération
+        # Génération (inclut la compression PDF optimisée via render_pdf_from_template)
         pdf_bytes = generate_catalog_pdf(with_prices=with_prices)
-
-        # Compression avec iLovePDF (repli sur pypdf en cas d'échec)
-        compressed_successfully = False
-        try:
-            from utils.ilovepdf import compress_pdf_with_ilovepdf
-            pdf_bytes = compress_pdf_with_ilovepdf(pdf_bytes)
-            compressed_successfully = True
-        except Exception as e:
-            current_app.logger.warning(
-                f"⚠️ Échec de la compression via iLovePDF ({e}). Utilisation du repli local (pypdf)..."
-            )
-
-        if not compressed_successfully:
-            try:
-                import io
-                from pypdf import PdfReader, PdfWriter
-
-                reader = PdfReader(io.BytesIO(pdf_bytes))
-                writer = PdfWriter()
-
-                for page in reader.pages:
-                    writer.add_page(page)
-
-                # Appliquer la compression sur tous les flux
-                for page in writer.pages:
-                    page.compress_content_streams()
-
-                remote_buffer = io.BytesIO()
-                writer.write(remote_buffer)
-                pdf_bytes = remote_buffer.getvalue()
-                current_app.logger.info("✅ PDF compressé avec succès via pypdf (repli).")
-            except ImportError:
-                current_app.logger.warning(
-                    "⚠️ pypdf non installé, le catalogue ne sera pas compressé logiciellement (repli)."
-                )
-            except Exception as err:
-                current_app.logger.error(f"⚠️ Échec de la compression PDF locale (repli) : {err}")
 
         # Écriture
         with open(file_path, "wb") as f:

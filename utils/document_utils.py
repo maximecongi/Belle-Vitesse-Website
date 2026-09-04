@@ -170,13 +170,21 @@ def make_url_fetcher(app):
 
 # ── Génération de PDF ────────────────────────────────────────────
 
-def render_pdf_from_template(html_content: str, base_url: str, stylesheets: list[str] = None) -> bytes:
+def render_pdf_from_template(
+    html_content: str,
+    base_url: str,
+    stylesheets: list[str] = None,
+    compress: bool = True,
+    filename: str = "document.pdf"
+) -> bytes:
     """
-    Générateur de PDF générique utilisant WeasyPrint.
+    Générateur de PDF générique utilisant WeasyPrint avec compression automatique.
     Args:
         html_content (str) : Contenu HTML rendu.
         base_url (str) : URL de base pour les ressources.
         stylesheets (list[str]) : Liste des fichiers statiques CSS (ex: ['css/styles.css']).
+        compress (bool) : Si True (par défaut), applique la compression PDF locale haute performance.
+        filename (str) : Nom indicatif du document pour le traitement de compression.
     """
     from flask import current_app
     dummy_pdf = (
@@ -202,6 +210,15 @@ def render_pdf_from_template(html_content: str, base_url: str, stylesheets: list
 
         res = html.write_pdf(stylesheets=css_list)
         if isinstance(res, bytes) and len(res) > 0:
+            if compress:
+                try:
+                    from utils.pdf_compressor import compress_pdf
+                    return compress_pdf(res, filename=filename)
+                except Exception as comp_err:
+                    if current_app:
+                        current_app.logger.warning(
+                            f"⚠️ Erreur lors de la compression automatique : {comp_err}"
+                        )
             return res
         return dummy_pdf
     except Exception as e:

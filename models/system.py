@@ -69,18 +69,32 @@ class AppSetting(db.Model):
 
     @staticmethod
     def get(key, default=None):
-        """Récupère une valeur par clé, avec fallback (mise en cache)."""
+        """
+        Récupère une valeur par clé, avec fallback hiérarchique :
+        1. Valeur en base de données (si non vide)
+        2. Valeur par défaut fournie (si non vide)
+        3. Variable d'environnement correspondante (.env)
+        4. Chaîne vide
+        """
+        import os
         from extensions import cache
         cache_key = f"setting:{key}"
         try:
             val = cache.get(cache_key)
-            if val is not None:
+            if val is not None and str(val).strip():
                 return val
         except Exception:
             pass
 
         setting = db.session.get(AppSetting, key)
-        val = setting.value if setting else default
+        if setting and setting.value and str(setting.value).strip():
+            val = str(setting.value).strip()
+        else:
+            if default is not None and str(default).strip():
+                val = str(default).strip()
+            else:
+                env_val = os.getenv(key.upper()) or os.getenv(key)
+                val = env_val.strip() if env_val else (default or "")
 
         try:
             cache.set(cache_key, val, timeout=3600)
@@ -90,29 +104,37 @@ class AppSetting(db.Model):
 
     @staticmethod
     def get_all_as_dict(keys_defaults: dict) -> dict:
-        """Récupère plusieurs paramètres d'un coup de manière optimisée."""
+        """Récupère plusieurs paramètres d'un coup de manière optimisée avec fallback env."""
+        import os
         from extensions import cache
         keys = list(keys_defaults.keys())
-        
+
         # 1. Tenter de lire depuis le cache en lot
         cache_keys = [f"setting:{k}" for k in keys]
         cached_results = {}
         try:
             vals = cache.get_many(*cache_keys)
             for k, val in zip(keys, vals):
-                if val is not None:
-                    cached_results[k] = val
+                if val is not None and str(val).strip():
+                    cached_results[k] = str(val).strip()
         except Exception:
             pass
-            
+
         # 2. S'il manque des clés, les charger de la DB d'un coup
         missing_keys = [k for k in keys if k not in cached_results]
         if missing_keys:
             try:
                 db_settings = AppSetting.query.filter(AppSetting.key.in_(missing_keys)).all()
-                db_dict = {s.key: s.value for s in db_settings}
+                db_dict = {s.key: str(s.value).strip() for s in db_settings if s.value and str(s.value).strip()}
                 for k in missing_keys:
-                    val = db_dict.get(k, keys_defaults[k])
+                    val = db_dict.get(k)
+                    if not val:
+                        d = keys_defaults.get(k)
+                        if d is not None and str(d).strip():
+                            val = str(d).strip()
+                        else:
+                            env_val = os.getenv(k.upper()) or os.getenv(k)
+                            val = env_val.strip() if env_val else (d or "")
                     cached_results[k] = val
                     try:
                         cache.set(f"setting:{k}", val, timeout=3600)
@@ -120,8 +142,10 @@ class AppSetting(db.Model):
                         pass
             except Exception:
                 for k in missing_keys:
-                    cached_results[k] = keys_defaults[k]
-                    
+                    d = keys_defaults.get(k)
+                    env_val = os.getenv(k.upper()) or os.getenv(k)
+                    cached_results[k] = env_val.strip() if env_val else (d or "")
+
         return cached_results
 
     @staticmethod
