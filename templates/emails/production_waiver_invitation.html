@@ -11,7 +11,8 @@
             padding: 0;
             background-color: #151515;
             color: #FFFFFF;
-            font-family: 'Inter', Helvetica, Arial, sans-serif;
+            font-family: 'Poppins', Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
         }
 
         .container {
@@ -28,6 +29,7 @@
 
         .logo {
             width: 200px;
+            max-width: 80%;
         }
 
         .content {
@@ -88,7 +90,7 @@
         <div class="content">
             <h1 class="dot-before">Signature Décharge Production.</h1>
             <p>
-                Bonjour {{ prod_contact_name }},<br><br>
+                Bonjour {{ prod_contact_name|title }},<br><br>
                 Vous êtes invité à compléter et signer électroniquement la <strong>décharge de responsabilité
                     production</strong> pour le projet :<br>
                 <strong>{{ project_name }}</strong>.
