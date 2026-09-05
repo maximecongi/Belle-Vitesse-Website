@@ -22,12 +22,14 @@ from .users import init_users_routes
 from .waivers import init_waivers_routes
 from .productions import init_productions_routes
 from .incidents import init_incidents_routes
+from .fleet import init_fleet_routes
 
 
 def init_admin_routes(app):
     init_auth_routes(app)
     init_files_routes(app)
     init_dashboard_routes(app)
+    init_fleet_routes(app)
     init_checkouts_routes(app)
     init_checkins_routes(app)
     init_incidents_routes(app)

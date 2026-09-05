@@ -308,9 +308,22 @@
 
 {% block content %}
 <div class="admin-card">
-    <h2 class="admin-section-title u-mt-0">
-        {{ '📁 Archives (Tournages passés)' if is_archive else '📅 Tournages à venir / En cours' }}
-    </h2><br>
+    <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
+        <h2 class="admin-section-title u-m-0">
+            {% if request.args.get('q') %}
+            🔍 Projets filtrés : « {{ request.args.get('q') }} » ({{ projects|length }})
+            {% elif is_archive %}
+            📁 Archives (Tournages passés)
+            {% else %}
+            📅 Tournages à venir / En cours
+            {% endif %}
+        </h2>
+        {% if request.args.get('q') %}
+        <a href="{{ url_for('admin_projects_list') }}" class="admin-btn admin-btn-sm admin-btn-secondary">
+            ✕ Effacer le filtre
+        </a>
+        {% endif %}
+    </div>
     {{ project_table(projects) }}
 </div>
 

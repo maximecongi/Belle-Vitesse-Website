@@ -61,7 +61,8 @@
                         <div class="admin-dev-role-wrapper">
                             <select name="role" class="badge-pill admin-header-user-role admin-dev-role-select"
                                 data-val="{{ current_user.role }}" onchange="this.form.submit()">
-                                {% for r in ['Super Administrateur', 'Administrateur', 'Manager', 'Commercial', 'Technicien'] %}
+                                {% for r in ['Super Administrateur', 'Administrateur', 'Manager', 'Commercial',
+                                'Technicien'] %}
                                 <option value="{{ r }}" {% if current_user.role_lower==r.lower() %}selected{% endif %}>
                                     {{ r }}
                                 </option>
@@ -80,21 +81,25 @@
 
             <nav class="admin-nav">
                 {# Résolution ultra-robuste du rôle utilisateur #}
-                {% set raw_role = (current_user.role_lower if current_user and current_user.role_lower is defined and current_user.role_lower else (current_user.role if current_user and current_user.role is defined and current_user.role else session.get('admin_user_role', '')))|string|lower|trim %}
+                {% set raw_role = (current_user.role_lower if current_user and current_user.role_lower is defined and
+                current_user.role_lower else (current_user.role if current_user and current_user.role is defined and
+                current_user.role else session.get('admin_user_role', '')))|string|lower|trim %}
                 {% if 'super' in raw_role %}
-                    {% set user_role = 'super administrateur' %}
+                {% set user_role = 'super administrateur' %}
                 {% elif 'admin' in raw_role %}
-                    {% set user_role = 'administrateur' %}
+                {% set user_role = 'administrateur' %}
                 {% elif 'manager' in raw_role %}
-                    {% set user_role = 'manager' %}
+                {% set user_role = 'manager' %}
                 {% elif 'commercial' in raw_role %}
-                    {% set user_role = 'commercial' %}
+                {% set user_role = 'commercial' %}
                 {% elif raw_role in ['technicien', 'user'] %}
-                    {% set user_role = 'technicien' %}
+                {% set user_role = 'technicien' %}
                 {% elif current_user and current_user.is_admin %}
-                    {% set user_role = 'super administrateur' %}
+                {% set user_role = 'super administrateur' %}
                 {% else %}
-                    {% set user_role = 'super administrateur' if session.get('admin_user_role', '')|lower in ['super administrator', 'super administrateur'] else ('administrateur' if session.get('admin_user_role', '')|lower in ['administrator', 'administrateur'] else 'technicien') %}
+                {% set user_role = 'super administrateur' if session.get('admin_user_role', '')|lower in ['super
+                administrator', 'super administrateur'] else ('administrateur' if session.get('admin_user_role',
+                '')|lower in ['administrator', 'administrateur'] else 'technicien') %}
                 {% endif %}
 
                 {# ── Permissions par rôle : chaque rôle liste les sections et items visibles ── #}
@@ -131,7 +136,9 @@
                 'super administrator': {'sections': ['all'], 'nav': ['all']}
                 } %}
 
-                {% set perms = role_permissions.get(user_role, {'sections': ['all'], 'nav': ['all']} if (current_user and current_user.is_admin) else role_permissions.get('technicien', {'sections': ['all'], 'nav': ['all']})) %}
+                {% set perms = role_permissions.get(user_role, {'sections': ['all'], 'nav': ['all']} if (current_user
+                and current_user.is_admin) else role_permissions.get('technicien', {'sections': ['all'], 'nav':
+                ['all']})) %}
 
                 {% macro has_section(section) %}{{ 'all' in perms['sections'] or section in perms['sections'] }}{%
                 endmacro %}
@@ -184,6 +191,7 @@
                 {% endcall %}
 
                 {% call nav_group('🏎️ Flotte', 'flotte', 'flotte', false) %}
+                {{ nav_item(url_for('admin_fleet_list'), 'Parc & Timeline', 'fleet') }}
                 {{ nav_item(url_for('admin_vehicle_configs'), 'Config. Véhicules', 'vehicles') }}
                 {% endcall %}
 
@@ -222,9 +230,13 @@
                     <h1>{% block page_title %}{% endblock %}</h1>
                 </div>
                 <div class="admin-header-actions">
-                    <button type="button" class="admin-cmdk-trigger" id="cmdkTrigger" onclick="window.openCmdK &amp;&amp; window.openCmdK()" title="Recherche rapide (⌘K)">
-                        <svg class="cmdk-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px; flex-shrink: 0;">
-                            <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    <button type="button" class="admin-cmdk-trigger" id="cmdkTrigger"
+                        onclick="window.openCmdK &amp;&amp; window.openCmdK()" title="Recherche rapide (⌘K)">
+                        <svg class="cmdk-icon" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            style="width: 14px; height: 14px; flex-shrink: 0;">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
                         <span>Rechercher...</span>
                         <kbd class="admin-cmdk-kbd">⌘K</kbd>
@@ -266,16 +278,22 @@
     <div class="admin-cmdk-overlay" id="cmdkOverlay" aria-hidden="true">
         <div class="admin-cmdk-dialog" role="dialog" aria-modal="true" aria-label="Palette de commande">
             <div class="admin-cmdk-header">
-                <svg class="admin-cmdk-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; flex-shrink: 0;">
-                    <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                <svg class="admin-cmdk-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    style="width: 18px; height: 18px; flex-shrink: 0;">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
-                <input type="text" class="admin-cmdk-input" id="cmdkInput" placeholder="Rechercher un projet, production, contact, véhicule... (ex: prod:..., contact:...)" autocomplete="off" spellcheck="false">
+                <input type="text" class="admin-cmdk-input" id="cmdkInput"
+                    placeholder="Rechercher un projet, production, contact, véhicule... (ex: prod:..., contact:...)"
+                    autocomplete="off" spellcheck="false">
                 <span class="admin-cmdk-close-hint" id="cmdkCloseBtn">ESC</span>
             </div>
             <div class="admin-cmdk-results" id="cmdkResults"></div>
             <div class="admin-cmdk-footer">
                 <div class="admin-cmdk-shortcuts">
-                    <span class="admin-cmdk-shortcut-item"><kbd class="admin-cmdk-kbd">↑</kbd><kbd class="admin-cmdk-kbd">↓</kbd> Naviguer</span>
+                    <span class="admin-cmdk-shortcut-item"><kbd class="admin-cmdk-kbd">↑</kbd><kbd
+                            class="admin-cmdk-kbd">↓</kbd> Naviguer</span>
                     <span class="admin-cmdk-shortcut-item"><kbd class="admin-cmdk-kbd">↵</kbd> Ouvrir</span>
                     <span class="admin-cmdk-shortcut-item"><kbd class="admin-cmdk-kbd">esc</kbd> Fermer</span>
                 </div>

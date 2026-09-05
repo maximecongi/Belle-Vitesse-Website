@@ -1,9 +1,9 @@
 {% extends "admin/admin_base.html" %}
 
-{% block title %}Détail Checkout {{ data.inspection_id }}{% endblock %} 
-{% block page_title %}Détail Checkout{% endblock %} 
+{% block title %}Détail Checkout {{ data.inspection_id }}{% endblock %}
+{% block page_title %}Détail Checkout{% endblock %}
 
-{% block header_actions %} 
+{% block header_actions %}
 <a href="{{ url_for('checkout_verify', inspection_id=data.inspection_id) }}" target="_blank"
     class="admin-btn admin-btn-secondary">Page de vérification ↗</a>
 {% if data.status_id == 'in_progress' %}
@@ -27,7 +27,14 @@
                     <div class="u-text-sm u-text-muted">Véhicule</div>
                     <div class="u-text-medium">{{ data.vehicle.fields.name if data.vehicle else '—' }} <span
                             class="checkout-doc-id">{{
-                            data.vehicle.fields.unique_id }}</span></div>
+                            data.vehicle.fields.unique_id }}</span>
+                        {% if data.vehicle and data.vehicle.id %}
+                        <a href="{{ url_for('admin_vehicle_timeline', vehicle_id=data.vehicle.id) }}"
+                            class="admin-btn admin-btn-sm admin-btn-secondary u-ml-1"
+                            style="font-size: 11px; padding: 2px 6px;" title="Consulter l'historique du véhicule">🏎️
+                            Timeline</a>
+                        {% endif %}
+                    </div>
                 </div>
                 <div>
                     <div class="u-text-sm u-text-muted">Production</div>
@@ -162,7 +169,8 @@
             </div>
             {% if data.pdf_url %}
             <div class="u-mt-2">
-                <a href="{{ data.pdf_url }}" target="_blank" class="admin-btn admin-btn-secondary btn-download-pdf-sidebar">Télécharger le PDF 📄</a>
+                <a href="{{ data.pdf_url }}" target="_blank"
+                    class="admin-btn admin-btn-secondary btn-download-pdf-sidebar">Télécharger le PDF 📄</a>
             </div>
             {% endif %}
         </div>
@@ -170,8 +178,9 @@
         {% if data.status_id == 'in_progress' %}
         <div class="admin-card">
             <div class="admin-card-title">Sceau numérique</div>
-            <button type="button" id="sealCheckoutBtn" {% if data.failures or data.ready !="true"
-                %}disabled class="admin-btn btn-disabled admin-btn-seal-yellow" {% else %}class="admin-btn admin-btn-seal-yellow" {% endif %}>
+            <button type="button" id="sealCheckoutBtn" {% if data.failures or data.ready !="true" %}disabled
+                class="admin-btn btn-disabled admin-btn-seal-yellow" {% else %}class="admin-btn admin-btn-seal-yellow"
+                {% endif %}>
                 Sceller ce checkout
             </button>
         </div>

@@ -51,7 +51,7 @@ def init_api_routes(app):
                 status_id = get_inspection_key(record.status)
                 status_label = INSPECTION_STATUS_MAP.get(status_id, status_id)
                 return jsonify({
-                    "status": status_label, 
+                    "status": status_label,
                     "status_id": status_id,
                     "message": "Statut mis à jour avec succès"
                 })
@@ -65,7 +65,8 @@ def init_api_routes(app):
             })
         except Exception as e:
             db.session.rollback()
-            current_app.logger.error(f"❌ Erreur lors de la mise à jour du statut : {e}")
+            current_app.logger.error(
+                f"❌ Erreur lors de la mise à jour du statut : {e}")
             return jsonify({"error": str(e)}), 500
 
     @app.route("/admin/api/checkouts/<int:record_id>/status", methods=["GET", "POST"])
@@ -91,7 +92,8 @@ def init_api_routes(app):
                 possible_checkpoints=ALL_POSSIBLE_CHECKPOINTS
             )
         except Exception as e:
-            current_app.logger.error(f"❌ Erreur dans admin_vehicle_configs : {e}")
+            current_app.logger.error(
+                f"❌ Erreur dans admin_vehicle_configs : {e}")
             flash(
                 f"Erreur lors du chargement des configurations: {e}", "error")
             return redirect(url_for('admin_dashboard'))
@@ -214,7 +216,8 @@ def init_api_routes(app):
                                 "icon": "folder"
                             })
                 except Exception as e:
-                    current_app.logger.warning(f"⚠️ Erreur suggestions projets en cours : {e}")
+                    current_app.logger.warning(
+                        f"⚠️ Erreur suggestions projets en cours : {e}")
 
                 default_suggestions.append({
                     "title": "Nouvelle Production",
@@ -272,28 +275,52 @@ def init_api_routes(app):
         # 1. Navigation & Actions rapides (uniquement si scope 'all')
         if scope == 'all':
             pages_and_actions = [
-                {"title": "Tableau de bord", "subtitle": "Vue d'ensemble", "url": url_for("admin_dashboard"), "category": "Page", "icon": "layout", "roles": ['all']},
-                {"title": "Nouveau Projet", "subtitle": "Créer un nouveau tournage", "url": url_for("admin_project_new"), "category": "Action", "icon": "plus", "roles": ['manager', 'commercial', 'admin']},
-                {"title": "Projets (En cours)", "subtitle": "Tournages en préparation ou en cours", "url": url_for("admin_projects_list"), "category": "Page", "icon": "folder", "roles": ['manager', 'commercial', 'admin']},
-                {"title": "Archives des Projets", "subtitle": "Projets terminés et archivés", "url": url_for("admin_projects_archives"), "category": "Page", "icon": "archive", "roles": ['manager', 'commercial', 'admin']},
-                {"title": "Productions", "subtitle": "Liste des sociétés clientes", "url": url_for("admin_productions_list"), "category": "Page", "icon": "building", "roles": ['manager', 'commercial', 'admin']},
-                {"title": "Nouvelle Production", "subtitle": "Créer une société de production", "url": url_for("admin_production_new"), "category": "Action", "icon": "plus", "roles": ['manager', 'commercial', 'admin']},
-                {"title": "Contacts", "subtitle": "Annuaire des contacts professionnels", "url": url_for("admin_contacts_list"), "category": "Page", "icon": "user", "roles": ['manager', 'commercial', 'admin']},
-                {"title": "Nouveau Contact", "subtitle": "Ajouter un contact professionnel", "url": url_for("admin_contact_new"), "category": "Action", "icon": "plus", "roles": ['manager', 'commercial', 'admin']},
-                {"title": "Nouveau Check-out", "subtitle": "Effectuer un contrôle de départ", "url": url_for("admin_checkout_new"), "category": "Action", "icon": "truck", "roles": ['all']},
-                {"title": "Check-outs", "subtitle": "Historique des contrôles de départ", "url": url_for("admin_checkouts_list"), "category": "Page", "icon": "clipboard", "roles": ['all']},
-                {"title": "Nouveau Check-in", "subtitle": "Effectuer un contrôle de retour", "url": url_for("admin_checkin_new"), "category": "Action", "icon": "check-circle", "roles": ['all']},
-                {"title": "Check-ins", "subtitle": "Historique des contrôles de retour", "url": url_for("admin_checkins_list"), "category": "Page", "icon": "clipboard", "roles": ['all']},
-                {"title": "Gestion des Incidents", "subtitle": "Suivi des pannes, dommages et sinistres", "url": url_for("admin_incidents_list"), "category": "Page", "icon": "alert", "roles": ['all']},
-                {"title": "Déclarer un Incident", "subtitle": "Signaler une anomalie en tournage", "url": url_for("admin_incident_new"), "category": "Action", "icon": "alert", "roles": ['all']},
-                {"title": "Calendrier Matériel", "subtitle": "Disponibilités et planning des équipements", "url": url_for("admin_booking"), "category": "Page", "icon": "calendar", "roles": ['manager', 'commercial', 'admin']},
-                {"title": "Abonnements Calendrier (ICS)", "subtitle": "Flux iCal et synchronisation des agendas", "url": url_for("admin_calendar"), "category": "Page", "icon": "calendar", "roles": ['manager', 'commercial', 'admin']},
-                {"title": "Tarification & Pre-quotes", "subtitle": "Grille tarifaire et devis", "url": url_for("admin_pricing"), "category": "Page", "icon": "tag", "roles": ['manager', 'commercial', 'admin']},
-                {"title": "Configurations Véhicules", "subtitle": "Checkpoints et équipements", "url": url_for("admin_vehicle_configs"), "category": "Page", "icon": "settings", "roles": ['admin']},
-                {"title": "Équipe & Utilisateurs", "subtitle": "Gestion des accès et collaborateurs", "url": url_for("admin_users_list"), "category": "Page", "icon": "users", "roles": ['manager', 'admin']},
-                {"title": "Newsletter", "subtitle": "Abonnés et composition de campagnes", "url": url_for("admin_newsletter_dashboard"), "category": "Page", "icon": "mail", "roles": ['manager', 'admin']},
-                {"title": "Générateur de Signature", "subtitle": "Générer la signature email officielle", "url": url_for("admin_signature_generator"), "category": "Outil", "icon": "pen", "roles": ['all']},
-                {"title": "Documentation Technique", "subtitle": "Guides et documentations internes", "url": url_for("admin_docs_index"), "category": "Outil", "icon": "book", "roles": ['admin']},
+                {"title": "Tableau de bord", "subtitle": "Vue d'ensemble", "url": url_for(
+                    "admin_dashboard"), "category": "Page", "icon": "layout", "roles": ['all']},
+                {"title": "Nouveau Projet", "subtitle": "Créer un nouveau tournage", "url": url_for(
+                    "admin_project_new"), "category": "Action", "icon": "plus", "roles": ['manager', 'commercial', 'admin']},
+                {"title": "Projets (En cours)", "subtitle": "Tournages en préparation ou en cours", "url": url_for(
+                    "admin_projects_list"), "category": "Page", "icon": "folder", "roles": ['manager', 'commercial', 'admin']},
+                {"title": "Archives des Projets", "subtitle": "Projets terminés et archivés", "url": url_for(
+                    "admin_projects_archives"), "category": "Page", "icon": "archive", "roles": ['manager', 'commercial', 'admin']},
+                {"title": "Productions", "subtitle": "Liste des sociétés clientes", "url": url_for(
+                    "admin_productions_list"), "category": "Page", "icon": "building", "roles": ['manager', 'commercial', 'admin']},
+                {"title": "Nouvelle Production", "subtitle": "Créer une société de production", "url": url_for(
+                    "admin_production_new"), "category": "Action", "icon": "plus", "roles": ['manager', 'commercial', 'admin']},
+                {"title": "Contacts", "subtitle": "Annuaire des contacts professionnels", "url": url_for(
+                    "admin_contacts_list"), "category": "Page", "icon": "user", "roles": ['manager', 'commercial', 'admin']},
+                {"title": "Nouveau Contact", "subtitle": "Ajouter un contact professionnel", "url": url_for(
+                    "admin_contact_new"), "category": "Action", "icon": "plus", "roles": ['manager', 'commercial', 'admin']},
+                {"title": "Nouveau Check-out", "subtitle": "Effectuer un contrôle de départ",
+                    "url": url_for("admin_checkout_new"), "category": "Action", "icon": "truck", "roles": ['all']},
+                {"title": "Check-outs", "subtitle": "Historique des contrôles de départ", "url": url_for(
+                    "admin_checkouts_list"), "category": "Page", "icon": "clipboard", "roles": ['all']},
+                {"title": "Nouveau Check-in", "subtitle": "Effectuer un contrôle de retour", "url": url_for(
+                    "admin_checkin_new"), "category": "Action", "icon": "check-circle", "roles": ['all']},
+                {"title": "Check-ins", "subtitle": "Historique des contrôles de retour", "url": url_for(
+                    "admin_checkins_list"), "category": "Page", "icon": "clipboard", "roles": ['all']},
+                {"title": "Gestion des Incidents", "subtitle": "Suivi des pannes, dommages et sinistres", "url": url_for(
+                    "admin_incidents_list"), "category": "Page", "icon": "alert", "roles": ['all']},
+                {"title": "Déclarer un Incident", "subtitle": "Signaler une anomalie en tournage", "url": url_for(
+                    "admin_incident_new"), "category": "Action", "icon": "alert", "roles": ['all']},
+                {"title": "Calendrier Matériel", "subtitle": "Disponibilités et planning des équipements", "url": url_for(
+                    "admin_booking"), "category": "Page", "icon": "calendar", "roles": ['manager', 'commercial', 'admin']},
+                {"title": "Abonnements Calendrier (ICS)", "subtitle": "Flux iCal et synchronisation des agendas", "url": url_for(
+                    "admin_calendar"), "category": "Page", "icon": "calendar", "roles": ['manager', 'commercial', 'admin']},
+                {"title": "Flotte & Parc", "subtitle": "Parc de véhicules, départs, retours et incidents",
+                    "url": url_for("admin_fleet_list"), "category": "Page", "icon": "truck", "roles": ['all']},
+                {"title": "Tarification & Pre-quotes", "subtitle": "Grille tarifaire et devis", "url": url_for(
+                    "admin_pricing"), "category": "Page", "icon": "tag", "roles": ['manager', 'commercial', 'admin']},
+                {"title": "Configurations Véhicules", "subtitle": "Checkpoints et équipements", "url": url_for(
+                    "admin_vehicle_configs"), "category": "Page", "icon": "settings", "roles": ['admin']},
+                {"title": "Équipe & Utilisateurs", "subtitle": "Gestion des accès et collaborateurs", "url": url_for(
+                    "admin_users_list"), "category": "Page", "icon": "users", "roles": ['manager', 'admin']},
+                {"title": "Newsletter", "subtitle": "Abonnés et composition de campagnes", "url": url_for(
+                    "admin_newsletter_dashboard"), "category": "Page", "icon": "mail", "roles": ['manager', 'admin']},
+                {"title": "Générateur de Signature", "subtitle": "Générer la signature email officielle", "url": url_for(
+                    "admin_signature_generator"), "category": "Outil", "icon": "pen", "roles": ['all']},
+                {"title": "Documentation Technique", "subtitle": "Guides et documentations internes", "url": url_for(
+                    "admin_docs_index"), "category": "Outil", "icon": "book", "roles": ['admin']},
             ]
 
             for item in pages_and_actions:
@@ -322,13 +349,15 @@ def init_api_routes(app):
         if (is_manager_or_higher or role_norm == 'commercial') and scope in ('all', 'production'):
             try:
                 from models import Production
-                productions = Production.query.order_by(Production.name.asc()).limit(150).all()
+                productions = Production.query.order_by(
+                    Production.name.asc()).limit(150).all()
                 for prod in productions:
                     prod_name = prod.name or ""
                     prod_addr = prod.address or ""
                     prod_mail = prod.mail or ""
                     prod_phone = prod.phone or ""
-                    searchable = f"{prod_name} {prod_addr} {prod_mail} {prod_phone}".lower()
+                    searchable = f"{prod_name} {prod_addr} {prod_mail} {prod_phone}".lower(
+                    )
 
                     if not query_lower or query_lower in searchable:
                         sub_parts = []
@@ -349,21 +378,24 @@ def init_api_routes(app):
                         if len(results) >= 25:
                             break
             except Exception as e:
-                current_app.logger.warning(f"⚠️ Erreur recherche productions : {e}")
+                current_app.logger.warning(
+                    f"⚠️ Erreur recherche productions : {e}")
 
         # 3. Contacts (ciblage avec ?q=)
         if (is_manager_or_higher or role_norm == 'commercial') and scope in ('all', 'contact'):
             try:
                 from models import Contact
                 from sqlalchemy.orm import joinedload
-                contacts = Contact.query.options(joinedload(Contact.production_rel)).order_by(Contact.last_name.asc(), Contact.first_name.asc()).limit(150).all()
+                contacts = Contact.query.options(joinedload(Contact.production_rel)).order_by(
+                    Contact.last_name.asc(), Contact.first_name.asc()).limit(150).all()
                 for c in contacts:
                     full_name = f"{c.first_name} {c.last_name}".strip()
                     prod_name = c.production_rel.name if c.production_rel else "Freelance"
                     c_job = c.job_title or ""
                     c_mail = c.mail or ""
                     c_phone = c.phone or ""
-                    searchable = f"{full_name} {prod_name} {c_job} {c_mail} {c_phone}".lower()
+                    searchable = f"{full_name} {prod_name} {c_job} {c_mail} {c_phone}".lower(
+                    )
 
                     if not query_lower or query_lower in searchable:
                         sub_parts = []
@@ -384,7 +416,8 @@ def init_api_routes(app):
                         if len(results) >= 30:
                             break
             except Exception as e:
-                current_app.logger.warning(f"⚠️ Erreur recherche contacts : {e}")
+                current_app.logger.warning(
+                    f"⚠️ Erreur recherche contacts : {e}")
 
         # 4. Projets (ciblage avec ?q=)
         if (is_manager_or_higher or role_norm == 'commercial') and scope in ('all', 'project'):
@@ -415,7 +448,8 @@ def init_api_routes(app):
                         if len(results) >= 35:
                             break
             except Exception as e:
-                current_app.logger.warning(f"⚠️ Erreur recherche projets : {e}")
+                current_app.logger.warning(
+                    f"⚠️ Erreur recherche projets : {e}")
 
         # 5. Véhicules
         if scope in ('all', 'vehicle'):
@@ -431,24 +465,27 @@ def init_api_routes(app):
                         results.append({
                             "title": v_name,
                             "subtitle": v_model or "Véhicule Belle Vitesse",
-                            "url": url_for("admin_vehicle_configs") if is_admin_or_higher else url_for("admin_checkouts_list"),
+                            "url": url_for("admin_vehicle_timeline", vehicle_id=v.get("id")),
                             "category": "Véhicule",
                             "icon": "truck"
                         })
                         if len(results) >= 40:
                             break
             except Exception as e:
-                current_app.logger.warning(f"⚠️ Erreur recherche véhicules : {e}")
+                current_app.logger.warning(
+                    f"⚠️ Erreur recherche véhicules : {e}")
 
         # 6. Incidents de tournage
         if scope in ('all', 'incident'):
             try:
                 from models.incident import Incident
-                incidents = Incident.query.filter(Incident.deleted_at.is_(None)).order_by(Incident.incident_date.desc()).limit(30).all()
+                incidents = Incident.query.filter(Incident.deleted_at.is_(None)).order_by(
+                    Incident.incident_date.desc()).limit(30).all()
                 for inc in incidents:
                     inc_num = inc.incident_number or ""
                     inc_title = inc.title or ""
-                    searchable = f"{inc_num} {inc_title} {inc.severity} {inc.status}".lower()
+                    searchable = f"{inc_num} {inc_title} {inc.severity} {inc.status}".lower(
+                    )
                     if not query_lower or query_lower in searchable:
                         results.append({
                             "title": f"{inc_num} — {inc_title}",
@@ -460,6 +497,7 @@ def init_api_routes(app):
                         if len(results) >= 45:
                             break
             except Exception as e:
-                current_app.logger.warning(f"⚠️ Erreur recherche incidents : {e}")
+                current_app.logger.warning(
+                    f"⚠️ Erreur recherche incidents : {e}")
 
         return jsonify({"results": results[:20]})
