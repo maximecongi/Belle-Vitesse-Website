@@ -32,6 +32,7 @@ from utils.checkpoints import (
 from utils.database import get_vehicles
 from utils.document_utils import generate_pdf_access_token
 from utils.formatting import format_date_fr
+from utils.image_utils import optimize_and_save_image
 
 logger = logging.getLogger(__name__)
 
@@ -244,7 +245,7 @@ def upload_inspection_photos_shared(mode, record, files):
             if f and f.filename:
                 filename = secure_filename(f.filename)
                 file_path = upload_dir / filename
-                f.save(file_path)
+                optimize_and_save_image(f, file_path)
                 # Enregistre le chemin relatif par rapport à OUTPUT_FOLDER
                 paths.append(os.path.relpath(file_path, output_base))
 

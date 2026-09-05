@@ -21,6 +21,7 @@ from utils.document_utils import (
     render_pdf_from_template,
 )
 from utils.storage import get_incident_path, ensure_dir
+from utils.image_utils import optimize_and_save_image
 
 logger = logging.getLogger(__name__)
 
@@ -1188,7 +1189,10 @@ def _save_uploaded_files(file_list, subfolder="photos"):
         target_path = dest_dir / safe_name
 
         try:
-            f.save(target_path)
+            if subfolder == "photos":
+                optimize_and_save_image(f, target_path)
+            else:
+                f.save(target_path)
             # Enregistre le chemin relatif par rapport à output_base
             rel_path = os.path.relpath(target_path, output_base)
             saved_paths.append(rel_path)

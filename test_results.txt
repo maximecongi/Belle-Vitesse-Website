@@ -52,6 +52,14 @@ test_switch_role_unauthenticated (test_dev_role_switcher.DevRoleSwitcherTestCase
 Unauthenticated call to switch role redirects to login. ... ok
 test_user_cannot_access_or_see_catalog_update (test_dev_role_switcher.DevRoleSwitcherTestCase.test_user_cannot_access_or_see_catalog_update)
 Technicien role should not see catalog_update in sidebar nav and should be forbidden on catalog preview/update. ... ok
+test_convert_rgba_to_jpeg (test_image_utils.ImageUtilsTest.test_convert_rgba_to_jpeg)
+Vérifie qu'une image avec canal alpha (RGBA) est convertie sans erreur en JPEG. ... ok
+test_fallback_non_image (test_image_utils.ImageUtilsTest.test_fallback_non_image)
+Vérifie le fallback gracieux lorsqu'un fichier texte ou corrompu est fourni. ... ok
+test_resize_large_image (test_image_utils.ImageUtilsTest.test_resize_large_image)
+Vérifie qu'une image de grande dimension est redimensionnée à max 1920px. ... ok
+test_save_png_format (test_image_utils.ImageUtilsTest.test_save_png_format)
+Vérifie la sauvegarde d'un fichier PNG. ... ok
 test_bv_signature (test_incident_signatures.IncidentSignaturesTestCase.test_bv_signature)
 Vérifie l'enregistrement du visa Belle Vitesse. ... ok
 test_contradictory_double_signature_and_sealing (test_incident_signatures.IncidentSignaturesTestCase.test_contradictory_double_signature_and_sealing)
@@ -156,6 +164,6 @@ test_create_and_list_waivers (test_waivers.WaiversTest.test_create_and_list_waiv
 test_soft_delete_waivers (test_waivers.WaiversTest.test_soft_delete_waivers) ... ok
 
 ----------------------------------------------------------------------
-Ran 95 tests in 7.158s
+Ran 99 tests in 6.720s
 
 OK
