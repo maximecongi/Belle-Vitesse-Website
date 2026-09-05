@@ -84,6 +84,7 @@ test_mcp_incident_tools (test_incidents.IncidentsTestCase.test_mcp_incident_tool
 Vérifie l'exposition et le fonctionnement des outils MCP pour l'IA. ... ok
 test_update_incident_and_resolution (test_incidents.IncidentsTestCase.test_update_incident_and_resolution)
 Vérifie la mise à jour et l'horodatage de résolution. ... ok
+test_create_checkout_and_checkin_routes (test_inspections.InspectionsTest.test_create_checkout_and_checkin_routes) ... ok
 test_list_and_details (test_inspections.InspectionsTest.test_list_and_details) ... ok
 test_soft_delete (test_inspections.InspectionsTest.test_soft_delete) ... ok
 test_unified_form_context (test_inspections.InspectionsTest.test_unified_form_context) ... ok
@@ -150,6 +151,6 @@ test_create_and_list_waivers (test_waivers.WaiversTest.test_create_and_list_waiv
 test_soft_delete_waivers (test_waivers.WaiversTest.test_soft_delete_waivers) ... ok
 
 ----------------------------------------------------------------------
-Ran 91 tests in 6.308s
+Ran 92 tests in 7.021s
 
 OK

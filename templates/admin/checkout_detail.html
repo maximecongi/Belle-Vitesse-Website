@@ -2,7 +2,7 @@
 
 {% set ns = namespace(failures=[]) %}
 {% for item in data.check_items %}
-{% if item.type == 'status' and data[item.key] and data[item.key] != '—' and data[item.key] != 'ok' %}
+{% if item.type == 'status' and data[item.key] and data[item.key] != '—' and data[item.key]|lower not in ['ok', 'not_applicable'] %}
 {% set ns.failures = ns.failures + [item.label] %}
 {% endif %}
 {% endfor %}
