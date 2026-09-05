@@ -7,8 +7,10 @@
 <div class="u-flex u-align-center u-gap-2">
     <a href="{{ url_for('admin_incident_pdf', record_id=incident.id) }}" target="_blank"
         class="admin-btn admin-btn-secondary">📄 Rapport PDF ↗</a>
+    {% if not incident.is_signed_prod %}
     <a href="{{ url_for('admin_incident_edit', record_id=incident.id) }}"
         class="admin-btn admin-btn-primary">Modifier</a>
+    {% endif %}
 </div>
 {% endblock %}
 
@@ -240,8 +242,10 @@
         <div class="admin-card">
             <div class="u-flex u-justify-between u-align-center u-mb-3">
                 <div class="admin-card-title u-m-0">Photos des Dommages ({{ incident.photos|length }})</div>
+                {% if not incident.is_signed_prod %}
                 <a href="{{ url_for('admin_incident_edit', record_id=incident.id) }}" class="u-text-xs u-font-semibold"
                     style="color: var(--blue-info, #0369a1);">+ Ajouter des photos</a>
+                {% endif %}
             </div>
 
             {% if incident.photos %}
@@ -709,26 +713,48 @@
         // Validation Formulaire BV
         const formBv = document.getElementById('formBvSign');
         if (formBv) {
+            let isBvSubmitting = false;
             formBv.addEventListener('submit', function (e) {
+                if (isBvSubmitting) {
+                    e.preventDefault();
+                    return false;
+                }
                 if (!bvPad || bvPad.isEmpty()) {
                     e.preventDefault();
                     alert('Veuillez apposer votre visa manuscrit avant de valider.');
                     return false;
                 }
                 document.getElementById('bvSignatureData').value = bvPad.toDataURL('image/png');
+                isBvSubmitting = true;
+                const submitBtn = formBv.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Enregistrement en cours...';
+                }
             });
         }
 
         // Validation Formulaire Prod
         const formProd = document.getElementById('formProdSign');
         if (formProd) {
+            let isProdSubmitting = false;
             formProd.addEventListener('submit', function (e) {
+                if (isProdSubmitting) {
+                    e.preventDefault();
+                    return false;
+                }
                 if (!prodPad || prodPad.isEmpty()) {
                     e.preventDefault();
                     alert('Veuillez recueillir la signature manuscrite avant de valider.');
                     return false;
                 }
                 document.getElementById('prodSignatureData').value = prodPad.toDataURL('image/png');
+                isProdSubmitting = true;
+                const submitBtn = formProd.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Scellement en cours...';
+                }
             });
         }
     })();

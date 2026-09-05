@@ -10,6 +10,7 @@ from pathlib import Path
 from flask import current_app, render_template
 from werkzeug.utils import secure_filename
 
+from sqlalchemy.exc import IntegrityError
 from models import db, Project, User, Vehicle
 from models.incident import Incident, IncidentToken, IncidentSignedDocument
 from models.db import _utcnow
@@ -801,6 +802,18 @@ def sign_incident_bv(incident_id, signer_name, signer_role, signature_data, ip_a
     if not inc or inc.deleted_at is not None:
         raise ValueError(f"Incident #{incident_id} introuvable.")
 
+    if inc.is_fully_signed and inc.signed_pdf_path:
+        return {
+            "success": True,
+            "message": "Le visa Belle Vitesse a déjà été enregistré et le constat est scellé.",
+            "incident_number": inc.incident_number,
+            "signature_status": inc.signature_status,
+            "is_fully_signed": True,
+            "signed_pdf_path": inc.signed_pdf_path,
+            "pdf_url": f"/incidents/document/{inc.signed_pdf_path}",
+            "file_path": None,
+        }
+
     if not signer_name or not str(signer_name).strip():
         raise ValueError("Le nom du signataire Belle Vitesse est requis.")
     if not signature_data or not str(signature_data).strip():
@@ -851,6 +864,18 @@ def sign_incident_prod(incident_id, signer_name, signer_role, signature_data, ip
     inc = db.session.get(Incident, int(incident_id)) if isinstance(incident_id, int) or (isinstance(incident_id, str) and incident_id.isdigit()) else Incident.query.filter_by(incident_number=str(incident_id)).first()
     if not inc or inc.deleted_at is not None:
         raise ValueError(f"Incident #{incident_id} introuvable.")
+
+    if inc.is_fully_signed and inc.signed_pdf_path:
+        return {
+            "success": True,
+            "message": "La signature Production a déjà été enregistrée et le constat est scellé.",
+            "incident_number": inc.incident_number,
+            "signature_status": inc.signature_status,
+            "is_fully_signed": True,
+            "signed_pdf_path": inc.signed_pdf_path,
+            "pdf_url": f"/incidents/document/{inc.signed_pdf_path}",
+            "file_path": None,
+        }
 
     if not signer_name or not str(signer_name).strip():
         raise ValueError("Le nom du représentant de la Production est requis.")
@@ -1050,28 +1075,45 @@ def finalize_incident_document(incident, base_url=None):
     incident.signature_status = "signed"
 
     # Enregistrement ou mise à jour de l'archive légale
-    signed_doc = IncidentSignedDocument.query.filter_by(incident_number=incident.incident_number).first()
-    if not signed_doc:
-        signed_doc = IncidentSignedDocument(
-            incident_number=incident.incident_number,
-            incident_id=incident.id,
-            hash=current_hash,
-            pdf_file_hash=pdf_file_hash,
-            data_snapshot=incident.to_dict(),
-            signature=incident.prod_signature_data or incident.bv_signature_data,
-            pdf_url=f"/incidents/document/{rel_pdf_path}",
-            signed_at=(incident.prod_signed_at or _utcnow()).replace(tzinfo=None)
-        )
-        db.session.add(signed_doc)
-    else:
-        signed_doc.hash = current_hash
-        signed_doc.pdf_file_hash = pdf_file_hash
-        signed_doc.data_snapshot = incident.to_dict()
-        signed_doc.signature = incident.prod_signature_data or incident.bv_signature_data
-        signed_doc.pdf_url = f"/incidents/document/{rel_pdf_path}"
-        signed_doc.signed_at = (incident.prod_signed_at or _utcnow()).replace(tzinfo=None)
+    try:
+        signed_doc = IncidentSignedDocument.query.filter_by(incident_number=incident.incident_number).first()
+        if not signed_doc:
+            signed_doc = IncidentSignedDocument(
+                incident_number=incident.incident_number,
+                incident_id=incident.id,
+                hash=current_hash,
+                pdf_file_hash=pdf_file_hash,
+                data_snapshot=incident.to_dict(),
+                signature=incident.prod_signature_data or incident.bv_signature_data,
+                pdf_url=f"/incidents/document/{rel_pdf_path}",
+                signed_at=(incident.prod_signed_at or _utcnow()).replace(tzinfo=None)
+            )
+            db.session.add(signed_doc)
+        else:
+            signed_doc.incident_id = incident.id
+            signed_doc.hash = current_hash
+            signed_doc.pdf_file_hash = pdf_file_hash
+            signed_doc.data_snapshot = incident.to_dict()
+            signed_doc.signature = incident.prod_signature_data or incident.bv_signature_data
+            signed_doc.pdf_url = f"/incidents/document/{rel_pdf_path}"
+            signed_doc.signed_at = (incident.prod_signed_at or _utcnow()).replace(tzinfo=None)
 
-    db.session.commit()
+        db.session.commit()
+    except IntegrityError as commit_err:
+        logger.warning(f"⚠️ Archive légale déjà présente pour {incident.incident_number} ({commit_err}), mise à jour de l'existant...")
+        db.session.rollback()
+        existing_doc = IncidentSignedDocument.query.filter_by(incident_number=incident.incident_number).first()
+        if existing_doc:
+            existing_doc.incident_id = incident.id
+            existing_doc.hash = current_hash
+            existing_doc.pdf_file_hash = pdf_file_hash
+            existing_doc.data_snapshot = incident.to_dict()
+            existing_doc.signature = incident.prod_signature_data or incident.bv_signature_data
+            existing_doc.pdf_url = f"/incidents/document/{rel_pdf_path}"
+            existing_doc.signed_at = (incident.prod_signed_at or _utcnow()).replace(tzinfo=None)
+            db.session.commit()
+        else:
+            raise commit_err
 
     # Webhook n8n
     webhook_url = os.getenv("N8N_WEBHOOK_INCIDENT_SIGN")

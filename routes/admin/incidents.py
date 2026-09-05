@@ -155,6 +155,10 @@ def init_incidents_routes(app):
         if not data:
             abort(404)
 
+        if data.get("is_signed_prod"):
+            flash("Ce constat d'incident a été signé par la production et ne peut plus être modifié.", "warning")
+            return redirect(url_for("admin_incident_detail", record_id=data["id"]))
+
         context = get_incident_form_context()
 
         if request.method == "POST":
