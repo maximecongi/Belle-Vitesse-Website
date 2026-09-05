@@ -10,7 +10,7 @@
 
 {% block content %}
 <div class="admin-card">
-    <form method="POST" enctype="multipart/form-data">
+    <form method="POST" enctype="multipart/form-data" novalidate id="inspectionForm">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
         <div class="admin-card-title">Informations de base</div>
@@ -86,7 +86,7 @@
                     {{ data.vehicle_name if data and data.vehicle_name else '—' }}
                 </div>
                 {% else %}
-                <div class="rich-select {% if not (data and data.project_id) %}u-disabled-select{% endif %}" id="vehicleSelect" {% if not (data and data.project_id) %}data-disabled="true"{% endif %}>
+                <div class="rich-select" id="vehicleSelect">
                     <input type="text" name="vehicle_id"
                         value="{{ data.vehicle_id if data and data.vehicle_id else '' }}" required
                         class="u-hidden-input">
@@ -103,8 +103,10 @@
                             </span>
                             {% endif %}
                             {% endfor %}
-                            {% else %}
+                            {% elif data and data.project_id %}
                             — Sélectionner un véhicule —
+                            {% else %}
+                            — Sélectionnez d'abord un projet —
                             {% endif %}
                         </span>
                         <span class="arrow">▼</span>
@@ -115,9 +117,12 @@
                                 placeholder="Rechercher un véhicule…" autocomplete="off">
                         </div>
                         <div class="rich-select-options" id="vehicleOptions">
-                            <button type="button" class="rich-select-option" data-id="" data-name="— Aucun véhicule —">
-                                <div class="rich-option-name u-text-muted">— Aucun véhicule —</div>
-                            </button>
+                            <div id="selectProjectNotice" class="u-p-3 u-text-sm u-text-muted u-text-center" {% if data and data.project_id %}style="display: none;"{% endif %}>
+                                ⚠️ Veuillez d'abord sélectionner un projet ci-dessus
+                            </div>
+                            <div id="noVehicleNotice" class="u-p-3 u-text-sm u-text-muted u-text-center" style="display: none;">
+                                Aucun véhicule n'est rattaché à ce projet
+                            </div>
                             {% for v in vehicles %}
                             {% set vf = v.fields %}
                             {% set thumb_url = vf.thumbnail[0].thumbnails.large.url if vf.thumbnail else '' %}
@@ -125,7 +130,8 @@
                                 data-name="{{ vf.get('name', '—') }}" data-thumb="{{ thumb_url }}"
                                 data-search="{{ vf.get('name', '') }}"
                                 data-checkout-statuses='{{ vf.get("_checkout_statuses", {}) | tojson | forceescape }}'
-                                data-blocked-by="{{ vf.get('_blocked_by', '') }}">
+                                data-blocked-by="{{ vf.get('_blocked_by', '') }}"
+                                {% if not (data and data.project_id) %}style="display: none;"{% endif %}>
                                 <div class="u-flex u-align-center u-gap-2">
                                     {% if thumb_url %}
                                     <img src="{{ thumb_url }}" class="vehicle-med-thumbnail">
@@ -135,7 +141,7 @@
                                     <div class="u-flex u-align-center u-gap-1">
                                         <span class="rich-option-name">{{ vf.get('name', '—') }}</span>
                                         <span class="badge-pill vehicle-status-badge u-text-xs" data-val="neutral">
-                                            Sélectionnez un projet
+                                            À contrôler
                                         </span>
                                     </div>
                                 </div>
@@ -243,8 +249,8 @@
                     {% if item.type == 'value' %}
                     <div class="checkpoint-value-container">
                         <input type="number" name="battery_level" class="form-input checkpoint-value-input"
-                            value="{{ data.battery_level if data and data.battery_level is not none else '' }}" {% if
-                            field=='battery_level' %}min="0" max="100" {% endif %} required>
+                            value="{{ data.battery_level if (data and data.battery_level is not none) else '100' }}" {% if
+                            field=='battery_level' %}min="0" max="100" {% endif %}>
                         {% if item.unit %}<span class="u-text-semibold">{{ item.unit }}</span>{% endif %}
                     </div>
                     {% else %}
@@ -283,7 +289,7 @@
         ('interior_photos', 'Photos intérieur véhicule', 'interior_photos')
         ] %}
         <div class="form-group u-mb-3">
-            <label class="form-label">{{ label }} <span class="u-text-error">*</span></label>
+            <label class="form-label">{{ label }}</label>
 
             {% set photos = data.get(data_key, []) if data else [] %}
             {% if is_edit and photos %}
@@ -304,7 +310,7 @@
                 </div>
                 <input type="file" name="{{ field_name }}" multiple accept="image/*"
                     class="u-file-input-hidden"
-                    onchange="updatePhotoLabel(this)" {% if not photos %}required{% endif %}>
+                    onchange="updatePhotoLabel(this)">
             </label>
             <div class="photo-preview u-flex u-flex-wrap u-gap-1 u-mt-1" data-for="{{ field_name }}"></div>
         </div>
@@ -340,79 +346,128 @@
 </script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const checkpointsConfig = {{ checkpoints_config_json| safe
-    }};
-    const defaultCheckpoints = {{ default_checkpoints_json| safe }};
-    const vehicleInput = document.querySelector('input[name="vehicle_id"]');
+        const checkpointsConfig = {{ checkpoints_config_json| safe }};
+        const defaultCheckpoints = {{ default_checkpoints_json| safe }};
+        const vehicleInput = document.querySelector('input[name="vehicle_id"]');
+        const form = document.getElementById('inspectionForm');
+        const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
 
-    function updateCheckpoints() {
-        if (!vehicleInput) return;
+        function updateCheckpoints() {
+            if (!vehicleInput) return;
 
-        const submitBtn = document.querySelector('button[type="submit"]');
-
-        if (!vehicleInput.value) {
-            // Hide everything if no vehicle selected
-            document.querySelectorAll('.checkpoint-field').forEach(fieldEl => {
-                fieldEl.style.display = 'none';
-            });
-            document.querySelectorAll('.checkpoint-group').forEach(groupEl => {
-                groupEl.style.display = 'none';
-            });
-            if (submitBtn) submitBtn.disabled = true;
-            return;
-        }
-
-        if (submitBtn) submitBtn.disabled = false;
-
-        // Determine which config to use
-        let configToUse = defaultCheckpoints;
-        const vid = vehicleInput.value;
-        if (vid && checkpointsConfig[vid]) {
-            configToUse = checkpointsConfig[vid];
-        }
-
-        // Extract the valid keys for this vehicle
-        const validKeys = configToUse.map(item => item.key);
-
-        // Loop through all fields and show/hide based on config
-        document.querySelectorAll('.checkpoint-field').forEach(fieldEl => {
-            const key = fieldEl.dataset.key;
-            const inputEl = fieldEl.querySelector('input');
-            const detailEl = fieldEl.querySelector('.checkpoint-detail');
-
-            const configItem = configToUse.find(cp => cp.key === key);
-
-            if (configItem) {
-                fieldEl.style.display = '';
-                if (inputEl) inputEl.required = true;
-                // Update detail text if available
-                if (detailEl && configItem.detail) {
-                    detailEl.innerText = configItem.detail;
-                }
-            } else {
-                fieldEl.style.display = 'none';
-                if (inputEl) inputEl.required = false;
+            if (!vehicleInput.value) {
+                // Hide everything if no vehicle selected
+                document.querySelectorAll('.checkpoint-field').forEach(fieldEl => {
+                    fieldEl.style.display = 'none';
+                });
+                document.querySelectorAll('.checkpoint-group').forEach(groupEl => {
+                    groupEl.style.display = 'none';
+                });
+                return;
             }
-        });
 
-        // Hide empty groups
-        document.querySelectorAll('.checkpoint-group').forEach(groupEl => {
-            const fields = groupEl.querySelectorAll('.checkpoint-field');
-            let hasVisibleField = false;
-            fields.forEach(f => {
-                if (f.style.display !== 'none') hasVisibleField = true;
+            // Determine which config to use
+            let configToUse = defaultCheckpoints;
+            const vid = vehicleInput.value;
+            if (vid && checkpointsConfig[vid]) {
+                configToUse = checkpointsConfig[vid];
+            }
+
+            // Loop through all fields and show/hide based on config
+            document.querySelectorAll('.checkpoint-field').forEach(fieldEl => {
+                const key = fieldEl.dataset.key;
+                const detailEl = fieldEl.querySelector('.checkpoint-detail');
+                const configItem = configToUse.find(cp => cp.key === key);
+
+                if (configItem) {
+                    fieldEl.style.display = '';
+                    if (detailEl && configItem.detail) {
+                        detailEl.innerText = configItem.detail;
+                    }
+                } else {
+                    fieldEl.style.display = 'none';
+                }
             });
-            groupEl.style.display = hasVisibleField ? '' : 'none';
-        });
-    }
 
-    // Listen to custom change event from admin.js
-    if (vehicleInput) {
-        vehicleInput.addEventListener('change', updateCheckpoints);
-    }
+            // Hide empty groups
+            document.querySelectorAll('.checkpoint-group').forEach(groupEl => {
+                const fields = groupEl.querySelectorAll('.checkpoint-field');
+                let hasVisibleField = false;
+                fields.forEach(f => {
+                    if (f.style.display !== 'none') hasVisibleField = true;
+                });
+                groupEl.style.display = hasVisibleField ? '' : 'none';
+            });
+        }
 
-    // Run once on load for edit forms
-    updateCheckpoints();
+        // Listen to custom change event from admin.js
+        if (vehicleInput) {
+            vehicleInput.addEventListener('change', updateCheckpoints);
+        }
+
+        // Form submission & explicit client validation
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                const pInput = form.querySelector('input[name="project_id"]');
+                const vInput = form.querySelector('input[name="vehicle_id"]');
+                const cInput = form.querySelector('input[name="controller_id"]');
+
+                if (pInput && !pInput.value) {
+                    e.preventDefault();
+                    if (typeof window.showFlash === 'function') {
+                        window.showFlash("Veuillez sélectionner un projet avant d'enregistrer.", "warning");
+                    } else {
+                        alert("Veuillez sélectionner un projet avant d'enregistrer.");
+                    }
+                    const pSelect = document.getElementById('projectSelect');
+                    if (pSelect) {
+                        pSelect.classList.add('open');
+                        pSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        const pSearch = document.getElementById('projectSearch');
+                        if (pSearch) setTimeout(() => pSearch.focus(), 100);
+                    }
+                    return false;
+                }
+
+                if (vInput && !vInput.value) {
+                    e.preventDefault();
+                    if (typeof window.showFlash === 'function') {
+                        window.showFlash("Veuillez sélectionner le véhicule à contrôler.", "warning");
+                    } else {
+                        alert("Veuillez sélectionner le véhicule à contrôler.");
+                    }
+                    const vSelect = document.getElementById('vehicleSelect');
+                    if (vSelect) {
+                        vSelect.classList.add('open');
+                        vSelect.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        const vSearch = document.getElementById('vehicleSearch');
+                        if (vSearch) setTimeout(() => vSearch.focus(), 100);
+                    }
+                    return false;
+                }
+
+                if (cInput && !cInput.value) {
+                    e.preventDefault();
+                    if (typeof window.showFlash === 'function') {
+                        window.showFlash("Veuillez désigner le responsable du contrôle.", "warning");
+                    } else {
+                        alert("Veuillez désigner le responsable du contrôle.");
+                    }
+                    return false;
+                }
+
+                // Everything is valid: prevent double submission with delayed disable
+                setTimeout(() => {
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.textContent = "Enregistrement en cours...";
+                    }
+                }, 10);
+            });
+        }
+
+        // Run once on load
+        updateCheckpoints();
     });
 </script>
 {% endblock %}

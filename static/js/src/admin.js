@@ -222,41 +222,53 @@ function init() {
             // Enable vehicle select
             const vSelectEl = document.getElementById('vehicleSelect');
             if (vSelectEl) {
+                vSelectEl.classList.remove('u-disabled-select');
                 vSelectEl.style.opacity = '';
                 vSelectEl.style.pointerEvents = '';
                 vSelectEl.removeAttribute('data-disabled');
             }
 
-            // Filter vehicle options based on project's linked vehicles
-            const vehiclesStr = opt.dataset.vehicles || '';
-            const allowedVehicles = vehiclesStr ? vehiclesStr.split(',') : [];
-            const vOptions = document.querySelectorAll('#vehicleOptions .rich-select-option');
-            const vInput = document.querySelector('#vehicleSelect input[name="vehicle_id"]');
-
-            if (vOptions.length) {
-                vOptions.forEach(vOpt => {
-                    if (!vOpt.dataset.id) {
-                        vOpt.style.display = '';
-                    } else if (allowedVehicles.length === 0) {
-                        vOpt.style.display = '';
-                    } else {
-                        vOpt.style.display = allowedVehicles.includes(vOpt.dataset.id) ? '' : 'none';
-                    }
-                });
-
-                if (vInput && allowedVehicles.length > 0 && vInput.value && !allowedVehicles.includes(vInput.value)) {
-                    vInput.value = '';
-                    const vLabel = document.getElementById('vehicleLabel');
-                    if (vLabel) vLabel.textContent = '— Sélectionner un véhicule —';
-                    vInput.dispatchEvent(new Event('change', { bubbles: true }));
-                }
-            }
-
             pInput.dispatchEvent(new Event('change', { bubbles: true }));
 
             const selectedProjectId = pInput.value;
-            const vOptionsForStatus = document.querySelectorAll('#vehicleOptions .rich-select-option');
-            if (vOptionsForStatus && selectedProjectId) {
+            const vehiclesStr = opt.dataset.vehicles || '';
+            const allowedVehicles = vehiclesStr ? vehiclesStr.split(',').map(s => s.trim()).filter(Boolean) : [];
+            const vOptions = document.querySelectorAll('#vehicleOptions .rich-select-option');
+            const vInput = document.querySelector('#vehicleSelect input[name="vehicle_id"]');
+            const vLabel = document.getElementById('vehicleLabel');
+            const noVehNotice = document.getElementById('noVehicleNotice');
+            const selProjNotice = document.getElementById('selectProjectNotice');
+
+            if (selProjNotice) selProjNotice.style.display = selectedProjectId ? 'none' : 'block';
+
+            if (!selectedProjectId) {
+                // Aucun projet sélectionné
+                if (vOptions) vOptions.forEach(o => o.style.display = 'none');
+                if (noVehNotice) noVehNotice.style.display = 'none';
+                if (vInput && vInput.value) {
+                    vInput.value = '';
+                    if (vLabel) vLabel.textContent = '— Sélectionnez d\'abord un projet —';
+                    vInput.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+                return;
+            }
+
+            if (allowedVehicles.length === 0) {
+                // Projet sans véhicule rattaché : masquer tous les véhicules et avertir
+                if (vOptions) vOptions.forEach(o => o.style.display = 'none');
+                if (noVehNotice) noVehNotice.style.display = 'block';
+                if (vInput) {
+                    vInput.value = '';
+                    if (vLabel) vLabel.textContent = '— Aucun véhicule rattaché à ce projet —';
+                    vInput.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+                return;
+            }
+
+            if (noVehNotice) noVehNotice.style.display = 'none';
+
+            // Afficher UNIQUEMENT les véhicules rattachés au projet, masquer strictement les autres
+            if (vOptions && vOptions.length) {
                 const statusMap = {
                     'signed': 'Signé',
                     'pending': 'À signer',
@@ -264,65 +276,84 @@ function init() {
                     'validated': 'Validé',
                     'to_sign': 'À signer'
                 };
-                vOptionsForStatus.forEach(opt => {
-                    const checkoutStatuses = JSON.parse(opt.dataset.checkoutStatuses || '{}');
-                    const checkinStatuses = JSON.parse(opt.dataset.checkinStatuses || '{}');
 
+                vOptions.forEach(vOpt => {
+                    const vid = vOpt.dataset.id;
+                    if (!vid || !allowedVehicles.includes(vid)) {
+                        // Véhicule non rattaché au projet : masqué
+                        vOpt.style.display = 'none';
+                        return;
+                    }
+
+                    // Véhicule rattaché au projet : visible et sélectionnable
+                    vOpt.style.display = '';
+                    vOpt.removeAttribute('data-disabled');
+
+                    const checkoutStatuses = JSON.parse(vOpt.dataset.checkoutStatuses || '{}');
+                    const checkinStatuses = JSON.parse(vOpt.dataset.checkinStatuses || '{}');
                     const checkoutStatus = checkoutStatuses[selectedProjectId];
                     const checkinStatus = checkinStatuses[selectedProjectId];
+                    const badgeEl = vOpt.querySelector('.vehicle-status-badge');
 
-                    const badgeEl = opt.querySelector('.vehicle-status-badge');
-
-                    if (opt.hasAttribute('data-checkin-statuses')) {
+                    if (vOpt.hasAttribute('data-checkin-statuses')) {
+                        // Formulaire de Retour (Check-in)
                         const isCheckoutSigned = (checkoutStatus === 'signed' || checkoutStatus === 'validated');
                         if (checkinStatus) {
-                            opt.dataset.disabled = "true";
                             if (badgeEl) {
-                                badgeEl.textContent = statusMap[checkinStatus] || checkinStatus;
+                                badgeEl.textContent = 'Retour : ' + (statusMap[checkinStatus] || checkinStatus);
                                 badgeEl.style.background = "var(--input-bg)";
                                 badgeEl.style.color = "var(--text-color)";
                             }
-                        } else if (!isCheckoutSigned) {
-                            opt.dataset.disabled = "true";
+                        } else if (isCheckoutSigned) {
                             if (badgeEl) {
-                                badgeEl.textContent = "Départ non signé";
-                                badgeEl.style.background = "#eee";
-                                badgeEl.style.color = "#999";
+                                badgeEl.textContent = "À contrôler";
+                                badgeEl.style.background = "#059669";
+                                badgeEl.style.color = "#ffffff";
+                            }
+                        } else if (checkoutStatus) {
+                            if (badgeEl) {
+                                badgeEl.textContent = "Départ en cours (" + (statusMap[checkoutStatus] || checkoutStatus) + ")";
+                                badgeEl.style.background = "#fef3c7";
+                                badgeEl.style.color = "#92400e";
                             }
                         } else {
-                            opt.removeAttribute('data-disabled');
                             if (badgeEl) {
                                 badgeEl.textContent = "À contrôler";
                                 badgeEl.style.background = "var(--brand-blue)";
-                                badgeEl.style.color = "white";
+                                badgeEl.style.color = "#ffffff";
                             }
                         }
-                    } else if (opt.hasAttribute('data-checkout-statuses')) {
-                        const blockedByProject = opt.dataset.blockedBy;
+                    } else if (vOpt.hasAttribute('data-checkout-statuses')) {
+                        // Formulaire de Départ (Check-out)
+                        const blockedByProject = vOpt.dataset.blockedBy;
                         if (checkoutStatus) {
-                            opt.dataset.disabled = "true";
                             if (badgeEl) {
-                                badgeEl.textContent = statusMap[checkoutStatus] || checkoutStatus;
+                                badgeEl.textContent = 'Départ : ' + (statusMap[checkoutStatus] || checkoutStatus);
                                 badgeEl.style.background = "var(--input-bg)";
                                 badgeEl.style.color = "var(--text-color)";
                             }
                         } else if (blockedByProject) {
-                            opt.dataset.disabled = "true";
                             if (badgeEl) {
-                                badgeEl.textContent = "Retour non signé : " + blockedByProject;
+                                badgeEl.textContent = "Retour en attente : " + blockedByProject;
                                 badgeEl.style.background = "#fee2e2";
                                 badgeEl.style.color = "#dc2626";
                             }
                         } else {
-                            opt.removeAttribute('data-disabled');
                             if (badgeEl) {
                                 badgeEl.textContent = "À contrôler";
                                 badgeEl.style.background = "var(--brand-blue)";
-                                badgeEl.style.color = "white";
+                                badgeEl.style.color = "#ffffff";
                             }
                         }
                     }
                 });
+
+                // Réinitialiser si le véhicule actuellement sélectionné ne fait plus partie du projet
+                if (vInput && vInput.value && !allowedVehicles.includes(vInput.value)) {
+                    vInput.value = '';
+                    if (vLabel) vLabel.textContent = '— Sélectionner un véhicule —';
+                    vInput.dispatchEvent(new Event('change', { bubbles: true }));
+                }
             }
         };
 
@@ -339,12 +370,17 @@ function init() {
         if (pInput.value) {
             const initialOpt = Array.from(pOptions).find(o => o.dataset.id === pInput.value);
             if (initialOpt) updateVehicleOptions(initialOpt);
+        } else {
+            const vOptionsInitial = document.querySelectorAll('#vehicleOptions .rich-select-option');
+            if (vOptionsInitial) vOptionsInitial.forEach(o => o.style.display = 'none');
+            const selProjNotice = document.getElementById('selectProjectNotice');
+            if (selProjNotice) selProjNotice.style.display = 'block';
         }
     }
 
 
     // ─────────────────────────────────────────────
-    // 3b. Rich vehicle select (checkout form)
+    // 3b. Rich vehicle select (checkout & checkin forms)
     // ─────────────────────────────────────────────
     const vSelect = document.getElementById('vehicleSelect');
     if (vSelect) {
@@ -355,42 +391,86 @@ function init() {
         const vOptions = document.querySelectorAll('#vehicleOptions .rich-select-option');
 
         vTrigger.addEventListener('click', () => {
+            const pInput = document.querySelector('#projectSelect input[name="project_id"]');
+            const selectedProjectId = pInput ? pInput.value : '';
+
+            // Si aucun projet sélectionné, guider l'utilisateur en ouvrant le sélecteur de projet
+            if (!selectedProjectId) {
+                const pSelect = document.getElementById('projectSelect');
+                if (pSelect) {
+                    document.querySelectorAll('.badge-select.open').forEach(s => s.classList.remove('open'));
+                    document.querySelectorAll('.rich-select.open').forEach(s => s.classList.remove('open'));
+                    pSelect.classList.add('open');
+                    const pSearch = document.getElementById('projectSearch');
+                    if (pSearch) {
+                        pSearch.value = '';
+                        setTimeout(() => pSearch.focus(), 50);
+                    }
+                    return;
+                }
+            }
+
             document.querySelectorAll('.badge-select.open').forEach(s => s.classList.remove('open'));
             document.querySelectorAll('.rich-select.open').forEach(s => {
                 if (s !== vSelect) s.classList.remove('open');
             });
             vSelect.classList.toggle('open');
             if (vSelect.classList.contains('open')) {
-                vSearch.value = '';
-                const selectedProject = document.querySelector(
-                    '#projectOptions .rich-select-option[data-id="' +
-                    (document.querySelector('#projectSelect input[name="project_id"]')?.value || '') +
-                    '"]'
+                if (vSearch) {
+                    vSearch.value = '';
+                    setTimeout(() => vSearch.focus(), 50);
+                }
+
+                // Filtrer pour n'afficher que les véhicules du projet sélectionné
+                const selectedProjectOpt = document.querySelector(
+                    '#projectOptions .rich-select-option[data-id="' + selectedProjectId + '"]'
                 );
-                const vehiclesStr = selectedProject?.dataset.vehicles || '';
-                const allowed = vehiclesStr ? vehiclesStr.split(',') : [];
-                vOptions.forEach(o => {
-                    if (!o.dataset.id || allowed.length === 0) {
-                        o.style.display = '';
-                    } else {
-                        o.style.display = allowed.includes(o.dataset.id) ? '' : 'none';
-                    }
-                });
-                setTimeout(() => vSearch.focus(), 50);
+                const vehiclesStr = selectedProjectOpt?.dataset.vehicles || '';
+                const allowed = vehiclesStr ? vehiclesStr.split(',').map(s => s.trim()).filter(Boolean) : [];
+                const noVehNotice = document.getElementById('noVehicleNotice');
+                const selProjNotice = document.getElementById('selectProjectNotice');
+
+                if (selProjNotice) selProjNotice.style.display = 'none';
+
+                if (allowed.length === 0) {
+                    vOptions.forEach(o => o.style.display = 'none');
+                    if (noVehNotice) noVehNotice.style.display = 'block';
+                } else {
+                    if (noVehNotice) noVehNotice.style.display = 'none';
+                    vOptions.forEach(o => {
+                        const vid = o.dataset.id;
+                        o.style.display = (vid && allowed.includes(vid)) ? '' : 'none';
+                    });
+                }
             }
         });
 
-        vSearch.addEventListener('input', () => {
-            const q = vSearch.value.toLowerCase();
-            vOptions.forEach(opt => {
-                const text = (opt.dataset.search || opt.dataset.name || '').toLowerCase();
-                opt.style.display = text.includes(q) ? '' : 'none';
+        if (vSearch) {
+            vSearch.addEventListener('input', () => {
+                const q = vSearch.value.toLowerCase().trim();
+                const pInput = document.querySelector('#projectSelect input[name="project_id"]');
+                const selectedProjectId = pInput ? pInput.value : '';
+                const selectedProjectOpt = document.querySelector(
+                    '#projectOptions .rich-select-option[data-id="' + selectedProjectId + '"]'
+                );
+                const vehiclesStr = selectedProjectOpt?.dataset.vehicles || '';
+                const allowed = vehiclesStr ? vehiclesStr.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+                vOptions.forEach(opt => {
+                    const vid = opt.dataset.id;
+                    if (!vid || !allowed.includes(vid)) {
+                        opt.style.display = 'none';
+                        return;
+                    }
+                    const text = (opt.dataset.search || opt.dataset.name || '').toLowerCase();
+                    opt.style.display = (!q || text.includes(q)) ? '' : 'none';
+                });
             });
-        });
+        }
 
         vOptions.forEach(opt => {
             opt.addEventListener('click', () => {
-                if (opt.dataset.disabled === 'true') return;
+                if (!opt.dataset.id) return;
                 vInput.value = opt.dataset.id;
                 const thumb = opt.dataset.thumb;
                 if (thumb) {

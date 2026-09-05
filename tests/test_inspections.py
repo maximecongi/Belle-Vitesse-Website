@@ -29,6 +29,7 @@ class InspectionsTest(unittest.TestCase):
         os.environ["USE_SSH_TUNNEL"] = "false"
 
         self.app = create_app()
+        self.app.config["WTF_CSRF_ENABLED"] = False
         self.client = self.app.test_client()
 
         with self.app.app_context():
@@ -127,6 +128,58 @@ class InspectionsTest(unittest.TestCase):
             self.assertIn("projects", context)
             self.assertIn("users", context)
             self.assertIn("vehicles", context)
+
+    def test_create_checkout_and_checkin_routes(self):
+        with self.app.app_context():
+            user, proj = self._create_mock_data()
+
+            with self.client.session_transaction() as sess:
+                sess['admin_authenticated'] = True
+                sess['admin_user_id'] = user.id
+                sess['admin_user_firstname'] = user.firstname
+                sess['admin_user_lastname'] = user.lastname
+                sess['admin_user_role'] = 'administrator'
+                sess['admin_logged_in'] = True
+
+            # POST /admin/checkouts/new without photos
+            res = self.client.post("/admin/checkouts/new", data={
+                "project_id": str(proj.id),
+                "vehicle_id": "1",
+                "controller_id": user.id,
+                "battery_level": "100",
+                "notes": "Test creation checkout",
+                "tires": "ok",
+                "brakes": "ok"
+            }, follow_redirects=False)
+
+            self.assertEqual(res.status_code, 302)
+            self.assertIn("/admin/checkouts", res.headers.get("Location", ""))
+
+            checkout = CheckoutVehicle.query.filter_by(project_id=proj.id).first()
+            self.assertIsNotNone(checkout)
+            self.assertEqual(checkout.battery_level, 100)
+
+            # Mark checkout as signed so checkin is permitted by business rule
+            checkout.status = 'signed'
+            db.session.commit()
+
+            # POST /admin/checkins/new without photos
+            res_in = self.client.post("/admin/checkins/new", data={
+                "project_id": str(proj.id),
+                "vehicle_id": "1",
+                "controller_id": user.id,
+                "battery_level": "90",
+                "notes": "Test creation checkin",
+                "tires": "ok",
+                "brakes": "ok"
+            }, follow_redirects=False)
+
+            self.assertEqual(res_in.status_code, 302)
+            self.assertIn("/admin/checkins", res_in.headers.get("Location", ""))
+
+            checkin = CheckinVehicle.query.filter_by(project_id=proj.id).first()
+            self.assertIsNotNone(checkin)
+            self.assertEqual(checkin.battery_level, 90)
 
 if __name__ == "__main__":
     unittest.main()
