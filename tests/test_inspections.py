@@ -181,5 +181,60 @@ class InspectionsTest(unittest.TestCase):
             self.assertIsNotNone(checkin)
             self.assertEqual(checkin.battery_level, 90)
 
+    def test_verify_public_routes(self):
+        from models import CheckoutSignedDocument, CheckinSignedDocument
+        with self.app.app_context():
+            user, proj = self._create_mock_data()
+
+            doc_co = CheckoutSignedDocument(
+                inspection_id="BVCO-TEST1234",
+                hash="mock_hash_123",
+                data_snapshot={
+                    "inspection_id": "BVCO-TEST1234",
+                    "project": "Test Project",
+                    "production": "Test Prod",
+                    "control_date": "05/09/2026",
+                    "controller": {"name": "John Doe"},
+                    "vehicle": {"fields": {"name": "Test Car", "unique_id": "CAR-01"}},
+                    "vehicle_id": "1",
+                    "signed_at": "2026-09-05T12:00:00"
+                },
+                signature="data:image/png;base64,mock",
+                pdf_url="/checkout/document/test.pdf"
+            )
+            db.session.add(doc_co)
+
+            doc_ci = CheckinSignedDocument(
+                inspection_id="BVCI-TEST5678",
+                hash="mock_hash_456",
+                data_snapshot={
+                    "inspection_id": "BVCI-TEST5678",
+                    "project": "Test Project",
+                    "production": "Test Prod",
+                    "control_date": "05/09/2026",
+                    "controller": {"name": "John Doe"},
+                    "vehicle": {"fields": {"name": "Test Car", "unique_id": "CAR-01"}},
+                    "vehicle_id": "1",
+                    "signed_at": "2026-09-05T12:00:00"
+                },
+                signature="data:image/png;base64,mock",
+                pdf_url="/checkin/document/test.pdf"
+            )
+            db.session.add(doc_ci)
+            db.session.commit()
+
+        # Test GET /checkout/verify/BVCO-TEST1234
+        res_co = self.client.get("/checkout/verify/BVCO-TEST1234")
+        self.assertEqual(res_co.status_code, 200)
+        self.assertIn(b"BVCO-TEST1234", res_co.data)
+        self.assertIn("Données Scellées".encode("utf-8"), res_co.data)
+
+        # Test GET /checkin/verify/BVCI-TEST5678
+        res_ci = self.client.get("/checkin/verify/BVCI-TEST5678")
+        self.assertEqual(res_ci.status_code, 200)
+        self.assertIn(b"BVCI-TEST5678", res_ci.data)
+        self.assertIn("Données Scellées".encode("utf-8"), res_ci.data)
+
+
 if __name__ == "__main__":
     unittest.main()

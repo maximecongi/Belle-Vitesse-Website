@@ -88,6 +88,7 @@ test_create_checkout_and_checkin_routes (test_inspections.InspectionsTest.test_c
 test_list_and_details (test_inspections.InspectionsTest.test_list_and_details) ... ok
 test_soft_delete (test_inspections.InspectionsTest.test_soft_delete) ... ok
 test_unified_form_context (test_inspections.InspectionsTest.test_unified_form_context) ... ok
+test_verify_public_routes (test_inspections.InspectionsTest.test_verify_public_routes) ... ok
 test_calendars_lifecycle (test_mcp_server.MCPServerFullTestSuite.test_calendars_lifecycle) ... ok
 test_contacts_lifecycle (test_mcp_server.MCPServerFullTestSuite.test_contacts_lifecycle) ... ok
 test_dashboard_summary_and_pre_quote_duplicate (test_mcp_server.MCPServerFullTestSuite.test_dashboard_summary_and_pre_quote_duplicate) ... ok
@@ -151,6 +152,6 @@ test_create_and_list_waivers (test_waivers.WaiversTest.test_create_and_list_waiv
 test_soft_delete_waivers (test_waivers.WaiversTest.test_soft_delete_waivers) ... ok
 
 ----------------------------------------------------------------------
-Ran 92 tests in 7.021s
+Ran 93 tests in 6.907s
 
 OK

@@ -100,6 +100,8 @@ def handle_document_verify(mode_config, identifier):
 
     return render_template(
         mode_config["template_verify"],
+        config=mode_config,
+        route_base=mode_config.get("route_base", "checkout"),
         data=data,
         seal_valid=seal_valid,
         pdf_valid=pdf_valid,

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+{% set rb = route_base or (config.route_base if (config is defined and config is mapping and 'route_base' in config) else 'checkout') %}
 
 <head>
     <meta charset="UTF-8">
@@ -14,31 +15,31 @@
 
     <title>Vérification — Belle Vitesse</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/' + config.route_base + '.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/' + rb + '.css') }}">
 </head>
 
 <body>
 
-    <div class="{{ config.route_base }}">
+    <div class="{{ rb }}">
 
         <!-- ═══════════ HEADER ═══════════ -->
-        <header class="{{ config.route_base }}-header">
-            <div class="{{ config.route_base }}-header-logo">
+        <header class="{{ rb }}-header">
+            <div class="{{ rb }}-header-logo">
                 <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
                     alt="Belle Vitesse">
             </div>
-            <div class="{{ config.route_base }}-header-meta">
+            <div class="{{ rb }}-header-meta">
                 <strong class="dot-before">Vérification de Document</strong><br>
-                <span class="{{ config.route_base }}-doc-id">{{ data.inspection_id or '—' }}</span>
+                <span class="{{ rb }}-doc-id">{{ data.inspection_id or '—' }}</span>
             </div>
         </header>
 
 
         <!-- ── Badge sceau de données ── -->
-        <section class="{{ config.route_base }}-section {{ config.route_base }}-text-center">
+        <section class="{{ rb }}-section {{ rb }}-text-center">
             <div style="margin-bottom: 2rem;">
                 {% if seal_valid %}
-                <span class="{{ config.route_base }}-badge {{ config.route_base }}-badge--ok"
+                <span class="{{ rb }}-badge {{ rb }}-badge--ok"
                     style="font-size: 1rem; padding: 10px 24px; background-color: var(--green-1); color: white;">
                     ✅ Données certifiées & intactes
                 </span>
@@ -46,7 +47,7 @@
                     Le sceau cryptographique correspond. Les données n'ont pas été modifiées depuis la signature.
                 </p>
                 {% else %}
-                <span class="{{ config.route_base }}-badge {{ config.route_base }}-badge--critical" style="font-size: 1rem; padding: 10px 24px;">
+                <span class="{{ rb }}-badge {{ rb }}-badge--critical" style="font-size: 1rem; padding: 10px 24px;">
                     🚨 Sceau invalide — données altérées
                 </span>
                 <p
@@ -60,10 +61,10 @@
 
         <!-- ── Badge résultat vérification PDF (après upload) ── -->
         {% if pdf_valid is not none %}
-        <section class="{{ config.route_base }}-section {{ config.route_base }}-text-center">
+        <section class="{{ rb }}-section {{ rb }}-text-center">
             <div style="margin-bottom: 1.5rem;">
                 {% if pdf_valid %}
-                <span class="{{ config.route_base }}-badge {{ config.route_base }}-badge--ok"
+                <span class="{{ rb }}-badge {{ rb }}-badge--ok"
                     style="font-size: 1rem; padding: 10px 24px; background-color: var(--green-1); color: white;">
                     ✅ Fichier PDF authentique
                 </span>
@@ -71,7 +72,7 @@
                     L'empreinte du fichier correspond à l'original signé, octet par octet.
                 </p>
                 {% else %}
-                <span class="{{ config.route_base }}-badge {{ config.route_base }}-badge--critical"
+                <span class="{{ rb }}-badge {{ rb }}-badge--critical"
                     style="font-size: 1rem; padding: 10px 24px; text-align: center;">
                     🚨 Fichier PDF non authentique
                 </span>
@@ -86,43 +87,43 @@
 
         <!-- ── Erreur upload ── -->
         {% if pdf_error %}
-        <section class="{{ config.route_base }}-section {{ config.route_base }}-text-center">
-            <span class="{{ config.route_base }}-badge {{ config.route_base }}-badge--warning" style="font-size: 0.9rem; padding: 8px 20px;">
+        <section class="{{ rb }}-section {{ rb }}-text-center">
+            <span class="{{ rb }}-badge {{ rb }}-badge--warning" style="font-size: 0.9rem; padding: 8px 20px;">
                 ⚠️ {{ pdf_error }}
             </span>
         </section>
         {% endif %}
 
         <!-- ── Données scellées ── -->
-        <section class="{{ config.route_base }}-section">
-            <h2 class="{{ config.route_base }}-section-title dot-before">Données Scellées</h2>
-            <div class="{{ config.route_base }}-info-grid">
-                <div class="{{ config.route_base }}-info-item">
-                    <span class="{{ config.route_base }}-info-label">Véhicule contrôlé</span>
-                    <span class="{{ config.route_base }}-info-value">
+        <section class="{{ rb }}-section">
+            <h2 class="{{ rb }}-section-title dot-before">Données Scellées</h2>
+            <div class="{{ rb }}-info-grid">
+                <div class="{{ rb }}-info-item">
+                    <span class="{{ rb }}-info-label">Véhicule contrôlé</span>
+                    <span class="{{ rb }}-info-value">
                         {% if data.vehicle %}
                         {{ data.vehicle.fields.name }}
                         {% if data.vehicle.fields.unique_id %}
-                        <span class="{{ config.route_base }}-doc-id">{{ data.vehicle.fields.unique_id }}</span>
+                        <span class="{{ rb }}-doc-id">{{ data.vehicle.fields.unique_id }}</span>
                         {% endif %}
                         {% else %}—{% endif %}
                     </span>
                 </div>
-                <div class="{{ config.route_base }}-info-item">
-                    <span class="{{ config.route_base }}-info-label">Production</span>
-                    <span class="{{ config.route_base }}-info-value">{{ data.production }}</span>
+                <div class="{{ rb }}-info-item">
+                    <span class="{{ rb }}-info-label">Production</span>
+                    <span class="{{ rb }}-info-value">{{ data.production }}</span>
                 </div>
-                <div class="{{ config.route_base }}-info-item">
-                    <span class="{{ config.route_base }}-info-label">Projet</span>
-                    <span class="{{ config.route_base }}-info-value">{{ data.project }}</span>
+                <div class="{{ rb }}-info-item">
+                    <span class="{{ rb }}-info-label">Projet</span>
+                    <span class="{{ rb }}-info-value">{{ data.project }}</span>
                 </div>
-                <div class="{{ config.route_base }}-info-item">
-                    <span class="{{ config.route_base }}-info-label">Date de contrôle</span>
-                    <span class="{{ config.route_base }}-info-value">{{ data.control_date }}</span>
+                <div class="{{ rb }}-info-item">
+                    <span class="{{ rb }}-info-label">Date de contrôle</span>
+                    <span class="{{ rb }}-info-value">{{ data.control_date }}</span>
                 </div>
-                <div class="{{ config.route_base }}-info-item">
-                    <span class="{{ config.route_base }}-info-label">Responsable</span>
-                    <span class="{{ config.route_base }}-info-value">
+                <div class="{{ rb }}-info-item">
+                    <span class="{{ rb }}-info-label">Responsable</span>
+                    <span class="{{ rb }}-info-value">
                         {% if data.controller and data.controller.name is defined %}
                         {{ data.controller.name }}
                         {% else %}
@@ -131,9 +132,9 @@
                     </span>
                 </div>
                 {% if data.signed_at %}
-                <div class="{{ config.route_base }}-info-item">
-                    <span class="{{ config.route_base }}-info-label">Signé le</span>
-                    <span class="{{ config.route_base }}-info-value">{{ data.signed_at }}</span>
+                <div class="{{ rb }}-info-item">
+                    <span class="{{ rb }}-info-label">Signé le</span>
+                    <span class="{{ rb }}-info-value">{{ data.signed_at }}</span>
                 </div>
                 {% endif %}
             </div>
@@ -141,8 +142,8 @@
 
         <!-- ── Empreinte numérique ── -->
         {% if data.hash %}
-        <section class="{{ config.route_base }}-section">
-            <h2 class="{{ config.route_base }}-section-title dot-before">Sécurité Numérique</h2>
+        <section class="{{ rb }}-section">
+            <h2 class="{{ rb }}-section-title dot-before">Sécurité Numérique</h2>
             <div style="background: var(--white-3); padding: 1.5rem; border-radius: 4px;">
                 <p
                     style="font-size: 0.75rem; color: var(--white-4); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px;">
@@ -158,8 +159,8 @@
 
         <!-- ═══════════ UPLOAD VÉRIFICATION PDF ═══════════ -->
         {% if has_pdf_hash %}
-        <section class="{{ config.route_base }}-section" style="margin-top: 3rem;">
-            <h2 class="{{ config.route_base }}-section-title dot-before">Vérifier le fichier PDF</h2>
+        <section class="{{ rb }}-section" style="margin-top: 3rem;">
+            <h2 class="{{ rb }}-section-title dot-before">Vérifier le fichier PDF</h2>
             <p style="font-size: 0.85rem; color: var(--grey-2); margin-bottom: 1.5rem; line-height: 1.6;">
                 Uploadez le PDF que vous souhaitez authentifier. Son empreinte SHA-256 sera comparée
                 à celle enregistrée au moment de la signature. Si le fichier a été modifié,
@@ -167,7 +168,7 @@
             </p>
 
             <form method="POST" enctype="multipart/form-data"
-                action="{{ url_for(config.route_base + '_verify', inspection_id=inspection_id) }}">
+                action="{{ url_for(rb + '_verify', inspection_id=inspection_id) }}">
 
                 <label for="pdf-input" style="cursor: pointer; display: block;">
                     <div id="upload-area" style="
@@ -191,7 +192,7 @@
 
                 <input type="file" id="pdf-input" name="pdf" accept=".pdf" style="display: none;">
 
-                <button type="submit" id="submit-btn" class="{{ config.route_base }}-btn {{ config.route_base }}-btn--primary"
+                <button type="submit" id="submit-btn" class="{{ rb }}-btn {{ rb }}-btn--primary"
                     style="width: 100%; border: none; cursor: pointer; border-radius: 4px; opacity: 0.35;" disabled>
                     Vérifier l'authenticité du PDF
                 </button>
@@ -204,7 +205,7 @@
         </section>
 
         {% else %}
-        <section class="{{ config.route_base }}-section" style="margin-top: 2rem;">
+        <section class="{{ rb }}-section" style="margin-top: 2rem;">
             <div style="background: var(--white-3); padding: 1.25rem 1.5rem; border-radius: 4px;">
                 <p style="font-size: 0.8rem; color: var(--grey-2); line-height: 1.6;">
                     ℹ️ Ce document a été signé avant l'introduction de la vérification par empreinte PDF.
@@ -216,7 +217,7 @@
 
 
         <!-- ═══════════ FOOTER ═══════════ -->
-        <footer class="{{ config.route_base }}-footer" style="margin-top: 5rem;">
+        <footer class="{{ rb }}-footer" style="margin-top: 5rem;">
             <p>
                 <strong>{{company_name}}</strong><br>
                 {{company_address}}
