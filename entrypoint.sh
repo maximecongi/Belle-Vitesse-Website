@@ -41,6 +41,7 @@ cat static/css/admin/admin-base.css \
     static/css/admin/prequote.css \
     static/css/admin/admin-js.css \
     static/css/admin/admin-booking.css \
+    static/css/admin/admin-cmdk.css \
     > static/css/admin/admin.bundle.css
 
 echo "✅ Bundles CSS générés avec succès"
