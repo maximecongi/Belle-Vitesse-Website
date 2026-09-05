@@ -21,9 +21,15 @@ def trigger_n8n_webhook(url: str, method: str = "POST", **kwargs) -> bool:
         logger.warning("⚠️ L'URL du webhook est vide.")
         return False
 
-    # Extraire l'ID pour le log si disponible (ex: inspection_id)
-    doc_id = kwargs.get("inspection_id") or kwargs.get(
-        "waiver_id") or kwargs.get("project_id") or kwargs.get("id", "")
+    # Extraire l'ID pour le log si disponible (ex: inspection_id, incident_number, waiver_id)
+    doc_id = (
+        kwargs.get("incident_number")
+        or kwargs.get("document_id")
+        or kwargs.get("inspection_id")
+        or kwargs.get("waiver_id")
+        or kwargs.get("project_id")
+        or kwargs.get("id", "")
+    )
     log_suffix = f" pour {doc_id}" if doc_id else ""
 
     logger.info(f"🚀 Déclenchement du webhook n8n ({method}){log_suffix}...")

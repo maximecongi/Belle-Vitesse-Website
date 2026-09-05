@@ -389,6 +389,102 @@ class IncidentSignaturesTestCase(unittest.TestCase):
         self.assertIsNone(detail_cleared["checkin"])
         self.assertEqual(detail_cleared["attached_inspection"], "")
 
+    @patch("utils.n8n.trigger_n8n_webhook")
+    def test_incident_webhook_post_on_finalize(self, mock_webhook):
+        """Vérifie que le webhook n8n POST est déclenché avec le bon payload lors du scellement de l'incident."""
+        mock_webhook.return_value = True
+        test_webhook_url = "https://automation.bellevitesse.com/webhook/test-incident-sign"
+
+        with patch.dict(os.environ, {"N8N_WEBHOOK_INCIDENT": test_webhook_url}):
+            sig_bv = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+            sig_prod = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+
+            # Visa préalable BV
+            incident_service.sign_incident_bv(
+                incident_id=self.incident.id,
+                signer_name="Alexandre Dubois",
+                signer_role="Responsable Technique",
+                signature_data=sig_bv,
+            )
+
+            # Signature Production -> Déclenche finalize_incident_document
+            incident_service.sign_incident_prod(
+                incident_id=self.incident.id,
+                signer_name="Marie Laurent",
+                signer_role="Directrice de Production",
+                signature_data=sig_prod,
+            )
+
+            self.assertTrue(mock_webhook.called)
+            call_args, call_kwargs = mock_webhook.call_args
+
+            # Vérification de l'URL et de la méthode HTTP
+            self.assertEqual(call_args[0], test_webhook_url)
+            self.assertEqual(call_kwargs.get("method"), "POST")
+
+            # Vérification des métadonnées globales
+            self.assertEqual(call_kwargs.get("event"), "incident_signed")
+            self.assertEqual(call_kwargs.get("document_id"), self.incident.incident_number)
+            self.assertEqual(call_kwargs.get("project_id"), self.project.project_id)
+            self.assertEqual(call_kwargs.get("production"), self.prod.name)
+            self.assertEqual(call_kwargs.get("project"), self.project.name)
+            self.assertIsNotNone(call_kwargs.get("hash"))
+
+            # Vérification du PDF signé avec token d'accès
+            pdf_url = call_kwargs.get("pdf_url")
+            self.assertIsNotNone(pdf_url)
+            self.assertIn("/incidents/document/", pdf_url)
+            self.assertIn("?t=", pdf_url)
+
+            # Vérification des sections incident & signatures
+            incident_payload = call_kwargs.get("incident", {})
+            self.assertEqual(incident_payload.get("title"), self.incident.title)
+            self.assertEqual(incident_payload.get("category_label"), "Carrosserie")
+            self.assertEqual(incident_payload.get("severity_label"), "Modéré")
+            self.assertEqual(incident_payload.get("shooting_impact_label"), "Retard sur planning")
+
+            signatures_payload = call_kwargs.get("signatures", {})
+            self.assertEqual(signatures_payload.get("bv_signer"), "Alexandre Dubois")
+            self.assertEqual(signatures_payload.get("prod_signer"), "Marie Laurent")
+
+    @patch("utils.n8n.trigger_n8n_webhook")
+    def test_incident_webhook_delete(self, mock_webhook):
+        """Vérifie que le webhook n8n DELETE est déclenché lors de la suppression logique d'un incident."""
+        mock_webhook.return_value = True
+        test_webhook_url = "https://automation.bellevitesse.com/webhook/test-incident-delete"
+
+        with patch.dict(os.environ, {"N8N_WEBHOOK_INCIDENT": test_webhook_url}):
+            inc_number = self.incident.incident_number
+            proj_id = self.project.project_id
+
+            res = incident_service.delete_incident(self.incident.id, confirm=True)
+            self.assertTrue(res.get("success"))
+
+            self.assertTrue(mock_webhook.called)
+            call_args, call_kwargs = mock_webhook.call_args
+
+            self.assertEqual(call_args[0], test_webhook_url)
+            self.assertEqual(call_kwargs.get("method"), "DELETE")
+            self.assertEqual(call_kwargs.get("incident_number"), inc_number)
+            self.assertEqual(call_kwargs.get("document_id"), inc_number)
+            self.assertEqual(call_kwargs.get("project_id"), proj_id)
+
+    @patch("utils.n8n.trigger_n8n_webhook")
+    def test_incident_webhook_fallback_env_var(self, mock_webhook):
+        """Vérifie le fallback sur N8N_WEBHOOK_INCIDENT_SIGN si N8N_WEBHOOK_INCIDENT n'est pas défini."""
+        mock_webhook.return_value = True
+        test_webhook_url = "https://automation.bellevitesse.com/webhook/test-fallback"
+
+        env = {
+            "N8N_WEBHOOK_INCIDENT": "",
+            "N8N_WEBHOOK_INCIDENT_SIGN": test_webhook_url,
+        }
+        with patch.dict(os.environ, env):
+            res = incident_service.delete_incident(self.incident.id, confirm=True)
+            self.assertTrue(res.get("success"))
+            self.assertTrue(mock_webhook.called)
+            self.assertEqual(mock_webhook.call_args[0][0], test_webhook_url)
+
 
 if __name__ == "__main__":
     unittest.main()

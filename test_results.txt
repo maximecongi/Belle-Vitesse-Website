@@ -72,6 +72,12 @@ test_incident_attached_inspection_linking (test_incident_signatures.IncidentSign
 Vérifie le rattachement dynamique d'un Check-out ou Check-in à un incident. ... ok
 test_incident_emails_rendering (test_incident_signatures.IncidentSignaturesTestCase.test_incident_emails_rendering)
 Vérifie le bon rendu des templates d'email d'invitation et de confirmation scellée avec la DA Belle Vitesse. ... ok
+test_incident_webhook_delete (test_incident_signatures.IncidentSignaturesTestCase.test_incident_webhook_delete)
+Vérifie que le webhook n8n DELETE est déclenché lors de la suppression logique d'un incident. ... ok
+test_incident_webhook_fallback_env_var (test_incident_signatures.IncidentSignaturesTestCase.test_incident_webhook_fallback_env_var)
+Vérifie le fallback sur N8N_WEBHOOK_INCIDENT_SIGN si N8N_WEBHOOK_INCIDENT n'est pas défini. ... ok
+test_incident_webhook_post_on_finalize (test_incident_signatures.IncidentSignaturesTestCase.test_incident_webhook_post_on_finalize)
+Vérifie que le webhook n8n POST est déclenché avec le bon payload lors du scellement de l'incident. ... ok
 test_pdf_download_security (test_incident_signatures.IncidentSignaturesTestCase.test_pdf_download_security)
 Vérifie les permissions d'accès au PDF signé (Admin, Token public, et Rejet si non autorisé). ... ok
 test_production_signs_first_no_sealing_until_bv_signs (test_incident_signatures.IncidentSignaturesTestCase.test_production_signs_first_no_sealing_until_bv_signs)
@@ -168,6 +174,6 @@ test_create_and_list_waivers (test_waivers.WaiversTest.test_create_and_list_waiv
 test_soft_delete_waivers (test_waivers.WaiversTest.test_soft_delete_waivers) ... ok
 
 ----------------------------------------------------------------------
-Ran 103 tests in 6.892s
+Ran 106 tests in 8.144s
 
 OK
