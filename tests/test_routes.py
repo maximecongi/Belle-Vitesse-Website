@@ -146,6 +146,65 @@ class RouteSmokeTest(unittest.TestCase):
             self.assertEqual(c.first_name, "Sophie")
 
 
+    def test_public_checkout_endpoints(self):
+        """Test public checkout routes behavior."""
+        os.environ["CHECK_API_TOKEN"] = "test-token"
+        # Generate requires record_id
+        resp = self.client.post("/checkout/generate", json={}, headers={"X-Check-Token": "test-token"})
+        self.assertEqual(resp.status_code, 400)
+
+        # Invalid token signature page
+        resp = self.client.get("/checkout/sign/invalid-token")
+        self.assertEqual(resp.status_code, 404)
+
+        # Invalid token signature submission
+        resp = self.client.post("/checkout/sign/invalid-token", json={"signature": "data"})
+        self.assertEqual(resp.status_code, 404)
+
+        # Abandon & resume
+        resp = self.client.post("/checkout/sign/invalid-token/abandon")
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.post("/checkout/sign/invalid-token/resume")
+        self.assertEqual(resp.status_code, 200)
+
+        # Verify non-existent
+        resp = self.client.get("/checkout/verify/BVCO-NONEXISTENT")
+        self.assertEqual(resp.status_code, 404)
+
+        # Document download without auth or token
+        resp = self.client.get("/checkout/document/test.pdf")
+        self.assertEqual(resp.status_code, 403)
+
+    def test_public_checkin_endpoints(self):
+        """Test public checkin routes behavior."""
+        os.environ["CHECK_API_TOKEN"] = "test-token"
+        # Generate requires record_id
+        resp = self.client.post("/checkin/generate", json={}, headers={"X-Check-Token": "test-token"})
+        self.assertEqual(resp.status_code, 400)
+
+        # Invalid token signature page
+        resp = self.client.get("/checkin/sign/invalid-token")
+        self.assertEqual(resp.status_code, 404)
+
+        # Invalid token signature submission
+        resp = self.client.post("/checkin/sign/invalid-token", json={"signature": "data"})
+        self.assertEqual(resp.status_code, 404)
+
+        # Abandon & resume
+        resp = self.client.post("/checkin/sign/invalid-token/abandon")
+        self.assertEqual(resp.status_code, 200)
+        resp = self.client.post("/checkin/sign/invalid-token/resume")
+        self.assertEqual(resp.status_code, 200)
+
+        # Verify non-existent
+        resp = self.client.get("/checkin/verify/BVCI-NONEXISTENT")
+        self.assertEqual(resp.status_code, 404)
+
+        # Document download without auth or token
+        resp = self.client.get("/checkin/document/test.pdf")
+        self.assertEqual(resp.status_code, 403)
+
+
 if __name__ == "__main__":
     unittest.main()
 

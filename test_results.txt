@@ -138,8 +138,12 @@ test_contact_page (test_routes.RouteSmokeTest.test_contact_page)
 Test that the contact page is accessible. ... ok
 test_home_page (test_routes.RouteSmokeTest.test_home_page)
 Test that the home page is accessible. ... ok
+test_public_checkin_endpoints (test_routes.RouteSmokeTest.test_public_checkin_endpoints)
+Test public checkin routes behavior. ... ok
 test_public_checkin_view_404 (test_routes.RouteSmokeTest.test_public_checkin_view_404)
 Test that public checkin view returns 404 for non-existent record. ... ok
+test_public_checkout_endpoints (test_routes.RouteSmokeTest.test_public_checkout_endpoints)
+Test public checkout routes behavior. ... ok
 test_public_checkout_view_404 (test_routes.RouteSmokeTest.test_public_checkout_view_404)
 Test that public checkout view returns 404 for non-existent record. ... ok
 test_public_waiver_sign_page_404 (test_routes.RouteSmokeTest.test_public_waiver_sign_page_404)
@@ -152,6 +156,6 @@ test_create_and_list_waivers (test_waivers.WaiversTest.test_create_and_list_waiv
 test_soft_delete_waivers (test_waivers.WaiversTest.test_soft_delete_waivers) ... ok
 
 ----------------------------------------------------------------------
-Ran 93 tests in 6.959s
+Ran 95 tests in 7.181s
 
 OK

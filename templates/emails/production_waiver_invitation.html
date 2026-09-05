@@ -1,109 +1,17 @@
-<!DOCTYPE html>
-<html lang="fr">
+{% extends "emails/base_transactional.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Signature Décharge Production - Belle Vitesse</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #151515;
-            color: #FFFFFF;
-            font-family: 'Poppins', Helvetica, Arial, sans-serif;
-            -webkit-font-smoothing: antialiased;
-        }
+{% block title %}Signature Décharge Production - Belle Vitesse{% endblock %}
 
-        .container {
-            width: 100%;
-            max-width: 600px;
-            margin: 40px auto;
-            background-color: #151515;
-        }
-
-        .header {
-            padding: 40px 20px;
-            text-align: center;
-        }
-
-        .logo {
-            width: 200px;
-            max-width: 80%;
-        }
-
-        .content {
-            padding: 20px 40px;
-            text-align: center;
-        }
-
-        h1 {
-            font-size: 24px;
-            font-weight: 500;
-            margin-bottom: 20px;
-            color: #FFFFFF;
-        }
-
-        .dot-before:before {
-            content: "■ ";
-            color: #FFC845;
-        }
-
-        p {
-            font-size: 16px;
-            line-height: 1.6;
-            color: #A1A1A1;
-            margin-bottom: 30px;
-        }
-
-        .button {
-            display: inline-block;
-            padding: 16px 32px;
-            background-color: #FFC845;
-            color: #151515;
-            text-decoration: none;
-            font-weight: 700;
-            text-transform: uppercase;
-            border-radius: 4px;
-        }
-
-        .footer {
-            padding: 40px 20px;
-            text-align: center;
-            color: #555555;
-            border-top: 1px solid #252525;
-            margin-top: 40px;
-        }
-
-        .footer p {
-            font-size: 11px;
-        }
-    </style>
-</head>
-
-<body>
-    <div class="container">
-        <div class="header">
-            <img src="https://bellevitesse.com/static/imgs/logos_and_name/blanc-fond-transparent.png"
-                alt="Belle Vitesse" class="logo">
-        </div>
-        <div class="content">
-            <h1 class="dot-before">Signature Décharge Production.</h1>
-            <p>
-                Bonjour {{ prod_contact_name }},<br><br>
-                Vous êtes invité à compléter et signer électroniquement la <strong>décharge de responsabilité
-                    production</strong> pour le projet :<br>
-                <strong>{{ project_name }}</strong>.
-            </p>
-            <a class="button" href="{{ signature_link }}">Consulter et Signer</a>
-            <p style="margin-top: 30px; font-size: 14px; font-style: italic;">
-                Ce document est indispensable avant le début de la prestation.
-            </p>
-        </div>
-        <div class="footer">
-            <p>© Belle Vitesse {{ now_year }}. Tous droits réservés.</p>
-        </div>
-    </div>
-</body>
-
-</html>
+{% block content %}
+<h1 class="dot-before">Signature Décharge Production.</h1>
+<p>
+    Bonjour {{ prod_contact_name }},<br><br>
+    Vous êtes invité à compléter et signer électroniquement la <strong>décharge de responsabilité
+        production</strong> pour le projet :<br>
+    <strong>{{ project_name }}</strong>.
+</p>
+<a class="button" href="{{ signature_link }}">Consulter et Signer</a>
+<p style="margin-top: 30px; font-size: 14px; font-style: italic;">
+    Ce document est indispensable avant le début de la prestation.
+</p>
+{% endblock %}
