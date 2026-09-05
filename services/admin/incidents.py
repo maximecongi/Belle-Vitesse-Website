@@ -362,6 +362,9 @@ def get_incident_detail(record_id):
             "inspection_number": inc.checkin.inspection_number,
             "inspection_date": _format_date(inc.checkin.inspection_date),
         } if inc.checkin else None,
+        "checkout_id": inc.checkout_id,
+        "checkin_id": inc.checkin_id,
+        "attached_inspection": f"checkout:{inc.checkout_id}" if inc.checkout_id else (f"checkin:{inc.checkin_id}" if inc.checkin_id else ""),
         "estimated_cost": float(inc.estimated_cost) if inc.estimated_cost is not None else None,
         "actual_cost": float(inc.actual_cost) if inc.actual_cost is not None else None,
         "insurance_declared": inc.insurance_declared,
@@ -436,11 +439,24 @@ def create_incident(form_data, uploaded_photos=None, uploaded_documents=None):
         except Exception:
             reported_by_id = None
 
-    checkout_id = form_data.get("checkout_id")
-    checkout_id = int(checkout_id) if checkout_id and str(checkout_id).isdigit() else None
-
-    checkin_id = form_data.get("checkin_id")
-    checkin_id = int(checkin_id) if checkin_id and str(checkin_id).isdigit() else None
+    attached_inspection = form_data.get("attached_inspection")
+    if attached_inspection is not None:
+        if attached_inspection.startswith("checkout:"):
+            cid = attached_inspection.split(":", 1)[1]
+            checkout_id = int(cid) if cid.isdigit() else None
+            checkin_id = None
+        elif attached_inspection.startswith("checkin:"):
+            cid = attached_inspection.split(":", 1)[1]
+            checkin_id = int(cid) if cid.isdigit() else None
+            checkout_id = None
+        else:
+            checkout_id = None
+            checkin_id = None
+    else:
+        checkout_id = form_data.get("checkout_id")
+        checkout_id = int(checkout_id) if checkout_id and str(checkout_id).isdigit() else None
+        checkin_id = form_data.get("checkin_id")
+        checkin_id = int(checkin_id) if checkin_id and str(checkin_id).isdigit() else None
 
     # Montants financiers
     est_cost = form_data.get("estimated_cost")
@@ -527,6 +543,27 @@ def update_incident(record_id, form_data, uploaded_photos=None, uploaded_documen
     if "project_id" in form_data:
         pid = form_data.get("project_id")
         incident.project_id = int(pid) if pid and str(pid).isdigit() else None
+
+    if "attached_inspection" in form_data:
+        attached = form_data.get("attached_inspection", "")
+        if attached.startswith("checkout:"):
+            cid = attached.split(":", 1)[1]
+            incident.checkout_id = int(cid) if cid.isdigit() else None
+            incident.checkin_id = None
+        elif attached.startswith("checkin:"):
+            cid = attached.split(":", 1)[1]
+            incident.checkin_id = int(cid) if cid.isdigit() else None
+            incident.checkout_id = None
+        else:
+            incident.checkout_id = None
+            incident.checkin_id = None
+    else:
+        if "checkout_id" in form_data:
+            cid = form_data.get("checkout_id")
+            incident.checkout_id = int(cid) if cid and str(cid).isdigit() else None
+        if "checkin_id" in form_data:
+            cid = form_data.get("checkin_id")
+            incident.checkin_id = int(cid) if cid and str(cid).isdigit() else None
 
     if "vehicle_id" in form_data:
         incident.vehicle_id = _clean_str(form_data.get("vehicle_id"))
@@ -717,6 +754,26 @@ def get_incident_form_context():
             "end_date": _format_date(p.shoot_end_date),
             "vehicles": p_vehicles,
             "heads": p_heads,
+            "checkouts": [
+                {
+                    "id": co.id,
+                    "inspection_number": co.inspection_number,
+                    "vehicle_id": co.vehicle_id,
+                    "date": _format_date(co.inspection_date),
+                }
+                for co in (p.checkout_vehicles or [])
+                if getattr(co, "deleted_at", None) is None
+            ],
+            "checkins": [
+                {
+                    "id": ci.id,
+                    "inspection_number": ci.inspection_number,
+                    "vehicle_id": ci.vehicle_id,
+                    "date": _format_date(ci.inspection_date),
+                }
+                for ci in (p.checkin_vehicles or [])
+                if getattr(ci, "deleted_at", None) is None
+            ],
         })
 
     return {

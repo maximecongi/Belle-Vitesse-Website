@@ -119,7 +119,8 @@
                         id="incidentImpactPill" title="Cliquer pour changer l'impact sur le tournage">
                         <span class="status-label" id="incidentImpactLabel">{{ current_imp_meta.icon }} {{
                             ns_imp.label }}</span>
-                        <select name="shooting_impact" id="incidentImpactSelect" onchange="updateIncidentImpactPill(this)">
+                        <select name="shooting_impact" id="incidentImpactSelect"
+                            onchange="updateIncidentImpactPill(this)">
                             {% for key, label in context.shooting_impacts %}
                             {% set opt_imp = impact_meta.get(key, {'val': 'ok', 'icon': '✅'}) %}
                             <option value="{{ key }}" data-val="{{ opt_imp.val }}" {% if current_impact==key
@@ -182,6 +183,17 @@
                 placeholder="Ex: Tête Flight Head, Bras remote, Objectif 24-70mm...">
             <span class="u-text-xs u-text-muted u-mt-1">Renseigné automatiquement si vous sélectionnez une tête, ou
                 personnalisable pour un accessoire précis.</span>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="attached_inspection">Moment de la constatation</label>
+            <select name="attached_inspection" id="attached_inspection" class="form-input">
+                <option value="">En cours d'opération (sur le plateau)</option>
+            </select>
+            <span class="u-text-xs u-text-muted u-mt-1">
+                Liez ce sinistre à l'état des lieux contradictoire de départ (Check-out) ou de retour (Check-in) du
+                projet.
+            </span>
         </div>
 
         <div class="u-grid u-grid-3 u-gap-3">
@@ -348,17 +360,23 @@
     const projectsData = {{ context.projects | tojson | safe }};
     const initialVehicleId = "{{ incident.vehicle_id or (incident.vehicle and incident.vehicle.id) or '' }}";
     const initialEquipmentName = "{{ incident.equipment_name or '' }}";
+    const initialAttachedInspection = "{{ incident.attached_inspection or (('checkout:' ~ incident.checkout_id) if incident.checkout_id else (('checkin:' ~ incident.checkin_id) if incident.checkin_id else '')) }}";
 
     function updateProjectEquipment(projectId) {
         const vehicleSelect = document.getElementById('vehicle_id');
         const headSelect = document.getElementById('head_select');
         const equipmentInput = document.getElementById('equipment_name');
+        const inspectionSelect = document.getElementById('attached_inspection');
 
         if (!projectId) {
             vehicleSelect.innerHTML = '<option value="">— Sélectionnez d\'abord un projet —</option>';
             vehicleSelect.disabled = true;
             headSelect.innerHTML = '<option value="">— Sélectionnez d\'abord un projet —</option>';
             headSelect.disabled = true;
+            if (inspectionSelect) {
+                inspectionSelect.innerHTML = '<option value="">En cours d\'opération (sur le plateau)</option>';
+                inspectionSelect.disabled = true;
+            }
             return;
         }
 
@@ -368,6 +386,10 @@
             vehicleSelect.disabled = false;
             headSelect.innerHTML = '<option value="">— Aucune tête —</option>';
             headSelect.disabled = false;
+            if (inspectionSelect) {
+                inspectionSelect.innerHTML = '<option value="">En cours d\'opération (sur le plateau)</option>';
+                inspectionSelect.disabled = false;
+            }
             return;
         }
 
@@ -403,6 +425,31 @@
 
         if (initialEquipmentName && !matchedHead && headSelect.querySelector('option[value="__custom__"]')) {
             headSelect.value = '__custom__';
+        }
+
+        // 3. Peupler les contrôles rattachés (Check-out / Check-in) du projet
+        if (inspectionSelect) {
+            inspectionSelect.disabled = false;
+            let insOptions = '<option value="">En cours d\'opération (sur le plateau)</option>';
+            if (project.checkouts && project.checkouts.length > 0) {
+                insOptions += '<optgroup label="📋 Contrôles au départ (Check-out)">';
+                project.checkouts.forEach(co => {
+                    const val = `checkout:${co.id}`;
+                    const isSelected = (val === initialAttachedInspection) ? 'selected' : '';
+                    insOptions += `<option value="${val}" ${isSelected}>Check-out ${co.inspection_number} (${co.date || 'Date N/A'})</option>`;
+                });
+                insOptions += '</optgroup>';
+            }
+            if (project.checkins && project.checkins.length > 0) {
+                insOptions += '<optgroup label="📋 Contrôles au retour (Check-in)">';
+                project.checkins.forEach(ci => {
+                    const val = `checkin:${ci.id}`;
+                    const isSelected = (val === initialAttachedInspection) ? 'selected' : '';
+                    insOptions += `<option value="${val}" ${isSelected}>Check-in ${ci.inspection_number} (${ci.date || 'Date N/A'})</option>`;
+                });
+                insOptions += '</optgroup>';
+            }
+            inspectionSelect.innerHTML = insOptions;
         }
     }
 

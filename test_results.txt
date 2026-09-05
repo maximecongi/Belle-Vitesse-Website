@@ -56,6 +56,8 @@ test_bv_signature (test_incident_signatures.IncidentSignaturesTestCase.test_bv_s
 Vérifie l'enregistrement du visa Belle Vitesse. ... ok
 test_contradictory_double_signature_and_sealing (test_incident_signatures.IncidentSignaturesTestCase.test_contradictory_double_signature_and_sealing)
 Vérifie le cycle complet BV + Production menant au scellement contradictoire. ... ok
+test_incident_attached_inspection_linking (test_incident_signatures.IncidentSignaturesTestCase.test_incident_attached_inspection_linking)
+Vérifie le rattachement dynamique d'un Check-out ou Check-in à un incident. ... ok
 test_incident_emails_rendering (test_incident_signatures.IncidentSignaturesTestCase.test_incident_emails_rendering)
 Vérifie le bon rendu des templates d'email d'invitation et de confirmation scellée avec la DA Belle Vitesse. ... ok
 test_pdf_download_security (test_incident_signatures.IncidentSignaturesTestCase.test_pdf_download_security)
@@ -148,6 +150,6 @@ test_create_and_list_waivers (test_waivers.WaiversTest.test_create_and_list_waiv
 test_soft_delete_waivers (test_waivers.WaiversTest.test_soft_delete_waivers) ... ok
 
 ----------------------------------------------------------------------
-Ran 90 tests in 6.286s
+Ran 91 tests in 6.308s
 
 OK

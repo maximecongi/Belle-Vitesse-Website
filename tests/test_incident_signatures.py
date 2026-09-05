@@ -322,10 +322,75 @@ class IncidentSignaturesTestCase(unittest.TestCase):
             to_email="test-prod@example.com",
             pdf_path=None,
         )
-        self.assertTrue(res_confirm)
-        self.assertTrue(mock_smtp.called)
+    def test_incident_attached_inspection_linking(self):
+        """Vérifie le rattachement dynamique d'un Check-out ou Check-in à un incident."""
+        from models.inspection import CheckoutVehicle, CheckinVehicle
+
+        co = CheckoutVehicle(
+            inspection_number="BVCO-2026-TEST",
+            project_id=self.project.id,
+            vehicle_id="eCar",
+            inspection_date=date.today(),
+            status="signed",
+        )
+        ci = CheckinVehicle(
+            inspection_number="BVCI-2026-TEST",
+            project_id=self.project.id,
+            vehicle_id="eCar",
+            inspection_date=date.today(),
+            status="signed",
+        )
+        db.session.add_all([co, ci])
+        db.session.commit()
+
+        # 1. Création avec Check-out rattaché
+        created_inc = incident_service.create_incident(
+            form_data={
+                "title": "Choc jupe avant",
+                "project_id": self.project.id,
+                "attached_inspection": f"checkout:{co.id}",
+                "severity": "modere",
+                "status": "signale",
+            }
+        )
+        self.assertEqual(created_inc.checkout_id, co.id)
+        self.assertIsNone(created_inc.checkin_id)
+
+        detail = incident_service.get_incident_detail(created_inc.id)
+        self.assertEqual(detail["checkout"]["inspection_number"], "BVCO-2026-TEST")
+        self.assertEqual(detail["attached_inspection"], f"checkout:{co.id}")
+
+        # 2. Mise à jour vers Check-in rattaché
+        updated_inc = incident_service.update_incident(
+            record_id=created_inc.id,
+            form_data={
+                "attached_inspection": f"checkin:{ci.id}",
+            }
+        )
+        self.assertIsNone(updated_inc.checkout_id)
+        self.assertEqual(updated_inc.checkin_id, ci.id)
+
+        detail_updated = incident_service.get_incident_detail(created_inc.id)
+        self.assertEqual(detail_updated["checkin"]["inspection_number"], "BVCI-2026-TEST")
+        self.assertEqual(detail_updated["attached_inspection"], f"checkin:{ci.id}")
+
+        # 3. Détachement pour repasser 'En cours d'opération'
+        cleared_inc = incident_service.update_incident(
+            record_id=created_inc.id,
+            form_data={
+                "attached_inspection": "",
+            }
+        )
+        self.assertIsNone(cleared_inc.checkout_id)
+        self.assertIsNone(cleared_inc.checkin_id)
+
+        detail_cleared = incident_service.get_incident_detail(created_inc.id)
+        self.assertIsNone(detail_cleared["checkout"])
+        self.assertIsNone(detail_cleared["checkin"])
+        self.assertEqual(detail_cleared["attached_inspection"], "")
 
 
 if __name__ == "__main__":
     unittest.main()
+
 

@@ -121,11 +121,20 @@ def init_incidents_routes(app):
                 )
 
         # Pré-remplissage éventuel depuis un projet ou un contrôle
+        checkout_arg = request.args.get("checkout_id", "")
+        checkin_arg = request.args.get("checkin_id", "")
+        attached_arg = ""
+        if checkout_arg:
+            attached_arg = f"checkout:{checkout_arg}"
+        elif checkin_arg:
+            attached_arg = f"checkin:{checkin_arg}"
+
         initial_data = {
             "project_id": request.args.get("project_id", ""),
             "vehicle_id": request.args.get("vehicle_id", ""),
-            "checkout_id": request.args.get("checkout_id", ""),
-            "checkin_id": request.args.get("checkin_id", ""),
+            "checkout_id": checkout_arg,
+            "checkin_id": checkin_arg,
+            "attached_inspection": attached_arg,
             "severity": "modere",
             "status": "signale",
             "category": "vehicule",
