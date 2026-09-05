@@ -89,6 +89,18 @@ class InspectionsTest(unittest.TestCase):
             detail = get_inspection_detail_unified("checkout", checkout.id)
             self.assertIsNotNone(detail)
             self.assertEqual(detail["tires"], "ok")
+            self.assertEqual(detail["failures"], [])
+            self.assertFalse(detail["has_failures"])
+
+            # Test details with failure and low battery
+            checkout.tire_status = "critical"
+            checkout.battery_level = 85
+            db.session.commit()
+
+            detail_failed = get_inspection_detail_unified("checkout", checkout.id)
+            self.assertTrue(detail_failed["has_failures"])
+            self.assertIn("Charge batterie (< 100%)", detail_failed["failures"])
+            self.assertEqual(detail_failed["failure_count"], 2)
 
     def test_soft_delete(self):
         with self.app.app_context():

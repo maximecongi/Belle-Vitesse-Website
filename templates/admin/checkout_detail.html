@@ -1,16 +1,5 @@
 {% extends "admin/admin_base.html" %}
 
-{% set ns = namespace(failures=[]) %}
-{% for item in data.check_items %}
-{% if item.type == 'status' and data[item.key] and data[item.key] != '—' and data[item.key]|lower not in ['ok', 'not_applicable'] %}
-{% set ns.failures = ns.failures + [item.label] %}
-{% endif %}
-{% endfor %}
-
-{% if data.battery_level is not none and data.battery_level < 100 %} 
-{% set ns.failures=ns.failures + ["Charge batterie (< 100%)"] %} 
-{% endif %} 
-
 {% block title %}Détail Checkout {{ data.inspection_id }}{% endblock %} 
 {% block page_title %}Détail Checkout{% endblock %} 
 
@@ -94,7 +83,7 @@
                     <div class="alert-banner-desc-danger">
                         Points à corriger :
                         <ul class="alert-banner-list">
-                            {% for failure in ns.failures %}
+                            {% for failure in data.failures %}
                             <li class="u-text-xs">{{ failure }}</li>
                             {% endfor %}
                         </ul>
@@ -181,7 +170,7 @@
         {% if data.status_id == 'in_progress' %}
         <div class="admin-card">
             <div class="admin-card-title">Sceau numérique</div>
-            <button type="button" id="sealCheckoutBtn" {% if ns.failures | length !=0 or data.ready !="true"
+            <button type="button" id="sealCheckoutBtn" {% if data.failures or data.ready !="true"
                 %}disabled class="admin-btn btn-disabled admin-btn-seal-yellow" {% else %}class="admin-btn admin-btn-seal-yellow" {% endif %}>
                 Sceller ce checkout
             </button>

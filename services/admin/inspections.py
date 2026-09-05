@@ -368,6 +368,23 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
             column = CHECKPOINT_TO_MODEL_MAP.get(key, key)
             data[key] = getattr(c, column, "—") or "—"
 
+    # Calcul centralisé des anomalies et défaillances
+    failures = []
+    for item in data.get("check_items", []):
+        if item.get("type") == "status":
+            k = item.get("key")
+            val = data.get(k)
+            if val and val != "—" and str(val).lower() not in ["ok", "not_applicable"]:
+                failures.append(item.get("label") or k)
+
+    is_checkout = isinstance(c, CheckoutVehicle) or getattr(c, "__tablename__", "") == "checkout_vehicles"
+    if is_checkout and battery_val is not None and battery_val < 100:
+        failures.append("Charge batterie (< 100%)")
+
+    data["failures"] = failures
+    data["failure_count"] = len(failures)
+    data["has_failures"] = len(failures) > 0
+
     data["interior_photos"] = _parse_photos_json(c.interior_photos)
     data["exterior_photos"] = _parse_photos_json(c.exterior_photos)
     data["notes"] = c.notes or ""

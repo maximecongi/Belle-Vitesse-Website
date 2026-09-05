@@ -1,12 +1,5 @@
 {% extends "admin/admin_base.html" %}
 
-{% set ns = namespace(failures=[]) %}
-{% for item in data.check_items %}
-{% if item.type == 'status' and data[item.key] and data[item.key] != '—' and data[item.key]|lower not in ['ok', 'not_applicable'] %}
-{% set ns.failures = ns.failures + [item.label] %}
-{% endif %}
-{% endfor %}
-
 {% block title %}Détail Checkin {{ data.inspection_id }}{% endblock %}
 {% block page_title %}Détail Checkin{% endblock %}
 
@@ -90,7 +83,7 @@
                     <div class="alert-banner-desc-danger">
                         Points à noter :
                         <ul class="alert-banner-list">
-                            {% for failure in ns.failures %}
+                            {% for failure in data.failures %}
                             <li class="u-text-xs">{{ failure }}</li>
                             {% endfor %}
                         </ul>
