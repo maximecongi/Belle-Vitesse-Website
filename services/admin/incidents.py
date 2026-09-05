@@ -1148,15 +1148,20 @@ def finalize_incident_document(incident, base_url=None):
         if project_obj:
             project_id_unique = getattr(project_obj, "project_id", "—")
 
-        # Année et mois de référence (date d'incident ou de départ du projet)
-        date_ref = datetime.utcnow()
-        if incident.incident_date:
-            date_ref = incident.incident_date
-        elif project_obj and project_obj.departure_date:
-            date_ref = project_obj.departure_date
+        # Date, année et mois de référence basés sur le projet rattaché
+        project_date_obj = None
+        if project_obj and project_obj.departure_date:
+            project_date_obj = project_obj.departure_date
+        elif project_obj and project_obj.shoot_start_date:
+            project_date_obj = project_obj.shoot_start_date
+        elif incident.incident_date:
+            project_date_obj = incident.incident_date
+        else:
+            project_date_obj = datetime.utcnow()
 
-        year_str = date_ref.strftime("%Y")
-        month_str = date_ref.strftime("%m")
+        project_date_str = project_date_obj.strftime("%Y-%m-%d") if hasattr(project_date_obj, "strftime") else str(project_date_obj)
+        year_str = project_date_obj.strftime("%Y")
+        month_str = project_date_obj.strftime("%m")
 
         pdf_access_token = generate_pdf_access_token(rel_pdf_path)
         pdf_url_signed = f"{base_url}/incidents/document/{rel_pdf_path}?t={pdf_access_token}"
@@ -1177,6 +1182,7 @@ def finalize_incident_document(incident, base_url=None):
             "hash": current_hash,
             "production": project_obj.production.name if project_obj and project_obj.production else "—",
             "project": project_obj.name if project_obj else "—",
+            "project_date": project_date_str,
             "year": year_str,
             "month": month_str,
             "incident": {

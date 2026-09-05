@@ -399,6 +399,10 @@ class IncidentSignaturesTestCase(unittest.TestCase):
             sig_bv = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
             sig_prod = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
 
+            # Configurer une date de départ du projet distincte (juin 2026) alors que l'incident est en septembre 2026
+            self.project.departure_date = date(2026, 6, 15)
+            db.session.commit()
+
             # Visa préalable BV
             incident_service.sign_incident_bv(
                 incident_id=self.incident.id,
@@ -422,12 +426,15 @@ class IncidentSignaturesTestCase(unittest.TestCase):
             self.assertEqual(call_args[0], test_webhook_url)
             self.assertEqual(call_kwargs.get("method"), "POST")
 
-            # Vérification des métadonnées globales
+            # Vérification des métadonnées globales basées sur le projet rattaché
             self.assertEqual(call_kwargs.get("event"), "incident_signed")
             self.assertEqual(call_kwargs.get("document_id"), self.incident.incident_number)
             self.assertEqual(call_kwargs.get("project_id"), self.project.project_id)
             self.assertEqual(call_kwargs.get("production"), self.prod.name)
             self.assertEqual(call_kwargs.get("project"), self.project.name)
+            self.assertEqual(call_kwargs.get("project_date"), "2026-06-15")
+            self.assertEqual(call_kwargs.get("year"), "2026")
+            self.assertEqual(call_kwargs.get("month"), "06")
             self.assertIsNotNone(call_kwargs.get("hash"))
 
             # Vérification du PDF signé avec token d'accès
@@ -439,6 +446,7 @@ class IncidentSignaturesTestCase(unittest.TestCase):
             # Vérification des sections incident & signatures
             incident_payload = call_kwargs.get("incident", {})
             self.assertEqual(incident_payload.get("title"), self.incident.title)
+            self.assertEqual(incident_payload.get("date"), "2026-09-04")
             self.assertEqual(incident_payload.get("category_label"), "Carrosserie")
             self.assertEqual(incident_payload.get("severity_label"), "Modéré")
             self.assertEqual(incident_payload.get("shooting_impact_label"), "Retard sur planning")
