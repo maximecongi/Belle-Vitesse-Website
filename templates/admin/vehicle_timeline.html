@@ -1,6 +1,6 @@
 {% extends "admin/admin_base.html" %}
 
-{% from "admin/macros.html" import incident_status_badge, incident_severity_badge, incident_impact_badge,
+{% from "admin/macros.html" import incident_severity_badge, incident_impact_badge,
 vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_status_badge %}
 
 {% block title %}Historique — {{ vehicle.name }} ({{ vehicle.unique_id }}){% endblock %}
@@ -18,6 +18,139 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
 {% endblock %}
 
 {% block content %}
+<!-- ═══════════ MACRO LOCALE : CARTE D'ÉVÉNEMENT UNIFIÉE (DRY) ═══════════ -->
+{% macro render_timeline_event_card(evt, is_sub_event=false, is_autonomous=false) %}
+<div class="admin-card u-p-3" style="transition: border-color 0.2s ease;">
+    <div class="u-flex u-justify-between u-align-start u-flex-wrap u-gap-2">
+        <!-- Colonne gauche : Badges, Titre, Référence et Métadonnées -->
+        <div>
+            <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
+                {{ timeline_event_type_badge(evt.type, evt.severity_label) }}
+                {{ timeline_event_status_badge(evt) }}
+                {% if is_autonomous %}
+                <span class="badge-pill" data-val="neutral" style="font-size: 10px;">Hors tournage</span>
+                {% endif %}
+            </div>
+
+            <h4 class="u-text-lg u-font-bold u-mt-1 u-mb-1">
+                {% if evt.type == 'checkout' %}
+                Contrôle de départ
+                {% elif evt.type == 'checkin' %}
+                Contrôle de retour
+                {% elif evt.type == 'incident' %}
+                {{ evt.title|replace('Incident : ', '') }}
+                {% else %}
+                {{ evt.title }}
+                {% endif %}
+            </h4>
+
+            <span class="checkout-doc-id u-m-0">{{ evt.reference }}</span>
+
+            <!-- Métadonnées contextuelles -->
+            <div class="u-text-xs u-text-muted u-flex u-gap-3 u-flex-wrap u-mt-3">
+                {% if not is_sub_event and evt.project_name and evt.project_name != '—' %}
+                <span>Projet : <a href="{{ url_for('admin_projects_list', q=evt.project_unique_id or evt.reference) }}"
+                        class="u-text-inherit" style="text-decoration: underline;"><strong>{{ evt.project_name }}</strong></a></span>
+                {% endif %}
+                {% if not is_sub_event and evt.production_name and evt.production_name != '—' %}
+                <span>Production : {{ evt.production_name }}</span>
+                {% endif %}
+                {% if evt.controller_name and evt.controller_name != '—' %}
+                <span>Contrôleur : {{ evt.controller_name }}</span>
+                {% endif %}
+                {% if evt.reporter_name and evt.reporter_name != '—' %}
+                <span>Déclaré par : {{ evt.reporter_name }}</span>
+                {% endif %}
+                {% if evt.pilot_name and evt.pilot_name != '—' %}
+                <span>Pilote : {{ evt.pilot_name }}</span>
+                {% endif %}
+                {% if evt.location and evt.location != 'Lieu non précisé' %}
+                <span>Lieu : {{ evt.location }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Colonne droite : Date et Boutons d'action -->
+        <div class="u-text-right u-flex u-flex-column u-align-end u-gap-2">
+            <span class="u-text-sm u-font-bold">
+                {{ evt.date_formatted }}
+            </span>
+            <div class="u-flex u-gap-2">
+                {% if evt.signed_pdf_path %}
+                <a href="{{ evt.signed_pdf_path }}" target="_blank"
+                    class="admin-btn admin-btn-sm admin-btn-secondary" title="Consulter le PV scellé">
+                    📄 PDF Signé
+                </a>
+                {% endif %}
+                {% if evt.type == 'checkout' %}
+                <a href="{{ url_for('admin_checkout_detail', record_id=evt.raw_id) }}"
+                    class="admin-btn admin-btn-sm admin-btn-secondary">
+                    Détails →
+                </a>
+                {% elif evt.type == 'checkin' %}
+                <a href="{{ url_for('admin_checkin_detail', record_id=evt.raw_id) }}"
+                    class="admin-btn admin-btn-sm admin-btn-secondary">
+                    Détails →
+                </a>
+                {% elif evt.type == 'incident' %}
+                <a href="{{ url_for('admin_incident_detail', record_id=evt.raw_id) }}"
+                    class="admin-btn admin-btn-sm admin-btn-secondary">
+                    Détails →
+                </a>
+                {% elif evt.type == 'project' %}
+                <a href="{{ url_for('admin_projects_list', q=evt.project_unique_id or evt.reference) }}"
+                    class="admin-btn admin-btn-sm admin-btn-secondary">
+                    Détails →
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Indicateurs techniques spécifiques en pied de carte -->
+    {% if evt.type in ('checkout', 'checkin') %}
+    <div class="u-flex u-align-center u-gap-3 u-flex-wrap u-mt-2 u-pt-2 u-border-top u-text-xs">
+        {% if evt.failures %}
+        <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
+            <span class="u-text-danger u-font-bold">⚠️ Anomalies :</span>
+            {% for f in evt.failures %}
+            <span class="badge-pill" data-val="critique" style="font-size: 10px; padding: 2px 6px;">{{ f }}</span>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="u-text-success">
+            ✅ Conforme (RAS)
+        </div>
+        {% endif %}
+    </div>
+    {% elif evt.type == 'incident' %}
+    <div class="u-flex u-align-center u-gap-3 u-flex-wrap u-mt-2 u-pt-2 u-border-top u-text-xs">
+        {{ incident_severity_badge(evt.severity, evt.severity_label) }}
+        {% if evt.shooting_impact and evt.shooting_impact != 'aucun' %}
+        {{ incident_impact_badge(evt.shooting_impact) }}
+        {% endif %}
+        {% if evt.description %}
+        <div class="u-text-muted u-mt-1" style="width: 100%;">
+            <span class="u-font-semibold">Constat :</span> {{ evt.description|truncate(220) }}
+        </div>
+        {% endif %}
+    </div>
+    {% elif evt.type == 'project' and (evt.shoot_start_date or evt.departure_date) %}
+    <div class="u-flex u-gap-3 u-flex-wrap u-mt-2 u-pt-2 u-border-top u-text-xs u-text-muted">
+        {% if evt.shoot_start_date and evt.shoot_end_date %}
+        <span>Période de tournage : <strong>{{ evt.shoot_start_date }}</strong> au <strong>{{ evt.shoot_end_date }}</strong></span>
+        {% endif %}
+        {% if evt.departure_date %}
+        <span>Enlèvement prévu : {{ evt.departure_date }}</span>
+        {% endif %}
+        {% if evt.return_date %}
+        <span>Retour prévu : {{ evt.return_date }}</span>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}
+
 <!-- ═══════════ CARTE D'IDENTITÉ TECHNIQUE DU VÉHICULE ═══════════ -->
 <div class="admin-card u-mb-4"
     style="border-left: 5px solid {% if stats.current_status == 'incident' %}var(--admin-color-red, #ef4444){% elif stats.current_status == 'tournage' %}var(--admin-color-blue, #3b82f6){% else %}var(--admin-color-green, #10b981){% endif %};">
@@ -150,11 +283,11 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
     <div class="timeline-item u-mb-4" data-type="project" style="position: relative;">
         <!-- Puce circulaire Niveau 1 (Tournage) -->
         <div
-            style="position: absolute; left: -2rem; top: px; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; z-index: 2; background: #8b5cf6; color: #fff; box-shadow: 0 0 10px rgba(139, 92, 246, 0.35);">
+            style="position: absolute; left: -2rem; top: 14px; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; z-index: 2; background: #8b5cf6; color: #fff; box-shadow: 0 0 10px rgba(139, 92, 246, 0.35);">
             🎬
         </div>
 
-        <!-- Carte Mission Principale (Style identique à la vue chronologique) -->
+        <!-- Carte Mission Principale -->
         <div class="admin-card u-p-3 mission-card" id="mission-card-{{ m.project_id }}">
             <div class="u-flex u-justify-between u-align-start u-flex-wrap u-gap-2">
                 <!-- Gauche : Références, Titre, Métadonnées contextuelles -->
@@ -215,101 +348,8 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
                     'incident' %}⚠️{% else %}ℹ️{% endif %}
                 </div>
 
-                <!-- Carte d'étape fine identique à la vue chronologique -->
-                <div class="admin-card u-p-3" style="transition: border-color 0.2s ease;">
-                    <div class="u-flex u-justify-between u-align-start u-flex-wrap u-gap-2">
-                        <div>
-                            <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
-                                {{ timeline_event_type_badge(sub_evt.type, sub_evt.severity_label) }}
-                                {{ timeline_event_status_badge(sub_evt) }}
-                            </div>
-                            <h4 class="u-text-lg u-font-bold u-mt-1 u-mb-1">
-                                {% if sub_evt.type == 'checkout' %}
-                                Contrôle de départ
-                                {% elif sub_evt.type == 'checkin' %}
-                                Contrôle de retour
-                                {% elif sub_evt.type == 'incident' %}
-                                {{ sub_evt.title|replace('Incident : ', '') }}
-                                {% else %}
-                                {{ sub_evt.title }}
-                                {% endif %}
-                            </h4>
-                            <span class="checkout-doc-id u-m-0">{{ sub_evt.reference }}</span>
-                            <div class="u-text-xs u-text-muted u-flex u-gap-3 u-flex-wrap u-mt-3">
-                                {% if sub_evt.controller_name and sub_evt.controller_name != '—' %}
-                                <span>👤 Contrôleur : {{ sub_evt.controller_name }}</span>
-                                {% endif %}
-                                {% if sub_evt.reporter_name and sub_evt.reporter_name != '—' %}
-                                <span>👤 Déclaré par : {{ sub_evt.reporter_name }}</span>
-                                {% endif %}
-                                {% if sub_evt.location and sub_evt.location != 'Lieu non précisé' %}
-                                <span>📍 Lieu : {{ sub_evt.location }}</span>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="u-text-right u-flex u-flex-column u-align-end u-gap-2">
-                            <span class="u-text-sm u-font-bold">
-                                {{ sub_evt.date_formatted }}
-                            </span>
-                            <div class="u-flex u-gap-2">
-                                {% if sub_evt.signed_pdf_path %}
-                                <a href="{{ sub_evt.signed_pdf_path }}" target="_blank"
-                                    class="admin-btn admin-btn-sm admin-btn-secondary" title="Consulter le PV scellé">
-                                    📄 PDF Signé
-                                </a>
-                                {% endif %}
-                                {% if sub_evt.type == 'checkout' %}
-                                <a href="{{ url_for('admin_checkout_detail', record_id=sub_evt.raw_id) }}"
-                                    class="admin-btn admin-btn-sm admin-btn-secondary">
-                                    Détails →
-                                </a>
-                                {% elif sub_evt.type == 'checkin' %}
-                                <a href="{{ url_for('admin_checkin_detail', record_id=sub_evt.raw_id) }}"
-                                    class="admin-btn admin-btn-sm admin-btn-secondary">
-                                    Détails →
-                                </a>
-                                {% elif sub_evt.type == 'incident' %}
-                                <a href="{{ url_for('admin_incident_detail', record_id=sub_evt.raw_id) }}"
-                                    class="admin-btn admin-btn-sm admin-btn-secondary">
-                                    Détails →
-                                </a>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Indicateurs techniques spécifiques en footer (u-border-top) -->
-                    {% if sub_evt.type in ('checkout', 'checkin') %}
-                    <div class="u-flex u-align-center u-gap-3 u-flex-wrap u-mt-2 u-pt-2 u-border-top u-text-xs">
-                        {% if sub_evt.failures %}
-                        <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
-                            <span class="u-text-danger u-font-bold">⚠️ Anomalies :</span>
-                            {% for f in sub_evt.failures %}
-                            <span class="badge-pill" data-val="critique" style="font-size: 10px; padding: 2px 6px;">{{ f
-                                }}</span>
-                            {% endfor %}
-                        </div>
-                        {% else %}
-                        <div class="u-text-success">
-                            ✅ Conforme (RAS)
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% elif sub_evt.type == 'incident' %}
-                    <div class="u-flex u-align-center u-gap-3 u-flex-wrap u-mt-2 u-pt-2 u-border-top u-text-xs">
-                        {{ incident_severity_badge(sub_evt.severity, sub_evt.severity_label) }}
-                        {% if sub_evt.shooting_impact and sub_evt.shooting_impact != 'aucun' %}
-                        {{ incident_impact_badge(sub_evt.shooting_impact) }}
-                        {% endif %}
-                        {% if sub_evt.description %}
-                        <div class="u-text-muted u-mt-1" style="width: 100%;">
-                            <span class="u-font-semibold">Constat :</span> {{ sub_evt.description|truncate(220) }}
-                        </div>
-                        {% endif %}
-                    </div>
-                    {% endif %}
-                </div>
+                <!-- Carte d'étape unifiée via macro -->
+                {{ render_timeline_event_card(sub_evt, is_sub_event=true) }}
             </div>
             {% endfor %}
             {% else %}
@@ -330,30 +370,9 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
             {% if m.event.type == 'incident' %}⚠️{% elif m.event.type == 'checkout' %}🚚{% elif m.event.type ==
             'checkin' %}📦{% else %}🔧{% endif %}
         </div>
-        <div class="admin-card u-p-3">
-            <div class="u-flex u-justify-between u-align-start u-flex-wrap u-gap-2">
-                <div>
-                    <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
-                        <span class="checkout-doc-id u-m-0">{{ m.event.reference }}</span>
-                        {{ timeline_event_type_badge(m.event.type, m.event.severity_label) }}
-                        {{ timeline_event_status_badge(m.event) }}
-                        <span class="badge-pill" data-val="neutral" style="font-size: 10px;">🔧 Hors tournage</span>
-                    </div>
-                    <h3 class="u-text-lg u-font-bold u-mt-2 u-mb-1">{{ m.event.title }}</h3>
-                    <p class="u-text-sm u-text-muted u-m-0 u-mt-1">{{ m.event.description or "Événement opérationnel
-                        indépendant" }}</p>
-                </div>
-                <div class="u-text-right u-flex u-flex-column u-align-end u-gap-2">
-                    <span class="u-text-sm u-font-bold">{{ m.event.date_formatted }}</span>
-                    {% if m.event.type == 'incident' %}
-                    <a href="{{ url_for('admin_incident_detail', record_id=m.event.raw_id) }}"
-                        class="admin-btn admin-btn-sm admin-btn-secondary">
-                        Détails →
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
+        
+        <!-- Carte d'événement autonome unifiée via macro -->
+        {{ render_timeline_event_card(m.event, is_sub_event=false, is_autonomous=true) }}
     </div>
     {% endif %}
     {% else %}
@@ -387,125 +406,8 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
             else %}🎬{% endif %}
         </div>
 
-        <!-- Carte d'événement -->
-        <div class="admin-card u-p-3" style="transition: border-color 0.2s ease;">
-            <div class="u-flex u-justify-between u-align-start u-flex-wrap u-gap-2">
-
-                <!-- Titre & Référence -->
-                <div>
-                    <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
-                        <span class="checkout-doc-id u-m-0">{{ evt.reference }}</span>
-
-                        <!-- Badge de type d'événement -->
-                        {{ timeline_event_type_badge(evt.type, evt.severity_label) }}
-
-                        <!-- Badge d'avancement / statut -->
-                        {{ timeline_event_status_badge(evt) }}
-                    </div>
-
-                    <h3 class="u-text-lg u-font-bold u-mt-2 u-mb-1">
-                        {{ evt.title }}
-                    </h3>
-
-                    <!-- Métadonnées contextuelles -->
-                    <div class="u-text-xs u-text-muted u-flex u-gap-3 u-flex-wrap u-mt-1">
-                        {% if evt.project_name and evt.project_name != '—' %}
-                        <span>🎥 Projet : <a
-                                href="{{ url_for('admin_projects_list', q=evt.project_unique_id or evt.reference) }}"
-                                class="u-text-inherit" style="text-decoration: underline;"><strong>{{ evt.project_name
-                                    }}</strong></a></span>
-                        {% endif %}
-                        {% if evt.production_name and evt.production_name != '—' %}
-                        <span>Production : {{ evt.production_name }}</span>
-                        {% endif %}
-                        {% if evt.controller_name and evt.controller_name != '—' %}
-                        <span>Contrôleur : {{ evt.controller_name }}</span>
-                        {% endif %}
-                        {% if evt.reporter_name and evt.reporter_name != '—' %}
-                        <span>Déclaré par : {{ evt.reporter_name }}</span>
-                        {% endif %}
-                        {% if evt.pilot_name and evt.pilot_name != '—' %}
-                        <span>Pilote : {{ evt.pilot_name }}</span>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- Date & Actions directes -->
-                <div class="u-text-right u-flex u-flex-column u-align-end u-gap-2">
-                    <span class="u-text-sm u-font-bold">
-                        {{ evt.date_formatted }}
-                    </span>
-
-                    <div class="u-flex u-gap-2">
-                        {% if evt.signed_pdf_path %}
-                        <a href="{{ evt.signed_pdf_path }}" target="_blank"
-                            class="admin-btn admin-btn-sm admin-btn-secondary" title="Consulter le PV scellé">
-                            📄 PDF Signé
-                        </a>
-                        {% endif %}
-
-                        {% if evt.type == 'checkout' %}
-                        <a href="{{ url_for('admin_checkout_detail', record_id=evt.raw_id) }}"
-                            class="admin-btn admin-btn-sm admin-btn-secondary">
-                            Détails →
-                        </a>
-                        {% elif evt.type == 'checkin' %}
-                        <a href="{{ url_for('admin_checkin_detail', record_id=evt.raw_id) }}"
-                            class="admin-btn admin-btn-sm admin-btn-secondary">
-                            Détails →
-                        </a>
-                        {% elif evt.type == 'incident' %}
-                        <a href="{{ url_for('admin_incident_detail', record_id=evt.raw_id) }}"
-                            class="admin-btn admin-btn-sm admin-btn-secondary">
-                            Détails →
-                        </a>
-                        {% elif evt.type == 'project' %}
-                        <a href="{{ url_for('admin_projects_list', q=evt.project_unique_id or evt.reference) }}"
-                            class="admin-btn admin-btn-sm admin-btn-secondary">
-                            Détails →
-                        </a>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Indicateurs techniques spécifiques -->
-            {% if evt.type in ('checkout', 'checkin') %}
-            <div class="u-flex u-align-center u-gap-3 u-flex-wrap u-mt-3 u-pt-2 u-border-top u-text-xs">
-                {% if evt.failures %}
-                <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
-                    <span class="u-text-danger u-font-bold">⚠️ Anomalies détectées :</span>
-                    {% for f in evt.failures %}
-                    <span class="badge-pill" data-val="critique" style="font-size: 10px; padding: 2px 6px;">{{ f
-                        }}</span>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <div class="u-text-success">
-                    ✅ Aucun défaut signalé
-                </div>
-                {% endif %}
-            </div>
-            {% elif evt.type == 'incident' and evt.description %}
-            <div class="u-mt-3 u-pt-2 u-border-top u-text-xs u-text-muted">
-                <span class="u-font-semibold">Description du constat :</span> {{ evt.description|truncate(200) }}
-            </div>
-            {% elif evt.type == 'project' and (evt.shoot_start_date or evt.departure_date) %}
-            <div class="u-flex u-gap-3 u-flex-wrap u-mt-3 u-pt-2 u-border-top u-text-xs u-text-muted">
-                {% if evt.shoot_start_date and evt.shoot_end_date %}
-                <span>📅 Période de tournage : <strong>{{ evt.shoot_start_date }}</strong> au <strong>{{
-                        evt.shoot_end_date }}</strong></span>
-                {% endif %}
-                {% if evt.departure_date %}
-                <span>🚚 Enlèvement prévu : {{ evt.departure_date }}</span>
-                {% endif %}
-                {% if evt.return_date %}
-                <span>📦 Retour prévu : {{ evt.return_date }}</span>
-                {% endif %}
-            </div>
-            {% endif %}
-
-        </div>
+        <!-- Carte d'événement unifiée via macro -->
+        {{ render_timeline_event_card(evt, is_sub_event=false) }}
     </div>
     {% else %}
     <div class="admin-card u-text-center u-p-5">
@@ -518,8 +420,6 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
         <p class="u-text-muted u-m-0">Aucun événement de ce type répertorié dans l'historique.</p>
     </div>
 </div>
-
-
 
 <script>
     (function () {
