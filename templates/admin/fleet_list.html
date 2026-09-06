@@ -9,9 +9,11 @@
 <div class="u-flex u-align-center u-gap-2">
     <input type="text" id="searchInput" class="form-input u-w-250 u-text-sm" placeholder="🔍 Rechercher un véhicule..."
         autocomplete="off">
+    {% if current_user and current_user.is_admin %}
     <a href="{{ url_for('admin_vehicle_configs') }}" class="admin-btn admin-btn-secondary">
-        ⚙️ Config. Points de Contrôle
+        ⚙️ Points de Contrôle
     </a>
+    {% endif %}
 </div>
 {% endblock %}
 

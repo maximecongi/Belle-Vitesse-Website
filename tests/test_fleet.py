@@ -315,6 +315,27 @@ class FleetTest(unittest.TestCase):
             self.assertEqual(res_unknown.status_code, 302)
             self.assertIn("/admin/fleet", res_unknown.headers.get("Location", ""))
 
+    def test_fleet_sidebar_visibility_for_all_roles(self):
+        """Vérifie que 'Parc & Timeline' est visible pour tous les rôles, et que 'Points de Contrôle' n'est exposé qu'aux administrateurs."""
+        roles = ["technicien", "commercial", "manager", "administrateur", "super administrateur"]
+        for r in roles:
+            with self.client.session_transaction() as sess:
+                sess["admin_authenticated"] = True
+                sess["admin_user_id"] = 1
+                sess["admin_user_role"] = r
+
+            # 1. Vérification dans le tableau de bord (barre latérale)
+            resp = self.client.get("/admin/dashboard")
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("/admin/fleet", resp.data.decode("utf-8"), f"Lien /admin/fleet absent pour le rôle {r}")
+            self.assertIn("Parc &amp; Timeline", resp.data.decode("utf-8"), f"Parc &amp; Timeline absent pour le rôle {r}")
+
+            if r in ["administrateur", "super administrateur"]:
+                self.assertIn("/admin/vehicle-configs", resp.data.decode("utf-8"), f"Points de Contrôle absent pour {r}")
+            else:
+                self.assertNotIn("/admin/vehicle-configs", resp.data.decode("utf-8"), f"Points de Contrôle exposé pour {r}")
+
 
 if __name__ == "__main__":
     unittest.main()
+

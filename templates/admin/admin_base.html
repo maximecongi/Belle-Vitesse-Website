@@ -106,32 +106,32 @@
 
                 {# ── Permissions par rôle : chaque rôle liste les sections et items visibles ── #}
                 {% set role_permissions = {
-                'technicien': {'sections': ['dashboard','departs','retours','tools'],
+                'technicien': {'sections': ['dashboard','departs','retours','flotte','tools'],
                 'nav': ['dashboard','checkouts','production_waivers','pilot_waivers',
-                'checkins','incidents','signature']},
-                'user': {'sections': ['dashboard','departs','retours','tools'],
+                'checkins','incidents','fleet','signature']},
+                'user': {'sections': ['dashboard','departs','retours','flotte','tools'],
                 'nav': ['dashboard','checkouts','production_waivers','pilot_waivers',
-                'checkins','incidents','signature']},
-                'commercial': {'sections': ['dashboard','tournages','admin','tools'],
+                'checkins','incidents','fleet','signature']},
+                'commercial': {'sections': ['dashboard','tournages','flotte','admin','tools'],
                 'nav': ['dashboard','projects','archives','booking','pre_quotes',
-                'productions','contacts','pricing','catalog_pdf','mcp_connector',
+                'productions','contacts','fleet','pricing','catalog_pdf','mcp_connector',
                 'calendar','signature']},
-                'manager': {'sections': ['dashboard','tournages','departs','retours','admin','tools'],
+                'manager': {'sections': ['dashboard','tournages','departs','retours','flotte','admin','tools'],
                 'nav': ['dashboard','projects','archives','booking','pre_quotes',
                 'productions','contacts','checkouts','production_waivers',
-                'pilot_waivers','checkins','incidents','users','pricing',
+                'pilot_waivers','checkins','incidents','fleet','users','pricing',
                 'catalog_pdf','mcp_connector','calendar','newsletter',
                 'signature','catalog_update']},
                 'administrateur': {'sections': ['dashboard','tournages','departs','retours','flotte','admin','tools'],
                 'nav': ['dashboard','projects','archives','booking','pre_quotes',
                 'productions','contacts','checkouts','production_waivers',
-                'pilot_waivers','checkins','incidents','vehicles',
+                'pilot_waivers','checkins','incidents','fleet','vehicles',
                 'users','pricing','catalog_pdf','mcp_connector','settings','calendar',
                 'newsletter','signature','docs','api_docs','catalog_update']},
                 'administrator': {'sections': ['dashboard','tournages','departs','retours','flotte','admin','tools'],
                 'nav': ['dashboard','projects','archives','booking','pre_quotes',
                 'productions','contacts','checkouts','production_waivers',
-                'pilot_waivers','checkins','incidents','vehicles',
+                'pilot_waivers','checkins','incidents','fleet','vehicles',
                 'users','pricing','catalog_pdf','mcp_connector','settings','calendar',
                 'newsletter','signature','docs','api_docs','catalog_update']},
                 'super administrateur': {'sections': ['all'], 'nav': ['all']},
@@ -194,7 +194,6 @@
 
                 {% call nav_group('🏎️ Flotte', 'flotte', 'flotte', false) %}
                 {{ nav_item(url_for('admin_fleet_list'), 'Parc & Timeline', 'fleet') }}
-                {{ nav_item(url_for('admin_vehicle_configs'), 'Config. Véhicules', 'vehicles') }}
                 {% endcall %}
 
                 {% call nav_group('🧰 Administration', 'admin', 'admin', false) %}

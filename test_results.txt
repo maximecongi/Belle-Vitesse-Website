@@ -66,6 +66,8 @@ test_user_cannot_access_or_see_catalog_update (test_dev_role_switcher.DevRoleSwi
 Technicien role should not see catalog_update in sidebar nav and should be forbidden on catalog preview/update. ... ok
 test_fleet_overview (test_fleet.FleetTest.test_fleet_overview) ... ok
 test_fleet_routes (test_fleet.FleetTest.test_fleet_routes) ... ok
+test_fleet_sidebar_visibility_for_all_roles (test_fleet.FleetTest.test_fleet_sidebar_visibility_for_all_roles)
+Vérifie que 'Parc & Timeline' est visible pour tous les rôles, et que 'Points de Contrôle' n'est exposé qu'aux administrateurs. ... ok
 test_vehicle_timeline (test_fleet.FleetTest.test_vehicle_timeline) ... ok
 test_vehicle_timeline_with_critical_incident (test_fleet.FleetTest.test_vehicle_timeline_with_critical_incident) ... ok
 test_convert_rgba_to_jpeg (test_image_utils.ImageUtilsTest.test_convert_rgba_to_jpeg)
@@ -200,6 +202,6 @@ test_script_remind_waivers_dry_run (test_waivers_reminders.WaiversRemindersTest.
 Vérifie le fonctionnement du script scripts/remind_waivers.py en mode dry-run. ... ok
 
 ----------------------------------------------------------------------
-Ran 119 tests in 8.675s
+Ran 120 tests in 8.960s
 
 OK

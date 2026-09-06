@@ -11,9 +11,6 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
     <a href="{{ url_for('admin_fleet_list') }}" class="admin-btn admin-btn-secondary">
         ← Retour au Parc
     </a>
-    <a href="{{ url_for('admin_vehicle_configs') }}" class="admin-btn admin-btn-primary">
-        ⚙️ Points de Contrôle
-    </a>
 </div>
 {% endblock %}
 
@@ -50,7 +47,8 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
             <div class="u-text-xs u-text-muted u-flex u-gap-3 u-flex-wrap u-mt-3">
                 {% if not is_sub_event and evt.project_name and evt.project_name != '—' %}
                 <span>Projet : <a href="{{ url_for('admin_projects_list', q=evt.project_unique_id or evt.reference) }}"
-                        class="u-text-inherit" style="text-decoration: underline;"><strong>{{ evt.project_name }}</strong></a></span>
+                        class="u-text-inherit" style="text-decoration: underline;"><strong>{{ evt.project_name
+                            }}</strong></a></span>
                 {% endif %}
                 {% if not is_sub_event and evt.production_name and evt.production_name != '—' %}
                 <span>Production : {{ evt.production_name }}</span>
@@ -77,8 +75,8 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
             </span>
             <div class="u-flex u-gap-2">
                 {% if evt.signed_pdf_path %}
-                <a href="{{ evt.signed_pdf_path }}" target="_blank"
-                    class="admin-btn admin-btn-sm admin-btn-secondary" title="Consulter le PV scellé">
+                <a href="{{ evt.signed_pdf_path }}" target="_blank" class="admin-btn admin-btn-sm admin-btn-secondary"
+                    title="Consulter le PV scellé">
                     📄 PDF Signé
                 </a>
                 {% endif %}
@@ -138,7 +136,8 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
     {% elif evt.type == 'project' and (evt.shoot_start_date or evt.departure_date) %}
     <div class="u-flex u-gap-3 u-flex-wrap u-mt-2 u-pt-2 u-border-top u-text-xs u-text-muted">
         {% if evt.shoot_start_date and evt.shoot_end_date %}
-        <span>Période de tournage : <strong>{{ evt.shoot_start_date }}</strong> au <strong>{{ evt.shoot_end_date }}</strong></span>
+        <span>Période de tournage : <strong>{{ evt.shoot_start_date }}</strong> au <strong>{{ evt.shoot_end_date
+                }}</strong></span>
         {% endif %}
         {% if evt.departure_date %}
         <span>Enlèvement prévu : {{ evt.departure_date }}</span>
@@ -370,7 +369,7 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
             {% if m.event.type == 'incident' %}⚠️{% elif m.event.type == 'checkout' %}🚚{% elif m.event.type ==
             'checkin' %}📦{% else %}🔧{% endif %}
         </div>
-        
+
         <!-- Carte d'événement autonome unifiée via macro -->
         {{ render_timeline_event_card(m.event, is_sub_event=false, is_autonomous=true) }}
     </div>
