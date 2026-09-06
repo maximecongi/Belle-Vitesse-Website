@@ -8,9 +8,12 @@
 
 
 {% block header_actions %}
-{% if not is_archive %}
-<a href="{{ url_for('admin_project_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Projet</a>
-{% endif %}
+<div class="u-flex u-gap-2 u-align-center">
+    <input type="text" id="searchInput" class="form-input u-w-250 u-text-sm" placeholder="🔍 Rechercher un projet..." autocomplete="off">
+    {% if not is_archive %}
+    <a href="{{ url_for('admin_project_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Projet</a>
+    {% endif %}
+</div>
 {% endblock %}
 
 {% macro project_table(project_list) %}

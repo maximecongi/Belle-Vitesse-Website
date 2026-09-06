@@ -10,7 +10,11 @@
 {% endblock %}
 
 {% block header_actions %}
-<a href="{{ url_for('admin_checkin_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Checkin</a>
+<div class="u-flex u-align-center u-gap-2">
+    <input type="text" id="searchInput" class="form-input u-w-250 u-text-sm" placeholder="🔍 Rechercher un checkin..."
+        autocomplete="off">
+    <a href="{{ url_for('admin_checkin_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Checkin</a>
+</div>
 {% endblock %}
 
 {% block content %}
@@ -39,7 +43,7 @@
 
             <tbody id="checkins-tbody">
                 {% for checkin in checkins %}
-                <tr data-search="{{ checkin.search_text }}">
+                <tr class="searchable-row" data-search="{{ checkin.search_text }}">
                     <td class="u-text-semibold">{{ checkin.inspection_id }}</td>
                     <td>{{ checkin.project }}</td>
                     <td>{{ checkin.vehicle.fields.name }} <span class="checkin-doc-id">{{

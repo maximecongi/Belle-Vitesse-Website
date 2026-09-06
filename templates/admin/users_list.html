@@ -6,9 +6,13 @@
 {% block page_title %}Gestion des Utilisateurs{% endblock %}
 
 {% block header_actions %}
-<a href="{{ url_for('admin_user_create') }}" class="admin-btn admin-btn-primary">
-    + Nouvel utilisateur
-</a>
+<div class="u-flex u-gap-2 u-align-center">
+    <input type="text" id="searchInput" class="form-input u-w-250 u-text-sm" placeholder="🔍 Rechercher un utilisateur..."
+        autocomplete="off">
+    <a href="{{ url_for('admin_user_create') }}" class="admin-btn admin-btn-primary">
+        + Nouvel utilisateur
+    </a>
+</div>
 {% endblock %}
 
 {% block content %}
@@ -28,7 +32,7 @@
             </thead>
             <tbody>
                 {% for u in users %}
-                <tr class="user-row">
+                <tr class="user-row searchable-row" data-search="{{ u.firstname|lower if u.firstname else '' }} {{ u.lastname|lower if u.lastname else '' }} {{ u.mail|lower if u.mail else '' }} {{ u.job|lower if u.job else '' }} {{ u.role|lower if u.role else '' }}">
                     <td class="searchable">{{ u.firstname or '—' }}</td>
                     <td class="searchable">
                         <div class="admin-list-title">{{ u.lastname or '—' }}</div>
@@ -80,38 +84,4 @@
         </table>
     </div>
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const searchInput = document.getElementById('userSearchInput');
-        const userRows = document.querySelectorAll('.user-row');
-        const noResultsRow = document.getElementById('noResultsRow');
-
-        if (searchInput) {
-            searchInput.addEventListener('input', function (e) {
-                const searchTerm = e.target.value.toLowerCase().trim();
-                let visibleCount = 0;
-
-                userRows.forEach(row => {
-                    const searchableCells = row.querySelectorAll('.searchable');
-                    let rowText = '';
-                    searchableCells.forEach(cell => {
-                        rowText += cell.textContent.toLowerCase() + ' ';
-                    });
-
-                    if (rowText.includes(searchTerm)) {
-                        row.style.display = '';
-                        visibleCount++;
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-
-                if (noResultsRow) {
-                    noResultsRow.style.display = (visibleCount === 0 && userRows.length > 0) ? '' : 'none';
-                }
-            });
-        }
-    });
-</script>
 {% endblock %}

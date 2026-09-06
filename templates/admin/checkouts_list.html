@@ -10,7 +10,11 @@
 {% endblock %}
 
 {% block header_actions %}
-<a href="{{ url_for('admin_checkout_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Checkout</a>
+<div class="u-flex u-align-center u-gap-2">
+    <input type="text" id="searchInput" class="form-input u-w-250 u-text-sm" placeholder="🔍 Rechercher un checkout..."
+        autocomplete="off">
+    <a href="{{ url_for('admin_checkout_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Checkout</a>
+</div>
 {% endblock %}
 
 {% block content %}
@@ -38,7 +42,7 @@
             </thead>
             <tbody id="checkouts-tbody">
                 {% for checkout in checkouts %}
-                <tr data-search="{{ checkout.search_text }}">
+                <tr class="searchable-row" data-search="{{ checkout.search_text }}">
                     <td class="u-text-semibold">{{ checkout.inspection_id }}</td>
                     <td>{{ checkout.project }}</td>
                     <td>{{ checkout.vehicle.fields.name }} <span class="checkout-doc-id">{{

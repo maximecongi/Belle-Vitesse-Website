@@ -47,12 +47,22 @@ function initCentralizedSearch() {
     const searchableRows = document.querySelectorAll('.searchable-row');
     if (searchableRows.length === 0) return;
 
+    const searchInput = document.getElementById('searchInput') || document.getElementById('search-input');
+    const resultCount = document.getElementById('result-count') || document.getElementById('visible-count');
+    const noResults = document.getElementById('no-results') || document.getElementById('noResultsRow');
+
     const filterItems = (query) => {
         const q = query.toLowerCase().trim();
+        let visibleCount = 0;
         searchableRows.forEach(row => {
             const searchText = (row.getAttribute('data-search') || '') + ' ' + row.textContent.toLowerCase();
-            row.style.display = searchText.includes(q) ? '' : 'none';
+            const matches = searchText.includes(q);
+            row.style.display = matches ? '' : 'none';
+            if (matches) visibleCount++;
         });
+
+        if (resultCount) resultCount.innerText = visibleCount;
+        if (noResults) noResults.style.display = (visibleCount === 0 && searchableRows.length > 0) ? '' : 'none';
     };
 
     // Gestion du paramètre URL 'q'
@@ -62,7 +72,6 @@ function initCentralizedSearch() {
         filterItems(qParam);
     }
 
-    const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         if (qParam) searchInput.value = qParam;
         searchInput.addEventListener('input', e => {

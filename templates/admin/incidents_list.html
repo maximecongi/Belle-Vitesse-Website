@@ -6,7 +6,11 @@
 {% block page_title %}Incidents de Tournage{% endblock %}
 
 {% block header_actions %}
-<a href="{{ url_for('admin_incident_new') }}" class="admin-btn admin-btn-primary">+ Déclarer un Incident</a>
+<div class="u-flex u-gap-2 u-align-center">
+    <input type="text" id="searchInput" class="form-input u-w-250 u-text-sm" placeholder="🔍 Rechercher un incident..."
+        autocomplete="off">
+    <a href="{{ url_for('admin_incident_new') }}" class="admin-btn admin-btn-primary">+ Déclarer un Incident</a>
+</div>
 {% endblock %}
 
 {% block content %}
@@ -104,7 +108,7 @@
             </thead>
             <tbody id="incidents-tbody">
                 {% for incident in incidents %}
-                <tr data-search="{{ incident.search_text }}">
+                <tr class="searchable-row" data-search="{{ incident.search_text }}">
                     <td class="u-text-semibold">
                         <span class="checkout-doc-id u-mt-0">{{ incident.incident_number }}</span>
                     </td>

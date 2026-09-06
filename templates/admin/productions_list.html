@@ -6,7 +6,11 @@
 {% block page_title %}Productions{% endblock %}
 
 {% block header_actions %}
-<a href="{{ url_for('admin_production_new') }}" class="admin-btn admin-btn-primary">+ Nouvelle Production</a>
+<div class="u-flex u-gap-2 u-align-center">
+    <input type="text" id="searchInput" class="form-input u-w-250 u-text-sm" placeholder="🔍 Rechercher une production..."
+        autocomplete="off">
+    <a href="{{ url_for('admin_production_new') }}" class="admin-btn admin-btn-primary">+ Nouvelle Production</a>
+</div>
 {% endblock %}
 
 {% block content %}
