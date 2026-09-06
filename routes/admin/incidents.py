@@ -29,7 +29,7 @@ def init_incidents_routes(app):
     # ── Gestion des Incidents de Tournage ─────────────────────────
 
     @app.route("/admin/incidents")
-    @require_roles("administrator", "manager", "user", "commercial")
+    @require_roles("administrator", "manager", "user")
     def admin_incidents_list():
         try:
             status_filter = request.args.get("status")
@@ -79,7 +79,7 @@ def init_incidents_routes(app):
             )
 
     @app.route("/admin/incidents/<record_id>")
-    @require_roles("administrator", "manager", "user", "commercial")
+    @require_roles("administrator", "manager", "user")
     def admin_incident_detail(record_id):
         try:
             data = get_incident_detail(record_id)
@@ -202,7 +202,7 @@ def init_incidents_routes(app):
         return redirect(url_for("admin_incidents_list"))
 
     @app.route("/admin/incidents/<record_id>/pdf")
-    @require_roles("administrator", "manager", "user", "commercial")
+    @require_roles("administrator", "manager", "user")
     def admin_incident_pdf(record_id):
         try:
             pdf_bytes, filename = generate_incident_pdf(record_id)

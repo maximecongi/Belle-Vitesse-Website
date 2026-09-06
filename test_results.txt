@@ -100,6 +100,8 @@ test_token_generation_and_validation (test_incident_signatures.IncidentSignature
 Vérifie la génération d'un jeton 48h et sa validation. ... ok
 test_auto_reporter_and_project_equipment_context (test_incidents.IncidentsTestCase.test_auto_reporter_and_project_equipment_context)
 Vérifie l'assignation automatique du déclarant et le filtrage des véhicules/têtes par projet. ... ok
+test_commercial_role_cannot_access_incidents (test_incidents.IncidentsTestCase.test_commercial_role_cannot_access_incidents)
+Vérifie qu'un utilisateur avec le rôle Commercial ne peut pas accéder aux incidents. ... ok
 test_create_incident (test_incidents.IncidentsTestCase.test_create_incident)
 Vérifie la création d'un incident avec calcul automatique du numéro BVIC. ... ok
 test_delete_incident_soft_delete (test_incidents.IncidentsTestCase.test_delete_incident_soft_delete)
@@ -198,6 +200,6 @@ test_script_remind_waivers_dry_run (test_waivers_reminders.WaiversRemindersTest.
 Vérifie le fonctionnement du script scripts/remind_waivers.py en mode dry-run. ... ok
 
 ----------------------------------------------------------------------
-Ran 118 tests in 8.720s
+Ran 119 tests in 8.675s
 
 OK

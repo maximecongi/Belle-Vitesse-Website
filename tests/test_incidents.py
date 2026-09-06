@@ -305,6 +305,25 @@ class IncidentsTestCase(unittest.TestCase):
         del_res = mcp_incidents.delete_incident(inc_id, confirm=True)
         self.assertTrue(del_res.get("success"))
 
+    def test_commercial_role_cannot_access_incidents(self):
+        """Vérifie qu'un utilisateur avec le rôle Commercial ne peut pas accéder aux incidents."""
+        client = self.app.test_client()
+        with client.session_transaction() as sess:
+            sess["admin_authenticated"] = True
+            sess["admin_user_id"] = 999
+            sess["admin_user_role"] = "Commercial"
+
+        # 1. Accès à la liste des incidents -> bloqué avec redirection vers le dashboard
+        resp = client.get("/admin/incidents", follow_redirects=False)
+        self.assertEqual(resp.status_code, 302)
+        self.assertTrue(resp.headers.get("Location", "").endswith("/admin/dashboard"))
+
+        # 2. Accès au formulaire de création -> bloqué
+        resp_new = client.get("/admin/incidents/new", follow_redirects=False)
+        self.assertEqual(resp_new.status_code, 302)
+        self.assertTrue(resp_new.headers.get("Location", "").endswith("/admin/dashboard"))
+
 
 if __name__ == "__main__":
     unittest.main()
+
