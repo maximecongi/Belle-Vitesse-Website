@@ -1,3 +1,16 @@
 {% macro status_badge(status, status_id=None) %}
 <span class="badge-pill" data-val="{{ status_id or status }}" {{ kwargs | xmlattr }}>{{ status }}</span>
 {% endmacro %}
+
+{% macro filter_header(label="Résultats filtrés", count=None, clear_url=None) %}
+{% if request.args.get('q') %}
+<div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
+    <h2 class="admin-section-title u-m-0">
+        🔍 {{ label }} : « {{ request.args.get('q') }} »{% if count is not none %} ({{ count }}){% endif %}
+    </h2>
+    <a href="{{ clear_url or request.path }}" class="admin-btn admin-btn-sm admin-btn-secondary">
+        ✕ Effacer le filtre
+    </a>
+</div>
+{% endif %}
+{% endmacro %}

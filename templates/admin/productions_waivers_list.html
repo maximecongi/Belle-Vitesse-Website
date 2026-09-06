@@ -1,6 +1,6 @@
 {% extends "admin/admin_base.html" %}
 
-{% from "admin/macros.html" import status_badge %}
+{% from "admin/macros.html" import status_badge, filter_header %}
 
 {% block title %}Décharges Productions{% endblock %}
 {% block page_title %}Décharges Productions{% endblock %}
@@ -14,16 +14,7 @@
 
 {% block content %}
 <div class="admin-card">
-    {% if request.args.get('q') %}
-    <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
-        <h2 class="admin-section-title u-m-0">
-            🔍 Décharges filtrées : « {{ request.args.get('q') }} » ({{ waivers|length }})
-        </h2>
-        <a href="{{ url_for('admin_production_waivers_list') }}" class="admin-btn admin-btn-sm admin-btn-secondary">
-            ✕ Effacer le filtre
-        </a>
-    </div>
-    {% endif %}
+    {{ filter_header("Décharges filtrées", count=waivers|length) }}
     <div class="u-overflow-x-auto">
         <table class="admin-table">
             <thead>

@@ -1,5 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
+{% from "admin/macros.html" import filter_header %}
+
 {% block title %}Productions{% endblock %}
 {% block page_title %}Productions{% endblock %}
 
@@ -9,6 +11,7 @@
 
 {% block content %}
 <div class="admin-card">
+    {{ filter_header("Productions filtrées", count=productions|length) }}
     <div class="admin-table-container">
         <table class="admin-table">
             <thead>

@@ -1,5 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
+{% from "admin/macros.html" import status_badge, filter_header %}
+
 {% block title %}Liste des Checkouts{% endblock %}
 {% block page_title %}Checkouts{% endblock %}
 
@@ -14,6 +16,7 @@
 {% block content %}
 <!-- Search & Table -->
 <div class="admin-card">
+    {{ filter_header("Checkouts filtrés", count=checkouts|length) }}
     <div class="u-flex u-justify-end u-align-center u-mb-2">
         <div class="u-text-sm u-text-muted">
             <span id="result-count">{{ checkouts|length }}</span> résultats
@@ -33,7 +36,6 @@
                     <th>Actions</th>
                 </tr>
             </thead>
-            {% from "admin/macros.html" import status_badge %}
             <tbody id="checkouts-tbody">
                 {% for checkout in checkouts %}
                 <tr data-search="{{ checkout.search_text }}">

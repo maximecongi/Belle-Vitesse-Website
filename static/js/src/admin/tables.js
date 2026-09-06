@@ -60,25 +60,6 @@ function initCentralizedSearch() {
     const qParam = urlParams.get('q');
     if (qParam) {
         filterItems(qParam);
-
-        // Affichage dynamique du badge de filtre actif
-        const tableContainer = document.querySelector('.admin-table-container') || searchableRows[0].closest('table');
-        if (tableContainer && !document.getElementById('activeFilterBanner')) {
-            const banner = document.createElement('div');
-            banner.id = 'activeFilterBanner';
-            banner.className = 'admin-active-filter-bar';
-            banner.innerHTML = `
-                <span>🔍 Filtre actif : <strong>"${escapeHtml(qParam)}"</strong></span>
-                <button type="button" class="admin-btn-clear-filter" id="clearFilterBtn">✕ Effacer le filtre</button>
-            `;
-            tableContainer.parentNode.insertBefore(banner, tableContainer);
-
-            document.getElementById('clearFilterBtn')?.addEventListener('click', () => {
-                banner.remove();
-                searchableRows.forEach(r => r.style.display = '');
-                window.history.replaceState(null, '', window.location.pathname);
-            });
-        }
     }
 
     const searchInput = document.getElementById('searchInput');

@@ -1,5 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
+{% from "admin/macros.html" import filter_header %}
+
 {% block title %}Gestion des Incidents de Tournage{% endblock %}
 {% block page_title %}Incidents de Tournage{% endblock %}
 
@@ -39,6 +41,7 @@
 
 <!-- ═══════════ FILTRES & LISTE ═══════════ -->
 <div class="admin-card">
+    {{ filter_header("Incidents filtrés", count=incidents|length) }}
     <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
         <form method="GET" action="{{ url_for('admin_incidents_list') }}"
             class="u-flex u-align-center u-gap-2 u-flex-wrap" id="incident-filter-form">

@@ -1,5 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
+{% from "admin/macros.html" import filter_header %}
+
 {% block title %}Pré-Devis{% endblock %}
 {% block page_title %}Pré-Devis{% endblock %}
 
@@ -8,8 +10,8 @@
 {% endblock %}
 
 {% block content %}
-
 <div class="admin-card">
+    {{ filter_header("Pré-devis filtrés", count=pre_quotes|length) }}
     <div class="admin-table-container">
         <table class="admin-table">
             <thead>

@@ -1,5 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
+{% from "admin/macros.html" import filter_header %}
+
 {% block title %}Utilisateurs{% endblock %}
 {% block page_title %}Gestion des Utilisateurs{% endblock %}
 
@@ -11,6 +13,7 @@
 
 {% block content %}
 <div class="admin-card">
+    {{ filter_header("Utilisateurs filtrés", count=users|length) }}
     <div class="u-overflow-x-auto">
         <table class="admin-table" id="usersTable">
             <thead>
