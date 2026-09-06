@@ -182,6 +182,6 @@ test_waivers_search_and_project_links (test_waivers.WaiversTest.test_waivers_sea
 Vérifie le formatage des décharges dans list_projects et le filtre ?q=. ... ok
 
 ----------------------------------------------------------------------
-Ran 110 tests in 8.506s
+Ran 110 tests in 8.699s
 
 OK

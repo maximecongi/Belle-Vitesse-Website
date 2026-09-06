@@ -554,6 +554,23 @@ body {
     content: "✅ ";
 }
 
+/* --- Timeline Event Types --- */
+.badge-pill[data-val="checkout"] {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.badge-pill[data-val="checkin"] {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.badge-pill[data-val="project"],
+.badge-pill[data-val="tournage"] {
+    background: #ede9fe;
+    color: #5b21b6;
+}
+
 /* --- User Roles & Contacts --- */
 .badge-pill[data-val="Super Administrateur"],
 .badge-pill[data-val="super administrateur"],

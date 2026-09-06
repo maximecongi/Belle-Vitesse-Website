@@ -118,6 +118,18 @@ class Incident(db.Model):
         return self.status in ("signale", "en_expertise", "en_reparation", "assurance")
 
     @property
+    def status_label(self) -> str:
+        status_map = {
+            "signale": "Signalé",
+            "en_expertise": "En expertise / Devis",
+            "en_reparation": "En réparation atelier",
+            "assurance": "Dossier assurance",
+            "resolu": "Résolu / Réparé",
+            "cloture": "Clôturé",
+        }
+        return status_map.get(self.status, (self.status.capitalize() if self.status else "Signalé"))
+
+    @property
     def photos_list(self):
         if not self.photos:
             return []

@@ -18,7 +18,7 @@
 <!-- ═══════════ CARTE D'IDENTITÉ TECHNIQUE DU VÉHICULE ═══════════ -->
 <div class="admin-card u-mb-4"
     style="border-left: 5px solid {% if stats.current_status == 'incident' %}var(--admin-color-red, #ef4444){% elif stats.current_status == 'tournage' %}var(--admin-color-blue, #3b82f6){% else %}var(--admin-color-green, #10b981){% endif %};">
-    <div class="u-flex u-justify-between u-align-start u-flex-wrap u-gap-4">
+    <div class="u-flex u-justify-between u-align-center u-flex-wrap u-gap-4">
 
         <!-- Colonne Gauche : Identité & Photo -->
         <div class="u-flex u-gap-4 u-flex-wrap u-align-center" style="max-width: 600px;">
@@ -89,13 +89,6 @@
                     {{ stats.total_incidents }}
                 </div>
             </div>
-            <div class="admin-card u-p-2 u-text-center" style="background: rgba(255, 255, 255, 0.02);">
-                <div class="u-text-xs u-text-muted">Conformité</div>
-                <div
-                    class="u-text-xl u-font-bold u-mt-1 {% if stats.conformance_rate >= 90 %}u-text-success{% elif stats.conformance_rate >= 70 %}u-text-warning{% else %}u-text-danger{% endif %}">
-                    {{ stats.conformance_rate }}%
-                </div>
-            </div>
         </div>
 
     </div>
@@ -135,8 +128,7 @@
 <!-- ═══════════ FLUX CHRONOLOGIQUE (TIMELINE) ═══════════ -->
 <div class="timeline-wrapper" style="position: relative; padding-left: 2rem; margin-top: 1.5rem;">
     <!-- Ligne verticale continue -->
-    <div
-        style="position: absolute; left: 15px; top: 10px; bottom: 10px; width: 2px; background: rgba(255, 255, 255, 0.12);">
+    <div style="position: absolute; left: 10px; top: 12px; bottom: 0; width: 2px; background: rgba(0, 0, 0, 0.1);">
     </div>
 
     {% for evt in events %}
@@ -165,27 +157,58 @@
                     <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
                         <span class="checkout-doc-id u-m-0">{{ evt.reference }}</span>
 
-                        <!-- Badge de type -->
+                        <!-- Badge de type d'événement -->
                         {% if evt.type == 'checkout' %}
-                        <span class="badge-pill" data-val="ok">🚚 Départ</span>
+                        <span class="badge-pill" data-val="checkout">🚚 Départ</span>
                         {% elif evt.type == 'checkin' %}
-                        <span class="badge-pill" data-val="in_progress">📦 Retour</span>
+                        <span class="badge-pill" data-val="checkin">📦 Retour</span>
                         {% elif evt.type == 'incident' %}
                         <span class="badge-pill" data-val="critique">⚠️ Incident ({{ evt.severity_label }})</span>
                         {% else %}
-                        <span class="badge-pill" style="background: rgba(139, 92, 246, 0.2); color: #6842f3cb;">🎬
-                            Tournage</span>
+                        <span class="badge-pill" data-val="project">🎬 Tournage</span>
                         {% endif %}
 
-                        <!-- Badge de statut -->
+                        <!-- Badge d'avancement / statut -->
+                        {% if evt.type in ('checkout', 'checkin') %}
                         {% if evt.status == 'signed' %}
                         <span class="badge-pill" data-val="ok">🔒 Signé</span>
                         {% elif evt.status == 'in_progress' %}
                         <span class="badge-pill" data-val="in_progress">⏳ En cours</span>
-                        {% elif evt.status == 'cloture' %}
+                        {% else %}
+                        <span class="badge-pill" data-val="neutral">ℹ️ {{ evt.status_label or evt.status }}</span>
+                        {% endif %}
+                        {% elif evt.type == 'incident' %}
+                        {% if evt.status == 'cloture' %}
                         <span class="badge-pill" data-val="cloture">🔒 Clôturé</span>
+                        {% elif evt.status == 'resolu' %}
+                        <span class="badge-pill" data-val="ok">✅ Résolu</span>
+                        {% elif evt.status == 'en_reparation' %}
+                        <span class="badge-pill" data-val="in_progress">🔧 En réparation</span>
+                        {% elif evt.status == 'en_expertise' %}
+                        <span class="badge-pill" data-val="warning">🔍 En expertise</span>
+                        {% elif evt.status == 'assurance' %}
+                        <span class="badge-pill" data-val="assurance">📋 Assurance</span>
+                        {% elif evt.status == 'signale' %}
+                        <span class="badge-pill" data-val="warning">📣 Signalé</span>
+                        {% else %}
+                        <span class="badge-pill" data-val="warning">📣 {{ evt.status_label or 'Signalé' }}</span>
+                        {% endif %}
+                        {% elif evt.type == 'project' %}
+                        {% if evt.status == 'in_progress' or evt.status == 'active' %}
+                        <span class="badge-pill" data-val="in_progress">🎬 En tournage</span>
+                        {% elif evt.status == 'completed' %}
+                        <span class="badge-pill" data-val="cloture">🔒 Projet clôturé</span>
+                        {% else %}
+                        <span class="badge-pill" data-val="neutral">📅 {{ evt.status_label or 'Tournage' }}</span>
+                        {% endif %}
+                        {% else %}
+                        {% if evt.status == 'signed' or evt.status == 'ok' %}
+                        <span class="badge-pill" data-val="ok">🔒 Signé</span>
+                        {% elif evt.status == 'in_progress' %}
+                        <span class="badge-pill" data-val="in_progress">⏳ En cours</span>
                         {% elif evt.status_label %}
-                        <span class="badge-pill" data-val="neutral">{{ evt.status_label }}</span>
+                        <span class="badge-pill" data-val="neutral">ℹ️ {{ evt.status_label }}</span>
+                        {% endif %}
                         {% endif %}
                     </div>
 
