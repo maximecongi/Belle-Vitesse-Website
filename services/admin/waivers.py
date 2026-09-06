@@ -127,15 +127,72 @@ def _reset_waiver_fields(mode, waiver):
 # ── Décharges Production ───────────────────────────────────────────
 
 def create_production_waiver(project_id):
-    """Crée une décharge production pour un projet s'il n'en existe pas déjà une."""
+    """Crée une décharge production pour un projet s'il n'en existe pas déjà une active."""
     existing = ProductionWaiver.query.filter_by(project_id=project_id).first()
     if existing:
-        return False, "Une décharge production existe déjà pour ce projet."
+        if existing.deleted_at is None:
+            return False, "Une décharge production existe déjà pour ce projet."
+        # Si une ancienne décharge a été supprimée, on purge ses fichiers et son enregistrement pour réinsérer
+        _cleanup_waiver_assets("production", existing)
+        db.session.delete(existing)
+        db.session.flush()
+
+    p = db.session.get(Project, int(project_id))
+    if not p:
+        return False, "Projet introuvable."
 
     waiver = ProductionWaiver(project_id=project_id)
+    waiver.project_name = p.name
+    if p.production:
+        waiver.production_name = p.production.name
+        waiver.production_address = p.production.address
+
+    if p.shoot_start_date and p.shoot_end_date:
+        waiver.shooting_dates = f"{p.shoot_start_date.strftime('%d/%m/%Y')} au {p.shoot_end_date.strftime('%d/%m/%Y')}"
+
+    if p.vehicles_to_check:
+        veh_ids = [v.strip()
+                   for v in p.vehicles_to_check.split(",") if v.strip()]
+        all_vehicles = get_vehicles()
+        vehicle_map = {str(v["id"]): v.get("fields", {}).get(
+            "name", f"ID {v['id']}") for v in all_vehicles}
+        waiver.vehicles = ", ".join(
+            [vehicle_map.get(vid, vid) for vid in veh_ids])
+
+    waiver.status = "to_send"
+    waiver.generated_at = datetime.utcnow()
+
     db.session.add(waiver)
     db.session.commit()
     return True, "Décharge production créée avec succès."
+
+
+def delete_production_waiver(waiver_id):
+    """Supprime logiquement une décharge production (soft-delete, nettoyage assets et notification n8n DELETE)."""
+    waiver = None
+    if str(waiver_id).isdigit():
+        waiver = db.session.get(ProductionWaiver, int(waiver_id))
+    if not waiver:
+        waiver = ProductionWaiver.query.filter_by(waiver_id=str(waiver_id)).first()
+
+    if not waiver:
+        return False, "Décharge production introuvable."
+
+    try:
+        webhook_url = os.getenv("N8N_WEBHOOK_PRODUCTION_WAIVER")
+        if webhook_url:
+            trigger_n8n_webhook(webhook_url, method="DELETE",
+                                waiver_id=waiver.waiver_id, project_id=waiver.project.project_id if waiver.project else None)
+
+        _cleanup_waiver_assets("production", waiver)
+        waiver.deleted_at = datetime.now(timezone.utc)
+        db.session.commit()
+        logger.info(f"🗑️ Décharge production {waiver.waiver_id} supprimée avec succès.")
+        return True, "Décharge supprimée avec succès."
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"❌ Erreur lors de la suppression de la décharge production {waiver_id} : {e}")
+        return False, f"Erreur lors de la suppression : {str(e)}"
 
 
 def list_production_waivers():
@@ -240,6 +297,12 @@ def send_production_waiver(waiver_id):
     if not waiver:
         return False, "Décharge non trouvée."
 
+    if waiver.status == "to_generate":
+        generate_production_waiver(waiver_id)
+
+    if waiver.status not in ["to_send", "to_sign"]:
+        return False, "Statut invalide pour l'envoi."
+
     contact_prod = waiver.project.production_contact
     if not contact_prod or not contact_prod.mail:
         return False, "La production n'a pas d'adresse e-mail de contact renseignée dans le projet."
@@ -312,15 +375,80 @@ def delete_production_waiver_internal(project_id):
 # ── Décharges Pilote ────────────────────────────────────────────────
 
 def create_pilot_waiver(project_id):
-    """Crée une décharge pilote pour un projet s'il n'en existe pas déjà une."""
+    """Crée une décharge pilote pour un projet s'il n'en existe pas déjà une active."""
     existing = PilotWaiver.query.filter_by(project_id=project_id).first()
     if existing:
-        return False, "Une décharge existe déjà pour ce projet."
+        if existing.deleted_at is None:
+            return False, "Une décharge existe déjà pour ce projet."
+        # Si une ancienne décharge a été supprimée, on purge ses fichiers et son enregistrement pour réinsérer
+        _cleanup_waiver_assets("pilot", existing)
+        db.session.delete(existing)
+        db.session.flush()
+
+    p = db.session.get(Project, int(project_id))
+    if not p:
+        return False, "Projet introuvable."
 
     waiver = PilotWaiver(project_id=project_id)
+    waiver.project_name = p.name
+    if p.production:
+        waiver.production_name = p.production.name
+
+    contact = p.pilot_contact
+    if contact:
+        waiver.pilot_first_name = contact.first_name
+        waiver.pilot_last_name = contact.last_name
+        waiver.pilot_address = getattr(contact, 'address', "")
+
+    if p.shoot_start_date and p.shoot_end_date:
+        waiver.shooting_dates = f"{p.shoot_start_date.strftime('%d/%m/%Y')} au {p.shoot_end_date.strftime('%d/%m/%Y')}"
+
+    if p.vehicles_to_check:
+        veh_ids = [v.strip()
+                   for v in p.vehicles_to_check.split(",") if v.strip()]
+        all_vehicles = get_vehicles()
+        vehicle_map = {str(v["id"]): v.get("fields", {}).get(
+            "name", f"ID {v['id']}") for v in all_vehicles}
+        waiver.vehicles = ", ".join(
+            [vehicle_map.get(vid, vid) for vid in veh_ids])
+    elif p.checkout_vehicles:
+        waiver.vehicles = ", ".join(
+            [cv.vehicle_name for cv in p.checkout_vehicles])
+
+    waiver.status = "to_send"
+    waiver.generated_at = datetime.utcnow()
+
     db.session.add(waiver)
     db.session.commit()
     return True, "Décharge créée avec succès."
+
+
+def delete_pilot_waiver(waiver_id):
+    """Supprime logiquement une décharge pilote (soft-delete, nettoyage assets et notification n8n DELETE)."""
+    waiver = None
+    if str(waiver_id).isdigit():
+        waiver = db.session.get(PilotWaiver, int(waiver_id))
+    if not waiver:
+        waiver = PilotWaiver.query.filter_by(waiver_id=str(waiver_id)).first()
+
+    if not waiver:
+        return False, "Décharge pilote introuvable."
+
+    try:
+        webhook_url = os.getenv("N8N_WEBHOOK_PILOT_WAIVER")
+        if webhook_url:
+            trigger_n8n_webhook(webhook_url, method="DELETE",
+                                waiver_id=waiver.waiver_id, project_id=waiver.project.project_id if waiver.project else None)
+
+        _cleanup_waiver_assets("pilot", waiver)
+        waiver.deleted_at = datetime.now(timezone.utc)
+        db.session.commit()
+        logger.info(f"🗑️ Décharge pilote {waiver.waiver_id} supprimée avec succès.")
+        return True, "Décharge supprimée avec succès."
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"❌ Erreur lors de la suppression de la décharge pilote {waiver_id} : {e}")
+        return False, f"Erreur lors de la suppression : {str(e)}"
 
 
 def list_pilot_waivers():
@@ -441,6 +569,10 @@ def send_pilot_waiver(waiver_id):
     waiver = PilotWaiver.query.filter_by(waiver_id=waiver_id).first()
     if not waiver:
         return False, "Décharge non trouvée."
+
+    if waiver.status == "to_generate":
+        generate_pilot_waiver(waiver_id)
+
     if waiver.status not in ["to_send", "to_sign"]:
         return False, "Statut invalide pour l'envoi."
 

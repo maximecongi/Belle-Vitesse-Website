@@ -14,6 +14,16 @@
 
 {% block content %}
 <div class="admin-card">
+    {% if request.args.get('q') %}
+    <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
+        <h2 class="admin-section-title u-m-0">
+            🔍 Décharges filtrées : « {{ request.args.get('q') }} » ({{ waivers|length }})
+        </h2>
+        <a href="{{ url_for('admin_production_waivers_list') }}" class="admin-btn admin-btn-sm admin-btn-secondary">
+            ✕ Effacer le filtre
+        </a>
+    </div>
+    {% endif %}
     <div class="u-overflow-x-auto">
         <table class="admin-table">
             <thead>
@@ -40,14 +50,7 @@
                     </td>
                     <td>
                         <div class="u-flex u-align-center u-justify-center u-gap-1">
-                            {% if w.raw_status == 'to_generate' %}
-                            <form
-                                action="{{ url_for('admin_production_waiver_generate', waiver_id=w.id, q=request.args.get('q')) }}"
-                                method="POST" class="u-m-0">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="admin-btn admin-btn-primary">Générer</button>
-                            </form>
-                            {% elif w.raw_status == 'to_send' %}
+                            {% if w.raw_status in ['to_generate', 'to_send'] %}
                             <form
                                 action="{{ url_for('admin_production_waiver_send', waiver_id=w.id, q=request.args.get('q')) }}"
                                 method="POST" class="u-m-0">
@@ -69,11 +72,11 @@
                             {% endif %}
 
                             <form
-                                action="{{ url_for('admin_production_waiver_reset', waiver_id=w.id, q=request.args.get('q')) }}"
+                                action="{{ url_for('admin_production_waiver_delete', waiver_id=w.id, q=request.args.get('q')) }}"
                                 method="POST" class="u-d-inline"
-                                onsubmit="return confirm('Êtes-vous sûr de vouloir réinitialiser cette décharge ? Tous les fichiers et données scellées seront supprimés, mais la décharge pourra être générée à nouveau.');">
+                                onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette décharge ? Cette action est irréversible.');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="admin-btn admin-btn-danger">Réinitialiser</button>
+                                <button type="submit" class="admin-btn admin-btn-danger">Supprimer</button>
                             </form>
                         </div>
                     </td>

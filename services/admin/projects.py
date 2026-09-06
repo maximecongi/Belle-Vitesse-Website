@@ -100,18 +100,18 @@ def _format_project_admin(p, vehicle_map, heads_map):
             "name": heads_map.get(hid, {}).get("name", "Sans nom")
         } for hid in head_ids],
         "pilot_waiver": {
-            "id": p.pilot_waiver.id if p.pilot_waiver else None,
-            "waiver_num": p.pilot_waiver.waiver_id if p.pilot_waiver else "",
-            "status": format_waiver_status(p.pilot_waiver.status) if p.pilot_waiver else "",
-            "raw_status": p.pilot_waiver.status if p.pilot_waiver else "",
-            "pdf_path": _get_secured_document_url(p.pilot_waiver.signed_pdf_path, "pilot-waiver") if p.pilot_waiver else None,
+            "id": p.pilot_waiver.id if (p.pilot_waiver and not p.pilot_waiver.deleted_at) else None,
+            "waiver_num": p.pilot_waiver.waiver_id if (p.pilot_waiver and not p.pilot_waiver.deleted_at) else "",
+            "status": format_waiver_status(p.pilot_waiver.status) if (p.pilot_waiver and not p.pilot_waiver.deleted_at) else "",
+            "raw_status": p.pilot_waiver.status if (p.pilot_waiver and not p.pilot_waiver.deleted_at) else "",
+            "pdf_path": _get_secured_document_url(p.pilot_waiver.signed_pdf_path, "pilot-waiver") if (p.pilot_waiver and not p.pilot_waiver.deleted_at) else None,
         },
         "production_waiver": {
-            "id": p.production_waiver.id if p.production_waiver else None,
-            "waiver_num": p.production_waiver.waiver_id if p.production_waiver else "",
-            "status": format_waiver_status(p.production_waiver.status) if p.production_waiver else "",
-            "raw_status": p.production_waiver.status if p.production_waiver else "",
-            "pdf_path": _get_secured_document_url(p.production_waiver.signed_pdf_path, "production-waiver") if p.production_waiver else None,
+            "id": p.production_waiver.id if (p.production_waiver and not p.production_waiver.deleted_at) else None,
+            "waiver_num": p.production_waiver.waiver_id if (p.production_waiver and not p.production_waiver.deleted_at) else "",
+            "status": format_waiver_status(p.production_waiver.status) if (p.production_waiver and not p.production_waiver.deleted_at) else "",
+            "raw_status": p.production_waiver.status if (p.production_waiver and not p.production_waiver.deleted_at) else "",
+            "pdf_path": _get_secured_document_url(p.production_waiver.signed_pdf_path, "production-waiver") if (p.production_waiver and not p.production_waiver.deleted_at) else None,
         },
         "pre_quotes": [{
             "id": pq.id,
@@ -207,11 +207,6 @@ def create_project(form, user_id=None):
     db.session.flush() # Permet d'obtenir l'ID du projet avant le commit final
 
     db.session.commit()
-
-    # Création automatique des décharges associées au projet
-    from services.admin.waivers import create_pilot_waiver, create_production_waiver
-    create_pilot_waiver(project.id)
-    create_production_waiver(project.id)
 
     # Déclenchement du webhook n8n pour notifier d'autres services
     webhook_url = os.getenv("N8N_WEBHOOK_PROJECT")

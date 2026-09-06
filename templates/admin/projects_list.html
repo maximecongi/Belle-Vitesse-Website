@@ -195,6 +195,7 @@
                 <td>
                     <div class="u-mb-1 u-flex u-gap-1 u-align-center">
                         <div class="projects-cell-item">
+                            {% if project.pilot_waiver and project.pilot_waiver.waiver_num %}
                             <a href="{{ url_for('admin_pilot_waivers_list', q=project.pilot_waiver.waiver_num) }}">
                                 {{ status_badge("Pilote", project.pilot_waiver.raw_status) }}
                             </a>
@@ -217,10 +218,24 @@
                                 </svg>
                             </span>
                             {% endif %}
+                            {% else %}
+                            <a href="{{ url_for('admin_pilot_waiver_new', project_id=project.id) }}">
+                                <span class="badge-pill" data-val="to_check">Pilote</span>
+                            </a>
+                            <span class="disabled" title="Voir le document">
+                                <svg class="badge-pill" data-val="download-unavailable" width="15" height="15"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                    <polyline points="7 10 12 15 17 10" />
+                                    <line x1="12" y1="15" x2="12" y2="3" />
+                                </svg>
+                            </span>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="u-flex u-gap-1 u-align-center">
                         <div class="projects-cell-item">
+                            {% if project.production_waiver and project.production_waiver.waiver_num %}
                             <a
                                 href="{{ url_for('admin_production_waivers_list', q=project.production_waiver.waiver_num) }}">
                                 {{ status_badge("Production", project.production_waiver.raw_status) }}
@@ -235,6 +250,19 @@
                                 </svg>
                             </a>
                             {% else %}
+                            <span class="disabled" title="Voir le document">
+                                <svg class="badge-pill" data-val="download-unavailable" width="15" height="15"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                    <polyline points="7 10 12 15 17 10" />
+                                    <line x1="12" y1="15" x2="12" y2="3" />
+                                </svg>
+                            </span>
+                            {% endif %}
+                            {% else %}
+                            <a href="{{ url_for('admin_production_waiver_new', project_id=project.id) }}">
+                                <span class="badge-pill" data-val="to_check">Production</span>
+                            </a>
                             <span class="disabled" title="Voir le document">
                                 <svg class="badge-pill" data-val="download-unavailable" width="15" height="15"
                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">

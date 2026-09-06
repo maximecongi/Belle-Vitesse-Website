@@ -3,6 +3,8 @@ from flask import Blueprint, current_app, jsonify, request
 from services.admin.waivers import (
     create_pilot_waiver,
     create_production_waiver,
+    delete_pilot_waiver,
+    delete_production_waiver,
     generate_pilot_waiver,
     generate_production_waiver,
     list_pilot_waivers,
@@ -68,6 +70,20 @@ def api_send_pilot_waiver(waiver_id):
         return jsonify({"error": str(e)}), 500
 
 
+@api_waivers_bp.route("/pilot-waivers/<waiver_id>", methods=["DELETE"])
+@api_waivers_bp.route("/pilot-waivers/<waiver_id>/delete", methods=["POST"])
+@require_api_auth("administrator", "manager")
+def api_delete_pilot_waiver(waiver_id):
+    try:
+        success, msg = delete_pilot_waiver(waiver_id)
+        if success:
+            return jsonify({"message": msg})
+        return jsonify({"error": msg}), 404
+    except Exception as e:
+        current_app.logger.error(f"❌ API delete_pilot_waiver error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
 @api_waivers_bp.route("/pilot-waivers/<waiver_id>/reset", methods=["POST"])
 @require_api_auth("administrator", "manager")
 def api_reset_pilot_waiver(waiver_id):
@@ -127,6 +143,20 @@ def api_send_production_waiver(waiver_id):
         return jsonify({"message": "Décharge production envoyée"})
     except Exception as e:
         current_app.logger.error(f"❌ API send_production_waiver error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@api_waivers_bp.route("/production-waivers/<waiver_id>", methods=["DELETE"])
+@api_waivers_bp.route("/production-waivers/<waiver_id>/delete", methods=["POST"])
+@require_api_auth("administrator", "manager")
+def api_delete_production_waiver(waiver_id):
+    try:
+        success, msg = delete_production_waiver(waiver_id)
+        if success:
+            return jsonify({"message": msg})
+        return jsonify({"error": msg}), 404
+    except Exception as e:
+        current_app.logger.error(f"❌ API delete_production_waiver error: {e}")
         return jsonify({"error": str(e)}), 500
 
 

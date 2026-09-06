@@ -187,7 +187,6 @@ def create_pre_quote(data, user_id=None):
     project_id = data.get('project_id')
     if project_id == 'new':
         from models import Project
-        from services.admin.waivers import create_pilot_waiver, create_production_waiver
         veh_ids = extract_vehicle_ids_from_prestations(quote.prestations)
         head_ids = extract_head_ids_from_prestations(quote.prestations)
         project = Project(
@@ -198,9 +197,6 @@ def create_pre_quote(data, user_id=None):
         )
         db.session.add(project)
         db.session.flush()
-        
-        create_pilot_waiver(project.id)
-        create_production_waiver(project.id)
         quote.project_id = project.id
     elif project_id:
         quote.project_id = int(project_id)
@@ -257,7 +253,6 @@ def update_pre_quote(quote_id, data):
         project_id = data['project_id']
         if project_id == 'new':
             from models import Project
-            from services.admin.waivers import create_pilot_waiver, create_production_waiver
             veh_ids = extract_vehicle_ids_from_prestations(quote.prestations)
             head_ids = extract_head_ids_from_prestations(quote.prestations)
             project = Project(
@@ -268,9 +263,6 @@ def update_pre_quote(quote_id, data):
             )
             db.session.add(project)
             db.session.flush()
-            
-            create_pilot_waiver(project.id)
-            create_production_waiver(project.id)
             quote.project_id = project.id
         elif project_id:
             quote.project_id = int(project_id)

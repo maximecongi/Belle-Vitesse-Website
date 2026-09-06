@@ -171,9 +171,17 @@ Test the /admin/api/contacts/quick endpoint. ... ok
 test_unsubscribe_success (test_routes.RouteSmokeTest.test_unsubscribe_success)
 Test that unsubscribing with a valid token works and does not 500. ... ok
 test_create_and_list_waivers (test_waivers.WaiversTest.test_create_and_list_waivers) ... ok
+test_explicit_delete_and_recreate (test_waivers.WaiversTest.test_explicit_delete_and_recreate)
+Vérifie la suppression unitaire par ID et la capacité de recréer une décharge pour le même projet. ... ok
+test_no_automatic_waivers_on_project_create (test_waivers.WaiversTest.test_no_automatic_waivers_on_project_create)
+Vérifie qu'aucune décharge n'est créée automatiquement lors de la création d'un projet. ... ok
 test_soft_delete_waivers (test_waivers.WaiversTest.test_soft_delete_waivers) ... ok
+test_waivers_created_directly_in_to_send_status (test_waivers.WaiversTest.test_waivers_created_directly_in_to_send_status)
+Vérifie que la création d'une décharge la place directement au statut 'to_send' avec snapshot. ... ok
+test_waivers_search_and_project_links (test_waivers.WaiversTest.test_waivers_search_and_project_links)
+Vérifie le formatage des décharges dans list_projects et le filtre ?q=. ... ok
 
 ----------------------------------------------------------------------
-Ran 106 tests in 8.620s
+Ran 110 tests in 8.600s
 
 OK

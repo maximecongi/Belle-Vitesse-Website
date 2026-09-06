@@ -6,6 +6,8 @@ from models import PilotWaiver, ProductionWaiver, Project
 from services.admin.waivers import (
     create_pilot_waiver,
     create_production_waiver,
+    delete_pilot_waiver,
+    delete_production_waiver,
     generate_pilot_waiver,
     generate_production_waiver,
     list_pilot_waivers,
@@ -36,17 +38,26 @@ def init_waivers_routes(app):
                 flash(msg, "error")
 
         from models import PilotWaiver as PW
-        projects_with_waiver = [w.project_id for w in PW.query.all()]
+        projects_with_waiver = [w.project_id for w in PW.query.filter(PW.deleted_at == None).all()]
         available_projects = Project.query.filter(
             Project.deleted_at == None,
             ~Project.id.in_(projects_with_waiver)
-        ).all()
+        ).order_by(Project.departure_date.desc(), Project.name.asc()).all()
         return render_template("admin/pilot_wai_form.html" if os.path.exists("templates/admin/pilot_wai_form.html") else "admin/pilot_waiver_form.html", projects=available_projects)
 
     @app.route("/admin/waivers/pilots", endpoint='admin_pilot_waivers_list')
     @require_roles('administrator', 'manager')
     def admin_pilot_waivers_list():
         waivers = list_pilot_waivers()
+        q = request.args.get('q', '').strip().lower()
+        if q:
+            waivers = [
+                w for w in waivers
+                if q in (w.get('waiver_id') or '').lower()
+                or q in (w.get('project_name') or '').lower()
+                or q in (w.get('pilot_name') or '').lower()
+                or q in str(w.get('db_id') or '')
+            ]
         return render_template("admin/pilots_waivers_list.html", waivers=waivers)
 
     @app.route("/admin/waivers/pilots/<string:waiver_id>/generate", methods=["POST"], endpoint='admin_pilot_waiver_generate')
@@ -78,10 +89,11 @@ def init_waivers_routes(app):
             waiver_id=waiver_id).first_or_404()
         return render_template("pdf/pilot_waiver_pdf.html", waiver=waiver)
 
+    @app.route("/admin/waivers/pilots/<string:waiver_id>/delete", methods=["POST"], endpoint='admin_pilot_waiver_delete')
     @app.route("/admin/waivers/pilots/<string:waiver_id>/reset", methods=["POST"], endpoint='admin_pilot_waiver_reset')
     @require_roles('administrator', 'manager')
-    def admin_pilot_waiver_reset(waiver_id):
-        success, msg = reset_pilot_waiver(waiver_id)
+    def admin_pilot_waiver_delete(waiver_id):
+        success, msg = delete_pilot_waiver(waiver_id)
         if success:
             flash(msg, "success")
         else:
@@ -106,17 +118,27 @@ def init_waivers_routes(app):
                 flash(msg, "error")
 
         from models import ProductionWaiver as PW
-        projects_with_waiver = [w.project_id for w in PW.query.all()]
+        projects_with_waiver = [w.project_id for w in PW.query.filter(PW.deleted_at == None).all()]
         available_projects = Project.query.filter(
             Project.deleted_at == None,
             ~Project.id.in_(projects_with_waiver)
-        ).all()
+        ).order_by(Project.departure_date.desc(), Project.name.asc()).all()
         return render_template("admin/production_waiver_form.html", projects=available_projects)
 
     @app.route("/admin/waivers/productions", endpoint='admin_production_waivers_list')
     @require_roles('administrator', 'manager')
     def admin_production_waivers_list():
         waivers = list_production_waivers()
+        q = request.args.get('q', '').strip().lower()
+        if q:
+            waivers = [
+                w for w in waivers
+                if q in (w.get('waiver_id') or '').lower()
+                or q in (w.get('project_name') or '').lower()
+                or q in (w.get('production_name') or '').lower()
+                or q in (w.get('production_contact_name') or '').lower()
+                or q in str(w.get('db_id') or '')
+            ]
         return render_template("admin/productions_waivers_list.html", waivers=waivers)
 
     @app.route("/admin/waivers/productions/<string:waiver_id>/generate", methods=["POST"], endpoint='admin_production_waiver_generate')
@@ -148,10 +170,11 @@ def init_waivers_routes(app):
             waiver_id=waiver_id).first_or_404()
         return render_template("pdf/production_waiver_pdf.html", waiver=waiver)
 
+    @app.route("/admin/waivers/productions/<string:waiver_id>/delete", methods=["POST"], endpoint='admin_production_waiver_delete')
     @app.route("/admin/waivers/productions/<string:waiver_id>/reset", methods=["POST"], endpoint='admin_production_waiver_reset')
     @require_roles('administrator', 'manager')
-    def admin_production_waiver_reset(waiver_id):
-        success, msg = reset_production_waiver(waiver_id)
+    def admin_production_waiver_delete(waiver_id):
+        success, msg = delete_production_waiver(waiver_id)
         if success:
             flash(msg, "success")
         else:
