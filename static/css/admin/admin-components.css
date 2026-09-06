@@ -1026,8 +1026,8 @@ input[type="checkbox"]:checked {
 
 .mission-sub-node {
     position: absolute;
-    left: -38px;
-    top: 14px;
+    left: -40px;
+    top: 0;
     width: 18px;
     height: 18px;
     border-radius: 50%;

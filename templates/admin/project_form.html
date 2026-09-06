@@ -42,7 +42,8 @@
             <div class="form-group">
                 <div class="u-flex u-justify-between u-align-center u-mb-1">
                     <label class="form-label u-mb-0">Contact de Production</label>
-                    <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn" data-target="production_contact_id" data-job="Directeur.rice de production">
+                    <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
+                        data-target="production_contact_id" data-job="Directeur.rice de production">
                         ➕ Nouveau contact
                     </button>
                 </div>
@@ -61,7 +62,8 @@
             <div class="form-group">
                 <div class="u-flex u-justify-between u-align-center u-mb-1">
                     <label class="form-label u-mb-0">DOP (Directeur Photo)</label>
-                    <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn" data-target="dop_contact_id" data-job="Directeur.rice de la photographie">
+                    <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
+                        data-target="dop_contact_id" data-job="Directeur.rice de la photographie">
                         ➕ Nouveau contact
                     </button>
                 </div>
@@ -78,7 +80,8 @@
             <div class="form-group">
                 <div class="u-flex u-justify-between u-align-center u-mb-1">
                     <label class="form-label u-mb-0">Pilote</label>
-                    <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn" data-target="pilot_contact_id" data-job="Pilote de précision">
+                    <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
+                        data-target="pilot_contact_id" data-job="Pilote de précision">
                         ➕ Nouveau contact
                     </button>
                 </div>
@@ -97,7 +100,8 @@
             <div class="form-group">
                 <div class="u-flex u-justify-between u-align-center u-mb-1">
                     <label class="form-label u-mb-0">1er Assistant Caméra</label>
-                    <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn" data-target="first_ac_contact_id" data-job="Premier.ère assistant.e caméra">
+                    <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
+                        data-target="first_ac_contact_id" data-job="Premier.ère assistant.e caméra">
                         ➕ Nouveau contact
                     </button>
                 </div>
@@ -114,7 +118,8 @@
             <div class="form-group">
                 <div class="u-flex u-justify-between u-align-center u-mb-1">
                     <label class="form-label u-mb-0">Chef Machiniste</label>
-                    <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn" data-target="key_grip_contact_id" data-job="Chef.fe machiniste">
+                    <button type="button" class="admin-btn admin-btn-quick-add quick-add-contact-btn"
+                        data-target="key_grip_contact_id" data-job="Chef.fe machiniste">
                         ➕ Nouveau contact
                     </button>
                 </div>
@@ -132,12 +137,15 @@
         <!-- Sélecteur de Dates Unifié (Timeline & Double Calendrier) -->
         <div class="form-group u-mb-3">
             <label class="form-label u-mb-2">Planning & Dates du Projet</label>
-            
+
             <!-- Inputs cachés pour soumission formulaire (rétrocompatibilité totale) -->
-            <input type="hidden" name="departure_date" id="departure_date_input" value="{{ data.departure_date_raw if data else '' }}">
-            <input type="hidden" name="shoot_start" id="shoot_start_input" value="{{ data.shoot_start_raw if data else '' }}">
+            <input type="hidden" name="departure_date" id="departure_date_input"
+                value="{{ data.departure_date_raw if data else '' }}">
+            <input type="hidden" name="shoot_start" id="shoot_start_input"
+                value="{{ data.shoot_start_raw if data else '' }}">
             <input type="hidden" name="shoot_end" id="shoot_end_input" value="{{ data.shoot_end_raw if data else '' }}">
-            <input type="hidden" name="return_date" id="return_date_input" value="{{ data.return_date_raw if data else '' }}">
+            <input type="hidden" name="return_date" id="return_date_input"
+                value="{{ data.return_date_raw if data else '' }}">
 
             <div id="projectDatePickerContainer"></div>
         </div>
@@ -204,11 +212,12 @@
 
 <!-- Modal Nouvelle Production -->
 <div id="quickProductionModal" class="admin-modal-overlay" style="display: none;">
-    <div class="admin-modal-container" style="max-width: 550px; height: auto; max-height: 90vh; border-radius: 12px; box-shadow: 0 15px 50px rgba(0,0,0,0.35);">
+    <div class="admin-modal-container"
+        style="max-width: 550px; height: auto; max-height: 90vh; border-radius: 12px; box-shadow: 0 15px 50px rgba(0,0,0,0.35);">
         <button type="button" class="admin-modal-close" id="closeProductionModalBtn" title="Fermer">&times;</button>
         <div class="admin-modal-content u-p-4" style="overflow-y: auto;">
             <h2 class="admin-section-title u-mt-0 u-mb-3" style="font-size: 1.25rem;">
-                🏢 Nouvelle Production
+                Nouvelle Production
             </h2>
             <form id="quickProductionForm">
                 <div class="form-group u-mb-2">
@@ -218,7 +227,8 @@
 
                 <div class="form-group u-mb-2">
                     <label class="form-label">Adresse</label>
-                    <input type="text" id="modalProdAddress" class="form-input" placeholder="Ex: 123 Rue de la République, 75001 Paris">
+                    <input type="text" id="modalProdAddress" class="form-input"
+                        placeholder="Ex: 123 Rue de la République, 75001 Paris">
                 </div>
 
                 <div class="u-grid u-grid-2 u-gap-2 u-mb-3">
@@ -233,8 +243,10 @@
                 </div>
 
                 <div class="u-flex u-justify-end u-gap-2 u-mt-4">
-                    <button type="button" id="cancelProductionModalBtn" class="admin-btn admin-btn-secondary">Annuler</button>
-                    <button type="submit" id="submitProductionModalBtn" class="admin-btn admin-btn-primary">Créer la production</button>
+                    <button type="button" id="cancelProductionModalBtn"
+                        class="admin-btn admin-btn-secondary">Annuler</button>
+                    <button type="submit" id="submitProductionModalBtn" class="admin-btn admin-btn-primary">Créer la
+                        production</button>
                 </div>
             </form>
         </div>
@@ -243,7 +255,8 @@
 
 <!-- Modal Nouveau Contact -->
 <div id="quickContactModal" class="admin-modal-overlay" style="display: none;">
-    <div class="admin-modal-container" style="max-width: 550px; height: auto; max-height: 90vh; border-radius: 12px; box-shadow: 0 15px 50px rgba(0,0,0,0.35);">
+    <div class="admin-modal-container"
+        style="max-width: 550px; height: auto; max-height: 90vh; border-radius: 12px; box-shadow: 0 15px 50px rgba(0,0,0,0.35);">
         <button type="button" class="admin-modal-close" id="closeContactModalBtn" title="Fermer">&times;</button>
         <div class="admin-modal-content u-p-4" style="overflow-y: auto;">
             <h2 class="admin-section-title u-mt-0 u-mb-3" style="font-size: 1.25rem;">
@@ -251,15 +264,17 @@
             </h2>
             <form id="quickContactForm">
                 <input type="hidden" id="modalTargetSelect" value="">
-                
+
                 <div class="u-grid u-grid-2 u-gap-2 u-mb-2">
                     <div class="form-group">
                         <label class="form-label">Prénom <span class="u-text-error">*</span></label>
-                        <input type="text" id="modalContactFirstName" class="form-input" required placeholder="Ex: Jean">
+                        <input type="text" id="modalContactFirstName" class="form-input" required
+                            placeholder="Ex: Jean">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Nom <span class="u-text-error">*</span></label>
-                        <input type="text" id="modalContactLastName" class="form-input" required placeholder="Ex: Dupont">
+                        <input type="text" id="modalContactLastName" class="form-input" required
+                            placeholder="Ex: Dupont">
                     </div>
                 </div>
 
@@ -269,8 +284,10 @@
                         <option value="">— Sélectionner un métier —</option>
                         <optgroup label="🎬 Réalisation">
                             <option value="Réalisateur.rice">Réalisateur.rice</option>
-                            <option value="Premier.ère assistant.e réalisateur.rice">Premier.ère assistant.e réalisateur.rice</option>
-                            <option value="Second.e assistant.e réalisateur.rice">Second.e assistant.e réalisateur.rice</option>
+                            <option value="Premier.ère assistant.e réalisateur.rice">Premier.ère assistant.e
+                                réalisateur.rice</option>
+                            <option value="Second.e assistant.e réalisateur.rice">Second.e assistant.e réalisateur.rice
+                            </option>
                             <option value="Scripte">Scripte</option>
                         </optgroup>
                         <optgroup label="📷 Caméra">
@@ -314,7 +331,8 @@
                 <div class="u-grid u-grid-2 u-gap-2 u-mb-2">
                     <div class="form-group">
                         <label class="form-label">E-mail</label>
-                        <input type="email" id="modalContactMail" class="form-input" placeholder="jean.dupont@example.com">
+                        <input type="email" id="modalContactMail" class="form-input"
+                            placeholder="jean.dupont@example.com">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Téléphone</label>
@@ -333,8 +351,10 @@
                 </div>
 
                 <div class="u-flex u-justify-end u-gap-2 u-mt-4">
-                    <button type="button" id="cancelContactModalBtn" class="admin-btn admin-btn-secondary">Annuler</button>
-                    <button type="submit" id="submitContactModalBtn" class="admin-btn admin-btn-primary">Créer le contact</button>
+                    <button type="button" id="cancelContactModalBtn"
+                        class="admin-btn admin-btn-secondary">Annuler</button>
+                    <button type="submit" id="submitContactModalBtn" class="admin-btn admin-btn-primary">Créer le
+                        contact</button>
                 </div>
             </form>
         </div>
