@@ -9,9 +9,6 @@
 
 {% block header_actions %}
 <div class="u-flex u-align-center u-gap-2">
-    <button type="button" id="btnAutoRemind" class="admin-btn admin-btn-secondary u-text-sm" title="Envoyer une relance par e-mail pour les décharges en attente dont le tournage débute sous 2 jours">
-        🔔 Relancer en attente (J-2)
-    </button>
     <input type="text" id="searchInput" class="form-input u-w-250 u-text-sm" placeholder="🔍 Rechercher une décharge..." autocomplete="off">
     <a href="{{ url_for('admin_production_waiver_new') }}" class="admin-btn admin-btn-primary">+ Nouvelle décharge</a>
 </div>
@@ -119,37 +116,7 @@
                     } else {
                         row.style.display = 'none';
                     }
-                });
-            });
-        const btnAutoRemind = document.getElementById('btnAutoRemind');
-        if (btnAutoRemind) {
-            btnAutoRemind.addEventListener('click', async function() {
-                if (!confirm("Voulez-vous vérifier et envoyer une relance pour toutes les décharges non signées dont le tournage débute d'ici 2 jours ?")) {
-                    return;
-                }
-                const originalText = btnAutoRemind.textContent;
-                btnAutoRemind.disabled = true;
-                btnAutoRemind.textContent = "⏳ Envoi des relances...";
-                try {
-                    const resp = await fetch("{{ url_for('admin_waivers_auto_remind') }}", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" }
-                    });
-                    const data = await resp.json();
-                    if (resp.ok && data.status === "success") {
-                        alert(data.message);
-                        window.location.reload();
-                    } else {
-                        alert(data.message || "Une erreur est survenue.");
-                    }
-                } catch (e) {
-                    alert("Erreur de communication avec le serveur : " + e.message);
-                } finally {
-                    btnAutoRemind.disabled = false;
-                    btnAutoRemind.textContent = originalText;
-                }
-            });
-        }
+        });
     });
 </script>
 {% endblock %}

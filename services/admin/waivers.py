@@ -669,7 +669,7 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
         "details": [],
     }
 
-    base_url_str = (base_url or "").rstrip("/")
+    base_url_str = (base_url or os.getenv("APP_BASE_URL") or os.getenv("BASE_URL") or "https://bellevitesse.com").rstrip("/")
 
     # 1. Décharges de Production
     prod_waivers = (
@@ -708,7 +708,7 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
             token_rec = ProductionWaiverToken(token=new_token, waiver_id=pw.waiver_id)
             db.session.add(token_rec)
 
-            sig_url = f"{base_url_str}/sign/production-waiver/{new_token}" if base_url_str else f"/sign/production-waiver/{new_token}"
+            sig_url = f"{base_url_str}/sign/production-waiver/{new_token}"
 
             sent = send_production_waiver_invitation_email(
                 to_email=contact_prod.mail,
@@ -771,7 +771,7 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
             token_rec = PilotWaiverToken(token=new_token, waiver_id=dw.waiver_id)
             db.session.add(token_rec)
 
-            sig_url = f"{base_url_str}/sign/pilot-waiver/{new_token}" if base_url_str else f"/sign/pilot-waiver/{new_token}"
+            sig_url = f"{base_url_str}/sign/waiver/{new_token}"
 
             sent = send_waiver_invitation_email(
                 to_email=pilot.mail,

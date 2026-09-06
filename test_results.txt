@@ -192,12 +192,12 @@ test_waivers_created_directly_in_to_send_status (test_waivers.WaiversTest.test_w
 Vérifie que la création d'une décharge la place directement au statut 'to_send' avec snapshot. ... ok
 test_waivers_search_and_project_links (test_waivers.WaiversTest.test_waivers_search_and_project_links)
 Vérifie le formatage des décharges dans list_projects et le filtre ?q=. ... ok
-test_api_auto_remind_endpoint (test_waivers_reminders.WaiversRemindersTest.test_api_auto_remind_endpoint)
-Vérifie l'endpoint /admin/api/waivers/auto-remind avec authentification admin. ... ok
 test_auto_remind_pending_waivers_service (test_waivers_reminders.WaiversRemindersTest.test_auto_remind_pending_waivers_service)
 Vérifie que le service de relance détecte les décharges J-1 et incrémente le compteur. ... ok
+test_script_remind_waivers_dry_run (test_waivers_reminders.WaiversRemindersTest.test_script_remind_waivers_dry_run)
+Vérifie le fonctionnement du script scripts/remind_waivers.py en mode dry-run. ... ok
 
 ----------------------------------------------------------------------
-Ran 118 tests in 8.701s
+Ran 118 tests in 8.720s
 
 OK

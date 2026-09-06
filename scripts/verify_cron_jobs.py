@@ -49,6 +49,12 @@ EXPECTED_JOBS = [
         "expected_freq": "Tous les lundis à 3h45",
         "tolerance_hours": 170,  # 168h (7 days) + 2h margin
     },
+    {
+        "job_name": "remind_waivers",
+        "display_name": "Relance automatique des décharges (48h avant)",
+        "expected_freq": "Tous les jours à 8h00",
+        "tolerance_hours": 26,  # 24h + 2h margin
+    },
 ]
 
 

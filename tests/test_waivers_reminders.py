@@ -105,23 +105,18 @@ class WaiversRemindersTest(unittest.TestCase):
 
     @patch("utils.mailer.send_production_waiver_invitation_email", return_value=True)
     @patch("utils.mailer.send_waiver_invitation_email", return_value=True)
-    def test_api_auto_remind_endpoint(self, mock_pilot_mail, mock_prod_mail):
-        """Vérifie l'endpoint /admin/api/waivers/auto-remind avec authentification admin."""
-        # 1. Non authentifié -> 403
-        resp = self.client.post("/admin/api/waivers/auto-remind")
-        self.assertEqual(resp.status_code, 403)
+    def test_script_remind_waivers_dry_run(self, mock_pilot_mail, mock_prod_mail):
+        """Vérifie le fonctionnement du script scripts/remind_waivers.py en mode dry-run."""
+        from scripts.remind_waivers import run_reminders
 
-        # 2. Authentifié admin -> 200 et succès
-        with self.client.session_transaction() as sess:
-            sess["admin_authenticated"] = True
-            sess["admin_user_role"] = "administrator"
-
-        resp2 = self.client.post("/admin/api/waivers/auto-remind")
-        self.assertEqual(resp2.status_code, 200)
-        data = json.loads(resp2.data)
-        self.assertEqual(data["status"], "success")
-        self.assertEqual(data["results"]["production_reminders_sent"], 1)
-        self.assertEqual(data["results"]["pilot_reminders_sent"], 1)
+        # En mockant build_minimal_app pour retourner self.app et None
+        with patch("scripts.remind_waivers.build_minimal_app", return_value=(self.app, None)):
+            res = run_reminders(days_before=2, dry_run=True)
+            self.assertEqual(res["production_reminders_sent"], 1)
+            self.assertEqual(res["pilot_reminders_sent"], 1)
+            # En mode dry-run, aucun mail n'est envoyé
+            mock_pilot_mail.assert_not_called()
+            mock_prod_mail.assert_not_called()
 
 
 if __name__ == "__main__":
