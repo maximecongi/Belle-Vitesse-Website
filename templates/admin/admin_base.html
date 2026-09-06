@@ -23,7 +23,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.css') }}">
     {% endif %}
 
+    <meta name="theme-color" content="#0f172a">
     <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="apple-touch-icon" href="/static/imgs/favicons/apple-touch-icon.png">
     {% block extra_css %}{% endblock %}
 </head>
 
@@ -302,6 +304,7 @@
     <script src="{{ url_for('static', filename='js/src/admin/project.js') }}"></script>
     <script src="{{ url_for('static', filename='js/src/admin/cmdk.js') }}"></script>
     <script src="{{ url_for('static', filename='js/src/admin/inspections.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/src/admin/photo-annotator.js') }}"></script>
     <script src="{{ url_for('static', filename='js/src/admin.js') }}"></script>
 </body>
 

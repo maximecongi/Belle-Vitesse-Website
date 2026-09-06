@@ -36,6 +36,18 @@ test_unauthenticated_access_redirects_to_login (test_calendar_permissions.Calend
 Unauthenticated user should be redirected to login page. ... ok
 test_user_role_cannot_access_calendar (test_calendar_permissions.CalendarPermissionsTestCase.test_user_role_cannot_access_calendar)
 User with role 'user' should be forbidden / redirected to dashboard. ... ok
+test_api_check_conflicts_endpoint_with_exclusion (test_conflicts.ConflictsTest.test_api_check_conflicts_endpoint_with_exclusion)
+Vérifie que l'API HTTP exclut bien le projet en cours d'édition pour éviter l'auto-conflit. ... ok
+test_exclude_project_id_for_self_edit (test_conflicts.ConflictsTest.test_exclude_project_id_for_self_edit)
+Vérifie que l'édition d'un projet n'entre pas en conflit avec lui-même (par ID entier et par code). ... ok
+test_get_project_for_edit_contains_ids (test_conflicts.ConflictsTest.test_get_project_for_edit_contains_ids)
+Vérifie que get_project_for_edit renvoie bien les clés id, record_id et project_id. ... ok
+test_head_conflict_detected (test_conflicts.ConflictsTest.test_head_conflict_detected)
+Vérifie la détection d'un conflit sur une tête gyrostabilisée. ... ok
+test_no_overlap_no_conflict (test_conflicts.ConflictsTest.test_no_overlap_no_conflict)
+Vérifie qu'aucune alerte n'est levée si les dates sont disjointes. ... ok
+test_overlap_conflict_detected_on_vehicle (test_conflicts.ConflictsTest.test_overlap_conflict_detected_on_vehicle)
+Vérifie qu'un chevauchement de dates sur un véhicule est bien détecté. ... ok
 test_docs_restricted_to_admin_and_super_admin (test_dev_role_switcher.DevRoleSwitcherTestCase.test_docs_restricted_to_admin_and_super_admin)
 Technical and API docs should only be accessible/visible to Administrator and Super Administrator. ... ok
 test_manager_can_modify_only_users_and_commercials (test_dev_role_switcher.DevRoleSwitcherTestCase.test_manager_can_modify_only_users_and_commercials)
@@ -180,8 +192,12 @@ test_waivers_created_directly_in_to_send_status (test_waivers.WaiversTest.test_w
 Vérifie que la création d'une décharge la place directement au statut 'to_send' avec snapshot. ... ok
 test_waivers_search_and_project_links (test_waivers.WaiversTest.test_waivers_search_and_project_links)
 Vérifie le formatage des décharges dans list_projects et le filtre ?q=. ... ok
+test_api_auto_remind_endpoint (test_waivers_reminders.WaiversRemindersTest.test_api_auto_remind_endpoint)
+Vérifie l'endpoint /admin/api/waivers/auto-remind avec authentification admin. ... ok
+test_auto_remind_pending_waivers_service (test_waivers_reminders.WaiversRemindersTest.test_auto_remind_pending_waivers_service)
+Vérifie que le service de relance détecte les décharges J-1 et incrémente le compteur. ... ok
 
 ----------------------------------------------------------------------
-Ran 110 tests in 8.710s
+Ran 118 tests in 8.701s
 
 OK

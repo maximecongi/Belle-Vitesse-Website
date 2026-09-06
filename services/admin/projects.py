@@ -274,6 +274,8 @@ def get_project_for_edit(record_id):
         ",")] if p.heads_to_check else []
 
     return {
+        "id": p.id,
+        "record_id": p.id,
         "project_id": p.project_id,
         "name": p.name,
         "departure_date_raw": str(p.departure_date) if p.departure_date else "",

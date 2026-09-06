@@ -619,3 +619,5 @@ def send_incident_signed_confirmation_email(incident, to_email, pdf_path):
         )
         return False
 
+
+

@@ -6,17 +6,42 @@ function updatePhotoLabel(input) {
     const preview = document.querySelector(`.photo-preview[data-for="${input.name}"]`);
     if (!preview) return;
     preview.innerHTML = '';
-    if (input.files.length > 0) {
-        for (const file of input.files) {
+    if (input.files && input.files.length > 0) {
+        Array.from(input.files).forEach((file, index) => {
             const reader = new FileReader();
             reader.onload = function (e) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'photo-preview-item';
+                wrapper.style.cssText = 'position: relative; display: inline-block; margin: 4px;';
+
                 const img = document.createElement('img');
                 img.src = e.target.result;
-                img.style.cssText = 'width: 70px; height: 70px; object-fit: cover; border-radius: 6px; border: 1px solid #e0e0e0;';
-                preview.appendChild(img);
+                img.style.cssText = 'width: 76px; height: 76px; object-fit: cover; border-radius: 4px; border: 1px solid var(--grey-border, #e0e0e0); display: block;';
+                wrapper.appendChild(img);
+
+                if (typeof window.openPhotoAnnotator === 'function') {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'annotator-edit-badge';
+                    btn.title = "Annoter cette photo (cercle, flèche)";
+                    btn.innerHTML = '✏️ Annoter';
+                    btn.onclick = function (ev) {
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                        window.openPhotoAnnotator(file, function (annotatedFile, dataUrl) {
+                            img.src = dataUrl;
+                            if (typeof window.replaceFileInInput === 'function') {
+                                window.replaceFileInInput(input, index, annotatedFile);
+                            }
+                        });
+                    };
+                    wrapper.appendChild(btn);
+                }
+
+                preview.appendChild(wrapper);
             };
             reader.readAsDataURL(file);
-        }
+        });
     }
 }
 window.updatePhotoLabel = updatePhotoLabel;

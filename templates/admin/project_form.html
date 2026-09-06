@@ -16,6 +16,7 @@
 <div class="admin-card">
     <form method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <input type="hidden" id="current_project_id" value="{{ (data.id if data and data.id else (data.project_id if data and data.project_id else (record_id if record_id else ''))) }}" />
         <div class="form-group">
             <label class="form-label">Nom du projet</label>
             <input type="text" name="name" class="form-input" value="{{ data.name if data else '' }}" required>
@@ -155,18 +156,29 @@
                 placeholder="Ex: Lumières additionnelles, contraintes d'accès, besoins spécifiques batterie...">{{ data.notes if data else '' }}</textarea>
         </div>
 
-        <div class="form-group u-mt-2">
+        <!-- Bandeau d'alerte Conflits de Réservation -->
+        <div id="bookingConflictsAlert" style="display: none;" class="booking-conflicts-banner u-mt-3">
+            <span style="font-size: 1.25rem; line-height: 1;">⚠️</span>
+            <div style="flex: 1;">
+                <strong class="u-d-block u-mb-1" style="font-size: 0.9rem;">Conflit de réservation détecté</strong>
+                <span id="bookingConflictsSummary">Des équipements sélectionnés sont déjà engagés sur un autre tournage aux mêmes dates.</span>
+                <ul id="bookingConflictsDetailsList" class="u-mt-2 u-mb-0 u-pl-3" style="font-size: 0.78rem; line-height: 1.4;"></ul>
+            </div>
+        </div>
+
+        <div class="form-group u-mt-3">
             <label class="form-label">Véhicules</label>
             <div class="u-flex u-flex-wrap u-gap-1">
                 {% for v in vehicles %}
                 {% set vf = v.fields %}
-                <label class="project-checkbox-card {% if data and v.id in data.vehicle_ids %}selected{% endif %}">
+                <label class="project-checkbox-card {% if data and v.id in data.vehicle_ids %}selected{% endif %}" data-item-id="{{ v.id }}" data-item-type="vehicle">
                     <input type="checkbox" name="vehicle_ids" value="{{ v.id }}" {% if data and v.id in data.vehicle_ids
                         %}checked{% endif %} class="u-d-none">
                     {% if vf.get('thumbnail') %}
                     <img src="{{ vf.thumbnail[0].thumbnails.small.url }}" class="project-checkbox-card-img">
                     {% endif %}
                     <span class="u-text-medium">{{ vf.get('name', '—') }}</span>
+                    <div class="conflict-placeholder" data-conflict-id="{{ v.id }}"></div>
                 </label>
                 {% endfor %}
             </div>
@@ -177,13 +189,14 @@
             <div class="u-flex u-flex-wrap u-gap-1">
                 {% for h in heads %}
                 {% set hf = h.fields %}
-                <label class="project-checkbox-card {% if data and h.id in data.head_ids %}selected{% endif %}">
+                <label class="project-checkbox-card {% if data and h.id in data.head_ids %}selected{% endif %}" data-item-id="{{ h.id }}" data-item-type="head">
                     <input type="checkbox" name="head_ids" value="{{ h.id }}" {% if data and h.id in data.head_ids
                         %}checked{% endif %} class="u-d-none">
                     {% if hf.get('thumbnail') %}
                     <img src="{{ hf.thumbnail[0].thumbnails.small.url }}" class="project-checkbox-card-img">
                     {% endif %}
                     <span class="u-text-medium">{{ hf.get('name', '—') }}</span>
+                    <div class="conflict-placeholder" data-conflict-id="{{ h.id }}"></div>
                 </label>
                 {% endfor %}
             </div>
@@ -618,6 +631,110 @@
                 productionSelect.select2('open');
             }
         });
+
+        // ── Détection en Temps Réel des Conflits de Réservation ───
+        let conflictCheckTimer = null;
+        const currentProjectId = "{{ (data.id if data and data.id else (data.project_id if data and data.project_id else (record_id if record_id else ''))) }}";
+
+        function checkBookingConflicts() {
+            clearTimeout(conflictCheckTimer);
+            conflictCheckTimer = setTimeout(function () {
+                const startDate = $('#departure_date_input').val() || $('#shoot_start_input').val();
+                const endDate = $('#return_date_input').val() || $('#shoot_end_input').val() || startDate;
+
+                const selectedVehicles = [];
+                $('input[name="vehicle_ids"]:checked').each(function () {
+                    selectedVehicles.push($(this).val());
+                });
+
+                const selectedHeads = [];
+                $('input[name="head_ids"]:checked').each(function () {
+                    selectedHeads.push($(this).val());
+                });
+
+                if (!startDate || (selectedVehicles.length === 0 && selectedHeads.length === 0)) {
+                    $('#bookingConflictsAlert').slideUp(200);
+                    $('.project-checkbox-card').removeClass('has-conflict');
+                    $('.conflict-placeholder').empty();
+                    return;
+                }
+
+                const csrfToken = $('input[name="csrf_token"]').val();
+
+                $.ajax({
+                    url: "/admin/api/projects/check-conflicts",
+                    type: "POST",
+                    contentType: "application/json",
+                    headers: {
+                        "X-CSRFToken": csrfToken
+                    },
+                    data: JSON.stringify({
+                        start_date: startDate,
+                        end_date: endDate,
+                        vehicle_ids: selectedVehicles,
+                        head_ids: selectedHeads,
+                        project_id: currentProjectId || $('#current_project_id').val() || null
+                    }),
+                    success: function (res) {
+                        if (!res || !res.data) return;
+                        const data = res.data;
+
+                        // Nettoyage des états précédents
+                        $('.project-checkbox-card').removeClass('has-conflict');
+                        $('.conflict-placeholder').empty();
+
+                        if (data.has_conflicts) {
+                            // Affichage du bandeau d'alerte
+                            $('#bookingConflictsSummary').text(
+                                data.total_conflicts + " conflit(s) détecté(s) pour les dates sélectionnées (" + startDate + " → " + endDate + ") :"
+                            );
+
+                            const $list = $('#bookingConflictsDetailsList').empty();
+                            data.conflicts_list.forEach(function (c) {
+                                const itemLabel = (c.item_type === 'vehicle' ? '🏎️ ' : '🎥 ') + c.item_name;
+                                $list.append(
+                                    $('<li>').html(
+                                        '<strong>' + itemLabel + '</strong> déjà réservé sur <em>' + c.project_name + '</em> (' + c.production + '), ' + c.period_label
+                                    )
+                                );
+
+                                // Marquer la carte spécifique
+                                const $card = $('.project-checkbox-card[data-item-id="' + c.item_id + '"]');
+                                $card.addClass('has-conflict');
+                                $card.find('.conflict-placeholder').html(
+                                    '<span class="conflict-badge" title="Déjà réservé par ' + c.production + ' (' + c.period_label + ')">⚠️ ' + c.project_name + '</span>'
+                                );
+                            });
+
+                            $('#bookingConflictsAlert').slideDown(250);
+                        } else {
+                            $('#bookingConflictsAlert').slideUp(200);
+                        }
+                    },
+                    error: function (err) {
+                        console.warn("Vérification des conflits indisponible :", err);
+                    }
+                });
+            }, 300);
+        }
+
+        // Déclencher la vérification sur changements de matériels et de dates
+        $('input[name="vehicle_ids"], input[name="head_ids"]').on('change', checkBookingConflicts);
+        $('#departure_date_input, #shoot_start_input, #shoot_end_input, #return_date_input').on('change', checkBookingConflicts);
+
+        // Observer les inputs de dates cachés modifiés par ProjectTimelineDatePicker
+        const dateObserver = new MutationObserver(checkBookingConflicts);
+        ['departure_date_input', 'shoot_start_input', 'shoot_end_input', 'return_date_input'].forEach(function(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                dateObserver.observe(el, { attributes: true, attributeFilter: ['value'] });
+            }
+        });
+
+        // Vérification initiale si on est en mode édition
+        if (currentProjectId) {
+            setTimeout(checkBookingConflicts, 400);
+        }
     });
 </script>
 {% endblock %}

@@ -1,9 +1,10 @@
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 from flask import (
     abort,
     current_app,
     flash,
+    jsonify,
     redirect,
     render_template,
     request,
@@ -12,6 +13,7 @@ from flask import (
 )
 
 from services.admin import (
+    check_booking_conflicts,
     create_project,
     delete_project,
     get_project_for_edit,
@@ -123,7 +125,7 @@ def init_projects_routes(app):
             data = get_project_for_edit(record_id)
             if not data:
                 abort(404)
-            return render_template("admin/project_form.html", data=data, is_edit=True, **context)
+            return render_template("admin/project_form.html", data=data, is_edit=True, record_id=record_id, **context)
         except Exception as e:
             current_app.logger.error(f"❌ Erreur lors de la modification du projet : {e}")
             flash(f"Erreur lors de la modification : {str(e)}", "error")
@@ -140,3 +142,41 @@ def init_projects_routes(app):
             current_app.logger.error(f"❌ Erreur lors de la suppression du projet : {e}")
             flash(f"Erreur lors de la suppression : {str(e)}", "error")
             return redirect(url_for("admin_project_edit", record_id=record_id))
+
+    # ── API Détection Conflits de Réservation ──────────────────────
+    @app.route("/admin/api/projects/check-conflicts", methods=["POST"])
+    @require_roles('administrator', 'manager', 'commercial')
+    def admin_api_check_conflicts():
+        try:
+            payload = request.get_json(silent=True) or request.form or {}
+            start_date = payload.get("start_date") or payload.get("departure_date") or payload.get("shoot_start")
+            end_date = payload.get("end_date") or payload.get("return_date") or payload.get("shoot_end")
+
+            vehicle_ids = payload.get("vehicle_ids")
+            if isinstance(vehicle_ids, str):
+                vehicle_ids = [v.strip() for v in vehicle_ids.split(",") if v.strip()]
+            elif vehicle_ids is None:
+                vehicle_ids = []
+
+            head_ids = payload.get("head_ids")
+            if isinstance(head_ids, str):
+                head_ids = [h.strip() for h in head_ids.split(",") if h.strip()]
+            elif head_ids is None:
+                head_ids = []
+
+            exclude_id = payload.get("project_id") or payload.get("record_id") or payload.get("id")
+            if str(exclude_id).strip() in ("", "null", "None", "undefined"):
+                exclude_id = None
+
+            result = check_booking_conflicts(
+                start_date_val=start_date,
+                end_date_val=end_date,
+                vehicle_ids=vehicle_ids,
+                head_ids=head_ids,
+                exclude_project_id=exclude_id,
+            )
+            return jsonify({"status": "success", "data": result}), 200
+        except Exception as e:
+            current_app.logger.error(f"❌ Erreur API check-conflicts : {e}")
+            return jsonify({"status": "error", "message": str(e)}), 500
+

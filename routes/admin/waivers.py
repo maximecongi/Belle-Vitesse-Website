@@ -1,9 +1,10 @@
 import os
 
-from flask import flash, redirect, render_template, request, url_for
+from flask import flash, jsonify, redirect, render_template, request, session, url_for
 
 from models import PilotWaiver, ProductionWaiver, Project
 from services.admin.waivers import (
+    auto_remind_pending_waivers,
     create_pilot_waiver,
     create_production_waiver,
     delete_pilot_waiver,
@@ -181,3 +182,27 @@ def init_waivers_routes(app):
             flash(msg, "error")
         q = request.args.get('q', '')
         return redirect(url_for('admin_production_waivers_list', q=q if q else None))
+
+    # --- API RELANCES AUTOMATIQUES ---
+    @app.route("/admin/api/waivers/auto-remind", methods=["POST"], endpoint='admin_waivers_auto_remind')
+    def admin_waivers_auto_remind():
+        """Déclenche les relances automatiques pour les décharges en attente (accessible admin/manager ou clé Cron)."""
+        cron_token = os.getenv("CRON_SECRET_KEY")
+        auth_header = request.headers.get("Authorization", "")
+        token_match = False
+        if cron_token and auth_header.startswith("Bearer "):
+            token_match = (auth_header.split(" ", 1)[1].strip() == cron_token)
+
+        if not token_match:
+            user_role = session.get("admin_user_role")
+            if not session.get("admin_authenticated") or user_role not in ["administrator", "manager"]:
+                return jsonify({"status": "error", "message": "Accès non autorisé"}), 403
+
+        days_before = request.args.get("days", default=2, type=int)
+        base_url = request.host_url.rstrip('/')
+        results = auto_remind_pending_waivers(days_before=days_before, base_url=base_url)
+        return jsonify({
+            "status": "success",
+            "message": f"{results['production_reminders_sent']} décharge(s) production et {results['pilot_reminders_sent']} décharge(s) pilote relancée(s).",
+            "results": results,
+        })

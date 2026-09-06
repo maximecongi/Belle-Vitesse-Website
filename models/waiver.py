@@ -1,3 +1,4 @@
+from datetime import timedelta
 from models.db import db, generate_inspection_number, _utcnow
 
 
@@ -9,6 +10,7 @@ class TokenMixin:
     created_at = db.Column(db.DateTime, nullable=False,
                            default=_utcnow)
     expires_at = db.Column(db.DateTime, nullable=False,
+                           default=lambda: _utcnow() + timedelta(hours=24),
                            server_default=db.FetchedValue())
 
 
@@ -78,6 +80,10 @@ class PilotWaiver(db.Model):
     # Webhook (n8n)
     webhook_triggered_at = db.Column(db.DateTime, nullable=True)
 
+    # Suivi des relances automatiques
+    last_reminded_at = db.Column(db.DateTime, nullable=True)
+    reminder_count = db.Column(db.Integer, default=0, nullable=False)
+
     # Soft-delete support
     deleted_at = db.Column(db.DateTime, nullable=True)
 
@@ -144,6 +150,10 @@ class ProductionWaiver(db.Model):
 
     # Webhook
     webhook_triggered_at = db.Column(db.DateTime, nullable=True)
+
+    # Suivi des relances automatiques
+    last_reminded_at = db.Column(db.DateTime, nullable=True)
+    reminder_count = db.Column(db.Integer, default=0, nullable=False)
 
     # Soft-delete support
     deleted_at = db.Column(db.DateTime, nullable=True)

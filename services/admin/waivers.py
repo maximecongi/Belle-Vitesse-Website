@@ -645,3 +645,160 @@ def delete_pilot_waiver_internal(project_id):
         logger.error(
             f"❌ Erreur lors de la suppression interne de la décharge pour projet {project_id} : {e}")
         db.session.rollback()
+
+
+# ── Relances Automatiques de Décharges ────────────────────────────
+
+def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> dict:
+    """
+    Identifie et relance automatiquement les décharges (production et pilote)
+    non signées rattachées à des projets dont le tournage débute prochainement (J-days_before).
+    """
+    from datetime import date, timedelta
+    from utils.mailer import (
+        send_production_waiver_invitation_email,
+        send_waiver_invitation_email,
+    )
+
+    today = date.today()
+    target_limit = today + timedelta(days=days_before)
+
+    results = {
+        "production_reminders_sent": 0,
+        "pilot_reminders_sent": 0,
+        "details": [],
+    }
+
+    base_url_str = (base_url or "").rstrip("/")
+
+    # 1. Décharges de Production
+    prod_waivers = (
+        ProductionWaiver.query.filter(
+            ProductionWaiver.deleted_at.is_(None),
+            ProductionWaiver.status.in_(["to_send", "to_sign"]),
+        )
+        .options(joinedload(ProductionWaiver.project).joinedload(Project.production_contact))
+        .all()
+    )
+
+    for pw in prod_waivers:
+        p = pw.project
+        if not p or p.deleted_at is not None:
+            continue
+
+        p_date = p.departure_date or p.shoot_start_date
+        if not p_date:
+            continue
+
+        # Vérifier si dans la fenêtre d'échéance [today, target_limit]
+        if not (today <= p_date <= target_limit):
+            continue
+
+        # Éviter de relancer deux fois le même jour
+        if pw.last_reminded_at and pw.last_reminded_at.date() == today:
+            continue
+
+        contact_prod = p.production_contact
+        if not contact_prod or not contact_prod.mail:
+            continue
+
+        try:
+            # Générer un nouveau token de signature 24h
+            new_token = str(uuid.uuid4())
+            token_rec = ProductionWaiverToken(token=new_token, waiver_id=pw.waiver_id)
+            db.session.add(token_rec)
+
+            sig_url = f"{base_url_str}/sign/production-waiver/{new_token}" if base_url_str else f"/sign/production-waiver/{new_token}"
+
+            sent = send_production_waiver_invitation_email(
+                to_email=contact_prod.mail,
+                prod_contact_name=f"{contact_prod.first_name} {contact_prod.last_name}",
+                project_name=p.name,
+                signature_link=sig_url,
+            )
+
+            if sent:
+                pw.last_reminded_at = datetime.utcnow()
+                pw.reminder_count = (pw.reminder_count or 0) + 1
+                pw.status = "to_sign"
+                pw.sent_at = pw.sent_at or datetime.utcnow()
+                db.session.commit()
+
+                results["production_reminders_sent"] += 1
+                results["details"].append({
+                    "type": "production",
+                    "waiver_id": pw.waiver_id,
+                    "project_name": p.name,
+                    "recipient": contact_prod.mail,
+                    "departure_date": p_date.isoformat(),
+                    "reminder_count": pw.reminder_count,
+                })
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"❌ Erreur relance décharge production {pw.waiver_id} : {e}")
+
+    # 2. Décharges Pilote
+    pilot_waivers = (
+        PilotWaiver.query.filter(
+            PilotWaiver.deleted_at.is_(None),
+            PilotWaiver.status.in_(["to_send", "to_sign"]),
+        )
+        .options(joinedload(PilotWaiver.project).joinedload(Project.pilot_contact))
+        .all()
+    )
+
+    for dw in pilot_waivers:
+        p = dw.project
+        if not p or p.deleted_at is not None:
+            continue
+
+        p_date = p.departure_date or p.shoot_start_date
+        if not p_date:
+            continue
+
+        if not (today <= p_date <= target_limit):
+            continue
+
+        if dw.last_reminded_at and dw.last_reminded_at.date() == today:
+            continue
+
+        pilot = p.pilot_contact
+        if not pilot or not pilot.mail:
+            continue
+
+        try:
+            new_token = str(uuid.uuid4())
+            token_rec = PilotWaiverToken(token=new_token, waiver_id=dw.waiver_id)
+            db.session.add(token_rec)
+
+            sig_url = f"{base_url_str}/sign/pilot-waiver/{new_token}" if base_url_str else f"/sign/pilot-waiver/{new_token}"
+
+            sent = send_waiver_invitation_email(
+                to_email=pilot.mail,
+                pilot_name=f"{pilot.first_name} {pilot.last_name}",
+                project_name=p.name,
+                signature_link=sig_url,
+            )
+
+            if sent:
+                dw.last_reminded_at = datetime.utcnow()
+                dw.reminder_count = (dw.reminder_count or 0) + 1
+                dw.status = "to_sign"
+                dw.sent_at = dw.sent_at or datetime.utcnow()
+                db.session.commit()
+
+                results["pilot_reminders_sent"] += 1
+                results["details"].append({
+                    "type": "pilot",
+                    "waiver_id": dw.waiver_id,
+                    "project_name": p.name,
+                    "recipient": pilot.mail,
+                    "departure_date": p_date.isoformat(),
+                    "reminder_count": dw.reminder_count,
+                })
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"❌ Erreur relance décharge pilote {dw.waiver_id} : {e}")
+
+    return results
+

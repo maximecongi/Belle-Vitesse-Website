@@ -31,6 +31,7 @@ from .productions import (
     list_productions,
     update_production,
 )
+from .conflicts import check_booking_conflicts
 from .projects import (
     create_project,
     delete_project,

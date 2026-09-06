@@ -6,6 +6,14 @@ from unittest.mock import MagicMock
 # Add the project root to sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+# Isolation stricte de l'environnement de test avant tout import d'app
+os.environ["FLASK_ENV"] = "testing"
+os.environ["TESTING"] = "True"
+os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+os.environ["WTF_CSRF_ENABLED"] = "False"
+os.environ["USE_SSH_TUNNEL"] = "false"
+os.environ["LAUNCH_MODE"] = "false"
+
 # --- Mocking WeasyPrint to avoid OSError on environments without GObject ---
 mock_weasyprint = MagicMock()
 mock_weasyprint.HTML = MagicMock()
