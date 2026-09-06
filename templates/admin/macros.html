@@ -14,3 +14,125 @@
 </div>
 {% endif %}
 {% endmacro %}
+
+{# ═══════════ MACROS INCIDENTS ═══════════ #}
+
+{% macro incident_severity_badge(severity, label=None) %}
+{% set s = (severity or 'mineur')|lower %}
+{% if s == 'critique' %}
+<span class="badge-pill" data-val="critique">🚨 {{ label or 'Critique' }}</span>
+{% elif s == 'modere' %}
+<span class="badge-pill" data-val="warning">⚠️ {{ label or 'Modéré' }}</span>
+{% else %}
+<span class="badge-pill" data-val="neutral">ℹ️ {{ label or 'Mineur' }}</span>
+{% endif %}
+{% endmacro %}
+
+{% macro incident_status_badge(status, label=None) %}
+{% set st = (status or 'signale')|lower %}
+{% if st == 'cloture' %}
+<span class="badge-pill" data-val="cloture">🔒 {{ label or 'Clôturé' }}</span>
+{% elif st == 'resolu' %}
+<span class="badge-pill" data-val="ok">✅ {{ label or 'Résolu' }}</span>
+{% elif st == 'en_reparation' %}
+<span class="badge-pill" data-val="in_progress">🔧 {{ label or 'En réparation' }}</span>
+{% elif st == 'en_expertise' %}
+<span class="badge-pill" data-val="warning">🔍 {{ label or 'En expertise' }}</span>
+{% elif st == 'assurance' %}
+<span class="badge-pill" data-val="assurance">📋 {{ label or 'Assurance' }}</span>
+{% else %}
+<span class="badge-pill" data-val="warning">📣 {{ label or 'Signalé' }}</span>
+{% endif %}
+{% endmacro %}
+
+{% macro incident_impact_badge(impact, label=None) %}
+{% set imp = (impact or 'aucun')|lower %}
+{% if imp in ('annulation', 'arret') %}
+<span class="badge-pill" data-val="critique">🛑 {{ label or 'Annulation de session' }}</span>
+{% elif imp == 'interruption' %}
+<span class="badge-pill" data-val="in_progress">⏸️ {{ label or 'Interruption temporaire' }}</span>
+{% elif imp == 'retard' %}
+<span class="badge-pill" data-val="warning">⏳ {{ label or 'Retard sur planning' }}</span>
+{% else %}
+<span class="badge-pill" data-val="ok">✅ {{ label or 'Aucun impact' }}</span>
+{% endif %}
+{% endmacro %}
+
+{% macro incident_signature_badge(incident, compact=false) %}
+{% if incident.is_fully_signed or incident.signature_status == 'signed' %}
+<span class="badge-pill" data-val="ok">✅ {{ 'Scellé 2/2' if compact else 'Scellé contradictoirement' }}</span>
+{% if compact %}<div class="u-text-xs u-text-muted u-mt-1" style="font-size: 11px;">BV ✓ &bull; Prod ✓</div>{% endif %}
+{% elif incident.signature_status == 'signed_bv' %}
+<span class="badge-pill" data-val="warning">✍️ {{ 'Visé BV 1/2' if compact else 'Visé BV — En attente Production' }}</span>
+{% if compact %}<div class="u-text-xs u-text-muted u-mt-1" style="font-size: 11px;">BV ✓ &bull; Prod ⏳</div>{% endif %}
+{% elif incident.signature_status == 'signed_prod' %}
+<span class="badge-pill" data-val="warning">✍️ {{ 'Signé Prod 1/2' if compact else 'Signé Prod — En attente visa BV' }}</span>
+{% if compact %}<div class="u-text-xs u-text-muted u-mt-1" style="font-size: 11px;">BV ⏳ &bull; Prod ✓</div>{% endif %}
+{% elif incident.signature_status == 'pending_prod' %}
+<span class="badge-pill" data-val="in_progress">⏳ {{ 'Invité 0/2' if compact else 'Invitation envoyée à la Production' }}</span>
+{% if compact %}<div class="u-text-xs u-text-muted u-mt-1" style="font-size: 11px;">BV ⏳ &bull; Prod ✉️</div>{% endif %}
+{% else %}
+<span class="badge-pill" data-val="neutral">📝 {{ 'Non signé' if compact else 'En attente de signatures' }}</span>
+{% if compact %}<div class="u-text-xs u-text-muted u-mt-1" style="font-size: 11px;">BV ⏳ &bull; Prod ⏳</div>{% endif %}
+{% endif %}
+{% endmacro %}
+
+{# ═══════════ MACROS VÉHICULES & FLOTTE ═══════════ #}
+
+{% macro vehicle_status_badge(status, label=None) %}
+{% set st = (status or 'disponible')|lower %}
+{% if st == 'incident' %}
+<span class="badge-pill" data-val="critique">⚠️ {{ label or 'Incident' }}</span>
+{% elif st in ('tournage', 'active', 'in_progress') %}
+<span class="badge-pill" data-val="in_progress">🎬 {{ label or 'En tournage' }}</span>
+{% else %}
+<span class="badge-pill" data-val="ok">✅ {{ label or 'Disponible' }}</span>
+{% endif %}
+{% endmacro %}
+
+{% macro vehicle_avatar(image_url, name, class="", style="", padding="1.5rem") %}
+<img src="{{ image_url }}" alt="{{ name }}" class="{{ class }}" style="{{ style }}"
+    onerror="this.src='/static/imgs/logo-bv.svg'; this.style.objectFit='contain'; this.style.padding='{{ padding }}';">
+{% endmacro %}
+
+{% macro timeline_event_type_badge(event_type, severity_label=None) %}
+{% if event_type == 'checkout' %}
+<span class="badge-pill" data-val="checkout">🚚 Départ</span>
+{% elif event_type == 'checkin' %}
+<span class="badge-pill" data-val="checkin">📦 Retour</span>
+{% elif event_type == 'incident' %}
+<span class="badge-pill" data-val="critique">⚠️ Incident ({{ severity_label or 'Modéré' }})</span>
+{% else %}
+<span class="badge-pill" data-val="project">🎬 Tournage</span>
+{% endif %}
+{% endmacro %}
+
+{% macro timeline_event_status_badge(evt) %}
+{% if evt.type in ('checkout', 'checkin') %}
+    {% if evt.status == 'signed' %}
+    <span class="badge-pill" data-val="ok">🔒 Signé</span>
+    {% elif evt.status == 'in_progress' %}
+    <span class="badge-pill" data-val="in_progress">⏳ En cours</span>
+    {% else %}
+    <span class="badge-pill" data-val="neutral">ℹ️ {{ evt.status_label or evt.status }}</span>
+    {% endif %}
+{% elif evt.type == 'incident' %}
+    {{ incident_status_badge(evt.status, evt.status_label) }}
+{% elif evt.type == 'project' %}
+    {% if evt.status == 'in_progress' or evt.status == 'active' %}
+    <span class="badge-pill" data-val="in_progress">🎬 En tournage</span>
+    {% elif evt.status == 'completed' %}
+    <span class="badge-pill" data-val="cloture">🔒 Projet clôturé</span>
+    {% else %}
+    <span class="badge-pill" data-val="neutral">📅 {{ evt.status_label or 'Tournage' }}</span>
+    {% endif %}
+{% else %}
+    {% if evt.status == 'signed' or evt.status == 'ok' %}
+    <span class="badge-pill" data-val="ok">🔒 Signé</span>
+    {% elif evt.status == 'in_progress' %}
+    <span class="badge-pill" data-val="in_progress">⏳ En cours</span>
+    {% elif evt.status_label %}
+    <span class="badge-pill" data-val="neutral">ℹ️ {{ evt.status_label }}</span>
+    {% endif %}
+{% endif %}
+{% endmacro %}

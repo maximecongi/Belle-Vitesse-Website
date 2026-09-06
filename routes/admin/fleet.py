@@ -46,6 +46,7 @@ def init_fleet_routes(app):
                 "admin/vehicle_timeline.html",
                 vehicle=timeline_data["vehicle"],
                 events=timeline_data["events"],
+                missions=timeline_data.get("missions", []),
                 stats=timeline_data["stats"]
             )
         except Exception as e:

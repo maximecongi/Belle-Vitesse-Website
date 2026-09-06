@@ -1,5 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
+{% from "admin/macros.html" import incident_severity_badge, incident_status_badge, incident_impact_badge, incident_signature_badge %}
+
 {% block title %}Incident {{ incident.incident_number }} — {{ incident.title }}{% endblock %}
 {% block page_title %}Incident {{ incident.incident_number }}{% endblock %}
 
@@ -33,43 +35,9 @@
 
         <div class="u-flex u-flex-column u-align-end u-gap-2">
             <div class="u-flex u-gap-2 u-flex-wrap u-justify-end">
-                <!-- Gravité -->
-                {% if incident.severity == 'critique' %}
-                <span class="badge-pill" data-val="critique">🚨 {{ incident.severity_label or 'Critique' }}</span>
-                {% elif incident.severity == 'modere' %}
-                <span class="badge-pill" data-val="warning">⚠️ {{ incident.severity_label or 'Modéré' }}</span>
-                {% else %}
-                <span class="badge-pill" data-val="neutral">ℹ️ {{ incident.severity_label or 'Mineur' }}</span>
-                {% endif %}
-
-                <!-- Impact Tournage -->
-                {% if incident.shooting_impact in ('annulation', 'arret') %}
-                <span class="badge-pill" data-val="critique">🛑 {{ incident.shooting_impact_label or 'Annulation de
-                    session' }}</span>
-                {% elif incident.shooting_impact == 'interruption' %}
-                <span class="badge-pill" data-val="in_progress">⏸️ {{ incident.shooting_impact_label or 'Interruption
-                    temporaire' }}</span>
-                {% elif incident.shooting_impact == 'retard' %}
-                <span class="badge-pill" data-val="warning">⏳ {{ incident.shooting_impact_label or 'Retard sur planning'
-                    }}</span>
-                {% else %}
-                <span class="badge-pill" data-val="ok">✅ {{ incident.shooting_impact_label or 'Aucun impact' }}</span>
-                {% endif %}
-
-                <!-- Statut Dossier -->
-                {% if incident.status == 'cloture' %}
-                <span class="badge-pill" data-val="cloture">🔒 {{ incident.status_label }}</span>
-                {% elif incident.status == 'resolu' %}
-                <span class="badge-pill" data-val="ok">✅ {{ incident.status_label }}</span>
-                {% elif incident.status == 'en_reparation' %}
-                <span class="badge-pill" data-val="in_progress">🔧 {{ incident.status_label }}</span>
-                {% elif incident.status == 'en_expertise' %}
-                <span class="badge-pill" data-val="warning">🔍 {{ incident.status_label }}</span>
-                {% elif incident.status == 'assurance' %}
-                <span class="badge-pill" data-val="assurance">📋 {{ incident.status_label }}</span>
-                {% else %}
-                <span class="badge-pill" data-val="neutral">📣 {{ incident.status_label }}</span>
-                {% endif %}
+                {{ incident_severity_badge(incident.severity, incident.severity_label) }}
+                {{ incident_impact_badge(incident.shooting_impact, incident.shooting_impact_label) }}
+                {{ incident_status_badge(incident.status, incident.status_label) }}
             </div>
         </div>
     </div>
@@ -85,17 +53,7 @@
             <div class="u-flex u-justify-between u-align-center u-flex-wrap u-gap-2 u-mb-3">
                 <div class="admin-card-title u-m-0">Visas & Signatures du Constat Contradictoire</div>
                 <div>
-                    {% if incident.signature_status == 'signed' %}
-                    <span class="badge-pill" data-val="ok">✅ Scellé contradictoirement</span>
-                    {% elif incident.signature_status == 'signed_bv' %}
-                    <span class="badge-pill" data-val="warning">✍️ Visé BV — En attente Production</span>
-                    {% elif incident.signature_status == 'signed_prod' %}
-                    <span class="badge-pill" data-val="warning">🎬 Signé Prod — En attente visa BV</span>
-                    {% elif incident.signature_status == 'pending_prod' %}
-                    <span class="badge-pill" data-val="in_progress">⏳ Invitation envoyée à la Production</span>
-                    {% else %}
-                    <span class="badge-pill" data-val="neutral">📝 En attente de signatures</span>
-                    {% endif %}
+                    {{ incident_signature_badge(incident) }}
                 </div>
             </div>
 
@@ -585,64 +543,6 @@
         </form>
     </div>
 </div>
-
-<style>
-    .incident-modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.65);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 3000;
-        backdrop-filter: blur(4px);
-    }
-
-    .incident-modal-card {
-        background: #ffffff;
-        width: 95%;
-        max-width: 520px;
-        border-radius: 8px;
-        padding: 1.75rem;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-        position: relative;
-        max-height: 90vh;
-        overflow-y: auto;
-    }
-
-    .incident-modal-close-btn {
-        background: none;
-        border: none;
-        font-size: 1.5rem;
-        line-height: 1;
-        cursor: pointer;
-        color: var(--grey-2, #64748b);
-        padding: 0;
-    }
-
-    .incident-modal-close-btn:hover {
-        color: #000;
-    }
-
-    .incident-canvas-wrapper {
-        border: 2px dashed #cbd5e1;
-        background: #f8fafc;
-        border-radius: 6px;
-        position: relative;
-        overflow: hidden;
-        height: 160px;
-    }
-
-    .incident-canvas-wrapper canvas {
-        display: block;
-        width: 100%;
-        height: 100%;
-        cursor: crosshair;
-    }
-</style>
 
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 <script>

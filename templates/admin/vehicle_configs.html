@@ -3,6 +3,14 @@
 {% block title %}Configuration des Véhicules{% endblock %}
 {% block page_title %}Configuration des Points de Contrôle{% endblock %}
 
+{% block header_actions %}
+<div class="u-flex u-align-center u-gap-2">
+    <a href="{{ url_for('admin_fleet_list') }}" class="admin-btn admin-btn-secondary">
+        ← Retour au Parc
+    </a>
+</div>
+{% endblock %}
+
 {% block content %}
 <div class="admin-card">
     <div class="admin-card-title">Gestion des Points de Contrôle par Véhicule <span class="vehicle-modal-trigger u-cursor-pointer u-ml-1 u-text-lg u-vertical-middle"

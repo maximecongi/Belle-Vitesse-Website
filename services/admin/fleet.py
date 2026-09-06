@@ -292,6 +292,107 @@ def get_fleet_overview() -> Dict[str, Any]:
     }
 
 
+def _build_vehicle_missions(vehicle_projects: List[Any], events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Construit une structure hiérarchique à deux niveaux des événements du véhicule :
+    Niveau 1 : Les Missions de Tournage (Projets) et Événements Autonomes (hors tournage).
+    Niveau 2 : Les sous-événements rattachés à chaque tournage (Départ -> Incidents -> Retour).
+    """
+    missions: List[Dict[str, Any]] = []
+    consumed_event_ids = set()
+
+    for p in vehicle_projects:
+        p_checkouts = [e for e in events if e["type"] == "checkout" and str(e.get("project_id")) == str(p.id)]
+        p_checkins = [e for e in events if e["type"] == "checkin" and str(e.get("project_id")) == str(p.id)]
+        p_incidents = [e for e in events if e["type"] == "incident" and str(e.get("project_id")) == str(p.id)]
+
+        # Sous-événements ordonnés chronologiquement (Départ -> Incidents -> Retour)
+        sub_events = p_checkouts + p_incidents + p_checkins
+        sub_events.sort(key=lambda e: (e.get("date") or date.min, e.get("datetime") or datetime.min))
+
+        for e in sub_events:
+            consumed_event_ids.add(e["id"])
+
+        # Date pivot de la mission
+        mission_date = (
+            p.shoot_start_date
+            or p.departure_date
+            or (sub_events[0]["date"] if sub_events else (p.created_at.date() if hasattr(p, "created_at") and p.created_at else date.min))
+        )
+        mission_datetime = getattr(p, "created_at", None) or (sub_events[0].get("datetime") if sub_events else None)
+
+        is_active = bool(p.shoot_start_date and p.shoot_end_date and p.shoot_start_date <= date.today() <= p.shoot_end_date)
+        status = "in_progress" if is_active else "completed"
+        status_label = "En tournage" if is_active else "Projet clôturé"
+
+        # Formatage des dates de tournage
+        date_range_label = ""
+        if p.shoot_start_date and p.shoot_end_date:
+            date_range_label = f"Du {format_date_fr(str(p.shoot_start_date))} au {format_date_fr(str(p.shoot_end_date))}"
+        elif p.shoot_start_date:
+            date_range_label = f"À partir du {format_date_fr(str(p.shoot_start_date))}"
+        elif mission_date != date.min:
+            date_range_label = format_date_fr(str(mission_date))
+        else:
+            date_range_label = "—"
+
+        # Synthèse des anomalies
+        total_failures = sum(e.get("failure_count", 0) for e in (p_checkouts + p_checkins))
+
+        missions.append({
+            "id": f"mission_{p.id}",
+            "type": "project_mission",
+            "project_id": p.id,
+            "project_unique_id": p.project_id,
+            "project_name": p.name,
+            "production_name": p.production.name if p.production else "—",
+            "pilot_name": f"{p.pilot_contact.first_name} {p.pilot_contact.last_name}" if p.pilot_contact else "—",
+            "date": mission_date,
+            "datetime": mission_datetime,
+            "date_range_label": date_range_label,
+            "status": status,
+            "status_label": status_label,
+            "checkouts": p_checkouts,
+            "checkins": p_checkins,
+            "incidents": p_incidents,
+            "sub_events": sub_events,
+            "has_checkout": len(p_checkouts) > 0,
+            "checkout_signed": any(c.get("status") == "signed" for c in p_checkouts),
+            "has_checkin": len(p_checkins) > 0,
+            "checkin_signed": any(c.get("status") == "signed" for c in p_checkins),
+            "has_incidents": len(p_incidents) > 0,
+            "incident_count": len(p_incidents),
+            "total_failures": total_failures,
+            "notes": p.notes or "",
+        })
+
+    # Événements autonomes (hors tournage / sans projet)
+    for e in events:
+        if e["type"] != "project" and e["id"] not in consumed_event_ids:
+            missions.append({
+                "id": f"autonomous_{e['id']}",
+                "type": "autonomous",
+                "date": e.get("date") or date.min,
+                "datetime": e.get("datetime"),
+                "event": e,
+            })
+
+    # Tri chronologique décroissant des missions (la plus récente d'abord)
+    missions.sort(
+        key=lambda m: (
+            m.get("date") or date.min,
+            m.get("datetime") or datetime.min
+        ),
+        reverse=True
+    )
+
+    # Déterminer quelles missions sont dépliées par défaut
+    for i, m in enumerate(missions):
+        m["is_open"] = (m.get("status") == "in_progress") or (i == 0)
+
+    return missions
+
+
 def get_vehicle_timeline(vehicle_id: str) -> Optional[Dict[str, Any]]:
     """
     Agrège chronologiquement tous les événements de vie d'un véhicule spécifique :
@@ -573,8 +674,11 @@ def get_vehicle_timeline(vehicle_id: str) -> Optional[Dict[str, Any]]:
         "current_status_label": current_status_label,
     }
 
+    missions = _build_vehicle_missions(vehicle_projects, events)
+
     return {
         "vehicle": vehicle_info,
         "events": events,
+        "missions": missions,
         "stats": stats,
     }

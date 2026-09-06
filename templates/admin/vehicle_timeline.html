@@ -1,5 +1,8 @@
 {% extends "admin/admin_base.html" %}
 
+{% from "admin/macros.html" import incident_status_badge, incident_severity_badge, incident_impact_badge,
+vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_status_badge %}
+
 {% block title %}Historique — {{ vehicle.name }} ({{ vehicle.unique_id }}){% endblock %}
 {% block page_title %}Timeline & Historique{% endblock %}
 
@@ -24,20 +27,13 @@
         <div class="u-flex u-gap-4 u-flex-wrap u-align-center" style="max-width: 600px;">
             <div
                 style="width: 130px; height: 100px; border-radius: 8px; overflow: hidden; background: rgba(0, 0, 0, 0.4); flex-shrink: 0;">
-                <img src="{{ vehicle.image_url }}" alt="{{ vehicle.name }}"
-                    style="width: 100%; height: 100%; object-fit: cover;"
-                    onerror="this.src='/static/imgs/logo-bv.svg'; this.style.objectFit='contain'; this.style.padding='1rem';">
+                {{ vehicle_avatar(vehicle.image_url, vehicle.name, style="width: 100%; height: 100%; object-fit:
+                cover;", padding="1rem") }}
             </div>
             <div>
                 <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
                     <span class="checkout-doc-id u-m-0">{{ vehicle.unique_id }}</span>
-                    {% if stats.current_status == 'incident' %}
-                    <span class="badge-pill" data-val="critique">⚠️ {{ stats.current_status_label }}</span>
-                    {% elif stats.current_status == 'tournage' %}
-                    <span class="badge-pill" data-val="in_progress">🎬 {{ stats.current_status_label }}</span>
-                    {% else %}
-                    <span class="badge-pill" data-val="ok">✅ {{ stats.current_status_label }}</span>
-                    {% endif %}
+                    {{ vehicle_status_badge(stats.current_status, stats.current_status_label) }}
                 </div>
 
                 <h1 class="u-text-2xl u-font-bold u-mt-1 u-mb-1">{{ vehicle.name }}</h1>
@@ -94,45 +90,361 @@
     </div>
 </div>
 
-<!-- ═══════════ FILTRES DE LA TIMELINE ═══════════ -->
+<!-- ═══════════ CONTRÔLES & COMMUTATEUR DE VUE ═══════════ -->
 <div class="admin-card u-mb-4 u-p-3">
     <div class="u-flex u-justify-between u-align-center u-flex-wrap u-gap-3">
-        <div class="u-flex u-gap-2 u-flex-wrap" id="timeline-filters">
-            <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary timeline-filter-btn active"
-                data-type="all">
-                Tous les événements ({{ events|length }})
-            </button>
-            <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary timeline-filter-btn"
-                data-type="project">
-                🎬 Tournages ({{ stats.total_projects }})
-            </button>
-            <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary timeline-filter-btn"
-                data-type="checkout">
-                🚚 Départs ({{ stats.total_checkouts }})
-            </button>
-            <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary timeline-filter-btn"
-                data-type="checkin">
-                📦 Retours ({{ stats.total_checkins }})
-            </button>
-            <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary timeline-filter-btn"
-                data-type="incident">
-                ⚠️ Incidents ({{ stats.total_incidents }})
-            </button>
+        <!-- Commutateur de mode d'affichage -->
+        <div class="u-flex u-align-center u-gap-3 u-flex-wrap">
+            <div class="view-toggle-container" id="timeline-view-toggle">
+                <button type="button" class="view-toggle-btn active" data-view="missions">
+                    🗂️ Vue par Tournage ({{ missions|length }})
+                </button>
+                <button type="button" class="view-toggle-btn" data-view="linear">
+                    ⏳ Flux Chronologique ({{ events|length }})
+                </button>
+            </div>
+
+            <div id="missions-controls" class="u-flex u-align-center u-gap-2">
+                <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary" id="toggle-all-missions-btn"
+                    onclick="toggleAllMissions()">
+                    Déplier / Replier tout
+                </button>
+            </div>
         </div>
+
+        <!-- Filtres par type (actif sur le flux linéaire) -->
+        <div id="linear-filters-container" style="display: none;">
+            <div class="u-flex u-gap-2 u-flex-wrap" id="timeline-filters">
+                <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary timeline-filter-btn active"
+                    data-type="all">
+                    Tous ({{ events|length }})
+                </button>
+                <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary timeline-filter-btn"
+                    data-type="project">
+                    🎬 Tournages ({{ stats.total_projects }})
+                </button>
+                <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary timeline-filter-btn"
+                    data-type="checkout">
+                    🚚 Départs ({{ stats.total_checkouts }})
+                </button>
+                <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary timeline-filter-btn"
+                    data-type="checkin">
+                    📦 Retours ({{ stats.total_checkins }})
+                </button>
+                <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary timeline-filter-btn"
+                    data-type="incident">
+                    ⚠️ Incidents ({{ stats.total_incidents }})
+                </button>
+            </div>
+        </div>
+
         <div class="u-text-xs u-text-muted">
-            <span id="events-count">{{ events|length }}</span> événement(s) affiché(s)
+            <span id="view-indicator-count">{{ missions|length }} mission(s) répertoriée(s)</span>
         </div>
     </div>
 </div>
 
-<!-- ═══════════ FLUX CHRONOLOGIQUE (TIMELINE) ═══════════ -->
-<div class="timeline-wrapper" style="position: relative; padding-left: 2rem; margin-top: 1.5rem;">
+<!-- ═══════════ VUE 1 : TIMELINE HIÉRARCHIQUE PAR MISSION (DÉFAUT) ═══════════ -->
+<div id="timeline-missions-view" class="timeline-wrapper"
+    style="position: relative; padding-left: 2rem; margin-top: 1.5rem;">
+    <!-- Ligne verticale continue Niveau 1 -->
+    <div style="position: absolute; left: 10px; top: 12px; bottom: 0; width: 2px; background: rgba(0, 0, 0, 0.1);">
+    </div>
+
+    {% for m in missions %}
+    {% if m.type == 'project_mission' %}
+    <!-- Jalon Niveau 1 : Tournage / Projet -->
+    <div class="timeline-item u-mb-4" data-type="project" style="position: relative;">
+        <!-- Puce circulaire Niveau 1 (Tournage) -->
+        <div
+            style="position: absolute; left: -2rem; top: 14px; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; z-index: 2; background: #8b5cf6; color: #fff; box-shadow: 0 0 10px rgba(139, 92, 246, 0.35);">
+            🎬
+        </div>
+
+        <!-- Carte Mission Principale (Style identique à la vue chronologique) -->
+        <div class="admin-card u-p-3 mission-card" id="mission-card-{{ m.project_id }}">
+            <div class="u-flex u-justify-between u-align-start u-flex-wrap u-gap-2">
+                <!-- Gauche : Références, Titre, Métadonnées contextuelles -->
+                <div>
+                    <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
+                        <span class="checkout-doc-id u-m-0">{{ m.project_unique_id }}</span>
+                        <span class="badge-pill" data-val="primary">🎬 Tournage</span>
+                        {% if m.status == 'in_progress' %}
+                        <span class="badge-pill" data-val="in_progress">🎬 En tournage</span>
+                        {% else %}
+                        <span class="badge-pill" data-val="cloture">🔒 Clôturé</span>
+                        {% endif %}
+                        {% if m.has_incidents %}
+                        <span class="badge-pill" data-val="critique">⚠️ {{ m.incident_count }} incident{{ 's' if
+                            m.incident_count > 1 else '' }}</span>
+                        {% endif %}
+                        {% if m.total_failures > 0 %}
+                        <span class="badge-pill" data-val="warning">⚠️ {{ m.total_failures }} anomalie(s)</span>
+                        {% endif %}
+                    </div>
+
+                    <h3 class="u-text-lg u-font-bold u-mt-2 u-mb-1">
+                        <a href="{{ url_for('admin_projects_list', q=m.project_unique_id) }}" class="u-text-inherit"
+                            style="text-decoration: none;">
+                            {{ m.project_name }}
+                        </a>
+                    </h3>
+
+                    <div class="u-text-sm u-text-muted u-flex u-gap-3 u-flex-wrap u-mt-1">
+                        <span>🗓️ {{ m.date_range_label }}</span>
+                        {% if m.production_name and m.production_name != '—' %}
+                        <span>🏢 Production : {{ m.production_name }}</span>
+                        {% endif %}
+                        {% if m.pilot_name and m.pilot_name != '—' %}
+                        <span>🏎️ Pilote : {{ m.pilot_name }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Droite : Actions directes -->
+                <div class="u-text-right u-flex u-flex-column u-align-end u-gap-2">
+                    <div class="u-flex u-gap-2">
+                        <a href="{{ url_for('admin_projects_list', q=m.project_unique_id) }}"
+                            class="admin-btn admin-btn-sm admin-btn-secondary" title="Consulter la fiche projet">
+                            Détails →
+                        </a>
+                        {% if m.sub_events %}
+                        <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary mission-expand-btn"
+                            onclick="toggleMissionDetails('{{ m.project_id }}')"
+                            title="Afficher ou masquer les contrôles et incidents">
+                            <span class="toggle-icon">{% if m.is_open %}▲ Masquer{% else %}▼ {{ m.sub_events|length }}
+                                étape(s){% endif %}</span>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer de synthèse discret du cycle de vie de la mission -->
+            <div class="mission-cycle-bar">
+                <span class="mission-cycle-step">
+                    <span>🚚 Départ :</span>
+                    {% if m.has_checkout %}
+                    {% if m.checkout_signed %}
+                    <strong class="u-text-success">✓ Signé{% if m.checkouts[0].battery is not none %} ({{
+                        m.checkouts[0].battery }}%){% endif %}</strong>
+                    {% else %}
+                    <strong class="u-text-warning">⏳ En cours</strong>
+                    {% endif %}
+                    {% else %}
+                    <span class="u-text-muted">— En attente</span>
+                    {% endif %}
+                </span>
+
+                <span class="mission-cycle-dot">•</span>
+
+                <span class="mission-cycle-step">
+                    <span>🎬 Tournage :</span>
+                    {% if m.has_incidents %}
+                    <strong class="u-text-danger">⚠️ {{ m.incident_count }} incident{{ 's' if m.incident_count > 1 else
+                        '' }}</strong>
+                    {% elif m.status == 'in_progress' %}
+                    <strong class="u-text-primary">En cours</strong>
+                    {% else %}
+                    <strong class="u-text-success">✓ Conforme</strong>
+                    {% endif %}
+                </span>
+
+                <span class="mission-cycle-dot">•</span>
+
+                <span class="mission-cycle-step">
+                    <span>📦 Retour :</span>
+                    {% if m.has_checkin %}
+                    {% if m.checkin_signed %}
+                    <strong class="u-text-success">✓ Validé{% if m.checkins[0].battery is not none %} ({{
+                        m.checkins[0].battery }}%){% endif %}</strong>
+                    {% else %}
+                    <strong class="u-text-warning">⏳ En cours</strong>
+                    {% endif %}
+                    {% else %}
+                    <span class="u-text-muted">— Non retourné</span>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+
+        <!-- Niveau 2 : Sous-timeline indentée pour les étapes du tournage -->
+        <div class="mission-sub-events mission-sub-timeline" id="mission-sub-events-{{ m.project_id }}"
+            style="display: {% if m.is_open %}block{% else %}none{% endif %};">
+            {% if m.sub_events %}
+            {% for sub_evt in m.sub_events %}
+            <div class="mission-sub-item">
+                <!-- Puce discrète sur la ligne pointillée -->
+                <div class="mission-sub-node node-{{ sub_evt.type }}">
+                    {% if sub_evt.type == 'checkout' %}🚚{% elif sub_evt.type == 'checkin' %}📦{% elif sub_evt.type ==
+                    'incident' %}⚠️{% else %}ℹ️{% endif %}
+                </div>
+
+                <!-- Carte d'étape fine identique à la vue chronologique -->
+                <div class="admin-card u-p-3" style="transition: border-color 0.2s ease;">
+                    <div class="u-flex u-justify-between u-align-start u-flex-wrap u-gap-2">
+                        <div>
+                            <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
+                                <span class="checkout-doc-id u-m-0">{{ sub_evt.reference }}</span>
+                                {{ timeline_event_type_badge(sub_evt.type, sub_evt.severity_label) }}
+                                {{ timeline_event_status_badge(sub_evt) }}
+                            </div>
+                            <h4 class="u-text-base u-font-bold u-mt-1 u-mb-1">
+                                {% if sub_evt.type == 'checkout' %}
+                                Contrôle de départ
+                                {% elif sub_evt.type == 'checkin' %}
+                                Contrôle de retour
+                                {% elif sub_evt.type == 'incident' %}
+                                {{ sub_evt.title|replace('Incident : ', '') }}
+                                {% else %}
+                                {{ sub_evt.title }}
+                                {% endif %}
+                            </h4>
+                            <div class="u-text-xs u-text-muted u-flex u-gap-3 u-flex-wrap u-mt-1">
+                                {% if sub_evt.controller_name and sub_evt.controller_name != '—' %}
+                                <span>👤 Contrôleur : {{ sub_evt.controller_name }}</span>
+                                {% endif %}
+                                {% if sub_evt.reporter_name and sub_evt.reporter_name != '—' %}
+                                <span>👤 Déclaré par : {{ sub_evt.reporter_name }}</span>
+                                {% endif %}
+                                {% if sub_evt.location and sub_evt.location != 'Lieu non précisé' %}
+                                <span>📍 Lieu : {{ sub_evt.location }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="u-text-right u-flex u-flex-column u-align-end u-gap-2">
+                            <span class="u-text-sm u-font-bold">
+                                {{ sub_evt.date_formatted }}
+                            </span>
+                            <div class="u-flex u-gap-2">
+                                {% if sub_evt.signed_pdf_path %}
+                                <a href="{{ sub_evt.signed_pdf_path }}" target="_blank"
+                                    class="admin-btn admin-btn-sm admin-btn-secondary" title="Consulter le PV scellé">
+                                    📄 PDF Signé
+                                </a>
+                                {% endif %}
+                                {% if sub_evt.type == 'checkout' %}
+                                <a href="{{ url_for('admin_checkout_detail', record_id=sub_evt.raw_id) }}"
+                                    class="admin-btn admin-btn-sm admin-btn-secondary">
+                                    Détails →
+                                </a>
+                                {% elif sub_evt.type == 'checkin' %}
+                                <a href="{{ url_for('admin_checkin_detail', record_id=sub_evt.raw_id) }}"
+                                    class="admin-btn admin-btn-sm admin-btn-secondary">
+                                    Détails →
+                                </a>
+                                {% elif sub_evt.type == 'incident' %}
+                                <a href="{{ url_for('admin_incident_detail', record_id=sub_evt.raw_id) }}"
+                                    class="admin-btn admin-btn-sm admin-btn-secondary">
+                                    Détails →
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Indicateurs techniques spécifiques en footer (u-border-top) -->
+                    {% if sub_evt.type in ('checkout', 'checkin') %}
+                    <div class="u-flex u-align-center u-gap-3 u-flex-wrap u-mt-2 u-pt-2 u-border-top u-text-xs">
+                        {% if sub_evt.battery is not none %}
+                        <div class="u-flex u-align-center u-gap-1">
+                            <span class="u-text-muted">Batterie :</span>
+                            <strong
+                                class="{% if sub_evt.battery >= 80 %}u-text-success{% elif sub_evt.battery >= 40 %}u-text-warning{% else %}u-text-danger{% endif %}">{{
+                                sub_evt.battery }}%</strong>
+                        </div>
+                        {% endif %}
+                        {% if sub_evt.failures %}
+                        <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
+                            <span class="u-text-danger u-font-bold">⚠️ Anomalies :</span>
+                            {% for f in sub_evt.failures %}
+                            <span class="badge-pill" data-val="critique" style="font-size: 10px; padding: 2px 6px;">{{ f
+                                }}</span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="u-text-success">
+                            ✅ Conforme (RAS)
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% elif sub_evt.type == 'incident' %}
+                    <div class="u-flex u-align-center u-gap-3 u-flex-wrap u-mt-2 u-pt-2 u-border-top u-text-xs">
+                        {{ incident_severity_badge(sub_evt.severity, sub_evt.severity_label) }}
+                        {% if sub_evt.shooting_impact and sub_evt.shooting_impact != 'aucun' %}
+                        {{ incident_impact_badge(sub_evt.shooting_impact) }}
+                        {% endif %}
+                        {% if sub_evt.description %}
+                        <div class="u-text-muted u-mt-1" style="width: 100%;">
+                            <span class="u-font-semibold">Constat :</span> {{ sub_evt.description|truncate(220) }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="admin-card u-p-3 u-text-xs u-text-muted" style="font-style: italic;">
+                Aucun contrôle de départ/retour ou incident enregistré pour ce tournage.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% elif m.type == 'autonomous' %}
+    <!-- Jalon Autonome : Événement hors tournage / atelier -->
+    <div class="timeline-item u-mb-4" data-type="{{ m.event.type }}" style="position: relative;">
+        <div style="position: absolute; left: -2rem; top: 14px; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; z-index: 2;
+            {% if m.event.type == 'incident' %}background: #ef4444; color: #fff; box-shadow: 0 0 10px rgba(239, 68, 68, 0.35);
+            {% elif m.event.type == 'checkout' %}background: #10b981; color: #fff;
+            {% elif m.event.type == 'checkin' %}background: #3b82f6; color: #fff;
+            {% else %}background: #64748b; color: #fff;{% endif %}">
+            {% if m.event.type == 'incident' %}⚠️{% elif m.event.type == 'checkout' %}🚚{% elif m.event.type ==
+            'checkin' %}📦{% else %}🔧{% endif %}
+        </div>
+        <div class="admin-card u-p-3">
+            <div class="u-flex u-justify-between u-align-start u-flex-wrap u-gap-2">
+                <div>
+                    <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
+                        <span class="checkout-doc-id u-m-0">{{ m.event.reference }}</span>
+                        {{ timeline_event_type_badge(m.event.type, m.event.severity_label) }}
+                        {{ timeline_event_status_badge(m.event) }}
+                        <span class="badge-pill" data-val="neutral" style="font-size: 10px;">🔧 Hors tournage</span>
+                    </div>
+                    <h3 class="u-text-lg u-font-bold u-mt-2 u-mb-1">{{ m.event.title }}</h3>
+                    <p class="u-text-sm u-text-muted u-m-0 u-mt-1">{{ m.event.description or "Événement opérationnel
+                        indépendant" }}</p>
+                </div>
+                <div class="u-text-right u-flex u-flex-column u-align-end u-gap-2">
+                    <span class="u-text-sm u-font-bold">{{ m.event.date_formatted }}</span>
+                    {% if m.event.type == 'incident' %}
+                    <a href="{{ url_for('admin_incident_detail', record_id=m.event.raw_id) }}"
+                        class="admin-btn admin-btn-sm admin-btn-secondary">
+                        Détails →
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="admin-card u-text-center u-p-5">
+        <p class="u-text-muted u-text-lg u-m-0">Aucun tournage ou événement répertorié pour ce véhicule.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- ═══════════ VUE 2 : FLUX CHRONOLOGIQUE LINÉAIRE ═══════════ -->
+<div id="timeline-linear-view" class="timeline-wrapper"
+    style="display: none; position: relative; padding-left: 2rem; margin-top: 1.5rem;">
     <!-- Ligne verticale continue -->
     <div style="position: absolute; left: 10px; top: 12px; bottom: 0; width: 2px; background: rgba(0, 0, 0, 0.1);">
     </div>
 
     {% for evt in events %}
-    <div class="timeline-item u-mb-4" data-type="{{ evt.type }}" style="position: relative;">
+    <div class="timeline-linear-item timeline-item u-mb-4" data-type="{{ evt.type }}" style="position: relative;">
         <!-- Puce circulaire sur la ligne verticale -->
         <div style="position: absolute; left: -2rem; top: 12px; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; z-index: 2;
             {% if evt.type == 'checkout' %}
@@ -158,58 +470,10 @@
                         <span class="checkout-doc-id u-m-0">{{ evt.reference }}</span>
 
                         <!-- Badge de type d'événement -->
-                        {% if evt.type == 'checkout' %}
-                        <span class="badge-pill" data-val="checkout">🚚 Départ</span>
-                        {% elif evt.type == 'checkin' %}
-                        <span class="badge-pill" data-val="checkin">📦 Retour</span>
-                        {% elif evt.type == 'incident' %}
-                        <span class="badge-pill" data-val="critique">⚠️ Incident ({{ evt.severity_label }})</span>
-                        {% else %}
-                        <span class="badge-pill" data-val="project">🎬 Tournage</span>
-                        {% endif %}
+                        {{ timeline_event_type_badge(evt.type, evt.severity_label) }}
 
                         <!-- Badge d'avancement / statut -->
-                        {% if evt.type in ('checkout', 'checkin') %}
-                        {% if evt.status == 'signed' %}
-                        <span class="badge-pill" data-val="ok">🔒 Signé</span>
-                        {% elif evt.status == 'in_progress' %}
-                        <span class="badge-pill" data-val="in_progress">⏳ En cours</span>
-                        {% else %}
-                        <span class="badge-pill" data-val="neutral">ℹ️ {{ evt.status_label or evt.status }}</span>
-                        {% endif %}
-                        {% elif evt.type == 'incident' %}
-                        {% if evt.status == 'cloture' %}
-                        <span class="badge-pill" data-val="cloture">🔒 Clôturé</span>
-                        {% elif evt.status == 'resolu' %}
-                        <span class="badge-pill" data-val="ok">✅ Résolu</span>
-                        {% elif evt.status == 'en_reparation' %}
-                        <span class="badge-pill" data-val="in_progress">🔧 En réparation</span>
-                        {% elif evt.status == 'en_expertise' %}
-                        <span class="badge-pill" data-val="warning">🔍 En expertise</span>
-                        {% elif evt.status == 'assurance' %}
-                        <span class="badge-pill" data-val="assurance">📋 Assurance</span>
-                        {% elif evt.status == 'signale' %}
-                        <span class="badge-pill" data-val="warning">📣 Signalé</span>
-                        {% else %}
-                        <span class="badge-pill" data-val="warning">📣 {{ evt.status_label or 'Signalé' }}</span>
-                        {% endif %}
-                        {% elif evt.type == 'project' %}
-                        {% if evt.status == 'in_progress' or evt.status == 'active' %}
-                        <span class="badge-pill" data-val="in_progress">🎬 En tournage</span>
-                        {% elif evt.status == 'completed' %}
-                        <span class="badge-pill" data-val="cloture">🔒 Projet clôturé</span>
-                        {% else %}
-                        <span class="badge-pill" data-val="neutral">📅 {{ evt.status_label or 'Tournage' }}</span>
-                        {% endif %}
-                        {% else %}
-                        {% if evt.status == 'signed' or evt.status == 'ok' %}
-                        <span class="badge-pill" data-val="ok">🔒 Signé</span>
-                        {% elif evt.status == 'in_progress' %}
-                        <span class="badge-pill" data-val="in_progress">⏳ En cours</span>
-                        {% elif evt.status_label %}
-                        <span class="badge-pill" data-val="neutral">ℹ️ {{ evt.status_label }}</span>
-                        {% endif %}
-                        {% endif %}
+                        {{ timeline_event_status_badge(evt) }}
                     </div>
 
                     <h3 class="u-text-lg u-font-bold u-mt-2 u-mb-1">
@@ -241,8 +505,8 @@
 
                 <!-- Date & Actions directes -->
                 <div class="u-text-right u-flex u-flex-column u-align-end u-gap-2">
-                    <span class="u-text-sm u-font-bold" style="color: var(--admin-accent, #FFC845);">
-                        🗓️ {{ evt.date_formatted }}
+                    <span class="u-text-sm u-font-bold">
+                        {{ evt.date_formatted }}
                     </span>
 
                     <div class="u-flex u-gap-2">
@@ -271,16 +535,24 @@
                         {% elif evt.type == 'project' %}
                         <a href="{{ url_for('admin_projects_list', q=evt.project_unique_id or evt.reference) }}"
                             class="admin-btn admin-btn-sm admin-btn-secondary">
-                            Dossier →
+                            Détails →
                         </a>
                         {% endif %}
                     </div>
                 </div>
             </div>
 
-            <!-- Indicateurs techniques spécifiques à l'événement -->
+            <!-- Indicateurs techniques spécifiques -->
             {% if evt.type in ('checkout', 'checkin') %}
             <div class="u-flex u-align-center u-gap-3 u-flex-wrap u-mt-3 u-pt-2 u-border-top u-text-xs">
+                {% if evt.battery is not none %}
+                <div class="u-flex u-align-center u-gap-1">
+                    <span class="u-text-muted">Batterie :</span>
+                    <strong
+                        class="{% if evt.battery >= 80 %}u-text-success{% elif evt.battery >= 40 %}u-text-warning{% else %}u-text-danger{% endif %}">{{
+                        evt.battery }}%</strong>
+                </div>
+                {% endif %}
                 {% if evt.failures %}
                 <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
                     <span class="u-text-danger u-font-bold">⚠️ Anomalies détectées :</span>
@@ -328,18 +600,82 @@
     </div>
 </div>
 
-<style>
-    .timeline-item.is-hidden {
-        display: none !important;
-    }
-</style>
+
 
 <script>
     (function () {
-        function initTimelineFilters() {
+        // Gestion du commutateur de vue (Missions vs Linéaire)
+        const viewToggleBtns = document.querySelectorAll('#timeline-view-toggle .view-toggle-btn');
+        const missionsView = document.getElementById('timeline-missions-view');
+        const linearView = document.getElementById('timeline-linear-view');
+        const linearFilters = document.getElementById('linear-filters-container');
+        const missionsControls = document.getElementById('missions-controls');
+        const viewCountSpan = document.getElementById('view-indicator-count');
+
+        viewToggleBtns.forEach(btn => {
+            btn.addEventListener('click', function () {
+                viewToggleBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+
+                const view = this.getAttribute('data-view');
+                if (view === 'missions') {
+                    if (missionsView) missionsView.style.display = 'block';
+                    if (linearView) linearView.style.display = 'none';
+                    if (linearFilters) linearFilters.style.display = 'none';
+                    if (missionsControls) missionsControls.style.display = 'flex';
+                    if (viewCountSpan) viewCountSpan.textContent = '{{ missions|length }} mission(s) répertoriée(s)';
+                } else {
+                    if (missionsView) missionsView.style.display = 'none';
+                    if (linearView) linearView.style.display = 'block';
+                    if (linearFilters) linearFilters.style.display = 'block';
+                    if (missionsControls) missionsControls.style.display = 'none';
+                    if (viewCountSpan) viewCountSpan.textContent = '{{ events|length }} événement(s) au total';
+                }
+            });
+        });
+
+        // Dépliage / repliage d'une mission
+        window.toggleMissionDetails = function (projectId) {
+            const container = document.getElementById('mission-sub-events-' + projectId);
+            const card = document.getElementById('mission-card-' + projectId);
+            if (!container) return;
+
+            const isHidden = container.style.display === 'none';
+            container.style.display = isHidden ? 'block' : 'none';
+
+            const toggleBtn = card ? card.querySelector('.mission-expand-btn .toggle-icon') : null;
+            if (toggleBtn) {
+                const count = container.querySelectorAll('.mission-sub-item').length;
+                toggleBtn.textContent = isHidden ? '▲ Masquer' : '▼ ' + count + ' étape(s)';
+            }
+        };
+
+        // Déplier / replier toutes les missions
+        let allExpanded = false;
+        window.toggleAllMissions = function () {
+            allExpanded = !allExpanded;
+            const subContainers = document.querySelectorAll('.mission-sub-events');
+            subContainers.forEach(container => {
+                container.style.display = allExpanded ? 'block' : 'none';
+            });
+            document.querySelectorAll('.mission-card').forEach(card => {
+                const toggleBtn = card.querySelector('.mission-expand-btn .toggle-icon');
+                const parent = card.closest('.timeline-item');
+                const count = parent ? parent.querySelectorAll('.mission-sub-item').length : 0;
+                if (toggleBtn) {
+                    toggleBtn.textContent = allExpanded ? '▲ Masquer' : '▼ ' + count + ' étape(s)';
+                }
+            });
+            const mainBtn = document.getElementById('toggle-all-missions-btn');
+            if (mainBtn) {
+                mainBtn.textContent = allExpanded ? 'Tout replier' : 'Tout déplier';
+            }
+        };
+
+        // Filtres pour le flux linéaire
+        function initLinearFilters() {
             const filterButtons = document.querySelectorAll('#timeline-filters .timeline-filter-btn');
-            const items = document.querySelectorAll('.timeline-item');
-            const countSpan = document.getElementById('events-count');
+            const items = document.querySelectorAll('#timeline-linear-view .timeline-linear-item');
             const emptyFilterState = document.getElementById('timeline-empty-filter');
 
             if (!filterButtons.length) return;
@@ -369,8 +705,8 @@
                         }
                     });
 
-                    if (countSpan) {
-                        countSpan.textContent = count;
+                    if (viewCountSpan && linearView.style.display !== 'none') {
+                        viewCountSpan.textContent = count + ' événement(s) affiché(s)';
                     }
 
                     if (emptyFilterState) {
@@ -385,9 +721,9 @@
         }
 
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initTimelineFilters);
+            document.addEventListener('DOMContentLoaded', initLinearFilters);
         } else {
-            initTimelineFilters();
+            initLinearFilters();
         }
     })();
 </script>

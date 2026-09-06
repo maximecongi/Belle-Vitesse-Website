@@ -8,25 +8,6 @@
 {% if is_edit %}Modifier l'Incident {{ incident.incident_number }}{% else %}Déclaration d'Incident{% endif %}
 {% endblock %}
 
-{% block extra_css %}
-<style>
-    .incident-header-status-bar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-        padding-bottom: 1.25rem;
-        margin-bottom: 1.5rem;
-        border-bottom: 1px solid var(--white-3, #e9ecef);
-    }
-
-    .badge-select-pill-lg {
-        font-size: 0.85rem !important;
-        padding: 0.35rem 1.75rem 0.35rem 0.75rem !important;
-    }
-</style>
-{% endblock %}
 
 {% block content %}
 <div class="admin-card">

@@ -205,6 +205,17 @@ class FleetTest(unittest.TestCase):
             dates = [e["date"] for e in timeline["events"]]
             self.assertEqual(dates, sorted(dates, reverse=True))
 
+            # Vérifier la structure de la timeline hiérarchique (missions)
+            self.assertIn("missions", timeline)
+            self.assertEqual(len(timeline["missions"]), 1)
+            mission = timeline["missions"][0]
+            self.assertEqual(mission["type"], "project_mission")
+            self.assertEqual(mission["project_name"], proj.name)
+            self.assertEqual(len(mission["sub_events"]), 3)
+            self.assertTrue(mission["has_checkout"])
+            self.assertTrue(mission["has_checkin"])
+            self.assertTrue(mission["has_incidents"])
+
     @patch("services.admin.fleet.get_vehicles")
     def test_vehicle_timeline_with_critical_incident(self, mock_get_vehicles):
         mock_get_vehicles.return_value = [
@@ -295,6 +306,9 @@ class FleetTest(unittest.TestCase):
             self.assertIn(b"ECAR-PROTO", res_timeline.data)
             self.assertNotIn("Autonomie :".encode("utf-8"), res_timeline.data)
             self.assertIn(f"/admin/projects?q={proj.project_id}".encode("utf-8"), res_timeline.data)
+            self.assertIn("Vue par Tournage (1)".encode("utf-8"), res_timeline.data)
+            self.assertIn(f"mission-card-{proj.id}".encode("utf-8"), res_timeline.data)
+            self.assertNotIn("Aucun tournage ou événement répertorié pour ce véhicule".encode("utf-8"), res_timeline.data)
 
             # GET /admin/fleet/inconnu -> redirect vers la liste avec flash
             res_unknown = self.client.get("/admin/fleet/inconnu")

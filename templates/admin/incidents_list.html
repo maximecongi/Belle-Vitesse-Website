@@ -1,6 +1,6 @@
 {% extends "admin/admin_base.html" %}
 
-{% from "admin/macros.html" import filter_header %}
+{% from "admin/macros.html" import filter_header, incident_severity_badge, incident_status_badge, incident_impact_badge, incident_signature_badge %}
 
 {% block title %}Gestion des Incidents de Tournage{% endblock %}
 {% block page_title %}Incidents de Tournage{% endblock %}
@@ -133,57 +133,16 @@
                         {% endif %}
                     </td>
                     <td>
-                        {% if incident.severity == 'critique' %}
-                        <span class="badge-pill" data-val="critique">🚨 Critique</span>
-                        {% elif incident.severity == 'modere' %}
-                        <span class="badge-pill" data-val="warning">⚠️ Modéré</span>
-                        {% else %}
-                        <span class="badge-pill" data-val="neutral">ℹ️ Mineur</span>
-                        {% endif %}
+                        {{ incident_severity_badge(incident.severity, incident.severity_label) }}
                     </td>
                     <td>
-                        {% if incident.status == 'cloture' %}
-                        <span class="badge-pill" data-val="cloture">🔒 {{ incident.status_label }}</span>
-                        {% elif incident.status == 'resolu' %}
-                        <span class="badge-pill" data-val="ok">✅ {{ incident.status_label }}</span>
-                        {% elif incident.status == 'en_reparation' %}
-                        <span class="badge-pill" data-val="in_progress">🔧 {{ incident.status_label }}</span>
-                        {% elif incident.status == 'en_expertise' %}
-                        <span class="badge-pill" data-val="warning">🔍 {{ incident.status_label }}</span>
-                        {% elif incident.status == 'assurance' %}
-                        <span class="badge-pill" data-val="assurance">📋 {{ incident.status_label }}</span>
-                        {% else %}
-                        <span class="badge-pill" data-val="neutral">📣 {{ incident.status_label }}</span>
-                        {% endif %}
+                        {{ incident_status_badge(incident.status, incident.status_label) }}
                     </td>
                     <td>
-                        {% if incident.shooting_impact in ('annulation', 'arret') %}
-                        <span class="badge-pill" data-val="critique">🛑 {{ incident.shooting_impact_label }}</span>
-                        {% elif incident.shooting_impact == 'interruption' %}
-                        <span class="badge-pill" data-val="in_progress">⏸️ {{ incident.shooting_impact_label }}</span>
-                        {% elif incident.shooting_impact == 'retard' %}
-                        <span class="badge-pill" data-val="warning">⏳ {{ incident.shooting_impact_label }}</span>
-                        {% else %}
-                        <span class="badge-pill" data-val="ok">✅ {{ incident.shooting_impact_label }}</span>
-                        {% endif %}
+                        {{ incident_impact_badge(incident.shooting_impact, incident.shooting_impact_label) }}
                     </td>
                     <td class="u-text-nowrap">
-                        {% if incident.is_fully_signed %}
-                        <span class="badge-pill" data-val="ok">✅ Scellé 2/2</span>
-                        <div class="u-text-xs u-text-muted u-mt-1" style="font-size: 11px;">BV ✓ &bull; Prod ✓</div>
-                        {% elif incident.signature_status == 'signed_bv' %}
-                        <span class="badge-pill" data-val="warning">✍️ Visé BV 1/2</span>
-                        <div class="u-text-xs u-text-muted u-mt-1" style="font-size: 11px;">BV ✓ &bull; Prod ⏳</div>
-                        {% elif incident.signature_status == 'signed_prod' %}
-                        <span class="badge-pill" data-val="warning">✍️ Signé Prod 1/2</span>
-                        <div class="u-text-xs u-text-muted u-mt-1" style="font-size: 11px;">BV ⏳ &bull; Prod ✓</div>
-                        {% elif incident.signature_status == 'pending_prod' %}
-                        <span class="badge-pill" data-val="in_progress">⏳ Invité 0/2</span>
-                        <div class="u-text-xs u-text-muted u-mt-1" style="font-size: 11px;">BV ⏳ &bull; Prod ✉️</div>
-                        {% else %}
-                        <span class="badge-pill" data-val="neutral">📝 Non signé</span>
-                        <div class="u-text-xs u-text-muted u-mt-1" style="font-size: 11px;">BV ⏳ &bull; Prod ⏳</div>
-                        {% endif %}
+                        {{ incident_signature_badge(incident, compact=true) }}
                     </td>
                     <td class="u-text-nowrap">
                         <div class="u-flex u-align-center u-gap-1">
