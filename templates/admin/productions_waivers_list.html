@@ -41,6 +41,11 @@
                     <td>{{ w.shooting_dates }}</td>
                     <td>
                         {{ status_badge(w.status, w.raw_status) }}
+                        {% if w.reminder_count and w.reminder_count > 0 %}
+                        <div class="u-text-xs u-text-muted u-mt-1" style="font-size: 11px;">
+                            🔔 Relancé ({{ w.reminder_count }})
+                        </div>
+                        {% endif %}
                     </td>
                     <td>
                         <div class="u-flex u-align-center u-justify-center u-gap-1">

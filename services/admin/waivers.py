@@ -247,7 +247,9 @@ def list_production_waivers():
             "sent_at": w.sent_at,
             "signed_at": w.signed_at,
             "signature_token": active_token.token if active_token else None,
-            "signed_pdf_path": get_secured_url(w.signed_pdf_path)
+            "signed_pdf_path": get_secured_url(w.signed_pdf_path),
+            "reminder_count": w.reminder_count or 0,
+            "last_reminded_at": w.last_reminded_at
         })
     return formatted
 
@@ -288,17 +290,23 @@ def generate_production_waiver(waiver_id):
     return True, "Décharge production générée avec succès."
 
 
-def send_production_waiver(waiver_id):
+def send_production_waiver(waiver_id, base_url=None):
     """Envoie l'invitation de signature par e-mail au contact production."""
-    from flask import request
+    from flask import current_app, has_request_context, request
     from utils.mailer import send_production_waiver_invitation_email
 
-    waiver = ProductionWaiver.query.filter_by(waiver_id=waiver_id).first()
+    if isinstance(waiver_id, int) or (isinstance(waiver_id, str) and waiver_id.isdigit()):
+        waiver = ProductionWaiver.query.filter(
+            (ProductionWaiver.id == int(waiver_id)) | (ProductionWaiver.waiver_id == str(waiver_id))
+        ).first()
+    else:
+        waiver = ProductionWaiver.query.filter_by(waiver_id=waiver_id).first()
+
     if not waiver:
         return False, "Décharge non trouvée."
 
     if waiver.status == "to_generate":
-        generate_production_waiver(waiver_id)
+        generate_production_waiver(waiver.waiver_id)
 
     if waiver.status not in ["to_send", "to_sign"]:
         return False, "Statut invalide pour l'envoi."
@@ -313,23 +321,37 @@ def send_production_waiver(waiver_id):
         token=new_token, waiver_id=waiver.waiver_id)
     db.session.add(token_rec)
 
-    base_url = request.host_url.rstrip('/')
-    signature_link = f"{base_url}/sign/production-waiver/{new_token}"
+    if base_url:
+        resolved_base_url = base_url.rstrip('/')
+    elif has_request_context():
+        resolved_base_url = request.host_url.rstrip('/')
+    else:
+        server_name = current_app.config.get("SERVER_NAME") if current_app else None
+        resolved_base_url = f"http://{server_name}" if server_name else "http://localhost:5000"
+
+    signature_link = f"{resolved_base_url}/sign/production-waiver/{new_token}"
+
+    is_reminder = (waiver.status == "to_sign") or bool(waiver.sent_at) or ((waiver.reminder_count or 0) > 0)
 
     success = send_production_waiver_invitation_email(
         to_email=contact_prod.mail,
         prod_contact_name=f"{contact_prod.first_name} {contact_prod.last_name}",
         project_name=waiver.project.name,
-        signature_link=signature_link
+        signature_link=signature_link,
+        is_reminder=is_reminder,
     )
 
     if not success:
         return False, "Échec de l'envoi de l'e-mail."
 
     waiver.status = "to_sign"
-    waiver.sent_at = datetime.utcnow()
+    waiver.sent_at = waiver.sent_at or datetime.utcnow()
+    if is_reminder:
+        waiver.reminder_count = (waiver.reminder_count or 0) + 1
+        waiver.last_reminded_at = datetime.utcnow()
     db.session.commit()
-    return True, f"Décharge envoyée à la production ({contact_prod.mail})."
+    msg_type = "Relance envoyée" if is_reminder else "Décharge envoyée"
+    return True, f"{msg_type} à la production ({contact_prod.mail})."
 
 
 def reset_production_waiver(waiver_id):
@@ -511,7 +533,9 @@ def list_pilot_waivers():
             "signed_pdf_path": get_secured_url(w.signed_pdf_path),
             "pilot_license_path": get_secured_url(w.pilot_license_path, is_attachment=True),
             "pilot_insurance_path": get_secured_url(w.pilot_insurance_path, is_attachment=True),
-            "pilot_identity_path": get_secured_url(w.pilot_identity_path, is_attachment=True)
+            "pilot_identity_path": get_secured_url(w.pilot_identity_path, is_attachment=True),
+            "reminder_count": w.reminder_count or 0,
+            "last_reminded_at": w.last_reminded_at
         })
     return formatted
 
@@ -561,17 +585,23 @@ def generate_pilot_waiver(waiver_id):
     return True, "Décharge générée avec succès."
 
 
-def send_pilot_waiver(waiver_id):
+def send_pilot_waiver(waiver_id, base_url=None):
     """Envoie l'invitation de signature par e-mail au pilote."""
-    from flask import request
+    from flask import current_app, has_request_context, request
     from utils.mailer import send_waiver_invitation_email
 
-    waiver = PilotWaiver.query.filter_by(waiver_id=waiver_id).first()
+    if isinstance(waiver_id, int) or (isinstance(waiver_id, str) and waiver_id.isdigit()):
+        waiver = PilotWaiver.query.filter(
+            (PilotWaiver.id == int(waiver_id)) | (PilotWaiver.waiver_id == str(waiver_id))
+        ).first()
+    else:
+        waiver = PilotWaiver.query.filter_by(waiver_id=waiver_id).first()
+
     if not waiver:
         return False, "Décharge non trouvée."
 
     if waiver.status == "to_generate":
-        generate_pilot_waiver(waiver_id)
+        generate_pilot_waiver(waiver.waiver_id)
 
     if waiver.status not in ["to_send", "to_sign"]:
         return False, "Statut invalide pour l'envoi."
@@ -585,23 +615,37 @@ def send_pilot_waiver(waiver_id):
     token_rec = PilotWaiverToken(token=new_token, waiver_id=waiver.waiver_id)
     db.session.add(token_rec)
 
-    base_url = request.host_url.rstrip('/')
-    signature_link = f"{base_url}/sign/waiver/{new_token}"
+    if base_url:
+        resolved_base_url = base_url.rstrip('/')
+    elif has_request_context():
+        resolved_base_url = request.host_url.rstrip('/')
+    else:
+        server_name = current_app.config.get("SERVER_NAME") if current_app else None
+        resolved_base_url = f"http://{server_name}" if server_name else "http://localhost:5000"
+
+    signature_link = f"{resolved_base_url}/sign/waiver/{new_token}"
+
+    is_reminder = (waiver.status == "to_sign") or bool(waiver.sent_at) or ((waiver.reminder_count or 0) > 0)
 
     success = send_waiver_invitation_email(
         to_email=pilot_contact.mail,
         pilot_name=f"{pilot_contact.first_name} {pilot_contact.last_name}",
         project_name=waiver.project.name,
-        signature_link=signature_link
+        signature_link=signature_link,
+        is_reminder=is_reminder,
     )
 
     if not success:
         return False, "Échec de l'envoi de l'e-mail."
 
     waiver.status = "to_sign"
-    waiver.sent_at = datetime.utcnow()
+    waiver.sent_at = waiver.sent_at or datetime.utcnow()
+    if is_reminder:
+        waiver.reminder_count = (waiver.reminder_count or 0) + 1
+        waiver.last_reminded_at = datetime.utcnow()
     db.session.commit()
-    return True, f"Décharge envoyée au pilote ({pilot_contact.mail})."
+    msg_type = "Relance envoyée" if is_reminder else "Décharge envoyée"
+    return True, f"{msg_type} au pilote ({pilot_contact.mail})."
 
 
 def reset_pilot_waiver(waiver_id):
@@ -715,6 +759,7 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
                 prod_contact_name=f"{contact_prod.first_name} {contact_prod.last_name}",
                 project_name=p.name,
                 signature_link=sig_url,
+                is_reminder=True,
             )
 
             if sent:
@@ -778,6 +823,7 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
                 pilot_name=f"{pilot.first_name} {pilot.last_name}",
                 project_name=p.name,
                 signature_link=sig_url,
+                is_reminder=True,
             )
 
             if sent:

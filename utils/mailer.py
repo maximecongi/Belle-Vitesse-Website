@@ -1,12 +1,12 @@
-import os
-import smtplib
+import base64
 from datetime import datetime, timezone
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formatdate, make_msgid
 import io
-import base64
+import os
+import smtplib
 import threading
 
 from flask import current_app, render_template, request
@@ -50,7 +50,8 @@ class EmailService:
             return True
 
         mail_server, mail_port, mail_user, mail_password, mail_use_tls = cls._get_credentials(
-            sender_type)
+            sender_type
+        )
 
         if not all([mail_server, mail_user, mail_password]):
             current_app.logger.error(
@@ -80,6 +81,86 @@ class EmailService:
             )
             return False
 
+    @classmethod
+    def send_templated_email(
+        cls,
+        to_email,
+        subject,
+        template_name,
+        context=None,
+        text_content=None,
+        sender_type="contact",
+        cc=None,
+        attachments=None,
+        extra_headers=None,
+        timeout=10,
+    ):
+        """
+        Helper générique pour construire et expédier un e-mail transactionnel (HTML + fallback texte).
+        Injecte automatiquement l'année en cours et prend en charge les pièces jointes.
+        """
+        try:
+            ctx = dict(context or {})
+            if "now_year" not in ctx:
+                ctx["now_year"] = datetime.now(timezone.utc).year
+
+            html_content = render_template(template_name, **ctx)
+
+            has_attachments = bool(attachments)
+            if has_attachments:
+                msg = MIMEMultipart("mixed")
+                body = MIMEMultipart("alternative")
+                if text_content:
+                    body.attach(MIMEText(text_content, "plain", "utf-8"))
+                body.attach(MIMEText(html_content, "html", "utf-8"))
+                msg.attach(body)
+
+                for att in attachments:
+                    att_path = att if isinstance(att, str) else att.get("path")
+                    att_name = att.get("name") if isinstance(att, dict) else os.path.basename(att_path)
+                    if att_path and os.path.exists(att_path):
+                        with open(att_path, "rb") as f:
+                            part = MIMEApplication(f.read(), Name=att_name)
+                        part["Content-Disposition"] = f'attachment; filename="{att_name}"'
+                        msg.attach(part)
+                    else:
+                        current_app.logger.error(f"❌ Attachment not found at {att_path}")
+            else:
+                msg = MIMEMultipart("alternative")
+                if text_content:
+                    msg.attach(MIMEText(text_content, "plain", "utf-8"))
+                msg.attach(MIMEText(html_content, "html", "utf-8"))
+
+            msg["Subject"] = subject
+            msg["To"] = to_email
+            msg["Date"] = formatdate(localtime=True)
+            msg["Message-ID"] = make_msgid(domain="bellevitesse.com")
+
+            if cc:
+                if isinstance(cc, list):
+                    msg["Cc"] = ", ".join(cc)
+                else:
+                    msg["Cc"] = str(cc)
+
+            if extra_headers:
+                for header_key, header_val in extra_headers.items():
+                    msg[header_key] = header_val
+
+            recipients = [to_email]
+            if cc:
+                if isinstance(cc, list):
+                    recipients.extend(cc)
+                else:
+                    recipients.append(cc)
+
+            return cls._send_smtp_message(msg, recipients, sender_type=sender_type, timeout=timeout)
+
+        except Exception as e:
+            current_app.logger.error(
+                f"❌ Erreur sending templated email '{subject}' to {to_email}: {e}"
+            )
+            return False
+
 
 def run_async_email(target_func, *args, **kwargs):
     """
@@ -101,7 +182,9 @@ def run_async_email(target_func, *args, **kwargs):
             try:
                 target_func(*args, **kwargs)
             except Exception as err:
-                app.logger.error(f"❌ Erreur lors de l'envoi d'email en arrière-plan : {err}")
+                app.logger.error(
+                    f"❌ Erreur lors de l'envoi d'email en arrière-plan : {err}"
+                )
 
     thread = threading.Thread(target=_worker, daemon=True)
     thread.start()
@@ -109,99 +192,66 @@ def run_async_email(target_func, *args, **kwargs):
 
 
 def send_magic_link_email(to_email, firstname, magic_link):
-    """
-    Envoie un lien magique pour une connexion sans mot de passe à un administrateur.
-    """
-    try:
-        current_app.logger.info(f"🚀 Sending magic link email to {to_email}")
-
-        # Text fallback content
-        text_content = (
-            f"Bonjour {firstname},\n\nVoici votre lien de connexion temporaire à Belle Vitesse :\n"
-            f"{magic_link}\n\nCe lien va expirer dans 15 minutes.\n\nL'équipe Belle Vitesse."
-        )
-
-        # Premium HTML content via template
-        html_content = render_template(
-            "emails/magic_link.html",
-            firstname=firstname,
-            magic_link=magic_link,
-            now_year=datetime.now(timezone.utc).year
-        )
-
-        # Create message
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = "Connexion à Belle Vitesse"
-        msg["To"] = to_email
-        msg["Date"] = formatdate(localtime=True)
-        msg["Message-ID"] = make_msgid(domain="bellevitesse.com")
-
-        msg.attach(MIMEText(text_content, "plain", "utf-8"))
-        msg.attach(MIMEText(html_content, "html", "utf-8"))
-
-        return EmailService._send_smtp_message(msg, [to_email], sender_type="admin")
-
-    except Exception as e:
-        current_app.logger.error(
-            f"❌ Erreur sending magic link email to {to_email}: {e}"
-        )
-        return False
+    """Envoie un lien magique pour une connexion sans mot de passe à un administrateur."""
+    current_app.logger.info(f"🚀 Sending magic link email to {to_email}")
+    text_content = (
+        f"Bonjour {firstname},\n\nVoici votre lien de connexion temporaire à Belle Vitesse :\n"
+        f"{magic_link}\n\nCe lien va expirer dans 15 minutes.\n\nL'équipe Belle Vitesse."
+    )
+    return EmailService.send_templated_email(
+        to_email=to_email,
+        subject="Connexion à Belle Vitesse",
+        template_name="emails/magic_link.html",
+        context={"firstname": firstname, "magic_link": magic_link},
+        text_content=text_content,
+        sender_type="admin",
+    )
 
 
 def send_subscription_email(to_email):
     """Envoie un email de bienvenue lors de l'inscription à la newsletter."""
     try:
         current_app.logger.info(
-            f"🚀 Démarrage de l'envoi d'email de bienvenue pour {to_email}")
+            f"🚀 Démarrage de l'envoi d'email de bienvenue pour {to_email}"
+        )
 
-        # Generate unsubscribe token
         secret_key = current_app.config.get("SECRET_KEY")
         serializer = URLSafeSerializer(secret_key)
         token = serializer.dumps(to_email)
 
-        # Use request.host_url to get the full base URL
         try:
-            base_url = request.host_url.rstrip('/')
+            base_url = request.host_url.rstrip("/")
         except Exception:
-            base_url = "https://bellevitesse.com"  # Fallback
+            base_url = "https://bellevitesse.com"
 
         unsubscribe_url = f"{base_url}/unsubscribe/{token}"
-        current_app.logger.info(
-            f"🔗 Unsubscribe URL générée: {unsubscribe_url}")
+        current_app.logger.info(f"🔗 Unsubscribe URL générée: {unsubscribe_url}")
 
-        # Load HTML template
-        html_content = render_template(
-            "emails/newsletter_welcome.html", unsubscribe_url=unsubscribe_url
-        )
-
-        # Simple plain text fallback
         text_content = (
             f"Welcome to Belle Vitesse! Thank you for subscribing to our newsletter. "
             f"To unsubscribe: {unsubscribe_url}"
         )
 
-        # Create message
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = "Welcome to Belle Vitesse"
-        msg["To"] = to_email
-        msg["Date"] = formatdate(localtime=True)
-        msg["Message-ID"] = make_msgid(domain="bellevitesse.com")
-
-        # ⭐ AJOUT DES EN-TÊTES ANTI-SPAM ⭐
-        msg["Precedence"] = "bulk"
-        msg["List-Unsubscribe"] = f"<{unsubscribe_url}>"
-        msg["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click"
-        msg["List-Id"] = "Belle Vitesse Newsletter <newsletter.bellevitesse.com>"
-        msg["X-Entity-Ref-ID"] = "newsletter-welcome"
-
+        extra_headers = {
+            "Precedence": "bulk",
+            "List-Unsubscribe": f"<{unsubscribe_url}>",
+            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+            "List-Id": "Belle Vitesse Newsletter <newsletter.bellevitesse.com>",
+            "X-Entity-Ref-ID": "newsletter-welcome",
+        }
         mail_user = os.getenv("MAIL_CONTACT_USERNAME")
         if mail_user:
-            msg["Return-Path"] = mail_user
+            extra_headers["Return-Path"] = mail_user
 
-        msg.attach(MIMEText(text_content, "plain", "utf-8"))
-        msg.attach(MIMEText(html_content, "html", "utf-8"))
-
-        return EmailService._send_smtp_message(msg, [to_email], sender_type="contact")
+        return EmailService.send_templated_email(
+            to_email=to_email,
+            subject="Welcome to Belle Vitesse",
+            template_name="emails/newsletter_welcome.html",
+            context={"unsubscribe_url": unsubscribe_url},
+            text_content=text_content,
+            sender_type="contact",
+            extra_headers=extra_headers,
+        )
 
     except Exception as e:
         current_app.logger.error(
@@ -228,7 +278,8 @@ def send_newsletter_campaign(subject, body, subscribers, base_url=None):
         return len(subscribers), 0
 
     mail_server, mail_port, mail_user, mail_password, mail_use_tls = EmailService._get_credentials(
-        "contact")
+        "contact"
+    )
 
     if not all([mail_server, mail_user, mail_password]):
         current_app.logger.error("❌ Email configuration missing in .env")
@@ -247,11 +298,10 @@ def send_newsletter_campaign(subject, body, subscribers, base_url=None):
 
         for sub in subscribers:
             try:
-                # Generate unique unsubscribe for each
                 token = serializer.dumps(sub.email)
                 if not base_url:
                     try:
-                        base_url = request.host_url.rstrip('/')
+                        base_url = request.host_url.rstrip("/")
                     except Exception:
                         base_url = "https://bellevitesse.com"
 
@@ -302,149 +352,115 @@ def send_newsletter_campaign_async(subject, body, subscribers, base_url=None):
     """Lance l'envoi d'une campagne newsletter groupée en arrière-plan."""
     if not base_url:
         try:
-            base_url = request.host_url.rstrip('/')
+            base_url = request.host_url.rstrip("/")
         except Exception:
             base_url = "https://bellevitesse.com"
     return run_async_email(send_newsletter_campaign, subject, body, subscribers, base_url=base_url)
 
 
-def send_waiver_invitation_email(to_email, pilot_name, project_name, signature_link):
-    """Envoie une invitation à un pilote pour signer sa décharge."""
-    try:
-        current_app.logger.info(
-            f"🚀 Sending waiver invitation email to {to_email}")
+def _send_waiver_invitation_email(
+    waiver_type: str,
+    to_email: str,
+    recipient_name: str,
+    project_name: str,
+    signature_link: str,
+    is_reminder: bool = False,
+):
+    """
+    Fonction unifiée interne pour l'envoi d'une invitation ou d'une relance
+    de décharge de responsabilité (pilote ou production).
+    """
+    is_prod = (waiver_type == "production")
+    type_label = "production" if is_prod else "pilote"
 
-        # Text fallback content
+    current_app.logger.info(
+        f"🚀 Sending {type_label} waiver {'reminder' if is_reminder else 'invitation'} email to {to_email}"
+    )
+
+    prefix = "Rappel : " if is_reminder else ""
+    subject = f"{prefix}Signature décharge {type_label} - {project_name}"
+
+    if is_reminder:
         text_content = (
-            f"Bonjour {pilot_name},\n\nVous êtes invité à compléter et signer électroniquement la décharge pilote "
-            f"pour le projet : {project_name}.\n\nSuivez ce lien pour signer : {signature_link}\n\nL'équipe Belle Vitesse."
+            f"Bonjour {recipient_name},\n\n"
+            f"RAPPEL : Le tournage approche et sauf erreur de notre part, votre décharge de responsabilité {type_label} "
+            f"pour le projet : {project_name} n'a pas encore été signée.\n\n"
+            f"Merci de la compléter et la signer dès maintenant via ce lien : {signature_link}\n\n"
+            f"Ce document est indispensable avant le début du tournage.\n\n"
+            f"L'équipe Belle Vitesse."
         )
-
-        # Premium HTML content via template
-        html_content = render_template(
-            "emails/waiver_invitation.html",
-            pilot_name=pilot_name,
-            project_name=project_name,
-            signature_link=signature_link,
-            now_year=datetime.now(timezone.utc).year
-        )
-
-        # Create message
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = f"Signature décharge pilote - {project_name}"
-        msg["To"] = to_email
-        msg["Date"] = formatdate(localtime=True)
-        msg["Message-ID"] = make_msgid(domain="bellevitesse.com")
-
-        msg.attach(MIMEText(text_content, "plain", "utf-8"))
-        msg.attach(MIMEText(html_content, "html", "utf-8"))
-
-        return EmailService._send_smtp_message(msg, [to_email], sender_type="admin")
-
-    except Exception as e:
-        current_app.logger.error(
-            f"❌ Erreur sending waiver email to {to_email}: {e}"
-        )
-        return False
-
-
-def send_production_waiver_invitation_email(to_email, prod_contact_name, project_name, signature_link):
-    """Envoie une invitation à un contact de production pour signer sa décharge."""
-    try:
-        current_app.logger.info(
-            f"🚀 Sending production waiver invitation email to {to_email}")
-
-        # Text fallback content
+    else:
         text_content = (
-            f"Bonjour {prod_contact_name},\n\nVous êtes invité à compléter et signer électroniquement "
-            f"la décharge production pour le projet : {project_name}.\n\n"
-            f"Suivez ce lien pour signer : {signature_link}\n\nL'équipe Belle Vitesse."
+            f"Bonjour {recipient_name},\n\n"
+            f"Vous êtes invité à compléter et signer électroniquement votre décharge de responsabilité {type_label} "
+            f"pour le projet : {project_name}.\n\n"
+            f"Suivez ce lien pour signer : {signature_link}\n\n"
+            f"L'équipe Belle Vitesse."
         )
 
-        # Premium HTML content via template
-        html_content = render_template(
-            "emails/production_waiver_invitation.html",
-            prod_contact_name=prod_contact_name,
-            project_name=project_name,
-            signature_link=signature_link,
-            now_year=datetime.now(timezone.utc).year
-        )
+    context = {
+        "waiver_type": waiver_type,
+        "recipient_name": recipient_name,
+        "pilot_name": recipient_name,
+        "prod_contact_name": recipient_name,
+        "project_name": project_name,
+        "signature_link": signature_link,
+        "is_reminder": is_reminder,
+    }
 
-        # Create message
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = f"Signature décharge production - {project_name}"
-        msg["To"] = to_email
-        msg["Date"] = formatdate(localtime=True)
-        msg["Message-ID"] = make_msgid(domain="bellevitesse.com")
+    return EmailService.send_templated_email(
+        to_email=to_email,
+        subject=subject,
+        template_name="emails/waiver_invitation.html",
+        context=context,
+        text_content=text_content,
+        sender_type="admin",
+    )
 
-        msg.attach(MIMEText(text_content, "plain", "utf-8"))
-        msg.attach(MIMEText(html_content, "html", "utf-8"))
 
-        return EmailService._send_smtp_message(msg, [to_email], sender_type="admin")
+def send_waiver_invitation_email(to_email, pilot_name, project_name, signature_link, is_reminder=False):
+    """Envoie une invitation (ou un rappel de relance) à un pilote pour signer sa décharge."""
+    return _send_waiver_invitation_email(
+        waiver_type="pilot",
+        to_email=to_email,
+        recipient_name=pilot_name,
+        project_name=project_name,
+        signature_link=signature_link,
+        is_reminder=is_reminder,
+    )
 
-    except Exception as e:
-        current_app.logger.error(
-            f"❌ Erreur sending production waiver email to {to_email}: {e}"
-        )
-        return False
+
+def send_production_waiver_invitation_email(to_email, prod_contact_name, project_name, signature_link, is_reminder=False):
+    """Envoie une invitation (ou un rappel de relance) à un contact de production pour signer sa décharge."""
+    return _send_waiver_invitation_email(
+        waiver_type="production",
+        to_email=to_email,
+        recipient_name=prod_contact_name,
+        project_name=project_name,
+        signature_link=signature_link,
+        is_reminder=is_reminder,
+    )
 
 
 def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path):
-    """
-    Envoie un email avec le PDF signé en pièce jointe.
-    """
+    """Envoie un email avec le PDF de décharge signé en pièce jointe."""
     admin_mail = os.getenv("SUPER_ADMIN_MAIL", "contact@bellevitesse.com")
-
-    try:
-        current_app.logger.info(
-            f"🚀 Sending signed waiver PDF to {to_email} and {admin_mail}")
-
-        # Text fallback content
-        text_content = (
-            f"Bonjour {recipient_name},\n\nVeuillez trouver ci-joint la décharge signée "
-            f"pour le projet : {project_name}.\n\nBelle journée,\nL'équipe Belle Vitesse."
-        )
-
-        # Premium HTML content via template
-        html_content = render_template(
-            "emails/waiver_signed_confirmation.html",
-            recipient_name=recipient_name,
-            project_name=project_name,
-            now_year=datetime.now(timezone.utc).year
-        )
-
-        # Create message (mixed for attachments)
-        msg = MIMEMultipart("mixed")
-        msg["Subject"] = f"Décharge signée - {project_name}"
-        msg["To"] = to_email
-        msg["Cc"] = admin_mail
-        msg["Date"] = formatdate(localtime=True)
-        msg["Message-ID"] = make_msgid(domain="bellevitesse.com")
-
-        # Create alternative container for body content
-        body = MIMEMultipart("alternative")
-        body.attach(MIMEText(text_content, "plain", "utf-8"))
-        body.attach(MIMEText(html_content, "html", "utf-8"))
-        msg.attach(body)
-
-        # Attach PDF
-        if os.path.exists(pdf_path):
-            with open(pdf_path, "rb") as f:
-                part = MIMEApplication(
-                    f.read(), Name=os.path.basename(pdf_path))
-            part['Content-Disposition'] = f'attachment; filename="{os.path.basename(pdf_path)}"'
-            msg.attach(part)
-        else:
-            current_app.logger.error(f"❌ PDF file not found at {pdf_path}")
-
-        recipients = [to_email, admin_mail]
-        return EmailService._send_smtp_message(msg, recipients, sender_type="contact", timeout=15)
-
-    except Exception as e:
-        current_app.logger.error(
-            f"❌ Erreur sending signed waiver email to {to_email}: {e}"
-        )
-        return False
+    current_app.logger.info(f"🚀 Sending signed waiver PDF to {to_email} and {admin_mail}")
+    text_content = (
+        f"Bonjour {recipient_name},\n\nVeuillez trouver ci-joint la décharge signée "
+        f"pour le projet : {project_name}.\n\nBelle journée,\nL'équipe Belle Vitesse."
+    )
+    return EmailService.send_templated_email(
+        to_email=to_email,
+        subject=f"Décharge signée - {project_name}",
+        template_name="emails/waiver_signed_confirmation.html",
+        context={"recipient_name": recipient_name, "project_name": project_name},
+        text_content=text_content,
+        sender_type="contact",
+        cc=admin_mail,
+        attachments=[pdf_path] if pdf_path else None,
+        timeout=15,
+    )
 
 
 def send_calendar_invitation_email(to_email, user_name, feed_url):
@@ -453,10 +469,8 @@ def send_calendar_invitation_email(to_email, user_name, feed_url):
     Inclut un QR code pour faciliter l'abonnement sur mobile.
     """
     try:
-        current_app.logger.info(
-            f"🚀 Sending calendar invitation email to {to_email}")
+        current_app.logger.info(f"🚀 Sending calendar invitation email to {to_email}")
 
-        # Generation du QR Code
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -471,32 +485,23 @@ def send_calendar_invitation_email(to_email, user_name, feed_url):
         img.save(buffered, format="PNG")
         qrcode_base64 = base64.b64encode(buffered.getvalue()).decode()
 
-        # Text fallback content
         text_content = (
             f"Bonjour {user_name},\n\nVous pouvez désormais synchroniser le planning des projets Belle Vitesse "
             f"directement sur votre téléphone ou ordinateur.\n\nLien d'abonnement : {feed_url}\n\nL'équipe Belle Vitesse."
         )
 
-        # Premium HTML content via template
-        html_content = render_template(
-            "emails/calendar_invitation.html",
-            user_name=user_name,
-            feed_url=feed_url,
-            qrcode_base64=qrcode_base64,
-            now_year=datetime.now(timezone.utc).year
+        return EmailService.send_templated_email(
+            to_email=to_email,
+            subject="Votre calendrier Belle Vitesse",
+            template_name="emails/calendar_invitation.html",
+            context={
+                "user_name": user_name,
+                "feed_url": feed_url,
+                "qrcode_base64": qrcode_base64,
+            },
+            text_content=text_content,
+            sender_type="admin",
         )
-
-        # Create message
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = "Votre calendrier Belle Vitesse"
-        msg["To"] = to_email
-        msg["Date"] = formatdate(localtime=True)
-        msg["Message-ID"] = make_msgid(domain="bellevitesse.com")
-
-        msg.attach(MIMEText(text_content, "plain", "utf-8"))
-        msg.attach(MIMEText(html_content, "html", "utf-8"))
-
-        return EmailService._send_smtp_message(msg, [to_email], sender_type="admin")
 
     except Exception as e:
         current_app.logger.error(
@@ -506,118 +511,82 @@ def send_calendar_invitation_email(to_email, user_name, feed_url):
 
 
 def send_incident_signature_request_email(incident, to_email, signing_url):
-    """
-    Envoie un email officiel à la Production l'invitant à viser et signer le constat d'incident.
-    """
-    try:
-        current_app.logger.info(
-            f"🚀 Envoi de l'invitation à signer l'incident {incident.incident_number} vers {to_email}"
-        )
+    """Envoie un email officiel à la Production l'invitant à viser et signer le constat d'incident."""
+    current_app.logger.info(
+        f"🚀 Envoi de l'invitation à signer l'incident {incident.incident_number} vers {to_email}"
+    )
 
-        project_name = incident.project.name if incident.project else "Tournage"
-        incident_num = incident.incident_number
-        incident_title = incident.title
+    project_name = incident.project.name if incident.project else "Tournage"
+    incident_num = incident.incident_number
+    incident_title = incident.title
 
-        text_content = (
-            f"Bonjour,\n\n"
-            f"Dans le cadre du projet '{project_name}', un constat d'incident ({incident_num} - {incident_title}) "
-            f"a été établi par l'équipe technique Belle Vitesse.\n\n"
-            f"Afin de valider contradictoirement ce constat, merci de bien vouloir apposer votre visa électronique "
-            f"en cliquant sur le lien suivant (valide 48 heures) :\n"
-            f"{signing_url}\n\n"
-            f"L'équipe Belle Vitesse reste à votre disposition pour tout échange.\n\n"
-            f"Bien cordialement,\n"
-            f"L'équipe Belle Vitesse\n"
-            f"https://bellevitesse.com"
-        )
+    text_content = (
+        f"Bonjour,\n\n"
+        f"Dans le cadre du projet '{project_name}', un constat d'incident ({incident_num} - {incident_title}) "
+        f"a été établi par l'équipe technique Belle Vitesse.\n\n"
+        f"Afin de valider contradictoirement ce constat, merci de bien vouloir apposer votre visa électronique "
+        f"en cliquant sur le lien suivant (valide 48 heures) :\n"
+        f"{signing_url}\n\n"
+        f"L'équipe Belle Vitesse reste à votre disposition pour tout échange.\n\n"
+        f"Bien cordialement,\n"
+        f"L'équipe Belle Vitesse\n"
+        f"https://bellevitesse.com"
+    )
 
-        html_content = render_template(
-            "emails/incident_invitation.html",
-            incident=incident,
-            incident_number=incident_num,
-            incident_title=incident_title,
-            incident_date=incident.incident_date,
-            location=incident.location,
-            project_name=project_name,
-            signature_link=signing_url,
-            now_year=datetime.now(timezone.utc).year,
-        )
+    context = {
+        "incident": incident,
+        "incident_number": incident_num,
+        "incident_title": incident_title,
+        "incident_date": incident.incident_date,
+        "location": incident.location,
+        "project_name": project_name,
+        "signature_link": signing_url,
+    }
 
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = f"Action requise : Visa du constat d'incident {incident_num} ({project_name})"
-        msg["To"] = to_email
-        msg["Date"] = formatdate(localtime=True)
-        msg["Message-ID"] = make_msgid(domain="bellevitesse.com")
-
-        msg.attach(MIMEText(text_content, "plain", "utf-8"))
-        msg.attach(MIMEText(html_content, "html", "utf-8"))
-
-        return EmailService._send_smtp_message(msg, [to_email], sender_type="admin")
-
-    except Exception as e:
-        current_app.logger.error(
-            f"❌ Erreur lors de l'envoi de l'invitation de signature d'incident à {to_email}: {e}"
-        )
-        return False
+    return EmailService.send_templated_email(
+        to_email=to_email,
+        subject=f"Action requise : Visa du constat d'incident {incident_num} ({project_name})",
+        template_name="emails/incident_invitation.html",
+        context=context,
+        text_content=text_content,
+        sender_type="admin",
+    )
 
 
 def send_incident_signed_confirmation_email(incident, to_email, pdf_path):
-    """
-    Envoie l'exemplaire certifié scellé du rapport d'incident avec le PDF en pièce jointe.
-    """
+    """Envoie l'exemplaire certifié scellé du rapport d'incident avec le PDF en pièce jointe."""
     admin_mail = os.getenv("SUPER_ADMIN_MAIL", "contact@bellevitesse.com")
-    try:
-        current_app.logger.info(
-            f"🚀 Envoi de la confirmation d'incident scellé {incident.incident_number} à {to_email}"
-        )
+    current_app.logger.info(
+        f"🚀 Envoi de la confirmation d'incident scellé {incident.incident_number} à {to_email}"
+    )
 
-        project_name = incident.project.name if incident.project else "Tournage"
-        incident_num = incident.incident_number
+    project_name = incident.project.name if incident.project else "Tournage"
+    incident_num = incident.incident_number
 
-        text_content = (
-            f"Bonjour,\n\n"
-            f"Le constat d'incident {incident_num} relatif au projet '{project_name}' a été "
-            f"visé par l'ensemble des parties et scellé électroniquement.\n\n"
-            f"Veuillez trouver ci-joint l'exemplaire officiel certifié (PDF scellé avec sceau d'intégrité).\n\n"
-            f"Bien cordialement,\n"
-            f"L'équipe Belle Vitesse"
-        )
+    text_content = (
+        f"Bonjour,\n\n"
+        f"Le constat d'incident {incident_num} relatif au projet '{project_name}' a été "
+        f"visé par l'ensemble des parties et scellé électroniquement.\n\n"
+        f"Veuillez trouver ci-joint l'exemplaire officiel certifié (PDF scellé avec sceau d'intégrité).\n\n"
+        f"Bien cordialement,\n"
+        f"L'équipe Belle Vitesse"
+    )
 
-        html_content = render_template(
-            "emails/incident_signed_confirmation.html",
-            incident=incident,
-            incident_number=incident_num,
-            incident_title=incident.title,
-            project_name=project_name,
-            now_year=datetime.now(timezone.utc).year,
-        )
+    context = {
+        "incident": incident,
+        "incident_number": incident_num,
+        "incident_title": incident.title,
+        "project_name": project_name,
+    }
 
-        msg = MIMEMultipart("mixed")
-        msg["Subject"] = f"Constat scellé et signé - {incident_num} ({project_name})"
-        msg["To"] = to_email
-        msg["Cc"] = admin_mail
-        msg["Date"] = formatdate(localtime=True)
-        msg["Message-ID"] = make_msgid(domain="bellevitesse.com")
-
-        body = MIMEMultipart("alternative")
-        body.attach(MIMEText(text_content, "plain", "utf-8"))
-        body.attach(MIMEText(html_content, "html", "utf-8"))
-        msg.attach(body)
-
-        if pdf_path and os.path.exists(pdf_path):
-            with open(pdf_path, "rb") as f:
-                part = MIMEApplication(f.read(), Name=os.path.basename(pdf_path))
-            part["Content-Disposition"] = f'attachment; filename="{os.path.basename(pdf_path)}"'
-            msg.attach(part)
-
-        recipients = [to_email, admin_mail]
-        return EmailService._send_smtp_message(msg, recipients, sender_type="contact", timeout=15)
-
-    except Exception as e:
-        current_app.logger.error(
-            f"❌ Erreur lors de l'envoi de la confirmation d'incident scellé à {to_email}: {e}"
-        )
-        return False
-
-
-
+    return EmailService.send_templated_email(
+        to_email=to_email,
+        subject=f"Constat scellé et signé - {incident_num} ({project_name})",
+        template_name="emails/incident_signed_confirmation.html",
+        context=context,
+        text_content=text_content,
+        sender_type="contact",
+        cc=admin_mail,
+        attachments=[pdf_path] if pdf_path else None,
+        timeout=15,
+    )

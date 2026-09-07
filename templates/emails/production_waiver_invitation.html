@@ -1,17 +1,3 @@
-{% extends "emails/base_transactional.html" %}
-
-{% block title %}Signature Décharge Production - Belle Vitesse{% endblock %}
-
-{% block content %}
-<h1 class="dot-before">Signature Décharge Production.</h1>
-<p>
-    Bonjour {{ prod_contact_name }},<br><br>
-    Vous êtes invité à compléter et signer électroniquement la <strong>décharge de responsabilité
-        production</strong> pour le projet :<br>
-    <strong>{{ project_name }}</strong>.
-</p>
-<a class="button" href="{{ signature_link }}">Consulter et Signer</a>
-<p style="margin-top: 30px; font-size: 14px; font-style: italic;">
-    Ce document est indispensable avant le début de la prestation.
-</p>
-{% endblock %}
+{% extends "emails/waiver_invitation.html" %}
+{# Alias de rétrocompatibilité pour production_waiver_invitation.html #}
+{% set waiver_type = 'production' %}
