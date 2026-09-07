@@ -344,11 +344,12 @@ def send_production_waiver(waiver_id, base_url=None):
     if not success:
         return False, "Échec de l'envoi de l'e-mail."
 
+    now_utc = datetime.now(timezone.utc).replace(tzinfo=None)
     waiver.status = "to_sign"
-    waiver.sent_at = waiver.sent_at or datetime.utcnow()
+    waiver.sent_at = waiver.sent_at or now_utc
     if is_reminder:
         waiver.reminder_count = (waiver.reminder_count or 0) + 1
-        waiver.last_reminded_at = datetime.utcnow()
+        waiver.last_reminded_at = now_utc
     db.session.commit()
     msg_type = "Relance envoyée" if is_reminder else "Décharge envoyée"
     return True, f"{msg_type} à la production ({contact_prod.mail})."
@@ -638,11 +639,12 @@ def send_pilot_waiver(waiver_id, base_url=None):
     if not success:
         return False, "Échec de l'envoi de l'e-mail."
 
+    now_utc = datetime.now(timezone.utc).replace(tzinfo=None)
     waiver.status = "to_sign"
-    waiver.sent_at = waiver.sent_at or datetime.utcnow()
+    waiver.sent_at = waiver.sent_at or now_utc
     if is_reminder:
         waiver.reminder_count = (waiver.reminder_count or 0) + 1
-        waiver.last_reminded_at = datetime.utcnow()
+        waiver.last_reminded_at = now_utc
     db.session.commit()
     msg_type = "Relance envoyée" if is_reminder else "Décharge envoyée"
     return True, f"{msg_type} au pilote ({pilot_contact.mail})."
@@ -704,7 +706,8 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
         send_waiver_invitation_email,
     )
 
-    today = date.today()
+    now_utc = datetime.now(timezone.utc)
+    today = now_utc.date()
     target_limit = today + timedelta(days=days_before)
 
     results = {
@@ -763,10 +766,10 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
             )
 
             if sent:
-                pw.last_reminded_at = datetime.utcnow()
+                pw.last_reminded_at = now_utc.replace(tzinfo=None)
                 pw.reminder_count = (pw.reminder_count or 0) + 1
                 pw.status = "to_sign"
-                pw.sent_at = pw.sent_at or datetime.utcnow()
+                pw.sent_at = pw.sent_at or now_utc.replace(tzinfo=None)
                 db.session.commit()
 
                 results["production_reminders_sent"] += 1
@@ -827,10 +830,10 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
             )
 
             if sent:
-                dw.last_reminded_at = datetime.utcnow()
+                dw.last_reminded_at = now_utc.replace(tzinfo=None)
                 dw.reminder_count = (dw.reminder_count or 0) + 1
                 dw.status = "to_sign"
-                dw.sent_at = dw.sent_at or datetime.utcnow()
+                dw.sent_at = dw.sent_at or now_utc.replace(tzinfo=None)
                 db.session.commit()
 
                 results["pilot_reminders_sent"] += 1

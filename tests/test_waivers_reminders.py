@@ -1,7 +1,7 @@
 import json
 import os
 import unittest
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from unittest.mock import patch
 
 # Isolation stricte de l'environnement de test avant tout import d'app
@@ -46,7 +46,7 @@ class WaiversRemindersTest(unittest.TestCase):
             db.session.commit()
 
             # Projet partant demain (J+1)
-            tomorrow = date.today() + timedelta(days=1)
+            tomorrow = datetime.now(timezone.utc).date() + timedelta(days=1)
             end_date = tomorrow + timedelta(days=3)
 
             self.project = Project(

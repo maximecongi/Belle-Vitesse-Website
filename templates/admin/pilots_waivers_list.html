@@ -1,6 +1,6 @@
 {% extends "admin/admin_base.html" %}
 
-{% from "admin/macros.html" import status_badge, filter_header %}
+{% from "admin/macros.html" import status_badge, filter_header, reminder_badge %}
 
 {% block title %}Décharges Pilotes{% endblock %}
 {% block page_title %}Décharges Pilotes{% endblock %}
@@ -38,12 +38,10 @@
                     <td>{{ w.pilot_name }}</td>
                     <td>{{ w.shooting_dates }}</td>
                     <td>
-                        {{ status_badge(w.status, w.raw_status) }}
-                        {% if w.reminder_count and w.reminder_count > 0 %}
-                        <div class="u-text-xs u-text-muted u-mt-1" style="font-size: 11px;">
-                            🔔 Relancé ({{ w.reminder_count }})
+                        <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
+                            {{ status_badge(w.status, w.raw_status) }}
+                            {{ reminder_badge(w.reminder_count, w.last_reminded_at) }}
                         </div>
-                        {% endif %}
                     </td>
                     <td>
                         <div class="u-flex u-align-center u-justify-center u-gap-1">

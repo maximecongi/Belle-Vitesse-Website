@@ -210,6 +210,6 @@ test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.W
 Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
 ----------------------------------------------------------------------
-Ran 124 tests in 11.971s
+Ran 124 tests in 11.865s
 
 OK
