@@ -130,6 +130,15 @@ class Incident(db.Model):
         return status_map.get(self.status, (self.status.capitalize() if self.status else "Signalé"))
 
     @property
+    def severity_label(self) -> str:
+        severity_map = {
+            "mineur": "Mineur",
+            "modere": "Modéré",
+            "critique": "Critique",
+        }
+        return severity_map.get(self.severity, "Modéré")
+
+    @property
     def photos_list(self):
         if not self.photos:
             return []
@@ -194,7 +203,9 @@ class Incident(db.Model):
             "location": self.location,
             "category": self.category,
             "severity": self.severity,
+            "severity_label": self.severity_label,
             "status": self.status,
+            "status_label": self.status_label,
             "shooting_impact": self.shooting_impact,
             "description": self.description,
             "immediate_actions": self.immediate_actions,

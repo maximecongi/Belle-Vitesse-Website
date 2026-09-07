@@ -3,7 +3,7 @@
 {% from "admin/macros.html" import filter_header, vehicle_status_badge, vehicle_avatar %}
 
 {% block title %}Flotte & Parc Véhicules — Belle Vitesse{% endblock %}
-{% block page_title %}Flotte & Véhicules{% endblock %}
+{% block page_title %}Flotte Véhicules{% endblock %}
 
 {% block header_actions %}
 <div class="u-flex u-align-center u-gap-2">
@@ -20,23 +20,23 @@
 {% block content %}
 <!-- ═══════════ STATS SYNTHÈSE FLOTTE ═══════════ -->
 <div class="u-grid u-gap-3 u-mb-4" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
-    <div class="admin-card u-p-3">
+    <div class="admin-card u-p-3" style="border-left: 3px solid var(--admin-color-grey, #64748b);">
         <div class="u-text-xs u-text-muted u-uppercase u-letter-spacing-1">Total Parc Roulant</div>
         <div class="u-text-3xl u-font-bold u-mt-1">{{ stats.total }}</div>
         <div class="u-text-xs u-text-muted u-mt-1">Véhicules répertoriés</div>
     </div>
-    <div class="admin-card u-p-3" style="border-top: 3px solid var(--admin-color-green, #10b981);">
+    <div class="admin-card u-p-3" style="border-left: 3px solid var(--admin-color-green, #10b981);">
         <div class="u-text-xs u-text-muted u-uppercase u-letter-spacing-1">Disponibles</div>
         <div class="u-text-3xl u-font-bold u-mt-1 u-text-success">{{ stats.available }}</div>
         <div class="u-text-xs u-text-muted u-mt-1">Prêts pour tournage</div>
     </div>
-    <div class="admin-card u-p-3" style="border-top: 3px solid var(--admin-color-blue, #3b82f6);">
-        <div class="u-text-xs u-text-muted u-uppercase u-letter-spacing-1">Sur Tournage</div>
-        <div class="u-text-3xl u-font-bold u-mt-1" style="color: #60a5fa;">{{ stats.on_tournage }}</div>
+    <div class="admin-card u-p-3" style="border-left: 3px solid var(--admin-color-orange, #f99e16);">
+        <div class="u-text-xs u-text-muted u-uppercase u-letter-spacing-1">En Tournage</div>
+        <div class="u-text-3xl u-font-bold u-mt-1" style="color: #f99e16;">{{ stats.on_tournage }}</div>
         <div class="u-text-xs u-text-muted u-mt-1">Actuellement déployés</div>
     </div>
-    <div class="admin-card u-p-3" style="border-top: 3px solid var(--admin-color-red, #ef4444);">
-        <div class="u-text-xs u-text-muted u-uppercase u-letter-spacing-1">En Révision / Alerte</div>
+    <div class="admin-card u-p-3" style="border-left: 3px solid var(--admin-color-red, #ef4444);">
+        <div class="u-text-xs u-text-muted u-uppercase u-letter-spacing-1">En Révision / Incident</div>
         <div class="u-text-3xl u-font-bold u-mt-1 u-text-danger">{{ stats.incident }}</div>
         <div class="u-text-xs u-text-muted u-mt-1">Incidents non soldés</div>
     </div>
@@ -72,7 +72,8 @@
 
         <!-- Visuel véhicule avec overlay de statut -->
         <div class="u-relative" style="height: 180px; background: rgba(0, 0, 0, 0.3);">
-            {{ vehicle_avatar(v.image_url, v.name, style="width: 100%; height: 100%; object-fit: cover;", padding="2rem") }}
+            {{ vehicle_avatar(v.image_url, v.name, style="width: 100%; height: 100%; object-fit: cover;",
+            padding="2rem") }}
         </div>
 
         <!-- Corps de la carte -->
@@ -138,7 +139,7 @@
         <div class="u-p-3 u-border-top u-flex u-justify-end u-align-center" style="background: rgba(0, 0, 0, 0.15);">
             <a href="{{ url_for('admin_vehicle_timeline', vehicle_id=v.id) }}"
                 class="admin-btn admin-btn-sm admin-btn-primary" style="width: 100%; text-align: center;">
-                Consulter l'historique →
+                Consulter la fiche véhicule →
             </a>
         </div>
     </div>

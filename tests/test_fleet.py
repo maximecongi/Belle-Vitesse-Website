@@ -316,7 +316,7 @@ class FleetTest(unittest.TestCase):
             self.assertIn("/admin/fleet", res_unknown.headers.get("Location", ""))
 
     def test_fleet_sidebar_visibility_for_all_roles(self):
-        """Vérifie que 'Parc & Timeline' est visible pour tous les rôles, et que 'Points de Contrôle' n'est exposé qu'aux administrateurs."""
+        """Vérifie que 'Flotte Véhicules' est visible pour tous les rôles, et que 'Points de Contrôle' n'est exposé qu'aux administrateurs."""
         roles = ["technicien", "commercial", "manager", "administrateur", "super administrateur"]
         for r in roles:
             with self.client.session_transaction() as sess:
@@ -328,12 +328,57 @@ class FleetTest(unittest.TestCase):
             resp = self.client.get("/admin/dashboard")
             self.assertEqual(resp.status_code, 200)
             self.assertIn("/admin/fleet", resp.data.decode("utf-8"), f"Lien /admin/fleet absent pour le rôle {r}")
-            self.assertIn("Parc &amp; Timeline", resp.data.decode("utf-8"), f"Parc &amp; Timeline absent pour le rôle {r}")
+            self.assertIn("Flotte Véhicules", resp.data.decode("utf-8"), f"Flotte Véhicules absent pour le rôle {r}")
 
+            # 2. Vérification sur la page /admin/fleet (bouton Points de Contrôle réservé admin)
+            resp_fleet = self.client.get("/admin/fleet")
+            self.assertEqual(resp_fleet.status_code, 200)
             if r in ["administrateur", "super administrateur"]:
-                self.assertIn("/admin/vehicle-configs", resp.data.decode("utf-8"), f"Points de Contrôle absent pour {r}")
+                self.assertIn("/admin/vehicle-configs", resp_fleet.data.decode("utf-8"), f"Points de Contrôle absent pour {r}")
             else:
-                self.assertNotIn("/admin/vehicle-configs", resp.data.decode("utf-8"), f"Points de Contrôle exposé pour {r}")
+                self.assertNotIn("/admin/vehicle-configs", resp_fleet.data.decode("utf-8"), f"Points de Contrôle exposé pour {r}")
+
+    @patch("services.admin.fleet.get_vehicles")
+    def test_incident_moderate_severity_badge_accent(self, mock_get_vehicles):
+        """Vérifie qu'un incident modéré affiche bien 'Modéré' avec accent (et non 'Modere') sur la timeline."""
+        mock_get_vehicles.return_value = [
+            {
+                "id": "recTest123",
+                "fields": {
+                    "name": "eCar Proto",
+                    "unique_id": "ECAR-PROTO",
+                    "brand": "Belle Vitesse",
+                    "model": "Mk1",
+                    "order": 1,
+                }
+            }
+        ]
+        with self.app.app_context():
+            user, proj = self._create_mock_data()
+            inc = Incident(
+                title="Problème batterie",
+                vehicle_id="recTest123",
+                reported_by_id=user.id,
+                incident_date=date(2026, 9, 5),
+                severity="modere",
+                status="signale"
+            )
+            db.session.add(inc)
+            db.session.commit()
+
+            self.assertEqual(inc.severity_label, "Modéré")
+
+            with self.client.session_transaction() as sess:
+                sess["admin_authenticated"] = True
+                sess["admin_user_id"] = user.id
+                sess["admin_user_role"] = "administrator"
+
+            res = self.client.get("/admin/fleet/recTest123")
+            self.assertEqual(res.status_code, 200)
+            html = res.data.decode("utf-8")
+            self.assertIn("Modéré", html)
+            self.assertNotIn(">⚠️ Modere<", html)
+            self.assertNotIn("(Modere)", html)
 
 
 if __name__ == "__main__":

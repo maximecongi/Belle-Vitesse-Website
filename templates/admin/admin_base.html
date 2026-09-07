@@ -176,7 +176,6 @@
                 {{ nav_item(url_for('admin_projects_list'), 'Projets', 'projects') }}
                 {{ nav_item(url_for('admin_projects_archives'), 'Archives', 'archives') }}
                 {{ nav_item(url_for('admin_booking'), 'Calendrier Matériel', 'booking') }}
-                {{ nav_item(url_for('admin_pre_quotes_list'), 'Pré-Devis', 'pre_quotes') }}
                 {{ nav_item(url_for('admin_productions_list'), 'Productions', 'productions') }}
                 {{ nav_item(url_for('admin_contacts_list'), 'Contacts', 'contacts') }}
                 {% endcall %}
@@ -193,7 +192,7 @@
                 {% endcall %}
 
                 {% call nav_group('🏎️ Flotte', 'flotte', 'flotte', false) %}
-                {{ nav_item(url_for('admin_fleet_list'), 'Parc & Timeline', 'fleet') }}
+                {{ nav_item(url_for('admin_fleet_list'), 'Flotte Véhicules', 'fleet') }}
                 {% endcall %}
 
                 {% call nav_group('🧰 Administration', 'admin', 'admin', false) %}

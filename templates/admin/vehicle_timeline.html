@@ -4,7 +4,7 @@
 vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_status_badge %}
 
 {% block title %}Historique — {{ vehicle.name }} ({{ vehicle.unique_id }}){% endblock %}
-{% block page_title %}Timeline & Historique{% endblock %}
+{% block page_title %}Timeline{% endblock %}
 
 {% block header_actions %}
 <div class="u-flex u-align-center u-gap-2">
@@ -180,7 +180,7 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
                 <div class="u-flex u-gap-2 u-flex-wrap u-mt-2">
                     {% if vehicle.max_speed %}
                     <span class="u-text-xs u-p-1" style="background: rgba(255, 255, 255, 0.05); border-radius: 4px;">
-                        ⚡ Vitesse max : {{ vehicle.max_speed }}
+                        ⚡ Vitesse max : {{ vehicle.max_speed }} km/h
                     </span>
                     {% endif %}
                     {% if vehicle.passengers %}
@@ -273,7 +273,7 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
 <div id="timeline-missions-view" class="timeline-wrapper"
     style="position: relative; padding-left: 2rem; margin-top: 1.5rem;">
     <!-- Ligne verticale continue Niveau 1 -->
-    <div style="position: absolute; left: 10px; top: 12px; bottom: 0; width: 2px; background: rgba(0, 0, 0, 0.1);">
+    <div style="position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: rgba(0, 0, 0, 0.1);">
     </div>
 
     {% for m in missions %}
@@ -282,7 +282,7 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
     <div class="timeline-item u-mb-4" data-type="project" style="position: relative;">
         <!-- Puce circulaire Niveau 1 (Tournage) -->
         <div
-            style="position: absolute; left: -2rem; top: 14px; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; z-index: 2; background: #8b5cf6; color: #fff; box-shadow: 0 0 10px rgba(139, 92, 246, 0.35);">
+            style="position: absolute; left: -2rem; top: 0; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; z-index: 2; background: #8b5cf6; color: #fff; box-shadow: 0 0 10px rgba(139, 92, 246, 0.35);">
             🎬
         </div>
 
@@ -292,8 +292,7 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
                 <!-- Gauche : Références, Titre, Métadonnées contextuelles -->
                 <div>
                     <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
-                        <span class="checkout-doc-id u-m-0">{{ m.project_unique_id }}</span>
-                        <span class="badge-pill" data-val="primary">🎬 Tournage</span>
+                        <span class="badge-pill" data-val="project">🎬 Tournage</span>
                         {% if m.status == 'in_progress' %}
                         <span class="badge-pill" data-val="in_progress">🎬 En tournage</span>
                         {% else %}
@@ -314,8 +313,9 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
                             {{ m.project_name }}
                         </a>
                     </h3>
+                    <span class="checkout-doc-id u-m-0">{{ m.project_unique_id }}</span>
 
-                    <div class="u-text-xs u-text-muted u-flex u-gap-3 u-flex-wrap u-mt-1">
+                    <div class="u-text-xs u-text-muted u-flex u-gap-3 u-flex-wrap u-mt-3">
                         <span>{{ m.date_range_label }}</span>
                         {% if m.production_name and m.production_name != '—' %}
                         <span>Production : {{ m.production_name }}</span>
@@ -351,10 +351,6 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
                 {{ render_timeline_event_card(sub_evt, is_sub_event=true) }}
             </div>
             {% endfor %}
-            {% else %}
-            <div class="admin-card u-p-3 u-text-xs u-text-muted" style="font-style: italic;">
-                Aucun contrôle de départ/retour ou incident enregistré pour ce tournage.
-            </div>
             {% endif %}
         </div>
     </div>
@@ -376,7 +372,7 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
     {% endif %}
     {% else %}
     <div class="admin-card u-text-center u-p-5">
-        <p class="u-text-muted u-text-lg u-m-0">Aucun tournage ou événement répertorié pour ce véhicule.</p>
+        <p class="u-text-muted u-text-sm u-m-0">Aucun tournage ou événement répertorié pour ce véhicule.</p>
     </div>
     {% endfor %}
 </div>
@@ -410,7 +406,7 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
     </div>
     {% else %}
     <div class="admin-card u-text-center u-p-5">
-        <p class="u-text-muted u-text-lg u-m-0">Aucun événement répertorié pour ce véhicule dans l'historique.</p>
+        <p class="u-text-muted u-text-sm u-m-0">Aucun événement répertorié pour ce véhicule.</p>
     </div>
     {% endfor %}
 

@@ -20,11 +20,11 @@
 {% macro incident_severity_badge(severity, label=None) %}
 {% set s = (severity or 'mineur')|lower %}
 {% if s == 'critique' %}
-<span class="badge-pill" data-val="critique">🚨 {{ label or 'Critique' }}</span>
-{% elif s == 'modere' %}
-<span class="badge-pill" data-val="warning">⚠️ {{ label or 'Modéré' }}</span>
+<span class="badge-pill" data-val="critique">🚨 {{ 'Critique' if (not label or label|lower == 'critique') else label }}</span>
+{% elif s in ('modere', 'modéré') %}
+<span class="badge-pill" data-val="warning">⚠️ {{ 'Modéré' if (not label or label|lower in ('modere', 'modéré')) else label }}</span>
 {% else %}
-<span class="badge-pill" data-val="neutral">ℹ️ {{ label or 'Mineur' }}</span>
+<span class="badge-pill" data-val="neutral">ℹ️ {{ 'Mineur' if (not label or label|lower == 'mineur') else label }}</span>
 {% endif %}
 {% endmacro %}
 
@@ -101,7 +101,8 @@
 {% elif event_type == 'checkin' %}
 <span class="badge-pill" data-val="checkin">📦 Retour</span>
 {% elif event_type == 'incident' %}
-<span class="badge-pill" data-val="critique">⚠️ Incident ({{ severity_label or 'Modéré' }})</span>
+{% set sev = 'Modéré' if (not severity_label or severity_label|lower in ('modere', 'modéré')) else ('Critique' if severity_label|lower == 'critique' else ('Mineur' if severity_label|lower == 'mineur' else severity_label)) %}
+<span class="badge-pill" data-val="critique">⚠️ Incident ({{ sev }})</span>
 {% else %}
 <span class="badge-pill" data-val="project">🎬 Tournage</span>
 {% endif %}

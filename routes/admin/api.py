@@ -489,7 +489,7 @@ def init_api_routes(app):
                     if not query_lower or query_lower in searchable:
                         results.append({
                             "title": f"{inc_num} — {inc_title}",
-                            "subtitle": f"{inc.severity.capitalize()} • {inc.status} • {inc.incident_date.strftime('%d/%m/%Y') if inc.incident_date else ''}",
+                            "subtitle": f"{inc.severity_label} • {inc.status_label} • {inc.incident_date.strftime('%d/%m/%Y') if inc.incident_date else ''}",
                             "url": url_for("admin_incident_detail", record_id=inc.id),
                             "category": "Incident",
                             "icon": "alert"
