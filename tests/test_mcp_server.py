@@ -91,7 +91,8 @@ class MCPServerFullTestSuite(unittest.TestCase):
 
     def test_newsletter_subscribers(self):
         res = system.get_newsletter_subscribers()
-        self.assertIsInstance(res, list)
+        self.assertIsInstance(res, dict)
+        self.assertIn("subscribers", res)
 
     def test_purge_system_cache(self):
         guard = system.purge_system_cache(confirm=False)
@@ -102,7 +103,9 @@ class MCPServerFullTestSuite(unittest.TestCase):
     # ── 2. PRODUCTIONS ───────────────────────────────────────────
     def test_productions_lifecycle(self):
         # List & Form Context
-        self.assertIsInstance(productions.list_productions(), list)
+        res_list = productions.list_productions()
+        self.assertIsInstance(res_list, dict)
+        self.assertIn("productions", res_list)
         self.assertIn("fields", productions.get_production_form_context())
 
         # Create
@@ -115,7 +118,7 @@ class MCPServerFullTestSuite(unittest.TestCase):
         self.assertTrue(res_c.get("success"))
 
         # Find created
-        all_p = productions.list_productions()
+        all_p = productions.list_productions().get("productions", [])
         prod = next((p for p in all_p if p.get("name") == "PyTest Studio Production"), None)
         self.assertIsNotNone(prod)
         prod_id = prod["id"]
@@ -139,7 +142,9 @@ class MCPServerFullTestSuite(unittest.TestCase):
 
     # ── 3. CONTACTS ──────────────────────────────────────────────
     def test_contacts_lifecycle(self):
-        self.assertIsInstance(contacts.list_contacts(), list)
+        res_c_list = contacts.list_contacts()
+        self.assertIsInstance(res_c_list, dict)
+        self.assertIn("contacts", res_c_list)
         self.assertIn("productions", contacts.get_contact_form_context())
 
         res_c = contacts.create_contact(
@@ -151,7 +156,7 @@ class MCPServerFullTestSuite(unittest.TestCase):
         )
         self.assertTrue(res_c.get("success"))
 
-        all_c = contacts.list_contacts()
+        all_c = contacts.list_contacts().get("contacts", [])
         cnt = next((c for c in all_c if c.get("first_name") == "PyTest" and c.get("last_name") == "ContactMCP"), None)
         self.assertIsNotNone(cnt)
         cnt_id = cnt["id"]
@@ -175,7 +180,9 @@ class MCPServerFullTestSuite(unittest.TestCase):
 
     # ── 4. PROJETS ───────────────────────────────────────────────
     def test_projects_lifecycle(self):
-        self.assertIsInstance(projects.list_projects(), list)
+        res_p_list = projects.list_projects()
+        self.assertIsInstance(res_p_list, dict)
+        self.assertIn("projects", res_p_list)
         self.assertIsInstance(projects.get_project_form_context(), dict)
 
         first_prod = Production.query.first()
@@ -193,7 +200,7 @@ class MCPServerFullTestSuite(unittest.TestCase):
         )
         self.assertTrue(res_c.get("success"))
 
-        all_pr = projects.list_projects()
+        all_pr = projects.list_projects().get("projects", [])
         proj = next((p for p in all_pr if p.get("name") == "PyTest Tournage MCP"), None)
         self.assertIsNotNone(proj)
         proj_id = proj["id"]
@@ -226,7 +233,9 @@ class MCPServerFullTestSuite(unittest.TestCase):
 
     # ── 5. PRÉ-DEVIS ─────────────────────────────────────────────
     def test_pre_quotes_lifecycle(self):
-        self.assertIsInstance(pre_quotes.list_pre_quotes(), list)
+        res_pq_list = pre_quotes.list_pre_quotes()
+        self.assertIsInstance(res_pq_list, dict)
+        self.assertIn("pre_quotes", res_pq_list)
         self.assertIn("delivery_config", pre_quotes.get_pre_quote_form_context())
 
         first_prod = Production.query.first()
@@ -284,15 +293,15 @@ class MCPServerFullTestSuite(unittest.TestCase):
     # ── 7. TARIFICATION ──────────────────────────────────────────
     def test_pricing(self):
         self.assertIsInstance(pricing.get_equipment_rates(), dict)
-        self.assertIsInstance(pricing.get_salary_rates(), list)
-        self.assertIsInstance(pricing.get_logistics_rates(), list)
+        self.assertIsInstance(pricing.get_salary_rates(), dict)
+        self.assertIsInstance(pricing.get_logistics_rates(), dict)
 
         first_v = Vehicle.query.first()
         if first_v:
             res_u = pricing.update_equipment_daily_rate("vehicles", first_v.id, float(first_v.daily_rate or 800.0))
             self.assertTrue(res_u.get("success"))
 
-        sal_rates = pricing.get_salary_rates()
+        sal_rates = pricing.get_salary_rates().get("rates", [])
         if sal_rates:
             res_s = pricing.update_salary_rate(sal_rates[0]["id"], "notes", "Note PyTest")
             self.assertTrue(res_s.get("success"))
@@ -302,7 +311,9 @@ class MCPServerFullTestSuite(unittest.TestCase):
 
     # ── 8. UTILISATEURS ──────────────────────────────────────────
     def test_users_lifecycle(self):
-        self.assertIsInstance(users.list_users(), list)
+        res_u = users.list_users()
+        self.assertIsInstance(res_u, dict)
+        self.assertIn("users", res_u)
 
         res_c = users.create_user(
             firstname="PyTestUser",
@@ -329,7 +340,9 @@ class MCPServerFullTestSuite(unittest.TestCase):
 
     # ── 9. CALENDRIERS ───────────────────────────────────────────
     def test_calendars_lifecycle(self):
-        self.assertIsInstance(calendars.list_calendar_subscriptions(), list)
+        res_cal = calendars.list_calendar_subscriptions()
+        self.assertIsInstance(res_cal, dict)
+        self.assertIn("subscriptions", res_cal)
         res_c = calendars.create_calendar_subscription(user_id=1, label="PyTest iCal")
         self.assertTrue(res_c.get("success"))
         token_id = res_c.get("token_id")
@@ -339,6 +352,12 @@ class MCPServerFullTestSuite(unittest.TestCase):
 
         revoked = calendars.revoke_calendar_subscription(token_id, confirm=True)
         self.assertTrue(revoked.get("success"))
+
+        from models import CalendarSubscription
+        test_sub = db.session.get(CalendarSubscription, token_id)
+        if test_sub:
+            db.session.delete(test_sub)
+            db.session.commit()
 
     # ── 10. DOCUMENTS & VÉHICULES ────────────────────────────────
     def test_documents_and_vehicles(self):
@@ -351,15 +370,15 @@ class MCPServerFullTestSuite(unittest.TestCase):
         catalog_up = documents.update_catalog_pdf(with_prices=True)
         self.assertTrue(catalog_up.get("success"))
 
-        self.assertIsInstance(vehicles.get_vehicles_with_config(), list)
-        self.assertIsInstance(vehicles.get_checkpoints_for_vehicle(v_id), list)
+        self.assertIsInstance(vehicles.get_vehicles_with_config(), dict)
+        self.assertIsInstance(vehicles.get_checkpoints_for_vehicle(v_id), dict)
 
         save_chk = vehicles.save_vehicle_checkpoint_config(v_id, ["exterior_cleanliness"])
         self.assertTrue(save_chk.get("success"))
 
         # Test véhicule invalide : renvoie [] proprement
         invalid_cps = vehicles.get_checkpoints_for_vehicle("recINVALIDE999")
-        self.assertEqual(invalid_cps, [])
+        self.assertEqual(invalid_cps.get("checkpoints"), [])
 
     # ── 11. SÉCURITÉ & AUDIT ─────────────────────────────────────
     def test_security_scopes_and_audit(self):
@@ -399,29 +418,29 @@ class MCPServerFullTestSuite(unittest.TestCase):
     def test_search_filters_and_pagination(self):
         # 1. Contacts
         c_list = contacts.list_contacts(limit=5, offset=0)
-        self.assertLessEqual(len(c_list), 5)
+        self.assertLessEqual(c_list.get("count", 0), 5)
         c_search = contacts.list_contacts(query="NonExistentContactName999")
-        self.assertEqual(len(c_search), 0)
+        self.assertEqual(c_search.get("total", 0), 0)
 
         # 2. Productions
         p_list = productions.list_productions(limit=3, offset=0)
-        self.assertLessEqual(len(p_list), 3)
+        self.assertLessEqual(p_list.get("count", 0), 3)
         p_search = productions.list_productions(query="NonExistentProdName999")
-        self.assertEqual(len(p_search), 0)
+        self.assertEqual(p_search.get("total", 0), 0)
 
         # 3. Projets
         pr_list = projects.list_projects(limit=5, offset=0)
-        self.assertLessEqual(len(pr_list), 5)
+        self.assertLessEqual(pr_list.get("count", 0), 5)
         pr_search = projects.list_projects(query="NonExistentProjectName999")
-        self.assertEqual(len(pr_search), 0)
+        self.assertEqual(pr_search.get("total", 0), 0)
 
         # 4. Devis
         q_list = pre_quotes.list_pre_quotes(limit=5, offset=0)
-        self.assertLessEqual(len(q_list), 5)
+        self.assertLessEqual(q_list.get("count", 0), 5)
 
     def test_enriched_details(self):
         # Production enrichie
-        first_p = productions.list_productions(limit=1)
+        first_p = productions.list_productions(limit=1).get("productions", [])
         if first_p:
             p_id = first_p[0]["id"]
             p_det = productions.get_production(p_id)
@@ -432,7 +451,7 @@ class MCPServerFullTestSuite(unittest.TestCase):
             self.assertIsInstance(p_det["recent_projects"], list)
 
         # Projet enrichi
-        first_proj = projects.list_projects(limit=1)
+        first_proj = projects.list_projects(limit=1).get("projects", [])
         if first_proj:
             proj_id = first_proj[0]["id"]
             proj_det = projects.get_project(proj_id)
@@ -474,7 +493,7 @@ class MCPServerFullTestSuite(unittest.TestCase):
         self.assertIn("pending_waivers", dash)
 
         # Pre-quote duplicate
-        first_pq = pre_quotes.list_pre_quotes(limit=1)
+        first_pq = pre_quotes.list_pre_quotes(limit=1).get("pre_quotes", [])
         if first_pq:
             orig_id = first_pq[0]["id"]
             res_dup = pre_quotes.duplicate_pre_quote(orig_id, new_project_name="Duplicated Project Test")

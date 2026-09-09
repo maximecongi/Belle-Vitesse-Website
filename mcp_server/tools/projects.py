@@ -7,6 +7,35 @@ from mcp_server.decorators import run_in_flask_context, require_mcp_scope
 from mcp_server.utils import parse_flexible_date, matches_search_query, apply_pagination
 
 
+def _format_project_summary(p: Dict[str, Any]) -> Dict[str, Any]:
+    """Produit une synthèse légère et optimisée pour le listage de projets."""
+    return {
+        "id": p.get("id"),
+        "project_id": p.get("project_id"),
+        "name": p.get("name"),
+        "production": p.get("production", "—"),
+        "departure_date": p.get("departure_date", "—"),
+        "shoot_start": p.get("shoot_start", "—"),
+        "shoot_end": p.get("shoot_end", "—"),
+        "return_date": p.get("return_date", "—"),
+        "raw_departure_date": p.get("raw_departure_date", ""),
+        "raw_return_date": p.get("raw_return_date", ""),
+        "notes": p.get("notes", ""),
+        "contacts": {
+            "pilot": p.get("pilot_contact_name", "—"),
+            "production": p.get("production_contact_name", "—"),
+            "dop": p.get("dop_contact_name", "—"),
+        },
+        "vehicles_count": len(p.get("vehicles", [])),
+        "heads_count": len(p.get("heads", [])),
+        "waivers": {
+            "pilot_status": p.get("pilot_waiver", {}).get("status", "—"),
+            "production_status": p.get("production_waiver", {}).get("status", "—"),
+        },
+        "pre_quotes_count": len(p.get("pre_quotes", [])),
+    }
+
+
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
@@ -16,7 +45,8 @@ def list_projects(
     production_id: Optional[int] = None,
     limit: Optional[int] = 50,
     offset: Optional[int] = 0,
-) -> List[Dict[str, Any]]:
+    detailed: bool = False,
+) -> Dict[str, Any]:
     """
     Liste les projets (tournages) avec recherche textuelle, filtre temporel et pagination.
     - query: Recherche par nom de projet, code BVPR, nom de production ou notes
@@ -24,6 +54,7 @@ def list_projects(
     - production_id: Filtrer par identifiant de société de production
     - limit: Nombre maximum de projets retournés (défaut 50, max 500)
     - offset: Décalage pour la pagination
+    - detailed: Si False (défaut), retourne une synthèse épurée. Si True, inclut tous les sous-objets imbriqués.
     """
     from services.admin.projects import list_projects as _list_projects
     all_projects = _list_projects()
@@ -40,26 +71,38 @@ def list_projects(
         # Filtre temporel / statut
         if status and status.lower() != "all":
             st = status.lower()
-            start_d = p.get("shoot_start_raw") or p.get("departure_date_raw") or ""
-            end_d = p.get("shoot_end_raw") or p.get("return_date_raw") or ""
+            start_d = p.get("raw_departure_date") or ""
+            end_d = p.get("raw_return_date") or ""
 
             if st == "active":
-                if not (start_d <= today_str <= (end_d or start_d)):
+                if not (start_d and start_d <= today_str <= (end_d or start_d)):
                     continue
             elif st == "upcoming":
-                if not (start_d > today_str):
+                if not (start_d and start_d > today_str):
                     continue
             elif st == "past":
                 if not (end_d and end_d < today_str):
                     continue
 
         # Recherche textuelle
-        if query and not matches_search_query(p, query, ["name", "project_id", "production_name", "notes"]):
+        if query and not matches_search_query(p, query, ["name", "project_id", "production", "notes"]):
             continue
 
         filtered.append(p)
 
-    return apply_pagination(filtered, limit=limit, offset=offset)
+    paginated = apply_pagination(filtered, limit=limit, offset=offset)
+    if not detailed:
+        formatted_projects = [_format_project_summary(p) for p in paginated]
+    else:
+        formatted_projects = paginated
+
+    return {
+        "total": len(filtered),
+        "count": len(formatted_projects),
+        "limit": limit,
+        "offset": offset,
+        "projects": formatted_projects,
+    }
 
 
 @mcp.tool()
@@ -465,9 +508,25 @@ def get_dashboard_summary() -> Dict[str, Any]:
                     "shoot_end": str(p.shoot_end_date or ""),
                 })
 
-    # Décharges en attente pour projets futurs/actifs
-    pending_pilot_waivers = PilotWaiver.query.filter(PilotWaiver.status != "signed").count()
-    pending_prod_waivers = ProductionWaiver.query.filter(ProductionWaiver.status != "signed").count()
+    # Décharges en attente pour projets non supprimés
+    pending_pilot_waivers = (
+        PilotWaiver.query.join(Project)
+        .filter(
+            PilotWaiver.deleted_at.is_(None),
+            Project.deleted_at.is_(None),
+            PilotWaiver.status != "signed",
+        )
+        .count()
+    )
+    pending_prod_waivers = (
+        ProductionWaiver.query.join(Project)
+        .filter(
+            ProductionWaiver.deleted_at.is_(None),
+            Project.deleted_at.is_(None),
+            ProductionWaiver.status != "signed",
+        )
+        .count()
+    )
 
     # Pré-devis récents (draft)
     recent_quotes = [

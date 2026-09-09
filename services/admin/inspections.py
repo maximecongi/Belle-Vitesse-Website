@@ -170,10 +170,21 @@ def get_signed_document_info(inspection_id, is_checkout=True):
 
     endpoint = "download_checkout_document" if is_checkout else "download_checkin_document"
     token = generate_pdf_access_token(path_part)
+    route_base = "checkout" if is_checkout else "checkin"
+
+    from flask import has_request_context
+    pdf_url_str = None
+    if has_request_context():
+        try:
+            pdf_url_str = url_for(endpoint, filepath=path_part, t=token)
+        except Exception:
+            pdf_url_str = None
+    if not pdf_url_str:
+        pdf_url_str = f"/{route_base}/document/{path_part}?t={token}"
 
     return {
         "hash": getattr(signed_doc, 'hash', None),
-        "pdf_url": url_for(endpoint, filepath=path_part, t=token)
+        "pdf_url": pdf_url_str,
     }
 
 

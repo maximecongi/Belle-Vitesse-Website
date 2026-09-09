@@ -92,6 +92,26 @@ def run_all_tests():
         # Setup contexte admin
         suite.set_user(scope="admin")
 
+        db.create_all()
+        if not Vehicle.query.filter_by(id="test-veh-01").first():
+            test_v = Vehicle(
+                id="test-veh-01",
+                daily_rate=1500,
+                fields={
+                    "name": "Mercedes C63 AMG Test",
+                    "max_speed": "250 km/h",
+                    "passengers": "4",
+                    "setups": "Standard",
+                    "power": "510 ch",
+                    "weight": "1800 kg",
+                }
+            )
+            db.session.add(test_v)
+            try:
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+
         # ----------------------------------------------------
         # 1. DOMAINE SYSTÈME (3 outils)
         # ----------------------------------------------------
@@ -107,8 +127,8 @@ def run_all_tests():
         # get_newsletter_subscribers
         try:
             res = system.get_newsletter_subscribers()
-            assert isinstance(res, list)
-            suite.record("system.get_newsletter_subscribers", "PASS", f"{len(res)} abonnés à la newsletter")
+            assert isinstance(res, dict) and "subscribers" in res
+            suite.record("system.get_newsletter_subscribers", "PASS", f"{len(res['subscribers'])} abonnés à la newsletter")
         except Exception as e:
             suite.record("system.get_newsletter_subscribers", "FAIL", str(e))
 
@@ -129,8 +149,8 @@ def run_all_tests():
         # list_productions
         try:
             prods = productions.list_productions()
-            assert isinstance(prods, list)
-            suite.record("productions.list_productions", "PASS", f"{len(prods)} sociétés de production listées")
+            assert isinstance(prods, dict) and "productions" in prods
+            suite.record("productions.list_productions", "PASS", f"{len(prods['productions'])} sociétés de production listées")
         except Exception as e:
             suite.record("productions.list_productions", "FAIL", str(e))
 
@@ -152,7 +172,7 @@ def run_all_tests():
                 phone="0140203040"
             )
             assert res_c.get("success") is True
-            all_p = productions.list_productions()
+            all_p = productions.list_productions().get("productions", [])
             match = [p for p in all_p if p.get("name") == "Warner BV Test Studio"]
             if match:
                 test_prod_id = match[0]["id"]
@@ -194,8 +214,8 @@ def run_all_tests():
         print("\n👥 --- 3. Domaine Contacts Professionnels ---")
         try:
             cnts = contacts.list_contacts()
-            assert isinstance(cnts, list)
-            suite.record("contacts.list_contacts", "PASS", f"{len(cnts)} contacts récupérés")
+            assert isinstance(cnts, dict) and "contacts" in cnts
+            suite.record("contacts.list_contacts", "PASS", f"{len(cnts['contacts'])} contacts récupérés")
         except Exception as e:
             suite.record("contacts.list_contacts", "FAIL", str(e))
 
@@ -217,7 +237,7 @@ def run_all_tests():
                 notes="Contact automatisé de test"
             )
             assert res_c.get("success") is True
-            all_c = contacts.list_contacts()
+            all_c = contacts.list_contacts().get("contacts", [])
             match = [c for c in all_c if c.get("mail") == "thomas.testmcp@bellevitesse.com" or c.get("email") == "thomas.testmcp@bellevitesse.com" or c.get("first_name") == "Thomas"]
             if match:
                 test_contact_id = match[0]["id"]
@@ -260,8 +280,8 @@ def run_all_tests():
         print("\n🎬 --- 4. Domaine Projets (Tournages) ---")
         try:
             projs = projects.list_projects()
-            assert isinstance(projs, list)
-            suite.record("projects.list_projects", "PASS", f"{len(projs)} projets actifs récupérés")
+            assert isinstance(projs, dict) and "projects" in projs
+            suite.record("projects.list_projects", "PASS", f"{len(projs['projects'])} projets actifs récupérés")
         except Exception as e:
             suite.record("projects.list_projects", "FAIL", str(e))
 
@@ -283,7 +303,7 @@ def run_all_tests():
                 notes="Tournage circuit et route fermée"
             )
             assert res_c.get("success") is True
-            all_pr = projects.list_projects()
+            all_pr = projects.list_projects().get("projects", [])
             match = [p for p in all_pr if p.get("name") == "Publicité Auto Alpine A110 MCP"]
             if match:
                 test_proj_id = match[0]["id"]
@@ -316,8 +336,8 @@ def run_all_tests():
         print("\n💶 --- 5. Domaine Pré-Devis & Devis ---")
         try:
             pqs = pre_quotes.list_pre_quotes()
-            assert isinstance(pqs, list)
-            suite.record("pre_quotes.list_pre_quotes", "PASS", f"{len(pqs)} pré-devis enregistrés")
+            assert isinstance(pqs, dict) and "pre_quotes" in pqs
+            suite.record("pre_quotes.list_pre_quotes", "PASS", f"{len(pqs['pre_quotes'])} pré-devis enregistrés")
         except Exception as e:
             suite.record("pre_quotes.list_pre_quotes", "FAIL", str(e))
 
@@ -468,15 +488,15 @@ def run_all_tests():
 
         try:
             sal = pricing.get_salary_rates()
-            assert isinstance(sal, list)
-            suite.record("pricing.get_salary_rates", "PASS", f"{len(sal)} tarifs salariaux trouvés")
+            assert isinstance(sal, dict) and "rates" in sal
+            suite.record("pricing.get_salary_rates", "PASS", f"{len(sal['rates'])} tarifs salariaux trouvés")
         except Exception as e:
             suite.record("pricing.get_salary_rates", "FAIL", str(e))
 
         try:
             log = pricing.get_logistics_rates()
-            assert isinstance(log, list)
-            suite.record("pricing.get_logistics_rates", "PASS", f"{len(log)} tarifs logistiques trouvés")
+            assert isinstance(log, dict) and "rates" in log
+            suite.record("pricing.get_logistics_rates", "PASS", f"{len(log['rates'])} tarifs logistiques trouvés")
         except Exception as e:
             suite.record("pricing.get_logistics_rates", "FAIL", str(e))
 
@@ -495,7 +515,7 @@ def run_all_tests():
 
         # update_salary_rate
         try:
-            sal_list = pricing.get_salary_rates()
+            sal_list = pricing.get_salary_rates().get("rates", [])
             if sal_list:
                 target_sal = sal_list[0]
                 res_u = pricing.update_salary_rate(target_sal["id"], "notes", "Note de test MCP")
@@ -508,7 +528,7 @@ def run_all_tests():
 
         # update_logistics_rate
         try:
-            log_list = pricing.get_logistics_rates()
+            log_list = pricing.get_logistics_rates().get("rates", [])
             if log_list:
                 target_log = log_list[0]
                 res_u = pricing.update_logistics_rate(target_log["id"], "notes", "Note logistique MCP")
@@ -533,8 +553,8 @@ def run_all_tests():
         print("\n👤 --- 8. Domaine Utilisateurs & Permissions ---")
         try:
             us = users.list_users()
-            assert isinstance(us, list)
-            suite.record("users.list_users", "PASS", f"{len(us)} utilisateurs dans le système")
+            assert isinstance(us, dict) and "users" in us
+            suite.record("users.list_users", "PASS", f"{len(us['users'])} utilisateurs dans le système")
         except Exception as e:
             suite.record("users.list_users", "FAIL", str(e))
 
@@ -590,8 +610,8 @@ def run_all_tests():
         print("\n📅 --- 9. Domaine Calendriers & Flux iCal ---")
         try:
             subs = calendars.list_calendar_subscriptions()
-            assert isinstance(subs, list)
-            suite.record("calendars.list_calendar_subscriptions", "PASS", f"{len(subs)} flux iCal répertoriés")
+            assert isinstance(subs, dict) and "subscriptions" in subs
+            suite.record("calendars.list_calendar_subscriptions", "PASS", f"{len(subs['subscriptions'])} flux iCal répertoriés")
         except Exception as e:
             suite.record("calendars.list_calendar_subscriptions", "FAIL", str(e))
 
@@ -643,8 +663,8 @@ def run_all_tests():
         print("\n🚗 --- 11. Domaine Véhicules & Checkpoints ---")
         try:
             veh_cfg = vehicles.get_vehicles_with_config()
-            assert isinstance(veh_cfg, list)
-            suite.record("vehicles.get_vehicles_with_config", "PASS", f"{len(veh_cfg)} véhicules avec configuration checkpoints")
+            assert isinstance(veh_cfg, dict) and "vehicles" in veh_cfg
+            suite.record("vehicles.get_vehicles_with_config", "PASS", f"{len(veh_cfg['vehicles'])} véhicules avec configuration checkpoints")
         except Exception as e:
             suite.record("vehicles.get_vehicles_with_config", "FAIL", str(e))
 
@@ -652,8 +672,8 @@ def run_all_tests():
             first_v = Vehicle.query.first()
             v_id = first_v.id if first_v else "mercedes-c63"
             cps = vehicles.get_checkpoints_for_vehicle(v_id)
-            assert isinstance(cps, list)
-            suite.record("vehicles.get_checkpoints_for_vehicle", "PASS", f"{len(cps)} points de contrôle pour '{v_id}'")
+            assert isinstance(cps, dict) and "checkpoints" in cps
+            suite.record("vehicles.get_checkpoints_for_vehicle", "PASS", f"{len(cps['checkpoints'])} points de contrôle pour '{v_id}'")
         except Exception as e:
             suite.record("vehicles.get_checkpoints_for_vehicle", "FAIL", str(e))
 
@@ -695,7 +715,7 @@ def run_all_tests():
             suite.record("utils.parse_flexible_date", "FAIL", str(e))
 
         try:
-            first_pq = pre_quotes.list_pre_quotes(limit=1)
+            first_pq = pre_quotes.list_pre_quotes(limit=1).get("pre_quotes", [])
             if first_pq:
                 orig_id = first_pq[0]["id"]
                 dup = pre_quotes.duplicate_pre_quote(orig_id, new_project_name="Duplication Test Script")

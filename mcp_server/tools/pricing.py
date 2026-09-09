@@ -59,7 +59,7 @@ def get_salary_rates(
     group_name: Optional[str] = None,
     limit: Optional[int] = 50,
     offset: Optional[int] = 0,
-) -> List[Dict[str, Any]]:
+) -> Dict[str, Any]:
     """
     Récupère les tarifs salariaux des techniciens / pilotes avec recherche, filtres et pagination.
     - query: Recherche par intitulé de poste ou rôle (ex: 'Pilote', 'Cadreur', 'Machiniste', 'Remote head', 'spécialisé')
@@ -82,7 +82,14 @@ def get_salary_rates(
             continue
         filtered.append(r)
 
-    return apply_pagination(filtered, limit=limit, offset=offset)
+    paginated = apply_pagination(filtered, limit=limit, offset=offset)
+    return {
+        "total": len(filtered),
+        "count": len(paginated),
+        "limit": limit,
+        "offset": offset,
+        "rates": paginated,
+    }
 
 
 @mcp.tool()
@@ -122,7 +129,7 @@ def get_logistics_rates(
     query: Optional[str] = None,
     limit: Optional[int] = 50,
     offset: Optional[int] = 0,
-) -> List[Dict[str, Any]]:
+) -> Dict[str, Any]:
     """
     Récupère les tarifs logistiques (kilométrage, carburant, convoyage) avec recherche et pagination.
     - query: Recherche par libellé ou description
@@ -139,7 +146,14 @@ def get_logistics_rates(
             continue
         filtered.append(r)
 
-    return apply_pagination(filtered, limit=limit, offset=offset)
+    paginated = apply_pagination(filtered, limit=limit, offset=offset)
+    return {
+        "total": len(filtered),
+        "count": len(paginated),
+        "limit": limit,
+        "offset": offset,
+        "rates": paginated,
+    }
 
 
 @mcp.tool()

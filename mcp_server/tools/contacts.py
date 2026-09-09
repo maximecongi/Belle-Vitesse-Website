@@ -13,7 +13,7 @@ def list_contacts(
     production_id: Optional[int] = None,
     limit: Optional[int] = 50,
     offset: Optional[int] = 0,
-) -> List[Dict[str, Any]]:
+) -> Dict[str, Any]:
     """
     Liste les contacts professionnels avec recherche textuelle et pagination.
     - query: Recherche par nom, prénom, poste, email, téléphone ou nom de production
@@ -37,7 +37,14 @@ def list_contacts(
             continue
         filtered.append(c)
 
-    return apply_pagination(filtered, limit=limit, offset=offset)
+    paginated = apply_pagination(filtered, limit=limit, offset=offset)
+    return {
+        "total": len(filtered),
+        "count": len(paginated),
+        "limit": limit,
+        "offset": offset,
+        "contacts": paginated,
+    }
 
 
 @mcp.tool()

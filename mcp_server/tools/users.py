@@ -8,11 +8,15 @@ from mcp_server.decorators import run_in_flask_context, require_mcp_scope
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
-def list_users() -> List[Dict[str, Any]]:
+def list_users() -> Dict[str, Any]:
     """Liste tous les utilisateurs du système avec leurs rôles."""
     from services.admin.users import list_users as _list
     users = _list()
-    return [u.to_dict() if hasattr(u, "to_dict") else dict(u) for u in users]
+    serialized = [u.to_dict() if hasattr(u, "to_dict") else dict(u) for u in users]
+    return {
+        "total": len(serialized),
+        "users": serialized,
+    }
 
 
 @mcp.tool()

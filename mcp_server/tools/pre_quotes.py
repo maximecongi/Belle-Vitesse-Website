@@ -27,7 +27,7 @@ def list_pre_quotes(
     query: Optional[str] = None,
     limit: Optional[int] = 50,
     offset: Optional[int] = 0,
-) -> List[Dict[str, Any]]:
+) -> Dict[str, Any]:
     """
     Liste les pré-devis avec filtres et pagination.
     - project_id: Filtrer par ID de projet associé
@@ -56,7 +56,14 @@ def list_pre_quotes(
 
         filtered.append(formatted)
 
-    return apply_pagination(filtered, limit=limit, offset=offset)
+    paginated = apply_pagination(filtered, limit=limit, offset=offset)
+    return {
+        "total": len(filtered),
+        "count": len(paginated),
+        "limit": limit,
+        "offset": offset,
+        "pre_quotes": paginated,
+    }
 
 
 @mcp.tool()

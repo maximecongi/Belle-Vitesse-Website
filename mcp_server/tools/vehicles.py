@@ -255,10 +255,14 @@ def check_vehicle_availability(
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
-def get_vehicles_with_config() -> List[Dict[str, Any]]:
+def get_vehicles_with_config() -> Dict[str, Any]:
     """Liste tous les véhicules avec leur configuration actuelle de points de contrôle."""
     from services.admin.vehicle_config import get_vehicles_with_config as _get
-    return _get()
+    vehicles = _get()
+    return {
+        "total": len(vehicles),
+        "vehicles": vehicles,
+    }
 
 
 @mcp.tool()
@@ -285,7 +289,7 @@ def save_vehicle_checkpoint_config(vehicle_id: str, enabled_keys: List[str]) -> 
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
-def get_checkpoints_for_vehicle(vehicle_id: str) -> List[Dict[str, Any]]:
+def get_checkpoints_for_vehicle(vehicle_id: str) -> Dict[str, Any]:
     """
     Récupère la liste des points de contrôle applicables pour un véhicule spécifique.
     Retourne une liste vide si le véhicule est introuvable ou invalide.
@@ -299,8 +303,19 @@ def get_checkpoints_for_vehicle(vehicle_id: str) -> List[Dict[str, Any]]:
         None,
     )
     if not matching_v:
-        return []
+        return {
+            "vehicle_id": vehicle_id,
+            "vehicle_name": vehicle_id,
+            "total": 0,
+            "checkpoints": [],
+        }
 
     actual_id = matching_v.get("id") or vehicle_id
     vehicle_name = matching_v.get("fields", {}).get("name") or vehicle_id
-    return _get(actual_id, vehicle_name=vehicle_name)
+    checkpoints = _get(actual_id, vehicle_name=vehicle_name)
+    return {
+        "vehicle_id": actual_id,
+        "vehicle_name": vehicle_name,
+        "total": len(checkpoints),
+        "checkpoints": checkpoints,
+    }

@@ -12,9 +12,9 @@ def list_productions(
     query: Optional[str] = None,
     limit: Optional[int] = 50,
     offset: Optional[int] = 0,
-) -> List[Dict[str, Any]]:
+) -> Dict[str, Any]:
     """
-    Liste les sociétés de production avec recherche textuelle et pagination.
+    Liste toutes les sociétés de production audiovisuelles et clients (productions, boîtes de production, agences) avec recherche textuelle et pagination.
     - query: Recherche par nom, email, téléphone ou adresse
     - limit: Nombre maximum d'enregistrements retournés (défaut 50, max 500)
     - offset: Décalage pour la pagination
@@ -29,7 +29,14 @@ def list_productions(
             continue
         filtered.append(p)
 
-    return apply_pagination(filtered, limit=limit, offset=offset)
+    paginated = apply_pagination(filtered, limit=limit, offset=offset)
+    return {
+        "total": len(filtered),
+        "count": len(paginated),
+        "limit": limit,
+        "offset": offset,
+        "productions": paginated,
+    }
 
 
 @mcp.tool()

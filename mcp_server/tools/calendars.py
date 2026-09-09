@@ -8,11 +8,19 @@ from mcp_server.decorators import run_in_flask_context, require_mcp_scope
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
-def list_calendar_subscriptions() -> List[Dict[str, Any]]:
-    """Liste tous les abonnements et tokens de synchronisation iCal actifs."""
+def list_calendar_subscriptions(
+    is_active: Optional[bool] = None,
+    user_id: Optional[int] = None,
+) -> Dict[str, Any]:
+    """
+    Liste les abonnements et tokens de synchronisation de calendrier iCal.
+    - is_active: Filtrer par état d'activation (True = actifs uniquement, False = inactifs/révoqués, None = tous)
+    - user_id: Filtrer par identifiant utilisateur
+    """
     from services.admin.calendar_subscriptions import list_all_subscriptions
     subs = list_all_subscriptions()
-    return [
+
+    formatted = [
         {
             "id": s.id,
             "user_id": s.user_id,
@@ -24,6 +32,22 @@ def list_calendar_subscriptions() -> List[Dict[str, Any]]:
         }
         for s in subs
     ]
+
+    filtered = formatted
+    if is_active is not None:
+        filtered = [s for s in filtered if s["is_active"] == is_active]
+    if user_id is not None:
+        filtered = [s for s in filtered if s["user_id"] == user_id]
+
+    active_count = sum(1 for s in formatted if s["is_active"])
+    inactive_count = sum(1 for s in formatted if not s["is_active"])
+
+    return {
+        "total": len(filtered),
+        "active_count": active_count,
+        "inactive_count": inactive_count,
+        "subscriptions": filtered,
+    }
 
 
 @mcp.tool()

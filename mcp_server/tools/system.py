@@ -36,7 +36,11 @@ def purge_system_cache(confirm: bool = False) -> Dict[str, Any]:
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
-def get_newsletter_subscribers() -> List[Dict[str, Any]]:
-    """Récupère la liste des inscrits à la newsletter."""
+def get_newsletter_subscribers() -> Dict[str, Any]:
+    """Récupère la liste des inscrits à la newsletter Belle Vitesse."""
     from services.admin.system import get_newsletter_subscribers as _get
-    return _get()
+    subscribers = _get()
+    return {
+        "total": len(subscribers),
+        "subscribers": subscribers,
+    }
