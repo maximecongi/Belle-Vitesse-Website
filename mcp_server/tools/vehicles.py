@@ -52,6 +52,38 @@ def get_vehicle_timeline(vehicle_id: str) -> Optional[Dict[str, Any]]:
     return _make_json_safe(raw_data)
 
 
+def _resolve_equipment_ids(
+    provided_ids: Optional[List[str]],
+    catalog_items: List[Dict[str, Any]],
+) -> List[str]:
+    """Résout de manière tolérante les identifiants, slugs ou noms d'équipements transmis par l'agent IA."""
+    if not provided_ids:
+        return []
+    resolved = []
+    for item_input in provided_ids:
+        if not item_input:
+            continue
+        item_str = str(item_input).strip()
+        # 1. Correspondance exacte sur l'identifiant
+        direct_match = next((c for c in catalog_items if str(c.get("id")) == item_str), None)
+        if direct_match:
+            resolved.append(str(direct_match.get("id")))
+            continue
+        # 2. Correspondance tolérante sur nom, slug ou unique_id
+        norm_input = item_str.lower()
+        named_match = next(
+            (c for c in catalog_items if norm_input in (c.get("fields", {}).get("name") or "").lower()
+             or norm_input in (c.get("fields", {}).get("slug") or "").lower()
+             or norm_input in (c.get("fields", {}).get("unique_id") or "").lower()),
+            None,
+        )
+        if named_match:
+            resolved.append(str(named_match.get("id")))
+        else:
+            resolved.append(item_str)
+    return resolved
+
+
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
@@ -64,14 +96,18 @@ def check_booking_conflicts(
 ) -> Dict[str, Any]:
     """
     Vérifie les conflits de réservation multi-matériels (véhicules et têtes gyrostabilisées) sur une période.
+    IMPORTANT : Si vehicle_ids ET head_ids sont omis ou vides, l'outil scanne AUTOMATIQUEMENT
+    l'intégralité de la flotte (tous les véhicules et têtes du catalogue) pour éviter tout faux négatif.
     - start_date: Date de début au format 'YYYY-MM-DD' ou 'DD/MM/YYYY'
     - end_date: Date de fin au format 'YYYY-MM-DD' ou 'DD/MM/YYYY'
-    - vehicle_ids: Liste optionnelle d'identifiants de véhicules à vérifier
-    - head_ids: Liste optionnelle d'identifiants de têtes gyrostabilisées à vérifier
+    - vehicle_ids: Liste optionnelle d'identifiants ou noms de véhicules (ex: ['mercedes-c63', 'Ford F150'])
+    - head_ids: Liste optionnelle d'identifiants ou noms de têtes gyrostabilisées (ex: ['Shotover F1', 'Flight Head'])
     - exclude_project_id: ID optionnel du projet en cours à exclure de l'analyse (int ou 'BVPR-...')
     """
+    from datetime import datetime
     from services.admin.conflicts import check_booking_conflicts as _check
     from mcp_server.utils import parse_flexible_date
+    from utils.database import get_heads, get_vehicles
 
     parsed_start = parse_flexible_date(start_date)
     parsed_end = parse_flexible_date(end_date)
@@ -81,16 +117,57 @@ def check_booking_conflicts(
             "has_conflicts": False,
             "total_conflicts": 0,
             "message": "Format de date invalide. Utilisez 'YYYY-MM-DD' ou 'DD/MM/YYYY'.",
+            "conflicts_list": [],
         }
+
+    req_start = datetime.strptime(parsed_start, "%Y-%m-%d").date()
+    req_end = datetime.strptime(parsed_end, "%Y-%m-%d").date()
+    if req_end < req_start:
+        return {
+            "has_conflicts": False,
+            "total_conflicts": 0,
+            "message": "La date de fin ne peut pas être antérieure à la date de début.",
+            "conflicts_list": [],
+        }
+
+    all_v = get_vehicles() or []
+    all_h = get_heads() or []
+
+    target_vehicle_ids = _resolve_equipment_ids(vehicle_ids, all_v) if vehicle_ids else []
+    target_head_ids = _resolve_equipment_ids(head_ids, all_h) if head_ids else []
+
+    scanned_all = False
+    # Si aucun équipement ciblé n'est fourni, scan automatique de l'ensemble de la flotte
+    if not target_vehicle_ids and not target_head_ids:
+        target_vehicle_ids = [str(v["id"]) for v in all_v if v.get("id")]
+        target_head_ids = [str(h["id"]) for h in all_h if h.get("id")]
+        scanned_all = True
 
     raw = _check(
         start_date_val=parsed_start,
         end_date_val=parsed_end,
-        vehicle_ids=vehicle_ids,
-        head_ids=head_ids,
+        vehicle_ids=target_vehicle_ids,
+        head_ids=target_head_ids,
         exclude_project_id=exclude_project_id,
     )
-    return _make_json_safe(raw)
+    result = _make_json_safe(raw)
+    result["scanned_all_equipment"] = scanned_all
+    result["scanned_vehicles_count"] = len(target_vehicle_ids)
+    result["scanned_heads_count"] = len(target_head_ids)
+
+    total_c = result.get("total_conflicts", 0)
+    if scanned_all:
+        result["scan_summary"] = (
+            f"Scan global de l'ensemble de la flotte ({len(target_vehicle_ids)} véhicules, {len(target_head_ids)} têtes) : "
+            f"{total_c} conflit(s) détecté(s) du {parsed_start} au {parsed_end}."
+        )
+    else:
+        result["scan_summary"] = (
+            f"Scan ciblé ({len(target_vehicle_ids)} véhicules, {len(target_head_ids)} têtes) : "
+            f"{total_c} conflit(s) détecté(s) du {parsed_start} au {parsed_end}."
+        )
+
+    return result
 
 
 @mcp.tool()

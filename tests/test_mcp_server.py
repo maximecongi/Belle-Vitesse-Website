@@ -536,7 +536,7 @@ class MCPServerFullTestSuite(unittest.TestCase):
         self.assertIn("vehicles", fleet)
         self.assertIn("stats", fleet)
 
-        # 2. Détection unifiée des conflits
+        # 2. Détection unifiée des conflits (ciblé)
         conflicts = vehicles.check_booking_conflicts(
             start_date="2026-11-01",
             end_date="2026-11-05",
@@ -545,6 +545,17 @@ class MCPServerFullTestSuite(unittest.TestCase):
         self.assertIsInstance(conflicts, dict)
         self.assertIn("has_conflicts", conflicts)
         self.assertIn("conflicts_list", conflicts)
+        self.assertFalse(conflicts.get("scanned_all_equipment"))
+
+        # 2b. Détection globale de la flotte (sans vehicle_ids ni head_ids)
+        global_conflicts = vehicles.check_booking_conflicts(
+            start_date="2026-11-01",
+            end_date="2026-11-05",
+        )
+        self.assertIsInstance(global_conflicts, dict)
+        self.assertIn("has_conflicts", global_conflicts)
+        self.assertTrue(global_conflicts.get("scanned_all_equipment"))
+        self.assertIn("scan_summary", global_conflicts)
 
         # 3. Disponibilité d'un véhicule
         avail = vehicles.check_vehicle_availability(
