@@ -382,21 +382,35 @@ class MCPServerFullTestSuite(unittest.TestCase):
 
     # ── 11. SÉCURITÉ & AUDIT ─────────────────────────────────────
     def test_security_scopes_and_audit(self):
-        # Read-only scope blocks write
-        read_only_user = McpUserContext(1, "ro@test.com", "RO", "User", "user", scope="read_only")
-        CURRENT_MCP_USER.set(read_only_user)
-        blocked = contacts.create_contact(first_name="Illegal", last_name="Write")
-        self.assertEqual(blocked.get("status"), "error")
-        self.assertEqual(blocked.get("error_code"), 403)
+        # 1. Rôle Technicien / User : aucun accès MCP autorisé (bloqué 403 même avec scope admin)
+        tech_user = McpUserContext(1, "tech@test.com", "Tech", "User", "technicien", scope="admin")
+        CURRENT_MCP_USER.set(tech_user)
+        blocked_tech = projects.list_projects()
+        self.assertEqual(blocked_tech.get("status"), "error")
+        self.assertEqual(blocked_tech.get("error_code"), 403)
 
-        # Write scope blocks admin
-        write_user = McpUserContext(1, "w@test.com", "W", "User", "user", scope="write")
-        CURRENT_MCP_USER.set(write_user)
+        # 2. Rôle Commercial : plafonné à read_only (écriture bloquée 403 même avec token write/admin)
+        com_user = McpUserContext(1, "com@test.com", "Com", "User", "commercial", scope="write")
+        CURRENT_MCP_USER.set(com_user)
+        allowed_read = projects.list_projects()
+        self.assertIn("projects", allowed_read)
+        blocked_write = contacts.create_contact(first_name="Illegal", last_name="Write")
+        self.assertEqual(blocked_write.get("status"), "error")
+        self.assertEqual(blocked_write.get("error_code"), 403)
+
+        # 3. Rôle Manager : plafonné à write (actions admin/destructives bloquées 403 même avec token admin)
+        mgr_user = McpUserContext(1, "mgr@test.com", "Mgr", "User", "manager", scope="admin")
+        CURRENT_MCP_USER.set(mgr_user)
         blocked_admin = users.delete_user(1, confirm=True)
         self.assertEqual(blocked_admin.get("status"), "error")
         self.assertEqual(blocked_admin.get("error_code"), 403)
 
-        # Audit logs recorded in database
+        # 4. Rôle Super Admin : tous les droits
+        CURRENT_MCP_USER.set(self.admin_user)
+        admin_read = projects.list_projects()
+        self.assertIn("projects", admin_read)
+
+        # Audit logs enregistrés en base
         logs = McpAuditLog.query.order_by(McpAuditLog.created_at.desc()).limit(5).all()
         self.assertGreater(len(logs), 0)
 
@@ -591,6 +605,84 @@ class MCPServerFullTestSuite(unittest.TestCase):
         self.assertIsInstance(inc_res, dict)
         self.assertIn("incidents", inc_res)
         self.assertIn("stats", inc_res)
+
+    def test_mcp_connector_routes_access_and_scoping(self):
+        """Vérifie le contrôle d'accès aux routes web /admin/mcp-connector et la limitation de création de scope selon le rôle."""
+        client = self.app.test_client()
+        prev_csrf = self.app.config.get("WTF_CSRF_ENABLED", True)
+        self.app.config["WTF_CSRF_ENABLED"] = False
+        try:
+            # 1. Technicien : accès refusé à la page (redirect 302)
+            with client.session_transaction() as sess:
+                sess["admin_authenticated"] = True
+                sess["admin_user_id"] = 901
+                sess["admin_user_role"] = "technicien"
+            res = client.get("/admin/mcp-connector")
+            self.assertEqual(res.status_code, 302)
+
+            # 2. Commercial : accès GET 200, bloqué 403 sur scope 'admin' et 'write', autorisé 201 sur 'read_only'
+            with client.session_transaction() as sess:
+                sess["admin_authenticated"] = True
+                sess["admin_user_id"] = 902
+                sess["admin_user_role"] = "commercial"
+            res_com_get = client.get("/admin/mcp-connector")
+            self.assertEqual(res_com_get.status_code, 200)
+
+            res_com_admin = client.post(
+                "/admin/mcp-connector/generate",
+                json={"name": "Com Admin", "scope": "admin"},
+                headers={"X-Requested-With": "XMLHttpRequest"},
+            )
+            self.assertEqual(res_com_admin.status_code, 403)
+
+            res_com_write = client.post(
+                "/admin/mcp-connector/generate",
+                json={"name": "Com Write", "scope": "write"},
+                headers={"X-Requested-With": "XMLHttpRequest"},
+            )
+            self.assertEqual(res_com_write.status_code, 403)
+
+            res_com_ro = client.post(
+                "/admin/mcp-connector/generate",
+                json={"name": "Com ReadOnly", "scope": "read_only"},
+                headers={"X-Requested-With": "XMLHttpRequest"},
+            )
+            self.assertEqual(res_com_ro.status_code, 201)
+
+            # 3. Manager : bloqué 403 sur 'admin', autorisé 201 sur 'write'
+            with client.session_transaction() as sess:
+                sess["admin_authenticated"] = True
+                sess["admin_user_id"] = 903
+                sess["admin_user_role"] = "manager"
+
+            res_mgr_admin = client.post(
+                "/admin/mcp-connector/generate",
+                json={"name": "Mgr Admin", "scope": "admin"},
+                headers={"X-Requested-With": "XMLHttpRequest"},
+            )
+            self.assertEqual(res_mgr_admin.status_code, 403)
+
+            res_mgr_write = client.post(
+                "/admin/mcp-connector/generate",
+                json={"name": "Mgr Write", "scope": "write"},
+                headers={"X-Requested-With": "XMLHttpRequest"},
+            )
+            self.assertEqual(res_mgr_write.status_code, 201)
+
+            # 4. Administrateur : autorisé 201 sur 'admin'
+            with client.session_transaction() as sess:
+                sess["admin_authenticated"] = True
+                sess["admin_user_id"] = 904
+                sess["admin_user_role"] = "administrateur"
+
+            res_adm_admin = client.post(
+                "/admin/mcp-connector/generate",
+                json={"name": "Adm Full", "scope": "admin"},
+                headers={"X-Requested-With": "XMLHttpRequest"},
+            )
+            self.assertEqual(res_adm_admin.status_code, 201)
+        finally:
+            self.app.config["WTF_CSRF_ENABLED"] = prev_csrf
 
 
 if __name__ == "__main__":

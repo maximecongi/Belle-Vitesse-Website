@@ -32,15 +32,16 @@ def require_mcp_scope(required_scope: str = "read_only"):
         def wrapper(*args, **kwargs):
             flask_app = get_flask_app()
             user = CURRENT_MCP_USER.get() or getattr(flask_app, "current_mcp_user", None)
-            if user and not check_mcp_scope(user, required_scope):
-                user_scope = getattr(user, "mcp_scope", "read_only")
+            if not user or not check_mcp_scope(user, required_scope):
+                user_scope = getattr(user, "mcp_scope", "aucun") if user else "aucun"
+                user_role = getattr(user, "role", "inconnu") if user else "non authentifié"
                 return {
                     "status": "error",
                     "error_code": 403,
                     "message": (
                         f"⛔ ACCÈS REFUSÉ : L'outil '{func.__name__}' exige le niveau de privilège MCP '{required_scope}'. "
-                        f"Votre clé d'accès possède actuellement le scope '{user_scope}'. "
-                        "Veuillez utiliser une clé API IA avec des privilèges supérieurs."
+                        f"Votre clé possède le scope '{user_scope}' et votre compte utilisateur a le rôle '{user_role}'. "
+                        "Action non autorisée pour ce niveau de permissions."
                     )
                 }
             return func(*args, **kwargs)

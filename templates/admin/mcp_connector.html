@@ -303,12 +303,26 @@
             <div class="form-group u-mb-3">
                 <label class="form-label u-text-xs u-fw-bold">Scope / Niveau de privilèges des outils :</label>
                 <select name="scope" class="form-input" style="background: #fff;">
-                    <option value="read_only" selected>👁️ Consultation seule (Read-Only) — Recommandé &amp; Sécurisé
-                    </option>
+                    {% if not allowed_scopes or 'read_only' in allowed_scopes %}
+                    <option value="read_only" selected>👁️ Consultation seule (Read-Only) — Recommandé &amp; Sécurisé</option>
+                    {% endif %}
+                    {% if 'write' in allowed_scopes %}
                     <option value="write">✏️ Consultation &amp; Édition (Read / Write)</option>
-                    <option value="admin">🛡️ Administrateur (Accès complet &amp; Suppressions avec confirmation)
-                    </option>
+                    {% endif %}
+                    {% if 'admin' in allowed_scopes %}
+                    <option value="admin">🛡️ Administrateur (Accès complet &amp; Suppressions avec confirmation)</option>
+                    {% endif %}
                 </select>
+                <p class="u-text-xs u-text-muted u-mt-1">
+                    Niveau maximum autorisé pour votre rôle (<strong>{{ (user_role or 'Collaborateur')|title }}</strong>) :
+                    {% if 'admin' in allowed_scopes %}
+                    <span style="color: #7e22ce; font-weight: 600;">🛡️ Admin</span>
+                    {% elif 'write' in allowed_scopes %}
+                    <span style="color: #1e40af; font-weight: 600;">✏️ Write</span>
+                    {% else %}
+                    <span style="color: #475569; font-weight: 600;">👁️ Read-Only</span>
+                    {% endif %}
+                </p>
             </div>
             <div class="u-text-right">
                 <button type="submit" class="admin-btn admin-btn-primary">Générer la clé</button>

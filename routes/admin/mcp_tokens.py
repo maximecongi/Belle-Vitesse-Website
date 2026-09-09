@@ -43,8 +43,21 @@ def _ensure_audit_table_exists():
         db.session.rollback()
 
 
+def get_allowed_scopes_for_role(role_name: str) -> list:
+    """Retourne la liste des scopes MCP autorisés pour un rôle utilisateur."""
+    from utils.decorators import normalize_role
+    norm = normalize_role(role_name)
+    if norm in ("super administrateur", "administrateur"):
+        return ["read_only", "write", "admin"]
+    elif norm == "manager":
+        return ["read_only", "write"]
+    elif norm == "commercial":
+        return ["read_only"]
+    return []
+
+
 @mcp_tokens_bp.route("", methods=["GET"])
-@require_roles("technicien", "commercial", "manager", "administrateur", "super administrateur")
+@require_roles("commercial", "manager", "administrateur", "super administrateur")
 def mcp_connector_page():
     from utils.decorators import normalize_role
     user_id = session.get("admin_user_id")
@@ -86,15 +99,19 @@ def mcp_connector_page():
                 db.session.rollback()
                 audit_logs = []
 
-    return render_template("admin/mcp_connector.html", tokens=tokens, audit_logs=audit_logs)
+    allowed_scopes = get_allowed_scopes_for_role(user_role)
 
-
-
-
+    return render_template(
+        "admin/mcp_connector.html",
+        tokens=tokens,
+        audit_logs=audit_logs,
+        allowed_scopes=allowed_scopes,
+        user_role=user_role,
+    )
 
 
 @mcp_tokens_bp.route("/api/tokens", methods=["GET"])
-@require_roles("user", "commercial", "manager", "administrator", "super administrator")
+@require_roles("commercial", "manager", "administrateur", "super administrateur")
 def list_tokens():
     user_id = session.get("admin_user_id")
     try:
@@ -107,11 +124,30 @@ def list_tokens():
     return jsonify({"tokens": [t.to_dict() for t in tokens]})
 
 
-
 @mcp_tokens_bp.route("/generate", methods=["POST"])
-@require_roles("user", "commercial", "manager", "administrator", "super administrator")
+@require_roles("commercial", "manager", "administrateur", "super administrateur")
 def generate_token():
     user_id = session.get("admin_user_id")
+    from utils.decorators import normalize_role
+    user_role = normalize_role(session.get("admin_user_role"))
+
+    if not user_role and user_id:
+        try:
+            from models import User
+            u = db.session.get(User, user_id)
+            if u and u.role:
+                user_role = normalize_role(u.role)
+        except Exception:
+            pass
+
+    allowed_scopes = get_allowed_scopes_for_role(user_role)
+    if not allowed_scopes:
+        msg = f"Votre rôle ({user_role}) ne vous autorise pas à créer de clé API IA."
+        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"status": "error", "message": msg}), 403
+        flash(msg, "error")
+        return redirect(url_for("admin_mcp_tokens.mcp_connector_page"))
+
     name = None
     if request.is_json and request.json:
         name = request.json.get("name")
@@ -124,8 +160,13 @@ def generate_token():
         scope = request.json.get("scope")
     if not scope:
         scope = request.form.get("scope")
-    if scope not in ("read_only", "write", "admin"):
-        scope = "read_only"
+
+    if scope not in allowed_scopes:
+        msg = f"Le scope '{scope}' n'est pas autorisé pour votre rôle ({user_role}). Scopes autorisés : {', '.join(allowed_scopes)}."
+        if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"status": "error", "message": msg}), 403
+        flash(msg, "error")
+        return redirect(url_for("admin_mcp_tokens.mcp_connector_page"))
 
     raw_token = McpApiToken.generate_token_raw()
     token_prefix = raw_token[:12] + "..."
@@ -155,7 +196,6 @@ def generate_token():
             db.session.rollback()
             raise retry_err
 
-
     if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return jsonify({
             "status": "success",
@@ -169,12 +209,15 @@ def generate_token():
 
 
 @mcp_tokens_bp.route("/<int:token_id>/revoke", methods=["POST"])
-@require_roles("user", "commercial", "manager", "administrator", "super administrator")
+@require_roles("commercial", "manager", "administrateur", "super administrateur")
 def revoke_token(token_id):
     user_id = session.get("admin_user_id")
+    from utils.decorators import normalize_role
+    user_role = normalize_role(session.get("admin_user_role"))
+
     token_rec = db.session.get(McpApiToken, token_id)
 
-    if not token_rec or token_rec.user_id != user_id:
+    if not token_rec or (token_rec.user_id != user_id and user_role != "super administrateur"):
         if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return jsonify({"status": "error", "message": "Token introuvable"}), 404
         flash("Token introuvable", "error")
@@ -192,12 +235,15 @@ def revoke_token(token_id):
 
 
 @mcp_tokens_bp.route("/<int:token_id>/delete", methods=["POST", "DELETE"])
-@require_roles("user", "commercial", "manager", "administrator", "super administrator")
+@require_roles("commercial", "manager", "administrateur", "super administrateur")
 def delete_token(token_id):
     user_id = session.get("admin_user_id")
+    from utils.decorators import normalize_role
+    user_role = normalize_role(session.get("admin_user_role"))
+
     token_rec = db.session.get(McpApiToken, token_id)
 
-    if not token_rec or token_rec.user_id != user_id:
+    if not token_rec or (token_rec.user_id != user_id and user_role != "super administrateur"):
         if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
             return jsonify({"status": "error", "message": "Token introuvable"}), 404
         flash("Token introuvable", "error")

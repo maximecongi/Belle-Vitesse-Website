@@ -45,6 +45,18 @@ class McpUserContext:
         return f"<McpUserContext id={self.id} mail={self.mail} role={self.role} scope={self.mcp_scope}>"
 
 
+ROLE_MAX_MCP_SCOPE = {
+    "super administrateur": "admin",
+    "super administrator": "admin",
+    "administrateur": "admin",
+    "administrator": "admin",
+    "manager": "write",
+    "commercial": "read_only",
+    "technicien": None,
+    "user": None,
+}
+
+
 def authenticate_mcp_token(raw_token: str) -> McpUserContext | None:
     """
     Vérifie un token API MCP brut :
@@ -90,6 +102,12 @@ def authenticate_mcp_token(raw_token: str) -> McpUserContext | None:
             f"⚠️ Token MCP #{token_rec.id} référencie un utilisateur introuvable.")
         return None
 
+    user_role = (user.role or "user").strip().lower()
+    if not ROLE_MAX_MCP_SCOPE.get(user_role):
+        logger.warning(
+            f"⚠️ Token MCP #{token_rec.id} refusé : le rôle '{user.role}' de l'utilisateur #{user.id} n'a pas accès au connecteur IA.")
+        return None
+
     user_scope = getattr(token_rec, "scope", None) or "read_only"
     return McpUserContext(
         user_id=user.id,
@@ -111,17 +129,30 @@ SCOPE_LEVELS = {
 
 def check_mcp_scope(user, required_scope: str) -> bool:
     """
-    Vérifie si le token de l'utilisateur a au moins le niveau de scope requis.
-    - read_only: 1 (consultation uniquement)
-    - write: 2 (création/modification)
-    - admin: 3 (suppression/actions critiques)
+    Vérifie si l'utilisateur et son token ont au moins le niveau de scope requis.
+    Applique le principe du moindre privilège :
+    Niveau effectif = min(Niveau token, Plafond rôle utilisateur).
+    - Techniciens / utilisateurs sans droit MCP : refus systématique (False)
+    - Commercial : plafonné à read_only (1)
+    - Manager : plafonné à write (2)
+    - Administrateur / Super Admin : accès jusqu'à admin (3)
     """
     if not user:
-        return True
-    user_scope = getattr(user, "mcp_scope", "admin") or "admin"
-    user_level = SCOPE_LEVELS.get(user_scope, 3)
+        return False
+
+    user_role = (getattr(user, "role", "") or "user").strip().lower()
+    role_max_scope = ROLE_MAX_MCP_SCOPE.get(user_role, None)
+    if not role_max_scope:
+        return False
+
+    role_level = SCOPE_LEVELS.get(role_max_scope, 0)
+    token_scope = getattr(user, "mcp_scope", "read_only") or "read_only"
+    token_level = SCOPE_LEVELS.get(token_scope, 1)
+
+    effective_level = min(role_level, token_level)
     req_level = SCOPE_LEVELS.get(required_scope, 1)
-    return user_level >= req_level
+
+    return effective_level >= req_level
 
 
 
