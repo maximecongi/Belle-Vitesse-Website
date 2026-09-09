@@ -81,9 +81,9 @@
 
   <!-- Application Stylesheet -->
   {% if config.FLASK_ENV == 'production' %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.bundle.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.bundle.css') }}?v={{ asset_version('css/styles.bundle.css') }}">
   {% else %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v={{ asset_version('css/styles.css') }}">
   {% endif %}
 
 </head>

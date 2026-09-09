@@ -70,6 +70,23 @@ def init_context_processors(app):
     """Enregistre les processeurs de contexte globaux pour les templates Jinja2."""
     template_path = os.path.join(app.root_path, 'templates', 'public', 'privacy-policy.html')
 
+    def asset_version(filename: str) -> str:
+        """Retourne l'horodatage mtime du fichier statique pour le cache-busting automatique."""
+        try:
+            s_folder = app.static_folder or os.path.join(app.root_path, 'static')
+            target = os.path.join(s_folder, filename)
+            if os.path.exists(target):
+                return str(int(os.path.getmtime(target)))
+        except Exception:
+            pass
+        return os.getenv("STATIC_VERSION", "2.3")
+
+    def asset_url(filename: str) -> str:
+        """Génère l'URL d'un asset statique avec le paramètre ?v=<mtime> automatique."""
+        from flask import url_for
+        v = asset_version(filename)
+        return f"{url_for('static', filename=filename)}?v={v}"
+
     @app.context_processor
     def inject_globals():
         launch_mode = os.getenv("LAUNCH_MODE") == "true"
@@ -87,6 +104,8 @@ def init_context_processors(app):
                 "t": t, "ts": ts, "alt_url": alt_url,
                 "launch_mode": launch_mode,
                 "privacy_last_update": privacy_last_update,
+                "asset_version": asset_version,
+                "asset_url": asset_url,
             }
 
         # Évite les appels DB lourds pour les pages d'erreur et les pages d'authentification
@@ -100,6 +119,8 @@ def init_context_processors(app):
                 "t": t, "ts": ts, "alt_url": alt_url,
                 "launch_mode": launch_mode,
                 "privacy_last_update": privacy_last_update,
+                "asset_version": asset_version,
+                "asset_url": asset_url,
             }
 
         is_admin = request.path.startswith('/admin')
@@ -118,6 +139,8 @@ def init_context_processors(app):
             "alt_url": alt_url,
             "launch_mode": launch_mode,
             "privacy_last_update": privacy_last_update,
+            "asset_version": asset_version,
+            "asset_url": asset_url,
             "company_name": settings.get("company_name", DEFAULT_SETTINGS["company_name"]),
             "company_representative": settings.get("company_representative", DEFAULT_SETTINGS["company_representative"]),
             "company_siret": settings.get("company_siret", DEFAULT_SETTINGS["company_siret"]),

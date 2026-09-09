@@ -16,11 +16,11 @@
 
     <!-- Stylesheets -->
     {% if config.FLASK_ENV == 'production' %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.bundle.css') }}?v=2.2">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.bundle.css') }}?v=2.2">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.bundle.css') }}?v={{ asset_version('css/styles.bundle.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.bundle.css') }}?v={{ asset_version('css/admin/admin.bundle.css') }}">
     {% else %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v={{ asset_version('css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.css') }}?v={{ asset_version('css/admin/admin.css') }}">
     {% endif %}
 
     <meta name="theme-color" content="#0f172a">

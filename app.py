@@ -78,7 +78,10 @@ def create_app():
     # S'assurer que les dossiers nécessaires existent sur le serveur
     for folder in ["OUTPUT_FOLDER", "BACKUPS_FOLDER", "LOGS_FOLDER", "ARCLIGHT_UPLOAD_DIR"]:
         if folder in app.config:
-            Path(app.config[folder]).mkdir(parents=True, exist_ok=True)
+            try:
+                Path(app.config[folder]).mkdir(parents=True, exist_ok=True)
+            except Exception:
+                pass
 
     # Initialisation des extensions
     cache.init_app(app)
@@ -107,6 +110,14 @@ def create_app():
 
     # Processeurs de Contexte (Variables Globales pour les Templates)
     init_context_processors(app)
+
+    # En production, vérifier et régénérer les bundles CSS si absents ou obsolètes
+    if env == "production":
+        try:
+            from scripts.build_bundles import ensure_bundles_fresh
+            ensure_bundles_fresh(app.static_folder)
+        except Exception as e:
+            app.logger.warning(f"⚠️ Impossible de vérifier la fraîcheur des bundles CSS : {e}")
 
 
     @app.route("/health")
