@@ -57,6 +57,8 @@ def create_incident(
     project_id: Optional[int] = None,
     vehicle_id: Optional[str] = None,
     equipment_name: Optional[str] = None,
+    checkout_id: Optional[int] = None,
+    checkin_id: Optional[int] = None,
     location: Optional[str] = None,
     description: Optional[str] = None,
     immediate_actions: Optional[str] = None,
@@ -69,6 +71,8 @@ def create_incident(
     - category: 'vehicule', 'materiel_camera', 'mecanique', 'electrique', 'carrosserie', etc.
     - severity: 'mineur', 'modere', 'critique'
     - shooting_impact: 'aucun', 'retard', 'interruption', 'annulation'
+    - checkout_id: ID optionnel du contrôle de départ lié
+    - checkin_id: ID optionnel du contrôle de retour lié
     """
     from services.admin.incidents import create_incident as _create
     form_data = {
@@ -86,6 +90,11 @@ def create_incident(
         "immediate_actions": immediate_actions,
         "estimated_cost": estimated_cost,
     }
+    if checkout_id is not None:
+        form_data["checkout_id"] = checkout_id
+    if checkin_id is not None:
+        form_data["checkin_id"] = checkin_id
+
     incident = _create(form_data)
     return {
         "success": True,
@@ -105,6 +114,8 @@ def update_incident(
     severity: Optional[str] = None,
     category: Optional[str] = None,
     shooting_impact: Optional[str] = None,
+    checkout_id: Optional[int] = None,
+    checkin_id: Optional[int] = None,
     description: Optional[str] = None,
     immediate_actions: Optional[str] = None,
     estimated_cost: Optional[float] = None,
@@ -113,7 +124,7 @@ def update_incident(
     insurance_reference: Optional[str] = None,
     resolution_notes: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Met à jour un incident existant (statut, coûts réels, notes de résolution)."""
+    """Met à jour un incident existant (statut, coûts réels, rattachements, notes de résolution)."""
     from services.admin.incidents import update_incident as _update
     form_data = {}
     if title is not None:
@@ -126,6 +137,10 @@ def update_incident(
         form_data["category"] = category
     if shooting_impact is not None:
         form_data["shooting_impact"] = shooting_impact
+    if checkout_id is not None:
+        form_data["checkout_id"] = checkout_id
+    if checkin_id is not None:
+        form_data["checkin_id"] = checkin_id
     if description is not None:
         form_data["description"] = description
     if immediate_actions is not None:

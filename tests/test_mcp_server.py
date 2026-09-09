@@ -30,6 +30,8 @@ from mcp_server.tools import (  # noqa: E402
     system,
     users,
     vehicles,
+    incidents,
+    waivers,
 )
 
 
@@ -506,6 +508,59 @@ class MCPServerFullTestSuite(unittest.TestCase):
 
         p_audit = prompts.prompt_audit_tournage(123)
         self.assertIn("123", p_audit)
+
+    def test_mcp_waivers_tools(self):
+        # 1. Listing des décharges
+        res = waivers.list_waivers(mode="all")
+        self.assertIsInstance(res, dict)
+        self.assertIn("mode", res)
+        self.assertIn("total", res)
+        self.assertIn("pending_count", res)
+        self.assertIn("pilot_waivers", res)
+        self.assertIn("production_waivers", res)
+
+        # 2. Test auto remind
+        remind_res = waivers.auto_remind_waivers(days_before=2)
+        self.assertTrue(remind_res.get("success"))
+        self.assertIn("production_reminders_sent", remind_res)
+
+        # 3. Test reset confirmation guard
+        reset_res = waivers.reset_waiver(mode="pilot", waiver_id="test-uuid", confirm=False)
+        self.assertFalse(reset_res.get("success"))
+        self.assertEqual(reset_res.get("status"), "requires_confirmation")
+
+    def test_mcp_fleet_360_and_conflicts_tools(self):
+        # 1. Vue d'ensemble de la flotte
+        fleet = vehicles.get_fleet_overview()
+        self.assertIsInstance(fleet, dict)
+        self.assertIn("vehicles", fleet)
+        self.assertIn("stats", fleet)
+
+        # 2. Détection unifiée des conflits
+        conflicts = vehicles.check_booking_conflicts(
+            start_date="2026-11-01",
+            end_date="2026-11-05",
+            vehicle_ids=["rec_dummy"],
+        )
+        self.assertIsInstance(conflicts, dict)
+        self.assertIn("has_conflicts", conflicts)
+        self.assertIn("conflicts_list", conflicts)
+
+        # 3. Disponibilité d'un véhicule
+        avail = vehicles.check_vehicle_availability(
+            vehicle_id="dummy_id",
+            start_date="2026-11-01",
+            end_date="2026-11-05",
+        )
+        self.assertIsInstance(avail, dict)
+        self.assertIn("available", avail)
+
+    def test_mcp_incidents_tools_checkpoints(self):
+        # Listing des incidents
+        inc_res = incidents.list_incidents(limit=5)
+        self.assertIsInstance(inc_res, dict)
+        self.assertIn("incidents", inc_res)
+        self.assertIn("stats", inc_res)
 
 
 if __name__ == "__main__":
