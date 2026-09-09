@@ -123,14 +123,25 @@ def get_newsletter_subscribers() -> List[Dict[str, Any]]:
         formatted = []
         for s in subs:
             if hasattr(s, "to_dict"):
-                formatted.append(s.to_dict())
+                d = s.to_dict()
+                # Garantir la présence de created_at et subscribed_at
+                dt = d.get("subscribed_at") or d.get("created_at")
+                d["subscribed_at"] = dt
+                d["created_at"] = dt
+                formatted.append(d)
             elif isinstance(s, dict):
+                dt = s.get("subscribed_at") or s.get("created_at")
+                s["subscribed_at"] = dt
+                s["created_at"] = dt
                 formatted.append(s)
             else:
+                raw_dt = getattr(s, "subscribed_at", None) or getattr(s, "created_at", None)
+                iso_dt = raw_dt.isoformat() if hasattr(raw_dt, "isoformat") else (str(raw_dt) if raw_dt else None)
                 formatted.append({
                     "id": getattr(s, "id", None),
                     "email": getattr(s, "email", None),
-                    "created_at": str(getattr(s, "created_at", "")),
+                    "subscribed_at": iso_dt,
+                    "created_at": iso_dt,
                 })
         return formatted
     except Exception as e:

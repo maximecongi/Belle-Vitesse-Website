@@ -126,9 +126,18 @@ def run_all_tests():
 
         # get_newsletter_subscribers
         try:
+            from models import NewsletterSubscriber
+            temp_sub = NewsletterSubscriber.query.filter_by(email="temp_check@bellevitesse.com").first() or NewsletterSubscriber(email="temp_check@bellevitesse.com")
+            if not temp_sub.id:
+                db.session.add(temp_sub)
+                db.session.commit()
             res = system.get_newsletter_subscribers()
             assert isinstance(res, dict) and "subscribers" in res
-            suite.record("system.get_newsletter_subscribers", "PASS", f"{len(res['subscribers'])} abonnés à la newsletter")
+            found = next((s for s in res["subscribers"] if s["email"] == "temp_check@bellevitesse.com"), None)
+            assert found and found.get("created_at") and found.get("subscribed_at")
+            db.session.delete(temp_sub)
+            db.session.commit()
+            suite.record("system.get_newsletter_subscribers", "PASS", f"{len(res['subscribers'])} abonnés à la newsletter (created_at validé)")
         except Exception as e:
             suite.record("system.get_newsletter_subscribers", "FAIL", str(e))
 

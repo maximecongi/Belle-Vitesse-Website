@@ -90,9 +90,30 @@ class MCPServerFullTestSuite(unittest.TestCase):
         self.assertEqual(res.get("mysql"), "connected")
 
     def test_newsletter_subscribers(self):
+        from models import NewsletterSubscriber
+        # Insérer un abonné de test si non présent
+        sub = NewsletterSubscriber.query.filter_by(email="test_sub_mcp@bellevitesse.com").first()
+        if not sub:
+            sub = NewsletterSubscriber(email="test_sub_mcp@bellevitesse.com")
+            db.session.add(sub)
+            db.session.commit()
+
         res = system.get_newsletter_subscribers()
         self.assertIsInstance(res, dict)
         self.assertIn("subscribers", res)
+        self.assertIn("total", res)
+        self.assertGreaterEqual(res["total"], 1)
+
+        found = next((s for s in res["subscribers"] if s["email"] == "test_sub_mcp@bellevitesse.com"), None)
+        self.assertIsNotNone(found)
+        self.assertTrue(bool(found.get("created_at")), "created_at ne doit pas être vide")
+        self.assertTrue(bool(found.get("subscribed_at")), "subscribed_at ne doit pas être vide")
+        self.assertEqual(found["created_at"], found["subscribed_at"])
+
+        # Nettoyage
+        db.session.delete(sub)
+        db.session.commit()
+
 
     def test_purge_system_cache(self):
         guard = system.purge_system_cache(confirm=False)
