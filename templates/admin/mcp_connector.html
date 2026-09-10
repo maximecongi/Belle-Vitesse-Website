@@ -59,6 +59,7 @@
                     <th>Préfixe de la clé</th>
                     <th>Scope / Niveau d'accès</th>
                     <th>Date de création</th>
+                    <th>Expiration</th>
                     <th>Dernière utilisation</th>
                     <th>Statut</th>
                     <th>Actions</th>
@@ -88,6 +89,17 @@
                     </td>
                     <td class="u-text-xs u-text-muted">
                         {{ t.created_at.strftime('%d/%m/%Y à %H:%M') if t.created_at else '—' }}
+                    </td>
+                    <td class="u-text-xs">
+                        {% if t.expires_at %}
+                            {% if now and t.expires_at < now %}
+                            <span class="badge-pill" style="background: #fee2e2; color: #b91c1c; font-weight: 600;">Expiré ({{ t.expires_at.strftime('%d/%m/%Y') }})</span>
+                            {% else %}
+                            <span class="u-text-muted">{{ t.expires_at.strftime('%d/%m/%Y') }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="u-text-muted">Permanent</span>
+                        {% endif %}
                     </td>
                     <td class="u-text-xs u-text-muted">
                         {{ t.last_used_at.strftime('%d/%m/%Y à %H:%M') if t.last_used_at else 'Jamais' }}
@@ -133,7 +145,7 @@
     {% endif %}
 </div>
 
-{% if session.get('admin_user_role', '').lower() == 'super administrator' %}
+{% if (user_role or session.get('admin_user_role', ''))|lower in ['super administrateur', 'super administrator'] %}
 <!-- Journal d'Audit MCP (Exclusif Super Administrator) -->
 <details class="admin-card u-mb-4">
     <summary style="cursor: pointer; user-select: none;" class="u-flex u-align-center u-justify-between">
@@ -324,6 +336,17 @@
                     {% endif %}
                 </p>
             </div>
+            <div class="form-group u-mb-4">
+                <label class="form-label u-text-xs u-fw-bold">Durée de validité de la clé :</label>
+                <select name="duration_days" class="form-input" style="background: #fff;">
+                    <option value="30">30 jours (Usage ponctuel / Mission courte)</option>
+                    <option value="90" selected>90 jours (3 mois — Recommandé)</option>
+                    <option value="180">180 jours (6 mois)</option>
+                    <option value="365">1 an (365 jours)</option>
+                    <option value="0">Illimitée (Clé permanente)</option>
+                </select>
+                <p class="u-text-xs u-text-muted u-mt-1">À l'expiration, l'accès sera automatiquement coupé sans affecter vos autres clés.</p>
+            </div>
             <div class="u-text-right">
                 <button type="submit" class="admin-btn admin-btn-primary">Générer la clé</button>
             </div>
@@ -352,6 +375,7 @@
                     <button type="button" id="modalCopyClaudeUrlBtn" class="admin-btn admin-btn-secondary"
                         style="white-space: nowrap;">📋 Copier l'URL</button>
                 </div>
+                <p class="u-text-xs u-text-muted u-mt-1">🔒 <em>Sécurité : Cette URL contient votre clé. Ne la partagez jamais publiquement. Pour Cursor et Claude Desktop, privilégiez toujours l'en-tête Authorization: Bearer.</em></p>
             </div>
 
             <div class="u-text-right">

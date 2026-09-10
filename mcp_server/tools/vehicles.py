@@ -2,6 +2,7 @@
 from datetime import date, datetime
 from typing import Any, Dict, List, Optional, Union
 
+from mcp_server.cache import mcp_cache, invalidate_mcp_cache
 from mcp_server.core import mcp
 from mcp_server.decorators import require_mcp_scope, run_in_flask_context
 
@@ -255,6 +256,7 @@ def check_vehicle_availability(
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
+@mcp_cache(ttl_seconds=60)
 def get_vehicles_with_config() -> Dict[str, Any]:
     """Liste tous les véhicules avec leur configuration actuelle de points de contrôle."""
     from services.admin.vehicle_config import get_vehicles_with_config as _get
@@ -283,12 +285,16 @@ def save_vehicle_checkpoint_config(vehicle_id: str, enabled_keys: List[str]) -> 
 
     actual_id = matching_v.get("id") or vehicle_id
     success = _save(actual_id, enabled_keys)
+    if success:
+        invalidate_mcp_cache("get_vehicles_with_config")
+        invalidate_mcp_cache("get_checkpoints_for_vehicle")
     return {"success": success, "message": "Configuration sauvegardée." if success else "Échec de sauvegarde."}
 
 
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
+@mcp_cache(ttl_seconds=60)
 def get_checkpoints_for_vehicle(vehicle_id: str) -> Dict[str, Any]:
     """
     Récupère la liste des points de contrôle applicables pour un véhicule spécifique.

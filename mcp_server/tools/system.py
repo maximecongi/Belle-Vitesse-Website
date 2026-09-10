@@ -1,6 +1,7 @@
 """Outils MCP : Domaine Système, Maintenance & Cache."""
 from typing import Optional, List, Dict, Any
 
+from mcp_server.cache import invalidate_mcp_cache
 from mcp_server.core import mcp
 from mcp_server.decorators import run_in_flask_context, require_mcp_scope
 
@@ -30,7 +31,9 @@ def purge_system_cache(confirm: bool = False) -> Dict[str, Any]:
             "message": "⚠️ ATTENTION : Vous allez vider le cache système Flask. Confirmez avec confirm=True."
         }
     success = _purge()
-    return {"success": success, "message": "Cache système purgé avec succès." if success else "Échec."}
+    if success:
+        invalidate_mcp_cache()
+    return {"success": success, "message": "Cache système et micro-cache MCP purgés avec succès." if success else "Échec."}
 
 
 @mcp.tool()

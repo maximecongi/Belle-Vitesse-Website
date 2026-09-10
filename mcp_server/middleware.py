@@ -1,6 +1,7 @@
 """Middleware ASGI pur pour le serveur MCP (Rate Limiting, CORS, Auth Stricte & Sécurité)."""
 import json
 import time
+from datetime import datetime, timezone
 from urllib.parse import parse_qs
 
 from mcp_auth.auth import authenticate_mcp_token, McpUserContext
@@ -9,6 +10,8 @@ from mcp_server.config import (
     MCP_RATE_LIMITER,
     MAX_MCP_REQUESTS_PER_MINUTE,
     ACTIVE_MCP_SESSIONS,
+    MCP_FAILED_AUTH_IP,
+    MCP_BANNED_IPS,
 )
 from mcp_server.context import CURRENT_MCP_USER, CURRENT_MCP_IP
 from mcp_server.core import flask_app
@@ -97,13 +100,37 @@ class PureAsgiAuthMiddleware:
             if client_ip == "unknown" and scope.get("client"):
                 client_ip = scope["client"][0]
 
+            now = time.time()
+
+            # 3.1 Protection Anti-Brute-Force & Anti-Scan (IP Jail)
+            if client_ip in MCP_BANNED_IPS:
+                unban_time = MCP_BANNED_IPS[client_ip]
+                if now < unban_time:
+                    remaining_s = int(unban_time - now)
+                    logger.warning(
+                        f"⛔ Requête bloquée : IP {client_ip} temporairement bannie pour brute-force ({remaining_s}s restantes).")
+                    body = json.dumps({
+                        "status": "error",
+                        "error_code": 429,
+                        "message": f"⛔ Trop de tentatives d'authentification échouées. Votre adresse IP est temporairement bloquée pendant encore {remaining_s} secondes."
+                    }).encode("utf-8")
+                    await send({
+                        "type": "http.response.start",
+                        "status": 429,
+                        "headers": [(b"content-type", b"application/json"), (b"access-control-allow-origin", b"*")],
+                    })
+                    await send({"type": "http.response.body", "body": body})
+                    return
+                else:
+                    MCP_BANNED_IPS.pop(client_ip, None)
+                    MCP_FAILED_AUTH_IP.pop(client_ip, None)
+
             query_string = scope.get("query_string", b"").decode("utf-8")
             query_params = parse_qs(query_string)
             session_id = query_params.get("session_id", [None])[0]
 
             # 4. Rate limiting par IP / Session
             rate_key = session_id or client_ip
-            now = time.time()
             timestamps = [t for t in MCP_RATE_LIMITER[rate_key] if now - t < 60]
             MCP_RATE_LIMITER[rate_key] = timestamps
 
@@ -141,6 +168,7 @@ class PureAsgiAuthMiddleware:
                     if user and session_id:
                         ACTIVE_MCP_SESSIONS[session_id] = {
                             "user": user,
+                            "token_id": getattr(user, "current_token_id", None),
                             "authenticated_at": now,
                             "last_seen": now,
                         }
@@ -149,8 +177,29 @@ class PureAsgiAuthMiddleware:
                 # Vérification TTL session (2 heures max d'inactivité)
                 if isinstance(session_data, dict):
                     if now - session_data.get("last_seen", 0) < 7200:
-                        session_data["last_seen"] = now
-                        user = session_data["user"]
+                        # Kill-Switch : re-vérification en base du statut actif du token
+                        token_id = session_data.get("token_id")
+                        is_token_valid = True
+                        if token_id:
+                            with flask_app.app_context():
+                                from models import McpApiToken
+                                t_rec = McpApiToken.query.filter_by(id=token_id).first()
+                                if not t_rec or not t_rec.is_active:
+                                    is_token_valid = False
+                                elif t_rec.expires_at:
+                                    exp = t_rec.expires_at
+                                    if exp.tzinfo is None:
+                                        exp = exp.replace(tzinfo=timezone.utc)
+                                    if exp < datetime.now(timezone.utc):
+                                        is_token_valid = False
+
+                        if is_token_valid:
+                            session_data["last_seen"] = now
+                            user = session_data["user"]
+                        else:
+                            logger.warning(
+                                f"🛑 Kill-Switch déclenché : Session {session_id} révoquée (clé #{token_id} inactive ou expirée).")
+                            ACTIVE_MCP_SESSIONS.pop(session_id, None)
                     else:
                         ACTIVE_MCP_SESSIONS.pop(session_id, None)
                 else:
@@ -160,6 +209,17 @@ class PureAsgiAuthMiddleware:
             if not user:
                 logger.warning(
                     f"⛔ Requête MCP non authentifiée ou token invalide [{method} {path}] depuis {client_ip}")
+
+                # Enregistrement de l'échec pour la protection Anti-Brute-Force
+                failures = [t for t in MCP_FAILED_AUTH_IP[client_ip] if now - t < 120]
+                failures.append(now)
+                MCP_FAILED_AUTH_IP[client_ip] = failures
+
+                if len(failures) >= 5:
+                    MCP_BANNED_IPS[client_ip] = now + 900  # Bannissement 15 minutes
+                    logger.warning(
+                        f"🚨 Bannissement temporaire (15 min) déclenché pour l'IP {client_ip} après 5 échecs consécutifs.")
+
                 body = json.dumps({
                     "status": "error",
                     "error_code": 401,
@@ -176,6 +236,9 @@ class PureAsgiAuthMiddleware:
                 })
                 await send({"type": "http.response.body", "body": body})
                 return
+
+            # Authentification réussie : réinitialiser les échecs de cette IP
+            MCP_FAILED_AUTH_IP.pop(client_ip, None)
 
             CURRENT_MCP_USER.set(user)
             CURRENT_MCP_IP.set(client_ip)

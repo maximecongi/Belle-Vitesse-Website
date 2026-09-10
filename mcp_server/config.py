@@ -17,3 +17,9 @@ ACTIVE_MCP_SESSIONS: Dict[str, Any] = {}
 # Rate Limiter (30 requêtes / minute par client)
 MCP_RATE_LIMITER: Dict[str, List[float]] = defaultdict(list)
 MAX_MCP_REQUESTS_PER_MINUTE = 30
+
+# Protection Anti-Brute-Force & Anti-Scan
+# - MCP_FAILED_AUTH_IP : { ip: [timestamp_1, timestamp_2, ...] }
+# - MCP_BANNED_IPS : { ip: unban_timestamp } (bannissement 15 minutes après 5 échecs consécutifs en 2 min)
+MCP_FAILED_AUTH_IP: Dict[str, List[float]] = defaultdict(list)
+MCP_BANNED_IPS: Dict[str, float] = {}

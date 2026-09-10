@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from flask import Blueprint, jsonify, render_template, request, session, flash, redirect, url_for
 from models import McpApiToken, db
 from utils.decorators import require_roles
@@ -100,6 +100,7 @@ def mcp_connector_page():
                 audit_logs = []
 
     allowed_scopes = get_allowed_scopes_for_role(user_role)
+    now = datetime.now(timezone.utc)
 
     return render_template(
         "admin/mcp_connector.html",
@@ -107,6 +108,7 @@ def mcp_connector_page():
         audit_logs=audit_logs,
         allowed_scopes=allowed_scopes,
         user_role=user_role,
+        now=now,
     )
 
 
@@ -168,6 +170,20 @@ def generate_token():
         flash(msg, "error")
         return redirect(url_for("admin_mcp_tokens.mcp_connector_page"))
 
+    # Durée de validité (jours)
+    duration_days = None
+    if request.is_json and request.json:
+        duration_days = request.json.get("duration_days")
+    if duration_days is None:
+        duration_days = request.form.get("duration_days")
+
+    expires_at = None
+    try:
+        if duration_days is not None and int(duration_days) > 0:
+            expires_at = datetime.now(timezone.utc) + timedelta(days=int(duration_days))
+    except (ValueError, TypeError):
+        expires_at = None
+
     raw_token = McpApiToken.generate_token_raw()
     token_prefix = raw_token[:12] + "..."
     token_hash = McpApiToken.hash_token(raw_token)
@@ -178,6 +194,7 @@ def generate_token():
         token_prefix=token_prefix,
         token_hash=token_hash,
         scope=scope,
+        expires_at=expires_at,
         is_active=True,
     )
 

@@ -1,6 +1,7 @@
 """Outils MCP : Domaine Tarification & Grilles Tarifaires."""
 from typing import Optional, List, Dict, Any
 
+from mcp_server.cache import mcp_cache, invalidate_mcp_cache
 from mcp_server.core import mcp
 from mcp_server.decorators import run_in_flask_context, require_mcp_scope
 
@@ -8,6 +9,7 @@ from mcp_server.decorators import run_in_flask_context, require_mcp_scope
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
+@mcp_cache(ttl_seconds=60)
 def get_equipment_rates(
     category: Optional[str] = None,
     query: Optional[str] = None,
@@ -47,12 +49,15 @@ def update_equipment_daily_rate(table_name: str, record_id: str, value: float) -
     """Met à jour le tarif journalier d'un équipement ou d'un véhicule."""
     from services.admin.pricing import update_equipment_daily_rate as _update
     res = _update(table_name, str(record_id), value)
+    if res is not None:
+        invalidate_mcp_cache("get_equipment_rates")
     return {"success": res is not None, "item": res, "message": f"Tarif mis à jour à {value} €." if res else "Échec."}
 
 
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
+@mcp_cache(ttl_seconds=60)
 def get_salary_rates(
     query: Optional[str] = None,
     annexe: Optional[str] = None,
@@ -99,6 +104,8 @@ def update_salary_rate(rate_id: int, field: str, value: Any) -> Dict[str, Any]:
     """Met à jour un champ spécifique d'un tarif salarial de rôle/technicien."""
     from services.admin.pricing import update_salary_rate as _update
     success = _update(rate_id, field, value)
+    if success:
+        invalidate_mcp_cache("get_salary_rates")
     return {"success": success is not None, "message": f"Tarif salarial #{rate_id} mis à jour." if success else "Échec."}
 
 
@@ -119,12 +126,15 @@ def delete_salary_rate(rate_id: int, confirm: bool = False) -> Dict[str, Any]:
             "message": f"⚠️ ATTENTION : Vous êtes sur le point de supprimer le tarif salarial #{rate_id}. Confirmez avec confirm=True."
         }
     success = _delete(rate_id)
+    if success:
+        invalidate_mcp_cache("get_salary_rates")
     return {"success": success, "message": f"Tarif salarial #{rate_id} supprimé." if success else "Échec."}
 
 
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
+@mcp_cache(ttl_seconds=60)
 def get_logistics_rates(
     query: Optional[str] = None,
     limit: Optional[int] = 50,
@@ -163,5 +173,7 @@ def update_logistics_rate(rate_id: int, field: str, value: Any) -> Dict[str, Any
     """Met à jour un tarif logistique par son ID."""
     from services.admin.pricing import update_logistics_rate as _update
     success = _update(rate_id, field, value)
+    if success:
+        invalidate_mcp_cache("get_logistics_rates")
     return {"success": success is not None, "message": f"Tarif logistique #{rate_id} mis à jour." if success else "Échec."}
 

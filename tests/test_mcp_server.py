@@ -839,6 +839,60 @@ class MCPServerFullTestSuite(unittest.TestCase):
                 (b"authorization", f"Bearer {raw_token}".encode()),
             ])
             self.assertEqual(status, 401)
+
+            # 11. Kill-Switch sur session active :
+            token_rec.is_active = True
+            token_rec.expires_at = None
+            db.session.commit()
+
+            # Connexion initiale avec token et session_id -> 200
+            status, _, body = call_middleware("GET", "/mcp", headers=[
+                (b"accept", b"text/event-stream"),
+                (b"authorization", f"Bearer {raw_token}".encode()),
+            ], query_string=b"session_id=sess_killswitch_test")
+            self.assertEqual(status, 200)
+
+            # Requête suivante sans Bearer mais avec session_id -> 200
+            status, _, body = call_middleware("POST", "/mcp", headers=[
+                (b"accept", b"application/json"),
+            ], query_string=b"session_id=sess_killswitch_test")
+            self.assertEqual(status, 200)
+
+            # Révocation de la clé en base
+            token_rec.is_active = False
+            db.session.commit()
+
+            # Requête suivante avec session_id -> 401 Kill-Switch immédiat !
+            status, _, body = call_middleware("POST", "/mcp", headers=[
+                (b"accept", b"application/json"),
+            ], query_string=b"session_id=sess_killswitch_test")
+            self.assertEqual(status, 401)
+
+            # 12. Protection Anti-Brute-Force & IP Jail
+            from mcp_server.config import MCP_BANNED_IPS, MCP_FAILED_AUTH_IP
+            MCP_BANNED_IPS.clear()
+            MCP_FAILED_AUTH_IP.clear()
+
+            jail_ip = "198.51.100.42"
+            # 5 tentatives échouées depuis jail_ip
+            for _ in range(5):
+                status, _, _ = call_middleware("GET", "/mcp", headers=[
+                    (b"accept", b"text/event-stream"),
+                    (b"cf-connecting-ip", jail_ip.encode()),
+                    (b"authorization", b"Bearer bad_key"),
+                ])
+                self.assertEqual(status, 401)
+
+            # 6ème tentative -> 429 Too Many Requests (Jailed)
+            status, _, body = call_middleware("GET", "/mcp", headers=[
+                (b"accept", b"text/event-stream"),
+                (b"cf-connecting-ip", jail_ip.encode()),
+                (b"authorization", b"Bearer bad_key"),
+            ])
+            self.assertEqual(status, 429)
+            self.assertIn(b"bloqu", body)
+            MCP_BANNED_IPS.clear()
+            MCP_FAILED_AUTH_IP.clear()
         finally:
             try:
                 db.session.rollback()
@@ -851,6 +905,82 @@ class MCPServerFullTestSuite(unittest.TestCase):
                 db.session.commit()
             except Exception:
                 db.session.rollback()
+
+    def test_mcp_expiration_and_caching(self):
+        """Vérifie la génération de clé avec durée d'expiration et le micro-cache outillage."""
+        from mcp_server.cache import mcp_cache, invalidate_mcp_cache
+        from datetime import datetime, timezone
+
+        # 1. Test génération de clé avec durée d'expiration (ex: 30 jours)
+        prev_csrf = self.app.config.get("WTF_CSRF_ENABLED", True)
+        self.app.config["WTF_CSRF_ENABLED"] = False
+        try:
+            client = self.app.test_client()
+            with client.session_transaction() as sess:
+                sess["admin_authenticated"] = True
+                sess["admin_user_id"] = 1
+                sess["admin_user_role"] = "super administrateur"
+
+            res = client.post(
+                "/admin/mcp-connector/generate",
+                json={"name": "Expiring Agent", "scope": "read_only", "duration_days": 30},
+                headers={"X-Requested-With": "XMLHttpRequest"},
+            )
+            self.assertEqual(res.status_code, 201)
+            data = res.get_json()
+            token_id = data["token"]["id"]
+            token_rec = db.session.get(McpApiToken, token_id)
+            self.assertIsNotNone(token_rec.expires_at)
+            exp_utc = token_rec.expires_at if token_rec.expires_at.tzinfo else token_rec.expires_at.replace(tzinfo=timezone.utc)
+            diff_days = (exp_utc - datetime.now(timezone.utc)).days
+            self.assertIn(diff_days, (29, 30))
+
+            # Test génération clé illimitée (duration_days = 0)
+            res_unl = client.post(
+                "/admin/mcp-connector/generate",
+                json={"name": "Permanent Agent", "scope": "read_only", "duration_days": 0},
+                headers={"X-Requested-With": "XMLHttpRequest"},
+            )
+            self.assertEqual(res_unl.status_code, 201)
+            token_rec_unl = db.session.get(McpApiToken, res_unl.get_json()["token"]["id"])
+            self.assertIsNone(token_rec_unl.expires_at)
+
+            # Nettoyage tokens de test
+            db.session.delete(token_rec)
+            db.session.delete(token_rec_unl)
+            db.session.commit()
+        finally:
+            self.app.config["WTF_CSRF_ENABLED"] = prev_csrf
+
+        # 2. Test du Micro-cache MCP
+        invalidate_mcp_cache()
+        call_counter = 0
+
+        @mcp_cache(ttl_seconds=5)
+        def heavy_tool_calc(x: int):
+            nonlocal call_counter
+            call_counter += 1
+            return {"result": x * 2, "counter": call_counter}
+
+        # Premier appel -> exécute la fonction
+        res1 = heavy_tool_calc(10)
+        self.assertEqual(res1["result"], 20)
+        self.assertEqual(call_counter, 1)
+
+        # Deuxième appel identique -> servi depuis le cache (counter inchangé)
+        res2 = heavy_tool_calc(10)
+        self.assertEqual(res2["result"], 20)
+        self.assertEqual(call_counter, 1)
+
+        # Appel avec autre argument -> calcule et incrémente
+        res3 = heavy_tool_calc(20)
+        self.assertEqual(res3["result"], 40)
+        self.assertEqual(call_counter, 2)
+
+        # Invalidation manuelle
+        invalidate_mcp_cache("heavy_tool_calc")
+        res4 = heavy_tool_calc(10)
+        self.assertEqual(call_counter, 3)
 
 
 if __name__ == "__main__":
