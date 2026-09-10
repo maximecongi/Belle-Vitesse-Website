@@ -9,13 +9,13 @@ CURRENT_MCP_IP: contextvars.ContextVar[str] = contextvars.ContextVar("CURRENT_MC
 
 
 class DummyGuestUser:
-    """Utilisateur invité par défaut pour les sondages sans token."""
-    id = 1
-    mail = "admin@bellevitesse.com"
-    firstname = "Admin"
-    lastname = "MCP"
-    role = "super administrator"
-    mcp_scope = "admin"
+    """Utilisateur invité anonyme sans privilège (Fail-Safe)."""
+    id = None
+    mail = "guest@bellevitesse.com"
+    firstname = "Guest"
+    lastname = "Anonymous"
+    role = "guest"
+    mcp_scope = "none"
 
     def to_dict(self):
         return {

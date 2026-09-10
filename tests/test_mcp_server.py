@@ -17,7 +17,8 @@ sys.modules["weasyprint"] = mock_weasyprint
 from mcp_server.core import flask_app  # noqa: E402
 from mcp_server.context import CURRENT_MCP_USER, CURRENT_MCP_IP  # noqa: E402
 from mcp_auth.auth import McpUserContext  # noqa: E402
-from models import db, McpAuditLog, McpApiToken, Production, Vehicle, Contact  # noqa: E402
+from mcp_server.middleware import PureAsgiAuthMiddleware  # noqa: E402
+from models import db, McpAuditLog, McpApiToken, Production, Vehicle, Contact, User  # noqa: E402
 from mcp_server.tools import (  # noqa: E402
     calendars,
     contacts,
@@ -704,6 +705,152 @@ class MCPServerFullTestSuite(unittest.TestCase):
             self.assertEqual(res_adm_admin.status_code, 201)
         finally:
             self.app.config["WTF_CSRF_ENABLED"] = prev_csrf
+
+    def test_asgi_auth_middleware_strict_fail_close(self):
+        """Vérifie le durcissement Zero-Trust du middleware ASGI (Fail-Close, 401 sur token absent/invalide/expiré/révoqué)."""
+        import asyncio
+        from datetime import datetime, timezone, timedelta
+
+        class MockAsgiApp:
+            async def __call__(self, scope, receive, send):
+                await send({
+                    "type": "http.response.start",
+                    "status": 200,
+                    "headers": [(b"content-type", b"application/json")],
+                })
+                await send({"type": "http.response.body", "body": b'{"status": "upstream_ok"}'})
+
+        middleware = PureAsgiAuthMiddleware(MockAsgiApp())
+
+        def call_middleware(method="GET", path="/mcp", headers=None, query_string=b""):
+            sent_events = []
+            async def fake_receive():
+                return {"type": "http.request", "body": b""}
+            async def fake_send(event):
+                sent_events.append(event)
+
+            scope = {
+                "type": "http",
+                "method": method,
+                "path": path,
+                "headers": headers or [],
+                "query_string": query_string,
+                "client": ("127.0.0.1", 54321),
+            }
+            asyncio.run(middleware(scope, fake_receive, fake_send))
+
+            status = None
+            body = b""
+            resp_headers = {}
+            for ev in sent_events:
+                if ev["type"] == "http.response.start":
+                    status = ev["status"]
+                    resp_headers = dict(ev.get("headers", []))
+                elif ev["type"] == "http.response.body":
+                    body += ev.get("body", b"")
+            return status, resp_headers, body
+
+        # 1. Options preflight CORS -> 200 sans auth
+        status, _, _ = call_middleware("OPTIONS", "/mcp")
+        self.assertEqual(status, 200)
+
+        # 2. Healthcheck -> 200 sans auth
+        status, _, body = call_middleware("GET", "/health")
+        self.assertEqual(status, 200)
+        self.assertIn(b"healthy", body)
+
+        # 3. Navigateur direct sans SSE -> 200 page informative avec authentication_required
+        status, _, body = call_middleware("GET", "/mcp")
+        self.assertEqual(status, 200)
+        self.assertIn(b"authentication_required", body)
+
+        # 4. Requête SSE / Streamable HTTP sans token -> 401 Unauthorized strict
+        status, resp_headers, body = call_middleware("GET", "/mcp", headers=[(b"accept", b"text/event-stream")])
+        self.assertEqual(status, 401)
+        self.assertIn(b"error_code", body)
+        self.assertIn(b"www-authenticate", resp_headers)
+
+        # 5. Token au mauvais format ou faux -> 401
+        status, _, body = call_middleware("GET", "/mcp", headers=[
+            (b"accept", b"text/event-stream"),
+            (b"authorization", b"Bearer invalid_token_12345")
+        ])
+        self.assertEqual(status, 401)
+
+        # 6. Créer un utilisateur et un vrai token
+        user = User.query.filter_by(id=999).first()
+        if not user:
+            user = User(
+                id=999,
+                firstname="Test",
+                lastname="MCP",
+                mail="mcp_test_user@bellevitesse.com",
+                role="super administrator",
+            )
+            db.session.add(user)
+            db.session.commit()
+
+        raw_token = McpApiToken.generate_token_raw()
+        token_hash = McpApiToken.hash_token(raw_token)
+        token_rec = McpApiToken(
+            user_id=999,
+            name="Test Token",
+            token_prefix=raw_token[:12] + "...",
+            token_hash=token_hash,
+            scope="admin",
+            is_active=True,
+        )
+        db.session.add(token_rec)
+        db.session.commit()
+
+        try:
+            # 7. Token Bearer valide dans en-tête -> 200
+            status, _, body = call_middleware("GET", "/mcp", headers=[
+                (b"accept", b"text/event-stream"),
+                (b"authorization", f"Bearer {raw_token}".encode()),
+            ])
+            self.assertEqual(status, 200)
+            self.assertIn(b"upstream_ok", body)
+
+            # 8. Token valide en query param (?token=...) -> 200
+            status, _, body = call_middleware("GET", "/mcp", headers=[
+                (b"accept", b"text/event-stream"),
+            ], query_string=f"token={raw_token}".encode())
+            self.assertEqual(status, 200)
+            self.assertIn(b"upstream_ok", body)
+
+            # 9. Token révoqué (is_active=False) -> 401
+            token_rec.is_active = False
+            db.session.commit()
+
+            status, _, body = call_middleware("GET", "/mcp", headers=[
+                (b"accept", b"text/event-stream"),
+                (b"authorization", f"Bearer {raw_token}".encode()),
+            ])
+            self.assertEqual(status, 401)
+
+            # 10. Token expiré -> 401
+            token_rec.is_active = True
+            token_rec.expires_at = datetime.now(timezone.utc) - timedelta(days=1)
+            db.session.commit()
+
+            status, _, body = call_middleware("GET", "/mcp", headers=[
+                (b"accept", b"text/event-stream"),
+                (b"authorization", f"Bearer {raw_token}".encode()),
+            ])
+            self.assertEqual(status, 401)
+        finally:
+            try:
+                db.session.rollback()
+                token_to_delete = McpApiToken.query.filter_by(token_hash=token_hash).first()
+                if token_to_delete:
+                    db.session.delete(token_to_delete)
+                user_to_delete = User.query.filter_by(id=999).first()
+                if user_to_delete:
+                    db.session.delete(user_to_delete)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
 
 
 if __name__ == "__main__":

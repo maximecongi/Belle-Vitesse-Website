@@ -13,7 +13,6 @@ MCP_SERVER_PORT = int(os.getenv("MCP_SERVER_PORT", "8080"))
 
 # Registres en mémoire
 ACTIVE_MCP_SESSIONS: Dict[str, Any] = {}
-RECENT_AUTH_BY_IP: Dict[str, Any] = {}
 
 # Rate Limiter (30 requêtes / minute par client)
 MCP_RATE_LIMITER: Dict[str, List[float]] = defaultdict(list)
