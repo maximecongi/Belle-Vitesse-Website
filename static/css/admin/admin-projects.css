@@ -401,6 +401,30 @@
     box-shadow: 0 0 0 3px rgba(255, 200, 69, 0.2);
 }
 
+.project-report-title-input {
+    width: 100%;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid var(--white-3, #cbd5e1);
+    background: #ffffff;
+    color: #0f172a;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    box-sizing: border-box;
+}
+
+.project-report-title-input::placeholder {
+    font-weight: 400;
+    color: #94a3b8;
+}
+
+.project-report-title-input:focus {
+    border-color: var(--admin-accent, #ffc845);
+    box-shadow: 0 0 0 3px rgba(255, 200, 69, 0.2);
+    outline: none;
+}
+
 .project-hub-divider {
     border: none;
     border-top: 1px solid var(--white-3, #e2e8f0);
@@ -472,6 +496,15 @@
     font-size: 0.72rem;
     color: #64748b;
     font-weight: 400;
+}
+
+.project-report-title {
+    font-size: 0.90rem;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.35rem 0;
+    line-height: 1.35;
 }
 
 .project-report-body {
@@ -1004,7 +1037,6 @@
 
 .project-report-delete-btn:hover {
     opacity: 1;
-    transform: scale(1.1);
 }
 
 .project-reports-empty {

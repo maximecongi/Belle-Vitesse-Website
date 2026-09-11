@@ -25,6 +25,7 @@ class ProjectReport(db.Model):
     )
     author_name = db.Column(db.String(150), nullable=True)
     author_role = db.Column(db.String(100), nullable=True)
+    title = db.Column(db.String(255), nullable=True)
     content = db.Column(db.Text, nullable=False)
 
     created_at = db.Column(db.DateTime, default=_utcnow, nullable=False, index=True)
@@ -47,6 +48,7 @@ class ProjectReport(db.Model):
             "id": self.id,
             "project_id": self.project_id,
             "user_id": self.user_id,
+            "title": self.title,
             "author_name": self.author_name or (f"{self.user.firstname} {self.user.lastname}" if self.user else "Collaborateur"),
             "author_role": self.author_role or (self.user.role_display if self.user else "Équipe"),
             "author_job": self.author_job,

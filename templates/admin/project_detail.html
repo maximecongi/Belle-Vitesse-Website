@@ -288,6 +288,12 @@
                 <!-- Champ masqué synchronisé avec le Markdown sérialisé -->
                 <textarea name="content" id="reportContentInput" class="u-d-none" required></textarea>
 
+                <!-- Titre optionnel du rapport -->
+                <div class="project-report-title-field u-mb-2">
+                    <input type="text" name="title" id="reportTitleInput" class="project-report-title-input"
+                        placeholder="Titre du rapport" maxlength="255" autocomplete="off">
+                </div>
+
                 <div class="notion-wysiwyg-wrapper u-mb-2" id="notionEditorWrapper">
                     <div class="notion-slash-container">
                         <div class="notion-slash-menu" id="notionSlashMenu" role="listbox"
@@ -339,7 +345,7 @@
                         <div class="project-report-body markdown-rendered notion-live-editor" id="reportContentEditor"
                             contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true"
                             data-empty="true"
-                            data-placeholder="Rédigez une observation, un point de tournage, un état matériel... (tapez / pour ouvrir le menu Notion)">
+                            data-placeholder="Rédigez une observation (tapez / pour ouvrir la mise en page    )">
                         </div>
                     </div>
                 </div>
@@ -362,7 +368,7 @@
                     </div>
                     <div class="project-report-content-wrapper">
                         <div
-                            class="project-report-header u-flex u-justify-between u-align-center u-flex-wrap u-gap-1 u-mb-3">
+                            class="project-report-header u-flex u-justify-between u-align-center u-flex-wrap u-gap-1 u-mb-2">
                             <div class="u-flex u-align-center u-gap-2">
                                 <strong class="project-report-author">{{ report.author_name }}</strong>
                                 <span class="project-report-role-badge">{{ report.author_job }}</span>
@@ -376,11 +382,23 @@
                                 onsubmit="return confirm('Confirmer la suppression de ce commentaire ?');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="project-report-delete-btn" title="Supprimer ce rapport">
-                                    🗑️
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="lucide lucide-trash">
+                                        <path d="M10 11v6" />
+                                        <path d="M14 11v6" />
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                                        <path d="M3 6h18" />
+                                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                    </svg>
                                 </button>
                             </form>
                             {% endif %}
                         </div>
+
+                        {% if report.title %}
+                        <h4 class="project-report-title">{{ report.title }}</h4>
+                        {% endif %}
 
                         {% if report.content and report.content|length > 200 %}
                         <div class="project-report-collapsible is-collapsed" data-report-id="{{ report.id }}">

@@ -89,28 +89,33 @@ class ProjectReportsTest(unittest.TestCase):
 
     def test_add_and_list_reports(self):
         with self.app.app_context():
-            # Ajout d'un premier rapport par le technicien
+            # Ajout d'un premier rapport par le technicien avec titre
             report1 = add_project_report(
                 self.project_id,
                 user_id=self.tech_id,
+                title="Débriefing Tournage J1",
                 content="Essai carmount validé à 110 km/h."
             )
             self.assertIsNotNone(report1.id)
+            self.assertEqual(report1.title, "Débriefing Tournage J1")
             self.assertEqual(report1.author_name, "Lucas Technicien")
             self.assertEqual(report1.author_role, "Technicien")
 
-            # Ajout d'un second rapport par l'administrateur
+            # Ajout d'un second rapport par l'administrateur (sans titre)
             report2 = add_project_report(
                 self.project_id,
                 user_id=self.admin_id,
                 content="Prévoir jeu de pneus pluie supplémentaire pour demain."
             )
             self.assertEqual(report2.author_name, "Maxime Admin")
+            self.assertIsNone(report2.title)
 
             # Récupération de la liste
             reports = list_project_reports(self.project_id)
             self.assertEqual(len(reports), 2)
+            self.assertEqual(reports[0]["title"], "Débriefing Tournage J1")
             self.assertEqual(reports[0]["content"], "Essai carmount validé à 110 km/h.")
+            self.assertIsNone(reports[1]["title"])
             self.assertEqual(reports[1]["content"], "Prévoir jeu de pneus pluie supplémentaire pour demain.")
             self.assertTrue("created_at_fr" in reports[0])
 

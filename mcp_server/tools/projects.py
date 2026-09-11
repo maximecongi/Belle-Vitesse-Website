@@ -673,6 +673,7 @@ def get_project_reports(
 def add_project_report(
     project_id: Any,
     content: str,
+    title: Optional[str] = None,
     author_name: Optional[str] = "Assistant IA",
     author_job: Optional[str] = None,
     user_id: Optional[int] = None,
@@ -681,6 +682,7 @@ def add_project_report(
     Ajoute un rapport ou une note d'observation d'équipe sur un projet (supporte le Markdown enrichi).
     - project_id: Identifiant numérique du projet ou code BVPR (ex: 'BVPR-0RLY80RD5LZB' ou 46)
     - content: Texte du rapport au format Markdown (titres, puces, citations, etc.)
+    - title: Titre optionnel du rapport (ex: 'Débriefing Jour 1')
     - author_name: Nom optionnel de l'auteur (défaut: 'Assistant IA')
     - author_job: Poste / fonction en entreprise (ex: 'Directeur d'atelier', 'Pilote de précision')
     - user_id: Identifiant optionnel d'un utilisateur existant
@@ -691,7 +693,7 @@ def add_project_report(
 
     from services.admin.project_reports import add_project_report as _add_report
     try:
-        report = _add_report(p.id, user_id=user_id, content=content)
+        report = _add_report(p.id, user_id=user_id, content=content, title=title)
         if author_name and not user_id:
             report.author_name = author_name
             report.author_role = author_job or "Assistant MCP"
@@ -781,6 +783,7 @@ def search_project_reports(
     if query:
         search_term = f"%{query.strip()}%"
         query_filter = query_filter.filter(
+            (ProjectReport.title.ilike(search_term)) |
             (ProjectReport.content.ilike(search_term)) |
             (ProjectReport.author_name.ilike(search_term)) |
             (ProjectReport.author_role.ilike(search_term))
@@ -796,6 +799,7 @@ def search_project_reports(
             "project_id": r.project_id,
             "project_code": r.project.project_id if r.project else "",
             "project_name": r.project.name if r.project else "Projet",
+            "title": r.title,
             "author_name": r.author_name or (f"{r.user.firstname} {r.user.lastname}" if r.user else "Collaborateur"),
             "author_job": job,
             "created_at": r.created_at.isoformat() if r.created_at else None,

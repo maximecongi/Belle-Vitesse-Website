@@ -172,9 +172,10 @@ def init_projects_routes(app):
         try:
             payload = request.get_json(silent=True) or request.form or {}
             content = payload.get("content", "")
+            title = payload.get("title", "")
             current_user_id = session.get("admin_user_id")
 
-            report = add_project_report(record_id, user_id=current_user_id, content=content)
+            report = add_project_report(record_id, user_id=current_user_id, content=content, title=title)
 
             if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
                 return jsonify({"status": "success", "report": report.to_dict()}), 201

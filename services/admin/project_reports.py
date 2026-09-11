@@ -32,12 +32,13 @@ def _format_datetime_fr(dt):
     return f"{dt.day} {month_str} {dt.year} à {dt.strftime('%H:%M')}"
 
 
-def add_project_report(project_id, user_id, content):
+def add_project_report(project_id, user_id, content, title=None):
     """
     Ajoute un rapport / commentaire libre à un projet.
     Associe l'auteur (utilisateur connecté) et conserve un snapshot du nom et rôle.
     """
     content = (content or "").strip()
+    title = (title or "").strip() or None
     if not content:
         raise ValueError("Le contenu du commentaire ne peut pas être vide.")
 
@@ -58,6 +59,7 @@ def add_project_report(project_id, user_id, content):
     report = ProjectReport(
         project_id=project.id,
         user_id=user_id,
+        title=title,
         author_name=author_name,
         author_role=author_role,
         content=content,
@@ -100,6 +102,7 @@ def list_project_reports(project_id):
         "id": r.id,
         "project_id": r.project_id,
         "user_id": r.user_id,
+        "title": r.title,
         "author_name": r.author_name or (f"{r.user.firstname} {r.user.lastname}" if r.user else "Collaborateur"),
         "author_role": r.author_role or (r.user.role_display if r.user else "Équipe"),
         "author_job": (r.user.job if (r.user and r.user.job) else (r.author_role or "Équipe")),
@@ -200,6 +203,7 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
             "id": r.id,
             "project_id": r.project_id,
             "user_id": r.user_id,
+            "title": r.title,
             "author_name": r.author_name or (f"{r.user.firstname} {r.user.lastname}" if r.user else "Collaborateur"),
             "author_role": r.author_role or (r.user.role_display if r.user else "Équipe"),
             "author_job": job,
