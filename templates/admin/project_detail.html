@@ -105,84 +105,8 @@
     <!-- COLONNE PRINCIPALE (GAUCHE : JOURNAL & MATÉRIEL) -->
     <div class="u-flex u-flex-column u-gap-3">
 
-        <!-- 1. JOURNAL & RAPPORTS COLLECTIFS D'ÉQUIPE -->
-        <div class="admin-card project-reports-container" id="reports">
-            <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
-                <div>
-                    <h2 class="admin-card-title u-m-0">
-                        💬 Journal de Bord & Rapports d'Équipe
-                    </h2>
-                    <p class="u-text-xs u-text-muted u-mt-1 u-mb-0">
-                        Espace collaboratif de suivi et de débriefing en direct (plateau & atelier).
-                    </p>
-                </div>
-                {{ status_badge(reports_count ~ (' contributions' if reports_count > 1 else ' contribution'), 'neutral')
-                }}
-            </div>
 
-            <!-- Boîte de saisie libre du commentaire -->
-            <form method="POST" action="{{ url_for('admin_project_reports_add', record_id=project.id) }}"
-                class="project-report-form u-mb-4" id="addReportForm">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div class="form-group u-mb-2">
-                    <textarea name="content" id="reportContentInput" class="form-input project-report-textarea" rows="3"
-                        placeholder="Rédigez une observation, un point de tournage, un état matériel ou un débriefing..."
-                        required></textarea>
-                </div>
-                <div class="u-flex u-justify-end u-align-center u-flex-wrap u-gap-2">
-                    <button type="submit" class="admin-btn admin-btn-primary admin-btn-sm" id="submitReportBtn">
-                        Publier le rapport
-                    </button>
-                </div>
-            </form>
-
-            <hr class="project-hub-divider u-mb-4">
-
-            <!-- Fil chronologique des rapports -->
-            <div class="project-reports-stream" id="reportsStream">
-                {% if reports and reports|length > 0 %}
-                {% for report in reports %}
-                <div class="project-report-item" id="report-{{ report.id }}">
-                    <div class="project-report-avatar" title="{{ report.author_job }}">
-                        {{ report.author_name[:2] | upper }}
-                    </div>
-                    <div class="project-report-content-wrapper">
-                        <div
-                            class="project-report-header u-flex u-justify-between u-align-center u-flex-wrap u-gap-1 u-mb-3">
-                            <div class="u-flex u-align-center u-gap-2">
-                                <strong class="project-report-author">{{ report.author_name }}</strong>
-                                <span class="project-report-role-badge">{{ report.author_job }}</span>
-                                <span class="project-report-date u-text-xs u-text-muted">{{ report.created_at_fr
-                                    }}</span>
-                            </div>
-                            {% if report.can_delete %}
-                            <form method="POST"
-                                action="{{ url_for('admin_project_report_delete', record_id=project.id, report_id=report.id) }}"
-                                class="u-m-0"
-                                onsubmit="return confirm('Confirmer la suppression de ce commentaire ?');">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="project-report-delete-btn" title="Supprimer ce rapport">
-                                    🗑️
-                                </button>
-                            </form>
-                            {% endif %}
-                        </div>
-                        <div class="project-report-body">{{ report.content }}</div>
-                    </div>
-                </div>
-                {% endfor %}
-                {% else %}
-                <div class="u-text-center u-p-4 u-text-muted project-reports-empty">
-                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">📝</div>
-                    <p class="u-text-sm u-m-0">Aucun rapport consigné pour ce tournage pour le moment.</p>
-                    <p class="u-text-xs u-text-muted u-mt-1">Utilisez la boîte ci-dessus pour laisser la première note
-                        d'équipe.</p>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- 2. MATÉRIEL ENGAGÉ (VÉHICULES & TÊTES) -->
+        <!-- 1. MATÉRIEL ENGAGÉ (VÉHICULES & TÊTES) -->
         <div class="admin-card">
             <div class="admin-card-title u-mb-3">
                 🚗 Matériel Engagé sur le Tournage
@@ -342,6 +266,157 @@
             {% else %}
             <p class="u-text-muted u-text-xs u-m-0">Aucune tête assignée à ce projet.</p>
             {% endif %}
+        </div>
+
+        <!-- 2. JOURNAL & RAPPORTS COLLECTIFS D'ÉQUIPE -->
+        <div class="admin-card project-reports-container" id="reports">
+            <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
+                <div>
+                    <h2 class="admin-card-title u-m-0">
+                        💬 Journal de Bord & Rapports d'Équipe
+                    </h2>
+                    <p class="u-text-xs u-text-muted u-mt-1 u-mb-0">
+                        Espace collaboratif de suivi et de débriefing en direct (plateau & atelier).
+                    </p>
+                </div>
+                {{ status_badge(reports_count ~ (' contributions' if reports_count > 1 else ' contribution'), 'neutral')
+                }}
+            </div>
+
+            <!-- Boîte de rédaction unique avec aperçu éditable direct (WYSIWYG Notion-style) -->
+            <form method="POST" action="{{ url_for('admin_project_reports_add', record_id=project.id) }}"
+                class="project-report-form u-mb-4" id="addReportForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <!-- Champ masqué synchronisé avec le Markdown sérialisé -->
+                <textarea name="content" id="reportContentInput" style="display: none;" required></textarea>
+
+                <div class="notion-wysiwyg-wrapper u-mb-2" id="notionEditorWrapper">
+                    <div class="notion-slash-container">
+                        <div class="notion-slash-menu" id="notionSlashMenu" role="listbox"
+                            aria-label="Commandes Markdown"></div>
+                        <!-- Menu contextuel personnalisé au clic droit -->
+                        <div class="notion-context-menu" id="notionContextMenu" role="menu"
+                            aria-label="Menu de formatage">
+                            <div class="notion-context-item is-danger-hover" data-action="clear" role="menuitem">
+                                <span class="notion-context-icon">🧹</span>
+                                <span class="notion-context-label">Supprimer la mise en forme</span>
+                                <span class="notion-context-hint">Normal</span>
+                            </div>
+                            <div class="notion-context-divider"></div>
+                            <div class="notion-context-header">TRANSFORMER LE BLOC</div>
+                            <div class="notion-context-item" data-action="bullet" role="menuitem">
+                                <span class="notion-context-icon">•</span>
+                                <span class="notion-context-label">Liste à puces</span>
+                            </div>
+                            <div class="notion-context-item" data-action="numbered" role="menuitem">
+                                <span class="notion-context-icon">1.</span>
+                                <span class="notion-context-label">Liste numérotée</span>
+                            </div>
+                            <div class="notion-context-item" data-action="h2" role="menuitem">
+                                <span class="notion-context-icon">🏷️</span>
+                                <span class="notion-context-label">Titre de section</span>
+                            </div>
+                            <div class="notion-context-item" data-action="h3" role="menuitem">
+                                <span class="notion-context-icon">📌</span>
+                                <span class="notion-context-label">Sous-titre</span>
+                            </div>
+                            <div class="notion-context-item" data-action="quote" role="menuitem">
+                                <span class="notion-context-icon">💬</span>
+                                <span class="notion-context-label">Citation / Observation</span>
+                            </div>
+                            <div class="notion-context-divider"></div>
+                            <div class="notion-context-header">STYLE DU TEXTE</div>
+                            <div class="notion-context-item" data-action="bold" role="menuitem">
+                                <span class="notion-context-icon">𝐁</span>
+                                <span class="notion-context-label">Mettre en gras</span>
+                                <span class="notion-context-hint">⌘B</span>
+                            </div>
+                            <div class="notion-context-item" data-action="italic" role="menuitem">
+                                <span class="notion-context-icon">𝐼</span>
+                                <span class="notion-context-label">Mettre en italique</span>
+                                <span class="notion-context-hint">⌘I</span>
+                            </div>
+                        </div>
+
+                        <div class="project-report-body markdown-rendered notion-live-editor" id="reportContentEditor"
+                            contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true"
+                            data-empty="true"
+                            data-placeholder="Rédigez une observation, un point de tournage, un état matériel... (tapez / pour ouvrir le menu Notion)">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="u-flex u-justify-end u-align-center u-flex-wrap u-gap-2">
+                    <button type="submit" class="admin-btn admin-btn-primary admin-btn-sm" id="submitReportBtn">
+                        Publier le rapport
+                    </button>
+                </div>
+            </form>
+
+            <hr class="project-hub-divider u-mb-4">
+
+            <!-- Fil chronologique des rapports -->
+            <div class="project-reports-stream" id="reportsStream">
+                {% if reports and reports|length > 0 %}
+                {% for report in reports %}
+                <div class="project-report-item" id="report-{{ report.id }}">
+                    <div class="project-report-avatar" title="{{ report.author_job }}">
+                        {{ report.author_name[:2] | upper }}
+                    </div>
+                    <div class="project-report-content-wrapper">
+                        <div
+                            class="project-report-header u-flex u-justify-between u-align-center u-flex-wrap u-gap-1 u-mb-3">
+                            <div class="u-flex u-align-center u-gap-2">
+                                <strong class="project-report-author">{{ report.author_name }}</strong>
+                                <span class="project-report-role-badge">{{ report.author_job }}</span>
+                                <span class="project-report-date u-text-xs u-text-muted">{{ report.created_at_fr
+                                    }}</span>
+                            </div>
+                            {% if report.can_delete %}
+                            <form method="POST"
+                                action="{{ url_for('admin_project_report_delete', record_id=project.id, report_id=report.id) }}"
+                                class="u-m-0"
+                                onsubmit="return confirm('Confirmer la suppression de ce commentaire ?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="project-report-delete-btn" title="Supprimer ce rapport">
+                                    🗑️
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+
+                        {% if report.content and report.content|length > 200 %}
+                        <div class="project-report-collapsible is-collapsed" data-report-id="{{ report.id }}">
+                            <div class="project-report-body markdown-rendered project-report-body-preview">
+                                {{ report.content | truncate_report(200) | markdown }}
+                            </div>
+                            <div class="project-report-body markdown-rendered project-report-body-full" style="display: none;">
+                                {{ report.content | markdown }}
+                            </div>
+                            <div class="project-report-toggle-wrapper">
+                                <button type="button" class="project-report-toggle-btn" data-action="toggle-report" aria-expanded="false" title="Afficher ou masquer la suite du rapport">
+                                    <span class="project-report-toggle-label">Déplier le rapport</span>
+                                    <span class="project-report-toggle-icon">▾</span>
+                                </button>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="project-report-body markdown-rendered">
+                            {{ report.content | markdown }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="u-text-center u-p-4 u-text-muted project-reports-empty">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">📝</div>
+                    <p class="u-text-sm u-m-0">Aucun rapport consigné pour ce tournage pour le moment.</p>
+                    <p class="u-text-xs u-text-muted u-mt-1">Utilisez la boîte ci-dessus pour laisser la première note
+                        d'équipe.</p>
+                </div>
+                {% endif %}
+            </div>
         </div>
 
     </div>
@@ -552,9 +627,12 @@
     </div>
 </div>
 
-{% if is_print %}
 <script>
+    if (typeof window.initProjectInteractions === 'function') {
+        window.initProjectInteractions();
+    }
+    {% if is_print %}
     window.print();
+    {% endif %}
 </script>
-{% endif %}
 {% endblock %}

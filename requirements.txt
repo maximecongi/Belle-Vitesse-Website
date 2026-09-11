@@ -61,3 +61,4 @@ pymysql==1.2.0
 Flask-Migrate==4.1.0
 mcp>=1.0.0
 uvicorn>=0.30.0
+markdown==3.10.3

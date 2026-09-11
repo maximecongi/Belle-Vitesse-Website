@@ -254,6 +254,53 @@ class ProjectReportsTest(unittest.TestCase):
             self.assertIsNotNone(ctx_report)
             self.assertEqual(ctx_report["author_job"], "Pilote Précision")
 
+    def test_render_markdown_filter(self):
+        with self.app.app_context():
+            from utils.formatting import render_markdown
+            md_input = (
+                "## Titre Test\n"
+                "- Puce de test 1\n"
+                "- Puce de test 2\n"
+                "**Important** : *observation*\n"
+                "> Citation d'équipe\n"
+                "<script>alert('xss')</script>"
+            )
+            html = render_markdown(md_input)
+            self.assertIn("<h2>Titre Test</h2>", html)
+            self.assertIn("<li>Puce de test 1</li>", html)
+            self.assertIn("<strong>Important</strong>", html)
+            self.assertIn("<em>observation</em>", html)
+            self.assertIn("<blockquote>", html)
+            self.assertNotIn("<script>", html)
+            self.assertNotIn("alert('xss')", html)
+
+    def test_truncate_report(self):
+        with self.app.app_context():
+            from utils.formatting import truncate_report
+
+            # Texte court (< 200 caractères) : non tronqué
+            short_text = "Rapport bref de tournage."
+            self.assertEqual(truncate_report(short_text, 200), short_text)
+
+            # Texte exactement égal à 200 caractères : non tronqué
+            exact_text = "A" * 200
+            self.assertEqual(truncate_report(exact_text, 200), exact_text)
+
+            # Texte long (> 200 caractères) avec des espaces : tronqué au mot avec points de suspension
+            long_text = "Ceci est un compte-rendu très détaillé du tournage sur le circuit du Mans avec plusieurs équipes et véhicules engagés. " * 3
+            truncated = truncate_report(long_text, 200)
+            self.assertTrue(len(truncated) <= 204)  # 200 max + ...
+            self.assertTrue(truncated.endswith("..."))
+            self.assertFalse(truncated.endswith(" ..."))
+
+            # Test de nettoyage des marqueurs orphelins
+            md_trailing = "Texte avec marqueur gras **" + " mot" * 40
+            truncated_md = truncate_report(md_trailing, 30)
+            self.assertNotIn("**...", truncated_md)
+
+            # Test présence du filtre Jinja dans l'environnement Flask
+            self.assertIn("truncate_report", self.app.jinja_env.filters)
+
 
 if __name__ == '__main__':
     unittest.main()
