@@ -348,7 +348,7 @@
     background: var(--admin-bg, #f8fafc);
     border: 1px solid var(--white-3, #e2e8f0);
     border-radius: 8px;
-    padding: 0.5rem 0.85rem;
+    padding: 0.7rem 0.5rem;
     min-width: 80px;
     text-align: center;
 }
@@ -363,8 +363,8 @@
 }
 
 .project-stat-num {
-    font-size: 1.25rem;
-    font-weight: 700;
+    font-size: 1.15rem;
+    font-weight: 600;
     color: var(--admin-text-dark, #0f172a);
     line-height: 1.2;
 }
@@ -391,8 +391,8 @@
     resize: vertical;
     border-radius: 6px;
     padding: 0.65rem 0.85rem;
-    font-size: 0.88rem;
-    line-height: 1.45;
+    font-size: 0.82rem;
+    line-height: 1.6;
     background: #ffffff;
 }
 
@@ -433,15 +433,16 @@
     height: 28px;
     aspect-ratio: 1;
     border-radius: 50%;
-    background: #0f172a;
-    color: #ffc845;
+    background: var(--admin-accent);
+    color: var(--grey-1);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 0.6rem;
+    font-size: 0.55rem;
+    letter-spacing: 0.04em;
     flex-shrink: 0;
-    border: 2px solid #e2e8f0;
+    border: 2px solid var(--neutral-bg);
 }
 
 .project-report-content-wrapper {
@@ -450,25 +451,34 @@
 }
 
 .project-report-author {
-    font-size: 0.88rem;
+    font-size: 0.84rem;
+    font-weight: 600;
     color: #0f172a;
+    letter-spacing: -0.01em;
 }
 
 .project-report-role-badge {
     font-size: 0.68rem;
-    padding: 0.15rem 0.45rem;
+    padding: 0.12rem 0.45rem;
     border-radius: 4px;
     background: #f1f5f9;
     color: #475569;
     border: 1px solid #e2e8f0;
     font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+.project-report-date {
+    font-size: 0.72rem;
+    color: #64748b;
+    font-weight: 400;
 }
 
 .project-report-body {
-    margin-top: 0.45rem;
-    font-size: 0.88rem;
+    margin-top: 0.4rem;
+    font-size: 0.82rem;
     color: #334155;
-    line-height: 1.55;
+    line-height: 1.6;
     word-break: break-word;
 }
 
@@ -480,41 +490,59 @@
     margin-bottom: 0;
 }
 
-.project-report-body h1,
-.project-report-body h2 {
-    font-size: 1.05rem;
-    font-weight: 700;
+.project-report-body h1 {
+    font-size: 1.02rem;
+    font-weight: 600;
     color: #0f172a;
-    margin: 0.75rem 0 0.35rem 0;
+    letter-spacing: -0.015em;
+    margin: 0.8rem 0 0.35rem 0;
 }
 
-.project-report-body h3,
-.project-report-body h4 {
-    font-size: 0.95rem;
+.project-report-body h2 {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+    margin: 0.7rem 0 0.3rem 0;
+}
+
+.project-report-body h3 {
+    font-size: 0.86rem;
     font-weight: 600;
     color: #1e293b;
-    margin: 0.6rem 0 0.3rem 0;
+    margin: 0.6rem 0 0.25rem 0;
+}
+
+.project-report-body h4 {
+    font-size: 0.80rem;
+    font-weight: 600;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin: 0.5rem 0 0.2rem 0;
 }
 
 .project-report-body ul,
 .project-report-body ol {
-    margin: 0.35rem 0 0.6rem 1.4rem;
+    margin: 0.35rem 0 0.6rem 1.25rem;
     padding: 0;
 }
 
 .project-report-body li {
-    margin-bottom: 0.25rem;
-    line-height: 1.45;
+    margin-bottom: 0.2rem;
+    line-height: 1.55;
 }
 
 .project-report-body blockquote {
     margin: 0.5rem 0;
-    padding: 0.5rem 0.85rem;
+    padding: 0.45rem 0.8rem;
     background: #f8fafc;
     border-left: 3px solid var(--admin-accent, #ffc845);
-    border-radius: 0 6px 6px 0;
+    border-radius: 0 5px 5px 0;
     color: #475569;
-    font-style: normal;
+    font-size: 0.80rem;
+    font-style: italic;
+    line-height: 1.55;
 }
 
 .project-report-body blockquote p {
@@ -524,9 +552,9 @@
 
 .project-report-body code {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 0.82rem;
+    font-size: 0.75rem;
     background: #f1f5f9;
-    padding: 0.15rem 0.35rem;
+    padding: 0.12rem 0.35rem;
     border-radius: 4px;
     color: #0f172a;
 }
@@ -534,10 +562,11 @@
 .project-report-body pre {
     background: #0f172a;
     color: #f8fafc;
-    padding: 0.75rem 1rem;
+    padding: 0.65rem 0.85rem;
     border-radius: 6px;
     overflow-x: auto;
-    font-size: 0.82rem;
+    font-size: 0.75rem;
+    line-height: 1.5;
     margin: 0.5rem 0;
 }
 
@@ -595,6 +624,7 @@
         opacity: 0;
         transform: translateY(-3px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -602,7 +632,7 @@
 }
 
 .project-report-toggle-wrapper {
-    margin-top: 0.45rem;
+    margin-top: 0.25rem;
     display: flex;
     align-items: center;
 }
@@ -610,31 +640,39 @@
 .project-report-toggle-btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    background: #f1f5f9;
-    border: 1px solid #cbd5e1;
-    color: #475569;
-    font-size: 0.74rem;
-    font-weight: 600;
-    padding: 0.2rem 0.6rem;
-    border-radius: 5px;
+    gap: 0.25rem;
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 500;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: color 0.15s ease;
     user-select: none;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    box-shadow: none;
 }
 
 .project-report-toggle-btn:hover {
-    background: #0f172a;
-    border-color: #0f172a;
-    color: #ffc845;
-    box-shadow: 0 2px 4px rgba(15, 23, 42, 0.15);
+    color: #0f172a;
+    background: transparent;
+    box-shadow: none;
+}
+
+.project-report-toggle-btn:hover .project-report-toggle-label {
+    text-decoration: underline;
+    text-underline-offset: 2px;
 }
 
 .project-report-toggle-btn .project-report-toggle-icon {
-    font-size: 0.68rem;
+    font-size: 0.58rem;
     line-height: 1;
-    transition: transform 0.15s ease;
+    opacity: 0.6;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.project-report-toggle-btn:hover .project-report-toggle-icon {
+    opacity: 1;
 }
 
 /* Notion Slash Command Dropdown */
@@ -768,6 +806,7 @@
         opacity: 0;
         transform: scale(0.96);
     }
+
     to {
         opacity: 1;
         transform: scale(1);
@@ -847,7 +886,7 @@
 }
 
 .notion-live-editor {
-    width: 100%;
+    width: calc(100% - 2rem);
     min-height: 115px;
     max-height: 480px;
     overflow-y: auto;
@@ -957,9 +996,9 @@
     background: transparent;
     border: none;
     cursor: pointer;
-    opacity: 0.5;
+    opacity: 0.45;
     transition: opacity 0.2s, transform 0.1s;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     padding: 0.2rem;
 }
 
@@ -1106,7 +1145,10 @@
 
 .project-notes-content {
     white-space: pre-wrap;
-    line-height: 1.5;
+    line-height: 1.55;
+    font-size: 0.82rem;
+    color: #334155;
+    word-break: break-word;
 }
 
 .projects-waiver-label {

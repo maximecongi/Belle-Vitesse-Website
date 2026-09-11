@@ -41,7 +41,8 @@ def add_project_report(project_id, user_id, content):
     if not content:
         raise ValueError("Le contenu du commentaire ne peut pas être vide.")
 
-    project = Project.query.filter(Project.id == project_id, Project.deleted_at.is_(None)).first()
+    project = Project.query.filter(
+        Project.id == project_id, Project.deleted_at.is_(None)).first()
     if not project:
         raise ValueError("Projet introuvable.")
 
@@ -76,9 +77,11 @@ def delete_project_report(report_id, current_user_id, is_admin=False):
         raise ValueError("Commentaire introuvable.")
 
     # Vérification des droits : auteur ou administrateur
-    is_author = (current_user_id is not None and report.user_id == current_user_id)
+    is_author = (current_user_id is not None and report.user_id ==
+                 current_user_id)
     if not is_author and not is_admin:
-        raise PermissionError("Vous n'êtes pas autorisé à supprimer ce commentaire.")
+        raise PermissionError(
+            "Vous n'êtes pas autorisé à supprimer ce commentaire.")
 
     db.session.delete(report)
     db.session.commit()
@@ -140,8 +143,10 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
     heads = get_heads()
     heads_map = {h["id"]: h.get("fields", {}) for h in heads}
 
-    veh_ids = [v.strip() for v in (project.vehicles_to_check or "").split(",") if v.strip()]
-    head_ids = [h.strip() for h in (project.heads_to_check or "").split(",") if h.strip()]
+    veh_ids = [v.strip()
+               for v in (project.vehicles_to_check or "").split(",") if v.strip()]
+    head_ids = [h.strip()
+                for h in (project.heads_to_check or "").split(",") if h.strip()]
 
     # Statut opérationnel du projet : strictement aligné sur la Timeline Véhicule et la charte officielle BV
     # (in_progress -> Orange ambre BV #F59E0B, completed -> Gris minéral BV #515151, upcoming -> Bleu acier BV #5299D3)
@@ -187,8 +192,10 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
     # Formattage des rapports avec permissions de suppression
     formatted_reports = []
     for r in sorted(project.reports, key=lambda x: x.created_at):
-        can_delete = (current_user_id is not None and r.user_id == current_user_id) or is_admin
-        job = r.user.job if (r.user and r.user.job) else (r.author_role or "Équipe")
+        can_delete = (current_user_id is not None and r.user_id ==
+                      current_user_id) or is_admin
+        job = r.user.job if (r.user and r.user.job) else (
+            r.author_role or "Équipe")
         formatted_reports.append({
             "id": r.id,
             "project_id": r.project_id,
@@ -217,15 +224,20 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
 
     contacts_list = []
     if project.production_contact:
-        contacts_list.append(_format_contact(project.production_contact, "Production"))
+        contacts_list.append(_format_contact(
+            project.production_contact, "Production"))
     if project.dop_contact:
-        contacts_list.append(_format_contact(project.dop_contact, "Directeur de la Photo (DOP)"))
+        contacts_list.append(_format_contact(
+            project.dop_contact, "Directeur de la Photo (DOP)"))
     if project.pilot_contact:
-        contacts_list.append(_format_contact(project.pilot_contact, "Pilote de précision"))
+        contacts_list.append(_format_contact(
+            project.pilot_contact, "Pilote de précision"))
     if project.first_ac_contact:
-        contacts_list.append(_format_contact(project.first_ac_contact, "1er Assistant Caméra"))
+        contacts_list.append(_format_contact(
+            project.first_ac_contact, "1er Assistant Caméra"))
     if project.key_grip_contact:
-        contacts_list.append(_format_contact(project.key_grip_contact, "Chef Machiniste"))
+        contacts_list.append(_format_contact(
+            project.key_grip_contact, "Chef Machiniste"))
 
     # Incidents
     incidents_list = [{
@@ -255,7 +267,7 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
             "name": heads_map.get(hid, {}).get("name", "Sans nom"),
             "brand": heads_map.get(hid, {}).get("brand", ""),
             "model": heads_map.get(hid, {}).get("model", ""),
-            "image": heads_map.get(hid, {}).get("thumbnail", [{}])[0].get("thumbnails", {}).get("small", {}).get("url") if heads_map.get(hid, {}).get("thumbnail") else None
+            "image": heads_map.get(hid, {}).get("thumbnail", [{}])[0].get("thumbnails", {}).get("large", {}).get("url") if heads_map.get(hid, {}).get("thumbnail") else None
         } for hid in head_ids],
         "contacts": contacts_list,
         "reports": formatted_reports,

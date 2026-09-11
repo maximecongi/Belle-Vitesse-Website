@@ -721,7 +721,7 @@ function initProjectReportsCollapsible() {
             wrapper.classList.add('is-expanded');
             if (previewEl) previewEl.style.display = 'none';
             if (fullEl) fullEl.style.display = 'block';
-            if (labelEl) labelEl.textContent = 'Plier le rapport';
+            if (labelEl) labelEl.textContent = 'Plier';
             if (iconEl) iconEl.textContent = '▴';
             toggleBtn.setAttribute('aria-expanded', 'true');
         } else {
@@ -729,7 +729,7 @@ function initProjectReportsCollapsible() {
             wrapper.classList.add('is-collapsed');
             if (previewEl) previewEl.style.display = 'block';
             if (fullEl) fullEl.style.display = 'none';
-            if (labelEl) labelEl.textContent = 'Déplier le rapport';
+            if (labelEl) labelEl.textContent = 'Déplier';
             if (iconEl) iconEl.textContent = '▾';
             toggleBtn.setAttribute('aria-expanded', 'false');
         }

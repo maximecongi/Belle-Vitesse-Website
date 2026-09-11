@@ -77,16 +77,16 @@
 
         <div class="project-hub-quick-stats u-flex u-gap-2 u-flex-wrap">
             <div class="project-stat-box">
-                <span class="project-stat-num">{{ reports_count }}</span>
-                <span class="project-stat-lbl">Rapports</span>
-            </div>
-            <div class="project-stat-box">
                 <span class="project-stat-num">{{ vehicles|length }}</span>
                 <span class="project-stat-lbl">Véhicules</span>
             </div>
             <div class="project-stat-box">
                 <span class="project-stat-num">{{ heads|length }}</span>
                 <span class="project-stat-lbl">Têtes</span>
+            </div>
+            <div class="project-stat-box">
+                <span class="project-stat-num">{{ reports_count }}</span>
+                <span class="project-stat-lbl">Rapports</span>
             </div>
             {% if incidents|length > 0 %}
             <div class="project-stat-box warning">
@@ -107,7 +107,7 @@
         <!-- 1. MATÉRIEL ENGAGÉ (VÉHICULES & TÊTES) -->
         <div class="admin-card">
             <div class="admin-card-title u-mb-3">
-                🚗 Matériel Engagé sur le Tournage
+                ⚙️ Matériel Engagé sur le Tournage
             </div>
 
             <!-- Véhicules -->
@@ -120,7 +120,7 @@
                 <div class="project-equipment-card">
                     <div class="u-flex u-align-center u-gap-2">
                         {% if v.fields.get('thumbnail') %}
-                        <img src="{{ v.fields.thumbnail[0].thumbnails.small.url }}" class="project-equipment-img"
+                        <img src="{{ v.fields.thumbnail[0].thumbnails.large.url }}" class="project-equipment-img"
                             alt="{{ v.fields.get('name', 'Véhicule') }}">
                         {% else %}
                         <div class="project-equipment-placeholder">🚗</div>
@@ -351,11 +351,10 @@
                 </div>
             </form>
 
-            <hr class="project-hub-divider u-mb-4">
-
             <!-- Fil chronologique des rapports -->
             <div class="project-reports-stream" id="reportsStream">
                 {% if reports and reports|length > 0 %}
+                <hr class="project-hub-divider u-mb-4">
                 {% for report in reports %}
                 <div class="project-report-item" id="report-{{ report.id }}">
                     <div class="project-report-avatar" title="{{ report.author_job }}">
@@ -367,7 +366,7 @@
                             <div class="u-flex u-align-center u-gap-2">
                                 <strong class="project-report-author">{{ report.author_name }}</strong>
                                 <span class="project-report-role-badge">{{ report.author_job }}</span>
-                                <span class="project-report-date u-text-xs u-text-muted">{{ report.created_at_fr
+                                <span class="project-report-date u-text-muted">{{ report.created_at_fr
                                     }}</span>
                             </div>
                             {% if report.can_delete %}
@@ -394,7 +393,7 @@
                             <div class="project-report-toggle-wrapper">
                                 <button type="button" class="project-report-toggle-btn" data-action="toggle-report"
                                     aria-expanded="false" title="Afficher ou masquer la suite du rapport">
-                                    <span class="project-report-toggle-label">Déplier le rapport</span>
+                                    <span class="project-report-toggle-label">Déplier</span>
                                     <span class="project-report-toggle-icon">▾</span>
                                 </button>
                             </div>
@@ -407,13 +406,6 @@
                     </div>
                 </div>
                 {% endfor %}
-                {% else %}
-                <div class="u-text-center u-p-4 u-text-muted project-reports-empty">
-                    <div class="u-text-2xl u-mb-1">📝</div>
-                    <p class="u-text-sm u-m-0">Aucun rapport consigné pour ce tournage pour le moment.</p>
-                    <p class="u-text-xs u-text-muted u-mt-1">Utilisez la boîte ci-dessus pour laisser la première note
-                        d'équipe.</p>
-                </div>
                 {% endif %}
             </div>
         </div>
@@ -617,9 +609,7 @@
             <div class="admin-card-title u-mb-2">
                 📝 Notes Spécifiques
             </div>
-            <div class="u-text-sm u-text-muted project-notes-content">
-                {{ project.notes }}
-            </div>
+            <div class="project-notes-content">{{ project.notes | trim }}</div>
         </div>
         {% endif %}
 
