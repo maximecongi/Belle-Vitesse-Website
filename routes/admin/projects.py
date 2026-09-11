@@ -13,11 +13,15 @@ from flask import (
 )
 
 from services.admin import (
+    add_project_report,
     check_booking_conflicts,
     create_project,
     delete_project,
+    delete_project_report,
+    get_project_detail_context,
     get_project_for_edit,
     get_project_form_context,
+    list_project_reports,
     list_projects,
     update_project,
 )
@@ -142,6 +146,97 @@ def init_projects_routes(app):
             current_app.logger.error(f"❌ Erreur lors de la suppression du projet : {e}")
             flash(f"Erreur lors de la suppression : {str(e)}", "error")
             return redirect(url_for("admin_project_edit", record_id=record_id))
+
+    # ── Hub / Fiche Projet & Rapports Collectifs ──────────────────
+    @app.route("/admin/projects/<record_id>", methods=["GET"])
+    @require_roles('administrator', 'manager', 'commercial', 'user', 'technicien')
+    def admin_project_detail(record_id):
+        try:
+            current_user_id = session.get("admin_user_id")
+            role_str = (session.get("admin_user_role") or "").strip().lower()
+            is_admin = role_str in ("administrateur", "super administrateur", "administrator", "super administrator")
+
+            context = get_project_detail_context(record_id, current_user_id=current_user_id, is_admin=is_admin)
+            if not context:
+                abort(404)
+
+            return render_template("admin/project_detail.html", **context)
+        except Exception as e:
+            current_app.logger.error(f"❌ Erreur dans admin_project_detail : {e}")
+            flash("Erreur lors de l'accès à la fiche projet.", "error")
+            return redirect(url_for("admin_projects_list"))
+
+    @app.route("/admin/projects/<record_id>/reports", methods=["POST"])
+    @require_roles('administrator', 'manager', 'commercial', 'user', 'technicien')
+    def admin_project_reports_add(record_id):
+        try:
+            payload = request.get_json(silent=True) or request.form or {}
+            content = payload.get("content", "")
+            current_user_id = session.get("admin_user_id")
+
+            report = add_project_report(record_id, user_id=current_user_id, content=content)
+
+            if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"status": "success", "report": report.to_dict()}), 201
+
+            flash("Rapport / commentaire ajouté avec succès.", "success")
+            return redirect(url_for("admin_project_detail", record_id=record_id) + "#reports")
+        except ValueError as ve:
+            if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"status": "error", "message": str(ve)}), 400
+            flash(str(ve), "error")
+            return redirect(url_for("admin_project_detail", record_id=record_id) + "#reports")
+        except Exception as e:
+            current_app.logger.error(f"❌ Erreur ajout rapport projet : {e}")
+            if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"status": "error", "message": "Erreur serveur"}), 500
+            flash(f"Erreur lors de l'enregistrement : {str(e)}", "error")
+            return redirect(url_for("admin_project_detail", record_id=record_id) + "#reports")
+
+    @app.route("/admin/projects/<record_id>/reports/<int:report_id>/delete", methods=["POST"])
+    @require_roles('administrator', 'manager', 'commercial', 'user', 'technicien')
+    def admin_project_report_delete(record_id, report_id):
+        try:
+            current_user_id = session.get("admin_user_id")
+            role_str = (session.get("admin_user_role") or "").strip().lower()
+            is_admin = role_str in ("administrateur", "super administrateur", "administrator", "super administrator")
+
+            delete_project_report(report_id, current_user_id=current_user_id, is_admin=is_admin)
+
+            if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"status": "success"}), 200
+
+            flash("Commentaire supprimé.", "success")
+            return redirect(url_for("admin_project_detail", record_id=record_id) + "#reports")
+        except PermissionError as pe:
+            if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"status": "error", "message": str(pe)}), 403
+            flash(str(pe), "error")
+            return redirect(url_for("admin_project_detail", record_id=record_id) + "#reports")
+        except Exception as e:
+            current_app.logger.error(f"❌ Erreur suppression rapport projet : {e}")
+            if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"status": "error", "message": "Erreur serveur"}), 500
+            flash("Erreur lors de la suppression.", "error")
+            return redirect(url_for("admin_project_detail", record_id=record_id) + "#reports")
+
+    @app.route("/admin/projects/<record_id>/print", methods=["GET"])
+    @require_roles('administrator', 'manager', 'commercial', 'user', 'technicien')
+    def admin_project_print(record_id):
+        try:
+            current_user_id = session.get("admin_user_id")
+            role_str = (session.get("admin_user_role") or "").strip().lower()
+            is_admin = role_str in ("administrateur", "super administrateur", "administrator", "super administrator")
+
+            context = get_project_detail_context(record_id, current_user_id=current_user_id, is_admin=is_admin)
+            if not context:
+                abort(404)
+
+            return render_template("admin/project_detail.html", is_print=True, **context)
+        except Exception as e:
+            current_app.logger.error(f"❌ Erreur dans admin_project_print : {e}")
+            flash("Erreur lors de la génération de la vue d'impression.", "error")
+            return redirect(url_for("admin_project_detail", record_id=record_id))
 
     # ── API Détection Conflits de Réservation ──────────────────────
     @app.route("/admin/api/projects/check-conflicts", methods=["POST"])

@@ -41,7 +41,7 @@ def _format_vehicle_state(project, vehicle_id, vehicle_map):
     """
     Formate l'état des contrôles (départ/retour) pour un véhicule spécifique au sein d'un projet.
     """
-    from services.admin.status_mapping import get_inspection_key
+    from services.admin.status_mapping import get_inspection_key, format_inspection_status
 
     # Recherche des enregistrements correspondants dans les collections pré-chargées du projet
     c_out = next(
@@ -49,16 +49,35 @@ def _format_vehicle_state(project, vehicle_id, vehicle_map):
     c_in = next(
         (c for c in project.checkin_vehicles if c.vehicle_id == vehicle_id), None)
 
+    v_data = vehicle_map.get(vehicle_id, {})
+    brand = v_data.get("brand") or ""
+    model = v_data.get("model") or ""
+    brand_model = f"{brand} {model}".strip()
+
+    raw_type = v_data.get("type") or ""
+    type_map = {
+        "car": "Véhicule",
+        "precision": "Véhicule de précision",
+        "bike": "Deux-roues",
+        "tracking": "Véhicule de travelling",
+        "van": "Fourgon technique",
+        "rickshaw": "Rickshaw de travelling",
+        "segway": "Gyropode / Segway",
+        "trike": "Trike électrique",
+    }
+    type_fr = type_map.get(raw_type.lower(), brand_model or "Véhicule de tournage")
+
     return {
         "id": vehicle_id,
         "fields": vehicle_map.get(vehicle_id, {}),
-        "checkout_status": c_out.status if c_out else "",
+        "type_fr": type_fr,
+        "checkout_status": format_inspection_status(c_out.status) if c_out else "À réaliser",
         "checkout_status_id": get_inspection_key(c_out.status) if c_out else "to_check",
         "checkout_id": c_out.id if c_out else "",
         "checkout_pdf": _get_secured_document_url(c_out.signed_pdf_path, "checkout") if c_out else None,
         "checkout_conform": "true" if (c_out and c_out.vehicle_ready) else "false",
         "checkout_ready": "true" if (c_out and c_out.vehicle_ready) else ("false" if c_out else "—"),
-        "checkin_status": c_in.status if c_in else "",
+        "checkin_status": format_inspection_status(c_in.status) if c_in else "À réaliser",
         "checkin_status_id": get_inspection_key(c_in.status) if c_in else "to_check",
         "checkin_id": c_in.id if c_in else "",
         "checkin_pdf": _get_secured_document_url(c_in.signed_pdf_path, "checkin") if c_in else None,
@@ -76,10 +95,38 @@ def _format_project_admin(p, vehicle_map, heads_map):
     head_ids = [h.strip()
                 for h in (p.heads_to_check or "").split(",") if h.strip()]
 
+    from datetime import date
+    today_date = date.today()
+    if p.shoot_start_date and p.shoot_end_date:
+        if p.shoot_start_date <= today_date <= p.shoot_end_date:
+            shoot_status = "in_progress"
+            shoot_status_label = "En tournage"
+        elif today_date > p.shoot_end_date:
+            shoot_status = "completed"
+            shoot_status_label = "Clôturé"
+        else:
+            shoot_status = "upcoming"
+            shoot_status_label = "À venir"
+    elif p.departure_date and p.return_date:
+        if p.departure_date <= today_date <= p.return_date:
+            shoot_status = "in_progress"
+            shoot_status_label = "En tournage"
+        elif today_date > p.return_date:
+            shoot_status = "completed"
+            shoot_status_label = "Clôturé"
+        else:
+            shoot_status = "upcoming"
+            shoot_status_label = "À venir"
+    else:
+        shoot_status = "upcoming"
+        shoot_status_label = "À venir"
+
     return {
         "id": p.id,
         "project_id": p.project_id,
         "name": p.name,
+        "shoot_status": shoot_status,
+        "shoot_status_label": shoot_status_label,
         "production": p.production.name if p.production else "—",
         "departure_date": format_date_fr(str(p.departure_date)) if p.departure_date else "—",
         "raw_departure_date": str(p.departure_date) if p.departure_date else "",
@@ -97,7 +144,9 @@ def _format_project_admin(p, vehicle_map, heads_map):
         "vehicles": [_format_vehicle_state(p, vid, vehicle_map) for vid in veh_ids],
         "heads": [{
             "id": hid,
-            "name": heads_map.get(hid, {}).get("name", "Sans nom")
+            "name": heads_map.get(hid, {}).get("name", "Sans nom"),
+            "brand": heads_map.get(hid, {}).get("brand", ""),
+            "model": heads_map.get(hid, {}).get("model", "")
         } for hid in head_ids],
         "pilot_waiver": {
             "id": p.pilot_waiver.id if (p.pilot_waiver and not p.pilot_waiver.deleted_at) else None,
@@ -119,7 +168,8 @@ def _format_project_admin(p, vehicle_map, heads_map):
             "total_ht": float(pq.total_ht),
             "status": pq.status,
             "latest_version": max([v.version_number for v in pq.versions]) if pq.versions else None
-        } for pq in p.pre_quotes] if getattr(p, 'pre_quotes', None) else []
+        } for pq in p.pre_quotes] if getattr(p, 'pre_quotes', None) else [],
+        "reports_count": len(p.reports) if hasattr(p, 'reports') and p.reports else 0,
     }
 
 
@@ -138,7 +188,8 @@ def list_projects():
         joinedload(Project.key_grip_contact),
         joinedload(Project.pilot_waiver),
         joinedload(Project.production_waiver),
-        selectinload(Project.pre_quotes).selectinload(PreQuote.versions)
+        selectinload(Project.pre_quotes).selectinload(PreQuote.versions),
+        selectinload(Project.reports)
     ).order_by(Project.departure_date.desc(), Project.name.asc()).all()
 
     vehicles = get_vehicles()

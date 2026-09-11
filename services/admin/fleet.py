@@ -321,9 +321,30 @@ def _build_vehicle_missions(vehicle_projects: List[Any], events: List[Dict[str, 
         )
         mission_datetime = getattr(p, "created_at", None) or (sub_events[0].get("datetime") if sub_events else None)
 
-        is_active = bool(p.shoot_start_date and p.shoot_end_date and p.shoot_start_date <= date.today() <= p.shoot_end_date)
-        status = "in_progress" if is_active else "completed"
-        status_label = "En tournage" if is_active else "Projet clôturé"
+        today_date = date.today()
+        if p.shoot_start_date and p.shoot_end_date:
+            if p.shoot_start_date <= today_date <= p.shoot_end_date:
+                status = "in_progress"
+                status_label = "En tournage"
+            elif today_date > p.shoot_end_date:
+                status = "completed"
+                status_label = "Clôturé"
+            else:
+                status = "upcoming"
+                status_label = "À venir"
+        elif p.departure_date and p.return_date:
+            if p.departure_date <= today_date <= p.return_date:
+                status = "in_progress"
+                status_label = "En tournage"
+            elif today_date > p.return_date:
+                status = "completed"
+                status_label = "Clôturé"
+            else:
+                status = "upcoming"
+                status_label = "À venir"
+        else:
+            status = "upcoming"
+            status_label = "À venir"
 
         # Formatage des dates de tournage
         date_range_label = ""
@@ -586,24 +607,49 @@ def get_vehicle_timeline(vehicle_id: str) -> Optional[Dict[str, Any]]:
 
     # Événements Tournages / Projets
     for p in vehicle_projects:
-        evt_date = p.shoot_start_date or p.departure_date or (
+        p_date = p.shoot_start_date or p.departure_date or (
             p.created_at.date() if hasattr(p, "created_at") and p.created_at else date.min)
+        p_today = date.today()
+        if p.shoot_start_date and p.shoot_end_date:
+            if p.shoot_start_date <= p_today <= p.shoot_end_date:
+                p_status = "in_progress"
+                p_status_label = "En tournage"
+            elif p_today > p.shoot_end_date:
+                p_status = "completed"
+                p_status_label = "Clôturé"
+            else:
+                p_status = "upcoming"
+                p_status_label = "À venir"
+        elif p.departure_date and p.return_date:
+            if p.departure_date <= p_today <= p.return_date:
+                p_status = "in_progress"
+                p_status_label = "En tournage"
+            elif p_today > p.return_date:
+                p_status = "completed"
+                p_status_label = "Clôturé"
+            else:
+                p_status = "upcoming"
+                p_status_label = "À venir"
+        else:
+            p_status = "upcoming"
+            p_status_label = "À venir"
+
         events.append({
             "id": f"project_{p.id}",
             "raw_id": p.id,
             "type": "project",
-            "type_label": "Tournage & Projet",
-            "icon": "film",
+            "type_label": "Tournage",
+            "icon": "clapperboard",
             "reference": p.project_id,
-            "date": evt_date,
-            "date_formatted": format_date_fr(str(evt_date)) if evt_date != date.min else "—",
+            "date": p_date,
+            "date_formatted": format_date_fr(str(p_date)) if p_date != date.min else "—",
             "datetime": getattr(p, "created_at", None),
             "title": f"Projet {p.project_id}",
             "project_name": p.name,
             "project_id": p.id,
             "project_unique_id": p.project_id,
-            "status": "in_progress" if (p.shoot_start_date and p.shoot_end_date and p.shoot_start_date <= date.today() <= p.shoot_end_date) else "completed",
-            "status_label": "En tournage" if (p.shoot_start_date and p.shoot_end_date and p.shoot_start_date <= date.today() <= p.shoot_end_date) else "Projet clôturé",
+            "status": p_status,
+            "status_label": p_status_label,
             "production_name": p.production.name if p.production else "—",
             "pilot_name": f"{p.pilot_contact.first_name} {p.pilot_contact.last_name}" if p.pilot_contact else "—",
             "shoot_start_date": format_date_fr(str(p.shoot_start_date)) if p.shoot_start_date else None,

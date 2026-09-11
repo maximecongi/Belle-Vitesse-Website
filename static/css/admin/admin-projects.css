@@ -64,6 +64,7 @@
         opacity: 0;
         transform: translateY(5px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -86,31 +87,37 @@
     gap: 0.2rem;
     white-space: nowrap;
 }
+
 .projects-prequote-badge.draft {
     background: #fef3c7;
     color: #d97706;
     border: 1px solid #fde68a;
 }
+
 .projects-prequote-badge.sent {
     background: #eff6ff;
     color: #1d4ed8;
     border: 1px solid #bfdbfe;
 }
+
 .projects-prequote-badge.accepted {
     background: #ecfdf5;
     color: #047857;
     border: 1px solid #a7f3d0;
 }
+
 .projects-prequote-badge.rejected {
     background: #fef2f2;
     color: #b91c1c;
     border: 1px solid #fecaca;
 }
+
 .projects-prequote-badge-version {
     opacity: 0.85;
     font-weight: 600;
     margin-left: 2px;
 }
+
 .projects-prequote-badge-status-label {
     font-size: 0.6rem;
     opacity: 0.85;
@@ -154,15 +161,16 @@
 }
 
 .projects-cell-item {
-    display: inline-flex;
-    align-items: center;
+    display: grid;
+    grid-auto-flow: column;
     gap: 0.2rem;
-    flex-direction: row-reverse;
 }
+
 .projects-cell-item a {
     display: inline-flex;
     text-decoration: none;
 }
+
 .projects-cell-item span.disabled {
     display: inline-flex;
     text-decoration: none;
@@ -173,11 +181,437 @@
 .projects-contacts-cell-item {
     white-space: nowrap;
 }
+
 .projects-contacts-cell-item span {
     color: var(--grey-2);
 }
+
 .projects-contacts-cell-item a {
     text-decoration: none;
     color: inherit;
     font-weight: 500;
+}
+
+/* ═══════════ STYLES DU HUB PROJET & RAPPORTS COLLECTIFS ═══════════ */
+
+.project-title-link {
+    color: var(--admin-text-dark, #0f172a);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.15s;
+}
+
+.project-title-link:hover {
+    color: var(--admin-accent, #ffc845);
+}
+
+/* En-tête & Statistiques */
+.project-hub-header {
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    padding: 1.25rem 1.5rem;
+}
+
+.project-hub-left-side {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem !important;
+    padding-top: 3px;
+}
+
+
+.project-hub-header-main-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 20px;
+}
+
+.project-hub-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.project-hub-prod-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #f8fafc;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    padding: 0.2rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+.project-hub-prod-badge strong {
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.project-hub-title {
+    font-size: 1.65rem;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+/* Barre de jalons temporels / Dates du tournage */
+.project-hub-dates-strip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.4rem 0.6rem;
+}
+
+.project-date-step {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    transition: background 0.15s ease;
+}
+
+.project-date-step.is-active {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+}
+
+.project-date-step-icon {
+    font-size: 1.15rem;
+    line-height: 1;
+}
+
+.project-date-step-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.project-date-step-lbl {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748b;
+    font-weight: 600;
+    line-height: 1.1;
+}
+
+.project-date-step-val {
+    font-size: 0.82rem;
+    color: #0f172a;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-top: 2px;
+}
+
+.project-date-sep {
+    color: #94a3b8;
+    font-size: 0.75rem;
+    font-weight: 700;
+    user-select: none;
+}
+
+@media (max-width: 768px) {
+    .project-hub-dates-strip {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.35rem;
+    }
+
+    .project-date-sep {
+        display: none;
+    }
+}
+
+.project-stat-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--admin-bg, #f8fafc);
+    border: 1px solid var(--white-3, #e2e8f0);
+    border-radius: 8px;
+    padding: 0.5rem 0.85rem;
+    min-width: 80px;
+    text-align: center;
+}
+
+.project-stat-box.warning {
+    background: #fff1f2;
+    border-color: #fecdd3;
+}
+
+.project-stat-box.warning .project-stat-num {
+    color: #e11d48;
+}
+
+.project-stat-num {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--admin-text-dark, #0f172a);
+    line-height: 1.2;
+}
+
+.project-stat-lbl {
+    font-size: 0.68rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0.15rem;
+}
+
+/* Boîte de saisie des rapports */
+.project-report-form {
+    background: var(--admin-bg, #f8fafc);
+    border: 1px solid var(--white-3, #e2e8f0);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.project-report-textarea {
+    width: 100%;
+    min-height: 80px;
+    resize: vertical;
+    border-radius: 6px;
+    padding: 0.65rem 0.85rem;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    background: #ffffff;
+}
+
+.project-report-textarea:focus {
+    border-color: var(--admin-accent, #ffc845);
+    box-shadow: 0 0 0 3px rgba(255, 200, 69, 0.2);
+}
+
+.project-hub-divider {
+    border: none;
+    border-top: 1px solid var(--white-3, #e2e8f0);
+    margin: 1.25rem 0;
+}
+
+/* Fil chronologique des rapports */
+.project-reports-stream {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.project-report-item {
+    display: flex;
+    gap: 0.85rem;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.9rem 1rem;
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.project-report-item:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.project-report-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #0f172a;
+    color: #ffc845;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+    border: 2px solid #e2e8f0;
+}
+
+.project-report-content-wrapper {
+    flex: 1;
+    min-width: 0;
+}
+
+.project-report-author {
+    font-size: 0.88rem;
+    color: #0f172a;
+}
+
+.project-report-role-badge {
+    font-size: 0.68rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    font-weight: 600;
+}
+
+.project-report-body {
+    margin-top: 0.4rem;
+    font-size: 0.88rem;
+    color: #334155;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.project-report-delete-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s, transform 0.1s;
+    font-size: 0.85rem;
+    padding: 0.2rem;
+}
+
+.project-report-delete-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.project-reports-empty {
+    background: var(--admin-bg, #f8fafc);
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+}
+
+/* Matériel engagé */
+.project-equipment-card {
+    background: var(--admin-bg, #f8fafc);
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.85rem;
+}
+
+.project-equipment-img {
+    width: 48px;
+    height: 48px;
+    border-radius: 6px;
+    object-fit: cover;
+    border: 1px solid #cbd5e1;
+}
+
+.project-equipment-placeholder {
+    width: 48px;
+    height: 48px;
+    border-radius: 6px;
+    background: #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+/* Contacts du tournage */
+.project-contact-row {
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.project-contact-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.project-contact-role {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #64748b;
+}
+
+.project-contact-action {
+    color: #0284c7;
+    text-decoration: none;
+    background: #f0f9ff;
+    padding: 0.2rem 0.45rem;
+    border-radius: 4px;
+    border: 1px solid #e0f2fe;
+    transition: background 0.15s;
+}
+
+.project-contact-action:hover {
+    background: #e0f2fe;
+}
+
+/* Documents & Décharges */
+.project-doc-item {
+    background: var(--admin-bg, #f8fafc);
+    border: 1px solid #e2e8f0;
+}
+
+/* Badge dans la liste des projets */
+.project-reports-list-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.45rem;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: transform 0.15s, background 0.15s;
+}
+
+.project-reports-list-badge.has-reports {
+    background: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+}
+
+.project-reports-list-badge.has-reports:hover {
+    background: #dbeafe;
+    transform: translateY(-1px);
+}
+
+.project-reports-list-badge.empty {
+    background: #f8fafc;
+    color: #64748b;
+    border: 1px dashed #cbd5e1;
+}
+
+.project-reports-list-badge.empty:hover {
+    background: #f1f5f9;
+    color: #334155;
+}
+
+/* Vue Impression / Print */
+@media print {
+    body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-size: 11pt;
+    }
+
+    .admin-sidebar,
+    .admin-header,
+    .header_actions,
+    .project-report-form,
+    .project-report-delete-btn,
+    .admin-btn {
+        display: none !important;
+    }
+
+    .admin-card {
+        box-shadow: none !important;
+        border: 1px solid #cccccc !important;
+        page-break-inside: avoid;
+        margin-bottom: 1.5rem !important;
+    }
+
+    .u-grid-2-1 {
+        display: block !important;
+    }
 }

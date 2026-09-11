@@ -1,6 +1,6 @@
 {% extends "admin/admin_base.html" %}
 
-{% from "admin/macros.html" import status_badge, filter_header %}
+{% from "admin/macros.html" import status_badge, filter_header, shoot_status_badge %}
 
 {% block title %}{{ 'Archives' if is_archive else 'Projets' }}{% endblock %}
 {% block page_title %}{{ 'Archives' if is_archive else 'Projets' }}{% endblock %}
@@ -9,7 +9,8 @@
 
 {% block header_actions %}
 <div class="u-flex u-gap-2 u-align-center">
-    <input type="text" id="searchInput" class="form-input u-w-250 u-text-sm" placeholder="🔍 Rechercher un projet..." autocomplete="off">
+    <input type="text" id="searchInput" class="form-input u-w-250 u-text-sm" placeholder="🔍 Rechercher un projet..."
+        autocomplete="off">
     {% if not is_archive %}
     <a href="{{ url_for('admin_project_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Projet</a>
     {% endif %}
@@ -22,8 +23,8 @@
         <thead>
             <tr>
                 <th>Projet</th>
-                <th>Check-outs</th>
-                <th>Check-ins</th>
+                <th>Départs</th>
+                <th>Retours</th>
                 <th>Décharges</th>
                 <th>Contacts</th>
                 <th>Actions</th>
@@ -33,9 +34,12 @@
             {% for project in project_list %}
             <tr class="searchable-row"
                 data-search="{{ project.name|lower }} {{ project.production|lower }} {{ project.project_id|lower }} {{ project.notes|lower if project.notes else '' }} {% for h in project.heads %}{{ h.name|lower }} {% endfor %}">
-                <td class="u-text-semibold">{{ project.name }}<br><span class="u-text-xs u-text-muted">{{
-                        project.production }}</span><br><br>
-                    <span class="checkout-doc-id">{{ project.project_id }}</span>
+                <td class="u-text-semibold u-text-lg">
+                    {{ project.name }}<br>
+                    <br><span class="u-text-xs u-text-muted">{{ project.production }}</span><br><br>
+                    <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
+                        <span class="checkout-doc-id">{{ project.project_id }}</span>
+                    </div>
                     {% if project.pre_quotes %}
                     <div class="u-mt-1 u-flex u-flex-column u-gap-1">
                         {% for pq in project.pre_quotes %}
@@ -99,12 +103,13 @@
                     <div class="projects-cell-item">
                         <a href="{{ url_for('admin_checkout_detail', record_id=v.checkout_id) }}">
                             <span class="badge-pill u-m-1" data-val="{{ v.checkout_status_id }}"
-                                data-conform="{{ v.checkout_conform }}">
-                                {{ v.fields.name }}
+                                data-conform="{{ v.checkout_conform }}"
+                                title="Contrôle de départ : {{ v.checkout_status }}">
+                                {{ v.fields.name or v.fields.Nom or 'Véhicule' }}
                             </span>
                         </a>
                         {% if v.checkout_pdf %}
-                        <a href="{{ v.checkout_pdf }}" target="_blank" title="Voir le document">
+                        <a href="{{ v.checkout_pdf }}" target="_blank" title="Voir le document signé">
                             <svg class="badge-pill" data-val="download-available" width="15" height="15"
                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                 <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
@@ -113,7 +118,7 @@
                             </svg>
                         </a>
                         {% else %}
-                        <span class="disabled" title="Voir le document">
+                        <span class="disabled" title="Document indisponible">
                             <svg class="badge-pill" data-val="download-unavailable" width="15" height="15"
                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                 <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
@@ -126,11 +131,11 @@
                     {% else %}
                     <div class="projects-cell-item">
                         <a href="{{ url_for('admin_checkout_new', project_id=project.id, vehicle_id=v.id) }}">
-                            <span class="badge-pill u-m-1" data-val="to_check">
-                                {{ v.fields.name }}
+                            <span class="badge-pill u-m-1" data-val="to_check" title="Contrôle de départ : À réaliser">
+                                {{ v.fields.name or v.fields.Nom or 'Véhicule' }}
                             </span>
                         </a>
-                        <span class="disabled" title="Voir le document">
+                        <span class="disabled" title="Document indisponible">
                             <svg class="badge-pill" data-val="download-unavailable" width="15" height="15"
                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                 <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
@@ -150,12 +155,13 @@
                     <div class="projects-cell-item">
                         <a href="{{ url_for('admin_checkin_detail', record_id=v.checkin_id) }}">
                             <span class="badge-pill u-m-1" data-val="{{ v.checkin_status_id }}"
-                                data-conform="{{ v.checkin_conform }}">
-                                {{ v.fields.name }}
+                                data-conform="{{ v.checkin_conform }}"
+                                title="Contrôle de retour : {{ v.checkin_status }}">
+                                {{ v.fields.name or v.fields.Nom or 'Véhicule' }}
                             </span>
                         </a>
                         {% if v.checkin_pdf %}
-                        <a href="{{ v.checkin_pdf }}" target="_blank" title="Voir le document">
+                        <a href="{{ v.checkin_pdf }}" target="_blank" title="Voir le document signé">
                             <svg class="badge-pill" data-val="download-available" width="15" height="15"
                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                 <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
@@ -164,7 +170,7 @@
                             </svg>
                         </a>
                         {% else %}
-                        <span class="disabled" title="Voir le document">
+                        <span class="disabled" title="Document indisponible">
                             <svg class="badge-pill" data-val="download-unavailable" width="15" height="15"
                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                 <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
@@ -177,11 +183,11 @@
                     {% else %}
                     <div class="projects-cell-item">
                         <a href="{{ url_for('admin_checkin_new', project_id=project.id, vehicle_id=v.id) }}">
-                            <span class="badge-pill u-m-1" data-val="to_check">
-                                {{ v.fields.name }}
+                            <span class="badge-pill u-m-1" data-val="to_check" title="Contrôle de retour : À réaliser">
+                                {{ v.fields.name or v.fields.Nom or 'Véhicule' }}
                             </span>
                         </a>
-                        <span class="disabled" title="Voir le document">
+                        <span class="disabled" title="Document indisponible">
                             <svg class="badge-pill" data-val="download-unavailable" width="15" height="15"
                                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                 <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
@@ -197,13 +203,15 @@
                 </td>
                 <td>
                     <div class="u-mb-1 u-flex u-gap-1 u-align-center">
+                        <span class="u-text-xs u-text-muted" style="min-width: 50px;">Pilote :</span>
                         <div class="projects-cell-item">
                             {% if project.pilot_waiver and project.pilot_waiver.waiver_num %}
                             <a href="{{ url_for('admin_pilot_waivers_list', q=project.pilot_waiver.waiver_num) }}">
-                                {{ status_badge("Pilote", project.pilot_waiver.raw_status) }}
+                                {{ status_badge(project.pilot_waiver.status, project.pilot_waiver.raw_status) }}
                             </a>
                             {% if project.pilot_waiver.pdf_path %}
-                            <a href="{{ project.pilot_waiver.pdf_path }}" target="_blank" title="Voir le document">
+                            <a href="{{ project.pilot_waiver.pdf_path }}" target="_blank"
+                                title="Voir le document signé">
                                 <svg class="badge-pill" data-val="download-available" width="15" height="15"
                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
@@ -212,7 +220,7 @@
                                 </svg>
                             </a>
                             {% else %}
-                            <span class="disabled" title="Voir le document">
+                            <span class="disabled" title="Document indisponible">
                                 <svg class="badge-pill" data-val="download-unavailable" width="15" height="15"
                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
@@ -223,9 +231,9 @@
                             {% endif %}
                             {% else %}
                             <a href="{{ url_for('admin_pilot_waiver_new', project_id=project.id) }}">
-                                <span class="badge-pill" data-val="to_check">Pilote</span>
+                                <span class="badge-pill" data-val="to_generate">À générer</span>
                             </a>
-                            <span class="disabled" title="Voir le document">
+                            <span class="disabled" title="Document indisponible">
                                 <svg class="badge-pill" data-val="download-unavailable" width="15" height="15"
                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
@@ -237,14 +245,17 @@
                         </div>
                     </div>
                     <div class="u-flex u-gap-1 u-align-center">
+                        <span class="u-text-xs u-text-muted" style="min-width: 50px;">Prod :</span>
                         <div class="projects-cell-item">
                             {% if project.production_waiver and project.production_waiver.waiver_num %}
                             <a
                                 href="{{ url_for('admin_production_waivers_list', q=project.production_waiver.waiver_num) }}">
-                                {{ status_badge("Production", project.production_waiver.raw_status) }}
+                                {{ status_badge(project.production_waiver.status, project.production_waiver.raw_status)
+                                }}
                             </a>
                             {% if project.production_waiver.pdf_path %}
-                            <a href="{{ project.production_waiver.pdf_path }}" target="_blank" title="Voir le document">
+                            <a href="{{ project.production_waiver.pdf_path }}" target="_blank"
+                                title="Voir le document signé">
                                 <svg class="badge-pill" data-val="download-available" width="15" height="15"
                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
@@ -253,7 +264,7 @@
                                 </svg>
                             </a>
                             {% else %}
-                            <span class="disabled" title="Voir le document">
+                            <span class="disabled" title="Document indisponible">
                                 <svg class="badge-pill" data-val="download-unavailable" width="15" height="15"
                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
@@ -264,9 +275,9 @@
                             {% endif %}
                             {% else %}
                             <a href="{{ url_for('admin_production_waiver_new', project_id=project.id) }}">
-                                <span class="badge-pill" data-val="to_check">Production</span>
+                                <span class="badge-pill" data-val="to_generate">À générer</span>
                             </a>
-                            <span class="disabled" title="Voir le document">
+                            <span class="disabled" title="Document indisponible">
                                 <svg class="badge-pill" data-val="download-unavailable" width="15" height="15"
                                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
@@ -321,8 +332,10 @@
                     </div>
                 </td>
                 <td>
-                    <a href="{{ url_for('admin_project_edit', record_id=project.id) }}"
-                        class="admin-btn admin-btn-secondary">Éditer</a>
+                    <div class="u-flex u-flex-column u-gap-1">
+                        <a href="{{ url_for('admin_project_detail', record_id=project.id) }}"
+                            class="admin-btn admin-btn-secondary admin-btn-sm" style="text-align: center;">Détails →</a>
+                    </div>
                 </td>
             </tr>
             {% else %}

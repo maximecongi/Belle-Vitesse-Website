@@ -16,7 +16,8 @@
 <div class="admin-card">
     <form method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        <input type="hidden" id="current_project_id" value="{{ (data.id if data and data.id else (data.project_id if data and data.project_id else (record_id if record_id else ''))) }}" />
+        <input type="hidden" id="current_project_id"
+            value="{{ (data.id if data and data.id else (data.project_id if data and data.project_id else (record_id if record_id else ''))) }}" />
         <div class="form-group">
             <label class="form-label">Nom du projet</label>
             <input type="text" name="name" class="form-input" value="{{ data.name if data else '' }}" required>
@@ -161,8 +162,10 @@
             <span style="font-size: 1.25rem; line-height: 1;">⚠️</span>
             <div style="flex: 1;">
                 <strong class="u-d-block u-mb-1" style="font-size: 0.9rem;">Conflit de réservation détecté</strong>
-                <span id="bookingConflictsSummary">Des équipements sélectionnés sont déjà engagés sur un autre tournage aux mêmes dates.</span>
-                <ul id="bookingConflictsDetailsList" class="u-mt-2 u-mb-0 u-pl-3" style="font-size: 0.78rem; line-height: 1.4;"></ul>
+                <span id="bookingConflictsSummary">Des équipements sélectionnés sont déjà engagés sur un autre tournage
+                    aux mêmes dates.</span>
+                <ul id="bookingConflictsDetailsList" class="u-mt-2 u-mb-0 u-pl-3"
+                    style="font-size: 0.78rem; line-height: 1.4;"></ul>
             </div>
         </div>
 
@@ -171,7 +174,8 @@
             <div class="u-flex u-flex-wrap u-gap-1">
                 {% for v in vehicles %}
                 {% set vf = v.fields %}
-                <label class="project-checkbox-card {% if data and v.id in data.vehicle_ids %}selected{% endif %}" data-item-id="{{ v.id }}" data-item-type="vehicle">
+                <label class="project-checkbox-card {% if data and v.id in data.vehicle_ids %}selected{% endif %}"
+                    data-item-id="{{ v.id }}" data-item-type="vehicle">
                     <input type="checkbox" name="vehicle_ids" value="{{ v.id }}" {% if data and v.id in data.vehicle_ids
                         %}checked{% endif %} class="u-d-none">
                     {% if vf.get('thumbnail') %}
@@ -189,7 +193,8 @@
             <div class="u-flex u-flex-wrap u-gap-1">
                 {% for h in heads %}
                 {% set hf = h.fields %}
-                <label class="project-checkbox-card {% if data and h.id in data.head_ids %}selected{% endif %}" data-item-id="{{ h.id }}" data-item-type="head">
+                <label class="project-checkbox-card {% if data and h.id in data.head_ids %}selected{% endif %}"
+                    data-item-id="{{ h.id }}" data-item-type="head">
                     <input type="checkbox" name="head_ids" value="{{ h.id }}" {% if data and h.id in data.head_ids
                         %}checked{% endif %} class="u-d-none">
                     {% if hf.get('thumbnail') %}
@@ -214,7 +219,8 @@
                 {% endif %}
             </div>
             <div>
-                <a href="{{ url_for('admin_projects_list') }}" class="admin-btn admin-btn-secondary u-mr-2">Annuler</a>
+                <a href="{{ url_for('admin_project_detail', record_id=record_id) if (is_edit and record_id) else url_for('admin_projects_list') }}"
+                    class="admin-btn admin-btn-secondary u-mr-2">Annuler</a>
                 <button type="submit" class="admin-btn admin-btn-primary">
                     {% if is_edit %}Enregistrer{% else %}Créer le Projet{% endif %}
                 </button>
@@ -724,7 +730,7 @@
 
         // Observer les inputs de dates cachés modifiés par ProjectTimelineDatePicker
         const dateObserver = new MutationObserver(checkBookingConflicts);
-        ['departure_date_input', 'shoot_start_input', 'shoot_end_input', 'return_date_input'].forEach(function(id) {
+        ['departure_date_input', 'shoot_start_input', 'shoot_end_input', 'return_date_input'].forEach(function (id) {
             const el = document.getElementById(id);
             if (el) {
                 dateObserver.observe(el, { attributes: true, attributeFilter: ['value'] });

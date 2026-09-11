@@ -1,7 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
 {% from "admin/macros.html" import incident_severity_badge, incident_impact_badge,
-vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_status_badge %}
+vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_status_badge, shoot_status_badge %}
 
 {% block title %}Historique — {{ vehicle.name }} ({{ vehicle.unique_id }}){% endblock %}
 {% block page_title %}Timeline{% endblock %}
@@ -293,11 +293,7 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
                 <div>
                     <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
                         <span class="badge-pill" data-val="project">🎬 Tournage</span>
-                        {% if m.status == 'in_progress' %}
-                        <span class="badge-pill" data-val="in_progress">🎬 En tournage</span>
-                        {% else %}
-                        <span class="badge-pill" data-val="cloture">🔒 Clôturé</span>
-                        {% endif %}
+                        {{ shoot_status_badge(m.status) }}
                         {% if m.has_incidents %}
                         <span class="badge-pill" data-val="critique">⚠️ {{ m.incident_count }} incident{{ 's' if
                             m.incident_count > 1 else '' }}</span>

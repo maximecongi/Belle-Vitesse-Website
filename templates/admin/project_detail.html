@@ -1,0 +1,600 @@
+{% extends "admin/admin_base.html" %}
+
+{% from "admin/macros.html" import status_badge, incident_severity_badge, incident_status_badge, shoot_status_badge %}
+
+{% block title %}{{ project.name }} — Hub Projet BV{% endblock %}
+{% block page_title %}Hub Projet : {{ project.name }}{% endblock %}
+
+{% block header_actions %}
+<div class="u-flex u-align-center u-gap-2">
+    <a href="{{ url_for('admin_projects_list') }}" class="admin-btn admin-btn-secondary">
+        ← Liste des projets
+    </a>
+    <a href="{{ url_for('admin_project_edit', record_id=project.id) }}" class="admin-btn admin-btn-primary">
+        Modifier le projet
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- ═══════════ EN-TÊTE RÉCAPITULATIF DU PROJET ═══════════ -->
+<div class="admin-card u-mb-3 project-hub-header" style="border-left: 5px solid {{ shoot_status_color }};">
+    <div class="u-flex u-justify-between u-align-start u-flex-wrap u-gap-3">
+        <div class="project-hub-left-side">
+            <div class="project-hub-header-main-row">
+                <!-- Titre du projet -->
+                <h1 class="project-hub-title">{{ project.name }}</h1>
+                {{ shoot_status_badge(shoot_status) }}
+            </div>
+            <!-- Ligne méta : Identifiant, Statut du tournage, Société de Production -->
+            <div class="project-hub-meta">
+                <span class="project-hub-prod-badge" title="Société de production">
+                    🏢 <strong>{{ project.production.name if project.production else 'Production à confirmer'
+                        }}</strong>
+                </span>
+                <span class="checkout-doc-id u-m-0">{{
+                    project.project_id }}</span>
+            </div>
+
+            <!-- Barre de jalons temporels (Enlèvement, Tournage, Restitution) -->
+            <div class="project-hub-dates-strip">
+                <div class="project-date-step" title="Date d'enlèvement du matériel">
+                    <span class="project-date-step-icon">🚚</span>
+                    <div class="project-date-step-body">
+                        <span class="project-date-step-lbl">Enlèvement</span>
+                        <span class="project-date-step-val">{{ departure_date_fr }}</span>
+                    </div>
+                </div>
+
+                <span class="project-date-sep">→</span>
+
+                <div class="project-date-step {% if shoot_status == 'in_progress' %}is-active{% endif %}"
+                    title="Période effective du tournage">
+                    <span class="project-date-step-icon">🎥</span>
+                    <div class="project-date-step-body">
+                        <span class="project-date-step-lbl">Tournage</span>
+                        <span class="project-date-step-val">
+                            {% if shoot_start_fr != '—' and shoot_end_fr != '—' %}
+                            {{ shoot_start_fr }} → {{ shoot_end_fr }}
+                            {% elif shoot_start_fr != '—' %}
+                            À partir du {{ shoot_start_fr }}
+                            {% else %}
+                            Dates à confirmer
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <span class="project-date-sep">→</span>
+
+                <div class="project-date-step" title="Date de restitution et réintégration du matériel">
+                    <span class="project-date-step-icon">📦</span>
+                    <div class="project-date-step-body">
+                        <span class="project-date-step-lbl">Retour</span>
+                        <span class="project-date-step-val">{{ return_date_fr }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="project-hub-quick-stats u-flex u-gap-2 u-flex-wrap">
+            <div class="project-stat-box">
+                <span class="project-stat-num">{{ reports_count }}</span>
+                <span class="project-stat-lbl">Rapports</span>
+            </div>
+            <div class="project-stat-box">
+                <span class="project-stat-num">{{ vehicles|length }}</span>
+                <span class="project-stat-lbl">Véhicules</span>
+            </div>
+            <div class="project-stat-box">
+                <span class="project-stat-num">{{ heads|length }}</span>
+                <span class="project-stat-lbl">Têtes</span>
+            </div>
+            {% if incidents|length > 0 %}
+            <div class="project-stat-box warning">
+                <span class="project-stat-num">{{ incidents|length }}</span>
+                <span class="project-stat-lbl">Incident{{ 's' if incidents|length > 1 else '' }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════ GRILLE PRINCIPALE ═══════════ -->
+<div class="u-grid u-grid-2-1 u-gap-3">
+    <!-- COLONNE PRINCIPALE (GAUCHE : JOURNAL & MATÉRIEL) -->
+    <div class="u-flex u-flex-column u-gap-3">
+
+        <!-- 1. JOURNAL & RAPPORTS COLLECTIFS D'ÉQUIPE -->
+        <div class="admin-card project-reports-container" id="reports">
+            <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
+                <div>
+                    <h2 class="admin-card-title u-m-0">
+                        💬 Journal de Bord & Rapports d'Équipe
+                    </h2>
+                    <p class="u-text-xs u-text-muted u-mt-1 u-mb-0">
+                        Espace collaboratif de suivi et de débriefing en direct (plateau & atelier).
+                    </p>
+                </div>
+                {{ status_badge(reports_count ~ (' contributions' if reports_count > 1 else ' contribution'), 'neutral')
+                }}
+            </div>
+
+            <!-- Boîte de saisie libre du commentaire -->
+            <form method="POST" action="{{ url_for('admin_project_reports_add', record_id=project.id) }}"
+                class="project-report-form u-mb-4" id="addReportForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group u-mb-2">
+                    <textarea name="content" id="reportContentInput" class="form-input project-report-textarea" rows="3"
+                        placeholder="Rédigez une observation, un point de tournage, un état matériel ou un débriefing... (raccourci : Ctrl+Entrée ou ⌘+Entrée)"
+                        required></textarea>
+                </div>
+                <div class="u-flex u-justify-between u-align-center u-flex-wrap u-gap-2">
+                    <span class="u-text-xs u-text-muted">
+                        💡 Astuce : Notez vos observations au fil de l'eau sur le plateau ou à l'atelier.
+                    </span>
+                    <button type="submit" class="admin-btn admin-btn-primary admin-btn-sm" id="submitReportBtn">
+                        ➕ Publier le rapport
+                    </button>
+                </div>
+            </form>
+
+            <hr class="project-hub-divider u-mb-4">
+
+            <!-- Fil chronologique des rapports -->
+            <div class="project-reports-stream" id="reportsStream">
+                {% if reports and reports|length > 0 %}
+                {% for report in reports %}
+                <div class="project-report-item" id="report-{{ report.id }}">
+                    <div class="project-report-avatar" title="{{ report.author_role }}">
+                        {{ report.author_name[:2] | upper }}
+                    </div>
+                    <div class="project-report-content-wrapper">
+                        <div class="project-report-header u-flex u-justify-between u-align-center u-flex-wrap u-gap-1">
+                            <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
+                                <strong class="project-report-author">{{ report.author_name }}</strong>
+                                <span class="project-report-role-badge">{{ report.author_role }}</span>
+                                <span class="project-report-date u-text-xs u-text-muted">🗓️ {{ report.created_at_fr
+                                    }}</span>
+                            </div>
+                            {% if report.can_delete %}
+                            <form method="POST"
+                                action="{{ url_for('admin_project_report_delete', record_id=project.id, report_id=report.id) }}"
+                                class="u-m-0"
+                                onsubmit="return confirm('Confirmer la suppression de ce commentaire ?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="project-report-delete-btn" title="Supprimer ce rapport">
+                                    🗑️
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                        <div class="project-report-body">
+                            {{ report.content | e | replace('\n', '<br>') | safe }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="u-text-center u-p-4 u-text-muted project-reports-empty">
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">📝</div>
+                    <p class="u-text-sm u-m-0">Aucun rapport consigné pour ce tournage pour le moment.</p>
+                    <p class="u-text-xs u-text-muted u-mt-1">Utilisez la boîte ci-dessus pour laisser la première note
+                        d'équipe.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 2. MATÉRIEL ENGAGÉ (VÉHICULES & TÊTES) -->
+        <div class="admin-card">
+            <div class="admin-card-title u-mb-3">
+                🚗 Matériel Engagé sur le Tournage
+            </div>
+
+            <!-- Véhicules -->
+            <h3 class="u-text-sm u-text-uppercase u-text-muted u-font-bold u-mb-2" style="letter-spacing: 0.5px;">
+                Véhicules de Précision & Travelling
+            </h3>
+            {% if vehicles and vehicles|length > 0 %}
+            <div class="u-grid u-grid-2 u-gap-2 u-mb-4">
+                {% for v in vehicles %}
+                <div class="project-equipment-card">
+                    <div class="u-flex u-align-center u-gap-2">
+                        {% if v.fields.get('thumbnail') %}
+                        <img src="{{ v.fields.thumbnail[0].thumbnails.small.url }}" class="project-equipment-img"
+                            alt="{{ v.fields.get('name', 'Véhicule') }}">
+                        {% else %}
+                        <div class="project-equipment-placeholder">🚗</div>
+                        {% endif %}
+                        <div>
+                            <div class="u-font-bold u-text-sm">{{ v.fields.get('name') or v.fields.get('Nom') or
+                                'Véhicule' }}</div>
+                            <div class="checkout-doc-id">{{ v.fields.unique_id}}</div>
+                        </div>
+                    </div>
+                    <div class="project-equipment-inspections u-mt-3 u-flex u-flex-column u-gap-2">
+                        <!-- Contrôle de départ -->
+                        <div class="u-flex u-justify-between u-align-center u-text-xs">
+                            <span class="u-text-muted">Départ :</span>
+                            {% if v.checkout_id %}
+                            <div class="projects-cell-item">
+                                <a href="{{ url_for('admin_checkout_detail', record_id=v.checkout_id) }}">
+                                    <span class="badge-pill u-m-1" data-val="{{ v.checkout_status_id }}"
+                                        data-conform="{{ v.checkout_conform }}">
+                                        {{ v.checkout_status }}
+                                    </span>
+                                </a>
+                                {% if v.checkout_pdf %}
+                                <a href="{{ v.checkout_pdf }}" target="_blank" title="Voir le document signé">
+                                    <svg class="badge-pill" data-val="download-available" width="15" height="15"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                        <polyline points="7 10 12 15 17 10" />
+                                        <line x1="12" y1="15" x2="12" y2="3" />
+                                    </svg>
+                                </a>
+                                {% else %}
+                                <span class="disabled" title="Document indisponible">
+                                    <svg class="badge-pill" data-val="download-unavailable" width="15" height="15"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                        <polyline points="7 10 12 15 17 10" />
+                                        <line x1="12" y1="15" x2="12" y2="3" />
+                                    </svg>
+                                </span>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <div class="projects-cell-item">
+                                <a href="{{ url_for('admin_checkout_new', project_id=project.id, vehicle_id=v.id) }}">
+                                    <span class="badge-pill u-m-1" data-val="to_check">
+                                        À réaliser
+                                    </span>
+                                </a>
+                                <span class="disabled" title="Document indisponible">
+                                    <svg class="badge-pill" data-val="download-unavailable" width="15" height="15"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                        <polyline points="7 10 12 15 17 10" />
+                                        <line x1="12" y1="15" x2="12" y2="3" />
+                                    </svg>
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Contrôle de retour -->
+                        <div class="u-flex u-justify-between u-align-center u-text-xs">
+                            <span class="u-text-muted">Retour :</span>
+                            {% if v.checkin_id %}
+                            <div class="projects-cell-item">
+                                <a href="{{ url_for('admin_checkin_detail', record_id=v.checkin_id) }}">
+                                    <span class="badge-pill u-m-1" data-val="{{ v.checkin_status_id }}"
+                                        data-conform="{{ v.checkin_conform }}">
+                                        {{ v.checkin_status }}
+                                    </span>
+                                </a>
+                                {% if v.checkin_pdf %}
+                                <a href="{{ v.checkin_pdf }}" target="_blank" title="Voir le document signé">
+                                    <svg class="badge-pill" data-val="download-available" width="15" height="15"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                        <polyline points="7 10 12 15 17 10" />
+                                        <line x1="12" y1="15" x2="12" y2="3" />
+                                    </svg>
+                                </a>
+                                {% else %}
+                                <span class="disabled" title="Document indisponible">
+                                    <svg class="badge-pill" data-val="download-unavailable" width="15" height="15"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                        <polyline points="7 10 12 15 17 10" />
+                                        <line x1="12" y1="15" x2="12" y2="3" />
+                                    </svg>
+                                </span>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <div class="projects-cell-item">
+                                <a href="{{ url_for('admin_checkin_new', project_id=project.id, vehicle_id=v.id) }}">
+                                    <span class="badge-pill u-m-1" data-val="to_check">
+                                        À réaliser
+                                    </span>
+                                </a>
+                                <span class="disabled" title="Document indisponible">
+                                    <svg class="badge-pill" data-val="download-unavailable" width="15" height="15"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                        <polyline points="7 10 12 15 17 10" />
+                                        <line x1="12" y1="15" x2="12" y2="3" />
+                                    </svg>
+                                </span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="u-text-muted u-text-xs u-mb-3">Aucun véhicule assigné à ce projet.</p>
+            {% endif %}
+
+            <!-- Têtes gyrostabilisées -->
+            <h3 class="u-text-sm u-text-uppercase u-text-muted u-font-bold u-mb-2" style="letter-spacing: 0.5px;">
+                Têtes Gyrostabilisées
+            </h3>
+            {% if heads and heads|length > 0 %}
+            <div class="u-grid u-grid-2 u-gap-2">
+                {% for h in heads %}
+                <div class="project-equipment-card">
+                    <div class="u-flex u-align-center u-gap-2">
+                        {% if h.image %}
+                        <img src="{{ h.image }}" class="project-equipment-img" alt="{{ h.name }}">
+                        {% else %}
+                        <div class="project-equipment-placeholder">🤖</div>
+                        {% endif %}
+                        <div>
+                            <div class="u-font-bold u-text-sm">{{ h.name }}</div>
+                            <div class="u-text-xs u-text-muted">{{ h.brand or 'Tête gyrostabilisée' }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="u-text-muted u-text-xs u-m-0">Aucune tête assignée à ce projet.</p>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- COLONNE LATÉRALE (DROITE : CONTACTS, DOCUMENTS, NOTES) -->
+    <div class="u-flex u-flex-column u-gap-3">
+
+        <!-- 3. CONTACTS CLÉS DU TOURNAGE -->
+        <div class="admin-card">
+            <div class="admin-card-title u-mb-3">
+                🎬 Contacts du Tournage
+            </div>
+            {% if contacts and contacts|length > 0 %}
+            <div class="u-flex u-flex-column u-gap-3">
+                {% for c in contacts %}
+                <div class="project-contact-row">
+                    <div class="u-flex u-justify-between u-align-center u-mb-1">
+                        <span class="project-contact-role">{{ c.role_title }}</span>
+                    </div>
+                    <div class="u-font-semibold u-text-sm">{{ c.full_name }}</div>
+                    <div class="u-flex u-gap-2 u-mt-1 u-text-xs u-flex-wrap">
+                        {% if c.phone %}
+                        <a href="tel:{{ c.phone }}" class="project-contact-action" title="Appeler">
+                            📞 {{ c.phone }}
+                        </a>
+                        {% endif %}
+                        {% if c.mail %}
+                        <a href="mailto:{{ c.mail }}" class="project-contact-action" title="Envoyer un e-mail">
+                            ✉️ {{ c.mail }}
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="u-text-muted u-text-xs u-m-0">Aucun contact spécifique rattaché à ce tournage.</p>
+            {% endif %}
+        </div>
+
+        <!-- 4. DOCUMENTS & DÉCHARGES ASSOCIÉES -->
+        <div class="admin-card">
+            <div class="admin-card-title u-mb-3">
+                📄 Documents & Décharges
+            </div>
+            <div class="u-flex u-flex-column u-gap-2">
+                <!-- Décharge Pilote -->
+                <div class="project-doc-item u-flex u-justify-between u-align-center u-p-2">
+                    <div>
+                        <div class="u-font-semibold u-text-xs">🏎️ Décharge Pilote</div>
+                        <div class="u-text-xs u-text-muted">{{ pilot_waiver.waiver_num or 'Non créée' }}</div>
+                    </div>
+                    <div class="projects-cell-item">
+                        {% if pilot_waiver and pilot_waiver.id and pilot_waiver.waiver_num %}
+                        <a href="{{ url_for('admin_pilot_waivers_list', q=pilot_waiver.waiver_num) }}">
+                            {{ status_badge(pilot_waiver.status, pilot_waiver.raw_status) }}
+                        </a>
+                        {% if pilot_waiver.pdf_path %}
+                        <a href="{{ pilot_waiver.pdf_path }}" target="_blank" title="Voir le document signé">
+                            <svg class="badge-pill" data-val="download-available" width="15" height="15"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                        </a>
+                        {% else %}
+                        <span class="disabled" title="Document indisponible">
+                            <svg class="badge-pill" data-val="download-unavailable" width="15" height="15"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                        </span>
+                        {% endif %}
+                        {% else %}
+                        <a href="{{ url_for('admin_pilot_waiver_new', project_id=project.id) }}">
+                            <span class="badge-pill" data-val="to_generate">À générer</span>
+                        </a>
+                        <span class="disabled" title="Document indisponible">
+                            <svg class="badge-pill" data-val="download-unavailable" width="15" height="15"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Décharge Production -->
+                <div class="project-doc-item u-flex u-justify-between u-align-center u-p-2">
+                    <div>
+                        <div class="u-font-semibold u-text-xs">🎬 Décharge Production</div>
+                        <div class="u-text-xs u-text-muted">{{ production_waiver.waiver_num or 'Non créée' }}</div>
+                    </div>
+                    <div class="projects-cell-item">
+                        {% if production_waiver and production_waiver.id and production_waiver.waiver_num %}
+                        <a href="{{ url_for('admin_production_waivers_list', q=production_waiver.waiver_num) }}">
+                            {{ status_badge(production_waiver.status, production_waiver.raw_status) }}
+                        </a>
+                        {% if production_waiver.pdf_path %}
+                        <a href="{{ production_waiver.pdf_path }}" target="_blank" title="Voir le document signé">
+                            <svg class="badge-pill" data-val="download-available" width="15" height="15"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                        </a>
+                        {% else %}
+                        <span class="disabled" title="Document indisponible">
+                            <svg class="badge-pill" data-val="download-unavailable" width="15" height="15"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                        </span>
+                        {% endif %}
+                        {% else %}
+                        <a href="{{ url_for('admin_production_waiver_new', project_id=project.id) }}">
+                            <span class="badge-pill" data-val="to_generate">À générer</span>
+                        </a>
+                        <span class="disabled" title="Document indisponible">
+                            <svg class="badge-pill" data-val="download-unavailable" width="15" height="15"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Pré-devis -->
+                {% if pre_quotes and pre_quotes|length > 0 %}
+                <div class="project-doc-item u-p-2">
+                    <div class="u-font-semibold u-text-xs u-mb-2">📑 Devis / Pré-devis</div>
+                    <div class="u-flex u-flex-column u-gap-1">
+                        {% for pq in pre_quotes %}
+                        {% set status_label = 'Brouillon' %}
+                        {% set status_class = 'draft' %}
+
+                        {% if pq.status == 'sent' %}
+                        {% set status_label = 'Envoyé' %}
+                        {% set status_class = 'sent' %}
+                        {% elif pq.status == 'accepted' %}
+                        {% set status_label = 'Accepté' %}
+                        {% set status_class = 'accepted' %}
+                        {% elif pq.status == 'rejected' %}
+                        {% set status_label = 'Refusé' %}
+                        {% set status_class = 'rejected' %}
+                        {% endif %}
+
+                        <div class="u-flex u-justify-between u-align-center u-text-xs">
+                            <a href="{{ url_for('admin_pre_quote_edit', quote_id=pq.id) }}" class="projects-badge-link">
+                                <span class="projects-prequote-badge {{ status_class }}"
+                                    title="Statut du pré-devis : {{ status_label }}">
+                                    📄 {{ pq.reference }}
+                                    {% if pq.latest_version %}
+                                    <span class="projects-prequote-badge-version">(v{{ pq.latest_version }})</span>
+                                    {% endif %}
+                                    <span class="projects-prequote-badge-status-label">[{{ status_label }}]</span>
+                                </span>
+                            </a>
+                            <span class="u-font-semibold">{{ "%.2f"|format(pq.total_ht) }} € HT</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Incidents éventuels -->
+                {% if incidents and incidents|length > 0 %}
+                <div class="project-doc-item u-p-2" style="border-left: 3px solid var(--red-error, #b91c1c);">
+                    <div class="u-font-semibold u-text-xs u-mb-1">🚨 Incident{{ 's' if incidents|length > 1 else '' }}
+                        lié{{ 's' if incidents|length > 1 else '' }}</div>
+                    <div class="u-flex u-flex-column u-gap-1">
+                        {% for inc in incidents %}
+                        <a href="{{ url_for('admin_incident_detail', record_id=inc.id) }}"
+                            class="u-flex u-justify-between u-align-center u-text-xs projects-badge-link">
+                            <span>{{ inc.incident_number }} — {{ inc.title | truncate(25) }}</span>
+                            {{ incident_severity_badge(inc.severity, inc.severity_label) }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 5. NOTES SPÉCIFIQUES DU PROJET -->
+        {% if project.notes %}
+        <div class="admin-card">
+            <div class="admin-card-title u-mb-2">
+                📝 Notes Spécifiques
+            </div>
+            <div class="u-text-sm u-text-muted" style="white-space: pre-wrap; line-height: 1.5;">
+                {{ project.notes }}
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+<script>
+    (function () {
+        function setupReportShortcut() {
+            const textarea = document.getElementById('reportContentInput');
+            const form = document.getElementById('addReportForm');
+            const submitBtn = document.getElementById('submitReportBtn');
+            if (!textarea || !form) return;
+            if (textarea._shortcutBound) return;
+            textarea._shortcutBound = true;
+
+            textarea.addEventListener('keydown', function (e) {
+                const isEnter = e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter' || e.keyCode === 13;
+                const isModifier = e.ctrlKey || e.metaKey;
+                if (isModifier && isEnter) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (textarea.value.trim().length > 0) {
+                        if (submitBtn) {
+                            submitBtn.click();
+                        } else if (typeof form.requestSubmit === 'function') {
+                            form.requestSubmit();
+                        } else {
+                            form.submit();
+                        }
+                    }
+                }
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setupReportShortcut);
+        } else {
+            setupReportShortcut();
+        }
+        document.addEventListener('swup:contentReplaced', setupReportShortcut);
+
+        {% if is_print %}
+        window.print();
+        {% endif %}
+    })();
+</script>
+{% endblock %}

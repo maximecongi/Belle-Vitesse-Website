@@ -547,3 +547,59 @@ def get_dashboard_summary() -> Dict[str, Any]:
         "recent_pre_quotes": recent_quotes,
     }
 
+
+@mcp.tool()
+@run_in_flask_context
+@require_mcp_scope("read_only")
+def get_project_reports(
+    project_id: int,
+) -> Dict[str, Any]:
+    """
+    Récupère l'ensemble des rapports et commentaires collectifs d'équipe rattachés à un projet.
+    - project_id: Identifiant numérique du projet
+    """
+    from services.admin.project_reports import list_project_reports
+    from models import Project
+
+    p = Project.query.filter(Project.id == project_id, Project.deleted_at.is_(None)).first()
+    if not p:
+        return {"error": f"Projet {project_id} introuvable"}
+
+    reports = list_project_reports(project_id)
+    return {
+        "project_id": project_id,
+        "project_name": p.name,
+        "reports_count": len(reports),
+        "reports": reports,
+    }
+
+
+@mcp.tool()
+@run_in_flask_context
+@require_mcp_scope("read_write")
+def add_project_report(
+    project_id: int,
+    content: str,
+    author_name: Optional[str] = "Assistant IA",
+) -> Dict[str, Any]:
+    """
+    Ajoute un rapport ou commentaire d'équipe sur un projet.
+    - project_id: Identifiant numérique du projet
+    - content: Texte du rapport ou de l'observation de tournage
+    - author_name: Nom optionnel de l'auteur (défaut: 'Assistant IA')
+    """
+    from services.admin.project_reports import add_project_report as _add_report
+    try:
+        report = _add_report(project_id, user_id=None, content=content)
+        if author_name:
+            report.author_name = author_name
+            report.author_role = "Assistant MCP"
+            from models.db import db
+            db.session.commit()
+        return {
+            "status": "success",
+            "report": report.to_dict(),
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+

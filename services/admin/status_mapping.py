@@ -13,6 +13,8 @@ WAIVER_STATUS_MAP = {
     "signed": "Signé",
     "approved": "Approuvé",
     "rejected": "Rejeté",
+    "draft": "Brouillon",
+    "pending": "À signer",
 }
 
 
@@ -20,25 +22,35 @@ def format_waiver_status(status_id):
     """
     Mappe un identifiant de statut de décharge interne vers son label français.
     """
-    return WAIVER_STATUS_MAP.get(status_id, status_id)
+    if not status_id:
+        return "À générer"
+    return WAIVER_STATUS_MAP.get(str(status_id).lower(), str(status_id).capitalize())
 
 
 # Unified internal keys for inspections
 INSPECTION_STATUS_MAP = {
     "to_check": "À contrôler",
-    "in_progress": "En cours",
     "pending": "À signer",
-    "signed": "Signé"
+    "in_progress": "En cours",
+    "signed": "Signé",
+    "approved": "Signé",
+    "completed": "Signé",
+    "ok": "Signé",
+    "cloture": "Clôturé",
+    "draft": "Brouillon",
+    "to_sign": "À signer",
+    "warning": "À vérifier",
+    "critical": "Défaut",
 }
 
 
 def get_inspection_key(status):
     """
-    Retourne la clé interne (anglaise) pour un statut donné.
-    Garantit toujours le retour d'une clé valide (par défaut 'warning' si inconnu).
+    Retourne la clé interne pour un statut donné.
+    Garantit toujours le retour d'une clé valide (par défaut 'to_check' si inconnu).
     """
     if not status or status not in INSPECTION_STATUS_MAP:
-        return "warning"
+        return "to_check"
     return status
 
 
@@ -46,7 +58,9 @@ def format_inspection_status(status_id):
     """
     Mappe un identifiant de statut d'inspection interne vers son label français.
     """
-    return INSPECTION_STATUS_MAP.get(status_id, status_id)
+    if not status_id:
+        return "À réaliser"
+    return INSPECTION_STATUS_MAP.get(str(status_id).lower(), str(status_id).capitalize())
 
 
 # ── Checkpoints Mapping ──────────────────────────────────────────

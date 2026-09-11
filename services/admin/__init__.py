@@ -40,3 +40,9 @@ from .projects import (
     list_projects,
     update_project,
 )
+from .project_reports import (
+    add_project_report,
+    delete_project_report,
+    get_project_detail_context,
+    list_project_reports,
+)

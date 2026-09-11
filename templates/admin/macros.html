@@ -130,6 +130,17 @@ severity_label|lower == 'critique' else ('Mineur' if severity_label|lower == 'mi
 {% endif %}
 {% endmacro %}
 
+{% macro shoot_status_badge(status) %}
+{% set s = (status or '')|lower %}
+{% if s in ('in_progress', 'active', 'tournage') %}
+<span class="badge-pill" data-val="in_progress">🎬 En tournage</span>
+{% elif s in ('completed', 'cloture', 'clôturé') %}
+<span class="badge-pill" data-val="cloture">🔒 Clôturé</span>
+{% else %}
+<span class="badge-pill" data-val="neutral">📅 À venir</span>
+{% endif %}
+{% endmacro %}
+
 {% macro timeline_event_status_badge(evt) %}
 {% if evt.type in ('checkout', 'checkin') %}
 {% if evt.status == 'signed' %}
@@ -142,13 +153,7 @@ severity_label|lower == 'critique' else ('Mineur' if severity_label|lower == 'mi
 {% elif evt.type == 'incident' %}
 {{ incident_status_badge(evt.status, evt.status_label) }}
 {% elif evt.type == 'project' %}
-{% if evt.status == 'in_progress' or evt.status == 'active' %}
-<span class="badge-pill" data-val="in_progress">🎬 En tournage</span>
-{% elif evt.status == 'completed' %}
-<span class="badge-pill" data-val="cloture">🔒 Projet clôturé</span>
-{% else %}
-<span class="badge-pill" data-val="neutral">📅 {{ evt.status_label or 'Tournage' }}</span>
-{% endif %}
+{{ shoot_status_badge(evt.status) }}
 {% else %}
 {% if evt.status == 'signed' or evt.status == 'ok' %}
 <span class="badge-pill" data-val="ok">🔒 Signé</span>
