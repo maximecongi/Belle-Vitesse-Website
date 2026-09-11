@@ -87,41 +87,10 @@ function initVehiclesModal() {
     }
 }
 
-function initProjectReportShortcut() {
-    const textarea = document.getElementById('reportContentInput');
-    const form = document.getElementById('addReportForm');
-    const submitBtn = document.getElementById('submitReportBtn');
-
-    if (!textarea || !form) return;
-    if (textarea._shortcutBound) return;
-    textarea._shortcutBound = true;
-
-    textarea.addEventListener('keydown', (e) => {
-        const isEnter = e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter' || e.keyCode === 13;
-        const isModifier = e.ctrlKey || e.metaKey;
-
-        if (isModifier && isEnter) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            if (textarea.value.trim().length > 0) {
-                if (submitBtn) {
-                    submitBtn.click();
-                } else if (typeof form.requestSubmit === 'function') {
-                    form.requestSubmit();
-                } else {
-                    form.submit();
-                }
-            }
-        }
-    });
-}
-
 function initProjectInteractions() {
     initProjectFormHighlight();
     initProjectDateValidation();
     initVehiclesModal();
-    initProjectReportShortcut();
 }
 
 window.initProjectInteractions = initProjectInteractions;

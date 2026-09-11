@@ -222,6 +222,38 @@ class ProjectReportsTest(unittest.TestCase):
             self.assertEqual(rep_res["reports"][0]["content"], "Note ajoutée par subagent IA")
             self.assertEqual(rep_res["reports"][0]["author_name"], "Claude Antigravity")
 
+    def test_author_job_display(self):
+        with self.app.app_context():
+            # Création d'un utilisateur avec un job spécifique dans l'équipe
+            user_pilot = User(
+                firstname="Romain",
+                lastname="Grosjean",
+                mail="romain@bellevitesse.com",
+                role="technicien",
+                job="Pilote Précision"
+            )
+            db.session.add(user_pilot)
+            db.session.commit()
+
+            report = add_project_report(
+                self.project_id,
+                user_id=user_pilot.id,
+                content="Passage sur circuit validé."
+            )
+            self.assertEqual(report.author_job, "Pilote Précision")
+
+            # Vérification dans list_project_reports
+            reports = list_project_reports(self.project_id)
+            pilot_report = next((r for r in reports if r["id"] == report.id), None)
+            self.assertIsNotNone(pilot_report)
+            self.assertEqual(pilot_report["author_job"], "Pilote Précision")
+
+            # Vérification dans get_project_detail_context
+            ctx = get_project_detail_context(self.project_id)
+            ctx_report = next((r for r in ctx["reports"] if r["id"] == report.id), None)
+            self.assertIsNotNone(ctx_report)
+            self.assertEqual(ctx_report["author_job"], "Pilote Précision")
+
 
 if __name__ == '__main__':
     unittest.main()

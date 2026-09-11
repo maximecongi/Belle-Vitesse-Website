@@ -126,15 +126,12 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="form-group u-mb-2">
                     <textarea name="content" id="reportContentInput" class="form-input project-report-textarea" rows="3"
-                        placeholder="Rédigez une observation, un point de tournage, un état matériel ou un débriefing... (raccourci : Ctrl+Entrée ou ⌘+Entrée)"
+                        placeholder="Rédigez une observation, un point de tournage, un état matériel ou un débriefing..."
                         required></textarea>
                 </div>
-                <div class="u-flex u-justify-between u-align-center u-flex-wrap u-gap-2">
-                    <span class="u-text-xs u-text-muted">
-                        💡 Astuce : Notez vos observations au fil de l'eau sur le plateau ou à l'atelier.
-                    </span>
+                <div class="u-flex u-justify-end u-align-center u-flex-wrap u-gap-2">
                     <button type="submit" class="admin-btn admin-btn-primary admin-btn-sm" id="submitReportBtn">
-                        ➕ Publier le rapport
+                        Publier le rapport
                     </button>
                 </div>
             </form>
@@ -146,15 +143,15 @@
                 {% if reports and reports|length > 0 %}
                 {% for report in reports %}
                 <div class="project-report-item" id="report-{{ report.id }}">
-                    <div class="project-report-avatar" title="{{ report.author_role }}">
+                    <div class="project-report-avatar" title="{{ report.author_job }}">
                         {{ report.author_name[:2] | upper }}
                     </div>
                     <div class="project-report-content-wrapper">
                         <div class="project-report-header u-flex u-justify-between u-align-center u-flex-wrap u-gap-1">
-                            <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
+                            <div class="u-flex u-align-center u-gap-2">
                                 <strong class="project-report-author">{{ report.author_name }}</strong>
-                                <span class="project-report-role-badge">{{ report.author_role }}</span>
-                                <span class="project-report-date u-text-xs u-text-muted">🗓️ {{ report.created_at_fr
+                                <span class="project-report-role-badge">{{ report.author_job }}</span>
+                                <span class="project-report-date u-text-xs u-text-muted">{{ report.created_at_fr
                                     }}</span>
                             </div>
                             {% if report.can_delete %}
@@ -556,45 +553,9 @@
     </div>
 </div>
 
+{% if is_print %}
 <script>
-    (function () {
-        function setupReportShortcut() {
-            const textarea = document.getElementById('reportContentInput');
-            const form = document.getElementById('addReportForm');
-            const submitBtn = document.getElementById('submitReportBtn');
-            if (!textarea || !form) return;
-            if (textarea._shortcutBound) return;
-            textarea._shortcutBound = true;
-
-            textarea.addEventListener('keydown', function (e) {
-                const isEnter = e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter' || e.keyCode === 13;
-                const isModifier = e.ctrlKey || e.metaKey;
-                if (isModifier && isEnter) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (textarea.value.trim().length > 0) {
-                        if (submitBtn) {
-                            submitBtn.click();
-                        } else if (typeof form.requestSubmit === 'function') {
-                            form.requestSubmit();
-                        } else {
-                            form.submit();
-                        }
-                    }
-                }
-            });
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', setupReportShortcut);
-        } else {
-            setupReportShortcut();
-        }
-        document.addEventListener('swup:contentReplaced', setupReportShortcut);
-
-        {% if is_print %}
-        window.print();
-        {% endif %}
-    })();
+    window.print();
 </script>
+{% endif %}
 {% endblock %}

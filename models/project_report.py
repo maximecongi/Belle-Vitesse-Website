@@ -34,6 +34,13 @@ class ProjectReport(db.Model):
     project = db.relationship("Project", backref=db.backref("reports", cascade="all, delete-orphan", order_by="ProjectReport.created_at.asc()", lazy=True))
     user = db.relationship("User", backref=db.backref("project_reports", lazy=True))
 
+    @property
+    def author_job(self):
+        """Retourne le job/poste de l'auteur dans l'équipe (ou repli sur le rôle)."""
+        if self.user and self.user.job:
+            return self.user.job
+        return self.author_role or "Équipe"
+
     def to_dict(self):
         """Sérialise le rapport pour les réponses JSON / API."""
         return {
@@ -42,6 +49,7 @@ class ProjectReport(db.Model):
             "user_id": self.user_id,
             "author_name": self.author_name or (f"{self.user.firstname} {self.user.lastname}" if self.user else "Collaborateur"),
             "author_role": self.author_role or (self.user.role_display if self.user else "Équipe"),
+            "author_job": self.author_job,
             "content": self.content,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,

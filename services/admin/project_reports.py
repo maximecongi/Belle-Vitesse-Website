@@ -52,7 +52,7 @@ def add_project_report(project_id, user_id, content):
         user = db.session.get(User, user_id)
         if user:
             author_name = f"{user.firstname} {user.lastname}".strip()
-            author_role = user.role_display
+            author_role = user.job or user.role_display
 
     report = ProjectReport(
         project_id=project.id,
@@ -99,6 +99,7 @@ def list_project_reports(project_id):
         "user_id": r.user_id,
         "author_name": r.author_name or (f"{r.user.firstname} {r.user.lastname}" if r.user else "Collaborateur"),
         "author_role": r.author_role or (r.user.role_display if r.user else "Équipe"),
+        "author_job": (r.user.job if (r.user and r.user.job) else (r.author_role or "Équipe")),
         "content": r.content,
         "created_at": r.created_at,
         "created_at_fr": _format_datetime_fr(r.created_at),
@@ -186,12 +187,14 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
     formatted_reports = []
     for r in sorted(project.reports, key=lambda x: x.created_at):
         can_delete = (current_user_id is not None and r.user_id == current_user_id) or is_admin
+        job = r.user.job if (r.user and r.user.job) else (r.author_role or "Équipe")
         formatted_reports.append({
             "id": r.id,
             "project_id": r.project_id,
             "user_id": r.user_id,
             "author_name": r.author_name or (f"{r.user.firstname} {r.user.lastname}" if r.user else "Collaborateur"),
             "author_role": r.author_role or (r.user.role_display if r.user else "Équipe"),
+            "author_job": job,
             "content": r.content,
             "created_at": r.created_at,
             "created_at_fr": _format_datetime_fr(r.created_at),
