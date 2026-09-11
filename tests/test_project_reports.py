@@ -20,7 +20,13 @@ from services.admin.project_reports import (
     list_project_reports,
     get_project_detail_context,
 )
-from mcp_server.tools.projects import get_project_reports, add_project_report as mcp_add_project_report
+from mcp_server.tools.projects import (
+    get_project_reports,
+    add_project_report as mcp_add_project_report,
+    get_project_hub,
+    delete_project_report as mcp_delete_project_report,
+    search_project_reports,
+)
 
 
 class ProjectReportsTest(unittest.TestCase):
@@ -197,6 +203,7 @@ class ProjectReportsTest(unittest.TestCase):
         with self.app.app_context():
             from mcp_server.context import CURRENT_MCP_USER
             from mcp_auth.auth import McpUserContext
+            from models import Project
             admin_context = McpUserContext(
                 user_id=self.admin_id,
                 mail="admin@bellevitesse.com",
@@ -208,19 +215,51 @@ class ProjectReportsTest(unittest.TestCase):
             )
             CURRENT_MCP_USER.set(admin_context)
 
-            # Ajout via outil MCP
+            proj = db.session.get(Project, self.project_id)
+            bvpr_code = proj.project_id
+
+            # 1. Ajout via outil MCP avec nom et poste
             res = mcp_add_project_report(
-                project_id=self.project_id,
-                content="Note ajoutée par subagent IA",
-                author_name="Claude Antigravity"
+                project_id=bvpr_code,  # Test avec le code BVPR en chaîne !
+                content="Note d'essai ajoutée par subagent IA sur caméra",
+                author_name="Claude Antigravity",
+                author_job="Ingénieur Caméra",
             )
             self.assertEqual(res.get("status"), "success")
+            report_id = res["report"]["id"]
 
-            # Récupération via outil MCP
-            rep_res = get_project_reports(project_id=self.project_id)
+            # 2. Récupération via outil MCP get_project_reports avec code BVPR
+            rep_res = get_project_reports(project_id=bvpr_code)
             self.assertEqual(rep_res.get("reports_count"), 1)
-            self.assertEqual(rep_res["reports"][0]["content"], "Note ajoutée par subagent IA")
+            self.assertEqual(rep_res["reports"][0]["content"], "Note d'essai ajoutée par subagent IA sur caméra")
             self.assertEqual(rep_res["reports"][0]["author_name"], "Claude Antigravity")
+
+            # 3. Test de get_project_hub
+            hub = get_project_hub(project_id=bvpr_code)
+            self.assertNotIn("error", hub)
+            self.assertEqual(hub["id"], self.project_id)
+            self.assertEqual(hub["project_id"], bvpr_code)
+            self.assertIn("status", hub)
+            self.assertIn("equipment", hub)
+            self.assertIn("waivers", hub)
+            self.assertIn("reports", hub)
+            self.assertEqual(hub["reports_count"], 1)
+
+            # 4. Test de search_project_reports
+            search_res = search_project_reports(query="caméra", project_id=self.project_id)
+            self.assertEqual(search_res.get("total"), 1)
+            self.assertIn("caméra", search_res["results"][0]["content"])
+
+            # 5. Test de delete_project_report avec simulation puis confirmation
+            del_sim = mcp_delete_project_report(report_id=report_id, confirm=False)
+            self.assertEqual(del_sim.get("status"), "requires_confirmation")
+
+            del_ok = mcp_delete_project_report(report_id=report_id, confirm=True)
+            self.assertEqual(del_ok.get("status"), "success")
+
+            # Vérifier que le rapport a bien disparu
+            rep_after = get_project_reports(project_id=self.project_id)
+            self.assertEqual(rep_after.get("reports_count"), 0)
 
     def test_author_job_display(self):
         with self.app.app_context():

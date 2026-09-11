@@ -51,3 +51,20 @@ def prompt_audit_tournage(project_id: int) -> str:
         "4. Liste les points de contrôle requis pour chaque véhicule via `get_checkpoints_for_vehicle`.\n"
         "5. Fournis un rapport de conformité : statut vert (prêt au départ) ou rouge (actions requises)."
     )
+
+
+@mcp.prompt("debrief_tournage")
+def prompt_debrief_tournage(project_id: str) -> str:
+    """Modèle guidé pour analyser le déroulement complet d'un tournage via son Hub Projet et son journal de bord."""
+    return (
+        f"Tu es le superviseur des opérations Belle Vitesse. Analyse le déroulement du projet '{project_id}'.\n\n"
+        "Instructions :\n"
+        f"1. Charge les données consolidées du projet via `get_project_hub('{project_id}')`.\n"
+        f"2. Consulte les rapports du journal de bord avec `get_project_reports('{project_id}')`.\n"
+        "3. Vérifie les contrôles de matériel (départ checkout et retour checkin) et les incidents signalés.\n"
+        "4. Rédige un débriefing opérationnel structuré avec :\n"
+        "   - Bilan logistique & matériel (véhicules engagés, conformité, restitution)\n"
+        "   - Chronologie et ressentis plateau (extraits des rapports d'équipe)\n"
+        "   - Synthèse administrative (statut des décharges et pré-devis)\n"
+        "   - Recommandations techniques pour les prochains tournages."
+    )

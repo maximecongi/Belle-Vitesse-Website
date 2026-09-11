@@ -35,3 +35,21 @@ def resource_vehicles_catalog() -> str:
     with flask_app.app_context():
         from utils.database import get_vehicles
         return json.dumps(get_vehicles(), ensure_ascii=False, indent=2)
+
+
+@mcp.resource("bv://projects/{project_id}/hub")
+def resource_project_hub(project_id: str) -> str:
+    """Vue consolidée 360° du Hub Projet (matériel engagé, contrôles, contacts, décharges, incidents, rapports)."""
+    with flask_app.app_context():
+        from mcp_server.tools.projects import get_project_hub
+        data = get_project_hub(project_id)
+        return json.dumps(data, ensure_ascii=False, indent=2)
+
+
+@mcp.resource("bv://projects/{project_id}/reports")
+def resource_project_reports(project_id: str) -> str:
+    """Journal de bord et rapports collectifs d'équipe pour un tournage donné."""
+    with flask_app.app_context():
+        from mcp_server.tools.projects import get_project_reports
+        data = get_project_reports(project_id)
+        return json.dumps(data, ensure_ascii=False, indent=2)

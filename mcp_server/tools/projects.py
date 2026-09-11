@@ -7,6 +7,33 @@ from mcp_server.decorators import run_in_flask_context, require_mcp_scope
 from mcp_server.utils import parse_flexible_date, matches_search_query, apply_pagination
 
 
+def _resolve_project(project_id_or_code: Any) -> Optional[Any]:
+    """
+    Résout une instance Project à partir d'un identifiant numérique (int)
+    ou d'un code chaîne BVPR (ex: 'BVPR-0RLY80RD5LZB').
+    """
+    from models import Project, db
+
+    if project_id_or_code is None:
+        return None
+
+    # Si c'est un int ou une chaîne purement numérique
+    if isinstance(project_id_or_code, int) or (isinstance(project_id_or_code, str) and str(project_id_or_code).strip().isdigit()):
+        p = db.session.get(Project, int(str(project_id_or_code).strip()))
+        if p and not p.deleted_at:
+            return p
+
+    code = str(project_id_or_code).strip()
+    # Recherche exacte sur project_id
+    p = Project.query.filter(Project.project_id == code, Project.deleted_at.is_(None)).first()
+    if p:
+        return p
+
+    # Recherche tolérante partielle
+    p = Project.query.filter(Project.project_id.ilike(f"%{code}%"), Project.deleted_at.is_(None)).first()
+    return p
+
+
 def _format_project_summary(p: Dict[str, Any]) -> Dict[str, Any]:
     """Produit une synthèse légère et optimisée pour le listage de projets."""
     return {
@@ -108,19 +135,14 @@ def list_projects(
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
-def get_project(project_id: int) -> Optional[Dict[str, Any]]:
+def get_project(project_id: Any) -> Optional[Dict[str, Any]]:
     """
-    Récupère les détails enrichis d'un projet par son ID numérique ou code BVPR.
+    Récupère les détails enrichis d'un projet par son ID numérique ou code BVPR (ex: 'BVPR-0RLY80RD5LZB').
     Inclut les contacts résolus, la société de production, les véhicules résolus et le statut des décharges.
     """
-    from models import Project, db
     from utils.database import get_vehicles, get_heads
 
-    # Recherche par ID primaire ou par identifiant BVPR
-    project = db.session.get(Project, project_id)
-    if not project:
-        project = Project.query.filter_by(project_id=str(project_id)).first()
-
+    project = _resolve_project(project_id)
     if not project or project.deleted_at:
         return None
 
@@ -234,6 +256,77 @@ def get_project(project_id: int) -> Optional[Dict[str, Any]]:
             "pilot": pilot_waiver_data,
             "production": production_waiver_data,
         },
+    }
+
+
+@mcp.tool()
+@run_in_flask_context
+@require_mcp_scope("read_only")
+def get_project_hub(project_id: Any) -> Dict[str, Any]:
+    """
+    Fournit la vue consolidée 360° du Hub Projet (Fiche opérationnelle complète) :
+    - Informations générales et statut opérationnel (En tournage, Clôturé, À venir)
+    - Société de production et tous les contacts assignés avec leurs coordonnées
+    - Matériel engagé (véhicules et têtes gyrostabilisées) avec statuts de contrôle départ/retour (Checkouts/Checkins) et PV signés
+    - Décharges de responsabilité (pilote & production) avec statut et liens PDF
+    - Synthèse financière (pré-devis rattachés et montants)
+    - Incidents de tournage éventuels
+    - Journal de bord et rapports d'équipe collectifs
+    - project_id: ID numérique du projet ou code BVPR (ex: 'BVPR-0RLY80RD5LZB' ou 46)
+    """
+    from services.admin.project_reports import get_project_detail_context
+
+    project = _resolve_project(project_id)
+    if not project:
+        return {"error": f"Projet '{project_id}' introuvable."}
+
+    context = get_project_detail_context(project.id)
+    if not context:
+        return {"error": f"Impossible de charger le hub du projet #{project.id}."}
+
+    # Sérialiser les données du contexte de manière propre et directement utilisable par l'agent IA
+    return {
+        "id": project.id,
+        "project_id": project.project_id,
+        "name": project.name,
+        "notes": project.notes or "",
+        "status": {
+            "id": context.get("shoot_status_id"),
+            "code": context.get("shoot_status"),
+            "label": context.get("shoot_status_label"),
+            "color": context.get("shoot_status_color"),
+        },
+        "dates": {
+            "departure_date": project.departure_date.isoformat() if project.departure_date else None,
+            "departure_date_fr": context.get("departure_date_fr"),
+            "shoot_start": project.shoot_start_date.isoformat() if project.shoot_start_date else None,
+            "shoot_start_fr": context.get("shoot_start_fr"),
+            "shoot_end": project.shoot_end_date.isoformat() if project.shoot_end_date else None,
+            "shoot_end_fr": context.get("shoot_end_fr"),
+            "return_date": project.return_date.isoformat() if project.return_date else None,
+            "return_date_fr": context.get("return_date_fr"),
+        },
+        "production": {
+            "id": project.production.id if project.production else None,
+            "name": project.production.name if project.production else "Non assignée",
+            "email": project.production.mail if project.production else None,
+            "phone": project.production.phone if project.production else None,
+        },
+        "contacts": context.get("contacts", []),
+        "equipment": {
+            "vehicles_count": len(context.get("vehicles", [])),
+            "vehicles": context.get("vehicles", []),
+            "heads_count": len(context.get("heads", [])),
+            "heads": context.get("heads", []),
+        },
+        "waivers": {
+            "pilot": context.get("pilot_waiver"),
+            "production": context.get("production_waiver"),
+        },
+        "pre_quotes": context.get("pre_quotes", []),
+        "incidents": context.get("incidents", []),
+        "reports_count": context.get("reports_count", 0),
+        "reports": context.get("reports", []),
     }
 
 
@@ -552,22 +645,22 @@ def get_dashboard_summary() -> Dict[str, Any]:
 @run_in_flask_context
 @require_mcp_scope("read_only")
 def get_project_reports(
-    project_id: int,
+    project_id: Any,
 ) -> Dict[str, Any]:
     """
     Récupère l'ensemble des rapports et commentaires collectifs d'équipe rattachés à un projet.
-    - project_id: Identifiant numérique du projet
+    - project_id: Identifiant numérique du projet ou code BVPR (ex: 'BVPR-0RLY80RD5LZB' ou 46)
     """
     from services.admin.project_reports import list_project_reports
-    from models import Project
 
-    p = Project.query.filter(Project.id == project_id, Project.deleted_at.is_(None)).first()
+    p = _resolve_project(project_id)
     if not p:
-        return {"error": f"Projet {project_id} introuvable"}
+        return {"error": f"Projet '{project_id}' introuvable"}
 
-    reports = list_project_reports(project_id)
+    reports = list_project_reports(p.id)
     return {
-        "project_id": project_id,
+        "project_id": p.id,
+        "project_code": p.project_id,
         "project_name": p.name,
         "reports_count": len(reports),
         "reports": reports,
@@ -578,28 +671,140 @@ def get_project_reports(
 @run_in_flask_context
 @require_mcp_scope("read_write")
 def add_project_report(
-    project_id: int,
+    project_id: Any,
     content: str,
     author_name: Optional[str] = "Assistant IA",
+    author_job: Optional[str] = None,
+    user_id: Optional[int] = None,
 ) -> Dict[str, Any]:
     """
-    Ajoute un rapport ou commentaire d'équipe sur un projet.
-    - project_id: Identifiant numérique du projet
-    - content: Texte du rapport ou de l'observation de tournage
+    Ajoute un rapport ou une note d'observation d'équipe sur un projet (supporte le Markdown enrichi).
+    - project_id: Identifiant numérique du projet ou code BVPR (ex: 'BVPR-0RLY80RD5LZB' ou 46)
+    - content: Texte du rapport au format Markdown (titres, puces, citations, etc.)
     - author_name: Nom optionnel de l'auteur (défaut: 'Assistant IA')
+    - author_job: Poste / fonction en entreprise (ex: 'Directeur d'atelier', 'Pilote de précision')
+    - user_id: Identifiant optionnel d'un utilisateur existant
     """
+    p = _resolve_project(project_id)
+    if not p:
+        return {"status": "error", "message": f"Projet '{project_id}' introuvable."}
+
     from services.admin.project_reports import add_project_report as _add_report
     try:
-        report = _add_report(project_id, user_id=None, content=content)
-        if author_name:
+        report = _add_report(p.id, user_id=user_id, content=content)
+        if author_name and not user_id:
             report.author_name = author_name
-            report.author_role = "Assistant MCP"
+            report.author_role = author_job or "Assistant MCP"
             from models.db import db
             db.session.commit()
+        elif author_job:
+            report.author_role = author_job
+            from models.db import db
+            db.session.commit()
+
         return {
             "status": "success",
             "report": report.to_dict(),
         }
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
+@mcp.tool()
+@run_in_flask_context
+@require_mcp_scope("write")
+def delete_project_report(
+    report_id: int,
+    confirm: bool = False,
+) -> Dict[str, Any]:
+    """
+    Supprime un rapport ou commentaire d'équipe du journal de bord.
+    - report_id: Identifiant unique du rapport à supprimer
+    - confirm: Confirmation explicite (exécuter d'abord avec confirm=False pour simuler)
+    """
+    from models import ProjectReport, db
+    from services.admin.project_reports import delete_project_report as _delete_report
+
+    report = db.session.get(ProjectReport, report_id)
+    if not report:
+        return {"status": "error", "message": f"Rapport #{report_id} introuvable."}
+
+    if not confirm:
+        return {
+            "status": "requires_confirmation",
+            "report_id": report_id,
+            "project_id": report.project_id,
+            "author_name": report.author_name or (f"{report.user.firstname} {report.user.lastname}" if report.user else "Collaborateur"),
+            "content_preview": (report.content or "")[:80] + "...",
+            "message": f"Confirmation requise : relancez avec confirm=True pour supprimer définitivement le rapport #{report_id}."
+        }
+
+    from mcp_server.context import CURRENT_MCP_USER
+
+    mcp_user = CURRENT_MCP_USER.get()
+    current_user_id = getattr(mcp_user, 'id', None) or getattr(mcp_user, 'user_id', None)
+
+    try:
+        success = _delete_report(report_id, current_user_id=current_user_id, is_admin=True)
+        return {
+            "status": "success" if success else "error",
+            "message": f"Rapport #{report_id} supprimé avec succès." if success else "Échec de la suppression."
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+@mcp.tool()
+@run_in_flask_context
+@require_mcp_scope("read_only")
+def search_project_reports(
+    query: str,
+    project_id: Optional[Any] = None,
+    limit: Optional[int] = 20,
+) -> Dict[str, Any]:
+    """
+    Recherche plein texte dans tous les rapports de projet (observations terrain, météo, incidents, réglages matériel...).
+    - query: Termes recherchés dans le texte ou l'auteur
+    - project_id: Filtrer optionnellement sur un projet spécifique (ID numérique ou code BVPR)
+    - limit: Nombre maximum de résultats retournés (défaut 20)
+    """
+    from models import ProjectReport, Project
+
+    query_filter = ProjectReport.query.join(Project).filter(Project.deleted_at.is_(None))
+
+    if project_id is not None:
+        p = _resolve_project(project_id)
+        if not p:
+            return {"error": f"Projet '{project_id}' introuvable.", "total": 0, "results": []}
+        query_filter = query_filter.filter(ProjectReport.project_id == p.id)
+
+    if query:
+        search_term = f"%{query.strip()}%"
+        query_filter = query_filter.filter(
+            (ProjectReport.content.ilike(search_term)) |
+            (ProjectReport.author_name.ilike(search_term)) |
+            (ProjectReport.author_role.ilike(search_term))
+        )
+
+    results = query_filter.order_by(ProjectReport.created_at.desc()).limit(limit or 20).all()
+
+    formatted_results = []
+    for r in results:
+        job = r.user.job if (r.user and r.user.job) else (r.author_role or "Équipe")
+        formatted_results.append({
+            "report_id": r.id,
+            "project_id": r.project_id,
+            "project_code": r.project.project_id if r.project else "",
+            "project_name": r.project.name if r.project else "Projet",
+            "author_name": r.author_name or (f"{r.user.firstname} {r.user.lastname}" if r.user else "Collaborateur"),
+            "author_job": job,
+            "created_at": r.created_at.isoformat() if r.created_at else None,
+            "content": r.content,
+        })
+
+    return {
+        "query": query,
+        "total": len(formatted_results),
+        "results": formatted_results,
+    }
 

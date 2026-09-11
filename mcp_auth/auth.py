@@ -31,6 +31,10 @@ class McpUserContext:
         self.mcp_scope = scope or "read_only"
         self.current_token_id = token_id
 
+    @property
+    def user_id(self):
+        return self.id
+
     def to_dict(self):
         return {
             "id": self.id,
