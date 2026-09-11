@@ -302,13 +302,17 @@ def _build_vehicle_missions(vehicle_projects: List[Any], events: List[Dict[str, 
     consumed_event_ids = set()
 
     for p in vehicle_projects:
-        p_checkouts = [e for e in events if e["type"] == "checkout" and str(e.get("project_id")) == str(p.id)]
-        p_checkins = [e for e in events if e["type"] == "checkin" and str(e.get("project_id")) == str(p.id)]
-        p_incidents = [e for e in events if e["type"] == "incident" and str(e.get("project_id")) == str(p.id)]
+        p_checkouts = [e for e in events if e["type"] ==
+                       "checkout" and str(e.get("project_id")) == str(p.id)]
+        p_checkins = [e for e in events if e["type"] ==
+                      "checkin" and str(e.get("project_id")) == str(p.id)]
+        p_incidents = [e for e in events if e["type"] ==
+                       "incident" and str(e.get("project_id")) == str(p.id)]
 
         # Sous-événements ordonnés chronologiquement (Départ -> Incidents -> Retour)
         sub_events = p_checkouts + p_incidents + p_checkins
-        sub_events.sort(key=lambda e: (e.get("date") or date.min, e.get("datetime") or datetime.min))
+        sub_events.sort(key=lambda e: (e.get("date") or date.min,
+                        e.get("datetime") or datetime.min))
 
         for e in sub_events:
             consumed_event_ids.add(e["id"])
@@ -319,7 +323,8 @@ def _build_vehicle_missions(vehicle_projects: List[Any], events: List[Dict[str, 
             or p.departure_date
             or (sub_events[0]["date"] if sub_events else (p.created_at.date() if hasattr(p, "created_at") and p.created_at else date.min))
         )
-        mission_datetime = getattr(p, "created_at", None) or (sub_events[0].get("datetime") if sub_events else None)
+        mission_datetime = getattr(p, "created_at", None) or (
+            sub_events[0].get("datetime") if sub_events else None)
 
         today_date = date.today()
         if p.shoot_start_date and p.shoot_end_date:
@@ -358,7 +363,8 @@ def _build_vehicle_missions(vehicle_projects: List[Any], events: List[Dict[str, 
             date_range_label = "—"
 
         # Synthèse des anomalies
-        total_failures = sum(e.get("failure_count", 0) for e in (p_checkouts + p_checkins))
+        total_failures = sum(e.get("failure_count", 0)
+                             for e in (p_checkouts + p_checkins))
 
         missions.append({
             "id": f"mission_{p.id}",

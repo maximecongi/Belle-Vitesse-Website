@@ -1,0 +1,228 @@
+/* ── Admin Fleet & Vehicle Timeline Styles ───────────────────────── */
+
+/* ── Flotte : Cartes KPI & Grilles ── */
+.fleet-stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.fleet-kpi-card--grey {
+    border-left: 3px solid var(--admin-color-grey, #64748b) !important;
+}
+
+.fleet-kpi-card--green {
+    border-left: 3px solid var(--admin-color-green, #10b981) !important;
+}
+
+.fleet-kpi-card--orange {
+    border-left: 3px solid var(--admin-color-orange, #f99e16) !important;
+}
+
+.fleet-kpi-card--red {
+    border-left: 3px solid var(--admin-color-red, #ef4444) !important;
+}
+
+.fleet-kpi-value--orange {
+    color: #f99e16 !important;
+}
+
+/* ── Flotte : Grille de cartes véhicules ── */
+.fleet-vehicle-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+
+.fleet-vehicle-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fleet-vehicle-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.fleet-media-wrapper {
+    position: relative;
+    height: 180px;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.vehicle-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.vehicle-avatar-fallback {
+    object-fit: contain !important;
+    padding: 1.5rem !important;
+}
+
+.fleet-badge-container {
+    padding-bottom: 1.5vh;
+    position: relative;
+    right: 2ch;
+}
+
+.fleet-frosted-badge {
+    background: rgba(240, 240, 240, 0.75) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+}
+
+.fleet-project-alert {
+    background: rgba(59, 130, 246, 0.08) !important;
+    border-left: 3px solid #3b82f6 !important;
+}
+
+.fleet-metrics-grid {
+    grid-template-columns: repeat(4, 1fr);
+    text-align: center;
+    gap: 0.25rem;
+}
+
+.fleet-card-footer {
+    background: rgba(0, 0, 0, 0.15) !important;
+}
+
+/* ── Timeline Véhicule ── */
+.timeline-event-card {
+    transition: border-color 0.2s ease;
+}
+
+.vehicle-timeline-header {
+    border-left: 5px solid var(--green-1, #618B4A);
+}
+
+.vehicle-timeline-header[data-status="incident"] {
+    border-left-color: var(--red-1, #C32F27) !important;
+}
+
+.vehicle-timeline-header[data-status="tournage"],
+.vehicle-timeline-header[data-status="in_progress"] {
+    border-left-color: var(--orange-1, #F59E0B) !important;
+}
+
+.vehicle-timeline-header[data-status="available"],
+.vehicle-timeline-header[data-status="disponible"] {
+    border-left-color: var(--green-1, #618B4A) !important;
+}
+
+.timeline-vehicle-meta {
+    max-width: 600px;
+}
+
+.timeline-avatar-wrapper {
+    width: 130px;
+    height: 100px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.4);
+    flex-shrink: 0;
+}
+
+.timeline-badge-subtle {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.timeline-stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    min-width: 300px;
+}
+
+.timeline-stat-card {
+    background: rgba(255, 255, 255, 0.02) !important;
+}
+
+.timeline-chronological-container {
+    position: relative;
+    padding-left: 2rem;
+    margin-top: 1.5rem;
+}
+
+.timeline-linear-container {
+    position: relative;
+    padding-left: 2rem;
+    margin-top: 1.5rem;
+}
+
+.timeline-spine {
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.timeline-spine--linear {
+    top: 12px;
+}
+
+.timeline-item {
+    position: relative;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: -2rem;
+    top: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    z-index: 2;
+    color: #ffffff;
+    background: #5299D3;
+    box-shadow: 0 0 10px rgba(82, 153, 211, 0.45);
+}
+
+.timeline-dot--linear {
+    top: 12px;
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+}
+
+.timeline-dot--sub-event {
+    top: 14px;
+}
+
+.timeline-dot--in_progress {
+    background: #F59E0B !important;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.45) !important;
+}
+
+.timeline-dot--completed {
+    background: #515151 !important;
+    box-shadow: 0 0 6px rgba(81, 81, 81, 0.3) !important;
+}
+
+.timeline-dot--upcoming {
+    background: #5299D3 !important;
+    box-shadow: 0 0 10px rgba(82, 153, 211, 0.45) !important;
+}
+
+.timeline-dot--incident {
+    background: #ef4444 !important;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.4) !important;
+}
+
+.timeline-dot--checkout {
+    background: #10b981 !important;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4) !important;
+}
+
+.timeline-dot--checkin {
+    background: #3b82f6 !important;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.4) !important;
+}
+
+.timeline-dot--default {
+    background: #8b5cf6 !important;
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.4) !important;
+}
+

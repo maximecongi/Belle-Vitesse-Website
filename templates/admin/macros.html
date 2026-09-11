@@ -6,9 +6,8 @@
 {% if count and count > 0 %}
 <span class="badge-reminder"
     title="Relancé {{ count }} fois{% if last_reminded_at %} · Dernier rappel le {{ last_reminded_at.strftime('%d/%m/%Y à %H:%M') }}{% endif %}">
-    <svg class="badge-reminder-icon" width="12" height="12" viewBox="0 0 24 24"
-        fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"
-        aria-hidden="true">
+    <svg class="badge-reminder-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
         <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
     </svg>
@@ -79,22 +78,22 @@
 {% macro incident_signature_badge(incident, compact=false) %}
 {% if incident.is_fully_signed or incident.signature_status == 'signed' %}
 <span class="badge-pill" data-val="ok">✅ {{ 'Scellé 2/2' if compact else 'Scellé contradictoirement' }}</span>
-{% if compact %}<div class="u-text-xs u-text-muted u-mt-1" style="font-size: 11px;">BV ✓ &bull; Prod ✓</div>{% endif %}
+{% if compact %}<div class="u-text-2xs u-text-muted u-mt-1">BV ✓ &bull; Prod ✓</div>{% endif %}
 {% elif incident.signature_status == 'signed_bv' %}
 <span class="badge-pill" data-val="warning">✍️ {{ 'Visé BV 1/2' if compact else 'Visé BV — En attente Production'
     }}</span>
-{% if compact %}<div class="u-text-xs u-text-muted u-mt-1" style="font-size: 11px;">BV ✓ &bull; Prod ⏳</div>{% endif %}
+{% if compact %}<div class="u-text-2xs u-text-muted u-mt-1">BV ✓ &bull; Prod ⏳</div>{% endif %}
 {% elif incident.signature_status == 'signed_prod' %}
 <span class="badge-pill" data-val="warning">✍️ {{ 'Signé Prod 1/2' if compact else 'Signé Prod — En attente visa BV'
     }}</span>
-{% if compact %}<div class="u-text-xs u-text-muted u-mt-1" style="font-size: 11px;">BV ⏳ &bull; Prod ✓</div>{% endif %}
+{% if compact %}<div class="u-text-2xs u-text-muted u-mt-1">BV ⏳ &bull; Prod ✓</div>{% endif %}
 {% elif incident.signature_status == 'pending_prod' %}
 <span class="badge-pill" data-val="in_progress">⏳ {{ 'Invité 0/2' if compact else 'Invitation envoyée à la Production'
     }}</span>
-{% if compact %}<div class="u-text-xs u-text-muted u-mt-1" style="font-size: 11px;">BV ⏳ &bull; Prod ✉️</div>{% endif %}
+{% if compact %}<div class="u-text-2xs u-text-muted u-mt-1">BV ⏳ &bull; Prod ✉️</div>{% endif %}
 {% else %}
 <span class="badge-pill" data-val="neutral">📝 {{ 'Non signé' if compact else 'En attente de signatures' }}</span>
-{% if compact %}<div class="u-text-xs u-text-muted u-mt-1" style="font-size: 11px;">BV ⏳ &bull; Prod ⏳</div>{% endif %}
+{% if compact %}<div class="u-text-2xs u-text-muted u-mt-1">BV ⏳ &bull; Prod ⏳</div>{% endif %}
 {% endif %}
 {% endmacro %}
 
@@ -111,10 +110,11 @@
 {% endif %}
 {% endmacro %}
 
-{% macro vehicle_avatar(image_url, name, class="", style="", padding="1.5rem") %}
-<img src="{{ image_url }}" alt="{{ name }}" class="{{ class }}" style="{{ style }}"
-    onerror="this.src='/static/imgs/logo-bv.svg'; this.style.objectFit='contain'; this.style.padding='{{ padding }}';">
+{% macro vehicle_avatar(image_url, name, class="") %}
+<img src="{{ image_url }}" alt="{{ name }}" class="vehicle-avatar-img {{ class }}"
+    onerror="this.src='/static/imgs/logo-bv.svg'; this.classList.add('vehicle-avatar-fallback');">
 {% endmacro %}
+
 
 {% macro timeline_event_type_badge(event_type, severity_label=None) %}
 {% if event_type == 'checkout' %}
@@ -133,11 +133,11 @@ severity_label|lower == 'critique' else ('Mineur' if severity_label|lower == 'mi
 {% macro shoot_status_badge(status) %}
 {% set s = (status or '')|lower %}
 {% if s in ('in_progress', 'active', 'tournage') %}
-<span class="badge-pill" data-val="in_progress">🎬 En tournage</span>
+<span class="badge-pill badge-shoot" data-val="in_progress">🎬 En tournage</span>
 {% elif s in ('completed', 'cloture', 'clôturé') %}
-<span class="badge-pill" data-val="cloture">🔒 Clôturé</span>
+<span class="badge-pill badge-shoot" data-val="completed">🔒 Clôturé</span>
 {% else %}
-<span class="badge-pill" data-val="neutral">📅 À venir</span>
+<span class="badge-pill badge-shoot" data-val="upcoming">🔜 À venir</span>
 {% endif %}
 {% endmacro %}
 

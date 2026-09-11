@@ -281,8 +281,16 @@
 }
 
 .project-date-step.is-active {
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.project-date-step.is-active .project-date-step-lbl {
+    color: #b45309;
+}
+
+.project-date-step.is-active .project-date-step-val {
+    color: #92400e;
 }
 
 .project-date-step-icon {
@@ -1067,7 +1075,46 @@
     color: #334155;
 }
 
+/* ── Hub Projet & États de tournage ── */
+.project-hub-header {
+    border-left: 5px solid #5299D3;
+}
+
+.project-hub-header[data-status="in_progress"] {
+    border-left-color: #F59E0B !important;
+}
+
+.project-hub-header[data-status="completed"] {
+    border-left-color: #515151 !important;
+}
+
+.project-hub-header[data-status="upcoming"] {
+    border-left-color: #5299D3 !important;
+}
+
+.project-hub-id {
+    position: absolute !important;
+}
+
+.project-report-body-full {
+    display: none;
+}
+
+.project-doc-item--error {
+    border-left: 3px solid var(--red-error, #b91c1c) !important;
+}
+
+.project-notes-content {
+    white-space: pre-wrap;
+    line-height: 1.5;
+}
+
+.projects-waiver-label {
+    min-width: 50px;
+}
+
 /* Vue Impression / Print */
+
 @media print {
     body {
         background: #ffffff !important;

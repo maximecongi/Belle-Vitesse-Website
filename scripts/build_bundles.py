@@ -46,7 +46,11 @@ ADMIN_CSS_FILES: List[str] = [
     "css/admin/admin-js.css",
     "css/admin/admin-booking.css",
     "css/admin/admin-cmdk.css",
+    "css/admin/admin-fleet.css",
+    "css/admin/admin-incidents.css",
+    "css/admin/admin-mcp.css",
 ]
+
 
 
 def find_static_dir(base_dir: Optional[str] = None) -> Path:

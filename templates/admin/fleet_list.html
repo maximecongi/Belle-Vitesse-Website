@@ -19,23 +19,23 @@
 
 {% block content %}
 <!-- ═══════════ STATS SYNTHÈSE FLOTTE ═══════════ -->
-<div class="u-grid u-gap-3 u-mb-4" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
-    <div class="admin-card u-p-3" style="border-left: 3px solid var(--admin-color-grey, #64748b);">
+<div class="u-grid u-gap-3 u-mb-4 fleet-stats-grid">
+    <div class="admin-card u-p-3 fleet-kpi-card--grey">
         <div class="u-text-xs u-text-muted u-uppercase u-letter-spacing-1">Total Parc Roulant</div>
         <div class="u-text-3xl u-font-bold u-mt-1">{{ stats.total }}</div>
         <div class="u-text-xs u-text-muted u-mt-1">Véhicules répertoriés</div>
     </div>
-    <div class="admin-card u-p-3" style="border-left: 3px solid var(--admin-color-green, #10b981);">
+    <div class="admin-card u-p-3 fleet-kpi-card--green">
         <div class="u-text-xs u-text-muted u-uppercase u-letter-spacing-1">Disponibles</div>
         <div class="u-text-3xl u-font-bold u-mt-1 u-text-success">{{ stats.available }}</div>
         <div class="u-text-xs u-text-muted u-mt-1">Prêts pour tournage</div>
     </div>
-    <div class="admin-card u-p-3" style="border-left: 3px solid var(--admin-color-orange, #f99e16);">
+    <div class="admin-card u-p-3 fleet-kpi-card--orange">
         <div class="u-text-xs u-text-muted u-uppercase u-letter-spacing-1">En Tournage</div>
-        <div class="u-text-3xl u-font-bold u-mt-1" style="color: #f99e16;">{{ stats.on_tournage }}</div>
+        <div class="u-text-3xl u-font-bold u-mt-1 fleet-kpi-value--orange">{{ stats.on_tournage }}</div>
         <div class="u-text-xs u-text-muted u-mt-1">Actuellement déployés</div>
     </div>
-    <div class="admin-card u-p-3" style="border-left: 3px solid var(--admin-color-red, #ef4444);">
+    <div class="admin-card u-p-3 fleet-kpi-card--red">
         <div class="u-text-xs u-text-muted u-uppercase u-letter-spacing-1">En Révision / Incident</div>
         <div class="u-text-3xl u-font-bold u-mt-1 u-text-danger">{{ stats.incident }}</div>
         <div class="u-text-xs u-text-muted u-mt-1">Incidents non soldés</div>
@@ -48,53 +48,51 @@
     <div class="u-flex u-justify-between u-align-center u-flex-wrap u-gap-3">
         <div class="u-flex u-gap-2 u-flex-wrap" id="fleet-filter-pills">
             <button type="button" class="admin-btn admin-btn-sm admin-btn-primary filter-pill active"
-                data-filter="all">Tous ({{ stats.total }})</button>
+                data-status="all">Tous ({{ stats.total }})</button>
             <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary filter-pill"
-                data-filter="disponible">Disponibles ({{ stats.available }})</button>
+                data-status="disponible">🟢 Disponibles ({{ stats.available }})</button>
             <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary filter-pill"
-                data-filter="tournage">Sur Tournage ({{ stats.on_tournage }})</button>
+                data-status="tournage">🎬 En Tournage ({{ stats.on_tournage }})</button>
             <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary filter-pill"
-                data-filter="incident">Incidents / Révision ({{ stats.incident }})</button>
+                data-status="incident">⚠️ En Révision ({{ stats.incident }})</button>
         </div>
-        <div class="u-text-xs u-text-muted">
-            <span id="visible-count">{{ vehicles|length }}</span> véhicule(s) affiché(s)
+        <div class="u-text-xs u-text-muted" id="fleet-counter">
+            Affichage de <strong id="fleet-visible-count">{{ vehicles|length }}</strong> sur {{ vehicles|length }}
+            véhicules
         </div>
     </div>
 </div>
 
 <!-- ═══════════ GRILLE DES VÉHICULES ═══════════ -->
-<div class="u-grid u-gap-4" id="fleet-cards-container"
-    style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
+<div class="u-grid u-gap-4 fleet-vehicle-grid" id="fleet-cards-container">
     {% for v in vehicles %}
-    <div class="admin-card vehicle-card u-flex u-flex-column u-justify-between u-p-0 u-overflow-hidden"
+    <div class="admin-card vehicle-card fleet-vehicle-card u-flex u-flex-column u-justify-between u-p-0 u-overflow-hidden"
         data-name="{{ v.name|lower }}" data-id="{{ v.id|lower }}" data-unique-id="{{ v.unique_id|lower }}"
-        data-status="{{ v.operational_status }}" style="transition: transform 0.2s ease, box-shadow 0.2s ease;">
+        data-status="{{ v.operational_status }}">
 
         <!-- Visuel véhicule avec overlay de statut -->
-        <div class="u-relative" style="height: 180px; background: rgba(0, 0, 0, 0.3);">
-            {{ vehicle_avatar(v.image_url, v.name, style="width: 100%; height: 100%; object-fit: cover;",
-            padding="2rem") }}
+        <div class="fleet-media-wrapper">
+            {{ vehicle_avatar(v.image_url, v.name) }}
         </div>
 
         <!-- Corps de la carte -->
         <div class="u-p-3 u-flex-1 u-flex u-flex-column u-justify-between">
             <div>
-                <div style="padding-bottom: 1.5vh; position: relative; right: 2ch;">
+                <div class="fleet-badge-container">
                     {{ vehicle_status_badge(v.operational_status, v.operational_status_label) }}
                 </div>
                 <div class="u-flex u-justify-between u-align-start u-gap-2">
                     <div>
                         <h3 class="u-text-lg u-font-bold u-m-0 u-mb-1">{{ v.name }}</h3>
                         <div>
-                            <span class="checkout-doc-id u-m-0"
-                                style="background: rgba(240, 240, 240, 0.75); backdrop-filter: blur(4px);">
+                            <span class="checkout-doc-id u-m-0 fleet-frosted-badge">
                                 {{ v.unique_id }}
                             </span>
                         </div>
                     </div>
                     <div>
                         {% if v.daily_rate %}
-                        <span class="u-text-xs u-text-muted u-text-right" style="white-space: nowrap;">
+                        <span class="u-text-xs u-text-muted u-text-right u-nowrap">
                             <strong class="u-text-sm u-font-bold">{{ v.daily_rate|int }} €</strong> /j
                         </span>
                         {% endif %}
@@ -103,8 +101,7 @@
 
                 <!-- Alerte Tournage en cours -->
                 {% if v.active_project %}
-                <div class="u-mt-2 u-p-2 u-text-xs"
-                    style="background: rgba(59, 130, 246, 0.08); border-left: 3px solid #3b82f6;">
+                <div class="u-mt-2 u-p-2 u-text-xs fleet-project-alert">
                     <span class="u-font-semibold">🎬 Tournage :</span> {{ v.active_project.name }}
                     <span class="u-text-muted">({{ v.active_project.production }})</span>
                 </div>
@@ -112,8 +109,7 @@
             </div>
 
             <!-- Compteurs d'activités -->
-            <div class="u-grid u-mt-3 u-pt-3 u-border-top"
-                style="grid-template-columns: repeat(4, 1fr); text-align: center; gap: 0.25rem;">
+            <div class="u-grid u-mt-3 u-pt-3 u-border-top fleet-metrics-grid">
                 <div>
                     <div class="u-text-xs u-text-muted">Projets</div>
                     <div class="u-text-sm u-font-bold u-mt-1">{{ v.projects_count }}</div>
@@ -136,9 +132,9 @@
         </div>
 
         <!-- Pied de carte : Bouton Timeline -->
-        <div class="u-p-3 u-border-top u-flex u-justify-end u-align-center" style="background: rgba(0, 0, 0, 0.15);">
+        <div class="u-p-3 u-border-top u-flex u-justify-end u-align-center fleet-card-footer">
             <a href="{{ url_for('admin_vehicle_timeline', vehicle_id=v.id) }}"
-                class="admin-btn admin-btn-sm admin-btn-primary" style="width: 100%; text-align: center;">
+                class="admin-btn admin-btn-sm admin-btn-primary u-w-full u-text-center">
                 Consulter la fiche véhicule →
             </a>
         </div>
@@ -150,8 +146,7 @@
     {% endfor %}
 
     <!-- Message si aucun véhicule ne correspond au filtre actif -->
-    <div id="fleet-empty-filter" class="admin-card u-text-center u-p-5 u-grid-col-span-all"
-        style="display: none !important;">
+    <div id="fleet-empty-filter" class="admin-card u-text-center u-p-5 u-grid-col-span-all fleet-empty-state">
         <p class="u-text-muted u-text-xs u-m-0">Aucun véhicule ne correspond à ce filtre.</p>
     </div>
 </div>

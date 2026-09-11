@@ -6,9 +6,9 @@
 (function () {
     'use strict';
 
-    // Outils et réglages par défaut (couleurs fidèles à la charte light admin : --red-error, --blue-info, etc.)
+    // Outils et réglages par défaut (couleurs fidèles à la charte BV officielle : #C32F27, #F59E0B, #FFC845, etc.)
     let currentTool = 'circle'; // 'select', 'circle', 'arrow', 'freehand', 'text'
-    let currentColor = '#b91c1c'; // Rouge incident / défaut par défaut (--red-error)
+    let currentColor = '#C32F27'; // Rouge BV officiel par défaut (--red-1)
     let currentLineWidth = 5;
     let originalImage = null;
     let originalFile = null;
@@ -61,14 +61,15 @@
 
                     <div class="bv-tool-divider"></div>
 
-                    <!-- Nuancier issu du design system Belle Vitesse -->
+                    <!-- Nuancier officiel Belle Vitesse -->
                     <div class="bv-tool-group" title="Couleur de l'annotation">
-                        <button type="button" class="bv-swatch active" data-color="#b91c1c" style="background:#b91c1c;" title="Rouge (Défaut / Impact)"></button>
-                        <button type="button" class="bv-swatch" data-color="#d97706" style="background:#d97706;" title="Ambre (Attention / À surveiller)"></button>
-                        <button type="button" class="bv-swatch" data-color="#0369a1" style="background:#0369a1;" title="Bleu (Repère technique)"></button>
-                        <button type="button" class="bv-swatch" data-color="#28a745" style="background:#28a745;" title="Vert (Conforme / Réf)"></button>
-                        <button type="button" class="bv-swatch" data-color="#151515" style="background:#151515;" title="Noir (Contraste carrosserie blanche)"></button>
-                        <button type="button" class="bv-swatch" data-color="#ffffff" style="background:#ffffff; border-color:#d1d5db;" title="Blanc (Contraste carrosserie sombre)"></button>
+                        <button type="button" class="bv-swatch active" data-color="#C32F27" style="background:#C32F27;" title="Rouge BV (#C32F27 — Impact / Défaut critique)"></button>
+                        <button type="button" class="bv-swatch" data-color="#F59E0B" style="background:#F59E0B;" title="Ambre BV (#F59E0B — Attention / À surveiller)"></button>
+                        <button type="button" class="bv-swatch" data-color="#FFC845" style="background:#FFC845;" title="Jaune BV (#FFC845 — Repère prioritaire)"></button>
+                        <button type="button" class="bv-swatch" data-color="#5299D3" style="background:#5299D3;" title="Bleu Acier BV (#5299D3 — Repère technique)"></button>
+                        <button type="button" class="bv-swatch" data-color="#618B4A" style="background:#618B4A;" title="Vert Sauge BV (#618B4A — Conforme / Réf)"></button>
+                        <button type="button" class="bv-swatch" data-color="#151515" style="background:#151515;" title="Noir Carbone BV (#151515 — Contraste carrosserie claire)"></button>
+                        <button type="button" class="bv-swatch" data-color="#FFFFFF" style="background:#FFFFFF; border-color:#d1d5db;" title="Blanc Pur BV (#FFFFFF — Contraste carrosserie sombre)"></button>
                     </div>
 
                     <div class="bv-tool-divider"></div>
@@ -243,14 +244,14 @@
                 box-shadow: 0 1px 3px rgba(255, 200, 69, 0.3);
             }
             .bv-btn-danger {
-                background: #fee2e2 !important;
-                border-color: #fecaca !important;
-                color: #b91c1c !important;
+                background: #fdf2f2 !important;
+                border-color: #fbd5d5 !important;
+                color: #C32F27 !important;
                 font-weight: 600;
             }
             .bv-btn-danger:hover {
-                background: #fca5a5 !important;
-                color: #7f1d1d !important;
+                background: #f8b4b4 !important;
+                color: #991b1b !important;
             }
 
             /* Swatches */
@@ -1086,7 +1087,7 @@
         const handleR = Math.max(6, Math.round(7.5 * scale));
 
         ctx.save();
-        ctx.strokeStyle = '#0284c7'; // Bleu sélection fin et précis
+        ctx.strokeStyle = '#5299D3'; // Bleu acier BV cinématique
         ctx.lineWidth = Math.max(1.5, Math.round(1.8 * scale));
         ctx.setLineDash([5 * scale, 5 * scale]);
 
@@ -1097,8 +1098,8 @@
             ctx.stroke();
 
             ctx.setLineDash([]);
-            drawHandle(shape.startX, shape.startY, handleR, '#0284c7');
-            drawHandle(shape.endX, shape.endY, handleR, '#0284c7');
+            drawHandle(shape.startX, shape.startY, handleR, '#5299D3');
+            drawHandle(shape.endX, shape.endY, handleR, '#5299D3');
         } else {
             const pad = 5 * scale;
             const x = bounds.minX - pad;
@@ -1109,10 +1110,10 @@
             ctx.strokeRect(x, y, w, h);
 
             ctx.setLineDash([]);
-            drawHandle(x, y, handleR, '#0284c7');
-            drawHandle(x + w, y, handleR, '#0284c7');
-            drawHandle(x + w, y + h, handleR, '#0284c7');
-            drawHandle(x, y + h, handleR, '#0284c7');
+            drawHandle(x, y, handleR, '#5299D3');
+            drawHandle(x + w, y, handleR, '#5299D3');
+            drawHandle(x + w, y + h, handleR, '#5299D3');
+            drawHandle(x, y + h, handleR, '#5299D3');
         }
         ctx.restore();
     }

@@ -117,21 +117,21 @@
                                 placeholder="Rechercher un véhicule…" autocomplete="off">
                         </div>
                         <div class="rich-select-options" id="vehicleOptions">
-                            <div id="selectProjectNotice" class="u-p-3 u-text-sm u-text-muted u-text-center" {% if data and data.project_id %}style="display: none;"{% endif %}>
+                            <div id="selectProjectNotice" class="u-p-3 u-text-sm u-text-muted u-text-center{% if data and data.project_id %} is-hidden{% endif %}">
                                 ⚠️ Veuillez d'abord sélectionner un projet ci-dessus
                             </div>
-                            <div id="noVehicleNotice" class="u-p-3 u-text-sm u-text-muted u-text-center" style="display: none;">
+                            <div id="noVehicleNotice" class="u-p-3 u-text-sm u-text-muted u-text-center is-hidden">
                                 Aucun véhicule n'est rattaché à ce projet
                             </div>
                             {% for v in vehicles %}
                             {% set vf = v.fields %}
                             {% set thumb_url = vf.thumbnail[0].thumbnails.large.url if vf.thumbnail else '' %}
-                            <button type="button" class="rich-select-option" data-id="{{ v.id }}"
+                            <button type="button" class="rich-select-option{% if not (data and data.project_id) %} is-hidden{% endif %}" data-id="{{ v.id }}"
                                 data-name="{{ vf.get('name', '—') }}" data-thumb="{{ thumb_url }}"
                                 data-search="{{ vf.get('name', '') }}"
                                 data-checkout-statuses='{{ vf.get("_checkout_statuses", {}) | tojson | forceescape }}'
-                                data-blocked-by="{{ vf.get('_blocked_by', '') }}"
-                                {% if not (data and data.project_id) %}style="display: none;"{% endif %}>
+                                data-blocked-by="{{ vf.get('_blocked_by', '') }}">
+
                                 <div class="u-flex u-align-center u-gap-2">
                                     {% if thumb_url %}
                                     <img src="{{ thumb_url }}" class="vehicle-med-thumbnail">

@@ -1,0 +1,205 @@
+/* ── Admin MCP Connector Styles ─────────────────────────────────── */
+
+/* ── Bannière Hero MCP ── */
+.mcp-hero-card {
+    background: var(--grey-3) !important;
+    color: #ffffff !important;
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.mcp-status-pill-active {
+    background: #10b981 !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 11px !important;
+}
+
+.mcp-hero-protocol {
+    color: #94a3b8 !important;
+}
+
+.mcp-hero-title {
+    color: #f8fafc !important;
+}
+
+.mcp-hero-desc {
+    color: #cbd5e1 !important;
+    max-width: 650px;
+}
+
+.mcp-endpoint-box {
+    background: var(--grey-1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    min-width: 320px;
+}
+
+.mcp-endpoint-label {
+    color: #94a3b8 !important;
+}
+
+.mcp-endpoint-url {
+    font-family: monospace;
+    font-size: 13px;
+    color: #38bdf8 !important;
+    word-break: break-all;
+}
+
+.mcp-btn-xs-nowrap {
+    white-space: nowrap !important;
+    padding: 4px 8px !important;
+    font-size: 11px !important;
+}
+
+/* ── Jetons & Portées ── */
+.mcp-token-code {
+    font-family: monospace;
+    font-size: 12px;
+    background: #f1f5f9;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.mcp-scope-admin {
+    background: #f3e8ff !important;
+    color: #7e22ce !important;
+    font-weight: 600 !important;
+}
+
+.mcp-scope-write {
+    background: #dbeafe !important;
+    color: #1e40af !important;
+    font-weight: 600 !important;
+}
+
+.mcp-scope-readonly {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    font-weight: 600 !important;
+}
+
+.mcp-token-expired {
+    background: #fee2e2 !important;
+    color: #b91c1c !important;
+    font-weight: 600 !important;
+}
+
+.mcp-token-active {
+    background: #dcfce7 !important;
+    color: #15803d !important;
+}
+
+.mcp-token-revoked {
+    background: #fee2e2 !important;
+    color: #b91c1c !important;
+}
+
+/* ── Journal d'audit ── */
+.mcp-audit-summary {
+    cursor: pointer;
+    user-select: none;
+}
+
+.mcp-audit-title {
+    display: inline-block;
+}
+
+.mcp-audit-toggle-hint {
+    background: #f1f5f9;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.mcp-audit-tool-name {
+    font-family: monospace;
+    font-size: 12px;
+    font-weight: bold;
+    color: #0284c7 !important;
+}
+
+.mcp-audit-payload {
+    max-width: 320px;
+    max-height: 50px;
+    overflow-y: auto;
+    font-family: monospace;
+    background: #f8fafc;
+    padding: 4px;
+    border-radius: 4px;
+    color: #344155;
+}
+
+.mcp-audit-status-success {
+    background: #dcfce7 !important;
+    color: #15803d !important;
+    font-weight: 600 !important;
+}
+
+.mcp-audit-status-warning {
+    background: #fef3c7 !important;
+    color: #d97706 !important;
+    font-weight: 600 !important;
+}
+
+.mcp-audit-status-error {
+    background: #fee2e2 !important;
+    color: #b91c1c !important;
+    font-weight: 600 !important;
+}
+
+.mcp-pre-block {
+    overflow-x: auto;
+}
+
+/* ── Modale de génération de jeton ── */
+.mcp-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+
+.mcp-modal-dialog {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 560px;
+    width: 90%;
+    text-align: left;
+    position: relative;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+}
+
+.mcp-modal-close-btn {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #888888;
+}
+
+.mcp-select-white {
+    background: #ffffff !important;
+}
+
+.mcp-modal-result-box {
+    border-left: 4px solid #10b981 !important;
+}
+
+.mcp-input-mono {
+    font-family: monospace;
+    font-size: 13px;
+    background: #f8fafc !important;
+}
+
+.mcp-input-mono-sm {
+    font-family: monospace;
+    font-size: 12px;
+    background: #f8fafc !important;
+}

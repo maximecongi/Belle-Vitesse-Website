@@ -143,45 +143,46 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
     veh_ids = [v.strip() for v in (project.vehicles_to_check or "").split(",") if v.strip()]
     head_ids = [h.strip() for h in (project.heads_to_check or "").split(",") if h.strip()]
 
-    # Statut opérationnel du projet : strictement aligné sur la Timeline Véhicule (in_progress -> "En tournage", completed -> "Clôturé", upcoming -> "À venir")
+    # Statut opérationnel du projet : strictement aligné sur la Timeline Véhicule et la charte officielle BV
+    # (in_progress -> Orange ambre BV #F59E0B, completed -> Gris minéral BV #515151, upcoming -> Bleu acier BV #5299D3)
     today_date = date.today()
     if project.shoot_start_date and project.shoot_end_date:
         if project.shoot_start_date <= today_date <= project.shoot_end_date:
             shoot_status = "in_progress"
             shoot_status_label = "En tournage"
             shoot_status_id = "in_progress"
-            shoot_status_color = "#3b82f6"
+            shoot_status_color = "#F59E0B"
         elif today_date > project.shoot_end_date:
             shoot_status = "completed"
             shoot_status_label = "Clôturé"
-            shoot_status_id = "cloture"
-            shoot_status_color = "#64748b"
+            shoot_status_id = "completed"
+            shoot_status_color = "#515151"
         else:
             shoot_status = "upcoming"
             shoot_status_label = "À venir"
-            shoot_status_id = "neutral"
-            shoot_status_color = "#8b5cf6"
+            shoot_status_id = "upcoming"
+            shoot_status_color = "#5299D3"
     elif project.departure_date and project.return_date:
         if project.departure_date <= today_date <= project.return_date:
             shoot_status = "in_progress"
             shoot_status_label = "En tournage"
             shoot_status_id = "in_progress"
-            shoot_status_color = "#3b82f6"
+            shoot_status_color = "#F59E0B"
         elif today_date > project.return_date:
             shoot_status = "completed"
             shoot_status_label = "Clôturé"
-            shoot_status_id = "cloture"
-            shoot_status_color = "#64748b"
+            shoot_status_id = "completed"
+            shoot_status_color = "#515151"
         else:
             shoot_status = "upcoming"
             shoot_status_label = "À venir"
-            shoot_status_id = "neutral"
-            shoot_status_color = "#8b5cf6"
+            shoot_status_id = "upcoming"
+            shoot_status_color = "#5299D3"
     else:
         shoot_status = "upcoming"
         shoot_status_label = "À venir"
-        shoot_status_id = "neutral"
-        shoot_status_color = "#8b5cf6"
+        shoot_status_id = "upcoming"
+        shoot_status_color = "#5299D3"
 
     # Formattage des rapports avec permissions de suppression
     formatted_reports = []

@@ -332,6 +332,19 @@
     color: var(--red-error) !important;
 }
 
+.u-text-success {
+    color: var(--green-success, #28a745) !important;
+}
+
+.u-text-warning {
+    color: var(--admin-accent, #FFC845) !important;
+}
+
+.u-text-info {
+    color: var(--blue-info, #0369a1) !important;
+}
+
+
 .u-text-uppercase {
     text-transform: uppercase !important;
 }
@@ -918,4 +931,50 @@
 .u-m-auto {
     margin-left: auto !important;
     margin-right: auto !important;
+}
+
+/* Affichage conditionnel compatible JS sans !important */
+.is-hidden {
+    display: none;
+}
+
+/* Tailles de texte fines & micro-typographie */
+.u-text-2xs {
+    font-size: 11px !important;
+}
+
+.u-font-10 {
+    font-size: 10px !important;
+}
+
+.u-font-normal {
+    font-weight: 400 !important;
+}
+
+.u-min-w-50 {
+    min-width: 50px !important;
+}
+
+.u-pre-wrap {
+    white-space: pre-wrap !important;
+}
+
+.u-leading-normal {
+    line-height: 1.5 !important;
+}
+
+.u-tracking-wide {
+    letter-spacing: 0.5px !important;
+}
+
+.u-underline {
+    text-decoration: underline !important;
+}
+
+.u-pos-absolute {
+    position: absolute !important;
+}
+
+.u-overflow-y-auto {
+    overflow-y: auto !important;
 }

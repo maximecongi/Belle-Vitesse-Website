@@ -101,25 +101,39 @@ def _format_project_admin(p, vehicle_map, heads_map):
         if p.shoot_start_date <= today_date <= p.shoot_end_date:
             shoot_status = "in_progress"
             shoot_status_label = "En tournage"
+            shoot_status_id = "in_progress"
+            shoot_status_color = "#F59E0B"
         elif today_date > p.shoot_end_date:
             shoot_status = "completed"
             shoot_status_label = "Clôturé"
+            shoot_status_id = "completed"
+            shoot_status_color = "#515151"
         else:
             shoot_status = "upcoming"
             shoot_status_label = "À venir"
+            shoot_status_id = "upcoming"
+            shoot_status_color = "#5299D3"
     elif p.departure_date and p.return_date:
         if p.departure_date <= today_date <= p.return_date:
             shoot_status = "in_progress"
             shoot_status_label = "En tournage"
+            shoot_status_id = "in_progress"
+            shoot_status_color = "#F59E0B"
         elif today_date > p.return_date:
             shoot_status = "completed"
             shoot_status_label = "Clôturé"
+            shoot_status_id = "completed"
+            shoot_status_color = "#515151"
         else:
             shoot_status = "upcoming"
             shoot_status_label = "À venir"
+            shoot_status_id = "upcoming"
+            shoot_status_color = "#5299D3"
     else:
         shoot_status = "upcoming"
         shoot_status_label = "À venir"
+        shoot_status_id = "upcoming"
+        shoot_status_color = "#5299D3"
 
     return {
         "id": p.id,
@@ -127,6 +141,8 @@ def _format_project_admin(p, vehicle_map, heads_map):
         "name": p.name,
         "shoot_status": shoot_status,
         "shoot_status_label": shoot_status_label,
+        "shoot_status_id": shoot_status_id,
+        "shoot_status_color": shoot_status_color,
         "production": p.production.name if p.production else "—",
         "departure_date": format_date_fr(str(p.departure_date)) if p.departure_date else "—",
         "raw_departure_date": str(p.departure_date) if p.departure_date else "",

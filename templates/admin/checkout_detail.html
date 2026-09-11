@@ -30,9 +30,9 @@
                             data.vehicle.fields.unique_id }}</span>
                         {% if data.vehicle and data.vehicle.id %}
                         <a href="{{ url_for('admin_vehicle_timeline', vehicle_id=data.vehicle.id) }}"
-                            class="admin-btn admin-btn-sm admin-btn-secondary u-ml-1"
-                            style="font-size: 11px; padding: 2px 6px;" title="Consulter l'historique du véhicule">🏎️
+                            class="admin-btn admin-btn-xs admin-btn-secondary u-ml-1" title="Consulter l'historique du véhicule">🏎️
                             Timeline</a>
+
                         {% endif %}
                     </div>
                 </div>

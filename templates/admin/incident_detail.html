@@ -18,8 +18,7 @@
 
 {% block content %}
 <!-- ═══════════ EN-TÊTE RÉCAPITULATIF ═══════════ -->
-<div class="admin-card u-mb-3"
-    style="border-left: 5px solid {% if incident.severity == 'critique' %}var(--red-error, #b91c1c){% elif incident.severity == 'modere' %}var(--admin-accent, #FFC845){% else %}var(--blue-info, #0369a1){% endif %};">
+<div class="admin-card u-mb-3 incident-header-card" data-severity="{{ incident.severity }}">
     <div class="u-flex u-justify-between u-align-start u-flex-wrap u-gap-3">
         <div>
             <div class="u-flex u-align-center u-gap-2">
@@ -48,8 +47,8 @@
     <div class="u-flex u-flex-column u-gap-3">
 
         <!-- 0. Visas & Signatures Contradictoires -->
-        <div class="admin-card"
-            style="border-top: 4px solid {% if incident.is_fully_signed %}var(--green-success, #28a745){% elif incident.is_signed_bv or incident.is_signed_prod %}var(--admin-accent, #FFC845){% else %}var(--white-3, #cbd5e1){% endif %};">
+        <div class="admin-card incident-visas-card"
+            data-signature-state="{% if incident.is_fully_signed %}fully_signed{% elif incident.is_signed_bv or incident.is_signed_prod %}partially_signed{% else %}unsigned{% endif %}">
             <div class="u-flex u-justify-between u-align-center u-flex-wrap u-gap-2 u-mb-3">
                 <div class="admin-card-title u-m-0">Visas & Signatures du Constat Contradictoire</div>
                 <div>
@@ -60,15 +59,13 @@
             <!-- Grille des 2 signataires contradictoires -->
             <div class="u-grid u-grid-2 u-gap-3">
                 <!-- Signataire Belle Vitesse -->
-                <div class="u-p-3"
-                    style="background: var(--admin-bg, #f8f9fa); border: 1px solid var(--white-3, #e9ecef); border-radius: 6px;">
+                <div class="u-p-3 incident-signer-box">
                     <div class="u-flex u-justify-between u-align-center u-mb-2">
-                        <span class="u-text-xs u-font-bold u-text-uppercase"
-                            style="letter-spacing: 0.5px; color: var(--admin-text-dark, #1e293b);">
+                        <span class="u-text-xs u-font-bold u-text-uppercase incident-signer-title">
                             🏢 Belle Vitesse
                         </span>
                         {% if incident.is_signed_bv %}
-                        <span class="u-text-xs u-font-semibold" style="color: var(--green-success, #28a745);">✅
+                        <span class="u-text-xs u-font-semibold u-text-success">✅
                             Visé</span>
                         {% else %}
                         <span class="u-text-xs u-text-muted">En attente</span>
@@ -87,7 +84,7 @@
                     {% if incident.bv_signature_data %}
                     <div class="u-mt-2">
                         <img src="{{ incident.bv_signature_data }}" alt="Signature Belle Vitesse"
-                            style="max-height: 70px; max-width: 100%; background: #ffffff; border: 1px solid var(--white-3, #e2e8f0); border-radius: 4px; padding: 4px; display: block;">
+                            class="incident-signature-preview">
                     </div>
                     {% endif %}
                     {% else %}
@@ -101,15 +98,13 @@
                 </div>
 
                 <!-- Signataire Production -->
-                <div class="u-p-3"
-                    style="background: var(--admin-bg, #f8f9fa); border: 1px solid var(--white-3, #e9ecef); border-radius: 6px;">
+                <div class="u-p-3 incident-signer-box">
                     <div class="u-flex u-justify-between u-align-center u-mb-2">
-                        <span class="u-text-xs u-font-bold u-text-uppercase"
-                            style="letter-spacing: 0.5px; color: var(--admin-text-dark, #1e293b);">
+                        <span class="u-text-xs u-font-bold u-text-uppercase incident-signer-title">
                             🎬 Production (Contradictoire)
                         </span>
                         {% if incident.is_signed_prod %}
-                        <span class="u-text-xs u-font-semibold" style="color: var(--green-success, #28a745);">✅
+                        <span class="u-text-xs u-font-semibold u-text-success">✅
                             Signé</span>
                         {% else %}
                         <span class="u-text-xs u-text-muted">En attente</span>
@@ -128,7 +123,7 @@
                     {% if incident.prod_signature_data %}
                     <div class="u-mt-2">
                         <img src="{{ incident.prod_signature_data }}" alt="Signature Production"
-                            style="max-height: 70px; max-width: 100%; background: #ffffff; border: 1px solid var(--white-3, #e2e8f0); border-radius: 4px; padding: 4px; display: block;">
+                            class="incident-signature-preview">
                     </div>
                     {% endif %}
                     {% else %}
@@ -150,20 +145,19 @@
 
             <!-- Sceau cryptographique si fully signed -->
             {% if incident.is_fully_signed %}
-            <div class="u-mt-3 u-p-3" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px;">
+            <div class="u-mt-3 u-p-3 incident-seal-box">
                 <div class="u-flex u-justify-between u-align-center u-flex-wrap u-gap-2">
                     <div>
-                        <div class="u-text-xs u-font-bold" style="color: #166534;">🛡️ Sceau d'Intégrité Cryptographique
+                        <div class="u-text-xs u-font-bold incident-seal-title">🛡️ Sceau d'Intégrité Cryptographique
                             (HMAC-SHA256)</div>
-                        <div class="u-text-xs u-mt-1"
-                            style="word-break: break-all; font-family: monospace; color: #14532d;">
+                        <div class="u-text-xs u-mt-1 incident-seal-hash">
                             {{ incident.hash }}
                         </div>
                     </div>
                     <div class="u-flex u-gap-2 u-align-center">
                         {% if incident.signed_pdf_path %}
                         <a href="{{ incident.signed_pdf_url or url_for('admin_incident_pdf', record_id=incident.id) }}"
-                            target="_blank" class="admin-btn admin-btn-sm" style="background: #166534; color: white;">
+                            target="_blank" class="admin-btn admin-btn-sm admin-btn-seal">
                             📥 PDF Scellé
                         </a>
                         {% endif %}
@@ -180,16 +174,14 @@
         <!-- 1. Circonstances -->
         <div class="admin-card">
             <div class="admin-card-title">Circonstances & Dommages Constatés</div>
-            <div class="u-p-3"
-                style="background-color: var(--admin-bg, #f8f9fa); border: 1px solid var(--white-3, #e9ecef); font-size: 14px; line-height: 1.6; white-space: pre-wrap;">
+            <div class="u-p-3 u-rounded incident-description-box">
                 {{ incident.description or "Aucun descriptif renseigné." }}</div>
 
             {% if incident.immediate_actions %}
             <div class="u-mt-3">
                 <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Actions immédiates prises sur le
                     plateau :</span>
-                <div class="u-p-3 u-mt-1"
-                    style="background-color: #fffbeb; border-left: 4px solid var(--admin-accent, #FFC845); font-size: 13px; color: #92400e;">
+                <div class="u-p-3 u-mt-1 u-rounded incident-impact-banner">
                     {{ incident.immediate_actions }}
                 </div>
             </div>
@@ -201,22 +193,18 @@
             <div class="u-flex u-justify-between u-align-center u-mb-3">
                 <div class="admin-card-title u-m-0">Photos des Dommages ({{ incident.photos|length }})</div>
                 {% if not incident.is_signed_prod %}
-                <a href="{{ url_for('admin_incident_edit', record_id=incident.id) }}" class="u-text-xs u-font-semibold"
-                    style="color: var(--blue-info, #0369a1);">+ Ajouter des photos</a>
+                <a href="{{ url_for('admin_incident_edit', record_id=incident.id) }}" class="u-text-xs u-font-semibold incident-add-photos-link">+ Ajouter des photos</a>
                 {% endif %}
             </div>
 
             {% if incident.photos %}
             <div class="u-grid u-grid-3 u-gap-3">
                 {% for p in incident.photos %}
-                <div style="border: 1px solid var(--white-3, #e9ecef); overflow: hidden; background-color: #000;">
+                <div class="incident-photo-container">
                     <a href="{{ p.url }}" target="_blank" title="Ouvrir l'image en grand">
-                        <img src="{{ p.url }}" alt="Photo dégât"
-                            style="width: 100%; height: 160px; object-fit: cover; display: block; transition: transform 0.2s;"
-                            onmouseover="this.style.transform='scale(1.03)'"
-                            onmouseout="this.style.transform='scale(1)'">
+                        <img src="{{ p.url }}" alt="Photo dégât" class="incident-photo-img">
                     </a>
-                    <div class="u-p-2 u-text-xs u-text-center u-text-muted" style="background-color: #ffffff;">
+                    <div class="u-p-2 u-text-xs u-text-center u-text-muted incident-photo-meta">
                         Pièce jointe #{{ loop.index }}
                     </div>
                 </div>
@@ -233,8 +221,7 @@
             <div class="admin-card-title">Justificatifs & Pièces Jointes ({{ incident.documents|length }})</div>
             <div class="u-flex u-flex-column u-gap-2">
                 {% for doc in incident.documents %}
-                <div class="u-flex u-justify-between u-align-center u-p-2"
-                    style="background-color: var(--admin-bg, #f8f9fa); border: 1px solid var(--white-3, #e9ecef);">
+                <div class="u-flex u-justify-between u-align-center u-p-2 u-rounded incident-empty-photos">
                     <span class="u-text-sm u-font-semibold">📄 {{ doc.filename }}</span>
                     <a href="{{ doc.url }}" target="_blank"
                         class="admin-btn admin-btn-secondary admin-btn-sm">Télécharger ↗</a>
@@ -247,14 +234,13 @@
         <!-- 4. Notes de Résolution -->
         {% if incident.resolution_notes or incident.resolved_at %}
         <div class="admin-card">
-            <div class="admin-card-title" style="color: var(--green-success, #28a745);">Résolution & Clôture du Dossier
+            <div class="admin-card-title u-text-success">Résolution & Clôture du Dossier
             </div>
             {% if incident.resolved_at %}
             <div class="u-text-xs u-text-muted u-mb-2">Date de clôture : <strong>{{ incident.resolved_at }}</strong>
             </div>
             {% endif %}
-            <div class="u-p-3"
-                style="background-color: #f0fdf4; border: 1px solid #bbf7d0; font-size: 13px; color: #166534;">
+            <div class="u-p-3 u-rounded incident-resolution-box">
                 {{ incident.resolution_notes or "Dossier clôturé." }}
             </div>
         </div>
@@ -291,8 +277,7 @@
                     {% endif %}
                     {% if incident.vehicle_id %}
                     <a href="{{ url_for('admin_vehicle_timeline', vehicle_id=incident.vehicle_id) }}"
-                        class="admin-btn admin-btn-sm admin-btn-secondary u-ml-1"
-                        style="font-size: 11px; padding: 2px 6px;" title="Consulter l'historique de ce véhicule">🏎️
+                        class="admin-btn admin-btn-xs admin-btn-secondary u-ml-1" title="Consulter l'historique de ce véhicule">🏎️
                         Timeline</a>
                     {% endif %}
                     {% else %}
@@ -322,20 +307,20 @@
             </div>
 
             {% if incident.checkout %}
-            <div class="u-mt-3 u-pt-2" style="border-top: 1px solid var(--white-3, #e9ecef);">
+            <div class="u-mt-3 u-pt-2 incident-sidebar-divider">
                 <span class="u-text-xs u-text-muted">Lié au Check-out :</span>
                 <a href="{{ url_for('admin_checkout_detail', record_id=incident.checkout.id) }}"
-                    class="u-text-xs u-font-semibold u-ml-1" style="color: var(--blue-info, #0369a1);">
+                    class="u-text-xs u-font-semibold u-ml-1 u-text-info">
                     {{ incident.checkout.inspection_number }} →
                 </a>
             </div>
             {% endif %}
 
             {% if incident.checkin %}
-            <div class="u-mt-2 u-pt-2" style="border-top: 1px solid var(--white-3, #e9ecef);">
+            <div class="u-mt-2 u-pt-2 incident-sidebar-divider">
                 <span class="u-text-xs u-text-muted">Lié au Check-in :</span>
                 <a href="{{ url_for('admin_checkin_detail', record_id=incident.checkin.id) }}"
-                    class="u-text-xs u-font-semibold u-ml-1" style="color: var(--blue-info, #0369a1);">
+                    class="u-text-xs u-font-semibold u-ml-1 u-text-info">
                     {{ incident.checkin.inspection_number }} →
                 </a>
             </div>
@@ -360,17 +345,17 @@
             {% if incident.actual_cost is not none %}
             <div class="u-mb-3">
                 <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Coût réel facturé :</span>
-                <div class="u-text-xl u-font-bold u-mt-1" style="color: var(--green-success, #28a745);">
+                <div class="u-text-xl u-font-bold u-mt-1 u-text-success">
                     {{ "{:,.2f}".format(incident.actual_cost)|replace(',', ' ') }} € HT
                 </div>
             </div>
             {% endif %}
 
-            <div class="u-pt-3 u-mt-3" style="border-top: 1px solid var(--white-3, #e9ecef);">
+            <div class="u-pt-3 u-mt-3 incident-sidebar-divider">
                 <div class="u-flex u-align-center u-gap-2">
                     <span class="u-text-sm">Déclaration Assurance :</span>
                     {% if incident.insurance_declared %}
-                    <strong style="color: var(--green-success, #28a745);">OUI</strong>
+                    <strong class="u-text-success">OUI</strong>
                     {% else %}
                     <strong class="u-text-muted">NON</strong>
                     {% endif %}
@@ -384,7 +369,7 @@
                 {% endif %}
 
                 {% if incident.insurance_notes %}
-                <div class="u-text-xs u-mt-2 u-p-2" style="background-color: var(--admin-bg, #f8f9fa);">
+                <div class="u-text-xs u-mt-2 u-p-2 incident-internal-notes">
                     {{ incident.insurance_notes }}
                 </div>
                 {% endif %}
@@ -441,9 +426,7 @@
             <div class="form-group u-mb-3">
                 <div class="u-flex u-justify-between u-align-center u-mb-1">
                     <label class="form-label u-text-xs u-font-semibold u-m-0">Signature manuscrite *</label>
-                    <button type="button" class="u-text-xs"
-                        style="background:none; border:none; color: var(--blue-info, #0369a1); cursor:pointer;"
-                        id="clearBvCanvas">Effacer</button>
+                    <button type="button" class="u-text-xs admin-btn-link" id="clearBvCanvas">Effacer</button>
                 </div>
                 <div class="incident-canvas-wrapper">
                     <canvas id="bvCanvas"></canvas>
@@ -490,9 +473,7 @@
                 <div class="u-flex u-justify-between u-align-center u-mb-1">
                     <label class="form-label u-text-xs u-font-semibold u-m-0">Signature manuscrite contradictoire
                         *</label>
-                    <button type="button" class="u-text-xs"
-                        style="background:none; border:none; color: var(--blue-info, #0369a1); cursor:pointer;"
-                        id="clearProdCanvas">Effacer</button>
+                    <button type="button" class="u-text-xs admin-btn-link" id="clearProdCanvas">Effacer</button>
                 </div>
                 <div class="incident-canvas-wrapper">
                     <canvas id="prodCanvas"></canvas>
@@ -529,8 +510,7 @@
                     placeholder="production@exemple.com" />
             </div>
 
-            <div class="u-p-3 u-mb-3"
-                style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px; color: #475569;">
+            <div class="u-p-3 u-mb-3 incident-modal-hint">
                 ℹ️ Dès que le représentant signe, le constat est scellé avec un QR code de vérification publique et
                 l'archive légale est générée automatiquement.
             </div>

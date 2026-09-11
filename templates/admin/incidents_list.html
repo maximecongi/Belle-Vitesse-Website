@@ -16,32 +16,33 @@
 {% block content %}
 <!-- ═══════════ KPI SUMMARY CARDS ═══════════ -->
 <div class="u-grid u-grid-4 u-gap-3 u-mb-3">
-    <div class="admin-card u-p-3" style="border-left: 4px solid var(--blue-info, #0369a1);">
+    <div class="admin-card u-p-3 incident-kpi-card--info">
         <div class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Total Actifs</div>
         <div class="u-text-2xl u-font-bold u-mt-1">{{ stats.in_progress }}</div>
         <div class="u-text-xs u-text-muted u-mt-1">Dossiers en cours de traitement</div>
     </div>
 
-    <div class="admin-card u-p-3" style="border-left: 4px solid var(--red-error, #b91c1c);">
+    <div class="admin-card u-p-3 incident-kpi-card--danger">
         <div class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Critiques / Arrêt Tournage</div>
-        <div class="u-text-2xl u-font-bold u-mt-1" style="color: var(--red-error, #b91c1c);">{{ stats.critical }}</div>
+        <div class="u-text-2xl u-font-bold u-mt-1 u-text-error">{{ stats.critical }}</div>
         <div class="u-text-xs u-text-muted u-mt-1">Véhicule ou matériel immobilisé</div>
     </div>
 
-    <div class="admin-card u-p-3" style="border-left: 4px solid var(--admin-accent, #FFC845);">
+    <div class="admin-card u-p-3 incident-kpi-card--warning">
         <div class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">En Réparation Atelier</div>
         <div class="u-text-2xl u-font-bold u-mt-1">{{ stats.reparation }}</div>
         <div class="u-text-xs u-text-muted u-mt-1">Travaux mécaniques / carrosserie</div>
     </div>
 
-    <div class="admin-card u-p-3" style="border-left: 4px solid var(--green-success, #28a745);">
+    <div class="admin-card u-p-3 incident-kpi-card--success">
         <div class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Coût Estimé Actif</div>
-        <div class="u-text-2xl u-font-bold u-mt-1" style="color: var(--green-success, #28a745);">
+        <div class="u-text-2xl u-font-bold u-mt-1 u-text-success">
             {{ "{:,.2f}".format(stats.total_estimated_cost)|replace(',', ' ') }} €
         </div>
         <div class="u-text-xs u-text-muted u-mt-1">Estimation totale des dommages</div>
     </div>
 </div>
+
 
 <!-- ═══════════ FILTRES & LISTE ═══════════ -->
 <div class="admin-card">
@@ -170,9 +171,10 @@
             </tbody>
         </table>
 
-        <div id="no-results" class="u-text-center u-p-4 u-text-muted" style="display: none;">
+        <div id="no-results" class="u-text-center u-p-4 u-text-muted is-hidden">
             Aucun résultat pour cette recherche.
         </div>
+
     </div>
 </div>
 {% endblock %}

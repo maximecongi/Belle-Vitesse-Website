@@ -18,9 +18,10 @@
 
 {% block content %}
 <!-- ═══════════ EN-TÊTE RÉCAPITULATIF DU PROJET ═══════════ -->
-<div class="admin-card u-mb-3 project-hub-header" style="border-left: 5px solid {{ shoot_status_color }};">
+<div class="admin-card u-mb-3 project-hub-header" data-status="{{ shoot_status }}">
     <div class="u-flex u-justify-between u-align-start u-flex-wrap u-gap-3">
         <div class="project-hub-left-side">
+            <div><span class="checkout-doc-id u-m-0 project-hub-id">{{project.project_id }}</span></div>
             <div class="project-hub-header-main-row">
                 <!-- Titre du projet -->
                 <h1 class="project-hub-title">{{ project.name }}</h1>
@@ -28,12 +29,9 @@
             </div>
             <!-- Ligne méta : Identifiant, Statut du tournage, Société de Production -->
             <div class="project-hub-meta">
-                <span class="project-hub-prod-badge" title="Société de production">
-                    🏢 <strong>{{ project.production.name if project.production else 'Production à confirmer'
-                        }}</strong>
-                </span>
-                <span class="checkout-doc-id u-m-0">{{
-                    project.project_id }}</span>
+                <span class="u-text-semibold">{{ project.production.name if project.production else 'Production à
+                    confirmer'
+                    }}</span>
             </div>
 
             <!-- Barre de jalons temporels (Enlèvement, Tournage, Restitution) -->
@@ -113,7 +111,7 @@
             </div>
 
             <!-- Véhicules -->
-            <h3 class="u-text-sm u-text-uppercase u-text-muted u-font-bold u-mb-2" style="letter-spacing: 0.5px;">
+            <h3 class="u-text-sm u-text-uppercase u-text-muted u-font-bold u-mb-2 u-tracking-wide">
                 Véhicules de Précision & Travelling
             </h3>
             {% if vehicles and vehicles|length > 0 %}
@@ -242,7 +240,7 @@
             {% endif %}
 
             <!-- Têtes gyrostabilisées -->
-            <h3 class="u-text-sm u-text-uppercase u-text-muted u-font-bold u-mb-2" style="letter-spacing: 0.5px;">
+            <h3 class="u-text-sm u-text-uppercase u-text-muted u-font-bold u-mb-2 u-tracking-wide">
                 Têtes Gyrostabilisées
             </h3>
             {% if heads and heads|length > 0 %}
@@ -288,7 +286,7 @@
                 class="project-report-form u-mb-4" id="addReportForm">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <!-- Champ masqué synchronisé avec le Markdown sérialisé -->
-                <textarea name="content" id="reportContentInput" style="display: none;" required></textarea>
+                <textarea name="content" id="reportContentInput" class="u-d-none" required></textarea>
 
                 <div class="notion-wysiwyg-wrapper u-mb-2" id="notionEditorWrapper">
                     <div class="notion-slash-container">
@@ -390,11 +388,12 @@
                             <div class="project-report-body markdown-rendered project-report-body-preview">
                                 {{ report.content | truncate_report(200) | markdown }}
                             </div>
-                            <div class="project-report-body markdown-rendered project-report-body-full" style="display: none;">
+                            <div class="project-report-body markdown-rendered project-report-body-full">
                                 {{ report.content | markdown }}
                             </div>
                             <div class="project-report-toggle-wrapper">
-                                <button type="button" class="project-report-toggle-btn" data-action="toggle-report" aria-expanded="false" title="Afficher ou masquer la suite du rapport">
+                                <button type="button" class="project-report-toggle-btn" data-action="toggle-report"
+                                    aria-expanded="false" title="Afficher ou masquer la suite du rapport">
                                     <span class="project-report-toggle-label">Déplier le rapport</span>
                                     <span class="project-report-toggle-icon">▾</span>
                                 </button>
@@ -410,7 +409,7 @@
                 {% endfor %}
                 {% else %}
                 <div class="u-text-center u-p-4 u-text-muted project-reports-empty">
-                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">📝</div>
+                    <div class="u-text-2xl u-mb-1">📝</div>
                     <p class="u-text-sm u-m-0">Aucun rapport consigné pour ce tournage pour le moment.</p>
                     <p class="u-text-xs u-text-muted u-mt-1">Utilisez la boîte ci-dessus pour laisser la première note
                         d'équipe.</p>
@@ -595,7 +594,7 @@
 
                 <!-- Incidents éventuels -->
                 {% if incidents and incidents|length > 0 %}
-                <div class="project-doc-item u-p-2" style="border-left: 3px solid var(--red-error, #b91c1c);">
+                <div class="project-doc-item u-p-2 project-doc-item--error">
                     <div class="u-font-semibold u-text-xs u-mb-1">🚨 Incident{{ 's' if incidents|length > 1 else '' }}
                         lié{{ 's' if incidents|length > 1 else '' }}</div>
                     <div class="u-flex u-flex-column u-gap-1">
@@ -618,7 +617,7 @@
             <div class="admin-card-title u-mb-2">
                 📝 Notes Spécifiques
             </div>
-            <div class="u-text-sm u-text-muted" style="white-space: pre-wrap; line-height: 1.5;">
+            <div class="u-text-sm u-text-muted project-notes-content">
                 {{ project.notes }}
             </div>
         </div>

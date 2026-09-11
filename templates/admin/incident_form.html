@@ -283,9 +283,9 @@
             <label class="form-label">Photos actuelles des dommages (Cocher pour supprimer) :</label>
             <div class="u-grid u-grid-4 u-gap-3 u-mt-1">
                 {% for p in incident.photos %}
-                <div style="border: 1px solid var(--white-3); padding: 6px; background-color: var(--white-1);">
-                    <img src="{{ p.url }}" alt="Photo dégât"
-                        style="width: 100%; height: 110px; object-fit: cover; display: block;">
+                <div class="incident-photo-card">
+                    <img src="{{ p.url }}" alt="Photo dégât" class="incident-photo-card-img">
+
                     <label class="u-flex u-align-center u-gap-1 u-mt-2 u-text-xs u-text-error u-cursor-pointer">
                         <input type="checkbox" name="remove_photos" value="{{ p.rel_path }}"> Supprimer
                     </label>

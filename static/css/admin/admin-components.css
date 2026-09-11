@@ -221,6 +221,25 @@
     color: var(--neutral-color);
 }
 
+/* --- Shoot & Project Operational Statuses (Charte Belle Vitesse) --- */
+.badge-pill[data-val="in_progress"] {
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.badge-pill[data-val="upcoming"] {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid rgba(82, 153, 211, 0.35);
+}
+
+.badge-pill[data-val="completed"] {
+    background: #f4f4f4;
+    color: #515151;
+    border: 1px solid #d1d5db;
+}
+
 /* --- Equipment Check Statuses --- */
 .badge-pill[data-val="warning"] {
     background: #fef3c7;
@@ -234,11 +253,6 @@
 
 .badge-pill[data-val="to_check"]:before {
     content: "🔍 ";
-}
-
-.badge-pill[data-val="in_progress"] {
-    background: #ffe2b8;
-    color: #dc852e;
 }
 
 .badge-pill[data-val="in_progress"][data-conform="true"]:before {
@@ -1117,4 +1131,58 @@ input[type="checkbox"]:checked {
     margin-bottom: 1rem;
     color: #92400e;
     font-size: 0.84rem;
+}
+
+.booking-conflicts-icon {
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.booking-conflicts-body {
+    flex: 1;
+}
+
+.booking-conflicts-title {
+    font-size: 0.9rem;
+}
+
+.booking-conflicts-list {
+    font-size: 0.78rem;
+    line-height: 1.4;
+}
+
+/* ── Boutons compacts & Boutons-liens ── */
+.admin-btn-xs {
+    font-size: 11px !important;
+    padding: 2px 6px !important;
+    line-height: 1.2 !important;
+}
+
+.admin-btn-link {
+    background: none !important;
+    border: none !important;
+    color: var(--blue-info, #0369a1) !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    font: inherit !important;
+    text-decoration: none !important;
+}
+
+.admin-btn-link:hover {
+    text-decoration: underline !important;
+}
+
+/* ── Badge Pill Extra-Small ── */
+.badge-pill-xs {
+    font-size: 10px !important;
+    padding: 2px 6px !important;
+}
+
+/* ── Modales compactes ── */
+.admin-modal-dialog-sm {
+    max-width: 550px !important;
+    height: auto !important;
+    max-height: 90vh !important;
+    border-radius: 12px !important;
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.35) !important;
 }
