@@ -147,7 +147,8 @@
                         {{ report.author_name[:2] | upper }}
                     </div>
                     <div class="project-report-content-wrapper">
-                        <div class="project-report-header u-flex u-justify-between u-align-center u-flex-wrap u-gap-1">
+                        <div
+                            class="project-report-header u-flex u-justify-between u-align-center u-flex-wrap u-gap-1 u-mb-3">
                             <div class="u-flex u-align-center u-gap-2">
                                 <strong class="project-report-author">{{ report.author_name }}</strong>
                                 <span class="project-report-role-badge">{{ report.author_job }}</span>
@@ -166,9 +167,7 @@
                             </form>
                             {% endif %}
                         </div>
-                        <div class="project-report-body">
-                            {{ report.content | e | replace('\n', '<br>') | safe }}
-                        </div>
+                        <div class="project-report-body">{{ report.content }}</div>
                     </div>
                 </div>
                 {% endfor %}
