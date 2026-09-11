@@ -200,6 +200,8 @@ img.top-head {
 .vehicle-configurator-carousel-wrapper {
     display: flex;
     justify-content: space-between;
+    background: var(--white-3);
+    padding: 2vw;
     width: 80vw;
     align-items: center;
 }
