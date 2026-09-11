@@ -719,19 +719,68 @@ function initProjectReportsCollapsible() {
         if (isCollapsed) {
             wrapper.classList.remove('is-collapsed');
             wrapper.classList.add('is-expanded');
-            if (previewEl) previewEl.style.display = 'none';
-            if (fullEl) fullEl.style.display = 'block';
             if (labelEl) labelEl.textContent = 'Plier';
             if (iconEl) iconEl.textContent = '▴';
             toggleBtn.setAttribute('aria-expanded', 'true');
         } else {
             wrapper.classList.remove('is-expanded');
             wrapper.classList.add('is-collapsed');
-            if (previewEl) previewEl.style.display = 'block';
-            if (fullEl) fullEl.style.display = 'none';
             if (labelEl) labelEl.textContent = 'Déplier';
             if (iconEl) iconEl.textContent = '▾';
             toggleBtn.setAttribute('aria-expanded', 'false');
+        }
+    });
+}
+
+function initProjectReportsEdit() {
+    if (document._projectReportsEditBound) return;
+    document._projectReportsEditBound = true;
+
+    document.addEventListener('click', (e) => {
+        // Bouton Modifier
+        const editBtn = e.target.closest('[data-action="edit-report"]');
+        if (editBtn) {
+            const reportId = editBtn.getAttribute('data-report-id');
+            const viewEl = document.getElementById(`reportView-${reportId}`);
+            const editEl = document.getElementById(`reportEdit-${reportId}`);
+            if (viewEl && editEl) {
+                viewEl.classList.add('is-hidden');
+                editEl.classList.remove('is-hidden');
+                const textarea = editEl.querySelector('textarea');
+                if (textarea) {
+                    textarea.focus();
+                    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+                }
+            }
+            return;
+        }
+
+        // Bouton Annuler
+        const cancelBtn = e.target.closest('[data-action="cancel-edit"]');
+        if (cancelBtn) {
+            const reportId = cancelBtn.getAttribute('data-report-id');
+            const viewEl = document.getElementById(`reportView-${reportId}`);
+            const editEl = document.getElementById(`reportEdit-${reportId}`);
+            if (viewEl && editEl) {
+                editEl.classList.add('is-hidden');
+                viewEl.classList.remove('is-hidden');
+            }
+            return;
+        }
+    });
+
+    // Raccourci Escape pour annuler l'édition en cours
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const activeEditForm = document.querySelector('.project-report-edit-form:not(.is-hidden)');
+            if (activeEditForm) {
+                const reportId = activeEditForm.id.replace('reportEdit-', '');
+                const viewEl = document.getElementById(`reportView-${reportId}`);
+                if (viewEl) {
+                    activeEditForm.classList.add('is-hidden');
+                    viewEl.classList.remove('is-hidden');
+                }
+            }
         }
     });
 }
@@ -742,6 +791,8 @@ function initProjectInteractions() {
     initVehiclesModal();
     initProjectNotionSlashEditor();
     initProjectReportsCollapsible();
+    initProjectReportsEdit();
 }
 
 window.initProjectInteractions = initProjectInteractions;
+

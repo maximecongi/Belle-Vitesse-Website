@@ -45,4 +45,5 @@ from .project_reports import (
     delete_project_report,
     get_project_detail_context,
     list_project_reports,
+    update_project_report,
 )

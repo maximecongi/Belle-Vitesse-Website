@@ -19,6 +19,7 @@ from services.admin.project_reports import (
     delete_project_report,
     list_project_reports,
     get_project_detail_context,
+    update_project_report,
 )
 from mcp_server.tools.projects import (
     get_project_reports,
@@ -110,13 +111,13 @@ class ProjectReportsTest(unittest.TestCase):
             self.assertEqual(report2.author_name, "Maxime Admin")
             self.assertIsNone(report2.title)
 
-            # Récupération de la liste
+            # Récupération de la liste (ordre antéchronologique : plus récent en premier)
             reports = list_project_reports(self.project_id)
             self.assertEqual(len(reports), 2)
-            self.assertEqual(reports[0]["title"], "Débriefing Tournage J1")
-            self.assertEqual(reports[0]["content"], "Essai carmount validé à 110 km/h.")
-            self.assertIsNone(reports[1]["title"])
-            self.assertEqual(reports[1]["content"], "Prévoir jeu de pneus pluie supplémentaire pour demain.")
+            self.assertIsNone(reports[0]["title"])
+            self.assertEqual(reports[0]["content"], "Prévoir jeu de pneus pluie supplémentaire pour demain.")
+            self.assertEqual(reports[1]["title"], "Débriefing Tournage J1")
+            self.assertEqual(reports[1]["content"], "Essai carmount validé à 110 km/h.")
             self.assertTrue("created_at_fr" in reports[0])
 
     def test_empty_content_validation(self):
@@ -344,6 +345,74 @@ class ProjectReportsTest(unittest.TestCase):
 
             # Test présence du filtre Jinja dans l'environnement Flask
             self.assertIn("truncate_report", self.app.jinja_env.filters)
+
+    def test_update_project_report_within_3h(self):
+        with self.app.app_context():
+            report = add_project_report(
+                self.project_id,
+                user_id=self.tech_id,
+                title="Titre initial",
+                content="Contenu initial"
+            )
+            updated = update_project_report(
+                report.id,
+                current_user_id=self.tech_id,
+                title="Titre modifié",
+                content="Contenu mis à jour",
+                is_admin=False
+            )
+            self.assertEqual(updated.title, "Titre modifié")
+            self.assertEqual(updated.content, "Contenu mis à jour")
+
+    def test_update_project_report_unauthorized_user(self):
+        with self.app.app_context():
+            report = add_project_report(
+                self.project_id,
+                user_id=self.tech_id,
+                title="Titre initial",
+                content="Contenu initial"
+            )
+            with self.assertRaises(PermissionError):
+                update_project_report(
+                    report.id,
+                    current_user_id=999,
+                    content="Contenu illégitime",
+                    is_admin=False
+                )
+
+    def test_update_project_report_after_3h_blocked_for_author_allowed_for_admin(self):
+        from datetime import datetime, timezone, timedelta
+        with self.app.app_context():
+            report = add_project_report(
+                self.project_id,
+                user_id=self.tech_id,
+                title="Titre initial",
+                content="Contenu initial"
+            )
+            # Simuler un rapport créé il y a 4 heures
+            r = db.session.get(ProjectReport, report.id)
+            r.created_at = datetime.now(timezone.utc) - timedelta(hours=4)
+            db.session.commit()
+
+            # L'auteur ne peut plus modifier au-delà de 3h
+            with self.assertRaises(PermissionError):
+                update_project_report(
+                    report.id,
+                    current_user_id=self.tech_id,
+                    content="Tentative tardive",
+                    is_admin=False
+                )
+
+            # L'administrateur peut toujours modifier
+            updated = update_project_report(
+                report.id,
+                current_user_id=self.admin_id,
+                title="Correction admin",
+                content="Mise à jour par l'administrateur",
+                is_admin=True
+            )
+            self.assertEqual(updated.title, "Correction admin")
+            self.assertEqual(updated.content, "Mise à jour par l'administrateur")
 
 
 if __name__ == '__main__':

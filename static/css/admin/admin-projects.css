@@ -377,35 +377,61 @@
     margin-top: 0.15rem;
 }
 
-/* Boîte de saisie des rapports */
+/* ── Section Journal de Bord & Rapports ── */
+.project-reports-container {
+    position: relative;
+}
+
+.project-reports-header-title {
+    display: flex;
+    flex-direction: column;
+}
+
+.project-reports-title-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: var(--grey-1, #151515);
+    color: var(--admin-accent, #FFC845);
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+/* Boîte de rédaction de rapport */
 .project-report-form {
-    background: var(--admin-bg, #f8fafc);
+    background: #ffffff;
     border: 1px solid var(--white-3, #e2e8f0);
     border-radius: 8px;
-    padding: 1rem;
+    padding: 1.15rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
-.project-report-textarea {
-    width: 100%;
-    min-height: 80px;
-    resize: vertical;
-    border-radius: 6px;
-    padding: 0.65rem 0.85rem;
-    font-size: 0.82rem;
-    line-height: 1.6;
-    background: #ffffff;
+.project-report-field-group {
+    display: flex;
+    flex-direction: column;
 }
 
-.project-report-textarea:focus {
-    border-color: var(--admin-accent, #ffc845);
-    box-shadow: 0 0 0 3px rgba(255, 200, 69, 0.2);
+.project-report-field-label {
+    font-size: 0.80rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.35rem;
+    display: block;
+}
+
+.project-report-format-hint {
+    font-size: 0.70rem;
+    color: #94a3b8;
+    font-weight: 400;
 }
 
 .project-report-title-input {
     width: 100%;
-    font-size: 0.85rem;
-    font-weight: 600;
-    padding: 0.5rem 0.75rem;
+    font-size: 0.86rem;
+    font-weight: 500;
+    padding: 0.55rem 0.75rem;
     border-radius: 6px;
     border: 1px solid var(--white-3, #cbd5e1);
     background: #ffffff;
@@ -420,10 +446,12 @@
 }
 
 .project-report-title-input:focus {
-    border-color: var(--admin-accent, #ffc845);
+    border-color: var(--admin-accent, #FFC845);
     box-shadow: 0 0 0 3px rgba(255, 200, 69, 0.2);
     outline: none;
 }
+
+
 
 .project-hub-divider {
     border: none;
@@ -431,87 +459,134 @@
     margin: 1.25rem 0;
 }
 
-/* Fil chronologique des rapports */
+/* Fil chronologique des rapports (Timeline technique BV) */
 .project-reports-stream {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.project-reports-timeline {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
 }
 
 .project-report-item {
     display: flex;
-    gap: 0.85rem;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 0.9rem 1rem;
-    transition: box-shadow 0.2s, border-color 0.2s;
+    gap: 1rem;
+    position: relative;
 }
 
-.project-report-item:hover {
-    border-color: #cbd5e1;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+.project-report-timeline-axis {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 32px;
+    flex-shrink: 0;
 }
 
 .project-report-avatar {
-    height: 28px;
+    width: 32px;
     aspect-ratio: 1;
+    position: relative;
+    top: 6px;
     border-radius: 50%;
-    background: var(--admin-accent);
-    color: var(--grey-1);
+    color: var(--grey-1, #151515);
+    background: var(--admin-accent, #FFC845);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 0.55rem;
+    font-size: 0.65rem;
     letter-spacing: 0.04em;
     flex-shrink: 0;
-    border: 2px solid var(--neutral-bg);
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 1.5px var(--neutral-bg);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    z-index: 2;
 }
 
-.project-report-content-wrapper {
+.project-reports-timeline:before {
+    content: "";
+    width: 2px;
+    flex: 1;
+    background: var(--neutral-bg);
+    border-radius: 1px;
+    height: calc(100% - 34px);
+    top: 34px;
+    left: 15px;
+    position: absolute;
+}
+
+.project-report-item:last-child .project-report-timeline-line {
+    display: none;
+}
+
+.project-report-card {
     flex: 1;
     min-width: 0;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-left: 3.5px solid #cbd5e1;
+    padding: 0.95rem 1.15rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.project-report-item:hover .project-report-card {
+    border-color: #cbd5e1;
+    border-left-color: var(--admin-accent, #FFC845);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
 }
 
 .project-report-author {
-    font-size: 0.84rem;
+    font-size: 0.66rem;
     font-weight: 600;
-    color: #0f172a;
-    letter-spacing: -0.01em;
+    color: var(--admin-text);
 }
 
 .project-report-role-badge {
-    font-size: 0.68rem;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
     padding: 0.12rem 0.45rem;
     border-radius: 4px;
-    background: #f1f5f9;
+    background: #f8fafc;
     color: #475569;
     border: 1px solid #e2e8f0;
     font-weight: 600;
-    letter-spacing: 0.01em;
 }
 
 .project-report-date {
     font-size: 0.72rem;
     color: #64748b;
     font-weight: 400;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.project-report-date svg {
+    color: #94a3b8;
+    flex-shrink: 0;
 }
 
 .project-report-title {
-    font-size: 0.90rem;
-    font-weight: 700;
+    font-size: 1.04rem;
+    font-weight: 600;
     color: #0f172a;
     letter-spacing: -0.01em;
-    margin: 0 0 0.35rem 0;
+    margin: 0 0 1rem 0;
     line-height: 1.35;
 }
 
 .project-report-body {
-    margin-top: 0.4rem;
-    font-size: 0.82rem;
+    margin-top: 0.35rem;
+    font-size: 0.83rem;
     color: #334155;
-    line-height: 1.6;
+    line-height: 1.62;
     word-break: break-word;
 }
 
@@ -553,6 +628,14 @@
     text-transform: uppercase;
     letter-spacing: 0.03em;
     margin: 0.5rem 0 0.2rem 0;
+}
+
+.project-report-body p,
+.project-report-body ul,
+.project-report-body li,
+.project-report-body ol {
+    font-size: 0.8rem;
+    line-height: 2rem;
 }
 
 .project-report-body ul,
@@ -939,8 +1022,8 @@
     content: attr(data-placeholder);
     color: #94a3b8;
     pointer-events: none;
+    font-weight: 400;
     display: block;
-    font-style: italic;
 }
 
 .notion-live-editor:focus:before,
@@ -1025,24 +1108,150 @@
     box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
 }
 
-.project-report-delete-btn {
+.project-report-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.project-report-action-btn {
     background: transparent;
     border: none;
     cursor: pointer;
-    opacity: 0.45;
-    transition: opacity 0.2s, transform 0.1s;
-    font-size: 0.82rem;
-    padding: 0.2rem;
+    color: #94a3b8;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: color 0.15s ease, background-color 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.project-report-action-btn:hover {
+    color: #0f172a;
+    background-color: #f1f5f9;
+}
+
+.project-report-edit-btn:hover {
+    color: #0284c7;
+    background-color: #e0f2fe;
 }
 
 .project-report-delete-btn:hover {
-    opacity: 1;
+    color: #ef4444;
+    background-color: #fee2e2;
+}
+
+.project-report-edited-badge {
+    font-size: 0.68rem;
+    color: #94a3b8;
+    font-style: italic;
+    margin-left: 0.25rem;
+    font-weight: 400;
+}
+
+.project-report-edit-form {
+    margin-top: 0.5rem;
+    padding-top: 0.65rem;
+    border-top: 1px dashed #cbd5e1;
+}
+
+.project-report-edit-title-input {
+    width: 100%;
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid var(--white-3, #cbd5e1);
+    border-radius: 6px;
+    background: #ffffff;
+    color: #0f172a;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.project-report-edit-title-input:focus {
+    border-color: var(--admin-accent, #FFC845);
+    box-shadow: 0 0 0 3px rgba(255, 200, 69, 0.2);
+    outline: none;
+}
+
+.project-report-edit-textarea {
+    width: 100%;
+    min-height: 90px;
+    border: 1px solid var(--white-3, #cbd5e1);
+    border-radius: 6px;
+    padding: 0.65rem 0.85rem;
+    font-size: 0.83rem;
+    line-height: 1.6;
+    font-family: inherit;
+    resize: vertical;
+    box-sizing: border-box;
+    background: #ffffff;
+    color: #0f172a;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.project-report-edit-textarea:focus {
+    border-color: var(--admin-accent, #FFC845);
+    box-shadow: 0 0 0 3px rgba(255, 200, 69, 0.2);
+    outline: none;
 }
 
 .project-reports-empty {
-    background: var(--admin-bg, #f8fafc);
+    background: #fafbfc;
     border: 1px dashed #cbd5e1;
     border-radius: 8px;
+    padding: 2.25rem 1.5rem;
+    text-align: center;
+    margin-top: 0.5rem;
+}
+
+.project-reports-empty-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #64748b;
+    margin-bottom: 0.75rem;
+}
+
+.project-reports-empty-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.project-reports-empty-desc {
+    font-size: 0.78rem;
+    color: #64748b;
+    max-width: 420px;
+    margin: 0 auto;
+    line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+    .project-report-item {
+        gap: 0.65rem;
+    }
+
+    .project-report-timeline-axis {
+        width: 28px;
+    }
+
+    .project-report-avatar {
+        width: 28px;
+        height: 28px;
+        font-size: 0.58rem;
+    }
+
+    .project-report-card {
+        padding: 0.75rem 0.85rem;
+    }
 }
 
 /* Matériel engagé */

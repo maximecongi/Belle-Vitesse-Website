@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timezone, date
+from datetime import datetime, timezone, date, timedelta
 from sqlalchemy.orm import joinedload, selectinload
 
 from models import (
@@ -12,6 +12,7 @@ from models import (
     Incident,
     db
 )
+from models.db import _utcnow
 from services.admin.status_mapping import format_waiver_status
 from services.admin.projects import _format_vehicle_state, _get_secured_document_url
 from utils.database import get_vehicles, get_heads
@@ -69,6 +70,44 @@ def add_project_report(project_id, user_id, content, title=None):
     return report
 
 
+REPORT_EDIT_WINDOW_SECONDS = 3 * 3600  # 3 heures
+
+
+def update_project_report(report_id, current_user_id, content, title=None, is_admin=False):
+    """
+    Met à jour un rapport d'équipe existant (titre et contenu).
+    Seul l'auteur dans les 3 heures suivant la publication ou un administrateur peut modifier.
+    """
+    report = db.session.get(ProjectReport, report_id)
+    if not report:
+        raise ValueError("Rapport introuvable.")
+
+    is_author = (current_user_id is not None and report.user_id == current_user_id)
+    created_at = report.created_at
+    if created_at.tzinfo is None:
+        created_at = created_at.replace(tzinfo=timezone.utc)
+    now = datetime.now(timezone.utc)
+    diff_seconds = (now - created_at).total_seconds()
+    within_window = diff_seconds <= REPORT_EDIT_WINDOW_SECONDS
+
+    if not is_admin:
+        if not is_author:
+            raise PermissionError("Vous n'êtes pas autorisé à modifier ce rapport.")
+        if not within_window:
+            raise PermissionError("La modification de ce rapport n'est plus autorisée (délai de 3 heures dépassé).")
+
+    content = (content or "").strip()
+    title = (title or "").strip() or None
+    if not content:
+        raise ValueError("Le contenu du rapport ne peut pas être vide.")
+
+    report.content = content
+    report.title = title
+    report.updated_at = _utcnow()
+    db.session.commit()
+    return report
+
+
 def delete_project_report(report_id, current_user_id, is_admin=False):
     """
     Supprime un rapport / commentaire.
@@ -95,7 +134,7 @@ def list_project_reports(project_id):
     Retourne la liste ordonnée chronologiquement des rapports d'un projet avec métadonnées formatées.
     """
     reports = ProjectReport.query.filter_by(project_id=project_id).order_by(
-        ProjectReport.created_at.asc()
+        ProjectReport.created_at.desc()
     ).all()
 
     return [{
@@ -192,11 +231,26 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
         shoot_status_id = "upcoming"
         shoot_status_color = "#5299D3"
 
-    # Formattage des rapports avec permissions de suppression
+    # Formattage des rapports avec permissions de modification et suppression
+    now = datetime.now(timezone.utc)
     formatted_reports = []
-    for r in sorted(project.reports, key=lambda x: x.created_at):
-        can_delete = (current_user_id is not None and r.user_id ==
-                      current_user_id) or is_admin
+    for r in sorted(project.reports, key=lambda x: x.created_at, reverse=True):
+        is_author = (current_user_id is not None and r.user_id == current_user_id)
+        can_delete = is_author or is_admin
+
+        created_at = r.created_at
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+        diff_seconds = (now - created_at).total_seconds()
+        within_edit_window = diff_seconds <= REPORT_EDIT_WINDOW_SECONDS
+        can_edit = is_admin or (is_author and within_edit_window)
+
+        is_edited = False
+        if r.updated_at and r.created_at:
+            up_at = r.updated_at.replace(tzinfo=timezone.utc) if r.updated_at.tzinfo is None else r.updated_at
+            if (up_at - created_at).total_seconds() > 2:
+                is_edited = True
+
         job = r.user.job if (r.user and r.user.job) else (
             r.author_role or "Équipe")
         formatted_reports.append({
@@ -210,7 +264,10 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
             "content": r.content,
             "created_at": r.created_at,
             "created_at_fr": _format_datetime_fr(r.created_at),
+            "updated_at": r.updated_at,
             "can_delete": can_delete,
+            "can_edit": can_edit,
+            "is_edited": is_edited,
         })
 
     # Contacts enrichis

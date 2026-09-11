@@ -24,6 +24,7 @@ from services.admin import (
     list_project_reports,
     list_projects,
     update_project,
+    update_project_report,
 )
 from utils.decorators import require_roles
 
@@ -220,6 +221,47 @@ def init_projects_routes(app):
                 return jsonify({"status": "error", "message": "Erreur serveur"}), 500
             flash("Erreur lors de la suppression.", "error")
             return redirect(url_for("admin_project_detail", record_id=record_id) + "#reports")
+
+    @app.route("/admin/projects/<record_id>/reports/<int:report_id>/edit", methods=["POST"])
+    @require_roles('administrator', 'manager', 'commercial', 'user', 'technicien')
+    def admin_project_report_edit(record_id, report_id):
+        try:
+            payload = request.get_json(silent=True) or request.form or {}
+            content = payload.get("content", "")
+            title = payload.get("title", "")
+            current_user_id = session.get("admin_user_id")
+            role_str = (session.get("admin_user_role") or "").strip().lower()
+            is_admin = role_str in ("administrateur", "super administrateur", "administrator", "super administrator")
+
+            report = update_project_report(
+                report_id,
+                current_user_id=current_user_id,
+                content=content,
+                title=title,
+                is_admin=is_admin
+            )
+
+            if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"status": "success", "report": report.to_dict()}), 200
+
+            flash("Rapport modifié avec succès.", "success")
+            return redirect(url_for("admin_project_detail", record_id=record_id) + f"#report-{report_id}")
+        except PermissionError as pe:
+            if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"status": "error", "message": str(pe)}), 403
+            flash(str(pe), "error")
+            return redirect(url_for("admin_project_detail", record_id=record_id) + f"#report-{report_id}")
+        except ValueError as ve:
+            if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"status": "error", "message": str(ve)}), 400
+            flash(str(ve), "error")
+            return redirect(url_for("admin_project_detail", record_id=record_id) + f"#report-{report_id}")
+        except Exception as e:
+            current_app.logger.error(f"❌ Erreur modification rapport projet : {e}")
+            if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"status": "error", "message": "Erreur serveur"}), 500
+            flash(f"Erreur lors de la modification : {str(e)}", "error")
+            return redirect(url_for("admin_project_detail", record_id=record_id) + f"#report-{report_id}")
 
     @app.route("/admin/projects/<record_id>/print", methods=["GET"])
     @require_roles('administrator', 'manager', 'commercial', 'user', 'technicien')

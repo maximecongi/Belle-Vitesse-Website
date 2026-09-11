@@ -1,6 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
-{% from "admin/macros.html" import status_badge, incident_severity_badge, incident_status_badge, shoot_status_badge %}
+{% from "admin/macros.html" import status_badge, incident_severity_badge, incident_status_badge, shoot_status_badge,
+initials %}
 
 {% block title %}{{ project.name }} — Hub Projet BV{% endblock %}
 {% block page_title %}Hub Projet : {{ project.name }}{% endblock %}
@@ -269,10 +270,12 @@
         <!-- 2. JOURNAL & RAPPORTS COLLECTIFS D'ÉQUIPE -->
         <div class="admin-card project-reports-container" id="reports">
             <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
-                <div>
-                    <h2 class="admin-card-title u-m-0">
-                        💬 Journal de Bord & Rapports d'Équipe
-                    </h2>
+                <div class="project-reports-header-title">
+                    <div class="u-flex u-align-center u-gap-2">
+                        <h2 class="admin-card-title u-m-0">
+                            📖 Journal de Bord & Rapports d'Équipe
+                        </h2>
+                    </div>
                     <p class="u-text-xs u-text-muted u-mt-1 u-mb-0">
                         Espace collaboratif de suivi et de débriefing en direct (plateau & atelier).
                     </p>
@@ -281,75 +284,91 @@
                 }}
             </div>
 
-            <!-- Boîte de rédaction unique avec aperçu éditable direct (WYSIWYG Notion-style) -->
+            <!-- Boîte de rédaction de rapport -->
             <form method="POST" action="{{ url_for('admin_project_reports_add', record_id=project.id) }}"
                 class="project-report-form u-mb-4" id="addReportForm">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <!-- Champ masqué synchronisé avec le Markdown sérialisé -->
-                <textarea name="content" id="reportContentInput" class="u-d-none" required></textarea>
 
-                <!-- Titre optionnel du rapport -->
-                <div class="project-report-title-field u-mb-2">
+                <!-- 1. Champ Titre autonome -->
+                <div class="project-report-field-group u-mb-3">
+                    <label for="reportTitleInput" class="project-report-field-label">
+                        Titre du rapport <span class="u-text-muted u-font-normal">(optionnel)</span>
+                    </label>
                     <input type="text" name="title" id="reportTitleInput" class="project-report-title-input"
-                        placeholder="Titre du rapport" maxlength="255" autocomplete="off">
+                        placeholder="Ex : Débriefing J1, Point matériel..." maxlength="255" autocomplete="off">
                 </div>
 
-                <div class="notion-wysiwyg-wrapper u-mb-2" id="notionEditorWrapper">
-                    <div class="notion-slash-container">
-                        <div class="notion-slash-menu" id="notionSlashMenu" role="listbox"
-                            aria-label="Commandes Markdown"></div>
-                        <!-- Menu contextuel personnalisé au clic droit -->
-                        <div class="notion-context-menu" id="notionContextMenu" role="menu"
-                            aria-label="Menu de formatage">
-                            <div class="notion-context-item is-danger-hover" data-action="clear" role="menuitem">
-                                <span class="notion-context-icon">🧹</span>
-                                <span class="notion-context-label">Supprimer la mise en forme</span>
-                                <span class="notion-context-hint">Normal</span>
-                            </div>
-                            <div class="notion-context-divider"></div>
-                            <div class="notion-context-header">TRANSFORMER LE BLOC</div>
-                            <div class="notion-context-item" data-action="bullet" role="menuitem">
-                                <span class="notion-context-icon">•</span>
-                                <span class="notion-context-label">Liste à puces</span>
-                            </div>
-                            <div class="notion-context-item" data-action="numbered" role="menuitem">
-                                <span class="notion-context-icon">1.</span>
-                                <span class="notion-context-label">Liste numérotée</span>
-                            </div>
-                            <div class="notion-context-item" data-action="h2" role="menuitem">
-                                <span class="notion-context-icon">🏷️</span>
-                                <span class="notion-context-label">Titre de section</span>
-                            </div>
-                            <div class="notion-context-item" data-action="h3" role="menuitem">
-                                <span class="notion-context-icon">📌</span>
-                                <span class="notion-context-label">Sous-titre</span>
-                            </div>
-                            <div class="notion-context-item" data-action="quote" role="menuitem">
-                                <span class="notion-context-icon">💬</span>
-                                <span class="notion-context-label">Citation / Observation</span>
-                            </div>
-                            <div class="notion-context-divider"></div>
-                            <div class="notion-context-header">STYLE DU TEXTE</div>
-                            <div class="notion-context-item" data-action="bold" role="menuitem">
-                                <span class="notion-context-icon">𝐁</span>
-                                <span class="notion-context-label">Mettre en gras</span>
-                                <span class="notion-context-hint">⌘B</span>
-                            </div>
-                            <div class="notion-context-item" data-action="italic" role="menuitem">
-                                <span class="notion-context-icon">𝐼</span>
-                                <span class="notion-context-label">Mettre en italique</span>
-                                <span class="notion-context-hint">⌘I</span>
-                            </div>
-                        </div>
+                <!-- 2. Champ Contenu / Éditeur WYSIWYG interactif en direct avec menu "/" -->
+                <div class="project-report-field-group u-mb-3">
+                    <div class="u-flex u-justify-between u-align-center u-mb-1">
+                        <label for="reportContentEditor" class="project-report-field-label u-m-0">
+                            Observation & Compte-rendu <span class="u-text-danger">*</span>
+                        </label>
+                        <span class="project-report-format-hint">Raccourci <kbd class="notion-kbd">/</kbd> pour formater
+                            en direct</span>
+                    </div>
 
-                        <div class="project-report-body markdown-rendered notion-live-editor" id="reportContentEditor"
-                            contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true"
-                            data-empty="true"
-                            data-placeholder="Rédigez une observation (tapez / pour ouvrir la mise en page    )">
+                    <!-- Champ masqué synchronisé avec le Markdown sérialisé -->
+                    <textarea name="content" id="reportContentInput" class="u-d-none"></textarea>
+
+                    <div class="notion-wysiwyg-wrapper" id="notionEditorWrapper">
+                        <div class="notion-slash-container">
+                            <div class="notion-slash-menu" id="notionSlashMenu" role="listbox"
+                                aria-label="Commandes Markdown"></div>
+                            <!-- Menu contextuel personnalisé au clic droit -->
+                            <div class="notion-context-menu" id="notionContextMenu" role="menu"
+                                aria-label="Menu de formatage">
+                                <div class="notion-context-item is-danger-hover" data-action="clear" role="menuitem">
+                                    <span class="notion-context-icon">🧹</span>
+                                    <span class="notion-context-label">Supprimer la mise en forme</span>
+                                    <span class="notion-context-hint">Normal</span>
+                                </div>
+                                <div class="notion-context-divider"></div>
+                                <div class="notion-context-header">TRANSFORMER LE BLOC</div>
+                                <div class="notion-context-item" data-action="bullet" role="menuitem">
+                                    <span class="notion-context-icon">•</span>
+                                    <span class="notion-context-label">Liste à puces</span>
+                                </div>
+                                <div class="notion-context-item" data-action="numbered" role="menuitem">
+                                    <span class="notion-context-icon">1.</span>
+                                    <span class="notion-context-label">Liste numérotée</span>
+                                </div>
+                                <div class="notion-context-item" data-action="h2" role="menuitem">
+                                    <span class="notion-context-icon">🏷️</span>
+                                    <span class="notion-context-label">Titre de section</span>
+                                </div>
+                                <div class="notion-context-item" data-action="h3" role="menuitem">
+                                    <span class="notion-context-icon">📌</span>
+                                    <span class="notion-context-label">Sous-titre</span>
+                                </div>
+                                <div class="notion-context-item" data-action="quote" role="menuitem">
+                                    <span class="notion-context-icon">💬</span>
+                                    <span class="notion-context-label">Citation / Observation</span>
+                                </div>
+                                <div class="notion-context-divider"></div>
+                                <div class="notion-context-header">STYLE DU TEXTE</div>
+                                <div class="notion-context-item" data-action="bold" role="menuitem">
+                                    <span class="notion-context-icon">𝐁</span>
+                                    <span class="notion-context-label">Mettre en gras</span>
+                                    <span class="notion-context-hint">⌘B</span>
+                                </div>
+                                <div class="notion-context-item" data-action="italic" role="menuitem">
+                                    <span class="notion-context-icon">𝐼</span>
+                                    <span class="notion-context-label">Mettre en italique</span>
+                                    <span class="notion-context-hint">⌘I</span>
+                                </div>
+                            </div>
+
+                            <div class="project-report-body markdown-rendered notion-live-editor"
+                                id="reportContentEditor" contenteditable="true" role="textbox" aria-multiline="true"
+                                spellcheck="true" data-empty="true"
+                                data-placeholder="Rédigez votre observation ou compte-rendu...">
+                            </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- 3. Actions -->
                 <div class="u-flex u-justify-end u-align-center u-flex-wrap u-gap-2">
                     <button type="submit" class="admin-btn admin-btn-primary admin-btn-sm" id="submitReportBtn">
                         Publier le rapport
@@ -357,73 +376,155 @@
                 </div>
             </form>
 
-            <!-- Fil chronologique des rapports -->
+            <!-- Fil chronologique des rapports (Timeline technique BV) -->
             <div class="project-reports-stream" id="reportsStream">
                 {% if reports and reports|length > 0 %}
-                <hr class="project-hub-divider u-mb-4">
-                {% for report in reports %}
-                <div class="project-report-item" id="report-{{ report.id }}">
-                    <div class="project-report-avatar" title="{{ report.author_job }}">
-                        {{ report.author_name[:2] | upper }}
-                    </div>
-                    <div class="project-report-content-wrapper">
-                        <div
-                            class="project-report-header u-flex u-justify-between u-align-center u-flex-wrap u-gap-1 u-mb-2">
-                            <div class="u-flex u-align-center u-gap-2">
-                                <strong class="project-report-author">{{ report.author_name }}</strong>
-                                <span class="project-report-role-badge">{{ report.author_job }}</span>
-                                <span class="project-report-date u-text-muted">{{ report.created_at_fr
-                                    }}</span>
+                <div class="project-reports-timeline">
+                    <div class="project-report-timeline-line"></div>
+                    {% for report in reports %}
+                    <div class="project-report-item" id="report-{{ report.id }}">
+                        <div class="project-report-timeline-axis">
+                            <div class="project-report-avatar" title="{{ report.author_job }}">
+                                {{ initials(report.author_name, '') }}
                             </div>
-                            {% if report.can_delete %}
+                        </div>
+                        <div class="project-report-card">
+                            <div
+                                class="project-report-header u-flex u-justify-between u-align-center u-flex-wrap u-gap-1 u-mb-3">
+                                <div class="u-flex u-align-center u-gap-2">
+                                    <strong class="project-report-author">{{ report.author_name }}</strong>
+                                    <span class="project-report-role-badge">{{ report.author_job }}</span>
+                                    <span class="project-report-date u-text-muted">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock">
+                                            <circle cx="12" cy="12" r="10" />
+                                            <polyline points="12 6 12 12 16 14" />
+                                        </svg>
+                                        {{ report.created_at_fr }}
+                                        {% if report.is_edited %}
+                                        <span class="project-report-edited-badge"
+                                            title="Rapport modifié ultérieurement">(modifié)</span>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div class="project-report-actions u-flex u-align-center u-gap-1">
+                                    {% if report.can_edit %}
+                                    <button type="button" class="project-report-action-btn project-report-edit-btn"
+                                        data-action="edit-report" data-report-id="{{ report.id }}"
+                                        title="Modifier ce rapport (accessible pendant 3h)">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pencil">
+                                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                                            <path d="m15 5 4 4" />
+                                        </svg>
+                                    </button>
+                                    {% endif %}
+                                    {% if report.can_delete %}
+                                    <form method="POST"
+                                        action="{{ url_for('admin_project_report_delete', record_id=project.id, report_id=report.id) }}"
+                                        class="u-m-0"
+                                        onsubmit="return confirm('Confirmer la suppression de ce commentaire ?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit"
+                                            class="project-report-action-btn project-report-delete-btn"
+                                            title="Supprimer ce rapport">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" stroke-linejoin="round"
+                                                class="lucide lucide-trash">
+                                                <path d="M10 11v6" />
+                                                <path d="M14 11v6" />
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                                                <path d="M3 6h18" />
+                                                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                            </svg>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Mode Affichage Normal -->
+                            <div class="project-report-view-mode" id="reportView-{{ report.id }}">
+                                {% if report.title %}
+                                <h4 class="project-report-title">{{ report.title }}</h4>
+                                {% endif %}
+
+                                {% if report.content and report.content|length > 200 %}
+                                <div class="project-report-collapsible is-collapsed" data-report-id="{{ report.id }}">
+                                    <div class="project-report-body markdown-rendered project-report-body-preview">
+                                        {{ report.content | truncate_report(200) | markdown }}
+                                    </div>
+                                    <div class="project-report-body markdown-rendered project-report-body-full">
+                                        {{ report.content | markdown }}
+                                    </div>
+                                    <div class="project-report-toggle-wrapper">
+                                        <button type="button" class="project-report-toggle-btn"
+                                            data-action="toggle-report" aria-expanded="false"
+                                            title="Afficher ou masquer la suite du rapport">
+                                            <span class="project-report-toggle-label">Déplier</span>
+                                            <span class="project-report-toggle-icon">▾</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <div class="project-report-body markdown-rendered">
+                                    {{ report.content | markdown }}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Mode Édition Inline (disponible dans les 3h) -->
+                            {% if report.can_edit %}
                             <form method="POST"
-                                action="{{ url_for('admin_project_report_delete', record_id=project.id, report_id=report.id) }}"
-                                class="u-m-0"
-                                onsubmit="return confirm('Confirmer la suppression de ce commentaire ?');">
+                                action="{{ url_for('admin_project_report_edit', record_id=project.id, report_id=report.id) }}"
+                                class="project-report-edit-form is-hidden" id="reportEdit-{{ report.id }}">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="project-report-delete-btn" title="Supprimer ce rapport">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round" class="lucide lucide-trash">
-                                        <path d="M10 11v6" />
-                                        <path d="M14 11v6" />
-                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                                        <path d="M3 6h18" />
-                                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                    </svg>
-                                </button>
+                                <div class="u-mb-2">
+                                    <input type="text" name="title" class="project-report-edit-title-input"
+                                        value="{{ report.title or '' }}" placeholder="Titre du rapport (optionnel)"
+                                        maxlength="255" autocomplete="off">
+                                </div>
+                                <div class="u-mb-2">
+                                    <textarea name="content" class="project-report-edit-textarea" rows="4"
+                                        required>{{ report.content }}</textarea>
+                                </div>
+                                <div class="u-flex u-justify-between u-align-center u-flex-wrap u-gap-2">
+                                    <span class="u-text-2xs u-text-muted">Modification autorisée pendant 3h après
+                                        publication</span>
+                                    <div class="u-flex u-align-center u-gap-2">
+                                        <button type="button" class="admin-btn admin-btn-secondary admin-btn-xs"
+                                            data-action="cancel-edit" data-report-id="{{ report.id }}">
+                                            Annuler
+                                        </button>
+                                        <button type="submit" class="admin-btn admin-btn-primary admin-btn-xs">
+                                            Enregistrer
+                                        </button>
+                                    </div>
+                                </div>
                             </form>
                             {% endif %}
                         </div>
-
-                        {% if report.title %}
-                        <h4 class="project-report-title">{{ report.title }}</h4>
-                        {% endif %}
-
-                        {% if report.content and report.content|length > 200 %}
-                        <div class="project-report-collapsible is-collapsed" data-report-id="{{ report.id }}">
-                            <div class="project-report-body markdown-rendered project-report-body-preview">
-                                {{ report.content | truncate_report(200) | markdown }}
-                            </div>
-                            <div class="project-report-body markdown-rendered project-report-body-full">
-                                {{ report.content | markdown }}
-                            </div>
-                            <div class="project-report-toggle-wrapper">
-                                <button type="button" class="project-report-toggle-btn" data-action="toggle-report"
-                                    aria-expanded="false" title="Afficher ou masquer la suite du rapport">
-                                    <span class="project-report-toggle-label">Déplier</span>
-                                    <span class="project-report-toggle-icon">▾</span>
-                                </button>
-                            </div>
-                        </div>
-                        {% else %}
-                        <div class="project-report-body markdown-rendered">
-                            {{ report.content | markdown }}
-                        </div>
-                        {% endif %}
                     </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
+                {% else %}
+                <div class="project-reports-empty">
+                    <div class="project-reports-empty-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
+                            class="lucide lucide-clipboard-pen">
+                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                            <path d="M10.4 12.6a2 2 0 1 1 3 3L8 21l-4 1 1-4Z" />
+                            <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+                        </svg>
+                    </div>
+                    <div class="project-reports-empty-title">Aucun rapport consigné pour le moment</div>
+                    <div class="project-reports-empty-desc">Rédigez la première observation de tournage, point technique
+                        ou débriefing d'équipe ci-dessus.</div>
+                </div>
                 {% endif %}
             </div>
         </div>
@@ -436,7 +537,7 @@
         <!-- 3. CONTACTS CLÉS DU TOURNAGE -->
         <div class="admin-card">
             <div class="admin-card-title u-mb-3">
-                🎬 Contacts du Tournage
+                🎬 Contacts
             </div>
             {% if contacts and contacts|length > 0 %}
             <div class="u-flex u-flex-column u-gap-3">

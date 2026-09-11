@@ -29,6 +29,10 @@
 {% endif %}
 {% endmacro %}
 
+{% macro initials(name, separator='') %}{%- for part in name.split() -%}
+{{ part[0]|upper }}{% if not loop.last %}{{ separator }}{% endif -%}
+{% endfor %}{% endmacro %}
+
 {# ═══════════ MACROS INCIDENTS ═══════════ #}
 
 {% macro incident_severity_badge(severity, label=None) %}
