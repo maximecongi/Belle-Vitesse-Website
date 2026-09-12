@@ -522,86 +522,98 @@ def create_incident(form_data, uploaded_photos=None, uploaded_documents=None):
 
 def update_incident(record_id, form_data, uploaded_photos=None, uploaded_documents=None, removed_photos=None):
     """
-    Met à jour un incident existant, gère l'ajout/suppression de photos et les changements de statut.
+    Met à jour un incident existant, gère l'ajout/suppression de photos, les changements de statut
+    et applique les transitions d'état automatiques.
+    Si le constat est scellé contradictoirement (is_signed_prod == True), les faits constatés
+    (date, lieu, véhicule, circonstances, photos du choc) sont protégés, tandis que le suivi
+    opérationnel (statut, coûts, assurance, résolution, justificatifs) reste modifiable.
     """
     incident = db.session.get(Incident, int(record_id))
     if not incident or incident.deleted_at is not None:
         raise ValueError(f"Incident #{record_id} introuvable.")
 
-    if "title" in form_data:
-        t = form_data.get("title", "").strip()
-        if not t:
-            raise ValueError("Le titre ne peut pas être vide.")
-        incident.title = t
+    is_sealed = bool(incident.is_signed_prod)
 
-    if "incident_date" in form_data:
-        parsed = _parse_date(form_data.get("incident_date"))
-        if parsed:
-            incident.incident_date = parsed
+    # 1. Contexte du Tournage & Matériel Concerné (SCELLÉ SI LE CONSTAT EST CONTRADICTOIREMENT SIGNÉ)
+    if not is_sealed:
+        if "project_id" in form_data:
+            pid = form_data.get("project_id")
+            if pid and str(pid).isdigit():
+                incident.project_id = int(pid)
 
-    if "incident_time" in form_data:
-        incident.incident_time = _clean_str(form_data.get("incident_time"))
+        if "vehicle_id" in form_data:
+            incident.vehicle_id = _clean_str(form_data.get("vehicle_id"))
 
-    if "project_id" in form_data:
-        pid = form_data.get("project_id")
-        incident.project_id = int(pid) if pid and str(pid).isdigit() else None
+        if "equipment_name" in form_data:
+            incident.equipment_name = _clean_str(form_data.get("equipment_name"))
 
-    if "attached_inspection" in form_data:
-        attached = form_data.get("attached_inspection", "")
-        if attached.startswith("checkout:"):
-            cid = attached.split(":", 1)[1]
-            incident.checkout_id = int(cid) if cid.isdigit() else None
-            incident.checkin_id = None
-        elif attached.startswith("checkin:"):
-            cid = attached.split(":", 1)[1]
-            incident.checkin_id = int(cid) if cid.isdigit() else None
-            incident.checkout_id = None
-        else:
-            incident.checkout_id = None
-            incident.checkin_id = None
-    else:
-        if "checkout_id" in form_data:
+        if "reported_by_id" in form_data:
+            rid = form_data.get("reported_by_id")
+            incident.reported_by_id = int(rid) if rid and str(rid).isdigit() else None
+
+        if "location" in form_data:
+            incident.location = _clean_str(form_data.get("location"))
+
+        if "incident_date" in form_data:
+            d = _parse_date(form_data.get("incident_date"))
+            if d:
+                incident.incident_date = d
+
+        if "incident_time" in form_data:
+            t = _parse_time(form_data.get("incident_time"))
+            if t:
+                incident.incident_time = t
+
+        if "attached_inspection" in form_data:
+            att = form_data.get("attached_inspection") or ""
+            if att.startswith("checkout:"):
+                incident.checkout_id = int(att.split(":")[1])
+                incident.checkin_id = None
+            elif att.startswith("checkin:"):
+                incident.checkin_id = int(att.split(":")[1])
+                incident.checkout_id = None
+            else:
+                incident.checkout_id = None
+                incident.checkin_id = None
+        elif "checkout_id" in form_data or "checkin_id" in form_data:
             cid = form_data.get("checkout_id")
             incident.checkout_id = int(cid) if cid and str(cid).isdigit() else None
-        if "checkin_id" in form_data:
             cid = form_data.get("checkin_id")
             incident.checkin_id = int(cid) if cid and str(cid).isdigit() else None
 
-    if "vehicle_id" in form_data:
-        incident.vehicle_id = _clean_str(form_data.get("vehicle_id"))
+    # 2. Circonstances & Qualification (uniquement modifiables SI NON SCELLÉ PAR LA PRODUCTION)
+    if not is_sealed:
+        if "title" in form_data:
+            t = form_data.get("title", "").strip()
+            if not t:
+                raise ValueError("Le titre ne peut pas être vide.")
+            incident.title = t
 
-    if "equipment_name" in form_data:
-        incident.equipment_name = _clean_str(form_data.get("equipment_name"))
+        if "category" in form_data:
+            incident.category = form_data.get("category", incident.category)
 
-    if "reported_by_id" in form_data:
-        rid = form_data.get("reported_by_id")
-        incident.reported_by_id = int(rid) if rid and str(rid).isdigit() else None
+        if "description" in form_data:
+            incident.description = _clean_str(form_data.get("description"))
 
-    if "location" in form_data:
-        incident.location = _clean_str(form_data.get("location"))
+        if "immediate_actions" in form_data:
+            incident.immediate_actions = _clean_str(form_data.get("immediate_actions"))
 
-    if "category" in form_data:
-        incident.category = form_data.get("category", incident.category)
+        # Photos du constat initial (suppression / ajout)
+        current_photos = incident.photos_list
+        if removed_photos:
+            current_photos = [p for p in current_photos if p not in removed_photos]
 
+        new_photos = _save_uploaded_files(uploaded_photos, subfolder="photos")
+        if new_photos:
+            current_photos.extend(new_photos)
+        incident.photos = json.dumps(current_photos) if current_photos else None
+
+    # 2. Champs de suivi opérationnel, financier & assurance (TOUJOURS MODIFIABLES)
     if "severity" in form_data:
         incident.severity = form_data.get("severity", incident.severity)
 
-    if "status" in form_data:
-        new_status = form_data.get("status", incident.status)
-        if new_status in ("resolu", "cloture") and incident.status not in ("resolu", "cloture"):
-            incident.resolved_at = _utcnow()
-        elif new_status not in ("resolu", "cloture"):
-            incident.resolved_at = None
-        incident.status = new_status
-
     if "shooting_impact" in form_data:
         incident.shooting_impact = form_data.get("shooting_impact", incident.shooting_impact)
-
-    if "description" in form_data:
-        incident.description = _clean_str(form_data.get("description"))
-
-    if "immediate_actions" in form_data:
-        incident.immediate_actions = _clean_str(form_data.get("immediate_actions"))
 
     if "estimated_cost" in form_data:
         est = form_data.get("estimated_cost")
@@ -629,25 +641,80 @@ def update_incident(record_id, form_data, uploaded_photos=None, uploaded_documen
     if "resolution_notes" in form_data:
         incident.resolution_notes = _clean_str(form_data.get("resolution_notes"))
 
-    # Gestion des photos : suppression des demandées et ajout des nouvelles
-    current_photos = incident.photos_list
-    if removed_photos:
-        current_photos = [p for p in current_photos if p not in removed_photos]
-
-    new_photos = _save_uploaded_files(uploaded_photos, subfolder="photos")
-    if new_photos:
-        current_photos.extend(new_photos)
-    incident.photos = json.dumps(current_photos) if current_photos else None
-
-    # Gestion des documents joints
+    # Gestion des documents justificatifs (devis, factures...)
     current_docs = incident.documents_list
     new_docs = _save_uploaded_files(uploaded_documents, subfolder="docs")
     if new_docs:
         current_docs.extend(new_docs)
     incident.documents = json.dumps(current_docs) if current_docs else None
 
+    # 3. Transitions d'état (Automatiques & Manuelles)
+    raw_status = form_data.get("status")
+    if raw_status:
+        new_status = raw_status
+    else:
+        new_status = incident.status
+
+    # Automatisme 1 : Déclaration d'assurance renseignée ➔ bascule vers "assurance" si statut en amont
+    has_insurance = incident.insurance_declared or bool(incident.insurance_reference)
+    if has_insurance and new_status in ("signale", "en_expertise") and (not raw_status or raw_status == incident.status):
+        new_status = "assurance"
+        logger.info(f"⚡ Bascule automatique du statut incident vers 'assurance' ({incident.incident_number})")
+
+    # Automatisme 2 : Note de résolution saisie ➔ bascule vers "resolu"
+    has_resolution = bool(incident.resolution_notes and incident.resolution_notes.strip())
+    if has_resolution and new_status in ("signale", "en_expertise", "en_reparation", "assurance") and (not raw_status or raw_status == incident.status):
+        new_status = "resolu"
+        logger.info(f"⚡ Bascule automatique du statut incident vers 'resolu' ({incident.incident_number})")
+
+    # Mise à jour effective du statut et gestion de resolved_at
+    if new_status in ("resolu", "cloture"):
+        if not incident.resolved_at:
+            incident.resolved_at = _utcnow()
+    else:
+        incident.resolved_at = None
+
+    incident.status = new_status
+
     db.session.commit()
-    logger.info(f"✅ Incident mis à jour : {incident.incident_number}")
+    logger.info(f"✅ Incident mis à jour : {incident.incident_number} (Statut: {incident.status})")
+    return incident
+
+
+def update_incident_status(record_id, new_status, resolution_notes=None, actual_cost=None):
+    """
+    Met à jour directement le statut d'un incident (action rapide ou API).
+    Gère la cohérence de resolved_at, les notes de résolution et le coût réel.
+    """
+    incident = db.session.get(Incident, int(record_id))
+    if not incident or incident.deleted_at is not None:
+        raise ValueError(f"Incident #{record_id} introuvable.")
+
+    valid_statuses = ("signale", "en_expertise", "en_reparation", "assurance", "resolu", "cloture")
+    if new_status not in valid_statuses:
+        raise ValueError(f"Statut invalide : '{new_status}'. Statuts autorisés : {', '.join(valid_statuses)}")
+
+    previous_status = incident.status
+    incident.status = new_status
+
+    if resolution_notes is not None and str(resolution_notes).strip():
+        incident.resolution_notes = str(resolution_notes).strip()
+
+    if actual_cost is not None and str(actual_cost).strip():
+        try:
+            incident.actual_cost = Decimal(str(actual_cost).replace(",", "."))
+        except Exception:
+            pass
+
+    if new_status in ("resolu", "cloture"):
+        if not incident.resolved_at:
+            incident.resolved_at = _utcnow()
+    else:
+        # Réouverture du dossier
+        incident.resolved_at = None
+
+    db.session.commit()
+    logger.info(f"🔄 Statut incident {incident.incident_number} mis à jour : {previous_status} ➔ {new_status}")
     return incident
 
 
@@ -1098,6 +1165,12 @@ def finalize_incident_document(incident, base_url=None):
     incident.hash = current_hash
     incident.pdf_file_hash = pdf_file_hash
     incident.signature_status = "signed"
+
+    # Transition automatique : dès que le constat contradictoire est scellé,
+    # si l'incident est encore au statut "signale", il passe automatiquement en "en_expertise"
+    if incident.status == "signale":
+        incident.status = "en_expertise"
+        logger.info(f"⚡ Statut de l'incident {incident.incident_number} passé automatiquement à 'en_expertise' suite au scellement contradictoire.")
 
     # Enregistrement ou mise à jour de l'archive légale
     try:

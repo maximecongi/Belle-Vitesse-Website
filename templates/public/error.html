@@ -3,11 +3,11 @@
 {% block content %}
 <section class="section-site">
     <div class="main-wrapper">
-        <h1 class="title-textual-section font-56 marg-tb-3">{{ error_title }}</h1>
-        <p class="font-20 marg-tb-3">
+        <h1 class="title-textual-section">{{ error_title }}</h1>
+        <p class="error-description">
             {{ error_message }}
         </p>
-        <a href="{{ url_for('home') }}" class="btn-primary" style="text-decoration: underline;">Return to Home</a>
+        <a href="{{ url_for('home') }}" class="btn-primary error-link">Return to Home</a>
     </div>
 </section>
 {% endblock %}

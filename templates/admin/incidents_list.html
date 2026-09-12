@@ -1,6 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
-{% from "admin/macros.html" import filter_header, incident_severity_badge, incident_status_badge, incident_impact_badge, incident_signature_badge %}
+{% from "admin/macros.html" import filter_header, incident_severity_badge, incident_status_badge, incident_impact_badge,
+incident_signature_badge %}
 
 {% block title %}Gestion des Incidents de Tournage{% endblock %}
 {% block page_title %}Incidents de Tournage{% endblock %}
@@ -115,7 +116,7 @@
                     </td>
                     <td class="u-text-nowrap">{{ incident.date }}</td>
                     <td>
-                        <strong class="u-text-sm">{{ incident.title }}</strong><br>
+                        <span class="u-nowrap u-text-semibold">{{ incident.title }}</span><br>
                     </td>
                     <td>
                         {% if incident.project_id %}
@@ -142,22 +143,16 @@
                     <td>
                         {{ incident_impact_badge(incident.shooting_impact, incident.shooting_impact_label) }}
                     </td>
-                    <td class="u-text-nowrap">
+                    <td class="u-nowrap u-flex u-flex-column u-align-center">
                         {{ incident_signature_badge(incident, compact=true) }}
                     </td>
-                    <td class="u-text-nowrap">
+                    <td class="u-nowrap">
                         <div class="u-flex u-align-center u-gap-1">
-                            <a href="{{ url_for('admin_incident_detail', record_id=incident.id) }}"
-                                class="admin-btn admin-btn-secondary admin-btn-sm">Détails →</a>
                             <a href="{{ url_for('admin_incident_pdf', record_id=incident.id) }}" target="_blank"
                                 class="admin-btn admin-btn-secondary admin-btn-sm" title="Télécharger le rapport PDF">📄
                                 PDF</a>
-                            <form action="{{ url_for('admin_incident_delete', record_id=incident.id) }}" method="POST"
-                                class="u-d-inline"
-                                onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet incident ({{ incident.incident_number }}) ? Cette action est irréversible.');">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="admin-btn admin-btn-danger admin-btn-sm">Supprimer</button>
-                            </form>
+                            <a href="{{ url_for('admin_incident_detail', record_id=incident.id) }}"
+                                class="admin-btn admin-btn-secondary admin-btn-sm">Détails →</a>
                         </div>
                     </td>
                 </tr>

@@ -1,7 +1,7 @@
 {% set mail = company_email %}
 {% set phone = company_phone %}
 <section class="section-site">
-    <div class="footer bg-color-grey-3">
+    <div class="footer">
         <div class="footer-wrapper">
             <div class="footer-testimonials">
                 <div class="footer-testimonials-logo">
@@ -67,14 +67,14 @@
                     {% endfor %}
                 </div>
                 <div class="footer-links-wrapper">
-                    <h3 class="color-white-2">{{ ts('footer.legals') }}</h3>
+                    <h3>{{ ts('footer.legals') }}</h3>
                     <p class=""><a href="{{ url_for('terms_and_conditions') }}">{{ ts('footer.terms_and_conditions')
                             }}</a></p>
                     <p class=""><a href="{{ url_for('privacy_policy') }}">{{ ts('footer.privacy_policy') }}</a></p>
                 </div>
                 <div class="footer-links-wrapper">
-                    <h3 class="color-white-2"><a href="{{ url_for('contact') }}">{{ ts('menu.contact') }}</a></h3>
-                    <p class="color-white-2 font-weight-300">
+                    <h3><a href="{{ url_for('contact') }}">{{ ts('menu.contact') }}</a></h3>
+                    <p>
                         <a href="https://maps.app.goo.gl/WPGRFRjmoC7LKhZm6" target="_blank">
                             {{ company_name }}<br />
                             {{ company_address }}<br />
@@ -90,7 +90,7 @@
             </div>
         </div>
         <div class="">
-            <p class="color-white-2 font-weight-300">© Copyright {{ company_name }} {{ now.year }}. All rights reserved.
+            <p>© Copyright {{ company_name }} {{ now.year }}. All rights reserved.
                 Made
                 by Maxime Congi.</p>
         </div>

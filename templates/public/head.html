@@ -54,7 +54,7 @@
 </script>
 {% endblock %}
 <section id="hero-banner" class="section-site">
-    <div class="vehicle-hero-banner bg-color-white-3">
+    <div class="vehicle-hero-banner">
         <div class="vehicle-hero-banner-img">
             <img src="{{ head.fields.banner[0].thumbnails.full.url }}"
                 alt="{{ head.fields.name }} banner - Belle Vitesse" {% if head.fields.banner_position=="top" %}
@@ -63,12 +63,12 @@
         <div
             class="vehicle-hero-banner-wrapper animate__animated animation__banner-title {% if head.fields.banner_position == 'top' %} text-head {% endif %}">
             <div class="vehicle-hero-banner-titlewrapper">
-                <h1 class="vehicle-hero-banner-titlewrapper-title font-54 color-grey-1">
+                <h1 class="vehicle-hero-banner-titlewrapper-title">
                     {{ head.fields.name }}
                 </h1>
             </div>
             <div class="vehicle-hero-banner-textwrapper">
-                <p class="vehicle-hero-banner-textwrapper-text color-grey-1 font-weight-300 ">
+                <p class="vehicle-hero-banner-textwrapper-text">
                     {{ t(head.fields, 'powerquote') }}
                 </p>
             </div>
@@ -106,7 +106,7 @@
                     </div>
                 </div>
                 <div class="vehicle-description-left">
-                    <p class="font-weight-400">{{ t(head.fields, 'description') }}</p>
+                    <p>{{ t(head.fields, 'description') }}</p>
                 </div>
             </div>
         </div>

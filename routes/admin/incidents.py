@@ -2,6 +2,7 @@ from flask import (
     abort,
     current_app,
     flash,
+    jsonify,
     redirect,
     render_template,
     request,
@@ -15,6 +16,7 @@ from services.admin.incidents import (
     get_incident_detail,
     create_incident,
     update_incident,
+    update_incident_status,
     delete_incident,
     get_incident_form_context,
     generate_incident_pdf,
@@ -155,10 +157,7 @@ def init_incidents_routes(app):
         if not data:
             abort(404)
 
-        if data.get("is_signed_prod"):
-            flash("Ce constat d'incident a été signé par la production et ne peut plus être modifié.", "warning")
-            return redirect(url_for("admin_incident_detail", record_id=data["id"]))
-
+        is_sealed = bool(data.get("is_signed_prod"))
         context = get_incident_form_context()
 
         if request.method == "POST":
@@ -184,7 +183,51 @@ def init_incidents_routes(app):
             context=context,
             incident=data,
             is_edit=True,
+            is_sealed=is_sealed,
         )
+
+    @app.route("/admin/incidents/<record_id>/status", methods=["POST"])
+    @require_roles("administrator", "manager", "user")
+    def admin_incident_status(record_id):
+        try:
+            if request.is_json:
+                payload = request.get_json() or {}
+                new_status = payload.get("status")
+                resolution_notes = payload.get("resolution_notes")
+                actual_cost = payload.get("actual_cost")
+            else:
+                new_status = request.form.get("status")
+                resolution_notes = request.form.get("resolution_notes")
+                actual_cost = request.form.get("actual_cost")
+
+            if not new_status:
+                raise ValueError("Le statut est requis.")
+
+            incident = update_incident_status(
+                record_id=record_id,
+                new_status=new_status,
+                resolution_notes=resolution_notes,
+                actual_cost=actual_cost,
+            )
+
+            msg = f"Statut de l'incident {incident.incident_number} mis à jour : {incident.status_label}."
+            if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({
+                    "success": True,
+                    "message": msg,
+                    "status": incident.status,
+                    "status_label": incident.status_label,
+                    "resolved_at": incident.resolved_at.strftime("%d/%m/%Y %H:%M") if incident.resolved_at else None,
+                })
+
+            flash(f"✅ {msg}", "success")
+        except Exception as e:
+            current_app.logger.error(f"❌ Erreur changement statut incident #{record_id} : {e}")
+            if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"success": False, "error": str(e)}), 400
+            flash(f"Erreur lors du changement de statut : {e}", "error")
+
+        return redirect(url_for("admin_incident_detail", record_id=record_id))
 
     @app.route("/admin/incidents/<record_id>/delete", methods=["POST"])
     @require_roles("administrator", "manager")

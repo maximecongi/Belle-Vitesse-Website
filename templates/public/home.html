@@ -27,14 +27,14 @@
         fetchpriority=high>
     </video>
     <div class="home-hero-banner-slogan">
-      <h1 class="home-hero-banner-slogan-text color-white-2">
+      <h1 class="home-hero-banner-slogan-text">
         {{ ts('home.powerquote') | safe }}
       </h1>
     </div>
     <div class="home-hero-banner-buttons">
       <a href="#solutions" class="home-hero-banner-buttons-discover button">{{ ts('home.discover_our_solutions.button')
         }}</a>
-      <a href="{{ url_for('contact') }}" class="home-hero-banner-buttons-contact button bg-color-yellow-1">{{
+      <a href="{{ url_for('contact') }}" class="home-hero-banner-buttons-contact button yellow-button">{{
         ts('home.contact_us.button') }}</a>
     </div>
     <div class="icon-scroll"></div>
@@ -43,7 +43,8 @@
 <section id="testimonials" class="section-site">
   <div class="home-testimonials">
     <div class="home-testimonials-logo"><img
-        src="{{ url_for('static', filename='/imgs/logos_and_name/noir-fond-transparent.png') }}" alt="Belle Vitesse logo"></div>
+        src="{{ url_for('static', filename='/imgs/logos_and_name/noir-fond-transparent.png') }}"
+        alt="Belle Vitesse logo"></div>
     <div class="home-testimonials-textwrapper">
       <p class="home-testimonials-textwrapper-text">{{ ts('home.testimonial') | safe }}</p>
     </div>
@@ -51,35 +52,39 @@
 </section>
 <section id="solutions" class="section-site">
   <div class="home-solutions">
-    <h2 class="dot-before title-section font-32">{{ ts('home.our_solutions.title') }}</h2>
-    <div class="home-solutions-categories font-18 color-grey-2">
+    <h2 class="dot-before title-section">{{ ts('home.our_solutions.title') }}</h2>
+    <div class="home-solutions-categories">
       <div>
         <h3>{{ ts('menu.vehicles') }}</h3>
         <a class="home-solutions-categories-img-link" href="{{ url_for('vehicles') }}"><img
-            src="{{ url_for('static', filename='/imgs/vehicles/ebike-thumbnail.png') }}" alt="Véhicules de tournage - Belle Vitesse" /></a>
+            src="{{ url_for('static', filename='/imgs/vehicles/ebike-thumbnail.png') }}"
+            alt="Véhicules de tournage - Belle Vitesse" /></a>
       </div>
       <div>
         <h3>{{ ts('menu.heads') }}</h3>
         <a class="home-solutions-categories-img-link" href="{{ url_for('heads') }}"><img
-            src="{{ url_for('static', filename='/imgs/vehicles/titan-lt-thumbnail.png') }}" alt="Têtes de caméra stabilisées - Belle Vitesse" /></a>
+            src="{{ url_for('static', filename='/imgs/vehicles/titan-lt-thumbnail.png') }}"
+            alt="Têtes de caméra stabilisées - Belle Vitesse" /></a>
       </div>
       <div>
         <h3>{{ ts('menu.supports') }}</h3>
         <a class="home-solutions-categories-img-link" href="{{ url_for('grips') }}"><img
-            src="{{ url_for('static', filename='/imgs/vehicles/black-arm-thumbnail.png') }}" alt="Supports et grips caméra - Belle Vitesse" /></a>
+            src="{{ url_for('static', filename='/imgs/vehicles/black-arm-thumbnail.png') }}"
+            alt="Supports et grips caméra - Belle Vitesse" /></a>
       </div>
     </div>
   </div>
 </section>
 <section id="references" class="section-site">
   <div class="home-references">
-    <h2 class="dot-before title-section font-32">{{ ts('home.our_references.title') }}</h2>
+    <h2 class="dot-before title-section">{{ ts('home.our_references.title') }}</h2>
     <div class="home-references-wrapper">
       <div class="home-references-group">
         {% for brand in brands %}
         <a href="{{ brand.url }}" target="_blank" rel="noopener" aria-label="{{ brand.label }}">
           <div class="logo"
-            style="--logo-url: url('{{ url_for('static', filename='imgs/brands/' ~ brand.slug ~ '-logo.svg') }}')"></div>
+            style="--logo-url: url('{{ url_for('static', filename='imgs/brands/' ~ brand.slug ~ '-logo.svg') }}')">
+          </div>
         </a>
         {% endfor %}
       </div>

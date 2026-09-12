@@ -24,9 +24,26 @@ main {
     line-height: 1.5em;
 }
 
+h1.title-textual-section {
+    line-height: 1.2em;
+    font-size: clamp(2rem, 5vw, 5.6rem);
+    margin-top: 3vw;
+    margin-bottom: 3vw;
+}
+
 h2.title-textual-section {
     line-height: 1.5em;
     font-size: clamp(1rem, 2vw, 3rem);
+}
+
+.error-description {
+    font-size: clamp(1.2rem, 1.8vw, 2rem);
+    margin-top: 3vw;
+    margin-bottom: 3vw;
+}
+
+.error-link {
+    text-decoration: underline;
 }
 
 .tag-setups {

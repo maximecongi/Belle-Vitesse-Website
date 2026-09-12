@@ -117,9 +117,100 @@
             </span>
         </div>
 
-        <!-- ═══════════ 1. CONTEXTE TOURNAGE & MATÉRIEL ═══════════ -->
-        <div class="admin-card-title">1. Contexte du Tournage & Matériel Concerné</div>
+        {% if is_sealed %}
+        <div class="incident-sealed-notice u-p-3 u-mb-3 u-rounded">
+            <div class="u-flex u-align-center u-gap-2">
+                <span class="u-text-lg">🛡️</span>
+                <div>
+                    <strong class="u-text-sm">Constat contradictoire scellé</strong>
+                    <p class="u-text-xs u-m-0 u-mt-1">
+                        Ce constat a été contradictoirement signé par la Production et Belle Vitesse. Les éléments
+                        constatés sur le plateau (titre, date, lieu, véhicule, circonstances, photos initiales) sont
+                        verrouillés afin de préserver l'intégrité juridique du document. Vous pouvez en revanche mettre
+                        à jour le statut, les coûts, le dossier d'assurance, les notes de résolution et ajouter des
+                        pièces justificatives (devis, factures).
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
 
+        <!-- ═══════════ 1. CONTEXTE TOURNAGE & MATÉRIEL ═══════════ -->
+        <div class="u-flex u-justify-between u-align-center u-mb-2">
+            <div class="admin-card-title u-m-0">1. Contexte du Tournage & Matériel Concerné</div>
+            {% if is_edit %}
+            <span class="badge-pill" data-val="neutral">🔒 Scellé</span>
+            {% endif %}
+        </div>
+
+        {% if is_edit %}
+        <!-- Mode Édition : Section Scellée -->
+        <div class="incident-context-sealed-box u-p-3 u-rounded u-mb-4">
+            <div class="u-text-xs u-text-muted u-mb-3">
+                ℹ️ Le contexte du tournage, le véhicule et le matériel rattaché sont scellés dès la création de l'incident et ne peuvent plus être modifiés.
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Projet (Tournage)</label>
+                <select class="form-input" disabled>
+                    {% for p in context.projects %}
+                    <option value="{{ p.id }}" {% if incident.project_id|string==p.id|string or (incident.project and incident.project.id|string==p.id|string) %}selected{% endif %}>
+                        {{ p.name }} {% if p.production_name %}({{ p.production_name }}){% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+                <input type="hidden" name="project_id" value="{{ incident.project_id }}" />
+            </div>
+
+            <div class="u-grid u-grid-2 u-gap-3">
+                <div class="form-group">
+                    <label class="form-label">Véhicule du projet</label>
+                    <input type="text" class="form-input" disabled
+                        value="{% if incident.vehicle %}{{ incident.vehicle.name }}{% if incident.vehicle.unique_id %} ({{ incident.vehicle.unique_id }}){% endif %}{% elif incident.vehicle_name and incident.vehicle_name != '—' %}{{ incident.vehicle_name }}{% else %}— Aucun véhicule concerné —{% endif %}" />
+                    <input type="hidden" name="vehicle_id" value="{{ incident.vehicle_id or '' }}" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Matériel / Accessoire concerné</label>
+                    <input type="text" class="form-input" disabled value="{{ incident.equipment_name or '— Aucun équipement spécifique —' }}" />
+                    <input type="hidden" name="equipment_name" value="{{ incident.equipment_name or '' }}" />
+                </div>
+            </div>
+
+            {% if incident.checkout or incident.checkin or incident.attached_inspection %}
+            <div class="form-group">
+                <label class="form-label">Moment de la constatation</label>
+                <input type="text" class="form-input" disabled
+                    value="{% if incident.checkout %}Check-out {{ incident.checkout.inspection_number }}{% elif incident.checkin %}Check-in {{ incident.checkin.inspection_number }}{% else %}En cours d'opération (sur le plateau){% endif %}" />
+                <input type="hidden" name="attached_inspection" value="{{ incident.attached_inspection or '' }}" />
+            </div>
+            {% endif %}
+
+            <div class="u-grid u-grid-3 u-gap-3">
+                <div class="form-group">
+                    <label class="form-label">Date de survenance</label>
+                    <input type="text" class="form-input" disabled
+                        value="{{ incident.incident_date_raw or incident.incident_date or '' }}" />
+                    <input type="hidden" name="incident_date" value="{{ incident.incident_date_raw or incident.incident_date or '' }}" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Heure approximative</label>
+                    <input type="text" class="form-input" disabled
+                        value="{{ incident.incident_time_raw or incident.incident_time or '—' }}" />
+                    <input type="hidden" name="incident_time" value="{{ incident.incident_time_raw or incident.incident_time or '' }}" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Lieu du sinistre / Plateau</label>
+                    <input type="text" class="form-input" disabled
+                        value="{{ incident.location or '—' }}" />
+                    <input type="hidden" name="location" value="{{ incident.location or '' }}" />
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- Mode Création : Champs Interactifs -->
         <div class="form-group">
             <label class="form-label" for="project_id">Projet (Tournage) <span class="u-text-error">*</span></label>
             <select name="project_id" id="project_id" class="form-input" required
@@ -197,6 +288,7 @@
                     value="{{ incident.location or '' }}" placeholder="Ex: Circuit, Plateau 2, Route de...">
             </div>
         </div>
+        {% endif %}
 
         <!-- ═══════════ 2. QUALIFICATION & CIRCONSTANCES ═══════════ -->
         <div class="admin-card-title u-mt-4">2. Qualification & Circonstances</div>
@@ -205,12 +297,12 @@
             <label class="form-label" for="title">Intitulé court de l'incident <span
                     class="u-text-error">*</span></label>
             <input type="text" name="title" id="title" class="form-input" required value="{{ incident.title or '' }}"
-                placeholder="Ex: Fissure jupe avant gauche suite choc vibreur">
+                placeholder="Ex: Fissure jupe avant gauche suite choc vibreur" {% if is_sealed %}readonly{% endif %}>
         </div>
 
         <div class="form-group">
             <label class="form-label" for="category">Catégorie de l'incident</label>
-            <select name="category" id="category" class="form-input">
+            <select name="category" id="category" class="form-input" {% if is_sealed %}disabled{% endif %}>
                 {% for key, label in context.categories %}
                 <option value="{{ key }}" {% if incident.category==key %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
@@ -220,13 +312,15 @@
         <div class="form-group">
             <label class="form-label" for="description">Circonstances précises & Dommages constatés</label>
             <textarea name="description" id="description" rows="4" class="form-input u-resize-y"
-                placeholder="Décrire précisément ce qui s'est passé, les conditions météo, le type de prise de vue, les parties endommagées...">{{ incident.description or '' }}</textarea>
+                placeholder="Décrire précisément ce qui s'est passé, les conditions météo, le type de prise de vue, les parties endommagées..."
+                {% if is_sealed %}readonly{% endif %}>{{ incident.description or '' }}</textarea>
         </div>
 
         <div class="form-group">
             <label class="form-label" for="immediate_actions">Actions immédiates prises sur le plateau</label>
             <textarea name="immediate_actions" id="immediate_actions" rows="2" class="form-input u-resize-y"
-                placeholder="Ex: Mise en sécurité du véhicule, remplacement par véhicule mulet, contrôle télémétrie...">{{ incident.immediate_actions or '' }}</textarea>
+                placeholder="Ex: Mise en sécurité du véhicule, remplacement par véhicule mulet, contrôle télémétrie..."
+                {% if is_sealed %}readonly{% endif %}>{{ incident.immediate_actions or '' }}</textarea>
         </div>
 
         <!-- ═══════════ 3. FINANCIER & ASSURANCE ═══════════ -->
@@ -280,22 +374,26 @@
 
         {% if is_edit and incident.photos %}
         <div class="form-group">
-            <label class="form-label">Photos actuelles des dommages (Cocher pour supprimer) :</label>
+            <label class="form-label">Photos des dommages :</label>
             <div class="u-grid u-grid-4 u-gap-3 u-mt-1">
                 {% for p in incident.photos %}
                 <div class="incident-photo-card">
                     <img src="{{ p.url }}" alt="Photo dégât" class="incident-photo-card-img">
-
+                    {% if not is_sealed %}
                     <label class="u-flex u-align-center u-gap-1 u-mt-2 u-text-xs u-text-error u-cursor-pointer">
                         <input type="checkbox" name="remove_photos" value="{{ p.rel_path }}"> Supprimer
                     </label>
+                    {% else %}
+                    <div class="u-mt-1 u-text-2xs u-text-muted u-text-center">🛡️ Scellée au constat</div>
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>
         </div>
         {% endif %}
 
-        <div class="u-grid u-grid-2 u-gap-3">
+        <div class="u-grid {% if not is_sealed %}u-grid-2{% endif %} u-gap-3">
+            {% if not is_sealed %}
             <div class="form-group">
                 <label class="form-label" for="photos">Ajouter des photos des dommages (JPEG, PNG)</label>
                 <input type="file" name="photos" id="photos" multiple accept="image/*" class="form-input"
@@ -304,12 +402,12 @@
                     l'atelier.</span>
                 <div id="photos-preview" class="u-flex u-flex-wrap u-gap-2 u-mt-2"></div>
             </div>
+            {% endif %}
 
             <div class="form-group">
                 <label class="form-label" for="documents">Devis, factures ou constats scannés (PDF, images)</label>
                 <input type="file" name="documents" id="documents" multiple accept=".pdf,image/*" class="form-input"
                     onchange="previewDocs(this, 'docs-preview')">
-                <span class="u-text-xs u-text-muted u-mt-1">Justificatifs réparateurs ou rapport d'intervention.</span>
                 <div id="docs-preview" class="u-flex u-flex-wrap u-gap-1 u-mt-2"></div>
             </div>
         </div>
@@ -339,15 +437,19 @@
 <script>
     // Données des projets injectées depuis le backend
     const projectsData = {{ context.projects | tojson | safe }};
+    const isEdit = {% if is_edit %}true{% else %}false{% endif %};
     const initialVehicleId = "{{ incident.vehicle_id or (incident.vehicle and incident.vehicle.id) or '' }}";
     const initialEquipmentName = "{{ incident.equipment_name or '' }}";
     const initialAttachedInspection = "{{ incident.attached_inspection or (('checkout:' ~ incident.checkout_id) if incident.checkout_id else (('checkin:' ~ incident.checkin_id) if incident.checkin_id else '')) }}";
 
     function updateProjectEquipment(projectId) {
+        if (isEdit) return;
         const vehicleSelect = document.getElementById('vehicle_id');
         const headSelect = document.getElementById('head_select');
         const equipmentInput = document.getElementById('equipment_name');
         const inspectionSelect = document.getElementById('attached_inspection');
+
+        if (!vehicleSelect || !headSelect) return;
 
         if (!projectId) {
             vehicleSelect.innerHTML = '<option value="">— Sélectionnez d\'abord un projet —</option>';
@@ -456,11 +558,10 @@
                     reader.onload = function (e) {
                         const wrapper = document.createElement('div');
                         wrapper.className = 'photo-preview-item';
-                        wrapper.style.cssText = 'position: relative; display: inline-block; margin: 4px;';
 
                         const img = document.createElement('img');
                         img.src = e.target.result;
-                        img.style.cssText = 'width: 76px; height: 76px; object-fit: cover; border-radius: 6px; border: 1px solid var(--white-3); display: block;';
+                        img.className = 'photo-preview-img';
                         wrapper.appendChild(img);
 
                         if (typeof window.openPhotoAnnotator === 'function') {
@@ -496,8 +597,7 @@
         if (input.files) {
             Array.from(input.files).forEach(file => {
                 const tag = document.createElement('span');
-                tag.className = 'admin-badge u-text-xs';
-                tag.style.cssText = 'background: var(--white-2); color: var(--grey-1); padding: 4px 8px; margin-right: 4px;';
+                tag.className = 'admin-badge doc-preview-tag u-text-xs';
                 tag.innerText = '📄 ' + file.name;
                 container.appendChild(tag);
             });
@@ -576,11 +676,13 @@
 
     // Initialisation au chargement
     document.addEventListener('DOMContentLoaded', () => {
-        const projectSelect = document.getElementById('project_id');
-        if (projectSelect && projectSelect.value) {
-            updateProjectEquipment(projectSelect.value);
-        } else {
-            updateProjectEquipment('');
+        if (!isEdit) {
+            const projectSelect = document.getElementById('project_id');
+            if (projectSelect && projectSelect.value) {
+                updateProjectEquipment(projectSelect.value);
+            } else {
+                updateProjectEquipment('');
+            }
         }
     });
 </script>

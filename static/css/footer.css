@@ -1,6 +1,7 @@
 .footer {
     flex-direction: column;
     align-items: flex-start;
+    background-color: var(--grey-3);
 }
 
 .footer-wrapper {
@@ -11,11 +12,14 @@
 .footer p {
     font-size: clamp(0.6rem, 0.8vw, 1.4rem);
     text-align: left;
+    color: var(--white-2);
+    font-weight: 300;
 }
 
 .footer-wrapper h3 {
     margin-bottom: 3svh;
     font-size: clamp(0.8rem, 1.6vw, 3rem);
+    color: var(--white-2);
 }
 
 .footer-testimonials {

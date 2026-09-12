@@ -443,6 +443,7 @@
 /* Document ID (Unique IDs for vehicles/inspections) */
 .checkout-doc-id,
 .checkin-doc-id {
+    white-space: nowrap;
     font-family: monospace;
     font-size: 6pt;
     background-color: var(--white-3);

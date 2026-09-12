@@ -35,6 +35,7 @@ class IncidentsTestCase(unittest.TestCase):
         os.environ["USE_SSH_TUNNEL"] = "false"
 
         self.app = create_app()
+        self.app.config["WTF_CSRF_ENABLED"] = False
         self.app_context = self.app.app_context()
         self.app_context.push()
         db.create_all()
@@ -323,7 +324,191 @@ class IncidentsTestCase(unittest.TestCase):
         self.assertEqual(resp_new.status_code, 302)
         self.assertTrue(resp_new.headers.get("Location", "").endswith("/admin/dashboard"))
 
+    def test_automatic_transition_on_contradictory_seal(self):
+        """Vérifie que le scellement contradictoire fait passer le statut de 'signale' à 'en_expertise'."""
+        inc = incident_service.create_incident({
+            "title": "Choc jupe avant",
+            "project_id": self.project.id,
+            "incident_date": "2026-09-04",
+            "severity": "modere",
+            "status": "signale",
+        })
+        self.assertEqual(inc.status, "signale")
+
+        # 1. Signature BV
+        incident_service.sign_incident_bv(
+            incident_id=inc.id,
+            signer_name="Maxime Congi",
+            signer_role="Responsable Technique",
+            signature_data="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+        )
+        db.session.refresh(inc)
+        self.assertEqual(inc.status, "signale")  # En attente de la production
+
+        # 2. Signature Production -> Scellement contradictoire
+        incident_service.sign_incident_prod(
+            incident_id=inc.id,
+            signer_name="Marie Laurent",
+            signer_role="Régisseur Général",
+            signature_data="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+        )
+        db.session.refresh(inc)
+        self.assertTrue(inc.is_fully_signed)
+        self.assertEqual(inc.status, "en_expertise")
+
+    def test_automatic_transition_on_insurance_declaration(self):
+        """Vérifie que déclarer une assurance bascule automatiquement le statut vers 'assurance'."""
+        inc = incident_service.create_incident({
+            "title": "Optique fêlée",
+            "project_id": self.project.id,
+            "incident_date": "2026-09-04",
+            "status": "signale",
+        })
+        self.assertEqual(inc.status, "signale")
+
+        # Mise à jour avec déclaration assurance cochée
+        incident_service.update_incident(inc.id, {
+            "insurance_declared": "1",
+            "insurance_reference": "SIN-2026-7788",
+        })
+        db.session.refresh(inc)
+        self.assertEqual(inc.status, "assurance")
+        self.assertTrue(inc.insurance_declared)
+        self.assertEqual(inc.insurance_reference, "SIN-2026-7788")
+
+    def test_automatic_transition_on_resolution_notes(self):
+        """Vérifie que la saisie d'une note de résolution bascule automatiquement le statut vers 'resolu'."""
+        inc = incident_service.create_incident({
+            "title": "Rétroviseur brisé",
+            "project_id": self.project.id,
+            "incident_date": "2026-09-04",
+            "status": "en_reparation",
+        })
+        self.assertEqual(inc.status, "en_reparation")
+        self.assertIsNone(inc.resolved_at)
+
+        # Ajout d'une note de résolution
+        incident_service.update_incident(inc.id, {
+            "resolution_notes": "Rétroviseur remplacé par pièce d'origine en atelier BV.",
+            "actual_cost": "450.00",
+        })
+        db.session.refresh(inc)
+        self.assertEqual(inc.status, "resolu")
+        self.assertIsNotNone(inc.resolved_at)
+        self.assertEqual(float(inc.actual_cost), 450.00)
+
+    def test_direct_update_incident_status(self):
+        """Vérifie la fonction dédiée update_incident_status et la réouverture."""
+        inc = incident_service.create_incident({
+            "title": "Rayure latérale",
+            "project_id": self.project.id,
+            "incident_date": "2026-09-04",
+            "status": "signale",
+        })
+
+        # Passage en réparation
+        incident_service.update_incident_status(inc.id, "en_reparation")
+        db.session.refresh(inc)
+        self.assertEqual(inc.status, "en_reparation")
+        self.assertIsNone(inc.resolved_at)
+
+        # Clôture avec notes et coût
+        incident_service.update_incident_status(
+            inc.id,
+            new_status="cloture",
+            resolution_notes="Polissage complet effectué",
+            actual_cost="320.00",
+        )
+        db.session.refresh(inc)
+        self.assertEqual(inc.status, "cloture")
+        self.assertIsNotNone(inc.resolved_at)
+        self.assertEqual(inc.resolution_notes, "Polissage complet effectué")
+        self.assertEqual(float(inc.actual_cost), 320.00)
+
+        # Réouverture du dossier
+        incident_service.update_incident_status(inc.id, "en_reparation")
+        db.session.refresh(inc)
+        self.assertEqual(inc.status, "en_reparation")
+        self.assertIsNone(inc.resolved_at)
+
+    def test_post_signature_followup_editing(self):
+        """Vérifie qu'un incident signé peut toujours recevoir des mises à jour de suivi financier et de statut sans altérer les faits scellés."""
+        inc = incident_service.create_incident({
+            "title": "Titre initial scellé",
+            "description": "Circonstances initiales scellées",
+            "location": "Virage Nord",
+            "project_id": self.project.id,
+            "incident_date": "2026-09-04",
+            "status": "signale",
+        })
+        # Double signature
+        incident_service.sign_incident_bv(inc.id, "Maxime Congi", "Tech", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==")
+        incident_service.sign_incident_prod(inc.id, "Prod Agent", "Régisseur", "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==")
+        db.session.refresh(inc)
+        self.assertTrue(inc.is_signed_prod)
+
+        # Tentative de modification : les champs du constat doivent être ignorés, le suivi doit être mis à jour
+        incident_service.update_incident(inc.id, {
+            "title": "Nouveau titre interdit",
+            "description": "Nouvelle description interdite",
+            "location": "Nouveau lieu interdit",
+            "status": "en_reparation",
+            "estimated_cost": "2000.00",
+            "actual_cost": "1850.00",
+            "insurance_notes": "Prise en charge validée à 80%",
+        })
+        db.session.refresh(inc)
+
+        # Les faits initiaux sont restés intacts
+        self.assertEqual(inc.title, "Titre initial scellé")
+        self.assertEqual(inc.description, "Circonstances initiales scellées")
+        self.assertEqual(inc.location, "Virage Nord")
+
+        # Le suivi opérationnel s'est bien mis à jour
+        self.assertEqual(inc.status, "en_reparation")
+        self.assertEqual(float(inc.estimated_cost), 2000.00)
+        self.assertEqual(float(inc.actual_cost), 1850.00)
+        self.assertEqual(inc.insurance_notes, "Prise en charge validée à 80%")
+
+    def test_admin_incident_status_route(self):
+        """Vérifie la route POST /admin/incidents/<id>/status."""
+        inc = incident_service.create_incident({
+            "title": "Test Route Statut",
+            "project_id": self.project.id,
+            "incident_date": "2026-09-04",
+            "status": "signale",
+        })
+
+        client = self.app.test_client()
+        with client.session_transaction() as sess:
+            sess["admin_authenticated"] = True
+            sess["admin_user_id"] = self.user.id
+            sess["admin_user_role"] = "administrator"
+
+        # 1. Appel AJAX JSON
+        resp = client.post(
+            f"/admin/incidents/{inc.id}/status",
+            json={"status": "en_reparation"},
+            headers={"X-Requested-With": "XMLHttpRequest"}
+        )
+        self.assertEqual(resp.status_code, 200)
+        json_data = resp.get_json()
+        self.assertTrue(json_data.get("success"))
+        self.assertEqual(json_data.get("status"), "en_reparation")
+
+        # 2. Appel standard avec redirection
+        resp_form = client.post(
+            f"/admin/incidents/{inc.id}/status",
+            data={"status": "resolu", "resolution_notes": "Réparé avec succès"},
+            follow_redirects=True,
+        )
+        self.assertEqual(resp_form.status_code, 200)
+        db.session.refresh(inc)
+        self.assertEqual(inc.status, "resolu")
+        self.assertEqual(inc.resolution_notes, "Réparé avec succès")
+
 
 if __name__ == "__main__":
     unittest.main()
+
 

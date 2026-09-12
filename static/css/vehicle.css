@@ -3,6 +3,7 @@
     height: 90svh;
     display: flex;
     background-size: cover;
+    background-color: var(--white-3);
 }
 
 .vehicle-hero-banner-wrapper {
@@ -18,8 +19,15 @@ img.top-head {
     top: 0;
 }
 
+.vehicle-hero-banner-titlewrapper-title {
+    color: var(--grey-1);
+}
+
 .vehicle-hero-banner-textwrapper-text {
     font-size: clamp(1rem, 1.6vw, 3rem);
+    width: auto;
+    color: var(--grey-1);
+    font-weight: 300;
 }
 
 .vehicle-hero-banner-slogan-text {
@@ -32,10 +40,6 @@ img.top-head {
     z-index: 0;
     right: 0;
     bottom: 0;
-}
-
-.vehicle-hero-banner-textwrapper-text {
-    width: auto;
 }
 
 /* description */
@@ -67,6 +71,7 @@ img.top-head {
 
 .vehicle-description-left p {
     font-size: clamp(0.6rem, 0.8vw, 2rem);
+    font-weight: 400;
 }
 
 /* key_features */
@@ -201,7 +206,7 @@ img.top-head {
     display: flex;
     justify-content: space-between;
     background: var(--white-3);
-    padding: 2vw;
+    padding: 2vw 3vw;
     width: 80vw;
     align-items: center;
 }
