@@ -352,7 +352,7 @@ tr.data-row:hover td {
 }
 
 /* --- Responsive Fixes --- */
-@media (max-width: 1100px) {
+@media (max-width: 1200px) {
     .detail-section {
         grid-template-columns: 1fr;
     }

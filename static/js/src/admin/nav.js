@@ -77,9 +77,81 @@ if (!window._adminNavClickAttached) {
     });
 }
 
+// ── Gestion du tiroir latéral escamotable pour tablette & mobile ─
+function initSidebarDrawer() {
+    const sidebar = document.getElementById('adminSidebar');
+    const toggle = document.getElementById('adminSidebarToggle');
+    const backdrop = document.getElementById('adminSidebarBackdrop');
+    const closeBtn = document.getElementById('adminSidebarClose');
+
+    if (!sidebar || !toggle) return;
+
+    function openSidebar() {
+        sidebar.classList.add('is-open');
+        if (backdrop) backdrop.classList.add('is-active');
+        toggle.setAttribute('aria-expanded', 'true');
+        document.body.classList.add('u-overflow-hidden');
+        if (window.bvIpadBridge) window.bvIpadBridge.triggerHaptic('light');
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove('is-open');
+        if (backdrop) backdrop.classList.remove('is-active');
+        toggle.setAttribute('aria-expanded', 'false');
+        document.body.classList.remove('u-overflow-hidden');
+    }
+
+    toggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (sidebar.classList.contains('is-open')) {
+            closeSidebar();
+        } else {
+            openSidebar();
+        }
+    });
+
+    if (backdrop) {
+        backdrop.addEventListener('click', closeSidebar);
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeSidebar);
+    }
+
+    // Fermer avec Échap
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && sidebar.classList.contains('is-open')) {
+            closeSidebar();
+        }
+    });
+
+    // Fermer le tiroir lors du clic sur un lien nav (sur tablette)
+    sidebar.querySelectorAll('.admin-nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+            if (window.innerWidth <= 1200) {
+                closeSidebar();
+            }
+        });
+    });
+
+    // Support du geste de balayage (swipe vers la gauche) pour fermer le tiroir
+    let touchStartX = 0;
+    sidebar.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    sidebar.addEventListener('touchend', (e) => {
+        const touchEndX = e.changedTouches[0].screenX;
+        if (touchStartX - touchEndX > 50) {
+            closeSidebar();
+        }
+    }, { passive: true });
+}
+
 function initNav() {
     restoreNavState();
     updateActiveNavLink();
+    initSidebarDrawer();
 }
 
 window.initNav = initNav;
@@ -96,3 +168,4 @@ if (document.readyState === 'loading') {
 } else {
     initNav();
 }
+

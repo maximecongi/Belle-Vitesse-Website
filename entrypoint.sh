@@ -20,7 +20,8 @@ if [ -f "scripts/build_bundles.py" ]; then
             static/css/admin/admin-login.css static/css/admin/admin-dashboard.css static/css/admin/admin-contacts.css \
             static/css/admin/calendar.css static/css/admin/admin-pricing.css static/css/admin/admin-utilities.css \
             static/css/admin/admin-projects.css static/css/admin/prequote.css static/css/admin/admin-js.css \
-            static/css/admin/admin-booking.css static/css/admin/admin-cmdk.css > static/css/admin/admin.bundle.css
+            static/css/admin/admin-booking.css static/css/admin/admin-cmdk.css static/css/admin/admin-fleet.css \
+            static/css/admin/admin-incidents.css static/css/admin/admin-mcp.css > static/css/admin/admin.bundle.css
     }
 else
     cat static/css/normalize.css static/css/main.css static/css/slider.css static/css/header.css \
@@ -33,7 +34,8 @@ else
         static/css/admin/admin-login.css static/css/admin/admin-dashboard.css static/css/admin/admin-contacts.css \
         static/css/admin/calendar.css static/css/admin/admin-pricing.css static/css/admin/admin-utilities.css \
         static/css/admin/admin-projects.css static/css/admin/prequote.css static/css/admin/admin-js.css \
-        static/css/admin/admin-booking.css static/css/admin/admin-cmdk.css > static/css/admin/admin.bundle.css
+        static/css/admin/admin-booking.css static/css/admin/admin-cmdk.css static/css/admin/admin-fleet.css \
+        static/css/admin/admin-incidents.css static/css/admin/admin-mcp.css > static/css/admin/admin.bundle.css
 fi
 
 echo "✅ Bundles CSS générés avec succès"

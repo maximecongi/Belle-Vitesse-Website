@@ -321,3 +321,33 @@ def init_web_routes(app):
     @app.route("/robots.txt")
     def robots():
         return send_from_directory(app.static_folder, "robots.txt")
+
+    # ── Universal Links Apple (AASA) ──────────────────────────────
+
+    @app.route("/.well-known/apple-app-site-association")
+    @app.route("/apple-app-site-association")
+    def apple_app_site_association():
+        """Fichier AASA permettant à iPadOS d'intercepter directement les liens magiques."""
+        team_id = os.getenv("APPLE_TEAM_ID", "").strip()
+        app_id = f"{team_id}.com.bellevitesse.admin" if team_id else "com.bellevitesse.admin"
+
+        aasa_data = {
+            "applinks": {
+                "apps": [],
+                "details": [
+                    {
+                        "appIDs": [app_id, f"*.com.bellevitesse.admin"],
+                        "components": [
+                            {"/": "/admin/auth/*", "comment": "Authentification directe par Magic Link"},
+                            {"/": "/admin/*", "comment": "Pages d'administration"}
+                        ]
+                    },
+                    {
+                        "appID": app_id,
+                        "paths": ["/admin/auth/*", "/admin/*"]
+                    }
+                ]
+            }
+        }
+        return jsonify(aasa_data)
+

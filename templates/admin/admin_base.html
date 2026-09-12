@@ -24,6 +24,10 @@
     {% endif %}
 
     <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BV Admin">
+    <meta name="format-detection" content="telephone=no">
     <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
     <link rel="apple-touch-icon" href="/static/imgs/favicons/apple-touch-icon.png">
     {% block extra_css %}{% endblock %}
@@ -31,9 +35,13 @@
 
 <body>
     <div class="admin-layout">
+        <!-- Voile d'arrière-plan pour tablette/mobile -->
+        <div class="admin-sidebar-backdrop" id="adminSidebarBackdrop"></div>
+
         <!-- Sidebar -->
-        <aside class="admin-sidebar">
+        <aside class="admin-sidebar" id="adminSidebar">
             <div class="admin-sidebar-header">
+                <button type="button" class="admin-sidebar-close" id="adminSidebarClose" aria-label="Fermer le menu">&times;</button>
                 <a href="/admin/dashboard">
                     <svg xmlns="http://www.w3.org/2000/svg" width="300" height="130.726" viewBox="0 0 300 130.726"
                         class="admin-sidebar-logo">
@@ -226,8 +234,15 @@
         <!-- Main Content -->
         <main class="admin-main">
             <header class="admin-header">
-                <div class="admin-header-title">
-                    <h1>{% block page_title %}{% endblock %}</h1>
+                <div class="admin-header-left">
+                    <button type="button" class="admin-sidebar-toggle" id="adminSidebarToggle" aria-label="Ouvrir le menu de navigation" aria-expanded="false">
+                        <span class="admin-sidebar-toggle-bar"></span>
+                        <span class="admin-sidebar-toggle-bar"></span>
+                        <span class="admin-sidebar-toggle-bar"></span>
+                    </button>
+                    <div class="admin-header-title">
+                        <h1>{% block page_title %}{% endblock %}</h1>
+                    </div>
                 </div>
                 <div class="admin-header-actions">
                     {% block header_actions %}{% endblock %}
@@ -303,6 +318,7 @@
     <script src="{{ url_for('static', filename='js/src/admin/cmdk.js') }}"></script>
     <script src="{{ url_for('static', filename='js/src/admin/inspections.js') }}"></script>
     <script src="{{ url_for('static', filename='js/src/admin/photo-annotator.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/src/admin/ios-bridge.js') }}"></script>
     <script src="{{ url_for('static', filename='js/src/admin.js') }}"></script>
 </body>
 

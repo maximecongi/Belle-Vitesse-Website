@@ -455,6 +455,7 @@
 /* Tables */
 .admin-table-container {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .admin-table {
@@ -1185,4 +1186,36 @@ input[type="checkbox"]:checked {
     max-height: 90vh !important;
     border-radius: 12px !important;
     box-shadow: 0 15px 50px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* ── Optimisations Tablette & iPadOS (Paysage iPad mini 1133px & Portrait) ── */
+@media (max-width: 1200px) {
+    .admin-card {
+        padding: 1.25rem;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        padding: 0.75rem 0.65rem;
+    }
+
+    .admin-table th {
+        font-size: 0.62rem;
+    }
+
+    /* Amélioration des zones tactiles sur boutons d'action */
+    .admin-btn {
+        min-height: 40px;
+        touch-action: manipulation;
+    }
+
+    .admin-btn-action,
+    .admin-table-action-btn {
+        min-width: 36px;
+        min-height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        touch-action: manipulation;
+    }
 }

@@ -11,13 +11,15 @@
     display: flex;
     flex-direction: column;
     z-index: 1000;
-    transition: all 0.3s;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box;
 }
 
 .admin-sidebar-header {
-    padding: 2rem;
+    padding: 1.5rem 1.75rem;
     text-align: center;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
 }
 
 .admin-sidebar-logo {
@@ -173,4 +175,109 @@
 .admin-dev-role-select:focus {
     border-color: rgba(0, 0, 0, 0.6) !important;
     box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+}
+
+/* ── Bouton Toggle Hamburger (Header) ────────────────────────── */
+.admin-sidebar-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 5px;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid var(--grey-border);
+    border-radius: 8px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    touch-action: manipulation;
+}
+
+.admin-sidebar-toggle:hover,
+.admin-sidebar-toggle:focus {
+    background-color: var(--white-3);
+    border-color: var(--grey-2);
+}
+
+.admin-sidebar-toggle-bar {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background-color: var(--grey-1);
+    border-radius: 2px;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+/* ── Bouton Fermer Sidebar (Mobile / Tablette) ───────────────── */
+.admin-sidebar-close {
+    display: none;
+}
+
+/* ── Backdrop / Voile d'obscurcissement pour tablette ────────── */
+.admin-sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 998;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.admin-sidebar-backdrop.is-active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+/* ── Mode Tiroir Écrans Tablettes (iPad Portrait & Paysage dont iPad mini 1133px) ──── */
+@media (max-width: 1200px) {
+    .admin-sidebar-toggle {
+        display: inline-flex;
+    }
+
+    .admin-sidebar {
+        width: 300px;
+        max-width: 85vw;
+        transform: translateX(-100%);
+        box-shadow: none;
+        padding-top: env(safe-area-inset-top, 0);
+        padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    .admin-sidebar.is-open {
+        transform: translateX(0);
+        box-shadow: 10px 0 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .admin-sidebar-close {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        right: 1rem;
+        top: 1.25rem;
+        width: 36px;
+        height: 36px;
+        background: rgba(255, 255, 255, 0.12);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        font-size: 1.4rem;
+        line-height: 1;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        touch-action: manipulation;
+    }
+
+    .admin-sidebar-close:hover,
+    .admin-sidebar-close:active {
+        background: rgba(255, 255, 255, 0.25);
+    }
 }

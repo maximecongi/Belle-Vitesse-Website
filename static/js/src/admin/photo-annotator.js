@@ -311,6 +311,9 @@
                 box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
                 border: 1px solid #dcdfe3;
                 border-radius: 4px;
+                touch-action: none;
+                -webkit-touch-callout: none;
+                user-select: none;
             }
 
             /* Mode Vue Globale */
@@ -328,6 +331,9 @@
                 background: #FFFFFF;
                 box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
                 border: 1px solid #dcdfe3;
+                touch-action: none;
+                -webkit-touch-callout: none;
+                user-select: none;
                 border-radius: 4px;
             }
 
