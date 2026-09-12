@@ -18,25 +18,25 @@ incident_signature_badge %}
 {% endblock %}
 
 {% block content %}
-<!-- ═══════════ EN-TÊTE RÉCAPITULATIF ═══════════ -->
+<!-- ═══════════ EN-TÊTE RÉCAPITULATIF DE L'INCIDENT (INSPIRÉ DU HUB) ═══════════ -->
 <div class="admin-card u-mb-3 incident-header-card" data-severity="{{ incident.severity }}">
-    <div class="u-flex u-justify-between u-align-start u-flex-wrap u-gap-3">
-        <div>
-            <div class="u-flex u-align-center u-gap-2">
-                <span class="checkout-doc-id u-mt-0">{{ incident.incident_number }}</span>
-                <span class="u-text-xs u-text-muted">Déclaré le {{ incident.created_at }}</span>
+    <div class="u-flex u-justify-between u-align-end u-flex-wrap u-gap-3">
+        <!-- Volet Gauche : Identité & Titre Principal avec Statut Interactif -->
+        <div class="u-flex u-flex-column u-gap-2">
+            <!-- 1. Identifiant, Statut légal & Catégorie -->
+            <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
+                <span class="checkout-doc-id u-m-0 project-hub-id">{{ incident.incident_number }}</span>
+                {% if incident.category_label %}
+                <span class="badge-pill badge-pill-xs" data-val="neutral">🏷️ {{ incident.category_label }}</span>
+                {% endif %}
+                {% if incident.is_sealed %}
+                <span class="badge-pill badge-pill-xs" data-val="neutral">🔒 Scellé contradictoire</span>
+                {% endif %}
             </div>
-            <h1 class="u-text-2xl u-font-bold u-mt-2 u-mb-1">{{ incident.title }}</h1>
-            <p class="u-text-sm u-text-muted u-m-0">
-                📍 {{ incident.location }} &nbsp;•&nbsp; 🗓️ Survenu le {{ incident.incident_date }} à {{
-                incident.incident_time }}
-            </p>
-        </div>
 
-        <div class="u-flex u-flex-column u-align-end u-gap-2">
-            <div class="u-flex u-gap-2 u-flex-wrap u-justify-end u-align-center">
-                {{ incident_severity_badge(incident.severity, incident.severity_label) }}
-                {{ incident_impact_badge(incident.shooting_impact, incident.shooting_impact_label) }}
+            <!-- 2. Ligne Principale : Titre & Sélecteur interactif de statut -->
+            <div class="project-hub-header-main-row u-flex-wrap u-gap-2">
+                <h1 class="project-hub-title u-m-0">{{ incident.title }}</h1>
 
                 {% set status_meta = {
                 'signale': {'val': 'neutral', 'icon': '📣', 'label': 'Signalé'},
@@ -63,6 +63,36 @@ incident_signature_badge %}
                     </select>
                     <span class="badge-select-pill-arrow">▼</span>
                 </div>
+            </div>
+
+            <!-- 3. Ligne d'Identification Matériel & Contexte Rapide -->
+            <div class="u-flex u-align-center u-gap-2 u-flex-wrap u-text-xs incident-header-material-row">
+                {% if incident.vehicle %}
+                <span class="u-font-semibold">🏎️ {{ incident.vehicle.name }}</span>
+                {% if incident.vehicle.unique_id %}
+                <span class="checkout-doc-id u-m-0">{{ incident.vehicle.unique_id }}</span>
+                {% endif %}
+                {% elif incident.vehicle_name and incident.vehicle_name != '—' %}
+                <span class="u-font-semibold">🏎️ {{ incident.vehicle_name }}</span>
+                {% endif %}
+                {% if incident.equipment_name %}
+                <span class="u-text-muted">•</span>
+                <span class="u-font-semibold">🎥 {{ incident.equipment_name }}</span>
+                {% endif %}
+                {% if incident.project %}
+                <span class="u-text-muted">•</span>
+                <span>🎬 {{ incident.project.name }}{% if incident.project.production_name %} <span
+                        class="u-text-muted">({{ incident.project.production_name }})</span>{% endif %}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Volet Droit : Badges opérationnels & Quick Stats Light -->
+        <div class="u-flex u-flex-column u-align-end u-gap-2">
+            <!-- Badges Gravité & Impact Tournage -->
+            <div class="u-flex u-gap-2 u-flex-wrap u-justify-end u-align-center">
+                {{ incident_severity_badge(incident.severity, incident.severity_label) }}
+                {{ incident_impact_badge(incident.shooting_impact, incident.shooting_impact_label) }}
             </div>
         </div>
     </div>
@@ -289,7 +319,7 @@ incident_signature_badge %}
             <div class="u-mt-3 u-p-3 incident-seal-box">
                 <div class="u-flex u-justify-between u-align-center u-flex-wrap u-gap-2">
                     <div>
-                        <div class="u-text-xs u-font-bold incident-seal-title">🛡️ Sceau d'Intégrité Cryptographique
+                        <div class="u-text-xs u-font-bold incident-seal-title">Sceau d'Intégrité Cryptographique
                             (HMAC-SHA256)</div>
                         <div class="u-text-xs u-mt-1 incident-seal-hash">
                             {{ incident.hash }}
@@ -299,7 +329,7 @@ incident_signature_badge %}
                         {% if incident.signed_pdf_path %}
                         <a href="{{ incident.signed_pdf_url or url_for('admin_incident_pdf', record_id=incident.id) }}"
                             target="_blank" class="admin-btn admin-btn-sm admin-btn-seal">
-                            📥 PDF Scellé
+                            📄 PDF Scellé
                         </a>
                         {% endif %}
                         <a href="/incidents/verify/{{ incident.incident_number }}" target="_blank"
@@ -315,6 +345,38 @@ incident_signature_badge %}
         <!-- 1. Circonstances -->
         <div class="admin-card">
             <div class="admin-card-title">Circonstances & Dommages Constatés</div>
+
+            <!-- Bandeau de synthèse : Matériel touché & Impact -->
+            <div class="incident-damage-summary-strip">
+                {% if incident.vehicle %}
+                <span class="badge-pill badge-pill-sm" data-val="neutral">
+                    🏎️ {{ incident.vehicle.name }} {% if incident.vehicle.unique_id %}({{ incident.vehicle.unique_id
+                    }}){% endif %}
+                </span>
+                {% elif incident.vehicle_name and incident.vehicle_name != '—' %}
+                <span class="badge-pill badge-pill-sm" data-val="neutral">
+                    🏎️ {{ incident.vehicle_name }}
+                </span>
+                {% endif %}
+
+                {% if incident.equipment_name %}
+                <span class="badge-pill badge-pill-sm" data-val="neutral">
+                    🎥 {{ incident.equipment_name }}
+                </span>
+                {% endif %}
+
+                {% if incident.category_label %}
+                <span class="badge-pill badge-pill-sm" data-val="neutral">
+                    🏷️ {{ incident.category_label }}
+                </span>
+                {% endif %}
+
+                <span class="badge-pill badge-pill-sm"
+                    data-val="{% if incident.shooting_impact == 'aucun' %}ok{% elif incident.shooting_impact == 'retard' %}warning{% else %}critical{% endif %}">
+                    Impact tournage : {{ incident.shooting_impact_label }}
+                </span>
+            </div>
+
             <div class="u-p-3 u-rounded incident-description-box">
                 {{ incident.description or "Aucun descriptif renseigné." }}</div>
 
@@ -395,94 +457,151 @@ incident_signature_badge %}
         <div class="admin-card">
             <div class="u-flex u-justify-between u-align-center u-mb-3">
                 <div class="admin-card-title u-m-0">Contexte du Tournage & Matériel</div>
+                {% if incident.is_sealed %}
                 <span class="badge-pill" data-val="neutral">🔒 Scellé</span>
+                {% endif %}
             </div>
 
-            <div class="u-mb-3">
-                <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Projet :</span>
-                <div class="u-font-semibold u-mt-1">
-                    {% if incident.project %}
-                    <a href="{{ url_for('admin_projects_list', q=incident.project.name) }}">
-                        {{ incident.project.name }}
-                    </a>
-                    <div class="u-text-xs u-text-muted u-mt-1">Prod : {{ incident.project.production_name }}</div>
-                    {% else %}
-                    <span class="u-text-muted">—</span>
-                    {% endif %}
-                </div>
-            </div>
-
-            <div class="u-mb-3">
-                <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Véhicule Belle Vitesse :</span>
-                <div class="u-font-semibold u-mt-1">
-                    {% if incident.vehicle %}
-                    {{ incident.vehicle.name }}
-                    {% if incident.vehicle.unique_id %}
-                    <span class="checkout-doc-id">{{ incident.vehicle.unique_id }}</span>
-                    {% endif %}
-                    {% if incident.vehicle_id %}
-                    <a href="{{ url_for('admin_vehicle_timeline', vehicle_id=incident.vehicle_id) }}"
-                        class="admin-btn admin-btn-xs admin-btn-secondary u-ml-1"
-                        title="Consulter l'historique de ce véhicule">🏎️
-                        Timeline</a>
-                    {% endif %}
-                    {% else %}
-                    <span class="u-text-muted">—</span>
-                    {% endif %}
-                </div>
-            </div>
-
-            {% if incident.equipment_name %}
-            <div class="u-mb-3">
-                <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Équipement concerné :</span>
-                <div class="u-font-semibold u-mt-1">{{ incident.equipment_name }}</div>
-            </div>
-            {% endif %}
-
-            <div class="u-mb-3">
-                <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Date & Heure :</span>
-                <div class="u-font-semibold u-mt-1">
-                    🗓️ {{ incident.incident_date or '—' }} {% if incident.incident_time %}à {{ incident.incident_time }}{% endif %}
-                </div>
-            </div>
-
-            <div class="u-mb-3">
-                <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Lieu / Plateau :</span>
-                <div class="u-font-semibold u-mt-1">
-                    📍 {{ incident.location or '—' }}
-                </div>
-            </div>
-
-            <div class="u-mb-3">
-                <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Déclarant :</span>
-                <div class="u-font-semibold u-mt-1">
-                    {% if incident.reporter %}
-                    {{ incident.reporter.name }}
-                    <div class="u-text-xs u-text-muted">{{ incident.reporter.role }} • {{ incident.reporter.mail }}
+            <!-- SOUS-BLOC 1 : PROJET & PRODUCTION -->
+            <div class="incident-context-section">
+                <div class="incident-context-section-title">🎬 Tournage & Production</div>
+                <div class="u-mb-2">
+                    <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Projet :</span>
+                    <div class="u-font-semibold u-mt-1">
+                        {% if incident.project %}
+                        <a href="{{ url_for('admin_projects_list', q=incident.project.name) }}">
+                            {{ incident.project.name }}
+                        </a>
+                        {% else %}
+                        <span class="u-text-muted">—</span>
+                        {% endif %}
                     </div>
-                    {% else %}
-                    <span class="u-text-muted">—</span>
+                </div>
+                <div>
+                    <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Production :</span>
+                    <div class="u-font-semibold u-mt-1">
+                        {% if incident.project and incident.project.production_name %}
+                        {{ incident.project.production_name }}
+                        {% elif incident.production_name %}
+                        {{ incident.production_name }}
+                        {% else %}
+                        <span class="u-text-muted">—</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- SOUS-BLOC 2 : MATÉRIEL IMPACTÉ -->
+            <div class="incident-context-section">
+                <div class="incident-context-section-title">⚙️ Matériel & Équipement Impacté</div>
+
+                <!-- Véhicule -->
+                <div class="u-mb-2">
+                    <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Véhicule Belle Vitesse
+                        :</span>
+                    <div class="u-font-semibold u-mt-1">
+                        {% if incident.vehicle %}
+                        {{ incident.vehicle.name }}
+                        {% if incident.vehicle.unique_id %}
+                        <span class="checkout-doc-id">{{ incident.vehicle.unique_id }}</span>
+                        {% endif %}
+                        {% if incident.vehicle_id %}
+                        <a href="{{ url_for('admin_vehicle_timeline', vehicle_id=incident.vehicle_id) }}"
+                            class="admin-btn admin-btn-xs admin-btn-secondary u-ml-1"
+                            title="Consulter l'historique de ce véhicule">🏎️
+                            Timeline</a>
+                        {% endif %}
+                        {% elif incident.vehicle_name and incident.vehicle_name != '—' %}
+                        {{ incident.vehicle_name }}
+                        {% else %}
+                        <span class="u-text-muted">Aucun véhicule impliqué</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Équipement / Tête -->
+                <div class="u-mb-2">
+                    <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Tête / Équipement caméra
+                        :</span>
+                    <div class="u-font-semibold u-mt-1">
+                        {% if incident.equipment_name %}
+                        🎥 {{ incident.equipment_name }}
+                        {% else %}
+                        <span class="u-text-muted">Aucun équipement spécifique</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Catégorie de dommage -->
+                {% if incident.category_label %}
+                <div>
+                    <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Nature de l'avarie :</span>
+                    <div class="u-mt-1">
+                        <span class="badge-pill badge-pill-xs" data-val="neutral">🏷️ {{ incident.category_label
+                            }}</span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- SOUS-BLOC 3 : SURVENANCE & PLATEAU -->
+            <div class="incident-context-section">
+                <div class="incident-context-section-title">📍 Circonstances & Plateau</div>
+                <div class="u-mb-2">
+                    <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Date & Heure :</span>
+                    <div class="u-font-semibold u-mt-1">
+                        🗓️ {{ incident.incident_date or '—' }} {% if incident.incident_time %}à {{
+                        incident.incident_time }}{% endif %}
+                    </div>
+                </div>
+
+                <div class="u-mb-2">
+                    <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Lieu / Plateau :</span>
+                    <div class="u-font-semibold u-mt-1">
+                        📍 {{ incident.location or '—' }}
+                    </div>
+                </div>
+
+                <div>
+                    <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Déclarant :</span>
+                    <div class="u-font-semibold u-mt-1">
+                        {% if incident.reporter %}
+                        👤 {{ incident.reporter.name }}
+                        {% else %}
+                        <span class="u-text-muted">—</span>
+                        {% endif %}
+
+                    </div>
+                </div>
+                <div class="u-pt-3 u-mt-3 incident-sidebar-divider">
+                    {% if incident.created_at %}
+                    <div class="u-text-xs u-text-muted u-mt-1">Déclaré le {{ incident.created_at }}</div>
                     {% endif %}
                 </div>
             </div>
 
-            {% if incident.checkout %}
-            <div class="u-mt-3 u-pt-2 incident-sidebar-divider">
-                <span class="u-text-xs u-text-muted">Lié au Check-out :</span>
-                <a href="{{ url_for('admin_checkout_detail', record_id=incident.checkout.id) }}"
-                    class="u-text-xs u-font-semibold u-ml-1 u-text-info">
-                    {{ incident.checkout.inspection_number }} →
-                </a>
-            </div>
-            {% endif %}
-
-            {% if incident.checkin %}
-            <div class="u-mt-2 u-pt-2 incident-sidebar-divider">
-                <span class="u-text-xs u-text-muted">Lié au Check-in :</span>
-                <a href="{{ url_for('admin_checkin_detail', record_id=incident.checkin.id) }}"
-                    class="u-text-xs u-font-semibold u-ml-1 u-text-info">
-                    {{ incident.checkin.inspection_number }} →
-                </a>
+            <!-- LIENS INSPECTIONS (Check-out / Check-in) -->
+            {% if incident.checkout or incident.checkin %}
+            <div class="incident-context-section">
+                <div class="incident-context-section-title">🔍 Rapprochement États des Lieux</div>
+                {% if incident.checkout %}
+                <div class="u-mb-1">
+                    <span class="u-text-xs u-text-muted">Constaté au Check-out :</span>
+                    <a href="{{ url_for('admin_checkout_detail', record_id=incident.checkout.id) }}"
+                        class="u-text-xs u-font-semibold u-ml-1 u-text-info">
+                        {{ incident.checkout.inspection_number }} →
+                    </a>
+                </div>
+                {% endif %}
+                {% if incident.checkin %}
+                <div>
+                    <span class="u-text-xs u-text-muted">Constaté au Check-in retour :</span>
+                    <a href="{{ url_for('admin_checkin_detail', record_id=incident.checkin.id) }}"
+                        class="u-text-xs u-font-semibold u-ml-1 u-text-info">
+                        {{ incident.checkin.inspection_number }} →
+                    </a>
+                </div>
+                {% endif %}
             </div>
             {% endif %}
         </div>

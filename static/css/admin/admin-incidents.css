@@ -83,7 +83,6 @@
     border: 1px solid var(--white-3, #e9ecef);
     font-size: 14px;
     line-height: 1.6;
-    white-space: pre-wrap;
 }
 
 .incident-impact-banner {
@@ -163,6 +162,32 @@
     display: block;
 }
 
+/* ── En-tête Récapitulatif Incident (inspiré Project Hub) ── */
+.incident-header-card {
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    padding: 1.25rem 1.5rem;
+    border-left: 4px solid var(--admin-accent, #FFC845);
+    transition: border-color 0.2s ease;
+}
+
+.incident-header-card[data-severity="critique"],
+.incident-header-card[data-severity="bloquant"] {
+    border-left-color: var(--red-1, #C32F27);
+}
+
+.incident-header-card[data-severity="elevee"] {
+    border-left-color: var(--orange-1, #F59E0B);
+}
+
+.incident-header-card[data-severity="moyenne"] {
+    border-left-color: var(--yellow-1, #FFC845);
+}
+
+.incident-header-card[data-severity="faible"] {
+    border-left-color: #94a3b8;
+}
+
 /* ── Bannière Constat Scellé ── */
 .incident-sealed-notice {
     background: #f8fafc;
@@ -240,7 +265,6 @@
 .incident-workflow-step.is-active .incident-step-badge {
     background: #3b82f6;
     color: #ffffff;
-    font-weight: 700;
 }
 
 .incident-workflow-step.is-completed .incident-step-badge {
@@ -315,4 +339,48 @@
     padding: 4px 8px;
     margin-right: 4px;
     border-radius: 4px;
+}
+
+/* ── Ligne de rappel matériel en en-tête ── */
+.incident-header-material-row {
+    color: var(--grey-1, #334155);
+    margin-top: 0.15rem;
+}
+
+/* ── Sous-sections de la carte Contexte ── */
+.incident-context-section {
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.incident-context-section:last-child {
+    padding-bottom: 0;
+    margin-bottom: 0;
+    border-bottom: none;
+}
+
+.incident-context-section-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--grey-2, #64748b);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+/* ── Synthèse d'impact matériel dans Circonstances ── */
+.incident-damage-summary-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
 }
