@@ -416,6 +416,16 @@
     gap: 0.35rem;
     flex-wrap: wrap;
     min-width: 0;
+    flex: 1;
+}
+
+.incident-detail-equipment-item .admin-btn {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.incident-modal-overlay.is-open {
+    display: flex;
 }
 
 
@@ -590,6 +600,7 @@
         opacity: 0;
         transform: translateY(-4px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);

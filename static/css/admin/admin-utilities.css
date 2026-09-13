@@ -933,6 +933,18 @@
     margin-right: auto !important;
 }
 
+.u-ml-auto {
+    margin-left: auto !important;
+}
+
+.u-mr-auto {
+    margin-right: auto !important;
+}
+
+.u-bg-transparent {
+    background: transparent !important;
+}
+
 /* Affichage conditionnel compatible JS sans !important */
 .is-hidden {
     display: none;
