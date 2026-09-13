@@ -411,10 +411,6 @@
 }
 
 .incident-detail-equipment-content {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    flex-wrap: wrap;
     min-width: 0;
     flex: 1;
 }
