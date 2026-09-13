@@ -157,7 +157,7 @@ def init_incidents_routes(app):
         if not data:
             abort(404)
 
-        is_sealed = bool(data.get("is_signed_prod"))
+        is_sealed = bool(data.get("is_sealed", False))
         context = get_incident_form_context()
 
         if request.method == "POST":

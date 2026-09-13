@@ -168,3 +168,31 @@ severity_label|lower == 'critique' else ('Mineur' if severity_label|lower == 'mi
 {% endif %}
 {% endif %}
 {% endmacro %}
+
+{# ── MACROS ÉQUIPEMENTS & EMOJIS (VÉHICULES 🏎️, TÊTES 🤖, ACCESSOIRES 📦) ── #}
+
+{% macro equipment_icon(name) %}
+{%- set n = (name or '')|lower|trim -%}
+{%- if 'ebike' in n or 'ecar' in n or 'etrike' in n or 'segway' in n or 'rickshaw' in n or 'véhicule' in n or 'vehicule' in n or 'mercedes' in n or 'voiture' in n or 'camion' in n or 'quad' in n or 'moto' in n -%}
+🏎️
+{%- elif 'inertia' in n or 'wheel' in n or 'easyrig' in n or 'bras' in n or 'arm' in n or 'isolator' in n or 'magnet' in n or 'small hd' in n or 'cine' in n or 'moniteur' in n or 'teradek' in n or 'follow focus' in n -%}
+📦
+{%- elif 'ronin' in n or 'titan' in n or 'nodo torq' in n or 'movi' in n or 'mōvi' in n or 'rs4' in n or 'rs3' in n or 'rs2' in n or 'tete' in n or 'tête' in n or 'shotover' in n or 'flight' in n or 'matrix' in n or 'gyro' in n -%}
+🤖
+{%- else -%}
+📦
+{%- endif -%}
+{% endmacro %}
+
+{% macro equipment_tag_class(name) %}
+{%- set n = (name or '')|lower|trim -%}
+{%- if 'ebike' in n or 'ecar' in n or 'etrike' in n or 'segway' in n or 'rickshaw' in n or 'véhicule' in n or 'vehicule' in n or 'mercedes' in n or 'voiture' in n or 'camion' in n or 'quad' in n or 'moto' in n -%}
+admin-multiselect-tag--vehicle
+{%- elif 'inertia' in n or 'wheel' in n or 'easyrig' in n or 'bras' in n or 'arm' in n or 'isolator' in n or 'magnet' in n or 'small hd' in n or 'cine' in n or 'moniteur' in n or 'teradek' in n or 'follow focus' in n -%}
+admin-multiselect-tag--custom
+{%- elif 'ronin' in n or 'titan' in n or 'nodo torq' in n or 'movi' in n or 'mōvi' in n or 'rs4' in n or 'rs3' in n or 'rs2' in n or 'tete' in n or 'tête' in n or 'shotover' in n or 'flight' in n or 'matrix' in n or 'gyro' in n -%}
+admin-multiselect-tag--head
+{%- else -%}
+admin-multiselect-tag--custom
+{%- endif -%}
+{% endmacro %}

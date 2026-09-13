@@ -470,6 +470,68 @@ class IncidentsTestCase(unittest.TestCase):
         self.assertEqual(float(inc.actual_cost), 1850.00)
         self.assertEqual(inc.insurance_notes, "Prise en charge validée à 80%")
 
+    def test_sealing_requires_both_signatures(self):
+        """Vérifie que le contexte n'est scellé que lorsque les 2 signatures sont apposées."""
+        inc = incident_service.create_incident({
+            "title": "Incident Test Scellement",
+            "description": "Description originale",
+            "location": "Lieu Initial",
+            "project_id": self.project.id,
+            "incident_date": "2026-09-04",
+            "status": "signale",
+        })
+        self.assertFalse(inc.is_sealed)
+        self.assertFalse(inc.is_fully_signed)
+
+        # 1. Mise à jour du contexte autorisée car non scellé
+        incident_service.update_incident(inc.id, {
+            "location": "Lieu Modifié 1",
+            "incident_time": "16h45",
+        })
+        db.session.refresh(inc)
+        self.assertEqual(inc.location, "Lieu Modifié 1")
+        self.assertEqual(inc.incident_time, "16:45")
+
+        # 2. Signature BV seule (1/2) -> Ne doit PAS être scellé
+        incident_service.sign_incident_bv(
+            inc.id,
+            "Tech BV",
+            "Technicien",
+            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+        )
+        db.session.refresh(inc)
+        self.assertTrue(inc.is_signed_bv)
+        self.assertFalse(inc.is_signed_prod)
+        self.assertFalse(inc.is_fully_signed)
+        self.assertFalse(inc.is_sealed)
+
+        # Le contexte peut toujours être modifié avec 1 seule signature
+        incident_service.update_incident(inc.id, {
+            "location": "Lieu Modifié avec Visa BV",
+        })
+        db.session.refresh(inc)
+        self.assertEqual(inc.location, "Lieu Modifié avec Visa BV")
+
+        # 3. Signature Production (2/2) -> Doit devenir scellé
+        incident_service.sign_incident_prod(
+            inc.id,
+            "Prod Manager",
+            "Directeur de Prod",
+            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+        )
+        db.session.refresh(inc)
+        self.assertTrue(inc.is_fully_signed)
+        self.assertTrue(inc.is_sealed)
+
+        # Le contexte est maintenant verrouillé : la modification du lieu doit être ignorée
+        incident_service.update_incident(inc.id, {
+            "location": "Tentative de modification après 2 signatures",
+            "status": "en_expertise",
+        })
+        db.session.refresh(inc)
+        self.assertEqual(inc.location, "Lieu Modifié avec Visa BV")
+        self.assertEqual(inc.status, "en_expertise")
+
     def test_admin_incident_status_route(self):
         """Vérifie la route POST /admin/incidents/<id>/status."""
         inc = incident_service.create_incident({

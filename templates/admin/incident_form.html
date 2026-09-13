@@ -1,5 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
+{% from "admin/macros.html" import equipment_icon, equipment_tag_class %}
+
 {% block title %}
 {% if is_edit %}Modifier l'Incident {{ incident.incident_number }}{% else %}Déclarer un Incident de Tournage{% endif %}
 {% endblock %}
@@ -138,23 +140,25 @@
         <!-- ═══════════ 1. CONTEXTE TOURNAGE & MATÉRIEL ═══════════ -->
         <div class="u-flex u-justify-between u-align-center u-mb-2">
             <div class="admin-card-title u-m-0">1. Contexte du Tournage & Matériel Concerné</div>
-            {% if is_edit %}
-            <span class="badge-pill" data-val="neutral">🔒 Scellé</span>
+            {% if is_sealed %}
+            <span class="badge-pill" data-val="neutral">🔒 Scellé (2/2 signatures)</span>
             {% endif %}
         </div>
 
-        {% if is_edit %}
-        <!-- Mode Édition : Section Scellée -->
+        {% if is_sealed %}
+        <!-- Mode Scellé : Section Verrouillée -->
         <div class="incident-context-sealed-box u-p-3 u-rounded u-mb-4">
             <div class="u-text-xs u-text-muted u-mb-3">
-                ℹ️ Le contexte du tournage, le véhicule et le matériel rattaché sont scellés dès la création de l'incident et ne peuvent plus être modifiés.
+                ℹ️ Le constat est contradictoirement scellé par les deux signatures (Belle Vitesse & Production). Le
+                contexte du tournage, le véhicule et le matériel rattaché ne peuvent plus être modifiés.
             </div>
 
             <div class="form-group">
                 <label class="form-label">Projet (Tournage)</label>
                 <select class="form-input" disabled>
                     {% for p in context.projects %}
-                    <option value="{{ p.id }}" {% if incident.project_id|string==p.id|string or (incident.project and incident.project.id|string==p.id|string) %}selected{% endif %}>
+                    <option value="{{ p.id }}" {% if incident.project_id|string==p.id|string or (incident.project and
+                        incident.project.id|string==p.id|string) %}selected{% endif %}>
                         {{ p.name }} {% if p.production_name %}({{ p.production_name }}){% endif %}
                     </option>
                     {% endfor %}
@@ -162,19 +166,47 @@
                 <input type="hidden" name="project_id" value="{{ incident.project_id }}" />
             </div>
 
-            <div class="u-grid u-grid-2 u-gap-3">
-                <div class="form-group">
-                    <label class="form-label">Véhicule du projet</label>
-                    <input type="text" class="form-input" disabled
-                        value="{% if incident.vehicle %}{{ incident.vehicle.name }}{% if incident.vehicle.unique_id %} ({{ incident.vehicle.unique_id }}){% endif %}{% elif incident.vehicle_name and incident.vehicle_name != '—' %}{{ incident.vehicle_name }}{% else %}— Aucun véhicule concerné —{% endif %}" />
-                    <input type="hidden" name="vehicle_id" value="{{ incident.vehicle_id or '' }}" />
-                </div>
+            <div class="form-group">
+                <label class="form-label">Équipements & matériels concernés (Scellé)</label>
+                <div class="admin-multiselect-sealed-display">
+                    {% if incident.equipments %}
+                    {% for eq in incident.equipments %}
+                    <span class="admin-multiselect-tag admin-multiselect-tag--sealed {{ eq.tag_class }}">
+                        <span class="admin-multiselect-tag-icon">{{ eq.icon }}</span>
+                        <span class="admin-multiselect-tag-label">{{ eq.name }}{% if eq.unique_id %} ({{ eq.unique_id }}){% endif %}</span>
+                    </span>
+                    {% endfor %}
+                    {% else %}
+                    {% if incident.vehicle %}
+                    <span class="admin-multiselect-tag admin-multiselect-tag--sealed admin-multiselect-tag--vehicle">
+                        <span class="admin-multiselect-tag-icon">🏎️</span>
+                        <span class="admin-multiselect-tag-label">{{ incident.vehicle.name }}{% if incident.vehicle.unique_id %} ({{ incident.vehicle.unique_id }}){% endif %}</span>
+                    </span>
+                    {% elif incident.vehicle_name and incident.vehicle_name != '—' %}
+                    <span class="admin-multiselect-tag admin-multiselect-tag--sealed admin-multiselect-tag--vehicle">
+                        <span class="admin-multiselect-tag-icon">🏎️</span>
+                        <span class="admin-multiselect-tag-label">{{ incident.vehicle_name }}</span>
+                    </span>
+                    {% endif %}
 
-                <div class="form-group">
-                    <label class="form-label">Matériel / Accessoire concerné</label>
-                    <input type="text" class="form-input" disabled value="{{ incident.equipment_name or '— Aucun équipement spécifique —' }}" />
-                    <input type="hidden" name="equipment_name" value="{{ incident.equipment_name or '' }}" />
+                    {% if incident.equipment_name %}
+                    {% for eq in incident.equipment_name.split(',') %}
+                    {% if eq.strip() %}
+                    <span class="admin-multiselect-tag admin-multiselect-tag--sealed {{ equipment_tag_class(eq.strip()) }}">
+                        <span class="admin-multiselect-tag-icon">{{ equipment_icon(eq.strip()) }}</span>
+                        <span class="admin-multiselect-tag-label">{{ eq.strip() }}</span>
+                    </span>
+                    {% endif %}
+                    {% endfor %}
+                    {% endif %}
+                    {% endif %}
+
+                    {% if not incident.equipments and not incident.vehicle and (not incident.vehicle_name or incident.vehicle_name == '—') and not incident.equipment_name %}
+                    <span class="u-text-muted u-text-sm">Aucun équipement spécifique mentionné</span>
+                    {% endif %}
                 </div>
+                <input type="hidden" name="vehicle_id" value="{{ incident.vehicle_id or '' }}" />
+                <input type="hidden" name="equipment_name" value="{{ incident.equipment_name or '' }}" />
             </div>
 
             {% if incident.checkout or incident.checkin or incident.attached_inspection %}
@@ -191,20 +223,21 @@
                     <label class="form-label">Date de survenance</label>
                     <input type="text" class="form-input" disabled
                         value="{{ incident.incident_date_raw or incident.incident_date or '' }}" />
-                    <input type="hidden" name="incident_date" value="{{ incident.incident_date_raw or incident.incident_date or '' }}" />
+                    <input type="hidden" name="incident_date"
+                        value="{{ incident.incident_date_raw or incident.incident_date or '' }}" />
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Heure approximative</label>
                     <input type="text" class="form-input" disabled
                         value="{{ incident.incident_time_raw or incident.incident_time or '—' }}" />
-                    <input type="hidden" name="incident_time" value="{{ incident.incident_time_raw or incident.incident_time or '' }}" />
+                    <input type="hidden" name="incident_time"
+                        value="{{ incident.incident_time_raw or incident.incident_time or '' }}" />
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Lieu du sinistre / Plateau</label>
-                    <input type="text" class="form-input" disabled
-                        value="{{ incident.location or '—' }}" />
+                    <input type="text" class="form-input" disabled value="{{ incident.location or '—' }}" />
                     <input type="hidden" name="location" value="{{ incident.location or '' }}" />
                 </div>
             </div>
@@ -228,33 +261,78 @@
             </span>
         </div>
 
-        <div class="u-grid u-grid-2 u-gap-3">
-            <div class="form-group">
-                <label class="form-label" for="vehicle_id">Véhicule du projet</label>
-                <select name="vehicle_id" id="vehicle_id" class="form-input">
-                    <option value="">— Sélectionnez d'abord un projet —</option>
-                </select>
-                <span class="u-text-xs u-text-muted u-mt-1">Seuls les véhicules prévus sur ce tournage sont
-                    listés.</span>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label" for="head_select">Tête gyrostabilisée du projet</label>
-                <select id="head_select" class="form-input" onchange="onHeadSelectChange(this.value)">
-                    <option value="">— Sélectionnez d'abord un projet —</option>
-                </select>
-                <span class="u-text-xs u-text-muted u-mt-1">Seules les têtes prévues sur ce tournage sont
-                    listées.</span>
-            </div>
-        </div>
-
         <div class="form-group">
-            <label class="form-label" for="equipment_name">Détail équipement / Accessoire concerné</label>
-            <input type="text" name="equipment_name" id="equipment_name" class="form-input"
-                value="{{ incident.equipment_name or '' }}"
-                placeholder="Ex: Tête Flight Head, Bras remote, Objectif 24-70mm...">
-            <span class="u-text-xs u-text-muted u-mt-1">Renseigné automatiquement si vous sélectionnez une tête, ou
-                personnalisable pour un accessoire précis.</span>
+            <label class="form-label" id="equipmentSelectLabel">
+                Équipements du tournage concernés
+            </label>
+
+            <!-- Inputs cachés pour transmission backend -->
+            <input type="hidden" name="vehicle_id" id="vehicle_id"
+                value="{{ incident.vehicle_id or (incident.vehicle and incident.vehicle.id) or '' }}">
+            <input type="hidden" name="equipment_name" id="equipment_name" value="{{ incident.equipment_name or '' }}">
+
+            <!-- Menu Déroulant Multi-Sélection avec Checkboxes -->
+            <div class="admin-multiselect is-disabled" id="equipmentMultiselect">
+                <button type="button" class="admin-multiselect-trigger" id="equipmentMultiselectTrigger"
+                    aria-haspopup="listbox" aria-expanded="false" aria-labelledby="equipmentSelectLabel">
+                    <div class="admin-multiselect-selection" id="equipmentMultiselectSelection">
+                        <span class="admin-multiselect-placeholder" id="equipmentMultiselectPlaceholder">— Sélectionnez
+                            d'abord un projet —</span>
+                    </div>
+                    <span class="admin-multiselect-arrow" aria-hidden="true">▾</span>
+                </button>
+
+                <div class="admin-multiselect-panel" id="equipmentMultiselectPanel" role="listbox"
+                    aria-multiselectable="true">
+                    <!-- Groupe Véhicules -->
+                    <div class="admin-multiselect-group" id="groupVehicles">
+                        <div class="admin-multiselect-group-header">
+                            <span class="admin-multiselect-group-title">🏎️ Véhicules du tournage</span>
+                            <span class="admin-multiselect-group-count" id="vehicleCountBadge">0</span>
+                        </div>
+                        <div class="admin-multiselect-items" id="vehicleItemsList">
+                            <div class="admin-multiselect-empty">Sélectionnez d'abord un projet</div>
+                        </div>
+                    </div>
+
+                    <!-- Groupe Têtes gyrostabilisées -->
+                    <div class="admin-multiselect-group" id="groupHeads">
+                        <div class="admin-multiselect-group-header">
+                            <span class="admin-multiselect-group-title">🤖 Têtes gyrostabilisées</span>
+                            <span class="admin-multiselect-group-count" id="headCountBadge">0</span>
+                        </div>
+                        <div class="admin-multiselect-items" id="headItemsList">
+                            <div class="admin-multiselect-empty">Sélectionnez d'abord un projet</div>
+                        </div>
+                    </div>
+
+                    <!-- Groupe Autres matériels & accessoires libres -->
+                    <div class="admin-multiselect-group admin-multiselect-group--custom" id="groupCustom">
+                        <div class="admin-multiselect-group-header">
+                            <span class="admin-multiselect-group-title">📦 Autres matériels & accessoires</span>
+                            <span class="admin-multiselect-group-count" id="customCountBadge">0</span>
+                        </div>
+                        <div class="admin-multiselect-custom-add-bar">
+                            <input type="text" id="customEquipmentInput"
+                                class="form-input form-input-sm admin-multiselect-custom-input"
+                                placeholder="Ex: Bras remote, Moniteur HF, Objectif..." autocomplete="off">
+                            <button type="button"
+                                class="admin-btn admin-btn-xs admin-btn-secondary admin-multiselect-custom-btn"
+                                id="addCustomEquipmentBtn">
+                                ＋ Ajouter
+                            </button>
+                        </div>
+                        <div class="admin-multiselect-custom-list" id="customEquipmentList">
+                            <span class="u-text-xs u-text-muted">Aucun accessoire spécifique ajouté</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <span class="u-text-xs u-text-muted u-mt-1">
+                Cochez tous les équipements affectés lors de ce tournage (véhicule, tête gyrostabilisée ou accessoire
+                caméra).
+            </span>
         </div>
 
         <div class="form-group">
@@ -363,12 +441,6 @@
             </div>
         </div>
 
-        <div class="form-group">
-            <label class="form-label" for="resolution_notes">Notes de résolution & Clôture</label>
-            <textarea name="resolution_notes" id="resolution_notes" rows="2" class="form-input u-resize-y"
-                placeholder="Ex: Réparation effectuée par le carrossier le 18/09. Test piste validé, véhicule réintégré à la flotte.">{{ incident.resolution_notes or '' }}</textarea>
-        </div>
-
         <!-- ═══════════ 4. PHOTOS & JUSTIFICATIFS ═══════════ -->
         <div class="admin-card-title u-mt-4">4. Photos des Dégâts & Pièces Jointes</div>
 
@@ -437,25 +509,101 @@
 <script>
     // Données des projets injectées depuis le backend
     const projectsData = {{ context.projects | tojson | safe }};
-    const isEdit = {% if is_edit %}true{% else %}false{% endif %};
-    const initialVehicleId = "{{ incident.vehicle_id or (incident.vehicle and incident.vehicle.id) or '' }}";
-    const initialEquipmentName = "{{ incident.equipment_name or '' }}";
-    const initialAttachedInspection = "{{ incident.attached_inspection or (('checkout:' ~ incident.checkout_id) if incident.checkout_id else (('checkin:' ~ incident.checkin_id) if incident.checkin_id else '')) }}";
+    const isEdit = {% if is_edit %}true{% else %} false{% endif %};
+    const isSealed = {% if is_sealed %}true{% else %} false{% endif %};
+    const initialVehicleId = {{ (incident.vehicle_id or(incident.vehicle and incident.vehicle.id) or '') | tojson | safe }};
+    const initialEquipmentName = {{ (incident.equipment_name or '') | tojson | safe }};
+    const initialAttachedInspection = {{ (incident.attached_inspection or(('checkout:' ~incident.checkout_id) if incident.checkout_id else (('checkin:' ~incident.checkin_id) if incident.checkin_id else ''))) | tojson | safe }};
+
+    let isInitialLoad = true;
+    let customEquipmentItems = [];
+
+    function renderCustomEquipmentList() {
+        const container = document.getElementById('customEquipmentList');
+        const countBadge = document.getElementById('customCountBadge');
+        if (!container) return;
+
+        if (countBadge) countBadge.textContent = String(customEquipmentItems.length);
+
+        if (customEquipmentItems.length === 0) {
+            container.innerHTML = '<span class="u-text-xs u-text-muted">Aucun accessoire spécifique ajouté</span>';
+            return;
+        }
+
+        let html = '';
+        customEquipmentItems.forEach(item => {
+            html += `
+                <span class="admin-multiselect-custom-pill">
+                    <span class="admin-multiselect-item-icon">📦</span>
+                    <span class="admin-multiselect-custom-text" title="${escapeHtml(item)}">${escapeHtml(item)}</span>
+                    <button type="button" class="admin-multiselect-custom-remove" data-action="remove-custom-item" data-value="${escapeHtml(item)}" title="Supprimer cet accessoire" aria-label="Supprimer">&times;</button>
+                </span>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function addCustomEquipment(val) {
+        if (!val) return;
+        const items = val.split(',').map(s => s.trim()).filter(Boolean);
+        let changed = false;
+        items.forEach(newItem => {
+            if (!customEquipmentItems.some(i => i.toLowerCase() === newItem.toLowerCase())) {
+                customEquipmentItems.push(newItem);
+                changed = true;
+            }
+        });
+        const input = document.getElementById('customEquipmentInput');
+        if (input) input.value = '';
+        if (changed) {
+            renderCustomEquipmentList();
+            syncSelectedEquipment();
+        }
+    }
+
+    function removeCustomEquipment(val) {
+        if (!val) return;
+        customEquipmentItems = customEquipmentItems.filter(i => i.toLowerCase() !== val.toLowerCase());
+        renderCustomEquipmentList();
+        syncSelectedEquipment();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return String(text).replace(/[&<>"']/g, m => map[m]);
+    }
 
     function updateProjectEquipment(projectId) {
-        if (isEdit) return;
-        const vehicleSelect = document.getElementById('vehicle_id');
-        const headSelect = document.getElementById('head_select');
-        const equipmentInput = document.getElementById('equipment_name');
+        if (isSealed) return;
+        const multiselect = document.getElementById('equipmentMultiselect');
+        const placeholder = document.getElementById('equipmentMultiselectPlaceholder');
+        const vehicleItemsList = document.getElementById('vehicleItemsList');
+        const headItemsList = document.getElementById('headItemsList');
+        const vehicleCountBadge = document.getElementById('vehicleCountBadge');
+        const headCountBadge = document.getElementById('headCountBadge');
         const inspectionSelect = document.getElementById('attached_inspection');
 
-        if (!vehicleSelect || !headSelect) return;
+        if (!multiselect || !vehicleItemsList || !headItemsList) return;
 
         if (!projectId) {
-            vehicleSelect.innerHTML = '<option value="">— Sélectionnez d\'abord un projet —</option>';
-            vehicleSelect.disabled = true;
-            headSelect.innerHTML = '<option value="">— Sélectionnez d\'abord un projet —</option>';
-            headSelect.disabled = true;
+            multiselect.classList.add('is-disabled');
+            multiselect.classList.remove('is-open');
+            if (placeholder) placeholder.textContent = "— Sélectionnez d'abord un projet —";
+            vehicleItemsList.innerHTML = '<div class="admin-multiselect-empty">Sélectionnez d\'abord un projet</div>';
+            headItemsList.innerHTML = '<div class="admin-multiselect-empty">Sélectionnez d\'abord un projet</div>';
+            if (vehicleCountBadge) vehicleCountBadge.textContent = '0';
+            if (headCountBadge) headCountBadge.textContent = '0';
+            customEquipmentItems = [];
+            renderCustomEquipmentList();
+            syncSelectedEquipment();
+
             if (inspectionSelect) {
                 inspectionSelect.innerHTML = '<option value="">En cours d\'opération (sur le plateau)</option>';
                 inspectionSelect.disabled = true;
@@ -464,53 +612,94 @@
         }
 
         const project = projectsData.find(p => String(p.id) === String(projectId));
+        multiselect.classList.remove('is-disabled');
+
         if (!project) {
-            vehicleSelect.innerHTML = '<option value="">— Aucun véhicule —</option>';
-            vehicleSelect.disabled = false;
-            headSelect.innerHTML = '<option value="">— Aucune tête —</option>';
-            headSelect.disabled = false;
-            if (inspectionSelect) {
-                inspectionSelect.innerHTML = '<option value="">En cours d\'opération (sur le plateau)</option>';
-                inspectionSelect.disabled = false;
-            }
+            vehicleItemsList.innerHTML = '<div class="admin-multiselect-empty">Aucun véhicule disponible</div>';
+            headItemsList.innerHTML = '<div class="admin-multiselect-empty">Aucune tête disponible</div>';
+            if (vehicleCountBadge) vehicleCountBadge.textContent = '0';
+            if (headCountBadge) headCountBadge.textContent = '0';
+            syncSelectedEquipment();
             return;
         }
 
-        // 1. Peupler les véhicules du projet
-        vehicleSelect.disabled = false;
-        let vehOptions = '<option value="">— Aucun véhicule concerné —</option>';
-        if (project.vehicles && project.vehicles.length > 0) {
-            project.vehicles.forEach(v => {
-                const isSelected = (v.id === initialVehicleId) ? 'selected' : '';
-                vehOptions += `<option value="${v.id}" ${isSelected}>${v.name}</option>`;
-            });
+        // 1. Peupler les véhicules
+        const vehicles = project.vehicles || [];
+        if (vehicleCountBadge) vehicleCountBadge.textContent = String(vehicles.length);
+        if (vehicles.length === 0) {
+            vehicleItemsList.innerHTML = '<div class="admin-multiselect-empty">Aucun véhicule rattaché à ce projet</div>';
         } else {
-            vehOptions += '<option value="" disabled>Aucun véhicule rattaché à ce projet</option>';
-        }
-        vehicleSelect.innerHTML = vehOptions;
-
-        // 2. Peupler les têtes du projet
-        headSelect.disabled = false;
-        let headOptions = '<option value="">— Aucune tête concernée —</option>';
-        let matchedHead = false;
-
-        if (project.heads && project.heads.length > 0) {
-            project.heads.forEach(h => {
-                const isSelected = (h.name === initialEquipmentName) ? 'selected' : '';
-                if (isSelected) matchedHead = true;
-                headOptions += `<option value="${h.name}" ${isSelected}>${h.name}</option>`;
+            let vHtml = '';
+            vehicles.forEach(v => {
+                let isChecked = false;
+                if (isInitialLoad) {
+                    if (String(v.id) === String(initialVehicleId)) {
+                        isChecked = true;
+                    } else if (initialEquipmentName && initialEquipmentName.toLowerCase().includes(v.name.toLowerCase())) {
+                        isChecked = true;
+                    }
+                }
+                const checkedAttr = isChecked ? 'checked' : '';
+                const selectedClass = isChecked ? 'is-selected' : '';
+                vHtml += `
+                    <label class="admin-multiselect-item ${selectedClass}" data-type="vehicle" data-id="${escapeHtml(v.id)}" data-name="${escapeHtml(v.name)}">
+                        <input type="checkbox" class="admin-multiselect-checkbox" value="${escapeHtml(v.id)}" data-type="vehicle" data-name="${escapeHtml(v.name)}" ${checkedAttr}>
+                        <span class="admin-multiselect-item-text">${escapeHtml(v.name)}</span>
+                        <span class="admin-multiselect-item-tag">Véhicule</span>
+                    </label>
+                `;
             });
+            vehicleItemsList.innerHTML = vHtml;
+        }
+
+        // 2. Peupler les têtes
+        const heads = project.heads || [];
+        if (headCountBadge) headCountBadge.textContent = String(heads.length);
+        if (heads.length === 0) {
+            headItemsList.innerHTML = '<div class="admin-multiselect-empty">Aucune tête rattachée à ce projet</div>';
         } else {
-            headOptions += '<option value="" disabled>Aucune tête rattachée à ce projet</option>';
+            let hHtml = '';
+            heads.forEach(h => {
+                let isChecked = false;
+                if (isInitialLoad && initialEquipmentName) {
+                    const parts = initialEquipmentName.split(',').map(s => s.trim().toLowerCase());
+                    if (parts.includes(h.name.toLowerCase()) || initialEquipmentName.toLowerCase().includes(h.name.toLowerCase())) {
+                        isChecked = true;
+                    }
+                }
+                const checkedAttr = isChecked ? 'checked' : '';
+                const selectedClass = isChecked ? 'is-selected' : '';
+                hHtml += `
+                    <label class="admin-multiselect-item ${selectedClass}" data-type="head" data-name="${escapeHtml(h.name)}">
+                        <input type="checkbox" class="admin-multiselect-checkbox" value="${escapeHtml(h.name)}" data-type="head" data-name="${escapeHtml(h.name)}" ${checkedAttr}>
+                        <span class="admin-multiselect-item-text">${escapeHtml(h.name)}</span>
+                        <span class="admin-multiselect-item-tag">Tête</span>
+                    </label>
+                `;
+            });
+            headItemsList.innerHTML = hHtml;
         }
-        headOptions += '<option value="__custom__">Autre équipement / accessoire libre…</option>';
-        headSelect.innerHTML = headOptions;
 
-        if (initialEquipmentName && !matchedHead && headSelect.querySelector('option[value="__custom__"]')) {
-            headSelect.value = '__custom__';
+        // 3. Traiter le cas des accessoires libres lors du premier chargement
+        if (isInitialLoad && initialEquipmentName) {
+            const parts = initialEquipmentName.split(',').map(s => s.trim()).filter(Boolean);
+            parts.forEach(p => {
+                const pLower = p.toLowerCase();
+                const matchedHead = heads.some(h => h.name.toLowerCase() === pLower);
+                const matchedVeh = vehicles.some(v => v.name.toLowerCase() === pLower);
+                if (!matchedHead && !matchedVeh) {
+                    if (!customEquipmentItems.some(i => i.toLowerCase() === pLower)) {
+                        customEquipmentItems.push(p);
+                    }
+                }
+            });
+            renderCustomEquipmentList();
         }
 
-        // 3. Peupler les contrôles rattachés (Check-out / Check-in) du projet
+        // 4. Mettre à jour l'affichage des tags & synchroniser les inputs cachés
+        syncSelectedEquipment();
+
+        // 5. Peupler les contrôles rattachés (Check-out / Check-in) du projet
         if (inspectionSelect) {
             inspectionSelect.disabled = false;
             let insOptions = '<option value="">En cours d\'opération (sur le plateau)</option>';
@@ -534,18 +723,88 @@
             }
             inspectionSelect.innerHTML = insOptions;
         }
+
+        isInitialLoad = false;
     }
 
-    function onHeadSelectChange(val) {
-        const equipmentInput = document.getElementById('equipment_name');
-        if (val && val !== '__custom__') {
-            equipmentInput.value = val;
-        } else if (val === '__custom__') {
-            if (equipmentInput.value === '') {
-                equipmentInput.placeholder = "Précisez l'équipement concerné...";
-            }
-            equipmentInput.focus();
+    function syncSelectedEquipment() {
+        const selectionContainer = document.getElementById('equipmentMultiselectSelection');
+        const vehicleHidden = document.getElementById('vehicle_id');
+        const equipmentHidden = document.getElementById('equipment_name');
+
+        if (!selectionContainer || !vehicleHidden || !equipmentHidden) return;
+
+        const checkedVehicles = Array.from(document.querySelectorAll('#vehicleItemsList input[type="checkbox"]:checked'));
+        const checkedHeads = Array.from(document.querySelectorAll('#headItemsList input[type="checkbox"]:checked'));
+
+        const totalSelected = checkedVehicles.length + checkedHeads.length + customEquipmentItems.length;
+
+        if (totalSelected === 0) {
+            selectionContainer.innerHTML = '<span class="admin-multiselect-placeholder" id="equipmentMultiselectPlaceholder">— Sélectionner le ou les équipements concernés —</span>';
+            vehicleHidden.value = '';
+            equipmentHidden.value = '';
+            return;
         }
+
+        let tagsHtml = '';
+
+        checkedVehicles.forEach(cb => {
+            const vId = cb.value;
+            const vName = cb.dataset.name || cb.value;
+            tagsHtml += `
+                <span class="admin-multiselect-tag admin-multiselect-tag--vehicle">
+                    <span class="admin-multiselect-tag-icon">🏎️</span>
+                    <span class="admin-multiselect-tag-label" title="${escapeHtml(vName)}">${escapeHtml(vName)}</span>
+                    <button type="button" class="admin-multiselect-tag-remove" data-action="remove-vehicle" data-id="${escapeHtml(vId)}" title="Désélectionner" aria-label="Désélectionner">&times;</button>
+                </span>
+            `;
+        });
+
+        checkedHeads.forEach(cb => {
+            const hName = cb.value;
+            tagsHtml += `
+                <span class="admin-multiselect-tag admin-multiselect-tag--head">
+                    <span class="admin-multiselect-tag-icon">🤖</span>
+                    <span class="admin-multiselect-tag-label" title="${escapeHtml(hName)}">${escapeHtml(hName)}</span>
+                    <button type="button" class="admin-multiselect-tag-remove" data-action="remove-head" data-name="${escapeHtml(hName)}" title="Désélectionner" aria-label="Désélectionner">&times;</button>
+                </span>
+            `;
+        });
+
+        customEquipmentItems.forEach(item => {
+            tagsHtml += `
+                <span class="admin-multiselect-tag admin-multiselect-tag--custom">
+                    <span class="admin-multiselect-tag-icon">📦</span>
+                    <span class="admin-multiselect-tag-label" title="${escapeHtml(item)}">${escapeHtml(item)}</span>
+                    <button type="button" class="admin-multiselect-tag-remove" data-action="remove-custom-item" data-value="${escapeHtml(item)}" title="Désélectionner" aria-label="Désélectionner">&times;</button>
+                </span>
+            `;
+        });
+
+        selectionContainer.innerHTML = tagsHtml;
+
+        // Mise à jour de vehicle_id avec le premier véhicule sélectionné
+        if (checkedVehicles.length > 0) {
+            vehicleHidden.value = checkedVehicles[0].value;
+        } else {
+            vehicleHidden.value = '';
+        }
+
+        // Construction de la chaîne d'équipements pour equipment_name
+        const equipmentList = [];
+        if (checkedVehicles.length > 1) {
+            checkedVehicles.slice(1).forEach(cb => {
+                equipmentList.push(cb.dataset.name || cb.value);
+            });
+        }
+        checkedHeads.forEach(cb => {
+            equipmentList.push(cb.dataset.name || cb.value);
+        });
+        customEquipmentItems.forEach(item => {
+            equipmentList.push(item);
+        });
+
+        equipmentHidden.value = equipmentList.join(', ');
     }
 
     function previewFiles(input, containerId) {
@@ -674,9 +933,128 @@
         }
     }
 
-    // Initialisation au chargement
+    // Initialisation et gestion des événements du sélecteur multi-équipements
     document.addEventListener('DOMContentLoaded', () => {
-        if (!isEdit) {
+        const multiselect = document.getElementById('equipmentMultiselect');
+        const trigger = document.getElementById('equipmentMultiselectTrigger');
+        const panel = document.getElementById('equipmentMultiselectPanel');
+        const selectionContainer = document.getElementById('equipmentMultiselectSelection');
+        const customList = document.getElementById('customEquipmentList');
+        const addCustomBtn = document.getElementById('addCustomEquipmentBtn');
+        const customInput = document.getElementById('customEquipmentInput');
+
+        if (trigger && multiselect) {
+            trigger.addEventListener('click', (e) => {
+                if (multiselect.classList.contains('is-disabled')) return;
+                if (e.target.closest('.admin-multiselect-tag-remove')) return;
+
+                const isOpen = multiselect.classList.contains('is-open');
+                if (isOpen) {
+                    multiselect.classList.remove('is-open');
+                    trigger.setAttribute('aria-expanded', 'false');
+                } else {
+                    multiselect.classList.add('is-open');
+                    trigger.setAttribute('aria-expanded', 'true');
+                }
+            });
+
+            // Fermer si clic à l'extérieur
+            document.addEventListener('click', (e) => {
+                if (!multiselect.contains(e.target)) {
+                    multiselect.classList.remove('is-open');
+                    trigger.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            // Fermer sur Échap
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && multiselect.classList.contains('is-open')) {
+                    multiselect.classList.remove('is-open');
+                    trigger.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+
+        // Clic sur bouton de suppression d'un tag
+        if (selectionContainer) {
+            selectionContainer.addEventListener('click', (e) => {
+                const removeBtn = e.target.closest('.admin-multiselect-tag-remove');
+                if (!removeBtn) return;
+                e.preventDefault();
+                e.stopPropagation();
+
+                const action = removeBtn.dataset.action;
+                if (action === 'remove-vehicle') {
+                    const id = removeBtn.dataset.id;
+                    const cb = document.querySelector(`#vehicleItemsList input[value="${id}"]`);
+                    if (cb) {
+                        cb.checked = false;
+                        const label = cb.closest('.admin-multiselect-item');
+                        if (label) label.classList.remove('is-selected');
+                    }
+                    syncSelectedEquipment();
+                } else if (action === 'remove-head') {
+                    const name = removeBtn.dataset.name;
+                    const cb = document.querySelector(`#headItemsList input[value="${name}"]`);
+                    if (cb) {
+                        cb.checked = false;
+                        const label = cb.closest('.admin-multiselect-item');
+                        if (label) label.classList.remove('is-selected');
+                    }
+                    syncSelectedEquipment();
+                } else if (action === 'remove-custom-item') {
+                    removeCustomEquipment(removeBtn.dataset.value);
+                }
+            });
+        }
+
+        // Suppression d'un accessoire depuis la liste dans le panneau déroulant
+        if (customList) {
+            customList.addEventListener('click', (e) => {
+                const removeBtn = e.target.closest('.admin-multiselect-custom-remove');
+                if (!removeBtn) return;
+                e.preventDefault();
+                e.stopPropagation();
+                removeCustomEquipment(removeBtn.dataset.value);
+            });
+        }
+
+        // Ajout d'accessoires personnalisés (clic bouton ou touche Entrée)
+        if (addCustomBtn && customInput) {
+            addCustomBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                addCustomEquipment(customInput.value);
+            });
+            customInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    addCustomEquipment(customInput.value);
+                }
+            });
+        }
+
+        // Changement sur les checkboxes de véhicules et têtes
+        if (panel) {
+            panel.addEventListener('change', (e) => {
+                const cb = e.target;
+                if (cb.classList.contains('admin-multiselect-checkbox')) {
+                    const label = cb.closest('.admin-multiselect-item');
+                    if (label) {
+                        if (cb.checked) {
+                            label.classList.add('is-selected');
+                        } else {
+                            label.classList.remove('is-selected');
+                        }
+                    }
+                    syncSelectedEquipment();
+                }
+            });
+        }
+
+        // Initialisation si un projet est déjà sélectionné
+        if (!isSealed) {
             const projectSelect = document.getElementById('project_id');
             if (projectSelect && projectSelect.value) {
                 updateProjectEquipment(projectSelect.value);

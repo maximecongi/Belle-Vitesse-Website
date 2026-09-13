@@ -11,7 +11,7 @@ from flask import current_app, render_template
 from werkzeug.utils import secure_filename
 
 from sqlalchemy.exc import IntegrityError
-from models import db, Project, User, Vehicle
+from models import db, Project, User, Vehicle, Head
 from models.incident import Incident, IncidentToken, IncidentSignedDocument
 from models.db import _utcnow
 from utils.document_utils import (
@@ -100,6 +100,17 @@ def _parse_date(val):
         except ValueError:
             pass
     return None
+
+
+def _parse_time(val):
+    if not val:
+        return None
+    s = str(val).strip().replace("h", ":").replace("H", ":")
+    if ":" in s:
+        parts = s.split(":")
+        if len(parts) >= 2 and parts[0].strip().isdigit() and parts[1].strip().isdigit():
+            return f"{int(parts[0]):02d}:{int(parts[1]):02d}"
+    return s if s else None
 
 
 def _format_date(val):
@@ -248,6 +259,164 @@ def list_incidents(status=None, severity=None, category=None, project_id=None, q
     }
 
 
+def resolve_incident_equipments(inc, vehicle_data=None):
+    """
+    Construit la liste unifiée et typée de tous les équipements impliqués dans un incident :
+    - Véhicules : type="vehicle", icon="🏎️", tag_class="admin-multiselect-tag--vehicle"
+    - Têtes gyrostabilisées : type="head", icon="🤖", tag_class="admin-multiselect-tag--head"
+    - Autres accessoires : type="custom", icon="📦", tag_class="admin-multiselect-tag--custom"
+    """
+    equipments = []
+    added_names = set()
+
+    # 1. Véhicule principal (s'il existe)
+    if vehicle_data:
+        v_name = vehicle_data.get("name") or "Véhicule"
+        equipments.append({
+            "type": "vehicle",
+            "name": v_name,
+            "icon": "🏎️",
+            "unique_id": vehicle_data.get("unique_id", ""),
+            "id": vehicle_data.get("id"),
+            "tag_class": "admin-multiselect-tag--vehicle",
+            "is_primary_vehicle": True,
+        })
+        added_names.add(v_name.strip().lower())
+    elif getattr(inc, "vehicle_name", None) and inc.vehicle_name != "—":
+        equipments.append({
+            "type": "vehicle",
+            "name": inc.vehicle_name,
+            "icon": "🏎️",
+            "unique_id": "",
+            "id": None,
+            "tag_class": "admin-multiselect-tag--vehicle",
+            "is_primary_vehicle": True,
+        })
+        added_names.add(inc.vehicle_name.strip().lower())
+
+    # 2. Référentiel des véhicules et têtes connus (avec IDs et unique_id)
+    vehicle_catalog = {}  # lower_name -> {"id": vid, "name": name, "unique_id": uniq}
+    head_catalog = {}     # lower_name -> {"id": hid, "name": name}
+
+    try:
+        from utils.database import get_vehicles, get_heads
+        for v in (get_vehicles() or []):
+            vid = str(v.get("id"))
+            f = v.get("fields") or {}
+            vn = f.get("name") or f.get("Nom") or vid
+            uniq = f.get("unique_id", "")
+            if vn:
+                vehicle_catalog[vn.strip().lower()] = {
+                    "id": vid,
+                    "name": vn.strip(),
+                    "unique_id": uniq or "",
+                }
+        for h in (get_heads() or []):
+            hid = str(h.get("id"))
+            f = h.get("fields") or {}
+            hn = f.get("name") or f.get("Nom") or hid
+            if hn:
+                head_catalog[hn.strip().lower()] = {
+                    "id": hid,
+                    "name": hn.strip(),
+                }
+    except Exception:
+        pass
+
+    try:
+        for v in Vehicle.query.all():
+            vid = str(v.id)
+            f = v.fields or {}
+            vn = f.get("name") or f.get("Nom") or getattr(v, "name", None) or vid
+            uniq = f.get("unique_id", "")
+            if vn:
+                vehicle_catalog[vn.strip().lower()] = {
+                    "id": vid,
+                    "name": vn.strip(),
+                    "unique_id": uniq or "",
+                }
+        for h in Head.query.all():
+            hid = str(h.id)
+            f = h.fields or {}
+            hn = f.get("name") or f.get("Nom") or getattr(h, "name", None) or hid
+            if hn:
+                head_catalog[hn.strip().lower()] = {
+                    "id": hid,
+                    "name": hn.strip(),
+                }
+    except Exception:
+        pass
+
+    veh_keywords = ("ebike", "ecar", "etrike", "segway", "rickshaw", "véhicule", "vehicule", "mercedes", "camion", "voiture", "quad", "moto")
+    custom_keywords = ("inertia", "wheel", "manivelle", "easyrig", "bras", "arm", "isolator", "magnet", "small hd", "cine", "teradek", "moniteur", "hf", "follow focus", "câble", "cable", "batterie", "accu")
+    head_keywords = ("ronin", "titan", "nodo torq", "movi", "mōvi", "rs4", "rs3", "rs2", "tete", "tête", "shotover", "flight", "matrix", "gyro")
+
+    # 3. Équipements listés dans equipment_name
+    if getattr(inc, "equipment_name", None):
+        for raw_item in inc.equipment_name.split(","):
+            item = raw_item.strip()
+            if not item:
+                continue
+            item_lower = item.lower()
+            if item_lower in added_names:
+                continue
+
+            # Est-ce un véhicule ?
+            matched_veh = vehicle_catalog.get(item_lower)
+            if not matched_veh:
+                for v_key, v_val in vehicle_catalog.items():
+                    if v_key in item_lower or item_lower in v_key:
+                        matched_veh = v_val
+                        break
+            if not matched_veh and any(k in item_lower for k in veh_keywords):
+                matched_veh = {"id": None, "name": item, "unique_id": ""}
+
+            if matched_veh:
+                equipments.append({
+                    "type": "vehicle",
+                    "name": matched_veh.get("name") or item,
+                    "icon": "🏎️",
+                    "unique_id": matched_veh.get("unique_id", ""),
+                    "id": matched_veh.get("id"),
+                    "tag_class": "admin-multiselect-tag--vehicle",
+                    "is_primary_vehicle": False,
+                })
+                added_names.add(item_lower)
+                continue
+            # Est-ce un accessoire / équipement caméra explicite (ex: Nodo Inertia, Easyrig, etc.) ?
+            elif any(k in item_lower for k in custom_keywords):
+                equipments.append({
+                    "type": "custom",
+                    "name": item,
+                    "icon": "📦",
+                    "tag_class": "admin-multiselect-tag--custom",
+                    "is_primary_vehicle": False,
+                })
+                added_names.add(item_lower)
+            # Est-ce une tête gyrostabilisée ?
+            elif item_lower in head_catalog or any(k in item_lower for k in head_keywords):
+                equipments.append({
+                    "type": "head",
+                    "name": item,
+                    "icon": "🤖",
+                    "tag_class": "admin-multiselect-tag--head",
+                    "is_primary_vehicle": False,
+                })
+                added_names.add(item_lower)
+            # Sinon, c'est un autre matériel / accessoire libre
+            else:
+                equipments.append({
+                    "type": "custom",
+                    "name": item,
+                    "icon": "📦",
+                    "tag_class": "admin-multiselect-tag--custom",
+                    "is_primary_vehicle": False,
+                })
+                added_names.add(item_lower)
+
+    return equipments
+
+
 def get_incident_detail(record_id):
     """
     Récupère le détail exhaustif d'un incident par son ID ou numéro.
@@ -315,6 +484,8 @@ def get_incident_detail(record_id):
         else:
             raw_time = t_str
 
+    equipments_data = resolve_incident_equipments(inc, vehicle_data=vehicle_data)
+
     return {
         "id": inc.id,
         "incident_number": inc.incident_number,
@@ -347,6 +518,7 @@ def get_incident_detail(record_id):
         } if inc.project else None,
         "vehicle": vehicle_data,
         "equipment_name": inc.equipment_name or "",
+        "equipments": equipments_data,
         "reporter": {
             "id": inc.reporter.id,
             "name": f"{inc.reporter.firstname} {inc.reporter.lastname}",
@@ -394,6 +566,7 @@ def get_incident_detail(record_id):
         "is_signed_bv": inc.is_signed_bv,
         "is_signed_prod": inc.is_signed_prod,
         "is_fully_signed": inc.is_fully_signed,
+        "is_sealed": inc.is_sealed,
         "signed_pdf_path": inc.signed_pdf_path,
         "signed_pdf_url": (
             f"/incidents/document/{inc.signed_pdf_path}?t={generate_pdf_access_token(inc.signed_pdf_path)}"
@@ -532,9 +705,9 @@ def update_incident(record_id, form_data, uploaded_photos=None, uploaded_documen
     if not incident or incident.deleted_at is not None:
         raise ValueError(f"Incident #{record_id} introuvable.")
 
-    is_sealed = bool(incident.is_signed_prod)
+    is_sealed = bool(incident.is_sealed)
 
-    # 1. Contexte du Tournage & Matériel Concerné (SCELLÉ SI LE CONSTAT EST CONTRADICTOIREMENT SIGNÉ)
+    # 1. Contexte du Tournage & Matériel Concerné (SCELLÉ UNIQUEMENT SI LES 2 SIGNATURES SONT APPOSÉES)
     if not is_sealed:
         if "project_id" in form_data:
             pid = form_data.get("project_id")

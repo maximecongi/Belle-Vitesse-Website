@@ -172,6 +172,11 @@ class Incident(db.Model):
         return self.signature_status == "signed" or (self.is_signed_bv and self.is_signed_prod)
 
     @property
+    def is_sealed(self) -> bool:
+        """Indique si le constat est contradictoirement scellé (les 2 signatures sont apposées)."""
+        return self.is_fully_signed
+
+    @property
     def signature_status_label(self) -> str:
         if self.is_fully_signed:
             return "Signé & Scellé"
