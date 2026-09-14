@@ -299,11 +299,11 @@
 }
 
 .checkpoint-category-dot--security {
-    background-color: #ef4444;
+    background-color: var(--red-1);
 }
 
 .checkpoint-category-dot--equipment {
-    background-color: #0284c7;
+    background-color: var(--blue-1);
 }
 
 .checkpoint-category-title {

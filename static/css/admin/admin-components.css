@@ -199,6 +199,11 @@
     margin-right: 0.5ch;
 }
 
+.badge-pill:after {
+    content: "";
+    margin-left: 0.5ch;
+}
+
 /* --- Global Statuses --- */
 .badge-pill[data-val="ok"],
 .badge-pill[data-val="signed"],
@@ -630,6 +635,10 @@
     box-shadow: none;
     border: 1px solid var(--admin-accent);
     background-color: #ffc84510;
+}
+
+input[type="text"] {
+    height: 100%;
 }
 
 input[type="checkbox"] {
