@@ -133,13 +133,13 @@
                 'administrateur': {'sections': ['dashboard','tournages','departs','retours','flotte','admin','tools'],
                 'nav': ['dashboard','projects','archives','booking',
                 'productions','contacts','checkouts','production_waivers',
-                'pilot_waivers','checkins','incidents','fleet','vehicles',
+                'pilot_waivers','checkins','incidents','fleet','vehicles','checkpoints',
                 'users','pricing','catalog_pdf','mcp_connector','settings','calendar',
                 'newsletter','signature','docs','api_docs','catalog_update']},
                 'administrator': {'sections': ['dashboard','tournages','departs','retours','flotte','admin','tools'],
                 'nav': ['dashboard','projects','archives','booking',
                 'productions','contacts','checkouts','production_waivers',
-                'pilot_waivers','checkins','incidents','fleet','vehicles',
+                'pilot_waivers','checkins','incidents','fleet','vehicles','checkpoints',
                 'users','pricing','catalog_pdf','mcp_connector','settings','calendar',
                 'newsletter','signature','docs','api_docs','catalog_update']},
                 'super administrateur': {'sections': ['all'], 'nav': ['all']},
@@ -201,6 +201,7 @@
 
                 {% call nav_group('🏎️ Flotte', 'flotte', 'flotte', false) %}
                 {{ nav_item(url_for('admin_fleet_list'), 'Flotte Véhicules', 'fleet') }}
+                {{ nav_item(url_for('admin_checkpoints_list'), 'Points de Contrôle', 'checkpoints') }}
                 {% endcall %}
 
                 {% call nav_group('🧰 Administration', 'admin', 'admin', false) %}

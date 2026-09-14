@@ -10,8 +10,11 @@
     <input type="text" id="searchInput" class="form-input u-w-250 u-text-sm" placeholder="🔍 Rechercher un véhicule..."
         autocomplete="off">
     {% if current_user and current_user.is_admin %}
-    <a href="{{ url_for('admin_vehicle_configs') }}" class="admin-btn admin-btn-secondary">
+    <a href="{{ url_for('admin_checkpoints_list') }}" class="admin-btn admin-btn-secondary">
         ⚙️ Points de Contrôle
+    </a>
+    <a href="{{ url_for('admin_vehicle_configs') }}" class="admin-btn admin-btn-secondary">
+        🎛️ Matrice Flotte
     </a>
     {% endif %}
 </div>

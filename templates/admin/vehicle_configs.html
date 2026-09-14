@@ -12,6 +12,16 @@
 {% endblock %}
 
 {% block content %}
+<!-- ═══════════ NAVIGATION PAR ONGLETS ═══════════ -->
+<div class="checkpoint-nav-tabs">
+    <a href="{{ url_for('admin_checkpoints_list') }}" class="checkpoint-nav-tab">
+        📋 Points de Contrôle
+    </a>
+    <a href="{{ url_for('admin_vehicle_configs') }}" class="checkpoint-nav-tab active">
+        🎛️ Matrice Flotte
+    </a>
+</div>
+
 <div class="admin-card">
     <div class="admin-card-title">Gestion des Points de Contrôle par Véhicule <span class="vehicle-modal-trigger u-cursor-pointer u-ml-1 u-text-lg u-vertical-middle"
             title="Voir l'protocoles freins et pneus"><img

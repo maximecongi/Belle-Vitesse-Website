@@ -11,10 +11,10 @@ from flask import (
 
 from services.admin.calendar import get_calendar_events
 from services.admin.vehicle_config import (
+    get_all_checkpoints,
     get_vehicles_with_config,
     save_vehicle_checkpoint_config,
 )
-from utils.checkpoints import ALL_POSSIBLE_CHECKPOINTS
 from utils.decorators import require_roles
 
 
@@ -89,7 +89,7 @@ def init_api_routes(app):
             return render_template(
                 "admin/vehicle_configs.html",
                 vehicles=vehicles,
-                possible_checkpoints=ALL_POSSIBLE_CHECKPOINTS
+                possible_checkpoints=get_all_checkpoints()
             )
         except Exception as e:
             current_app.logger.error(

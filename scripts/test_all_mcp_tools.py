@@ -792,6 +792,16 @@ def run_all_tests():
         except Exception as e:
             suite.record("audit.mcp_audit_log_recorded", "FAIL", str(e))
 
+        # Nettoyage automatique du véhicule de test
+        try:
+            v = Vehicle.query.filter_by(id="test-veh-01").first()
+            if v:
+                db.session.delete(v)
+            VehicleCheckpointConfig.query.filter_by(vehicle_id="test-veh-01").delete()
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
     print("\n" + "=" * 75)
     print(f"📊 BILAN FINAL : {suite.passed} RÉUSSIS / {suite.failed} ÉCHECS / {suite.skipped} IGNORÉS (TOTAL : {suite.passed + suite.failed + suite.skipped} TESTS)")
     print("=" * 75)

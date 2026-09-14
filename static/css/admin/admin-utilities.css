@@ -66,6 +66,10 @@
     grid-template-columns: repeat(4, 1fr) !important;
 }
 
+.u-grid-align-start {
+    align-items: start !important;
+}
+
 /* Gap Spacings */
 .u-gap-1 {
     gap: 0.5rem !important;
@@ -723,7 +727,7 @@
 
 .checkpoint-category-title {
     font-size: 0.9rem !important;
-    margin-top: 1rem !important;
+    margin-top: 1rem;
     border-bottom: 1px solid var(--admin-border) !important;
 }
 

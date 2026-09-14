@@ -1,0 +1,120 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}{% if is_new %}Nouveau Point de Contrôle{% else %}Modifier « {{ checkpoint.label }} »{% endif %} —
+Belle Vitesse{% endblock %}
+{% block page_title %}{% if is_new %}Nouveau Point de Contrôle{% else %}Modifier le Point de Contrôle{% endif %}{%
+endblock %}
+
+{% block header_actions %}
+<div class="u-flex u-align-center u-gap-2">
+    <a href="{{ url_for('admin_checkpoints_list') }}" class="admin-btn admin-btn-secondary">
+        ← Retour aux points de contrôle
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="admin-card u-max-w-800">
+    <form method="POST"
+        action="{% if is_new %}{{ url_for('admin_checkpoint_new') }}{% else %}{{ url_for('admin_checkpoint_edit', checkpoint_id=checkpoint.id) }}{% endif %}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- ═══════════ 1. INFORMATIONS GÉNÉRALES ═══════════ -->
+        <div class="admin-card-title">1. Informations Générales</div>
+
+        <div class="form-group u-mb-3">
+            <label for="checkpoint_label" class="form-label">
+                Nom du point de contrôle <span class="u-text-danger">*</span>
+            </label>
+            <input type="text" id="checkpoint_label" name="label" class="form-input" value="{{ checkpoint.label }}"
+                required placeholder="Ex : Pression des pneus, Contrôle des freins…">
+        </div>
+
+        <div class="u-grid u-grid-2 u-gap-3 u-mb-4 u-grid-align-start">
+            <div class="form-group">
+                <label for="checkpoint_category" class="form-label">Catégorie <span
+                        class="u-text-danger">*</span></label>
+                <select id="checkpoint_category" name="category" class="form-input">
+                    <option value="Sécurité" {% if checkpoint.category=='Sécurité' %}selected{% endif %}>
+                        Sécurité
+                    </option>
+                    <option value="Équipements" {% if checkpoint.category=='Équipements' %}selected{% endif %}>
+                        Équipements
+                    </option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="default_detail" class="form-label">Consigne par défaut</label>
+                <input type="text" id="default_detail" name="default_detail" class="form-input"
+                    value="{{ checkpoint.default_detail or '' }}" placeholder="Ex : Contrôle visuel, voir protocole…">
+                <div class="u-text-xs u-text-muted u-mt-1">
+                    Si aucune consigne spécifique.
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════ 2. VÉHICULES CONCERNÉS ═══════════ -->
+        <div class="admin-card-title u-mt-4 u-pt-3 u-border-top">2. Véhicules Concernés</div>
+        <p class="u-text-xs u-text-muted u-mb-3">
+            Cochez les véhicules pour lesquels ce point doit être vérifié lors des contrôles de départ et retour.
+            Renseignez une consigne spécifique (pression, couple de serrage…) si nécessaire.
+        </p>
+
+        <div class="admin-table-container u-mb-4">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th class="u-w-60 u-text-center">Actif</th>
+                        <th class="u-min-w-180">Véhicule</th>
+                        <th>Consigne spécifique (optionnelle)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for v in checkpoint.vehicles %}
+                    <tr>
+                        <td class="u-text-center">
+                            <input type="checkbox" id="ve_{{ v.id }}" name="vehicle_enabled_{{ v.id }}" value="1" {% if
+                                v.enabled %}checked{% endif %}>
+                        </td>
+                        <td>
+                            <label for="ve_{{ v.id }}" class="u-cursor-pointer u-font-semibold u-m-0">
+                                {{ v.name }}
+                            </label>
+                        </td>
+                        <td>
+                            <input type="text" name="vehicle_indication_{{ v.id }}" class="form-input form-input-sm"
+                                value="{{ v.indication }}" placeholder="Ex : 2.2 bar, 110 Nm, voir notice…">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ═══════════ ACTIONS ═══════════ -->
+        <div class="u-flex u-justify-between u-align-center u-mt-4 u-pt-3 u-border-top">
+            <div>
+                {% if not is_new %}
+                <button type="submit" form="deleteCheckpointForm" class="admin-btn admin-btn-danger"
+                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer définitivement le point de contrôle « {{ checkpoint.label }} » ? Cette action est irréversible.');">
+                    Supprimer ce point
+                </button>
+                {% endif %}
+            </div>
+            <div class="u-flex u-align-center u-gap-2">
+                <a href="{{ url_for('admin_checkpoints_list') }}" class="admin-btn admin-btn-secondary">Annuler</a>
+                <button type="submit" class="admin-btn admin-btn-primary">
+                    {% if is_new %}Créer le point de contrôle{% else %}Enregistrer les modifications{% endif %}
+                </button>
+            </div>
+        </div>
+    </form>
+
+    {% if not is_new %}
+    <form id="deleteCheckpointForm" method="POST"
+        action="{{ url_for('admin_checkpoint_delete', checkpoint_id=checkpoint.id) }}" class="u-d-none">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    </form>
+    {% endif %}
+</div>
+{% endblock %}

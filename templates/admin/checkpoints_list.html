@@ -1,0 +1,303 @@
+{% extends "admin/admin_base.html" %}
+
+{% from "admin/macros.html" import filter_header %}
+
+{% block title %}Points de Contrôle — Belle Vitesse{% endblock %}
+{% block page_title %}Points de Contrôle{% endblock %}
+
+{% block header_actions %}
+<div class="u-flex u-align-center u-gap-2">
+    <input type="text" id="searchInput" class="form-input u-w-250 u-text-sm" placeholder="🔍 Rechercher un point..."
+        autocomplete="off">
+    <a href="{{ url_for('admin_checkpoint_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Point</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- ═══════════ NAVIGATION PAR ONGLETS ═══════════ -->
+<div class="checkpoint-nav-tabs">
+    <a href="{{ url_for('admin_checkpoints_list') }}" class="checkpoint-nav-tab active">
+        Points de Contrôle
+        <span class="badge-pill u-ml-1" data-val="neutral">{{ stats.total }}</span>
+    </a>
+    <a href="{{ url_for('admin_vehicle_configs') }}" class="checkpoint-nav-tab">
+        Matrice Flotte
+    </a>
+</div>
+
+<!-- ═══════════ CARTE PRINCIPALE : FILTRES & TABLE ═══════════ -->
+<div class="admin-card">
+    <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
+        <div class="u-flex u-gap-2 u-flex-wrap" id="checkpoint-filter-pills">
+            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary filter-pill active"
+                data-category="all">Tous ({{ stats.total }})</button>
+            <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary filter-pill"
+                data-category="Sécurité">Sécurité ({{ stats.security }})</button>
+            <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary filter-pill"
+                data-category="Équipements">Équipements ({{ stats.equipment }})</button>
+        </div>
+        <div class="u-text-sm u-text-muted">
+            <strong id="checkpoint-visible-count">{{ checkpoints|length }}</strong> point{{ 's' if checkpoints|length >
+            1 else '' }} répertorié{{ 's' if checkpoints|length > 1 else '' }}
+        </div>
+    </div>
+
+    <div class="admin-table-container">
+        <table class="admin-table" id="checkpointsTable">
+            <thead>
+                <tr>
+                    <th>Point de Contrôle</th>
+                    <th>Catégorie</th>
+                    <th>Consigne standard</th>
+                    <th>Véhicules concernés</th>
+                    <th class="u-text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="checkpointsTableBody">
+                {% set current_cat = namespace(val=None) %}
+                {% for cp in checkpoints %}
+                {% if cp.category != current_cat.val %}
+                {% set current_cat.val = cp.category %}
+                <tr class="checkpoint-category-header" data-category="{{ cp.category }}">
+                    <td colspan="5">
+                        <div class="checkpoint-category-header-inner">
+                            <span
+                                class="checkpoint-category-dot checkpoint-category-dot--{{ 'security' if cp.category == 'Sécurité' else 'equipment' }}"></span>
+                            <span class="checkpoint-category-title u-mt-0">{{ cp.category }}</span>
+                            <span class="badge-pill" data-val="{{ cp.category }}">
+                                <span class="checkpoint-cat-count">{{ stats.security if cp.category == 'Sécurité' else
+                                    (stats.equipment if cp.category == 'Équipements' else '') }}</span>
+                            </span>
+                        </div>
+                    </td>
+                </tr>
+                {% endif %}
+                {% set spec_count = cp.enabled_vehicles | selectattr('indication') | list | length %}
+                <tr class="checkpoint-row" data-id="{{ cp.id }}" data-category="{{ cp.category }}"
+                    data-search="{{ cp.label|lower }} {{ cp.key|lower }} {{ (cp.default_detail or '')|lower }} {% for ev in cp.enabled_vehicles %}{{ ev.name|lower }} {% endfor %}">
+                    <td class="u-font-semibold">
+                        {{ cp.label }}
+                    </td>
+                    <td>
+                        <span class="badge-pill" data-val="{{ cp.category }}">{{ cp.category }}</span>
+                    </td>
+                    <td>
+                        {% if cp.default_detail %}
+                        <span class="u-text-sm">{{ cp.default_detail }}</span>
+                        {% else %}
+                        <span class="u-text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if cp.enabled_count == 0 %}
+                        <span class="u-text-muted">—</span>
+                        {% elif cp.enabled_count == cp.total_vehicles %}
+                        <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
+                            <span class="badge-pill" data-val="ok"
+                                title="Actif sur l'ensemble de la flotte ({{ cp.total_vehicles }} véhicules)">Tous</span>
+                            {% if spec_count > 0 %}
+                            {% for ev in cp.enabled_vehicles %}
+                            {% if ev.indication %}
+                            <button type="button" class="badge-pill checkpoint-spec-trigger" data-val="warning"
+                                data-vehicle="{{ ev.name }}" data-checkpoint="{{ cp.label }}"
+                                data-indication="{{ ev.indication }}"
+                                title="Consigne spécifique pour {{ ev.name }} : {{ ev.indication }} (cliquer pour afficher)">
+                                {{ ev.name }} 📝
+                            </button>
+                            {% endif %}
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
+                            {% for ev in cp.enabled_vehicles %}
+                            {% if ev.indication %}
+                            <button type="button" class="badge-pill checkpoint-spec-trigger" data-val="warning"
+                                data-vehicle="{{ ev.name }}" data-checkpoint="{{ cp.label }}"
+                                data-indication="{{ ev.indication }}"
+                                title="Consigne spécifique pour {{ ev.name }} : {{ ev.indication }} (cliquer pour afficher)">
+                                {{ ev.name }} 📝
+                            </button>
+                            {% else %}
+                            <span class="badge-pill" data-val="neutral">
+                                {{ ev.name }}
+                            </span>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td class="u-text-center u-nowrap">
+                        <div class="u-flex u-align-center u-justify-center u-gap-1">
+                            <a href="{{ url_for('admin_checkpoint_edit', checkpoint_id=cp.id) }}"
+                                class="admin-btn admin-btn-secondary admin-btn-sm">Modifier</a>
+                            <form method="POST" action="{{ url_for('admin_checkpoint_delete', checkpoint_id=cp.id) }}"
+                                class="u-d-inline"
+                                onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer définitivement le point de contrôle « {{ cp.label }} » ? Cette action est irréversible.');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="admin-btn admin-btn-danger admin-btn-sm">Supprimer</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                <tr id="checkpoint-no-results" class="u-d-none">
+                    <td colspan="5" class="u-text-center u-p-4 u-text-muted">
+                        Aucun point de contrôle ne correspond à vos critères de recherche.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ═══════════ MODALE CONSIGNES SPÉCIFIQUES VÉHICULE ═══════════ -->
+<div id="checkpointIndicationModal" class="checkpoint-modal-overlay" role="dialog" aria-modal="true"
+    aria-labelledby="modalVehicleName">
+    <div class="checkpoint-modal-card">
+        <div class="checkpoint-modal-header">
+            <div>
+                <span class="badge-pill u-mb-1" data-val="warning">Consigne Spécifique</span>
+                <h3 id="modalVehicleName" class="u-text-lg u-font-bold u-m-0"></h3>
+                <div id="modalCheckpointLabel" class="u-text-xs u-text-muted u-mt-1"></div>
+            </div>
+            <button type="button" class="checkpoint-modal-close" id="closeIndicationModal"
+                aria-label="Fermer">&times;</button>
+        </div>
+        <div class="u-text-xs u-text-muted u-uppercase u-letter-spacing-1 u-mb-1">
+            Consigne technique de préparation :
+        </div>
+        <div id="modalIndicationText" class="checkpoint-modal-box"></div>
+        <div class="u-flex u-justify-end">
+            <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" id="closeIndicationModalBtn">
+                Fermer
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // ── Recherche & Filtres ──
+        var searchInput = document.getElementById('searchInput') || document.getElementById('checkpointSearch');
+        var filterPills = document.querySelectorAll('#checkpoint-filter-pills .filter-pill');
+        var noResultsRow = document.getElementById('checkpoint-no-results');
+        var visibleCountEl = document.getElementById('checkpoint-visible-count');
+        var activeCategory = 'all';
+        var searchQuery = '';
+        var tbody = document.getElementById('checkpointsTableBody');
+
+        function normalizeStr(str) {
+            return (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+        }
+
+        function filterRows() {
+            var count = 0;
+            var normalizedQuery = normalizeStr(searchQuery);
+            var normActiveCategory = normalizeStr(activeCategory);
+            var visiblePerCategory = {};
+
+            var allRows = tbody.querySelectorAll('.checkpoint-row');
+            allRows.forEach(function (row) {
+                var cat = normalizeStr(row.getAttribute('data-category') || '');
+                var text = normalizeStr(row.getAttribute('data-search') || '');
+
+                var matchesCategory = (normActiveCategory === 'all' || cat === normActiveCategory);
+                var matchesSearch = (!normalizedQuery || text.indexOf(normalizedQuery) !== -1);
+                var show = matchesCategory && matchesSearch;
+
+                row.classList.toggle('u-d-none', !show);
+                if (show) {
+                    count++;
+                    visiblePerCategory[cat] = (visiblePerCategory[cat] || 0) + 1;
+                }
+            });
+
+            var catHeaders = tbody.querySelectorAll('.checkpoint-category-header');
+            catHeaders.forEach(function (header) {
+                var cat = normalizeStr(header.getAttribute('data-category') || '');
+                var hasVisibleRows = (visiblePerCategory[cat] || 0) > 0;
+                var matchesCategoryFilter = (normActiveCategory === 'all' || cat === normActiveCategory);
+                var showHeader = hasVisibleRows && matchesCategoryFilter;
+                header.classList.toggle('u-d-none', !showHeader);
+                if (showHeader) {
+                    var countSpan = header.querySelector('.checkpoint-cat-count');
+                    if (countSpan) {
+                        countSpan.textContent = visiblePerCategory[cat] || 0;
+                    }
+                }
+            });
+
+            if (visibleCountEl) visibleCountEl.textContent = count;
+            if (noResultsRow) noResultsRow.classList.toggle('u-d-none', count > 0);
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function (e) {
+                searchQuery = e.target.value;
+                filterRows();
+            });
+        }
+
+        filterPills.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                filterPills.forEach(function (b) {
+                    b.classList.remove('active', 'admin-btn-primary');
+                    b.classList.add('admin-btn-secondary');
+                });
+                btn.classList.add('active', 'admin-btn-primary');
+                btn.classList.remove('admin-btn-secondary');
+                activeCategory = btn.getAttribute('data-category');
+                filterRows();
+            });
+        });
+
+        // ── Gestion de la Modale de Consigne Spécifique ──
+        var modal = document.getElementById('checkpointIndicationModal');
+        var modalVehicle = document.getElementById('modalVehicleName');
+        var modalCheckpoint = document.getElementById('modalCheckpointLabel');
+        var modalIndication = document.getElementById('modalIndicationText');
+        var closeModalBtn = document.getElementById('closeIndicationModal');
+        var closeModalFooterBtn = document.getElementById('closeIndicationModalBtn');
+
+        function openModal(vehicle, checkpoint, indication) {
+            if (!modal) return;
+            modalVehicle.textContent = '🏎️ ' + vehicle;
+            modalCheckpoint.textContent = checkpoint;
+            modalIndication.textContent = indication;
+            modal.classList.add('open');
+            document.body.classList.add('u-overflow-hidden');
+        }
+
+        function closeModal() {
+            if (!modal) return;
+            modal.classList.remove('open');
+            document.body.classList.remove('u-overflow-hidden');
+        }
+
+        document.addEventListener('click', function (e) {
+            var trigger = e.target.closest('.checkpoint-spec-trigger');
+            if (trigger) {
+                e.preventDefault();
+                e.stopPropagation();
+                openModal(
+                    trigger.getAttribute('data-vehicle') || '',
+                    trigger.getAttribute('data-checkpoint') || '',
+                    trigger.getAttribute('data-indication') || ''
+                );
+                return;
+            }
+
+            if (e.target === modal || e.target === closeModalBtn || e.target === closeModalFooterBtn || e.target.closest('#closeIndicationModal')) {
+                closeModal();
+            }
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && modal && modal.classList.contains('open')) {
+                closeModal();
+            }
+        });
+    });
+</script>
+{% endblock %}

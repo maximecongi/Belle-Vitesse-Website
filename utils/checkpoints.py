@@ -106,63 +106,83 @@ def get_checkpoints_for_vehicle(vehicle_id: str, batch_configs=None, vehicle_nam
 
     from flask import current_app, has_app_context
 
-    # 1. Try batch_configs first (passed from service layer)
-    if batch_configs and vehicle_id in batch_configs:
-        config = batch_configs[vehicle_id]
-        if isinstance(config, dict):
-            # DB config is a dict {key: bool}
-            enabled_keys = {k for k, v in config.items() if v}
-        else:
-            # Legacy or other format might be a list
-            enabled_keys = config
-
-        return BASE_CHECKPOINTS + _resolve_checkpoints(enabled_keys)
-
-    # Resolve the vehicle name if it's an Airtable ID (starts with rec)
+    # Resolve vehicle name if not provided
     if not vehicle_name:
         vehicle_name = vehicle_id
 
-    # Try to resolve actual name from DB/Airtable if we only have an ID so we can match SPECIFIC_DETAILS later
-    if has_app_context() and vehicle_id.startswith('rec') and vehicle_name == vehicle_id:
+    # 1. Try to get from DB via CheckpointDefinition (cached) if in app context
+    if has_app_context():
         try:
+            from services.admin.vehicle_config import get_all_checkpoints
             from utils.database import get_vehicles
-            vehicles = get_vehicles()
-            for v in vehicles:
-                if v['id'] == vehicle_id:
-                    vehicle_name = v['fields'].get('name', vehicle_id)
-                    break
-        except Exception:
-            pass
 
-    # 1. Try batch_configs first (passed from service layer)
+            # Try to resolve vehicle ID <-> name if needed
+            vehicles = get_vehicles()
+            v_id_to_name = {v['id']: v.get('fields', {}).get('name', '') for v in vehicles}
+            v_name_to_id = {v.get('fields', {}).get('name', ''): v['id'] for v in vehicles}
+
+            v_id = vehicle_id
+            v_name = vehicle_name
+            if vehicle_id in v_id_to_name and vehicle_name == vehicle_id:
+                v_name = v_id_to_name[vehicle_id]
+            elif vehicle_id in v_name_to_id:
+                v_id = v_name_to_id[vehicle_id]
+                v_name = vehicle_id
+
+            all_cps = get_all_checkpoints()
+            if all_cps:
+                resolved = []
+                for cp in all_cps:
+                    overrides = cp.get('vehicle_overrides') or {}
+
+                    # Check enabled status
+                    is_enabled = False
+                    if batch_configs and (v_id in batch_configs or v_name in batch_configs):
+                        cfg = batch_configs.get(v_id) or batch_configs.get(v_name) or {}
+                        if isinstance(cfg, dict):
+                            is_enabled = bool(cfg.get(cp['key']))
+                        elif isinstance(cfg, (list, set)):
+                            is_enabled = cp['key'] in cfg
+                    else:
+                        if (v_id and v_id in overrides) or (v_name and v_name in overrides):
+                            v_ov = overrides.get(v_id) or overrides.get(v_name) or {}
+                            is_enabled = bool(v_ov.get('enabled', False))
+                        else:
+                            is_enabled = (cp.get('category') == 'Sécurité')
+
+                    if is_enabled:
+                        # Determine indication
+                        indication = ""
+                        v_ov = overrides.get(v_id) or overrides.get(v_name) or {}
+                        if v_ov.get('indication'):
+                            indication = v_ov['indication'].strip()
+                        elif cp.get('default_detail'):
+                            indication = cp['default_detail'].strip()
+
+                        item = {
+                            'key': cp['key'],
+                            'label': cp['label'],
+                            'category': cp.get('category', 'Sécurité'),
+                            'type': cp.get('type', 'status'),
+                            'detail': indication
+                        }
+                        if cp.get('unit'):
+                            item['unit'] = cp['unit']
+                        resolved.append(item)
+
+                return BASE_CHECKPOINTS + resolved
+        except Exception as e:
+            if current_app:
+                current_app.logger.error(f"Error fetching vehicle checkpoints from DB: {e}")
+
+    # 2. Fallback when outside app context or if DB fetch failed
     if batch_configs and vehicle_id in batch_configs:
         config = batch_configs[vehicle_id]
         if isinstance(config, dict):
-            # DB config is a dict {key: bool}
             enabled_keys = {k for k, v in config.items() if v}
         else:
-            # Legacy or other format might be a list
             enabled_keys = config
-
         return BASE_CHECKPOINTS + _resolve_checkpoints(enabled_keys, vehicle_name)
-
-    # 2. Try to get from DB (cached) if in app context
-    if has_app_context():
-        try:
-            from services.admin.vehicle_config import get_checkpoint_configs
-            all_configs = get_checkpoint_configs()
-
-            config = all_configs.get(vehicle_id)
-            if not config and vehicle_id.startswith('rec') and vehicle_name != vehicle_id:
-                config = all_configs.get(vehicle_name)
-
-            if config:
-                # DB config is usually {key: bool}
-                enabled_keys = {k for k, v in config.items() if v}
-                return BASE_CHECKPOINTS + _resolve_checkpoints(enabled_keys, vehicle_name)
-        except Exception as e:
-            if current_app:
-                current_app.logger.error(f"Error fetching vehicle config: {e}")
 
     # Final fallback: return ALL possible checkpoints
     return BASE_CHECKPOINTS + ALL_POSSIBLE_CHECKPOINTS

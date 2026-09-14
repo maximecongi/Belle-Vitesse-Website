@@ -46,6 +46,16 @@ class MCPServerFullTestSuite(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        try:
+            from models.catalog import Vehicle
+            from models.inspection import VehicleCheckpointConfig
+            v = Vehicle.query.filter_by(id="test-veh-01").first()
+            if v:
+                db.session.delete(v)
+            VehicleCheckpointConfig.query.filter_by(vehicle_id="test-veh-01").delete()
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
         cls.app_context.pop()
 
     def setUp(self):
