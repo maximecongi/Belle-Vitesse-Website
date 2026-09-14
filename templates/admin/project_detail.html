@@ -680,44 +680,6 @@ initials %}
                     </div>
                 </div>
 
-                <!-- Pré-devis -->
-                {% if pre_quotes and pre_quotes|length > 0 %}
-                <div class="project-doc-item u-p-2">
-                    <div class="u-font-semibold u-text-xs u-mb-2">📑 Devis / Pré-devis</div>
-                    <div class="u-flex u-flex-column u-gap-1">
-                        {% for pq in pre_quotes %}
-                        {% set status_label = 'Brouillon' %}
-                        {% set status_class = 'draft' %}
-
-                        {% if pq.status == 'sent' %}
-                        {% set status_label = 'Envoyé' %}
-                        {% set status_class = 'sent' %}
-                        {% elif pq.status == 'accepted' %}
-                        {% set status_label = 'Accepté' %}
-                        {% set status_class = 'accepted' %}
-                        {% elif pq.status == 'rejected' %}
-                        {% set status_label = 'Refusé' %}
-                        {% set status_class = 'rejected' %}
-                        {% endif %}
-
-                        <div class="u-flex u-justify-between u-align-center u-text-xs">
-                            <a href="{{ url_for('admin_pre_quote_edit', quote_id=pq.id) }}" class="projects-badge-link">
-                                <span class="projects-prequote-badge {{ status_class }}"
-                                    title="Statut du pré-devis : {{ status_label }}">
-                                    📄 {{ pq.reference }}
-                                    {% if pq.latest_version %}
-                                    <span class="projects-prequote-badge-version">(v{{ pq.latest_version }})</span>
-                                    {% endif %}
-                                    <span class="projects-prequote-badge-status-label">[{{ status_label }}]</span>
-                                </span>
-                            </a>
-                            <span class="u-font-semibold">{{ "%.2f"|format(pq.total_ht) }} € HT</span>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
-
                 <!-- Incidents éventuels -->
                 {% if incidents and incidents|length > 0 %}
                 <div class="project-doc-item u-p-2 project-doc-item--error">

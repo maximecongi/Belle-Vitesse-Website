@@ -40,38 +40,7 @@
                     <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
                         <span class="checkout-doc-id">{{ project.project_id }}</span>
                     </div>
-                    {% if project.pre_quotes %}
-                    <div class="u-mt-1 u-flex u-flex-column u-gap-1">
-                        {% for pq in project.pre_quotes %}
-                        {% set status_label = 'Brouillon' %}
-                        {% set status_class = 'draft' %}
-
-                        {% if pq.status == 'sent' %}
-                        {% set status_label = 'Envoyé' %}
-                        {% set status_class = 'sent' %}
-                        {% elif pq.status == 'accepted' %}
-                        {% set status_label = 'Accepté' %}
-                        {% set status_class = 'accepted' %}
-                        {% elif pq.status == 'rejected' %}
-                        {% set status_label = 'Refusé' %}
-                        {% set status_class = 'rejected' %}
-                        {% endif %}
-
-                        <a href="{{ url_for('admin_pre_quote_edit', quote_id=pq.id) }}" class="projects-badge-link">
-                            <span class="projects-prequote-badge {{ status_class }}"
-                                title="Statut du pré-devis : {{ status_label }}">
-                                📄 {{ pq.reference }}
-                                {% if pq.latest_version %}
-                                <span class="projects-prequote-badge-version">(v{{ pq.latest_version }})</span>
-                                {% endif %}
-                                <span class="projects-prequote-badge-status-label">[{{ status_label }}]</span>
-                            </span>
-                        </a>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                    <br><br>
-                    <div class="projects-dates-info">
+                    <div class="projects-dates-info u-mt-2">
                         🚚 {{ project.departure_date }}<br><br>
                         🎥 {{ project.shoot_start }}<br> → {{ project.shoot_end }}<br><br>
                         📦 {{ project.return_date }}
