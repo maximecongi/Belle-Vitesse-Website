@@ -93,7 +93,7 @@ incident_signature_badge, equipment_icon %}
             </div>
 
             <!-- Pipeline visuel des étapes -->
-            <div class="incident-workflow-bar u-mb-3">
+            <div class="incident-workflow-bar">
                 {% set steps = [
                 {'key': 'signale', 'title': '1. Signalé', 'icon': '📣'},
                 {'key': 'en_expertise', 'title': '2. En expertise', 'icon': '🔍'},
@@ -267,7 +267,8 @@ incident_signature_badge, equipment_icon %}
             <div class="incident-damage-summary-strip">
                 {% for eq in incident.equipments or [] %}
                 <span class="badge-pill badge-pill-sm" data-val="neutral">
-                    {{ eq.icon }} {{ eq.name }} {% if eq.unique_id %}<span class="checkout-doc-id u-bg-transparent">{{ eq.unique_id }}</span>{% endif %}
+                    {{ eq.icon }} {{ eq.name }} {% if eq.unique_id %}<span class="checkout-doc-id u-bg-transparent">{{
+                        eq.unique_id }}</span>{% endif %}
                 </span>
                 {% endfor %}
 
