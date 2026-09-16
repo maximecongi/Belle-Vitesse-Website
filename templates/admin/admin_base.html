@@ -16,11 +16,15 @@
 
     <!-- Stylesheets -->
     {% if config.FLASK_ENV == 'production' %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.bundle.css') }}?v={{ asset_version('css/styles.bundle.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.bundle.css') }}?v={{ asset_version('css/admin/admin.bundle.css') }}">
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/styles.bundle.css') }}?v={{ asset_version('css/styles.bundle.css') }}">
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/admin/admin.bundle.css') }}?v={{ asset_version('css/admin/admin.bundle.css') }}">
     {% else %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v={{ asset_version('css/styles.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.css') }}?v={{ asset_version('css/admin/admin.css') }}">
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/styles.css') }}?v={{ asset_version('css/styles.css') }}">
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/admin/admin.css') }}?v={{ asset_version('css/admin/admin.css') }}">
     {% endif %}
 
     <meta name="theme-color" content="#0f172a">
@@ -41,7 +45,8 @@
         <!-- Sidebar -->
         <aside class="admin-sidebar" id="adminSidebar">
             <div class="admin-sidebar-header">
-                <button type="button" class="admin-sidebar-close" id="adminSidebarClose" aria-label="Fermer le menu">&times;</button>
+                <button type="button" class="admin-sidebar-close" id="adminSidebarClose"
+                    aria-label="Fermer le menu">&times;</button>
                 <a href="/admin/dashboard">
                     <svg xmlns="http://www.w3.org/2000/svg" width="300" height="130.726" viewBox="0 0 300 130.726"
                         class="admin-sidebar-logo">
@@ -236,7 +241,8 @@
         <main class="admin-main">
             <header class="admin-header">
                 <div class="admin-header-left">
-                    <button type="button" class="admin-sidebar-toggle" id="adminSidebarToggle" aria-label="Ouvrir le menu de navigation" aria-expanded="false">
+                    <button type="button" class="admin-sidebar-toggle" id="adminSidebarToggle"
+                        aria-label="Ouvrir le menu de navigation" aria-expanded="false">
                         <span class="admin-sidebar-toggle-bar"></span>
                         <span class="admin-sidebar-toggle-bar"></span>
                         <span class="admin-sidebar-toggle-bar"></span>
@@ -321,6 +327,12 @@
     <script src="{{ url_for('static', filename='js/src/admin/photo-annotator.js') }}"></script>
     <script src="{{ url_for('static', filename='js/src/admin/ios-bridge.js') }}"></script>
     <script src="{{ url_for('static', filename='js/src/admin.js') }}"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            lucide.createIcons();
+        });
+    </script>
 </body>
 
 </html>

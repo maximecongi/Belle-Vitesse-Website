@@ -389,11 +389,31 @@
 .badge-pill[data-val="download-available"] {
     background: #dbeafe;
     color: #1e40af;
+    stroke-width: 2.5;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+a:hover > .badge-pill[data-val="download-available"] {
+    background: #bfdbfe;
+    color: #1e3a8a;
 }
 
 .badge-pill[data-val="download-unavailable"] {
     background: var(--neutral-bg);
     color: var(--neutral-color);
+    stroke-width: 2.5;
+}
+
+.badge-pill[data-val="link"] {
+    background: #dbeafe;
+    color: #1e40af;
+    stroke-width: 2.5;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.badge-pill[data-val="link"]:hover {
+    background: #bfdbfe;
+    color: #1e3a8a;
 }
 
 /* --- Reminder Pill Badge (Indicateur purement informatif) --- */
@@ -456,6 +476,7 @@
     padding: 2pt 6pt;
     border-radius: 2pt;
     margin-top: 6pt;
+    width: fit-content;
     vertical-align: middle;
 }
 
