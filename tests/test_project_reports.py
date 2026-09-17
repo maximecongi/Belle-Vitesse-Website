@@ -102,19 +102,20 @@ class ProjectReportsTest(unittest.TestCase):
             self.assertEqual(report1.author_name, "Lucas Technicien")
             self.assertEqual(report1.author_role, "Technicien")
 
-            # Ajout d'un second rapport par l'administrateur (sans titre)
+            # Ajout d'un second rapport par l'administrateur
             report2 = add_project_report(
                 self.project_id,
                 user_id=self.admin_id,
+                title="Logistique pneus",
                 content="Prévoir jeu de pneus pluie supplémentaire pour demain."
             )
             self.assertEqual(report2.author_name, "Maxime Admin")
-            self.assertIsNone(report2.title)
+            self.assertEqual(report2.title, "Logistique pneus")
 
             # Récupération de la liste (ordre antéchronologique : plus récent en premier)
             reports = list_project_reports(self.project_id)
             self.assertEqual(len(reports), 2)
-            self.assertIsNone(reports[0]["title"])
+            self.assertEqual(reports[0]["title"], "Logistique pneus")
             self.assertEqual(reports[0]["content"], "Prévoir jeu de pneus pluie supplémentaire pour demain.")
             self.assertEqual(reports[1]["title"], "Débriefing Tournage J1")
             self.assertEqual(reports[1]["content"], "Essai carmount validé à 110 km/h.")
@@ -123,13 +124,26 @@ class ProjectReportsTest(unittest.TestCase):
     def test_empty_content_validation(self):
         with self.app.app_context():
             with self.assertRaises(ValueError):
-                add_project_report(self.project_id, user_id=self.tech_id, content="   ")
+                add_project_report(self.project_id, user_id=self.tech_id, title="Titre valide", content="   ")
+
+    def test_empty_title_validation(self):
+        with self.app.app_context():
+            # Titre vide
+            with self.assertRaises(ValueError):
+                add_project_report(self.project_id, user_id=self.tech_id, title="", content="Contenu valide")
+            # Titre avec espaces
+            with self.assertRaises(ValueError):
+                add_project_report(self.project_id, user_id=self.tech_id, title="   ", content="Contenu valide")
+            # Titre None
+            with self.assertRaises(ValueError):
+                add_project_report(self.project_id, user_id=self.tech_id, title=None, content="Contenu valide")
 
     def test_delete_permissions(self):
         with self.app.app_context():
             report = add_project_report(
                 self.project_id,
                 user_id=self.tech_id,
+                title="Note temporaire",
                 content="Note temporaire du technicien"
             )
 
@@ -150,6 +164,7 @@ class ProjectReportsTest(unittest.TestCase):
             add_project_report(
                 self.project_id,
                 user_id=self.tech_id,
+                title="Rapport lié",
                 content="Rapport lié au projet"
             )
             self.assertEqual(ProjectReport.query.filter_by(project_id=self.project_id).count(), 1)
@@ -167,6 +182,7 @@ class ProjectReportsTest(unittest.TestCase):
             add_project_report(
                 self.project_id,
                 user_id=self.tech_id,
+                title="Fin de journée",
                 content="Débriefing fin de journée."
             )
             ctx = get_project_detail_context(self.project_id, current_user_id=self.tech_id, is_admin=False)
@@ -190,7 +206,7 @@ class ProjectReportsTest(unittest.TestCase):
         # 2. Ajout rapport via POST JSON
         resp_add = self.client.post(
             f"/admin/projects/{self.project_id}/reports",
-            json={"content": "Rapport test via API HTTP"},
+            json={"title": "Rapport test HTTP", "content": "Rapport test via API HTTP"},
             headers={"X-Requested-With": "XMLHttpRequest"}
         )
         self.assertEqual(resp_add.status_code, 201)
@@ -227,6 +243,7 @@ class ProjectReportsTest(unittest.TestCase):
             # 1. Ajout via outil MCP avec nom et poste
             res = mcp_add_project_report(
                 project_id=bvpr_code,  # Test avec le code BVPR en chaîne !
+                title="Note d'essai caméra",
                 content="Note d'essai ajoutée par subagent IA sur caméra",
                 author_name="Claude Antigravity",
                 author_job="Ingénieur Caméra",
@@ -283,6 +300,7 @@ class ProjectReportsTest(unittest.TestCase):
             report = add_project_report(
                 self.project_id,
                 user_id=user_pilot.id,
+                title="Passage circuit",
                 content="Passage sur circuit validé."
             )
             self.assertEqual(report.author_job, "Pilote Précision")
@@ -376,6 +394,7 @@ class ProjectReportsTest(unittest.TestCase):
                 update_project_report(
                     report.id,
                     current_user_id=999,
+                    title="Titre illégitime",
                     content="Contenu illégitime",
                     is_admin=False
                 )
@@ -399,6 +418,7 @@ class ProjectReportsTest(unittest.TestCase):
                 update_project_report(
                     report.id,
                     current_user_id=self.tech_id,
+                    title="Tentative tardive",
                     content="Tentative tardive",
                     is_admin=False
                 )

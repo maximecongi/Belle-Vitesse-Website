@@ -52,11 +52,14 @@ def add_project_report(project_id, user_id, content, title=None):
     """
     Ajoute un rapport / commentaire libre à un projet.
     Associe l'auteur (utilisateur connecté) et conserve un snapshot du nom et rôle.
+    Le titre et le contenu sont obligatoires.
     """
+    title = (title or "").strip()
     content = (content or "").strip()
-    title = (title or "").strip() or None
+    if not title:
+        raise ValueError("L'intitulé / titre du rapport est obligatoire.")
     if not content:
-        raise ValueError("Le contenu du commentaire ne peut pas être vide.")
+        raise ValueError("Le contenu du rapport ne peut pas être vide.")
 
     project = Project.query.filter(
         Project.id == project_id, Project.deleted_at.is_(None)).first()
@@ -92,6 +95,7 @@ def update_project_report(report_id, current_user_id, content, title=None, is_ad
     """
     Met à jour un rapport d'équipe existant (titre et contenu).
     Seul l'auteur dans les 3 heures suivant la publication ou un administrateur peut modifier.
+    Le titre et le contenu sont obligatoires.
     """
     report = db.session.get(ProjectReport, report_id)
     if not report:
@@ -111,8 +115,10 @@ def update_project_report(report_id, current_user_id, content, title=None, is_ad
         if not within_window:
             raise PermissionError("La modification de ce rapport n'est plus autorisée (délai de 3 heures dépassé).")
 
+    title = (title or "").strip()
     content = (content or "").strip()
-    title = (title or "").strip() or None
+    if not title:
+        raise ValueError("L'intitulé / titre du rapport est obligatoire.")
     if not content:
         raise ValueError("Le contenu du rapport ne peut pas être vide.")
 

@@ -689,6 +689,12 @@ function initProjectNotionSlashEditor() {
     if (form) {
         form.addEventListener('submit', (e) => {
             syncToHidden();
+            const titleInput = form.querySelector('input[name="title"]');
+            if (titleInput && !titleInput.value.trim()) {
+                e.preventDefault();
+                titleInput.focus();
+                return;
+            }
             if (!hiddenInput.value.trim()) {
                 e.preventDefault();
                 editor.focus();

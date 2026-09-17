@@ -673,7 +673,7 @@ def get_project_reports(
 def add_project_report(
     project_id: Any,
     content: str,
-    title: Optional[str] = None,
+    title: str,
     author_name: Optional[str] = "Assistant IA",
     author_job: Optional[str] = None,
     user_id: Optional[int] = None,
@@ -682,7 +682,7 @@ def add_project_report(
     Ajoute un rapport ou une note d'observation d'équipe sur un projet (supporte le Markdown enrichi).
     - project_id: Identifiant numérique du projet ou code BVPR (ex: 'BVPR-0RLY80RD5LZB' ou 46)
     - content: Texte du rapport au format Markdown (titres, puces, citations, etc.)
-    - title: Titre optionnel du rapport (ex: 'Débriefing Jour 1')
+    - title: Titre obligatoire du rapport (ex: 'Débriefing Jour 1')
     - author_name: Nom optionnel de l'auteur (défaut: 'Assistant IA')
     - author_job: Poste / fonction en entreprise (ex: 'Directeur d'atelier', 'Pilote de précision')
     - user_id: Identifiant optionnel d'un utilisateur existant

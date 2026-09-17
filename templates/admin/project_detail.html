@@ -269,10 +269,10 @@ initials, empty_state, waiver_card %}
                 <!-- 1. Champ Titre autonome -->
                 <div class="project-report-field-group u-mb-3">
                     <label for="reportTitleInput" class="project-report-field-label">
-                        Titre du rapport <span class="u-text-muted u-font-normal">(optionnel)</span>
+                        Titre du rapport <span class="u-text-danger">*</span>
                     </label>
                     <input type="text" name="title" id="reportTitleInput" class="project-report-title-input"
-                        placeholder="Ex : Débriefing J1, Point matériel..." maxlength="255" autocomplete="off">
+                        placeholder="Ex : Débriefing J1, Point matériel..." maxlength="255" autocomplete="off" required>
                 </div>
 
                 <!-- 2. Champ Contenu / Éditeur WYSIWYG interactif en direct avec menu "/" -->
@@ -461,8 +461,8 @@ initials, empty_state, waiver_card %}
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <div class="u-mb-2">
                                     <input type="text" name="title" class="project-report-edit-title-input"
-                                        value="{{ report.title or '' }}" placeholder="Titre du rapport (optionnel)"
-                                        maxlength="255" autocomplete="off">
+                                        value="{{ report.title or '' }}" placeholder="Titre du rapport"
+                                        maxlength="255" autocomplete="off" required>
                                 </div>
                                 <div class="u-mb-2">
                                     <textarea name="content" class="project-report-edit-textarea" rows="4"
