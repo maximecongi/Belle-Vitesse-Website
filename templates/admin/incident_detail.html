@@ -1,7 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
 {% from "admin/macros.html" import incident_severity_badge, incident_status_badge, incident_impact_badge,
-incident_signature_badge, equipment_icon %}
+incident_signature_badge, equipment_icon, empty_state %}
 
 {% block title %}Détail Incident {% endblock %}
 {% block page_title %}Détail Incident{% endblock %}
@@ -254,16 +254,9 @@ incident_signature_badge, equipment_icon %}
             <div class="u-p-3 u-rounded incident-description-box">
                 {{ incident.description}}
             </div>
-            {%else%}
-            <div class="project-reports-empty">
-                <div class="project-reports-empty-icon">
-                    <i data-lucide="clipboard-pen"></i>
-                </div>
-                <div class="project-reports-empty-title">Aucune description des dommages renseignée</div>
-                <div class="project-reports-empty-desc">Les circonstances de l'événement et les dommages constatés n'ont
-                    pas encore été détaillés pour cet incident.</div>
-            </div>
-            {%endif%}
+            {% else %}
+            {{ empty_state('clipboard-pen', 'Aucune description des dommages renseignée', "Les circonstances de l'événement et les dommages constatés n'ont pas encore été détaillés pour cet incident.") }}
+            {% endif %}
 
             {% if incident.immediate_actions %}
             <div class="u-mt-3">
@@ -296,14 +289,7 @@ incident_signature_badge, equipment_icon %}
                 {% endfor %}
             </div>
             {% else %}
-            <div class="project-reports-empty">
-                <div class="project-reports-empty-icon">
-                    <i data-lucide="camera"></i>
-                </div>
-                <div class="project-reports-empty-title">Aucune photo enregistrée</div>
-                <div class="project-reports-empty-desc">Aucune photo des dommages n'a été jointe à ce
-                    dossier.</div>
-            </div>
+            {{ empty_state('camera', 'Aucune photo enregistrée', "Aucune photo des dommages n'a été jointe à ce dossier.") }}
             {% endif %}
         </div>
 

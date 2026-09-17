@@ -1229,6 +1229,55 @@ input[type="checkbox"]:checked {
     box-shadow: 0 15px 50px rgba(0, 0, 0, 0.35) !important;
 }
 
+/* ── Composant Générique : États Vides (Empty State) ── */
+.empty-state,
+.project-reports-empty {
+    background: #fafbfc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    padding: 2.25rem 1.5rem;
+    text-align: center;
+    margin-top: 0.5rem;
+}
+
+.empty-state-icon,
+.project-reports-empty-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #64748b;
+    margin-bottom: 0.75rem;
+}
+
+.empty-state-icon .lucide,
+.empty-state-icon i,
+.project-reports-empty-icon .lucide,
+.project-reports-empty-icon i {
+    width: 28px;
+    height: 28px;
+}
+
+.empty-state-title,
+.project-reports-empty-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.empty-state-desc,
+.project-reports-empty-desc {
+    font-size: 0.78rem;
+    color: #64748b;
+    max-width: 420px;
+    margin: 0 auto;
+    line-height: 1.5;
+}
+
 /* ── Optimisations Tablette & iPadOS (Paysage iPad mini 1133px & Portrait) ── */
 @media (max-width: 1200px) {
     .admin-card {

@@ -196,3 +196,56 @@ admin-multiselect-tag--head
 admin-multiselect-tag--custom
 {%- endif -%}
 {% endmacro %}
+
+{# ── MACROS ÉTATS VIDES & DOCUMENTS DE PROJET ── #}
+
+{% macro empty_state(icon, title, desc=None, class_name='') %}
+<div class="empty-state{% if class_name %} {{ class_name }}{% endif %}">
+    <div class="empty-state-icon">
+        <i data-lucide="{{ icon }}"></i>
+    </div>
+    <div class="empty-state-title">{{ title }}</div>
+    {% if desc %}
+    <div class="empty-state-desc">{{ desc }}</div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro waiver_card(waiver, title, icon, beneficiary_label, beneficiary_name, list_url, new_url) %}
+<div class="project-doc-item u-flex u-flex-column u-justify-between u-p-2">
+    <div class="project-doc-info">
+        <div class="project-doc-title u-font-semibold u-text-xs">
+            <i data-lucide="{{ icon }}"></i> {{ title }}
+        </div>
+        <div class="checkout-doc-id">{{ waiver.waiver_num or 'Non créée' }}</div>
+        {% if beneficiary_name %}
+        <div class="project-doc-beneficiary">
+            {{ beneficiary_label }} : <span class="u-font-semibold">{{ beneficiary_name }}</span>
+        </div>
+        {% endif %}
+    </div>
+    <div class="projects-cell-item u-flex u-justify-between u-align-center u-mt-2">
+        {% if waiver and waiver.id and waiver.waiver_num %}
+        <a href="{{ list_url }}">
+            {{ status_badge(waiver.status, waiver.raw_status) }}
+        </a>
+        {% if waiver.pdf_path %}
+        <a href="{{ waiver.pdf_path }}" target="_blank" title="Voir le document signé">
+            <i data-lucide="download" stroke-width="2.5" class="badge-pill" data-val="download-available"></i>
+        </a>
+        {% else %}
+        <span class="disabled" title="Document indisponible">
+            <i data-lucide="download" stroke-width="2.5" class="badge-pill" data-val="download-unavailable"></i>
+        </span>
+        {% endif %}
+        {% else %}
+        <a href="{{ new_url }}">
+            <span class="badge-pill" data-val="to_generate">À générer</span>
+        </a>
+        <span class="disabled" title="Document indisponible">
+            <i data-lucide="download" stroke-width="2.5" class="badge-pill" data-val="download-unavailable"></i>
+        </span>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}

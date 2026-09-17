@@ -1,7 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
 {% from "admin/macros.html" import status_badge, incident_severity_badge, incident_status_badge, shoot_status_badge,
-initials %}
+initials, empty_state, waiver_card %}
 
 {% block title %}{{ project.name }} — Hub Projet BV{% endblock %}
 {% block page_title %}Hub Projet : {{ project.name }}{% endblock %}
@@ -488,14 +488,7 @@ initials %}
                     {% endfor %}
                 </div>
                 {% else %}
-                <div class="project-reports-empty">
-                    <div class="project-reports-empty-icon">
-                        <i data-lucide="clipboard-pen"></i>
-                    </div>
-                    <div class="project-reports-empty-title">Aucun rapport consigné pour le moment</div>
-                    <div class="project-reports-empty-desc">Rédigez la première observation de tournage, point technique
-                        ou débriefing d'équipe ci-dessus.</div>
-                </div>
+                {{ empty_state('clipboard-pen', 'Aucun rapport consigné pour le moment', "Rédigez la première observation de tournage, point technique ou débriefing d'équipe ci-dessus.") }}
                 {% endif %}
             </div>
         </div>
@@ -546,87 +539,25 @@ initials %}
 
             <!-- Grille des Décharges (Pilote & Production) -->
             <div class="project-docs-grid">
-                <!-- Décharge Pilote -->
-                <div class="project-doc-item u-flex u-flex-column u-justify-between u-p-2">
-                    <div class="project-doc-info">
-                        <div class="project-doc-title u-font-semibold u-text-xs">
-                            <i data-lucide="id-card"></i> Décharge Pilote
-                        </div>
-                        <div class="checkout-doc-id">{{ pilot_waiver.waiver_num or 'Non créée' }}</div>
-                        {% if pilot_waiver.pilot_name %}
-                        <div class="project-doc-beneficiary">
-                            Pilote : <span class="u-font-semibold">{{ pilot_waiver.pilot_name }}</span>
-                        </div>
-                        {% endif %}
-                    </div>
-                    <div class="projects-cell-item u-flex u-justify-between u-align-center u-mt-2">
-                        {% if pilot_waiver and pilot_waiver.id and pilot_waiver.waiver_num %}
-                        <a href="{{ url_for('admin_pilot_waivers_list', q=pilot_waiver.waiver_num) }}">
-                            {{ status_badge(pilot_waiver.status, pilot_waiver.raw_status) }}
-                        </a>
-                        {% if pilot_waiver.pdf_path %}
-                        <a href="{{ pilot_waiver.pdf_path }}" target="_blank" title="Voir le document signé">
-                            <i data-lucide="download" stroke-width="2.5" class="badge-pill"
-                                data-val="download-available"></i>
-                        </a>
-                        {% else %}
-                        <span class="disabled" title="Document indisponible">
-                            <i data-lucide="download" stroke-width="2.5" class="badge-pill"
-                                data-val="download-unavailable"></i>
-                        </span>
-                        {% endif %}
-                        {% else %}
-                        <a href="{{ url_for('admin_pilot_waiver_new', project_id=project.id) }}">
-                            <span class="badge-pill" data-val="to_generate">À générer</span>
-                        </a>
-                        <span class="disabled" title="Document indisponible">
-                            <i data-lucide="download" stroke-width="2.5" class="badge-pill"
-                                data-val="download-unavailable"></i>
-                        </span>
-                        {% endif %}
-                    </div>
-                </div>
+                {{ waiver_card(
+                    pilot_waiver,
+                    'Décharge Pilote',
+                    'id-card',
+                    'Pilote',
+                    pilot_waiver.pilot_name,
+                    url_for('admin_pilot_waivers_list', q=pilot_waiver.waiver_num),
+                    url_for('admin_pilot_waiver_new', project_id=project.id)
+                ) }}
 
-                <!-- Décharge Production -->
-                <div class="project-doc-item u-flex u-flex-column u-justify-between u-p-2">
-                    <div class="project-doc-info">
-                        <div class="project-doc-title u-font-semibold u-text-xs">
-                            <i data-lucide="building"></i> Décharge Production
-                        </div>
-                        <div class="checkout-doc-id">{{ production_waiver.waiver_num or 'Non créée' }}</div>
-                        {% if production_waiver.production_name %}
-                        <div class="project-doc-beneficiary">
-                            Prod : <span class="u-font-semibold">{{ production_waiver.production_name }}</span>
-                        </div>
-                        {% endif %}
-                    </div>
-                    <div class="projects-cell-item u-flex u-justify-between u-align-center u-mt-2">
-                        {% if production_waiver and production_waiver.id and production_waiver.waiver_num %}
-                        <a href="{{ url_for('admin_production_waivers_list', q=production_waiver.waiver_num) }}">
-                            {{ status_badge(production_waiver.status, production_waiver.raw_status) }}
-                        </a>
-                        {% if production_waiver.pdf_path %}
-                        <a href="{{ production_waiver.pdf_path }}" target="_blank" title="Voir le document signé">
-                            <i data-lucide="download" stroke-width="2.5" class="badge-pill"
-                                data-val="download-available"></i>
-                        </a>
-                        {% else %}
-                        <span class="disabled" title="Document indisponible">
-                            <i data-lucide="download" stroke-width="2.5" class="badge-pill"
-                                data-val="download-unavailable"></i>
-                        </span>
-                        {% endif %}
-                        {% else %}
-                        <a href="{{ url_for('admin_production_waiver_new', project_id=project.id) }}">
-                            <span class="badge-pill" data-val="to_generate">À générer</span>
-                        </a>
-                        <span class="disabled" title="Document indisponible">
-                            <i data-lucide="download" stroke-width="2.5" class="badge-pill"
-                                data-val="download-unavailable"></i>
-                        </span>
-                        {% endif %}
-                    </div>
-                </div>
+                {{ waiver_card(
+                    production_waiver,
+                    'Décharge Production',
+                    'building',
+                    'Prod',
+                    production_waiver.production_name,
+                    url_for('admin_production_waivers_list', q=production_waiver.waiver_num),
+                    url_for('admin_production_waiver_new', project_id=project.id)
+                ) }}
             </div>
 
             <!-- Incidents éventuels -->

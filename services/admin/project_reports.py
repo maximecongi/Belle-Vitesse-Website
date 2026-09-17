@@ -33,6 +33,21 @@ def _format_datetime_fr(dt):
     return f"{dt.day} {month_str} {dt.year} à {dt.strftime('%H:%M')}"
 
 
+def _format_waiver_data(waiver, beneficiary_name: str, doc_type: str) -> dict:
+    """Helper pour formater uniformément les données d'une décharge pour le contexte projet."""
+    is_valid = waiver is not None and not getattr(waiver, "deleted_at", None)
+    return {
+        "id": waiver.id if is_valid else None,
+        "waiver_num": waiver.waiver_id if (is_valid and waiver.waiver_id) else "",
+        "pilot_name": beneficiary_name if (is_valid and doc_type == "pilot-waiver") else "",
+        "production_name": beneficiary_name if (is_valid and doc_type == "production-waiver") else "",
+        "beneficiary_name": beneficiary_name if is_valid else "",
+        "status": format_waiver_status(waiver.status) if is_valid else "",
+        "raw_status": waiver.status if is_valid else "",
+        "pdf_path": _get_secured_document_url(waiver.signed_pdf_path, doc_type) if is_valid else None,
+    }
+
+
 def add_project_report(project_id, user_id, content, title=None):
     """
     Ajoute un rapport / commentaire libre à un projet.
@@ -342,30 +357,24 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
         "reports": formatted_reports,
         "reports_count": len(formatted_reports),
         "incidents": incidents_list,
-        "pilot_waiver": {
-            "id": project.pilot_waiver.id if (project.pilot_waiver and not project.pilot_waiver.deleted_at) else None,
-            "waiver_num": project.pilot_waiver.waiver_id if (project.pilot_waiver and not project.pilot_waiver.deleted_at) else "",
-            "pilot_name": (
+        "pilot_waiver": _format_waiver_data(
+            project.pilot_waiver,
+            (
                 f"{project.pilot_waiver.pilot_first_name or ''} {project.pilot_waiver.pilot_last_name or ''}".strip()
                 if (project.pilot_waiver and (project.pilot_waiver.pilot_first_name or project.pilot_waiver.pilot_last_name))
                 else (f"{project.pilot_contact.first_name} {project.pilot_contact.last_name}".strip() if project.pilot_contact else "")
             ),
-            "status": format_waiver_status(project.pilot_waiver.status) if (project.pilot_waiver and not project.pilot_waiver.deleted_at) else "",
-            "raw_status": project.pilot_waiver.status if (project.pilot_waiver and not project.pilot_waiver.deleted_at) else "",
-            "pdf_path": _get_secured_document_url(project.pilot_waiver.signed_pdf_path, "pilot-waiver") if (project.pilot_waiver and not project.pilot_waiver.deleted_at) else None,
-        },
-        "production_waiver": {
-            "id": project.production_waiver.id if (project.production_waiver and not project.production_waiver.deleted_at) else None,
-            "waiver_num": project.production_waiver.waiver_id if (project.production_waiver and not project.production_waiver.deleted_at) else "",
-            "production_name": (
+            "pilot-waiver",
+        ),
+        "production_waiver": _format_waiver_data(
+            project.production_waiver,
+            (
                 project.production_waiver.production_name
                 if (project.production_waiver and project.production_waiver.production_name)
                 else (project.production.name if project.production else "")
             ),
-            "status": format_waiver_status(project.production_waiver.status) if (project.production_waiver and not project.production_waiver.deleted_at) else "",
-            "raw_status": project.production_waiver.status if (project.production_waiver and not project.production_waiver.deleted_at) else "",
-            "pdf_path": _get_secured_document_url(project.production_waiver.signed_pdf_path, "production-waiver") if (project.production_waiver and not project.production_waiver.deleted_at) else None,
-        },
+            "production-waiver",
+        ),
         "pre_quotes": [{
             "id": pq.id,
             "reference": pq.reference,
