@@ -301,16 +301,24 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
             project.key_grip_contact, "Chef Machiniste"))
 
     # Incidents
-    incidents_list = [{
-        "id": inc.id,
-        "incident_number": inc.incident_number,
-        "title": inc.title,
-        "severity": inc.severity,
-        "severity_label": inc.severity_label,
-        "status": inc.status,
-        "status_label": inc.status_label,
-        "incident_date": format_date_fr(str(inc.incident_date)) if inc.incident_date else "",
-    } for inc in (project.incidents or []) if not inc.deleted_at]
+    incidents_list = []
+    for inc in (project.incidents or []):
+        if inc.deleted_at:
+            continue
+        eq_label = inc.equipment_name or ""
+        if not eq_label and inc.vehicle_id:
+            eq_label = vehicle_map.get(inc.vehicle_id, {}).get("name", inc.vehicle_id)
+        incidents_list.append({
+            "id": inc.id,
+            "incident_number": inc.incident_number,
+            "title": inc.title,
+            "severity": inc.severity,
+            "severity_label": inc.severity_label,
+            "status": inc.status,
+            "status_label": inc.status_label,
+            "incident_date": format_date_fr(str(inc.incident_date)) if inc.incident_date else "",
+            "equipment_name": eq_label,
+        })
 
     return {
         "project": project,
@@ -337,6 +345,11 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
         "pilot_waiver": {
             "id": project.pilot_waiver.id if (project.pilot_waiver and not project.pilot_waiver.deleted_at) else None,
             "waiver_num": project.pilot_waiver.waiver_id if (project.pilot_waiver and not project.pilot_waiver.deleted_at) else "",
+            "pilot_name": (
+                f"{project.pilot_waiver.pilot_first_name or ''} {project.pilot_waiver.pilot_last_name or ''}".strip()
+                if (project.pilot_waiver and (project.pilot_waiver.pilot_first_name or project.pilot_waiver.pilot_last_name))
+                else (f"{project.pilot_contact.first_name} {project.pilot_contact.last_name}".strip() if project.pilot_contact else "")
+            ),
             "status": format_waiver_status(project.pilot_waiver.status) if (project.pilot_waiver and not project.pilot_waiver.deleted_at) else "",
             "raw_status": project.pilot_waiver.status if (project.pilot_waiver and not project.pilot_waiver.deleted_at) else "",
             "pdf_path": _get_secured_document_url(project.pilot_waiver.signed_pdf_path, "pilot-waiver") if (project.pilot_waiver and not project.pilot_waiver.deleted_at) else None,
@@ -344,6 +357,11 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
         "production_waiver": {
             "id": project.production_waiver.id if (project.production_waiver and not project.production_waiver.deleted_at) else None,
             "waiver_num": project.production_waiver.waiver_id if (project.production_waiver and not project.production_waiver.deleted_at) else "",
+            "production_name": (
+                project.production_waiver.production_name
+                if (project.production_waiver and project.production_waiver.production_name)
+                else (project.production.name if project.production else "")
+            ),
             "status": format_waiver_status(project.production_waiver.status) if (project.production_waiver and not project.production_waiver.deleted_at) else "",
             "raw_status": project.production_waiver.status if (project.production_waiver and not project.production_waiver.deleted_at) else "",
             "pdf_path": _get_secured_document_url(project.production_waiver.signed_pdf_path, "production-waiver") if (project.production_waiver and not project.production_waiver.deleted_at) else None,

@@ -3,16 +3,18 @@
 {% from "admin/macros.html" import incident_severity_badge, incident_status_badge, incident_impact_badge,
 incident_signature_badge, equipment_icon %}
 
-{% block title %}Incident {{ incident.incident_number }} — {{ incident.title }}{% endblock %}
-{% block page_title %}Incident {{ incident.incident_number }}{% endblock %}
+{% block title %}Détail Incident {% endblock %}
+{% block page_title %}Détail Incident{% endblock %}
 
 {% block header_actions %}
 <div class="u-flex u-align-center u-gap-2">
     <a href="{{ url_for('admin_incidents_list') }}" class="admin-btn admin-btn-secondary">← Retour à la liste</a>
+    {% if incident.is_sealed %}
     <a href="{{ url_for('admin_incident_pdf', record_id=incident.id) }}" target="_blank"
         class="admin-btn admin-btn-secondary">📄 Rapport PDF ↗</a>
+    {% endif %}
     <a href="{{ url_for('admin_incident_edit', record_id=incident.id) }}" class="admin-btn admin-btn-primary">
-        {% if incident.is_sealed %}✏️ Modifier le suivi{% else %}✏️ Modifier{% endif %}
+        {% if incident.is_sealed %}Modifier le suivi{% else %}Modifier l'incident{% endif %}
     </a>
 </div>
 {% endblock %}
@@ -52,18 +54,6 @@ incident_signature_badge, equipment_icon %}
                 {{ incident_severity_badge(incident.severity, incident.severity_label) }}
                 {{ incident_impact_badge(incident.shooting_impact, incident.shooting_impact_label) }}
             </div>
-        </div>
-
-        <!-- 3. Ligne d'Identification Matériel & Contexte Rapide -->
-        <div class="u-flex u-align-center u-gap-2 u-flex-wrap u-text-xs incident-header-material-row">
-            {% if incident.equipments %}
-            {% for eq in incident.equipments %}
-            <span class="u-font-semibold">{{ eq.icon }} {{ eq.name }}</span>
-            {% if not loop.last %}<span class="u-text-muted">•</span>{% endif %}
-            {% endfor %}
-            {% else %}
-            <span class="u-text-muted">Aucun équipement spécifique impliqué</span>
-            {% endif %}
         </div>
     </div>
 </div>
@@ -153,10 +143,9 @@ incident_signature_badge, equipment_icon %}
                             Belle Vitesse
                         </span>
                         {% if incident.is_signed_bv %}
-                        <span class="u-text-xs u-font-semibold u-text-success">✅
-                            Signé</span>
+                        <span class="badge-pill" data-val="signed">Signé</span>
                         {% else %}
-                        <span class="u-text-xs u-text-muted">En attente</span>
+                        <span class="badge-pill" data-val="waiting">En attente</span>
                         {% endif %}
                     </div>
 
@@ -192,10 +181,9 @@ incident_signature_badge, equipment_icon %}
                             Production
                         </span>
                         {% if incident.is_signed_prod %}
-                        <span class="u-text-xs u-font-semibold u-text-success">✅
-                            Signé</span>
+                        <span class="badge-pill" data-val="signed">Signé</span>
                         {% else %}
-                        <span class="u-text-xs u-text-muted">En attente</span>
+                        <span class="badge-pill" data-val="waiting">En attente</span>
                         {% endif %}
                     </div>
 
@@ -261,31 +249,21 @@ incident_signature_badge, equipment_icon %}
 
         <!-- 1. Circonstances -->
         <div class="admin-card">
-            <div class="admin-card-title">Circonstances & Dommages Constatés</div>
-
-            <!-- Bandeau de synthèse : Matériel touché & Impact -->
-            <div class="incident-damage-summary-strip">
-                {% for eq in incident.equipments or [] %}
-                <span class="badge-pill badge-pill-sm" data-val="neutral">
-                    {{ eq.icon }} {{ eq.name }} {% if eq.unique_id %}<span class="checkout-doc-id u-bg-transparent">{{
-                        eq.unique_id }}</span>{% endif %}
-                </span>
-                {% endfor %}
-
-                {% if incident.category_label %}
-                <span class="badge-pill badge-pill-sm" data-val="neutral">
-                    🏷️ {{ incident.category_label }}
-                </span>
-                {% endif %}
-
-                <span class="badge-pill badge-pill-sm"
-                    data-val="{% if incident.shooting_impact == 'aucun' %}ok{% elif incident.shooting_impact == 'retard' %}warning{% else %}critical{% endif %}">
-                    Impact tournage : {{ incident.shooting_impact_label }}
-                </span>
-            </div>
-
+            <div class="admin-card-title">Dommages Constatés</div>
+            {%if incident.description %}
             <div class="u-p-3 u-rounded incident-description-box">
-                {{ incident.description or "Aucun descriptif renseigné." }}</div>
+                {{ incident.description}}
+            </div>
+            {%else%}
+            <div class="project-reports-empty">
+                <div class="project-reports-empty-icon">
+                    <i data-lucide="clipboard-pen"></i>
+                </div>
+                <div class="project-reports-empty-title">Aucune description des dommages renseignée</div>
+                <div class="project-reports-empty-desc">Les circonstances de l'événement et les dommages constatés n'ont
+                    pas encore été détaillés pour cet incident.</div>
+            </div>
+            {%endif%}
 
             {% if incident.immediate_actions %}
             <div class="u-mt-3">
@@ -302,10 +280,6 @@ incident_signature_badge, equipment_icon %}
         <div class="admin-card">
             <div class="u-flex u-justify-between u-align-center u-mb-3">
                 <div class="admin-card-title u-m-0">Photos des Dommages ({{ incident.photos|length }})</div>
-                {% if not incident.is_signed_prod %}
-                <a href="{{ url_for('admin_incident_edit', record_id=incident.id) }}"
-                    class="u-text-xs u-font-semibold incident-add-photos-link">+ Ajouter des photos</a>
-                {% endif %}
             </div>
 
             {% if incident.photos %}
@@ -322,7 +296,14 @@ incident_signature_badge, equipment_icon %}
                 {% endfor %}
             </div>
             {% else %}
-            <p class="u-text-sm u-text-muted u-p-3 u-text-center u-m-0">Aucune photo enregistrée pour cet incident.</p>
+            <div class="project-reports-empty">
+                <div class="project-reports-empty-icon">
+                    <i data-lucide="camera"></i>
+                </div>
+                <div class="project-reports-empty-title">Aucune photo enregistrée</div>
+                <div class="project-reports-empty-desc">Aucune photo des dommages n'a été jointe à ce
+                    dossier.</div>
+            </div>
             {% endif %}
         </div>
 
@@ -335,7 +316,8 @@ incident_signature_badge, equipment_icon %}
                 <div class="u-flex u-justify-between u-align-center u-p-2 u-rounded incident-empty-photos">
                     <span class="u-text-sm u-font-semibold">📄 {{ doc.filename }}</span>
                     <a href="{{ doc.url }}" target="_blank"
-                        class="admin-btn admin-btn-secondary admin-btn-sm">Télécharger ↗</a>
+                        class="admin-btn admin-btn-secondary admin-btn-sm">Télécharger
+                        ↗</a>
                 </div>
                 {% endfor %}
             </div>
@@ -363,7 +345,7 @@ incident_signature_badge, equipment_icon %}
         <!-- Contexte Tournage -->
         <div class="admin-card">
             <div class="u-flex u-justify-between u-align-center u-mb-3">
-                <div class="admin-card-title u-m-0">Contexte du Tournage & Matériel</div>
+                <div class="admin-card-title u-m-0">Récapitulatif incident</div>
                 {% if incident.is_sealed %}
                 <span class="badge-pill" data-val="neutral">🔒 Scellé</span>
                 {% endif %}
@@ -371,7 +353,7 @@ incident_signature_badge, equipment_icon %}
 
             <!-- SOUS-BLOC 1 : PROJET & PRODUCTION -->
             <div class="incident-context-section">
-                <div class="incident-context-section-title">🎬 Tournage & Production</div>
+                <div class="incident-context-section-title u-mb-2">🎬 Tournage</div>
                 <div class="u-mb-2">
                     <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Projet :</span>
                     <div class="u-font-semibold u-mt-1">
@@ -397,8 +379,48 @@ incident_signature_badge, equipment_icon %}
                     </div>
                 </div>
             </div>
+            <!-- SOUS-BLOC 2 : SURVENANCE & PLATEAU -->
+            <div class="incident-context-section">
+                <div class="incident-context-section-title u-mb-2">📍 Contexte</div>
+                <div class="u-mb-2">
+                    <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Date & Heure :</span>
+                    <div class="u-font-semibold u-mt-1">
+                        {{ incident.incident_date or '—' }} {% if incident.incident_time %}à {{
+                        incident.incident_time }}{% endif %}
+                    </div>
+                </div>
 
-            <!-- SOUS-BLOC 2 : MATÉRIEL IMPACTÉ -->
+                <div class="u-mb-2">
+                    <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Lieu :</span>
+                    <div class="u-font-semibold u-mt-1">
+                        {{ incident.location or '—' }}
+                    </div>
+                </div>
+
+                <div class="u-mb-2">
+                    <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Déclarant :</span>
+                    <div class="u-font-semibold u-mt-1">
+                        {% if incident.reporter %}
+                        {{ incident.reporter.name }}
+                        {% else %}
+                        <span class="u-text-muted">—</span>
+                        {% endif %}
+
+                    </div>
+                </div>
+                <div class="u-mb-2">
+                    <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Date de déclaration :</span>
+                    <div class="u-font-semibold u-mt-1">
+                        {% if incident.created_at %}
+                        {{ incident.created_at }}
+                        {% else %}
+                        <span class="u-text-muted">—</span>
+                        {% endif %}
+
+                    </div>
+                </div>
+            </div>
+            <!-- SOUS-BLOC 3 : MATÉRIEL IMPACTÉ -->
             <div class="incident-context-section">
                 <div class="incident-context-section-title">⚙️ Matériel & Équipements Concernés</div>
 
@@ -428,41 +450,6 @@ incident_signature_badge, equipment_icon %}
                 {% endif %}
             </div>
 
-            <!-- SOUS-BLOC 3 : SURVENANCE & PLATEAU -->
-            <div class="incident-context-section">
-                <div class="incident-context-section-title">📍 Circonstances & Plateau</div>
-                <div class="u-mb-2">
-                    <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Date & Heure :</span>
-                    <div class="u-font-semibold u-mt-1">
-                        🗓️ {{ incident.incident_date or '—' }} {% if incident.incident_time %}à {{
-                        incident.incident_time }}{% endif %}
-                    </div>
-                </div>
-
-                <div class="u-mb-2">
-                    <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Lieu / Plateau :</span>
-                    <div class="u-font-semibold u-mt-1">
-                        📍 {{ incident.location or '—' }}
-                    </div>
-                </div>
-
-                <div>
-                    <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Déclarant :</span>
-                    <div class="u-font-semibold u-mt-1">
-                        {% if incident.reporter %}
-                        👤 {{ incident.reporter.name }}
-                        {% else %}
-                        <span class="u-text-muted">—</span>
-                        {% endif %}
-
-                    </div>
-                </div>
-                <div class="u-pt-3 u-mt-3 incident-sidebar-divider">
-                    {% if incident.created_at %}
-                    <div class="u-text-xs u-text-muted u-mt-1">Déclaré le {{ incident.created_at }}</div>
-                    {% endif %}
-                </div>
-            </div>
 
             <!-- LIENS INSPECTIONS (Check-out / Check-in) -->
             {% if incident.checkout or incident.checkin %}

@@ -109,7 +109,7 @@ initials %}
         <!-- 1. MATÉRIEL ENGAGÉ (VÉHICULES & TÊTES) -->
         <div class="admin-card">
             <div class="admin-card-title u-mb-3">
-                ⚙️ Matériel Engagé sur le Tournage
+                Matériel engagé sur le tournage
             </div>
 
             <!-- Véhicules -->
@@ -250,7 +250,7 @@ initials %}
                 <div class="project-reports-header-title">
                     <div class="u-flex u-align-center u-gap-2">
                         <h2 class="admin-card-title u-m-0">
-                            📖 Journal de Bord & Rapports d'Équipe
+                            Rapports d'Équipe
                         </h2>
                     </div>
                     <p class="u-text-xs u-text-muted u-mt-1 u-mb-0">
@@ -508,7 +508,7 @@ initials %}
         <!-- 3. CONTACTS CLÉS DU TOURNAGE -->
         <div class="admin-card">
             <div class="admin-card-title u-mb-3">
-                🎬 Contacts
+                Contacts
             </div>
             {% if contacts and contacts|length > 0 %}
             <div class="u-flex u-flex-column u-gap-3">
@@ -541,18 +541,25 @@ initials %}
         <!-- 4. DOCUMENTS & DÉCHARGES ASSOCIÉES -->
         <div class="admin-card">
             <div class="admin-card-title u-mb-3">
-                📄 Documents & Décharges
+                Documents
             </div>
-            <div class="u-flex u-flex-column u-gap-2">
+
+            <!-- Grille des Décharges (Pilote & Production) -->
+            <div class="project-docs-grid">
                 <!-- Décharge Pilote -->
-                <div class="project-doc-item u-flex u-flex-column u-justify-between u-align-left u-p-2">
+                <div class="project-doc-item u-flex u-flex-column u-justify-between u-p-2">
                     <div class="project-doc-info">
-                        <div class="project-doc-title u-font-semibold u-text-xs"><i data-lucide="id-card"></i> Décharge
-                            Pilote</div>
-                        <div class="checkout-doc-id">{{ pilot_waiver.waiver_num or 'Non créée'
-                            }}</div>
+                        <div class="project-doc-title u-font-semibold u-text-xs">
+                            <i data-lucide="id-card"></i> Décharge Pilote
+                        </div>
+                        <div class="checkout-doc-id">{{ pilot_waiver.waiver_num or 'Non créée' }}</div>
+                        {% if pilot_waiver.pilot_name %}
+                        <div class="project-doc-beneficiary">
+                            Pilote : <span class="u-font-semibold">{{ pilot_waiver.pilot_name }}</span>
+                        </div>
+                        {% endif %}
                     </div>
-                    <div class="projects-cell-item">
+                    <div class="projects-cell-item u-flex u-justify-between u-align-center u-mt-2">
                         {% if pilot_waiver and pilot_waiver.id and pilot_waiver.waiver_num %}
                         <a href="{{ url_for('admin_pilot_waivers_list', q=pilot_waiver.waiver_num) }}">
                             {{ status_badge(pilot_waiver.status, pilot_waiver.raw_status) }}
@@ -581,14 +588,19 @@ initials %}
                 </div>
 
                 <!-- Décharge Production -->
-                <div class="project-doc-item u-flex u-flex-column u-justify-between u-align-left u-p-2">
+                <div class="project-doc-item u-flex u-flex-column u-justify-between u-p-2">
                     <div class="project-doc-info">
-                        <div class=" project-doc-title u-font-semibold u-text-xs"><i data-lucide="building"></i>
-                            Décharge Production</div>
-                        <div class="checkout-doc-id">{{ production_waiver.waiver_num or 'Non
-                            créée' }}</div>
+                        <div class="project-doc-title u-font-semibold u-text-xs">
+                            <i data-lucide="building"></i> Décharge Production
+                        </div>
+                        <div class="checkout-doc-id">{{ production_waiver.waiver_num or 'Non créée' }}</div>
+                        {% if production_waiver.production_name %}
+                        <div class="project-doc-beneficiary">
+                            Prod : <span class="u-font-semibold">{{ production_waiver.production_name }}</span>
+                        </div>
+                        {% endif %}
                     </div>
-                    <div class="projects-cell-item">
+                    <div class="projects-cell-item u-flex u-justify-between u-align-center u-mt-2">
                         {% if production_waiver and production_waiver.id and production_waiver.waiver_num %}
                         <a href="{{ url_for('admin_production_waivers_list', q=production_waiver.waiver_num) }}">
                             {{ status_badge(production_waiver.status, production_waiver.raw_status) }}
@@ -615,37 +627,37 @@ initials %}
                         {% endif %}
                     </div>
                 </div>
+            </div>
 
-                <!-- Incidents éventuels -->
-                {% if incidents and incidents|length > 0 %}
-                <div
-                    class="project-doc-item u-flex u-flex-column u-justify-between u-align-left u-p-2 project-doc-item--error">
-                    <div class="project-doc-title u-font-semibold u-text-xs u-mb-1 u-text-error"><i
-                            data-lucide="flag"></i>
-                        Incident{{ 's' if
-                        incidents|length > 1 else '' }}
-                        lié{{ 's' if incidents|length > 1 else '' }}</div>
-                    <div class="u-flex u-flex-column u-gap-1">
-                        {% for inc in incidents %}
-                        <div class="project-doc-item u-flex u-justify-between u-flex-column u-p-2">
-                            <div class="project-doc-info">
-                                <span class="u-text-xs u-font-semibold">{{ inc.title | truncate(50) }}</span>
+            <!-- Incidents éventuels -->
+            {% if incidents and incidents|length > 0 %}
+            <div class="project-doc-item project-doc-item--error u-flex u-flex-column u-p-2 u-mt-2">
+                <div class="project-doc-title u-font-semibold u-text-xs u-mb-1 u-text-error"><i data-lucide="flag"></i>
+                    Incident{{ 's' if
+                    incidents|length > 1 else '' }}
+                    lié{{ 's' if incidents|length > 1 else '' }} ({{ incidents|length }})</div>
+                <div class="u-flex u-flex-column u-gap-1">
+                    {% for inc in incidents %}
+                    <div class="project-doc-item u-flex u-justify-between u-align-center u-p-2 u-flex-wrap u-gap-2">
+                        <div class="project-doc-info">
+                            <span class="u-text-xs u-font-semibold">{{ inc.title | truncate(60) }}</span>
+                            <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
                                 <span class="checkout-doc-id">{{ inc.incident_number }}</span>
                             </div>
-                            <div class="projects-cell-item">
-                                {{ incident_severity_badge(inc.severity, inc.severity_label) }}
-                                <a href="{{ url_for('admin_incident_detail', record_id=inc.id) }}" data-val="link"
-                                    title="Voir l'incident" target="_blank"
-                                    class="badge-pill u-flex u-justify-center u-align-center u-text-xs projects-badge-link"><i
-                                        data-lucide="square-arrow-out-up-right" stroke-width="2.5"></i></a>
-                            </div>
-
                         </div>
-                        {% endfor %}
+                        <div class="projects-cell-item u-flex u-align-center u-gap-2">
+                            {{ incident_severity_badge(inc.severity, inc.severity_label) }}
+                            {{ incident_status_badge(inc.status, inc.status_label) }}
+                            <a href="{{ url_for('admin_incident_detail', record_id=inc.id) }}" data-val="link"
+                                title="Voir l'incident" target="_blank"
+                                class="badge-pill u-flex u-justify-center u-align-center u-text-xs projects-badge-link"><i
+                                    data-lucide="square-arrow-out-up-right" stroke-width="2.5"></i></a>
+                        </div>
                     </div>
+                    {% endfor %}
                 </div>
-                {% endif %}
             </div>
+            {% endif %}
         </div>
 
         <!-- 5. NOTES SPÉCIFIQUES DU PROJET -->

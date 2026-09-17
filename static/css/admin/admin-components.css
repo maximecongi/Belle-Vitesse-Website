@@ -257,6 +257,15 @@
     color: var(--neutral-color);
 }
 
+.badge-pill[data-val="waiting"] {
+    background: #ecebe9;
+    color: #5c5c5c;
+}
+
+.badge-pill[data-val="waiting"]:before {
+    content: "⏳ ";
+}
+
 .badge-pill[data-val="to_check"]:before {
     content: "🔍 ";
 }
@@ -393,7 +402,7 @@
     transition: background 0.15s ease, color 0.15s ease;
 }
 
-a:hover > .badge-pill[data-val="download-available"] {
+a:hover>.badge-pill[data-val="download-available"] {
     background: #bfdbfe;
     color: #1e3a8a;
 }
