@@ -64,6 +64,18 @@
     color: var(--grey-1);
 }
 
+.admin-btn-quaternary {
+    background-color: white;
+    color: var(--grey-1);
+    border-color: var(--white-3);
+    border: 1px solid var(--white-3);
+}
+
+.admin-btn-quaternary:hover {
+    background-color: var(--grey-1);
+    color: var(--white-1);
+}
+
 .btn-disabled {
     filter: grayscale(1);
     cursor: not-allowed;
@@ -652,7 +664,7 @@ a:hover>.badge-pill[data-val="download-available"] {
 
 .form-input {
     width: 100%;
-    padding: 0.8rem;
+    padding: 0.6rem 1.2rem;
     border: 1px solid var(--white-3);
     font-size: 0.9rem;
     box-sizing: border-box;
@@ -665,10 +677,6 @@ a:hover>.badge-pill[data-val="download-available"] {
     box-shadow: none;
     border: 1px solid var(--admin-accent);
     background-color: #ffc84510;
-}
-
-input[type="text"] {
-    height: 100%;
 }
 
 input[type="checkbox"] {

@@ -9,7 +9,8 @@
 
 {% block header_actions %}
 <div class="u-flex u-align-center u-gap-2">
-    <input type="text" id="searchInput" class="form-input u-w-250 u-text-sm" placeholder="🔍 Rechercher une décharge..." autocomplete="off">
+    <input type="text" id="searchInput" class="form-input u-w-250" placeholder="Rechercherune décharge..."
+        autocomplete="off">
     <a href="{{ url_for('admin_production_waiver_new') }}" class="admin-btn admin-btn-primary">+ Nouvelle décharge</a>
 </div>
 {% endblock %}
@@ -119,7 +120,7 @@
                     } else {
                         row.style.display = 'none';
                     }
-        });
-    });
+                });
+            });
 </script>
 {% endblock %}

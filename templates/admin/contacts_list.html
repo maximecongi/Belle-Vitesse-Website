@@ -7,7 +7,7 @@
 
 {% block header_actions %}
 <div class="u-flex u-gap-2 u-align-center">
-    <input type="text" id="searchInput" class="form-input u-w-250 u-text-sm" placeholder="🔍 Rechercher un contact..."
+    <input type="text" id="searchInput" class="form-input u-w-250" placeholder="Rechercherun contact..."
         autocomplete="off">
     <a href="{{ url_for('admin_contact_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Contact</a>
 </div>
@@ -31,8 +31,10 @@
             </thead>
             <tbody>
                 {% for c in contacts %}
-                <tr class="searchable-row" data-search="{{ c.first_name|lower }} {{ c.last_name|lower }} {{ c.job_title|lower if c.job_title else '' }} {{ c.production_name|lower if c.production_name else '' }} {{ c.mail|lower if c.mail else '' }} {{ c.phone if c.phone else '' }}">
-                    <td class="u-text-semibold" data-sort="{{ c.last_name }} {{ c.first_name }}">{{ c.first_name }} {{ c.last_name | upper
+                <tr class="searchable-row"
+                    data-search="{{ c.first_name|lower }} {{ c.last_name|lower }} {{ c.job_title|lower if c.job_title else '' }} {{ c.production_name|lower if c.production_name else '' }} {{ c.mail|lower if c.mail else '' }} {{ c.phone if c.phone else '' }}">
+                    <td class="u-text-semibold" data-sort="{{ c.last_name }} {{ c.first_name }}">{{ c.first_name }} {{
+                        c.last_name | upper
                         }}</td>
                     <td>{{ c.job_title }}</td>
                     <td>
@@ -45,9 +47,9 @@
                     <td><a href="tel:{{ c.phone }}">{{ c.phone }}</a></td>
                     <td><a href="mailto:{{ c.mail }}">{{ c.mail }}</a></td>
                     <td class="u-text-center">
-                        <span class="qr-trigger u-cursor-pointer u-text-xl" data-name="{{ c.first_name }} {{ c.last_name }}" data-vcf="{{ c.vcf_b64 }}"
-                            data-filename="{{ c.vcf_filename }}"
-                            title="Afficher le QR code"><img
+                        <span class="qr-trigger u-cursor-pointer u-text-xl"
+                            data-name="{{ c.first_name }} {{ c.last_name }}" data-vcf="{{ c.vcf_b64 }}"
+                            data-filename="{{ c.vcf_filename }}" title="Afficher le QR code"><img
                                 src="{{ url_for('static', filename='imgs/icons/qr_code.svg') }}" alt="QR Code"></span>
                     </td>
                     <td>

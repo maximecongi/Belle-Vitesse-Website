@@ -7,7 +7,7 @@
 
 {% block header_actions %}
 <div class="u-flex u-gap-2 u-align-center">
-    <input type="text" id="searchInput" class="form-input u-w-250 u-text-sm" placeholder="🔍 Rechercher un utilisateur..."
+    <input type="text" id="searchInput" class="form-input u-w-250" placeholder="Rechercherun utilisateur..."
         autocomplete="off">
     <a href="{{ url_for('admin_user_create') }}" class="admin-btn admin-btn-primary">
         + Nouvel utilisateur
@@ -32,7 +32,8 @@
             </thead>
             <tbody>
                 {% for u in users %}
-                <tr class="user-row searchable-row" data-search="{{ u.firstname|lower if u.firstname else '' }} {{ u.lastname|lower if u.lastname else '' }} {{ u.mail|lower if u.mail else '' }} {{ u.job|lower if u.job else '' }} {{ u.role|lower if u.role else '' }}">
+                <tr class="user-row searchable-row"
+                    data-search="{{ u.firstname|lower if u.firstname else '' }} {{ u.lastname|lower if u.lastname else '' }} {{ u.mail|lower if u.mail else '' }} {{ u.job|lower if u.job else '' }} {{ u.role|lower if u.role else '' }}">
                     <td class="searchable">{{ u.firstname or '—' }}</td>
                     <td class="searchable">
                         <div class="admin-list-title">{{ u.lastname or '—' }}</div>
@@ -40,7 +41,8 @@
                     <td class="searchable">{{ u.mail or '—' }}</td>
                     <td class="searchable">{{ u.job or '—' }}</td>
                     <td class="searchable">
-                        <span class="badge-pill" data-val="{{ u.role_display if u.role_display is defined else (u.role or 'Technicien') }}">
+                        <span class="badge-pill"
+                            data-val="{{ u.role_display if u.role_display is defined else (u.role or 'Technicien') }}">
                             {{ u.role_display if u.role_display is defined else (u.role or 'Technicien') }}
                         </span>
                     </td>

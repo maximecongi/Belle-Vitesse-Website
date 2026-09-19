@@ -7,7 +7,7 @@
 
 {% block header_actions %}
 <div class="u-flex u-gap-2 u-align-center">
-    <input type="text" id="searchInput" class="form-input u-w-250 u-text-sm" placeholder="🔍 Rechercher une production..."
+    <input type="text" id="searchInput" class="form-input u-w-250" placeholder="Rechercherune production..."
         autocomplete="off">
     <a href="{{ url_for('admin_production_new') }}" class="admin-btn admin-btn-primary">+ Nouvelle Production</a>
 </div>
@@ -29,7 +29,8 @@
             </thead>
             <tbody>
                 {% for prod in productions %}
-                <tr class="searchable-row" data-search="{{ prod.name|lower }} {{ prod.address|lower if prod.address else '' }} {{ prod.email|lower if prod.email else '' }} {{ prod.phone if prod.phone else '' }}">
+                <tr class="searchable-row"
+                    data-search="{{ prod.name|lower }} {{ prod.address|lower if prod.address else '' }} {{ prod.email|lower if prod.email else '' }} {{ prod.phone if prod.phone else '' }}">
                     <td class="u-text-semibold">{{ prod.name }}</td>
                     <td>{{ prod.address }}</td>
                     <td>{{ prod.email }}</td>

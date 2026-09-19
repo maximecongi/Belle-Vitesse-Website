@@ -7,14 +7,14 @@
 
 {% block header_actions %}
 <div class="u-flex u-align-center u-gap-2">
-    <input type="text" id="searchInput" class="form-input u-w-250 u-text-sm" placeholder="🔍 Rechercher un véhicule..."
+    <input type="text" id="searchInput" class="form-input u-w-250" placeholder="Rechercher un véhicule..."
         autocomplete="off">
     {% if current_user and current_user.is_admin %}
     <a href="{{ url_for('admin_checkpoints_list') }}" class="admin-btn admin-btn-secondary">
-        ⚙️ Points de Contrôle
+        <i class="admin-header__icon" data-lucide="list-checks"></i> Points de Contrôle
     </a>
     <a href="{{ url_for('admin_vehicle_configs') }}" class="admin-btn admin-btn-secondary">
-        🎛️ Matrice Flotte
+        <i class="admin-header__icon" data-lucide="grid-3x3"></i>Matrice Flotte
     </a>
     {% endif %}
 </div>
@@ -52,11 +52,11 @@
         <div class="u-flex u-gap-2 u-flex-wrap" id="fleet-filter-pills">
             <button type="button" class="admin-btn admin-btn-sm admin-btn-primary filter-pill active"
                 data-status="all">Tous</button>
-            <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary filter-pill"
+            <button type="button" class="admin-btn admin-btn-sm admin-btn-quaternary filter-pill"
                 data-status="disponible"><i data-lucide="circle-check"></i> Disponibles</button>
-            <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary filter-pill"
+            <button type="button" class="admin-btn admin-btn-sm admin-btn-quaternary filter-pill"
                 data-status="tournage"><i data-lucide="clapperboard"></i> En Tournage</button>
-            <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary filter-pill"
+            <button type="button" class="admin-btn admin-btn-sm admin-btn-quaternary filter-pill"
                 data-status="incident"><i data-lucide="wrench"></i> En Révision</button>
         </div>
         <div class="u-text-xs u-text-muted" id="fleet-counter">
@@ -120,7 +120,7 @@
                 </div>
                 <div>
                     <div class="u-text-xs u-text-muted">Incidents</div>
-                    <div class="u-text-sm u-font-bold u-mt-1 {% if v.incidents_count > 0 %}u-text-warning{% endif %}">
+                    <div class="u-text-sm u-font-bold u-mt-1">
                         {{ v.incidents_count }}
                     </div>
                 </div>
@@ -197,10 +197,10 @@
                 pill.addEventListener('click', function () {
                     filterPills.forEach(p => {
                         p.classList.remove('active', 'admin-btn-primary');
-                        p.classList.add('admin-btn-secondary');
+                        p.classList.add('admin-btn-quaternary');
                     });
                     this.classList.add('active', 'admin-btn-primary');
-                    this.classList.remove('admin-btn-secondary');
+                    this.classList.remove('admin-btn-quaternary');
                     currentFilter = this.getAttribute('data-status') || this.getAttribute('data-filter') || 'all';
                     applyFilters();
                 });

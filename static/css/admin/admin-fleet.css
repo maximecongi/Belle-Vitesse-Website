@@ -1,4 +1,11 @@
 /* ── Admin Fleet & Vehicle Timeline Styles ───────────────────────── */
+.admin-header__icon {
+    width: 0.9rem;
+    height: 0.9rem;
+    margin-right: 0.5rem;
+    vertical-align: -2px;
+
+}
 
 /* ── Flotte : Cartes KPI & Grilles ── */
 .fleet-stats-grid {
@@ -42,6 +49,13 @@
 
 #fleet-filter-pills .lucide-wrench {
     color: var(--red-1);
+}
+
+#fleet-filter-pills .filter-pill.active:hover,
+#fleet-filter-pills .filter-pill.active:focus {
+    background-color: var(--grey-1);
+    color: white;
+    border-color: var(--white-3);
 }
 
 #fleet-empty-filter {
