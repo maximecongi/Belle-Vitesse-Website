@@ -3,8 +3,8 @@
 {% from "admin/macros.html" import status_badge, incident_severity_badge, incident_status_badge, shoot_status_badge,
 initials, empty_state, waiver_card %}
 
-{% block title %}{{ project.name }} — Hub Projet BV{% endblock %}
-{% block page_title %}Hub Projet : {{ project.name }}{% endblock %}
+{% block title %}{{ project.name }}{% endblock %}
+{% block page_title %}Détail Projet{% endblock %}
 
 {% block header_actions %}
 <div class="u-flex u-align-center u-gap-2">
@@ -461,8 +461,8 @@ initials, empty_state, waiver_card %}
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <div class="u-mb-2">
                                     <input type="text" name="title" class="project-report-edit-title-input"
-                                        value="{{ report.title or '' }}" placeholder="Titre du rapport"
-                                        maxlength="255" autocomplete="off" required>
+                                        value="{{ report.title or '' }}" placeholder="Titre du rapport" maxlength="255"
+                                        autocomplete="off" required>
                                 </div>
                                 <div class="u-mb-2">
                                     <textarea name="content" class="project-report-edit-textarea" rows="4"
@@ -488,7 +488,8 @@ initials, empty_state, waiver_card %}
                     {% endfor %}
                 </div>
                 {% else %}
-                {{ empty_state('clipboard-pen', 'Aucun rapport consigné pour le moment', "Rédigez la première observation de tournage, point technique ou débriefing d'équipe ci-dessus.") }}
+                {{ empty_state('clipboard-pen', 'Aucun rapport consigné pour le moment', "Rédigez la première
+                observation de tournage, point technique ou débriefing d'équipe ci-dessus.") }}
                 {% endif %}
             </div>
         </div>
@@ -540,23 +541,23 @@ initials, empty_state, waiver_card %}
             <!-- Grille des Décharges (Pilote & Production) -->
             <div class="project-docs-grid">
                 {{ waiver_card(
-                    pilot_waiver,
-                    'Décharge Pilote',
-                    'id-card',
-                    'Pilote',
-                    pilot_waiver.pilot_name,
-                    url_for('admin_pilot_waivers_list', q=pilot_waiver.waiver_num),
-                    url_for('admin_pilot_waiver_new', project_id=project.id)
+                pilot_waiver,
+                'Décharge Pilote',
+                'id-card',
+                'Pilote',
+                pilot_waiver.pilot_name,
+                url_for('admin_pilot_waivers_list', q=pilot_waiver.waiver_num),
+                url_for('admin_pilot_waiver_new', project_id=project.id)
                 ) }}
 
                 {{ waiver_card(
-                    production_waiver,
-                    'Décharge Production',
-                    'building',
-                    'Prod',
-                    production_waiver.production_name,
-                    url_for('admin_production_waivers_list', q=production_waiver.waiver_num),
-                    url_for('admin_production_waiver_new', project_id=project.id)
+                production_waiver,
+                'Décharge Production',
+                'building',
+                'Prod',
+                production_waiver.production_name,
+                url_for('admin_production_waivers_list', q=production_waiver.waiver_num),
+                url_for('admin_production_waiver_new', project_id=project.id)
                 ) }}
             </div>
 
