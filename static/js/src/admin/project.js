@@ -791,6 +791,148 @@ function initProjectReportsEdit() {
     });
 }
 
+function escapeProjectNotesHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+function initProjectNotesEdit() {
+    if (document._projectNotesEditBound) return;
+    document._projectNotesEditBound = true;
+
+    // Clic : Activer ou Annuler l'édition
+    document.addEventListener('click', (e) => {
+        const editBtn = e.target.closest('[data-action="edit-notes"]');
+        if (editBtn) {
+            const displayEl = document.getElementById('projectNotesDisplay');
+            const formEl = document.getElementById('projectNotesForm');
+            const textarea = document.getElementById('projectNotesInput');
+            if (displayEl && formEl) {
+                displayEl.classList.add('is-hidden');
+                formEl.classList.remove('is-hidden');
+                editBtn.classList.add('is-hidden');
+                if (textarea) {
+                    textarea.focus();
+                    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+                }
+            }
+            return;
+        }
+
+        const cancelBtn = e.target.closest('[data-action="cancel-notes"]');
+        if (cancelBtn) {
+            const displayEl = document.getElementById('projectNotesDisplay');
+            const formEl = document.getElementById('projectNotesForm');
+            const editBtn = document.getElementById('projectNotesEditBtn');
+            if (displayEl && formEl) {
+                formEl.classList.add('is-hidden');
+                displayEl.classList.remove('is-hidden');
+                if (editBtn) editBtn.classList.remove('is-hidden');
+            }
+            return;
+        }
+    });
+
+    // Raccourci Échap pour annuler l'édition
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const formEl = document.getElementById('projectNotesForm');
+            const displayEl = document.getElementById('projectNotesDisplay');
+            const editBtn = document.getElementById('projectNotesEditBtn');
+            if (formEl && !formEl.classList.contains('is-hidden')) {
+                formEl.classList.add('is-hidden');
+                if (displayEl) displayEl.classList.remove('is-hidden');
+                if (editBtn) editBtn.classList.remove('is-hidden');
+            }
+        }
+    });
+
+    // Raccourci Ctrl+Entrée ou Cmd+Entrée pour soumettre le formulaire
+    document.addEventListener('keydown', (e) => {
+        const isEnter = e.key === 'Enter' || e.code === 'Enter' || e.keyCode === 13;
+        const isModifier = e.ctrlKey || e.metaKey;
+        if (isModifier && isEnter) {
+            const formEl = document.getElementById('projectNotesForm');
+            const textarea = document.getElementById('projectNotesInput');
+            if (formEl && !formEl.classList.contains('is-hidden') && document.activeElement === textarea) {
+                e.preventDefault();
+                if (typeof formEl.requestSubmit === 'function') {
+                    formEl.requestSubmit();
+                } else {
+                    formEl.submit();
+                }
+            }
+        }
+    });
+
+    // Soumission AJAX avec fallback automatique
+    document.addEventListener('submit', async (e) => {
+        const formEl = e.target.closest('#projectNotesForm');
+        if (!formEl) return;
+
+        e.preventDefault();
+        const submitBtn = document.getElementById('projectNotesSubmitBtn');
+        const displayEl = document.getElementById('projectNotesDisplay');
+        const editBtn = document.getElementById('projectNotesEditBtn');
+        const editBtnLabel = document.getElementById('projectNotesEditBtnLabel');
+        const originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Enregistrement...';
+        }
+
+        try {
+            const formData = new FormData(formEl);
+            const response = await fetch(formEl.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const newNotes = (data.notes || '').trim();
+
+                if (newNotes) {
+                    displayEl.innerHTML = `<div class="project-notes-content" id="projectNotesText">${escapeProjectNotesHtml(newNotes)}</div>`;
+                    if (editBtnLabel) editBtnLabel.textContent = 'Modifier';
+                } else {
+                    displayEl.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i data-lucide="clipboard-pen"></i>
+                            </div>
+                            <div class="empty-state-title">Aucune note n'a encore été enregistrée</div>
+                            <div class="empty-state-desc">Ajoutez les consignes spécifiques de ce tournage.</div>
+                        </div>
+                    `;
+                    if (editBtnLabel) editBtnLabel.textContent = 'Ajouter une note';
+                    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                        window.lucide.createIcons();
+                    }
+                }
+
+                formEl.classList.add('is-hidden');
+                displayEl.classList.remove('is-hidden');
+                if (editBtn) editBtn.classList.remove('is-hidden');
+            } else {
+                formEl.submit();
+            }
+        } catch (err) {
+            formEl.submit();
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnHtml;
+            }
+        }
+    });
+}
+
 function initProjectInteractions() {
     initProjectFormHighlight();
     initProjectDateValidation();
@@ -798,6 +940,7 @@ function initProjectInteractions() {
     initProjectNotionSlashEditor();
     initProjectReportsCollapsible();
     initProjectReportsEdit();
+    initProjectNotesEdit();
 }
 
 window.initProjectInteractions = initProjectInteractions;

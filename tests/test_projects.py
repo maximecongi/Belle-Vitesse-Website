@@ -14,7 +14,14 @@ sys.modules["weasyprint"] = mock_weasyprint
 
 from app import create_app
 from models import db, Project, Production, User, Contact
-from services.admin.projects import create_project, update_project, delete_project, get_project_for_edit, list_projects
+from services.admin.projects import (
+    create_project,
+    update_project,
+    delete_project,
+    get_project_for_edit,
+    list_projects,
+    update_project_notes,
+)
 
 class ProjectsTest(unittest.TestCase):
     def setUp(self):
@@ -24,6 +31,8 @@ class ProjectsTest(unittest.TestCase):
         os.environ["USE_SSH_TUNNEL"] = "false"
 
         self.app = create_app()
+        self.app.config["TESTING"] = True
+        self.app.config["WTF_CSRF_ENABLED"] = False
         self.client = self.app.test_client()
 
         with self.app.app_context():
@@ -123,6 +132,49 @@ class ProjectsTest(unittest.TestCase):
             proj = db.session.get(Project, proj.id)
             self.assertIsNotNone(proj.deleted_at)
             self.assertEqual(proj.last_action_by_id, user.id)
+
+    def test_project_notes_edit(self):
+        with self.app.app_context():
+            user = User(firstname="Charlie", lastname="Technician", mail="charlie@example.com", role="technicien")
+            prod = Production(name="Production Alpha")
+            db.session.add_all([user, prod])
+            db.session.flush()
+
+            proj = Project(name="Project Notes Test", production_id=prod.id, notes="Ancienne consigne")
+            db.session.add(proj)
+            db.session.commit()
+            proj_id = proj.id
+
+            # 1. Test update_project_notes service function
+            updated = update_project_notes(proj_id, "Nouvelle consigne technique", user_id=user.id)
+            self.assertIsNotNone(updated)
+            self.assertEqual(updated.notes, "Nouvelle consigne technique")
+            self.assertEqual(updated.last_action_by_id, user.id)
+
+        # 2. Test HTTP AJAX route
+        with self.client.session_transaction() as sess:
+            sess["admin_authenticated"] = True
+            sess["admin_user_id"] = user.id
+            sess["admin_user_role"] = "technicien"
+
+        resp = self.client.post(
+            f"/admin/projects/{proj_id}/notes",
+            json={"notes": "Consigne mise à jour via AJAX"},
+            headers={"X-Requested-With": "XMLHttpRequest"}
+        )
+        self.assertEqual(resp.status_code, 200)
+        data = resp.get_json()
+        self.assertEqual(data["status"], "success")
+        self.assertEqual(data["notes"], "Consigne mise à jour via AJAX")
+
+        # 3. Test HTTP standard form submit route
+        resp_form = self.client.post(
+            f"/admin/projects/{proj_id}/notes",
+            data={"notes": "Consigne finale via POST form"},
+            follow_redirects=True
+        )
+        self.assertEqual(resp_form.status_code, 200)
+        self.assertIn("Consigne finale via POST form".encode("utf-8"), resp_form.data)
 
 if __name__ == "__main__":
     unittest.main()

@@ -100,6 +100,54 @@ initials, empty_state, waiver_card %}
     </div>
 </div>
 
+<!-- ═══════════ NOTE / CONSIGNES DU PROJET ═══════════ -->
+<div class="admin-card u-mb-3 project-notes-card" id="projectNotesCard">
+    <div class="u-flex u-justify-between u-align-center u-mb-2">
+        <div class="u-flex u-align-center u-gap-2">
+            <span class="project-notes-title u-font-bold u-text-sm">Notes Spécifiques</span>
+        </div>
+        <div>
+            <button type="button" class="admin-btn admin-btn-xs admin-btn-quaternary" id="projectNotesEditBtn"
+                data-action="edit-notes" title="Modifier la note du projet">
+                <i data-lucide="pencil" class="project-notes-btn-icon"></i>
+                <span id="projectNotesEditBtnLabel">{% if project.notes %}Modifier{% else %}Ajouter une note{% endif
+                    %}</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Mode Affichage -->
+    <div id="projectNotesDisplay" class="project-notes-display">
+        {% if project.notes %}
+        <div class="project-notes-content" id="projectNotesText">{{ project.notes | trim }}</div>
+        {% else %}
+        {{ empty_state('clipboard-pen', "Aucune note n'a encore été enregistrée", "Ajoutez les consignes spécifiques de
+        ce tournage.") }}
+        {% endif %}
+    </div>
+
+    <!-- Mode Édition -->
+    <form method="POST" action="{{ url_for('admin_project_notes_edit', record_id=project.id) }}"
+        class="project-notes-form is-hidden" id="projectNotesForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="u-mb-2">
+            <textarea name="notes" id="projectNotesInput" class="form-input project-notes-textarea" rows="3"
+                placeholder="Renseignez les spécificités du tournage, contraintes de production ou consignes particulières...">{{ project.notes or '' }}</textarea>
+        </div>
+        <div class="u-flex u-justify-between u-align-center u-flex-wrap u-gap-2">
+            <div class="u-flex u-align-center u-gap-2 u-ml-auto">
+                <button type="button" class="admin-btn admin-btn-xs admin-btn-quaternary" id="projectNotesCancelBtn"
+                    data-action="cancel-notes">
+                    Annuler
+                </button>
+                <button type="submit" class="admin-btn admin-btn-xs admin-btn-primary" id="projectNotesSubmitBtn">
+                    <i data-lucide="check" class="project-notes-btn-icon"></i> Enregistrer
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
 <!-- ═══════════ GRILLE PRINCIPALE ═══════════ -->
 <div class="u-grid u-grid-2-1 u-gap-3">
     <!-- COLONNE PRINCIPALE (GAUCHE : JOURNAL & MATÉRIEL) -->
@@ -591,16 +639,6 @@ initials, empty_state, waiver_card %}
             </div>
             {% endif %}
         </div>
-
-        <!-- 5. NOTES SPÉCIFIQUES DU PROJET -->
-        {% if project.notes %}
-        <div class="admin-card">
-            <div class="admin-card-title u-mb-2">
-                📝 Notes Spécifiques
-            </div>
-            <div class="project-notes-content">{{ project.notes | trim }}</div>
-        </div>
-        {% endif %}
 
     </div>
 </div>

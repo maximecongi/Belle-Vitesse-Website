@@ -327,6 +327,23 @@ def update_project(record_id, form, user_id=None):
     return True
 
 
+def update_project_notes(record_id, notes, user_id=None):
+    """
+    Met à jour spécifiquement les notes / consignes d'un projet.
+    """
+    project = db.session.get(Project, record_id)
+    if not project or project.deleted_at is not None:
+        return None
+
+    cleaned_notes = notes.strip() if notes else None
+    project.notes = cleaned_notes
+    if user_id:
+        project.last_action_by_id = user_id
+
+    db.session.commit()
+    return project
+
+
 def get_project_for_edit(record_id):
     """
     Récupère un projet et le formate spécifiquement pour le pré-remplissage du formulaire d'édition.

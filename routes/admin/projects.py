@@ -24,6 +24,7 @@ from services.admin import (
     list_project_reports,
     list_projects,
     update_project,
+    update_project_notes,
     update_project_report,
 )
 from utils.decorators import require_roles
@@ -166,6 +167,30 @@ def init_projects_routes(app):
             current_app.logger.error(f"❌ Erreur dans admin_project_detail : {e}")
             flash("Erreur lors de l'accès à la fiche projet.", "error")
             return redirect(url_for("admin_projects_list"))
+
+    @app.route("/admin/projects/<record_id>/notes", methods=["POST"])
+    @require_roles('administrator', 'manager', 'commercial', 'user', 'technicien')
+    def admin_project_notes_edit(record_id):
+        try:
+            payload = request.get_json(silent=True) or request.form or {}
+            notes = payload.get("notes", "")
+            current_user_id = session.get("admin_user_id")
+
+            project = update_project_notes(record_id, notes=notes, user_id=current_user_id)
+            if not project:
+                abort(404)
+
+            if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"status": "success", "notes": project.notes or ""}), 200
+
+            flash("Notes du projet enregistrées avec succès.", "success")
+            return redirect(url_for("admin_project_detail", record_id=record_id))
+        except Exception as e:
+            current_app.logger.error(f"❌ Erreur enregistrement note projet : {e}")
+            if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"status": "error", "message": "Erreur serveur"}), 500
+            flash(f"Erreur lors de l'enregistrement de la note : {str(e)}", "error")
+            return redirect(url_for("admin_project_detail", record_id=record_id))
 
     @app.route("/admin/projects/<record_id>/reports", methods=["POST"])
     @require_roles('administrator', 'manager', 'commercial', 'user', 'technicien')

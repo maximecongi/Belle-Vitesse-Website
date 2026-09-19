@@ -332,7 +332,7 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
     {% for evt in events %}
     <div class="timeline-linear-item timeline-item u-mb-4" data-type="{{ evt.type }}">
         <!-- Puce circulaire sur la ligne verticale -->
-        <div class="timeline-dot timeline-dot--linear timeline-dot--{{ evt.type }}">
+        <div class="timeline-dot  timeline-dot--{{ evt.type }}">
             {% if evt.type == 'checkout' %}🚚{% elif evt.type == 'checkin' %}📦{% elif evt.type == 'incident' %}⚠️{%
             else %}🎬{% endif %}
         </div>

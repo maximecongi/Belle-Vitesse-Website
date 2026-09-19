@@ -39,6 +39,7 @@ from .projects import (
     get_project_form_context,
     list_projects,
     update_project,
+    update_project_notes,
 )
 from .project_reports import (
     add_project_report,
