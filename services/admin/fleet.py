@@ -640,6 +640,19 @@ def get_vehicle_timeline(vehicle_id: str) -> Optional[Dict[str, Any]]:
             p_status = "upcoming"
             p_status_label = "À venir"
 
+        # Calcul du libellé de période et des anomalies/incidents associés pour la vue linéaire
+        if p.shoot_start_date and p.shoot_end_date:
+            p_date_range_label = f"Du {format_date_fr(str(p.shoot_start_date))} au {format_date_fr(str(p.shoot_end_date))}"
+        elif p.shoot_start_date:
+            p_date_range_label = f"À partir du {format_date_fr(str(p.shoot_start_date))}"
+        elif p_date != date.min:
+            p_date_range_label = format_date_fr(str(p_date))
+        else:
+            p_date_range_label = "—"
+
+        p_failures = sum(e.get("failure_count", 0) for e in events if e.get("type") in ("checkout", "checkin") and e.get("project_id") == p.id)
+        p_incidents = [e for e in events if e.get("type") == "incident" and e.get("project_id") == p.id]
+
         events.append({
             "id": f"project_{p.id}",
             "raw_id": p.id,
@@ -649,6 +662,7 @@ def get_vehicle_timeline(vehicle_id: str) -> Optional[Dict[str, Any]]:
             "reference": p.project_id,
             "date": p_date,
             "date_formatted": format_date_fr(str(p_date)) if p_date != date.min else "—",
+            "date_range_label": p_date_range_label,
             "datetime": getattr(p, "created_at", None),
             "title": f"Projet {p.project_id}",
             "project_name": p.name,
@@ -656,6 +670,9 @@ def get_vehicle_timeline(vehicle_id: str) -> Optional[Dict[str, Any]]:
             "project_unique_id": p.project_id,
             "status": p_status,
             "status_label": p_status_label,
+            "has_incidents": len(p_incidents) > 0,
+            "incident_count": len(p_incidents),
+            "total_failures": p_failures,
             "production_name": p.production.name if p.production else "—",
             "pilot_name": f"{p.pilot_contact.first_name} {p.pilot_contact.last_name}" if p.pilot_contact else "—",
             "shoot_start_date": format_date_fr(str(p.shoot_start_date)) if p.shoot_start_date else None,

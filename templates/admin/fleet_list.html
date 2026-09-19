@@ -51,13 +51,13 @@
     <div class="u-flex u-justify-between u-align-center u-flex-wrap u-gap-3">
         <div class="u-flex u-gap-2 u-flex-wrap" id="fleet-filter-pills">
             <button type="button" class="admin-btn admin-btn-sm admin-btn-primary filter-pill active"
-                data-status="all">Tous ({{ stats.total }})</button>
+                data-status="all">Tous</button>
             <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary filter-pill"
-                data-status="disponible">🟢 Disponibles ({{ stats.available }})</button>
+                data-status="disponible"><i data-lucide="circle-check"></i> Disponibles</button>
             <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary filter-pill"
-                data-status="tournage">🎬 En Tournage ({{ stats.on_tournage }})</button>
+                data-status="tournage"><i data-lucide="clapperboard"></i> En Tournage</button>
             <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary filter-pill"
-                data-status="incident">⚠️ En Révision ({{ stats.incident }})</button>
+                data-status="incident"><i data-lucide="wrench"></i> En Révision</button>
         </div>
         <div class="u-text-xs u-text-muted" id="fleet-counter">
             Affichage de <strong id="fleet-visible-count">{{ vehicles|length }}</strong> sur {{ vehicles|length }}
@@ -69,7 +69,8 @@
 <!-- ═══════════ GRILLE DES VÉHICULES ═══════════ -->
 <div class="u-grid u-gap-4 fleet-vehicle-grid" id="fleet-cards-container">
     {% for v in vehicles %}
-    <div class="admin-card vehicle-card fleet-vehicle-card u-flex u-flex-column u-justify-between u-p-0 u-overflow-hidden"
+    <a href="{{ url_for('admin_vehicle_timeline', vehicle_id=v.id) }}"
+        class="admin-card vehicle-card fleet-vehicle-card u-flex u-flex-column u-justify-between u-p-0 u-overflow-hidden"
         data-name="{{ v.name|lower }}" data-id="{{ v.id|lower }}" data-unique-id="{{ v.unique_id|lower }}"
         data-status="{{ v.operational_status }}">
 
@@ -118,30 +119,14 @@
                     <div class="u-text-sm u-font-bold u-mt-1">{{ v.projects_count }}</div>
                 </div>
                 <div>
-                    <div class="u-text-xs u-text-muted">Départs</div>
-                    <div class="u-text-sm u-font-bold u-mt-1">{{ v.checkouts_count }}</div>
-                </div>
-                <div>
-                    <div class="u-text-xs u-text-muted">Retours</div>
-                    <div class="u-text-sm u-font-bold u-mt-1">{{ v.checkins_count }}</div>
-                </div>
-                <div>
                     <div class="u-text-xs u-text-muted">Incidents</div>
                     <div class="u-text-sm u-font-bold u-mt-1 {% if v.incidents_count > 0 %}u-text-warning{% endif %}">
-                        {{
-                        v.incidents_count }}</div>
+                        {{ v.incidents_count }}
+                    </div>
                 </div>
             </div>
         </div>
-
-        <!-- Pied de carte : Bouton Timeline -->
-        <div class="u-p-3 u-border-top u-flex u-justify-end u-align-center fleet-card-footer">
-            <a href="{{ url_for('admin_vehicle_timeline', vehicle_id=v.id) }}"
-                class="admin-btn admin-btn-sm admin-btn-primary u-w-full u-text-center">
-                Consulter la fiche véhicule →
-            </a>
-        </div>
-    </div>
+    </a>
     {% else %}
     <div class="admin-card u-text-center u-p-5 u-grid-col-span-all">
         <p class="u-text-muted u-text-lg">Aucun véhicule répertorié dans la flotte.</p>
@@ -159,7 +144,7 @@
         function initFleetFilters() {
             const filterPills = document.querySelectorAll('#fleet-filter-pills .filter-pill');
             const cards = document.querySelectorAll('.vehicle-card');
-            const visibleCount = document.getElementById('visible-count');
+            const visibleCount = document.getElementById('fleet-visible-count') || document.getElementById('visible-count');
             const emptyFilterState = document.getElementById('fleet-empty-filter');
             const searchInput = document.getElementById('searchInput');
 
@@ -180,11 +165,9 @@
 
                     if (statusMatches && searchMatches) {
                         card.classList.remove('is-hidden', 'u-d-none');
-                        card.style.removeProperty('display');
                         count++;
                     } else {
                         card.classList.add('is-hidden', 'u-d-none');
-                        card.style.setProperty('display', 'none', 'important');
                     }
                 });
 
@@ -194,9 +177,9 @@
 
                 if (emptyFilterState) {
                     if (count === 0) {
-                        emptyFilterState.style.removeProperty('display');
+                        emptyFilterState.classList.remove('is-hidden', 'u-d-none');
                     } else {
-                        emptyFilterState.style.setProperty('display', 'none', 'important');
+                        emptyFilterState.classList.add('is-hidden', 'u-d-none');
                     }
                 }
             }
@@ -218,7 +201,7 @@
                     });
                     this.classList.add('active', 'admin-btn-primary');
                     this.classList.remove('admin-btn-secondary');
-                    currentFilter = this.getAttribute('data-filter');
+                    currentFilter = this.getAttribute('data-status') || this.getAttribute('data-filter') || 'all';
                     applyFilters();
                 });
             });

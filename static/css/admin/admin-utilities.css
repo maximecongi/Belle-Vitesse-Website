@@ -292,6 +292,10 @@
 }
 
 /* Text Utilities */
+.u-text-base {
+    color: var(--grey-1);
+}
+
 .u-text-left {
     text-align: left !important;
 }

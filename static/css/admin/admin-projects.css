@@ -1393,9 +1393,7 @@
     border-left-color: #5299D3 !important;
 }
 
-.project-hub-id {
-    position: absolute !important;
-}
+.project-hub-id {}
 
 .project-report-body-full {
     display: none;

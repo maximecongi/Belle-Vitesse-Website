@@ -200,8 +200,8 @@ class ProjectReportsTest(unittest.TestCase):
 
         resp = self.client.get(f"/admin/projects/{self.project_id}")
         self.assertEqual(resp.status_code, 200)
-        self.assertIn(b"Hub Projet", resp.data)
-        self.assertIn(b"Journal de Bord", resp.data)
+        self.assertIn("Détail Projet".encode("utf-8"), resp.data)
+        self.assertIn("Rapports d'Équipe".encode("utf-8"), resp.data)
 
         # 2. Ajout rapport via POST JSON
         resp_add = self.client.post(

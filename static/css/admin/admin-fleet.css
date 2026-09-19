@@ -25,17 +25,54 @@
     color: #f99e16 !important;
 }
 
+#fleet-filter-pills .lucide {
+    width: 13px;
+    height: 13px;
+    vertical-align: -2px;
+    margin-right: 4px;
+}
+
+#fleet-filter-pills .lucide-circle-check {
+    color: var(--green-1);
+}
+
+#fleet-filter-pills .lucide-clapperboard {
+    color: var(--orange-1);
+}
+
+#fleet-filter-pills .lucide-wrench {
+    color: var(--red-1);
+}
+
+#fleet-empty-filter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    height: 30vh;
+    width: 100%;
+
+}
+
+.fleet-vehicle-grid:has(#fleet-empty-filter:not(.is-hidden):not(.u-d-none)) {
+    grid-template-columns: auto;
+}
+
 /* ── Flotte : Grille de cartes véhicules ── */
 .fleet-vehicle-grid {
     grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
 }
 
 .fleet-vehicle-card {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-decoration: none !important;
+    color: inherit !important;
+    display: flex;
+    transition: box-shadow 0.2s ease;
 }
 
 .fleet-vehicle-card:hover {
-    transform: translateY(-2px);
+    text-decoration: none !important;
+    color: inherit !important;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
@@ -75,7 +112,7 @@
 }
 
 .fleet-metrics-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     text-align: center;
     gap: 0.25rem;
 }
@@ -219,6 +256,11 @@
 .timeline-dot--checkin {
     background: #3b82f6 !important;
     box-shadow: 0 0 10px rgba(59, 130, 246, 0.4) !important;
+}
+
+.timeline-dot--project {
+    background: #8b5cf6 !important;
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.4) !important;
 }
 
 .timeline-dot--default {

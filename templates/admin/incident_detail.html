@@ -22,19 +22,8 @@ incident_signature_badge, equipment_icon, empty_state %}
 {% block content %}
 <!-- ═══════════ EN-TÊTE RÉCAPITULATIF DE L'INCIDENT (INSPIRÉ DU HUB) ═══════════ -->
 <div class="admin-card u-mb-3 incident-header-card" data-severity="{{ incident.severity }}">
-    <div class="u-flex u-flex-column u-gap-2">
-        <!-- 1. Identifiant, Statut légal & Catégorie -->
-        <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
-            <span class="checkout-doc-id u-m-0 project-hub-id">{{ incident.incident_number }}</span>
-            {% if incident.category_label %}
-            <span class="badge-pill badge-pill-xs" data-val="neutral">🏷️ {{ incident.category_label }}</span>
-            {% endif %}
-            {% if incident.is_sealed %}
-            <span class="badge-pill badge-pill-xs" data-val="neutral">🔒 Scellé contradictoire</span>
-            {% endif %}
-        </div>
-
-        <!-- 2. Ligne Principale : Titre, Sélecteur interactif de statut & Badges -->
+    <div class="u-flex u-flex-column u-gap-2 u-mb-1">
+        <!-- 1. Ligne Principale : Titre, Sélecteur interactif de statut & Badges -->
         <div class="project-hub-header-main-row u-flex-wrap u-gap-2 u-align-center">
             <h1 class="project-hub-title u-m-0">{{ incident.title }}</h1>
 
@@ -55,6 +44,13 @@ incident_signature_badge, equipment_icon, empty_state %}
                 {{ incident_impact_badge(incident.shooting_impact, incident.shooting_impact_label) }}
             </div>
         </div>
+    </div>
+    <!-- 2. Identifiant, Statut légal & Catégorie -->
+    <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
+        <span class="checkout-doc-id u-m-0 project-hub-id">{{ incident.incident_number }}</span>
+        {% if incident.is_sealed %}
+        <span class="badge-pill badge-pill-xs" data-val="neutral">🔒 Scellé contradictoire</span>
+        {% endif %}
     </div>
 </div>
 
@@ -255,7 +251,8 @@ incident_signature_badge, equipment_icon, empty_state %}
                 {{ incident.description}}
             </div>
             {% else %}
-            {{ empty_state('clipboard-pen', 'Aucune description des dommages renseignée', "Les circonstances de l'événement et les dommages constatés n'ont pas encore été détaillés pour cet incident.") }}
+            {{ empty_state('clipboard-pen', 'Aucune description des dommages renseignée', "Les circonstances de
+            l'événement et les dommages constatés n'ont pas encore été détaillés pour cet incident.") }}
             {% endif %}
 
             {% if incident.immediate_actions %}
@@ -289,7 +286,8 @@ incident_signature_badge, equipment_icon, empty_state %}
                 {% endfor %}
             </div>
             {% else %}
-            {{ empty_state('camera', 'Aucune photo enregistrée', "Aucune photo des dommages n'a été jointe à ce dossier.") }}
+            {{ empty_state('camera', 'Aucune photo enregistrée', "Aucune photo des dommages n'a été jointe à ce
+            dossier.") }}
             {% endif %}
         </div>
 
