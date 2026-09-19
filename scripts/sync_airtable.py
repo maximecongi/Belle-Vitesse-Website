@@ -3,7 +3,7 @@
 Airtable Sync CLI
 
 Usage:
-    python scripts/sync_airtable.py            # Interactive menu
+    1           # Interactive menu
     python scripts/sync_airtable.py --db       # Sync database only
     python scripts/sync_airtable.py --images   # Download images only
     python scripts/sync_airtable.py --both     # Sync database + images
@@ -15,9 +15,21 @@ import sys
 from pathlib import Path
 
 # Setup path for local imports (parent of scripts/)
-_root = Path(__file__).parent.parent
+_root = Path(__file__).resolve().parent.parent
 sys.path.append(str(_root))
 os.chdir(_root)
+
+# Bascule automatique vers l'environnement virtuel .venv si exécuté avec un Python système
+_venv_python = _root / ".venv" / "bin" / "python"
+if _venv_python.exists() and os.environ.get("_BV_AUTO_VENV_SWITCH") != "1":
+    try:
+        current_prefix = Path(sys.prefix).resolve()
+        venv_prefix = (_root / ".venv").resolve()
+        if current_prefix != venv_prefix:
+            os.environ["_BV_AUTO_VENV_SWITCH"] = "1"
+            os.execv(str(_venv_python), [str(_venv_python)] + sys.argv)
+    except Exception:
+        pass
 
 
 def get_airtable_config():
@@ -37,7 +49,8 @@ def get_airtable_config():
 def validate_airtable_config(config):
     """Validate required Airtable values."""
     if not config["airtable_token"] or not config["airtable_base_id"]:
-        raise RuntimeError("AIRTABLE_SECRET_TOKEN and AIRTABLE_BASE_ID must be set")
+        raise RuntimeError(
+            "AIRTABLE_SECRET_TOKEN and AIRTABLE_BASE_ID must be set")
 
 
 def interactive_menu():
@@ -71,10 +84,13 @@ def main():
     from services.sync_airtable import run_sync
     from utils.scripts_helper import build_minimal_app
 
-    parser = argparse.ArgumentParser(description="Sync Airtable data to MySQL and download images")
+    parser = argparse.ArgumentParser(
+        description="Sync Airtable data to MySQL and download images")
     parser.add_argument("--db", action="store_true", help="Sync database only")
-    parser.add_argument("--images", action="store_true", help="Download images only")
-    parser.add_argument("--both", action="store_true", help="Sync database + download images")
+    parser.add_argument("--images", action="store_true",
+                        help="Download images only")
+    parser.add_argument("--both", action="store_true",
+                        help="Sync database + download images")
 
     args = parser.parse_args()
 

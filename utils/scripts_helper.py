@@ -2,6 +2,20 @@ import os
 import sys
 from pathlib import Path
 
+_root = Path(__file__).resolve().parent.parent
+
+# Détection et bascule automatique vers le venv du projet si exécuté hors venv
+_venv_python = _root / ".venv" / "bin" / "python"
+if _venv_python.exists() and os.environ.get("_BV_AUTO_VENV_SWITCH") != "1":
+    try:
+        current_prefix = Path(sys.prefix).resolve()
+        venv_prefix = (_root / ".venv").resolve()
+        if current_prefix != venv_prefix:
+            os.environ["_BV_AUTO_VENV_SWITCH"] = "1"
+            os.execv(str(_venv_python), [str(_venv_python)] + sys.argv)
+    except Exception:
+        pass
+
 # En développement / scripts autonomes, utiliser PyMySQL comme pilote MySQLdb
 # pour contourner l'erreur de chargement de mysql_native_password présente sur MySQL 9+
 try:
