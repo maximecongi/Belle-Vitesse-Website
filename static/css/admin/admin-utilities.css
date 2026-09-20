@@ -386,8 +386,42 @@
     border-bottom: 1px solid var(--white-3) !important;
 }
 
+/* Border Utilities: Semantic Entities */
+.u-border-left-checkin {
+    border-left: 4px solid var(--entity-checkin) !important;
+}
+
+.u-border-left-checkout {
+    border-left: 4px solid var(--entity-checkout) !important;
+}
+
+.u-border-left-project {
+    border-left: 4px solid var(--entity-project) !important;
+}
+
+.u-border-left-incident {
+    border-left: 4px solid var(--entity-incident) !important;
+}
+
+/* Border Utilities: Semantic Statuses */
+.u-border-left-success {
+    border-left: 4px solid var(--status-success) !important;
+}
+
 .u-border-left-warning {
-    border-left: 4px solid var(--yellow-1) !important;
+    border-left: 4px solid var(--status-warning, var(--yellow-1)) !important;
+}
+
+.u-border-left-danger {
+    border-left: 4px solid var(--status-danger) !important;
+}
+
+.u-border-left-info {
+    border-left: 4px solid var(--status-info) !important;
+}
+
+.u-border-left-neutral {
+    border-left: 4px solid var(--status-neutral) !important;
 }
 
 .u-border-radius-4 {

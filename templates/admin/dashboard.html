@@ -19,7 +19,7 @@
 {% if agenda %}
 <div class="dashboard-split-layout">
     <!-- Left Column: Check-outs -->
-    <div class="dashboard-column">
+    <div class="dashboard-column dashboard-column--checkout">
         <h3 class="dashboard-column-title">🚚 DÉPARTS (CHECK-OUTS)</h3>
         {% set ns = namespace(has_checkout=false) %}
         {% for project in agenda %}
@@ -123,7 +123,7 @@
     </div>
 
     <!-- Right Column: Check-ins -->
-    <div class="dashboard-column">
+    <div class="dashboard-column dashboard-column--checkin">
         <h3 class="dashboard-column-title">📦 RETOURS (CHECK-INS)</h3>
         {% set ns_in = namespace(has_checkin=false) %}
         {% for project in agenda %}

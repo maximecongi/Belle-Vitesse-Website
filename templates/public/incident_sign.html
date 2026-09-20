@@ -133,9 +133,9 @@
                 <div class="pilot-waiver-notes" style="background: var(--white-3); border-radius: 4px; padding: 16px; margin-bottom: 1.5rem; font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap; color: var(--grey-1);">{{ incident.description or "Aucun descriptif renseigné." }}</div>
 
                 {% if incident.immediate_actions %}
-                <div style="margin-bottom: 1.5rem;">
-                    <span class="pilot-waiver-info-label" style="color: var(--amber-text, #92400e);">Mesures conservatoires immédiates :</span>
-                    <div style="background: #fffbeb; border-left: 3px solid #FFC845; padding: 12px 16px; margin-top: 6px; font-size: 0.9rem; color: #92400e; border-radius: 2px;">
+                <div class="u-mb-3">
+                    <span class="pilot-waiver-info-label u-text-warning">Mesures conservatoires immédiates :</span>
+                    <div class="incident-impact-banner u-p-2 u-mt-1 u-border-radius-4">
                         {{ incident.immediate_actions }}
                     </div>
                 </div>

@@ -15,15 +15,16 @@
 <!-- ═══════════ NAVIGATION PAR ONGLETS ═══════════ -->
 <div class="checkpoint-nav-tabs">
     <a href="{{ url_for('admin_checkpoints_list') }}" class="checkpoint-nav-tab">
-        📋 Points de Contrôle
+        Points de Contrôle
     </a>
     <a href="{{ url_for('admin_vehicle_configs') }}" class="checkpoint-nav-tab active">
-        🎛️ Matrice Flotte
+        Matrice Flotte
     </a>
 </div>
 
 <div class="admin-card">
-    <div class="admin-card-title">Gestion des Points de Contrôle par Véhicule <span class="vehicle-modal-trigger u-cursor-pointer u-ml-1 u-text-lg u-vertical-middle"
+    <div class="admin-card-title">Gestion des Points de Contrôle par Véhicule <span
+            class="vehicle-modal-trigger u-cursor-pointer u-ml-1 u-text-lg u-vertical-middle"
             title="Voir l'protocoles freins et pneus"><img
                 src="{{ url_for('static', filename='imgs/icons/information.svg') }}" alt="Information"
                 class="u-w-1rem u-h-1rem"></span></div>
@@ -57,7 +58,8 @@
                     {% endfor %}
 
                     <td>
-                        <button class="admin-btn admin-btn-primary admin-btn-sm save-vehicle-btn" data-vehicle="{{ vehicle.id }}">
+                        <button class="admin-btn admin-btn-primary admin-btn-sm save-vehicle-btn"
+                            data-vehicle="{{ vehicle.id }}">
                             Enregistrer
                         </button>
                     </td>

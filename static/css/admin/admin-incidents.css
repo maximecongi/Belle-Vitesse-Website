@@ -2,19 +2,19 @@
 
 /* ── Liste : Cartes KPI d'incidents ── */
 .incident-kpi-card--info {
-    border-left: 4px solid var(--blue-info, #0369a1) !important;
+    border-left: 4px solid var(--status-info, #0369a1) !important;
 }
 
 .incident-kpi-card--danger {
-    border-left: 4px solid var(--red-error, #b91c1c) !important;
+    border-left: 4px solid var(--status-danger, #ef4444) !important;
 }
 
 .incident-kpi-card--warning {
-    border-left: 4px solid var(--admin-accent, #FFC845) !important;
+    border-left: 4px solid var(--status-warning, #f59e0b) !important;
 }
 
 .incident-kpi-card--success {
-    border-left: 4px solid var(--green-success, #28a745) !important;
+    border-left: 4px solid var(--status-success, #10b981) !important;
 }
 
 /* ── Détail : Visas & Signatures contradictoires ── */
@@ -164,24 +164,25 @@
     background: #ffffff;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     padding: 1.25rem 1.5rem;
+    border-left: 5px solid var(--entity-incident, #EF4444);
     transition: border-color 0.2s ease;
 }
 
 .incident-header-card[data-severity="critique"],
 .incident-header-card[data-severity="bloquant"] {
-    border-left-color: var(--red-1, #C32F27);
+    border-left-color: var(--status-danger, #EF4444);
 }
 
 .incident-header-card[data-severity="elevee"] {
-    border-left-color: var(--orange-1, #F59E0B);
+    border-left-color: var(--status-warning, #F59E0B);
 }
 
 .incident-header-card[data-severity="moyenne"] {
-    border-left-color: var(--yellow-1, #FFC845);
+    border-left-color: var(--admin-accent, #FFC845);
 }
 
 .incident-header-card[data-severity="faible"] {
-    border-left-color: #94a3b8;
+    border-left-color: var(--status-neutral, #94a3b8);
 }
 
 /* ── Bannière Constat Scellé ── */

@@ -13,23 +13,23 @@
 }
 
 .fleet-kpi-card--grey {
-    border-left: 3px solid var(--admin-color-grey, #64748b) !important;
+    border-left: 3px solid var(--status-neutral, #64748b) !important;
 }
 
 .fleet-kpi-card--green {
-    border-left: 3px solid var(--admin-color-green, #10b981) !important;
+    border-left: 3px solid var(--status-success, #10b981) !important;
 }
 
 .fleet-kpi-card--orange {
-    border-left: 3px solid var(--admin-color-orange, #f99e16) !important;
+    border-left: 3px solid var(--entity-project, #f59e0b) !important;
 }
 
 .fleet-kpi-card--red {
-    border-left: 3px solid var(--admin-color-red, #ef4444) !important;
+    border-left: 3px solid var(--entity-incident, #ef4444) !important;
 }
 
 .fleet-kpi-value--orange {
-    color: #f99e16 !important;
+    color: var(--entity-project, #f59e0b) !important;
 }
 
 #fleet-filter-pills .lucide {
@@ -40,15 +40,15 @@
 }
 
 #fleet-filter-pills .lucide-circle-check {
-    color: var(--green-1);
+    color: var(--status-success, #10B981);
 }
 
 #fleet-filter-pills .lucide-clapperboard {
-    color: var(--orange-1);
+    color: var(--entity-project, #F59E0B);
 }
 
 #fleet-filter-pills .lucide-wrench {
-    color: var(--red-1);
+    color: var(--entity-incident, #EF4444);
 }
 
 #fleet-filter-pills .filter-pill.active:hover,
@@ -137,25 +137,51 @@
 
 /* ── Timeline Véhicule ── */
 .timeline-event-card {
-    transition: border-color 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    border-left: 4px solid var(--status-neutral, #cbd5e1);
+}
+
+.timeline-event-card[data-type="checkout"],
+.timeline-event-card--checkout {
+    border-left: 4px solid var(--entity-checkout, #10b981) !important;
+}
+
+.timeline-event-card[data-type="checkin"],
+.timeline-event-card--checkin {
+    border-left: 4px solid var(--entity-checkin, #3b82f6) !important;
+}
+
+.timeline-event-card[data-type="project"],
+.timeline-event-card[data-type="project_mission"],
+.timeline-event-card--project {
+    border-left: 4px solid var(--entity-project, #f59e0b) !important;
+}
+
+.timeline-event-card[data-type="incident"],
+.timeline-event-card--incident {
+    border-left: 4px solid var(--entity-incident, #ef4444) !important;
+}
+
+.mission-sub-item .timeline-event-card {
+    border-left-width: 3.5px !important;
 }
 
 .vehicle-timeline-header {
-    border-left: 5px solid var(--green-1, #618B4A);
+    border-left: 5px solid var(--status-success, #10B981);
 }
 
 .vehicle-timeline-header[data-status="incident"] {
-    border-left-color: var(--red-1, #C32F27) !important;
+    border-left-color: var(--entity-incident, #EF4444) !important;
 }
 
 .vehicle-timeline-header[data-status="tournage"],
 .vehicle-timeline-header[data-status="in_progress"] {
-    border-left-color: var(--orange-1, #F59E0B) !important;
+    border-left-color: var(--entity-project, #F59E0B) !important;
 }
 
 .vehicle-timeline-header[data-status="available"],
 .vehicle-timeline-header[data-status="disponible"] {
-    border-left-color: var(--green-1, #618B4A) !important;
+    border-left-color: var(--status-success, #10B981) !important;
 }
 
 .timeline-vehicle-meta {
@@ -231,6 +257,18 @@
     box-shadow: 0 0 10px rgba(82, 153, 211, 0.45);
 }
 
+.timeline-dot .lucide {
+    width: 12px;
+    height: 12px;
+    stroke-width: 2.2;
+}
+
+.mission-sub-node .lucide {
+    width: 10px;
+    height: 10px;
+    stroke-width: 2.2;
+}
+
 .timeline-dot--linear {
     top: 12px;
     width: 20px;
@@ -253,33 +291,29 @@
 }
 
 .timeline-dot--upcoming {
-    background: #5299D3 !important;
+    background: var(--blue-1);
     box-shadow: 0 0 10px rgba(82, 153, 211, 0.45) !important;
 }
 
 .timeline-dot--incident {
-    background: #ef4444 !important;
-    box-shadow: 0 0 10px rgba(239, 68, 68, 0.4) !important;
+    background: var(--entity-incident, #ef4444) !important;
+    box-shadow: 0 0 10px var(--entity-incident-glow, rgba(239, 68, 68, 0.4)) !important;
 }
 
 .timeline-dot--checkout {
-    background: #10b981 !important;
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4) !important;
+    background: var(--entity-checkout, #10b981) !important;
+    box-shadow: 0 0 10px var(--entity-checkout-glow, rgba(16, 185, 129, 0.4)) !important;
 }
 
 .timeline-dot--checkin {
-    background: #3b82f6 !important;
-    box-shadow: 0 0 10px rgba(59, 130, 246, 0.4) !important;
+    background: var(--entity-checkin, #3b82f6) !important;
+    box-shadow: 0 0 10px var(--entity-checkin-glow, rgba(59, 130, 246, 0.4)) !important;
 }
 
+.timeline-dot--default,
 .timeline-dot--project {
-    background: #8b5cf6 !important;
-    box-shadow: 0 0 10px rgba(139, 92, 246, 0.4) !important;
-}
-
-.timeline-dot--default {
-    background: #8b5cf6 !important;
-    box-shadow: 0 0 10px rgba(139, 92, 246, 0.4) !important;
+    background: var(--entity-project, #f59e0b) !important;
+    box-shadow: 0 0 10px var(--entity-project-glow, rgba(245, 158, 11, 0.4)) !important;
 }
 
 /* ── Navigation par Onglets (Points de Contrôle / Matrice) ── */

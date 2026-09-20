@@ -76,6 +76,50 @@
     color: var(--white-1);
 }
 
+/* ── Boutons de filtrage / Filter Pills & Icônes Boutons ── */
+.admin-btn .lucide,
+.filter-pill .lucide {
+    width: 13px;
+    height: 13px;
+    vertical-align: -2px;
+    margin-right: 4px;
+}
+
+.filter-pill.active:hover,
+.filter-pill.active:focus {
+    background-color: var(--grey-1) !important;
+    color: white !important;
+    border-color: var(--white-3) !important;
+}
+
+.filter-pill .lucide-circle-check {
+    color: var(--status-success, #10B981);
+}
+
+.filter-pill .lucide-package-check {
+    color: var(--entity-checkin, #3B82F6);
+}
+
+.filter-pill .lucide-truck {
+    color: var(--entity-checkout, #10B981);
+}
+
+.filter-pill .lucide-clapperboard {
+    color: var(--entity-project, #F59E0B);
+}
+
+.filter-pill .lucide-wrench {
+    color: var(--entity-incident, #EF4444);
+}
+
+.filter-pill .lucide-boxes {
+    color: var(--status-info, #0284C7);
+}
+
+.filter-pill .lucide-shield-check {
+    color: var(--status-danger, #EF4444);
+}
+
 .btn-disabled {
     filter: grayscale(1);
     cursor: not-allowed;
@@ -330,21 +374,30 @@
     content: "✅ ";
 }
 
-/* --- Timeline Event Types --- */
+/* --- Timeline Event Types (Semantic Entity Badges) --- */
 .badge-pill[data-val="checkout"] {
-    background: #d1fae5;
-    color: #065f46;
+    background: var(--entity-checkout-bg, #d1fae5);
+    color: var(--entity-checkout-text, #065f46);
+    border: 1px solid var(--entity-checkout-border, rgba(16, 185, 129, 0.3));
 }
 
 .badge-pill[data-val="checkin"] {
-    background: #dbeafe;
-    color: #1e40af;
+    background: var(--entity-checkin-bg, #dbeafe);
+    color: var(--entity-checkin-text, #1e40af);
+    border: 1px solid var(--entity-checkin-border, rgba(59, 130, 246, 0.3));
 }
 
 .badge-pill[data-val="project"],
 .badge-pill[data-val="tournage"] {
-    background: #ede9fe;
-    color: #5b21b6;
+    background: var(--entity-project-bg, #fef3c7);
+    color: var(--entity-project-text, #b45309);
+    border: 1px solid var(--entity-project-border, rgba(245, 158, 11, 0.35));
+}
+
+.badge-pill[data-val="incident"] {
+    background: var(--entity-incident-bg, #fee2e2);
+    color: var(--entity-incident-text, #991b1b);
+    border: 1px solid var(--entity-incident-border, rgba(239, 68, 68, 0.3));
 }
 
 /* --- User Roles & Contacts --- */
@@ -1130,18 +1183,27 @@ input[type="checkbox"]:checked {
 }
 
 .mission-sub-node.node-checkout {
-    background: #10b981;
+    background: var(--entity-checkout, #10b981);
     color: #ffffff;
+    box-shadow: 0 1px 3px var(--entity-checkout-glow, rgba(16, 185, 129, 0.4));
 }
 
 .mission-sub-node.node-checkin {
-    background: #3b82f6;
+    background: var(--entity-checkin, #3b82f6);
     color: #ffffff;
+    box-shadow: 0 1px 3px var(--entity-checkin-glow, rgba(59, 130, 246, 0.4));
 }
 
 .mission-sub-node.node-incident {
-    background: #ef4444;
+    background: var(--entity-incident, #ef4444);
     color: #ffffff;
+    box-shadow: 0 1px 3px var(--entity-incident-glow, rgba(239, 68, 68, 0.4));
+}
+
+.mission-sub-node.node-project {
+    background: var(--entity-project, #f59e0b);
+    color: #ffffff;
+    box-shadow: 0 1px 3px var(--entity-project-glow, rgba(245, 158, 11, 0.4));
 }
 
 .timeline-item.is-hidden {

@@ -17,7 +17,7 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
 {% block content %}
 <!-- ═══════════ MACRO LOCALE : CARTE D'ÉVÉNEMENT UNIFIÉE (DRY) ═══════════ -->
 {% macro render_timeline_event_card(evt, is_sub_event=false, is_autonomous=false, card_id=none) %}
-<div class="admin-card u-p-3 mission-card timeline-event-card" {% if card_id %}id="{{ card_id }}" {% elif evt.id
+<div class="admin-card u-p-3 mission-card timeline-event-card timeline-event-card--{{ evt.type }}" data-type="{{ evt.type }}" {% if card_id %}id="{{ card_id }}" {% elif evt.id
     %}id="event-card-{{ evt.id }}" {% endif %}>
     <div class="u-flex u-justify-between u-align-start u-flex-wrap u-gap-2">
         <!-- Colonne gauche : Badges, Titre, Référence et Métadonnées -->
@@ -136,7 +136,7 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
                 {% if evt.signed_pdf_path %}
                 <a href="{{ evt.signed_pdf_path }}" target="_blank" class="admin-btn admin-btn-sm admin-btn-secondary"
                     title="Consulter le PV scellé">
-                    📄 PDF Signé
+                    <i data-lucide="file-text"></i> PDF Signé
                 </a>
                 {% endif %}
                 {% if evt.type in ('project', 'project_mission') %}
@@ -240,26 +240,21 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
         <!-- Filtres par type (actif sur le flux linéaire) -->
         <div id="linear-filters-container" class="is-hidden">
             <div class="u-flex u-gap-2 u-flex-wrap" id="timeline-filters">
-                <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary timeline-filter-btn active"
-                    data-type="all">
-                    Tous ({{ events|length }})
-                </button>
-                <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary timeline-filter-btn"
-                    data-type="project">
-                    🎬 Tournages ({{ stats.total_projects }})
-                </button>
-                <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary timeline-filter-btn"
-                    data-type="checkout">
-                    🚚 Départs ({{ stats.total_checkouts }})
-                </button>
-                <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary timeline-filter-btn"
-                    data-type="checkin">
-                    📦 Retours ({{ stats.total_checkins }})
-                </button>
-                <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary timeline-filter-btn"
-                    data-type="incident">
-                    ⚠️ Incidents ({{ stats.total_incidents }})
-                </button>
+                <button type="button"
+                    class="admin-btn admin-btn-sm admin-btn-primary filter-pill timeline-filter-btn active"
+                    data-type="all">Tous</button>
+                <button type="button"
+                    class="admin-btn admin-btn-sm admin-btn-quaternary filter-pill timeline-filter-btn"
+                    data-type="project"><i data-lucide="clapperboard"></i> Tournages</button>
+                <button type="button"
+                    class="admin-btn admin-btn-sm admin-btn-quaternary filter-pill timeline-filter-btn"
+                    data-type="checkout"><i data-lucide="truck"></i> Départs</button>
+                <button type="button"
+                    class="admin-btn admin-btn-sm admin-btn-quaternary filter-pill timeline-filter-btn"
+                    data-type="checkin"><i data-lucide="package-check"></i> Retours</button>
+                <button type="button"
+                    class="admin-btn admin-btn-sm admin-btn-quaternary filter-pill timeline-filter-btn"
+                    data-type="incident"><i data-lucide="wrench"></i> Incidents</button>
             </div>
         </div>
 
@@ -278,9 +273,9 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
     {% if m.type == 'project_mission' %}
     <!-- Jalon Niveau 1 : Tournage / Projet -->
     <div class="timeline-item u-mb-4" data-type="project">
-        <!-- Puce circulaire Niveau 1 (Tournage unifié violet) -->
+        <!-- Puce circulaire Niveau 1 (Tournage ambre) -->
         <div class="timeline-dot timeline-dot--project">
-            🎬
+            <i data-lucide="clapperboard"></i>
         </div>
 
         <!-- Carte Mission Principale unifiée -->
@@ -294,8 +289,10 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
             <div class="mission-sub-item">
                 <!-- Puce discrète sur la ligne pointillée -->
                 <div class="mission-sub-node node-{{ sub_evt.type }}">
-                    {% if sub_evt.type == 'checkout' %}🚚{% elif sub_evt.type == 'checkin' %}📦{% elif sub_evt.type ==
-                    'incident' %}⚠️{% else %}ℹ️{% endif %}
+                    {% if sub_evt.type == 'checkout' %}<i data-lucide="truck"></i>{% elif sub_evt.type == 'checkin' %}<i
+                        data-lucide="package-check"></i>{% elif sub_evt.type == 'incident' %}<i
+                        data-lucide="wrench"></i>{%
+                    else %}<i data-lucide="clapperboard"></i>{% endif %}
                 </div>
 
                 <!-- Carte d'étape unifiée via macro -->
@@ -309,8 +306,9 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
     <!-- Jalon Autonome : Événement hors tournage / atelier -->
     <div class="timeline-item u-mb-4" data-type="{{ m.event.type }}">
         <div class="timeline-dot timeline-dot--sub-event timeline-dot--{{ m.event.type }}">
-            {% if m.event.type == 'incident' %}⚠️{% elif m.event.type == 'checkout' %}🚚{% elif m.event.type ==
-            'checkin' %}📦{% else %}🔧{% endif %}
+            {% if m.event.type == 'checkout' %}<i data-lucide="truck"></i>{% elif m.event.type == 'checkin' %}<i
+                data-lucide="package-check"></i>{% elif m.event.type == 'incident' %}<i data-lucide="wrench"></i>{%
+            else %}<i data-lucide="clapperboard"></i>{% endif %}
         </div>
 
         <!-- Carte d'événement autonome unifiée via macro -->
@@ -332,9 +330,10 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
     {% for evt in events %}
     <div class="timeline-linear-item timeline-item u-mb-4" data-type="{{ evt.type }}">
         <!-- Puce circulaire sur la ligne verticale -->
-        <div class="timeline-dot  timeline-dot--{{ evt.type }}">
-            {% if evt.type == 'checkout' %}🚚{% elif evt.type == 'checkin' %}📦{% elif evt.type == 'incident' %}⚠️{%
-            else %}🎬{% endif %}
+        <div class="timeline-dot timeline-dot--{{ evt.type }}">
+            {% if evt.type == 'checkout' %}<i data-lucide="truck"></i>{% elif evt.type == 'checkin' %}<i
+                data-lucide="package-check"></i>{% elif evt.type == 'incident' %}<i data-lucide="wrench"></i>{%
+            else %}<i data-lucide="clapperboard"></i>{% endif %}
         </div>
 
         <!-- Carte d'événement unifiée via macro -->
@@ -393,10 +392,10 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
                 btn.addEventListener('click', function () {
                     filterButtons.forEach(b => {
                         b.classList.remove('active', 'admin-btn-primary');
-                        b.classList.add('admin-btn-secondary');
+                        b.classList.add('admin-btn-quaternary');
                     });
                     this.classList.add('active', 'admin-btn-primary');
-                    this.classList.remove('admin-btn-secondary');
+                    this.classList.remove('admin-btn-quaternary');
 
                     const targetType = this.getAttribute('data-type');
                     let count = 0;

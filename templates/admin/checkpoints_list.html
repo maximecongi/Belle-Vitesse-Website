@@ -30,11 +30,11 @@
     <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
         <div class="u-flex u-gap-2 u-flex-wrap" id="checkpoint-filter-pills">
             <button type="button" class="admin-btn admin-btn-sm admin-btn-primary filter-pill active"
-                data-category="all">Tous ({{ stats.total }})</button>
-            <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary filter-pill"
-                data-category="Sécurité">Sécurité ({{ stats.security }})</button>
-            <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary filter-pill"
-                data-category="Équipements">Équipements ({{ stats.equipment }})</button>
+                data-category="all">Tous</button>
+            <button type="button" class="admin-btn admin-btn-sm admin-btn-quaternary filter-pill"
+                data-category="Sécurité"><i data-lucide="shield-check"></i> Sécurité</button>
+            <button type="button" class="admin-btn admin-btn-sm admin-btn-quaternary filter-pill"
+                data-category="Équipements"><i data-lucide="boxes"></i> Équipements</button>
         </div>
         <div class="u-text-sm u-text-muted">
             <strong id="checkpoint-visible-count">{{ checkpoints|length }}</strong> point{{ 's' if checkpoints|length >
@@ -243,10 +243,10 @@
             btn.addEventListener('click', function () {
                 filterPills.forEach(function (b) {
                     b.classList.remove('active', 'admin-btn-primary');
-                    b.classList.add('admin-btn-secondary');
+                    b.classList.add('admin-btn-quaternary');
                 });
                 btn.classList.add('active', 'admin-btn-primary');
-                btn.classList.remove('admin-btn-secondary');
+                btn.classList.remove('admin-btn-quaternary');
                 activeCategory = btn.getAttribute('data-category');
                 filterRows();
             });

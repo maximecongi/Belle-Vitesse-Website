@@ -1378,19 +1378,19 @@
 
 /* ── Hub Projet & États de tournage ── */
 .project-hub-header {
-    border-left: 5px solid #5299D3;
+    border-left: 5px solid var(--status-info, #5299D3);
 }
 
 .project-hub-header[data-status="in_progress"] {
-    border-left-color: #F59E0B !important;
+    border-left-color: var(--entity-project, #F59E0B) !important;
 }
 
 .project-hub-header[data-status="completed"] {
-    border-left-color: #515151 !important;
+    border-left-color: var(--status-neutral, #515151) !important;
 }
 
 .project-hub-header[data-status="upcoming"] {
-    border-left-color: #5299D3 !important;
+    border-left-color: var(--status-info, #5299D3) !important;
 }
 
 .project-hub-id {}
