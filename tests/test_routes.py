@@ -258,6 +258,64 @@ class RouteSmokeTest(unittest.TestCase):
         self.assertEqual(resp.status_code, 404)
 
 
+    def test_dashboard_agenda_today_checkout(self):
+        """Test that a project with departure_date = today (Europe/Paris) is displayed in the dashboard checkout column."""
+        from models import Project, Production
+        from utils.formatting import get_today_paris
+
+        today = get_today_paris()
+        with self.app.app_context():
+            prod = Production(name="Prod Test Dashboard")
+            db.session.add(prod)
+            db.session.commit()
+
+            project = Project(
+                name="Tournage Urgent Aujourd'hui",
+                production_id=prod.id,
+                departure_date=today,
+                shoot_start_date=today
+            )
+            db.session.add(project)
+            db.session.commit()
+
+        with self.client.session_transaction() as sess:
+            sess["admin_authenticated"] = True
+            sess["admin_user_role"] = "administrator"
+
+        resp = self.client.get("/admin/dashboard")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("Tournage Urgent Aujourd&#39;hui", resp.get_data(as_text=True))
+        self.assertNotIn("Aucun départ ou retour prévu aujourd&#39;hui.", resp.get_data(as_text=True))
+
+    def test_dashboard_agenda_shoot_start_fallback(self):
+        """Test that a project without explicit departure_date falls back to shoot_start_date for checkout."""
+        from models import Project, Production
+        from utils.formatting import get_today_paris
+
+        today = get_today_paris()
+        with self.app.app_context():
+            prod = Production(name="Prod Fallback Shoot")
+            db.session.add(prod)
+            db.session.commit()
+
+            project = Project(
+                name="Tournage Fallback Shoot Start",
+                production_id=prod.id,
+                departure_date=None,
+                shoot_start_date=today
+            )
+            db.session.add(project)
+            db.session.commit()
+
+        with self.client.session_transaction() as sess:
+            sess["admin_authenticated"] = True
+            sess["admin_user_role"] = "administrator"
+
+        resp = self.client.get("/admin/dashboard")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("Tournage Fallback Shoot Start", resp.get_data(as_text=True))
+
+
 if __name__ == "__main__":
     unittest.main()
 

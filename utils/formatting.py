@@ -1,4 +1,19 @@
-# ── Date Formatting ───────────────────────────────────────────────
+from datetime import date, datetime
+
+
+def get_today_paris() -> date:
+    """Retourne la date courante dans le fuseau horaire Europe/Paris (pour éviter les décalages UTC sur serveur)."""
+    try:
+        from zoneinfo import ZoneInfo
+        return datetime.now(ZoneInfo("Europe/Paris")).date()
+    except Exception:
+        return datetime.now().date()
+
+
+def get_today_paris_iso() -> str:
+    """Retourne la date du jour au format ISO YYYY-MM-DD selon le fuseau Europe/Paris."""
+    return get_today_paris().strftime("%Y-%m-%d")
+
 
 MOIS_FR = [
     "", "janvier", "février", "mars", "avril", "mai", "juin",

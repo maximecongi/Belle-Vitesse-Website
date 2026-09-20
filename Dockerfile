@@ -5,7 +5,9 @@ FROM python:3.14-slim
 WORKDIR /app
 
 # Installer les dépendances système nécessaires
+ENV TZ=Europe/Paris
 RUN apt-get update && apt-get install -y \
+    tzdata \
     default-libmysqlclient-dev \
     default-mysql-client \
     build-essential \

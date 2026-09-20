@@ -9,6 +9,7 @@ from services.admin import (
     list_projects,
 )
 from utils.decorators import require_roles
+from utils.formatting import get_today_paris_iso
 
 
 def init_dashboard_routes(app):
@@ -20,14 +21,17 @@ def init_dashboard_routes(app):
     def admin_dashboard():
         try:
             projects_data = list_projects()
-            today_iso = datetime.now().strftime('%Y-%m-%d')
+            today_iso = get_today_paris_iso()
 
             # Regroupe les projets ayant une activité aujourd'hui
-            # (Départ ou Retour)
+            # (Départ ou Retour, avec fallback sur les dates de tournage si les dates de départ/retour ne sont pas définies)
             agenda = []
             for p in projects_data:
-                is_checkout_today = p.get("raw_departure_date") == today_iso
-                is_checkin_today = p.get("raw_checkin_date") == today_iso
+                effective_departure = p.get("raw_departure_date") or p.get("raw_shoot_start")
+                effective_return = p.get("raw_checkin_date") or p.get("raw_shoot_end")
+
+                is_checkout_today = effective_departure == today_iso
+                is_checkin_today = effective_return == today_iso
 
                 if is_checkout_today or is_checkin_today:
                     # Ajoute des drapeaux pour aider au style du template

@@ -6,7 +6,7 @@ from sqlalchemy.orm import joinedload, selectinload
 from models import Contact, Production, Project, db
 from services.admin.status_mapping import format_waiver_status
 from utils.database import get_vehicles, get_heads
-from utils.formatting import format_date_fr
+from utils.formatting import format_date_fr, get_today_paris
 from utils.n8n import trigger_n8n_webhook
 
 from utils.document_utils import generate_pdf_access_token
@@ -102,8 +102,7 @@ def _format_project_admin(p, vehicle_map, heads_map):
     head_ids = [h.strip()
                 for h in (p.heads_to_check or "").split(",") if h.strip()]
 
-    from datetime import date
-    today_date = date.today()
+    today_date = get_today_paris()
     if p.shoot_start_date and p.shoot_end_date:
         if p.shoot_start_date <= today_date <= p.shoot_end_date:
             shoot_status = "in_progress"
@@ -154,7 +153,9 @@ def _format_project_admin(p, vehicle_map, heads_map):
         "departure_date": format_date_fr(str(p.departure_date)) if p.departure_date else "—",
         "raw_departure_date": str(p.departure_date) if p.departure_date else "",
         "shoot_start": format_date_fr(str(p.shoot_start_date)) if p.shoot_start_date else "—",
+        "raw_shoot_start": str(p.shoot_start_date) if p.shoot_start_date else "",
         "shoot_end": format_date_fr(str(p.shoot_end_date)) if p.shoot_end_date else "—",
+        "raw_shoot_end": str(p.shoot_end_date) if p.shoot_end_date else "",
         "return_date": format_date_fr(str(p.return_date)) if p.return_date else "—",
         "raw_return_date": str(p.return_date) if p.return_date else "",
         "raw_checkin_date": str(p.return_date) if p.return_date else "",

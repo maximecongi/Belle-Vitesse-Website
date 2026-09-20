@@ -221,6 +221,10 @@ test_admin_login_page (test_routes.RouteSmokeTest.test_admin_login_page)
 Test that the admin login page is accessible. ... ok
 test_contact_page (test_routes.RouteSmokeTest.test_contact_page)
 Test that the contact page is accessible. ... ok
+test_dashboard_agenda_shoot_start_fallback (test_routes.RouteSmokeTest.test_dashboard_agenda_shoot_start_fallback)
+Test that a project without explicit departure_date falls back to shoot_start_date for checkout. ... ok
+test_dashboard_agenda_today_checkout (test_routes.RouteSmokeTest.test_dashboard_agenda_today_checkout)
+Test that a project with departure_date = today (Europe/Paris) is displayed in the dashboard checkout column. ... ok
 test_home_page (test_routes.RouteSmokeTest.test_home_page)
 Test that the home page is accessible. ... ok
 test_public_checkin_endpoints (test_routes.RouteSmokeTest.test_public_checkin_endpoints)
@@ -267,6 +271,6 @@ test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.W
 Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
 ----------------------------------------------------------------------
-Ran 166 tests in 16.344s
+Ran 168 tests in 15.110s
 
 OK
