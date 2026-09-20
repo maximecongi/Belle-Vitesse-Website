@@ -231,7 +231,8 @@ def init_web_routes(app):
         if not re.match(email_regex, email):
             return jsonify({"status": "error", "message": msg["invalid_email"]}), 400
 
-        ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+        raw_ip = request.headers.get("X-Forwarded-For") or request.remote_addr or ""
+        ip = raw_ip.split(",")[0].strip()[:45]
         rate_key = f"rate_limit_{ip}"
         requests_count = cache.get(rate_key) or 0
 

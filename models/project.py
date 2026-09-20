@@ -80,8 +80,8 @@ class Project(db.Model):
         "contacts.id"), nullable=True, index=True)
     key_grip_contact_id = db.Column(db.Integer, db.ForeignKey(
         "contacts.id"), nullable=True, index=True)
-    departure_date = db.Column(db.Date)  # Date de départ (enlèvement)
-    shoot_start_date = db.Column(db.Date)  # Date de début de tournage
+    departure_date = db.Column(db.Date, index=True)  # Date de départ (enlèvement)
+    shoot_start_date = db.Column(db.Date, index=True)  # Date de début de tournage
     shoot_end_date = db.Column(db.Date)  # Date de fin de tournage
     return_date = db.Column(db.Date)  # Date de retour prévu
     # Liste des identifiants de véhicules séparés par virgules ex: "3,5"

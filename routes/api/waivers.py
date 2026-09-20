@@ -201,6 +201,7 @@ def api_finalize_pilot_waiver(record_id):
         signer_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
         if signer_ip and ',' in signer_ip:
             signer_ip = signer_ip.split(',')[0].strip()
+        signer_ip = signer_ip[:45] if signer_ip else None
         record.signer_ip = signer_ip
 
         db.session.commit()
@@ -248,6 +249,7 @@ def api_finalize_production_waiver(record_id):
         signer_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
         if signer_ip and ',' in signer_ip:
             signer_ip = signer_ip.split(',')[0].strip()
+        signer_ip = signer_ip[:45] if signer_ip else None
         record.signer_ip = signer_ip
 
         db.session.commit()

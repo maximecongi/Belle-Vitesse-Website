@@ -73,7 +73,8 @@ def init_incident_public_routes(app):
         if not signature_data:
             return jsonify({"error": "Le tracé manuscrit de signature est requis."}), 400
 
-        ip_addr = request.headers.get("X-Forwarded-For", request.remote_addr)
+        raw_ip = request.headers.get("X-Forwarded-For") or request.remote_addr or ""
+        ip_addr = raw_ip.split(",")[0].strip()[:45]
 
         try:
             sign_res = sign_incident_prod(

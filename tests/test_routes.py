@@ -212,7 +212,53 @@ class RouteSmokeTest(unittest.TestCase):
         resp = self.client.get("/checkin/document/test.pdf")
         self.assertEqual(resp.status_code, 403)
 
+    def test_serve_private_file_unauthenticated_forbidden(self):
+        """Test that accessing /files/<path> without authentication or token returns 403."""
+        resp = self.client.get("/files/2026/09/PROD/PROJECT/test.pdf")
+        self.assertEqual(resp.status_code, 403)
+
+    def test_serve_private_file_with_valid_hmac_token(self):
+        """Test that accessing /files/<path> with a valid HMAC access token passes auth (returns 404 if file absent, not 403)."""
+        from utils.document_utils import generate_pdf_access_token
+        path = "2026/09/PROD/PROJECT/test.pdf"
+        token = generate_pdf_access_token(path)
+        resp = self.client.get(f"/files/{path}?t={token}")
+        self.assertEqual(resp.status_code, 404)
+
+    def test_serve_private_file_with_admin_session(self):
+        """Test that logged-in admin can access /files/<path> (returns 404 if file absent, not 403)."""
+        with self.client.session_transaction() as sess:
+            sess["admin_authenticated"] = True
+            sess["admin_user_role"] = "technicien"
+
+        resp = self.client.get("/files/2026/09/PROD/PROJECT/test.pdf")
+        self.assertEqual(resp.status_code, 404)
+
+    def test_serve_private_file_with_jwt_token(self):
+        """Test that API / iPad client with valid Bearer JWT can access /files/<path>."""
+        from models import User
+        from utils.jwt_auth import generate_token
+
+        with self.app.app_context():
+            user = User(firstname="Tech", lastname="BV", mail="tech@test.com", role="technicien")
+            db.session.add(user)
+            db.session.commit()
+            token = generate_token(user)
+
+        resp = self.client.get("/files/2026/09/PROD/PROJECT/test.pdf", headers={"Authorization": f"Bearer {token}"})
+        self.assertEqual(resp.status_code, 404)
+
+    def test_admin_docs_chapter_not_found_returns_404(self):
+        """Test that accessing a non-existent technical docs chapter returns 404 instead of 500."""
+        with self.client.session_transaction() as sess:
+            sess["admin_authenticated"] = True
+            sess["admin_user_role"] = "administrator"
+
+        resp = self.client.get("/admin/docs/non_existent_chapter_xyz")
+        self.assertEqual(resp.status_code, 404)
+
 
 if __name__ == "__main__":
     unittest.main()
+
 

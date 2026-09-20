@@ -309,7 +309,7 @@ def init_api_routes(app):
                     "admin_calendar"), "category": "Page", "icon": "calendar", "roles": ['manager', 'commercial', 'admin']},
                 {"title": "Flotte & Parc", "subtitle": "Parc de véhicules, départs, retours et incidents",
                     "url": url_for("admin_fleet_list"), "category": "Page", "icon": "truck", "roles": ['all']},
-                {"title": "Tarification & Pre-quotes", "subtitle": "Grille tarifaire et devis", "url": url_for(
+                {"title": "Tarification", "subtitle": "Grille tarifaire et options matériels", "url": url_for(
                     "admin_pricing"), "category": "Page", "icon": "tag", "roles": ['manager', 'commercial', 'admin']},
                 {"title": "Configurations Véhicules", "subtitle": "Checkpoints et équipements", "url": url_for(
                     "admin_vehicle_configs"), "category": "Page", "icon": "settings", "roles": ['admin']},

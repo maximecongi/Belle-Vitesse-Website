@@ -33,14 +33,14 @@ class Incident(db.Model):
     )
 
     # Date et lieu
-    incident_date = db.Column(db.Date, nullable=False)
+    incident_date = db.Column(db.Date, nullable=False, index=True)
     incident_time = db.Column(db.String(10), nullable=True)
     location = db.Column(db.String(255), nullable=True)
 
     # Classification & Statut
     category = db.Column(db.String(50), nullable=False, default="vehicule")
     severity = db.Column(db.String(50), nullable=False, default="modere")
-    status = db.Column(db.String(50), nullable=False, default="signale")
+    status = db.Column(db.String(50), nullable=False, default="signale", index=True)
     shooting_impact = db.Column(db.String(50), nullable=False, default="aucun")
 
     # Circonstances & Actions

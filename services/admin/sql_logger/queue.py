@@ -1,3 +1,4 @@
+import logging
 import os
 import queue
 import threading
@@ -6,8 +7,8 @@ from rq import Queue as RQQueue
 
 from redis import Redis
 
+logger = logging.getLogger("sql_logger")
 FLASK_ENV = os.getenv("FLASK_ENV", "production")
-print(f"[sql_logger] queue.py initialized with FLASK_ENV={FLASK_ENV}")
 
 # ─────────────────────────────────────────────
 # DEV → queue mémoire
@@ -20,7 +21,7 @@ if FLASK_ENV == "development":
         try:
             log_queue.put_nowait((func, record))
         except queue.Full:
-            print("[sql_logger] queue full, log dropped")
+            logger.warning("[sql_logger] queue full, log dropped")
 
     def start_dev_worker(app):
         def worker():
@@ -31,7 +32,7 @@ if FLASK_ENV == "development":
                 try:
                     process_sql_log(record, app=app)
                 except Exception as e:
-                    print(f"[sql_logger] worker error: {e}")
+                    logger.error(f"[sql_logger] worker error: {e}")
                 finally:
                     log_queue.task_done()
 
@@ -61,7 +62,7 @@ else:
                 result_ttl=0
             )
         except Exception as e:
-            print(f"[sql_logger] Redis enqueue failed: {e}")
+            logger.error(f"[sql_logger] Redis enqueue failed: {e}")
 
     def start_dev_worker(app):
         """No-op in production (using RQ worker)"""

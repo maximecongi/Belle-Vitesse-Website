@@ -215,6 +215,8 @@ test_project_notes_edit (test_projects.ProjectsTest.test_project_notes_edit) ...
 test_soft_deleted_checks_and_waivers_on_projects (test_projects.ProjectsTest.test_soft_deleted_checks_and_waivers_on_projects) ... ok
 test_about_us_page (test_routes.RouteSmokeTest.test_about_us_page)
 Test that the about us page is accessible. ... ok
+test_admin_docs_chapter_not_found_returns_404 (test_routes.RouteSmokeTest.test_admin_docs_chapter_not_found_returns_404)
+Test that accessing a non-existent technical docs chapter returns 404 instead of 500. ... ok
 test_admin_login_page (test_routes.RouteSmokeTest.test_admin_login_page)
 Test that the admin login page is accessible. ... ok
 test_contact_page (test_routes.RouteSmokeTest.test_contact_page)
@@ -233,6 +235,14 @@ test_public_waiver_sign_page_404 (test_routes.RouteSmokeTest.test_public_waiver_
 Test that public waiver sign page returns 404 for invalid token. ... ok
 test_quick_contact_creation (test_routes.RouteSmokeTest.test_quick_contact_creation)
 Test the /admin/api/contacts/quick endpoint. ... ok
+test_serve_private_file_unauthenticated_forbidden (test_routes.RouteSmokeTest.test_serve_private_file_unauthenticated_forbidden)
+Test that accessing /files/<path> without authentication or token returns 403. ... ok
+test_serve_private_file_with_admin_session (test_routes.RouteSmokeTest.test_serve_private_file_with_admin_session)
+Test that logged-in admin can access /files/<path> (returns 404 if file absent, not 403). ... ok
+test_serve_private_file_with_jwt_token (test_routes.RouteSmokeTest.test_serve_private_file_with_jwt_token)
+Test that API / iPad client with valid Bearer JWT can access /files/<path>. ... ok
+test_serve_private_file_with_valid_hmac_token (test_routes.RouteSmokeTest.test_serve_private_file_with_valid_hmac_token)
+Test that accessing /files/<path> with a valid HMAC access token passes auth (returns 404 if file absent, not 403). ... ok
 test_unsubscribe_success (test_routes.RouteSmokeTest.test_unsubscribe_success)
 Test that unsubscribing with a valid token works and does not 500. ... ok
 test_create_and_list_waivers (test_waivers.WaiversTest.test_create_and_list_waivers) ... ok
@@ -257,6 +267,6 @@ test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.W
 Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
 ----------------------------------------------------------------------
-Ran 161 tests in 14.371s
+Ran 166 tests in 16.344s
 
 OK

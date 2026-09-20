@@ -120,6 +120,7 @@ def api_finalize_checkout(record_id):
         signer_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
         if signer_ip and ',' in signer_ip:
             signer_ip = signer_ip.split(',')[0].strip()
+        signer_ip = signer_ip[:45] if signer_ip else None
 
         # If we have a token (sent by the app), we use the standard process
         if token:

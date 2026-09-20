@@ -119,6 +119,7 @@ def api_finalize_checkin(record_id):
         signer_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
         if signer_ip and ',' in signer_ip:
             signer_ip = signer_ip.split(',')[0].strip()
+        signer_ip = signer_ip[:45] if signer_ip else None
 
         if token:
             result = process_inspection_signature(token, "checkin", signature_data, signer_ip)

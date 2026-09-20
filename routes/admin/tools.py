@@ -1,4 +1,5 @@
-from flask import render_template
+from flask import abort, render_template
+from jinja2.exceptions import TemplateNotFound
 
 from utils.decorators import require_roles
 
@@ -36,5 +37,9 @@ def init_tools_routes(app):
     @require_roles('administrator')
     def admin_docs_chapter(chapter):
         """Affiche un chapitre spécifique de la documentation."""
-        return render_template(f"admin/docs/{chapter}.html")
+        try:
+            return render_template(f"admin/docs/{chapter}.html")
+        except TemplateNotFound:
+            abort(404)
+
 

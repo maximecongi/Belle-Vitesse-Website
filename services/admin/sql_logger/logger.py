@@ -11,23 +11,19 @@ IGNORED_PREFIXES = ("DESCRIBE", "SHOW", "PRAGMA", "SELECT 1")
 
 
 def init_sql_logger(app, db):
-    print(f"[sql_logger] init_sql_logger called (db={db})")
-
     activated = os.getenv("SQL_LOGGER_ACTIVATED", "false").lower() in (
         "true", "1", "yes"
     )
 
     if not activated:
-        print("[sql_logger] SQL Logger is DISABLED in environment")
-        app.logger.info("SQL Logger disabled")
+        app.logger.debug("[sql_logger] SQL Logger is DISABLED in environment")
         return
 
-    print("[sql_logger] SQL Logger is ENABLED in environment")
     app.logger.info("SQL Logger (v2) enabled")
 
     # ✅ DEV → démarre thread local
     if os.getenv("FLASK_ENV") == "development":
-        print("[sql_logger] Starting dev worker thread")
+        app.logger.debug("[sql_logger] Starting dev worker thread")
         start_dev_worker(app)
 
     with app.app_context():
@@ -89,5 +85,4 @@ def init_sql_logger(app, db):
                 enqueue("process_sql_log", record)
 
             except Exception as e:
-                print(f"[sql_logger] Error preparing record: {e}")
                 app.logger.error(f"[sql_logger] failed to prepare log: {e}")

@@ -144,7 +144,7 @@ def init_waiver_routes(app):
                 'X-Forwarded-For', request.remote_addr)
             if signer_ip and ',' in signer_ip:
                 signer_ip = signer_ip.split(',')[0].strip()
-            waiver.signer_ip = signer_ip
+            waiver.signer_ip = signer_ip[:45] if signer_ip else None
 
             db.session.commit()
 
