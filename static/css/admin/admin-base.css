@@ -154,6 +154,15 @@ body {
     font-weight: 600;
 }
 
+.admin-section-title .lucide {
+    height: 18px;
+    width: 18px;
+    vertical-align: -2px;
+    stroke-width: 2.2;
+    color: var(--grey-1);
+    margin-right: 0.25rem
+}
+
 .admin-content {
     padding: 2rem;
     padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0));
