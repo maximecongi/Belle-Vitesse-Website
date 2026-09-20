@@ -156,16 +156,21 @@
     }
 }
 
-.flash-error {
-    border-left: 4px solid #ff4b2b;
+.flash-error,
+.flash-danger {
+    border-left: 4px solid var(--status-danger) !important;
 }
 
 .flash-success {
-    border-left: 4px solid #28a745;
+    border-left: 4px solid var(--status-success) !important;
+}
+
+.flash-warning {
+    border-left: 4px solid var(--status-warning) !important;
 }
 
 .flash-info {
-    border-left: 4px solid #007bff;
+    border-left: 4px solid var(--status-info) !important;
 }
 
 /* Badge Select (custom dropdowns) */
@@ -260,18 +265,22 @@
     margin-left: 0.5ch;
 }
 
-/* --- Global Statuses --- */
+/* --- Global Statuses (Design System Tokens) --- */
 .badge-pill[data-val="ok"],
 .badge-pill[data-val="signed"],
-.badge-pill[data-val="cloture"] {
-    background: #d1fae5;
-    color: #065f46;
+.badge-pill[data-val="cloture"],
+.badge-pill[data-val="resolu"] {
+    background: var(--status-success-bg);
+    color: var(--status-success-text);
+    border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .badge-pill[data-val="critical"],
-.badge-pill[data-val="critique"] {
-    background: #fee2e2;
-    color: #991b1b;
+.badge-pill[data-val="critique"],
+.badge-pill[data-val="danger"] {
+    background: var(--status-danger-bg);
+    color: var(--status-danger-text);
+    border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .badge-pill[data-val="critical"]:before {
@@ -279,43 +288,49 @@
 }
 
 .badge-pill[data-val="neutral"] {
-    background: var(--neutral-bg);
-    color: var(--neutral-color);
+    background: var(--status-neutral-bg);
+    color: var(--status-neutral-text);
+    border: 1px solid rgba(100, 116, 139, 0.25);
 }
 
 /* --- Shoot & Project Operational Statuses (Charte Belle Vitesse) --- */
 .badge-pill[data-val="in_progress"] {
-    background: #fef3c7;
-    color: #b45309;
-    border: 1px solid rgba(245, 158, 11, 0.35);
+    background: var(--entity-project-bg);
+    color: var(--entity-project-text);
+    border: 1px solid var(--entity-project-border);
 }
 
 .badge-pill[data-val="upcoming"] {
-    background: #e0f2fe;
-    color: #0369a1;
-    border: 1px solid rgba(82, 153, 211, 0.35);
+    background: var(--status-info-bg);
+    color: var(--status-info-text);
+    border: 1px solid rgba(2, 132, 199, 0.35);
 }
 
 .badge-pill[data-val="completed"] {
-    background: #f4f4f4;
-    color: #515151;
-    border: 1px solid #d1d5db;
+    background: var(--status-neutral-bg);
+    color: var(--status-neutral-text);
+    border: 1px solid rgba(100, 116, 139, 0.25);
 }
 
 /* --- Equipment Check Statuses --- */
-.badge-pill[data-val="warning"] {
-    background: #fef3c7;
-    color: #92400e;
+.badge-pill[data-val="warning"],
+.badge-pill[data-val="modere"],
+.badge-pill[data-val="modéré"] {
+    background: var(--status-warning-bg);
+    color: var(--status-warning-text);
+    border: 1px solid rgba(217, 119, 6, 0.3);
 }
 
 .badge-pill[data-val="to_check"] {
-    background: var(--neutral-bg);
-    color: var(--neutral-color);
+    background: var(--status-neutral-bg);
+    color: var(--status-neutral-text);
+    border: 1px solid rgba(100, 116, 139, 0.25);
 }
 
 .badge-pill[data-val="waiting"] {
-    background: #ecebe9;
-    color: #5c5c5c;
+    background: var(--status-neutral-bg);
+    color: var(--status-neutral-text);
+    border: 1px solid rgba(100, 116, 139, 0.25);
 }
 
 .badge-pill[data-val="waiting"]:before {
@@ -336,8 +351,9 @@
 
 /* --- Document / Waiver Statuses --- */
 .badge-pill[data-val="to_generate"] {
-    background: var(--neutral-bg);
-    color: var(--neutral-color);
+    background: var(--status-neutral-bg);
+    color: var(--status-neutral-text);
+    border: 1px solid rgba(100, 116, 139, 0.25);
 }
 
 .badge-pill[data-val="to_generate"]:before {
@@ -345,8 +361,9 @@
 }
 
 .badge-pill[data-val="to_send"] {
-    background: #ffe2b8;
-    color: #dc852e;
+    background: var(--status-warning-bg);
+    color: var(--status-warning-text);
+    border: 1px solid rgba(217, 119, 6, 0.3);
 }
 
 .badge-pill[data-val="to_send"]::before {
@@ -354,10 +371,16 @@
 }
 
 .badge-pill[data-val="to_sign"],
-.badge-pill[data-val="pending"],
+.badge-pill[data-val="pending"] {
+    background: var(--entity-waiver-bg);
+    color: var(--entity-waiver-text);
+    border: 1px solid var(--entity-waiver-border);
+}
+
 .badge-pill[data-val="assurance"] {
-    background: #dce8fd;
-    color: #0e6292;
+    background: var(--status-info-bg);
+    color: var(--status-info-text);
+    border: 1px solid rgba(2, 132, 199, 0.3);
 }
 
 .badge-pill[data-val="to_sign"]:before,
@@ -366,8 +389,9 @@
 }
 
 .badge-pill[data-val="signed"] {
-    background: #d1fae5;
-    color: #065f46;
+    background: var(--status-success-bg);
+    color: var(--status-success-text);
+    border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .badge-pill[data-val="signed"]:before {
@@ -376,28 +400,34 @@
 
 /* --- Timeline Event Types (Semantic Entity Badges) --- */
 .badge-pill[data-val="checkout"] {
-    background: var(--entity-checkout-bg, #d1fae5);
-    color: var(--entity-checkout-text, #065f46);
-    border: 1px solid var(--entity-checkout-border, rgba(16, 185, 129, 0.3));
+    background: var(--entity-checkout-bg);
+    color: var(--entity-checkout-text);
+    border: 1px solid var(--entity-checkout-border);
 }
 
 .badge-pill[data-val="checkin"] {
-    background: var(--entity-checkin-bg, #dbeafe);
-    color: var(--entity-checkin-text, #1e40af);
-    border: 1px solid var(--entity-checkin-border, rgba(59, 130, 246, 0.3));
+    background: var(--entity-checkin-bg);
+    color: var(--entity-checkin-text);
+    border: 1px solid var(--entity-checkin-border);
 }
 
 .badge-pill[data-val="project"],
 .badge-pill[data-val="tournage"] {
-    background: var(--entity-project-bg, #fef3c7);
-    color: var(--entity-project-text, #b45309);
-    border: 1px solid var(--entity-project-border, rgba(245, 158, 11, 0.35));
+    background: var(--entity-project-bg);
+    color: var(--entity-project-text);
+    border: 1px solid var(--entity-project-border);
 }
 
 .badge-pill[data-val="incident"] {
-    background: var(--entity-incident-bg, #fee2e2);
-    color: var(--entity-incident-text, #991b1b);
-    border: 1px solid var(--entity-incident-border, rgba(239, 68, 68, 0.3));
+    background: var(--entity-incident-bg);
+    color: var(--entity-incident-text);
+    border: 1px solid var(--entity-incident-border);
+}
+
+.badge-pill[data-val="waiver"] {
+    background: var(--entity-waiver-bg);
+    color: var(--entity-waiver-text);
+    border: 1px solid var(--entity-waiver-border);
 }
 
 /* --- User Roles & Contacts --- */
@@ -405,28 +435,32 @@
 .badge-pill[data-val="super administrateur"],
 .badge-pill[data-val="Super Administrator"],
 .badge-pill[data-val="super administrator"] {
-    background: #fde68a;
-    color: #92400e;
+    background: var(--status-warning-bg);
+    color: var(--status-warning-text);
+    border: 1px solid rgba(217, 119, 6, 0.3);
 }
 
 .badge-pill[data-val="Administrateur"],
 .badge-pill[data-val="administrateur"],
 .badge-pill[data-val="Administrator"],
 .badge-pill[data-val="administrator"] {
-    background: #ede9fe;
-    color: #5b21b6;
+    background: var(--entity-waiver-bg);
+    color: var(--entity-waiver-text);
+    border: 1px solid var(--entity-waiver-border);
 }
 
 .badge-pill[data-val="Manager"],
 .badge-pill[data-val="manager"] {
-    background: #dbeafe;
-    color: #1e40af;
+    background: var(--entity-checkin-bg);
+    color: var(--entity-checkin-text);
+    border: 1px solid var(--entity-checkin-border);
 }
 
 .badge-pill[data-val="Commercial"],
 .badge-pill[data-val="commercial"] {
-    background: #ccfbf1;
-    color: #115e59;
+    background: var(--entity-checkout-bg);
+    color: var(--entity-checkout-text);
+    border: 1px solid var(--entity-checkout-border);
 }
 
 .badge-pill[data-val="Technicien"],
@@ -435,16 +469,19 @@
 .badge-pill[data-val="user"] {
     background: #ffedd5;
     color: #c2410c;
+    border: 1px solid rgba(194, 65, 12, 0.3);
 }
 
 .badge-pill[data-val="Freelance"] {
-    background: #dbeafe;
-    color: #1e40af;
+    background: var(--status-info-bg);
+    color: var(--status-info-text);
+    border: 1px solid rgba(2, 132, 199, 0.3);
 }
 
 .badge-pill[data-val="Production"] {
-    background: #ffe2b8;
-    color: #dc852e;
+    background: var(--entity-project-bg);
+    color: var(--entity-project-text);
+    border: 1px solid var(--entity-project-border);
 }
 
 /* --- Misc --- */
@@ -1345,7 +1382,74 @@ input[type="checkbox"]:checked {
     color: #64748b;
     max-width: 420px;
     margin: 0 auto;
-    line-height: 1.5;
+/* ── Cartes KPI Transversales Standardisées (Belle Vitesse Design System) ── */
+.admin-kpi-card {
+    background: #ffffff;
+    border-radius: 6px;
+    padding: 1.15rem 1.25rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border-left: 4px solid var(--status-neutral, #64748b);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.admin-kpi-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.admin-kpi-card--checkin {
+    border-left-color: var(--entity-checkin) !important;
+}
+
+.admin-kpi-card--checkout {
+    border-left-color: var(--entity-checkout) !important;
+}
+
+.admin-kpi-card--project {
+    border-left-color: var(--entity-project) !important;
+}
+
+.admin-kpi-card--incident {
+    border-left-color: var(--entity-incident) !important;
+}
+
+.admin-kpi-card--waiver {
+    border-left-color: var(--entity-waiver) !important;
+}
+
+.admin-kpi-card--success {
+    border-left-color: var(--status-success) !important;
+}
+
+.admin-kpi-card--warning {
+    border-left-color: var(--status-warning) !important;
+}
+
+.admin-kpi-card--danger {
+    border-left-color: var(--status-danger) !important;
+}
+
+.admin-kpi-card--info {
+    border-left-color: var(--status-info) !important;
+}
+
+.admin-kpi-card--neutral {
+    border-left-color: var(--status-neutral) !important;
+}
+
+.admin-kpi-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--grey-2);
+    margin-bottom: 0.35rem;
+    font-weight: 600;
+}
+
+.admin-kpi-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--grey-1);
 }
 
 /* ── Optimisations Tablette & iPadOS (Paysage iPad mini 1133px & Portrait) ── */

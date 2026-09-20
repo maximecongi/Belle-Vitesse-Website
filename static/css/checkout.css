@@ -156,40 +156,37 @@ body {
     letter-spacing: 0.05em;
 }
 
-.checkout-badge--ok {
-    background-color: var(--green-1);
+.checkout-badge--ok,
+.checkout-badge--signed {
+    background-color: var(--status-success, var(--green-1));
     color: var(--white-1);
 }
 
 .checkout-badge--tobesigned {
-    background-color: var(--blue-1);
+    background-color: var(--entity-waiver, var(--blue-1));
     color: var(--white-1);
 }
 
 .checkout-badge--warning {
-    background-color: var(--yellow-1);
+    background-color: var(--status-warning, var(--yellow-1));
     color: var(--grey-1);
 }
 
 .checkout-badge--critical {
-    background-color: var(--red-1);
-    color: var(--white-1);
-}
-
-.checkout-badge--signed {
-    background-color: var(--green-1);
+    background-color: var(--status-danger, var(--red-1));
     color: var(--white-1);
 }
 
 .checkout-badge--neutral {
-    background-color: var(--white-3);
-    color: var(--grey-2);
+    background-color: var(--status-neutral-bg, var(--white-3));
+    color: var(--status-neutral-text, var(--grey-2));
 }
 
 .checkout-badge--inprogress {
-    background-color: var(--orange-1);
+    background-color: var(--entity-project, var(--orange-1));
     color: var(--white-1);
 }
+
 
 /* ── Inspection Table ────────────────── */
 .checkout-table {

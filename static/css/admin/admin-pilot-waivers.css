@@ -771,3 +771,15 @@
         padding: 6px 8px;
     }
 }
+
+/* ── Classes utilitaires d'état pour la signature en ligne ── */
+.pilot-waiver-state-banner {
+    text-align: center;
+    margin-top: 4rem;
+}
+
+.pilot-waiver-status-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    line-height: 1;
+}

@@ -59,6 +59,13 @@
     --entity-incident-border: rgba(239, 68, 68, 0.3);
     --entity-incident-glow: rgba(239, 68, 68, 0.4);
 
+    /* Décharges (Waivers) : Violet / Indigo */
+    --entity-waiver: #8B5CF6;
+    --entity-waiver-bg: #EDE9FE;
+    --entity-waiver-text: #5B21B6;
+    --entity-waiver-border: rgba(139, 92, 246, 0.3);
+    --entity-waiver-glow: rgba(139, 92, 246, 0.4);
+
     /* Statuts Opérationnels Transversaux */
     --status-success: #10B981;
     --status-success-bg: #D1FAE5;

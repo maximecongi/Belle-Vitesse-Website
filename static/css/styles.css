@@ -36,6 +36,54 @@
     --blue-1: #5299D3;
     --purple-1: #9334b9;
 
+    /* ── Semantic Entity Tokens (Design System Belle Vitesse) ── */
+    --entity-checkin: #3B82F6;
+    --entity-checkin-bg: #DBEAFE;
+    --entity-checkin-text: #1E40AF;
+    --entity-checkin-border: rgba(59, 130, 246, 0.3);
+    --entity-checkin-glow: rgba(59, 130, 246, 0.4);
+
+    --entity-checkout: #10B981;
+    --entity-checkout-bg: #D1FAE5;
+    --entity-checkout-text: #065F46;
+    --entity-checkout-border: rgba(16, 185, 129, 0.3);
+    --entity-checkout-glow: rgba(16, 185, 129, 0.4);
+
+    --entity-project: #F59E0B;
+    --entity-project-bg: #FEF3C7;
+    --entity-project-text: #B45309;
+    --entity-project-border: rgba(245, 158, 11, 0.35);
+    --entity-project-glow: rgba(245, 158, 11, 0.4);
+
+    --entity-incident: #EF4444;
+    --entity-incident-bg: #FEE2E2;
+    --entity-incident-text: #991B1B;
+    --entity-incident-border: rgba(239, 68, 68, 0.3);
+    --entity-incident-glow: rgba(239, 68, 68, 0.4);
+
+    --entity-waiver: #8B5CF6;
+    --entity-waiver-bg: #EDE9FE;
+    --entity-waiver-text: #5B21B6;
+    --entity-waiver-border: rgba(139, 92, 246, 0.3);
+    --entity-waiver-glow: rgba(139, 92, 246, 0.4);
+
+    /* Statuts Opérationnels Transversaux */
+    --status-success: #10B981;
+    --status-success-bg: #D1FAE5;
+    --status-success-text: #065F46;
+    --status-warning: #D97706;
+    --status-warning-bg: #FEF3C7;
+    --status-warning-text: #92400E;
+    --status-danger: #EF4444;
+    --status-danger-bg: #FEE2E2;
+    --status-danger-text: #991B1B;
+    --status-info: #0284C7;
+    --status-info-bg: #E0F2FE;
+    --status-info-text: #0369A1;
+    --status-neutral: #64748B;
+    --status-neutral-bg: #F1F5F9;
+    --status-neutral-text: #475569;
+
     --base-font-size: 12px;
 
 }

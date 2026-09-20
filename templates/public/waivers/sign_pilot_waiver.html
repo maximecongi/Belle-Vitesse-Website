@@ -37,10 +37,10 @@
 
         {% if waiver.status == 'signed' %}
         <!-- ── État : déjà signé ────────────────────────────────────── -->
-        <section class="pilot-waiver-section" style="text-align: center; margin-top: 4rem;">
-            <div style="font-size: 4rem; margin-bottom: 1rem; color: var(--green-1);">✓</div>
+        <section class="pilot-waiver-section pilot-waiver-state-banner">
+            <div class="pilot-waiver-status-icon u-text-success">✓</div>
             <h2 class="pilot-waiver-section-title">Décharge signée</h2>
-            <p style="color: var(--grey-2); margin-top: 1rem; text-align: center;">
+            <p class="u-text-muted u-mt-2 u-text-center">
                 Ce document a déjà été signé électroniquement et ne peut plus être modifié.<br><br>
                 Vous allez être redirigé vers <a href="https://bellevitesse.com">bellevitesse.com</a> dans quelques
                 secondes.
@@ -52,10 +52,10 @@
 
         {% elif waiver.status not in ['to_sign', 'to_send'] %}
         <!-- ── État : lien invalide ────────────────────────────────── -->
-        <section class="pilot-waiver-section" style="text-align: center; margin-top: 4rem;">
-            <div style="font-size: 4rem; margin-bottom: 1rem; color: var(--red-1);">✕</div>
+        <section class="pilot-waiver-section pilot-waiver-state-banner">
+            <div class="pilot-waiver-status-icon u-text-danger">✕</div>
             <h2 class="pilot-waiver-section-title">Lien invalide</h2>
-            <p style="color: var(--grey-2); margin-top: 1rem;">
+            <p class="u-text-muted u-mt-2">
                 Ce lien de signature est invalide ou expiré.
             </p>
         </section>
@@ -82,7 +82,7 @@
                         <span class="pilot-waiver-info-value">{{ waiver.shooting_dates or '—' }}</span>
                     </div>
                     <span class="pilot-waiver-info-label">Véhicule(s) à piloter</span>
-                    <div class="pilot-waiver-info-item pilot-waiver-info-vehicles" style="grid-column: 1 / -1;">
+                    <div class="pilot-waiver-info-item pilot-waiver-info-vehicles u-col-span-full">
                         {% if waiver.vehicles %}
                         {% for v in waiver.vehicles.split(',') %}
                         <span class="pilot-waiver-vehicles-badge">{{ v.strip() }}</span>
@@ -95,52 +95,52 @@
             <!-- Informations pilote (éditables) -->
             <section class="pilot-waiver-section">
                 <h2 class="pilot-waiver-section-title dot-before">Vos informations de pilote</h2>
-                <p style="font-size: 0.9rem; color: var(--grey-2); margin-bottom: 1.5rem;">
+                <p class="u-text-sm u-text-muted u-mb-3">
                     Vérifiez et complétez vos informations personnelles avant de signer.
                 </p>
                 <div class="pilot-form-grid">
                     <div class="form-group">
-                        <label for="first_name">Prénom <span style="color:red;">*</span></label>
+                        <label for="first_name">Prénom <span class="u-text-danger">*</span></label>
                         <input class="form-input" type="text" id="first_name" name="first_name"
                             value="{{ waiver.pilot_first_name or '' }}" required autocomplete="given-name" disabled>
                     </div>
                     <div class="form-group">
-                        <label for="last_name">Nom <span style="color:red;">*</span></label>
+                        <label for="last_name">Nom <span class="u-text-danger">*</span></label>
                         <input class="form-input" type="text" id="last_name" name="last_name"
                             value="{{ waiver.pilot_last_name or '' }}" required autocomplete="family-name" disabled>
                     </div>
                     <div class="form-group">
-                        <label for="dob">Date de naissance <span style="color:red;">*</span></label>
+                        <label for="dob">Date de naissance <span class="u-text-danger">*</span></label>
                         <input class="form-input" type="date" id="dob" name="dob" value="{{ waiver.pilot_dob or '' }}"
                             required>
                     </div>
                     <div class="form-group">
-                        <label for="license_number">Numéro de permis <span style="color:red;">*</span></label>
+                        <label for="license_number">Numéro de permis <span class="u-text-danger">*</span></label>
                         <input class="form-input" type="text" id="license_number" name="license_number"
                             value="{{ waiver.pilot_license_number or '' }}" required>
                     </div>
-                    <div class="form-group" style="grid-column: 1 / -1;">
-                        <label for="address">Adresse postale <span style="color:red;">*</span></label>
+                    <div class="form-group u-col-span-full">
+                        <label for="address">Adresse postale <span class="u-text-danger">*</span></label>
                         <input class="form-input" type="text" id="address" name="address" required autocomplete="off"
                             value="{{ waiver.pilot_address or '' }}">
                         <div id="address-suggestions" class="address-suggestions"></div>
                     </div>
                     <div class="form-group">
                         <label for="insurance_company">Compagnie d'assurance (RC) <span
-                                style="color:red;">*</span></label>
+                                class="u-text-danger">*</span></label>
                         <input class="form-input" type="text" id="insurance_company" name="insurance_company"
                             value="{{ waiver.pilot_insurance_company or '' }}" required>
                     </div>
                     <div class="form-group">
                         <label for="insurance_policy">Numéro de police d'assurance <span
-                                style="color:red;">*</span></label>
+                                class="u-text-danger">*</span></label>
                         <input class="form-input" type="text" id="insurance_policy" name="insurance_policy"
                             value="{{ waiver.pilot_insurance_policy or '' }}" required>
                     </div>
 
                     <!-- Pièces jointes -->
                     <div class="form-group">
-                        <label>Permis de conduire <span style="color:red;">*</span></label>
+                        <label>Permis de conduire <span class="u-text-danger">*</span></label>
                         <div class="custom-file-upload">
                             <label for="pilot_license" class="custom-file-label"><span>📁 Choisir un
                                     fichier...</span></label>
@@ -149,7 +149,7 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Attestation d'assurance <span style="color:red;">*</span></label>
+                        <label>Attestation d'assurance <span class="u-text-danger">*</span></label>
                         <div class="custom-file-upload">
                             <label for="pilot_insurance" class="custom-file-label"><span>📁 Choisir un
                                     fichier...</span></label>
@@ -159,7 +159,7 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Carte d'identité / Passeport <span style="color:red;">*</span></label>
+                        <label>Carte d'identité / Passeport <span class="u-text-danger">*</span></label>
                         <div class="custom-file-upload">
                             <label for="pilot_identity" class="custom-file-label"><span>📁 Choisir un
                                     fichier...</span></label>
@@ -167,6 +167,7 @@
                             <span class="file-name" id="name-pilot_identity">Aucun fichier sélectionné</span>
                         </div>
                     </div>
+
                 </div>
             </section>
 
@@ -175,7 +176,7 @@
                 <h2 class="pilot-waiver-section-title dot-before">Contenu de la décharge</h2>
                 <div class="waiver-content">
                     <h1>DÉCHARGE DE RESPONSABILITÉ</h1>
-                    <p style="font-weight: 500;">Pilote de véhicule caméra tracking — {{ company_name }}</p>
+                    <p class="u-text-semibold">Pilote de véhicule caméra tracking — {{ company_name }}</p>
                     <hr>
 
                     <h2>1. Identification des parties</h2>
@@ -275,7 +276,7 @@
                     </label>
                 </div>
 
-                <div class="pilot-waiver-sign-canvas-wrapper" style="margin-top: 1rem;">
+                <div class="pilot-waiver-sign-canvas-wrapper u-mt-2">
                     <canvas id="signature-canvas"></canvas>
                 </div>
 
@@ -290,7 +291,7 @@
             </section>
 
             <div id="feedback" class="feedback-box"></div>
-            <canvas id="pdf-conversion-canvas" style="display: none;"></canvas>
+            <canvas id="pdf-conversion-canvas" class="is-hidden"></canvas>
 
         </form>
         {% endif %}
