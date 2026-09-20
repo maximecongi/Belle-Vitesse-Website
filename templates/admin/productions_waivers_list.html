@@ -5,7 +5,8 @@
 {% block title %}Décharges Productions{% endblock %}
 {% block page_title %}Décharges Productions{% endblock %}
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-pilot-waivers.css') }}">{% endblock %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-pilot-waivers.css') }}?v={{ asset_version('css/admin/admin-pilot-waivers.css') }}">
+{% endblock %}
 
 {% block header_actions %}
 <div class="u-flex u-align-center u-gap-2">

@@ -36,6 +36,14 @@ test_unauthenticated_access_redirects_to_login (test_calendar_permissions.Calend
 Unauthenticated user should be redirected to login page. ... ok
 test_user_role_cannot_access_calendar (test_calendar_permissions.CalendarPermissionsTestCase.test_user_role_cannot_access_calendar)
 User with role 'user' should be forbidden / redirected to dashboard. ... ok
+test_admin_checkpoint_edit_get_and_post (test_checkpoints_management.CheckpointsManagementTest.test_admin_checkpoint_edit_get_and_post) ... ok
+test_admin_checkpoints_list_view (test_checkpoints_management.CheckpointsManagementTest.test_admin_checkpoints_list_view) ... ok
+test_auto_seeding_checkpoints (test_checkpoints_management.CheckpointsManagementTest.test_auto_seeding_checkpoints) ... ok
+test_category_grouping_order (test_checkpoints_management.CheckpointsManagementTest.test_category_grouping_order) ... ok
+test_delete_checkpoint_route (test_checkpoints_management.CheckpointsManagementTest.test_delete_checkpoint_route) ... ok
+test_matrix_config_sync (test_checkpoints_management.CheckpointsManagementTest.test_matrix_config_sync) ... ok
+test_reorder_checkpoints_api (test_checkpoints_management.CheckpointsManagementTest.test_reorder_checkpoints_api) ... ok
+test_utils_get_checkpoints_for_vehicle_with_custom_definition (test_checkpoints_management.CheckpointsManagementTest.test_utils_get_checkpoints_for_vehicle_with_custom_definition) ... ok
 test_api_check_conflicts_endpoint_with_exclusion (test_conflicts.ConflictsTest.test_api_check_conflicts_endpoint_with_exclusion)
 Vérifie que l'API HTTP exclut bien le projet en cours d'édition pour éviter l'auto-conflit. ... ok
 test_exclude_project_id_for_self_edit (test_conflicts.ConflictsTest.test_exclude_project_id_for_self_edit)
@@ -130,6 +138,8 @@ test_mcp_incident_tools (test_incidents.IncidentsTestCase.test_mcp_incident_tool
 Vérifie l'exposition et le fonctionnement des outils MCP pour l'IA. ... ok
 test_post_signature_followup_editing (test_incidents.IncidentsTestCase.test_post_signature_followup_editing)
 Vérifie qu'un incident signé peut toujours recevoir des mises à jour de suivi financier et de statut sans altérer les faits scellés. ... ok
+test_sealing_requires_both_signatures (test_incidents.IncidentsTestCase.test_sealing_requires_both_signatures)
+Vérifie que le contexte n'est scellé que lorsque les 2 signatures sont apposées. ... ok
 test_update_incident_and_resolution (test_incidents.IncidentsTestCase.test_update_incident_and_resolution)
 Vérifie la mise à jour et l'horodatage de résolution. ... ok
 test_create_checkout_and_checkin_routes (test_inspections.InspectionsTest.test_create_checkout_and_checkin_routes) ... ok
@@ -147,7 +157,7 @@ test_enriched_details (test_mcp_server.MCPServerFullTestSuite.test_enriched_deta
 test_flexible_date_parsing (test_mcp_server.MCPServerFullTestSuite.test_flexible_date_parsing) ... ok
 test_inspections (test_mcp_server.MCPServerFullTestSuite.test_inspections) ... ok
 test_mcp_connector_routes_access_and_scoping (test_mcp_server.MCPServerFullTestSuite.test_mcp_connector_routes_access_and_scoping)
-Vérifie le contrôle d'accès aux routes web /admin/mcp-connector et la limitation de création de scope selon le rôle. ... ERROR
+Vérifie le contrôle d'accès aux routes web /admin/mcp-connector et la limitation de création de scope selon le rôle. ... ok
 test_mcp_expiration_and_caching (test_mcp_server.MCPServerFullTestSuite.test_mcp_expiration_and_caching)
 Vérifie la génération de clé avec durée d'expiration et le micro-cache outillage. ... ok
 test_mcp_fleet_360_and_conflicts_tools (test_mcp_server.MCPServerFullTestSuite.test_mcp_fleet_360_and_conflicts_tools) ... ok
@@ -191,6 +201,7 @@ test_author_job_display (test_project_reports.ProjectReportsTest.test_author_job
 test_cascade_delete_with_project (test_project_reports.ProjectReportsTest.test_cascade_delete_with_project) ... ok
 test_delete_permissions (test_project_reports.ProjectReportsTest.test_delete_permissions) ... ok
 test_empty_content_validation (test_project_reports.ProjectReportsTest.test_empty_content_validation) ... ok
+test_empty_title_validation (test_project_reports.ProjectReportsTest.test_empty_title_validation) ... ok
 test_http_routes (test_project_reports.ProjectReportsTest.test_http_routes) ... ok
 test_mcp_tools (test_project_reports.ProjectReportsTest.test_mcp_tools) ... ok
 test_project_detail_context (test_project_reports.ProjectReportsTest.test_project_detail_context) ... ok
@@ -200,6 +211,7 @@ test_update_project_report_after_3h_blocked_for_author_allowed_for_admin (test_p
 test_update_project_report_unauthorized_user (test_project_reports.ProjectReportsTest.test_update_project_report_unauthorized_user) ... ok
 test_update_project_report_within_3h (test_project_reports.ProjectReportsTest.test_update_project_report_within_3h) ... ok
 test_project_crud_tracking (test_projects.ProjectsTest.test_project_crud_tracking) ... ok
+test_project_notes_edit (test_projects.ProjectsTest.test_project_notes_edit) ... ok
 test_about_us_page (test_routes.RouteSmokeTest.test_about_us_page)
 Test that the about us page is accessible. ... ok
 test_admin_login_page (test_routes.RouteSmokeTest.test_admin_login_page)
@@ -243,491 +255,7 @@ Vérifie le fonctionnement du script scripts/remind_waivers.py en mode dry-run. 
 test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.WaiversRemindersTest.test_send_templated_email_with_attachments_and_headers)
 Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
-======================================================================
-ERROR: test_mcp_connector_routes_access_and_scoping (test_mcp_server.MCPServerFullTestSuite.test_mcp_connector_routes_access_and_scoping)
-Vérifie le contrôle d'accès aux routes web /admin/mcp-connector et la limitation de création de scope selon le rôle.
 ----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-    self.dialect.do_execute(
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
-    cursor.execute(statement, parameters)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/cursors.py", line 159, in execute
-    result = self._query(query)
-             ^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/cursors.py", line 330, in _query
-    conn.query(q)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 582, in query
-    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
-                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 847, in _read_query_result
-    result.read()
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 1245, in read
-    first_packet = self.connection._read_packet()
-                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 803, in _read_packet
-    packet.raise_for_error()
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/protocol.py", line 219, in raise_for_error
-    err.raise_mysql_exception(self._data)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/err.py", line 154, in raise_mysql_exception
-    raise errorclass(errno, errval, sqlstate=sqlstate)
-pymysql.err.IntegrityError: (1452, 'Cannot add or update a child row: a foreign key constraint fails (`BelleVitesse`.`mcp_api_tokens`, CONSTRAINT `mcp_api_tokens_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`))')
+Ran 160 tests in 13.276s
 
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/routes/admin/mcp_tokens.py", line 203, in generate_token
-    db.session.commit()
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/scoping.py", line 597, in commit
-    return self._proxied.commit()
-           ^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2030, in commit
-    trans.commit(_to_root=True)
-  File "<string>", line 2, in commit
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
-    ret_value = fn(self, *arg, **kw)
-                ^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1311, in commit
-    self._prepare_impl()
-  File "<string>", line 2, in _prepare_impl
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
-    ret_value = fn(self, *arg, **kw)
-                ^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1286, in _prepare_impl
-    self.session.flush()
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4331, in flush
-    self._flush(objects)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4466, in _flush
-    with util.safe_reraise():
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
-    raise exc_value.with_traceback(exc_tb)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4427, in _flush
-    flush_context.execute()
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
-    rec.execute(self)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
-    util.preloaded.orm_persistence.save_obj(
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
-    _emit_insert_statements(
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 1233, in _emit_insert_statements
-    result = connection.execute(
-             ^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
-    return meth(
-           ^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 527, in _execute_on_connection
-    return connection._execute_clauseelement(
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1641, in _execute_clauseelement
-    ret = self._execute_context(
-          ^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
-    return self._exec_single_context(
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
-    self._handle_dbapi_exception(
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2363, in _handle_dbapi_exception
-    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-    self.dialect.do_execute(
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
-    cursor.execute(statement, parameters)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/cursors.py", line 159, in execute
-    result = self._query(query)
-             ^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/cursors.py", line 330, in _query
-    conn.query(q)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 582, in query
-    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
-                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 847, in _read_query_result
-    result.read()
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 1245, in read
-    first_packet = self.connection._read_packet()
-                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 803, in _read_packet
-    packet.raise_for_error()
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/protocol.py", line 219, in raise_for_error
-    err.raise_mysql_exception(self._data)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/err.py", line 154, in raise_mysql_exception
-    raise errorclass(errno, errval, sqlstate=sqlstate)
-sqlalchemy.exc.IntegrityError: (pymysql.err.IntegrityError) (1452, 'Cannot add or update a child row: a foreign key constraint fails (`BelleVitesse`.`mcp_api_tokens`, CONSTRAINT `mcp_api_tokens_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`))')
-[SQL: INSERT INTO mcp_api_tokens (user_id, name, token_prefix, token_hash, is_active, created_at, last_used_at, expires_at, scope) VALUES (%(user_id)s, %(name)s, %(token_prefix)s, %(token_hash)s, %(is_active)s, %(created_at)s, %(last_used_at)s, %(expires_at)s, %(scope)s)]
-[parameters: {'user_id': 902, 'name': 'Com ReadOnly', 'token_prefix': 'bv_mcp_74325...', 'token_hash': '70bea857008af5e19836579491ad4469f86bd92492ebbcef6a1456b5e17cdef8', 'is_active': 1, 'created_at': datetime.datetime(2026, 9, 12, 19, 35, 1, 386149, tzinfo=datetime.timezone.utc), 'last_used_at': None, 'expires_at': None, 'scope': 'read_only'}]
-(Background on this error at: https://sqlalche.me/e/20/gkpj)
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-    self.dialect.do_execute(
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
-    cursor.execute(statement, parameters)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/cursors.py", line 159, in execute
-    result = self._query(query)
-             ^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/cursors.py", line 330, in _query
-    conn.query(q)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 582, in query
-    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
-                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 847, in _read_query_result
-    result.read()
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 1245, in read
-    first_packet = self.connection._read_packet()
-                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 803, in _read_packet
-    packet.raise_for_error()
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/protocol.py", line 219, in raise_for_error
-    err.raise_mysql_exception(self._data)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/err.py", line 154, in raise_mysql_exception
-    raise errorclass(errno, errval, sqlstate=sqlstate)
-pymysql.err.OperationalError: (1060, "Duplicate column name 'scope'")
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/tests/test_mcp_server.py", line 667, in test_mcp_connector_routes_access_and_scoping
-    res_com_ro = client.post(
-                 ^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/werkzeug/test.py", line 1167, in post
-    return self.open(*args, **kw)
-           ^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/flask/testing.py", line 235, in open
-    response = super().open(
-               ^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/werkzeug/test.py", line 1116, in open
-    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
-                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/werkzeug/test.py", line 988, in run_wsgi_app
-    rv = run_wsgi_app(self.application, environ, buffered=buffered)
-         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/werkzeug/test.py", line 1264, in run_wsgi_app
-    app_rv = app(environ, start_response)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/flask/app.py", line 1536, in __call__
-    return self.wsgi_app(environ, start_response)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/werkzeug/middleware/proxy_fix.py", line 183, in __call__
-    return self.app(environ, start_response)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/flask/app.py", line 1514, in wsgi_app
-    response = self.handle_exception(e)
-               ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/flask/app.py", line 1511, in wsgi_app
-    response = self.full_dispatch_request()
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/flask/app.py", line 919, in full_dispatch_request
-    rv = self.handle_user_exception(e)
-         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/flask/app.py", line 917, in full_dispatch_request
-    rv = self.dispatch_request()
-         ^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/flask/app.py", line 902, in dispatch_request
-    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/utils/decorators.py", line 66, in decorated_function
-    return f(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/routes/admin/mcp_tokens.py", line 214, in generate_token
-    raise retry_err
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/routes/admin/mcp_tokens.py", line 208, in generate_token
-    db.session.execute(text("ALTER TABLE mcp_api_tokens ADD COLUMN scope VARCHAR(20) NOT NULL DEFAULT 'read_only'"))
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/scoping.py", line 765, in execute
-    return self._proxied.execute(
-           ^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
-    return self._execute_internal(
-           ^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2258, in _execute_internal
-    result = conn.execute(
-             ^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
-    return meth(
-           ^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 527, in _execute_on_connection
-    return connection._execute_clauseelement(
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1641, in _execute_clauseelement
-    ret = self._execute_context(
-          ^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
-    return self._exec_single_context(
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
-    self._handle_dbapi_exception(
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2363, in _handle_dbapi_exception
-    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-    self.dialect.do_execute(
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
-    cursor.execute(statement, parameters)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/cursors.py", line 159, in execute
-    result = self._query(query)
-             ^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/cursors.py", line 330, in _query
-    conn.query(q)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 582, in query
-    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
-                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 847, in _read_query_result
-    result.read()
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 1245, in read
-    first_packet = self.connection._read_packet()
-                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 803, in _read_packet
-    packet.raise_for_error()
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/protocol.py", line 219, in raise_for_error
-    err.raise_mysql_exception(self._data)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/err.py", line 154, in raise_mysql_exception
-    raise errorclass(errno, errval, sqlstate=sqlstate)
-sqlalchemy.exc.OperationalError: (pymysql.err.OperationalError) (1060, "Duplicate column name 'scope'")
-[SQL: ALTER TABLE mcp_api_tokens ADD COLUMN scope VARCHAR(20) NOT NULL DEFAULT 'read_only']
-(Background on this error at: https://sqlalche.me/e/20/e3q8)
-
-----------------------------------------------------------------------
-Ran 149 tests in 69.450s
-
-FAILED (errors=1)
-
-=== DETAILED ERRORS ===
-
-ERROR in test_mcp_connector_routes_access_and_scoping (test_mcp_server.MCPServerFullTestSuite.test_mcp_connector_routes_access_and_scoping):
-Traceback (most recent call last):
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-    self.dialect.do_execute(
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
-    cursor.execute(statement, parameters)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/cursors.py", line 159, in execute
-    result = self._query(query)
-             ^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/cursors.py", line 330, in _query
-    conn.query(q)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 582, in query
-    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
-                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 847, in _read_query_result
-    result.read()
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 1245, in read
-    first_packet = self.connection._read_packet()
-                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 803, in _read_packet
-    packet.raise_for_error()
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/protocol.py", line 219, in raise_for_error
-    err.raise_mysql_exception(self._data)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/err.py", line 154, in raise_mysql_exception
-    raise errorclass(errno, errval, sqlstate=sqlstate)
-pymysql.err.IntegrityError: (1452, 'Cannot add or update a child row: a foreign key constraint fails (`BelleVitesse`.`mcp_api_tokens`, CONSTRAINT `mcp_api_tokens_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`))')
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/routes/admin/mcp_tokens.py", line 203, in generate_token
-    db.session.commit()
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/scoping.py", line 597, in commit
-    return self._proxied.commit()
-           ^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2030, in commit
-    trans.commit(_to_root=True)
-  File "<string>", line 2, in commit
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
-    ret_value = fn(self, *arg, **kw)
-                ^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1311, in commit
-    self._prepare_impl()
-  File "<string>", line 2, in _prepare_impl
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
-    ret_value = fn(self, *arg, **kw)
-                ^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1286, in _prepare_impl
-    self.session.flush()
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4331, in flush
-    self._flush(objects)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4466, in _flush
-    with util.safe_reraise():
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 121, in __exit__
-    raise exc_value.with_traceback(exc_tb)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 4427, in _flush
-    flush_context.execute()
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
-    rec.execute(self)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
-    util.preloaded.orm_persistence.save_obj(
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
-    _emit_insert_statements(
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py", line 1233, in _emit_insert_statements
-    result = connection.execute(
-             ^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
-    return meth(
-           ^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 527, in _execute_on_connection
-    return connection._execute_clauseelement(
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1641, in _execute_clauseelement
-    ret = self._execute_context(
-          ^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
-    return self._exec_single_context(
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
-    self._handle_dbapi_exception(
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2363, in _handle_dbapi_exception
-    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-    self.dialect.do_execute(
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
-    cursor.execute(statement, parameters)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/cursors.py", line 159, in execute
-    result = self._query(query)
-             ^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/cursors.py", line 330, in _query
-    conn.query(q)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 582, in query
-    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
-                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 847, in _read_query_result
-    result.read()
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 1245, in read
-    first_packet = self.connection._read_packet()
-                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 803, in _read_packet
-    packet.raise_for_error()
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/protocol.py", line 219, in raise_for_error
-    err.raise_mysql_exception(self._data)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/err.py", line 154, in raise_mysql_exception
-    raise errorclass(errno, errval, sqlstate=sqlstate)
-sqlalchemy.exc.IntegrityError: (pymysql.err.IntegrityError) (1452, 'Cannot add or update a child row: a foreign key constraint fails (`BelleVitesse`.`mcp_api_tokens`, CONSTRAINT `mcp_api_tokens_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`))')
-[SQL: INSERT INTO mcp_api_tokens (user_id, name, token_prefix, token_hash, is_active, created_at, last_used_at, expires_at, scope) VALUES (%(user_id)s, %(name)s, %(token_prefix)s, %(token_hash)s, %(is_active)s, %(created_at)s, %(last_used_at)s, %(expires_at)s, %(scope)s)]
-[parameters: {'user_id': 902, 'name': 'Com ReadOnly', 'token_prefix': 'bv_mcp_74325...', 'token_hash': '70bea857008af5e19836579491ad4469f86bd92492ebbcef6a1456b5e17cdef8', 'is_active': 1, 'created_at': datetime.datetime(2026, 9, 12, 19, 35, 1, 386149, tzinfo=datetime.timezone.utc), 'last_used_at': None, 'expires_at': None, 'scope': 'read_only'}]
-(Background on this error at: https://sqlalche.me/e/20/gkpj)
-
-During handling of the above exception, another exception occurred:
-
-Traceback (most recent call last):
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-    self.dialect.do_execute(
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
-    cursor.execute(statement, parameters)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/cursors.py", line 159, in execute
-    result = self._query(query)
-             ^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/cursors.py", line 330, in _query
-    conn.query(q)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 582, in query
-    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
-                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 847, in _read_query_result
-    result.read()
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 1245, in read
-    first_packet = self.connection._read_packet()
-                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 803, in _read_packet
-    packet.raise_for_error()
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/protocol.py", line 219, in raise_for_error
-    err.raise_mysql_exception(self._data)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/err.py", line 154, in raise_mysql_exception
-    raise errorclass(errno, errval, sqlstate=sqlstate)
-pymysql.err.OperationalError: (1060, "Duplicate column name 'scope'")
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/tests/test_mcp_server.py", line 667, in test_mcp_connector_routes_access_and_scoping
-    res_com_ro = client.post(
-                 ^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/werkzeug/test.py", line 1167, in post
-    return self.open(*args, **kw)
-           ^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/flask/testing.py", line 235, in open
-    response = super().open(
-               ^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/werkzeug/test.py", line 1116, in open
-    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
-                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/werkzeug/test.py", line 988, in run_wsgi_app
-    rv = run_wsgi_app(self.application, environ, buffered=buffered)
-         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/werkzeug/test.py", line 1264, in run_wsgi_app
-    app_rv = app(environ, start_response)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/flask/app.py", line 1536, in __call__
-    return self.wsgi_app(environ, start_response)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/werkzeug/middleware/proxy_fix.py", line 183, in __call__
-    return self.app(environ, start_response)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/flask/app.py", line 1514, in wsgi_app
-    response = self.handle_exception(e)
-               ^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/flask/app.py", line 1511, in wsgi_app
-    response = self.full_dispatch_request()
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/flask/app.py", line 919, in full_dispatch_request
-    rv = self.handle_user_exception(e)
-         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/flask/app.py", line 917, in full_dispatch_request
-    rv = self.dispatch_request()
-         ^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/flask/app.py", line 902, in dispatch_request
-    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/utils/decorators.py", line 66, in decorated_function
-    return f(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/routes/admin/mcp_tokens.py", line 214, in generate_token
-    raise retry_err
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/routes/admin/mcp_tokens.py", line 208, in generate_token
-    db.session.execute(text("ALTER TABLE mcp_api_tokens ADD COLUMN scope VARCHAR(20) NOT NULL DEFAULT 'read_only'"))
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/scoping.py", line 765, in execute
-    return self._proxied.execute(
-           ^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
-    return self._execute_internal(
-           ^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2258, in _execute_internal
-    result = conn.execute(
-             ^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1419, in execute
-    return meth(
-           ^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 527, in _execute_on_connection
-    return connection._execute_clauseelement(
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1641, in _execute_clauseelement
-    ret = self._execute_context(
-          ^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1846, in _execute_context
-    return self._exec_single_context(
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
-    self._handle_dbapi_exception(
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2363, in _handle_dbapi_exception
-    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
-    self.dialect.do_execute(
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
-    cursor.execute(statement, parameters)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/cursors.py", line 159, in execute
-    result = self._query(query)
-             ^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/cursors.py", line 330, in _query
-    conn.query(q)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 582, in query
-    self._affected_rows = self._read_query_result(unbuffered=unbuffered)
-                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 847, in _read_query_result
-    result.read()
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 1245, in read
-    first_packet = self.connection._read_packet()
-                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/connections.py", line 803, in _read_packet
-    packet.raise_for_error()
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/protocol.py", line 219, in raise_for_error
-    err.raise_mysql_exception(self._data)
-  File "/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/pymysql/err.py", line 154, in raise_mysql_exception
-    raise errorclass(errno, errval, sqlstate=sqlstate)
-sqlalchemy.exc.OperationalError: (pymysql.err.OperationalError) (1060, "Duplicate column name 'scope'")
-[SQL: ALTER TABLE mcp_api_tokens ADD COLUMN scope VARCHAR(20) NOT NULL DEFAULT 'read_only']
-(Background on this error at: https://sqlalche.me/e/20/e3q8)
-
+OK

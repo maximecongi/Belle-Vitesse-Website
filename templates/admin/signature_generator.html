@@ -4,7 +4,7 @@
 {% block page_title %}Générateur de signature mail{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-signature-generator.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-signature-generator.css') }}?v={{ asset_version('css/admin/admin-signature-generator.css') }}">
 {% endblock %}
 
 {% block content %}

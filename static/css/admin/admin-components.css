@@ -1382,6 +1382,8 @@ input[type="checkbox"]:checked {
     color: #64748b;
     max-width: 420px;
     margin: 0 auto;
+}
+
 /* ── Cartes KPI Transversales Standardisées (Belle Vitesse Design System) ── */
 .admin-kpi-card {
     background: #ffffff;

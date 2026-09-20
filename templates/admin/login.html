@@ -5,8 +5,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Admin - Belle Vitesse</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.css') }}">
+    {% if config.FLASK_ENV == 'production' %}
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/styles.bundle.css') }}?v={{ asset_version('css/styles.bundle.css') }}">
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/admin/admin.bundle.css') }}?v={{ asset_version('css/admin/admin.bundle.css') }}">
+    {% else %}
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/styles.css') }}?v={{ asset_version('css/styles.css') }}">
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/admin/admin.css') }}?v={{ asset_version('css/admin/admin.css') }}">
+    {% endif %}
     <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
 </head>
 

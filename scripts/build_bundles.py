@@ -53,6 +53,55 @@ ADMIN_CSS_FILES: List[str] = [
 
 
 
+def validate_css_syntax(rel_path: str, content: str) -> None:
+    """Valide l'équilibrage des accolades, parenthèses et commentaires d'un fichier CSS."""
+    open_comments = content.count('/*')
+    close_comments = content.count('*/')
+    if open_comments != close_comments:
+        raise ValueError(f"Déséquilibre de commentaires /* */ dans {rel_path} ({open_comments} ouverts, {close_comments} fermés)")
+
+    i = 0
+    n = len(content)
+    in_comment = False
+    in_str = None
+    brace_diff = 0
+    line_num = 1
+
+    while i < n:
+        c = content[i]
+        if c == '\n':
+            line_num += 1
+
+        if in_comment:
+            if c == '*' and i + 1 < n and content[i + 1] == '/':
+                in_comment = False
+                i += 2
+                continue
+        elif in_str:
+            if c == '\\':
+                i += 2
+                continue
+            elif c == in_str:
+                in_str = None
+        else:
+            if c == '/' and i + 1 < n and content[i + 1] == '*':
+                in_comment = True
+                i += 2
+                continue
+            elif c in ('"', "'"):
+                in_str = c
+            elif c == '{':
+                brace_diff += 1
+            elif c == '}':
+                brace_diff -= 1
+                if brace_diff < 0:
+                    raise ValueError(f"Accolade fermante '}}' en trop à la ligne {line_num} dans {rel_path}")
+        i += 1
+
+    if brace_diff != 0:
+        raise ValueError(f"Accolade(s) ouvrante(s) '{{' non fermée(s) (diff={brace_diff}) dans {rel_path}")
+
+
 def find_static_dir(base_dir: Optional[str] = None) -> Path:
     """Localise le dossier static du projet."""
     if base_dir:
@@ -85,20 +134,25 @@ def build_public_bundle(static_dir: Path) -> Path:
     for rel_path in PUBLIC_CSS_FILES:
         src = static_dir / rel_path
         if src.exists():
-            content_chunks.append(f"/* ── {rel_path} ── */\n" + src.read_text(encoding="utf-8"))
+            txt = src.read_text(encoding="utf-8")
+            validate_css_syntax(rel_path, txt)
+            content_chunks.append(f"/* ── {rel_path} ── */\n" + txt)
         else:
             print(f"⚠️  Fichier public manquant : {src}", file=sys.stderr)
 
     # Concaténer styles.css en filtrant les @import
     styles_src = static_dir / "css" / "styles.css"
     if styles_src.exists():
+        styles_raw = styles_src.read_text(encoding="utf-8")
+        validate_css_syntax("css/styles.css", styles_raw)
         filtered_lines = [
-            line for line in styles_src.read_text(encoding="utf-8").splitlines()
+            line for line in styles_raw.splitlines()
             if not line.strip().startswith("@import")
         ]
         content_chunks.append("/* ── css/styles.css (règles globales) ── */\n" + "\n".join(filtered_lines))
 
     bundle_content = "\n\n".join(content_chunks) + "\n"
+    validate_css_syntax("css/styles.bundle.css", bundle_content)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(bundle_content, encoding="utf-8")
     return target
@@ -112,11 +166,14 @@ def build_admin_bundle(static_dir: Path) -> Path:
     for rel_path in ADMIN_CSS_FILES:
         src = static_dir / rel_path
         if src.exists():
-            content_chunks.append(f"/* ── {rel_path} ── */\n" + src.read_text(encoding="utf-8"))
+            txt = src.read_text(encoding="utf-8")
+            validate_css_syntax(rel_path, txt)
+            content_chunks.append(f"/* ── {rel_path} ── */\n" + txt)
         else:
             print(f"⚠️  Fichier admin manquant : {src}", file=sys.stderr)
 
     bundle_content = "\n\n".join(content_chunks) + "\n"
+    validate_css_syntax("css/admin/admin.bundle.css", bundle_content)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(bundle_content, encoding="utf-8")
     return target
