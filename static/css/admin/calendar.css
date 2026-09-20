@@ -101,11 +101,9 @@
 .fc-direction-ltr .fc-daygrid-event.fc-event-end,
 .fc-direction-rtl .fc-daygrid-event.fc-event-start {
     cursor: pointer !important;
-    border-radius: 6px !important;
     margin: 2px 3px !important;
     padding: 3px 6px !important;
     font-family: var(--font-primary) !important;
-    font-size: 0.74rem !important;
     line-height: 1.35 !important;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease !important;
@@ -304,52 +302,62 @@
     margin-bottom: 1.5rem !important;
     padding: 1.25rem !important;
 }
+
 .cal-info-header {
     display: flex;
     align-items: flex-start;
     gap: 1rem;
 }
+
 .cal-info-icon {
     font-size: 1.75rem;
     line-height: 1;
 }
+
 .cal-info-title {
     font-weight: 600;
     margin-bottom: 0.35rem;
     font-size: 1rem;
 }
+
 .cal-info-desc {
     color: var(--grey-2);
     font-size: 0.85rem;
     line-height: 1.5;
 }
+
 .cal-info-details {
     margin-top: 0.75rem;
 }
+
 .cal-info-summary {
     cursor: pointer;
     font-size: 0.8rem;
     color: var(--grey-2);
     font-weight: 500;
 }
+
 .cal-info-details-content {
     margin-top: 0.5rem;
     font-size: 0.8rem;
     color: var(--grey-2);
     line-height: 1.6;
 }
+
 .cal-url-wrapper {
     position: relative;
     flex: 1;
     min-width: 0;
     max-width: 200px;
 }
+
 .cal-url-input-styled {
     font-size: 0.7rem !important;
     padding: 0.35rem 2.5rem 0.35rem 0.5rem !important;
     width: 100% !important;
     font-family: monospace !important;
 }
+
 .cal-copy-btn-styled {
     position: absolute;
     right: 0.25rem;
@@ -361,25 +369,29 @@
     padding: 0.25rem;
     font-size: 1rem;
 }
+
 .cal-qr-trigger {
     cursor: pointer;
     display: flex;
     align-items: center;
 }
+
 .cal-qr-img {
     width: 24px;
     height: 24px;
 }
+
 .qr-modal-overlay {
     display: none;
     position: fixed;
     inset: 0;
     z-index: 9999;
-    background: rgba(0,0,0,.6);
+    background: rgba(0, 0, 0, .6);
     backdrop-filter: blur(4px);
     justify-content: center;
     align-items: center;
 }
+
 .qr-modal-content {
     background: #fff;
     border-radius: 16px;
@@ -387,14 +399,16 @@
     text-align: center;
     max-width: 360px;
     width: 90%;
-    box-shadow: 0 20px 60px rgba(0,0,0,.3);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .3);
 }
+
 .qr-modal-title {
     font-weight: 700;
     font-size: 1.15rem;
     margin: 0 0 1.25rem;
     color: #1a1a2e;
 }
+
 .qr-modal-code {
     display: inline-block;
     padding: 12px;
@@ -402,12 +416,14 @@
     border-radius: 8px;
     border: 1px solid #e5e7eb;
 }
+
 .qr-modal-desc {
     margin-top: 1.5rem;
     text-align: center;
     font-size: .85rem;
     color: #9ca3af;
 }
+
 .qr-modal-close {
     margin-top: 1rem;
     width: 100%;
