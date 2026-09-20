@@ -10,7 +10,23 @@
 {% block content %}
 <!-- Calendar -->
 <div class="admin-card">
-    <div class="admin-card-title">Calendrier</div>
+    <div class="admin-card-title admin-card-header u-flex-wrap u-gap-2">
+        <span>Calendrier</span>
+        <div class="u-flex u-gap-1 u-flex-wrap" id="calendarFilters">
+            <button type="button"
+                class="admin-btn admin-btn-sm admin-btn-primary filter-pill calendar-filter-btn active"
+                data-filter="all">Tous</button>
+            <button type="button"
+                class="admin-btn admin-btn-sm admin-btn-quaternary filter-pill calendar-filter-btn"
+                data-filter="checkout"><i data-lucide="truck"></i> Départs</button>
+            <button type="button"
+                class="admin-btn admin-btn-sm admin-btn-quaternary filter-pill calendar-filter-btn"
+                data-filter="project"><i data-lucide="clapperboard"></i> Tournages</button>
+            <button type="button"
+                class="admin-btn admin-btn-sm admin-btn-quaternary filter-pill calendar-filter-btn"
+                data-filter="checkin"><i data-lucide="package-check"></i> Retours</button>
+        </div>
+    </div>
     <div id='calendar'></div>
 </div>
 

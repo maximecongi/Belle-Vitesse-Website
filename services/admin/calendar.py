@@ -2,6 +2,7 @@ from datetime import timedelta
 import logging
 
 from flask import url_for
+from sqlalchemy.orm import joinedload
 
 from models import Project
 
@@ -10,34 +11,52 @@ logger = logging.getLogger(__name__)
 
 def get_calendar_events():
     """
-    Récupère tous les projets et les formate comme événements FullCalendar.
+    Récupère tous les projets et les formate comme événements FullCalendar
+    en respectant le Design System de Belle Vitesse.
     """
-    records = Project.query.filter(Project.deleted_at == None).all()
+    records = (
+        Project.query.options(joinedload(Project.production))
+        .filter(Project.deleted_at == None)
+        .all()
+    )
     events = []
-    colors = [
-        "#618b4acc", "#5299d3cc", "#f59e0bcc", "#e05c5ccc", "#8b5cf6cc",
-        "#06b6d4cc", "#f97316cc", "#ec4899cc", "#14b8a6cc", "#a855f7cc",
-    ]
 
-    for i, r in enumerate(records):
+    for r in records:
         name = r.name or "Sans nom"
-        color = colors[i % len(colors)]
+        production_name = r.production.name if r.production else ""
 
+        # Check-out (Départ)
         if r.departure_date:
             events.append({
-                "title": f"🚚 Départ : {name}",
+                "id": f"checkout-{r.id}",
+                "title": f"Départ : {name}",
                 "start": r.departure_date.isoformat(),
-                "color": color,
+                "classNames": ["fc-event--checkout"],
                 "url": url_for("admin_projects_list", q=r.project_id),
+                "extendedProps": {
+                    "type": "checkout",
+                    "typeLabel": "Départ",
+                    "projectName": name,
+                    "projectId": r.project_id,
+                    "production": production_name,
+                },
             })
 
-        # Date de tournage 
+        # Date de tournage (Projet)
         if r.shoot_start_date:
             event = {
-                "title": f"🎬 {name}",
+                "id": f"project-{r.id}",
+                "title": f"Tournage : {name}",
                 "start": r.shoot_start_date.isoformat(),
-                "color": color,
+                "classNames": ["fc-event--project"],
                 "url": url_for("admin_projects_list", q=r.project_id),
+                "extendedProps": {
+                    "type": "project",
+                    "typeLabel": "Tournage",
+                    "projectName": name,
+                    "projectId": r.project_id,
+                    "production": production_name,
+                },
             }
             if r.shoot_end_date:
                 # FullCalendar end date is exclusive for all-day events
@@ -45,12 +64,22 @@ def get_calendar_events():
                 event["end"] = (r.shoot_end_date + timedelta(days=1)).isoformat()
             events.append(event)
 
+        # Check-in (Retour)
         if r.return_date:
             events.append({
-                "title": f"📦 Retour : {name}",
+                "id": f"checkin-{r.id}",
+                "title": f"Retour : {name}",
                 "start": r.return_date.isoformat(),
-                "color": color,
+                "classNames": ["fc-event--checkin"],
                 "url": url_for("admin_projects_list", q=r.project_id),
+                "extendedProps": {
+                    "type": "checkin",
+                    "typeLabel": "Retour",
+                    "projectName": name,
+                    "projectId": r.project_id,
+                    "production": production_name,
+                },
             })
 
     return events
+

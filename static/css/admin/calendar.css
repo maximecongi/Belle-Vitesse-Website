@@ -1,48 +1,305 @@
-.fc-event {
-    cursor: pointer;
+/* ── FullCalendar Design System Overrides (Belle Vitesse) ──────── */
+
+.fc {
+    font-family: var(--font-primary) !important;
+    --fc-border-color: var(--white-3, #e9ecef);
+    --fc-today-bg-color: rgba(255, 200, 69, 0.07);
+    --fc-neutral-text-color: var(--grey-2);
 }
 
-.fc-daygrid-event {
-    font-size: 0.85rem;
-    padding: 2px 4px;
+/* Toolbar */
+.fc .fc-toolbar {
+    margin-bottom: 1.25rem !important;
+    gap: 0.75rem;
+    flex-wrap: wrap;
 }
 
-.fc-toolbar-title {
-    font-size: 1.25rem !important;
+.fc .fc-toolbar-title {
+    font-size: 1.15rem !important;
+    font-weight: 600 !important;
+    color: var(--grey-1);
+    text-transform: capitalize;
 }
 
-.fc-button-primary {
-    background-color: var(--grey-1) !important;
-    border-color: var(--grey-1) !important;
+/* Toolbar Buttons */
+.fc .fc-button-primary {
+    background-color: #ffffff !important;
+    color: var(--grey-1) !important;
+    border: 1px solid var(--white-3) !important;
+    border-radius: 6px !important;
+    font-family: var(--font-primary) !important;
+    font-size: 0.8rem !important;
+    font-weight: 500 !important;
+    padding: 0.4rem 0.8rem !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease !important;
 }
 
-.fc-button-primary:hover {
-    background-color: var(--admin-accent) !important;
-    border-color: var(--admin-accent) !important;
+.fc .fc-button-primary:hover {
+    background-color: var(--admin-bg) !important;
+    border-color: #cbd5e1 !important;
     color: var(--grey-1) !important;
 }
 
-.fc-button-active {
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
     background-color: var(--admin-accent) !important;
     border-color: var(--admin-accent) !important;
     color: var(--grey-1) !important;
+    font-weight: 600 !important;
+}
+
+.fc .fc-button-primary:disabled {
+    background-color: var(--admin-bg) !important;
+    border-color: var(--white-3) !important;
+    color: var(--grey-2) !important;
+    opacity: 0.55;
+    cursor: not-allowed !important;
 }
 
 .fc .fc-button:focus,
 .fc .fc-button-primary:focus,
 .fc .fc-button-primary:not(:disabled).fc-button-active:focus,
 .fc .fc-button-primary:not(:disabled):active:focus {
-    box-shadow: none !important;
+    box-shadow: 0 0 0 2px rgba(255, 200, 69, 0.4) !important;
 }
 
-.fc .fc-button-primary:disabled {
-    background-color: var(--grey-2) !important;
-    color: var(--white-1) !important;
-    cursor: default;
-    border-color: var(--grey-2) !important;
+/* En-têtes de colonnes (Jours de semaine) */
+.fc .fc-col-header-cell {
+    background-color: var(--admin-bg);
+    padding: 0.6rem 0;
+    border-color: var(--white-3) !important;
+}
+
+.fc .fc-col-header-cell-cushion {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--grey-2);
+    text-decoration: none !important;
+}
+
+/* Cellules de grille et numéros de jours */
+.fc .fc-daygrid-day-number {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--grey-2);
+    padding: 4px 8px;
+    text-decoration: none !important;
+}
+
+.fc .fc-day-today .fc-daygrid-day-number {
+    color: var(--grey-1);
+    font-weight: 700;
+}
+
+/* ── Refonte Visuelle des Événements (.fc-event) ──────────────── */
+
+.fc-event,
+.fc-daygrid-event,
+.fc-direction-ltr .fc-daygrid-event.fc-event-end,
+.fc-direction-rtl .fc-daygrid-event.fc-event-start {
+    cursor: pointer !important;
+    border-radius: 6px !important;
+    margin: 2px 3px !important;
+    padding: 3px 6px !important;
+    font-family: var(--font-primary) !important;
+    font-size: 0.74rem !important;
+    line-height: 1.35 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease !important;
+    text-decoration: none !important;
+}
+
+.fc-event:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
+    filter: brightness(0.97);
+}
+
+/* Check-out (Départs) — Vert Émeraude */
+.fc-event--checkout,
+.fc-event.fc-event--checkout {
+    background-color: var(--entity-checkout-bg) !important;
+    border: 1px solid var(--entity-checkout-border) !important;
+    border-left: 3.5px solid var(--entity-checkout) !important;
+    color: var(--entity-checkout-text) !important;
+}
+
+.fc-event--checkout:hover {
+    border-color: var(--entity-checkout) !important;
+    box-shadow: 0 2px 8px var(--entity-checkout-glow, rgba(16, 185, 129, 0.25)) !important;
+}
+
+/* Tournages / Projets — Ambre Chaud */
+.fc-event--project,
+.fc-event.fc-event--project {
+    background-color: var(--entity-project-bg) !important;
+    border: 1px solid var(--entity-project-border) !important;
+    border-left: 3.5px solid var(--entity-project) !important;
+    color: var(--entity-project-text) !important;
+}
+
+.fc-event--project:hover {
+    border-color: var(--entity-project) !important;
+    box-shadow: 0 2px 8px var(--entity-project-glow, rgba(245, 158, 11, 0.25)) !important;
+}
+
+/* Check-in (Retours) — Bleu Océan */
+.fc-event--checkin,
+.fc-event.fc-event--checkin {
+    background-color: var(--entity-checkin-bg) !important;
+    border: 1px solid var(--entity-checkin-border) !important;
+    border-left: 3.5px solid var(--entity-checkin) !important;
+    color: var(--entity-checkin-text) !important;
+}
+
+.fc-event--checkin:hover {
+    border-color: var(--entity-checkin) !important;
+    box-shadow: 0 2px 8px var(--entity-checkin-glow, rgba(59, 130, 246, 0.25)) !important;
+}
+
+/* Masquage des puces FullCalendar par défaut & neutralisation du texte blanc */
+.fc-daygrid-event-dot {
+    display: none !important;
+}
+
+.fc-event,
+.fc-event-main,
+.fc-daygrid-event .fc-event-main,
+.fc-h-event .fc-event-main {
+    color: inherit !important;
+}
+
+/* ── Structure Interne de l'Événement (eventContent) ──────────── */
+
+.fc-event-custom {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+/* Couleurs Check-out (Départs) — Vert Émeraude */
+.fc-event-custom--checkout,
+.fc-event--checkout .fc-event-custom,
+.fc-event-custom--checkout .fc-event-custom__title,
+.fc-event-custom--checkout .fc-event-custom__badge,
+.fc-event--checkout .fc-event-custom__title,
+.fc-event--checkout .fc-event-custom__badge {
+    color: var(--entity-checkout-text) !important;
+}
+
+.fc-event-custom--checkout .fc-event-custom__icon,
+.fc-event--checkout .fc-event-custom__icon {
+    color: var(--entity-checkout) !important;
+    stroke: var(--entity-checkout) !important;
+}
+
+.fc-event-custom--checkout .fc-event-custom__prod,
+.fc-event--checkout .fc-event-custom__prod {
+    color: var(--entity-checkout-text) !important;
+    opacity: 0.75;
+}
+
+/* Couleurs Tournages / Projets — Ambre Chaud */
+.fc-event-custom--project,
+.fc-event--project .fc-event-custom,
+.fc-event-custom--project .fc-event-custom__title,
+.fc-event-custom--project .fc-event-custom__badge,
+.fc-event--project .fc-event-custom__title,
+.fc-event--project .fc-event-custom__badge {
+    color: var(--entity-project-text) !important;
+}
+
+.fc-event-custom--project .fc-event-custom__icon,
+.fc-event--project .fc-event-custom__icon {
+    color: var(--entity-project) !important;
+    stroke: var(--entity-project) !important;
+}
+
+.fc-event-custom--project .fc-event-custom__prod,
+.fc-event--project .fc-event-custom__prod {
+    color: var(--entity-project-text) !important;
+    opacity: 0.75;
+}
+
+/* Couleurs Check-in (Retours) — Bleu Océan */
+.fc-event-custom--checkin,
+.fc-event--checkin .fc-event-custom,
+.fc-event-custom--checkin .fc-event-custom__title,
+.fc-event-custom--checkin .fc-event-custom__badge,
+.fc-event--checkin .fc-event-custom__title,
+.fc-event--checkin .fc-event-custom__badge {
+    color: var(--entity-checkin-text) !important;
+}
+
+.fc-event-custom--checkin .fc-event-custom__icon,
+.fc-event--checkin .fc-event-custom__icon {
+    color: var(--entity-checkin) !important;
+    stroke: var(--entity-checkin) !important;
+}
+
+.fc-event-custom--checkin .fc-event-custom__prod,
+.fc-event--checkin .fc-event-custom__prod {
+    color: var(--entity-checkin-text) !important;
+    opacity: 0.75;
+}
+
+.fc-event-custom__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+}
+
+.fc-event-custom__icon {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    vertical-align: -1px;
+}
+
+.fc-event-custom__title {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+}
+
+.fc-event-custom__prod {
+    font-size: 0.65rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 110px;
+    flex-shrink: 1;
+}
+
+.fc-event-custom__prod::before {
+    content: "•";
+    margin-right: 4px;
+    opacity: 0.6;
+}
+
+/* ── Filtrage Interactif du Calendrier ────────────────────────── */
+
+#calendar[data-filter="checkout"] .fc-event:not(.fc-event--checkout),
+#calendar[data-filter="project"] .fc-event:not(.fc-event--project),
+#calendar[data-filter="checkin"] .fc-event:not(.fc-event--checkin) {
+    display: none !important;
 }
 
 /* ICS Subscription Page Styles */
+
 .cal-info-card {
     margin-bottom: 1.5rem !important;
     padding: 1.25rem !important;
