@@ -212,6 +212,7 @@ test_update_project_report_unauthorized_user (test_project_reports.ProjectReport
 test_update_project_report_within_3h (test_project_reports.ProjectReportsTest.test_update_project_report_within_3h) ... ok
 test_project_crud_tracking (test_projects.ProjectsTest.test_project_crud_tracking) ... ok
 test_project_notes_edit (test_projects.ProjectsTest.test_project_notes_edit) ... ok
+test_soft_deleted_checks_and_waivers_on_projects (test_projects.ProjectsTest.test_soft_deleted_checks_and_waivers_on_projects) ... ok
 test_about_us_page (test_routes.RouteSmokeTest.test_about_us_page)
 Test that the about us page is accessible. ... ok
 test_admin_login_page (test_routes.RouteSmokeTest.test_admin_login_page)
@@ -256,6 +257,6 @@ test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.W
 Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
 ----------------------------------------------------------------------
-Ran 160 tests in 13.276s
+Ran 161 tests in 14.371s
 
 OK

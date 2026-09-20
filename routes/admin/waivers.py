@@ -85,8 +85,10 @@ def init_waivers_routes(app):
     @app.route("/admin/waivers/pilots/<string:waiver_id>/preview", endpoint='admin_pilot_waiver_preview')
     @require_roles('administrator', 'manager')
     def admin_pilot_waiver_preview(waiver_id):
-        waiver = PilotWaiver.query.filter_by(
-            waiver_id=waiver_id).first_or_404()
+        waiver = PilotWaiver.query.filter(
+            PilotWaiver.waiver_id == waiver_id,
+            PilotWaiver.deleted_at.is_(None)
+        ).first_or_404()
         return render_template("pdf/pilot_waiver_pdf.html", waiver=waiver)
 
     @app.route("/admin/waivers/pilots/<string:waiver_id>/delete", methods=["POST"], endpoint='admin_pilot_waiver_delete')
@@ -166,8 +168,10 @@ def init_waivers_routes(app):
     @app.route("/admin/waivers/productions/<string:waiver_id>/preview", endpoint='admin_production_waiver_preview')
     @require_roles('administrator', 'manager')
     def admin_production_waiver_preview(waiver_id):
-        waiver = ProductionWaiver.query.filter_by(
-            waiver_id=waiver_id).first_or_404()
+        waiver = ProductionWaiver.query.filter(
+            ProductionWaiver.waiver_id == waiver_id,
+            ProductionWaiver.deleted_at.is_(None)
+        ).first_or_404()
         return render_template("pdf/production_waiver_pdf.html", waiver=waiver)
 
     @app.route("/admin/waivers/productions/<string:waiver_id>/delete", methods=["POST"], endpoint='admin_production_waiver_delete')

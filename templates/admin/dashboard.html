@@ -45,7 +45,7 @@
         {# Status Logic for Checkout #}
         {% set p_status = namespace(is_green=true) %}
         {% for v in project.vehicles %}
-        {% if v.checkout_status != 'signed' %}
+        {% if v.checkout_status_id != 'signed' %}
         {% set p_status.is_green = false %}
         {% endif %}
         {% endfor %}
@@ -75,7 +75,7 @@
                         <div>
                             <div class="u-flex u-flex-wrap u-gap-1">
                                 {% for vehicle in project.vehicles %}
-                                {% if vehicle.checkout_status %}
+                                {% if vehicle.checkout_id %}
                                 <a class="today-row-vehicle-link"
                                     href="{{ url_for('admin_checkout_detail', record_id=vehicle.checkout_id) }}">
                                     <span class="u-text-medium">{{ vehicle.fields.name }}</span>
@@ -149,7 +149,7 @@
         {# Status Logic for Checkin #}
         {% set p_status_in = namespace(is_green=true) %}
         {% for v in project.vehicles %}
-        {% if v.checkin_status != 'signed' %}
+        {% if v.checkin_status_id != 'signed' %}
         {% set p_status_in.is_green = false %}
         {% endif %}
         {% endfor %}
@@ -180,7 +180,7 @@
                         <div>
                             <div class="u-flex u-flex-wrap u-gap-1">
                                 {% for vehicle in project.vehicles %}
-                                {% if vehicle.checkin_status %}
+                                {% if vehicle.checkin_id %}
                                 <a class="today-row-vehicle-link"
                                     href="{{ url_for('admin_checkin_detail', record_id=vehicle.checkin_id) }}">
                                     <span class="u-text-medium">{{ vehicle.fields.name }}</span>

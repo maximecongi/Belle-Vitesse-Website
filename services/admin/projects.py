@@ -43,11 +43,18 @@ def _format_vehicle_state(project, vehicle_id, vehicle_map):
     """
     from services.admin.status_mapping import get_inspection_key, format_inspection_status
 
-    # Recherche des enregistrements correspondants dans les collections pré-chargées du projet
-    c_out = next(
-        (c for c in project.checkout_vehicles if c.vehicle_id == vehicle_id), None)
-    c_in = next(
-        (c for c in project.checkin_vehicles if c.vehicle_id == vehicle_id), None)
+    # Recherche des enregistrements correspondants non supprimés dans les collections pré-chargées du projet
+    active_c_outs = [
+        c for c in (project.checkout_vehicles or [])
+        if str(c.vehicle_id) == str(vehicle_id) and getattr(c, "deleted_at", None) is None
+    ]
+    c_out = max(active_c_outs, key=lambda x: x.id) if active_c_outs else None
+
+    active_c_ins = [
+        c for c in (project.checkin_vehicles or [])
+        if str(c.vehicle_id) == str(vehicle_id) and getattr(c, "deleted_at", None) is None
+    ]
+    c_in = max(active_c_ins, key=lambda x: x.id) if active_c_ins else None
 
     v_data = vehicle_map.get(vehicle_id, {})
     brand = v_data.get("brand") or ""

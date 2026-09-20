@@ -176,5 +176,137 @@ class ProjectsTest(unittest.TestCase):
         self.assertEqual(resp_form.status_code, 200)
         self.assertIn("Consigne finale via POST form".encode("utf-8"), resp_form.data)
 
+    def test_soft_deleted_checks_and_waivers_on_projects(self):
+        from models import CheckoutVehicle, CheckinVehicle, PilotWaiver, ProductionWaiver
+        from services.admin.inspections import delete_inspection_unified
+        from services.admin.waivers import delete_pilot_waiver, delete_production_waiver
+        from services.admin.project_reports import get_project_detail_context
+        from services.admin.checkins import create_checkin
+
+        with self.app.app_context():
+            user = User(firstname="Bob", lastname="Inspector", mail="bob@example.com", role="administrator")
+            prod = Production(name="Soft Delete Prod")
+            db.session.add_all([user, prod])
+            db.session.flush()
+
+            proj = Project(
+                name="Project SoftDelete Test",
+                production_id=prod.id,
+                vehicles_to_check="1, 2"
+            )
+            db.session.add(proj)
+            db.session.commit()
+
+            # 1. Initially, checks are "to_check"
+            projects_list = list_projects()
+            p_data = next(p for p in projects_list if p["id"] == proj.id)
+            v1_state = next(v for v in p_data["vehicles"] if v["id"] == "1")
+            self.assertEqual(v1_state["checkout_id"], "")
+            self.assertEqual(v1_state["checkout_status_id"], "to_check")
+            self.assertEqual(v1_state["checkout_status"], "À réaliser")
+            self.assertEqual(v1_state["checkin_id"], "")
+            self.assertEqual(v1_state["checkin_status_id"], "to_check")
+
+            # 2. Add signed checkout and checkin
+            checkout = CheckoutVehicle(
+                project_id=proj.id,
+                vehicle_id="1",
+                status="signed",
+                controller_id=user.id,
+                inspection_date=date.today(),
+            )
+            db.session.add(checkout)
+            db.session.commit()
+
+            checkin = CheckinVehicle(
+                project_id=proj.id,
+                vehicle_id="1",
+                status="completed",
+                controller_id=user.id,
+                inspection_date=date.today(),
+            )
+            db.session.add(checkin)
+            db.session.commit()
+
+            # Verify active checks are formatted
+            projects_list = list_projects()
+            p_data = next(p for p in projects_list if p["id"] == proj.id)
+            v1_state = next(v for v in p_data["vehicles"] if v["id"] == "1")
+            self.assertEqual(v1_state["checkout_id"], checkout.id)
+            self.assertEqual(v1_state["checkout_status_id"], "signed")
+            self.assertEqual(v1_state["checkin_id"], checkin.id)
+            self.assertEqual(v1_state["checkin_status_id"], "completed")
+
+            # 3. Soft-delete checkout
+            success = delete_inspection_unified("checkout", checkout.id)
+            self.assertTrue(success)
+
+            # Re-fetch projects and check that checkout reverted to "to_check"
+            projects_list = list_projects()
+            p_data = next(p for p in projects_list if p["id"] == proj.id)
+            v1_state = next(v for v in p_data["vehicles"] if v["id"] == "1")
+            self.assertEqual(v1_state["checkout_id"], "")
+            self.assertEqual(v1_state["checkout_status_id"], "to_check")
+            self.assertEqual(v1_state["checkout_status"], "À réaliser")
+            # Checkin is still active
+            self.assertEqual(v1_state["checkin_id"], checkin.id)
+
+            # Verify in project detail context as well
+            detail_ctx = get_project_detail_context(proj.id)
+            v1_detail = next(v for v in detail_ctx["vehicles"] if v["id"] == "1")
+            self.assertEqual(v1_detail["checkout_id"], "")
+            self.assertEqual(v1_detail["checkout_status_id"], "to_check")
+
+            # 4. Attempting to create a new checkin when checkout is deleted must be rejected
+            with self.assertRaises(ValueError) as cm:
+                create_checkin({
+                    "project_id": str(proj.id),
+                    "vehicle_id": "1",
+                    "controller_id": str(user.id)
+                })
+            self.assertIn("Le départ de ce véhicule n'a pas été validé", str(cm.exception))
+
+            # 5. Soft-delete checkin
+            success_in = delete_inspection_unified("checkin", checkin.id)
+            self.assertTrue(success_in)
+
+            projects_list = list_projects()
+            p_data = next(p for p in projects_list if p["id"] == proj.id)
+            v1_state = next(v for v in p_data["vehicles"] if v["id"] == "1")
+            self.assertEqual(v1_state["checkin_id"], "")
+            self.assertEqual(v1_state["checkin_status_id"], "to_check")
+            self.assertEqual(v1_state["checkin_status"], "À réaliser")
+
+            # 6. Test Pilot & Production Waivers soft delete
+            pw = PilotWaiver(project_id=proj.id, status="to_sign", pilot_first_name="Jean", pilot_last_name="Pilote")
+            prw = ProductionWaiver(project_id=proj.id, status="to_sign", production_name="Prod Alpha")
+            db.session.add_all([pw, prw])
+            db.session.commit()
+
+            projects_list = list_projects()
+            p_data = next(p for p in projects_list if p["id"] == proj.id)
+            self.assertEqual(p_data["pilot_waiver"]["id"], pw.id)
+            self.assertEqual(p_data["production_waiver"]["id"], prw.id)
+
+            # Soft-delete waivers
+            del_pw_ok, _ = delete_pilot_waiver(pw.waiver_id)
+            del_prw_ok, _ = delete_production_waiver(prw.waiver_id)
+            self.assertTrue(del_pw_ok)
+            self.assertTrue(del_prw_ok)
+
+            projects_list = list_projects()
+            p_data = next(p for p in projects_list if p["id"] == proj.id)
+            self.assertIsNone(p_data["pilot_waiver"]["id"])
+            self.assertEqual(p_data["pilot_waiver"]["waiver_num"], "")
+            self.assertIsNone(p_data["production_waiver"]["id"])
+            self.assertEqual(p_data["production_waiver"]["waiver_num"], "")
+
+            # Check project model properties
+            db.session.refresh(proj)
+            self.assertEqual(len(proj.active_checkout_vehicles), 0)
+            self.assertEqual(len(proj.active_checkin_vehicles), 0)
+            self.assertIsNone(proj.active_pilot_waiver)
+            self.assertIsNone(proj.active_production_waiver)
+
 if __name__ == "__main__":
     unittest.main()

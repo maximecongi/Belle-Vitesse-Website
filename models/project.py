@@ -129,6 +129,26 @@ class Project(db.Model):
     last_action_by = db.relationship(
         "User", foreign_keys=[last_action_by_id], lazy=True)
 
+    @property
+    def active_checkout_vehicles(self):
+        """Retourne la liste des départs non supprimés associés à ce projet."""
+        return [c for c in (self.checkout_vehicles or []) if getattr(c, "deleted_at", None) is None]
+
+    @property
+    def active_checkin_vehicles(self):
+        """Retourne la liste des retours non supprimés associés à ce projet."""
+        return [c for c in (self.checkin_vehicles or []) if getattr(c, "deleted_at", None) is None]
+
+    @property
+    def active_pilot_waiver(self):
+        """Retourne la décharge pilote si elle existe et n'a pas été supprimée."""
+        return self.pilot_waiver if (self.pilot_waiver and getattr(self.pilot_waiver, "deleted_at", None) is None) else None
+
+    @property
+    def active_production_waiver(self):
+        """Retourne la décharge production si elle existe et n'a pas été supprimée."""
+        return self.production_waiver if (self.production_waiver and getattr(self.production_waiver, "deleted_at", None) is None) else None
+
     def to_dict(self):
         """Convertit l'objet en dictionnaire pour les réponses API."""
         return {

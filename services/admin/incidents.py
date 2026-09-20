@@ -989,7 +989,7 @@ def get_incident_form_context():
             p_veh_ids.extend([v.strip() for v in p.vehicles_to_check.split(",") if v.strip()])
         if hasattr(p, "checkout_vehicles") and p.checkout_vehicles:
             for cv in p.checkout_vehicles:
-                if cv.vehicle_id and str(cv.vehicle_id) not in p_veh_ids:
+                if getattr(cv, "deleted_at", None) is None and cv.vehicle_id and str(cv.vehicle_id) not in p_veh_ids:
                     p_veh_ids.append(str(cv.vehicle_id))
 
         p_vehicles = []

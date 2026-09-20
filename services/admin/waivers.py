@@ -434,9 +434,9 @@ def create_pilot_waiver(project_id):
             "name", f"ID {v['id']}") for v in all_vehicles}
         waiver.vehicles = ", ".join(
             [vehicle_map.get(vid, vid) for vid in veh_ids])
-    elif p.checkout_vehicles:
+    elif p.active_checkout_vehicles:
         waiver.vehicles = ", ".join(
-            [cv.vehicle_name for cv in p.checkout_vehicles])
+            [cv.vehicle_name for cv in p.active_checkout_vehicles if cv.vehicle_name])
 
     waiver.status = "to_send"
     waiver.generated_at = datetime.utcnow()
@@ -576,9 +576,9 @@ def generate_pilot_waiver(waiver_id):
         waiver.vehicles = ", ".join(
             [vehicle_map.get(vid, vid) for vid in veh_ids])
     else:
-        # Fallback sur les véhicules déjà contrôlés (checkout)
+        # Fallback sur les véhicules déjà contrôlés (checkout) non supprimés
         waiver.vehicles = ", ".join(
-            [cv.vehicle_name for cv in p.checkout_vehicles])
+            [cv.vehicle_name for cv in p.active_checkout_vehicles if cv.vehicle_name])
 
     waiver.status = "to_send"
     waiver.generated_at = datetime.utcnow()

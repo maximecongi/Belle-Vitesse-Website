@@ -55,8 +55,17 @@ def create_checkin(form, files=None):
 
     # Sécurité : s'assurer que le dernier départ (checkout) est bien signé
     if record.vehicle_id:
-        latest_checkout = CheckoutVehicle.query.filter_by(
-            vehicle_id=record.vehicle_id).order_by(CheckoutVehicle.id.desc()).first()
+        query = CheckoutVehicle.query.filter(
+            CheckoutVehicle.vehicle_id == record.vehicle_id,
+            CheckoutVehicle.deleted_at.is_(None)
+        )
+        if record.project_id:
+            latest_checkout = query.filter(
+                CheckoutVehicle.project_id == record.project_id
+            ).order_by(CheckoutVehicle.id.desc()).first() or query.order_by(CheckoutVehicle.id.desc()).first()
+        else:
+            latest_checkout = query.order_by(CheckoutVehicle.id.desc()).first()
+
         if not latest_checkout or latest_checkout.status not in ["signed", "validated"]:
             raise ValueError("Le départ de ce véhicule n'a pas été validé par une signature.")
 
