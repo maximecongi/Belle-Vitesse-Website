@@ -19,6 +19,7 @@ from services.admin.incidents import (
     update_incident_status,
     delete_incident,
     get_incident_form_context,
+    get_incident_filter_options,
     generate_incident_pdf,
     sign_incident_bv,
     sign_incident_prod,
@@ -47,7 +48,7 @@ def init_incidents_routes(app):
                 project_id=project_filter,
                 query=query_filter,
             )
-            form_context = get_incident_form_context()
+            form_context = get_incident_filter_options()
 
             return render_template(
                 "admin/incidents_list.html",

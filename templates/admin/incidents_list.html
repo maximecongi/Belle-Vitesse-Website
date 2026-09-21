@@ -96,13 +96,12 @@ incident_signature_badge %}
         <table class="admin-table">
             <thead>
                 <tr>
-                    <th>N° Incident</th>
-                    <th>Date</th>
-                    <th>Titre & Circonstances</th>
-                    <th>Projet / Production</th>
+                    <th>Nom de l'incident</th>
                     <th>Véhicule / Équipement</th>
-                    <th>Gravité</th>
+                    <th>Projet / Production</th>
+                    <th>Date</th>
                     <th>Statut</th>
+                    <th>Gravité</th>
                     <th>Impact Tournage</th>
                     <th>Signatures</th>
                     <th>Actions</th>
@@ -111,19 +110,8 @@ incident_signature_badge %}
             <tbody id="incidents-tbody">
                 {% for incident in incidents %}
                 <tr class="searchable-row" data-search="{{ incident.search_text }}">
-                    <td class="u-text-semibold">
-                        <span class="checkout-doc-id u-mt-0">{{ incident.incident_number }}</span>
-                    </td>
-                    <td class="u-text-nowrap">{{ incident.date }}</td>
                     <td>
                         <span class="u-nowrap u-text-semibold">{{ incident.title }}</span><br>
-                    </td>
-                    <td>
-                        {% if incident.project_id %}
-                        <span class="u-font-semibold">{{ incident.project_name }}</span>
-                        {% else %}
-                        <span class="u-text-muted">—</span>
-                        {% endif %}
                     </td>
                     <td>
                         {% if incident.vehicle_name != '—' %}
@@ -135,10 +123,18 @@ incident_signature_badge %}
                         {% endif %}
                     </td>
                     <td>
-                        {{ incident_severity_badge(incident.severity, incident.severity_label) }}
+                        {% if incident.project_id %}
+                        <span class="u-font-semibold">{{ incident.project_name }}</span>
+                        {% else %}
+                        <span class="u-text-muted">—</span>
+                        {% endif %}
                     </td>
+                    <td class="u-text-nowrap">{{ incident.date }}</td>
                     <td>
                         {{ incident_status_badge(incident.status, incident.status_label) }}
+                    </td>
+                    <td>
+                        {{ incident_severity_badge(incident.severity, incident.severity_label) }}
                     </td>
                     <td>
                         {{ incident_impact_badge(incident.shooting_impact, incident.shooting_impact_label) }}

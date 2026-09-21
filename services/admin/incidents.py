@@ -11,6 +11,7 @@ from flask import current_app, render_template
 from werkzeug.utils import secure_filename
 
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import joinedload, selectinload, defer
 from models import db, Project, User, Vehicle, Head
 from models.incident import Incident, IncidentToken, IncidentSignedDocument
 from models.db import _utcnow
@@ -129,19 +130,38 @@ def list_incidents(status=None, severity=None, category=None, project_id=None, q
     """
     base_query = Incident.query.filter(Incident.deleted_at.is_(None))
 
-    # Calcul des statistiques globales sur l'ensemble des incidents actifs
-    all_active = base_query.all()
+    # Calcul des statistiques globales sur l'ensemble des incidents actifs via agrégation SQL directe
+    active_statuses = ("signale", "en_expertise", "en_reparation", "assurance")
+    stats_row = (
+        db.session.query(
+            db.func.count(Incident.id),
+            db.func.sum(db.case((Incident.status.in_(active_statuses), 1), else_=0)),
+            db.func.sum(db.case((db.and_(Incident.severity == "critique", Incident.status != "cloture"), 1), else_=0)),
+            db.func.sum(db.case((Incident.status == "en_reparation", 1), else_=0)),
+            db.func.sum(db.case((Incident.status.in_(active_statuses), Incident.estimated_cost), else_=0)),
+            db.func.sum(db.func.coalesce(Incident.actual_cost, 0)),
+        )
+        .filter(Incident.deleted_at.is_(None))
+        .first()
+    )
+
     stats = {
-        "total": len(all_active),
-        "in_progress": sum(1 for i in all_active if i.is_active),
-        "critical": sum(1 for i in all_active if i.is_critical and i.status != "cloture"),
-        "reparation": sum(1 for i in all_active if i.status == "en_reparation"),
-        "total_estimated_cost": sum(float(i.estimated_cost or 0) for i in all_active if i.is_active),
-        "total_actual_cost": sum(float(i.actual_cost or 0) for i in all_active),
+        "total": stats_row[0] or 0,
+        "in_progress": int(stats_row[1] or 0),
+        "critical": int(stats_row[2] or 0),
+        "reparation": int(stats_row[3] or 0),
+        "total_estimated_cost": float(stats_row[4] or 0),
+        "total_actual_cost": float(stats_row[5] or 0),
     }
 
-    # Application des filtres
-    q = base_query
+    # Application des filtres avec eager loading pour éliminer les requêtes N+1
+    q = (
+        base_query
+        .options(
+            joinedload(Incident.reporter),
+            joinedload(Incident.project),
+        )
+    )
     if status:
         q = q.filter(Incident.status == status)
     if severity:
@@ -177,15 +197,23 @@ def list_incidents(status=None, severity=None, category=None, project_id=None, q
 
     records = q.all()
 
+    # Préchargement des véhicules en une seule passe pour éviter les requêtes N+1
+    veh_ids = {str(inc.vehicle_id) for inc in records if inc.vehicle_id}
+    veh_map = {}
+    if veh_ids:
+        try:
+            for v in Vehicle.query.all():
+                vid = str(v.id)
+                fields = v.fields or {}
+                name = fields.get("name") or fields.get("Nom") or getattr(v, "name", vid)
+                veh_map[vid] = name
+        except Exception:
+            pass
+
     # Enrichissement pour l'affichage
     formatted_incidents = []
     for inc in records:
-        vehicle_obj = None
-        if inc.vehicle_id:
-            vehicle_obj = db.session.get(Vehicle, inc.vehicle_id)
-
-        v_name = (vehicle_obj.fields.get("name") or inc.vehicle_id) if (vehicle_obj and vehicle_obj.fields) else (inc.vehicle_id or "—")
-
+        v_name = veh_map.get(str(inc.vehicle_id), inc.vehicle_id or "—") if inc.vehicle_id else "—"
         reporter_name = f"{inc.reporter.firstname} {inc.reporter.lastname}" if inc.reporter else "—"
         project_name = inc.project.name if inc.project else "—"
 
@@ -256,6 +284,21 @@ def list_incidents(status=None, severity=None, category=None, project_id=None, q
     return {
         "incidents": formatted_incidents,
         "stats": stats,
+    }
+
+
+def get_incident_filter_options():
+    """
+    Retourne les options légères pour les sélecteurs de filtres de la liste d'incidents
+    (évite les requêtes SQL lourdes sur les projets, véhicules, inspections et utilisateurs).
+    """
+    return {
+        "categories": [(k, v) for k, v in INCIDENT_CATEGORY_MAP.items()],
+        "severities": [(k, v) for k, v in INCIDENT_SEVERITY_MAP.items()],
+        "statuses": [(k, v) for k, v in INCIDENT_STATUS_MAP.items()],
+        "status_icons": INCIDENT_STATUS_ICONS,
+        "status_badge_vals": INCIDENT_STATUS_BADGE_VALS,
+        "shooting_impacts": [(k, v) for k, v in INCIDENT_IMPACT_MAP.items()],
     }
 
 
@@ -937,9 +980,14 @@ def get_incident_form_context():
     """
     Données de référence pour les sélecteurs de formulaires (projets, véhicules, utilisateurs, constantes).
     """
-    # Projets actifs
+    # Projets actifs avec eager loading pour éliminer les N+1 sur production et inspections
     projects = (
-        Project.query.filter(Project.deleted_at.is_(None))
+        Project.query.options(
+            joinedload(Project.production),
+            selectinload(Project.checkout_vehicles),
+            selectinload(Project.checkin_vehicles),
+        )
+        .filter(Project.deleted_at.is_(None))
         .order_by(Project.departure_date.desc())
         .all()
     )
