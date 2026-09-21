@@ -64,7 +64,8 @@
                     <span class="form-label u-m-0 u-font-semibold">Statut :</span>
                     <div class="badge-pill badge-select-pill badge-select-pill-lg" data-val="{{ current_meta.val }}"
                         id="incidentStatusPill" title="Cliquer pour changer le statut">
-                        <span class="status-label" id="incidentStatusLabel"><i data-lucide="{{ current_meta.icon }}"></i> {{ ns_status.label }}</span>
+                        <span class="status-label" id="incidentStatusLabel"><i
+                                data-lucide="{{ current_meta.icon }}"></i> {{ ns_status.label }}</span>
                         <select name="status" id="incidentStatusSelect" onchange="updateIncidentStatusPill(this)">
                             {% for key, label in context.statuses %}
                             {% set opt_meta = status_meta.get(key, {'val': 'neutral', 'icon': 'megaphone'}) %}
@@ -81,7 +82,8 @@
                     <span class="form-label u-m-0 u-font-semibold">Gravité :</span>
                     <div class="badge-pill badge-select-pill badge-select-pill-lg" data-val="{{ current_sev_meta.val }}"
                         id="incidentSeverityPill" title="Cliquer pour changer le niveau de gravité">
-                        <span class="status-label" id="incidentSeverityLabel"><i data-lucide="{{ current_sev_meta.icon }}"></i> {{
+                        <span class="status-label" id="incidentSeverityLabel"><i
+                                data-lucide="{{ current_sev_meta.icon }}"></i> {{
                             ns_sev.label }}</span>
                         <select name="severity" id="incidentSeveritySelect" onchange="updateIncidentSeverityPill(this)">
                             {% for key, label in context.severities %}
@@ -99,7 +101,8 @@
                     <span class="form-label u-m-0 u-font-semibold">Impact :</span>
                     <div class="badge-pill badge-select-pill badge-select-pill-lg" data-val="{{ current_imp_meta.val }}"
                         id="incidentImpactPill" title="Cliquer pour changer l'impact sur le tournage">
-                        <span class="status-label" id="incidentImpactLabel"><i data-lucide="{{ current_imp_meta.icon }}"></i> {{
+                        <span class="status-label" id="incidentImpactLabel"><i
+                                data-lucide="{{ current_imp_meta.icon }}"></i> {{
                             ns_imp.label }}</span>
                         <select name="shooting_impact" id="incidentImpactSelect"
                             onchange="updateIncidentImpactPill(this)">
@@ -172,14 +175,16 @@
                     {% for eq in incident.equipments %}
                     <span class="admin-multiselect-tag admin-multiselect-tag--sealed {{ eq.tag_class }}">
                         <span class="admin-multiselect-tag-icon">{{ eq.icon }}</span>
-                        <span class="admin-multiselect-tag-label">{{ eq.name }}{% if eq.unique_id %} ({{ eq.unique_id }}){% endif %}</span>
+                        <span class="admin-multiselect-tag-label">{{ eq.name }}{% if eq.unique_id %} ({{ eq.unique_id
+                            }}){% endif %}</span>
                     </span>
                     {% endfor %}
                     {% else %}
                     {% if incident.vehicle %}
                     <span class="admin-multiselect-tag admin-multiselect-tag--sealed admin-multiselect-tag--vehicle">
                         <span class="admin-multiselect-tag-icon"><i data-lucide="car"></i></span>
-                        <span class="admin-multiselect-tag-label">{{ incident.vehicle.name }}{% if incident.vehicle.unique_id %} ({{ incident.vehicle.unique_id }}){% endif %}</span>
+                        <span class="admin-multiselect-tag-label">{{ incident.vehicle.name }}{% if
+                            incident.vehicle.unique_id %} ({{ incident.vehicle.unique_id }}){% endif %}</span>
                     </span>
                     {% elif incident.vehicle_name and incident.vehicle_name != '—' %}
                     <span class="admin-multiselect-tag admin-multiselect-tag--sealed admin-multiselect-tag--vehicle">
@@ -191,7 +196,8 @@
                     {% if incident.equipment_name %}
                     {% for eq in incident.equipment_name.split(',') %}
                     {% if eq.strip() %}
-                    <span class="admin-multiselect-tag admin-multiselect-tag--sealed {{ equipment_tag_class(eq.strip()) }}">
+                    <span
+                        class="admin-multiselect-tag admin-multiselect-tag--sealed {{ equipment_tag_class(eq.strip()) }}">
                         <span class="admin-multiselect-tag-icon">{{ equipment_icon(eq.strip()) }}</span>
                         <span class="admin-multiselect-tag-label">{{ eq.strip() }}</span>
                     </span>
@@ -200,7 +206,8 @@
                     {% endif %}
                     {% endif %}
 
-                    {% if not incident.equipments and not incident.vehicle and (not incident.vehicle_name or incident.vehicle_name == '—') and not incident.equipment_name %}
+                    {% if not incident.equipments and not incident.vehicle and (not incident.vehicle_name or
+                    incident.vehicle_name == '—') and not incident.equipment_name %}
                     <span class="u-text-muted u-text-sm">Aucun équipement spécifique mentionné</span>
                     {% endif %}
                 </div>
@@ -752,7 +759,7 @@
             const vName = cb.dataset.name || cb.value;
             tagsHtml += `
                 <span class="admin-multiselect-tag admin-multiselect-tag--vehicle">
-                    <span class="admin-multiselect-tag-icon"><i data-lucide="car"></i></span>
+                    <span class="admin-multiselect-tag-icon">🏎️</span>
                     <span class="admin-multiselect-tag-label" title="${escapeHtml(vName)}">${escapeHtml(vName)}</span>
                     <button type="button" class="admin-multiselect-tag-remove" data-action="remove-vehicle" data-id="${escapeHtml(vId)}" title="Désélectionner" aria-label="Désélectionner">&times;</button>
                 </span>
@@ -763,7 +770,7 @@
             const hName = cb.value;
             tagsHtml += `
                 <span class="admin-multiselect-tag admin-multiselect-tag--head">
-                    <span class="admin-multiselect-tag-icon"><i data-lucide="bot"></i></span>
+                    <span class="admin-multiselect-tag-icon">🤖</span>
                     <span class="admin-multiselect-tag-label" title="${escapeHtml(hName)}">${escapeHtml(hName)}</span>
                     <button type="button" class="admin-multiselect-tag-remove" data-action="remove-head" data-name="${escapeHtml(hName)}" title="Désélectionner" aria-label="Désélectionner">&times;</button>
                 </span>
@@ -773,7 +780,7 @@
         customEquipmentItems.forEach(item => {
             tagsHtml += `
                 <span class="admin-multiselect-tag admin-multiselect-tag--custom">
-                    <span class="admin-multiselect-tag-icon"><i data-lucide="package"></i></span>
+                    <span class="admin-multiselect-tag-icon">📦</span>
                     <span class="admin-multiselect-tag-label" title="${escapeHtml(item)}">${escapeHtml(item)}</span>
                     <button type="button" class="admin-multiselect-tag-remove" data-action="remove-custom-item" data-value="${escapeHtml(item)}" title="Désélectionner" aria-label="Désélectionner">&times;</button>
                 </span>
