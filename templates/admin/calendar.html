@@ -49,7 +49,7 @@
                     <th>Rôle</th>
                     <th>Statut</th>
                     <th>Dernier accès</th>
-                    <th>Lien / QR Code</th>
+                    <th>QR Code</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -84,15 +84,6 @@
                     <td class="u-text-center">
                         {% if data %}
                         <div class="u-flex u-align-center u-gap-2 u-justify-center">
-                            <!-- URL avec copier -->
-                            <div class="cal-url-wrapper">
-                                <input type="text" value="{{ data.feed_url }}" readonly
-                                    class="form-input cal-url-input-styled" id="calUrl-{{ u.id }}">
-                                <button type="button" class="cal-copy-btn-styled" onclick="copyCalUrl({{ u.id }})"
-                                    title="Copier l'URL">
-                                    📋
-                                </button>
-                            </div>
                             <!-- QR Code Trigger (Same as contacts_list) -->
                             <span class="qr-trigger cal-qr-trigger"
                                 data-name="Calendrier : {{ u.firstname }} {{ u.lastname }}"
