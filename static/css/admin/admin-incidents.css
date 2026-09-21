@@ -36,6 +36,14 @@
     border-radius: 6px;
 }
 
+.incident-signer-box .lucide {
+    stroke-width: 2.2;
+    height: 12px;
+    width: 12px;
+    vertical-align: -2px;
+    margin-right: 0.5rem;
+}
+
 .incident-signer-title {
     letter-spacing: 0.5px;
     color: var(--admin-text-dark, #1e293b);

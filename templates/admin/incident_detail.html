@@ -49,7 +49,8 @@ incident_signature_badge, equipment_icon, empty_state %}
     <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
         <span class="checkout-doc-id u-m-0 project-hub-id">{{ incident.incident_number }}</span>
         {% if incident.is_sealed %}
-        <span class="badge-pill badge-pill-xs" data-val="neutral"><i data-lucide="lock"></i> Scellé contradictoire</span>
+        <span class="badge-pill badge-pill-xs" data-val="neutral"><i data-lucide="lock"></i> Scellé
+            contradictoire</span>
         {% endif %}
     </div>
 </div>
@@ -65,7 +66,8 @@ incident_signature_badge, equipment_icon, empty_state %}
                 <div class="badge-pill badge-select-pill badge-select-pill-lg incident-status-pill-action"
                     data-val="{{ cur_meta.val }}" id="incidentHeaderStatusPill"
                     title="Cliquer pour changer rapidement le statut">
-                    <span class="status-label" id="incidentHeaderStatusLabel"><i data-lucide="{{ cur_meta.icon }}"></i> {{ cur_meta.label }}</span>
+                    <span class="status-label" id="incidentHeaderStatusLabel"><i data-lucide="{{ cur_meta.icon }}"></i>
+                        {{ cur_meta.label }}</span>
                     <select id="incidentHeaderStatusSelect" onchange="quickStatusSelect(this.value)">
                         {% for sk, sv in status_meta.items() %}
                         <option value="{{ sk }}" data-val="{{ sv.val }}" {% if current_status==sk %}selected{% endif %}>
@@ -98,7 +100,8 @@ incident_signature_badge, equipment_icon, empty_state %}
                 <div
                     class="incident-workflow-step {% if is_active %}is-active{% elif is_completed %}is-completed{% else %}is-upcoming{% endif %}">
                     <div class="incident-step-icon">
-                        {% if current_status == 'assurance' and st.key == 'en_reparation' %}<i data-lucide="clipboard-list"></i>{% else %}<i data-lucide="{{ st.icon }}"></i>{% endif %}
+                        {% if current_status == 'assurance' and st.key == 'en_reparation' %}<i
+                            data-lucide="clipboard-list"></i>{% else %}<i data-lucide="{{ st.icon }}"></i>{% endif %}
                     </div>
                     <div class="incident-step-title">
                         {% if current_status == 'assurance' and st.key == 'en_reparation' %}
@@ -147,9 +150,10 @@ incident_signature_badge, equipment_icon, empty_state %}
                     <div class="u-text-sm u-font-bold">{{ incident.bv_signer_name }}</div>
                     <div class="u-text-xs u-text-muted">{{ incident.bv_signer_role or 'Responsable Technique Belle
                         Vitesse' }}</div>
-                    <div class="u-text-xs u-text-muted u-mt-1">🗓️ {{ incident.bv_signed_at }}</div>
+                    <div class="u-text-xs u-text-muted u-mt-1"><i data-lucide="calendar"></i> {{ incident.bv_signed_at
+                        }}</div>
                     {% if incident.bv_signer_ip %}
-                    <div class="u-text-xs u-text-muted">🌐 IP : {{ incident.bv_signer_ip }}</div>
+                    <div class="u-text-xs u-text-muted"><i data-lucide="globe"></i> {{ incident.bv_signer_ip }}</div>
                     {% endif %}
 
                     {% if incident.bv_signature_data %}
@@ -185,9 +189,10 @@ incident_signature_badge, equipment_icon, empty_state %}
                     <div class="u-text-sm u-font-bold">{{ incident.prod_signer_name }}</div>
                     <div class="u-text-xs u-text-muted">{{ incident.prod_signer_role or 'Représentant Production' }}
                     </div>
-                    <div class="u-text-xs u-text-muted u-mt-1">🗓️ {{ incident.prod_signed_at }}</div>
+                    <div class="u-text-xs u-text-muted u-mt-1"><i data-lucide="calendar"></i> {{ incident.prod_signed_at
+                        }}</div>
                     {% if incident.prod_signer_ip %}
-                    <div class="u-text-xs u-text-muted">🌐 IP : {{ incident.prod_signer_ip }}</div>
+                    <div class="u-text-xs u-text-muted"><i data-lucide="globe"></i> {{ incident.prod_signer_ip }}</div>
                     {% endif %}
 
                     {% if incident.prod_signature_data %}
