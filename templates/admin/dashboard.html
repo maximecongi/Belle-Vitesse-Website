@@ -1,5 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
+{% from "admin/macros.html" import empty_state %}
+
 {% block title %}Tableau de bord{% endblock %}
 {% block page_title %}Tableau de bord{% endblock %}
 
@@ -268,7 +270,7 @@
 </div>
 {% else %}
 <div class="admin-card dashboard-no-events">
-    <p class="u-text-muted u-text-sm">Aucun départ ou retour prévu aujourd'hui.</p>
+    {{ empty_state('calendar-check', "Aucun départ ou retour prévu aujourd'hui") }}
 </div>
 {% endif %}
 {% endblock %}

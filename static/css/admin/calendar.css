@@ -3,7 +3,7 @@
 .fc {
     font-family: var(--font-primary) !important;
     --fc-border-color: var(--white-3, #e9ecef);
-    --fc-today-bg-color: rgba(255, 200, 69, 0.07);
+    --fc-today-bg-color: rgba(255, 200, 69, 0.2);
     --fc-neutral-text-color: var(--grey-2);
 }
 
