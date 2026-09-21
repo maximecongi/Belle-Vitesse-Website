@@ -12,10 +12,14 @@
             <div class="cal-info-title">Comment ça marche ?</div>
             <div class="cal-info-desc">
                 {% if is_super_admin %}
-                Générez et gérez les liens calendrier pour chaque membre de l'équipe. Ces liens permettent de s'abonner au calendrier
-                des projets Belle Vitesse depuis <strong>iPhone</strong>, <strong>Android</strong>, <strong>Outlook</strong> ou <strong>Google Calendar</strong>.
+                Générez et gérez les liens calendrier pour chaque membre de l'équipe. Ces liens permettent de s'abonner
+                au calendrier
+                des projets Belle Vitesse depuis <strong>iPhone</strong>, <strong>Android</strong>,
+                <strong>Outlook</strong> ou <strong>Google Calendar</strong>.
                 {% else %}
-                Générez et configurez votre lien calendrier personnel pour synchroniser les projets Belle Vitesse directement dans votre <strong>iPhone</strong>, <strong>Android</strong>, <strong>Outlook</strong> ou <strong>Google Calendar</strong>.
+                Générez et configurez votre lien calendrier personnel pour synchroniser les projets Belle Vitesse
+                directement dans votre <strong>iPhone</strong>, <strong>Android</strong>, <strong>Outlook</strong> ou
+                <strong>Google Calendar</strong>.
                 {% endif %}
                 Le calendrier se met à jour automatiquement lorsqu'un projet est créé ou modifié.
             </div>
@@ -24,8 +28,10 @@
                     Instructions d'abonnement
                 </summary>
                 <div class="cal-info-details-content">
-                    <strong>iPhone :</strong> Réglages → Calendrier → Comptes → Ajouter → Autre → Calendrier par abonnement → Coller l'URL<br>
-                    <strong>Android / Google Calendar :</strong> Depuis un PC → Google Calendar → "+" → "À partir d'une URL" → Coller l'URL<br>
+                    <strong>iPhone :</strong> Calendrier → Nouv. calendrier → Ajouter un calendrier avec abonnement →
+                    Coller l'URL<br>
+                    <strong>Android / Google Calendar :</strong> Depuis un PC → Google Calendar → "+" → "À partir d'une
+                    URL" → Coller l'URL<br>
                     <strong>Outlook :</strong> Ajouter un calendrier → Depuis Internet → Coller l'URL<br>
                     <em>Ou scannez le QR code directement depuis le téléphone.</em>
                 </div>
@@ -56,7 +62,8 @@
                         <div class="u-text-xs u-text-muted">{{ u.mail }}</div>
                     </td>
                     <td>
-                        <span class="badge-pill" data-val="{{ u.role_display if u.role_display is defined else (u.role or 'Technicien') }}">
+                        <span class="badge-pill"
+                            data-val="{{ u.role_display if u.role_display is defined else (u.role or 'Technicien') }}">
                             {{ u.role_display if u.role_display is defined else (u.role or 'Technicien') }}
                         </span>
                     </td>
@@ -80,21 +87,19 @@
                             <!-- URL avec copier -->
                             <div class="cal-url-wrapper">
                                 <input type="text" value="{{ data.feed_url }}" readonly
-                                    class="form-input cal-url-input-styled"
-                                    id="calUrl-{{ u.id }}">
-                                <button type="button" class="cal-copy-btn-styled"
-                                    onclick="copyCalUrl({{ u.id }})"
+                                    class="form-input cal-url-input-styled" id="calUrl-{{ u.id }}">
+                                <button type="button" class="cal-copy-btn-styled" onclick="copyCalUrl({{ u.id }})"
                                     title="Copier l'URL">
                                     📋
                                 </button>
                             </div>
                             <!-- QR Code Trigger (Same as contacts_list) -->
-                            <span class="qr-trigger cal-qr-trigger" 
-                                  data-name="Calendrier : {{ u.firstname }} {{ u.lastname }}" 
-                                  data-url="{{ data.feed_url }}"
-                                  title="Afficher le QR code">
-                                <img src="{{ url_for('static', filename='imgs/icons/qr_code.svg') }}" 
-                                     alt="QR Code" class="cal-qr-img">
+                            <span class="qr-trigger cal-qr-trigger"
+                                data-name="Calendrier : {{ u.firstname }} {{ u.lastname }}"
+                                data-url="{{ data.feed_url }}" data-webcal="{{ data.webcal_url }}"
+                                title="Afficher le QR code pour s'abonner">
+                                <img src="{{ url_for('static', filename='imgs/icons/qr_code.svg') }}" alt="QR Code"
+                                    class="cal-qr-img">
                             </span>
                         </div>
                         {% else %}
@@ -105,8 +110,7 @@
                         <div class="u-flex u-gap-1 u-flex-wrap">
                             {% if data %}
                             <!-- Envoyer par email -->
-                            <form action="{{ url_for('admin_calendar_send_email') }}" method="POST"
-                                class="u-d-inline">
+                            <form action="{{ url_for('admin_calendar_send_email') }}" method="POST" class="u-d-inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="user_id" value="{{ u.id }}">
                                 <button type="submit" class="admin-btn admin-btn-secondary admin-btn-sm"
@@ -115,8 +119,7 @@
                                 </button>
                             </form>
                             <!-- Régénérer -->
-                            <form action="{{ url_for('admin_calendar_regenerate') }}" method="POST"
-                                class="u-d-inline">
+                            <form action="{{ url_for('admin_calendar_regenerate') }}" method="POST" class="u-d-inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="user_id" value="{{ u.id }}">
                                 <button type="submit" class="admin-btn admin-btn-secondary admin-btn-sm"
@@ -125,8 +128,7 @@
                                 </button>
                             </form>
                             <!-- Révoquer -->
-                            <form action="{{ url_for('admin_calendar_revoke') }}" method="POST"
-                                class="u-d-inline">
+                            <form action="{{ url_for('admin_calendar_revoke') }}" method="POST" class="u-d-inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="user_id" value="{{ u.id }}">
                                 <button type="submit" class="admin-btn admin-btn-danger admin-btn-sm"
@@ -136,8 +138,7 @@
                             </form>
                             {% else %}
                             <!-- Générer -->
-                            <form action="{{ url_for('admin_calendar_generate') }}" method="POST"
-                                class="u-d-inline">
+                            <form action="{{ url_for('admin_calendar_generate') }}" method="POST" class="u-d-inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="user_id" value="{{ u.id }}">
                                 <button type="submit" class="admin-btn admin-btn-primary admin-btn-sm">
@@ -161,16 +162,23 @@
     </div>
 </div>
 
-<!-- QR Modal (Same as contacts_list) -->
+<!-- QR Modal -->
 <div id="qrModal" class="qr-modal-overlay">
     <div class="qr-modal-content">
-        <p id="qrModalName" class="qr-modal-title"></p>
+        <h3 id="qrModalName" class="qr-modal-title"></h3>
         <div id="qrModalCode" class="qr-modal-code">
         </div>
         <p class="qr-modal-desc">
-            Scannez ce QR code avec votre téléphone pour vous abonner au calendrier.
+            Scannez ce QR code avec l'appareil photo de votre smartphone pour vous abonner instantanément.
         </p>
-        <button type="button" class="admin-btn admin-btn-secondary qr-modal-close" onclick="document.getElementById('qrModal').style.display='none'">Fermer</button>
+        <div class="u-flex u-flex-column u-gap-2 u-mt-3">
+            <a id="qrModalWebcalBtn" href="#" class="admin-btn admin-btn-primary cal-modal-action-btn">
+                S'abonner sur cet appareil
+            </a>
+            <button type="button" id="qrModalCloseBtn" class="admin-btn admin-btn-secondary qr-modal-close">
+                Fermer
+            </button>
+        </div>
     </div>
 </div>
 
@@ -195,17 +203,28 @@
         const modal = document.getElementById('qrModal');
         const modalName = document.getElementById('qrModalName');
         const modalCode = document.getElementById('qrModalCode');
+        const webcalBtn = document.getElementById('qrModalWebcalBtn');
+        const closeBtn = document.getElementById('qrModalCloseBtn');
 
         function renderQR(container, text, size) {
-            var qr = qrcode(0, 'L');
+            var qr = qrcode(0, 'M');
             qr.addData(text);
             qr.make();
-            var cellSize = Math.floor(size / qr.getModuleCount());
+            var cellSize = Math.max(2, Math.floor(size / qr.getModuleCount()));
             var img = document.createElement('img');
-            img.src = qr.createDataURL(cellSize, 0);
-            img.style.width = size + 'px';
-            img.style.height = size + 'px';
+            img.src = qr.createDataURL(cellSize, 2);
+            img.className = 'cal-qr-code-img';
             container.appendChild(img);
+        }
+
+        function closeModal() {
+            if (modal) {
+                modal.classList.remove('is-active');
+            }
+        }
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closeModal);
         }
 
         document.querySelectorAll('.qr-trigger').forEach(trigger => {
@@ -215,20 +234,26 @@
 
                 modalName.textContent = trigger.dataset.name;
                 modalCode.innerHTML = '';
-                renderQR(modalCode, trigger.dataset.url, 260);
-                modal.style.display = 'flex';
+                const targetUrl = trigger.dataset.webcal || trigger.dataset.url;
+                renderQR(modalCode, targetUrl, 240);
+                if (webcalBtn) {
+                    webcalBtn.href = targetUrl;
+                }
+                modal.classList.add('is-active');
             });
         });
 
-        modal.addEventListener('click', function (e) {
-            if (e.target === modal) {
-                modal.style.display = 'none';
-            }
-        });
+        if (modal) {
+            modal.addEventListener('click', function (e) {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+        }
 
         document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape' && modal.style.display === 'flex') {
-                modal.style.display = 'none';
+            if (e.key === 'Escape' && modal && modal.classList.contains('is-active')) {
+                closeModal();
             }
         });
     });

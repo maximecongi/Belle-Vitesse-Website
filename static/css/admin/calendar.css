@@ -397,6 +397,10 @@
     align-items: center;
 }
 
+.qr-modal-overlay.is-active {
+    display: flex;
+}
+
 .qr-modal-content {
     background: #fff;
     border-radius: 16px;
@@ -422,14 +426,21 @@
     border: 1px solid #e5e7eb;
 }
 
+.cal-qr-code-img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+}
+
 .qr-modal-desc {
-    margin-top: 1.5rem;
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
     text-align: center;
     font-size: .85rem;
-    color: #9ca3af;
+    color: #6b7280;
 }
 
 .qr-modal-close {
-    margin-top: 1rem;
     width: 100%;
 }

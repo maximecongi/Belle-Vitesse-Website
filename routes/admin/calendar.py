@@ -4,9 +4,10 @@ Accessible aux administrateurs et managers.
 """
 import base64
 import io
+import os
 
 import qrcode
-from flask import flash, redirect, render_template, request, session, url_for
+from flask import current_app, flash, redirect, render_template, request, session, url_for
 
 from models import User, db
 from services.admin.calendar_subscriptions import (
@@ -18,6 +19,37 @@ from services.admin.calendar_subscriptions import (
 )
 from utils.decorators import normalize_role, require_roles
 from utils.mailer import send_calendar_invitation_email
+
+
+def _get_public_feed_urls(token):
+    """
+    Construit les URLs publique (HTTPS) et d'abonnement natif (webcal) pour un token calendrier.
+    Utilise APP_BASE_URL (ex: https://bellevitesse.com) pour garantir que les QR codes
+    et emails soient accessibles depuis les smartphones en toute circonstance.
+    """
+    base_url = (
+        current_app.config.get("APP_BASE_URL")
+        or os.getenv("APP_BASE_URL")
+        or os.getenv("BASE_URL")
+    )
+    if not base_url:
+        if request and "127.0.0.1" not in request.host and "localhost" not in request.host:
+            base_url = request.host_url.rstrip("/")
+        else:
+            base_url = "https://bellevitesse.com"
+    base_url = base_url.rstrip("/")
+    if not base_url.startswith("http"):
+        base_url = f"https://{base_url}"
+
+    feed_url = f"{base_url}/cal/{token}.ics"
+    if feed_url.startswith("https://"):
+        webcal_url = "webcal://" + feed_url[len("https://"):]
+    elif feed_url.startswith("http://"):
+        webcal_url = "webcal://" + feed_url[len("http://"):]
+    else:
+        webcal_url = f"webcal://{feed_url}"
+
+    return feed_url, webcal_url
 
 
 def _get_target_user_id(request_form):
@@ -61,13 +93,13 @@ def init_calendar_routes(app):
         # Générer les URLs et QR codes pour les abonnements actifs
         sub_data = {}
         for user_id, sub in sub_map.items():
-            feed_url = url_for("cal_feed.calendar_feed",
-                               token=sub.token, _external=True)
-            # Générer le QR code en base64
-            qr_b64 = _generate_qr_base64(feed_url)
+            feed_url, webcal_url = _get_public_feed_urls(sub.token)
+            # Générer le QR code en base64 sur webcal:// pour déclencher l'abonnement calendrier natif sur smartphone
+            qr_b64 = _generate_qr_base64(webcal_url)
             sub_data[user_id] = {
                 "subscription": sub,
                 "feed_url": feed_url,
+                "webcal_url": webcal_url,
                 "qr_base64": qr_b64,
             }
 
@@ -95,8 +127,7 @@ def init_calendar_routes(app):
 
             # Envoyer l'email d'invitation automatiquement à la génération
             if user and user.mail:
-                feed_url = url_for("cal_feed.calendar_feed",
-                                   token=sub.token, _external=True)
+                feed_url, webcal_url = _get_public_feed_urls(sub.token)
                 if send_calendar_invitation_email(user.mail, f"{user.firstname} {user.lastname}", feed_url):
                     flash(f"Email d'invitation envoyé à {user.mail}.", "info")
                 else:
@@ -161,8 +192,7 @@ def init_calendar_routes(app):
         elif not sub or not sub.is_active:
             flash("Aucun abonnement actif trouvé.", "error")
         else:
-            feed_url = url_for("cal_feed.calendar_feed",
-                               token=sub.token, _external=True)
+            feed_url, webcal_url = _get_public_feed_urls(sub.token)
             if send_calendar_invitation_email(user.mail, f"{user.firstname} {user.lastname}", feed_url):
                 flash(f"Lien calendrier envoyé à {user.mail}.", "success")
             else:

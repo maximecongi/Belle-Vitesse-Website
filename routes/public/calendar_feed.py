@@ -15,6 +15,7 @@ from models import CalendarSubscription, Project, db
 cal_feed_bp = Blueprint("cal_feed", __name__)
 
 
+@cal_feed_bp.route("/cal/<token>")
 @cal_feed_bp.route("/cal/<token>.ics")
 @limiter.limit("30 per hour")
 def calendar_feed(token):
@@ -144,7 +145,7 @@ def calendar_feed(token):
         cal.to_ical(),
         mimetype="text/calendar",
         headers={
-            "Content-Disposition": "attachment; filename=bellevitesse.ics",
+            "Content-Disposition": "inline; filename=bellevitesse.ics",
             "Cache-Control": "no-cache, no-store, must-revalidate",
             "Pragma": "no-cache",
             "Expires": "0",

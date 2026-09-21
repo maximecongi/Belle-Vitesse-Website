@@ -471,13 +471,21 @@ def send_calendar_invitation_email(to_email, user_name, feed_url):
     try:
         current_app.logger.info(f"🚀 Sending calendar invitation email to {to_email}")
 
+        # Générer l'URL webcal pour l'abonnement direct depuis mobile / Mac
+        if feed_url.startswith("https://"):
+            webcal_url = "webcal://" + feed_url[len("https://"):]
+        elif feed_url.startswith("http://"):
+            webcal_url = "webcal://" + feed_url[len("http://"):]
+        else:
+            webcal_url = f"webcal://{feed_url}"
+
         qr = qrcode.QRCode(
             version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
             box_size=10,
             border=4,
         )
-        qr.add_data(feed_url)
+        qr.add_data(webcal_url)
         qr.make(fit=True)
 
         img = qr.make_image(fill_color="black", back_color="white")
@@ -497,6 +505,7 @@ def send_calendar_invitation_email(to_email, user_name, feed_url):
             context={
                 "user_name": user_name,
                 "feed_url": feed_url,
+                "webcal_url": webcal_url,
                 "qrcode_base64": qrcode_base64,
             },
             text_content=text_content,
