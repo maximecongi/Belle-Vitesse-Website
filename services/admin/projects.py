@@ -72,19 +72,20 @@ def _format_vehicle_state(project, vehicle_id, vehicle_map):
         "segway": "Gyropode / Segway",
         "trike": "Trike électrique",
     }
-    type_fr = type_map.get(raw_type.lower(), brand_model or "Véhicule de tournage")
+    type_fr = type_map.get(
+        raw_type.lower(), brand_model or "Véhicule de tournage")
 
     return {
         "id": vehicle_id,
         "fields": vehicle_map.get(vehicle_id, {}),
         "type_fr": type_fr,
-        "checkout_status": format_inspection_status(c_out.status) if c_out else "À réaliser",
+        "checkout_status": format_inspection_status(c_out.status) if c_out else "À contrôler",
         "checkout_status_id": get_inspection_key(c_out.status) if c_out else "to_check",
         "checkout_id": c_out.id if c_out else "",
         "checkout_pdf": _get_secured_document_url(c_out.signed_pdf_path, "checkout") if c_out else None,
         "checkout_conform": "true" if (c_out and c_out.vehicle_ready) else "false",
         "checkout_ready": "true" if (c_out and c_out.vehicle_ready) else ("false" if c_out else "—"),
-        "checkin_status": format_inspection_status(c_in.status) if c_in else "À réaliser",
+        "checkin_status": format_inspection_status(c_in.status) if c_in else "À contrôler",
         "checkin_status_id": get_inspection_key(c_in.status) if c_in else "to_check",
         "checkin_id": c_in.id if c_in else "",
         "checkin_pdf": _get_secured_document_url(c_in.signed_pdf_path, "checkin") if c_in else None,
@@ -271,7 +272,7 @@ def create_project(form, user_id=None):
         last_action_by_id=user_id
     )
     db.session.add(project)
-    db.session.flush() # Permet d'obtenir l'ID du projet avant le commit final
+    db.session.flush()  # Permet d'obtenir l'ID du projet avant le commit final
 
     db.session.commit()
 

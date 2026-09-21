@@ -92,7 +92,7 @@
                     {% else %}
                     <div class="projects-cell-item">
                         <a href="{{ url_for('admin_checkout_new', project_id=project.id, vehicle_id=v.id) }}">
-                            <span class="badge-pill u-m-1" data-val="to_check" title="Contrôle de départ : À réaliser">
+                            <span class="badge-pill u-m-1" data-val="to_check" title="Contrôle de départ : À contrôler">
                                 {{ v.fields.name or v.fields.Nom or 'Véhicule' }}
                             </span>
                         </a>
@@ -132,7 +132,7 @@
                     {% else %}
                     <div class="projects-cell-item">
                         <a href="{{ url_for('admin_checkin_new', project_id=project.id, vehicle_id=v.id) }}">
-                            <span class="badge-pill u-m-1" data-val="to_check" title="Contrôle de retour : À réaliser">
+                            <span class="badge-pill u-m-1" data-val="to_check" title="Contrôle de retour : À contrôler">
                                 {{ v.fields.name or v.fields.Nom or 'Véhicule' }}
                             </span>
                         </a>

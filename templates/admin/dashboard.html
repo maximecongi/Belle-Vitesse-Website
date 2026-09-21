@@ -16,14 +16,11 @@
             <button type="button"
                 class="admin-btn admin-btn-sm admin-btn-primary filter-pill calendar-filter-btn active"
                 data-filter="all">Tous</button>
-            <button type="button"
-                class="admin-btn admin-btn-sm admin-btn-quaternary filter-pill calendar-filter-btn"
+            <button type="button" class="admin-btn admin-btn-sm admin-btn-quaternary filter-pill calendar-filter-btn"
                 data-filter="checkout"><i data-lucide="truck"></i> Départs</button>
-            <button type="button"
-                class="admin-btn admin-btn-sm admin-btn-quaternary filter-pill calendar-filter-btn"
+            <button type="button" class="admin-btn admin-btn-sm admin-btn-quaternary filter-pill calendar-filter-btn"
                 data-filter="project"><i data-lucide="clapperboard"></i> Tournages</button>
-            <button type="button"
-                class="admin-btn admin-btn-sm admin-btn-quaternary filter-pill calendar-filter-btn"
+            <button type="button" class="admin-btn admin-btn-sm admin-btn-quaternary filter-pill calendar-filter-btn"
                 data-filter="checkin"><i data-lucide="package-check"></i> Retours</button>
         </div>
     </div>
@@ -101,29 +98,42 @@
                 <div class="agenda-section">
                     <div class="agenda-section-title">Administratif</div>
                     <div class="u-flex u-flex-column u-gap-2">
-                        <div class="agenda-admin-row">
-                            <span class="u-text-sm u-text-medium">Décharge Pilote</span>
-                            {% if project.pilot_waiver.id %}
-                            <a href="{{ url_for('admin_pilot_waivers_list') }}?q={{ project.pilot_waiver.waiver_num|urlencode }}"
-                                class="badge-pill u-badge-agenda" data-val="{{ project.pilot_waiver.raw_status }}">
-                                {{ project.pilot_waiver.status }}
-                            </a>
-                            {% else %}
-                            <span class="badge-pill u-badge-agenda" data-val="pending">Non
-                                générée</span>
-                            {% endif %}
-                        </div>
-                        <div class="agenda-admin-row">
-                            <span class="u-text-sm u-text-medium">Décharge Prod.</span>
-                            {% if project.production_waiver.id %}
-                            <a href="{{ url_for('admin_production_waivers_list') }}?q={{ project.production_waiver.waiver_num|urlencode }}"
-                                class="badge-pill u-badge-agenda" data-val="{{ project.production_waiver.raw_status }}">
-                                {{ project.production_waiver.status }}
-                            </a>
-                            {% else %}
-                            <span class="badge-pill u-badge-agenda" data-val="pending">Non
-                                générée</span>
-                            {% endif %}
+                        <div>
+                            <div class="u-flex u-flex-wrap u-gap-1">
+                                {% if project.pilot_waiver.id %}
+                                <a class="today-row-vehicle-link"
+                                    href="{{ url_for('admin_pilot_waivers_list') }}?q={{ project.pilot_waiver.waiver_num|urlencode }}">
+                                    <span class="u-text-medium">Décharge Pilote</span>
+                                    <span class="badge-pill u-badge-agenda"
+                                        data-val="{{ project.pilot_waiver.raw_status }}">{{
+                                        project.pilot_waiver.status }}</span>
+                                </a>
+                                {% else %}
+                                <a href="{{ url_for('admin_pilot_waiver_new', project_id=project.id) }}"
+                                    class="today-row-vehicle-link">
+                                    <span>Décharge Pilote</span>
+                                    <span class="badge-pill u-badge-agenda" data-val="to_generate">Non
+                                        générée</span>
+                                </a>
+                                {% endif %}
+
+                                {% if project.production_waiver.id %}
+                                <a class="today-row-vehicle-link"
+                                    href="{{ url_for('admin_production_waivers_list') }}?q={{ project.production_waiver.waiver_num|urlencode }}">
+                                    <span class="u-text-medium">Décharge Prod.</span>
+                                    <span class="badge-pill u-badge-agenda"
+                                        data-val="{{ project.production_waiver.raw_status }}">{{
+                                        project.production_waiver.status }}</span>
+                                </a>
+                                {% else %}
+                                <a href="{{ url_for('admin_production_waiver_new', project_id=project.id) }}"
+                                    class="today-row-vehicle-link">
+                                    <span>Décharge Prod.</span>
+                                    <span class="badge-pill u-badge-agenda" data-val="to_generate">Non
+                                        générée</span>
+                                </a>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -184,7 +194,8 @@
                                 <a class="today-row-vehicle-link"
                                     href="{{ url_for('admin_checkin_detail', record_id=vehicle.checkin_id) }}">
                                     <span class="u-text-medium">{{ vehicle.fields.name }}</span>
-                                    <span class="badge-pill u-badge-agenda" data-val="{{ vehicle.checkin_status_id }}">{{
+                                    <span class="badge-pill u-badge-agenda"
+                                        data-val="{{ vehicle.checkin_status_id }}">{{
                                         format_inspection_status(vehicle.checkin_status) }}</span>
                                 </a>
                                 {% else %}
@@ -205,29 +216,42 @@
                 <div class="agenda-section">
                     <div class="agenda-section-title">Administratif</div>
                     <div class="u-flex u-flex-column u-gap-2">
-                        <div class="agenda-admin-row">
-                            <span class="u-text-sm u-text-medium">Décharge Pilote</span>
-                            {% if project.pilot_waiver.id %}
-                            <a href="{{ url_for('admin_pilot_waivers_list') }}?q={{ project.pilot_waiver.waiver_num|urlencode }}"
-                                class="badge-pill u-badge-agenda" data-val="{{ project.pilot_waiver.raw_status }}">
-                                {{ project.pilot_waiver.status }}
-                            </a>
-                            {% else %}
-                            <span class="badge-pill u-badge-agenda" data-val="pending">Non
-                                générée</span>
-                            {% endif %}
-                        </div>
-                        <div class="agenda-admin-row">
-                            <span class="u-text-sm u-text-medium">Décharge Prod.</span>
-                            {% if project.production_waiver.id %}
-                            <a href="{{ url_for('admin_production_waivers_list') }}?q={{ project.production_waiver.waiver_num|urlencode }}"
-                                class="badge-pill u-badge-agenda" data-val="{{ project.production_waiver.raw_status }}">
-                                {{ project.production_waiver.status }}
-                            </a>
-                            {% else %}
-                            <span class="badge-pill u-badge-agenda" data-val="pending">Non
-                                générée</span>
-                            {% endif %}
+                        <div>
+                            <div class="u-flex u-flex-wrap u-gap-1">
+                                {% if project.pilot_waiver.id %}
+                                <a class="today-row-vehicle-link"
+                                    href="{{ url_for('admin_pilot_waivers_list') }}?q={{ project.pilot_waiver.waiver_num|urlencode }}">
+                                    <span class="u-text-medium">Décharge Pilote</span>
+                                    <span class="badge-pill u-badge-agenda"
+                                        data-val="{{ project.pilot_waiver.raw_status }}">{{
+                                        project.pilot_waiver.status }}</span>
+                                </a>
+                                {% else %}
+                                <a href="{{ url_for('admin_pilot_waiver_new', project_id=project.id) }}"
+                                    class="today-row-vehicle-link">
+                                    <span>Décharge Pilote</span>
+                                    <span class="badge-pill u-badge-agenda" data-val="to_generate">Non
+                                        générée</span>
+                                </a>
+                                {% endif %}
+
+                                {% if project.production_waiver.id %}
+                                <a class="today-row-vehicle-link"
+                                    href="{{ url_for('admin_production_waivers_list') }}?q={{ project.production_waiver.waiver_num|urlencode }}">
+                                    <span class="u-text-medium">Décharge Prod.</span>
+                                    <span class="badge-pill u-badge-agenda"
+                                        data-val="{{ project.production_waiver.raw_status }}">{{
+                                        project.production_waiver.status }}</span>
+                                </a>
+                                {% else %}
+                                <a href="{{ url_for('admin_production_waiver_new', project_id=project.id) }}"
+                                    class="today-row-vehicle-link">
+                                    <span>Décharge Prod.</span>
+                                    <span class="badge-pill u-badge-agenda" data-val="to_generate">Non
+                                        générée</span>
+                                </a>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>

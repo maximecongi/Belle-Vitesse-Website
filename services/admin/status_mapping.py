@@ -59,7 +59,7 @@ def format_inspection_status(status_id):
     Mappe un identifiant de statut d'inspection interne vers son label français.
     """
     if not status_id:
-        return "À réaliser"
+        return "À contrôler"
     return INSPECTION_STATUS_MAP.get(str(status_id).lower(), str(status_id).capitalize())
 
 

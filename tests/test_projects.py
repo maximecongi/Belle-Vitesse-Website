@@ -1,19 +1,3 @@
-import os
-import sys
-import unittest
-from datetime import date
-from unittest.mock import MagicMock
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-# Mock weasyprint
-mock_weasyprint = MagicMock()
-mock_weasyprint.HTML = MagicMock()
-mock_weasyprint.CSS = MagicMock()
-sys.modules["weasyprint"] = mock_weasyprint
-
-from app import create_app
-from models import db, Project, Production, User, Contact
 from services.admin.projects import (
     create_project,
     update_project,
@@ -22,6 +6,23 @@ from services.admin.projects import (
     list_projects,
     update_project_notes,
 )
+from models import db, Project, Production, User, Contact
+from app import create_app
+import os
+import sys
+import unittest
+from datetime import date
+from unittest.mock import MagicMock
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
+
+# Mock weasyprint
+mock_weasyprint = MagicMock()
+mock_weasyprint.HTML = MagicMock()
+mock_weasyprint.CSS = MagicMock()
+sys.modules["weasyprint"] = mock_weasyprint
+
 
 class ProjectsTest(unittest.TestCase):
     def setUp(self):
@@ -46,7 +47,8 @@ class ProjectsTest(unittest.TestCase):
     def test_project_crud_tracking(self):
         with self.app.app_context():
             # Create user
-            user = User(firstname="Alice", lastname="Smith", mail="alice.smith@example.com", role="manager")
+            user = User(firstname="Alice", lastname="Smith",
+                        mail="alice.smith@example.com", role="manager")
             db.session.add(user)
             db.session.flush()
 
@@ -56,11 +58,16 @@ class ProjectsTest(unittest.TestCase):
             db.session.flush()
 
             # Create contacts
-            contact_pilot = Contact(first_name="Jean", last_name="Pilote", mail="pilot@example.com")
-            contact_dop = Contact(first_name="Claire", last_name="DOP", mail="dop@example.com")
-            contact_first_ac = Contact(first_name="Marc", last_name="Assistant", mail="ac@example.com")
-            contact_key_grip = Contact(first_name="Paul", last_name="Machino", mail="grip@example.com")
-            db.session.add_all([contact_pilot, contact_dop, contact_first_ac, contact_key_grip])
+            contact_pilot = Contact(
+                first_name="Jean", last_name="Pilote", mail="pilot@example.com")
+            contact_dop = Contact(first_name="Claire",
+                                  last_name="DOP", mail="dop@example.com")
+            contact_first_ac = Contact(
+                first_name="Marc", last_name="Assistant", mail="ac@example.com")
+            contact_key_grip = Contact(
+                first_name="Paul", last_name="Machino", mail="grip@example.com")
+            db.session.add_all([contact_pilot, contact_dop,
+                               contact_first_ac, contact_key_grip])
             db.session.flush()
 
             # 1. Test create_project records user_id and technical contacts
@@ -77,10 +84,11 @@ class ProjectsTest(unittest.TestCase):
                 "return_date": date(2026, 6, 21)
             }
             # Mock getlist for vehicles/heads
+
             class MockForm(dict):
                 def getlist(self, name):
                     return []
-            
+
             form = MockForm(form_data)
             success = create_project(form, user_id=user.id)
             self.assertTrue(success)
@@ -95,21 +103,27 @@ class ProjectsTest(unittest.TestCase):
 
             # Check to_dict & get_project_for_edit & list_projects
             proj_dict = proj.to_dict()
-            self.assertEqual(proj_dict["first_ac_contact_id"], contact_first_ac.id)
-            self.assertEqual(proj_dict["key_grip_contact_id"], contact_key_grip.id)
+            self.assertEqual(
+                proj_dict["first_ac_contact_id"], contact_first_ac.id)
+            self.assertEqual(
+                proj_dict["key_grip_contact_id"], contact_key_grip.id)
 
             edit_data = get_project_for_edit(proj.id)
-            self.assertEqual(edit_data["first_ac_contact_id"], str(contact_first_ac.id))
-            self.assertEqual(edit_data["key_grip_contact_id"], str(contact_key_grip.id))
+            self.assertEqual(
+                edit_data["first_ac_contact_id"], str(contact_first_ac.id))
+            self.assertEqual(
+                edit_data["key_grip_contact_id"], str(contact_key_grip.id))
 
             all_p = list_projects()
             p_admin = next((p for p in all_p if p["id"] == proj.id), None)
             self.assertIsNotNone(p_admin)
-            self.assertEqual(p_admin["first_ac_contact_name"], "Marc Assistant")
+            self.assertEqual(
+                p_admin["first_ac_contact_name"], "Marc Assistant")
             self.assertEqual(p_admin["key_grip_contact_name"], "Paul Machino")
 
             # 2. Test update_project records updated user_id and modified contacts
-            user2 = User(firstname="Bob", lastname="Jones", mail="bob.jones@example.com", role="administrator")
+            user2 = User(firstname="Bob", lastname="Jones",
+                         mail="bob.jones@example.com", role="administrator")
             db.session.add(user2)
             db.session.flush()
 
@@ -135,18 +149,21 @@ class ProjectsTest(unittest.TestCase):
 
     def test_project_notes_edit(self):
         with self.app.app_context():
-            user = User(firstname="Charlie", lastname="Technician", mail="charlie@example.com", role="technicien")
+            user = User(firstname="Charlie", lastname="Technician",
+                        mail="charlie@example.com", role="technicien")
             prod = Production(name="Production Alpha")
             db.session.add_all([user, prod])
             db.session.flush()
 
-            proj = Project(name="Project Notes Test", production_id=prod.id, notes="Ancienne consigne")
+            proj = Project(name="Project Notes Test",
+                           production_id=prod.id, notes="Ancienne consigne")
             db.session.add(proj)
             db.session.commit()
             proj_id = proj.id
 
             # 1. Test update_project_notes service function
-            updated = update_project_notes(proj_id, "Nouvelle consigne technique", user_id=user.id)
+            updated = update_project_notes(
+                proj_id, "Nouvelle consigne technique", user_id=user.id)
             self.assertIsNotNone(updated)
             self.assertEqual(updated.notes, "Nouvelle consigne technique")
             self.assertEqual(updated.last_action_by_id, user.id)
@@ -174,7 +191,8 @@ class ProjectsTest(unittest.TestCase):
             follow_redirects=True
         )
         self.assertEqual(resp_form.status_code, 200)
-        self.assertIn("Consigne finale via POST form".encode("utf-8"), resp_form.data)
+        self.assertIn("Consigne finale via POST form".encode(
+            "utf-8"), resp_form.data)
 
     def test_soft_deleted_checks_and_waivers_on_projects(self):
         from models import CheckoutVehicle, CheckinVehicle, PilotWaiver, ProductionWaiver
@@ -184,7 +202,8 @@ class ProjectsTest(unittest.TestCase):
         from services.admin.checkins import create_checkin
 
         with self.app.app_context():
-            user = User(firstname="Bob", lastname="Inspector", mail="bob@example.com", role="administrator")
+            user = User(firstname="Bob", lastname="Inspector",
+                        mail="bob@example.com", role="administrator")
             prod = Production(name="Soft Delete Prod")
             db.session.add_all([user, prod])
             db.session.flush()
@@ -203,7 +222,7 @@ class ProjectsTest(unittest.TestCase):
             v1_state = next(v for v in p_data["vehicles"] if v["id"] == "1")
             self.assertEqual(v1_state["checkout_id"], "")
             self.assertEqual(v1_state["checkout_status_id"], "to_check")
-            self.assertEqual(v1_state["checkout_status"], "À réaliser")
+            self.assertEqual(v1_state["checkout_status"], "À contrôler")
             self.assertEqual(v1_state["checkin_id"], "")
             self.assertEqual(v1_state["checkin_status_id"], "to_check")
 
@@ -247,13 +266,14 @@ class ProjectsTest(unittest.TestCase):
             v1_state = next(v for v in p_data["vehicles"] if v["id"] == "1")
             self.assertEqual(v1_state["checkout_id"], "")
             self.assertEqual(v1_state["checkout_status_id"], "to_check")
-            self.assertEqual(v1_state["checkout_status"], "À réaliser")
+            self.assertEqual(v1_state["checkout_status"], "À contrôler")
             # Checkin is still active
             self.assertEqual(v1_state["checkin_id"], checkin.id)
 
             # Verify in project detail context as well
             detail_ctx = get_project_detail_context(proj.id)
-            v1_detail = next(v for v in detail_ctx["vehicles"] if v["id"] == "1")
+            v1_detail = next(
+                v for v in detail_ctx["vehicles"] if v["id"] == "1")
             self.assertEqual(v1_detail["checkout_id"], "")
             self.assertEqual(v1_detail["checkout_status_id"], "to_check")
 
@@ -264,7 +284,8 @@ class ProjectsTest(unittest.TestCase):
                     "vehicle_id": "1",
                     "controller_id": str(user.id)
                 })
-            self.assertIn("Le départ de ce véhicule n'a pas été validé", str(cm.exception))
+            self.assertIn(
+                "Le départ de ce véhicule n'a pas été validé", str(cm.exception))
 
             # 5. Soft-delete checkin
             success_in = delete_inspection_unified("checkin", checkin.id)
@@ -275,11 +296,13 @@ class ProjectsTest(unittest.TestCase):
             v1_state = next(v for v in p_data["vehicles"] if v["id"] == "1")
             self.assertEqual(v1_state["checkin_id"], "")
             self.assertEqual(v1_state["checkin_status_id"], "to_check")
-            self.assertEqual(v1_state["checkin_status"], "À réaliser")
+            self.assertEqual(v1_state["checkin_status"], "À contrôler")
 
             # 6. Test Pilot & Production Waivers soft delete
-            pw = PilotWaiver(project_id=proj.id, status="to_sign", pilot_first_name="Jean", pilot_last_name="Pilote")
-            prw = ProductionWaiver(project_id=proj.id, status="to_sign", production_name="Prod Alpha")
+            pw = PilotWaiver(project_id=proj.id, status="to_sign",
+                             pilot_first_name="Jean", pilot_last_name="Pilote")
+            prw = ProductionWaiver(
+                project_id=proj.id, status="to_sign", production_name="Prod Alpha")
             db.session.add_all([pw, prw])
             db.session.commit()
 
@@ -307,6 +330,7 @@ class ProjectsTest(unittest.TestCase):
             self.assertEqual(len(proj.active_checkin_vehicles), 0)
             self.assertIsNone(proj.active_pilot_waiver)
             self.assertIsNone(proj.active_production_waiver)
+
 
 if __name__ == "__main__":
     unittest.main()

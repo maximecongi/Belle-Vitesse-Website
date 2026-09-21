@@ -370,8 +370,7 @@
     content: "📤 ";
 }
 
-.badge-pill[data-val="to_sign"],
-.badge-pill[data-val="pending"] {
+.badge-pill[data-val="to_sign"] {
     background: var(--entity-waiver-bg);
     color: var(--entity-waiver-text);
     border: 1px solid var(--entity-waiver-border);
@@ -383,8 +382,7 @@
     border: 1px solid rgba(2, 132, 199, 0.3);
 }
 
-.badge-pill[data-val="to_sign"]:before,
-.badge-pill[data-val="pending"]:before {
+.badge-pill[data-val="to_sign"]:before {
     content: "✍️ ";
 }
 
