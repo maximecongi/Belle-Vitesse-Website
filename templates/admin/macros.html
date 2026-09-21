@@ -81,23 +81,20 @@
 
 {% macro incident_signature_badge(incident, compact=false) %}
 {% if incident.is_fully_signed or incident.signature_status == 'signed' %}
-<span class="badge-pill" data-val="ok">✅ {{ 'Scellé 2/2' if compact else 'Scellé contradictoirement' }}</span>
-{% if compact %}<div class="u-text-2xs u-text-muted u-mt-1">BV ✓ &bull; Prod ✓</div>{% endif %}
+<span class="badge-pill" data-val="ok"><i data-lucide="shield-check"></i> {{ 'Scellé 2/2' if compact else 'Scellé contradictoirement' }}</span>
+{% if compact %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="check" class="u-text-success"></i> &bull; <span>Prod</span> <i data-lucide="check" class="u-text-success"></i></div>{% endif %}
 {% elif incident.signature_status == 'signed_bv' %}
-<span class="badge-pill" data-val="warning">✍️ {{ 'Visé BV 1/2' if compact else 'Visé BV — En attente Production'
-    }}</span>
-{% if compact %}<div class="u-text-2xs u-text-muted u-mt-1">BV ✓ &bull; Prod ⏳</div>{% endif %}
+<span class="badge-pill" data-val="warning"><i data-lucide="signature"></i> {{ 'Visé BV 1/2' if compact else 'Visé BV — En attente Production' }}</span>
+{% if compact %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="check" class="u-text-success"></i> &bull; <span>Prod</span> <i data-lucide="clock"></i></div>{% endif %}
 {% elif incident.signature_status == 'signed_prod' %}
-<span class="badge-pill" data-val="warning">✍️ {{ 'Signé Prod 1/2' if compact else 'Signé Prod — En attente visa BV'
-    }}</span>
-{% if compact %}<div class="u-text-2xs u-text-muted u-mt-1">BV ⏳ &bull; Prod ✓</div>{% endif %}
+<span class="badge-pill" data-val="warning"><i data-lucide="signature"></i> {{ 'Signé Prod 1/2' if compact else 'Signé Prod — En attente visa BV' }}</span>
+{% if compact %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="clock"></i> &bull; <span>Prod</span> <i data-lucide="check" class="u-text-success"></i></div>{% endif %}
 {% elif incident.signature_status == 'pending_prod' %}
-<span class="badge-pill" data-val="in_progress">⏳ {{ 'Invité 0/2' if compact else 'Invitation envoyée à la Production'
-    }}</span>
-{% if compact %}<div class="u-text-2xs u-text-muted u-mt-1">BV ⏳ &bull; Prod ✉️</div>{% endif %}
+<span class="badge-pill" data-val="in_progress"><i data-lucide="mail"></i> {{ 'Invité 0/2' if compact else 'Invitation envoyée à la Production' }}</span>
+{% if compact %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="clock"></i> &bull; <span>Prod</span> <i data-lucide="mail"></i></div>{% endif %}
 {% else %}
-<span class="badge-pill" data-val="neutral">📝 {{ 'Non signé' if compact else 'En attente de signatures' }}</span>
-{% if compact %}<div class="u-text-2xs u-text-muted u-mt-1">BV ⏳ &bull; Prod ⏳</div>{% endif %}
+<span class="badge-pill" data-val="neutral"><i data-lucide="file-text"></i> {{ 'Non signé' if compact else 'En attente de signatures' }}</span>
+{% if compact %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="clock"></i> &bull; <span>Prod</span> <i data-lucide="clock"></i></div>{% endif %}
 {% endif %}
 {% endmacro %}
 

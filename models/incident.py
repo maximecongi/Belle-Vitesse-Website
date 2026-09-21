@@ -40,7 +40,8 @@ class Incident(db.Model):
     # Classification & Statut
     category = db.Column(db.String(50), nullable=False, default="vehicule")
     severity = db.Column(db.String(50), nullable=False, default="modere")
-    status = db.Column(db.String(50), nullable=False, default="signale", index=True)
+    status = db.Column(db.String(50), nullable=False,
+                       default="signale", index=True)
     shooting_impact = db.Column(db.String(50), nullable=False, default="aucun")
 
     # Circonstances & Actions
@@ -93,7 +94,8 @@ class Incident(db.Model):
 
     # 3. Statut de signature, empreinte d'intégrité & archive
     # "unsigned" (non signé), "signed_bv" (signé BV), "pending_prod" (invitation envoyée), "signed" (scellé)
-    signature_status = db.Column(db.String(30), default="unsigned", nullable=False)
+    signature_status = db.Column(
+        db.String(30), default="unsigned", nullable=False)
     signed_pdf_path = db.Column(db.String(500), nullable=True)
     hash = db.Column(db.String(255), nullable=True)
     pdf_file_hash = db.Column(db.String(64), nullable=True)
@@ -104,10 +106,14 @@ class Incident(db.Model):
     deleted_at = db.Column(db.DateTime, nullable=True, index=True)
 
     # Relations SQLAlchemy
-    project = db.relationship("Project", backref=db.backref("incidents", lazy=True))
-    reporter = db.relationship("User", backref=db.backref("reported_incidents", lazy=True))
-    checkout = db.relationship("CheckoutVehicle", backref=db.backref("incidents", lazy=True))
-    checkin = db.relationship("CheckinVehicle", backref=db.backref("incidents", lazy=True))
+    project = db.relationship(
+        "Project", backref=db.backref("incidents", lazy=True))
+    reporter = db.relationship(
+        "User", backref=db.backref("reported_incidents", lazy=True))
+    checkout = db.relationship(
+        "CheckoutVehicle", backref=db.backref("incidents", lazy=True))
+    checkin = db.relationship(
+        "CheckinVehicle", backref=db.backref("incidents", lazy=True))
 
     @property
     def is_critical(self):
@@ -123,7 +129,7 @@ class Incident(db.Model):
             "signale": "Signalé",
             "en_expertise": "En expertise / Devis",
             "en_reparation": "En réparation atelier",
-            "assurance": "Dossier assurance",
+            "assurance": "Assurance",
             "resolu": "Résolu / Réparé",
             "cloture": "Clôturé",
         }
@@ -260,7 +266,8 @@ class IncidentToken(db.Model, TokenMixin):
     recipient_email = db.Column(db.String(255), nullable=True)
     signature = db.Column(db.Text(length=16777215), nullable=True)
 
-    incident = db.relationship("Incident", backref=db.backref("tokens", lazy=True, cascade="all, delete-orphan"))
+    incident = db.relationship("Incident", backref=db.backref(
+        "tokens", lazy=True, cascade="all, delete-orphan"))
 
 
 class IncidentSignedDocument(db.Model, SignedDocumentMixin):

@@ -102,7 +102,6 @@ incident_signature_badge %}
                     <th>Date</th>
                     <th>Statut</th>
                     <th>Gravité</th>
-                    <th>Impact Tournage</th>
                     <th>Signatures</th>
                     <th>Actions</th>
                 </tr>
@@ -135,9 +134,6 @@ incident_signature_badge %}
                     </td>
                     <td>
                         {{ incident_severity_badge(incident.severity, incident.severity_label) }}
-                    </td>
-                    <td>
-                        {{ incident_impact_badge(incident.shooting_impact, incident.shooting_impact_label) }}
                     </td>
                     <td class="u-nowrap u-flex u-flex-column u-align-center">
                         {{ incident_signature_badge(incident, compact=true) }}

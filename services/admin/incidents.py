@@ -51,7 +51,7 @@ INCIDENT_STATUS_MAP = {
     "signale": "Signalé",
     "en_expertise": "En expertise / Devis",
     "en_reparation": "En réparation atelier",
-    "assurance": "Dossier assurance",
+    "assurance": "Assurance",
     "resolu": "Résolu / Réparé",
     "cloture": "Clôturé",
 }
@@ -135,10 +135,14 @@ def list_incidents(status=None, severity=None, category=None, project_id=None, q
     stats_row = (
         db.session.query(
             db.func.count(Incident.id),
-            db.func.sum(db.case((Incident.status.in_(active_statuses), 1), else_=0)),
-            db.func.sum(db.case((db.and_(Incident.severity == "critique", Incident.status != "cloture"), 1), else_=0)),
-            db.func.sum(db.case((Incident.status == "en_reparation", 1), else_=0)),
-            db.func.sum(db.case((Incident.status.in_(active_statuses), Incident.estimated_cost), else_=0)),
+            db.func.sum(
+                db.case((Incident.status.in_(active_statuses), 1), else_=0)),
+            db.func.sum(db.case((db.and_(Incident.severity ==
+                        "critique", Incident.status != "cloture"), 1), else_=0)),
+            db.func.sum(
+                db.case((Incident.status == "en_reparation", 1), else_=0)),
+            db.func.sum(db.case((Incident.status.in_(
+                active_statuses), Incident.estimated_cost), else_=0)),
             db.func.sum(db.func.coalesce(Incident.actual_cost, 0)),
         )
         .filter(Incident.deleted_at.is_(None))
@@ -205,7 +209,8 @@ def list_incidents(status=None, severity=None, category=None, project_id=None, q
             for v in Vehicle.query.all():
                 vid = str(v.id)
                 fields = v.fields or {}
-                name = fields.get("name") or fields.get("Nom") or getattr(v, "name", vid)
+                name = fields.get("name") or fields.get(
+                    "Nom") or getattr(v, "name", vid)
                 veh_map[vid] = name
         except Exception:
             pass
@@ -213,7 +218,8 @@ def list_incidents(status=None, severity=None, category=None, project_id=None, q
     # Enrichissement pour l'affichage
     formatted_incidents = []
     for inc in records:
-        v_name = veh_map.get(str(inc.vehicle_id), inc.vehicle_id or "—") if inc.vehicle_id else "—"
+        v_name = veh_map.get(str(inc.vehicle_id),
+                             inc.vehicle_id or "—") if inc.vehicle_id else "—"
         reporter_name = f"{inc.reporter.firstname} {inc.reporter.lastname}" if inc.reporter else "—"
         project_name = inc.project.name if inc.project else "—"
 
@@ -370,7 +376,8 @@ def resolve_incident_equipments(inc, vehicle_data=None):
         for v in Vehicle.query.all():
             vid = str(v.id)
             f = v.fields or {}
-            vn = f.get("name") or f.get("Nom") or getattr(v, "name", None) or vid
+            vn = f.get("name") or f.get(
+                "Nom") or getattr(v, "name", None) or vid
             uniq = f.get("unique_id", "")
             if vn:
                 vehicle_catalog[vn.strip().lower()] = {
@@ -381,7 +388,8 @@ def resolve_incident_equipments(inc, vehicle_data=None):
         for h in Head.query.all():
             hid = str(h.id)
             f = h.fields or {}
-            hn = f.get("name") or f.get("Nom") or getattr(h, "name", None) or hid
+            hn = f.get("name") or f.get(
+                "Nom") or getattr(h, "name", None) or hid
             if hn:
                 head_catalog[hn.strip().lower()] = {
                     "id": hid,
@@ -390,9 +398,12 @@ def resolve_incident_equipments(inc, vehicle_data=None):
     except Exception:
         pass
 
-    veh_keywords = ("ebike", "ecar", "etrike", "segway", "rickshaw", "véhicule", "vehicule", "mercedes", "camion", "voiture", "quad", "moto")
-    custom_keywords = ("inertia", "wheel", "manivelle", "easyrig", "bras", "arm", "isolator", "magnet", "small hd", "cine", "teradek", "moniteur", "hf", "follow focus", "câble", "cable", "batterie", "accu")
-    head_keywords = ("ronin", "titan", "nodo torq", "movi", "mōvi", "rs4", "rs3", "rs2", "tete", "tête", "shotover", "flight", "matrix", "gyro")
+    veh_keywords = ("ebike", "ecar", "etrike", "segway", "rickshaw", "véhicule",
+                    "vehicule", "mercedes", "camion", "voiture", "quad", "moto")
+    custom_keywords = ("inertia", "wheel", "manivelle", "easyrig", "bras", "arm", "isolator", "magnet",
+                       "small hd", "cine", "teradek", "moniteur", "hf", "follow focus", "câble", "cable", "batterie", "accu")
+    head_keywords = ("ronin", "titan", "nodo torq", "movi", "mōvi", "rs4",
+                     "rs3", "rs2", "tete", "tête", "shotover", "flight", "matrix", "gyro")
 
     # 3. Équipements listés dans equipment_name
     if getattr(inc, "equipment_name", None):
@@ -527,7 +538,8 @@ def get_incident_detail(record_id):
         else:
             raw_time = t_str
 
-    equipments_data = resolve_incident_equipments(inc, vehicle_data=vehicle_data)
+    equipments_data = resolve_incident_equipments(
+        inc, vehicle_data=vehicle_data)
 
     return {
         "id": inc.id,
@@ -637,7 +649,8 @@ def create_incident(form_data, uploaded_photos=None, uploaded_documents=None):
 
     # Conversion des clés relationnelles
     project_id = form_data.get("project_id")
-    project_id = int(project_id) if project_id and str(project_id).isdigit() else None
+    project_id = int(project_id) if project_id and str(
+        project_id).isdigit() else None
 
     reported_by_id = form_data.get("reported_by_id")
     if not reported_by_id:
@@ -672,24 +685,29 @@ def create_incident(form_data, uploaded_photos=None, uploaded_documents=None):
             checkin_id = None
     else:
         checkout_id = form_data.get("checkout_id")
-        checkout_id = int(checkout_id) if checkout_id and str(checkout_id).isdigit() else None
+        checkout_id = int(checkout_id) if checkout_id and str(
+            checkout_id).isdigit() else None
         checkin_id = form_data.get("checkin_id")
-        checkin_id = int(checkin_id) if checkin_id and str(checkin_id).isdigit() else None
+        checkin_id = int(checkin_id) if checkin_id and str(
+            checkin_id).isdigit() else None
 
     # Montants financiers
     est_cost = form_data.get("estimated_cost")
     try:
-        estimated_cost = Decimal(str(est_cost).replace(",", ".")) if est_cost else None
+        estimated_cost = Decimal(str(est_cost).replace(
+            ",", ".")) if est_cost else None
     except Exception:
         estimated_cost = None
 
     act_cost = form_data.get("actual_cost")
     try:
-        actual_cost = Decimal(str(act_cost).replace(",", ".")) if act_cost else None
+        actual_cost = Decimal(str(act_cost).replace(
+            ",", ".")) if act_cost else None
     except Exception:
         actual_cost = None
 
-    ins_declared = form_data.get("insurance_declared") in (True, "true", "True", "1", "on", "yes")
+    ins_declared = form_data.get("insurance_declared") in (
+        True, "true", "True", "1", "on", "yes")
 
     # Enregistrement initial
     incident = Incident(
@@ -732,7 +750,8 @@ def create_incident(form_data, uploaded_photos=None, uploaded_documents=None):
     db.session.add(incident)
     db.session.commit()
 
-    logger.info(f"✅ Incident créé : {incident.incident_number} - {incident.title}")
+    logger.info(
+        f"✅ Incident créé : {incident.incident_number} - {incident.title}")
     return incident
 
 
@@ -761,11 +780,13 @@ def update_incident(record_id, form_data, uploaded_photos=None, uploaded_documen
             incident.vehicle_id = _clean_str(form_data.get("vehicle_id"))
 
         if "equipment_name" in form_data:
-            incident.equipment_name = _clean_str(form_data.get("equipment_name"))
+            incident.equipment_name = _clean_str(
+                form_data.get("equipment_name"))
 
         if "reported_by_id" in form_data:
             rid = form_data.get("reported_by_id")
-            incident.reported_by_id = int(rid) if rid and str(rid).isdigit() else None
+            incident.reported_by_id = int(
+                rid) if rid and str(rid).isdigit() else None
 
         if "location" in form_data:
             incident.location = _clean_str(form_data.get("location"))
@@ -793,9 +814,11 @@ def update_incident(record_id, form_data, uploaded_photos=None, uploaded_documen
                 incident.checkin_id = None
         elif "checkout_id" in form_data or "checkin_id" in form_data:
             cid = form_data.get("checkout_id")
-            incident.checkout_id = int(cid) if cid and str(cid).isdigit() else None
+            incident.checkout_id = int(cid) if cid and str(
+                cid).isdigit() else None
             cid = form_data.get("checkin_id")
-            incident.checkin_id = int(cid) if cid and str(cid).isdigit() else None
+            incident.checkin_id = int(cid) if cid and str(
+                cid).isdigit() else None
 
     # 2. Circonstances & Qualification (uniquement modifiables SI NON SCELLÉ PAR LA PRODUCTION)
     if not is_sealed:
@@ -812,50 +835,59 @@ def update_incident(record_id, form_data, uploaded_photos=None, uploaded_documen
             incident.description = _clean_str(form_data.get("description"))
 
         if "immediate_actions" in form_data:
-            incident.immediate_actions = _clean_str(form_data.get("immediate_actions"))
+            incident.immediate_actions = _clean_str(
+                form_data.get("immediate_actions"))
 
         # Photos du constat initial (suppression / ajout)
         current_photos = incident.photos_list
         if removed_photos:
-            current_photos = [p for p in current_photos if p not in removed_photos]
+            current_photos = [
+                p for p in current_photos if p not in removed_photos]
 
         new_photos = _save_uploaded_files(uploaded_photos, subfolder="photos")
         if new_photos:
             current_photos.extend(new_photos)
-        incident.photos = json.dumps(current_photos) if current_photos else None
+        incident.photos = json.dumps(
+            current_photos) if current_photos else None
 
     # 2. Champs de suivi opérationnel, financier & assurance (TOUJOURS MODIFIABLES)
     if "severity" in form_data:
         incident.severity = form_data.get("severity", incident.severity)
 
     if "shooting_impact" in form_data:
-        incident.shooting_impact = form_data.get("shooting_impact", incident.shooting_impact)
+        incident.shooting_impact = form_data.get(
+            "shooting_impact", incident.shooting_impact)
 
     if "estimated_cost" in form_data:
         est = form_data.get("estimated_cost")
         try:
-            incident.estimated_cost = Decimal(str(est).replace(",", ".")) if est else None
+            incident.estimated_cost = Decimal(
+                str(est).replace(",", ".")) if est else None
         except Exception:
             incident.estimated_cost = None
 
     if "actual_cost" in form_data:
         act = form_data.get("actual_cost")
         try:
-            incident.actual_cost = Decimal(str(act).replace(",", ".")) if act else None
+            incident.actual_cost = Decimal(
+                str(act).replace(",", ".")) if act else None
         except Exception:
             incident.actual_cost = None
 
     if "insurance_declared" in form_data:
-        incident.insurance_declared = form_data.get("insurance_declared") in (True, "true", "True", "1", "on", "yes")
+        incident.insurance_declared = form_data.get(
+            "insurance_declared") in (True, "true", "True", "1", "on", "yes")
 
     if "insurance_reference" in form_data:
-        incident.insurance_reference = _clean_str(form_data.get("insurance_reference"))
+        incident.insurance_reference = _clean_str(
+            form_data.get("insurance_reference"))
 
     if "insurance_notes" in form_data:
         incident.insurance_notes = _clean_str(form_data.get("insurance_notes"))
 
     if "resolution_notes" in form_data:
-        incident.resolution_notes = _clean_str(form_data.get("resolution_notes"))
+        incident.resolution_notes = _clean_str(
+            form_data.get("resolution_notes"))
 
     # Gestion des documents justificatifs (devis, factures...)
     current_docs = incident.documents_list
@@ -872,16 +904,20 @@ def update_incident(record_id, form_data, uploaded_photos=None, uploaded_documen
         new_status = incident.status
 
     # Automatisme 1 : Déclaration d'assurance renseignée ➔ bascule vers "assurance" si statut en amont
-    has_insurance = incident.insurance_declared or bool(incident.insurance_reference)
+    has_insurance = incident.insurance_declared or bool(
+        incident.insurance_reference)
     if has_insurance and new_status in ("signale", "en_expertise") and (not raw_status or raw_status == incident.status):
         new_status = "assurance"
-        logger.info(f"⚡ Bascule automatique du statut incident vers 'assurance' ({incident.incident_number})")
+        logger.info(
+            f"⚡ Bascule automatique du statut incident vers 'assurance' ({incident.incident_number})")
 
     # Automatisme 2 : Note de résolution saisie ➔ bascule vers "resolu"
-    has_resolution = bool(incident.resolution_notes and incident.resolution_notes.strip())
+    has_resolution = bool(
+        incident.resolution_notes and incident.resolution_notes.strip())
     if has_resolution and new_status in ("signale", "en_expertise", "en_reparation", "assurance") and (not raw_status or raw_status == incident.status):
         new_status = "resolu"
-        logger.info(f"⚡ Bascule automatique du statut incident vers 'resolu' ({incident.incident_number})")
+        logger.info(
+            f"⚡ Bascule automatique du statut incident vers 'resolu' ({incident.incident_number})")
 
     # Mise à jour effective du statut et gestion de resolved_at
     if new_status in ("resolu", "cloture"):
@@ -893,7 +929,8 @@ def update_incident(record_id, form_data, uploaded_photos=None, uploaded_documen
     incident.status = new_status
 
     db.session.commit()
-    logger.info(f"✅ Incident mis à jour : {incident.incident_number} (Statut: {incident.status})")
+    logger.info(
+        f"✅ Incident mis à jour : {incident.incident_number} (Statut: {incident.status})")
     return incident
 
 
@@ -906,9 +943,11 @@ def update_incident_status(record_id, new_status, resolution_notes=None, actual_
     if not incident or incident.deleted_at is not None:
         raise ValueError(f"Incident #{record_id} introuvable.")
 
-    valid_statuses = ("signale", "en_expertise", "en_reparation", "assurance", "resolu", "cloture")
+    valid_statuses = ("signale", "en_expertise",
+                      "en_reparation", "assurance", "resolu", "cloture")
     if new_status not in valid_statuses:
-        raise ValueError(f"Statut invalide : '{new_status}'. Statuts autorisés : {', '.join(valid_statuses)}")
+        raise ValueError(
+            f"Statut invalide : '{new_status}'. Statuts autorisés : {', '.join(valid_statuses)}")
 
     previous_status = incident.status
     incident.status = new_status
@@ -930,7 +969,8 @@ def update_incident_status(record_id, new_status, resolution_notes=None, actual_
         incident.resolved_at = None
 
     db.session.commit()
-    logger.info(f"🔄 Statut incident {incident.incident_number} mis à jour : {previous_status} ➔ {new_status}")
+    logger.info(
+        f"🔄 Statut incident {incident.incident_number} mis à jour : {previous_status} ➔ {new_status}")
     return incident
 
 
@@ -951,10 +991,12 @@ def delete_incident(record_id, confirm=True):
     # 1. Nettoyage des jetons d'invitation et documents signés archivés
     if incident_number:
         IncidentToken.query.filter_by(incident_id=incident.id).delete()
-        IncidentSignedDocument.query.filter_by(incident_number=incident_number).delete()
+        IncidentSignedDocument.query.filter_by(
+            incident_number=incident_number).delete()
 
     # 2. Notification n8n de la suppression (DELETE)
-    webhook_url = os.getenv("N8N_WEBHOOK_INCIDENT") or os.getenv("N8N_WEBHOOK_INCIDENT_SIGN")
+    webhook_url = os.getenv("N8N_WEBHOOK_INCIDENT") or os.getenv(
+        "N8N_WEBHOOK_INCIDENT_SIGN")
     if webhook_url and incident_number:
         try:
             from utils.n8n import trigger_n8n_webhook
@@ -967,7 +1009,8 @@ def delete_incident(record_id, confirm=True):
                 project=incident.project.name if incident.project else None,
             )
         except Exception as e:
-            logger.warning(f"⚠️ Erreur lors du déclenchement du webhook DELETE incident : {e}")
+            logger.warning(
+                f"⚠️ Erreur lors du déclenchement du webhook DELETE incident : {e}")
 
     # 3. Soft-delete de l'incident
     incident.deleted_at = _utcnow()
@@ -992,7 +1035,6 @@ def get_incident_form_context():
         .all()
     )
 
-
     # Utilisateurs de l'équipe
     users = User.query.order_by(User.lastname, User.firstname).all()
 
@@ -1011,7 +1053,8 @@ def get_incident_form_context():
         for v in Vehicle.query.all():
             vid = str(v.id)
             fields = v.fields or {}
-            name = fields.get("name") or fields.get("Nom") or getattr(v, "name", vid)
+            name = fields.get("name") or fields.get(
+                "Nom") or getattr(v, "name", vid)
             if vid not in vehicle_map:
                 vehicle_map[vid] = {"id": vid, "name": name}
     except Exception:
@@ -1034,7 +1077,8 @@ def get_incident_form_context():
         # Véhicules assignés à ce projet
         p_veh_ids = []
         if p.vehicles_to_check:
-            p_veh_ids.extend([v.strip() for v in p.vehicles_to_check.split(",") if v.strip()])
+            p_veh_ids.extend(
+                [v.strip() for v in p.vehicles_to_check.split(",") if v.strip()])
         if hasattr(p, "checkout_vehicles") and p.checkout_vehicles:
             for cv in p.checkout_vehicles:
                 if getattr(cv, "deleted_at", None) is None and cv.vehicle_id and str(cv.vehicle_id) not in p_veh_ids:
@@ -1051,7 +1095,8 @@ def get_incident_form_context():
         # Têtes assignées à ce projet
         p_head_ids = []
         if p.heads_to_check:
-            p_head_ids.extend([h.strip() for h in p.heads_to_check.split(",") if h.strip()])
+            p_head_ids.extend([h.strip()
+                              for h in p.heads_to_check.split(",") if h.strip()])
 
         p_heads = []
         for hid in p_head_ids:
@@ -1111,7 +1156,8 @@ def sign_incident_bv(incident_id, signer_name, signer_role, signature_data, ip_a
     """
     Enregistre le visa et la signature manuscrite de Belle Vitesse pour un incident.
     """
-    inc = db.session.get(Incident, int(incident_id)) if isinstance(incident_id, int) or (isinstance(incident_id, str) and incident_id.isdigit()) else Incident.query.filter_by(incident_number=str(incident_id)).first()
+    inc = db.session.get(Incident, int(incident_id)) if isinstance(incident_id, int) or (isinstance(
+        incident_id, str) and incident_id.isdigit()) else Incident.query.filter_by(incident_number=str(incident_id)).first()
     if not inc or inc.deleted_at is not None:
         raise ValueError(f"Incident #{incident_id} introuvable.")
 
@@ -1133,7 +1179,8 @@ def sign_incident_bv(incident_id, signer_name, signer_role, signature_data, ip_a
         raise ValueError("Le tracé de signature est requis.")
 
     inc.bv_signer_name = str(signer_name).strip()
-    inc.bv_signer_role = str(signer_role).strip() if signer_role else "Responsable Technique Belle Vitesse"
+    inc.bv_signer_role = str(signer_role).strip(
+    ) if signer_role else "Responsable Technique Belle Vitesse"
     inc.bv_signature_data = str(signature_data).strip()
     inc.bv_signed_at = datetime.now(timezone.utc)
     inc.bv_signer_ip = ip_address or "127.0.0.1"
@@ -1148,9 +1195,11 @@ def sign_incident_bv(incident_id, signer_name, signer_role, signature_data, ip_a
             for tok in tokens:
                 if tok.recipient_email:
                     from utils.mailer import send_incident_signed_confirmation_email
-                    send_incident_signed_confirmation_email(inc, tok.recipient_email, res.get("file_path"))
+                    send_incident_signed_confirmation_email(
+                        inc, tok.recipient_email, res.get("file_path"))
         except Exception as mail_err:
-            logger.warning(f"⚠️ Échec notification email post-visa BV : {mail_err}")
+            logger.warning(
+                f"⚠️ Échec notification email post-visa BV : {mail_err}")
     else:
         inc.signature_status = "signed_bv"
         db.session.commit()
@@ -1174,7 +1223,8 @@ def sign_incident_prod(incident_id, signer_name, signer_role, signature_data, ip
     Enregistre le visa et la signature manuscrite de la Production (sur place ou via token).
     Déclenche le scellement contradictoire final UNIQUEMENT si Belle Vitesse a déjà signé.
     """
-    inc = db.session.get(Incident, int(incident_id)) if isinstance(incident_id, int) or (isinstance(incident_id, str) and incident_id.isdigit()) else Incident.query.filter_by(incident_number=str(incident_id)).first()
+    inc = db.session.get(Incident, int(incident_id)) if isinstance(incident_id, int) or (isinstance(
+        incident_id, str) and incident_id.isdigit()) else Incident.query.filter_by(incident_number=str(incident_id)).first()
     if not inc or inc.deleted_at is not None:
         raise ValueError(f"Incident #{incident_id} introuvable.")
 
@@ -1196,7 +1246,8 @@ def sign_incident_prod(incident_id, signer_name, signer_role, signature_data, ip
         raise ValueError("Le tracé de signature est requis.")
 
     inc.prod_signer_name = str(signer_name).strip()
-    inc.prod_signer_role = str(signer_role).strip() if signer_role else "Représentant Production"
+    inc.prod_signer_role = str(signer_role).strip(
+    ) if signer_role else "Représentant Production"
     inc.prod_signature_data = str(signature_data).strip()
     inc.prod_signed_at = datetime.now(timezone.utc)
     inc.prod_signer_ip = ip_address or "127.0.0.1"
@@ -1232,7 +1283,8 @@ def generate_incident_token(incident_id, recipient_email=None):
     """
     Génère un jeton sécurisé temporaire (48h) pour la signature distante par la Production.
     """
-    inc = db.session.get(Incident, int(incident_id)) if isinstance(incident_id, int) or (isinstance(incident_id, str) and incident_id.isdigit()) else Incident.query.filter_by(incident_number=str(incident_id)).first()
+    inc = db.session.get(Incident, int(incident_id)) if isinstance(incident_id, int) or (isinstance(
+        incident_id, str) and incident_id.isdigit()) else Incident.query.filter_by(incident_number=str(incident_id)).first()
     if not inc or inc.deleted_at is not None:
         raise ValueError(f"Incident #{incident_id} introuvable.")
 
@@ -1253,7 +1305,8 @@ def generate_incident_token(incident_id, recipient_email=None):
 
     db.session.commit()
 
-    base_url = current_app.config.get("APP_BASE_URL", "https://bellevitesse.com").rstrip("/")
+    base_url = current_app.config.get(
+        "APP_BASE_URL", "https://bellevitesse.com").rstrip("/")
     try:
         from flask import request
         if request:
@@ -1268,10 +1321,12 @@ def generate_incident_token(incident_id, recipient_email=None):
     if recipient_email:
         try:
             from utils.mailer import send_incident_signature_request_email
-            send_incident_signature_request_email(inc, recipient_email.strip(), signing_url)
+            send_incident_signature_request_email(
+                inc, recipient_email.strip(), signing_url)
             email_sent = True
         except Exception as mail_err:
-            logger.warning(f"⚠️ Échec d'envoi de l'invitation email pour l'incident {inc.incident_number}: {mail_err}")
+            logger.warning(
+                f"⚠️ Échec d'envoi de l'invitation email pour l'incident {inc.incident_number}: {mail_err}")
 
     return {
         "success": True,
@@ -1323,7 +1378,8 @@ def finalize_incident_document(incident, base_url=None):
             if request:
                 base_url = request.host_url.rstrip("/")
         except Exception:
-            base_url = current_app.config.get("APP_BASE_URL", "https://bellevitesse.com").rstrip("/")
+            base_url = current_app.config.get(
+                "APP_BASE_URL", "https://bellevitesse.com").rstrip("/")
 
     verification_url = f"{base_url}/incidents/verify/{incident.incident_number}"
     qr_code_img = generate_qr_code(verification_url)
@@ -1370,11 +1426,13 @@ def finalize_incident_document(incident, base_url=None):
     pdf_bytes = render_pdf_from_template(
         html_content=html,
         base_url=current_app.root_path,
-        stylesheets=["css/styles.css", "css/checkout.css", "css/incident_pdf.css"],
+        stylesheets=["css/styles.css",
+                     "css/checkout.css", "css/incident_pdf.css"],
         filename=filename,
     )
 
-    output_base = current_app.config.get("OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
+    output_base = current_app.config.get(
+        "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
     rel_pdf_path = os.path.relpath(file_path, output_base)
 
     with open(file_path, "wb") as f:
@@ -1391,11 +1449,13 @@ def finalize_incident_document(incident, base_url=None):
     # si l'incident est encore au statut "signale", il passe automatiquement en "en_expertise"
     if incident.status == "signale":
         incident.status = "en_expertise"
-        logger.info(f"⚡ Statut de l'incident {incident.incident_number} passé automatiquement à 'en_expertise' suite au scellement contradictoire.")
+        logger.info(
+            f"⚡ Statut de l'incident {incident.incident_number} passé automatiquement à 'en_expertise' suite au scellement contradictoire.")
 
     # Enregistrement ou mise à jour de l'archive légale
     try:
-        signed_doc = IncidentSignedDocument.query.filter_by(incident_number=incident.incident_number).first()
+        signed_doc = IncidentSignedDocument.query.filter_by(
+            incident_number=incident.incident_number).first()
         if not signed_doc:
             signed_doc = IncidentSignedDocument(
                 incident_number=incident.incident_number,
@@ -1405,7 +1465,8 @@ def finalize_incident_document(incident, base_url=None):
                 data_snapshot=incident.to_dict(),
                 signature=incident.prod_signature_data or incident.bv_signature_data,
                 pdf_url=f"/incidents/document/{rel_pdf_path}",
-                signed_at=(incident.prod_signed_at or _utcnow()).replace(tzinfo=None)
+                signed_at=(incident.prod_signed_at or _utcnow()
+                           ).replace(tzinfo=None)
             )
             db.session.add(signed_doc)
         else:
@@ -1415,13 +1476,16 @@ def finalize_incident_document(incident, base_url=None):
             signed_doc.data_snapshot = incident.to_dict()
             signed_doc.signature = incident.prod_signature_data or incident.bv_signature_data
             signed_doc.pdf_url = f"/incidents/document/{rel_pdf_path}"
-            signed_doc.signed_at = (incident.prod_signed_at or _utcnow()).replace(tzinfo=None)
+            signed_doc.signed_at = (
+                incident.prod_signed_at or _utcnow()).replace(tzinfo=None)
 
         db.session.commit()
     except IntegrityError as commit_err:
-        logger.warning(f"⚠️ Archive légale déjà présente pour {incident.incident_number} ({commit_err}), mise à jour de l'existant...")
+        logger.warning(
+            f"⚠️ Archive légale déjà présente pour {incident.incident_number} ({commit_err}), mise à jour de l'existant...")
         db.session.rollback()
-        existing_doc = IncidentSignedDocument.query.filter_by(incident_number=incident.incident_number).first()
+        existing_doc = IncidentSignedDocument.query.filter_by(
+            incident_number=incident.incident_number).first()
         if existing_doc:
             existing_doc.incident_id = incident.id
             existing_doc.hash = current_hash
@@ -1429,13 +1493,15 @@ def finalize_incident_document(incident, base_url=None):
             existing_doc.data_snapshot = incident.to_dict()
             existing_doc.signature = incident.prod_signature_data or incident.bv_signature_data
             existing_doc.pdf_url = f"/incidents/document/{rel_pdf_path}"
-            existing_doc.signed_at = (incident.prod_signed_at or _utcnow()).replace(tzinfo=None)
+            existing_doc.signed_at = (
+                incident.prod_signed_at or _utcnow()).replace(tzinfo=None)
             db.session.commit()
         else:
             raise commit_err
 
     # 6. Webhook n8n (POST)
-    webhook_url = os.getenv("N8N_WEBHOOK_INCIDENT") or os.getenv("N8N_WEBHOOK_INCIDENT_SIGN")
+    webhook_url = os.getenv("N8N_WEBHOOK_INCIDENT") or os.getenv(
+        "N8N_WEBHOOK_INCIDENT_SIGN")
     if webhook_url:
         project_obj = incident.project
         project_id_unique = "—"
@@ -1453,7 +1519,8 @@ def finalize_incident_document(incident, base_url=None):
         else:
             project_date_obj = datetime.utcnow()
 
-        project_date_str = project_date_obj.strftime("%Y-%m-%d") if hasattr(project_date_obj, "strftime") else str(project_date_obj)
+        project_date_str = project_date_obj.strftime(
+            "%Y-%m-%d") if hasattr(project_date_obj, "strftime") else str(project_date_obj)
         year_str = project_date_obj.strftime("%Y")
         month_str = project_date_obj.strftime("%m")
 
@@ -1539,7 +1606,8 @@ def generate_incident_pdf(record_id):
     """
     incident_data = get_incident_detail(record_id)
     if not incident_data:
-        raise ValueError(f"Incident #{record_id} introuvable pour la génération PDF.")
+        raise ValueError(
+            f"Incident #{record_id} introuvable pour la génération PDF.")
 
     company_address = "128 Rue La Boétie, 75008 Paris"
     try:
@@ -1548,12 +1616,15 @@ def generate_incident_pdf(record_id):
     except Exception:
         pass
 
-    is_sealed = incident_data.get("is_fully_signed", False) or incident_data.get("signature_status") == "signed"
+    is_sealed = incident_data.get("is_fully_signed", False) or incident_data.get(
+        "signature_status") == "signed"
 
     # Si le document est scellé et que le PDF signé existe sur le disque, servir l'exemplaire scellé original
     if is_sealed and incident_data.get("signed_pdf_path"):
-        output_base = current_app.config.get("OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
-        sealed_file_path = os.path.join(output_base, incident_data["signed_pdf_path"])
+        output_base = current_app.config.get(
+            "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
+        sealed_file_path = os.path.join(
+            output_base, incident_data["signed_pdf_path"])
         if os.path.exists(sealed_file_path):
             with open(sealed_file_path, "rb") as f:
                 return f.read(), os.path.basename(sealed_file_path)
@@ -1561,7 +1632,8 @@ def generate_incident_pdf(record_id):
     qr_code_img = None
     verification_url = None
     if is_sealed and incident_data.get("hash"):
-        base_url = current_app.config.get("APP_BASE_URL", "https://bellevitesse.com").rstrip("/")
+        base_url = current_app.config.get(
+            "APP_BASE_URL", "https://bellevitesse.com").rstrip("/")
         try:
             from flask import request
             if request:
@@ -1581,14 +1653,16 @@ def generate_incident_pdf(record_id):
         qr=qr_code_img,
         hash=incident_data.get("hash"),
         verification_url=verification_url,
-        signed_at_str=incident_data.get("prod_signed_at") or _format_date(date.today()),
+        signed_at_str=incident_data.get(
+            "prod_signed_at") or _format_date(date.today()),
     )
 
     filename = f"Belle_Vitesse_INCIDENT_{incident_data['incident_number']}.pdf"
     pdf_bytes = render_pdf_from_template(
         html_content=html,
         base_url=current_app.root_path,
-        stylesheets=["css/styles.css", "css/checkout.css", "css/incident_pdf.css"],
+        stylesheets=["css/styles.css",
+                     "css/checkout.css", "css/incident_pdf.css"],
         filename=filename,
     )
 
@@ -1604,7 +1678,8 @@ def _save_uploaded_files(file_list, subfolder="photos"):
     if not file_list:
         return []
 
-    output_base = Path(os.getenv("OUTPUT_FOLDER", Path(current_app.root_path) / "output"))
+    output_base = Path(
+        os.getenv("OUTPUT_FOLDER", Path(current_app.root_path) / "output"))
     dest_dir = output_base / "incidents" / subfolder
     dest_dir.mkdir(parents=True, exist_ok=True)
 
@@ -1629,6 +1704,7 @@ def _save_uploaded_files(file_list, subfolder="photos"):
             rel_path = os.path.relpath(target_path, output_base)
             saved_paths.append(rel_path)
         except Exception as err:
-            logger.error(f"Erreur lors de la sauvegarde du fichier {original_name} : {err}")
+            logger.error(
+                f"Erreur lors de la sauvegarde du fichier {original_name} : {err}")
 
     return saved_paths

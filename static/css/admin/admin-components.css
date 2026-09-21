@@ -78,7 +78,8 @@
 
 /* ── Boutons de filtrage / Filter Pills & Icônes Boutons ── */
 .admin-btn .lucide,
-.filter-pill .lucide {
+.filter-pill .lucide,
+.badge-pill .lucide {
     width: 13px;
     height: 13px;
     vertical-align: -2px;
@@ -263,6 +264,22 @@
 .badge-pill:after {
     content: "";
     margin-left: 0.5ch;
+}
+
+.incident-signature-subline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.7rem;
+    color: var(--grey-text, #64748b);
+    margin-top: 0.2rem;
+}
+
+.incident-signature-subline .lucide {
+    width: 11px;
+    height: 11px;
+    vertical-align: -1px;
+    stroke-width: 2.5px;
 }
 
 /* --- Global Statuses (Design System Tokens) --- */
