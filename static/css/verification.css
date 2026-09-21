@@ -1,0 +1,218 @@
+/* ==========================================================================
+   verification.css — Styles pour les pages de vérification contradictoire (Belle Vitesse)
+   Strictement sans style inline, conforme au Design System
+   ========================================================================== */
+
+.verify-seal-banner {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.verify-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.625rem 1.5rem;
+    border-radius: 9999px;
+    letter-spacing: 0.01em;
+}
+
+.verify-badge--ok {
+    background-color: var(--status-success, #10b981);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+}
+
+.verify-badge--critical {
+    background-color: var(--status-danger, #ef4444);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+}
+
+.verify-badge--warning {
+    background-color: var(--status-warning, #f59e0b);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+}
+
+.verify-hint-text {
+    font-size: 0.75rem;
+    color: var(--grey-2, #64748b);
+    margin-top: 0.75rem;
+    max-width: 440px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    line-height: 1.5;
+}
+
+.verify-error-box {
+    background: var(--u-bg-danger-light, #fee2e2);
+    color: var(--u-text-danger, #991b1b);
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* Empreintes cryptographiques */
+.verify-crypto-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 1.5rem;
+    border-radius: 6px;
+}
+
+.verify-crypto-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.verify-crypto-code {
+    display: block;
+    word-break: break-all;
+    font-size: 0.8rem;
+    color: #1e293b;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    background: #ffffff;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+}
+
+/* Upload et drag-and-drop */
+.verify-upload-container {
+    margin-top: 3rem;
+}
+
+.verify-upload-area {
+    border: 2px dashed #cbd5e1;
+    border-radius: 6px;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    transition: border-color 0.2s, background-color 0.2s;
+    margin-bottom: 1.25rem;
+    cursor: pointer;
+    background-color: #fafbfc;
+}
+
+.verify-upload-area:hover {
+    border-color: var(--status-success, #10b981);
+    background-color: rgba(16, 185, 129, 0.03);
+}
+
+.verify-upload-area.is-active {
+    border-color: var(--status-success, #10b981);
+    background-color: rgba(16, 185, 129, 0.06);
+}
+
+.verify-upload-icon {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.verify-upload-hint {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin: 0;
+}
+
+.verify-upload-hint strong {
+    color: #0f172a;
+}
+
+.verify-upload-filename {
+    display: none;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--status-success, #10b981);
+    font-weight: 600;
+}
+
+.verify-upload-btn {
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.verify-upload-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.verify-upload-disclaimer {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    text-align: center;
+    margin-top: 1rem;
+}
+
+/* Signatures contradictoires */
+.verify-signature-item {
+    flex: 1;
+}
+
+.verify-signer-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--grey-1);
+}
+
+.verify-signer-role {
+    font-size: 0.75rem;
+    color: var(--grey-2);
+    margin-top: 2px;
+}
+
+.verify-signed-at {
+    font-size: 0.75rem;
+    color: var(--status-success, #10b981);
+    margin-top: 4px;
+}
+
+/* Constatations & dividers */
+.verify-section-divider {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--white-3);
+}
+
+.verify-notes-content {
+    margin-top: 0.5rem;
+    white-space: pre-wrap;
+}
+
+/* Notice pour anciens documents sans hash PDF */
+.verify-old-notice {
+    background: var(--white-3);
+    padding: 1.25rem 1.5rem;
+    border-radius: 4px;
+}
+
+.verify-old-notice p {
+    font-size: 0.8rem;
+    color: var(--grey-2);
+    line-height: 1.6;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.verify-footer {
+    margin-top: 4rem;
+}
+

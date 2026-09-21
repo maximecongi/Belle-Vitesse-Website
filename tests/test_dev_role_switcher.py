@@ -155,6 +155,32 @@ class DevRoleSwitcherTestCase(unittest.TestCase):
         self.assertEqual(resp_up.status_code, 302)
         self.assertIn("/admin/dashboard", resp_up.location)
 
+    def test_technicien_cannot_see_or_access_waivers(self):
+        """Technicien role should not see waiver links in sidebar nav and should be forbidden on waivers."""
+        self._login()
+        self.app.config["FLASK_ENV"] = "development"
+
+        # Switch to Technicien
+        self.client.post("/admin/dev/switch-role", data={"role": "Technicien"})
+
+        # Dashboard sidebar check: 'Décharge Production' and 'Décharge Pilote' should NOT be present
+        resp_dash = self.client.get("/admin/dashboard")
+        self.assertEqual(resp_dash.status_code, 200)
+        dash_html = resp_dash.data.decode("utf-8")
+        self.assertNotIn("Décharge Production", dash_html)
+        self.assertNotIn("Décharge Pilote", dash_html)
+        self.assertIn("Checkouts", dash_html)
+
+        # Accessing /admin/waivers/pilots directly should redirect to dashboard
+        resp_pilots = self.client.get("/admin/waivers/pilots", follow_redirects=False)
+        self.assertEqual(resp_pilots.status_code, 302)
+        self.assertIn("/admin/dashboard", resp_pilots.location)
+
+        # Accessing /admin/waivers/productions directly should redirect to dashboard
+        resp_prods = self.client.get("/admin/waivers/productions", follow_redirects=False)
+        self.assertEqual(resp_prods.status_code, 302)
+        self.assertIn("/admin/dashboard", resp_prods.location)
+
     def test_docs_restricted_to_admin_and_super_admin(self):
         """Technical and API docs should only be accessible/visible to Administrator and Super Administrator."""
         self._login()

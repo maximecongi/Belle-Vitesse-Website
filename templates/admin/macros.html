@@ -1,72 +1,73 @@
 {% macro status_badge(status, status_id=None, icon=None, class_name='') %}
 {% set label_map = {
-    'to_check': 'À contrôler',
-    'to_generate': 'À générer',
-    'to_sign': 'À signer',
-    'to_send': 'À envoyer',
-    'pending': 'À signer',
-    'signed': 'Signé',
-    'in_progress': 'En cours',
-    'waiting': 'En attente'
+'to_check': 'À contrôler',
+'to_generate': 'À générer',
+'to_sign': 'À signer',
+'to_send': 'À envoyer',
+'pending': 'À signer',
+'signed': 'Signé',
+'in_progress': 'En cours',
+'waiting': 'En attente'
 } %}
 {% set s_raw = (status or '')|string|trim %}
 {% set display_status = label_map.get(s_raw|lower, s_raw) %}
 {% set sid = (status_id or s_raw or '')|lower|trim %}
 {% set icon_map = {
-    'to_send': 'send',
-    'à envoyer': 'send',
-    'a envoyer': 'send',
-    'envoyé': 'send',
-    'envoye': 'send',
-    'to_sign': 'signature',
-    'pending': 'signature',
-    'à signer': 'signature',
-    'a signer': 'signature',
-    'to_generate': 'refresh-cw',
-    'à générer': 'refresh-cw',
-    'a générer': 'refresh-cw',
-    'non générée': 'refresh-cw',
-    'non généré': 'refresh-cw',
-    'non_genere': 'refresh-cw',
-    'non configuré': 'refresh-cw',
-    'non configure': 'refresh-cw',
-    'signed': 'check-circle',
-    'signé': 'check-circle',
-    'signe': 'check-circle',
-    'ok': 'check-circle',
-    'approved': 'check-circle',
-    'approuvé': 'check-circle',
-    'completed': 'check-circle',
-    'resolu': 'check-circle',
-    'résolu': 'check-circle',
-    'cloture': 'lock',
-    'clôturé': 'lock',
-    'waiting': 'clock',
-    'en attente': 'clock',
-    'in_progress': 'clock',
-    'en cours': 'clock',
-    'to_check': 'search',
-    'à contrôler': 'search',
-    'a controler': 'search',
-    'warning': 'alert-triangle',
-    'à vérifier': 'alert-triangle',
-    'modéré': 'alert-triangle',
-    'modere': 'alert-triangle',
-    'critical': 'alert-octagon',
-    'critique': 'alert-octagon',
-    'danger': 'alert-octagon',
-    'défaut': 'alert-octagon',
-    'defaut': 'alert-octagon',
-    'upcoming': 'calendar',
-    'à venir': 'calendar'
+'to_send': 'send',
+'à envoyer': 'send',
+'a envoyer': 'send',
+'envoyé': 'send',
+'envoye': 'send',
+'to_sign': 'signature',
+'pending': 'signature',
+'à signer': 'signature',
+'a signer': 'signature',
+'to_generate': 'refresh-cw',
+'à générer': 'refresh-cw',
+'a générer': 'refresh-cw',
+'non générée': 'refresh-cw',
+'non généré': 'refresh-cw',
+'non_genere': 'refresh-cw',
+'non configuré': 'refresh-cw',
+'non configure': 'refresh-cw',
+'signed': 'check-circle',
+'signé': 'check-circle',
+'signe': 'check-circle',
+'ok': 'check-circle',
+'approved': 'check-circle',
+'approuvé': 'check-circle',
+'completed': 'check-circle',
+'resolu': 'check-circle',
+'résolu': 'check-circle',
+'cloture': 'lock',
+'clôturé': 'lock',
+'waiting': 'clock',
+'en attente': 'clock',
+'in_progress': 'clock',
+'en cours': 'clock',
+'to_check': 'search',
+'à contrôler': 'search',
+'a controler': 'search',
+'warning': 'alert-triangle',
+'à vérifier': 'alert-triangle',
+'modéré': 'alert-triangle',
+'modere': 'alert-triangle',
+'critical': 'alert-octagon',
+'critique': 'alert-octagon',
+'danger': 'alert-octagon',
+'défaut': 'alert-octagon',
+'defaut': 'alert-octagon',
+'upcoming': 'calendar',
+'à venir': 'calendar'
 } %}
 {% set determined_icon = icon or icon_map.get(sid) or icon_map.get(s_raw|lower) or icon_map.get(display_status|lower) %}
-<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="{{ status_id or s_raw }}" {{ kwargs | xmlattr }}>
-    {%- if determined_icon and '<svg' not in display_status and '<i ' not in display_status -%}
-    <i data-lucide="{{ determined_icon }}"></i> {{ display_status }}
-    {%- else -%}
-    {{ display_status }}
-    {%- endif -%}
+<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="{{ status_id or s_raw }}" {{ kwargs |
+    xmlattr }}>
+    {%- if determined_icon and '<svg' not in display_status and '<i ' not in display_status -%} <i
+        data-lucide="{{ determined_icon }}"></i> {{ display_status }}
+        {%- else -%}
+        {{ display_status }}
+        {%- endif -%}
 </span>
 {% endmacro %}
 
@@ -106,11 +107,14 @@
 {% macro incident_severity_badge(severity, label=None) %}
 {% set s = (severity or 'mineur')|lower %}
 {% if s == 'critique' %}
-<span class="badge-pill" data-val="critique"><i data-lucide="alert-octagon"></i> {{ 'Critique' if (not label or label|lower == 'critique') else label }}</span>
+<span class="badge-pill" data-val="critique"><i data-lucide="alert-octagon"></i> {{ 'Critique' if (not label or
+    label|lower == 'critique') else label }}</span>
 {% elif s in ('modere', 'modéré') %}
-<span class="badge-pill" data-val="warning"><i data-lucide="alert-triangle"></i> {{ 'Modéré' if (not label or label|lower in ('modere', 'modéré')) else label }}</span>
+<span class="badge-pill" data-val="warning"><i data-lucide="alert-triangle"></i> {{ 'Modéré' if (not label or
+    label|lower in ('modere', 'modéré')) else label }}</span>
 {% else %}
-<span class="badge-pill" data-val="neutral"><i data-lucide="info"></i> {{ 'Mineur' if (not label or label|lower == 'mineur') else label }}</span>
+<span class="badge-pill" data-val="neutral"><i data-lucide="info"></i> {{ 'Mineur' if (not label or label|lower ==
+    'mineur') else label }}</span>
 {% endif %}
 {% endmacro %}
 
@@ -136,9 +140,10 @@
 {% if imp in ('annulation', 'arret') %}
 <span class="badge-pill" data-val="critique"><i data-lucide="ban"></i> {{ label or 'Annulation de session' }}</span>
 {% elif imp == 'interruption' %}
-<span class="badge-pill" data-val="in_progress"><i data-lucide="pause-circle"></i> {{ label or 'Interruption temporaire' }}</span>
+<span class="badge-pill" data-val="in_progress"><i data-lucide="pause-circle"></i> {{ label or 'Interruption temporaire'
+    }}</span>
 {% elif imp == 'retard' %}
-<span class="badge-pill" data-val="warning"><i data-lucide="clock"></i> {{ label or 'Retard sur planning' }}</span>
+<span class="badge-pill" data-val="to_sign"><i data-lucide="clock"></i> {{ label or 'Retard sur planning' }}</span>
 {% else %}
 <span class="badge-pill" data-val="ok"><i data-lucide="check-circle"></i> {{ label or 'Aucun impact' }}</span>
 {% endif %}
@@ -146,20 +151,34 @@
 
 {% macro incident_signature_badge(incident, compact=false) %}
 {% if incident.is_fully_signed or incident.signature_status == 'signed' %}
-<span class="badge-pill" data-val="ok"><i data-lucide="shield-check"></i> {{ 'Scellé 2/2' if compact else 'Scellé contradictoirement' }}</span>
-{% if compact %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="check" class="u-text-success"></i> &bull; <span>Prod</span> <i data-lucide="check" class="u-text-success"></i></div>{% endif %}
+<span class="badge-pill" data-val="ok"><i data-lucide="shield-check"></i> {{ 'Scellé 2/2' if compact else 'Scellé
+    contradictoirement' }}</span>
+{% if compact %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="check"
+        class="u-text-success"></i> &bull; <span>Prod</span> <i data-lucide="check" class="u-text-success"></i></div>{%
+endif %}
 {% elif incident.signature_status == 'signed_bv' %}
-<span class="badge-pill" data-val="warning"><i data-lucide="signature"></i> {{ 'Visé BV 1/2' if compact else 'Visé BV — En attente Production' }}</span>
-{% if compact %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="check" class="u-text-success"></i> &bull; <span>Prod</span> <i data-lucide="clock"></i></div>{% endif %}
+<span class="badge-pill" data-val="to_sign"><i data-lucide="signature"></i> {{ 'Visé BV 1/2' if compact else 'Visé BV —
+    En attente Production' }}</span>
+{% if compact %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="check"
+        class="u-text-success"></i> &bull; <span>Prod</span> <i data-lucide="clock"></i></div>{% endif %}
 {% elif incident.signature_status == 'signed_prod' %}
-<span class="badge-pill" data-val="warning"><i data-lucide="signature"></i> {{ 'Signé Prod 1/2' if compact else 'Signé Prod — En attente visa BV' }}</span>
-{% if compact %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="clock"></i> &bull; <span>Prod</span> <i data-lucide="check" class="u-text-success"></i></div>{% endif %}
+<span class="badge-pill" data-val="to_sign"><i data-lucide="signature"></i> {{ 'Signé Prod 1/2' if compact else 'Signé
+    Prod — En attente visa BV' }}</span>
+{% if compact %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="clock"></i> &bull;
+    <span>Prod</span> <i data-lucide="check" class="u-text-success"></i>
+</div>{% endif %}
 {% elif incident.signature_status == 'pending_prod' %}
-<span class="badge-pill" data-val="in_progress"><i data-lucide="mail"></i> {{ 'Invité 0/2' if compact else 'Invitation envoyée à la Production' }}</span>
-{% if compact %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="clock"></i> &bull; <span>Prod</span> <i data-lucide="mail"></i></div>{% endif %}
+<span class="badge-pill" data-val="in_progress"><i data-lucide="mail"></i> {{ 'Invité 0/2' if compact else 'Invitation
+    envoyée à la Production' }}</span>
+{% if compact %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="clock"></i> &bull;
+    <span>Prod</span> <i data-lucide="mail"></i>
+</div>{% endif %}
 {% else %}
-<span class="badge-pill" data-val="neutral"><i data-lucide="file-text"></i> {{ 'Non signé' if compact else 'En attente de signatures' }}</span>
-{% if compact %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="clock"></i> &bull; <span>Prod</span> <i data-lucide="clock"></i></div>{% endif %}
+<span class="badge-pill" data-val="neutral"><i data-lucide="file-text"></i> {{ 'Non signé' if compact else 'En attente
+    de signatures' }}</span>
+{% if compact %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="clock"></i> &bull;
+    <span>Prod</span> <i data-lucide="clock"></i>
+</div>{% endif %}
 {% endif %}
 {% endmacro %}
 
@@ -231,28 +250,31 @@ severity_label|lower == 'critique' else ('Mineur' if severity_label|lower == 'mi
 {% endif %}
 {% endmacro %}
 
-{# ── MACROS ÉQUIPEMENTS & EMOJIS (VÉHICULES 🏎️, TÊTES 🤖, ACCESSOIRES 📦) ── #}
+{# ── MACROS ÉQUIPEMENTS (VÉHICULES, TÊTES, ACCESSOIRES) ── #}
 
 {% macro equipment_icon(name) %}
 {%- set n = (name or '')|lower|trim -%}
-{%- if 'ebike' in n or 'ecar' in n or 'etrike' in n or 'segway' in n or 'rickshaw' in n or 'véhicule' in n or 'vehicule' in n or 'mercedes' in n or 'voiture' in n or 'camion' in n or 'quad' in n or 'moto' in n -%}
-🏎️
-{%- elif 'inertia' in n or 'wheel' in n or 'easyrig' in n or 'bras' in n or 'arm' in n or 'isolator' in n or 'magnet' in n or 'small hd' in n or 'cine' in n or 'moniteur' in n or 'teradek' in n or 'follow focus' in n -%}
-📦
-{%- elif 'ronin' in n or 'titan' in n or 'nodo torq' in n or 'movi' in n or 'mōvi' in n or 'rs4' in n or 'rs3' in n or 'rs2' in n or 'tete' in n or 'tête' in n or 'shotover' in n or 'flight' in n or 'matrix' in n or 'gyro' in n -%}
-🤖
+{%- if 'ebike' in n or 'ecar' in n or 'etrike' in n or 'segway' in n or 'rickshaw' in n or 'véhicule' in n or 'vehicule'
+in n or 'mercedes' in n or 'voiture' in n or 'camion' in n or 'quad' in n or 'moto' in n -%}
+<i data-lucide="car"></i>
+{%- elif 'ronin' in n or 'titan' in n or 'nodo torq' in n or 'movi' in n or 'mōvi' in n or 'rs4' in n or 'rs3' in n or
+'rs2' in n or 'tete' in n or 'tête' in n or 'shotover' in n or 'flight' in n or 'matrix' in n or 'gyro' in n -%}
+<i data-lucide="bot"></i>
 {%- else -%}
-📦
+<i data-lucide="package"></i>
 {%- endif -%}
 {% endmacro %}
 
 {% macro equipment_tag_class(name) %}
 {%- set n = (name or '')|lower|trim -%}
-{%- if 'ebike' in n or 'ecar' in n or 'etrike' in n or 'segway' in n or 'rickshaw' in n or 'véhicule' in n or 'vehicule' in n or 'mercedes' in n or 'voiture' in n or 'camion' in n or 'quad' in n or 'moto' in n -%}
+{%- if 'ebike' in n or 'ecar' in n or 'etrike' in n or 'segway' in n or 'rickshaw' in n or 'véhicule' in n or 'vehicule'
+in n or 'mercedes' in n or 'voiture' in n or 'camion' in n or 'quad' in n or 'moto' in n -%}
 admin-multiselect-tag--vehicle
-{%- elif 'inertia' in n or 'wheel' in n or 'easyrig' in n or 'bras' in n or 'arm' in n or 'isolator' in n or 'magnet' in n or 'small hd' in n or 'cine' in n or 'moniteur' in n or 'teradek' in n or 'follow focus' in n -%}
+{%- elif 'inertia' in n or 'wheel' in n or 'easyrig' in n or 'bras' in n or 'arm' in n or 'isolator' in n or 'magnet' in
+n or 'small hd' in n or 'cine' in n or 'moniteur' in n or 'teradek' in n or 'follow focus' in n -%}
 admin-multiselect-tag--custom
-{%- elif 'ronin' in n or 'titan' in n or 'nodo torq' in n or 'movi' in n or 'mōvi' in n or 'rs4' in n or 'rs3' in n or 'rs2' in n or 'tete' in n or 'tête' in n or 'shotover' in n or 'flight' in n or 'matrix' in n or 'gyro' in n -%}
+{%- elif 'ronin' in n or 'titan' in n or 'nodo torq' in n or 'movi' in n or 'mōvi' in n or 'rs4' in n or 'rs3' in n or
+'rs2' in n or 'tete' in n or 'tête' in n or 'shotover' in n or 'flight' in n or 'matrix' in n or 'gyro' in n -%}
 admin-multiselect-tag--head
 {%- else -%}
 admin-multiselect-tag--custom
@@ -270,6 +292,59 @@ admin-multiselect-tag--custom
     {% if desc %}
     <div class="empty-state-desc">{{ desc }}</div>
     {% endif %}
+</div>
+{% endmacro %}
+
+{% macro doc_download_badge(pdf_url, title='Voir le document signé') %}
+{% if pdf_url %}
+<a href="{{ pdf_url }}" target="_blank" title="{{ title }}">
+    <i data-lucide="download" stroke-width="2.5" class="badge-pill" data-val="download-available"></i>
+</a>
+{% else %}
+<span class="disabled" title="Document indisponible">
+    <i data-lucide="download" stroke-width="2.5" class="badge-pill" data-val="download-unavailable"></i>
+</span>
+{% endif %}
+{% endmacro %}
+
+{% macro list_header_actions(placeholder="Rechercher...", new_url=None, new_label=None, is_archive=false) %}
+<div class="u-flex u-align-center u-gap-2">
+    <input type="text" id="searchInput" class="form-input u-w-250" placeholder="{{ placeholder }}" autocomplete="off">
+    {% if new_url and not is_archive %}
+    <a href="{{ new_url }}" class="admin-btn admin-btn-primary">{{ new_label or '+ Nouveau' }}</a>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro table_empty_row(colspan, message="Aucun résultat trouvé.", icon="inbox") %}
+<tr>
+    <td colspan="{{ colspan }}" class="u-text-center u-p-4 u-text-muted">
+        <div class="empty-state u-p-2">
+            <div class="empty-state-icon">
+                <i data-lucide="{{ icon }}"></i>
+            </div>
+            <div class="empty-state-title">{{ message }}</div>
+        </div>
+    </td>
+</tr>
+{% endmacro %}
+
+{% macro admin_modal(id, title=None, size='md') %}
+<div id="{{ id }}" class="admin-modal-overlay" role="dialog" aria-modal="true" aria-hidden="true" tabindex="-1">
+    <div class="admin-modal-container admin-modal-container--{{ size }}">
+        <div class="admin-modal-header u-flex u-justify-between u-align-center">
+            {% if title %}
+            <h3 class="admin-modal-title u-m-0">{{ title }}</h3>
+            {% else %}
+            <div></div>
+            {% endif %}
+            <button type="button" class="admin-modal-close" data-modal-close="{{ id }}"
+                aria-label="Fermer">&times;</button>
+        </div>
+        <div class="admin-modal-content admin-modal-body">
+            {{ caller() }}
+        </div>
+    </div>
 </div>
 {% endmacro %}
 
@@ -291,22 +366,12 @@ admin-multiselect-tag--custom
         <a href="{{ list_url }}">
             {{ status_badge(waiver.status, waiver.raw_status) }}
         </a>
-        {% if waiver.pdf_path %}
-        <a href="{{ waiver.pdf_path }}" target="_blank" title="Voir le document signé">
-            <i data-lucide="download" stroke-width="2.5" class="badge-pill" data-val="download-available"></i>
-        </a>
-        {% else %}
-        <span class="disabled" title="Document indisponible">
-            <i data-lucide="download" stroke-width="2.5" class="badge-pill" data-val="download-unavailable"></i>
-        </span>
-        {% endif %}
+        {{ doc_download_badge(waiver.pdf_path) }}
         {% else %}
         <a href="{{ new_url }}">
             {{ status_badge('À générer', 'to_generate') }}
         </a>
-        <span class="disabled" title="Document indisponible">
-            <i data-lucide="download" stroke-width="2.5" class="badge-pill" data-val="download-unavailable"></i>
-        </span>
+        {{ doc_download_badge(None) }}
         {% endif %}
     </div>
 </div>

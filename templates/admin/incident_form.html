@@ -178,12 +178,12 @@
                     {% else %}
                     {% if incident.vehicle %}
                     <span class="admin-multiselect-tag admin-multiselect-tag--sealed admin-multiselect-tag--vehicle">
-                        <span class="admin-multiselect-tag-icon">🏎️</span>
+                        <span class="admin-multiselect-tag-icon"><i data-lucide="car"></i></span>
                         <span class="admin-multiselect-tag-label">{{ incident.vehicle.name }}{% if incident.vehicle.unique_id %} ({{ incident.vehicle.unique_id }}){% endif %}</span>
                     </span>
                     {% elif incident.vehicle_name and incident.vehicle_name != '—' %}
                     <span class="admin-multiselect-tag admin-multiselect-tag--sealed admin-multiselect-tag--vehicle">
-                        <span class="admin-multiselect-tag-icon">🏎️</span>
+                        <span class="admin-multiselect-tag-icon"><i data-lucide="car"></i></span>
                         <span class="admin-multiselect-tag-label">{{ incident.vehicle_name }}</span>
                     </span>
                     {% endif %}
@@ -752,7 +752,7 @@
             const vName = cb.dataset.name || cb.value;
             tagsHtml += `
                 <span class="admin-multiselect-tag admin-multiselect-tag--vehicle">
-                    <span class="admin-multiselect-tag-icon">🏎️</span>
+                    <span class="admin-multiselect-tag-icon"><i data-lucide="car"></i></span>
                     <span class="admin-multiselect-tag-label" title="${escapeHtml(vName)}">${escapeHtml(vName)}</span>
                     <button type="button" class="admin-multiselect-tag-remove" data-action="remove-vehicle" data-id="${escapeHtml(vId)}" title="Désélectionner" aria-label="Désélectionner">&times;</button>
                 </span>
@@ -763,7 +763,7 @@
             const hName = cb.value;
             tagsHtml += `
                 <span class="admin-multiselect-tag admin-multiselect-tag--head">
-                    <span class="admin-multiselect-tag-icon">🤖</span>
+                    <span class="admin-multiselect-tag-icon"><i data-lucide="bot"></i></span>
                     <span class="admin-multiselect-tag-label" title="${escapeHtml(hName)}">${escapeHtml(hName)}</span>
                     <button type="button" class="admin-multiselect-tag-remove" data-action="remove-head" data-name="${escapeHtml(hName)}" title="Désélectionner" aria-label="Désélectionner">&times;</button>
                 </span>
@@ -773,7 +773,7 @@
         customEquipmentItems.forEach(item => {
             tagsHtml += `
                 <span class="admin-multiselect-tag admin-multiselect-tag--custom">
-                    <span class="admin-multiselect-tag-icon">📦</span>
+                    <span class="admin-multiselect-tag-icon"><i data-lucide="package"></i></span>
                     <span class="admin-multiselect-tag-label" title="${escapeHtml(item)}">${escapeHtml(item)}</span>
                     <button type="button" class="admin-multiselect-tag-remove" data-action="remove-custom-item" data-value="${escapeHtml(item)}" title="Désélectionner" aria-label="Désélectionner">&times;</button>
                 </span>
@@ -781,6 +781,9 @@
         });
 
         selectionContainer.innerHTML = tagsHtml;
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
 
         // Mise à jour de vehicle_id avec le premier véhicule sélectionné
         if (checkedVehicles.length > 0) {

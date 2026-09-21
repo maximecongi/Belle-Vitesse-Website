@@ -96,72 +96,8 @@
             </div>
 
             <nav class="admin-nav">
-                {# Résolution ultra-robuste du rôle utilisateur #}
-                {% set raw_role = (current_user.role_lower if current_user and current_user.role_lower is defined and
-                current_user.role_lower else (current_user.role if current_user and current_user.role is defined and
-                current_user.role else session.get('admin_user_role', '')))|string|lower|trim %}
-                {% if 'super' in raw_role %}
-                {% set user_role = 'super administrateur' %}
-                {% elif 'admin' in raw_role %}
-                {% set user_role = 'administrateur' %}
-                {% elif 'manager' in raw_role %}
-                {% set user_role = 'manager' %}
-                {% elif 'commercial' in raw_role %}
-                {% set user_role = 'commercial' %}
-                {% elif raw_role in ['technicien', 'user'] %}
-                {% set user_role = 'technicien' %}
-                {% elif current_user and current_user.is_admin %}
-                {% set user_role = 'super administrateur' %}
-                {% else %}
-                {% set user_role = 'super administrateur' if session.get('admin_user_role', '')|lower in ['super
-                administrator', 'super administrateur'] else ('administrateur' if session.get('admin_user_role',
-                '')|lower in ['administrator', 'administrateur'] else 'technicien') %}
-                {% endif %}
-
-                {# ── Permissions par rôle : chaque rôle liste les sections et items visibles ── #}
-                {% set role_permissions = {
-                'technicien': {'sections': ['dashboard','departs','retours','flotte','tools'],
-                'nav': ['dashboard','checkouts','production_waivers','pilot_waivers',
-                'checkins','incidents','fleet','signature']},
-                'user': {'sections': ['dashboard','departs','retours','flotte','tools'],
-                'nav': ['dashboard','checkouts','production_waivers','pilot_waivers',
-                'checkins','incidents','fleet','signature']},
-                'commercial': {'sections': ['dashboard','tournages','flotte','admin','tools'],
-                'nav': ['dashboard','projects','archives','booking',
-                'productions','contacts','fleet','pricing','catalog_pdf','mcp_connector',
-                'calendar','signature']},
-                'manager': {'sections': ['dashboard','tournages','departs','retours','flotte','admin','tools'],
-                'nav': ['dashboard','projects','archives','booking',
-                'productions','contacts','checkouts','production_waivers',
-                'pilot_waivers','checkins','incidents','fleet','users','pricing',
-                'catalog_pdf','mcp_connector','calendar','newsletter',
-                'signature','catalog_update']},
-                'administrateur': {'sections': ['dashboard','tournages','departs','retours','flotte','admin','tools'],
-                'nav': ['dashboard','projects','archives','booking',
-                'productions','contacts','checkouts','production_waivers',
-                'pilot_waivers','checkins','incidents','fleet','vehicles','checkpoints',
-                'users','pricing','catalog_pdf','mcp_connector','settings','calendar',
-                'newsletter','signature','docs','api_docs','catalog_update']},
-                'administrator': {'sections': ['dashboard','tournages','departs','retours','flotte','admin','tools'],
-                'nav': ['dashboard','projects','archives','booking',
-                'productions','contacts','checkouts','production_waivers',
-                'pilot_waivers','checkins','incidents','fleet','vehicles','checkpoints',
-                'users','pricing','catalog_pdf','mcp_connector','settings','calendar',
-                'newsletter','signature','docs','api_docs','catalog_update']},
-                'super administrateur': {'sections': ['all'], 'nav': ['all']},
-                'super administrator': {'sections': ['all'], 'nav': ['all']}
-                } %}
-
-                {% set perms = role_permissions.get(user_role, {'sections': ['all'], 'nav': ['all']} if (current_user
-                and current_user.is_admin) else role_permissions.get('technicien', {'sections': ['all'], 'nav':
-                ['all']})) %}
-
-                {% macro has_section(section) %}{{ 'all' in perms['sections'] or section in perms['sections'] }}{%
-                endmacro %}
-                {% macro has_item(item) %}{{ 'all' in perms['nav'] or item in perms['nav'] }}{% endmacro %}
-
                 {% macro nav_group(title, id_suffix, section, default_open=false) %}
-                {% if has_section(section)|trim == 'True' %}
+                {% if has_section(section) %}
                 <div class="admin-nav-group {% if default_open %}default-open{% endif %}"
                     data-nav-group="{{ id_suffix }}">
                     <div class="admin-nav-group-trigger">
@@ -176,7 +112,7 @@
                 {% endmacro %}
 
                 {% macro nav_item(href, title, item_key, target=none) %}
-                {% if has_item(item_key)|trim == 'True' %}
+                {% if has_item(item_key) %}
                 <a href="{{ href }}" class="admin-nav-item" {% if target %}target="{{ target }}" {% endif %}>
                     {{ title }} {% if href == "#"%} <span class="badge-pill" data-val="incoming"><i data-lucide="sparkles"></i> Bientôt</span>{% endif
                     %}

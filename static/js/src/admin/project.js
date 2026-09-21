@@ -65,14 +65,14 @@ function initVehiclesModal() {
                 if (iframe && !iframe.getAttribute('src') && iframe.dataset.src) {
                     iframe.setAttribute('src', iframe.dataset.src);
                 }
-                vehiclesModal.style.display = 'flex';
+                vehiclesModal.classList.add('is-active');
             });
         });
 
         if (closeVModalBtn && !closeVModalBtn._modalBound) {
             closeVModalBtn._modalBound = true;
             closeVModalBtn.addEventListener('click', () => {
-                vehiclesModal.style.display = 'none';
+                vehiclesModal.classList.remove('is-active');
             });
         }
 
@@ -80,7 +80,7 @@ function initVehiclesModal() {
             vehiclesModal._backdropBound = true;
             window.addEventListener('click', (event) => {
                 if (event.target === vehiclesModal) {
-                    vehiclesModal.style.display = 'none';
+                    vehiclesModal.classList.remove('is-active');
                 }
             });
         }

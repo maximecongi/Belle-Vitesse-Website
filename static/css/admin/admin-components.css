@@ -957,6 +957,10 @@ input[type="checkbox"]:checked {
     backdrop-filter: blur(4px);
 }
 
+.admin-modal-overlay.is-active {
+    display: flex;
+}
+
 .admin-modal-container {
     background: white;
     width: 95%;
@@ -968,6 +972,39 @@ input[type="checkbox"]:checked {
     display: flex;
     flex-direction: column;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.admin-modal-container--sm {
+    max-width: 480px;
+    height: auto;
+    max-height: 85vh;
+}
+
+.admin-modal-container--md {
+    max-width: 720px;
+    height: auto;
+    max-height: 85vh;
+}
+
+.admin-modal-container--lg {
+    max-width: 1000px;
+    height: auto;
+    max-height: 90vh;
+}
+
+.admin-modal-container--xl {
+    max-width: 1400px;
+    height: 90vh;
+}
+
+.admin-modal-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+.admin-modal-body {
+    padding: 1.5rem;
+    overflow-y: auto;
 }
 
 .admin-modal-close {

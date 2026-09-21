@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/' + type + '.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-components.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="{{ asset_url('js/src/common/signature-pad-controller.js') }}"></script>
     <script src="{{ url_for('static', filename='js/src/ui-utils.js') }}"></script>
 </head>
 
@@ -89,7 +90,7 @@
         <!-- Feedback -->
         <div id="feedback" class="feedback-box"></div>
 
-        <footer class="{{ type }}-footer" style="margin-top: 4rem;">
+        <footer class="{{ type }}-footer u-mt-5">
             <p>
                 <strong>{{company_name}}</strong><br>
                 Ce document sera scellé électroniquement après validation.
@@ -115,28 +116,7 @@
                 }
             });
 
-            const canvas = document.getElementById('signature-canvas');
-            const wrapper = canvas.parentElement;
-
-            function resizeCanvas() {
-                const ratio = Math.max(window.devicePixelRatio || 1, 1);
-                canvas.width = wrapper.offsetWidth * ratio;
-                canvas.height = wrapper.offsetHeight * ratio;
-                canvas.getContext('2d').scale(ratio, ratio);
-                signaturePad.clear();
-            }
-
-            const signaturePad = new SignaturePad(canvas, {
-                backgroundColor: 'rgb(250, 250, 250)',
-                penColor: 'rgb(21, 21, 21)',
-            });
-
-            window.addEventListener('resize', resizeCanvas);
-            resizeCanvas();
-
-            document.getElementById('btn-clear').addEventListener('click', function () {
-                signaturePad.clear();
-            });
+            const signaturePad = new BelleVitesseSignaturePad('signature-canvas');
 
             document.getElementById('btn-sign').addEventListener('click', function () {
                 hideFeedback();

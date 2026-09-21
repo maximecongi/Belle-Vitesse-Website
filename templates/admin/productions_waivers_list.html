@@ -1,6 +1,6 @@
 {% extends "admin/admin_base.html" %}
 
-{% from "admin/macros.html" import status_badge, filter_header, reminder_badge %}
+{% from "admin/macros.html" import status_badge, filter_header, reminder_badge, list_header_actions, table_empty_row, doc_download_badge %}
 
 {% block title %}Décharges Productions{% endblock %}
 {% block page_title %}Décharges Productions{% endblock %}
@@ -9,11 +9,7 @@
 {% endblock %}
 
 {% block header_actions %}
-<div class="u-flex u-align-center u-gap-2">
-    <input type="text" id="searchInput" class="form-input u-w-250" placeholder="Rechercher une décharge..."
-        autocomplete="off">
-    <a href="{{ url_for('admin_production_waiver_new') }}" class="admin-btn admin-btn-primary">+ Nouvelle décharge</a>
-</div>
+{{ list_header_actions(placeholder="Rechercher une décharge...", new_url=url_for('admin_production_waiver_new'), new_label="+ Nouvelle décharge") }}
 {% endblock %}
 
 
@@ -64,10 +60,10 @@
                                 <button type="submit" class="admin-btn admin-btn-secondary">Relancer</button>
                             </form>
                             <button type="button" class="admin-btn admin-btn-secondary"
-                                onclick="navigator.clipboard.writeText(window.location.origin + '/sign/production-waiver/{{ w.signature_token }}'); showFlash('Le lien a été copié dans le presse-papier. ', 'info');">Lien</button>
+                                onclick="navigator.clipboard.writeText(window.location.origin + '/sign/production-waiver/{{ w.signature_token }}'); showFlash('Le lien a été copié dans le presse-papier.', 'info');">Lien</button>
                             {% elif w.raw_status == 'signed' %}
                             <a href="{{ w.signed_pdf_path }}" class="admin-btn admin-btn-secondary"
-                                target="_blank">Télécharger le PDF 📄</a>
+                                target="_blank"><i data-lucide="file-text"></i> PDF</a>
                             {% endif %}
 
                             <form
@@ -81,11 +77,7 @@
                     </td>
                 </tr>
                 {% else %}
-                <tr>
-                    <td colspan="7" class="u-text-center u-p-4 u-text-muted">
-                        Aucune décharge trouvée.
-                    </td>
-                </tr>
+                {{ table_empty_row(7, "Aucune décharge trouvée.") }}
                 {% endfor %}
             </tbody>
         </table>
@@ -103,7 +95,6 @@
             const q = urlParams.get('q');
             if (q) {
                 searchInput.value = q;
-                // Trigger the filter logic
                 const searchTerm = q.toLowerCase().trim();
                 searchableRows.forEach(row => {
                     const rowText = row.textContent.toLowerCase();
@@ -123,5 +114,7 @@
                     }
                 });
             });
+        }
+    });
 </script>
 {% endblock %}

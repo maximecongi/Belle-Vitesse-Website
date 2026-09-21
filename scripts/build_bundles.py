@@ -29,6 +29,7 @@ PUBLIC_CSS_FILES: List[str] = [
     "css/mouse-scrolling-animation.css",
     "css/filtersliders.css",
     "css/newsletter.css",
+    "css/verification.css",
 ]
 
 ADMIN_CSS_FILES: List[str] = [

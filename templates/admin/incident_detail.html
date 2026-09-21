@@ -700,46 +700,35 @@ incident_signature_badge, equipment_icon, empty_state %}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+<script src="{{ asset_url('js/src/common/signature-pad-controller.js') }}"></script>
 <script>
     (function () {
         const pads = {};
 
-        function resizePad(padObj) {
-            if (!padObj || !padObj.pad || !padObj.canvas) return;
-            const ratio = Math.max(window.devicePixelRatio || 1, 1);
-            const rect = padObj.canvas.getBoundingClientRect();
-            padObj.canvas.width = rect.width * ratio;
-            padObj.canvas.height = rect.height * ratio;
-            padObj.canvas.getContext('2d').scale(ratio, ratio);
-            padObj.pad.clear();
-        }
-
         function getOrCreatePad(canvasId, clearBtnId) {
             if (pads[canvasId]) return pads[canvasId];
-            const canvas = document.getElementById(canvasId);
-            if (!canvas) return null;
-            const pad = new SignaturePad(canvas, {
-                backgroundColor: 'rgba(248, 250, 252, 0)',
-                penColor: '#0f172a',
+            const padObj = new BelleVitesseSignaturePad(canvasId, {
+                clearBtnId: clearBtnId,
+                padOptions: {
+                    backgroundColor: 'rgba(248, 250, 252, 0)',
+                    penColor: '#0f172a'
+                }
             });
-            const clearBtn = document.getElementById(clearBtnId);
-            if (clearBtn) clearBtn.addEventListener('click', () => pad.clear());
-            pads[canvasId] = { pad, canvas };
-            return pads[canvasId];
+            pads[canvasId] = padObj;
+            return padObj;
         }
 
         window.openIncidentModal = function (modalId) {
             const modal = document.getElementById(modalId);
             if (!modal) return;
             modal.classList.add('is-open');
-            modal.style.display = 'flex';
 
             if (modalId === 'modalBvSign') {
                 const padObj = getOrCreatePad('bvCanvas', 'clearBvCanvas');
-                setTimeout(() => resizePad(padObj), 50);
+                setTimeout(() => padObj && padObj.resize(), 50);
             } else if (modalId === 'modalProdSign') {
                 const padObj = getOrCreatePad('prodCanvas', 'clearProdCanvas');
-                setTimeout(() => resizePad(padObj), 50);
+                setTimeout(() => padObj && padObj.resize(), 50);
             }
         };
 
@@ -747,7 +736,6 @@ incident_signature_badge, equipment_icon, empty_state %}
             const modal = document.getElementById(modalId);
             if (modal) {
                 modal.classList.remove('is-open');
-                modal.style.display = 'none';
             }
         };
 

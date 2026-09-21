@@ -1,6 +1,6 @@
 {% extends "admin/admin_base.html" %}
 
-{% from "admin/macros.html" import status_badge, filter_header %}
+{% from "admin/macros.html" import status_badge, filter_header, list_header_actions, table_empty_row %}
 
 {% block title %}Liste des Checkouts{% endblock %}
 {% block page_title %}Checkouts{% endblock %}
@@ -10,11 +10,7 @@
 {% endblock %}
 
 {% block header_actions %}
-<div class="u-flex u-align-center u-gap-2">
-    <input type="text" id="searchInput" class="form-input u-w-250" placeholder="Rechercher un checkout..."
-        autocomplete="off">
-    <a href="{{ url_for('admin_checkout_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Checkout</a>
-</div>
+{{ list_header_actions('Rechercher un checkout...', url_for('admin_checkout_new'), '+ Nouveau Checkout') }}
 {% endblock %}
 
 {% block content %}
@@ -59,11 +55,7 @@
                     </td>
                 </tr>
                 {% else %}
-                <tr>
-                    <td colspan="7" class="u-text-center u-p-4 u-text-muted">
-                        Aucun checkout trouvé.
-                    </td>
-                </tr>
+                {{ table_empty_row(7, 'Aucun checkout trouvé.', 'truck') }}
                 {% endfor %}
             </tbody>
         </table>

@@ -1,3 +1,4 @@
+{% import "public/verification_macros.html" as vmacro %}
 <!DOCTYPE html>
 <html lang="fr">
 {% set rb = route_base or (config.route_base if (config is defined and config is mapping and 'route_base' in config) else 'checkout') %}
@@ -16,6 +17,7 @@
     <title>Vérification — Belle Vitesse</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/' + rb + '.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/verification.css') }}">
 </head>
 
 <body>
@@ -36,63 +38,10 @@
 
 
         <!-- ── Badge sceau de données ── -->
-        <section class="{{ rb }}-section {{ rb }}-text-center">
-            <div style="margin-bottom: 2rem;">
-                {% if seal_valid %}
-                <span class="{{ rb }}-badge {{ rb }}-badge--ok"
-                    style="font-size: 1rem; padding: 10px 24px; background-color: var(--green-1); color: white;">
-                    ✅ Données certifiées & intactes
-                </span>
-                <p style="font-size: 0.75rem; color: var(--grey-2); margin-top: 0.75rem; text-align: center;">
-                    Le sceau cryptographique correspond. Les données n'ont pas été modifiées depuis la signature.
-                </p>
-                {% else %}
-                <span class="{{ rb }}-badge {{ rb }}-badge--critical" style="font-size: 1rem; padding: 10px 24px;">
-                    🚨 Sceau invalide — données altérées
-                </span>
-                <p
-                    style="font-size: 0.75rem; color: var(--grey-2); margin-top: 0.75rem; max-width: 420px; margin-left: auto; margin-right: auto; text-align: center;">
-                    Le sceau ne correspond pas à l'enregistrement. Les données peuvent avoir été modifiées après
-                    signature.
-                </p>
-                {% endif %}
-            </div>
-        </section>
+        {{ vmacro.seal_banner(seal_valid, ok_label="Données certifiées & intactes", error_label="Sceau invalide — données altérées", ok_hint="Le sceau cryptographique correspond. Les données n'ont pas été modifiées depuis la signature.", error_hint="Le sceau ne correspond pas à l'enregistrement. Les données peuvent avoir été modifiées après signature.") }}
 
         <!-- ── Badge résultat vérification PDF (après upload) ── -->
-        {% if pdf_valid is not none %}
-        <section class="{{ rb }}-section {{ rb }}-text-center">
-            <div style="margin-bottom: 1.5rem;">
-                {% if pdf_valid %}
-                <span class="{{ rb }}-badge {{ rb }}-badge--ok"
-                    style="font-size: 1rem; padding: 10px 24px; background-color: var(--green-1); color: white;">
-                    ✅ Fichier PDF authentique
-                </span>
-                <p style="font-size: 0.75rem; color: var(--grey-2); margin-top: 0.75rem; text-align: center;">
-                    L'empreinte du fichier correspond à l'original signé, octet par octet.
-                </p>
-                {% else %}
-                <span class="{{ rb }}-badge {{ rb }}-badge--critical"
-                    style="font-size: 1rem; padding: 10px 24px; text-align: center;">
-                    🚨 Fichier PDF non authentique
-                </span>
-                <p
-                    style="font-size: 0.75rem; color: var(--grey-2); margin-top: 0.75rem; max-width: 420px; margin-left: auto; margin-right: auto; text-align: center;">
-                    Ce fichier ne correspond pas au PDF original. Il a peut-être été modifié ou remplacé.
-                </p>
-                {% endif %}
-            </div>
-        </section>
-        {% endif %}
-
-        <!-- ── Erreur upload ── -->
-        {% if pdf_error %}
-        <section class="{{ rb }}-section {{ rb }}-text-center">
-            <span class="{{ rb }}-badge {{ rb }}-badge--warning" style="font-size: 0.9rem; padding: 8px 20px;">
-                ⚠️ {{ pdf_error }}
-            </span>
-        </section>
-        {% endif %}
+        {{ vmacro.pdf_verification_result(pdf_valid, pdf_error) }}
 
         <!-- ── Données scellées ── -->
         <section class="{{ rb }}-section">
@@ -142,82 +91,14 @@
 
         <!-- ── Empreinte numérique ── -->
         {% if data.hash %}
-        <section class="{{ rb }}-section">
-            <h2 class="{{ rb }}-section-title dot-before">Sécurité Numérique</h2>
-            <div style="background: var(--white-3); padding: 1.5rem; border-radius: 4px;">
-                <p
-                    style="font-size: 0.75rem; color: var(--white-4); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px;">
-                    Sceau HMAC-SHA256
-                </p>
-                <code
-                    style="display: block; word-break: break-all; font-size: 0.75rem; color: var(--grey-2); font-family: monospace;">
-                    {{ data.hash }}
-                </code>
-            </div>
-        </section>
+        {{ vmacro.crypto_fingerprints(data.hash, title="Sécurité Numérique") }}
         {% endif %}
 
         <!-- ═══════════ UPLOAD VÉRIFICATION PDF ═══════════ -->
-        {% if has_pdf_hash %}
-        <section class="{{ rb }}-section" style="margin-top: 3rem;">
-            <h2 class="{{ rb }}-section-title dot-before">Vérifier le fichier PDF</h2>
-            <p style="font-size: 0.85rem; color: var(--grey-2); margin-bottom: 1.5rem; line-height: 1.6;">
-                Uploadez le PDF que vous souhaitez authentifier. Son empreinte SHA-256 sera comparée
-                à celle enregistrée au moment de la signature. Si le fichier a été modifié,
-                même d'un seul caractère, la vérification échouera.
-            </p>
-
-            <form method="POST" enctype="multipart/form-data"
-                action="{{ url_for(rb + '_verify', inspection_id=inspection_id) }}">
-
-                <label for="pdf-input" style="cursor: pointer; display: block;">
-                    <div id="upload-area" style="
-                        border: 2px dashed var(--white-4);
-                        border-radius: 4px;
-                        padding: 2.5rem 1.5rem;
-                        text-align: center;
-                        transition: border-color 0.2s, background 0.2s;
-                        margin-bottom: 1.25rem;
-                    ">
-                        <p style="font-size: 1.5rem; margin-bottom: 0.5rem;">📎</p>
-                        <p style="font-size: 0.9rem; color: var(--grey-2);">
-                            <strong style="color: var(--black-1);">Cliquez pour sélectionner</strong>
-                            ou glissez le PDF ici
-                        </p>
-                        <p id="file-name"
-                            style="display: none; margin-top: 0.5rem; font-size: 0.85rem; color: var(--green-1); font-weight: 500;">
-                        </p>
-                    </div>
-                </label>
-
-                <input type="file" id="pdf-input" name="pdf" accept=".pdf" style="display: none;">
-
-                <button type="submit" id="submit-btn" class="{{ rb }}-btn {{ rb }}-btn--primary"
-                    style="width: 100%; border: none; cursor: pointer; border-radius: 4px; opacity: 0.35;" disabled>
-                    Vérifier l'authenticité du PDF
-                </button>
-
-            </form>
-
-            <p style="font-size: 0.75rem; color: var(--white-4); text-align: center; margin-top: 1rem;">
-                Le fichier est analysé sur le serveur et n'est pas conservé.
-            </p>
-        </section>
-
-        {% else %}
-        <section class="{{ rb }}-section" style="margin-top: 2rem;">
-            <div style="background: var(--white-3); padding: 1.25rem 1.5rem; border-radius: 4px;">
-                <p style="font-size: 0.8rem; color: var(--grey-2); line-height: 1.6;">
-                    ℹ️ Ce document a été signé avant l'introduction de la vérification par empreinte PDF.
-                    Seul le sceau de données est disponible.
-                </p>
-            </div>
-        </section>
-        {% endif %}
-
+        {{ vmacro.pdf_upload_verifier(has_pdf_hash, action_url=url_for(rb + '_verify', inspection_id=inspection_id), old_notice="Ce document a été signé avant l'introduction de la vérification par empreinte PDF. Seul le sceau de données est disponible.") }}
 
         <!-- ═══════════ FOOTER ═══════════ -->
-        <footer class="{{ rb }}-footer" style="margin-top: 5rem;">
+        <footer class="{{ rb }}-footer verify-footer">
             <p>
                 <strong>{{company_name}}</strong><br>
                 {{company_address}}
@@ -226,52 +107,12 @@
 
     </div>
 
-
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script>
-        const input = document.getElementById("pdf-input");
-        const area = document.getElementById("upload-area");
-        const nameEl = document.getElementById("file-name");
-        const btn = document.getElementById("submit-btn");
-
-        if (input) {
-            input.addEventListener("change", () => {
-                if (input.files.length > 0) {
-                    nameEl.textContent = input.files[0].name;
-                    nameEl.style.display = "block";
-                    area.style.borderColor = "var(--green-1)";
-                    area.style.background = "var(--white-3)";
-                    btn.disabled = false;
-                    btn.style.opacity = "1";
-                }
-            });
-
-            area.addEventListener("dragover", (e) => {
-                e.preventDefault();
-                area.style.borderColor = "var(--green-1)";
-            });
-
-            area.addEventListener("dragleave", () => {
-                if (!input.files.length) area.style.borderColor = "var(--white-4)";
-            });
-
-            area.addEventListener("drop", (e) => {
-                e.preventDefault();
-                const files = e.dataTransfer.files;
-                if (files.length > 0 && files[0].name.toLowerCase().endsWith(".pdf")) {
-                    const dt = new DataTransfer();
-                    dt.items.add(files[0]);
-                    input.files = dt.files;
-                    nameEl.textContent = files[0].name;
-                    nameEl.style.display = "block";
-                    area.style.borderColor = "var(--green-1)";
-                    area.style.background = "var(--white-3)";
-                    btn.disabled = false;
-                    btn.style.opacity = "1";
-                }
-            });
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
         }
     </script>
-
 </body>
 
 </html>

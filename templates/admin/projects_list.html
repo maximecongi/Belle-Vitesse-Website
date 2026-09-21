@@ -1,6 +1,6 @@
 {% extends "admin/admin_base.html" %}
 
-{% from "admin/macros.html" import status_badge, filter_header, shoot_status_badge %}
+{% from "admin/macros.html" import status_badge, filter_header, shoot_status_badge, doc_download_badge, list_header_actions, table_empty_row %}
 
 {% block title %}{{ 'Archives' if is_archive else 'Projets' }}{% endblock %}
 {% block page_title %}{{ 'Archives' if is_archive else 'Projets' }}{% endblock %}
@@ -8,13 +8,7 @@
 
 
 {% block header_actions %}
-<div class="u-flex u-gap-2 u-align-center">
-    <input type="text" id="searchInput" class="form-input u-w-250" placeholder="Rechercher un projet..."
-        autocomplete="off">
-    {% if not is_archive %}
-    <a href="{{ url_for('admin_project_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Projet</a>
-    {% endif %}
-</div>
+{{ list_header_actions('Rechercher un projet...', url_for('admin_project_new'), '+ Nouveau Projet', is_archive) }}
 {% endblock %}
 
 {% macro project_table(project_list) %}
@@ -59,8 +53,7 @@
                         <div class="note-tooltip-trigger projects-note-trigger">
                             📝 {{ project.notes | truncate(80) }}
                         </div>
-                        <div class="admin-tooltip-popup">
-                            <strong>Note du projet :</strong><br>
+                        <div class="admin-tooltip note-tooltip-content">
                             {{ project.notes }}
                         </div>
                     </div>
@@ -73,27 +66,14 @@
                         <a href="{{ url_for('admin_checkout_detail', record_id=v.checkout_id) }}">
                             {{ status_badge(v.fields.name or v.fields.Nom or 'Véhicule', v.checkout_status_id, class_name='u-m-1', **{'data-conform': v.checkout_conform, 'title': 'Contrôle de départ : ' ~ v.checkout_status}) }}
                         </a>
-                        {% if v.checkout_pdf %}
-                        <a href="{{ v.checkout_pdf }}" target="_blank" title="Voir le document signé">
-                            <i data-lucide="download" stroke-width="2.5" class="badge-pill"
-                                data-val="download-available"></i>
-                        </a>
-                        {% else %}
-                        <span class="disabled" title="Document indisponible">
-                            <i data-lucide="download" stroke-width="2.5" class="badge-pill"
-                                data-val="download-unavailable"></i>
-                        </span>
-                        {% endif %}
+                        {{ doc_download_badge(v.checkout_pdf) }}
                     </div>
                     {% else %}
                     <div class="projects-cell-item">
                         <a href="{{ url_for('admin_checkout_new', project_id=project.id, vehicle_id=v.id) }}">
                             {{ status_badge(v.fields.name or v.fields.Nom or 'Véhicule', 'to_check', class_name='u-m-1', **{'title': 'Contrôle de départ : À contrôler'}) }}
                         </a>
-                        <span class="disabled" title="Document indisponible">
-                            <i data-lucide="download" stroke-width="2.5" class="badge-pill"
-                                data-val="download-unavailable"></i>
-                        </span>
+                        {{ doc_download_badge(None) }}
                     </div>
                     {% endif %}<br>
                     {% else %}
@@ -107,27 +87,14 @@
                         <a href="{{ url_for('admin_checkin_detail', record_id=v.checkin_id) }}">
                             {{ status_badge(v.fields.name or v.fields.Nom or 'Véhicule', v.checkin_status_id, class_name='u-m-1', **{'data-conform': v.checkin_conform, 'title': 'Contrôle de retour : ' ~ v.checkin_status}) }}
                         </a>
-                        {% if v.checkin_pdf %}
-                        <a href="{{ v.checkin_pdf }}" target="_blank" title="Voir le document signé">
-                            <i data-lucide="download" stroke-width="2.5" class="badge-pill"
-                                data-val="download-available"></i>
-                        </a>
-                        {% else %}
-                        <span class="disabled" title="Document indisponible">
-                            <i data-lucide="download" stroke-width="2.5" class="badge-pill"
-                                data-val="download-unavailable"></i>
-                        </span>
-                        {% endif %}
+                        {{ doc_download_badge(v.checkin_pdf) }}
                     </div>
                     {% else %}
                     <div class="projects-cell-item">
                         <a href="{{ url_for('admin_checkin_new', project_id=project.id, vehicle_id=v.id) }}">
                             {{ status_badge(v.fields.name or v.fields.Nom or 'Véhicule', 'to_check', class_name='u-m-1', **{'title': 'Contrôle de retour : À contrôler'}) }}
                         </a>
-                        <span class="disabled" title="Document indisponible">
-                            <i data-lucide="download" stroke-width="2.5" class="badge-pill"
-                                data-val="download-unavailable"></i>
-                        </span>
+                        {{ doc_download_badge(None) }}
                     </div>
                     {% endif %}<br>
                     {% else %}
@@ -142,26 +109,12 @@
                             <a href="{{ url_for('admin_pilot_waivers_list', q=project.pilot_waiver.waiver_num) }}">
                                 {{ status_badge(project.pilot_waiver.status, project.pilot_waiver.raw_status) }}
                             </a>
-                            {% if project.pilot_waiver.pdf_path %}
-                            <a href="{{ project.pilot_waiver.pdf_path }}" target="_blank"
-                                title="Voir le document signé">
-                                <i data-lucide="download" stroke-width="2.5" class="badge-pill"
-                                    data-val="download-available"></i>
-                            </a>
-                            {% else %}
-                            <span class="disabled" title="Document indisponible">
-                                <i data-lucide="download" stroke-width="2.5" class="badge-pill"
-                                    data-val="download-unavailable"></i>
-                            </span>
-                            {% endif %}
+                            {{ doc_download_badge(project.pilot_waiver.pdf_path) }}
                             {% else %}
                             <a href="{{ url_for('admin_pilot_waiver_new', project_id=project.id) }}">
                                 {{ status_badge('À générer', 'to_generate') }}
                             </a>
-                            <span class="disabled" title="Document indisponible">
-                                <i data-lucide="download" stroke-width="2.5" class="badge-pill"
-                                    data-val="download-unavailable"></i>
-                            </span>
+                            {{ doc_download_badge(None) }}
                             {% endif %}
                         </div>
                     </div>
@@ -174,26 +127,12 @@
                                 {{ status_badge(project.production_waiver.status, project.production_waiver.raw_status)
                                 }}
                             </a>
-                            {% if project.production_waiver.pdf_path %}
-                            <a href="{{ project.production_waiver.pdf_path }}" target="_blank"
-                                title="Voir le document signé">
-                                <i data-lucide="download" stroke-width="2.5" class="badge-pill"
-                                    data-val="download-available"></i>
-                            </a>
-                            {% else %}
-                            <span class="disabled" title="Document indisponible">
-                                <i data-lucide="download" stroke-width="2.5" class="badge-pill"
-                                    data-val="download-unavailable"></i>
-                            </span>
-                            {% endif %}
+                            {{ doc_download_badge(project.production_waiver.pdf_path) }}
                             {% else %}
                             <a href="{{ url_for('admin_production_waiver_new', project_id=project.id) }}">
                                 {{ status_badge('À générer', 'to_generate') }}
                             </a>
-                            <span class="disabled" title="Document indisponible">
-                                <i data-lucide="download" stroke-width="2.5" class="badge-pill"
-                                    data-val="download-unavailable"></i>
-                            </span>
+                            {{ doc_download_badge(None) }}
                             {% endif %}
                         </div>
                     </div>
@@ -204,7 +143,7 @@
                         <a href="{{ url_for('admin_contacts_list', q=project.dop_contact_name) }}">{{
                             project.dop_contact_name }}</a>
                         {% else %}
-                        <span>—</span>
+                        <span class="u-text-muted">—</span>
                         {% endif %}
                     </div><br>
                     <div class="projects-contacts-cell-item" title="1er Assistant Caméra"><span>🎥</span>
@@ -212,7 +151,7 @@
                         <a href="{{ url_for('admin_contacts_list', q=project.first_ac_contact_name) }}">{{
                             project.first_ac_contact_name }}</a>
                         {% else %}
-                        <span>—</span>
+                        <span class="u-text-muted">—</span>
                         {% endif %}
                     </div><br>
                     <div class="projects-contacts-cell-item" title="Chef Machiniste"><span>🔧</span>
@@ -220,7 +159,7 @@
                         <a href="{{ url_for('admin_contacts_list', q=project.key_grip_contact_name) }}">{{
                             project.key_grip_contact_name }}</a>
                         {% else %}
-                        <span>—</span>
+                        <span class="u-text-muted">—</span>
                         {% endif %}
                     </div><br>
                     <div class="projects-contacts-cell-item" title="Pilote"><span>🏎️</span>
@@ -228,7 +167,7 @@
                         <a href="{{ url_for('admin_contacts_list', q=project.pilot_contact_name) }}">{{
                             project.pilot_contact_name }}</a>
                         {% else %}
-                        <span>—</span>
+                        <span class="u-text-muted">—</span>
                         {% endif %}
                     </div><br>
                     <div class="projects-contacts-cell-item u-mt-1" title="Contact de Production"><span>🎬</span>
@@ -236,7 +175,7 @@
                         <a href="{{ url_for('admin_contacts_list', q=project.production_contact_name) }}">{{
                             project.production_contact_name }}</a>
                         {% else %}
-                        <span>—</span>
+                        <span class="u-text-muted">—</span>
                         {% endif %}
                     </div>
                 </td>
@@ -249,11 +188,7 @@
                 </td>
             </tr>
             {% else %}
-            <tr>
-                <td colspan="6" class="u-text-center u-p-4 u-text-muted">
-                    Aucun projet trouvé.
-                </td>
-            </tr>
+            {{ table_empty_row(6, 'Aucun projet trouvé.', 'clapperboard') }}
             {% endfor %}
         </tbody>
     </table>

@@ -1,7 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
 {% from "admin/macros.html" import status_badge, incident_severity_badge, incident_status_badge, shoot_status_badge,
-initials, empty_state, waiver_card %}
+initials, empty_state, waiver_card, doc_download_badge %}
 
 {% block title %}{{ project.name }}{% endblock %}
 {% block page_title %}Détail Projet{% endblock %}
@@ -190,27 +190,14 @@ initials, empty_state, waiver_card %}
                                 <a href="{{ url_for('admin_checkout_detail', record_id=v.checkout_id) }}">
                                     {{ status_badge(v.checkout_status, v.checkout_status_id, class_name='u-m-1', **{'data-conform': v.checkout_conform}) }}
                                 </a>
-                                {% if v.checkout_pdf %}
-                                <a href="{{ v.checkout_pdf }}" target="_blank" title="Voir le document signé">
-                                    <i data-lucide="download" stroke-width="2.5" class="badge-pill"
-                                        data-val="download-available"></i>
-                                </a>
-                                {% else %}
-                                <span class="disabled" title="Document indisponible">
-                                    <i data-lucide="download" stroke-width="2.5" class="badge-pill"
-                                        data-val="download-unavailable"></i>
-                                </span>
-                                {% endif %}
+                                {{ doc_download_badge(v.checkout_pdf) }}
                             </div>
                             {% else %}
                             <div class="projects-cell-item">
                                 <a href="{{ url_for('admin_checkout_new', project_id=project.id, vehicle_id=v.id) }}">
                                     {{ status_badge('À contrôler', 'to_check', class_name='u-m-1') }}
                                 </a>
-                                <span class="disabled" title="Document indisponible">
-                                    <i data-lucide="download" stroke-width="2.5" class="badge-pill"
-                                        data-val="download-unavailable"></i>
-                                </span>
+                                {{ doc_download_badge(None) }}
                             </div>
                             {% endif %}
                         </div>
@@ -223,27 +210,14 @@ initials, empty_state, waiver_card %}
                                 <a href="{{ url_for('admin_checkin_detail', record_id=v.checkin_id) }}">
                                     {{ status_badge(v.checkin_status, v.checkin_status_id, class_name='u-m-1', **{'data-conform': v.checkin_conform}) }}
                                 </a>
-                                {% if v.checkin_pdf %}
-                                <a href="{{ v.checkin_pdf }}" target="_blank" title="Voir le document signé">
-                                    <i data-lucide="download" stroke-width="2.5" class="badge-pill"
-                                        data-val="download-available"></i>
-                                </a>
-                                {% else %}
-                                <span class="disabled" title="Document indisponible">
-                                    <i data-lucide="download" stroke-width="2.5" class="badge-pill"
-                                        data-val="download-unavailable"></i>
-                                </span>
-                                {% endif %}
+                                {{ doc_download_badge(v.checkin_pdf) }}
                             </div>
                             {% else %}
                             <div class="projects-cell-item">
                                 <a href="{{ url_for('admin_checkin_new', project_id=project.id, vehicle_id=v.id) }}">
                                     {{ status_badge('À contrôler', 'to_check', class_name='u-m-1') }}
                                 </a>
-                                <span class="disabled" title="Document indisponible">
-                                    <i data-lucide="download" stroke-width="2.5" class="badge-pill"
-                                        data-val="download-unavailable"></i>
-                                </span>
+                                {{ doc_download_badge(None) }}
                             </div>
                             {% endif %}
                         </div>

@@ -1,0 +1,169 @@
+{# ═══════════ MACROS POUR PAGES DE VÉRIFICATION CONTRADICTOIRE ═══════════ #}
+
+{% macro seal_banner(seal_valid, ok_label="Données Scellées & Intactes", error_label="Sceau Invalide — Données Altérées", ok_hint=None, error_hint=None) %}
+<section class="checkout-section checkout-text-center">
+    <div class="verify-seal-banner">
+        {% if seal_valid %}
+        <span class="verify-badge verify-badge--ok">
+            <i data-lucide="shield-check"></i> {{ ok_label }}
+        </span>
+        <p class="verify-hint-text">
+            {{ ok_hint or "Le sceau cryptographique correspond. Les constatations contradictoires n'ont pas été modifiées depuis la signature." }}
+        </p>
+        {% else %}
+        <span class="verify-badge verify-badge--critical">
+            <i data-lucide="alert-octagon"></i> {{ error_label }}
+        </span>
+        <p class="verify-hint-text">
+            {{ error_hint or "Le sceau ne correspond pas à l'archive originale. Les données peuvent avoir été altérées." }}
+        </p>
+        {% endif %}
+    </div>
+</section>
+{% endmacro %}
+
+{% macro pdf_verification_result(pdf_valid, pdf_error=None) %}
+{% if pdf_valid is not none %}
+<section class="checkout-section checkout-text-center">
+    <div class="verify-seal-banner">
+        {% if pdf_valid %}
+        <span class="verify-badge verify-badge--ok">
+            <i data-lucide="file-check"></i> Fichier PDF authentique
+        </span>
+        <p class="verify-hint-text">
+            L'empreinte SHA-256 du fichier analysé correspond exactement au document scellé original.
+        </p>
+        {% else %}
+        <span class="verify-badge verify-badge--critical">
+            <i data-lucide="file-x"></i> Fichier PDF non authentique
+        </span>
+        <p class="verify-hint-text">
+            Ce fichier PDF ne correspond pas à l'original scellé lors de la signature.
+        </p>
+        {% endif %}
+    </div>
+</section>
+{% endif %}
+
+{% if pdf_error %}
+<section class="checkout-section checkout-text-center">
+    <div class="verify-error-box">
+        <i data-lucide="alert-triangle"></i> {{ pdf_error }}
+    </div>
+</section>
+{% endif %}
+{% endmacro %}
+
+{% macro crypto_fingerprints(document_hash, pdf_file_hash=None, title="Sécurité Numérique & Sceau") %}
+<section class="checkout-section">
+    <h2 class="checkout-section-title dot-before">{{ title }}</h2>
+    <div class="verify-crypto-card">
+        <p class="verify-crypto-label">
+            Empreinte d'intégrité (HMAC-SHA256)
+        </p>
+        <code class="verify-crypto-code">
+            {{ document_hash }}
+        </code>
+        {% if pdf_file_hash %}
+        <p class="verify-crypto-label u-mt-3">
+            Empreinte PDF scellé (SHA-256)
+        </p>
+        <code class="verify-crypto-code">
+            {{ pdf_file_hash }}
+        </code>
+        {% endif %}
+    </div>
+</section>
+{% endmacro %}
+
+{% macro pdf_upload_verifier(has_pdf_hash, action_url="", button_label="Vérifier l'authenticité du PDF", disclaimer="Le fichier est analysé sur le serveur et n'est pas conservé.", old_notice=None) %}
+{% if has_pdf_hash %}
+<section class="checkout-section verify-upload-container">
+    <h2 class="checkout-section-title dot-before">Vérifier le fichier PDF</h2>
+    <p class="u-text-sm u-text-muted u-mb-3 u-lh-base">
+        Uploadez l'exemplaire PDF que vous souhaitez authentifier. Son empreinte SHA-256 sera calculée et comparée à celle scellée lors de la finalisation contradictoire. Si le fichier a été altéré, la vérification échouera.
+    </p>
+
+    <form method="POST" enctype="multipart/form-data"{% if action_url %} action="{{ action_url }}"{% endif %}>
+        <label for="pdf-input" class="u-cursor-pointer u-d-block">
+            <div id="upload-area" class="verify-upload-area">
+                <span class="verify-upload-icon">📎</span>
+                <p class="verify-upload-hint">
+                    <strong>Cliquez pour sélectionner</strong> ou glissez le PDF ici
+                </p>
+                <p id="file-name" class="verify-upload-filename"></p>
+            </div>
+        </label>
+
+        <input type="file" id="pdf-input" name="pdf" accept=".pdf" class="u-d-none">
+
+        <button type="submit" id="submit-btn" class="checkout-btn checkout-btn--primary verify-upload-btn" disabled>
+            {{ button_label }}
+        </button>
+    </form>
+
+    {% if disclaimer %}
+    <p class="verify-upload-disclaimer">
+        {{ disclaimer }}
+    </p>
+    {% endif %}
+</section>
+
+<script>
+    (function () {
+        const pdfInput = document.getElementById('pdf-input');
+        const fileNameDisp = document.getElementById('file-name');
+        const submitBtn = document.getElementById('submit-btn');
+        const uploadArea = document.getElementById('upload-area');
+
+        if (!pdfInput || !fileNameDisp || !submitBtn || !uploadArea) return;
+
+        pdfInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                fileNameDisp.textContent = "Fichier sélectionné : " + e.target.files[0].name;
+                fileNameDisp.style.display = 'block';
+                submitBtn.disabled = false;
+                uploadArea.classList.add('is-active');
+            } else {
+                fileNameDisp.style.display = 'none';
+                submitBtn.disabled = true;
+                uploadArea.classList.remove('is-active');
+            }
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                uploadArea.classList.add('is-active');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (eventName === 'dragleave') uploadArea.classList.remove('is-active');
+            });
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files && files.length > 0) {
+                pdfInput.files = files;
+                pdfInput.dispatchEvent(new Event('change'));
+            }
+        });
+    })();
+</script>
+{% elif old_notice %}
+<section class="checkout-section u-mt-3">
+    <div class="verify-old-notice">
+        <p>
+            <i data-lucide="info"></i> {{ old_notice }}
+        </p>
+    </div>
+</section>
+{% endif %}
+{% endmacro %}

@@ -220,14 +220,14 @@
 }
 
 .incident-workflow-step.is-active {
-    background: #eff6ff;
-    border-color: #3b82f6;
+    background: var(--entity-checkin-bg);
+    border-color: var(--entity-checkin);
     box-shadow: 0 1px 3px rgba(59, 130, 246, 0.15);
 }
 
 .incident-workflow-step.is-completed {
-    background: #f0fdf4;
-    border-color: #86efac;
+    background: var(--entity-checkout-bg);
+    border-color: var(--entity-checkout);
 }
 
 .incident-workflow-step.is-upcoming {
@@ -237,6 +237,12 @@
 .incident-step-icon {
     font-size: 16px;
     margin-bottom: 4px;
+}
+
+.incident-step-icon .lucide {
+    stroke-width: 2.2;
+    height: 16px;
+    width: 16px;
 }
 
 .incident-step-title {
@@ -533,6 +539,14 @@
 .admin-multiselect-tag-icon {
     font-size: 0.875rem;
     line-height: 1;
+    display: inline-flex;
+    align-items: center;
+}
+
+.admin-multiselect-tag-icon svg,
+.admin-multiselect-tag-icon i {
+    width: 14px;
+    height: 14px;
 }
 
 .admin-multiselect-tag-label {

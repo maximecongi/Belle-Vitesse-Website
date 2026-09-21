@@ -1,6 +1,6 @@
 {% extends "admin/admin_base.html" %}
 
-{% from "admin/macros.html" import status_badge, filter_header %}
+{% from "admin/macros.html" import status_badge, filter_header, list_header_actions, table_empty_row %}
 
 {% block title %}Liste des Checkins{% endblock %}
 {% block page_title %}Checkins{% endblock %}
@@ -10,11 +10,7 @@
 {% endblock %}
 
 {% block header_actions %}
-<div class="u-flex u-align-center u-gap-2">
-    <input type="text" id="searchInput" class="form-input u-w-250" placeholder="Rechercher un checkin..."
-        autocomplete="off">
-    <a href="{{ url_for('admin_checkin_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Checkin</a>
-</div>
+{{ list_header_actions('Rechercher un checkin...', url_for('admin_checkin_new'), '+ Nouveau Checkin') }}
 {% endblock %}
 
 {% block content %}
@@ -60,11 +56,7 @@
                     </td>
                 </tr>
                 {% else %}
-                <tr>
-                    <td colspan="7" class="u-text-center u-p-4 u-text-muted">
-                        Aucun checkin trouvé.
-                    </td>
-                </tr>
+                {{ table_empty_row(7, 'Aucun checkin trouvé.', 'package-check') }}
                 {% endfor %}
             </tbody>
         </table>
