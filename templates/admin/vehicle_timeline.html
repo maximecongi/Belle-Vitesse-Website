@@ -25,26 +25,26 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
             <!-- Ligne 1 : Badges d'état et typologie -->
             <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
                 {% if evt.type in ('project', 'project_mission') %}
-                <span class="badge-pill" data-val="project">🎬 Tournage</span>
+                <span class="badge-pill" data-val="project"><i data-lucide="clapperboard"></i> Tournage</span>
                 {{ shoot_status_badge(evt.status) }}
                 {% if evt.has_incidents %}
-                <span class="badge-pill" data-val="critique">⚠️ {{ evt.incident_count }} incident{{ 's' if
+                <span class="badge-pill" data-val="critique"><i data-lucide="alert-triangle"></i> {{ evt.incident_count }} incident{{ 's' if
                     evt.incident_count > 1 else '' }}</span>
                 {% endif %}
                 {% if evt.total_failures > 0 %}
-                <span class="badge-pill" data-val="warning">⚠️ {{ evt.total_failures }} anomalie(s)</span>
+                <span class="badge-pill" data-val="warning"><i data-lucide="alert-triangle"></i> {{ evt.total_failures }} anomalie(s)</span>
                 {% endif %}
                 {% elif evt.type in ('checkout', 'checkin') %}
                 {{ timeline_event_type_badge(evt.type) }}
                 {{ timeline_event_status_badge(evt) }}
                 {% if evt.failures %}
-                <span class="badge-pill" data-val="critique">⚠️ {{ evt.failure_count }} anomalie{{ 's' if
+                <span class="badge-pill" data-val="critique"><i data-lucide="alert-triangle"></i> {{ evt.failure_count }} anomalie{{ 's' if
                     evt.failure_count > 1 else '' }}</span>
                 {% for f in evt.failures %}
                 <span class="badge-pill badge-pill-xs" data-val="critique">{{ f }}</span>
                 {% endfor %}
                 {% else %}
-                <span class="badge-pill" data-val="ok">✅ Conforme (RAS)</span>
+                <span class="badge-pill" data-val="ok"><i data-lucide="check-circle"></i> Conforme (RAS)</span>
                 {% endif %}
                 {% elif evt.type == 'incident' %}
                 {{ timeline_event_type_badge(evt.type, evt.severity_label) }}

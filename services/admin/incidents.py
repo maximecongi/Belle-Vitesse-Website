@@ -65,6 +65,28 @@ INCIDENT_STATUS_ICONS = {
     "cloture": "🔒",
 }
 
+INCIDENT_STATUS_LUCIDE_ICONS = {
+    "signale": "megaphone",
+    "en_expertise": "search",
+    "en_reparation": "wrench",
+    "assurance": "clipboard-list",
+    "resolu": "check-circle",
+    "cloture": "lock",
+}
+
+INCIDENT_SEVERITY_LUCIDE_ICONS = {
+    "mineur": "info",
+    "modere": "alert-triangle",
+    "critique": "alert-octagon",
+}
+
+INCIDENT_IMPACT_LUCIDE_ICONS = {
+    "aucun": "check-circle",
+    "retard": "clock",
+    "interruption": "pause-circle",
+    "annulation": "ban",
+}
+
 INCIDENT_STATUS_BADGE_VALS = {
     "signale": "neutral",
     "en_expertise": "warning",
@@ -261,6 +283,7 @@ def list_incidents(status=None, severity=None, category=None, project_id=None, q
             "status": inc.status,
             "status_label": INCIDENT_STATUS_MAP.get(inc.status, inc.status),
             "status_icon": INCIDENT_STATUS_ICONS.get(inc.status, "📣"),
+            "status_lucide_icon": INCIDENT_STATUS_LUCIDE_ICONS.get(inc.status, "megaphone"),
             "status_badge_val": INCIDENT_STATUS_BADGE_VALS.get(inc.status, "neutral"),
             "status_display": f"{INCIDENT_STATUS_ICONS.get(inc.status, '📣')} {INCIDENT_STATUS_MAP.get(inc.status, inc.status)}",
             "shooting_impact": inc.shooting_impact,
@@ -557,6 +580,7 @@ def get_incident_detail(record_id):
         "status": inc.status,
         "status_label": INCIDENT_STATUS_MAP.get(inc.status, inc.status),
         "status_icon": INCIDENT_STATUS_ICONS.get(inc.status, "📣"),
+        "status_lucide_icon": INCIDENT_STATUS_LUCIDE_ICONS.get(inc.status, "megaphone"),
         "status_badge_val": INCIDENT_STATUS_BADGE_VALS.get(inc.status, "neutral"),
         "status_display": f"{INCIDENT_STATUS_ICONS.get(inc.status, '📣')} {INCIDENT_STATUS_MAP.get(inc.status, inc.status)}",
         "shooting_impact": inc.shooting_impact,

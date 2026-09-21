@@ -29,6 +29,7 @@
     {% endif %}
     <link rel="stylesheet"
         href="{{ url_for('static', filename='css/admin/admin-pilot-waivers.css') }}?v={{ asset_version('css/admin/admin-pilot-waivers.css') }}">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <script src="{{ url_for('static', filename='js/src/ui-utils.js') }}"></script>
 </head>
@@ -113,11 +114,11 @@
                         <span class="pilot-waiver-info-label">Gravité</span>
                         <span class="pilot-waiver-info-value">
                             {% if incident.severity == 'critique' %}
-                            <span class="badge-pill" data-val="critique">🚨 {{ incident.severity_label or 'Critique' }}</span>
+                            <span class="badge-pill" data-val="critique"><i data-lucide="alert-octagon"></i> {{ incident.severity_label or 'Critique' }}</span>
                             {% elif incident.severity == 'modere' %}
-                            <span class="badge-pill" data-val="warning">⚠️ {{ incident.severity_label or 'Modéré' }}</span>
+                            <span class="badge-pill" data-val="warning"><i data-lucide="alert-triangle"></i> {{ incident.severity_label or 'Modéré' }}</span>
                             {% else %}
-                            <span class="badge-pill" data-val="neutral">ℹ️ {{ incident.severity_label or 'Mineur' }}</span>
+                            <span class="badge-pill" data-val="neutral"><i data-lucide="info"></i> {{ incident.severity_label or 'Mineur' }}</span>
                             {% endif %}
                         </span>
                     </div>
@@ -125,13 +126,13 @@
                         <span class="pilot-waiver-info-label">Impact Tournage</span>
                         <span class="pilot-waiver-info-value">
                             {% if incident.shooting_impact in ('annulation', 'arret') %}
-                            <span class="badge-pill" data-val="critique">🛑 {{ incident.shooting_impact_label or 'Annulation de session' }}</span>
+                            <span class="badge-pill" data-val="critique"><i data-lucide="ban"></i> {{ incident.shooting_impact_label or 'Annulation de session' }}</span>
                             {% elif incident.shooting_impact == 'interruption' %}
-                            <span class="badge-pill" data-val="in_progress">⏸️ {{ incident.shooting_impact_label or 'Interruption temporaire' }}</span>
+                            <span class="badge-pill" data-val="in_progress"><i data-lucide="pause-circle"></i> {{ incident.shooting_impact_label or 'Interruption temporaire' }}</span>
                             {% elif incident.shooting_impact == 'retard' %}
-                            <span class="badge-pill" data-val="warning">⏳ {{ incident.shooting_impact_label or 'Retard sur planning' }}</span>
+                            <span class="badge-pill" data-val="warning"><i data-lucide="clock"></i> {{ incident.shooting_impact_label or 'Retard sur planning' }}</span>
                             {% else %}
-                            <span class="badge-pill" data-val="ok">✅ {{ incident.shooting_impact_label or 'Aucun impact' }}</span>
+                            <span class="badge-pill" data-val="ok"><i data-lucide="check-circle"></i> {{ incident.shooting_impact_label or 'Aucun impact' }}</span>
                             {% endif %}
                         </span>
                     </div>
@@ -189,7 +190,7 @@
                     {% else %}
                     <div style="width: 100%; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                         <div>
-                            <span class="badge-pill" data-val="in_progress" style="margin-bottom: 6px; display: inline-block;">⏳ En attente</span>
+                            <span class="badge-pill" data-val="in_progress" style="margin-bottom: 6px; display: inline-block;"><i data-lucide="clock"></i> En attente</span>
                             <div style="font-size: 0.95rem; color: var(--grey-1); font-weight: 500;">
                                 ⏳ Visa technique Belle Vitesse en attente de validation.
                             </div>
@@ -361,6 +362,13 @@
     </script>
     {% endif %}
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
+        });
+    </script>
 </body>
 
 </html>

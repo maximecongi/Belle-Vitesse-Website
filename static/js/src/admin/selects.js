@@ -23,11 +23,18 @@ function initBadgeSelects() {
         sel.querySelectorAll('.badge-select-option').forEach(opt => {
             opt.addEventListener('click', () => {
                 const val = opt.dataset.value;
-                const label = opt.querySelector('.badge-pill')?.textContent || val;
+                const optPill = opt.querySelector('.badge-pill');
                 input.value = val;
                 if (pill) {
-                    pill.textContent = label;
+                    if (optPill) {
+                        pill.innerHTML = optPill.innerHTML;
+                    } else {
+                        pill.textContent = val;
+                    }
                     pill.dataset.val = val;
+                    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                        window.lucide.createIcons();
+                    }
                 }
                 sel.classList.remove('open');
             });

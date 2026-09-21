@@ -18,40 +18,40 @@
 
         <!-- ═══════════ STATUT, GRAVITÉ & IMPACT DU DOSSIER (BADGE-PILLS COMPACTS) ═══════════ -->
         {% set status_meta = {
-        'signale': {'val': 'neutral', 'icon': '📣'},
-        'en_expertise': {'val': 'warning', 'icon': '🔍'},
-        'en_reparation': {'val': 'in_progress', 'icon': '🔧'},
-        'assurance': {'val': 'assurance', 'icon': '📋'},
-        'resolu': {'val': 'ok', 'icon': '✅'},
-        'cloture': {'val': 'cloture', 'icon': '🔒'}
+        'signale': {'val': 'neutral', 'icon': 'megaphone'},
+        'en_expertise': {'val': 'warning', 'icon': 'search'},
+        'en_reparation': {'val': 'in_progress', 'icon': 'wrench'},
+        'assurance': {'val': 'assurance', 'icon': 'clipboard-list'},
+        'resolu': {'val': 'ok', 'icon': 'check-circle'},
+        'cloture': {'val': 'cloture', 'icon': 'lock'}
         } %}
         {% set current_status = incident.status or 'signale' %}
-        {% set current_meta = status_meta.get(current_status, {'val': 'neutral', 'icon': '📣'}) %}
+        {% set current_meta = status_meta.get(current_status, {'val': 'neutral', 'icon': 'megaphone'}) %}
         {% set ns_status = namespace(label='Signalé') %}
         {% for key, label in context.statuses %}
         {% if key == current_status %}{% set ns_status.label = label %}{% endif %}
         {% endfor %}
 
         {% set severity_meta = {
-        'mineur': {'val': 'neutral', 'icon': 'ℹ️'},
-        'modere': {'val': 'warning', 'icon': '⚠️'},
-        'critique': {'val': 'critique', 'icon': '🚨'}
+        'mineur': {'val': 'neutral', 'icon': 'info'},
+        'modere': {'val': 'warning', 'icon': 'alert-triangle'},
+        'critique': {'val': 'critique', 'icon': 'alert-octagon'}
         } %}
         {% set current_severity = incident.severity or 'modere' %}
-        {% set current_sev_meta = severity_meta.get(current_severity, {'val': 'warning', 'icon': '⚠️'}) %}
+        {% set current_sev_meta = severity_meta.get(current_severity, {'val': 'warning', 'icon': 'alert-triangle'}) %}
         {% set ns_sev = namespace(label='Modéré') %}
         {% for key, label in context.severities %}
         {% if key == current_severity %}{% set ns_sev.label = label %}{% endif %}
         {% endfor %}
 
         {% set impact_meta = {
-        'aucun': {'val': 'ok', 'icon': '✅'},
-        'retard': {'val': 'warning', 'icon': '⏳'},
-        'interruption': {'val': 'in_progress', 'icon': '⏸️'},
-        'annulation': {'val': 'critique', 'icon': '🛑'}
+        'aucun': {'val': 'ok', 'icon': 'check-circle'},
+        'retard': {'val': 'warning', 'icon': 'clock'},
+        'interruption': {'val': 'in_progress', 'icon': 'pause-circle'},
+        'annulation': {'val': 'critique', 'icon': 'ban'}
         } %}
         {% set current_impact = incident.shooting_impact or 'aucun' %}
-        {% set current_imp_meta = impact_meta.get(current_impact, {'val': 'ok', 'icon': '✅'}) %}
+        {% set current_imp_meta = impact_meta.get(current_impact, {'val': 'ok', 'icon': 'check-circle'}) %}
         {% set ns_imp = namespace(label='Aucun impact') %}
         {% for key, label in context.shooting_impacts %}
         {% if key == current_impact %}{% set ns_imp.label = label %}{% endif %}
@@ -64,13 +64,12 @@
                     <span class="form-label u-m-0 u-font-semibold">Statut :</span>
                     <div class="badge-pill badge-select-pill badge-select-pill-lg" data-val="{{ current_meta.val }}"
                         id="incidentStatusPill" title="Cliquer pour changer le statut">
-                        <span class="status-label" id="incidentStatusLabel">{{ current_meta.icon }} {{ ns_status.label
-                            }}</span>
+                        <span class="status-label" id="incidentStatusLabel"><i data-lucide="{{ current_meta.icon }}"></i> {{ ns_status.label }}</span>
                         <select name="status" id="incidentStatusSelect" onchange="updateIncidentStatusPill(this)">
                             {% for key, label in context.statuses %}
-                            {% set opt_meta = status_meta.get(key, {'val': 'neutral', 'icon': '📣'}) %}
+                            {% set opt_meta = status_meta.get(key, {'val': 'neutral', 'icon': 'megaphone'}) %}
                             <option value="{{ key }}" data-val="{{ opt_meta.val }}" {% if current_status==key
-                                %}selected{% endif %}>{{ opt_meta.icon }} {{ label }}</option>
+                                %}selected{% endif %}>{{ label }}</option>
                             {% endfor %}
                         </select>
                         <span class="badge-select-pill-arrow">▼</span>
@@ -82,13 +81,13 @@
                     <span class="form-label u-m-0 u-font-semibold">Gravité :</span>
                     <div class="badge-pill badge-select-pill badge-select-pill-lg" data-val="{{ current_sev_meta.val }}"
                         id="incidentSeverityPill" title="Cliquer pour changer le niveau de gravité">
-                        <span class="status-label" id="incidentSeverityLabel">{{ current_sev_meta.icon }} {{
+                        <span class="status-label" id="incidentSeverityLabel"><i data-lucide="{{ current_sev_meta.icon }}"></i> {{
                             ns_sev.label }}</span>
                         <select name="severity" id="incidentSeveritySelect" onchange="updateIncidentSeverityPill(this)">
                             {% for key, label in context.severities %}
-                            {% set opt_sev = severity_meta.get(key, {'val': 'neutral', 'icon': 'ℹ️'}) %}
+                            {% set opt_sev = severity_meta.get(key, {'val': 'neutral', 'icon': 'info'}) %}
                             <option value="{{ key }}" data-val="{{ opt_sev.val }}" {% if current_severity==key
-                                %}selected{% endif %}>{{ opt_sev.icon }} {{ label }}</option>
+                                %}selected{% endif %}>{{ label }}</option>
                             {% endfor %}
                         </select>
                         <span class="badge-select-pill-arrow">▼</span>
@@ -100,14 +99,14 @@
                     <span class="form-label u-m-0 u-font-semibold">Impact :</span>
                     <div class="badge-pill badge-select-pill badge-select-pill-lg" data-val="{{ current_imp_meta.val }}"
                         id="incidentImpactPill" title="Cliquer pour changer l'impact sur le tournage">
-                        <span class="status-label" id="incidentImpactLabel">{{ current_imp_meta.icon }} {{
+                        <span class="status-label" id="incidentImpactLabel"><i data-lucide="{{ current_imp_meta.icon }}"></i> {{
                             ns_imp.label }}</span>
                         <select name="shooting_impact" id="incidentImpactSelect"
                             onchange="updateIncidentImpactPill(this)">
                             {% for key, label in context.shooting_impacts %}
-                            {% set opt_imp = impact_meta.get(key, {'val': 'ok', 'icon': '✅'}) %}
+                            {% set opt_imp = impact_meta.get(key, {'val': 'ok', 'icon': 'check-circle'}) %}
                             <option value="{{ key }}" data-val="{{ opt_imp.val }}" {% if current_impact==key
-                                %}selected{% endif %}>{{ opt_imp.icon }} {{ label }}</option>
+                                %}selected{% endif %}>{{ label }}</option>
                             {% endfor %}
                         </select>
                         <span class="badge-select-pill-arrow">▼</span>
@@ -141,7 +140,7 @@
         <div class="u-flex u-justify-between u-align-center u-mb-2">
             <div class="admin-card-title u-m-0">1. Contexte du Tournage & Matériel Concerné</div>
             {% if is_sealed %}
-            <span class="badge-pill" data-val="neutral">🔒 Scellé (2/2 signatures)</span>
+            <span class="badge-pill" data-val="neutral"><i data-lucide="lock"></i> Scellé (2/2 signatures)</span>
             {% endif %}
         </div>
 
@@ -872,6 +871,14 @@
         'resolu': 'ok',
         'cloture': 'cloture'
     };
+    const STATUS_ICONS = {
+        'signale': 'megaphone',
+        'en_expertise': 'search',
+        'en_reparation': 'wrench',
+        'assurance': 'clipboard-list',
+        'resolu': 'check-circle',
+        'cloture': 'lock'
+    };
 
     function updateIncidentStatusPill(selectElem) {
         const pill = document.getElementById('incidentStatusPill');
@@ -879,12 +886,16 @@
         const selectedVal = selectElem.value;
         const selectedText = selectElem.options[selectElem.selectedIndex].text;
         const dataVal = STATUS_MAP[selectedVal] || 'neutral';
+        const iconName = STATUS_ICONS[selectedVal] || 'megaphone';
 
         if (pill) {
             pill.setAttribute('data-val', dataVal);
         }
         if (label) {
-            label.textContent = selectedText;
+            label.innerHTML = `<i data-lucide="${iconName}"></i> ${selectedText}`;
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
         }
     }
 
@@ -893,6 +904,11 @@
         'mineur': 'neutral',
         'modere': 'warning',
         'critique': 'critique'
+    };
+    const SEVERITY_ICONS = {
+        'mineur': 'info',
+        'modere': 'alert-triangle',
+        'critique': 'alert-octagon'
     };
 
     function updateIncidentSeverityPill(selectElem) {
@@ -903,10 +919,14 @@
         const selectedVal = selectElem.value;
         const selectedText = selectElem.options[selectElem.selectedIndex].text;
         const dataVal = SEVERITY_MAP[selectedVal] || 'neutral';
+        const iconName = SEVERITY_ICONS[selectedVal] || 'alert-triangle';
 
         pill.setAttribute('data-val', dataVal);
         if (label) {
-            label.textContent = selectedText;
+            label.innerHTML = `<i data-lucide="${iconName}"></i> ${selectedText}`;
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
         }
     }
 
@@ -917,6 +937,12 @@
         'interruption': 'in_progress',
         'annulation': 'critique'
     };
+    const IMPACT_ICONS = {
+        'aucun': 'check-circle',
+        'retard': 'clock',
+        'interruption': 'pause-circle',
+        'annulation': 'ban'
+    };
 
     function updateIncidentImpactPill(selectElem) {
         const pill = document.getElementById('incidentImpactPill');
@@ -926,10 +952,14 @@
         const selectedVal = selectElem.value;
         const selectedText = selectElem.options[selectElem.selectedIndex].text;
         const dataVal = IMPACT_MAP[selectedVal] || 'neutral';
+        const iconName = IMPACT_ICONS[selectedVal] || 'check-circle';
 
         pill.setAttribute('data-val', dataVal);
         if (label) {
-            label.textContent = selectedText;
+            label.innerHTML = `<i data-lucide="${iconName}"></i> ${selectedText}`;
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
         }
     }
 

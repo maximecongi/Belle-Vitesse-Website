@@ -28,15 +28,15 @@ incident_signature_badge, equipment_icon, empty_state %}
             <h1 class="project-hub-title u-m-0">{{ incident.title }}</h1>
 
             {% set status_meta = {
-            'signale': {'val': 'neutral', 'icon': '📣', 'label': 'Signalé'},
-            'en_expertise': {'val': 'warning', 'icon': '🔍', 'label': 'En expertise'},
-            'en_reparation': {'val': 'in_progress', 'icon': '🔧', 'label': 'En réparation'},
-            'assurance': {'val': 'assurance', 'icon': '📋', 'label': 'Assurance'},
-            'resolu': {'val': 'ok', 'icon': '✅', 'label': 'Résolu'},
-            'cloture': {'val': 'cloture', 'icon': '🔒', 'label': 'Clôturé'}
+            'signale': {'val': 'neutral', 'icon': 'megaphone', 'label': 'Signalé'},
+            'en_expertise': {'val': 'warning', 'icon': 'search', 'label': 'En expertise'},
+            'en_reparation': {'val': 'in_progress', 'icon': 'wrench', 'label': 'En réparation'},
+            'assurance': {'val': 'assurance', 'icon': 'clipboard-list', 'label': 'Assurance'},
+            'resolu': {'val': 'ok', 'icon': 'check-circle', 'label': 'Résolu'},
+            'cloture': {'val': 'cloture', 'icon': 'lock', 'label': 'Clôturé'}
             } %}
             {% set current_status = incident.status or 'signale' %}
-            {% set cur_meta = status_meta.get(current_status, {'val': 'neutral', 'icon': '📣', 'label':
+            {% set cur_meta = status_meta.get(current_status, {'val': 'neutral', 'icon': 'megaphone', 'label':
             incident.status_label or 'Signalé'}) %}
 
             <div class="u-flex u-gap-2 u-flex-wrap u-align-center">
@@ -49,7 +49,7 @@ incident_signature_badge, equipment_icon, empty_state %}
     <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
         <span class="checkout-doc-id u-m-0 project-hub-id">{{ incident.incident_number }}</span>
         {% if incident.is_sealed %}
-        <span class="badge-pill badge-pill-xs" data-val="neutral">🔒 Scellé contradictoire</span>
+        <span class="badge-pill badge-pill-xs" data-val="neutral"><i data-lucide="lock"></i> Scellé contradictoire</span>
         {% endif %}
     </div>
 </div>
@@ -65,12 +65,11 @@ incident_signature_badge, equipment_icon, empty_state %}
                 <div class="badge-pill badge-select-pill badge-select-pill-lg incident-status-pill-action"
                     data-val="{{ cur_meta.val }}" id="incidentHeaderStatusPill"
                     title="Cliquer pour changer rapidement le statut">
-                    <span class="status-label" id="incidentHeaderStatusLabel">{{ cur_meta.icon }} {{ cur_meta.label
-                        }}</span>
+                    <span class="status-label" id="incidentHeaderStatusLabel"><i data-lucide="{{ cur_meta.icon }}"></i> {{ cur_meta.label }}</span>
                     <select id="incidentHeaderStatusSelect" onchange="quickStatusSelect(this.value)">
                         {% for sk, sv in status_meta.items() %}
                         <option value="{{ sk }}" data-val="{{ sv.val }}" {% if current_status==sk %}selected{% endif %}>
-                            {{ sv.icon }} {{ sv.label }}
+                            {{ sv.label }}
                         </option>
                         {% endfor %}
                     </select>
@@ -81,11 +80,11 @@ incident_signature_badge, equipment_icon, empty_state %}
             <!-- Pipeline visuel des étapes -->
             <div class="incident-workflow-bar">
                 {% set steps = [
-                {'key': 'signale', 'title': '1. Signalé', 'icon': '📣'},
-                {'key': 'en_expertise', 'title': '2. En expertise', 'icon': '🔍'},
-                {'key': 'en_reparation', 'title': '3. Réparation', 'icon': '🔧'},
-                {'key': 'resolu', 'title': '4. Résolu', 'icon': '✅'},
-                {'key': 'cloture', 'title': '5. Clôturé', 'icon': '🔒'}
+                {'key': 'signale', 'title': '1. Signalé', 'icon': 'megaphone'},
+                {'key': 'en_expertise', 'title': '2. En expertise', 'icon': 'search'},
+                {'key': 'en_reparation', 'title': '3. Réparation', 'icon': 'wrench'},
+                {'key': 'resolu', 'title': '4. Résolu', 'icon': 'check-circle'},
+                {'key': 'cloture', 'title': '5. Clôturé', 'icon': 'lock'}
                 ] %}
                 {% set step_order = {'signale': 1, 'en_expertise': 2, 'en_reparation': 3, 'assurance': 3, 'resolu': 4,
                 'cloture': 5} %}
@@ -99,8 +98,7 @@ incident_signature_badge, equipment_icon, empty_state %}
                 <div
                     class="incident-workflow-step {% if is_active %}is-active{% elif is_completed %}is-completed{% else %}is-upcoming{% endif %}">
                     <div class="incident-step-icon">
-                        {% if current_status == 'assurance' and st.key == 'en_reparation' %}📋{% else %}{{ st.icon }}{%
-                        endif %}
+                        {% if current_status == 'assurance' and st.key == 'en_reparation' %}<i data-lucide="clipboard-list"></i>{% else %}<i data-lucide="{{ st.icon }}"></i>{% endif %}
                     </div>
                     <div class="incident-step-title">
                         {% if current_status == 'assurance' and st.key == 'en_reparation' %}
@@ -139,9 +137,9 @@ incident_signature_badge, equipment_icon, empty_state %}
                             Belle Vitesse
                         </span>
                         {% if incident.is_signed_bv %}
-                        <span class="badge-pill" data-val="signed">Signé</span>
+                        <span class="badge-pill" data-val="signed"><i data-lucide="check-circle"></i> Signé</span>
                         {% else %}
-                        <span class="badge-pill" data-val="waiting">En attente</span>
+                        <span class="badge-pill" data-val="waiting"><i data-lucide="clock"></i> En attente</span>
                         {% endif %}
                     </div>
 
@@ -177,9 +175,9 @@ incident_signature_badge, equipment_icon, empty_state %}
                             Production
                         </span>
                         {% if incident.is_signed_prod %}
-                        <span class="badge-pill" data-val="signed">Signé</span>
+                        <span class="badge-pill" data-val="signed"><i data-lucide="check-circle"></i> Signé</span>
                         {% else %}
-                        <span class="badge-pill" data-val="waiting">En attente</span>
+                        <span class="badge-pill" data-val="waiting"><i data-lucide="clock"></i> En attente</span>
                         {% endif %}
                     </div>
 
@@ -331,7 +329,7 @@ incident_signature_badge, equipment_icon, empty_state %}
             <div class="u-flex u-justify-between u-align-center u-mb-3">
                 <div class="admin-card-title u-m-0">Récapitulatif incident</div>
                 {% if incident.is_sealed %}
-                <span class="badge-pill" data-val="neutral">🔒 Scellé</span>
+                <span class="badge-pill" data-val="neutral"><i data-lucide="lock"></i> Scellé</span>
                 {% endif %}
             </div>
 

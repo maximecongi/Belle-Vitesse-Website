@@ -1,4 +1,5 @@
 {% extends "admin/admin_base.html" %}
+{% from "admin/macros.html" import status_badge %}
 
 {% block title %}Calendrier ICS{% endblock %}
 {% block page_title %}📅 Abonnements Calendrier{% endblock %}
@@ -61,9 +62,9 @@
                     </td>
                     <td>
                         {% if data %}
-                        <span class="badge-pill u-text-xs" data-val="signed">Actif</span>
+                        {{ status_badge('Actif', 'signed', class_name='u-text-xs') }}
                         {% else %}
-                        <span class="badge-pill u-text-xs" data-val="to_generate">Non configuré</span>
+                        {{ status_badge('Non configuré', 'to_generate', class_name='u-text-xs') }}
                         {% endif %}
                     </td>
                     <td class="u-text-sm u-text-muted">

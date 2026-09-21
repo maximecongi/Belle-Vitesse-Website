@@ -72,14 +72,11 @@
                     </td>
                     <td>
                         {% if t.scope == 'admin' %}
-                        <span class="badge-pill mcp-scope-admin">🛡️
-                            Admin</span>
+                        <span class="badge-pill mcp-scope-admin"><i data-lucide="shield"></i> Admin</span>
                         {% elif t.scope == 'write' %}
-                        <span class="badge-pill mcp-scope-write">✏️
-                            Write</span>
+                        <span class="badge-pill mcp-scope-write"><i data-lucide="pencil"></i> Write</span>
                         {% else %}
-                        <span class="badge-pill mcp-scope-readonly">👁️
-                            Read-Only</span>
+                        <span class="badge-pill mcp-scope-readonly"><i data-lucide="eye"></i> Read-Only</span>
                         {% endif %}
                     </td>
                     <td class="u-text-xs u-text-muted">
@@ -197,16 +194,13 @@
                         </td>
                         <td>
                             {% if log.status == 'success' %}
-                            <span class="badge-pill mcp-audit-status-success">Success</span>
+                            <span class="badge-pill mcp-audit-status-success"><i data-lucide="check-circle"></i> Success</span>
                             {% elif log.status == 'requires_confirmation' %}
-                            <span class="badge-pill mcp-audit-status-warning">⚠️
-                                Confirmation Exigée</span>
+                            <span class="badge-pill mcp-audit-status-warning"><i data-lucide="alert-triangle"></i> Confirmation Exigée</span>
                             {% elif log.status == 'blocked_403' %}
-                            <span class="badge-pill mcp-audit-status-error">⛔
-                                Bloqué
-                                (403)</span>
+                            <span class="badge-pill mcp-audit-status-error"><i data-lucide="shield-alert"></i> Bloqué (403)</span>
                             {% else %}
-                            <span class="badge-pill mcp-audit-status-error">Erreur</span>
+                            <span class="badge-pill mcp-audit-status-error"><i data-lucide="alert-circle"></i> Erreur</span>
                             {% endif %}
                         </td>
                         <td class="u-text-xs u-text-muted">

@@ -178,7 +178,7 @@
                 {% macro nav_item(href, title, item_key, target=none) %}
                 {% if has_item(item_key)|trim == 'True' %}
                 <a href="{{ href }}" class="admin-nav-item" {% if target %}target="{{ target }}" {% endif %}>
-                    {{ title }} {% if href == "#"%} <span class="badge-pill" data-val="incoming">Bientôt</span>{% endif
+                    {{ title }} {% if href == "#"%} <span class="badge-pill" data-val="incoming"><i data-lucide="sparkles"></i> Bientôt</span>{% endif
                     %}
                 </a>
                 {% endif %}

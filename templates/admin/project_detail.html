@@ -188,10 +188,7 @@ initials, empty_state, waiver_card %}
                             {% if v.checkout_id %}
                             <div class="projects-cell-item">
                                 <a href="{{ url_for('admin_checkout_detail', record_id=v.checkout_id) }}">
-                                    <span class="badge-pill u-m-1" data-val="{{ v.checkout_status_id }}"
-                                        data-conform="{{ v.checkout_conform }}">
-                                        {{ v.checkout_status }}
-                                    </span>
+                                    {{ status_badge(v.checkout_status, v.checkout_status_id, class_name='u-m-1', **{'data-conform': v.checkout_conform}) }}
                                 </a>
                                 {% if v.checkout_pdf %}
                                 <a href="{{ v.checkout_pdf }}" target="_blank" title="Voir le document signé">
@@ -208,9 +205,7 @@ initials, empty_state, waiver_card %}
                             {% else %}
                             <div class="projects-cell-item">
                                 <a href="{{ url_for('admin_checkout_new', project_id=project.id, vehicle_id=v.id) }}">
-                                    <span class="badge-pill u-m-1" data-val="to_check">
-                                        À contrôler
-                                    </span>
+                                    {{ status_badge('À contrôler', 'to_check', class_name='u-m-1') }}
                                 </a>
                                 <span class="disabled" title="Document indisponible">
                                     <i data-lucide="download" stroke-width="2.5" class="badge-pill"
@@ -226,10 +221,7 @@ initials, empty_state, waiver_card %}
                             {% if v.checkin_id %}
                             <div class="projects-cell-item">
                                 <a href="{{ url_for('admin_checkin_detail', record_id=v.checkin_id) }}">
-                                    <span class="badge-pill u-m-1" data-val="{{ v.checkin_status_id }}"
-                                        data-conform="{{ v.checkin_conform }}">
-                                        {{ v.checkin_status }}
-                                    </span>
+                                    {{ status_badge(v.checkin_status, v.checkin_status_id, class_name='u-m-1', **{'data-conform': v.checkin_conform}) }}
                                 </a>
                                 {% if v.checkin_pdf %}
                                 <a href="{{ v.checkin_pdf }}" target="_blank" title="Voir le document signé">
@@ -246,9 +238,7 @@ initials, empty_state, waiver_card %}
                             {% else %}
                             <div class="projects-cell-item">
                                 <a href="{{ url_for('admin_checkin_new', project_id=project.id, vehicle_id=v.id) }}">
-                                    <span class="badge-pill u-m-1" data-val="to_check">
-                                        À contrôler
-                                    </span>
+                                    {{ status_badge('À contrôler', 'to_check', class_name='u-m-1') }}
                                 </a>
                                 <span class="disabled" title="Document indisponible">
                                     <i data-lucide="download" stroke-width="2.5" class="badge-pill"

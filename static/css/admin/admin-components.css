@@ -79,7 +79,8 @@
 /* ── Boutons de filtrage / Filter Pills & Icônes Boutons ── */
 .admin-btn .lucide,
 .filter-pill .lucide,
-.badge-pill .lucide {
+.badge-pill .lucide,
+.badge-pill svg.lucide {
     width: 13px;
     height: 13px;
     vertical-align: -2px;
@@ -255,16 +256,7 @@
     border: none;
 }
 
-.badge-pill:before {
-    content: "";
-    font-size: 0.9em;
-    margin-right: 0.5ch;
-}
 
-.badge-pill:after {
-    content: "";
-    margin-left: 0.5ch;
-}
 
 .incident-signature-subline {
     display: inline-flex;
@@ -300,9 +292,7 @@
     border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
-.badge-pill[data-val="critical"]:before {
-    content: "🚫 ";
-}
+
 
 .badge-pill[data-val="neutral"] {
     background: var(--status-neutral-bg);
@@ -338,56 +328,63 @@
     border: 1px solid rgba(217, 119, 6, 0.3);
 }
 
-.badge-pill[data-val="to_check"] {
+.badge-pill[data-val="to_check"],
+.badge-pill[data-val="À contrôler"],
+.badge-pill[data-val="à contrôler"],
+.badge-pill[data-val="a controler"],
+.badge-pill[data-val="A controler"] {
     background: var(--status-neutral-bg);
     color: var(--status-neutral-text);
     border: 1px solid rgba(100, 116, 139, 0.25);
 }
 
-.badge-pill[data-val="waiting"] {
+.badge-pill[data-val="waiting"],
+.badge-pill[data-val="en attente"],
+.badge-pill[data-val="En attente"] {
     background: var(--status-neutral-bg);
     color: var(--status-neutral-text);
     border: 1px solid rgba(100, 116, 139, 0.25);
 }
 
-.badge-pill[data-val="waiting"]:before {
-    content: "⏳ ";
-}
 
-.badge-pill[data-val="to_check"]:before {
-    content: "🔍 ";
-}
 
-.badge-pill[data-val="in_progress"][data-conform="true"]:before {
-    content: "⏳ ";
-}
-
-.badge-pill[data-val="in_progress"][data-conform="false"]:before {
-    content: "🚨 ";
-}
-
-/* --- Document / Waiver Statuses --- */
-.badge-pill[data-val="to_generate"] {
+/* --- Document / Waiver / Inspection Statuses --- */
+.badge-pill[data-val="to_generate"],
+.badge-pill[data-val="À générer"],
+.badge-pill[data-val="à générer"],
+.badge-pill[data-val="a générer"],
+.badge-pill[data-val="A générer"],
+.badge-pill[data-val="Non générée"],
+.badge-pill[data-val="non générée"],
+.badge-pill[data-val="Non généré"],
+.badge-pill[data-val="non généré"] {
     background: var(--status-neutral-bg);
     color: var(--status-neutral-text);
     border: 1px solid rgba(100, 116, 139, 0.25);
 }
 
-.badge-pill[data-val="to_generate"]:before {
-    content: "🔄 ";
-}
 
-.badge-pill[data-val="to_send"] {
+
+.badge-pill[data-val="to_send"],
+.badge-pill[data-val="À envoyer"],
+.badge-pill[data-val="à envoyer"],
+.badge-pill[data-val="a envoyer"],
+.badge-pill[data-val="A envoyer"],
+.badge-pill[data-val="envoyé"],
+.badge-pill[data-val="Envoyé"] {
     background: var(--status-warning-bg);
     color: var(--status-warning-text);
     border: 1px solid rgba(217, 119, 6, 0.3);
 }
 
-.badge-pill[data-val="to_send"]::before {
-    content: "📤 ";
-}
 
-.badge-pill[data-val="to_sign"] {
+
+.badge-pill[data-val="to_sign"],
+.badge-pill[data-val="pending"],
+.badge-pill[data-val="À signer"],
+.badge-pill[data-val="à signer"],
+.badge-pill[data-val="a signer"],
+.badge-pill[data-val="A signer"] {
     background: var(--entity-waiver-bg);
     color: var(--entity-waiver-text);
     border: 1px solid var(--entity-waiver-border);
@@ -399,19 +396,23 @@
     border: 1px solid rgba(2, 132, 199, 0.3);
 }
 
-.badge-pill[data-val="to_sign"]:before {
-    content: "✍️ ";
-}
 
-.badge-pill[data-val="signed"] {
+
+.badge-pill[data-val="signed"],
+.badge-pill[data-val="Signé"],
+.badge-pill[data-val="signé"],
+.badge-pill[data-val="signe"],
+.badge-pill[data-val="Signe"],
+.badge-pill[data-val="approuvé"],
+.badge-pill[data-val="Approuvé"],
+.badge-pill[data-val="approved"],
+.badge-pill[data-val="completed"] {
     background: var(--status-success-bg);
     color: var(--status-success-text);
     border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
-.badge-pill[data-val="signed"]:before {
-    content: "✅ ";
-}
+
 
 /* --- Timeline Event Types (Semantic Entity Badges) --- */
 .badge-pill[data-val="checkout"] {
@@ -508,9 +509,7 @@
     margin: 0.1rem 0;
 }
 
-.badge-pill[data-val="incoming"]:before {
-    content: "🚧 ";
-}
+
 
 .badge-pill[data-val="download-available"] {
     background: #dbeafe;
