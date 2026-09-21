@@ -26,7 +26,6 @@
     background-color: #ffffff !important;
     color: var(--grey-1) !important;
     border: 1px solid var(--white-3) !important;
-    border-radius: 6px !important;
     font-family: var(--font-primary) !important;
     font-size: 0.8rem !important;
     font-weight: 500 !important;
@@ -93,6 +92,11 @@
     color: var(--grey-1);
     font-weight: 700;
 }
+
+.fc .fc-daygrid-body-natural .fc-daygrid-day-events {
+    margin: 0.5em 0;
+}
+
 
 /* ── Refonte Visuelle des Événements (.fc-event) ──────────────── */
 
@@ -269,7 +273,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    flex: 1;
+    flex: 0 1 auto;
     min-width: 0;
 }
 
@@ -278,8 +282,9 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 110px;
-    flex-shrink: 1;
+    flex: 0 1000 auto;
+    min-width: 0;
+    max-width: 120px;
 }
 
 .fc-event-custom__prod::before {

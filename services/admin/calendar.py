@@ -61,7 +61,8 @@ def get_calendar_events():
             if r.shoot_end_date:
                 # FullCalendar end date is exclusive for all-day events
                 # We add 1 day to make it inclusive (e.g. 16th April included)
-                event["end"] = (r.shoot_end_date + timedelta(days=1)).isoformat()
+                event["end"] = (r.shoot_end_date +
+                                timedelta(days=1)).isoformat()
             events.append(event)
 
         # Check-in (Retour)
@@ -82,4 +83,3 @@ def get_calendar_events():
             })
 
     return events
-

@@ -56,12 +56,12 @@
 }
 
 .dashboard-column--checkout .dashboard-column-title {
-    border-bottom: 2px solid var(--entity-checkout, #10B981);
+    border-bottom: 2px solid var(--entity-checkout-border, #10B981);
     color: var(--entity-checkout-text, #065F46);
 }
 
 .dashboard-column--checkin .dashboard-column-title {
-    border-bottom: 2px solid var(--entity-checkin, #3B82F6);
+    border-bottom: 2px solid var(--entity-checkin-border, #3B82F6);
     color: var(--entity-checkin-text, #1E40AF);
 }
 

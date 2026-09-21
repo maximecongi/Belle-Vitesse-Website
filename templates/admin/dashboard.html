@@ -35,29 +35,9 @@
 <div class="dashboard-split-layout">
     <!-- Left Column: Check-outs -->
     <div class="dashboard-column dashboard-column--checkout">
-        <h3 class="dashboard-column-title">🚚 DÉPARTS (CHECK-OUTS)</h3>
-        {% set ns = namespace(has_checkout=false) %}
-        {% for project in agenda %}
-        {% if project.is_checkout_today %}
-        {% set ns.has_checkout = true %}
-
-        {# Status Logic for Checkout #}
-        {% set p_status = namespace(is_green=true) %}
-        {% for v in project.vehicles %}
-        {% if v.checkout_status_id != 'signed' %}
-        {% set p_status.is_green = false %}
-        {% endif %}
-        {% endfor %}
-        {% if project.pilot_waiver.raw_status != 'signed' or project.production_waiver.raw_status != 'signed' %}
-        {% set p_status.is_green = false %}
-        {% endif %}
-
-        {% set border_class = 'status-yellow' %}
-        {% if p_status.is_green %}
-        {% set border_class = 'status-green' %}
-        {% endif %}
-
-        <div class="admin-card {{ border_class }}">
+        <h3 class="dashboard-column-title">DÉPARTS</h3>
+        {% for project in agenda | selectattr('is_checkout_today') %}
+        <div class="admin-card">
             <div class="admin-card-title admin-card-header">
                 <span>{{ project.name }}</span>
                 <span class="admin-card-header-sub">{{ project.production }}</span>
@@ -141,41 +121,18 @@
                 </div>
             </div>
         </div>
-        {% endif %}
-        {% endfor %}
-        {% if not ns.has_checkout %}
+        {% else %}
         <div class="dashboard-card-empty">
             Aucun départ prévu
         </div>
-        {% endif %}
+        {% endfor %}
     </div>
 
     <!-- Right Column: Check-ins -->
     <div class="dashboard-column dashboard-column--checkin">
-        <h3 class="dashboard-column-title">📦 RETOURS (CHECK-INS)</h3>
-        {% set ns_in = namespace(has_checkin=false) %}
-        {% for project in agenda %}
-        {% if project.is_checkin_today %}
-        {% set ns_in.has_checkin = true %}
-
-        {# Status Logic for Checkin #}
-        {% set p_status_in = namespace(is_green=true) %}
-        {% for v in project.vehicles %}
-        {% if v.checkin_status_id != 'signed' %}
-        {% set p_status_in.is_green = false %}
-        {% endif %}
-        {% endfor %}
-        {# We check project waivers even for checkins as they cover the whole activity #}
-        {% if project.pilot_waiver.raw_status != 'signed' or project.production_waiver.raw_status != 'signed' %}
-        {% set p_status_in.is_green = false %}
-        {% endif %}
-
-        {% set border_class_in = 'status-yellow' %}
-        {% if p_status_in.is_green %}
-        {% set border_class_in = 'status-green' %}
-        {% endif %}
-
-        <div class="admin-card {{ border_class_in }}">
+        <h3 class="dashboard-column-title">RETOURS</h3>
+        {% for project in agenda | selectattr('is_checkin_today') %}
+        <div class="admin-card">
             <div class="admin-card-title admin-card-header">
                 <span>{{ project.name }}</span>
                 <span class="admin-card-header-sub">{{ project.production }}</span>
@@ -259,13 +216,11 @@
                 </div>
             </div>
         </div>
-        {% endif %}
-        {% endfor %}
-        {% if not ns_in.has_checkin %}
+        {% else %}
         <div class="dashboard-card-empty">
             Aucun retour prévu
         </div>
-        {% endif %}
+        {% endfor %}
     </div>
 </div>
 {% else %}

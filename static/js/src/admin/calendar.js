@@ -60,7 +60,7 @@ function initCalendar() {
                 return {
                     html: `
                         <div class="fc-event-custom fc-event-custom--${escapeHtml(type)}">
-                            <span class="fc-event-custom__badge">${iconSvg}<span>${escapeHtml(typeLabel)}</span></span>
+                            <span class="fc-event-custom__badge">${iconSvg}</span>
                             <span class="fc-event-custom__title">${escapeHtml(projectName)}</span>
                             ${production ? `<span class="fc-event-custom__prod">${escapeHtml(production)}</span>` : ''}
                         </div>
