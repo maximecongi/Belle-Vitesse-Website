@@ -17,7 +17,7 @@
 }
 
 .fleet-kpi-card--green {
-    border-left: 3px solid var(--status-success, #618B4A) !important;
+    border-left: 3px solid var(--status-success, #10b981) !important;
 }
 
 .fleet-kpi-card--orange {
@@ -40,7 +40,7 @@
 }
 
 #fleet-filter-pills .lucide-circle-check {
-    color: var(--status-success, #618B4A);
+    color: var(--status-success, #10B981);
 }
 
 #fleet-filter-pills .lucide-clapperboard {
@@ -167,7 +167,7 @@
 }
 
 .vehicle-timeline-header {
-    border-left: 5px solid var(--status-success, #618B4A);
+    border-left: 5px solid var(--status-success, #10B981);
 }
 
 .vehicle-timeline-header[data-status="incident"] {
@@ -181,7 +181,7 @@
 
 .vehicle-timeline-header[data-status="available"],
 .vehicle-timeline-header[data-status="disponible"] {
-    border-left-color: var(--status-success, #618B4A) !important;
+    border-left-color: var(--status-success, #10B981) !important;
 }
 
 .timeline-vehicle-meta {

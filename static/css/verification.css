@@ -33,9 +33,9 @@
 }
 
 .verify-badge--ok {
-    background-color: var(--status-success-bg, #EDF4EA);
-    color: var(--status-success-text, #2D481E);
-    border-color: var(--status-success-border, rgba(97, 139, 74, 0.3));
+    background-color: var(--status-success-bg, #D1FAE5);
+    color: var(--status-success-text, #065F46);
+    border-color: var(--status-success-border, rgba(16, 185, 129, 0.3));
     box-shadow: none;
 }
 
@@ -122,13 +122,13 @@
 }
 
 .verify-upload-area:hover {
-    border-color: var(--status-success, #618B4A);
-    background-color: rgba(97, 139, 74, 0.04);
+    border-color: var(--status-success, #10B981);
+    background-color: rgba(16, 185, 129, 0.04);
 }
 
 .verify-upload-area.is-active {
-    border-color: var(--status-success, #618B4A);
-    background-color: rgba(97, 139, 74, 0.08);
+    border-color: var(--status-success, #10B981);
+    background-color: rgba(16, 185, 129, 0.08);
 }
 
 .verify-upload-icon {
@@ -155,7 +155,7 @@
     display: none;
     margin-top: 0.5rem;
     font-size: 0.875rem;
-    color: var(--status-success-text, #2D481E);
+    color: var(--status-success-text, #065F46);
     font-weight: 600;
 }
 
@@ -204,7 +204,7 @@
 
 .verify-signed-at {
     font-size: 0.75rem;
-    color: var(--status-success-text, #2D481E);
+    color: var(--status-success-text, #065F46);
     margin-top: 4px;
 }
 

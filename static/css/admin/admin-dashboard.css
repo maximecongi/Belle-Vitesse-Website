@@ -71,7 +71,7 @@
 }
 
 .admin-card.status-green {
-    border-left: 3px solid var(--status-success, #618B4A);
+    border-left: 3px solid var(--status-success, #10B981);
 }
 
 @media (max-width: 1000px) {

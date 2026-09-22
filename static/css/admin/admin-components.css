@@ -95,7 +95,7 @@
 }
 
 .filter-pill .lucide-circle-check {
-    color: var(--status-success, #618B4A);
+    color: var(--status-success, #10B981);
 }
 
 .filter-pill .lucide-package-check {
@@ -281,7 +281,7 @@
 .badge-pill[data-val="resolu"] {
     background: var(--status-success-bg);
     color: var(--status-success-text);
-    border: 1px solid var(--status-success-border, rgba(97, 139, 74, 0.3));
+    border: 1px solid var(--status-success-border, rgba(16, 185, 129, 0.3));
 }
 
 .badge-pill[data-val="critical"],
@@ -409,7 +409,7 @@
 .badge-pill[data-val="completed"] {
     background: var(--status-success-bg);
     color: var(--status-success-text);
-    border: 1px solid var(--status-success-border, rgba(97, 139, 74, 0.3));
+    border: 1px solid var(--status-success-border, rgba(16, 185, 129, 0.3));
 }
 
 

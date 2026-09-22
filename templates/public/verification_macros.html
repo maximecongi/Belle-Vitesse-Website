@@ -85,8 +85,8 @@ fichier est analysé sur le serveur et n'est pas conservé.", old_notice=None) %
 <section class="checkout-section verify-upload-container">
     <h2 class="checkout-section-title dot-before">Vérifier le fichier PDF</h2>
     <p class="u-text-sm u-text-muted u-mb-3 u-lh-base">
-        Uploadez l'exemplaire PDF que vous souhaitez authentifier. Son empreinte SHA-256 sera calculée et comparée à
-        celle scellée lors de la finalisation contradictoire. Si le fichier a été altéré, la vérification échouera.
+        Uploadez l'exemplaire PDF que vous souhaitez authentifier. Nous comparons son empreinte à celle enregistrée lors
+        de la signature. Le moindre changement sera détecté.
     </p>
 
     <form method="POST" enctype="multipart/form-data" {% if action_url %} action="{{ action_url }}" {% endif %}>

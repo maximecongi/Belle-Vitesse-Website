@@ -14,7 +14,7 @@
 }
 
 .incident-kpi-card--success {
-    border-left: 4px solid var(--status-success, #618B4A) !important;
+    border-left: 4px solid var(--status-success, #10b981) !important;
 }
 
 /* ── Détail : Visas & Signatures contradictoires ── */

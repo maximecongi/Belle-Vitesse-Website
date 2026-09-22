@@ -9,7 +9,7 @@
     * **Tournages / Projets** : Ambre Chaud (`--entity-project`: `#F59E0B`, bg: `#FEF3C7`, text: `#B45309`, icône Lucide: `clapperboard`).
     * **Incidents / Dommages** : Rouge Carmin (`--entity-incident`: `#EF4444`, bg: `#FEE2E2`, text: `#991B1B`, icône Lucide: `wrench` / `alert-triangle`).
     * **Décharges (Waivers)** : Violet / Indigo (`--entity-waiver`: `#8B5CF6`, bg: `#EDE9FE`, text: `#5B21B6`, icône Lucide: `file-signature` / `shield`).
-    * **Statuts transversaux** : Succès/Validé (`--status-success`: `#618B4A`, bg: `#EDF4EA`, text: `#2D481E`, icône Lucide: `circle-check`), Attention/Attente (`--status-warning`: `#D97706`), Danger/Critique (`--status-danger`: `#EF4444`), Info/À venir (`--status-info`: `#0284C7`), Neutre/Archivé (`--status-neutral`: `#64748B`).
+    * **Statuts transversaux** : Succès/Validé (`--status-success`: `#10B981`, bg: `#D1FAE5`, text: `#065F46`, icône Lucide: `circle-check`), Attention/Attente (`--status-warning`: `#D97706`), Danger/Critique (`--status-danger`: `#EF4444`), Info/À venir (`--status-info`: `#0284C7`), Neutre/Archivé (`--status-neutral`: `#64748B`).
   - **Cohérence des composants et utilitaires** :
     * Pour une même entité ou statut, synchroniser systématiquement la couleur du badge (`badge-pill`), de l'icône Lucide, de la puce de timeline, de la bordure (`.u-border-left-*`, `.u-border-*`) et des cartes KPI.
     * Ne jamais coder de couleurs hexadécimales en dur pour ces entités dans le HTML ou les styles spécifiques : toujours consommer les variables CSS `--entity-*` et `--status-*` ou les classes utilitaires dédiées (`.u-text-*`, `.u-bg-*`, `.u-bg-*-light`, `.u-border-left-*`).
