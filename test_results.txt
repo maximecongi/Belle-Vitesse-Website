@@ -82,6 +82,8 @@ Technicien role should not see waiver links in sidebar nav and should be forbidd
 test_user_cannot_access_or_see_catalog_update (test_dev_role_switcher.DevRoleSwitcherTestCase.test_user_cannot_access_or_see_catalog_update)
 Technicien role should not see catalog_update in sidebar nav and should be forbidden on catalog preview/update. ... ok
 test_calendar_invitation_rendering (test_email_templates.EmailTemplatesTest.test_calendar_invitation_rendering) ... ok
+test_company_settings_dynamic_in_email (test_email_templates.EmailTemplatesTest.test_company_settings_dynamic_in_email)
+Vérifie que les coordonnées société définies dans app_settings sont bien injectées dans le footer des emails. ... ok
 test_cron_report_rendering (test_email_templates.EmailTemplatesTest.test_cron_report_rendering) ... ok
 test_incident_invitation_rendering (test_email_templates.EmailTemplatesTest.test_incident_invitation_rendering) ... ok
 test_incident_signed_confirmation_rendering (test_email_templates.EmailTemplatesTest.test_incident_signed_confirmation_rendering) ... ok
@@ -286,6 +288,6 @@ test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.W
 Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
 ----------------------------------------------------------------------
-Ran 185 tests in 11.418s
+Ran 186 tests in 13.019s
 
 OK

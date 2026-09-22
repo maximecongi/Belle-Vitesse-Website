@@ -1028,7 +1028,8 @@ def delete_incident(record_id, confirm=True):
             from services.common.kdrive import dispatch_delete_document
             dispatch_delete_document("incident", incident_number)
         except Exception as k_err:
-            logger.error(f"❌ Erreur dispatch suppression kDrive incident : {k_err}")
+            logger.error(
+                f"❌ Erreur dispatch suppression kDrive incident : {k_err}")
 
     logger.info(f"🗑️ Incident soft-deleted : {incident.incident_number}")
     return {"success": True, "message": f"Incident {incident.incident_number} supprimé avec succès."}
@@ -1401,10 +1402,15 @@ def generate_incident_pdf(record_id):
         raise ValueError(
             f"Incident #{record_id} introuvable pour la génération PDF.")
 
-    company_address = "128 Rue La Boétie, 75008 Paris"
+    company_address = "39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine"
+    company_name = "Belle Vitesse SAS"
     try:
         from models import AppSetting
-        company_address = AppSetting.get("company_address", company_address)
+        from utils.context_processors import DEFAULT_SETTINGS
+        company_address = AppSetting.get(
+            "company_address", DEFAULT_SETTINGS["company_address"])
+        company_name = AppSetting.get(
+            "company_name", DEFAULT_SETTINGS["company_name"])
     except Exception:
         pass
 
@@ -1437,7 +1443,7 @@ def generate_incident_pdf(record_id):
 
     html = render_template(
         "pdf/incident_report.html",
-        company_name="Belle Vitesse",
+        company_name=company_name,
         company_address=company_address,
         incident=incident_data,
         today=_format_date(date.today()),

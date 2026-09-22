@@ -140,7 +140,8 @@
                             value="{{ waiver.location_of_use or '' }}" required>
                     </div>
                     <div class="form-group">
-                        <label for="insurance_company">Compagnie d'assurance <span class="u-text-danger">*</span></label>
+                        <label for="insurance_company">Compagnie d'assurance <span
+                                class="u-text-danger">*</span></label>
                         <input class="form-input" type="text" id="insurance_company" name="insurance_company"
                             value="{{ waiver.production_insurance_company or '' }}" required>
                     </div>
@@ -172,8 +173,8 @@
                     <hr>
 
                     <h2>1. Identification des parties</h2>
-                    <p><strong>Prestataire :</strong> {{ company_name }} — 33 rue Maurice Gunsbourg, 94200
-                        Ivry-sur-Seine — SIRET : 984 535 071 00013 — Représenté par Simon Maignan.</p>
+                    <p><strong>Prestataire :</strong> {{ company_name }} — {{ company_address }} — SIRET : {{
+                        company_siret }} — Représenté par {{ company_representative }}.</p>
                     <p><strong>Locataire (Production) :</strong></p>
                     <ul>
                         <li>Raison sociale : <strong id="text_production_name">…</strong></li>

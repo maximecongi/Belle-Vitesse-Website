@@ -30,7 +30,7 @@ DEFAULT_SETTINGS = {
     "company_name": "Belle Vitesse SAS",
     "company_representative": "Simon Maignan",
     "company_siret": "981 514 040 00014",
-    "company_address": "27 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine, France",
+    "company_address": "39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine",
     "company_phone": "+33 6 65 51 40 40",
     "company_email": "contact@bellevitesse.com",
     "company_vat": "FR32981514040",
@@ -161,6 +161,39 @@ def _safe_float(val, default):
         return float(default)
 
 
+def get_company_context():
+    """
+    Charge et retourne les paramètres de la société depuis AppSetting (avec cache Redis / DB).
+    Utilisé pour injecter de manière garantie les coordonnées de la société dans tous les templates
+    (ERP admin, site public, e-mails transactionnels, exports PDF).
+    """
+    try:
+        settings = AppSetting.get_all_as_dict(DEFAULT_SETTINGS)
+    except Exception:
+        settings = DEFAULT_SETTINGS.copy()
+
+    return {
+        "company_name": settings.get("company_name", DEFAULT_SETTINGS["company_name"]),
+        "company_representative": settings.get("company_representative", DEFAULT_SETTINGS["company_representative"]),
+        "company_siret": settings.get("company_siret", DEFAULT_SETTINGS["company_siret"]),
+        "company_address": settings.get("company_address", DEFAULT_SETTINGS["company_address"]),
+        "company_phone": settings.get("company_phone", DEFAULT_SETTINGS["company_phone"]),
+        "company_email": settings.get("company_email", DEFAULT_SETTINGS["company_email"]),
+        "company_vat": settings.get("company_vat", DEFAULT_SETTINGS["company_vat"]),
+        "company_capital": settings.get("company_capital", DEFAULT_SETTINGS["company_capital"]),
+        "company_rcs": settings.get("company_rcs", DEFAULT_SETTINGS["company_rcs"]),
+        "host_name": settings.get("host_name", DEFAULT_SETTINGS["host_name"]),
+        "host_address": settings.get("host_address", DEFAULT_SETTINGS["host_address"]),
+        "bank_iban": settings.get("bank_iban", ""),
+        "bank_bic": settings.get("bank_bic", ""),
+        "DELIVERY_CONFIG": {
+            "base_distance": _safe_float(settings.get("delivery_base_distance"), 100),
+            "base_price": _safe_float(settings.get("delivery_base_price"), 200),
+            "high_rate": _safe_float(settings.get("delivery_high_rate"), 0.5)
+        },
+    }
+
+
 def init_context_processors(app):
     """Enregistre les processeurs de contexte globaux pour les templates Jinja2."""
     template_path = os.path.join(
@@ -194,8 +227,10 @@ def init_context_processors(app):
         months = MONTHS_FR if lang == 'fr' else MONTHS_EN
         privacy_last_update = f"{months[privacy_date.month]} {privacy_date.year}"
 
+        company_ctx = get_company_context()
+
         if not has_request_context():
-            return {
+            base_ctx = {
                 "now": datetime.now(timezone.utc),
                 "is_admin": False,
                 "lang": DEFAULT_LANG,
@@ -209,13 +244,15 @@ def init_context_processors(app):
                 "has_section": lambda s: 'all' in ROLE_PERMISSIONS['technicien']['sections'] or s in ROLE_PERMISSIONS['technicien']['sections'],
                 "has_item": lambda i: 'all' in ROLE_PERMISSIONS['technicien']['nav'] or i in ROLE_PERMISSIONS['technicien']['nav'],
             }
+            base_ctx.update(company_ctx)
+            return base_ctx
 
         # Évite les appels DB lourds pour les pages d'erreur et les pages d'authentification
         # afin de prévenir les pannes en cascade et les blocages au login.
         is_auth_page = request.path in (
             '/admin/login', '/admin/logout') or request.path.startswith('/admin/auth/')
         if getattr(g, '_rendering_error', False) or is_auth_page:
-            return {
+            base_ctx = {
                 "now": datetime.now(timezone.utc),
                 "is_admin": request.path.startswith('/admin'),
                 "lang": g.get('lang', DEFAULT_LANG),
@@ -229,12 +266,11 @@ def init_context_processors(app):
                 "has_section": lambda s: 'all' in ROLE_PERMISSIONS['technicien']['sections'] or s in ROLE_PERMISSIONS['technicien']['sections'],
                 "has_item": lambda i: 'all' in ROLE_PERMISSIONS['technicien']['nav'] or i in ROLE_PERMISSIONS['technicien']['nav'],
             }
+            base_ctx.update(company_ctx)
+            return base_ctx
 
         is_admin = request.path.startswith('/admin')
         lang = g.get('lang', DEFAULT_LANG)
-
-        # Récupération groupée optimisée de tous les paramètres d'application
-        settings = AppSetting.get_all_as_dict(DEFAULT_SETTINGS)
 
         # Variables globales de base
         ctx = {
@@ -248,24 +284,6 @@ def init_context_processors(app):
             "privacy_last_update": privacy_last_update,
             "asset_version": asset_version,
             "asset_url": asset_url,
-            "company_name": settings.get("company_name", DEFAULT_SETTINGS["company_name"]),
-            "company_representative": settings.get("company_representative", DEFAULT_SETTINGS["company_representative"]),
-            "company_siret": settings.get("company_siret", DEFAULT_SETTINGS["company_siret"]),
-            "company_address": settings.get("company_address", DEFAULT_SETTINGS["company_address"]),
-            "company_phone": settings.get("company_phone", DEFAULT_SETTINGS["company_phone"]),
-            "company_email": settings.get("company_email", DEFAULT_SETTINGS["company_email"]),
-            "company_vat": settings.get("company_vat", DEFAULT_SETTINGS["company_vat"]),
-            "company_capital": settings.get("company_capital", DEFAULT_SETTINGS["company_capital"]),
-            "company_rcs": settings.get("company_rcs", DEFAULT_SETTINGS["company_rcs"]),
-            "host_name": settings.get("host_name", DEFAULT_SETTINGS["host_name"]),
-            "host_address": settings.get("host_address", DEFAULT_SETTINGS["host_address"]),
-            "bank_iban": settings.get("bank_iban", ""),
-            "bank_bic": settings.get("bank_bic", ""),
-            "DELIVERY_CONFIG": {
-                "base_distance": _safe_float(settings.get("delivery_base_distance"), 100),
-                "base_price": _safe_float(settings.get("delivery_base_price"), 200),
-                "high_rate": _safe_float(settings.get("delivery_high_rate"), 0.5)
-            },
             "PRE_QUOTE_CAT_MAP": {
                 "equipment": "Équipement",
                 "salary": "Salaire",
@@ -285,6 +303,7 @@ def init_context_processors(app):
             "has_section": lambda s: 'all' in ROLE_PERMISSIONS['technicien']['sections'] or s in ROLE_PERMISSIONS['technicien']['sections'],
             "has_item": lambda i: 'all' in ROLE_PERMISSIONS['technicien']['nav'] or i in ROLE_PERMISSIONS['technicien']['nav'],
         }
+        ctx.update(company_ctx)
 
         def _load_db_context(is_admin):
             """Charge les données dynamiques depuis la base de données pour le contexte."""

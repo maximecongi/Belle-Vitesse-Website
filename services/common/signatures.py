@@ -276,7 +276,7 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
             "company_representative": AppSetting.get("company_representative", "Simon Maignan"),
             "company_siret": AppSetting.get("company_siret", "981 514 040 00014"),
             "company_vat": AppSetting.get("company_vat", "FR32981514040"),
-            "company_address": AppSetting.get("company_address", "33 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine, France"),
+            "company_address": AppSetting.get("company_address", "39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine, France"),
             "company_phone": AppSetting.get("company_phone", "+33 6 65 51 40 40"),
             "company_email": AppSetting.get("company_email", "contact@bellevitesse.com"),
             "bank_iban": AppSetting.get("bank_iban", ""),
@@ -350,7 +350,8 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
 
     except Exception as e:
         db.session.rollback()
-        logger.error(f"❌ La transaction a échoué pendant la signature {mode} : {e}")
+        logger.error(
+            f"❌ La transaction a échoué pendant la signature {mode} : {e}")
         raise
 
 
@@ -431,7 +432,8 @@ def _dispatch_kdrive_document_bundle(mode, record, rel_pdf_path, base_url, curre
                 resolve_entity_info,
             )
 
-            entity_type, entity_id, project_id = resolve_entity_info(record, mode)
+            entity_type, entity_id, project_id = resolve_entity_info(
+                record, mode)
             if entity_id and project_id:
                 file_specs = extract_bundle_file_specs(
                     record, entity_type=entity_type, rel_pdf_path=rel_pdf_path
@@ -510,15 +512,14 @@ def seal_incident_contradictory_document(incident, incident_data, base_url=None)
         prod_signed_iso,
     )
 
-    company_address = "128 Rue La Boétie, 75008 Paris"
+    company_address = "39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine"
+    company_name = "Belle Vitesse SAS"
     try:
-        company_address = AppSetting.get("company_address", company_address)
-    except Exception:
-        pass
-
-    company_name = "Belle Vitesse"
-    try:
-        company_name = AppSetting.get("company_name", company_name)
+        from utils.context_processors import DEFAULT_SETTINGS
+        company_address = AppSetting.get(
+            "company_address", DEFAULT_SETTINGS["company_address"])
+        company_name = AppSetting.get(
+            "company_name", DEFAULT_SETTINGS["company_name"])
     except Exception:
         pass
 
@@ -545,7 +546,8 @@ def seal_incident_contradictory_document(incident, incident_data, base_url=None)
     pdf_bytes = render_pdf_from_template(
         html_content=html,
         base_url=current_app.root_path,
-        stylesheets=["css/styles.css", "css/checkout.css", "css/incident_pdf.css"],
+        stylesheets=["css/styles.css",
+                     "css/checkout.css", "css/incident_pdf.css"],
         filename=filename,
     )
 
@@ -582,7 +584,8 @@ def seal_incident_contradictory_document(incident, incident_data, base_url=None)
                 data_snapshot=incident.to_dict(),
                 signature=incident.prod_signature_data or incident.bv_signature_data,
                 pdf_url=f"/incidents/document/{rel_pdf_path}",
-                signed_at=(incident.prod_signed_at or _utcnow()).replace(tzinfo=None)
+                signed_at=(incident.prod_signed_at or _utcnow()
+                           ).replace(tzinfo=None)
             )
             db.session.add(signed_doc)
         else:
@@ -592,7 +595,8 @@ def seal_incident_contradictory_document(incident, incident_data, base_url=None)
             signed_doc.data_snapshot = incident.to_dict()
             signed_doc.signature = incident.prod_signature_data or incident.bv_signature_data
             signed_doc.pdf_url = f"/incidents/document/{rel_pdf_path}"
-            signed_doc.signed_at = (incident.prod_signed_at or _utcnow()).replace(tzinfo=None)
+            signed_doc.signed_at = (
+                incident.prod_signed_at or _utcnow()).replace(tzinfo=None)
 
         db.session.commit()
     except IntegrityError as commit_err:
@@ -608,7 +612,8 @@ def seal_incident_contradictory_document(incident, incident_data, base_url=None)
             existing_doc.data_snapshot = incident.to_dict()
             existing_doc.signature = incident.prod_signature_data or incident.bv_signature_data
             existing_doc.pdf_url = f"/incidents/document/{rel_pdf_path}"
-            existing_doc.signed_at = (incident.prod_signed_at or _utcnow()).replace(tzinfo=None)
+            existing_doc.signed_at = (
+                incident.prod_signed_at or _utcnow()).replace(tzinfo=None)
             db.session.commit()
         else:
             raise commit_err

@@ -38,7 +38,7 @@ def get_delivery_config():
             return float(val) if val is not None else float(default)
         except (ValueError, TypeError):
             return float(default)
-            
+
     return {
         "base_distance": _safe_float("delivery_base_distance", 100.0),
         "base_price": _safe_float("delivery_base_price", 200.0),
@@ -68,24 +68,27 @@ def calculate_totals(prestations, tva_rate=20.00, insurance_rate=10.00, insuranc
         if item.get('is_mad'):
             item['discount_rate'] = 100.0
         discount = Decimal(str(item.get('discount_rate', 0)))
-        
+
         if item.get('unit') == 'km':
             # Formule progressive avec le multiplicateur x2 pour aller/retour sur les tarifs kilométriques
             if qty <= base_dist:
                 total_item_price = base_price
             else:
-                total_item_price = base_price + (qty - base_dist) * high_rate * Decimal('2')
-            
-            line_total = total_item_price * (Decimal('1') - (discount / Decimal('100')))
+                total_item_price = base_price + \
+                    (qty - base_dist) * high_rate * Decimal('2')
+
+            line_total = total_item_price * \
+                (Decimal('1') - (discount / Decimal('100')))
             undiscounted_line_total = total_item_price
             item['total'] = float(line_total)
             item['unit_price'] = float(total_item_price)
         else:
             price = Decimal(str(item.get('unit_price', 0)))
-            line_total = (qty * price) * (Decimal('1') - (discount / Decimal('100')))
+            line_total = (qty * price) * (Decimal('1') -
+                                          (discount / Decimal('100')))
             undiscounted_line_total = qty * price
             item['total'] = float(line_total)
-            
+
         # Exclude all salary items from the main HT sum
         if item.get('category') == 'salary':
             continue
@@ -98,10 +101,12 @@ def calculate_totals(prestations, tva_rate=20.00, insurance_rate=10.00, insuranc
             insurance_base_ht_undiscounted += undiscounted_line_total
 
     if insurance_based_on_undiscounted:
-        insurance_amount = insurance_base_ht_undiscounted * (insurance_rate / Decimal('100'))
+        insurance_amount = insurance_base_ht_undiscounted * \
+            (insurance_rate / Decimal('100'))
     else:
-        insurance_amount = insurance_base_ht * (insurance_rate / Decimal('100'))
-        
+        insurance_amount = insurance_base_ht * \
+            (insurance_rate / Decimal('100'))
+
     total_ht = total_rental_ht + insurance_amount
     tva_amount = total_ht * (tva_rate / Decimal('100'))
     total_ttc = total_ht + tva_amount
@@ -125,7 +130,7 @@ def extract_vehicle_ids_from_prestations(prestations):
         name = v.get("fields", {}).get("name")
         if name:
             name_to_id[name.strip().lower()] = v["id"]
-            
+
     matched_ids = []
     for item in prestations:
         if item.get("category") == "equipment":
@@ -143,7 +148,7 @@ def extract_head_ids_from_prestations(prestations):
         name = h.get("fields", {}).get("name")
         if name:
             name_to_id[name.strip().lower()] = h["id"]
-            
+
     matched_ids = []
     for item in prestations:
         if item.get("category") == "equipment":
@@ -160,17 +165,20 @@ def create_pre_quote(data, user_id=None):
         data.get('prestations', []),
         tva_rate=data.get('tva_rate', 20.00),
         insurance_rate=data.get('insurance_rate', 10.00),
-        insurance_based_on_undiscounted=data.get('insurance_based_on_undiscounted', False)
+        insurance_based_on_undiscounted=data.get(
+            'insurance_based_on_undiscounted', False)
     )
 
     quote = PreQuote(
         reference=reference,
         production_id=data['production_id'],
         project_name=data.get('project_name'),
-        prestations=[p for p in data.get('prestations', []) if p.get('category') != 'insurance'],
+        prestations=[p for p in data.get(
+            'prestations', []) if p.get('category') != 'insurance'],
         insurance_rate=totals['insurance_rate'],
         insurance_amount=totals['insurance_amount'],
-        insurance_based_on_undiscounted=data.get('insurance_based_on_undiscounted', False),
+        insurance_based_on_undiscounted=data.get(
+            'insurance_based_on_undiscounted', False),
         total_ht=totals['total_ht'],
         tva_rate=totals['tva_rate'],
         tva_amount=totals['tva_amount'],
@@ -213,25 +221,28 @@ def update_pre_quote(quote_id, data):
         quote.production_id = data['production_id']
     if 'project_name' in data:
         quote.project_name = data['project_name']
-    
+
     if 'prestations' in data or 'tva_rate' in data or 'insurance_rate' in data or 'insurance_based_on_undiscounted' in data:
         prestations = data.get('prestations', quote.prestations)
         tva_rate = data.get('tva_rate', quote.tva_rate)
         insurance_rate = data.get('insurance_rate', quote.insurance_rate)
-        insurance_based_on_undiscounted = data.get('insurance_based_on_undiscounted', quote.insurance_based_on_undiscounted)
-        
-        logger.info(f"📊 Mise à jour pré-devis #{quote_id}: insurance_rate reçu={insurance_rate}, tva_rate reçu={tva_rate}, insurance_based_on_undiscounted={insurance_based_on_undiscounted}")
-        
+        insurance_based_on_undiscounted = data.get(
+            'insurance_based_on_undiscounted', quote.insurance_based_on_undiscounted)
+
+        logger.info(
+            f"📊 Mise à jour pré-devis #{quote_id}: insurance_rate reçu={insurance_rate}, tva_rate reçu={tva_rate}, insurance_based_on_undiscounted={insurance_based_on_undiscounted}")
+
         # Filtrer les anciens items d'assurance si présents
-        clean_prestations = [p for p in prestations if p.get('category') != 'insurance']
-        
+        clean_prestations = [
+            p for p in prestations if p.get('category') != 'insurance']
+
         totals = calculate_totals(
             clean_prestations,
             tva_rate=tva_rate,
             insurance_rate=insurance_rate,
             insurance_based_on_undiscounted=insurance_based_on_undiscounted
         )
-        
+
         quote.prestations = clean_prestations
         quote.insurance_rate = totals['insurance_rate']
         quote.insurance_amount = totals['insurance_amount']
@@ -240,8 +251,9 @@ def update_pre_quote(quote_id, data):
         quote.tva_rate = totals['tva_rate']
         quote.tva_amount = totals['tva_amount']
         quote.total_ttc = totals['total_ttc']
-        
-        logger.info(f"📊 Pré-devis #{quote_id} sauvegardé: insurance_rate={quote.insurance_rate}, insurance_amount={quote.insurance_amount}, insurance_based_on_undiscounted={quote.insurance_based_on_undiscounted}")
+
+        logger.info(
+            f"📊 Pré-devis #{quote_id} sauvegardé: insurance_rate={quote.insurance_rate}, insurance_amount={quote.insurance_amount}, insurance_based_on_undiscounted={quote.insurance_based_on_undiscounted}")
 
     if 'status' in data:
         quote.status = data['status']
@@ -276,24 +288,26 @@ def update_pre_quote(quote_id, data):
 def create_pre_quote_version(quote_id, note):
     """Crée une nouvelle version (snapshot) pour un pré-devis."""
     quote = PreQuote.query.get_or_404(quote_id)
-    
+
     # Numéro de la version
-    last_version = PreQuoteVersion.query.filter_by(pre_quote_id=quote_id).order_by(PreQuoteVersion.version_number.desc()).first()
+    last_version = PreQuoteVersion.query.filter_by(pre_quote_id=quote_id).order_by(
+        PreQuoteVersion.version_number.desc()).first()
     next_version = (last_version.version_number + 1) if last_version else 1
-    
+
     # Dossier de sortie pour les PDF des pré-devis
-    output_base = current_app.config.get("OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
+    output_base = current_app.config.get(
+        "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
     pre_quotes_dir = os.path.join(output_base, "pre-quotes")
     os.makedirs(pre_quotes_dir, exist_ok=True)
-    
+
     # Génération du PDF
     pdf_bytes = get_pre_quote_pdf(quote_id)
     relative_pdf_path = f"pre-quotes/{quote.reference}_v{next_version}.pdf"
     full_pdf_path = os.path.join(output_base, relative_pdf_path)
-    
+
     with open(full_pdf_path, 'wb') as f:
         f.write(pdf_bytes)
-        
+
     # Création du record de version
     version = PreQuoteVersion(
         pre_quote_id=quote.id,
@@ -309,7 +323,7 @@ def create_pre_quote_version(quote_id, note):
         pdf_path=relative_pdf_path,
         version_note=note or f"Version {next_version}"
     )
-    
+
     db.session.add(version)
     db.session.commit()
     return version
@@ -319,7 +333,7 @@ def restore_pre_quote_version(version_id):
     """Restaure les données d'une version spécifique dans le pré-devis parent."""
     version = PreQuoteVersion.query.get_or_404(version_id)
     quote = version.pre_quote
-    
+
     quote.prestations = version.prestations
     quote.total_ht = version.total_ht
     quote.total_ttc = version.total_ttc
@@ -328,7 +342,7 @@ def restore_pre_quote_version(version_id):
     quote.insurance_based_on_undiscounted = version.insurance_based_on_undiscounted or False
     quote.tva_rate = version.tva_rate
     quote.tva_amount = version.tva_amount
-    
+
     db.session.commit()
     return quote
 
@@ -354,16 +368,16 @@ def get_pre_quote_pdf(quote_id):
             if not custom_cat:
                 custom_cat = 'Autre'
             cat = custom_cat
-            
+
         if cat not in by_cat:
             by_cat[cat] = []
         by_cat[cat].append(item)
-        
+
     grouped_prestations = []
     for cat in category_order:
         if cat in by_cat and by_cat[cat]:
             grouped_prestations.append((cat, by_cat[cat]))
-            
+
     for cat, items in by_cat.items():
         if cat not in category_order and items:
             grouped_prestations.append((cat, items))
@@ -374,7 +388,7 @@ def get_pre_quote_pdf(quote_id):
     # Batch load settings for the PDF template to avoid 9 separate cache/DB lookups
     company_settings = AppSetting.get_all_as_dict({
         'company_name': 'Belle Vitesse SAS',
-        'company_address': '33 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine',
+        'company_address': '39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine',
         'company_phone': '+33 6 65 51 40 40',
         'company_email': 'contact@bellevitesse.com',
         'company_siret': '981 514 040 00014',
@@ -402,7 +416,8 @@ def get_pre_quote_pdf(quote_id):
                            now=datetime.now(),
                            settings=company_settings)
 
-    pdf_bytes = render_pdf_from_template(html, base_url=current_app.root_path, filename=filename)
+    pdf_bytes = render_pdf_from_template(
+        html, base_url=current_app.root_path, filename=filename)
 
     return pdf_bytes
 

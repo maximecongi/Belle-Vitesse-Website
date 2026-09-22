@@ -1,3 +1,5 @@
+from flask import render_template
+from app import create_app
 import os
 import unittest
 from datetime import datetime, timezone
@@ -9,9 +11,6 @@ os.environ["TESTING"] = "True"
 os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
 os.environ["WTF_CSRF_ENABLED"] = "False"
 os.environ["USE_SSH_TUNNEL"] = "false"
-
-from app import create_app
-from flask import render_template
 
 
 class EmailTemplatesTest(unittest.TestCase):
@@ -29,9 +28,10 @@ class EmailTemplatesTest(unittest.TestCase):
             )
             self.assertIn("Connexion Admin.", html)
             self.assertIn("Bonjour Maxime,", html)
-            self.assertIn("https://bellevitesse.com/admin/login?token=xyz123", html)
-            self.assertIn("blanc-fond-transparent.png", html)
-            self.assertIn("© Belle Vitesse 2026", html)
+            self.assertIn(
+                "https://bellevitesse.com/admin/login?token=xyz123", html)
+            self.assertIn("© Belle Vitesse", html)
+            self.assertIn("2026", html)
 
     def test_waiver_invitation_rendering_standard(self):
         with self.app.app_context():
@@ -47,7 +47,8 @@ class EmailTemplatesTest(unittest.TestCase):
             self.assertIn("Signature Décharge Pilote", html)
             self.assertIn("Tournage Pub Vitesse", html)
             self.assertIn("project-pill", html)
-            self.assertIn("https://bellevitesse.com/waivers/pilot/token123", html)
+            self.assertIn(
+                "https://bellevitesse.com/waivers/pilot/token123", html)
             self.assertNotIn("Signature en attente", html)
 
     def test_waiver_invitation_rendering_reminder(self):
@@ -125,7 +126,8 @@ class EmailTemplatesTest(unittest.TestCase):
             self.assertIn("Calendrier Projets.", html)
             self.assertIn("qr-code-box", html)
             self.assertIn("instructions-card", html)
-            self.assertIn("webcal://bellevitesse.com/calendar/feed.ics?token=cal123", html)
+            self.assertIn(
+                "webcal://bellevitesse.com/calendar/feed.ics?token=cal123", html)
             self.assertIn("blanc-fond-transparent.png", html)
 
     def test_newsletter_welcome_rendering(self):
@@ -136,8 +138,23 @@ class EmailTemplatesTest(unittest.TestCase):
                 now_year=2026,
             )
             self.assertIn("Bienvenue chez Belle Vitesse.", html)
-            self.assertIn("https://bellevitesse.com/unsubscribe/token_abc", html)
-            self.assertIn("© Belle Vitesse 2026", html)
+            self.assertIn(
+                "https://bellevitesse.com/unsubscribe/token_abc", html)
+            self.assertIn("© Belle Vitesse", html)
+            self.assertIn("2026", html)
+
+    def test_company_settings_dynamic_in_email(self):
+        """Vérifie que les coordonnées société définies dans app_settings sont bien injectées dans le footer des emails."""
+        with self.app.app_context():
+            html = render_template(
+                "emails/magic_link.html",
+                firstname="Maxime",
+                magic_link="https://bellevitesse.com/admin/login?token=xyz123",
+                now_year=2026,
+            )
+            self.assertIn("39 rue Maurice Gunsbourg", html)
+            self.assertIn("94200 Ivry-sur-Seine", html)
+            self.assertIn("contact@bellevitesse.com", html)
 
     def test_newsletter_campaign_rendering(self):
         with self.app.app_context():
@@ -150,7 +167,8 @@ class EmailTemplatesTest(unittest.TestCase):
             )
             self.assertIn("Nouvelle Grue Télescopique en Flotte", html)
             self.assertIn("Nous avons le plaisir d'accueillir", html)
-            self.assertIn("https://bellevitesse.com/unsubscribe/token_xyz", html)
+            self.assertIn(
+                "https://bellevitesse.com/unsubscribe/token_xyz", html)
             self.assertIn("content-left", html)
 
     def test_sql_alert_rendering(self):

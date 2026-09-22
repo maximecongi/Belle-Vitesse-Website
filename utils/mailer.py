@@ -104,6 +104,15 @@ class EmailService:
             if "now_year" not in ctx:
                 ctx["now_year"] = datetime.now(timezone.utc).year
 
+            try:
+                from utils.context_processors import get_company_context
+                company_data = get_company_context()
+                for k, v in company_data.items():
+                    if k not in ctx:
+                        ctx[k] = v
+            except Exception:
+                pass
+
             html_content = render_template(template_name, **ctx)
 
             has_attachments = bool(attachments)

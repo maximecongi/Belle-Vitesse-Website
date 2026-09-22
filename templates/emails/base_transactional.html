@@ -9,7 +9,8 @@
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
         /* ── CSS Reset & Base ────────────────────────────────────────── */
-        body, html {
+        body,
+        html {
             margin: 0;
             padding: 0;
             width: 100% !important;
@@ -22,7 +23,8 @@
             -webkit-text-size-adjust: 100%;
         }
 
-        table, td {
+        table,
+        td {
             mso-table-lspace: 0pt;
             mso-table-rspace: 0pt;
         }
@@ -151,51 +153,140 @@
             letter-spacing: 0.5px;
         }
 
-        .badge {
+        /* ── Badges & Pills (Design System Belle Vitesse ERP) ────────── */
+        .badge,
+        .badge-pill {
             display: inline-block;
-            padding: 4px 10px;
-            border-radius: 3px;
+            padding: 3px 10px;
+            margin: 2px 0;
+            border-radius: 20px;
             font-size: 11px;
-            font-weight: 700;
+            font-weight: 600;
+            white-space: nowrap;
+            letter-spacing: 0.4px;
+            line-height: 1.4;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
-        .badge-success {
-            background-color: #10B981;
-            color: #FFFFFF;
+        /* Succès / Validé / OK / Signé (Vert Émeraude) */
+        .badge-success,
+        .badge-pill-success,
+        .badge[data-val="ok"],
+        .badge-pill[data-val="ok"],
+        .badge[data-val="signed"],
+        .badge-pill[data-val="signed"] {
+            background-color: #D1FAE5 !important;
+            color: #065F46 !important;
+            border: 1px solid rgba(16, 185, 129, 0.35);
         }
 
-        .badge-warning {
-            background-color: #F59E0B;
-            color: #FFFFFF;
+        /* Warning / Attention / En retard / En attente (Ambre Chaud) */
+        .badge-warning,
+        .badge-pill-warning,
+        .badge[data-val="warning"],
+        .badge-pill[data-val="warning"],
+        .badge[data-val="pending"],
+        .badge-pill[data-val="pending"],
+        .badge[data-val="waiting"],
+        .badge-pill[data-val="waiting"] {
+            background-color: #FEF3C7 !important;
+            color: #92400E !important;
+            border: 1px solid rgba(217, 119, 6, 0.35);
         }
 
-        .badge-danger, .badge-failed {
-            background-color: #EF4444;
-            color: #FFFFFF;
+        /* Danger / Critique / Échec / Incident (Rouge Carmin) */
+        .badge-danger,
+        .badge-failed,
+        .badge-incident,
+        .badge-pill-danger,
+        .badge[data-val="danger"],
+        .badge-pill[data-val="danger"],
+        .badge[data-val="failed"],
+        .badge-pill[data-val="failed"],
+        .badge[data-val="critical"],
+        .badge-pill[data-val="critical"],
+        .badge[data-val="critique"],
+        .badge-pill[data-val="critique"] {
+            background-color: #FEE2E2 !important;
+            color: #991B1B !important;
+            border: 1px solid rgba(239, 68, 68, 0.35);
         }
 
-        .badge-missing, .badge-neutral {
-            background-color: #64748B;
-            color: #FFFFFF;
+        /* Info / À venir (Bleu Ciel) */
+        .badge-info,
+        .badge-pill-info,
+        .badge[data-val="info"],
+        .badge-pill[data-val="info"],
+        .badge[data-val="upcoming"],
+        .badge-pill[data-val="upcoming"] {
+            background-color: #E0F2FE !important;
+            color: #0369A1 !important;
+            border: 1px solid rgba(2, 132, 199, 0.35);
         }
 
-        .badge-waiver {
-            background-color: #8B5CF6;
-            color: #FFFFFF;
+        /* Neutre / Manquant / Archivé (Gris Ardoise) */
+        .badge-neutral,
+        .badge-missing,
+        .badge-pill-neutral,
+        .badge[data-val="neutral"],
+        .badge-pill[data-val="neutral"],
+        .badge[data-val="missing"],
+        .badge-pill[data-val="missing"],
+        .badge[data-val="completed"],
+        .badge-pill[data-val="completed"] {
+            background-color: #F1F5F9 !important;
+            color: #475569 !important;
+            border: 1px solid rgba(100, 116, 139, 0.25);
         }
 
-        .badge-incident {
-            background-color: #EF4444;
-            color: #FFFFFF;
+        /* Décharges (Waivers) : Violet / Indigo */
+        .badge-waiver,
+        .badge-pill-waiver,
+        .badge[data-val="waiver"],
+        .badge-pill[data-val="waiver"],
+        .badge[data-val="to_sign"],
+        .badge-pill[data-val="to_sign"] {
+            background-color: #EDE9FE !important;
+            color: #5B21B6 !important;
+            border: 1px solid rgba(139, 92, 246, 0.35);
+        }
+
+        /* Tournages / Projets : Ambre Chaud */
+        .badge-project,
+        .badge-pill-project,
+        .badge[data-val="project"],
+        .badge-pill[data-val="project"],
+        .badge[data-val="in_progress"],
+        .badge-pill[data-val="in_progress"] {
+            background-color: #FEF3C7 !important;
+            color: #B45309 !important;
+            border: 1px solid rgba(245, 158, 11, 0.35);
+        }
+
+        /* Check-in : Bleu Océan */
+        .badge-checkin,
+        .badge-pill-checkin,
+        .badge[data-val="checkin"],
+        .badge-pill[data-val="checkin"] {
+            background-color: #DBEAFE !important;
+            color: #1E40AF !important;
+            border: 1px solid rgba(59, 130, 246, 0.35);
+        }
+
+        /* Check-out : Vert Émeraude */
+        .badge-checkout,
+        .badge-pill-checkout,
+        .badge[data-val="checkout"],
+        .badge-pill[data-val="checkout"] {
+            background-color: #D1FAE5 !important;
+            color: #065F46 !important;
+            border: 1px solid rgba(16, 185, 129, 0.35);
         }
 
         /* ── Cards & Data Displays ───────────────────────────────────── */
         .info-card {
             background-color: #1a1a1a;
             border: 1px solid #282828;
-            border-radius: 6px;
             padding: 20px;
             margin: 20px 0 25px;
             text-align: left;
@@ -486,8 +577,15 @@
         </div>
         <div class="footer">
             <p>
-                © Belle Vitesse {{ now_year }}. Tous droits réservés.<br>
-                Belle Vitesse — 33 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine, France
+                © {{ company_name or 'Belle Vitesse' }} {{ now_year }}. Tous droits réservés.<br>
+                {{ company_name or 'Belle Vitesse' }} — {{ company_address or '39 rue Maurice Gunsbourg, 94200
+                Ivry-sur-Seine' }}
+                {% if company_email or company_phone %}
+                <br>
+                {% if company_email %}<a href="mailto:{{ company_email }}">{{ company_email }}</a>{% endif %}
+                {% if company_email and company_phone %} • {% endif %}
+                {% if company_phone %}<span>{{ company_phone }}</span>{% endif %}
+                {% endif %}
             </p>
             {% block footer_extra %}{% endblock %}
         </div>
