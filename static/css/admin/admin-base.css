@@ -39,8 +39,8 @@
     --entity-checkin-glow: rgba(59, 130, 246, 0.4);
 
     /* Check-out (Départs) : Vert Émeraude */
-    --entity-checkout: #10B981;
-    --entity-checkout-bg: #D1FAE5;
+    --entity-checkout: #1ea461;
+    --entity-checkout-bg: #dbf0e5;
     --entity-checkout-text: #065F46;
     --entity-checkout-border: rgba(16, 185, 129, 0.3);
     --entity-checkout-glow: rgba(16, 185, 129, 0.4);

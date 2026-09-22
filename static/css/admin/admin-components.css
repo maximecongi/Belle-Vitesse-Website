@@ -103,11 +103,11 @@
 }
 
 .filter-pill .lucide-truck {
-    color: var(--entity-checkout, #10B981);
+    color: var(--entity-checkout, #0cb57de2);
 }
 
 .filter-pill .lucide-clapperboard {
-    color: var(--entity-project, #F59E0B);
+    color: var(--entity-project, hsl(38, 92%, 50%));
 }
 
 .filter-pill .lucide-wrench {
