@@ -185,6 +185,8 @@ def run_kdrive_reconciliation(dry_run: bool = False):
                         if not pw.project_id:
                             logger.warning(f"⚠️ Décharge pilote {pw.waiver_id} sans project_id, ignorée.")
                             continue
+                        if pw.project and pw.project.deleted_at is not None:
+                            continue
                         synced_pdf = KDriveObject.query.filter_by(
                             entity_id=pw.waiver_id, role="pdf", status="synced"
                         ).first()
@@ -221,6 +223,8 @@ def run_kdrive_reconciliation(dry_run: bool = False):
                     for prw in signed_prod:
                         if not prw.project_id:
                             continue
+                        if prw.project and prw.project.deleted_at is not None:
+                            continue
                         synced_pdf = KDriveObject.query.filter_by(
                             entity_id=prw.waiver_id, role="pdf", status="synced"
                         ).first()
@@ -250,6 +254,8 @@ def run_kdrive_reconciliation(dry_run: bool = False):
                     logger.info(f"🔍 Inspections Check-out signées en BDD : {len(checkouts)}")
                     for co in checkouts:
                         if not co.project_id:
+                            continue
+                        if co.project and co.project.deleted_at is not None:
                             continue
                         synced_pdf = KDriveObject.query.filter_by(
                             entity_id=co.inspection_number, role="pdf", status="synced"
@@ -287,6 +293,8 @@ def run_kdrive_reconciliation(dry_run: bool = False):
                     for ci in checkins:
                         if not ci.project_id:
                             continue
+                        if ci.project and ci.project.deleted_at is not None:
+                            continue
                         synced_pdf = KDriveObject.query.filter_by(
                             entity_id=ci.inspection_number, role="pdf", status="synced"
                         ).first()
@@ -322,6 +330,8 @@ def run_kdrive_reconciliation(dry_run: bool = False):
                     logger.info(f"🔍 Incidents signés en BDD : {len(incidents)}")
                     for inc in incidents:
                         if not inc.project_id:
+                            continue
+                        if inc.project and inc.project.deleted_at is not None:
                             continue
                         synced_pdf = KDriveObject.query.filter_by(
                             entity_id=inc.incident_number, role="pdf", status="synced"
