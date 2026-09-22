@@ -17,9 +17,9 @@ from services.common.kdrive.service import KDriveService
 logger = logging.getLogger("kdrive.tasks")
 
 FLASK_ENV = os.getenv("FLASK_ENV", "production")
-REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_HOST = os.getenv("REDIS_HOST", "bv_redis" if FLASK_ENV == "production" else "localhost")
 REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
-REDIS_DB = int(os.getenv("REDIS_DB_KDRIVE", 2))
+REDIS_DB = int(os.getenv("REDIS_DB_KDRIVE", 1))
 REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", None)
 
 _redis_conn: Optional[Redis] = None
@@ -78,8 +78,14 @@ def task_create_project_tree(project_id: int):
 def task_upload_document_bundle(project_id: int, entity_type: str, entity_id: str, file_specs: List[Dict[str, Any]]):
     """Tâche RQ : Upload un lot de fichiers (PDF + photos) pour une entité."""
     logger.info(f"🚀 [kDrive Job] task_upload_document_bundle pour {entity_type} {entity_id} ({len(file_specs)} fichiers)")
-    service = KDriveService()
-    service.upload_bundle_sync(project_id, entity_type, entity_id, file_specs)
+    try:
+        service = KDriveService()
+        uploaded = service.upload_bundle_sync(project_id, entity_type, entity_id, file_specs)
+        logger.info(f"✅ [kDrive Job] {len(uploaded)}/{len(file_specs)} fichier(s) uploadé(s) pour {entity_type} {entity_id}")
+        return len(uploaded)
+    except Exception as exc:
+        logger.error(f"❌ [kDrive Job] Échec upload_document_bundle {entity_type} {entity_id} : {exc}", exc_info=True)
+        raise
 
 
 @_with_app_context

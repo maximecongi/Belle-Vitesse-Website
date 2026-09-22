@@ -153,10 +153,11 @@ def run_kdrive_reconciliation(dry_run: bool = False):
             if not dry_run:
                 logger.info("🔍 Contrôle des documents signés non synchronisés (décharges)...")
                 try:
-                    from models import PilotWaiver, ProductionWaiver
+                    import json
+                    from models import PilotWaiver, ProductionWaiver, CheckoutVehicle, CheckinVehicle, Incident
                     stats["documents_caught_up"] = 0
 
-                    # Décharges Pilote
+                    # 1. Décharges Pilote
                     signed_pilot = PilotWaiver.query.filter(
                         PilotWaiver.status == "signed",
                         PilotWaiver.deleted_at.is_(None)
@@ -180,7 +181,7 @@ def run_kdrive_reconciliation(dry_run: bool = False):
                             except Exception as e_pw:
                                 logger.error(f"❌ Échec rattrapage décharge pilote {pw.waiver_id} : {e_pw}")
 
-                    # Décharges Production
+                    # 2. Décharges Production
                     signed_prod = ProductionWaiver.query.filter(
                         ProductionWaiver.status == "signed",
                         ProductionWaiver.deleted_at.is_(None)
@@ -199,6 +200,82 @@ def run_kdrive_reconciliation(dry_run: bool = False):
                                 stats["documents_caught_up"] += 1
                             except Exception as e_prw:
                                 logger.error(f"❌ Échec rattrapage décharge prod {prw.waiver_id} : {e_prw}")
+
+                    # 3. Inspections Check-out signées
+                    checkouts = CheckoutVehicle.query.filter(
+                        CheckoutVehicle.is_signed.is_(True),
+                        CheckoutVehicle.deleted_at.is_(None)
+                    ).all()
+                    for co in checkouts:
+                        if not co.project_id:
+                            continue
+                        synced_pdf = KDriveObject.query.filter_by(entity_id=co.inspection_number, role="pdf", status="synced").first()
+                        if not synced_pdf and co.signed_pdf_path:
+                            logger.info(f"📤 Rattrapage check-out {co.inspection_number}...")
+                            fspecs = [{"role": "pdf", "path": co.signed_pdf_path, "filename": os.path.basename(co.signed_pdf_path)}]
+                            for p_field in [co.interior_photos, co.exterior_photos]:
+                                if p_field:
+                                    try:
+                                        for p in (json.loads(p_field) if isinstance(p_field, str) else p_field):
+                                            if p:
+                                                fspecs.append({"role": "photo", "path": p})
+                                    except Exception:
+                                        pass
+                            try:
+                                service.upload_bundle_sync(co.project_id, "checkout", co.inspection_number, fspecs)
+                                stats["documents_caught_up"] += 1
+                            except Exception as e_co:
+                                logger.error(f"❌ Échec rattrapage checkout {co.inspection_number} : {e_co}")
+
+                    # 4. Inspections Check-in signées
+                    checkins = CheckinVehicle.query.filter(
+                        CheckinVehicle.is_signed.is_(True),
+                        CheckinVehicle.deleted_at.is_(None)
+                    ).all()
+                    for ci in checkins:
+                        if not ci.project_id:
+                            continue
+                        synced_pdf = KDriveObject.query.filter_by(entity_id=ci.inspection_number, role="pdf", status="synced").first()
+                        if not synced_pdf and ci.signed_pdf_path:
+                            logger.info(f"📤 Rattrapage check-in {ci.inspection_number}...")
+                            fspecs = [{"role": "pdf", "path": ci.signed_pdf_path, "filename": os.path.basename(ci.signed_pdf_path)}]
+                            for p_field in [ci.interior_photos, ci.exterior_photos]:
+                                if p_field:
+                                    try:
+                                        for p in (json.loads(p_field) if isinstance(p_field, str) else p_field):
+                                            if p:
+                                                fspecs.append({"role": "photo", "path": p})
+                                    except Exception:
+                                        pass
+                            try:
+                                service.upload_bundle_sync(ci.project_id, "checkin", ci.inspection_number, fspecs)
+                                stats["documents_caught_up"] += 1
+                            except Exception as e_ci:
+                                logger.error(f"❌ Échec rattrapage checkin {ci.inspection_number} : {e_ci}")
+
+                    # 5. Incidents scellés / signés
+                    incidents = Incident.query.filter(
+                        Incident.is_fully_signed.is_(True),
+                        Incident.deleted_at.is_(None)
+                    ).all()
+                    for inc in incidents:
+                        if not inc.project_id:
+                            continue
+                        synced_pdf = KDriveObject.query.filter_by(entity_id=inc.incident_number, role="pdf", status="synced").first()
+                        if not synced_pdf and inc.signed_pdf_path:
+                            logger.info(f"📤 Rattrapage incident {inc.incident_number}...")
+                            fspecs = [{"role": "pdf", "path": inc.signed_pdf_path, "filename": os.path.basename(inc.signed_pdf_path)}]
+                            for p in (inc.photos_list or []):
+                                if p:
+                                    fspecs.append({"role": "photo", "path": p})
+                            for d in (inc.documents_list or []):
+                                if d:
+                                    fspecs.append({"role": "document", "path": d})
+                            try:
+                                service.upload_bundle_sync(inc.project_id, "incident", inc.incident_number, fspecs)
+                                stats["documents_caught_up"] += 1
+                            except Exception as e_inc:
+                                logger.error(f"❌ Échec rattrapage incident {inc.incident_number} : {e_inc}")
 
                 except Exception as e:
                     logger.error(f"❌ Erreur contrôle documents signés : {e}")

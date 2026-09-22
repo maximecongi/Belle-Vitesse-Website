@@ -42,9 +42,9 @@ class KDriveService:
         self.client = client or KDriveClient()
 
     def _resolve_output_path(self, rel_or_abs_path: str) -> Path:
-        """Résout un chemin relatif par rapport à OUTPUT_FOLDER ou le retourne s'il est absolu."""
+        """Résout un chemin relatif par rapport à OUTPUT_FOLDER ou le retourne s'il est absolu et existant."""
         p = Path(rel_or_abs_path)
-        if p.is_absolute():
+        if p.is_absolute() and p.exists():
             return p
 
         output_base = None
@@ -57,7 +57,8 @@ class KDriveService:
         if not output_base:
             output_base = os.getenv("OUTPUT_FOLDER", "/app/output")
 
-        return Path(output_base) / rel_or_abs_path
+        clean_rel = str(rel_or_abs_path).lstrip("/")
+        return Path(output_base) / clean_rel
 
     def ensure_project_tree(self, project_id_or_obj) -> int:
         """
