@@ -113,6 +113,14 @@ def run_kdrive_reconciliation(dry_run: bool = False):
                         else:
                             stats["active_synced"] += 1
                             logger.info(f"✓ Projet #{project.id} ({project.name}) : arborescence complète 100% conforme.")
+
+                        # Nettoyage automatique des dossiers de documents orphelins/vides (ex: décharges/checks supprimés)
+                        empty_purged = service.cleanup_empty_document_folders(project, dry_run=dry_run)
+                        if empty_purged:
+                            stats["empty_docs_purged"] = stats.get("empty_docs_purged", 0) + len(empty_purged)
+                            logger.info(
+                                f"🧹 Projet #{project.id} ({project.name}) : {len(empty_purged)} dossier(s) document(s) vide(s) purgé(s) -> {', '.join(empty_purged)}"
+                            )
                     except Exception as e:
                         logger.error(f"❌ Échec audit sous-dossiers projet #{project.id} : {e}")
 

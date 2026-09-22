@@ -179,6 +179,77 @@ class KDriveService:
 
         return repaired
 
+    def _is_folder_completely_empty(self, folder_id: int) -> bool:
+        """Vérifie récursivement si un dossier kDrive ne contient aucun fichier physique."""
+        try:
+            items, _, _ = self.client.list_files(folder_id, limit=100)
+            if not items:
+                return True
+            for item in items:
+                if item.get("type") == "file":
+                    return False
+                if item.get("type") == "dir":
+                    if not self._is_folder_completely_empty(item["id"]):
+                        return False
+            return True
+        except Exception as e:
+            logger.warning(f"⚠️ Impossible de scanner le contenu de {folder_id}: {e}")
+            return False
+
+    def cleanup_empty_document_folders(self, project: Project, dry_run: bool = False) -> List[str]:
+        """
+        Scanne les catégories de documents (Checkouts, Décharges, Checkins, Incidents) d'un projet.
+        Si un sous-dossier d'entité (ex: BVPW-HUVTDMP0LCK9) est totalement vide de fichiers physiques, il est purgé.
+        Retourne la liste des dossiers purgés.
+        """
+        if not project.kdrive_folder_id:
+            return []
+
+        purged = []
+        doc_categories = [
+            "4_SÉCURITÉ/1_CHECKOUT",
+            "4_SÉCURITÉ/2_DÉCHARGE_PILOTE",
+            "4_SÉCURITÉ/3_DÉCHARGE_PRODUCTION",
+            "4_SÉCURITÉ/4_CHECKIN",
+            "6_INCIDENTS",
+        ]
+
+        for cat_rel in doc_categories:
+            try:
+                curr_id = project.kdrive_folder_id
+                found = True
+                for seg in cat_rel.split("/"):
+                    child = self.client.get_child_by_name(curr_id, seg)
+                    if not child:
+                        found = False
+                        break
+                    curr_id = child["id"]
+
+                if not found:
+                    continue
+
+                # Lister les dossiers enfants (représentant un document, ex: BVPW-XXX, BVCO-XXX)
+                items, _, _ = self.client.list_files(curr_id, limit=100)
+                for item in items:
+                    if item.get("type") == "dir":
+                        doc_folder_name = item.get("name")
+                        doc_folder_id = item["id"]
+                        if self._is_folder_completely_empty(doc_folder_id):
+                            if dry_run:
+                                logger.info(
+                                    f"🔍 [DRY-RUN] Dossier document vide détecté : '{cat_rel}/{doc_folder_name}' (ID={doc_folder_id})"
+                                )
+                            else:
+                                logger.info(
+                                    f"🗑️ Purge du dossier document vide : '{cat_rel}/{doc_folder_name}' (ID={doc_folder_id})..."
+                                )
+                                self.client.delete(doc_folder_id)
+                            purged.append(f"{cat_rel}/{doc_folder_name}")
+            except Exception as err:
+                logger.warning(f"⚠️ Erreur scan dossiers vides dans {cat_rel} pour projet {project.name}: {err}")
+
+        return purged
+
     def ensure_directory_path(self, parent_id: int, relative_path: str) -> int:
         """
         Assure l'existence d'une chaîne de répertoires sous parent_id et retourne l'ID du dernier dossier.
@@ -386,36 +457,99 @@ class KDriveService:
 
     def delete_entity(self, entity_type: str, entity_id: str) -> bool:
         """
-        Supprime le dossier d'un document ou d'un incident sur kDrive en utilisant EXCLUSIVEMENT son ID réel.
-        Supprime les entrées associées dans kdrive_objects.
+        Supprime le dossier complet d'un document ou d'un incident (<document_id>) sur kDrive.
+        Supprime également toutes les entrées associées dans kdrive_objects.
+        Garantit que le dossier du document (ex: BVPW-XXXX) est lui-même supprimé et ne reste pas vide.
         """
         objects = KDriveObject.query.filter_by(
             entity_type=entity_type,
             entity_id=entity_id,
         ).all()
 
-        if not objects:
-            logger.warning(f"⚠️ Aucun objet kDrive trouvé en base pour {entity_type} {entity_id}.")
+        entity_folder_ids = set()
+
+        # 1. Identifier le dossier racine de l'entité à partir des kdrive_objects
+        for obj in objects:
+            if not obj.kdrive_dir_id:
+                continue
+            try:
+                meta = self.client.get_file(obj.kdrive_dir_id)
+                folder_name = meta.get("name")
+                # Si le dossier est déjà le dossier de l'entité (ex: BVPW-XXX, BVCO-XXX, BVIC-XXX)
+                if folder_name == entity_id:
+                    entity_folder_ids.add(obj.kdrive_dir_id)
+                else:
+                    # Sinon, il s'agit d'un sous-dossier (ex: 1_DÉCHARGE, PHOTOS), le parent est le dossier de l'entité
+                    parent_id = meta.get("parent_id")
+                    if parent_id:
+                        try:
+                            parent_meta = self.client.get_file(parent_id)
+                            if parent_meta.get("name") == entity_id:
+                                entity_folder_ids.add(parent_id)
+                            else:
+                                entity_folder_ids.add(obj.kdrive_dir_id)
+                        except Exception:
+                            entity_folder_ids.add(parent_id)
+                    else:
+                        entity_folder_ids.add(obj.kdrive_dir_id)
+            except Exception as err:
+                logger.warning(f"⚠️ Erreur identification dossier pour {obj.kdrive_dir_id} : {err}")
+                entity_folder_ids.add(obj.kdrive_dir_id)
+
+        # 2. Recherche complémentaire dans l'arborescence kDrive du projet si non trouvé
+        project = None
+        if objects:
+            project = objects[0].project
+        if not project:
+            if entity_type == "pilot_waiver":
+                from models import PilotWaiver
+                rec = PilotWaiver.query.filter_by(waiver_id=entity_id).first()
+                project = rec.project if rec else None
+            elif entity_type == "production_waiver":
+                from models import ProductionWaiver
+                rec = ProductionWaiver.query.filter_by(waiver_id=entity_id).first()
+                project = rec.project if rec else None
+            elif entity_type == "checkout":
+                from models import CheckoutVehicle
+                rec = CheckoutVehicle.query.filter_by(inspection_number=entity_id).first()
+                project = rec.project if rec else None
+            elif entity_type == "checkin":
+                from models import CheckinVehicle
+                rec = CheckinVehicle.query.filter_by(inspection_number=entity_id).first()
+                project = rec.project if rec else None
+            elif entity_type == "incident":
+                from models import Incident
+                rec = Incident.query.filter_by(incident_number=entity_id).first()
+                project = rec.project if rec else None
+
+        if project and project.kdrive_folder_id and entity_type in DOC_FOLDERS:
+            try:
+                cat_rel = DOC_FOLDERS[entity_type]  # ex: 4_SÉCURITÉ/2_DÉCHARGE_PILOTE
+                cat_dir_id = self.ensure_directory_path(project.kdrive_folder_id, cat_rel)
+                child = self.client.get_child_by_name(cat_dir_id, entity_id)
+                if child:
+                    entity_folder_ids.add(child["id"])
+            except Exception as e_find:
+                logger.warning(f"⚠️ Recherche du dossier {entity_id} dans {entity_type} : {e_find}")
+
+        if not entity_folder_ids and not objects:
+            logger.warning(f"⚠️ Aucun dossier kDrive ni objet trouvé en base pour {entity_type} {entity_id}.")
             return False
 
-        # Récupération de l'ID du dossier parent de l'entité (<document_id>)
-        dir_ids = {obj.kdrive_dir_id for obj in objects if obj.kdrive_dir_id}
-
-        for dir_id in dir_ids:
+        # 3. Suppression du/des dossier(s) racine(s) de l'entité sur kDrive
+        for folder_id in entity_folder_ids:
             try:
-                # Pour les sous-dossiers (ex: PHOTOS), on peut supprimer directement le dossier racine <document_id>
-                # En vérifiant le parent ou en supprimant le dir_id
-                logger.info(f"🗑️ Suppression kDrive du dossier {dir_id} pour {entity_type} {entity_id}...")
-                self.client.delete(dir_id)
+                logger.info(f"🗑️ Suppression kDrive du dossier entité {folder_id} ({entity_id})...")
+                self.client.delete(folder_id)
             except Exception as err:
-                logger.error(f"❌ Erreur lors de la suppression du dossier {dir_id} : {err}")
+                logger.error(f"❌ Erreur lors de la suppression du dossier {folder_id} : {err}")
 
-        # Nettoyage de la base de données
+        # 4. Nettoyage de la base de données
         for obj in objects:
             db.session.delete(obj)
 
         db.session.commit()
-        logger.info(f"✅ Suppression terminée pour {entity_type} {entity_id}")
+        logger.info(f"✅ Dossier entité kDrive et objets supprimés avec succès pour {entity_type} {entity_id}")
         return True
 
     def delete_project_folder(self, project_id: int, folder_id: Optional[int] = None) -> bool:
