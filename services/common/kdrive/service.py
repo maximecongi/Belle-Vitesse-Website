@@ -179,128 +179,62 @@ class KDriveService:
 
         return repaired
 
-    def _is_folder_completely_empty(self, folder_id: int) -> bool:
-        """Vérifie récursivement si un dossier kDrive ne contient aucun fichier physique."""
+    def prune_orphan_project_containers(self, dry_run: bool = False) -> List[str]:
+        """
+        Scanne UNIQUEMENT le niveau externe de l'arborescence kDrive :
+        1_TOURNAGES / <Année> / <Mois> / <Production> / <Nom_Projet>
+        Si un conteneur <Nom_Projet> ne contient aucun dossier projet (aucun BVPR-*) et est totalement vide,
+        il est supprimé (ex: ancien dossier laissé après déplacement de projet comme 'TEST PROJET 4').
+        Remonte ensuite supprimer la production et le mois s'ils sont devenus totalement vides.
+        SANCTUARISATION ABSOLUE : ne pénètre JAMAIS dans les dossiers projets BVPR-* et ne touche
+        JAMAIS à leur structure interne (1_DEVIS, 2_FACTURES, 3_LISTES, 4_SÉCURITÉ, 5_BTS, 6_INCIDENTS).
+        """
+        purged = []
         try:
-            items, _, _ = self.client.list_files(folder_id, limit=100)
-            if not items:
-                return True
-            for item in items:
-                if item.get("type") == "file":
-                    return False
-                if item.get("type") == "dir":
-                    if not self._is_folder_completely_empty(item["id"]):
-                        return False
-            return True
-        except Exception as e:
-            logger.warning(f"⚠️ Impossible de scanner le contenu de {folder_id}: {e}")
-            return False
-
-    def cleanup_empty_document_folders(self, project: Project, dry_run: bool = False) -> List[str]:
-        """
-        Scanne les catégories de documents (Checkouts, Décharges, Checkins, Incidents) d'un projet.
-        Si un sous-dossier d'entité (ex: BVPW-HUVTDMP0LCK9) est totalement vide de fichiers physiques, il est purgé.
-        Retourne la liste des dossiers purgés.
-        """
-        if not project.kdrive_folder_id:
-            return []
-
-        purged = []
-        doc_categories = [
-            "4_SÉCURITÉ/1_CHECKOUT",
-            "4_SÉCURITÉ/2_DÉCHARGE_PILOTE",
-            "4_SÉCURITÉ/3_DÉCHARGE_PRODUCTION",
-            "4_SÉCURITÉ/4_CHECKIN",
-            "6_INCIDENTS",
-        ]
-
-        for cat_rel in doc_categories:
-            try:
-                curr_id = project.kdrive_folder_id
-                found = True
-                for seg in cat_rel.split("/"):
-                    child = self.client.get_child_by_name(curr_id, seg)
-                    if not child:
-                        found = False
-                        break
-                    curr_id = child["id"]
-
-                if not found:
+            years, _, _ = self.client.list_files(KDRIVE_ROOT_FOLDER_ID, limit=50)
+            for y in years:
+                if y.get("type") != "dir":
                     continue
+                y_id, y_name = y["id"], y.get("name")
 
-                # Lister les dossiers enfants (représentant un document, ex: BVPW-XXX, BVCO-XXX)
-                items, _, _ = self.client.list_files(curr_id, limit=100)
-                for item in items:
-                    if item.get("type") == "dir":
-                        doc_folder_name = item.get("name")
-                        doc_folder_id = item["id"]
-                        if self._is_folder_completely_empty(doc_folder_id):
-                            if dry_run:
-                                logger.info(
-                                    f"🔍 [DRY-RUN] Dossier document vide détecté : '{cat_rel}/{doc_folder_name}' (ID={doc_folder_id})"
-                                )
-                            else:
-                                logger.info(
-                                    f"🗑️ Purge du dossier document vide : '{cat_rel}/{doc_folder_name}' (ID={doc_folder_id})..."
-                                )
-                                self.client.delete(doc_folder_id)
-                            purged.append(f"{cat_rel}/{doc_folder_name}")
-            except Exception as err:
-                logger.warning(f"⚠️ Erreur scan dossiers vides dans {cat_rel} pour projet {project.name}: {err}")
+                months, _, _ = self.client.list_files(y_id, limit=50)
+                for m in months:
+                    if m.get("type") != "dir":
+                        continue
+                    m_id, m_name = m["id"], m.get("name")
 
-        return purged
+                    prods, _, _ = self.client.list_files(m_id, limit=100)
+                    for prod in prods:
+                        if prod.get("type") != "dir":
+                            continue
+                        prod_id, prod_name = prod["id"], prod.get("name")
 
-    def prune_empty_directories_tree(
-        self, root_folder_id: int = KDRIVE_ROOT_FOLDER_ID, dry_run: bool = False
-    ) -> List[str]:
-        """
-        Scanne récursivement (bottom-up) l'ensemble de l'arborescence kDrive sous root_folder_id
-        et supprime tous les dossiers orphelins totalement vides (ex: anciens dossiers de projets déplacés comme 'TEST PROJET 4').
-        Ne supprime JAMAIS root_folder_id.
-        """
-        purged = []
+                        proj_containers, _, _ = self.client.list_files(prod_id, limit=100)
+                        for pc in proj_containers:
+                            if pc.get("type") != "dir":
+                                continue
+                            pc_id, pc_name = pc["id"], pc.get("name")
 
-        def _traverse_and_prune(folder_id: int, folder_path: str = "") -> bool:
-            """Retourne True si le dossier est vide (sans fichier ni sous-dossier restant)."""
-            try:
-                items, _, _ = self.client.list_files(folder_id, limit=200)
-            except Exception as e:
-                logger.warning(f"⚠️ Impossible de lister le dossier {folder_id} ({folder_path}): {e}")
-                return False
+                            # Vérifier si ce conteneur de projet a des enfants
+                            children, _, _ = self.client.list_files(pc_id, limit=5)
+                            # S'il est totalement vide (aucun sous-dossier projet BVPR-*, aucun fichier)
+                            if len(children) == 0:
+                                container_path = f"{y_name}/{m_name}/{prod_name}/{pc_name}"
+                                if dry_run:
+                                    logger.info(f"🔍 [DRY-RUN] Conteneur projet orphelin vide détecté : '{container_path}' (ID={pc_id})")
+                                else:
+                                    logger.info(f"🗑️ Purge du conteneur projet orphelin vide : '{container_path}' (ID={pc_id})...")
+                                    try:
+                                        self.client.delete(pc_id)
+                                        # Remonter vers la production puis le mois si devenus vides
+                                        self._prune_empty_parents_upwards(prod_id)
+                                    except Exception as e_del:
+                                        logger.warning(f"⚠️ Impossible de supprimer {container_path}: {e_del}")
+                                purged.append(container_path)
 
-            has_files = False
-            remaining_children = 0
+        except Exception as e:
+            logger.error(f"❌ Erreur lors du scan des conteneurs de projet orphelins : {e}")
 
-            for item in items:
-                child_id = item["id"]
-                child_name = item.get("name", str(child_id))
-                child_path = f"{folder_path}/{child_name}" if folder_path else child_name
-
-                if item.get("type") == "file":
-                    has_files = True
-                    remaining_children += 1
-                elif item.get("type") == "dir":
-                    child_is_empty = _traverse_and_prune(child_id, child_path)
-                    if not child_is_empty:
-                        remaining_children += 1
-
-            if remaining_children == 0 and not has_files:
-                if folder_id != root_folder_id:
-                    if dry_run:
-                        logger.info(f"🔍 [DRY-RUN] Dossier vide orphelin détecté : '{folder_path}' (ID={folder_id})")
-                    else:
-                        logger.info(f"🗑️ Purge du dossier vide orphelin : '{folder_path}' (ID={folder_id})...")
-                        try:
-                            self.client.delete(folder_id)
-                        except Exception as del_err:
-                            logger.warning(f"⚠️ Échec suppression dossier vide {folder_id}: {del_err}")
-                            return False
-                    purged.append(folder_path)
-                    return True
-
-            return False
-
-        _traverse_and_prune(root_folder_id)
         return purged
 
     def ensure_directory_path(self, parent_id: int, relative_path: str) -> int:

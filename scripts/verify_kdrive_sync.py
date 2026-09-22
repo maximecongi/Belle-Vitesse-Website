@@ -48,6 +48,7 @@ def run_kdrive_reconciliation(dry_run: bool = False):
         "subfolders_repaired": 0,
         "active_synced": 0,
         "deleted_purged": 0,
+        "orphan_containers_purged": 0,
         "objects_retried": 0,
     }
 
@@ -114,13 +115,7 @@ def run_kdrive_reconciliation(dry_run: bool = False):
                             stats["active_synced"] += 1
                             logger.info(f"✓ Projet #{project.id} ({project.name}) : arborescence complète 100% conforme.")
 
-                        # Nettoyage automatique des dossiers de documents orphelins/vides (ex: décharges/checks supprimés)
-                        empty_purged = service.cleanup_empty_document_folders(project, dry_run=dry_run)
-                        if empty_purged:
-                            stats["empty_docs_purged"] = stats.get("empty_docs_purged", 0) + len(empty_purged)
-                            logger.info(
-                                f"🧹 Projet #{project.id} ({project.name}) : {len(empty_purged)} dossier(s) document(s) vide(s) purgé(s) -> {', '.join(empty_purged)}"
-                            )
+
                     except Exception as e:
                         logger.error(f"❌ Échec audit sous-dossiers projet #{project.id} : {e}")
 
@@ -149,17 +144,20 @@ def run_kdrive_reconciliation(dry_run: bool = False):
             else:
                 logger.info("✓ Aucun projet supprimé orphelin à purger.")
 
-            # Nettoyage récursif des dossiers orphelins vides sur l'ensemble de kDrive (ex: anciens dossiers de projets déplacés)
-            logger.info("🧹 Scan et nettoyage des dossiers orphelins vides résiduels sur kDrive...")
+            # Purge ciblée des conteneurs de projet orphelins (ex: anciens dossiers vides après déplacement de projet)
+            # Ne touche JAMAIS aux sous-dossiers internes d'un projet BVPR-*
+            logger.info("🧹 Scan et purge des conteneurs de projets orphelins vides (anciens dossiers déplacés)...")
             try:
-                tree_purged = service.prune_empty_directories_tree(dry_run=dry_run)
-                if tree_purged:
-                    stats["orphan_dirs_purged"] = len(tree_purged)
-                    logger.info(f"🗑️ {len(tree_purged)} dossier(s) orphelin(s) vide(s) purgé(s) sur kDrive -> {', '.join(tree_purged)}")
+                orphan_purged = service.prune_orphan_project_containers(dry_run=dry_run)
+                if orphan_purged:
+                    stats["orphan_containers_purged"] = len(orphan_purged)
+                    logger.info(
+                        f"🗑️ {len(orphan_purged)} conteneur(s) orphelin(s) purgé(s) sur kDrive -> {', '.join(orphan_purged)}"
+                    )
                 else:
-                    logger.info("✓ Aucun dossier orphelin vide détecté.")
+                    logger.info("✓ Aucun conteneur projet orphelin vide détecté.")
             except Exception as e_tree:
-                logger.error(f"❌ Erreur purge dossiers orphelins vides : {e_tree}")
+                logger.error(f"❌ Erreur purge conteneurs orphelins : {e_tree}")
 
             # ── 3. Relance des Objets kDrive (photos, PDF) en attente ou échec ────────
             if not dry_run:
@@ -356,7 +354,8 @@ def run_kdrive_reconciliation(dry_run: bool = False):
                 f"{stats['subfolders_repaired']} sous-dossier(s) "
                 f"{'détecté(s) manquant(s)' if dry_run else 'réparé(s)'}, "
                 f"{stats.get('documents_caught_up', 0)} document(s) rattrapé(s), "
-                f"{stats['deleted_purged']} orphelin(s) purgé(s)."
+                f"{stats['deleted_purged']} projet(s) supprimé(s) purgé(s), "
+                f"{stats.get('orphan_containers_purged', 0)} conteneur(s) orphelin(s) purgé(s)."
             )
             return stats
     finally:
