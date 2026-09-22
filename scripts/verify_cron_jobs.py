@@ -8,6 +8,12 @@ from email.message import EmailMessage
 from pathlib import Path
 from dotenv import load_dotenv
 
+try:
+    from zoneinfo import ZoneInfo
+    PARIS_TZ = ZoneInfo("Europe/Paris")
+except Exception:
+    PARIS_TZ = timezone(timedelta(hours=2))
+
 # Setup path for local imports (parent of scripts/)
 _root = Path(__file__).parent.parent
 sys.path.append(str(_root))
@@ -86,13 +92,16 @@ def load_cron_status():
 
 
 def format_timestamp(iso_str):
-    """Convert ISO UTC timestamp into a readable format in French timezone."""
+    """Convert ISO UTC timestamp into a readable format in French timezone (Europe/Paris)."""
     if not iso_str:
         return "Jamais"
     try:
-        dt = datetime.fromisoformat(iso_str)
-        # Shift to local display if needed, but keeping UTC clear for logs
-        return dt.strftime("%d/%m/%Y à %H:%M:%S")
+        cleaned_iso = iso_str.replace("Z", "+00:00")
+        dt = datetime.fromisoformat(cleaned_iso)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        dt_local = dt.astimezone(PARIS_TZ)
+        return dt_local.strftime("%d/%m/%Y à %H:%M:%S")
     except Exception:
         return iso_str
 
@@ -129,7 +138,10 @@ def verify_jobs():
 
             if last_run_str:
                 try:
-                    last_run_dt = datetime.fromisoformat(last_run_str)
+                    cleaned_iso = last_run_str.replace("Z", "+00:00")
+                    last_run_dt = datetime.fromisoformat(cleaned_iso)
+                    if last_run_dt.tzinfo is None:
+                        last_run_dt = last_run_dt.replace(tzinfo=timezone.utc)
                     age_hours = (now - last_run_dt).total_seconds() / 3600.0
                 except Exception:
                     age_hours = 9999.0
@@ -197,9 +209,9 @@ def send_report_email(jobs, failures, global_status, app):
 
     from flask import render_template
 
-    now_utc = datetime.now(timezone.utc)
-    date_str = now_utc.strftime("%d/%m/%Y")
-    time_str = now_utc.strftime("%H:%M:%S")
+    now_paris = datetime.now(PARIS_TZ)
+    date_str = now_paris.strftime("%d/%m/%Y")
+    time_str = now_paris.strftime("%H:%M:%S")
 
     subject_prefix = "[CRON SUCCESS]" if global_status == "OK" else "[CRON WARNING]" if global_status == "WARNING" else "[CRON ALERTE ÉCHEC]"
     subject = f"{subject_prefix} Rapport quotidien des tâches planifiées — {date_str}"
@@ -212,7 +224,7 @@ def send_report_email(jobs, failures, global_status, app):
             global_status=global_status,
             date_str=date_str,
             time_str=time_str,
-            now_year=now_utc.year,
+            now_year=now_paris.year,
         )
 
     msg = EmailMessage()

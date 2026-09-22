@@ -56,6 +56,13 @@ test_no_overlap_no_conflict (test_conflicts.ConflictsTest.test_no_overlap_no_con
 Vérifie qu'aucune alerte n'est levée si les dates sont disjointes. ... ok
 test_overlap_conflict_detected_on_vehicle (test_conflicts.ConflictsTest.test_overlap_conflict_detected_on_vehicle)
 Vérifie qu'un chevauchement de dates sur un véhicule est bien détecté. ... ok
+test_cron_report_template_rendering (test_cron_jobs.CronJobsVerificationTest.test_cron_report_template_rendering) ... ok
+test_format_timestamp_empty (test_cron_jobs.CronJobsVerificationTest.test_format_timestamp_empty) ... ok
+test_format_timestamp_naive_string (test_cron_jobs.CronJobsVerificationTest.test_format_timestamp_naive_string) ... ok
+test_format_timestamp_summer_paris (test_cron_jobs.CronJobsVerificationTest.test_format_timestamp_summer_paris) ... ok
+test_format_timestamp_winter_paris (test_cron_jobs.CronJobsVerificationTest.test_format_timestamp_winter_paris) ... ok
+test_format_timestamp_with_z (test_cron_jobs.CronJobsVerificationTest.test_format_timestamp_with_z) ... ok
+test_verify_jobs (test_cron_jobs.CronJobsVerificationTest.test_verify_jobs) ... ok
 test_docs_restricted_to_admin_and_super_admin (test_dev_role_switcher.DevRoleSwitcherTestCase.test_docs_restricted_to_admin_and_super_admin)
 Technical and API docs should only be accessible/visible to Administrator and Super Administrator. ... ok
 test_manager_can_modify_only_users_and_commercials (test_dev_role_switcher.DevRoleSwitcherTestCase.test_manager_can_modify_only_users_and_commercials)
@@ -70,6 +77,8 @@ test_switch_role_in_production_blocked (test_dev_role_switcher.DevRoleSwitcherTe
 In production environment, role switching is forbidden. ... ok
 test_switch_role_unauthenticated (test_dev_role_switcher.DevRoleSwitcherTestCase.test_switch_role_unauthenticated)
 Unauthenticated call to switch role redirects to login. ... ok
+test_technicien_cannot_see_or_access_waivers (test_dev_role_switcher.DevRoleSwitcherTestCase.test_technicien_cannot_see_or_access_waivers)
+Technicien role should not see waiver links in sidebar nav and should be forbidden on waivers. ... ok
 test_user_cannot_access_or_see_catalog_update (test_dev_role_switcher.DevRoleSwitcherTestCase.test_user_cannot_access_or_see_catalog_update)
 Technicien role should not see catalog_update in sidebar nav and should be forbidden on catalog preview/update. ... ok
 test_fleet_overview (test_fleet.FleetTest.test_fleet_overview) ... ok
@@ -96,12 +105,6 @@ test_incident_attached_inspection_linking (test_incident_signatures.IncidentSign
 Vérifie le rattachement dynamique d'un Check-out ou Check-in à un incident. ... ok
 test_incident_emails_rendering (test_incident_signatures.IncidentSignaturesTestCase.test_incident_emails_rendering)
 Vérifie le bon rendu des templates d'email d'invitation et de confirmation scellée avec la DA Belle Vitesse. ... ok
-test_incident_webhook_delete (test_incident_signatures.IncidentSignaturesTestCase.test_incident_webhook_delete)
-Vérifie que le webhook n8n DELETE est déclenché lors de la suppression logique d'un incident. ... ok
-test_incident_webhook_fallback_env_var (test_incident_signatures.IncidentSignaturesTestCase.test_incident_webhook_fallback_env_var)
-Vérifie le fallback sur N8N_WEBHOOK_INCIDENT_SIGN si N8N_WEBHOOK_INCIDENT n'est pas défini. ... ok
-test_incident_webhook_post_on_finalize (test_incident_signatures.IncidentSignaturesTestCase.test_incident_webhook_post_on_finalize)
-Vérifie que le webhook n8n POST est déclenché avec le bon payload lors du scellement de l'incident. ... ok
 test_pdf_download_security (test_incident_signatures.IncidentSignaturesTestCase.test_pdf_download_security)
 Vérifie les permissions d'accès au PDF signé (Admin, Token public, et Rejet si non autorisé). ... ok
 test_production_signs_first_no_sealing_until_bv_signs (test_incident_signatures.IncidentSignaturesTestCase.test_production_signs_first_no_sealing_until_bv_signs)
@@ -210,6 +213,7 @@ test_truncate_report (test_project_reports.ProjectReportsTest.test_truncate_repo
 test_update_project_report_after_3h_blocked_for_author_allowed_for_admin (test_project_reports.ProjectReportsTest.test_update_project_report_after_3h_blocked_for_author_allowed_for_admin) ... ok
 test_update_project_report_unauthorized_user (test_project_reports.ProjectReportsTest.test_update_project_report_unauthorized_user) ... ok
 test_update_project_report_within_3h (test_project_reports.ProjectReportsTest.test_update_project_report_within_3h) ... ok
+test_admin_project_kdrive_resync (test_projects.ProjectsTest.test_admin_project_kdrive_resync) ... ok
 test_project_crud_tracking (test_projects.ProjectsTest.test_project_crud_tracking) ... ok
 test_project_notes_edit (test_projects.ProjectsTest.test_project_notes_edit) ... ok
 test_soft_deleted_checks_and_waivers_on_projects (test_projects.ProjectsTest.test_soft_deleted_checks_and_waivers_on_projects) ... ok
@@ -271,6 +275,6 @@ test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.W
 Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
 ----------------------------------------------------------------------
-Ran 168 tests in 15.282s
+Ran 174 tests in 11.865s
 
 OK
