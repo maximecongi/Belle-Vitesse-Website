@@ -1,21 +1,24 @@
 {# ═══════════ MACROS POUR PAGES DE VÉRIFICATION CONTRADICTOIRE ═══════════ #}
 
-{% macro seal_banner(seal_valid, ok_label="Données Scellées & Intactes", error_label="Sceau Invalide — Données Altérées", ok_hint=None, error_hint=None) %}
+{% macro seal_banner(seal_valid, ok_label="Données Scellées & Intactes", error_label="Sceau Invalide — Données
+Altérées", ok_hint=None, error_hint=None) %}
 <section class="checkout-section checkout-text-center">
     <div class="verify-seal-banner">
         {% if seal_valid %}
-        <span class="verify-badge verify-badge--ok">
+        <span class="badge-pill verify-badge verify-badge--ok">
             <i data-lucide="shield-check"></i> {{ ok_label }}
         </span>
         <p class="verify-hint-text">
-            {{ ok_hint or "Le sceau cryptographique correspond. Les constatations contradictoires n'ont pas été modifiées depuis la signature." }}
+            {{ ok_hint or "Le sceau cryptographique correspond. Les constatations contradictoires n'ont pas été
+            modifiées depuis la signature." }}
         </p>
         {% else %}
-        <span class="verify-badge verify-badge--critical">
+        <span class="badge-pill verify-badge verify-badge--critical">
             <i data-lucide="alert-octagon"></i> {{ error_label }}
         </span>
         <p class="verify-hint-text">
-            {{ error_hint or "Le sceau ne correspond pas à l'archive originale. Les données peuvent avoir été altérées." }}
+            {{ error_hint or "Le sceau ne correspond pas à l'archive originale. Les données peuvent avoir été altérées."
+            }}
         </p>
         {% endif %}
     </div>
@@ -27,14 +30,14 @@
 <section class="checkout-section checkout-text-center">
     <div class="verify-seal-banner">
         {% if pdf_valid %}
-        <span class="verify-badge verify-badge--ok">
+        <span class="badge-pill verify-badge verify-badge--ok">
             <i data-lucide="file-check"></i> Fichier PDF authentique
         </span>
         <p class="verify-hint-text">
             L'empreinte SHA-256 du fichier analysé correspond exactement au document scellé original.
         </p>
         {% else %}
-        <span class="verify-badge verify-badge--critical">
+        <span class="badge-pill verify-badge verify-badge--critical">
             <i data-lucide="file-x"></i> Fichier PDF non authentique
         </span>
         <p class="verify-hint-text">
@@ -76,18 +79,20 @@
 </section>
 {% endmacro %}
 
-{% macro pdf_upload_verifier(has_pdf_hash, action_url="", button_label="Vérifier l'authenticité du PDF", disclaimer="Le fichier est analysé sur le serveur et n'est pas conservé.", old_notice=None) %}
+{% macro pdf_upload_verifier(has_pdf_hash, action_url="", button_label="Vérifier l'authenticité du PDF", disclaimer="Le
+fichier est analysé sur le serveur et n'est pas conservé.", old_notice=None) %}
 {% if has_pdf_hash %}
 <section class="checkout-section verify-upload-container">
     <h2 class="checkout-section-title dot-before">Vérifier le fichier PDF</h2>
     <p class="u-text-sm u-text-muted u-mb-3 u-lh-base">
-        Uploadez l'exemplaire PDF que vous souhaitez authentifier. Son empreinte SHA-256 sera calculée et comparée à celle scellée lors de la finalisation contradictoire. Si le fichier a été altéré, la vérification échouera.
+        Uploadez l'exemplaire PDF que vous souhaitez authentifier. Son empreinte SHA-256 sera calculée et comparée à
+        celle scellée lors de la finalisation contradictoire. Si le fichier a été altéré, la vérification échouera.
     </p>
 
-    <form method="POST" enctype="multipart/form-data"{% if action_url %} action="{{ action_url }}"{% endif %}>
+    <form method="POST" enctype="multipart/form-data" {% if action_url %} action="{{ action_url }}" {% endif %}>
         <label for="pdf-input" class="u-cursor-pointer u-d-block">
             <div id="upload-area" class="verify-upload-area">
-                <span class="verify-upload-icon">📎</span>
+                <span class="verify-upload-icon"><i data-lucide="file-up"></i></span>
                 <p class="verify-upload-hint">
                     <strong>Cliquez pour sélectionner</strong> ou glissez le PDF ici
                 </p>

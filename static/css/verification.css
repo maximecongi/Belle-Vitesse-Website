@@ -11,30 +11,46 @@
 .verify-badge {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 1rem;
-    font-weight: 600;
-    padding: 0.625rem 1.5rem;
+    justify-content: center;
+    gap: 0.45rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.4rem 1.1rem;
     border-radius: 9999px;
-    letter-spacing: 0.01em;
+    letter-spacing: 0.015em;
+    line-height: 1.4;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.verify-badge .lucide,
+.verify-badge svg.lucide {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2.25px;
+    flex-shrink: 0;
 }
 
 .verify-badge--ok {
-    background-color: var(--status-success, #10b981);
-    color: #ffffff;
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+    background-color: var(--status-success-bg, #EDF4EA);
+    color: var(--status-success-text, #2D481E);
+    border-color: var(--status-success-border, rgba(97, 139, 74, 0.3));
+    box-shadow: none;
 }
 
 .verify-badge--critical {
-    background-color: var(--status-danger, #ef4444);
-    color: #ffffff;
-    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+    background-color: var(--status-danger-bg, #FEE2E2);
+    color: var(--status-danger-text, #991B1B);
+    border-color: var(--status-danger-border, rgba(239, 68, 68, 0.3));
+    box-shadow: none;
 }
 
 .verify-badge--warning {
-    background-color: var(--status-warning, #f59e0b);
-    color: #ffffff;
-    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+    background-color: var(--status-warning-bg, #FEF3C7);
+    color: var(--status-warning-text, #92400E);
+    border-color: var(--status-warning-border, rgba(245, 158, 11, 0.35));
+    box-shadow: none;
 }
 
 .verify-hint-text {
@@ -49,8 +65,9 @@
 }
 
 .verify-error-box {
-    background: var(--u-bg-danger-light, #fee2e2);
-    color: var(--u-text-danger, #991b1b);
+    background: var(--status-danger-bg, #fee2e2);
+    color: var(--status-danger-text, #991b1b);
+    border: 1px solid var(--status-danger-border, rgba(239, 68, 68, 0.3));
     padding: 0.75rem 1rem;
     border-radius: 6px;
     text-align: center;
@@ -105,13 +122,13 @@
 }
 
 .verify-upload-area:hover {
-    border-color: var(--status-success, #10b981);
-    background-color: rgba(16, 185, 129, 0.03);
+    border-color: var(--status-success, #618B4A);
+    background-color: rgba(97, 139, 74, 0.04);
 }
 
 .verify-upload-area.is-active {
-    border-color: var(--status-success, #10b981);
-    background-color: rgba(16, 185, 129, 0.06);
+    border-color: var(--status-success, #618B4A);
+    background-color: rgba(97, 139, 74, 0.08);
 }
 
 .verify-upload-icon {
@@ -124,6 +141,10 @@
     font-size: 0.9rem;
     color: #64748b;
     margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    justify-content: center;
 }
 
 .verify-upload-hint strong {
@@ -134,8 +155,12 @@
     display: none;
     margin-top: 0.5rem;
     font-size: 0.875rem;
-    color: var(--status-success, #10b981);
+    color: var(--status-success-text, #2D481E);
     font-weight: 600;
+}
+
+#pdf-input {
+    display: none;
 }
 
 .verify-upload-btn {
@@ -179,7 +204,7 @@
 
 .verify-signed-at {
     font-size: 0.75rem;
-    color: var(--status-success, #10b981);
+    color: var(--status-success-text, #2D481E);
     margin-top: 4px;
 }
 
@@ -219,4 +244,3 @@
 .verify-info-item--full {
     grid-column: 1 / -1;
 }
-

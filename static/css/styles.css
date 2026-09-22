@@ -69,9 +69,11 @@
     --entity-waiver-glow: rgba(139, 92, 246, 0.4);
 
     /* Statuts Opérationnels Transversaux */
-    --status-success: #10B981;
-    --status-success-bg: #D1FAE5;
-    --status-success-text: #065F46;
+    --status-success: #618B4A;
+    --status-success-bg: #EDF4EA;
+    --status-success-text: #2D481E;
+    --status-success-border: rgba(97, 139, 74, 0.3);
+    --status-success-glow: rgba(97, 139, 74, 0.2);
     --status-warning: #D97706;
     --status-warning-bg: #FEF3C7;
     --status-warning-text: #92400E;
