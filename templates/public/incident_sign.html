@@ -322,7 +322,9 @@
                     if (result.success || result.status === 'signed') {
                         showFeedback('✅ Constat d\'incident signé avec succès.', 'success');
                         btnSign.textContent = 'Signé ✓';
-                        canvas.style.pointerEvents = 'none';
+                        if (signaturePad && signaturePad.canvas) {
+                            signaturePad.canvas.style.pointerEvents = 'none';
+                        }
                         setTimeout(function () {
                             window.location.reload();
                         }, 2000);

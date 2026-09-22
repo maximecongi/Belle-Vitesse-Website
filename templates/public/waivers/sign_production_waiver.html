@@ -438,7 +438,9 @@
                     if (response.ok && result && result.success) {
                         showFeedback('✅ Décharge signée avec succès. Vous allez recevoir un e-mail de confirmation.', 'success');
                         btnSign.textContent = 'Signé ✓';
-                        canvas.style.pointerEvents = 'none';
+                        if (signaturePad && signaturePad.canvas) {
+                            signaturePad.canvas.style.pointerEvents = 'none';
+                        }
                         setTimeout(function () { window.location.reload(); }, 2500);
                     } else {
                         var errMsg = (result && (result.error || result.message)) || ('Erreur du serveur (code ' + response.status + '). Veuillez réessayer.');

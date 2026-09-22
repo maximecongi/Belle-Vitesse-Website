@@ -149,12 +149,67 @@ def run_kdrive_reconciliation(dry_run: bool = False):
                 except Exception as e:
                     logger.error(f"❌ Erreur retry kdrive objects : {e}")
 
+            # ── 4. Rattrapage des Documents Signés Non Synchronisés ──────────────────
+            if not dry_run:
+                logger.info("🔍 Contrôle des documents signés non synchronisés (décharges)...")
+                try:
+                    from models import PilotWaiver, ProductionWaiver
+                    stats["documents_caught_up"] = 0
+
+                    # Décharges Pilote
+                    signed_pilot = PilotWaiver.query.filter(
+                        PilotWaiver.status == "signed",
+                        PilotWaiver.deleted_at.is_(None)
+                    ).all()
+                    for pw in signed_pilot:
+                        if not pw.project_id:
+                            continue
+                        synced_pdf = KDriveObject.query.filter_by(entity_id=pw.waiver_id, role="pdf", status="synced").first()
+                        if not synced_pdf and pw.signed_pdf_path:
+                            logger.info(f"📤 Rattrapage décharge pilote {pw.waiver_id}...")
+                            fspecs = [{"role": "pdf", "path": pw.signed_pdf_path, "filename": os.path.basename(pw.signed_pdf_path)}]
+                            if pw.pilot_license_path:
+                                fspecs.append({"role": "license", "path": pw.pilot_license_path})
+                            if pw.pilot_insurance_path:
+                                fspecs.append({"role": "insurance", "path": pw.pilot_insurance_path})
+                            if pw.pilot_identity_path:
+                                fspecs.append({"role": "identity", "path": pw.pilot_identity_path})
+                            try:
+                                service.upload_bundle_sync(pw.project_id, "pilot_waiver", pw.waiver_id, fspecs)
+                                stats["documents_caught_up"] += 1
+                            except Exception as e_pw:
+                                logger.error(f"❌ Échec rattrapage décharge pilote {pw.waiver_id} : {e_pw}")
+
+                    # Décharges Production
+                    signed_prod = ProductionWaiver.query.filter(
+                        ProductionWaiver.status == "signed",
+                        ProductionWaiver.deleted_at.is_(None)
+                    ).all()
+                    for prw in signed_prod:
+                        if not prw.project_id:
+                            continue
+                        synced_pdf = KDriveObject.query.filter_by(entity_id=prw.waiver_id, role="pdf", status="synced").first()
+                        if not synced_pdf and prw.signed_pdf_path:
+                            logger.info(f"📤 Rattrapage décharge production {prw.waiver_id}...")
+                            fspecs = [{"role": "pdf", "path": prw.signed_pdf_path, "filename": os.path.basename(prw.signed_pdf_path)}]
+                            if prw.production_insurance_path:
+                                fspecs.append({"role": "insurance", "path": prw.production_insurance_path})
+                            try:
+                                service.upload_bundle_sync(prw.project_id, "production_waiver", prw.waiver_id, fspecs)
+                                stats["documents_caught_up"] += 1
+                            except Exception as e_prw:
+                                logger.error(f"❌ Échec rattrapage décharge prod {prw.waiver_id} : {e_prw}")
+
+                except Exception as e:
+                    logger.error(f"❌ Erreur contrôle documents signés : {e}")
+
             logger.info(
                 f"🏁 Réconciliation kDrive terminée : "
                 f"{stats['active_synced']} synchro 100% OK, "
                 f"{stats['active_recreated']} arborescence(s) recréée(s), "
                 f"{stats['subfolders_repaired']} sous-dossier(s) "
                 f"{'détecté(s) manquant(s)' if dry_run else 'réparé(s)'}, "
+                f"{stats.get('documents_caught_up', 0)} document(s) rattrapé(s), "
                 f"{stats['deleted_purged']} orphelin(s) purgé(s)."
             )
             return stats

@@ -142,7 +142,9 @@
                             isSigned = true;
                             showFeedback('✅ Document signé avec succès.', 'success');
                             btn.textContent = 'Signé ✓';
-                            canvas.style.pointerEvents = 'none';
+                            if (signaturePad && signaturePad.canvas) {
+                                signaturePad.canvas.style.pointerEvents = 'none';
+                            }
                         } else {
                             showFeedback(result.error || 'Erreur inconnue.', 'error');
                             btn.disabled = false;
