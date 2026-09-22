@@ -42,13 +42,15 @@
                 {% if is_edit %}
                 <button type="submit"
                     formaction="{{ url_for('admin_production_delete', record_id=request.view_args.get('record_id')) }}"
-                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette production ?');" class="admin-btn admin-btn-danger">
+                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette production ?');"
+                    class="admin-btn admin-btn-danger">
                     Supprimer
                 </button>
                 {% endif %}
             </div>
             <div>
-                <a href="{{ url_for('admin_productions_list') }}" class="admin-btn admin-btn-secondary u-mr-2">Annuler</a>
+                <a href="{{ url_for('admin_productions_list') }}"
+                    class="admin-btn admin-btn-secondary u-mr-2">Annuler</a>
                 <button type="submit" class="admin-btn admin-btn-primary">
                     {% if is_edit %}Enregistrer{% else %}Créer la Production{% endif %}
                 </button>

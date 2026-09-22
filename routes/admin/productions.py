@@ -57,8 +57,11 @@ def init_productions_routes(app):
     def admin_production_edit(record_id):
         try:
             if request.method == "POST":
-                update_production(record_id, request.form)
-                flash("Production modifiée avec succès !", "success")
+                res = update_production(record_id, request.form)
+                if isinstance(res, dict) and res.get("renamed_kdrive"):
+                    flash("Production modifiée avec succès ! La synchronisation des dossiers kDrive associés est en cours.", "success")
+                else:
+                    flash("Production modifiée avec succès !", "success")
                 return redirect(url_for("admin_productions_list"))
 
             data = get_production_for_edit(record_id)

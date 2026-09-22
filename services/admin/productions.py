@@ -7,6 +7,7 @@ from services.admin.utils import (
     generic_list_records,
     handle_admin_service_error,
 )
+from services.common.kdrive import dispatch_rename_production
 
 logger = logging.getLogger(__name__)
 
@@ -38,18 +39,31 @@ def create_production(form):
 
 @handle_admin_service_error
 def update_production(record_id, form):
-    """Met à jour un enregistrement de production existant."""
+    """Met à jour un enregistrement de production existant et renomme les dossiers kDrive si le nom a changé."""
     prod = db.session.get(Production, record_id)
     if not prod:
         return False
 
-    prod.name = form.get("name", "")
+    old_name = (prod.name or "").strip()
+    new_name = form.get("name", "").strip()
+
+    prod.name = new_name
     prod.address = form.get("address", "")
     prod.mail = form.get("email", "")
     prod.phone = form.get("phone", "")
 
     db.session.commit()
-    return True
+
+    renamed_kdrive = False
+    if old_name and new_name and old_name != new_name:
+        try:
+            logger.info(f"🏷️ Déclenchement du renommage kDrive pour la production '{old_name}' -> '{new_name}'")
+            dispatch_rename_production(old_name, new_name)
+            renamed_kdrive = True
+        except Exception as e:
+            logger.error(f"❌ Erreur lors du déclenchement du renommage kDrive pour '{old_name}' -> '{new_name}': {e}")
+
+    return {"success": True, "renamed_kdrive": renamed_kdrive}
 
 
 def get_production_for_edit(record_id):

@@ -8,7 +8,6 @@ from flask import current_app, has_app_context
 from redis import Redis
 from rq import Queue as RQQueue
 
-from app import create_app
 from models.db import db
 from models.kdrive import KDriveObject
 from models.project import Project
@@ -60,6 +59,7 @@ def _with_app_context(func):
     def wrapper(*args, **kwargs):
         if has_app_context():
             return func(*args, **kwargs)
+        from app import create_app
         app = create_app()
         with app.app_context():
             return func(*args, **kwargs)
@@ -196,11 +196,14 @@ def _dispatch_task(func, *args, **kwargs):
             app = None
 
     def _thread_worker():
-        if app:
-            with app.app_context():
+        try:
+            if app:
+                with app.app_context():
+                    func(*args, **kwargs)
+            else:
                 func(*args, **kwargs)
-        else:
-            func(*args, **kwargs)
+        except Exception as exc:
+            logger.error(f"❌ Exception dans le thread worker kDrive ({func.__name__}): {exc}", exc_info=True)
 
     t = threading.Thread(target=_thread_worker, daemon=True)
     t.start()
@@ -238,3 +241,15 @@ def dispatch_delete_document(entity_type: str, entity_id: str):
 
 def dispatch_delete_project(project_id: int, folder_id: Optional[int] = None):
     return _dispatch_task(task_delete_project_folder, project_id, folder_id)
+
+
+@_with_app_context
+def task_rename_production_folders(old_name: str, new_name: str):
+    """Tâche RQ : Renomme directement les dossiers de production sur kDrive."""
+    logger.info(f"🚀 [kDrive Job] task_rename_production_folders : '{old_name}' -> '{new_name}'")
+    service = KDriveService()
+    service.rename_production_folders(old_name, new_name)
+
+
+def dispatch_rename_production(old_name: str, new_name: str):
+    return _dispatch_task(task_rename_production_folders, old_name, new_name)

@@ -30,6 +30,7 @@ from services.common.kdrive.tasks import (
     dispatch_move_project,
     dispatch_delete_document,
     dispatch_delete_project,
+    dispatch_rename_production,
     task_retry_pending_kdrive_objects,
 )
 
@@ -44,6 +45,7 @@ __all__ = [
     "dispatch_move_project",
     "dispatch_delete_document",
     "dispatch_delete_project",
+    "dispatch_rename_production",
     "task_retry_pending_kdrive_objects",
     "KDRIVE_API_BASE",
     "KDRIVE_API_TOKEN",

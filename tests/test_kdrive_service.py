@@ -375,3 +375,131 @@ def test_upload_bundle_sync(app_ctx, tmp_path):
     assert KDriveObject.query.filter_by(entity_id="BVIC-TEST-123").count() == 2
 
 
+def test_rename_production_folders_direct(app_ctx):
+    """Teste le renommage direct kDrive d'une production lorsqu'aucune collision n'existe."""
+    prod = Production(name="NOUVEAU_NOM_PROD")
+    db.session.add(prod)
+    db.session.flush()
+
+    project = Project(
+        name="Projet Alpha",
+        project_id="BVPR-ALPHA",
+        production_id=prod.id,
+        kdrive_folder_id=777,
+        departure_date=date(2026, 9, 20),
+        kdrive_path="1_TOURNAGES/2026/09 - SEPTEMBRE/ANCIEN_NOM/PROJET_ALPHA/BVPR-ALPHA"
+    )
+    db.session.add(project)
+    db.session.commit()
+
+    mock_client = MagicMock()
+    # Simuler 1_TOURNAGES contenant 2026, qui contient 09 - SEPTEMBRE
+    mock_client.list_files.side_effect = lambda folder_id, limit=50: {
+        48: ([{"id": 2026, "name": "2026", "type": "dir"}], None, False),
+        2026: ([{"id": 909, "name": "09 - SEPTEMBRE", "type": "dir"}], None, False),
+    }.get(folder_id, ([], None, False))
+
+    # Dans 09 - SEPTEMBRE, l'ancien dossier existe (ID=555), mais pas le nouveau
+    def mock_get_child(parent_id, name, *args, **kwargs):
+        if parent_id == 909 and name == "ANCIEN_NOM":
+            return {"id": 555, "name": "ANCIEN_NOM", "type": "dir"}
+        return None
+
+    mock_client.get_child_by_name.side_effect = mock_get_child
+
+    service = KDriveService(client=mock_client)
+    res = service.rename_production_folders("ANCIEN_NOM", "NOUVEAU_NOM_PROD")
+
+    assert res["renamed"] == 1
+    assert res["merged"] == 0
+    assert res["total"] == 1
+
+    # Vérifier l'appel à client.rename
+    mock_client.rename.assert_called_once_with(555, "NOUVEAU_NOM_PROD")
+    mock_client.move.assert_not_called()
+
+    # Vérifier que le kdrive_path du projet en BDD a été mis à jour
+    updated_project = db.session.get(Project, project.id)
+    assert "NOUVEAU_NOM_PROD" in updated_project.kdrive_path
+
+
+def test_rename_production_folders_collision(app_ctx):
+    """Teste le renommage kDrive d'une production avec collision (fusion du contenu et suppression de l'ancien dossier)."""
+    mock_client = MagicMock()
+    mock_client.list_files.side_effect = lambda folder_id, limit=50: {
+        48: ([{"id": 2026, "name": "2026", "type": "dir"}], None, False),
+        2026: ([{"id": 909, "name": "09 - SEPTEMBRE", "type": "dir"}], None, False),
+        555: ([{"id": 888, "name": "PROJET_ALPHA", "type": "dir"}], None, False),
+    }.get(folder_id, ([], None, False))
+
+    # Les deux dossiers existent (collision)
+    def mock_get_child(parent_id, name, *args, **kwargs):
+        if parent_id == 909 and name == "ANCIEN_NOM":
+            return {"id": 555, "name": "ANCIEN_NOM", "type": "dir"}
+        if parent_id == 909 and name == "NOUVEAU_NOM":
+            return {"id": 666, "name": "NOUVEAU_NOM", "type": "dir"}
+        return None
+
+    mock_client.get_child_by_name.side_effect = mock_get_child
+
+    service = KDriveService(client=mock_client)
+    res = service.rename_production_folders("ANCIEN_NOM", "NOUVEAU_NOM")
+
+    assert res["renamed"] == 0
+    assert res["merged"] == 1
+    assert res["total"] == 1
+
+    # Doit avoir déplacé le projet dans le dossier existant (ID 666) puis supprimé l'ancien dossier 555
+    mock_client.move.assert_called_once_with(888, 666, conflict="error")
+    mock_client.delete.assert_called_once_with(555)
+    mock_client.rename.assert_not_called()
+
+
+def test_rename_production_folders_case_insensitivity_and_uppercase(app_ctx):
+    """Vérifie que la recherche trouve les dossiers en majuscules sur kDrive et renomme en UPPERCASE."""
+    prod = Production(name="Academy films international")
+    db.session.add(prod)
+    db.session.flush()
+
+    project = Project(
+        name="Pub Nike",
+        project_id="BVPR-NIKE",
+        production_id=prod.id,
+        kdrive_folder_id=1234,
+        departure_date=date(2026, 9, 20),
+        kdrive_path="1_TOURNAGES/2026/09 - SEPTEMBRE/ACADEMY FILMS/PUB_NIKE/BVPR-NIKE"
+    )
+    db.session.add(project)
+    db.session.commit()
+
+    mock_client = MagicMock()
+    mock_client.list_files.side_effect = lambda folder_id, limit=50: {
+        48: ([{"id": 2026, "name": "2026", "type": "dir"}], None, False),
+        2026: ([{"id": 909, "name": "09 - SEPTEMBRE", "type": "dir"}], None, False),
+    }.get(folder_id, ([], None, False))
+
+    # Sur kDrive, le dossier existe en UPPERCASE : "ACADEMY FILMS"
+    def mock_get_child(parent_id, name, case_insensitive=False):
+        if parent_id == 909 and (name == "ACADEMY FILMS" or (case_insensitive and name.lower() == "academy films")):
+            return {"id": 111, "name": "ACADEMY FILMS", "type": "dir"}
+        return None
+
+    mock_client.get_child_by_name.side_effect = mock_get_child
+
+    service = KDriveService(client=mock_client)
+    # L'utilisateur renomme "Academy films" -> "Academy films international"
+    res = service.rename_production_folders("Academy films", "Academy films international")
+
+    assert res["renamed"] == 1
+    assert res["merged"] == 0
+
+    # Vérifie que rename a été appelé avec le nouveau nom en MAJUSCULES
+    mock_client.rename.assert_called_once_with(111, "ACADEMY FILMS INTERNATIONAL")
+
+    # Vérifie que le kdrive_path a été mis à jour avec le nom en majuscules
+    updated_project = db.session.get(Project, project.id)
+    assert "ACADEMY FILMS INTERNATIONAL" in updated_project.kdrive_path
+
+
+
+

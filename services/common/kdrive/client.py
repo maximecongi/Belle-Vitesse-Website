@@ -120,18 +120,25 @@ class KDriveClient:
         next_cursor = res.get("cursor")
         return items, next_cursor, has_more
 
-    def get_child_by_name(self, parent_id: int, name: str) -> Optional[Dict[str, Any]]:
-        """Recherche un enfant direct par son nom exact dans un dossier parent."""
+    def get_child_by_name(
+        self, parent_id: int, name: str, case_insensitive: bool = False
+    ) -> Optional[Dict[str, Any]]:
+        """Recherche un enfant direct par son nom dans un dossier parent."""
         cursor = None
         target_name = name.strip()
+        target_lower = target_name.lower()
+        insensitive_match = None
         while True:
             items, cursor, has_more = self.list_files(parent_id, cursor=cursor)
             for item in items:
-                if item.get("name") == target_name:
+                item_name = (item.get("name") or "").strip()
+                if item_name == target_name:
                     return item
+                if case_insensitive and insensitive_match is None and item_name.lower() == target_lower:
+                    insensitive_match = item
             if not has_more or not cursor:
                 break
-        return None
+        return insensitive_match if case_insensitive else None
 
     def create_directory(
         self, parent_id: int, name: str, relative_path: Optional[str] = None
@@ -213,6 +220,18 @@ class KDriveClient:
         res = self._request(
             "POST",
             f"/3/drive/{self.drive_id}/files/{file_id}/move/{destination_directory_id}",
+            json=payload,
+        )
+        return res.get("data", {})
+
+    def rename(self, file_id: int, new_name: str) -> Dict[str, Any]:
+        """
+        Renomme un fichier ou un répertoire sur kDrive (POST /2/drive/{drive_id}/files/{file_id}/rename).
+        """
+        payload = {"name": new_name}
+        res = self._request(
+            "POST",
+            f"/2/drive/{self.drive_id}/files/{file_id}/rename",
             json=payload,
         )
         return res.get("data", {})

@@ -15,6 +15,7 @@ from services.common.kdrive.paths import (
     build_project_path,
     build_project_rel_path,
     clean_segment,
+    format_name,
     get_project_date_reference,
 )
 
@@ -288,3 +289,101 @@ class ProjectTreeMixin:
         db.session.commit()
         logger.info(f"✅ Dossier projet kDrive supprimé avec succès pour projet ID={project_id}")
         return True
+
+    def rename_production_folders(self, old_name: str, new_name: str) -> Dict[str, Any]:
+        """
+        Recherche tous les dossiers de production portant l'ancien nom dans l'arborescence kDrive
+        (1_TOURNAGES/<Année>/<Mois>/<old_name>) et les renomme avec le nouveau nom.
+
+        En l'absence de collision : renommage direct via POST /2/.../rename (ultra-rapide et atomique).
+        En cas de collision (le nouveau nom existe déjà dans le même mois) : déplace les sous-dossiers projets
+        vers le dossier existant et purge l'ancien dossier devenu vide.
+
+        Met également à jour project.kdrive_path pour l'ensemble des projets rattachés.
+        """
+        old_clean = format_name(old_name, "production")
+        new_clean = format_name(new_name, "production")
+
+        if old_clean == new_clean:
+            logger.info(f"ℹ️ Aucun renommage kDrive nécessaire pour la production '{old_name}' (nom identique après normalisation en majuscules: '{new_clean}').")
+            return {"renamed": 0, "merged": 0, "total": 0}
+
+        logger.info(f"🏷️ Démarrage du renommage de la production kDrive : '{old_clean}' -> '{new_clean}'...")
+
+        renamed_count = 0
+        merged_count = 0
+
+        try:
+            years, _, _ = self.client.list_files(KDRIVE_ROOT_FOLDER_ID, limit=50)
+            for y in years:
+                if y.get("type") != "dir":
+                    continue
+                y_id, y_name = y["id"], y.get("name")
+
+                months, _, _ = self.client.list_files(y_id, limit=50)
+                for m in months:
+                    if m.get("type") != "dir":
+                        continue
+                    m_id, m_name = m["id"], m.get("name")
+
+                    # Vérifier si l'ancien dossier de production existe sous ce mois (insensible à la casse)
+                    old_prod_folder = self.client.get_child_by_name(m_id, old_clean, case_insensitive=True)
+                    if not old_prod_folder:
+                        continue
+
+                    old_prod_id = old_prod_folder["id"]
+                    month_path = f"{y_name}/{m_name}"
+
+                    # Vérifier si le nouveau nom existe déjà sous ce mois (collision potentielle)
+                    new_prod_folder = self.client.get_child_by_name(m_id, new_clean, case_insensitive=True)
+
+                    if not new_prod_folder or new_prod_folder["id"] == old_prod_id:
+                        # Cas standard : pas de collision avec un autre dossier -> Renommage direct
+                        if old_prod_folder.get("name") != new_clean:
+                            logger.info(f"⚡ Renommage direct kDrive du dossier production '{old_prod_folder.get('name')}' -> '{new_clean}' sous {month_path} (ID={old_prod_id})...")
+                            self.client.rename(old_prod_id, new_clean)
+                            renamed_count += 1
+                        else:
+                            logger.info(f"ℹ️ Le dossier {month_path}/{new_clean} porte déjà exactement le nom cible.")
+                    else:
+                        # Cas de collision : un autre dossier porte déjà le nom cible -> fusionner le contenu
+                        dest_prod_id = new_prod_folder["id"]
+                        logger.warning(f"⚠️ Collision détectée sous {month_path} : '{new_clean}' existe déjà (ID={dest_prod_id}). Déplacement des projets...")
+                        children, _, _ = self.client.list_files(old_prod_id, limit=200)
+                        for child in children:
+                            child_id = child["id"]
+                            child_name = child.get("name")
+                            logger.info(f"📦 Déplacement du projet '{child_name}' vers la nouvelle production...")
+                            self.client.move(child_id, dest_prod_id, conflict="error")
+
+                        # Supprimer l'ancien dossier de production désormais vide
+                        self.client.delete(old_prod_id)
+                        merged_count += 1
+
+        except Exception as err:
+            logger.error(f"❌ Erreur lors du renommage des dossiers kDrive de la production '{old_name}' : {err}")
+            raise
+
+        # Mise à jour des kdrive_path de tous les projets en base qui étaient rattachés à cette production
+        from models import Production
+        prod_obj = Production.query.filter(
+            (Production.name == new_name) | (Production.name == old_name)
+        ).first()
+        if not prod_obj:
+            for cand in Production.query.all():
+                if cand.name and format_name(cand.name, "production") in (new_clean, old_clean):
+                    prod_obj = cand
+                    break
+
+        if prod_obj and hasattr(prod_obj, "projects"):
+            for p in prod_obj.projects:
+                if p.deleted_at is None and p.kdrive_folder_id:
+                    try:
+                        p.kdrive_path = build_project_path(p)
+                    except Exception as e_path:
+                        logger.warning(f"⚠️ Impossible de recalculer kdrive_path pour projet #{p.id}: {e_path}")
+            db.session.commit()
+
+        total = renamed_count + merged_count
+        logger.info(f"✅ Renommage kDrive de la production terminé : {renamed_count} renommé(s), {merged_count} fusionné(s) (Total {total} mois).")
+        return {"renamed": renamed_count, "merged": merged_count, "total": total}
