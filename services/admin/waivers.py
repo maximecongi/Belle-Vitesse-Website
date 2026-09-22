@@ -22,7 +22,6 @@ from utils.database import get_vehicles
 from utils.document_utils import (
     generate_pdf_access_token as generate_waiver_pdf_access_token,
 )
-from utils.n8n import trigger_n8n_webhook
 
 logger = logging.getLogger(__name__)
 
@@ -31,14 +30,13 @@ logger = logging.getLogger(__name__)
 
 def _get_waiver_config(mode):
     """
-    Retourne la configuration (modèles, webhooks, routes) selon le type de décharge (pilote ou production).
+    Retourne la configuration (modèles, routes) selon le type de décharge (pilote ou production).
     """
     if mode == "pilot":
         return {
             "model": PilotWaiver,
             "signed_model": PilotWaiverSignedDocument,
             "token_model": PilotWaiverToken,
-            "webhook_env": "N8N_WEBHOOK_PILOT_WAIVER",
             "route_base": "pilot-waiver",
             "attachment_fields": ["pilot_license_path", "pilot_insurance_path", "pilot_identity_path"]
         }
@@ -46,7 +44,6 @@ def _get_waiver_config(mode):
         "model": ProductionWaiver,
         "signed_model": ProductionWaiverSignedDocument,
         "token_model": ProductionWaiverToken,
-        "webhook_env": "N8N_WEBHOOK_PRODUCTION_WAIVER",
         "route_base": "production-waiver",
         "attachment_fields": ["production_insurance_path"]
     }
@@ -168,7 +165,7 @@ def create_production_waiver(project_id):
 
 
 def delete_production_waiver(waiver_id):
-    """Supprime logiquement une décharge production (soft-delete, nettoyage assets et notification n8n DELETE)."""
+    """Supprime logiquement une décharge production (soft-delete et nettoyage assets)."""
     waiver = None
     if str(waiver_id).isdigit():
         waiver = db.session.get(ProductionWaiver, int(waiver_id))
@@ -179,11 +176,6 @@ def delete_production_waiver(waiver_id):
         return False, "Décharge production introuvable."
 
     try:
-        webhook_url = os.getenv("N8N_WEBHOOK_PRODUCTION_WAIVER")
-        if webhook_url:
-            trigger_n8n_webhook(webhook_url, method="DELETE",
-                                waiver_id=waiver.waiver_id, project_id=waiver.project.project_id if waiver.project else None)
-
         _cleanup_waiver_assets("production", waiver)
         waiver.deleted_at = datetime.now(timezone.utc)
         db.session.commit()
@@ -364,18 +356,12 @@ def send_production_waiver(waiver_id, base_url=None):
 
 
 def reset_production_waiver(waiver_id):
-    """Réinitialise complètement une décharge production (supprime signature, PDF et notifie n8n)."""
+    """Réinitialise complètement une décharge production (supprime signature et PDF)."""
     waiver = ProductionWaiver.query.filter_by(waiver_id=waiver_id).first()
     if not waiver:
         return False, "Décharge non trouvée."
 
     try:
-        # Notifie n8n de la suppression/reset
-        webhook_url = os.getenv("N8N_WEBHOOK_PRODUCTION_WAIVER")
-        if webhook_url:
-            trigger_n8n_webhook(webhook_url, method="DELETE",
-                                waiver_id=waiver.waiver_id, project_id=waiver.project.project_id)
-
         _cleanup_waiver_assets("production", waiver)
         _reset_waiver_fields("production", waiver)
         db.session.commit()
@@ -398,10 +384,6 @@ def delete_production_waiver_internal(project_id):
     if not waiver:
         return
     try:
-        webhook_url = os.getenv("N8N_WEBHOOK_PRODUCTION_WAIVER")
-        if webhook_url:
-            trigger_n8n_webhook(webhook_url, method="DELETE",
-                                waiver_id=waiver.waiver_id, project_id=waiver.project.project_id)
         _cleanup_waiver_assets("production", waiver)
         waiver.deleted_at = datetime.now(timezone.utc)
         db.session.commit()
@@ -468,7 +450,7 @@ def create_pilot_waiver(project_id):
 
 
 def delete_pilot_waiver(waiver_id):
-    """Supprime logiquement une décharge pilote (soft-delete, nettoyage assets et notification n8n DELETE)."""
+    """Supprime logiquement une décharge pilote (soft-delete et nettoyage assets)."""
     waiver = None
     if str(waiver_id).isdigit():
         waiver = db.session.get(PilotWaiver, int(waiver_id))
@@ -479,11 +461,6 @@ def delete_pilot_waiver(waiver_id):
         return False, "Décharge pilote introuvable."
 
     try:
-        webhook_url = os.getenv("N8N_WEBHOOK_PILOT_WAIVER")
-        if webhook_url:
-            trigger_n8n_webhook(webhook_url, method="DELETE",
-                                waiver_id=waiver.waiver_id, project_id=waiver.project.project_id if waiver.project else None)
-
         _cleanup_waiver_assets("pilot", waiver)
         waiver.deleted_at = datetime.now(timezone.utc)
         db.session.commit()
@@ -680,18 +657,12 @@ def send_pilot_waiver(waiver_id, base_url=None):
 
 
 def reset_pilot_waiver(waiver_id):
-    """Réinitialise complètement une décharge pilote (supprime signature, PDF et notifie n8n)."""
+    """Réinitialise complètement une décharge pilote (supprime signature et PDF)."""
     waiver = PilotWaiver.query.filter_by(waiver_id=waiver_id).first()
     if not waiver:
         return False, "Décharge non trouvée."
 
     try:
-        # Notifie n8n de la suppression/reset
-        webhook_url = os.getenv("N8N_WEBHOOK_PILOT_WAIVER")
-        if webhook_url:
-            trigger_n8n_webhook(webhook_url, method="DELETE",
-                                waiver_id=waiver.waiver_id, project_id=waiver.project.project_id)
-
         _cleanup_waiver_assets("pilot", waiver)
         _reset_waiver_fields("pilot", waiver)
         db.session.commit()
@@ -716,10 +687,6 @@ def delete_pilot_waiver_internal(project_id):
     if not waiver:
         return
     try:
-        webhook_url = os.getenv("N8N_WEBHOOK_PILOT_WAIVER")
-        if webhook_url:
-            trigger_n8n_webhook(webhook_url, method="DELETE",
-                                waiver_id=waiver.waiver_id, project_id=waiver.project.project_id)
         _cleanup_waiver_assets("pilot", waiver)
         waiver.deleted_at = datetime.now(timezone.utc)
         db.session.commit()

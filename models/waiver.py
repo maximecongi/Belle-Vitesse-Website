@@ -77,7 +77,7 @@ class PilotWaiver(db.Model):
     pilot_insurance_path = db.Column(db.String(500), nullable=True)
     pilot_identity_path = db.Column(db.String(500), nullable=True)
 
-    # Webhook (n8n)
+    # Historique d'archivage / synchronisation (legacy)
     webhook_triggered_at = db.Column(db.DateTime, nullable=True)
 
     # Suivi des relances automatiques

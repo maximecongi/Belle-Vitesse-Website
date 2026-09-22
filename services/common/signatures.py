@@ -36,7 +36,6 @@ from utils.document_utils import (
     render_pdf_from_template,
 )
 from utils.mailer import send_waiver_signed_email
-from utils.n8n import trigger_n8n_webhook
 from utils.storage import (
     ensure_dir,
     get_checkin_path,
@@ -57,7 +56,6 @@ FLOW_CONFIG = {
         "prefix": "BVCO",
         "url_path": "checkout",
         "storage_func": get_checkout_path,
-        "webhook_env": "N8N_WEBHOOK_CHECKOUT_SIGN",
         "stylesheets": ["css/styles.css", "css/checkout.css"],
         "template": "pdf/checkout.html"
     },
@@ -68,7 +66,6 @@ FLOW_CONFIG = {
         "prefix": "BVCI",
         "url_path": "checkin",
         "storage_func": get_checkin_path,
-        "webhook_env": "N8N_WEBHOOK_CHECKIN_SIGN",
         "stylesheets": ["css/styles.css", "css/checkin.css"],
         "template": "pdf/checkin.html"
     },
@@ -79,7 +76,6 @@ FLOW_CONFIG = {
         "prefix": "WAIVER",
         "url_path": "pilot-waiver",
         "storage_func": get_pilot_waiver_path,
-        "webhook_env": "N8N_WEBHOOK_PILOT_WAIVER",
         "stylesheets": [],  # Utilise des styles en ligne ou globaux pour les décharges
         "template": "pdf/pilot_waiver.html"
     },
@@ -90,7 +86,6 @@ FLOW_CONFIG = {
         "prefix": "WAIVER_PROD",
         "url_path": "production-waiver",
         "storage_func": get_production_waiver_path,
-        "webhook_env": "N8N_WEBHOOK_PRODUCTION_WAIVER",
         "stylesheets": [],  # Utilise des styles en ligne ou globaux pour les décharges
         "template": "pdf/production_waiver.html"
     }
@@ -315,8 +310,8 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         db.session.add(signed_doc)
         db.session.commit()
 
-        # 6. Post-traitement (Webhooks et Emails)
-        _trigger_unified_webhook(
+        # 6. Post-traitement (kDrive et Emails)
+        _dispatch_kdrive_document_bundle(
             mode, record, rel_pdf_path, base_url, current_hash, snapshot)
 
         if mode in ["pilot", "production"]:
@@ -393,11 +388,11 @@ def process_inspection_signature(token_str, mode, signature_data, signed_ip):
     return res
 
 
-# ── Logique Webhook ──────────────────────────────────────────────
+# ── Synchronisation kDrive ──────────────────────────────────────────
 
-def _trigger_unified_webhook(mode, record, rel_pdf_path, base_url, current_hash, snapshot):
+def _dispatch_kdrive_document_bundle(mode, record, rel_pdf_path, base_url, current_hash, snapshot):
     """
-    Déclenche la synchronisation kDrive native et le webhook n8n approprié pour tout document signé.
+    Déclenche la synchronisation kDrive native pour tout document signé (bundle PDF + pièces jointes).
     """
     config = FLOW_CONFIG.get(mode)
     project_obj = getattr(record, "project", None)
@@ -455,92 +450,6 @@ def _trigger_unified_webhook(mode, record, rel_pdf_path, base_url, current_hash,
                 )
         except Exception as k_err:
             logger.error(f"❌ Erreur dispatch kDrive ({mode}) : {k_err}")
-
-    # 2. Webhook n8n transitoire
-    webhook_url = os.getenv(config["webhook_env"])
-    if not webhook_url:
-        return
-
-    # Jeton d'accès PDF (pour sécuriser le lien envoyé au webhook)
-    from utils.document_utils import generate_pdf_access_token
-    pdf_access_token = generate_pdf_access_token(rel_pdf_path)
-    pdf_url_signed = f"{base_url}/{config['url_path']}/document/{rel_pdf_path}?t={pdf_access_token}"
-
-    project_id_unique = "—"
-    if project_obj:
-        project_id_unique = getattr(project_obj, "project_id", "—")
-
-    # Extrait l'année et le mois du projet (date de départ) ou date actuelle
-    date_ref = datetime.utcnow()
-    if project_obj and project_obj.departure_date:
-        date_ref = project_obj.departure_date
-
-    year_str = date_ref.strftime("%Y")
-    month_str = date_ref.strftime("%m")
-
-    # Payload de base
-    payload = {
-        "event": f"{mode}_signed",
-        "document_id": getattr(record, "inspection_number", getattr(record, "waiver_id", "—")),
-        "project_id": project_id_unique,
-        "pdf_url": pdf_url_signed,
-        "hash": current_hash,
-        "production": snapshot.get("production", "—"),
-        "project": snapshot.get("project", "—"),
-        "year": year_str,
-        "month": month_str,
-    }
-
-    # Composants de payload spécifiques au flux
-    if mode in ["checkout", "checkin"]:
-        def get_secured_photo_url(photo_item):
-            if not photo_item or "url" not in photo_item:
-                return None
-            path = photo_item["url"].replace("/files/", "")
-            return f"{base_url}/files/{path}?t={generate_pdf_access_token(path)}"
-
-        payload.update({
-            "control_date": snapshot.get("control_date", "—"),
-            "photos": {
-                "interior": [p for p in [get_secured_photo_url(p) for p in snapshot.get("interior_photos", [])] if p],
-                "exterior": [p for p in [get_secured_photo_url(p) for p in snapshot.get("exterior_photos", [])] if p]
-            }
-        })
-    elif mode == "pilot":
-        def get_secured_attachment_url(path):
-            if not path:
-                return None
-            return f"{base_url}/pilot-waiver/attachment/{path}?t={generate_pdf_access_token(path)}"
-
-        payload.update({
-            "pilot": {
-                "first_name": record.pilot_first_name,
-                "last_name": record.pilot_last_name,
-                "license_number": record.pilot_license_number
-            },
-            "attachments": {
-                "license_url": get_secured_attachment_url(record.pilot_license_path),
-                "insurance_url": get_secured_attachment_url(record.pilot_insurance_path),
-                "identity_url": get_secured_attachment_url(record.pilot_identity_path)
-            }
-        })
-    elif mode == "production":
-        payload.update({
-            "production": {
-                "name": record.production_name,
-                "representative": record.production_representative,
-                "siret": record.production_siret,
-                "insurance_url": f"{base_url}/production-waiver/attachment/{record.production_insurance_path}?t={generate_pdf_access_token(record.production_insurance_path)}" if record.production_insurance_path else None
-            }
-        })
-
-    try:
-        trigger_n8n_webhook(webhook_url, **payload)
-        if hasattr(record, "webhook_triggered_at"):
-            record.webhook_triggered_at = datetime.utcnow()
-            db.session.commit()
-    except Exception as e:
-        logger.error(f"❌ Erreur Webhook ({mode}) : {e}")
 
 
 def _send_waiver_confirmation_email(mode, waiver, pdf_path):

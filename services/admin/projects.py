@@ -7,8 +7,6 @@ from models import Contact, Production, Project, db
 from services.admin.status_mapping import format_waiver_status
 from utils.database import get_vehicles, get_heads
 from utils.formatting import format_date_fr, get_today_paris
-from utils.n8n import trigger_n8n_webhook
-
 from utils.document_utils import generate_pdf_access_token
 
 logger = logging.getLogger(__name__)
@@ -279,21 +277,6 @@ def create_project(form, user_id=None):
     # Déclenchement de la création de l'arborescence kDrive (post-commit)
     from services.common.kdrive import dispatch_create_project_tree
     dispatch_create_project_tree(project.id)
-
-    # Déclenchement du webhook n8n pour compatibilité transitoire
-    webhook_url = os.getenv("N8N_WEBHOOK_PROJECT")
-    if webhook_url:
-        trigger_n8n_webhook(
-            webhook_url,
-            event="project_created",
-            project_id=project.project_id,
-            project=project.name,
-            production=project.production.name if project.production else "—",
-            year=str(project.departure_date.strftime("%Y")
-                     ) if project.departure_date else "—",
-            month=str(project.departure_date.strftime("%m")
-                      ) if project.departure_date else "—",
-        )
 
     return True
 

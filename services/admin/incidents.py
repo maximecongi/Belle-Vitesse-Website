@@ -1000,7 +1000,7 @@ def update_incident_status(record_id, new_status, resolution_notes=None, actual_
 
 def delete_incident(record_id, confirm=True):
     """
-    Suppression logique (soft-delete) d'un incident et notification n8n si configuré.
+    Suppression logique (soft-delete) d'un incident.
     """
     if not confirm:
         return {"status": "requires_confirmation", "message": "Veuillez confirmer la suppression de cet incident."}
@@ -1018,25 +1018,7 @@ def delete_incident(record_id, confirm=True):
         IncidentSignedDocument.query.filter_by(
             incident_number=incident_number).delete()
 
-    # 2. Notification n8n de la suppression (DELETE)
-    webhook_url = os.getenv("N8N_WEBHOOK_INCIDENT") or os.getenv(
-        "N8N_WEBHOOK_INCIDENT_SIGN")
-    if webhook_url and incident_number:
-        try:
-            from utils.n8n import trigger_n8n_webhook
-            trigger_n8n_webhook(
-                webhook_url,
-                method="DELETE",
-                incident_number=incident_number,
-                document_id=incident_number,
-                project_id=project_unique_id,
-                project=incident.project.name if incident.project else None,
-            )
-        except Exception as e:
-            logger.warning(
-                f"⚠️ Erreur lors du déclenchement du webhook DELETE incident : {e}")
-
-    # 3. Soft-delete de l'incident
+    # 2. Soft-delete de l'incident
     incident.deleted_at = _utcnow()
     db.session.commit()
 
@@ -1403,7 +1385,7 @@ def finalize_incident_document(incident, base_url=None):
     3. Rend et compresse le PDF scellé intégrant les 2 signatures et le cartouche de conformité.
     4. Enregistre le PDF dans output/.../1_SÉCURITÉ/5_INCIDENTS/.
     5. Persiste l'archive légale immuable IncidentSignedDocument.
-    6. Déclenche le webhook n8n si configuré.
+    6. Déclenche l'upload kDrive asynchrone (bundle PDF + photos + documents).
     """
     if not base_url:
         try:
@@ -1558,97 +1540,6 @@ def finalize_incident_document(incident, base_url=None):
             )
         except Exception as k_err:
             logger.error(f"❌ Erreur dispatch kDrive incident : {k_err}")
-
-    # 7. Webhook n8n transitoire (POST)
-    webhook_url = os.getenv("N8N_WEBHOOK_INCIDENT") or os.getenv(
-        "N8N_WEBHOOK_INCIDENT_SIGN")
-    if webhook_url:
-        project_obj = incident.project
-        project_id_unique = "—"
-        if project_obj:
-            project_id_unique = getattr(project_obj, "project_id", "—")
-
-        # Date, année et mois de référence basés sur le projet rattaché
-        project_date_obj = None
-        if project_obj and project_obj.departure_date:
-            project_date_obj = project_obj.departure_date
-        elif project_obj and project_obj.shoot_start_date:
-            project_date_obj = project_obj.shoot_start_date
-        elif incident.incident_date:
-            project_date_obj = incident.incident_date
-        else:
-            project_date_obj = datetime.utcnow()
-
-        project_date_str = project_date_obj.strftime(
-            "%Y-%m-%d") if hasattr(project_date_obj, "strftime") else str(project_date_obj)
-        year_str = project_date_obj.strftime("%Y")
-        month_str = project_date_obj.strftime("%m")
-
-        pdf_access_token = generate_pdf_access_token(rel_pdf_path)
-        pdf_url_signed = f"{base_url}/incidents/document/{rel_pdf_path}?t={pdf_access_token}"
-
-        def get_secured_file_url(file_path):
-            if not file_path:
-                return None
-            clean = file_path.lstrip("/")
-            if clean.startswith("files/"):
-                clean = clean[6:]
-            return f"{base_url}/files/{clean}?t={generate_pdf_access_token(clean)}"
-
-        payload = {
-            "event": "incident_signed",
-            "document_id": incident.incident_number,
-            "project_id": project_id_unique,
-            "pdf_url": pdf_url_signed,
-            "hash": current_hash,
-            "production": project_obj.production.name if project_obj and project_obj.production else "—",
-            "project": project_obj.name if project_obj else "—",
-            "project_date": project_date_str,
-            "year": year_str,
-            "month": month_str,
-            "incident": {
-                "title": incident.title,
-                "incident_number": incident.incident_number,
-                "category": incident.category,
-                "category_label": INCIDENT_CATEGORY_MAP.get(incident.category, incident.category),
-                "severity": incident.severity,
-                "severity_label": INCIDENT_SEVERITY_MAP.get(incident.severity, incident.severity),
-                "status": incident.status,
-                "status_label": INCIDENT_STATUS_MAP.get(incident.status, incident.status),
-                "signature_status": incident.signature_status,
-                "date": incident.incident_date.strftime("%Y-%m-%d") if incident.incident_date else None,
-                "time": incident.incident_time,
-                "location": incident.location,
-                "shooting_impact": incident.shooting_impact,
-                "shooting_impact_label": INCIDENT_IMPACT_MAP.get(incident.shooting_impact, incident.shooting_impact),
-                "equipment_name": incident.equipment_name,
-                "description": incident.description,
-                "immediate_actions": incident.immediate_actions,
-                "estimated_cost": float(incident.estimated_cost) if incident.estimated_cost is not None else None,
-                "actual_cost": float(incident.actual_cost) if incident.actual_cost is not None else None,
-                "insurance_declared": incident.insurance_declared,
-                "insurance_reference": incident.insurance_reference,
-                "declared_by": f"{incident.reporter.firstname} {incident.reporter.lastname}".strip() if incident.reporter else None,
-            },
-            "vehicle": incident_data.get("vehicle"),
-            "signatures": {
-                "bv_signer": incident.bv_signer_name or (f"{incident.reporter.firstname} {incident.reporter.lastname}".strip() if incident.reporter else "Belle Vitesse"),
-                "bv_signer_role": incident.bv_signer_role,
-                "bv_signed_at": incident.bv_signed_at.isoformat() if incident.bv_signed_at else None,
-                "prod_signer": incident.prod_signer_name,
-                "prod_signer_role": incident.prod_signer_role,
-                "prod_signed_at": incident.prod_signed_at.isoformat() if incident.prod_signed_at else None,
-            },
-            "photos": [url for url in [get_secured_file_url(p) for p in incident.photos_list] if url],
-            "documents": [url for url in [get_secured_file_url(d) for d in incident.documents_list] if url],
-        }
-
-        try:
-            from utils.n8n import trigger_n8n_webhook
-            trigger_n8n_webhook(webhook_url, method="POST", **payload)
-        except Exception as err:
-            logger.warning(f"⚠️ Échec webhook n8n incident : {err}")
-
     return {
         "document_id": incident.incident_number,
         "pdf_url": f"/incidents/document/{rel_pdf_path}",

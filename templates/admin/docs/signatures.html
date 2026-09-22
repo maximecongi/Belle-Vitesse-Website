@@ -42,16 +42,15 @@ signature_hash = compute_hmac_seal(
         <p>Les liens de téléchargement directs vers les PDF sont protégés par des jetons temporaires (TTL de 60 minutes) pour éviter le "scraping" ou l'accès non autorisé par simple devinement d'URL.</p>
     </div>
 
-    <h2>Webhooks de Finalisation</h2>
-    <p>Une fois le document scellé et le PDF généré, un webhook <strong>n8n</strong> est déclenché. Ce flux externe se charge de l'archivage longue durée sur kDrive ou d'autres systèmes de production.</p>
+    <h2>Archivage & Synchronisation kDrive</h2>
+    <p>Une fois le document scellé et le PDF généré, le module natif <strong>kDrive Infomaniak</strong> prend le relais en tâche de fond pour archiver le document PDF ainsi que ses éventuelles pièces jointes (photos, justificatifs) dans le dossier de production approprié.</p>
 
     <div class="mermaid">
     sequenceDiagram
         Signataire->>Serveur: Envoi Signature
         Serveur->>Serveur: Calcul Snapshot + Sceau
         Serveur->>Serveur: Génération PDF
-        Serveur->>Serveur: Archivage local
-        Serveur->>n8n: Trigger Webhook (Finalisé)
-        n8n->>kDrive: Copie Archive
+        Serveur->>Serveur: Archivage local & DB
+        Serveur->>kDrive: Upload Natif (Bundle PDF + Pièces jointes)
     </div>
 {% endblock %}

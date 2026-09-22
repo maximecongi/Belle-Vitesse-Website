@@ -39,7 +39,7 @@ ROLE_SUBFOLDERS = {
 def clean_segment(value, label: str = "segment") -> str:
     """
     Nettoie un segment de chemin :
-    - Remplace les slashes / et \\ par des espaces (conforme au workflow n8n)
+    - Remplace les slashes / et \ par des espaces (conforme aux spécifications de nommage)
     - Supprime les espaces multiples et les espaces en bordure
     - Refuse les segments vides ou dangereux (., ..)
     """

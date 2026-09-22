@@ -49,7 +49,6 @@ def get_inspection_config(mode):
             "model": CheckoutVehicle,
             "token_model": CheckoutToken,
             "signed_model": CheckoutSignedDocument,
-            "webhook_env": "N8N_WEBHOOK_CHECKOUT_SIGN",
             "photos_path_func": "get_checkout_photos_path",
             "responsible_attr": "controller",
             "is_checkout": True,
@@ -61,7 +60,6 @@ def get_inspection_config(mode):
             "model": CheckinVehicle,
             "token_model": CheckinToken,
             "signed_model": CheckinSignedDocument,
-            "webhook_env": "N8N_WEBHOOK_CHECKIN_SIGN",
             "photos_path_func": "get_checkin_photos_path",
             "responsible_attr": "controller",
             "is_checkout": False,
@@ -191,14 +189,13 @@ def get_signed_document_info(inspection_id, is_checkout=True):
 def delete_inspection_unified(mode, record_id):
     """
     Supprime génériquement une inspection (Checkout ou Checkin).
-    Supprime également les documents signés, les jetons et notifie n8n.
+    Supprime également les documents signés et les jetons.
     """
     config = get_inspection_config(mode)
     record = db.session.get(config["model"], record_id)
     if not record or record.deleted_at is not None:
         return False
 
-    from utils.n8n import trigger_n8n_webhook
     insp_id = record.inspection_number
 
     if insp_id:
@@ -206,19 +203,10 @@ def delete_inspection_unified(mode, record_id):
         config["token_model"].query.filter_by(inspection_id=insp_id).delete()
         config["signed_model"].query.filter_by(inspection_id=insp_id).delete()
 
-        # 2. Notification n8n de la suppression
-        webhook_url = os.getenv(config["webhook_env"])
-        if webhook_url:
-            trigger_n8n_webhook(
-                webhook_url, method="DELETE",
-                inspection_id=insp_id,
-                project_id=record.project.project_id if record.project else None
-            )
-
-    # 3. Suppression des fichiers physiques (photos, PDF)
+    # 2. Suppression des fichiers physiques (photos, PDF)
     _delete_inspection_files(record)
 
-    # 4. Suppression via soft-delete
+    # 3. Suppression via soft-delete
     record.deleted_at = datetime.utcnow()
     db.session.commit()
 

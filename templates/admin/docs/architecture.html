@@ -1,45 +1,61 @@
 {% extends "admin/docs/base.html" %}
 
 {% block content %}
-    <h1>Architecture Système</h1>
-    
-    <p>La plateforme Belle Vitesse repose sur une architecture découplée où Flask agit comme le chef d'orchestre entre les différentes sources de données et les services de sortie (PDF, n8n).</p>
+<h1>Architecture Système</h1>
 
-    <h2>Flux de Données Global</h2>
-    <div class="mermaid">
+refactor(integrations): supprimer l'ensemble des webhooks n8n au profit de kDrive natif
+
+- Supprimer le module utilitaire utils/n8n.py
+- Supprimer les appels webhook (POST et DELETE) dans les services incidents, waivers, inspections et projects
+- Retirer les clés de configuration 'webhook_env' dans les workflows de signatures et de décharges
+- Renommer la logique post-signature en _dispatch_kdrive_document_bundle
+- Supprimer les variables d'environnement de fallback N8N_* dans services/common/kdrive/config.py
+- Mettre à jour les diagrammes et chapitres de la documentation interne d'administration
+- Supprimer les tests unitaires obsolètes testant le webhook n8n dans test_incident_signatures.py
+<p>La plateforme Belle Vitesse repose sur une architecture robuste où Flask agit comme le chef d'orchestre entre les
+    sources de données, les générateurs de documents (PDF) et le stockage cloud direct (kDrive Infomaniak).</p>
+
+<h2>Flux de Données Global</h2>
+<div class="mermaid">
     graph TD
-        A[Utilisateur / Public] -->|Signature / Formulaire| B(Flask App)
-        B -->|Persistance| C[(MySQL DB)]
-        B -->|Synchronisation| D(Airtable)
-        B -->|Génération| E[PDF Documents]
-        B -->|Notifications| F(n8n Webhooks)
-        D -->|Source de Vérité| B
-    </div>
+    A[Utilisateur / Public] -->|Signature / Formulaire| B(Flask App)
+    B -->|Persistance| C[(MySQL DB)]
+    B -->|Synchronisation| D(Airtable)
+    B -->|Génération| E[PDF Documents]
+    B -->|Archivage & Sync| F(kDrive Infomaniak)
+    D -->|Source de Vérité| B
+</div>
 
-    <h2>Composants Principaux</h2>
-    
-    <h3>1. Flask (Le Noyau)</h3>
-    <p>L'application est structurée en Blueprints (admin, public) pour séparer proprement la logique de gestion et l'interface client.</p>
-    <ul>
-        <li><strong>Routes Admin</strong> : Dashboard, gestion des projets, contacts et outils.</li>
-        <li><strong>Routes Publiques</strong> : Landing pages, formulaires de signature et consultation de documents.</li>
-    </ul>
+<h2>Composants Principaux</h2>
 
-    <h3>2. Airtable & MySQL (La Dualité du Stockage)</h3>
-    <p>Nous utilisons une approche hybride pour bénéficier du meilleur des deux mondes :</p>
-    <ul>
-        <li><strong>Airtable</strong> : Utilisé comme interface de saisie "No-Code" pour le catalogue (véhicules, têtes, produits). Les données sont synchronisées manuellement via un script sur le serveur vers MySQL.</li>
-        <li><strong>MySQL</strong> : Utilisé pour les données transactionnelles rapides (signatures, logs, sessions, configurations de projets spécifiques).</li>
-    </ul>
+<h3>1. Flask (Le Noyau)</h3>
+<p>L'application est structurée en Blueprints (admin, public) pour séparer proprement la logique de gestion et
+    l'interface client.</p>
+<ul>
+    <li><strong>Routes Admin</strong> : Dashboard, gestion des projets, contacts et outils.</li>
+    <li><strong>Routes Publiques</strong> : Landing pages, formulaires de signature et consultation de documents.</li>
+</ul>
 
-    <h3>3. WeasyPrint (Moteur de Rendu)</h3>
-    <p>Le moteur WeasyPrint convertit les templates Jinja2 + CSS en documents PDF professionnels. La DA (Direction Artistique) est strictement contrôlée via des variables CSS partagées entre le web et le PDF.</p>
+<h3>2. Airtable & MySQL (La Dualité du Stockage)</h3>
+<p>Nous utilisons une approche hybride pour bénéficier du meilleur des deux mondes :</p>
+<ul>
+    <li><strong>Airtable</strong> : Utilisé comme interface de saisie "No-Code" pour le catalogue (véhicules, têtes,
+        produits). Les données sont synchronisées manuellement via un script sur le serveur vers MySQL.</li>
+    <li><strong>MySQL</strong> : Utilisé pour les données transactionnelles rapides (signatures, logs, sessions,
+        configurations de projets spécifiques).</li>
+</ul>
 
-    <div class="callout callout-important">
-        <h4>Note sur la Synchronisation</h4>
-        <p>Le service <code>sync_airtable.py</code> assure que MySQL contient une copie fraîche des données Airtable. Toute modification sur Airtable nécessite un déclenchement de synchro pour être visible sur le site public.</p>
-    </div>
+<h3>3. WeasyPrint (Moteur de Rendu)</h3>
+<p>Le moteur WeasyPrint convertit les templates Jinja2 + CSS en documents PDF professionnels. La DA (Direction
+    Artistique) est strictement contrôlée via des variables CSS partagées entre le web et le PDF.</p>
 
-    <h2>Sécurité des Accès</h2>
-    <p>L'accès administratif est protégé par un système de <strong>Magic Link</strong> (envoi par email) pour éviter la gestion complexe de mots de passe, complété par un décorateur <code>@require_roles</code> au niveau des routes.</p>
+<div class="callout callout-important">
+    <h4>Note sur la Synchronisation</h4>
+    <p>Le service <code>sync_airtable.py</code> assure que MySQL contient une copie fraîche des données Airtable. Toute
+        modification sur Airtable nécessite un déclenchement de synchro pour être visible sur le site public.</p>
+</div>
+
+<h2>Sécurité des Accès</h2>
+<p>L'accès administratif est protégé par un système de <strong>Magic Link</strong> (envoi par email) pour éviter la
+    gestion complexe de mots de passe, complété par un décorateur <code>@require_roles</code> au niveau des routes.</p>
 {% endblock %}

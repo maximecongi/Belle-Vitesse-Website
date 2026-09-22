@@ -47,26 +47,18 @@
     </table>
 
     <h2>2. API REST Publique</h2>
-    <p>Cette API est conçue pour les intégrations externes (n8n, applications mobiles). Elle est versionnée et utilise une authentification par jeton <strong>JWT (Bearer)</strong>.</p>
+    <p>Cette API est conçue pour les intégrations externes (applications tierces, mobiles). Elle est versionnée et utilise une authentification par jeton <strong>JWT (Bearer)</strong>.</p>
     <ul>
         <li><strong>Base URL</strong> : <code>/api/v1</code></li>
         <li><strong>Authentification</strong> : <code>Authorization: Bearer &lt;JWT_TOKEN&gt;</code></li>
     </ul>
 
-    <h3>Webhooks Sortants</h3>
-    <p>Le système envoie des webhooks vers <strong>n8n</strong> lors d'événements clés. Les payloads sont structurés pour faciliter l'automatisation.</p>
+    <h3>Archivage & Synchronisation kDrive</h3>
+    <p>La gestion documentaire s'effectue directement via l'API REST kDrive Infomaniak intégrée de manière native. Lors de la création d'un projet ou de la finalisation d'un document contradictoire, les fichiers sont immédiatement structurés et archivés de façon résiliente.</p>
     <ul>
-        <li><strong>Signature finalisée</strong> : Envoi automatique après scellement du document.</li>
-        <li><strong>Notifications</strong> : Alertes de création de projet ou d'erreurs système.</li>
+        <li><strong>Création d'arborescence projet</strong> : Déploiement automatique de la hiérarchie standard <code>1_SÉCURITÉ</code>, <code>2_PRODUCTION</code>, etc.</li>
+        <li><strong>Bundles documentaires</strong> : Téléversement en arrière-plan du PDF scellé et de l'ensemble des pièces jointes associées.</li>
     </ul>
-
-    <pre><code># Exemple de payload envoyé à n8n
-{
-    "event": "inspection_signed",
-    "project_id": "BVPR-XXXX",
-    "inspection_id": "recAbc123",
-    "pdf_url": "https://bellevitesse.com/document/..."
-}</code></pre>
 
     <div class="callout">
         <p><strong>Note Technique</strong> : Toutes les routes de l'API administrative sont définies dans <code>routes/admin/api.py</code>, tandis que l'API publique est structurée dans le blueprint <code>api_v1</code> (voir <code>static/docs/openapi.yaml</code>).</p>
