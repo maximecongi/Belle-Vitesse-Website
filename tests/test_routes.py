@@ -315,6 +315,29 @@ class RouteSmokeTest(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertIn("Tournage Fallback Shoot Start", resp.get_data(as_text=True))
 
+    def test_temp_email_preview_access_and_prod_guard(self):
+        """Vérifie que la route temporaire est accessible en dev/test et bloquée (404) en production."""
+        # 1. Accessible en dev/test
+        resp = self.client.get("/temp-email-preview/waiver")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("Décharge Signée", resp.get_data(as_text=True))
+
+        resp_badges = self.client.get("/temp-email-preview/badges")
+        self.assertEqual(resp_badges.status_code, 200)
+        self.assertIn("Statut Quotidien", resp_badges.get_data(as_text=True))
+
+        # 2. Bloqué (404) en production
+        prev_env = os.environ.get("FLASK_ENV")
+        try:
+            os.environ["FLASK_ENV"] = "production"
+            resp_prod = self.client.get("/temp-email-preview/waiver")
+            self.assertEqual(resp_prod.status_code, 404)
+        finally:
+            if prev_env is not None:
+                os.environ["FLASK_ENV"] = prev_env
+            else:
+                os.environ.pop("FLASK_ENV", None)
+
 
 if __name__ == "__main__":
     unittest.main()

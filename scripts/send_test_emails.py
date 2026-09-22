@@ -286,7 +286,8 @@ def get_all_test_emails():
 
 def main():
     print(f"\n🚀 Démarrage de l'envoi des 13 templates d'e-mails vers {DEST_EMAIL}...\n")
-    app = Flask(__name__, template_folder=str(_root / "templates"))
+    from app import create_app
+    app = create_app()
 
     emails = get_all_test_emails()
     success_count = 0

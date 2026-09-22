@@ -42,13 +42,13 @@
             <td>{{ job.last_run_display }}</td>
             <td>
                 {% if job.status == 'success' %}
-                <span class="badge badge-success">OK</span>
+                <span class="badge badge-success" style="display: inline-block; padding: 2px 10px; margin: 2px 0; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; line-height: 1.4; vertical-align: middle; background-color: #D1FAE5; color: #065F46; border: 1px solid #10B981;">OK</span>
                 {% elif job.status == 'failed' %}
-                <span class="badge badge-danger">Échec</span>
+                <span class="badge badge-danger" style="display: inline-block; padding: 2px 10px; margin: 2px 0; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; line-height: 1.4; vertical-align: middle; background-color: #FEE2E2; color: #991B1B; border: 1px solid #EF4444;">Échec</span>
                 {% elif job.status == 'stale' %}
-                <span class="badge badge-warning">En retard</span>
+                <span class="badge badge-warning" style="display: inline-block; padding: 2px 10px; margin: 2px 0; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; line-height: 1.4; vertical-align: middle; background-color: #FEF3C7; color: #92400E; border: 1px solid #F59E0B;">En retard</span>
                 {% else %}
-                <span class="badge badge-missing">Manquant</span>
+                <span class="badge badge-missing" style="display: inline-block; padding: 2px 10px; margin: 2px 0; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; line-height: 1.4; vertical-align: middle; background-color: #F1F5F9; color: #475569; border: 1px solid #94A3B8;">Manquant</span>
                 {% endif %}
             </td>
         </tr>

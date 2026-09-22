@@ -194,7 +194,7 @@ def init_web_routes(app):
     @csrf.exempt
     def subscribe():
         from utils.mailer import send_subscription_email
-        
+
         # Déterminer la langue pour les messages de feedback
         # Toujours forcer l'anglais si la requête vient de la page /launch
         referrer = request.referrer or ""
@@ -231,7 +231,8 @@ def init_web_routes(app):
         if not re.match(email_regex, email):
             return jsonify({"status": "error", "message": msg["invalid_email"]}), 400
 
-        raw_ip = request.headers.get("X-Forwarded-For") or request.remote_addr or ""
+        raw_ip = request.headers.get(
+            "X-Forwarded-For") or request.remote_addr or ""
         ip = raw_ip.split(",")[0].strip()[:45]
         rate_key = f"rate_limit_{ip}"
         requests_count = cache.get(rate_key) or 0
@@ -339,7 +340,8 @@ def init_web_routes(app):
                     {
                         "appIDs": [app_id, f"*.com.bellevitesse.admin"],
                         "components": [
-                            {"/": "/admin/auth/*", "comment": "Authentification directe par Magic Link"},
+                            {"/": "/admin/auth/*",
+                                "comment": "Authentification directe par Magic Link"},
                             {"/": "/admin/*", "comment": "Pages d'administration"}
                         ]
                     },
@@ -352,3 +354,76 @@ def init_web_routes(app):
         }
         return jsonify(aasa_data)
 
+    # ── Endpoint Temporaire : Prévisualisation des e-mails ─────────
+
+    @app.route("/temp-email-preview")
+    @app.route("/temp-email-preview/<mail_type>")
+    def temp_email_preview(mail_type="waiver"):
+        """Endpoint temporaire pour visualiser le HTML/CSS des e-mails transactionnels (actif uniquement en dev)."""
+        # Sécurité : strictement indisponible en production (erreur 404)
+        if os.getenv("FLASK_ENV") not in ["development", "testing"] or current_app.config.get("FLASK_ENV") not in ["development", "testing"]:
+            abort(404)
+
+        from datetime import datetime, timezone
+        from utils.context_processors import get_company_context
+
+        ctx = get_company_context()
+        ctx["now_year"] = datetime.now(timezone.utc).year
+
+        m_type = request.args.get("type", mail_type).lower()
+
+        if m_type in ("waiver", "decharge", "waiver_signed"):
+            template_name = "emails/waiver_signed_confirmation.html"
+            ctx.update({
+                "recipient_name": "Maxime Congi",
+                "project_name": "Tournage Porsche 911 GT3 RS",
+            })
+        elif m_type in ("badges", "cron", "cron_report"):
+            template_name = "emails/cron_report.html"
+            ctx.update({
+                "global_status": "OK",
+                "date_str": "22/09/2026",
+                "time_str": "18:30:00",
+                "jobs": [
+                    {"display_name": "Sauvegarde Base de Données SQL", "expected_freq": "Tous les jours à 4h00",
+                        "last_run_display": "22/09/2026 à 04:00:01", "status": "success"},
+                    {"display_name": "Purge des logs SQL (60 jours)", "expected_freq": "Tous les jours à 5h00",
+                     "last_run_display": "22/09/2026 à 05:00:02", "status": "failed"},
+                    {"display_name": "Relance automatique des décharges", "expected_freq": "Tous les jours à 8h00",
+                        "last_run_display": "22/09/2026 à 08:00:02", "status": "stale"},
+                    {"display_name": "Nettoyage dossiers vides Serveur", "expected_freq": "Tous les lundis à 3h45",
+                        "last_run_display": "22/09/2026 à 03:45:01", "status": "missing"},
+                ],
+                "failures": [],
+            })
+        elif m_type in ("incident", "incident_signed"):
+            template_name = "emails/incident_signed_confirmation.html"
+            ctx.update({
+                "recipient_name": "Maxime Congi",
+                "project_name": "Tournage Nocturne Paris",
+                "incident_number": "INC-2026-0008",
+                "incident_title": "Frottement splitter carbone et fixation camera-car",
+            })
+        elif m_type in ("incident_invitation", "incident_visa"):
+            template_name = "emails/incident_invitation.html"
+            ctx.update({
+                "project_name": "Tournage Nocturne Paris",
+                "incident_number": "INC-2026-0008",
+                "incident_title": "Frottement splitter carbone et fixation camera-car",
+                "incident_date": "22/09/2026",
+                "location": "Pont de Bir-Hakeim, Paris",
+                "signature_link": "https://bellevitesse.com/incidents/sign/demo_token",
+            })
+        elif m_type in ("waiver_invitation",):
+            template_name = "emails/waiver_invitation.html"
+            ctx.update({
+                "waiver_type": "pilot",
+                "recipient_name": "Maxime Congi",
+                "project_name": "Tournage Porsche 911 GT3 RS",
+                "signature_link": "https://bellevitesse.com/waivers/pilot/demo_token",
+                "is_reminder": False,
+            })
+        else:
+            return abort(404, f"Type d'e-mail inconnu : {m_type}")
+
+        return render_template(template_name, **ctx)

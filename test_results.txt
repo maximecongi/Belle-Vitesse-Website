@@ -264,6 +264,8 @@ test_serve_private_file_with_jwt_token (test_routes.RouteSmokeTest.test_serve_pr
 Test that API / iPad client with valid Bearer JWT can access /files/<path>. ... ok
 test_serve_private_file_with_valid_hmac_token (test_routes.RouteSmokeTest.test_serve_private_file_with_valid_hmac_token)
 Test that accessing /files/<path> with a valid HMAC access token passes auth (returns 404 if file absent, not 403). ... ok
+test_temp_email_preview_access_and_prod_guard (test_routes.RouteSmokeTest.test_temp_email_preview_access_and_prod_guard)
+Vérifie que la route temporaire est accessible en dev/test et bloquée (404) en production. ... ok
 test_unsubscribe_success (test_routes.RouteSmokeTest.test_unsubscribe_success)
 Test that unsubscribing with a valid token works and does not 500. ... ok
 test_create_and_list_waivers (test_waivers.WaiversTest.test_create_and_list_waivers) ... ok
@@ -288,6 +290,6 @@ test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.W
 Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
 ----------------------------------------------------------------------
-Ran 186 tests in 13.019s
+Ran 187 tests in 14.024s
 
 OK
