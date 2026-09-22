@@ -3,15 +3,6 @@
 {% block content %}
 <h1>Architecture Système</h1>
 
-refactor(integrations): supprimer l'ensemble des webhooks n8n au profit de kDrive natif
-
-- Supprimer le module utilitaire utils/n8n.py
-- Supprimer les appels webhook (POST et DELETE) dans les services incidents, waivers, inspections et projects
-- Retirer les clés de configuration 'webhook_env' dans les workflows de signatures et de décharges
-- Renommer la logique post-signature en _dispatch_kdrive_document_bundle
-- Supprimer les variables d'environnement de fallback N8N_* dans services/common/kdrive/config.py
-- Mettre à jour les diagrammes et chapitres de la documentation interne d'administration
-- Supprimer les tests unitaires obsolètes testant le webhook n8n dans test_incident_signatures.py
 <p>La plateforme Belle Vitesse repose sur une architecture robuste où Flask agit comme le chef d'orchestre entre les
     sources de données, les générateurs de documents (PDF) et le stockage cloud direct (kDrive Infomaniak).</p>
 
