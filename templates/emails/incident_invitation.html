@@ -6,28 +6,30 @@
 <h1 class="dot-before">Signature Constat d'Incident.</h1>
 
 <p>
-    Bonjour,<br><br>
-    Vous êtes invité à viser et signer électroniquement le <strong>constat d'incident contradictoire</strong> pour le projet :
+    Bonjour {{ recipient_name or '' }}{% if not recipient_name %},{% endif %}<br><br>
+    Vous êtes invité à viser et signer électroniquement le <strong>constat d'incident contradictoire</strong> pour le
+    projet ci-dessous :
 </p>
 
-<div>
-    <span class="project-pill">{{ project_name }}</span>
-</div>
-
 <div class="info-card info-card-incident">
-    <div class="info-line"><strong>N° de dossier :</strong> {{ incident_number }}</div>
+    <div class="info-line"><strong>Projet :</strong> {{ project_name }}</div>
+    {% if production_name %}
+    <div class="info-line"><strong>Production :</strong> {{ production_name }}</div>
+    {% endif %}
     <div class="info-line"><strong>Objet :</strong> {{ incident_title }}</div>
+    <div class="info-line"><strong>N° de dossier :</strong> {{ incident_number }}</div>
     <div class="info-line"><strong>Date :</strong> {{ incident_date }}</div>
     {% if location %}
     <div class="info-line"><strong>Lieu :</strong> {{ location }}</div>
     {% endif %}
-    <div class="info-line"><strong>Statut :</strong> <span class="badge badge-warning" style="display: inline-block; padding: 2px 10px; margin: 2px 0; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; line-height: 1.4; vertical-align: middle; background-color: #FEF3C7; color: #92400E; border: 1px solid #F59E0B;">En attente de visa</span></div>
+    <div class="info-line"><strong>Statut :</strong> <span class="badge badge-warning">En attente de visa</span></div>
 </div>
 
 <a class="button" href="{{ signature_link }}">Consulter et Signer</a>
 
 <p class="text-muted">
     Ce lien sécurisé est valable pendant 48 heures.<br>
-    Dès signature des deux parties, l'exemplaire officiel scellé vous sera automatiquement transmis.
+    Dès signature des parties, l'exemplaire officiel scellé vous sera automatiquement transmis.<br>
+    L'équipe Belle Vitesse reste à votre entière disposition.
 </p>
 {% endblock %}

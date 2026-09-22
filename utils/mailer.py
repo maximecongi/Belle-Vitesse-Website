@@ -126,14 +126,16 @@ class EmailService:
 
                 for att in attachments:
                     att_path = att if isinstance(att, str) else att.get("path")
-                    att_name = att.get("name") if isinstance(att, dict) else os.path.basename(att_path)
+                    att_name = att.get("name") if isinstance(
+                        att, dict) else os.path.basename(att_path)
                     if att_path and os.path.exists(att_path):
                         with open(att_path, "rb") as f:
                             part = MIMEApplication(f.read(), Name=att_name)
                         part["Content-Disposition"] = f'attachment; filename="{att_name}"'
                         msg.attach(part)
                     else:
-                        current_app.logger.error(f"❌ Attachment not found at {att_path}")
+                        current_app.logger.error(
+                            f"❌ Attachment not found at {att_path}")
             else:
                 msg = MIMEMultipart("alternative")
                 if text_content:
@@ -234,7 +236,8 @@ def send_subscription_email(to_email):
             base_url = "https://bellevitesse.com"
 
         unsubscribe_url = f"{base_url}/unsubscribe/{token}"
-        current_app.logger.info(f"🔗 Unsubscribe URL générée: {unsubscribe_url}")
+        current_app.logger.info(
+            f"🔗 Unsubscribe URL générée: {unsubscribe_url}")
 
         text_content = (
             f"Welcome to Belle Vitesse! Thank you for subscribing to our newsletter. "
@@ -370,6 +373,7 @@ def _send_waiver_invitation_email(
     project_name: str,
     signature_link: str,
     is_reminder: bool = False,
+    production_name: str = None,
 ):
     """
     Fonction unifiée interne pour l'envoi d'une invitation ou d'une relance
@@ -409,6 +413,7 @@ def _send_waiver_invitation_email(
         "pilot_name": recipient_name,
         "prod_contact_name": recipient_name,
         "project_name": project_name,
+        "production_name": production_name,
         "signature_link": signature_link,
         "is_reminder": is_reminder,
     }
@@ -423,7 +428,7 @@ def _send_waiver_invitation_email(
     )
 
 
-def send_waiver_invitation_email(to_email, pilot_name, project_name, signature_link, is_reminder=False):
+def send_waiver_invitation_email(to_email, pilot_name, project_name, signature_link, is_reminder=False, production_name=None):
     """Envoie une invitation (ou un rappel de relance) à un pilote pour signer sa décharge."""
     return _send_waiver_invitation_email(
         waiver_type="pilot",
@@ -432,10 +437,11 @@ def send_waiver_invitation_email(to_email, pilot_name, project_name, signature_l
         project_name=project_name,
         signature_link=signature_link,
         is_reminder=is_reminder,
+        production_name=production_name,
     )
 
 
-def send_production_waiver_invitation_email(to_email, prod_contact_name, project_name, signature_link, is_reminder=False):
+def send_production_waiver_invitation_email(to_email, prod_contact_name, project_name, signature_link, is_reminder=False, production_name=None):
     """Envoie une invitation (ou un rappel de relance) à un contact de production pour signer sa décharge."""
     return _send_waiver_invitation_email(
         waiver_type="production",
@@ -444,22 +450,34 @@ def send_production_waiver_invitation_email(to_email, prod_contact_name, project
         project_name=project_name,
         signature_link=signature_link,
         is_reminder=is_reminder,
+        production_name=production_name,
     )
 
 
-def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path):
+def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path, production_name=None, waiver_type=None):
     """Envoie un email avec le PDF de décharge signé en pièce jointe."""
     admin_mail = os.getenv("SUPER_ADMIN_MAIL", "contact@bellevitesse.com")
-    current_app.logger.info(f"🚀 Sending signed waiver PDF to {to_email} and {admin_mail}")
+    current_app.logger.info(
+        f"🚀 Sending signed waiver PDF to {to_email} and {admin_mail}")
     text_content = (
         f"Bonjour {recipient_name},\n\nVeuillez trouver ci-joint la décharge signée "
         f"pour le projet : {project_name}.\n\nBelle journée,\nL'équipe Belle Vitesse."
     )
+    is_prod = waiver_type in ("production", "prod")
+    type_title = "Production" if is_prod else ("Pilote" if waiver_type == "pilot" else None)
+    context = {
+        "recipient_name": recipient_name,
+        "display_name": recipient_name,
+        "project_name": project_name,
+        "production_name": production_name,
+        "waiver_type": waiver_type,
+        "type_title": type_title,
+    }
     return EmailService.send_templated_email(
         to_email=to_email,
         subject=f"Décharge signée - {project_name}",
         template_name="emails/waiver_signed_confirmation.html",
-        context={"recipient_name": recipient_name, "project_name": project_name},
+        context=context,
         text_content=text_content,
         sender_type="contact",
         cc=admin_mail,
@@ -474,7 +492,8 @@ def send_calendar_invitation_email(to_email, user_name, feed_url):
     Inclut un QR code pour faciliter l'abonnement sur mobile.
     """
     try:
-        current_app.logger.info(f"🚀 Sending calendar invitation email to {to_email}")
+        current_app.logger.info(
+            f"🚀 Sending calendar invitation email to {to_email}")
 
         # Générer l'URL webcal pour l'abonnement direct depuis mobile / Mac
         if feed_url.startswith("https://"):
@@ -503,36 +522,46 @@ def send_calendar_invitation_email(to_email, user_name, feed_url):
             f"directement sur votre téléphone ou ordinateur.\n\nLien d'abonnement : {feed_url}\n\nL'équipe Belle Vitesse."
         )
 
+        context = {
+            "user_name": user_name,
+            "feed_url": feed_url,
+            "webcal_url": webcal_url,
+            "qrcode_base64": qrcode_base64,
+        }
+
         return EmailService.send_templated_email(
             to_email=to_email,
             subject="Votre calendrier Belle Vitesse",
             template_name="emails/calendar_invitation.html",
-            context={
-                "user_name": user_name,
-                "feed_url": feed_url,
-                "webcal_url": webcal_url,
-                "qrcode_base64": qrcode_base64,
-            },
+            context=context,
             text_content=text_content,
-            sender_type="admin",
+            sender_type="contact",
         )
-
     except Exception as e:
         current_app.logger.error(
-            f"❌ Erreur sending calendar invitation email to {to_email}: {e}"
-        )
+            f"❌ Failed to send calendar invitation email: {e}")
         return False
 
 
 def send_incident_signature_request_email(incident, to_email, signing_url):
-    """Envoie un email officiel à la Production l'invitant à viser et signer le constat d'incident."""
+    """Envoie un email demandant la signature contradictoire d'un constat d'incident."""
     current_app.logger.info(
-        f"🚀 Envoi de l'invitation à signer l'incident {incident.incident_number} vers {to_email}"
+        f"🚀 Envoi de la demande de visa incident {incident.incident_number} à {to_email}"
     )
 
     project_name = incident.project.name if incident.project else "Tournage"
+    production_name = incident.project.production.name if (
+        incident.project and incident.project.production) else None
+    contact_prod = incident.project.production_contact if incident.project else None
+    recipient_name = f"{contact_prod.first_name} {contact_prod.last_name}".strip(
+    ) if contact_prod else None
     incident_num = incident.incident_number
     incident_title = incident.title
+    inc_date = (
+        incident.incident_date.strftime("%d/%m/%Y")
+        if hasattr(incident.incident_date, "strftime")
+        else str(incident.incident_date or "")
+    )
 
     text_content = (
         f"Bonjour,\n\n"
@@ -551,9 +580,11 @@ def send_incident_signature_request_email(incident, to_email, signing_url):
         "incident": incident,
         "incident_number": incident_num,
         "incident_title": incident_title,
-        "incident_date": incident.incident_date,
+        "incident_date": inc_date,
         "location": incident.location,
         "project_name": project_name,
+        "production_name": production_name,
+        "recipient_name": recipient_name,
         "signature_link": signing_url,
     }
 
@@ -575,7 +606,17 @@ def send_incident_signed_confirmation_email(incident, to_email, pdf_path):
     )
 
     project_name = incident.project.name if incident.project else "Tournage"
+    production_name = incident.project.production.name if (
+        incident.project and incident.project.production) else None
+    contact_prod = incident.project.production_contact if incident.project else None
+    recipient_name = f"{contact_prod.first_name} {contact_prod.last_name}".strip(
+    ) if contact_prod else None
     incident_num = incident.incident_number
+    inc_date = (
+        incident.incident_date.strftime("%d/%m/%Y")
+        if hasattr(incident.incident_date, "strftime")
+        else str(incident.incident_date or "")
+    )
 
     text_content = (
         f"Bonjour,\n\n"
@@ -590,7 +631,11 @@ def send_incident_signed_confirmation_email(incident, to_email, pdf_path):
         "incident": incident,
         "incident_number": incident_num,
         "incident_title": incident.title,
+        "incident_date": inc_date,
+        "location": incident.location,
         "project_name": project_name,
+        "production_name": production_name,
+        "recipient_name": recipient_name,
     }
 
     return EmailService.send_templated_email(

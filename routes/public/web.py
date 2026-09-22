@@ -356,13 +356,17 @@ def init_web_routes(app):
 
     # ── Endpoint Temporaire : Prévisualisation des e-mails ─────────
 
+    @app.route("/badges-preview")
     @app.route("/temp-email-preview")
     @app.route("/temp-email-preview/<mail_type>")
-    def temp_email_preview(mail_type="waiver"):
+    def temp_email_preview(mail_type=None):
         """Endpoint temporaire pour visualiser le HTML/CSS des e-mails transactionnels (actif uniquement en dev)."""
         # Sécurité : strictement indisponible en production (erreur 404)
         if os.getenv("FLASK_ENV") not in ["development", "testing"] or current_app.config.get("FLASK_ENV") not in ["development", "testing"]:
             abort(404)
+
+        if mail_type is None:
+            mail_type = "badges" if request.path == "/badges-preview" else "waiver"
 
         from datetime import datetime, timezone
         from utils.context_processors import get_company_context
@@ -372,13 +376,19 @@ def init_web_routes(app):
 
         m_type = request.args.get("type", mail_type).lower()
 
-        if m_type in ("waiver", "decharge", "waiver_signed"):
+        if m_type in ("all-badges", "all_badges", "badges", "showcase"):
+            template_name = "emails/showcase_badges.html"
+        elif m_type in ("waiver", "decharge", "waiver_signed"):
             template_name = "emails/waiver_signed_confirmation.html"
             ctx.update({
                 "recipient_name": "Maxime Congi",
+                "display_name": "Maxime Congi",
                 "project_name": "Tournage Porsche 911 GT3 RS",
+                "production_name": "Studio Transatlantique",
+                "waiver_type": "pilot",
+                "type_title": "Pilote",
             })
-        elif m_type in ("badges", "cron", "cron_report"):
+        elif m_type in ("cron", "cron_report"):
             template_name = "emails/cron_report.html"
             ctx.update({
                 "global_status": "OK",
@@ -401,13 +411,18 @@ def init_web_routes(app):
             ctx.update({
                 "recipient_name": "Maxime Congi",
                 "project_name": "Tournage Nocturne Paris",
+                "production_name": "Iconoclast Films",
                 "incident_number": "INC-2026-0008",
+                "incident_date": "22/09/2026",
+                "location": "Pont de Bir-Hakeim, Paris",
                 "incident_title": "Frottement splitter carbone et fixation camera-car",
             })
         elif m_type in ("incident_invitation", "incident_visa"):
             template_name = "emails/incident_invitation.html"
             ctx.update({
+                "recipient_name": "Maxime Congi",
                 "project_name": "Tournage Nocturne Paris",
+                "production_name": "Iconoclast Films",
                 "incident_number": "INC-2026-0008",
                 "incident_title": "Frottement splitter carbone et fixation camera-car",
                 "incident_date": "22/09/2026",
@@ -420,6 +435,7 @@ def init_web_routes(app):
                 "waiver_type": "pilot",
                 "recipient_name": "Maxime Congi",
                 "project_name": "Tournage Porsche 911 GT3 RS",
+                "production_name": "Studio Transatlantique",
                 "signature_link": "https://bellevitesse.com/waivers/pilot/demo_token",
                 "is_reminder": False,
             })

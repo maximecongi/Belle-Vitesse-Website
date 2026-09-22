@@ -463,13 +463,21 @@ def _send_waiver_confirmation_email(mode, waiver, pdf_path):
                 recipient_email = waiver.project.production_contact.mail
             recipient_name = waiver.production_representative
 
+        prod_name = None
+        if waiver.project and waiver.project.production:
+            prod_name = waiver.project.production.name
+        elif getattr(waiver, "production_name", None):
+            prod_name = waiver.production_name
+
         if recipient_email:
             send_waiver_signed_email(
                 recipient_email,
                 recipient_name,
                 waiver.project_name or (
                     waiver.project.name if waiver.project else "—"),
-                pdf_path
+                pdf_path,
+                production_name=prod_name,
+                waiver_type=mode,
             )
     except Exception as e:
         logger.error(f"❌ Erreur e-mail ({mode} {waiver.id}) : {e}")

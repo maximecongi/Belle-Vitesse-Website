@@ -340,6 +340,7 @@ def send_production_waiver(waiver_id, base_url=None):
         project_name=waiver.project.name,
         signature_link=signature_link,
         is_reminder=is_reminder,
+        production_name=(waiver.project.production.name if waiver.project and waiver.project.production else getattr(waiver, "production_name", None)),
     )
 
     if not success:
@@ -641,6 +642,7 @@ def send_pilot_waiver(waiver_id, base_url=None):
         project_name=waiver.project.name,
         signature_link=signature_link,
         is_reminder=is_reminder,
+        production_name=(waiver.project.production.name if waiver.project and waiver.project.production else None),
     )
 
     if not success:
@@ -773,6 +775,7 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
                 project_name=p.name,
                 signature_link=sig_url,
                 is_reminder=True,
+                production_name=(p.production.name if p.production else getattr(pw, "production_name", None)),
             )
 
             if sent:
@@ -837,6 +840,7 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
                 project_name=p.name,
                 signature_link=sig_url,
                 is_reminder=True,
+                production_name=(p.production.name if p.production else None),
             )
 
             if sent:

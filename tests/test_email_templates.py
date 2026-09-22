@@ -40,13 +40,16 @@ class EmailTemplatesTest(unittest.TestCase):
                 waiver_type="pilot",
                 recipient_name="Luc Pilote",
                 project_name="Tournage Pub Vitesse",
+                production_name="Studio Test Prod",
                 signature_link="https://bellevitesse.com/waivers/pilot/token123",
                 is_reminder=False,
                 now_year=2026,
             )
             self.assertIn("Signature Décharge Pilote", html)
             self.assertIn("Tournage Pub Vitesse", html)
-            self.assertIn("project-pill", html)
+            self.assertIn("Studio Test Prod", html)
+            self.assertIn("info-card info-card-waiver", html)
+            self.assertNotIn("project-pill", html)
             self.assertIn(
                 "https://bellevitesse.com/waivers/pilot/token123", html)
             self.assertNotIn("Signature en attente", html)
@@ -58,6 +61,7 @@ class EmailTemplatesTest(unittest.TestCase):
                 waiver_type="production",
                 recipient_name="Jean Prod",
                 project_name="Film Long Métrage",
+                production_name="Studio Grand Angle",
                 signature_link="https://bellevitesse.com/waivers/prod/token456",
                 is_reminder=True,
                 now_year=2026,
@@ -66,25 +70,48 @@ class EmailTemplatesTest(unittest.TestCase):
             self.assertIn("alert-box alert-box-warning", html)
             self.assertIn("Signature en attente", html)
             self.assertIn("Film Long Métrage", html)
+            self.assertIn("Studio Grand Angle", html)
+            self.assertNotIn("project-pill", html)
 
     def test_waiver_signed_confirmation_rendering(self):
         with self.app.app_context():
+            # Test 1 : Sans waiver_type explicite
             html = render_template(
                 "emails/waiver_signed_confirmation.html",
                 recipient_name="Jean Dupont",
                 project_name="Spot Commercial",
+                production_name="Studio Test Prod",
                 now_year=2026,
             )
             self.assertIn("Décharge Signée.", html)
             self.assertIn("info-card info-card-waiver", html)
             self.assertIn("Spot Commercial", html)
+            self.assertIn("Studio Test Prod", html)
+            self.assertIn("Jean Dupont", html)
             self.assertIn("badge-success", html)
+            self.assertNotIn("project-pill", html)
+            self.assertNotIn("<strong>Type de décharge :</strong> </div>", html)
+
+            # Test 2 : Avec waiver_type='production'
+            html_prod = render_template(
+                "emails/waiver_signed_confirmation.html",
+                recipient_name="Claire Martin",
+                project_name="Spot Commercial",
+                production_name="Studio Test Prod",
+                waiver_type="production",
+                now_year=2026,
+            )
+            self.assertIn("Claire Martin", html_prod)
+            self.assertIn("Type de décharge :", html_prod)
+            self.assertIn("Production", html_prod)
 
     def test_incident_invitation_rendering(self):
         with self.app.app_context():
             html = render_template(
                 "emails/incident_invitation.html",
                 project_name="Clip Rap Paris",
+                production_name="Studio Test Prod",
+                recipient_name="Maxime Test",
                 incident_number="INC-2026-0042",
                 incident_title="Impact carrosserie aile arrière",
                 incident_date="22/09/2026",
@@ -94,24 +121,37 @@ class EmailTemplatesTest(unittest.TestCase):
             )
             self.assertIn("Signature Constat d'Incident.", html)
             self.assertIn("info-card info-card-incident", html)
+            self.assertIn("Clip Rap Paris", html)
+            self.assertIn("Studio Test Prod", html)
             self.assertIn("INC-2026-0042", html)
             self.assertIn("Impact carrosserie aile arrière", html)
+            self.assertIn("22/09/2026", html)
             self.assertIn("Circuit Jean Behra", html)
             self.assertIn("badge-warning", html)
+            self.assertNotIn("project-pill", html)
 
     def test_incident_signed_confirmation_rendering(self):
         with self.app.app_context():
             html = render_template(
                 "emails/incident_signed_confirmation.html",
                 project_name="Clip Rap Paris",
+                production_name="Studio Test Prod",
+                recipient_name="Maxime Test",
                 incident_number="INC-2026-0042",
                 incident_title="Impact carrosserie aile arrière",
+                incident_date="22/09/2026",
+                location="Circuit Jean Behra",
                 now_year=2026,
             )
             self.assertIn("Constat d'Incident Scellé.", html)
             self.assertIn("info-card info-card-incident", html)
+            self.assertIn("Clip Rap Paris", html)
+            self.assertIn("Studio Test Prod", html)
             self.assertIn("INC-2026-0042", html)
+            self.assertIn("22/09/2026", html)
+            self.assertIn("Circuit Jean Behra", html)
             self.assertIn("badge-success", html)
+            self.assertNotIn("project-pill", html)
 
     def test_calendar_invitation_rendering(self):
         with self.app.app_context():

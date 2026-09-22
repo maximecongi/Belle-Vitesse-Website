@@ -1,0 +1,134 @@
+{% extends "emails/base_transactional.html" %}
+
+{% block title %}Nuancier Complet des Badges — Belle Vitesse{% endblock %}
+
+{% block content %}
+<div class="status-banner status-ok">
+    Nuancier Complet — Design System Badges
+</div>
+
+<p>
+    Voici l'ensemble des badges et pastilles (pills) configurés pour les e-mails transactionnels de Belle Vitesse,
+    alignés sur le Design System de l'ERP.
+</p>
+
+<!-- Raccourcis de navigation pour le dev -->
+<div class="info-card">
+    <div class="info-line"><strong>Navigation Prévisualisation :</strong></div>
+    <div style="margin-top: 10px; font-size: 13px; line-height: 1.8;">
+        <a href="/temp-email-preview/all-badges" style="color: #FFC845; text-decoration: underline; margin-right: 12px;">Tous les badges</a>
+        <a href="/temp-email-preview/waiver" style="color: #A1A1A1; text-decoration: underline; margin-right: 12px;">Décharge signée</a>
+        <a href="/temp-email-preview/waiver_invitation" style="color: #A1A1A1; text-decoration: underline; margin-right: 12px;">Invitation décharge</a>
+        <a href="/temp-email-preview/incident" style="color: #A1A1A1; text-decoration: underline; margin-right: 12px;">Incident scellé</a>
+        <a href="/temp-email-preview/incident_invitation" style="color: #A1A1A1; text-decoration: underline; margin-right: 12px;">Invitation incident</a>
+        <a href="/temp-email-preview/cron" style="color: #A1A1A1; text-decoration: underline;">Rapport Crons</a>
+    </div>
+</div>
+
+<!-- 1. STATUTS TRANSVERSAUX -->
+<h3 style="color: #FFFFFF; font-size: 16px; margin: 30px 0 10px; text-transform: uppercase; letter-spacing: 0.5px; text-align: left;">
+    1. Statuts Transversaux
+</h3>
+
+<table class="email-table">
+    <thead>
+        <tr>
+            <th>Statut</th>
+            <th>Classe CSS</th>
+            <th>Rendu .badge</th>
+            <th>Rendu .badge-pill</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Succès / Validé / OK</strong></td>
+            <td><code>.badge-success</code></td>
+            <td><span class="badge badge-success">OK / Validé</span></td>
+            <td><span class="badge-pill badge-pill-success">Signé</span></td>
+        </tr>
+        <tr>
+            <td><strong>Attention / Attente</strong></td>
+            <td><code>.badge-warning</code></td>
+            <td><span class="badge badge-warning">En attente</span></td>
+            <td><span class="badge-pill badge-pill-warning">En retard</span></td>
+        </tr>
+        <tr>
+            <td><strong>Danger / Échec / Critique</strong></td>
+            <td><code>.badge-danger</code>, <code>.badge-failed</code></td>
+            <td><span class="badge badge-danger">Échec</span></td>
+            <td><span class="badge-pill badge-pill-danger">Critique</span></td>
+        </tr>
+        <tr>
+            <td><strong>Information / À venir</strong></td>
+            <td><code>.badge-info</code></td>
+            <td><span class="badge badge-info">À venir</span></td>
+            <td><span class="badge-pill badge-pill-info">Information</span></td>
+        </tr>
+        <tr>
+            <td><strong>Neutre / Manquant / Archivé</strong></td>
+            <td><code>.badge-neutral</code>, <code>.badge-missing</code></td>
+            <td><span class="badge badge-neutral">Archivé</span></td>
+            <td><span class="badge-pill badge-pill-neutral">Manquant</span></td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- 2. ENTITÉS MÉTIER BELLE VITESSE -->
+<h3 style="color: #FFFFFF; font-size: 16px; margin: 35px 0 10px; text-transform: uppercase; letter-spacing: 0.5px; text-align: left;">
+    2. Entités Métier (Design System ERP)
+</h3>
+
+<table class="email-table">
+    <thead>
+        <tr>
+            <th>Entité Métier</th>
+            <th>Classe CSS</th>
+            <th>Rendu .badge</th>
+            <th>Rendu .badge-pill</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Check-out (Départs)</strong><br><span style="font-size: 11px; color: #888888;">Vert Émeraude</span></td>
+            <td><code>.badge-checkout</code></td>
+            <td><span class="badge badge-checkout">Départ validé</span></td>
+            <td><span class="badge-pill badge-pill-checkout">Matériel expédié</span></td>
+        </tr>
+        <tr>
+            <td><strong>Check-in (Retours)</strong><br><span style="font-size: 11px; color: #888888;">Bleu Océan</span></td>
+            <td><code>.badge-checkin</code></td>
+            <td><span class="badge badge-checkin">Retour conforme</span></td>
+            <td><span class="badge-pill badge-pill-checkin">Clôturé</span></td>
+        </tr>
+        <tr>
+            <td><strong>Tournages / Projets</strong><br><span style="font-size: 11px; color: #888888;">Ambre Chaud</span></td>
+            <td><code>.badge-project</code></td>
+            <td><span class="badge badge-project">Tournage en cours</span></td>
+            <td><span class="badge-pill badge-pill-project">Projet actif</span></td>
+        </tr>
+        <tr>
+            <td><strong>Incidents / Dommages</strong><br><span style="font-size: 11px; color: #888888;">Rouge Carmin</span></td>
+            <td><code>.badge-incident</code></td>
+            <td><span class="badge badge-incident">Incident scellé</span></td>
+            <td><span class="badge-pill badge-pill-danger">Dommage déclaré</span></td>
+        </tr>
+        <tr>
+            <td><strong>Décharges (Waivers)</strong><br><span style="font-size: 11px; color: #888888;">Violet / Indigo</span></td>
+            <td><code>.badge-waiver</code></td>
+            <td><span class="badge badge-waiver">Visa Pilote</span></td>
+            <td><span class="badge-pill badge-pill-waiver">Visa Production</span></td>
+        </tr>
+    </tbody>
+</table>
+
+<!-- 3. SPÉCIFICATIONS TECHNIQUES DU DESIGN SYSTEM -->
+<div class="info-card" style="margin-top: 35px;">
+    <div class="info-line"><strong>Palette Sémantique Officielle :</strong></div>
+    <div class="info-line">• <strong>Check-in</strong> : Fond <code>#DBEAFE</code>, Texte <code>#1E40AF</code>, Bordure <code>#3B82F6</code></div>
+    <div class="info-line">• <strong>Check-out / Succès</strong> : Fond <code>#D1FAE5</code>, Texte <code>#065F46</code>, Bordure <code>#10B981</code></div>
+    <div class="info-line">• <strong>Tournages / Projets / Warning</strong> : Fond <code>#FEF3C7</code>, Texte <code>#92400E</code>, Bordure <code>#F59E0B</code></div>
+    <div class="info-line">• <strong>Incidents / Danger</strong> : Fond <code>#FEE2E2</code>, Texte <code>#991B1B</code>, Bordure <code>#EF4444</code></div>
+    <div class="info-line">• <strong>Décharges (Waivers)</strong> : Fond <code>#EDE9FE</code>, Texte <code>#5B21B6</code>, Bordure <code>#8B5CF6</code></div>
+    <div class="info-line">• <strong>Neutre / Manquant</strong> : Fond <code>#F1F5F9</code>, Texte <code>#475569</code>, Bordure <code>#94A3B8</code></div>
+</div>
+{% endblock %}

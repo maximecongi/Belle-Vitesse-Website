@@ -322,9 +322,17 @@ class RouteSmokeTest(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertIn("Décharge Signée", resp.get_data(as_text=True))
 
-        resp_badges = self.client.get("/temp-email-preview/badges")
+        resp_cron = self.client.get("/temp-email-preview/cron")
+        self.assertEqual(resp_cron.status_code, 200)
+        self.assertIn("Statut Quotidien", resp_cron.get_data(as_text=True))
+
+        resp_badges = self.client.get("/badges-preview")
         self.assertEqual(resp_badges.status_code, 200)
-        self.assertIn("Statut Quotidien", resp_badges.get_data(as_text=True))
+        self.assertIn("Nuancier Complet", resp_badges.get_data(as_text=True))
+
+        resp_all_badges = self.client.get("/temp-email-preview/all-badges")
+        self.assertEqual(resp_all_badges.status_code, 200)
+        self.assertIn("Nuancier Complet", resp_all_badges.get_data(as_text=True))
 
         # 2. Bloqué (404) en production
         prev_env = os.environ.get("FLASK_ENV")
@@ -332,6 +340,9 @@ class RouteSmokeTest(unittest.TestCase):
             os.environ["FLASK_ENV"] = "production"
             resp_prod = self.client.get("/temp-email-preview/waiver")
             self.assertEqual(resp_prod.status_code, 404)
+
+            resp_prod_badges = self.client.get("/badges-preview")
+            self.assertEqual(resp_prod_badges.status_code, 404)
         finally:
             if prev_env is not None:
                 os.environ["FLASK_ENV"] = prev_env
