@@ -1,3 +1,4 @@
+{% import "public/verification_macros.html" as vmacro %}
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -8,10 +9,14 @@
     <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/static/imgs/favicons/favicon.svg" />
     <link rel="shortcut icon" href="/static/imgs/favicons/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/imgs/favicons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Belle Vitesse" />
+    <link rel="manifest" href="/static/imgs/favicons/site.webmanifest" />
 
     <title>Vérification Décharge Production — Belle Vitesse</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/checkout.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/verification.css') }}">
 </head>
 
 <body>
@@ -31,46 +36,10 @@
         </header>
 
         <!-- ── Badge sceau de données ── -->
-        <section class="checkout-section checkout-text-center">
-            <div style="margin-bottom: 2rem;">
-                {% if seal_valid %}
-                <span class="checkout-badge checkout-badge--ok"
-                    style="font-size: 1rem; padding: 10px 24px; background-color: var(--green-1); color: white;">
-                    ✅ Données certifiées & intactes
-                </span>
-                <p style="font-size: 0.75rem; color: var(--grey-2); margin-top: 0.75rem; text-align: center;">
-                    Le sceau cryptographique correspond. Les données n'ont pas été modifiées depuis la signature.
-                </p>
-                {% else %}
-                <span class="checkout-badge checkout-badge--critical" style="font-size: 1rem; padding: 10px 24px;">
-                    🚨 Sceau invalide — données altérées
-                </span>
-                <p
-                    style="font-size: 0.75rem; color: var(--grey-2); margin-top: 0.75rem; max-width: 420px; margin-left: auto; margin-right: auto; text-align: center;">
-                    Le sceau ne correspond pas à l'enregistrement.
-                </p>
-                {% endif %}
-            </div>
-        </section>
+        {{ vmacro.seal_banner(seal_valid, ok_label="Données Certifiées & Intactes", error_label="Sceau Invalide — Données Altérées", ok_hint="Le sceau cryptographique correspond. Les données n'ont pas été modifiées depuis la signature.", error_hint="Le sceau ne correspond pas à l'enregistrement. Les données peuvent avoir été modifiées après signature.") }}
 
-        <!-- ── Badge résultat vérification PDF ── -->
-        {% if pdf_valid is not none %}
-        <section class="checkout-section checkout-text-center">
-            <div style="margin-bottom: 1.5rem;">
-                {% if pdf_valid %}
-                <span class="checkout-badge checkout-badge--ok"
-                    style="font-size: 1rem; padding: 10px 24px; background-color: var(--green-1); color: white;">
-                    ✅ Fichier PDF authentique
-                </span>
-                {% else %}
-                <span class="checkout-badge checkout-badge--critical"
-                    style="font-size: 1rem; padding: 10px 24px; text-align: center;">
-                    🚨 Fichier PDF non authentique
-                </span>
-                {% endif %}
-            </div>
-        </section>
-        {% endif %}
+        <!-- ── Badge résultat vérification PDF (après upload) ── -->
+        {{ vmacro.pdf_verification_result(pdf_valid, pdf_error) }}
 
         <!-- ── Données scellées ── -->
         <section class="checkout-section">
@@ -78,165 +47,56 @@
             <div class="checkout-info-grid">
                 <div class="checkout-info-item">
                     <span class="checkout-info-label">Production</span>
-                    <span class="checkout-info-value">{{ data.production_name or '—' }}</span>
+                    <span class="checkout-info-value">{{ data.production_name or data.production or data._seal_production_name or (waiver.production_name if waiver else '—') }}</span>
                 </div>
                 <div class="checkout-info-item">
                     <span class="checkout-info-label">Représentant</span>
-                    <span class="checkout-info-value">{{ data.representative or '—' }}</span>
+                    <span class="checkout-info-value">{{ data.representative or data._seal_representative or (waiver.production_representative if waiver else '—') }}</span>
                 </div>
                 <div class="checkout-info-item">
                     <span class="checkout-info-label">Projet</span>
-                    <span class="checkout-info-value">{{ data.project_name or '—' }}</span>
+                    <span class="checkout-info-value">{{ data.project_name or data.project or project_name or (waiver.project_name if waiver else '—') }}</span>
                 </div>
                 <div class="checkout-info-item">
                     <span class="checkout-info-label">Signé le</span>
                     <span class="checkout-info-value">
                         {% if data.signed_at and data.signed_at.strftime %}
                         {{ data.signed_at.strftime('%d/%m/%Y %H:%M') }}
+                        {% elif waiver and waiver.signed_at %}
+                        {{ waiver.signed_at.strftime('%d/%m/%Y %H:%M') }}
                         {% else %}
                         {{ data.signed_at or '—' }}
                         {% endif %}
                     </span>
                 </div>
-                <div class="checkout-info-item" style="grid-column: 1 / -1;">
+                {% if data.location_of_use or (waiver and waiver.location_of_use) %}
+                <div class="checkout-info-item verify-info-item--full">
                     <span class="checkout-info-label">Lieu d'utilisation</span>
-                    <span class="checkout-info-value">{{ data.location_of_use or '—' }}</span>
+                    <span class="checkout-info-value">{{ data.location_of_use or waiver.location_of_use }}</span>
                 </div>
+                {% endif %}
             </div>
         </section>
 
         <!-- ── Empreinte numérique ── -->
-        <section class="checkout-section">
-            <h2 class="checkout-section-title dot-before">Sécurité Numérique</h2>
-            <div style="background: var(--white-3); padding: 1.5rem; border-radius: 4px;">
-                <p style="font-size: 0.75rem; color: var(--white-4); margin-bottom: 0.5rem; text-transform: uppercase;">
-                    Sceau HMAC-SHA256 (Production)
-                </p>
-                <code
-                    style="display: block; word-break: break-all; font-size: 0.75rem; color: var(--grey-2); font-family: monospace;">
-                    {{ document_hash }}
-                </code>
-            </div>
-        </section>
+        {{ vmacro.crypto_fingerprints(document_hash, signed_doc.pdf_file_hash, title="Sécurité Numérique (Production)") }}
 
         <!-- ═══════════ UPLOAD VÉRIFICATION PDF ═══════════ -->
-        {% if has_pdf_hash %}
-        <section class="checkout-section" style="margin-top: 3rem;">
-            <h2 class="checkout-section-title dot-before">Vérifier le fichier PDF</h2>
-            <p style="font-size: 0.85rem; color: var(--grey-2); margin-bottom: 1.5rem; line-height: 1.6;">
-                Uploadez le PDF que vous souhaitez authentifier. Son empreinte SHA-256 sera comparée
-                à celle enregistrée au moment de la signature. Si le fichier a été modifié,
-                même d'un seul caractère, la vérification échouera.
-            </p>
-
-            <form method="POST" enctype="multipart/form-data">
-                <label for="pdf-input" style="cursor: pointer; display: block;">
-                    <div id="upload-area" style="
-                        border: 2px dashed var(--white-4);
-                        border-radius: 4px;
-                        padding: 2.5rem 1.5rem;
-                        text-align: center;
-                        transition: border-color 0.2s, background 0.2s;
-                        margin-bottom: 1.25rem;
-                    ">
-                        <p style="font-size: 1.5rem; margin-bottom: 0.5rem;">📎</p>
-                        <p style="font-size: 0.9rem; color: var(--grey-2);">
-                            <strong style="color: var(--black-1);">Cliquez pour sélectionner</strong>
-                            ou glissez le PDF ici
-                        </p>
-                        <p id="file-name"
-                            style="display: none; margin-top: 0.5rem; font-size: 0.85rem; color: var(--green-1); font-weight: 500;">
-                        </p>
-                    </div>
-                </label>
-
-                <input type="file" id="pdf-input" name="pdf" accept=".pdf" style="display: none;">
-
-                <button type="submit" id="submit-btn" class="checkout-btn checkout-btn--primary"
-                    style="width: 100%; border: none; cursor: pointer; border-radius: 4px; opacity: 0.35;" disabled>
-                    Vérifier l'authenticité du PDF
-                </button>
-            </form>
-
-            <p style="font-size: 0.75rem; color: var(--white-4); text-align: center; margin-top: 1rem;">
-                Le fichier est analysé sur le serveur et n'est pas conservé.
-            </p>
-        </section>
-
-        <script>
-            const pdfInput = document.getElementById('pdf-input');
-            const fileNameDisp = document.getElementById('file-name');
-            const submitBtn = document.getElementById('submit-btn');
-            const uploadArea = document.getElementById('upload-area');
-
-            pdfInput.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) {
-                    const name = e.target.files[0].name;
-                    fileNameDisp.textContent = "Fichier sélectionné : " + name;
-                    fileNameDisp.style.display = 'block';
-                    submitBtn.disabled = false;
-                    submitBtn.style.opacity = '1';
-                    uploadArea.style.borderColor = 'var(--green-1)';
-                    uploadArea.style.background = 'rgba(46, 204, 113, 0.05)';
-                }
-            });
-
-            // Drag & Drop
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                uploadArea.addEventListener(eventName, preventDefaults, false);
-            });
-
-            function preventDefaults(e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-
-            ['dragenter', 'dragover'].forEach(eventName => {
-                uploadArea.addEventListener(eventName, highlight, false);
-            });
-
-            ['dragleave', 'drop'].forEach(eventName => {
-                uploadArea.addEventListener(eventName, unhighlight, false);
-            });
-
-            function highlight(e) { uploadArea.style.borderColor = 'var(--black-1)'; }
-            function unhighlight(e) {
-                if (pdfInput.files.length > 0) {
-                    uploadArea.style.borderColor = 'var(--green-1)';
-                } else {
-                    uploadArea.style.borderColor = 'var(--white-4)';
-                }
-            }
-
-            uploadArea.addEventListener('drop', handleDrop, false);
-
-            function handleDrop(e) {
-                let dt = e.dataTransfer;
-                let files = dt.files;
-                pdfInput.files = files;
-                pdfInput.dispatchEvent(new Event('change'));
-            }
-        </script>
-
-        {% else %}
-        <section class="checkout-section" style="margin-top: 2rem;">
-            <div style="background: var(--white-3); padding: 1.25rem 1.5rem; border-radius: 4px;">
-                <p style="font-size: 0.8rem; color: var(--grey-2); line-height: 1.6;">
-                    ℹ️ Ce document a été signé avant l'introduction de la vérification par empreinte PDF.
-                    Seul le sceau de données est disponible.
-                </p>
-            </div>
-        </section>
-        {% endif %}
-
+        {{ vmacro.pdf_upload_verifier(has_pdf_hash, old_notice="Ce document a été signé avant l'introduction de la vérification par empreinte PDF. Seul le sceau de données est disponible.") }}
 
         <!-- ═══════════ FOOTER ═══════════ -->
-        <footer class="checkout-footer" style="margin-top: 5rem;">
-            <p><strong>{{company_name}}</strong> — {{company_address}}</p>
+        <footer class="checkout-footer verify-footer">
+            <p><strong>{{ company_name or 'Belle Vitesse SAS' }}</strong> — {{ company_address or '39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine' }}</p>
         </footer>
 
     </div>
 
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    </script>
 </body>
 
 </html>

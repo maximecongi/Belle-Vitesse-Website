@@ -240,6 +240,110 @@ class WaiversTest(unittest.TestCase):
             self.assertTrue(p_data["production_waiver"]["waiver_num"].startswith("BVDW") or p_data["production_waiver"]["waiver_num"].startswith("BVPW"))
             self.assertEqual(p_data["production_waiver"]["raw_status"], "to_send")
 
+    def test_verify_production_waiver_route(self):
+        """Vérifie l'accès à la route de vérification pour une décharge production scellée."""
+        with self.app.app_context():
+            from models import ProductionWaiverSignedDocument
+            from utils.document_utils import compute_hmac_seal
+
+            user, proj = self._create_mock_data()
+            create_production_waiver(proj.id)
+            prw = ProductionWaiver.query.filter_by(project_id=proj.id).first()
+            prw.status = "signed"
+            prw.production_name = "Studio Test"
+            prw.production_representative = "Jean Dupont"
+
+            seal_args = ["Studio Test", "Jean Dupont"]
+            sig_data = "data:image/png;base64,mock"
+            iso_signed = "2026-09-22T20:00:00"
+            h = compute_hmac_seal("WAIVER_PROD", prw.waiver_id, *seal_args, sig_data, iso_signed)
+
+            signed_doc = ProductionWaiverSignedDocument(
+                waiver_id=prw.waiver_id,
+                hash=h,
+                pdf_file_hash="mock-pdf-hash",
+                data_snapshot={
+                    "_seal_production_name": "Studio Test",
+                    "_seal_representative": "Jean Dupont",
+                    "production": "Studio Test",
+                    "project": "Test Project",
+                    "_seal_signed_at": iso_signed,
+                },
+                signature=sig_data,
+                pdf_url=f"/production-waiver/document/{prw.waiver_id}.pdf"
+            )
+            db.session.add(signed_doc)
+            db.session.commit()
+
+            # Test route standard QR code: /production-waiver/verify/<waiver_id>
+            resp = self.client.get(f"/production-waiver/verify/{prw.waiver_id}")
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("Données Certifiées &amp; Intactes".encode("utf-8"), resp.data)
+            self.assertIn(prw.waiver_id.encode("utf-8"), resp.data)
+
+            # Test route alias: /verify/production-waiver/<waiver_id>
+            resp2 = self.client.get(f"/verify/production-waiver/{prw.waiver_id}")
+            self.assertEqual(resp2.status_code, 200)
+
+            # Test ID inexistant
+            resp404 = self.client.get("/production-waiver/verify/BVPW-NONEXISTENT")
+            self.assertEqual(resp404.status_code, 404)
+
+    def test_verify_pilot_waiver_route(self):
+        """Vérifie l'accès à la route de vérification pour une décharge pilote scellée."""
+        with self.app.app_context():
+            from models import PilotWaiverSignedDocument
+            from utils.document_utils import compute_hmac_seal
+
+            user, proj = self._create_mock_data()
+            create_pilot_waiver(proj.id)
+            pw = PilotWaiver.query.filter_by(project_id=proj.id).first()
+            pw.status = "signed"
+            pw.pilot_first_name = "Pierre"
+            pw.pilot_last_name = "Martin"
+            pw.pilot_license_number = "12345ABC"
+
+            full_name = "Pierre Martin"
+            seal_args = [full_name, "12345ABC"]
+            sig_data = "data:image/png;base64,mock"
+            iso_signed = "2026-09-22T20:00:00"
+            h = compute_hmac_seal("WAIVER", pw.waiver_id, *seal_args, sig_data, iso_signed)
+
+            signed_doc = PilotWaiverSignedDocument(
+                waiver_id=pw.waiver_id,
+                hash=h,
+                pdf_file_hash="mock-pdf-hash",
+                data_snapshot={
+                    "_seal_pilot_name": full_name,
+                    "_seal_license": "12345ABC",
+                    "production": "Test Prod",
+                    "project": "Test Project",
+                    "_seal_signed_at": iso_signed,
+                },
+                signature=sig_data,
+                pdf_url=f"/pilot-waiver/document/{pw.waiver_id}.pdf"
+            )
+            db.session.add(signed_doc)
+            db.session.commit()
+
+            # Test route standard QR code: /pilot-waiver/verify/<waiver_id>
+            resp = self.client.get(f"/pilot-waiver/verify/{pw.waiver_id}")
+            self.assertEqual(resp.status_code, 200)
+            self.assertIn("Données Certifiées &amp; Intactes".encode("utf-8"), resp.data)
+            self.assertIn(pw.waiver_id.encode("utf-8"), resp.data)
+
+            # Test route alias: /waiver/verify/<waiver_id>
+            resp2 = self.client.get(f"/waiver/verify/{pw.waiver_id}")
+            self.assertEqual(resp2.status_code, 200)
+
+            # Test route alias: /verify/waiver/<waiver_id>
+            resp3 = self.client.get(f"/verify/waiver/{pw.waiver_id}")
+            self.assertEqual(resp3.status_code, 200)
+
+            # Test ID inexistant
+            resp404 = self.client.get("/pilot-waiver/verify/BVDW-NONEXISTENT")
+            self.assertEqual(resp404.status_code, 404)
+
 
 if __name__ == "__main__":
     unittest.main()

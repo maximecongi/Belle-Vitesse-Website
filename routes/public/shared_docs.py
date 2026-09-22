@@ -68,18 +68,29 @@ def handle_document_verify(mode_config, identifier):
         - get_seal_args : Callback (data, signed_doc) -> liste d'arguments pour le scellement.
     identifier : La clé primaire (inspection_id ou waiver_id).
     """
-    from models import db
+    from models import db, AppSetting
     signed_doc = db.session.get(mode_config["signed_model"], identifier)
     if not signed_doc:
         abort(404)
 
-    data = signed_doc.data_snapshot
+    data = signed_doc.data_snapshot or {}
     # Normaliser la date pour l'affichage dans le template
     if 'signed_at' in data and isinstance(data['signed_at'], str):
         try:
             data['signed_at'] = datetime.fromisoformat(data['signed_at'])
         except (ValueError, TypeError):
             pass
+
+    # Récupérer l'entité source si disponible
+    source_record = None
+    if mode_config.get("model"):
+        model_cls = mode_config["model"]
+        if hasattr(model_cls, "waiver_id"):
+            source_record = model_cls.query.filter_by(waiver_id=identifier).first()
+        elif hasattr(model_cls, "inspection_id"):
+            source_record = model_cls.query.filter_by(inspection_id=identifier).first()
+        elif hasattr(model_cls, "inspection_number"):
+            source_record = model_cls.query.filter_by(inspection_number=identifier).first()
 
     # 1. Vérifier l'intégrité du Sceau (Seal)
     seal_args = mode_config["get_seal_args"](data, signed_doc)
@@ -113,6 +124,9 @@ def handle_document_verify(mode_config, identifier):
         token = generate_pdf_access_token(path_part)
         pdf_download_url = f"/{mode_config['route_base']}/document/{path_part}?t={token}"
 
+    company_name = AppSetting.get("company_name", "Belle Vitesse SAS")
+    company_address = AppSetting.get("company_address", "39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine, France")
+
     return render_template(
         mode_config["template_verify"],
         config=mode_config,
@@ -122,9 +136,13 @@ def handle_document_verify(mode_config, identifier):
         pdf_valid=pdf_valid,
         pdf_error=pdf_error,
         signed_doc=signed_doc,
+        source_record=source_record,
+        waiver=source_record,
         inspection_id=identifier,
         document_hash=signed_doc.hash,
         project_name=data.get('project_name', data.get('project', '—')),
         has_pdf_hash=bool(signed_doc.pdf_file_hash),
-        pdf_download_url=pdf_download_url
+        pdf_download_url=pdf_download_url,
+        company_name=company_name,
+        company_address=company_address
     )

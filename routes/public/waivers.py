@@ -51,6 +51,7 @@ def init_waiver_routes(app):
     # ── Routes de Signature ──────────────────────────────────────
 
     @app.route("/sign/waiver/<token>", methods=["GET", "POST"])
+    @app.route("/sign/pilot-waiver/<token>", methods=["GET", "POST"])
     def sign_pilot_waiver(token):
         return _handle_sign_waiver("pilot", token)
 
@@ -170,7 +171,10 @@ def init_waiver_routes(app):
 
     # ── Routes de Vérification ───────────────────────────────────
 
+    @app.route("/pilot-waiver/verify/<string:waiver_id>", methods=["GET", "POST"])
+    @app.route("/waiver/verify/<string:waiver_id>", methods=["GET", "POST"])
     @app.route("/verify/waiver/<string:waiver_id>", methods=["GET", "POST"])
+    @app.route("/verify/pilot-waiver/<string:waiver_id>", methods=["GET", "POST"])
     @csrf.exempt
     def verify_pilot_waiver(waiver_id):
         config = _get_waiver_route_config("pilot")
@@ -185,6 +189,7 @@ def init_waiver_routes(app):
         config["get_seal_args"] = get_seal_args
         return handle_document_verify(config, waiver_id)
 
+    @app.route("/production-waiver/verify/<string:waiver_id>", methods=["GET", "POST"])
     @app.route("/verify/production-waiver/<string:waiver_id>", methods=["GET", "POST"])
     @csrf.exempt
     def verify_production_waiver(waiver_id):

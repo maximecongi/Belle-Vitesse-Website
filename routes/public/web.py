@@ -95,7 +95,11 @@ def init_web_routes(app):
                 and not request.path.startswith('/verify/') \
                 and not request.path.startswith('/sign/') \
                 and not request.path.startswith('/pilot-waiver/') \
-                and not request.path.startswith('/production-waiver/'):
+                and not request.path.startswith('/production-waiver/') \
+                and not request.path.startswith('/waiver/') \
+                and not request.path.startswith('/checkout/') \
+                and not request.path.startswith('/checkin/') \
+                and not request.path.startswith('/incidents/'):
             return redirect(url_for('launch'))
 
     # ── Pages (toutes préfixées par /<lang>/) ──────────────────────
