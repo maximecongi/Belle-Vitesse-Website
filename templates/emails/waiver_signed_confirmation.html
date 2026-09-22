@@ -1,4 +1,5 @@
 {% extends "emails/base_transactional.html" %}
+{% from "emails/macros.html" import info_card_waiver %}
 
 {% set is_prod = (waiver_type == 'production') or (prod_contact_name is defined and prod_contact_name) %}
 {% set type_title = type_title or ('Production' if is_prod else ('Pilote' if waiver_type == 'pilot' else '')) %}
@@ -14,19 +15,14 @@
     Merci d'avoir complété et signé électroniquement votre décharge de responsabilité pour le projet ci-dessous :
 </p>
 
-<div class="info-card info-card-waiver">
-    <div class="info-line"><strong>Projet :</strong> {{ project_name }}</div>
-    {% if production_name %}
-    <div class="info-line"><strong>Production :</strong> {{ production_name }}</div>
-    {% endif %}
-    {% if display_name %}
-    <div class="info-line"><strong>Destinataire :</strong> {{ display_name }}</div>
-    {% endif %}
-    {% if type_title %}
-    <div class="info-line"><strong>Type de décharge :</strong> {{ type_title }}</div>
-    {% endif %}
-    <div class="info-line"><strong>Statut :</strong> <span class="badge badge-success">Signé</span></div>
-</div>
+{{ info_card_waiver(
+    project_name=project_name,
+    production_name=production_name,
+    display_name=display_name,
+    type_title=type_title,
+    status_badge_class='badge-success',
+    status_label='Signé'
+) }}
 
 <p>
     Vous trouverez en pièce jointe de ce courriel votre exemplaire au format PDF.

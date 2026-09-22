@@ -22,6 +22,7 @@ os.environ.pop("FLASK_ENV", None)
 os.environ.pop("TESTING", None)
 
 from utils.mailer import EmailService
+from utils.email_fixtures import get_demo_email_data
 
 DEST_EMAIL = "maxime@bellevitesse.com"
 
@@ -65,15 +66,7 @@ def get_all_test_emails():
             "name": "2. Invitation Décharge Pilote (Standard)",
             "subject": "[TEST 2/13] Signature décharge pilote - Tournage Porsche 911 GT3 RS",
             "template": "emails/waiver_invitation.html",
-            "context": {
-                "waiver_type": "pilot",
-                "recipient_name": "Maxime Congi",
-                "project_name": "Tournage Porsche 911 GT3 RS",
-                "production_name": "Studio Transatlantique",
-                "signature_link": "https://bellevitesse.com/waivers/pilot/demo_token",
-                "is_reminder": False,
-                "now_year": now_year,
-            },
+            "context": get_demo_email_data("waiver_invitation")["context"],
             "sender_type": "admin",
         },
         # 3. Rappel Décharge Pilote (Relance J-1)
@@ -81,15 +74,7 @@ def get_all_test_emails():
             "name": "3. Relance Décharge Pilote (Rappel J-1)",
             "subject": "[TEST 3/13] Rappel : Signature décharge pilote - Tournage Porsche 911 GT3 RS",
             "template": "emails/waiver_invitation.html",
-            "context": {
-                "waiver_type": "pilot",
-                "recipient_name": "Maxime Congi",
-                "project_name": "Tournage Porsche 911 GT3 RS",
-                "production_name": "Studio Transatlantique",
-                "signature_link": "https://bellevitesse.com/waivers/pilot/demo_token",
-                "is_reminder": True,
-                "now_year": now_year,
-            },
+            "context": get_demo_email_data("waiver_reminder")["context"],
             "sender_type": "admin",
         },
         # 4. Invitation Décharge Production
@@ -100,6 +85,7 @@ def get_all_test_emails():
             "context": {
                 "waiver_type": "production",
                 "recipient_name": "Maxime Congi (Prod)",
+                "display_name": "Maxime Congi (Prod)",
                 "project_name": "Spot TV Chanel No 5",
                 "production_name": "Chanel Parfums & Beauté",
                 "signature_link": "https://bellevitesse.com/waivers/production/demo_token",
@@ -116,6 +102,7 @@ def get_all_test_emails():
             "context": {
                 "waiver_type": "production",
                 "recipient_name": "Maxime Congi (Prod)",
+                "display_name": "Maxime Congi (Prod)",
                 "project_name": "Spot TV Chanel No 5",
                 "production_name": "Chanel Parfums & Beauté",
                 "signature_link": "https://bellevitesse.com/waivers/production/demo_token",
@@ -129,15 +116,7 @@ def get_all_test_emails():
             "name": "6. Confirmation Décharge Signée (PDF)",
             "subject": "[TEST 6/13] Décharge signée - Tournage Porsche 911 GT3 RS",
             "template": "emails/waiver_signed_confirmation.html",
-            "context": {
-                "recipient_name": "Maxime Congi",
-                "display_name": "Maxime Congi",
-                "project_name": "Tournage Porsche 911 GT3 RS",
-                "production_name": "Studio Transatlantique",
-                "waiver_type": "pilot",
-                "type_title": "Pilote",
-                "now_year": now_year,
-            },
+            "context": get_demo_email_data("waiver_signed")["context"],
             "sender_type": "contact",
         },
         # 7. Invitation Signature Constat d'Incident
@@ -145,17 +124,7 @@ def get_all_test_emails():
             "name": "7. Invitation Constat d'Incident",
             "subject": "[TEST 7/13] Action requise : Visa du constat d'incident INC-2026-0008 (Tournage Nocturne Paris)",
             "template": "emails/incident_invitation.html",
-            "context": {
-                "recipient_name": "Maxime Congi",
-                "project_name": "Tournage Nocturne Paris",
-                "production_name": "Iconoclast Films",
-                "incident_number": "INC-2026-0008",
-                "incident_title": "Frottement splitter carbone et fixation camera-car",
-                "incident_date": "22/09/2026",
-                "location": "Pont de Bir-Hakeim, Paris",
-                "signature_link": "https://bellevitesse.com/incidents/sign/demo_token",
-                "now_year": now_year,
-            },
+            "context": get_demo_email_data("incident_invitation")["context"],
             "sender_type": "admin",
         },
         # 8. Confirmation Constat d'Incident Scellé
@@ -163,14 +132,7 @@ def get_all_test_emails():
             "name": "8. Confirmation Constat Scellé",
             "subject": "[TEST 8/13] Constat scellé et signé - INC-2026-0008 (Tournage Nocturne Paris)",
             "template": "emails/incident_signed_confirmation.html",
-            "context": {
-                "recipient_name": "Maxime Congi",
-                "project_name": "Tournage Nocturne Paris",
-                "production_name": "Iconoclast Films",
-                "incident_number": "INC-2026-0008",
-                "incident_title": "Frottement splitter carbone et fixation camera-car",
-                "now_year": now_year,
-            },
+            "context": get_demo_email_data("incident_signed")["context"],
             "sender_type": "contact",
         },
         # 9. Invitation Calendrier (avec QR code)

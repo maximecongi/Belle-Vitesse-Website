@@ -1,4 +1,5 @@
 {% extends "emails/base_transactional.html" %}
+{% from "emails/macros.html" import info_card_incident %}
 
 {% block title %}Signature Constat d'Incident - Belle Vitesse{% endblock %}
 
@@ -11,19 +12,16 @@
     projet ci-dessous :
 </p>
 
-<div class="info-card info-card-incident">
-    <div class="info-line"><strong>Projet :</strong> {{ project_name }}</div>
-    {% if production_name %}
-    <div class="info-line"><strong>Production :</strong> {{ production_name }}</div>
-    {% endif %}
-    <div class="info-line"><strong>Objet :</strong> {{ incident_title }}</div>
-    <div class="info-line"><strong>N° de dossier :</strong> {{ incident_number }}</div>
-    <div class="info-line"><strong>Date :</strong> {{ incident_date }}</div>
-    {% if location %}
-    <div class="info-line"><strong>Lieu :</strong> {{ location }}</div>
-    {% endif %}
-    <div class="info-line"><strong>Statut :</strong> <span class="badge badge-warning">En attente de visa</span></div>
-</div>
+{{ info_card_incident(
+    project_name=project_name,
+    production_name=production_name,
+    incident_title=incident_title,
+    incident_number=incident_number,
+    incident_date=incident_date,
+    location=location,
+    status_badge_class='badge-warning',
+    status_label='En attente de visa'
+) }}
 
 <a class="button" href="{{ signature_link }}">Consulter et Signer</a>
 

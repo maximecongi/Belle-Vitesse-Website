@@ -1,12 +1,12 @@
 {% extends "emails/base_transactional.html" %}
+{% from "emails/macros.html" import info_card_waiver %}
 
 {% set is_prod = (waiver_type == 'production') or (prod_contact_name is defined and prod_contact_name) %}
 {% set type_title = 'Production' if is_prod else 'Pilote' %}
 {% set type_label = 'production' if is_prod else 'pilote' %}
 {% set display_name = recipient_name or (prod_contact_name if is_prod else pilot_name) %}
 
-{% block title %}{% if is_reminder %}Rappel : {% endif %}Signature Décharge {{ type_title }} - Belle Vitesse{% endblock
-%}
+{% block title %}{% if is_reminder %}Rappel : {% endif %}Signature Décharge {{ type_title }} - Belle Vitesse{% endblock %}
 
 {% block content %}
 <h1 class="dot-before">{% if is_reminder %}Rappel : {% endif %}Signature Décharge {{ type_title }}.</h1>
@@ -32,18 +32,14 @@
     {% endif %}
 </p>
 
-<div class="info-card info-card-waiver">
-    <div class="info-line"><strong>Projet :</strong> {{ project_name }}</div>
-    {% if production_name %}
-    <div class="info-line"><strong>Production :</strong> {{ production_name }}</div>
-    {% endif %}
-    {% if display_name %}
-    <div class="info-line"><strong>Destinataire :</strong> {{ display_name }}</div>
-    {% endif %}
-    <div class="info-line"><strong>Type de décharge :</strong> {{ type_title }}</div>
-    <div class="info-line"><strong>Statut :</strong> <span class="badge badge-warning">En attente de signature</span>
-    </div>
-</div>
+{{ info_card_waiver(
+    project_name=project_name,
+    production_name=production_name,
+    display_name=display_name,
+    type_title=type_title,
+    status_badge_class='badge-warning',
+    status_label='En attente de signature'
+) }}
 
 <a class="button" href="{{ signature_link }}">Consulter et Signer</a>
 

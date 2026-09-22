@@ -1,4 +1,5 @@
 {% extends "emails/base_transactional.html" %}
+{% from "emails/macros.html" import info_card_incident %}
 
 {% block title %}Constat d'Incident Scellé - Belle Vitesse{% endblock %}
 
@@ -11,22 +12,16 @@
     ci-dessous :
 </p>
 
-<div class="info-card info-card-incident">
-    <div class="info-line"><strong>Projet :</strong> {{ project_name }}</div>
-    {% if production_name %}
-    <div class="info-line"><strong>Production :</strong> {{ production_name }}</div>
-    {% endif %}
-    {% if incident_title %}
-    <div class="info-line"><strong>Objet :</strong> {{ incident_title }}</div>
-    {% endif %}
-    <div class="info-line"><strong>N° de dossier :</strong> {{ incident_number }}</div>
-    <div class="info-line"><strong>Date :</strong> {{ incident_date }}</div>
-    {% if location %}
-    <div class="info-line"><strong>Lieu :</strong> {{ location }}</div>
-    {% endif %}
-    <div class="info-line"><strong>Statut :</strong> <span class="badge badge-success">Signé</span>
-    </div>
-</div>
+{{ info_card_incident(
+    project_name=project_name,
+    production_name=production_name,
+    incident_title=incident_title,
+    incident_number=incident_number,
+    incident_date=incident_date,
+    location=location,
+    status_badge_class='badge-success',
+    status_label='Signé'
+) }}
 
 <p>
     Vous trouverez en pièce jointe de ce courriel votre exemplaire officiel scellé au format PDF pour archivage et

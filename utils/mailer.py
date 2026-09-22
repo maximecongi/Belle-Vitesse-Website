@@ -366,6 +366,33 @@ def send_newsletter_campaign_async(subject, body, subscribers, base_url=None):
     return run_async_email(send_newsletter_campaign, subject, body, subscribers, base_url=base_url)
 
 
+def _build_waiver_email_context(
+    waiver_type: str,
+    recipient_name: str,
+    project_name: str,
+    production_name: str = None,
+    signature_link: str = None,
+    is_reminder: bool = False,
+) -> dict:
+    """Construit un contexte Jinja standardisé pour les invitations et confirmations de décharge."""
+    is_prod = waiver_type in ("production", "prod")
+    type_title = "Production" if is_prod else ("Pilote" if waiver_type == "pilot" else None)
+    context = {
+        "waiver_type": waiver_type,
+        "recipient_name": recipient_name,
+        "display_name": recipient_name,
+        "pilot_name": recipient_name,
+        "prod_contact_name": recipient_name,
+        "project_name": project_name,
+        "production_name": production_name,
+        "type_title": type_title,
+        "is_reminder": is_reminder,
+    }
+    if signature_link:
+        context["signature_link"] = signature_link
+    return context
+
+
 def _send_waiver_invitation_email(
     waiver_type: str,
     to_email: str,
@@ -407,16 +434,14 @@ def _send_waiver_invitation_email(
             f"L'équipe Belle Vitesse."
         )
 
-    context = {
-        "waiver_type": waiver_type,
-        "recipient_name": recipient_name,
-        "pilot_name": recipient_name,
-        "prod_contact_name": recipient_name,
-        "project_name": project_name,
-        "production_name": production_name,
-        "signature_link": signature_link,
-        "is_reminder": is_reminder,
-    }
+    context = _build_waiver_email_context(
+        waiver_type=waiver_type,
+        recipient_name=recipient_name,
+        project_name=project_name,
+        production_name=production_name,
+        signature_link=signature_link,
+        is_reminder=is_reminder,
+    )
 
     return EmailService.send_templated_email(
         to_email=to_email,
@@ -463,16 +488,12 @@ def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path, p
         f"Bonjour {recipient_name},\n\nVeuillez trouver ci-joint la décharge signée "
         f"pour le projet : {project_name}.\n\nBelle journée,\nL'équipe Belle Vitesse."
     )
-    is_prod = waiver_type in ("production", "prod")
-    type_title = "Production" if is_prod else ("Pilote" if waiver_type == "pilot" else None)
-    context = {
-        "recipient_name": recipient_name,
-        "display_name": recipient_name,
-        "project_name": project_name,
-        "production_name": production_name,
-        "waiver_type": waiver_type,
-        "type_title": type_title,
-    }
+    context = _build_waiver_email_context(
+        waiver_type=waiver_type,
+        recipient_name=recipient_name,
+        project_name=project_name,
+        production_name=production_name,
+    )
     return EmailService.send_templated_email(
         to_email=to_email,
         subject=f"Décharge signée - {project_name}",
@@ -543,18 +564,20 @@ def send_calendar_invitation_email(to_email, user_name, feed_url):
         return False
 
 
-def send_incident_signature_request_email(incident, to_email, signing_url):
-    """Envoie un email demandant la signature contradictoire d'un constat d'incident."""
-    current_app.logger.info(
-        f"🚀 Envoi de la demande de visa incident {incident.incident_number} à {to_email}"
-    )
-
+def _build_incident_email_context(incident, signing_url: str = None) -> dict:
+    """Construit un contexte Jinja standardisé pour les e-mails liés à un incident."""
     project_name = incident.project.name if incident.project else "Tournage"
-    production_name = incident.project.production.name if (
-        incident.project and incident.project.production) else None
+    production_name = (
+        incident.project.production.name
+        if (incident.project and incident.project.production)
+        else None
+    )
     contact_prod = incident.project.production_contact if incident.project else None
-    recipient_name = f"{contact_prod.first_name} {contact_prod.last_name}".strip(
-    ) if contact_prod else None
+    recipient_name = (
+        f"{contact_prod.first_name} {contact_prod.last_name}".strip()
+        if contact_prod
+        else None
+    )
     incident_num = incident.incident_number
     incident_title = incident.title
     inc_date = (
@@ -562,6 +585,32 @@ def send_incident_signature_request_email(incident, to_email, signing_url):
         if hasattr(incident.incident_date, "strftime")
         else str(incident.incident_date or "")
     )
+
+    context = {
+        "incident": incident,
+        "incident_number": incident_num,
+        "incident_title": incident_title,
+        "incident_date": inc_date,
+        "location": incident.location,
+        "project_name": project_name,
+        "production_name": production_name,
+        "recipient_name": recipient_name,
+    }
+    if signing_url:
+        context["signature_link"] = signing_url
+    return context
+
+
+def send_incident_signature_request_email(incident, to_email, signing_url):
+    """Envoie un email demandant la signature contradictoire d'un constat d'incident."""
+    current_app.logger.info(
+        f"🚀 Envoi de la demande de visa incident {incident.incident_number} à {to_email}"
+    )
+
+    context = _build_incident_email_context(incident, signing_url=signing_url)
+    project_name = context["project_name"]
+    incident_num = context["incident_number"]
+    incident_title = context["incident_title"]
 
     text_content = (
         f"Bonjour,\n\n"
@@ -575,18 +624,6 @@ def send_incident_signature_request_email(incident, to_email, signing_url):
         f"L'équipe Belle Vitesse\n"
         f"https://bellevitesse.com"
     )
-
-    context = {
-        "incident": incident,
-        "incident_number": incident_num,
-        "incident_title": incident_title,
-        "incident_date": inc_date,
-        "location": incident.location,
-        "project_name": project_name,
-        "production_name": production_name,
-        "recipient_name": recipient_name,
-        "signature_link": signing_url,
-    }
 
     return EmailService.send_templated_email(
         to_email=to_email,
@@ -605,18 +642,9 @@ def send_incident_signed_confirmation_email(incident, to_email, pdf_path):
         f"🚀 Envoi de la confirmation d'incident scellé {incident.incident_number} à {to_email}"
     )
 
-    project_name = incident.project.name if incident.project else "Tournage"
-    production_name = incident.project.production.name if (
-        incident.project and incident.project.production) else None
-    contact_prod = incident.project.production_contact if incident.project else None
-    recipient_name = f"{contact_prod.first_name} {contact_prod.last_name}".strip(
-    ) if contact_prod else None
-    incident_num = incident.incident_number
-    inc_date = (
-        incident.incident_date.strftime("%d/%m/%Y")
-        if hasattr(incident.incident_date, "strftime")
-        else str(incident.incident_date or "")
-    )
+    context = _build_incident_email_context(incident)
+    project_name = context["project_name"]
+    incident_num = context["incident_number"]
 
     text_content = (
         f"Bonjour,\n\n"
@@ -626,17 +654,6 @@ def send_incident_signed_confirmation_email(incident, to_email, pdf_path):
         f"Bien cordialement,\n"
         f"L'équipe Belle Vitesse"
     )
-
-    context = {
-        "incident": incident,
-        "incident_number": incident_num,
-        "incident_title": incident.title,
-        "incident_date": inc_date,
-        "location": incident.location,
-        "project_name": project_name,
-        "production_name": production_name,
-        "recipient_name": recipient_name,
-    }
 
     return EmailService.send_templated_email(
         to_email=to_email,

@@ -1,0 +1,60 @@
+{#
+    templates/emails/macros.html
+    Macros réutilisables pour les e-mails transactionnels Belle Vitesse.
+    Conformes au Design System (info-cards, badges, pastilles et métadonnées projet).
+#}
+
+{% macro info_card_incident(
+    project_name,
+    production_name=None,
+    incident_title=None,
+    incident_number=None,
+    incident_date=None,
+    location=None,
+    status_badge_class='badge-warning',
+    status_label='En attente de visa'
+) %}
+<div class="info-card info-card-incident">
+    <div class="info-line"><strong>Projet :</strong> {{ project_name }}</div>
+    {% if production_name %}
+    <div class="info-line"><strong>Production :</strong> {{ production_name }}</div>
+    {% endif %}
+    {% if incident_title %}
+    <div class="info-line"><strong>Objet :</strong> {{ incident_title }}</div>
+    {% endif %}
+    {% if incident_number %}
+    <div class="info-line"><strong>N° de dossier :</strong> {{ incident_number }}</div>
+    {% endif %}
+    {% if incident_date %}
+    <div class="info-line"><strong>Date :</strong> {{ incident_date }}</div>
+    {% endif %}
+    {% if location %}
+    <div class="info-line"><strong>Lieu :</strong> {{ location }}</div>
+    {% endif %}
+    <div class="info-line"><strong>Statut :</strong> <span class="badge {{ status_badge_class }}">{{ status_label }}</span></div>
+</div>
+{% endmacro %}
+
+
+{% macro info_card_waiver(
+    project_name,
+    production_name=None,
+    display_name=None,
+    type_title=None,
+    status_badge_class='badge-warning',
+    status_label='En attente de signature'
+) %}
+<div class="info-card info-card-waiver">
+    <div class="info-line"><strong>Projet :</strong> {{ project_name }}</div>
+    {% if production_name %}
+    <div class="info-line"><strong>Production :</strong> {{ production_name }}</div>
+    {% endif %}
+    {% if display_name %}
+    <div class="info-line"><strong>Destinataire :</strong> {{ display_name }}</div>
+    {% endif %}
+    {% if type_title %}
+    <div class="info-line"><strong>Type de décharge :</strong> {{ type_title }}</div>
+    {% endif %}
+    <div class="info-line"><strong>Statut :</strong> <span class="badge {{ status_badge_class }}">{{ status_label }}</span></div>
+</div>
+{% endmacro %}

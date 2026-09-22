@@ -370,76 +370,15 @@ def init_web_routes(app):
 
         from datetime import datetime, timezone
         from utils.context_processors import get_company_context
+        from utils.email_fixtures import get_demo_email_data
+
+        m_type = request.args.get("type", mail_type).lower()
+        demo_data = get_demo_email_data(m_type)
+        if not demo_data:
+            return abort(404, f"Type d'e-mail inconnu : {m_type}")
 
         ctx = get_company_context()
         ctx["now_year"] = datetime.now(timezone.utc).year
+        ctx.update(demo_data["context"])
 
-        m_type = request.args.get("type", mail_type).lower()
-
-        if m_type in ("all-badges", "all_badges", "badges", "showcase"):
-            template_name = "emails/showcase_badges.html"
-        elif m_type in ("waiver", "decharge", "waiver_signed"):
-            template_name = "emails/waiver_signed_confirmation.html"
-            ctx.update({
-                "recipient_name": "Maxime Congi",
-                "display_name": "Maxime Congi",
-                "project_name": "Tournage Porsche 911 GT3 RS",
-                "production_name": "Studio Transatlantique",
-                "waiver_type": "pilot",
-                "type_title": "Pilote",
-            })
-        elif m_type in ("cron", "cron_report"):
-            template_name = "emails/cron_report.html"
-            ctx.update({
-                "global_status": "OK",
-                "date_str": "22/09/2026",
-                "time_str": "18:30:00",
-                "jobs": [
-                    {"display_name": "Sauvegarde Base de Données SQL", "expected_freq": "Tous les jours à 4h00",
-                        "last_run_display": "22/09/2026 à 04:00:01", "status": "success"},
-                    {"display_name": "Purge des logs SQL (60 jours)", "expected_freq": "Tous les jours à 5h00",
-                     "last_run_display": "22/09/2026 à 05:00:02", "status": "failed"},
-                    {"display_name": "Relance automatique des décharges", "expected_freq": "Tous les jours à 8h00",
-                        "last_run_display": "22/09/2026 à 08:00:02", "status": "stale"},
-                    {"display_name": "Nettoyage dossiers vides Serveur", "expected_freq": "Tous les lundis à 3h45",
-                        "last_run_display": "22/09/2026 à 03:45:01", "status": "missing"},
-                ],
-                "failures": [],
-            })
-        elif m_type in ("incident", "incident_signed"):
-            template_name = "emails/incident_signed_confirmation.html"
-            ctx.update({
-                "recipient_name": "Maxime Congi",
-                "project_name": "Tournage Nocturne Paris",
-                "production_name": "Iconoclast Films",
-                "incident_number": "INC-2026-0008",
-                "incident_date": "22/09/2026",
-                "location": "Pont de Bir-Hakeim, Paris",
-                "incident_title": "Frottement splitter carbone et fixation camera-car",
-            })
-        elif m_type in ("incident_invitation", "incident_visa"):
-            template_name = "emails/incident_invitation.html"
-            ctx.update({
-                "recipient_name": "Maxime Congi",
-                "project_name": "Tournage Nocturne Paris",
-                "production_name": "Iconoclast Films",
-                "incident_number": "INC-2026-0008",
-                "incident_title": "Frottement splitter carbone et fixation camera-car",
-                "incident_date": "22/09/2026",
-                "location": "Pont de Bir-Hakeim, Paris",
-                "signature_link": "https://bellevitesse.com/incidents/sign/demo_token",
-            })
-        elif m_type in ("waiver_invitation",):
-            template_name = "emails/waiver_invitation.html"
-            ctx.update({
-                "waiver_type": "pilot",
-                "recipient_name": "Maxime Congi",
-                "project_name": "Tournage Porsche 911 GT3 RS",
-                "production_name": "Studio Transatlantique",
-                "signature_link": "https://bellevitesse.com/waivers/pilot/demo_token",
-                "is_reminder": False,
-            })
-        else:
-            return abort(404, f"Type d'e-mail inconnu : {m_type}")
-
-        return render_template(template_name, **ctx)
+        return render_template(demo_data["template"], **ctx)
