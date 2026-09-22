@@ -307,17 +307,13 @@ def send_newsletter_campaign(subject, body, subscribers, base_url=None):
 
                 unsubscribe_url = f"{base_url}/unsubscribe/{token}"
 
-                html_content = f"""
-                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #151515;">
-                    <div style="padding: 2rem;">
-                        {body.replace('\n', '<br>')}
-                    </div>
-                    <div style="padding: 1rem; border-top: 1px solid #eee; font-size: 0.8rem; color: #888; text-align: center;">
-                        <p>Belle Vitesse &copy; 2026</p>
-                        <p><a href="{unsubscribe_url}" style="color: #888;">Se désabonner de la newsletter</a></p>
-                    </div>
-                </div>
-                """
+                html_content = render_template(
+                    "emails/newsletter_campaign.html",
+                    subject=subject,
+                    body=body,
+                    unsubscribe_url=unsubscribe_url,
+                    now_year=datetime.now(timezone.utc).year,
+                )
 
                 msg = MIMEMultipart("alternative")
                 msg["Subject"] = subject

@@ -4,24 +4,29 @@
 
 {% block content %}
 <h1 class="dot-before">Signature Constat d'Incident.</h1>
+
 <p>
     Bonjour,<br><br>
-    Vous êtes invité à viser et signer électroniquement le <strong>constat d'incident contradictoire</strong> pour le projet :<br>
-    <strong>{{ project_name }}</strong>.
+    Vous êtes invité à viser et signer électroniquement le <strong>constat d'incident contradictoire</strong> pour le projet :
 </p>
 
-<div class="info-card">
+<div>
+    <span class="project-pill">{{ project_name }}</span>
+</div>
+
+<div class="info-card info-card-incident">
     <div class="info-line"><strong>N° de dossier :</strong> {{ incident_number }}</div>
     <div class="info-line"><strong>Objet :</strong> {{ incident_title }}</div>
     <div class="info-line"><strong>Date :</strong> {{ incident_date }}</div>
     {% if location %}
     <div class="info-line"><strong>Lieu :</strong> {{ location }}</div>
     {% endif %}
+    <div class="info-line"><strong>Statut :</strong> <span class="badge badge-warning">En attente de visa</span></div>
 </div>
 
 <a class="button" href="{{ signature_link }}">Consulter et Signer</a>
 
-<p style="margin-top: 30px; font-size: 14px; font-style: italic;">
+<p class="text-muted">
     Ce lien sécurisé est valable pendant 48 heures.<br>
     Dès signature des deux parties, l'exemplaire officiel scellé vous sera automatiquement transmis.
 </p>

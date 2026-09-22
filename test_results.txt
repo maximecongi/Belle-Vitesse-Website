@@ -81,6 +81,17 @@ test_technicien_cannot_see_or_access_waivers (test_dev_role_switcher.DevRoleSwit
 Technicien role should not see waiver links in sidebar nav and should be forbidden on waivers. ... ok
 test_user_cannot_access_or_see_catalog_update (test_dev_role_switcher.DevRoleSwitcherTestCase.test_user_cannot_access_or_see_catalog_update)
 Technicien role should not see catalog_update in sidebar nav and should be forbidden on catalog preview/update. ... ok
+test_calendar_invitation_rendering (test_email_templates.EmailTemplatesTest.test_calendar_invitation_rendering) ... ok
+test_cron_report_rendering (test_email_templates.EmailTemplatesTest.test_cron_report_rendering) ... ok
+test_incident_invitation_rendering (test_email_templates.EmailTemplatesTest.test_incident_invitation_rendering) ... ok
+test_incident_signed_confirmation_rendering (test_email_templates.EmailTemplatesTest.test_incident_signed_confirmation_rendering) ... ok
+test_magic_link_rendering (test_email_templates.EmailTemplatesTest.test_magic_link_rendering) ... ok
+test_newsletter_campaign_rendering (test_email_templates.EmailTemplatesTest.test_newsletter_campaign_rendering) ... ok
+test_newsletter_welcome_rendering (test_email_templates.EmailTemplatesTest.test_newsletter_welcome_rendering) ... ok
+test_sql_alert_rendering (test_email_templates.EmailTemplatesTest.test_sql_alert_rendering) ... ok
+test_waiver_invitation_rendering_reminder (test_email_templates.EmailTemplatesTest.test_waiver_invitation_rendering_reminder) ... ok
+test_waiver_invitation_rendering_standard (test_email_templates.EmailTemplatesTest.test_waiver_invitation_rendering_standard) ... ok
+test_waiver_signed_confirmation_rendering (test_email_templates.EmailTemplatesTest.test_waiver_signed_confirmation_rendering) ... ok
 test_fleet_overview (test_fleet.FleetTest.test_fleet_overview) ... ok
 test_fleet_routes (test_fleet.FleetTest.test_fleet_routes) ... ok
 test_fleet_sidebar_visibility_for_all_roles (test_fleet.FleetTest.test_fleet_sidebar_visibility_for_all_roles)
@@ -275,6 +286,6 @@ test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.W
 Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
 ----------------------------------------------------------------------
-Ran 174 tests in 11.865s
+Ran 185 tests in 11.418s
 
 OK

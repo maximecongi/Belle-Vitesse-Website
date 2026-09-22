@@ -5,22 +5,16 @@
 {% set type_label = 'production' if is_prod else 'pilote' %}
 {% set display_name = recipient_name or (prod_contact_name if is_prod else pilot_name) %}
 
-{% block title %}{% if is_reminder %}Rappel : {% endif %}Signature Décharge {{ type_title }} - Belle Vitesse{% endblock
-%}
+{% block title %}{% if is_reminder %}Rappel : {% endif %}Signature Décharge {{ type_title }} - Belle Vitesse{% endblock %}
 
 {% block content %}
 <h1 class="dot-before">{% if is_reminder %}Rappel : {% endif %}Signature Décharge {{ type_title }}.</h1>
 
 {% if is_reminder %}
-<div
-    style="background-color: #1f1a14; border-left: 4px solid #f99e16; padding: 14px 18px; margin: 0 auto 24px; max-width: 480px; text-align: left;">
-    <div
-        style="color: #f99e16; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
-        Signature en attente
-    </div>
-    <div style="color: #e2e8f0; font-size: 14px; line-height: 1.5;">
-        Le tournage approche et sauf erreur de notre part, votre décharge de responsabilité {{ type_label }} n'a pas
-        encore été complétée.
+<div class="alert-box alert-box-warning">
+    <div class="alert-title">Signature en attente</div>
+    <div class="alert-body">
+        Le tournage approche et sauf erreur de notre part, votre décharge de responsabilité {{ type_label }} n'a pas encore été complétée.
     </div>
 </div>
 {% endif %}
@@ -28,19 +22,19 @@
 <p>
     Bonjour {{ display_name }},<br><br>
     {% if is_reminder %}
-    Merci de bien vouloir finaliser et signer électroniquement votre <strong>décharge de responsabilité {{ type_label
-        }}</strong> pour le projet :
+    Merci de bien vouloir finaliser et signer électroniquement votre <strong>décharge de responsabilité {{ type_label }}</strong> pour le projet :
     {% else %}
-    Vous êtes invité à compléter et signer électroniquement la <strong>décharge de responsabilité {{ type_label
-        }}</strong> pour le projet :
-    {% endif %}<br>
-    <span
-        style="display: inline-block; margin-top: 10px; padding: 6px 16px; background-color: #1e1e1e; border: 1px solid #333333; border-radius: 4px; font-size: 17px; font-weight: 700; color: #FFFFFF; text-transform: uppercase; letter-spacing: 1px;">
-        {{ project_name }}
-    </span>
+    Vous êtes invité à compléter et signer électroniquement la <strong>décharge de responsabilité {{ type_label }}</strong> pour le projet :
+    {% endif %}
 </p>
+
+<div>
+    <span class="project-pill">{{ project_name }}</span>
+</div>
+
 <a class="button" href="{{ signature_link }}">Consulter et signer</a>
-<p style="margin-top: 30px; font-size: 14px; font-style: italic;">
+
+<p class="text-muted">
     Ce document obligatoire doit impérativement être validé avant le début du tournage.
 </p>
 {% endblock %}

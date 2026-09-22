@@ -6,15 +6,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Belle Vitesse{% endblock %}</title>
     <style>
-        body {
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        /* ── CSS Reset & Base ────────────────────────────────────────── */
+        body, html {
             margin: 0;
             padding: 0;
+            width: 100% !important;
+            height: 100% !important;
             background-color: #151515;
             color: #FFFFFF;
-            font-family: 'Poppins', Helvetica, Arial, sans-serif;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             -webkit-font-smoothing: antialiased;
+            -ms-text-size-adjust: 100%;
+            -webkit-text-size-adjust: 100%;
         }
 
+        table, td {
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }
+
+        img {
+            -ms-interpolation-mode: bicubic;
+            border: 0;
+            outline: none;
+            text-decoration: none;
+        }
+
+        /* ── Layout ──────────────────────────────────────────────────── */
         .container {
             width: 100%;
             max-width: 600px;
@@ -23,25 +43,33 @@
         }
 
         .header {
-            padding: 40px 20px;
+            padding: 40px 20px 25px;
             text-align: center;
         }
 
         .logo {
-            width: 200px;
+            width: 220px;
             max-width: 80%;
+            height: auto;
+            display: inline-block;
         }
 
         .content {
-            padding: 20px 40px;
+            padding: 10px 30px 30px;
             text-align: center;
         }
 
+        .content-left {
+            text-align: left;
+        }
+
+        /* ── Typography ──────────────────────────────────────────────── */
         h1 {
             font-size: 24px;
             font-weight: 500;
+            margin-top: 0;
             margin-bottom: 20px;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
             color: #FFFFFF;
         }
 
@@ -55,31 +83,134 @@
         }
 
         p {
-            font-size: 16px;
+            font-size: 15px;
             line-height: 1.6;
             color: #A1A1A1;
-            margin-bottom: 30px;
+            margin-top: 0;
+            margin-bottom: 20px;
         }
 
+        p strong {
+            color: #FFFFFF;
+        }
+
+        .text-muted {
+            font-size: 13px;
+            color: #777777;
+            font-style: italic;
+        }
+
+        .text-highlight {
+            color: #FFC845;
+        }
+
+        /* ── Action Buttons ─────────────────────────────────────────── */
         .button {
             display: inline-block;
-            padding: 16px 32px;
+            padding: 15px 32px;
             background-color: #FFC845;
-            color: #151515;
-            text-decoration: none;
+            color: #151515 !important;
+            text-decoration: none !important;
             font-weight: 700;
+            font-size: 13px;
             text-transform: uppercase;
             border-radius: 4px;
             letter-spacing: 1px;
+            margin: 15px 0;
+            transition: filter 0.2s ease;
         }
 
+        .button:hover {
+            filter: brightness(0.9);
+        }
+
+        .button-secondary {
+            background-color: #222222;
+            color: #FFFFFF !important;
+            border: 1px solid #383838;
+        }
+
+        .button-outline {
+            background-color: transparent;
+            color: #FFC845 !important;
+            border: 1px solid #FFC845;
+        }
+
+        /* ── Badges & Pills ─────────────────────────────────────────── */
+        .project-pill {
+            display: inline-block;
+            margin: 8px 0;
+            padding: 6px 16px;
+            background-color: #1e1e1e;
+            border: 1px solid #333333;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #FFFFFF;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-success {
+            background-color: #10B981;
+            color: #FFFFFF;
+        }
+
+        .badge-warning {
+            background-color: #F59E0B;
+            color: #FFFFFF;
+        }
+
+        .badge-danger, .badge-failed {
+            background-color: #EF4444;
+            color: #FFFFFF;
+        }
+
+        .badge-missing, .badge-neutral {
+            background-color: #64748B;
+            color: #FFFFFF;
+        }
+
+        .badge-waiver {
+            background-color: #8B5CF6;
+            color: #FFFFFF;
+        }
+
+        .badge-incident {
+            background-color: #EF4444;
+            color: #FFFFFF;
+        }
+
+        /* ── Cards & Data Displays ───────────────────────────────────── */
         .info-card {
             background-color: #1a1a1a;
             border: 1px solid #282828;
             border-radius: 6px;
             padding: 20px;
-            margin: 25px 0 30px;
+            margin: 20px 0 25px;
             text-align: left;
+        }
+
+        .info-card-incident {
+            border-left: 4px solid #EF4444;
+        }
+
+        .info-card-waiver {
+            border-left: 4px solid #8B5CF6;
+        }
+
+        .info-card-warning {
+            border-left: 4px solid #F59E0B;
         }
 
         .info-line {
@@ -96,6 +227,225 @@
             color: #FFFFFF;
         }
 
+        /* ── Alert & Notification Boxes ─────────────────────────────── */
+        .alert-box {
+            border-radius: 4px;
+            padding: 14px 18px;
+            margin: 0 auto 24px;
+            max-width: 520px;
+            text-align: left;
+            background-color: #1e1e1e;
+        }
+
+        .alert-box-warning {
+            background-color: #231b12;
+            border-left: 4px solid #F59E0B;
+        }
+
+        .alert-box-warning .alert-title {
+            color: #F59E0B;
+        }
+
+        .alert-box-danger {
+            background-color: #251414;
+            border-left: 4px solid #EF4444;
+        }
+
+        .alert-box-danger .alert-title {
+            color: #EF4444;
+        }
+
+        .alert-box-success {
+            background-color: #13231a;
+            border-left: 4px solid #10B981;
+        }
+
+        .alert-box-success .alert-title {
+            color: #10B981;
+        }
+
+        .alert-box-info {
+            background-color: #121e28;
+            border-left: 4px solid #0284C7;
+        }
+
+        .alert-box-info .alert-title {
+            color: #0284C7;
+        }
+
+        .alert-title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .alert-body {
+            font-size: 13px;
+            line-height: 1.5;
+            color: #DDDDDD;
+            margin: 0;
+        }
+
+        /* ── Status Banners (Reports) ────────────────────────────────── */
+        .status-banner {
+            padding: 14px 20px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .status-ok {
+            background-color: #12281b;
+            border: 1px solid #10B981;
+            color: #10B981;
+        }
+
+        .status-warning {
+            background-color: #2a2012;
+            border: 1px solid #F59E0B;
+            color: #F59E0B;
+        }
+
+        .status-danger {
+            background-color: #2b1212;
+            border: 1px solid #EF4444;
+            color: #EF4444;
+        }
+
+        /* ── Tables ──────────────────────────────────────────────────── */
+        table.email-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            background-color: #1a1a1a;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #282828;
+        }
+
+        table.email-table th {
+            background-color: #222222;
+            color: #FFFFFF;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 12px 14px;
+            text-align: left;
+            border-bottom: 1px solid #2c2c2c;
+        }
+
+        table.email-table td {
+            padding: 12px 14px;
+            font-size: 13px;
+            color: #CCCCCC;
+            border-bottom: 1px solid #242424;
+            text-align: left;
+        }
+
+        table.email-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* ── Error Details Section ───────────────────────────────────── */
+        .error-section {
+            margin-top: 30px;
+            text-align: left;
+        }
+
+        .error-title {
+            color: #EF4444;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .error-box {
+            background-color: #1e1e1e;
+            border: 1px solid #331515;
+            border-left: 4px solid #EF4444;
+            padding: 16px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+        }
+
+        .error-job-name {
+            color: #EF4444;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .error-body {
+            background-color: #121212;
+            color: #EF4444;
+            font-family: monospace;
+            font-size: 11px;
+            padding: 12px;
+            border-radius: 3px;
+            overflow-x: auto;
+            margin: 0;
+            white-space: pre-wrap;
+        }
+
+        /* ── Specialized Components (QR & Instructions) ──────────────── */
+        .qr-code-box {
+            background-color: #FFFFFF;
+            padding: 15px;
+            border-radius: 8px;
+            display: inline-block;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .qr-code-box img {
+            display: block;
+            width: 150px;
+            height: 150px;
+        }
+
+        .instructions-card {
+            text-align: left;
+            background-color: #1a1a1a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 25px;
+            border: 1px solid #252525;
+        }
+
+        .instructions-card h2 {
+            font-size: 13px;
+            text-transform: uppercase;
+            color: #FFC845;
+            margin-top: 0;
+            letter-spacing: 0.5px;
+        }
+
+        .instructions-card ul {
+            padding-left: 20px;
+            margin-bottom: 0;
+        }
+
+        .instructions-card li {
+            font-size: 13px;
+            color: #A1A1A1;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .instructions-card li strong {
+            color: #FFFFFF;
+        }
+
+        /* ── Footer ──────────────────────────────────────────────────── */
         .footer {
             padding: 40px 20px;
             text-align: center;
@@ -106,6 +456,18 @@
 
         .footer p {
             font-size: 11px;
+            line-height: 1.6;
+            margin-top: 0;
+            margin-bottom: 6px;
+        }
+
+        .footer a {
+            color: #888888;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            color: #FFC845;
         }
     </style>
     {% block extra_style %}{% endblock %}
@@ -114,10 +476,12 @@
 <body>
     <div class="container">
         <div class="header">
-            <img src="https://bellevitesse.com/static/imgs/logos_and_name/blanc-fond-transparent.png"
-                alt="Belle Vitesse" class="logo">
+            <a href="https://bellevitesse.com" target="_blank">
+                <img src="https://bellevitesse.com/static/imgs/logos_and_name/blanc-fond-transparent.png"
+                    alt="Belle Vitesse" class="logo">
+            </a>
         </div>
-        <div class="content">
+        <div class="content {% block content_class %}{% endblock %}">
             {% block content %}{% endblock %}
         </div>
         <div class="footer">
@@ -125,6 +489,7 @@
                 © Belle Vitesse {{ now_year }}. Tous droits réservés.<br>
                 Belle Vitesse — 33 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine, France
             </p>
+            {% block footer_extra %}{% endblock %}
         </div>
     </div>
 </body>

@@ -1,0 +1,28 @@
+{% extends "emails/base_transactional.html" %}
+
+{% block title %}{{ subject }}{% endblock %}
+
+{% block content_class %}content-left{% endblock %}
+
+{% block content %}
+<h1 class="dot-before">{{ subject }}</h1>
+
+<div class="campaign-body">
+    {% if body_html %}
+        {{ body_html|safe }}
+    {% elif body %}
+        {% for paragraph in body.split('\n\n') %}
+            {% if paragraph.strip() %}
+                <p>{{ paragraph.replace('\n', '<br>')|safe }}</p>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block footer_extra %}
+<p>
+    Vous recevez ce courriel car vous êtes abonné à la newsletter de Belle Vitesse.<br>
+    <a href="{{ unsubscribe_url }}">Se désabonner de la newsletter</a>
+</p>
+{% endblock %}

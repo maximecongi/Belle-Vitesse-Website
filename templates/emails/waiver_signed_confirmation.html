@@ -4,15 +4,23 @@
 
 {% block content %}
 <h1 class="dot-before">Décharge Signée.</h1>
+
 <p>
     Bonjour {{ recipient_name }},<br><br>
-    Merci d'avoir complété et signé électroniquement la décharge pour le projet :<br>
-    <strong>{{ project_name }}</strong>.
+    Merci d'avoir complété et signé électroniquement votre décharge de responsabilité.
 </p>
+
+<div class="info-card info-card-waiver">
+    <div class="info-line"><strong>Projet :</strong> {{ project_name }}</div>
+    <div class="info-line"><strong>Statut :</strong> <span class="badge badge-success">Signée & Validée</span></div>
+    <div class="info-line"><strong>Document :</strong> Exemplaire officiel certifié en pièce jointe (PDF)</div>
+</div>
+
 <p>
-    Vous trouverez ci-joint la copie signée au format PDF.
+    Vous trouverez ci-joint votre exemplaire signé pour archivage et conformité.
 </p>
-<p style="margin-top: 30px; font-size: 14px; font-style: italic;">
-    L'équipe Belle Vitesse.
+
+<p class="text-muted">
+    L'équipe Belle Vitesse reste à votre entière disposition.
 </p>
 {% endblock %}

@@ -4,24 +4,30 @@
 
 {% block content %}
 <h1 class="dot-before">Constat d'Incident Scellé.</h1>
+
 <p>
     Bonjour,<br><br>
-    Le constat contradictoire d'incident relatif au projet <strong>{{ project_name }}</strong> a été signé par l'ensemble des parties et scellé électroniquement.
+    Le constat contradictoire d'incident relatif au projet a été visé par l'ensemble des parties et scellé électroniquement :
 </p>
 
-<div class="info-card">
+<div>
+    <span class="project-pill">{{ project_name }}</span>
+</div>
+
+<div class="info-card info-card-incident">
     <div class="info-line"><strong>N° de dossier :</strong> {{ incident_number }}</div>
-    <div class="info-line"><strong>Statut :</strong> Scellé & Certifié conforme</div>
+    <div class="info-line"><strong>Statut :</strong> <span class="badge badge-success">Scellé & Certifié conforme</span></div>
     {% if incident_title %}
     <div class="info-line"><strong>Objet :</strong> {{ incident_title }}</div>
     {% endif %}
+    <div class="info-line"><strong>Intégrité :</strong> Empreinte cryptographique & QR code de vérification</div>
 </div>
 
 <p>
-    Vous trouverez en pièce jointe de ce courriel l'exemplaire officiel scellé au format PDF, muni de son empreinte cryptographique d'intégrité et de son QR code de vérification légale.
+    Vous trouverez en pièce jointe de ce courriel l'exemplaire officiel scellé au format PDF.
 </p>
 
-<p style="margin-top: 30px; font-size: 14px; font-style: italic;">
-    L'équipe Belle Vitesse.
+<p class="text-muted">
+    L'équipe Belle Vitesse reste à votre disposition pour tout échange complémentaire.
 </p>
 {% endblock %}
