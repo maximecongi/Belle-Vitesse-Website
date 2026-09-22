@@ -250,6 +250,59 @@ class KDriveService:
 
         return purged
 
+    def prune_empty_directories_tree(
+        self, root_folder_id: int = KDRIVE_ROOT_FOLDER_ID, dry_run: bool = False
+    ) -> List[str]:
+        """
+        Scanne récursivement (bottom-up) l'ensemble de l'arborescence kDrive sous root_folder_id
+        et supprime tous les dossiers orphelins totalement vides (ex: anciens dossiers de projets déplacés comme 'TEST PROJET 4').
+        Ne supprime JAMAIS root_folder_id.
+        """
+        purged = []
+
+        def _traverse_and_prune(folder_id: int, folder_path: str = "") -> bool:
+            """Retourne True si le dossier est vide (sans fichier ni sous-dossier restant)."""
+            try:
+                items, _, _ = self.client.list_files(folder_id, limit=200)
+            except Exception as e:
+                logger.warning(f"⚠️ Impossible de lister le dossier {folder_id} ({folder_path}): {e}")
+                return False
+
+            has_files = False
+            remaining_children = 0
+
+            for item in items:
+                child_id = item["id"]
+                child_name = item.get("name", str(child_id))
+                child_path = f"{folder_path}/{child_name}" if folder_path else child_name
+
+                if item.get("type") == "file":
+                    has_files = True
+                    remaining_children += 1
+                elif item.get("type") == "dir":
+                    child_is_empty = _traverse_and_prune(child_id, child_path)
+                    if not child_is_empty:
+                        remaining_children += 1
+
+            if remaining_children == 0 and not has_files:
+                if folder_id != root_folder_id:
+                    if dry_run:
+                        logger.info(f"🔍 [DRY-RUN] Dossier vide orphelin détecté : '{folder_path}' (ID={folder_id})")
+                    else:
+                        logger.info(f"🗑️ Purge du dossier vide orphelin : '{folder_path}' (ID={folder_id})...")
+                        try:
+                            self.client.delete(folder_id)
+                        except Exception as del_err:
+                            logger.warning(f"⚠️ Échec suppression dossier vide {folder_id}: {del_err}")
+                            return False
+                    purged.append(folder_path)
+                    return True
+
+            return False
+
+        _traverse_and_prune(root_folder_id)
+        return purged
+
     def ensure_directory_path(self, parent_id: int, relative_path: str) -> int:
         """
         Assure l'existence d'une chaîne de répertoires sous parent_id et retourne l'ID du dernier dossier.
@@ -426,7 +479,15 @@ class KDriveService:
 
         logger.info(f"📦 Déplacement du projet {project.name} vers {new_parent_rel}...")
 
-        # 1. Assurer l'existence du nouveau dossier parent (<Nouveau_Projet>)
+        # 1. Récupération de l'ancien dossier parent avant le déplacement
+        old_parent_id = None
+        try:
+            curr_meta = self.client.get_file(project.kdrive_folder_id)
+            old_parent_id = curr_meta.get("parent_id")
+        except Exception as e_meta:
+            logger.warning(f"⚠️ Impossible de récupérer l'ancien parent de {project.kdrive_folder_id}: {e_meta}")
+
+        # 2. Assurer l'existence du nouveau dossier parent (<Nouveau_Projet>)
         # relative_path = <Nouvelle_Année>/<Nouveau_Mois>/<Nouvelle_Production>
         segments = new_parent_rel.split("/")
         grandparent_rel = "/".join(segments[:-1])
@@ -439,12 +500,19 @@ class KDriveService:
         )
         new_dest_id = dest_dir_res["id"]
 
-        # 2. Déplacement atomique du dossier <project_id>
+        # 3. Déplacement atomique du dossier <project_id>
         move_res = self.client.move(
             file_id=project.kdrive_folder_id,
             destination_directory_id=new_dest_id,
             conflict="error",
         )
+
+        # 4. Nettoyage de l'ancien emplacement : suppression de l'ancien parent s'il est devenu vide (remonte récursivement)
+        if old_parent_id and old_parent_id != new_dest_id:
+            try:
+                self._prune_empty_parents_upwards(old_parent_id)
+            except Exception as e_prune:
+                logger.warning(f"⚠️ Erreur nettoyage ancien dossier parent {old_parent_id}: {e_prune}")
 
         project.kdrive_path = build_project_path(project)
         project.kdrive_last_cancel_id = move_res.get("cancel_id")
@@ -623,7 +691,9 @@ class KDriveService:
         s'il est devenu totalement vide, jusqu'au premier dossier non-vide (sans jamais supprimer stop_at_id).
         """
         curr_id = parent_id
-        while curr_id and curr_id != stop_at_id:
+        steps = 0
+        while curr_id and curr_id != stop_at_id and steps < 10:
+            steps += 1
             try:
                 meta = self.client.get_file(curr_id)
                 parent_of_curr = meta.get("parent_id")

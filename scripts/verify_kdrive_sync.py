@@ -149,6 +149,18 @@ def run_kdrive_reconciliation(dry_run: bool = False):
             else:
                 logger.info("✓ Aucun projet supprimé orphelin à purger.")
 
+            # Nettoyage récursif des dossiers orphelins vides sur l'ensemble de kDrive (ex: anciens dossiers de projets déplacés)
+            logger.info("🧹 Scan et nettoyage des dossiers orphelins vides résiduels sur kDrive...")
+            try:
+                tree_purged = service.prune_empty_directories_tree(dry_run=dry_run)
+                if tree_purged:
+                    stats["orphan_dirs_purged"] = len(tree_purged)
+                    logger.info(f"🗑️ {len(tree_purged)} dossier(s) orphelin(s) vide(s) purgé(s) sur kDrive -> {', '.join(tree_purged)}")
+                else:
+                    logger.info("✓ Aucun dossier orphelin vide détecté.")
+            except Exception as e_tree:
+                logger.error(f"❌ Erreur purge dossiers orphelins vides : {e_tree}")
+
             # ── 3. Relance des Objets kDrive (photos, PDF) en attente ou échec ────────
             if not dry_run:
                 logger.info("🔄 Relance des objets de documents en attente de synchronisation...")
