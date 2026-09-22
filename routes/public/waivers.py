@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask import abort, current_app, jsonify, render_template, request
 from werkzeug.utils import secure_filename
@@ -69,10 +69,14 @@ def init_waiver_routes(app):
             return jsonify({"success": False, "error": "Jeton invalide."})
 
         # 2. Vérifier l'expiration (24h)
-        if token_rec.expires_at and token_rec.expires_at < datetime.utcnow():
-            if request.method == "GET":
-                return render_template(config["template_sign"], waiver={"status": "expired"})
-            return jsonify({"success": False, "error": "Ce lien de signature a expiré."})
+        if token_rec.expires_at:
+            exp = token_rec.expires_at
+            now_utc = datetime.now(timezone.utc)
+            is_expired = exp < (now_utc if exp.tzinfo is not None else now_utc.replace(tzinfo=None))
+            if is_expired:
+                if request.method == "GET":
+                    return render_template(config["template_sign"], waiver={"status": "expired"})
+                return jsonify({"success": False, "error": "Ce lien de signature a expiré."})
 
         # 3. Récupérer la décharge
         waiver = config["model"].query.filter_by(

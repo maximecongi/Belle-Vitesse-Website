@@ -1,6 +1,4 @@
-from datetime import datetime
-
-from models import NewsletterSubscriber, db
+from models import NewsletterSubscriber, db, _utcnow
 
 
 def add_newsletter_subscriber(email):
@@ -12,7 +10,7 @@ def add_newsletter_subscriber(email):
 
     subscriber = NewsletterSubscriber(
         email=email,
-        subscribed_at=datetime.utcnow()
+        subscribed_at=_utcnow()
     )
 
     db.session.add(subscriber)

@@ -1,5 +1,4 @@
-from datetime import datetime
-from models.db import db
+from models.db import db, _utcnow
 
 
 class KDriveObject(db.Model):
@@ -28,11 +27,11 @@ class KDriveObject(db.Model):
     attempts = db.Column(db.Integer, default=0, nullable=False)
     last_error = db.Column(db.Text, nullable=True)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=_utcnow, nullable=False)
     updated_at = db.Column(
         db.DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        default=_utcnow,
+        onupdate=_utcnow,
         nullable=False
     )
 

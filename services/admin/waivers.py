@@ -15,6 +15,7 @@ from models import (
     Project,
     db,
 )
+from models.db import _utcnow
 from services.admin.status_mapping import format_waiver_status
 from utils.database import get_vehicles
 
@@ -157,7 +158,7 @@ def create_production_waiver(project_id):
             [vehicle_map.get(vid, vid) for vid in veh_ids])
 
     waiver.status = "to_send"
-    waiver.generated_at = datetime.utcnow()
+    waiver.generated_at = _utcnow()
 
     db.session.add(waiver)
     db.session.commit()
@@ -285,7 +286,7 @@ def generate_production_waiver(waiver_id):
             [vehicle_map.get(vid, vid) for vid in veh_ids])
 
     waiver.status = "to_send"
-    waiver.generated_at = datetime.utcnow()
+    waiver.generated_at = _utcnow()
     db.session.commit()
     return True, "Décharge production générée avec succès."
 
@@ -442,7 +443,7 @@ def create_pilot_waiver(project_id):
             [cv.vehicle_name for cv in p.active_checkout_vehicles if cv.vehicle_name])
 
     waiver.status = "to_send"
-    waiver.generated_at = datetime.utcnow()
+    waiver.generated_at = _utcnow()
 
     db.session.add(waiver)
     db.session.commit()
@@ -587,7 +588,7 @@ def generate_pilot_waiver(waiver_id):
             [cv.vehicle_name for cv in p.active_checkout_vehicles if cv.vehicle_name])
 
     waiver.status = "to_send"
-    waiver.generated_at = datetime.utcnow()
+    waiver.generated_at = _utcnow()
     db.session.commit()
     return True, "Décharge générée avec succès."
 

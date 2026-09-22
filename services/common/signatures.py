@@ -6,9 +6,10 @@ import logging
 import os
 import secrets
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from flask import current_app, render_template
+from sqlalchemy.exc import IntegrityError
 
 from models import (
     CheckinSignedDocument,
@@ -25,9 +26,14 @@ from models import (
     ProductionWaiver,
     ProductionWaiverSignedDocument,
     ProductionWaiverToken,
+    # Incidents
+    Incident,
+    IncidentToken,
+    IncidentSignedDocument,
     AppSetting,
     db,
 )
+from models.db import _utcnow
 from utils.database import get_vehicles
 from utils.document_utils import (
     compute_hmac_seal,
@@ -40,6 +46,7 @@ from utils.storage import (
     ensure_dir,
     get_checkin_path,
     get_checkout_path,
+    get_incident_path,
     get_pilot_waiver_path,
     get_production_waiver_path,
 )
@@ -57,7 +64,8 @@ FLOW_CONFIG = {
         "url_path": "checkout",
         "storage_func": get_checkout_path,
         "stylesheets": ["css/styles.css", "css/checkout.css"],
-        "template": "pdf/checkout.html"
+        "template": "pdf/checkout.html",
+        "pk_name": "inspection_id",
     },
     "checkin": {
         "model": CheckinVehicle,
@@ -67,7 +75,8 @@ FLOW_CONFIG = {
         "url_path": "checkin",
         "storage_func": get_checkin_path,
         "stylesheets": ["css/styles.css", "css/checkin.css"],
-        "template": "pdf/checkin.html"
+        "template": "pdf/checkin.html",
+        "pk_name": "inspection_id",
     },
     "pilot": {
         "model": PilotWaiver,
@@ -77,7 +86,8 @@ FLOW_CONFIG = {
         "url_path": "pilot-waiver",
         "storage_func": get_pilot_waiver_path,
         "stylesheets": [],  # Utilise des styles en ligne ou globaux pour les décharges
-        "template": "pdf/pilot_waiver.html"
+        "template": "pdf/pilot_waiver.html",
+        "pk_name": "waiver_id",
     },
     "production": {
         "model": ProductionWaiver,
@@ -87,8 +97,23 @@ FLOW_CONFIG = {
         "url_path": "production-waiver",
         "storage_func": get_production_waiver_path,
         "stylesheets": [],  # Utilise des styles en ligne ou globaux pour les décharges
-        "template": "pdf/production_waiver.html"
-    }
+        "template": "pdf/production_waiver.html",
+        "pk_name": "waiver_id",
+    },
+    "incident": {
+        "model": Incident,
+        "token_model": IncidentToken,
+        "signed_model": IncidentSignedDocument,
+        "prefix": "INCIDENT",
+        "url_path": "incidents",
+        "storage_func": lambda project_or_rec: get_incident_path(
+            project_or_rec if hasattr(project_or_rec, "departure_date") or hasattr(project_or_rec, "name")
+            else getattr(project_or_rec, "project", None)
+        ),
+        "stylesheets": ["css/styles.css", "css/checkout.css", "css/incident_pdf.css"],
+        "template": "pdf/incident_report.html",
+        "pk_name": "incident_number",
+    },
 }
 
 # ── Gestion des Jetons ───────────────────────────────────────────
@@ -138,7 +163,7 @@ def generate_inspection_token(record_id, mode):
         token=token,
         record_id=str(record_id),
         inspection_id=data["inspection_id"],
-        created_at=datetime.utcnow()
+        created_at=_utcnow()
     )
     db.session.add(new_token)
 
@@ -400,51 +425,20 @@ def _dispatch_kdrive_document_bundle(mode, record, rel_pdf_path, base_url, curre
     # 1. Synchronisation native kDrive (dispatch asynchrone post-commit)
     if project_obj and getattr(project_obj, "id", None):
         try:
-            from services.common.kdrive import dispatch_upload_bundle
-            entity_id = getattr(record, "inspection_number", getattr(record, "waiver_id", None))
-            entity_type_map = {
-                "checkout": "checkout",
-                "checkin": "checkin",
-                "pilot": "pilot_waiver",
-                "production": "production_waiver",
-            }
-            kdrive_entity_type = entity_type_map.get(mode, mode)
+            from services.common.kdrive import (
+                dispatch_upload_bundle,
+                extract_bundle_file_specs,
+                resolve_entity_info,
+            )
 
-            file_specs = [
-                {"role": "pdf", "path": rel_pdf_path, "filename": os.path.basename(rel_pdf_path)}
-            ]
-
-            if mode in ["checkout", "checkin"]:
-                import json
-                interior_raw = getattr(record, "interior_photos", None)
-                exterior_raw = getattr(record, "exterior_photos", None)
-                try:
-                    for p in (json.loads(interior_raw) if interior_raw else []):
-                        if p:
-                            file_specs.append({"role": "photo", "path": p})
-                except Exception:
-                    pass
-                try:
-                    for p in (json.loads(exterior_raw) if exterior_raw else []):
-                        if p:
-                            file_specs.append({"role": "photo", "path": p})
-                except Exception:
-                    pass
-            elif mode == "pilot":
-                if getattr(record, "pilot_license_path", None):
-                    file_specs.append({"role": "license", "path": record.pilot_license_path})
-                if getattr(record, "pilot_insurance_path", None):
-                    file_specs.append({"role": "insurance", "path": record.pilot_insurance_path})
-                if getattr(record, "pilot_identity_path", None):
-                    file_specs.append({"role": "identity", "path": record.pilot_identity_path})
-            elif mode == "production":
-                if getattr(record, "production_insurance_path", None):
-                    file_specs.append({"role": "insurance", "path": record.production_insurance_path})
-
-            if entity_id:
+            entity_type, entity_id, project_id = resolve_entity_info(record, mode)
+            if entity_id and project_id:
+                file_specs = extract_bundle_file_specs(
+                    record, entity_type=entity_type, rel_pdf_path=rel_pdf_path
+                )
                 dispatch_upload_bundle(
-                    project_id=project_obj.id,
-                    entity_type=kdrive_entity_type,
+                    project_id=project_id,
+                    entity_type=entity_type,
                     entity_id=entity_id,
                     file_specs=file_specs,
                 )
@@ -477,3 +471,156 @@ def _send_waiver_confirmation_email(mode, waiver, pdf_path):
             )
     except Exception as e:
         logger.error(f"❌ Erreur e-mail ({mode} {waiver.id}) : {e}")
+
+
+def seal_incident_contradictory_document(incident, incident_data, base_url=None):
+    """
+    Moteur unifié de scellement électronique et d'archivage contradictoire pour un incident :
+    1. Calcule le sceau HMAC-SHA256 d'intégrité contradictoire.
+    2. Génère le QR code de vérification pointant vers /incidents/verify/<incident_number>.
+    3. Rend et compresse le PDF scellé intégrant les 2 signatures et le cartouche de conformité.
+    4. Enregistre le PDF dans output/.../1_SÉCURITÉ/5_INCIDENTS/.
+    5. Met à jour l'incident (hash, pdf_file_hash, signature_status='signed', status 'en_expertise' si signale).
+    6. Persiste ou met à jour l'archive légale immuable IncidentSignedDocument.
+    7. Déclenche l'upload kDrive asynchrone (bundle PDF + photos + documents).
+    """
+    if not base_url:
+        try:
+            from flask import request
+            if request:
+                base_url = request.host_url.rstrip("/")
+        except Exception:
+            base_url = current_app.config.get(
+                "APP_BASE_URL", "https://bellevitesse.com").rstrip("/")
+
+    verification_url = f"{base_url}/incidents/verify/{incident.incident_number}"
+    qr_code_img = generate_qr_code(verification_url)
+
+    # Calcul du sceau HMAC contradictoire
+    bv_signed_iso = incident.bv_signed_at.isoformat() if incident.bv_signed_at else ""
+    prod_signed_iso = incident.prod_signed_at.isoformat() if incident.prod_signed_at else ""
+    current_hash = compute_hmac_seal(
+        "INCIDENT",
+        incident.incident_number,
+        incident.bv_signer_name or "",
+        incident.bv_signature_data or "",
+        bv_signed_iso,
+        incident.prod_signer_name or "",
+        incident.prod_signature_data or "",
+        prod_signed_iso,
+    )
+
+    company_address = "128 Rue La Boétie, 75008 Paris"
+    try:
+        company_address = AppSetting.get("company_address", company_address)
+    except Exception:
+        pass
+
+    company_name = "Belle Vitesse"
+    try:
+        company_name = AppSetting.get("company_name", company_name)
+    except Exception:
+        pass
+
+    filename = f"Belle_Vitesse_INCIDENT_{incident.incident_number}_{secrets.token_hex(4)}.pdf"
+    project_obj = incident.project if hasattr(incident, "project") else None
+    pdf_dir = ensure_dir(get_incident_path(project_obj))
+    file_path = os.path.join(pdf_dir, filename)
+
+    today_str = date.today().strftime("%d/%m/%Y")
+
+    render_ctx = {
+        "company_name": company_name,
+        "company_address": company_address,
+        "incident": incident_data,
+        "today": today_str,
+        "is_sealed": True,
+        "hash": current_hash,
+        "qr": qr_code_img,
+        "verification_url": verification_url,
+        "signed_at_str": (incident.prod_signed_at or _utcnow()).strftime("%d/%m/%Y %H:%M"),
+    }
+
+    html = render_template("pdf/incident_report.html", **render_ctx)
+    pdf_bytes = render_pdf_from_template(
+        html_content=html,
+        base_url=current_app.root_path,
+        stylesheets=["css/styles.css", "css/checkout.css", "css/incident_pdf.css"],
+        filename=filename,
+    )
+
+    output_base = current_app.config.get(
+        "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
+    rel_pdf_path = os.path.relpath(file_path, output_base)
+
+    with open(file_path, "wb") as f:
+        f.write(pdf_bytes)
+
+    pdf_file_hash = compute_pdf_hash(pdf_bytes)
+
+    incident.signed_pdf_path = rel_pdf_path
+    incident.hash = current_hash
+    incident.pdf_file_hash = pdf_file_hash
+    incident.signature_status = "signed"
+
+    # Transition automatique vers "en_expertise" si "signale"
+    if incident.status == "signale":
+        incident.status = "en_expertise"
+        logger.info(
+            f"⚡ Statut de l'incident {incident.incident_number} passé automatiquement à 'en_expertise' suite au scellement contradictoire.")
+
+    # Enregistrement ou mise à jour de l'archive légale
+    try:
+        signed_doc = IncidentSignedDocument.query.filter_by(
+            incident_number=incident.incident_number).first()
+        if not signed_doc:
+            signed_doc = IncidentSignedDocument(
+                incident_number=incident.incident_number,
+                incident_id=incident.id,
+                hash=current_hash,
+                pdf_file_hash=pdf_file_hash,
+                data_snapshot=incident.to_dict(),
+                signature=incident.prod_signature_data or incident.bv_signature_data,
+                pdf_url=f"/incidents/document/{rel_pdf_path}",
+                signed_at=(incident.prod_signed_at or _utcnow()).replace(tzinfo=None)
+            )
+            db.session.add(signed_doc)
+        else:
+            signed_doc.incident_id = incident.id
+            signed_doc.hash = current_hash
+            signed_doc.pdf_file_hash = pdf_file_hash
+            signed_doc.data_snapshot = incident.to_dict()
+            signed_doc.signature = incident.prod_signature_data or incident.bv_signature_data
+            signed_doc.pdf_url = f"/incidents/document/{rel_pdf_path}"
+            signed_doc.signed_at = (incident.prod_signed_at or _utcnow()).replace(tzinfo=None)
+
+        db.session.commit()
+    except IntegrityError as commit_err:
+        logger.warning(
+            f"⚠️ Archive légale déjà présente pour {incident.incident_number} ({commit_err}), mise à jour de l'existant...")
+        db.session.rollback()
+        existing_doc = IncidentSignedDocument.query.filter_by(
+            incident_number=incident.incident_number).first()
+        if existing_doc:
+            existing_doc.incident_id = incident.id
+            existing_doc.hash = current_hash
+            existing_doc.pdf_file_hash = pdf_file_hash
+            existing_doc.data_snapshot = incident.to_dict()
+            existing_doc.signature = incident.prod_signature_data or incident.bv_signature_data
+            existing_doc.pdf_url = f"/incidents/document/{rel_pdf_path}"
+            existing_doc.signed_at = (incident.prod_signed_at or _utcnow()).replace(tzinfo=None)
+            db.session.commit()
+        else:
+            raise commit_err
+
+    # Synchronisation kDrive native (bundle PDF + photos + documents)
+    _dispatch_kdrive_document_bundle(
+        "incident", incident, rel_pdf_path, base_url, current_hash, incident.to_dict()
+    )
+
+    return {
+        "document_id": incident.incident_number,
+        "pdf_url": f"/incidents/document/{rel_pdf_path}",
+        "hash": current_hash,
+        "file_path": file_path,
+    }

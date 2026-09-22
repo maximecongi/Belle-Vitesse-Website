@@ -17,6 +17,7 @@ from models import (
     User,
     db,
 )
+from models.db import _utcnow
 from services.admin.status_mapping import (
     INSPECTION_STATUS_MAP,
     get_checkpoint_key,
@@ -207,7 +208,7 @@ def delete_inspection_unified(mode, record_id):
     _delete_inspection_files(record)
 
     # 3. Suppression via soft-delete
-    record.deleted_at = datetime.utcnow()
+    record.deleted_at = _utcnow()
     db.session.commit()
 
     # 5. Suppression kDrive native ciblée par ID (post-commit)

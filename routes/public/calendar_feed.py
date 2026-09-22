@@ -2,7 +2,7 @@
 Route publique pour le flux calendrier ICS.
 Accessible via un token unique dans l'URL : GET /cal/<token>.ics
 """
-from datetime import datetime, timedelta
+from datetime import timedelta, timezone
 
 from flask import Blueprint, Response, abort, current_app, request
 from icalendar import Calendar, Event
@@ -10,7 +10,7 @@ from icalendar import Calendar, Event
 from sqlalchemy.orm import joinedload
 
 from extensions import limiter
-from models import CalendarSubscription, Project, db
+from models import CalendarSubscription, Project, db, _utcnow
 
 cal_feed_bp = Blueprint("cal_feed", __name__)
 
@@ -31,7 +31,7 @@ def calendar_feed(token):
 
     # 2. Mettre à jour le dernier accès
     try:
-        sub.last_accessed_at = datetime.utcnow()
+        sub.last_accessed_at = _utcnow()
         db.session.commit()
     except Exception:
         db.session.rollback()
@@ -96,7 +96,7 @@ def calendar_feed(token):
         event.add("dtstart", start_date)
         event.add("dtend", end_date_exclusive)
         event.add("summary", f"🎬 {name}")
-        event.add("dtstamp", datetime.utcnow())
+        event.add("dtstamp", _utcnow())
 
         # Construire la description
         desc_parts = [f"Projet : {name}"]

@@ -19,6 +19,10 @@ from services.common.kdrive.paths import (
     ROLE_SUBFOLDERS,
 )
 
+from services.common.kdrive.bundles import (
+    extract_bundle_file_specs,
+    resolve_entity_info,
+)
 from services.common.kdrive.service import KDriveService
 from services.common.kdrive.tasks import (
     dispatch_create_project_tree,
@@ -33,6 +37,8 @@ __all__ = [
     "KDriveClient",
     "KDriveError",
     "KDriveService",
+    "extract_bundle_file_specs",
+    "resolve_entity_info",
     "dispatch_create_project_tree",
     "dispatch_upload_bundle",
     "dispatch_move_project",
