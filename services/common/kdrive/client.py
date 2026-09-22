@@ -45,10 +45,11 @@ class KDriveClient:
         base_url: Optional[str] = None,
         timeout: Optional[int] = None,
     ):
-        self.token = token or KDRIVE_API_TOKEN
-        self.drive_id = str(drive_id or KDRIVE_DRIVE_ID)
-        self.base_url = (base_url or KDRIVE_API_BASE).rstrip("/")
-        self.timeout = timeout or KDRIVE_TIMEOUT
+        import os
+        self.token = token or os.getenv("KDRIVE_API_TOKEN") or os.getenv("N8N_API_TOKEN", "") or KDRIVE_API_TOKEN
+        self.drive_id = str(drive_id or os.getenv("KDRIVE_DRIVE_ID") or os.getenv("N8N_DRIVE_ID") or KDRIVE_DRIVE_ID)
+        self.base_url = (base_url or os.getenv("KDRIVE_API_BASE") or KDRIVE_API_BASE).rstrip("/")
+        self.timeout = timeout or int(os.getenv("KDRIVE_TIMEOUT", str(KDRIVE_TIMEOUT)))
         self.session = requests.Session()
 
     def _get_headers(self, additional_headers: Optional[Dict[str, str]] = None) -> Dict[str, str]:

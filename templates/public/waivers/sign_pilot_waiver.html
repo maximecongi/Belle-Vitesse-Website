@@ -538,20 +538,28 @@
                         body: formData
                     });
 
-                    var result = await response.json();
-                    if (result.success) {
+                    var result = null;
+                    try {
+                        result = await response.json();
+                    } catch (parseErr) {
+                        console.warn('Réponse non-JSON du serveur:', parseErr);
+                    }
+
+                    if (response.ok && result && result.success) {
                         showFeedback('✅ Décharge signée avec succès. Vous allez recevoir un e-mail de confirmation.', 'success');
                         btnSign.textContent = 'Signé ✓';
                         canvas.style.pointerEvents = 'none';
                         setTimeout(function () { window.location.reload(); }, 2500);
                     } else {
-                        showFeedback(result.error || 'Erreur inconnue. Réessayez.', 'error');
+                        var errMsg = (result && (result.error || result.message)) || ('Erreur du serveur (code ' + response.status + '). Veuillez réessayer.');
+                        showFeedback(errMsg, 'error');
                         btnSign.disabled = false;
                         btnSign.textContent = 'Signer le document';
                     }
 
                 } catch (err) {
-                    showFeedback('Erreur réseau. Vérifiez votre connexion et réessayez.', 'error');
+                    console.error('Erreur lors de la signature:', err);
+                    showFeedback('Erreur de connexion : ' + (err.message || 'Vérifiez votre connexion et réessayez.'), 'error');
                     btnSign.disabled = false;
                     btnSign.textContent = 'Signer le document';
                 }
