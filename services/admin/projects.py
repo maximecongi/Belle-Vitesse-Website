@@ -276,7 +276,11 @@ def create_project(form, user_id=None):
 
     db.session.commit()
 
-    # Déclenchement du webhook n8n pour notifier d'autres services
+    # Déclenchement de la création de l'arborescence kDrive (post-commit)
+    from services.common.kdrive import dispatch_create_project_tree
+    dispatch_create_project_tree(project.id)
+
+    # Déclenchement du webhook n8n pour compatibilité transitoire
     webhook_url = os.getenv("N8N_WEBHOOK_PROJECT")
     if webhook_url:
         trigger_n8n_webhook(
@@ -299,6 +303,13 @@ def update_project(record_id, form, user_id=None):
     project = db.session.get(Project, record_id)
     if not project:
         return False
+
+    # Capture de l'ancien état pour détecter un éventuel déplacement kDrive
+    old_date = project.departure_date or project.shoot_start_date
+    old_year = old_date.strftime("%Y") if old_date else None
+    old_month = old_date.strftime("%m") if old_date else None
+    old_prod = project.production.name if project.production else "SANS_PRODUCTION"
+    old_name = project.name
 
     veh_ids = form.getlist("vehicle_ids") if hasattr(form, 'getlist') else []
     head_ids = form.getlist("head_ids") if hasattr(form, 'getlist') else []
@@ -325,6 +336,24 @@ def update_project(record_id, form, user_id=None):
     project.last_action_by_id = user_id
 
     db.session.commit()
+
+    # Détection de renommage / déplacement kDrive
+    new_date = project.departure_date or project.shoot_start_date
+    new_year = new_date.strftime("%Y") if new_date else None
+    new_month = new_date.strftime("%m") if new_date else None
+    new_prod = project.production.name if project.production else "SANS_PRODUCTION"
+    new_name = project.name
+
+    if (old_name != new_name or old_prod != new_prod or old_year != new_year or old_month != new_month):
+        from services.common.kdrive import dispatch_move_project
+        dispatch_move_project(
+            project.id,
+            old_year=old_year,
+            old_month=old_month,
+            old_prod_name=old_prod,
+            old_proj_name=old_name,
+        )
+
     return True
 
 
@@ -389,9 +418,20 @@ def delete_project(record_id, user_id=None):
             delete_production_waiver_internal,
         )
         # Supprime d'abord les décharges liées pour respecter l'intégrité
-        delete_pilot_waiver_internal(record_id)
-        delete_production_waiver_internal(record_id)
+        delete_pilot_waiver_internal(p.id)
+        delete_production_waiver_internal(p.id)
+
+        project_db_id = p.id
+        folder_id = p.kdrive_folder_id
+
         p.deleted_at = _utcnow()
         p.last_action_by_id = user_id
         db.session.commit()
+
+        # Déclenchement de la suppression sur kDrive (post-commit)
+        try:
+            from services.common.kdrive import dispatch_delete_project
+            dispatch_delete_project(project_db_id, folder_id)
+        except Exception as k_err:
+            logger.error(f"❌ Erreur dispatch suppression kDrive projet {project_db_id} : {k_err}")
     return True

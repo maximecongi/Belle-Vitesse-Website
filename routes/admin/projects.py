@@ -27,6 +27,7 @@ from services.admin import (
     update_project_notes,
     update_project_report,
 )
+from models import Project, db
 from utils.decorators import require_roles
 
 
@@ -167,6 +168,23 @@ def init_projects_routes(app):
             current_app.logger.error(f"❌ Erreur dans admin_project_detail : {e}")
             flash("Erreur lors de l'accès à la fiche projet.", "error")
             return redirect(url_for("admin_projects_list"))
+
+    @app.route("/admin/projects/<record_id>/kdrive/resync", methods=["POST"])
+    @require_roles('administrator', 'manager')
+    def admin_project_kdrive_resync(record_id):
+        try:
+            project = db.session.get(Project, record_id)
+            if not project:
+                abort(404)
+
+            from services.common.kdrive import dispatch_create_project_tree
+            dispatch_create_project_tree(project.id)
+            flash("Synchronisation kDrive relancée.", "success")
+            return redirect(url_for("admin_project_detail", record_id=record_id))
+        except Exception as e:
+            current_app.logger.error(f"❌ Erreur resync kDrive : {e}")
+            flash(f"Erreur lors de la synchronisation : {e}", "error")
+            return redirect(url_for("admin_project_detail", record_id=record_id))
 
     @app.route("/admin/projects/<record_id>/notes", methods=["POST"])
     @require_roles('administrator', 'manager', 'commercial', 'user', 'technicien')

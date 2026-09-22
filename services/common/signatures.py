@@ -397,9 +397,66 @@ def process_inspection_signature(token_str, mode, signature_data, signed_ip):
 
 def _trigger_unified_webhook(mode, record, rel_pdf_path, base_url, current_hash, snapshot):
     """
-    Déclenche le webhook n8n approprié pour tout document signé.
+    Déclenche la synchronisation kDrive native et le webhook n8n approprié pour tout document signé.
     """
     config = FLOW_CONFIG.get(mode)
+    project_obj = getattr(record, "project", None)
+
+    # 1. Synchronisation native kDrive (dispatch asynchrone post-commit)
+    if project_obj and getattr(project_obj, "id", None):
+        try:
+            from services.common.kdrive import dispatch_upload_bundle
+            entity_id = getattr(record, "inspection_number", getattr(record, "waiver_id", None))
+            entity_type_map = {
+                "checkout": "checkout",
+                "checkin": "checkin",
+                "pilot": "pilot_waiver",
+                "production": "production_waiver",
+            }
+            kdrive_entity_type = entity_type_map.get(mode, mode)
+
+            file_specs = [
+                {"role": "pdf", "path": rel_pdf_path, "filename": os.path.basename(rel_pdf_path)}
+            ]
+
+            if mode in ["checkout", "checkin"]:
+                import json
+                interior_raw = getattr(record, "interior_photos", None)
+                exterior_raw = getattr(record, "exterior_photos", None)
+                try:
+                    for p in (json.loads(interior_raw) if interior_raw else []):
+                        if p:
+                            file_specs.append({"role": "photo", "path": p})
+                except Exception:
+                    pass
+                try:
+                    for p in (json.loads(exterior_raw) if exterior_raw else []):
+                        if p:
+                            file_specs.append({"role": "photo", "path": p})
+                except Exception:
+                    pass
+            elif mode == "pilot":
+                if getattr(record, "pilot_license_path", None):
+                    file_specs.append({"role": "license", "path": record.pilot_license_path})
+                if getattr(record, "pilot_insurance_path", None):
+                    file_specs.append({"role": "insurance", "path": record.pilot_insurance_path})
+                if getattr(record, "pilot_identity_path", None):
+                    file_specs.append({"role": "identity", "path": record.pilot_identity_path})
+            elif mode == "production":
+                if getattr(record, "production_insurance_path", None):
+                    file_specs.append({"role": "insurance", "path": record.production_insurance_path})
+
+            if entity_id:
+                dispatch_upload_bundle(
+                    project_id=project_obj.id,
+                    entity_type=kdrive_entity_type,
+                    entity_id=entity_id,
+                    file_specs=file_specs,
+                )
+        except Exception as k_err:
+            logger.error(f"❌ Erreur dispatch kDrive ({mode}) : {k_err}")
+
+    # 2. Webhook n8n transitoire
     webhook_url = os.getenv(config["webhook_env"])
     if not webhook_url:
         return
@@ -409,7 +466,6 @@ def _trigger_unified_webhook(mode, record, rel_pdf_path, base_url, current_hash,
     pdf_access_token = generate_pdf_access_token(rel_pdf_path)
     pdf_url_signed = f"{base_url}/{config['url_path']}/document/{rel_pdf_path}?t={pdf_access_token}"
 
-    project_obj = getattr(record, "project", None)
     project_id_unique = "—"
     if project_obj:
         project_id_unique = getattr(project_obj, "project_id", "—")

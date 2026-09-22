@@ -187,6 +187,14 @@ def delete_production_waiver(waiver_id):
         _cleanup_waiver_assets("production", waiver)
         waiver.deleted_at = datetime.now(timezone.utc)
         db.session.commit()
+
+        # Suppression kDrive ciblée (post-commit)
+        try:
+            from services.common.kdrive import dispatch_delete_document
+            dispatch_delete_document("production_waiver", waiver.waiver_id)
+        except Exception as k_err:
+            logger.error(f"❌ Erreur dispatch suppression kDrive production_waiver : {k_err}")
+
         logger.info(f"🗑️ Décharge production {waiver.waiver_id} supprimée avec succès.")
         return True, "Décharge supprimée avec succès."
     except Exception as e:
@@ -371,6 +379,13 @@ def reset_production_waiver(waiver_id):
         _cleanup_waiver_assets("production", waiver)
         _reset_waiver_fields("production", waiver)
         db.session.commit()
+
+        try:
+            from services.common.kdrive import dispatch_delete_document
+            dispatch_delete_document("production_waiver", waiver.waiver_id)
+        except Exception as k_err:
+            logger.error(f"❌ Erreur dispatch suppression kDrive production_waiver reset : {k_err}")
+
         return True, "Décharge réinitialisée avec succès."
     except Exception as e:
         db.session.rollback()
@@ -390,6 +405,12 @@ def delete_production_waiver_internal(project_id):
         _cleanup_waiver_assets("production", waiver)
         waiver.deleted_at = datetime.now(timezone.utc)
         db.session.commit()
+
+        try:
+            from services.common.kdrive import dispatch_delete_document
+            dispatch_delete_document("production_waiver", waiver.waiver_id)
+        except Exception as k_err:
+            logger.error(f"❌ Erreur dispatch suppression kDrive production_waiver internal : {k_err}")
     except Exception as e:
         logger.error(f"❌ Erreur suppression décharge production : {e}")
         db.session.rollback()
@@ -466,6 +487,14 @@ def delete_pilot_waiver(waiver_id):
         _cleanup_waiver_assets("pilot", waiver)
         waiver.deleted_at = datetime.now(timezone.utc)
         db.session.commit()
+
+        # Suppression kDrive ciblée (post-commit)
+        try:
+            from services.common.kdrive import dispatch_delete_document
+            dispatch_delete_document("pilot_waiver", waiver.waiver_id)
+        except Exception as k_err:
+            logger.error(f"❌ Erreur dispatch suppression kDrive pilot_waiver : {k_err}")
+
         logger.info(f"🗑️ Décharge pilote {waiver.waiver_id} supprimée avec succès.")
         return True, "Décharge supprimée avec succès."
     except Exception as e:
@@ -666,6 +695,13 @@ def reset_pilot_waiver(waiver_id):
         _cleanup_waiver_assets("pilot", waiver)
         _reset_waiver_fields("pilot", waiver)
         db.session.commit()
+
+        try:
+            from services.common.kdrive import dispatch_delete_document
+            dispatch_delete_document("pilot_waiver", waiver.waiver_id)
+        except Exception as k_err:
+            logger.error(f"❌ Erreur dispatch suppression kDrive pilot_waiver reset : {k_err}")
+
         return True, "Décharge réinitialisée avec succès."
     except Exception as e:
         db.session.rollback()
@@ -687,6 +723,12 @@ def delete_pilot_waiver_internal(project_id):
         _cleanup_waiver_assets("pilot", waiver)
         waiver.deleted_at = datetime.now(timezone.utc)
         db.session.commit()
+
+        try:
+            from services.common.kdrive import dispatch_delete_document
+            dispatch_delete_document("pilot_waiver", waiver.waiver_id)
+        except Exception as k_err:
+            logger.error(f"❌ Erreur dispatch suppression kDrive pilot_waiver internal : {k_err}")
     except Exception as e:
         logger.error(
             f"❌ Erreur lors de la suppression interne de la décharge pour projet {project_id} : {e}")

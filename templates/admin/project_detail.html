@@ -11,9 +11,27 @@ initials, empty_state, waiver_card, doc_download_badge %}
     <a href="{{ url_for('admin_projects_list') }}" class="admin-btn admin-btn-secondary">
         ← Liste des projets
     </a>
+    <form action="{{ url_for('admin_project_kdrive_resync', record_id=project.id) }}" method="POST" class="u-inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="admin-btn admin-btn-secondary" title="Relancer la synchronisation kDrive">
+            <i data-lucide="cloud-cog"></i>
+            <span>kDrive</span>
+        </button>
+    </form>
     <a href="{{ url_for('admin_project_edit', record_id=project.id) }}" class="admin-btn admin-btn-primary">
-        Modifier le projet
+        <i data-lucide="edit-3"></i>
+        <span>Modifier</span>
     </a>
+    {% if is_admin or session.get('admin_user_role') in ['administrator', 'manager', 'commercial'] %}
+    <form method="POST" action="{{ url_for('admin_project_delete', record_id=project.id) }}" class="u-d-inline"
+        onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce projet ? Cette action supprimera également son dossier sur kDrive.');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="admin-btn admin-btn-danger" title="Supprimer le projet">
+            <i data-lucide="trash-2"></i>
+            <span>Supprimer</span>
+        </button>
+    </form>
+    {% endif %}
 </div>
 {% endblock %}
 
@@ -22,18 +40,35 @@ initials, empty_state, waiver_card, doc_download_badge %}
 <div class="admin-card u-mb-3 project-hub-header" data-status="{{ shoot_status }}">
     <div class="u-flex u-justify-between u-align-start u-flex-wrap u-gap-3">
         <div class="project-hub-left-side">
-            <div><span class="checkout-doc-id u-m-0 project-hub-id">{{project.project_id }}</span></div>
             <div class="project-hub-header-main-row">
                 <!-- Titre du projet -->
                 <h1 class="project-hub-title">{{ project.name }}</h1>
                 {{ shoot_status_badge(shoot_status) }}
+                <div class="u-flex u-align-center u-gap-2">
+                    {% if project.kdrive_sync_status == 'synced' %}
+                    <span class="badge-pill u-bg-success-light u-text-success"
+                        title="{{ project.kdrive_path or 'Synchronisé sur kDrive' }}">
+                        <i data-lucide="cloud"></i> Synchronisé sur le Cloud
+                    </span>
+                    {% elif project.kdrive_sync_status == 'failed' %}
+                    <span class="badge-pill u-bg-danger-light u-text-danger"
+                        title="{{ project.kdrive_last_error or 'Erreur kDrive' }}">
+                        <i data-lucide="alert-triangle"></i> Erreur de synchronisation sur le Cloud
+                    </span>
+                    {% else %}
+                    <span class="badge-pill u-bg-warning-light u-text-warning"
+                        title="En attente de synchronisation kDrive">
+                        <i data-lucide="clock"></i> En attente de synchronisation sur le Cloud
+                    </span>
+                    {% endif %}
+                </div>
             </div>
             <!-- Ligne méta : Identifiant, Statut du tournage, Société de Production -->
             <div class="project-hub-meta">
                 <i data-lucide="building"></i>
                 <span class="u-text-semibold">{{ project.production.name if project.production else 'Production à
-                    confirmer'
-                    }}</span>
+                    confirmer' }}</span>
+                <span class="checkout-doc-id u-m-0 project-hub-id">{{ project.project_id }}</span>
             </div>
 
             <!-- Barre de jalons temporels (Enlèvement, Tournage, Restitution) -->
@@ -188,7 +223,8 @@ initials, empty_state, waiver_card, doc_download_badge %}
                             {% if v.checkout_id %}
                             <div class="projects-cell-item">
                                 <a href="{{ url_for('admin_checkout_detail', record_id=v.checkout_id) }}">
-                                    {{ status_badge(v.checkout_status, v.checkout_status_id, class_name='u-m-1', **{'data-conform': v.checkout_conform}) }}
+                                    {{ status_badge(v.checkout_status, v.checkout_status_id, class_name='u-m-1',
+                                    **{'data-conform': v.checkout_conform}) }}
                                 </a>
                                 {{ doc_download_badge(v.checkout_pdf) }}
                             </div>
@@ -208,7 +244,8 @@ initials, empty_state, waiver_card, doc_download_badge %}
                             {% if v.checkin_id %}
                             <div class="projects-cell-item">
                                 <a href="{{ url_for('admin_checkin_detail', record_id=v.checkin_id) }}">
-                                    {{ status_badge(v.checkin_status, v.checkin_status_id, class_name='u-m-1', **{'data-conform': v.checkin_conform}) }}
+                                    {{ status_badge(v.checkin_status, v.checkin_status_id, class_name='u-m-1',
+                                    **{'data-conform': v.checkin_conform}) }}
                                 </a>
                                 {{ doc_download_badge(v.checkin_pdf) }}
                             </div>

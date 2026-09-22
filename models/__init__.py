@@ -33,4 +33,5 @@ from models.pre_quote import PreQuote, PreQuoteVersion
 from models.mcp import McpApiToken, McpAuditLog
 from models.incident import Incident, IncidentToken, IncidentSignedDocument
 from models.project_report import ProjectReport
+from models.kdrive import KDriveObject
 

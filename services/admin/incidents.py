@@ -1039,6 +1039,15 @@ def delete_incident(record_id, confirm=True):
     # 3. Soft-delete de l'incident
     incident.deleted_at = _utcnow()
     db.session.commit()
+
+    # 4. Suppression kDrive native ciblée par ID (post-commit)
+    if incident_number:
+        try:
+            from services.common.kdrive import dispatch_delete_document
+            dispatch_delete_document("incident", incident_number)
+        except Exception as k_err:
+            logger.error(f"❌ Erreur dispatch suppression kDrive incident : {k_err}")
+
     logger.info(f"🗑️ Incident soft-deleted : {incident.incident_number}")
     return {"success": True, "message": f"Incident {incident.incident_number} supprimé avec succès."}
 
@@ -1523,7 +1532,34 @@ def finalize_incident_document(incident, base_url=None):
         else:
             raise commit_err
 
-    # 6. Webhook n8n (POST)
+    # 6. Synchronisation native kDrive (dispatch asynchrone post-commit)
+    if incident.project and getattr(incident.project, "id", None):
+        try:
+            from services.common.kdrive import dispatch_upload_bundle
+            file_specs = [
+                {
+                    "role": "pdf",
+                    "path": rel_pdf_path,
+                    "filename": f"Belle_Vitesse_INCIDENT_{incident.incident_number}_{secrets.token_hex(4)}.pdf"
+                }
+            ]
+            for p in (incident.photos_list or []):
+                if p:
+                    file_specs.append({"role": "photo", "path": p})
+            for d in (incident.documents_list or []):
+                if d:
+                    file_specs.append({"role": "document", "path": d})
+
+            dispatch_upload_bundle(
+                project_id=incident.project.id,
+                entity_type="incident",
+                entity_id=incident.incident_number,
+                file_specs=file_specs,
+            )
+        except Exception as k_err:
+            logger.error(f"❌ Erreur dispatch kDrive incident : {k_err}")
+
+    # 7. Webhook n8n transitoire (POST)
     webhook_url = os.getenv("N8N_WEBHOOK_INCIDENT") or os.getenv(
         "N8N_WEBHOOK_INCIDENT_SIGN")
     if webhook_url:

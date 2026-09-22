@@ -97,6 +97,13 @@ class Project(db.Model):
     last_action_by_id = db.Column(
         db.Integer, db.ForeignKey("users.id"), nullable=True, index=True)
 
+    # Synchronisation kDrive Infomaniak
+    kdrive_folder_id = db.Column(db.BigInteger, nullable=True, index=True)
+    kdrive_path = db.Column(db.String(500), nullable=True)
+    kdrive_sync_status = db.Column(db.String(20), default="pending", nullable=False)
+    kdrive_last_error = db.Column(db.Text, nullable=True)
+    kdrive_last_cancel_id = db.Column(db.String(100), nullable=True)
+
     # Relations
     # Liste des contrôles au départ effectués pour ce projet
     checkout_vehicles = db.relationship(
@@ -128,6 +135,9 @@ class Project(db.Model):
     # Utilisateur ayant effectué la dernière action
     last_action_by = db.relationship(
         "User", foreign_keys=[last_action_by_id], lazy=True)
+    # Objets kDrive synchronisés pour ce projet
+    kdrive_objects = db.relationship(
+        "KDriveObject", backref="project", cascade="all, delete-orphan", lazy=True)
 
     @property
     def active_checkout_vehicles(self):
@@ -167,6 +177,10 @@ class Project(db.Model):
             "return_date": self.return_date.isoformat() if self.return_date else None,
             "vehicles_to_check": self.vehicles_to_check,
             "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
+            "kdrive_folder_id": self.kdrive_folder_id,
+            "kdrive_path": self.kdrive_path,
+            "kdrive_sync_status": self.kdrive_sync_status,
+            "kdrive_last_error": self.kdrive_last_error,
         }
 
     def __repr__(self):

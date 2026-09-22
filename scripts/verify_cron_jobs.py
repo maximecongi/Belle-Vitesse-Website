@@ -38,10 +38,10 @@ EXPECTED_JOBS = [
         "tolerance_hours": 1,  # 1h tolerance (runs frequently)
     },
     {
-        "job_name": "cleanup_empty_folders_kdrive",
-        "display_name": "Nettoyage dossiers vides kDrive",
-        "expected_freq": "Tous les lundis à 3h30",
-        "tolerance_hours": 170,  # 168h (7 days) + 2h margin
+        "job_name": "verify_kdrive_sync",
+        "display_name": "Vérification et réconciliation kDrive",
+        "expected_freq": "Tous les jours à 4h30",
+        "tolerance_hours": 26,  # 24h + 2h margin
     },
     {
         "job_name": "cleanup_empty_folders_server",

@@ -40,5 +40,11 @@ fi
 
 echo "✅ Bundles CSS générés avec succès"
 
+# ── Migration du schéma de base de données ─────────────────────────────
+if [ -f "scripts/migrate_kdrive_schema.py" ]; then
+    echo "🗄️ Application des migrations kDrive..."
+    python3 scripts/migrate_kdrive_schema.py || true
+fi
+
 # ── Lancement de l'application ────────────────────────────────────────
 exec "$@"

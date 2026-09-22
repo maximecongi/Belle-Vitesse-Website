@@ -221,6 +221,15 @@ def delete_inspection_unified(mode, record_id):
     # 4. Suppression via soft-delete
     record.deleted_at = datetime.utcnow()
     db.session.commit()
+
+    # 5. Suppression kDrive native ciblée par ID (post-commit)
+    if insp_id:
+        try:
+            from services.common.kdrive import dispatch_delete_document
+            dispatch_delete_document(mode, insp_id)
+        except Exception as k_err:
+            logger.error(f"❌ Erreur suppression kDrive ({mode} {insp_id}) : {k_err}")
+
     return True
 
 

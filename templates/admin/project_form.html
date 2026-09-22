@@ -211,7 +211,7 @@
             <div>
                 {% if is_edit %}
                 <button type="submit"
-                    formaction="{{ url_for('admin_project_delete', record_id=request.view_args.get('record_id')) }}"
+                    formaction="{{ url_for('admin_project_delete', record_id=record_id or (data.id if data else '')) }}"
                     onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce projet ?');"
                     class="admin-btn admin-btn-danger" formnovalidate>
                     Supprimer

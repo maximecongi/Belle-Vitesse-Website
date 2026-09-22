@@ -331,6 +331,29 @@ class ProjectsTest(unittest.TestCase):
             self.assertIsNone(proj.active_pilot_waiver)
             self.assertIsNone(proj.active_production_waiver)
 
+    def test_admin_project_kdrive_resync(self):
+        with self.app.app_context():
+            user = User(firstname="Admin", lastname="User", mail="admin_kdrive@example.com", role="administrator")
+            prod = Production(name="Resync Production")
+            db.session.add_all([user, prod])
+            db.session.commit()
+            u_id = user.id
+            prod_id = prod.id
+
+            proj = Project(name="Project Resync Test", production_id=prod_id, departure_date=date(2026, 9, 22))
+            db.session.add(proj)
+            db.session.commit()
+            p_id = proj.id
+
+        with self.client.session_transaction() as sess:
+            sess["admin_authenticated"] = True
+            sess["admin_user_id"] = u_id
+            sess["admin_user_role"] = "administrator"
+
+        resp = self.client.post(f"/admin/projects/{p_id}/kdrive/resync", follow_redirects=True)
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("Synchronisation kDrive relancée.".encode("utf-8"), resp.data)
+
 
 if __name__ == "__main__":
     unittest.main()
