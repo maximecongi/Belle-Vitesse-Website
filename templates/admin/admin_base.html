@@ -165,6 +165,37 @@
                 {{ nav_item(url_for('admin_catalog_preview'), 'Mise à jour du catalogue', 'catalog_update',
                 target='_blank') }}
                 {% endcall %}
+
+                <!-- Restauration synchrone immédiate pour éviter tout clignotement / FOUC -->
+                <script>
+                    (function () {
+                        try {
+                            var currentPath = window.location.pathname;
+                            document.querySelectorAll('.admin-nav-group').forEach(function (group) {
+                                var id = group.getAttribute('data-nav-group');
+                                var state = id ? localStorage.getItem('nav-group-' + id) : null;
+                                if (state === 'open') {
+                                    group.classList.add('open');
+                                } else if (state === 'closed') {
+                                    group.classList.remove('open');
+                                } else if (group.classList.contains('default-open')) {
+                                    group.classList.add('open');
+                                }
+
+                                // Si la page actuelle fait partie de ce groupe, s'assurer qu'il soit ouvert
+                                if (id && group.querySelector('.admin-nav-item[href="' + currentPath + '"]')) {
+                                    group.classList.add('open');
+                                }
+                            });
+
+                            // Marquer immédiatement le lien actif
+                            var activeItem = document.querySelector('.admin-nav-item[href="' + currentPath + '"]');
+                            if (activeItem) {
+                                activeItem.classList.add('active');
+                            }
+                        } catch (e) { }
+                    })();
+                </script>
             </nav>
 
             <div class="admin-sidebar-footer">
