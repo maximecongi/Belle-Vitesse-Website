@@ -145,7 +145,7 @@
             display: inline-block;
             padding: 4px 10px;
             margin: 2px 0;
-            border-radius: 20px;
+            border-radius: 4px;
             font-size: 12px;
             font-weight: 600;
             white-space: nowrap;
@@ -154,79 +154,65 @@
             vertical-align: middle;
         }
 
-        /* Succès / Validé / OK / Signé (Vert Émeraude) */
+        /* Succès / Validé / OK / Signé / Check-out (Vert Émeraude) */
         .badge-success,
-        .badge-pill-success {
-            background-color: #D1FAE5 !important;
-            color: #065F46 !important;
-            border: 1px solid rgba(16, 185, 129, 0.35) !important;
+        .badge-ok,
+        .badge-checkout,
+        .badge-pill-success,
+        .badge-pill-ok,
+        .badge-pill-checkout {
+            background-color: #12281b !important;
+            color: #10B981 !important;
+            border: 1px solid #10B981 !important;
         }
 
-        /* Warning / Attention / En retard / En attente (Ambre Chaud) */
+        /* Warning / Attention / En retard / En attente / Projets (Ambre Chaud) */
         .badge-warning,
-        .badge-pill-warning {
-            background-color: #e6d699 !important;
-            color: #b35419 !important;
-            border: 1px solid #dd9c2c !important;
+        .badge-project,
+        .badge-pill-warning,
+        .badge-pill-project {
+            background-color: #2a2012 !important;
+            color: #F59E0B !important;
+            border: 1px solid #F59E0B !important;
         }
 
-        /* Danger / Critique / Échec / Incident (Rouge Carmin) */
+        /* Danger / Critique / Échec / Incidents (Rouge Carmin) */
         .badge-danger,
         .badge-failed,
         .badge-incident,
-        .badge-pill-danger {
-            background-color: #f0c2c2 !important;
-            color: #931b1b !important;
-            border: 1px solid #d44e4e !important;
+        .badge-pill-danger,
+        .badge-pill-incident {
+            background-color: #2b1212 !important;
+            color: #EF4444 !important;
+            border: 1px solid #EF4444 !important;
         }
 
-        /* Info / À venir (Bleu Ciel) */
+        /* Info / À venir / Check-in (Bleu Océan) */
         .badge-info,
-        .badge-pill-info {
-            background-color: #E0F2FE !important;
-            color: #0369A1 !important;
-            border: 1px solid #0284C7 !important;
+        .badge-checkin,
+        .badge-pill-info,
+        .badge-pill-checkin {
+            background-color: #0f1c2e !important;
+            color: #3B82F6 !important;
+            border: 1px solid #3B82F6 !important;
         }
 
         /* Neutre / Manquant / Archivé (Gris Ardoise) */
         .badge-neutral,
         .badge-missing,
-        .badge-pill-neutral {
-            background-color: #d9d9d9 !important;
-            color: #404040 !important;
-            border: 1px solid #a6a6a6 !important;
+        .badge-pill-neutral,
+        .badge-pill-missing {
+            background-color: #1c1c1c !important;
+            color: #94A3B8 !important;
+            border: 1px solid #64748B !important;
         }
 
         /* Décharges (Waivers) : Violet / Indigo */
         .badge-waiver,
         .badge-pill-waiver {
-            background-color: #EDE9FE !important;
-            color: #5B21B6 !important;
+            background-color: #1e142b !important;
+            color: #8B5CF6 !important;
             border: 1px solid #8B5CF6 !important;
-        }
-
-        /* Tournages / Projets : Ambre Chaud */
-        .badge-project,
-        .badge-pill-project {
-            background-color: #FEF3C7 !important;
-            color: #B45309 !important;
-            border: 1px solid #F59E0B !important;
-        }
-
-        /* Check-in : Bleu Océan */
-        .badge-checkin,
-        .badge-pill-checkin {
-            background-color: #DBEAFE !important;
-            color: #1E40AF !important;
-            border: 1px solid #3B82F6 !important;
-        }
-
-        /* Check-out : Vert Émeraude */
-        .badge-checkout,
-        .badge-pill-checkout {
-            background-color: #D1FAE5 !important;
-            color: #065F46 !important;
-            border: 1px solid rgba(16, 185, 129, 0.35) !important;
         }
 
         /* ── Cards & Data Displays ───────────────────────────────────── */
