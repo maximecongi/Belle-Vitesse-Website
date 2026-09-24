@@ -104,34 +104,34 @@
 
 {# ═══════════ MACROS INCIDENTS ═══════════ #}
 
-{% macro incident_severity_badge(severity, label=None) %}
+{% macro incident_severity_badge(severity, label=None, class_name='') %}
 {% set s = (severity or 'mineur')|lower %}
 {% if s == 'critique' %}
-<span class="badge-pill" data-val="critique"><i data-lucide="alert-octagon"></i> {{ 'Critique' if (not label or
+<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="critique"><i data-lucide="alert-octagon"></i> {{ 'Critique' if (not label or
     label|lower == 'critique') else label }}</span>
 {% elif s in ('modere', 'modéré') %}
-<span class="badge-pill" data-val="warning"><i data-lucide="alert-triangle"></i> {{ 'Modéré' if (not label or
+<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="warning"><i data-lucide="alert-triangle"></i> {{ 'Modéré' if (not label or
     label|lower in ('modere', 'modéré')) else label }}</span>
 {% else %}
-<span class="badge-pill" data-val="neutral"><i data-lucide="info"></i> {{ 'Mineur' if (not label or label|lower ==
+<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="neutral"><i data-lucide="info"></i> {{ 'Mineur' if (not label or label|lower ==
     'mineur') else label }}</span>
 {% endif %}
 {% endmacro %}
 
-{% macro incident_status_badge(status, label=None) %}
+{% macro incident_status_badge(status, label=None, class_name='') %}
 {% set st = (status or 'signale')|lower %}
 {% if st == 'cloture' %}
-<span class="badge-pill" data-val="cloture"><i data-lucide="lock"></i> {{ label or 'Clôturé' }}</span>
+<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="cloture"><i data-lucide="lock"></i> {{ label or 'Clôturé' }}</span>
 {% elif st == 'resolu' %}
-<span class="badge-pill" data-val="ok"><i data-lucide="check-circle"></i> {{ label or 'Résolu' }}</span>
+<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="ok"><i data-lucide="check-circle"></i> {{ label or 'Résolu' }}</span>
 {% elif st == 'en_reparation' %}
-<span class="badge-pill" data-val="in_progress"><i data-lucide="wrench"></i> {{ label or 'En réparation' }}</span>
+<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="in_progress"><i data-lucide="wrench"></i> {{ label or 'En réparation' }}</span>
 {% elif st == 'en_expertise' %}
-<span class="badge-pill" data-val="warning"><i data-lucide="search"></i> {{ label or 'En expertise' }}</span>
+<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="warning"><i data-lucide="search"></i> {{ label or 'En expertise' }}</span>
 {% elif st == 'assurance' %}
-<span class="badge-pill" data-val="assurance"><i data-lucide="clipboard-list"></i> {{ label or 'Assurance' }}</span>
+<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="assurance"><i data-lucide="clipboard-list"></i> {{ label or 'Assurance' }}</span>
 {% else %}
-<span class="badge-pill" data-val="warning"><i data-lucide="megaphone"></i> {{ label or 'Signalé' }}</span>
+<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="warning"><i data-lucide="megaphone"></i> {{ label or 'Signalé' }}</span>
 {% endif %}
 {% endmacro %}
 
@@ -149,34 +149,34 @@
 {% endif %}
 {% endmacro %}
 
-{% macro incident_signature_badge(incident, compact=false) %}
+{% macro incident_signature_badge(incident, compact=false, class_name='', show_subline=true) %}
 {% if incident.is_fully_signed or incident.signature_status == 'signed' %}
-<span class="badge-pill" data-val="ok"><i data-lucide="shield-check"></i> {{ 'Scellé 2/2' if compact else 'Scellé
+<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="ok"><i data-lucide="shield-check"></i> {{ 'Scellé 2/2' if compact else 'Scellé
     contradictoirement' }}</span>
-{% if compact %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="check"
+{% if compact and show_subline %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="check"
         class="u-text-success"></i> &bull; <span>Prod</span> <i data-lucide="check" class="u-text-success"></i></div>{%
 endif %}
 {% elif incident.signature_status == 'signed_bv' %}
-<span class="badge-pill" data-val="to_sign"><i data-lucide="signature"></i> {{ 'Visé BV 1/2' if compact else 'Visé BV —
+<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="to_sign"><i data-lucide="signature"></i> {{ 'Visé BV 1/2' if compact else 'Visé BV —
     En attente Production' }}</span>
-{% if compact %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="check"
+{% if compact and show_subline %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="check"
         class="u-text-success"></i> &bull; <span>Prod</span> <i data-lucide="clock"></i></div>{% endif %}
 {% elif incident.signature_status == 'signed_prod' %}
-<span class="badge-pill" data-val="to_sign"><i data-lucide="signature"></i> {{ 'Signé Prod 1/2' if compact else 'Signé
+<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="to_sign"><i data-lucide="signature"></i> {{ 'Signé Prod 1/2' if compact else 'Signé
     Prod — En attente visa BV' }}</span>
-{% if compact %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="clock"></i> &bull;
+{% if compact and show_subline %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="clock"></i> &bull;
     <span>Prod</span> <i data-lucide="check" class="u-text-success"></i>
 </div>{% endif %}
 {% elif incident.signature_status == 'pending_prod' %}
-<span class="badge-pill" data-val="in_progress"><i data-lucide="mail"></i> {{ 'Invité 0/2' if compact else 'Invitation
+<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="in_progress"><i data-lucide="mail"></i> {{ 'Invité 0/2' if compact else 'Invitation
     envoyée à la Production' }}</span>
-{% if compact %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="clock"></i> &bull;
+{% if compact and show_subline %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="clock"></i> &bull;
     <span>Prod</span> <i data-lucide="mail"></i>
 </div>{% endif %}
 {% else %}
-<span class="badge-pill" data-val="neutral"><i data-lucide="file-text"></i> {{ 'Non signé' if compact else 'En attente
+<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="neutral"><i data-lucide="file-text"></i> {{ 'Non signé' if compact else 'En attente
     de signatures' }}</span>
-{% if compact %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="clock"></i> &bull;
+{% if compact and show_subline %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="clock"></i> &bull;
     <span>Prod</span> <i data-lucide="clock"></i>
 </div>{% endif %}
 {% endif %}

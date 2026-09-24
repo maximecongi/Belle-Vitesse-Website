@@ -96,14 +96,48 @@
 }
 
 .agenda-section-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     font-size: 0.7rem;
     text-transform: uppercase;
     color: var(--grey-2);
     margin-bottom: 0.8rem;
     border-bottom: 1px solid #eee;
-    padding-bottom: 0.3rem;
+    padding-bottom: 0.5rem;
     font-weight: 600;
     letter-spacing: 0.05em;
+}
+
+.agenda-section-action {
+    position: absolute;
+    right: 3.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.55rem;
+    text-transform: none;
+    font-weight: 500;
+    color: var(--grey-2);
+    text-decoration: none;
+    letter-spacing: normal;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s;
+}
+
+.agenda-section-action:hover {
+    color: var(--entity-incident);
+    background: var(--entity-incident-bg);
+    border-color: var(--entity-incident-border);
+}
+
+.agenda-section-action i[data-lucide],
+.agenda-section-action svg {
+    width: 11px;
+    height: 11px;
 }
 
 .today-row {
@@ -130,24 +164,83 @@
 }
 
 .today-row-vehicle-link,
-.today-row-waiver-link {
+.today-row-waiver-link,
+.today-row-incident-link,
+.today-row-report-link {
     text-decoration: none;
-    display: inline-flex;
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 0.7rem;
-    padding: 0.35rem 0.6rem;
+    width: 100%;
+    box-sizing: border-box;
+    gap: 0.75rem;
+    padding: 0.45rem 0.65rem;
     border: 1px dashed #ccc;
     border-radius: 6px;
     background: #fff;
-    font-size: 0.65rem;
+    font-size: 0.68rem;
     color: var(--grey-2);
     transition: all 0.2s;
 }
 
 .today-row-vehicle-link:hover,
-.today-row-waiver-link:hover {
+.today-row-waiver-link:hover,
+.today-row-incident-link:hover,
+.today-row-report-link:hover {
     background: var(--admin-bg);
     color: var(--grey-2);
+    border-color: #aaa;
+}
+
+.today-row-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.today-row-label i[data-lucide],
+.today-row-label svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+
+.today-row-badges {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
+}
+
+.today-row-incident-link--active {
+    border-color: var(--entity-incident-border);
+    background: var(--entity-incident-bg);
+    color: var(--entity-incident-text);
+}
+
+.today-row-incident-link--active:hover {
+    border-color: var(--entity-incident);
+    background: var(--entity-incident-bg);
+    color: var(--entity-incident-text);
+}
+
+.today-row-vehicle-link i[data-lucide],
+.today-row-vehicle-link svg,
+.today-row-waiver-link i[data-lucide],
+.today-row-waiver-link svg,
+.today-row-incident-link i[data-lucide],
+.today-row-incident-link svg,
+.today-row-report-link i[data-lucide],
+.today-row-report-link svg {
+    width: 13px;
+    height: 13px;
+    vertical-align: middle;
 }
 
 .today-row-dates {

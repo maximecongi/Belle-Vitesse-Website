@@ -186,6 +186,23 @@ def _format_project_admin(p, vehicle_map, heads_map):
             "pdf_path": _get_secured_document_url(p.production_waiver.signed_pdf_path, "production-waiver") if (p.production_waiver and not p.production_waiver.deleted_at) else None,
         },
         "reports_count": len(p.reports) if hasattr(p, 'reports') and p.reports else 0,
+        "incidents": [
+            {
+                "id": inc.id,
+                "incident_number": inc.incident_number,
+                "title": inc.title,
+                "severity": inc.severity,
+                "severity_label": inc.severity_label,
+                "status": inc.status,
+                "status_label": inc.status_label,
+                "signature_status": inc.signature_status,
+                "is_fully_signed": inc.is_fully_signed,
+                "signature_status_label": inc.signature_status_label,
+            }
+            for inc in (getattr(p, "incidents", []) or [])
+            if not getattr(inc, "deleted_at", None)
+        ],
+        "incidents_count": len([inc for inc in (getattr(p, "incidents", []) or []) if not getattr(inc, "deleted_at", None)]),
     }
 
 
@@ -204,6 +221,7 @@ def list_projects():
         joinedload(Project.key_grip_contact),
         joinedload(Project.pilot_waiver),
         joinedload(Project.production_waiver),
+        selectinload(Project.incidents),
         selectinload(Project.reports)
     ).order_by(Project.departure_date.desc(), Project.name.asc()).all()
 

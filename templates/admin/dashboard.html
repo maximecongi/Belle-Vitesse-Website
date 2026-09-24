@@ -1,6 +1,6 @@
 {% extends "admin/admin_base.html" %}
 
-{% from "admin/macros.html" import empty_state, status_badge %}
+{% from "admin/macros.html" import empty_state, status_badge, incident_status_badge, incident_signature_badge %}
 
 {% block title %}Tableau de bord{% endblock %}
 {% block page_title %}Tableau de bord{% endblock %}
@@ -50,64 +50,78 @@
                 <!-- Logistique - Focus Checkout -->
                 <div class="agenda-section">
                     <div class="agenda-section-title">Logistique</div>
-                    <div class="u-flex u-flex-column u-gap-2">
-                        <div>
-                            <div class="u-flex u-flex-wrap u-gap-1">
-                                {% for vehicle in project.vehicles %}
-                                {% if vehicle.checkout_id %}
-                                <a class="today-row-vehicle-link"
-                                    href="{{ url_for('admin_checkout_detail', record_id=vehicle.checkout_id) }}">
-                                    <span class="u-text-medium">{{ vehicle.fields.name }}</span>
-                                    {{ status_badge(format_inspection_status(vehicle.checkout_status), vehicle.checkout_status_id, class_name='u-badge-agenda', **{'data-conform': vehicle.checkout_ready}) }}
-                                </a>
-                                {% else %}
-                                <a href="{{ url_for('admin_checkout_new', project_id=project.id, vehicle_id=vehicle.id) }}"
-                                    class="today-row-vehicle-link">
-                                    <span>{{ vehicle.fields.name }}</span>
-                                    {{ status_badge('À contrôler', 'to_check', class_name='u-badge-agenda') }}
-                                </a>
-                                {% endif %}
-                                {% endfor %}
-                            </div>
-                        </div>
+                    <div class="u-flex u-flex-column u-gap-1">
+                        {% for vehicle in project.vehicles %}
+                        {% if vehicle.checkout_id %}
+                        <a class="today-row-vehicle-link"
+                            href="{{ url_for('admin_checkout_detail', record_id=vehicle.checkout_id) }}">
+                            <span class="today-row-label u-text-medium">
+                                <i data-lucide="truck"></i>
+                                <span>{{ vehicle.fields.name }}</span>
+                            </span>
+                            {{ status_badge(format_inspection_status(vehicle.checkout_status),
+                            vehicle.checkout_status_id, class_name='u-badge-agenda', **{'data-conform':
+                            vehicle.checkout_ready}) }}
+                        </a>
+                        {% else %}
+                        <a href="{{ url_for('admin_checkout_new', project_id=project.id, vehicle_id=vehicle.id) }}"
+                            class="today-row-vehicle-link">
+                            <span class="today-row-label">
+                                <i data-lucide="truck"></i>
+                                <span>{{ vehicle.fields.name }}</span>
+                            </span>
+                            {{ status_badge('À contrôler', 'to_check', class_name='u-badge-agenda') }}
+                        </a>
+                        {% endif %}
+                        {% endfor %}
                     </div>
                 </div>
 
                 <!-- Administratif -->
                 <div class="agenda-section">
                     <div class="agenda-section-title">Administratif</div>
-                    <div class="u-flex u-flex-column u-gap-2">
-                        <div>
-                            <div class="u-flex u-flex-wrap u-gap-1">
-                                {% if project.pilot_waiver.id %}
-                                <a class="today-row-vehicle-link"
-                                    href="{{ url_for('admin_pilot_waivers_list') }}?q={{ project.pilot_waiver.waiver_num|urlencode }}">
-                                    <span class="u-text-medium">Décharge Pilote</span>
-                                    {{ status_badge(project.pilot_waiver.status, project.pilot_waiver.raw_status, class_name='u-badge-agenda') }}
-                                </a>
-                                {% else %}
-                                <a href="{{ url_for('admin_pilot_waiver_new', project_id=project.id) }}"
-                                    class="today-row-vehicle-link">
-                                    <span>Décharge Pilote</span>
-                                    {{ status_badge('Non générée', 'to_generate', class_name='u-badge-agenda') }}
-                                </a>
-                                {% endif %}
+                    <div class="u-flex u-flex-column u-gap-1">
+                        {% if project.pilot_waiver.id %}
+                        <a class="today-row-waiver-link"
+                            href="{{ url_for('admin_pilot_waivers_list') }}?q={{ project.pilot_waiver.waiver_num|urlencode }}">
+                            <span class="today-row-label u-text-medium">
+                                <i data-lucide="file-signature"></i>
+                                <span>Décharge Pilote</span>
+                            </span>
+                            {{ status_badge(project.pilot_waiver.status, project.pilot_waiver.raw_status,
+                            class_name='u-badge-agenda') }}
+                        </a>
+                        {% else %}
+                        <a href="{{ url_for('admin_pilot_waiver_new', project_id=project.id) }}"
+                            class="today-row-waiver-link">
+                            <span class="today-row-label">
+                                <i data-lucide="file-signature"></i>
+                                <span>Décharge Pilote</span>
+                            </span>
+                            {{ status_badge('Non générée', 'to_generate', class_name='u-badge-agenda') }}
+                        </a>
+                        {% endif %}
 
-                                {% if project.production_waiver.id %}
-                                <a class="today-row-vehicle-link"
-                                    href="{{ url_for('admin_production_waivers_list') }}?q={{ project.production_waiver.waiver_num|urlencode }}">
-                                    <span class="u-text-medium">Décharge Prod.</span>
-                                    {{ status_badge(project.production_waiver.status, project.production_waiver.raw_status, class_name='u-badge-agenda') }}
-                                </a>
-                                {% else %}
-                                <a href="{{ url_for('admin_production_waiver_new', project_id=project.id) }}"
-                                    class="today-row-vehicle-link">
-                                    <span>Décharge Prod.</span>
-                                    {{ status_badge('Non générée', 'to_generate', class_name='u-badge-agenda') }}
-                                </a>
-                                {% endif %}
-                            </div>
-                        </div>
+                        {% if project.production_waiver.id %}
+                        <a class="today-row-waiver-link"
+                            href="{{ url_for('admin_production_waivers_list') }}?q={{ project.production_waiver.waiver_num|urlencode }}">
+                            <span class="today-row-label u-text-medium">
+                                <i data-lucide="file-signature"></i>
+                                <span>Décharge Prod.</span>
+                            </span>
+                            {{ status_badge(project.production_waiver.status,
+                            project.production_waiver.raw_status, class_name='u-badge-agenda') }}
+                        </a>
+                        {% else %}
+                        <a href="{{ url_for('admin_production_waiver_new', project_id=project.id) }}"
+                            class="today-row-waiver-link">
+                            <span class="today-row-label">
+                                <i data-lucide="file-signature"></i>
+                                <span>Décharge Prod.</span>
+                            </span>
+                            {{ status_badge('Non générée', 'to_generate', class_name='u-badge-agenda') }}
+                        </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -136,64 +150,92 @@
                 <!-- Logistique - Focus Checkin -->
                 <div class="agenda-section">
                     <div class="agenda-section-title">Logistique</div>
-                    <div class="u-flex u-flex-column u-gap-2">
-                        <div>
-                            <div class="u-flex u-flex-column u-gap-1">
-                                {% for vehicle in project.vehicles %}
-                                {% if vehicle.checkin_id %}
-                                <a class="today-row-vehicle-link"
-                                    href="{{ url_for('admin_checkin_detail', record_id=vehicle.checkin_id) }}">
-                                    <span class="u-text-medium">{{ vehicle.fields.name }}</span>
-                                    {{ status_badge(format_inspection_status(vehicle.checkin_status), vehicle.checkin_status_id, class_name='u-badge-agenda') }}
-                                </a>
-                                {% else %}
-                                <a href="{{ url_for('admin_checkin_new', project_id=project.id, vehicle_id=vehicle.id) }}"
-                                    class="today-row-vehicle-link">
-                                    <span>{{ vehicle.fields.name }}</span>
-                                    {{ status_badge('À contrôler', 'to_check', class_name='u-badge-agenda') }}
-                                </a>
-                                {% endif %}
-                                {% endfor %}
-                            </div>
-                        </div>
+                    <div class="u-flex u-flex-column u-gap-1">
+                        {% for vehicle in project.vehicles %}
+                        {% if vehicle.checkin_id %}
+                        <a class="today-row-vehicle-link"
+                            href="{{ url_for('admin_checkin_detail', record_id=vehicle.checkin_id) }}">
+                            <span class="today-row-label u-text-medium">
+                                <i data-lucide="truck"></i>
+                                <span>{{ vehicle.fields.name }}</span>
+                            </span>
+                            {{ status_badge(format_inspection_status(vehicle.checkin_status),
+                            vehicle.checkin_status_id, class_name='u-badge-agenda') }}
+                        </a>
+                        {% else %}
+                        <a href="{{ url_for('admin_checkin_new', project_id=project.id, vehicle_id=vehicle.id) }}"
+                            class="today-row-vehicle-link">
+                            <span class="today-row-label">
+                                <i data-lucide="truck"></i>
+                                <span>{{ vehicle.fields.name }}</span>
+                            </span>
+                            {{ status_badge('À contrôler', 'to_check', class_name='u-badge-agenda') }}
+                        </a>
+                        {% endif %}
+                        {% endfor %}
                     </div>
                 </div>
 
-                <!-- Administratif -->
+                <!-- Bilan retour (Incidents & Rapports de tournage) -->
                 <div class="agenda-section">
-                    <div class="agenda-section-title">Administratif</div>
-                    <div class="u-flex u-flex-column u-gap-2">
-                        <div>
-                            <div class="u-flex u-flex-wrap u-gap-1">
-                                {% if project.pilot_waiver.id %}
-                                <a class="today-row-vehicle-link"
-                                    href="{{ url_for('admin_pilot_waivers_list') }}?q={{ project.pilot_waiver.waiver_num|urlencode }}">
-                                    <span class="u-text-medium">Décharge Pilote</span>
-                                    {{ status_badge(project.pilot_waiver.status, project.pilot_waiver.raw_status, class_name='u-badge-agenda') }}
-                                </a>
-                                {% else %}
-                                <a href="{{ url_for('admin_pilot_waiver_new', project_id=project.id) }}"
-                                    class="today-row-vehicle-link">
-                                    <span>Décharge Pilote</span>
-                                    {{ status_badge('Non générée', 'to_generate', class_name='u-badge-agenda') }}
-                                </a>
-                                {% endif %}
+                    <div class="agenda-section-title">
+                        <span>Bilan retour</span>
+                        {% if project.incidents and project.incidents|length > 0 %}
+                        <a href="{{ url_for('admin_incident_new', project_id=project.id) }}"
+                            class="agenda-section-action" title="Déclarer un autre incident">
+                            <i data-lucide="plus"></i> <span>Incident</span>
+                        </a>
+                        {% endif %}
+                    </div>
+                    <div class="u-flex u-flex-column u-gap-1">
+                        {% if project.incidents and project.incidents|length > 0 %}
+                        {% for inc in project.incidents %}
+                        <a class="today-row-incident-link today-row-incident-link--active"
+                            href="{{ url_for('admin_incident_detail', record_id=inc.id) }}" title="{{ inc.title }}">
+                            <span class="today-row-label u-text-medium">
+                                <i data-lucide="wrench"></i>
+                                <span>{{ inc.title | truncate(30) }}</span>
+                            </span>
+                            <span class="today-row-badges">
+                                {{ incident_signature_badge(inc, compact=true, class_name='u-badge-agenda',
+                                show_subline=false) }}
+                            </span>
+                        </a>
+                        {% endfor %}
+                        {% else %}
+                        <a href="{{ url_for('admin_incident_new', project_id=project.id) }}"
+                            class="today-row-incident-link"
+                            title="Aucun incident signalé · Déclarer un dommage constaté">
+                            <span class="today-row-label">
+                                <i data-lucide="shield-check"></i>
+                                <span>Dommages & Incidents</span>
+                            </span>
+                            {{ status_badge('Aucun dommage', 'ok', class_name='u-badge-agenda') }}
+                        </a>
+                        {% endif %}
 
-                                {% if project.production_waiver.id %}
-                                <a class="today-row-vehicle-link"
-                                    href="{{ url_for('admin_production_waivers_list') }}?q={{ project.production_waiver.waiver_num|urlencode }}">
-                                    <span class="u-text-medium">Décharge Prod.</span>
-                                    {{ status_badge(project.production_waiver.status, project.production_waiver.raw_status, class_name='u-badge-agenda') }}
-                                </a>
-                                {% else %}
-                                <a href="{{ url_for('admin_production_waiver_new', project_id=project.id) }}"
-                                    class="today-row-vehicle-link">
-                                    <span>Décharge Prod.</span>
-                                    {{ status_badge('Non générée', 'to_generate', class_name='u-badge-agenda') }}
-                                </a>
-                                {% endif %}
-                            </div>
-                        </div>
+                        {% if project.reports_count > 0 %}
+                        <a class="today-row-report-link"
+                            href="{{ url_for('admin_project_detail', record_id=project.id) }}#reports"
+                            title="Consulter les comptes-rendus de tournage">
+                            <span class="today-row-label u-text-medium">
+                                <i data-lucide="clipboard-list"></i>
+                                <span>Rapport de tournage</span>
+                            </span>
+                            {{ status_badge(project.reports_count ~ (' rapport' if project.reports_count == 1
+                            else ' rapports'), 'signed', icon='file-check', class_name='u-badge-agenda') }}
+                        </a>
+                        {% else %}
+                        <a href="{{ url_for('admin_project_detail', record_id=project.id) }}#reports"
+                            class="today-row-report-link" title="Rédiger le débrief / compte-rendu de tournage">
+                            <span class="today-row-label">
+                                <i data-lucide="clipboard-list"></i>
+                                <span>Rapport de tournage</span>
+                            </span>
+                            {{ status_badge('À rédiger', 'to_check', icon='file-text',
+                            class_name='u-badge-agenda') }}
+                        </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
