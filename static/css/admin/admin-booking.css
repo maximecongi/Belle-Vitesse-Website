@@ -1,156 +1,180 @@
-/* ── Admin Booking Gantt Chart Styles ── */
+/* ── Admin Booking Gantt Chart Styles (Belle Vitesse Design System) ── */
 
-.booking-controls-card {
-    padding: 1.25rem;
-    margin-bottom: 1.5rem;
-}
-
-.booking-filters {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1.5rem;
-}
-
-/* Tabs */
-.category-tabs {
-    display: flex;
-    background: var(--white-3);
-    padding: 4px;
-    border-radius: 8px;
-}
-
-.tab-btn {
-    border: none;
-    background: none;
-    padding: 0.6rem 1.2rem;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    border-radius: 6px;
-    transition: all 0.2s;
-    color: var(--grey-2);
-}
-
-.tab-btn:hover {
-    color: var(--grey-1);
-}
-
-.tab-btn.active {
-    background: white;
-    color: var(--grey-1);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.tab-btn-ai-logo {
-    height: 16px;
-    padding-right: 8px;
-    position: relative;
-    vertical-align: bottom;
-}
-
-/* Dropdown filter */
-.item-filter-group {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.item-filter-group .form-label {
-    margin-bottom: 0;
-    font-weight: 500;
-    white-space: nowrap;
-}
-
-.item-filter-group .select2-container {
-    min-width: 200px;
-}
-
-/* Navigation */
-.date-navigation {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.current-month-display {
-    font-size: 1.1rem;
-    font-weight: 700;
-    min-width: 140px;
-    text-align: center;
-    color: var(--grey-1);
-}
-
-.nav-btn {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.8rem;
-}
-
-/* Gantt Card & Outer Container */
+/* ── Carte principale du Gantt ── */
 .gantt-card {
     padding: 0;
     overflow: hidden;
     border-radius: 8px;
-    margin-bottom: 80px;
+    margin-bottom: 2.5rem;
 }
 
+.gantt-card .admin-card-header {
+    padding: 1.25rem 1.5rem 0.85rem 1.5rem;
+    border-bottom: 1px solid var(--white-3);
+    margin-bottom: 0;
+}
+
+/* ── Toolbar de Navigation (Alignée sur FullCalendar .fc-toolbar) ── */
+.gantt-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 0.85rem 1.5rem;
+    background-color: #ffffff;
+    border-bottom: 1px solid var(--white-3);
+}
+
+.gantt-toolbar-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.gantt-toolbar-nav .admin-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-radius: 6px;
+}
+
+.gantt-toolbar-nav .admin-btn .lucide {
+    width: 14px;
+    height: 14px;
+    margin: 0;
+}
+
+.gantt-toolbar-title {
+    font-family: var(--font-primary);
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--grey-1);
+    text-transform: capitalize;
+    margin: 0;
+    letter-spacing: -0.01em;
+}
+
+.gantt-toolbar-filters {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.gantt-select-wrapper {
+    min-width: 220px;
+    max-width: 280px;
+}
+
+/* ── Select2 Customization ── */
+.gantt-select-wrapper .select2-container--default .select2-selection--single {
+    height: 32px;
+    border: 1px solid var(--white-3);
+    border-radius: 6px;
+    background-color: #ffffff;
+    display: flex;
+    align-items: center;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.gantt-select-wrapper .select2-container--default .select2-selection--single:focus,
+.gantt-select-wrapper .select2-container--default.select2-container--open .select2-selection--single {
+    border-color: var(--admin-accent);
+    box-shadow: 0 0 0 2px rgba(255, 200, 69, 0.3);
+}
+
+.gantt-select-wrapper .select2-container--default .select2-selection--single .select2-selection__rendered {
+    font-size: 0.8rem;
+    color: var(--grey-1);
+    line-height: 30px;
+    padding-left: 0.6rem;
+    padding-right: 1.5rem;
+}
+
+.gantt-select-wrapper .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 30px;
+    right: 4px;
+}
+
+/* ── Conteneur Gantt Global ── */
 .gantt-outer-container {
     display: flex;
     position: relative;
-    background: white;
+    background: #ffffff;
+    min-height: 220px;
 }
 
-/* Gantt Sidebar (Sticky left column) */
+/* ── Sidebar Gauche (Équipements Sticky) ── */
 .gantt-sidebar {
-    width: 220px;
-    min-width: 220px;
+    width: 230px;
+    min-width: 230px;
     border-right: 1px solid var(--white-3);
     z-index: 10;
-    background: white;
-    box-shadow: 4px 0 8px rgba(0, 0, 0, 0.02);
+    background: #ffffff;
+    box-shadow: 2px 0 6px rgba(0, 0, 0, 0.02);
 }
 
 .gantt-sidebar-header {
-    height: 50px;
+    height: 48px;
     display: flex;
     align-items: center;
     padding: 0 1.25rem;
-    font-weight: 700;
-    font-size: 0.8rem;
+    font-size: 0.72rem;
+    font-weight: 600;
     text-transform: uppercase;
+    letter-spacing: 0.05em;
     color: var(--grey-2);
-    border-bottom: 2px solid var(--white-3);
-    background: var(--white-2);
+    border-bottom: 1px solid var(--white-3);
+    background-color: var(--admin-bg);
 }
 
 .gantt-sidebar-row {
-    height: 56px;
+    height: 52px;
     display: flex;
     align-items: center;
     padding: 0 1.25rem;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    color: var(--grey-1);
     border-bottom: 1px solid var(--white-3);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    background: white;
+    background: #ffffff;
+    transition: background-color 0.15s ease;
 }
 
-/* Gantt Timeline (Scrollable area) */
+.gantt-sidebar-row.is-hovered {
+    background-color: var(--admin-bg);
+}
+
+.gantt-sidebar-empty {
+    height: 52px;
+    display: flex;
+    align-items: center;
+    padding: 0 1.25rem;
+    color: var(--grey-2);
+    font-style: italic;
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--white-3);
+}
+
+/* ── Grille de la Timeline (Scrollable) ── */
 .gantt-timeline-container {
     flex-grow: 1;
     overflow-x: auto;
     position: relative;
-    background: white;
+    background: #ffffff;
 }
 
 .gantt-timeline-header {
-    height: 50px;
+    height: 48px;
     display: grid;
-    border-bottom: 2px solid var(--white-3);
-    background: var(--white-2);
+    border-bottom: 1px solid var(--white-3);
+    background-color: var(--admin-bg);
 }
 
 .gantt-header-day {
@@ -162,26 +186,40 @@
     font-size: 0.75rem;
     color: var(--grey-2);
     font-weight: 500;
+    user-select: none;
+    transition: background-color 0.15s ease;
 }
 
-.gantt-header-day.weekend {
-    background: rgba(0, 0, 0, 0.02);
+.gantt-header-day .day-name {
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     color: var(--grey-2);
 }
 
+.gantt-header-day .day-num {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--grey-1);
+    margin-top: 1px;
+}
+
+.gantt-header-day.weekend {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
 .gantt-header-day.today {
-    background: rgba(255, 200, 69, 0.15);
+    background-color: rgba(255, 200, 69, 0.25);
+}
+
+.gantt-header-day.today .day-name,
+.gantt-header-day.today .day-num {
     color: var(--grey-1);
     font-weight: 700;
 }
 
-.gantt-header-day .day-num {
-    font-size: 0.95rem;
-    font-weight: 700;
-    margin-bottom: 2px;
-}
-
-/* Timeline Grid */
+/* ── Timeline Grid & Rows ── */
 .gantt-timeline-grid {
     position: relative;
     display: flex;
@@ -189,10 +227,15 @@
 }
 
 .gantt-grid-row {
-    height: 56px;
+    height: 52px;
     border-bottom: 1px solid var(--white-3);
     position: relative;
     display: flex;
+    transition: background-color 0.15s ease;
+}
+
+.gantt-grid-row.is-hovered {
+    background-color: rgba(0, 0, 0, 0.015);
 }
 
 .gantt-grid-cell {
@@ -202,212 +245,321 @@
 }
 
 .gantt-grid-cell.weekend {
-    background: rgba(0, 0, 0, 0.015);
+    background-color: rgba(0, 0, 0, 0.015);
 }
 
 .gantt-grid-cell.today {
-    background: rgba(255, 200, 69, 0.06);
-    border-left: 1px solid rgba(255, 200, 69, 0.3);
-    border-right: 1px solid rgba(255, 200, 69, 0.3);
+    background-color: rgba(255, 200, 69, 0.08);
+    border-left: 1.5px solid rgba(255, 200, 69, 0.4);
+    border-right: 1.5px solid rgba(255, 200, 69, 0.4);
 }
 
-/* Booking Bars — Base */
+/* ── Barres d'Événements (Modèle FullCalendar Dashboard) ── */
 .gantt-booking-bar {
     position: absolute;
     box-sizing: border-box;
-    height: 30px;
-    top: 13px;
-    border-radius: 6px;
-    color: white;
-    font-weight: 600;
+    height: 28px;
+    top: 12px;
+    border-radius: 4px;
+    font-family: var(--font-primary);
     font-size: 0.78rem;
-    display: flex;
+    line-height: 1.35;
+    display: inline-flex;
     align-items: center;
+    gap: 6px;
     padding: 0 8px;
     cursor: pointer;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, filter 0.15s ease;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
     user-select: none;
+    z-index: 2;
+    text-decoration: none;
 }
 
 .gantt-booking-bar:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+    filter: brightness(0.97);
 }
 
-/* ── Phase-specific bars ── */
-
-/* Départ (🚚) — Outlined style with amber accent */
+/* ── Départs (Check-out) : Vert Émeraude ── */
 .gantt-dep-bar {
-    background: #fffbeb !important;
-    border: 2px solid #f59e0b !important;
-    color: #92400e !important;
+    background-color: var(--entity-checkout-bg) !important;
+    border: 1px solid var(--entity-checkout-border) !important;
+    border-left: 3.5px solid var(--entity-checkout) !important;
+    color: var(--entity-checkout-text) !important;
     justify-content: center;
-    padding: 0;
-    font-size: 0.95rem;
-    box-shadow: 0 1px 3px rgba(245, 158, 11, 0.2);
+    padding: 0 6px;
 }
 
 .gantt-dep-bar:hover {
-    background: #fef3c7 !important;
-    box-shadow: 0 3px 8px rgba(245, 158, 11, 0.3);
+    border-color: var(--entity-checkout) !important;
+    box-shadow: 0 2px 8px var(--entity-checkout-glow, rgba(16, 185, 129, 0.25)) !important;
 }
 
-/* Tournage (🎬) — Solid bar, uses the project color */
+.gantt-dep-bar .gantt-bar__icon {
+    color: var(--entity-checkout);
+    stroke: var(--entity-checkout);
+}
+
+/* ── Tournages (Projets) : Ambre Chaud ── */
 .gantt-shoot-bar {
-    font-size: 0.78rem;
-    letter-spacing: 0.01em;
+    background-color: var(--entity-project-bg) !important;
+    border: 1px solid var(--entity-project-border) !important;
+    border-left: 3.5px solid var(--entity-project) !important;
+    color: var(--entity-project-text) !important;
 }
 
-/* Retour (📦) — Outlined style with teal accent */
+.gantt-shoot-bar:hover {
+    border-color: var(--entity-project) !important;
+    box-shadow: 0 2px 8px var(--entity-project-glow, rgba(245, 158, 11, 0.25)) !important;
+}
+
+.gantt-shoot-bar .gantt-bar__icon {
+    color: var(--entity-project);
+    stroke: var(--entity-project);
+}
+
+/* ── Retours (Check-in) : Bleu Océan ── */
 .gantt-ret-bar {
-    background: #f0fdfa !important;
-    border: 2px solid #14b8a6 !important;
-    color: #134e4a !important;
+    background-color: var(--entity-checkin-bg) !important;
+    border: 1px solid var(--entity-checkin-border) !important;
+    border-left: 3.5px solid var(--entity-checkin) !important;
+    color: var(--entity-checkin-text) !important;
     justify-content: center;
-    padding: 0;
-    font-size: 0.95rem;
-    box-shadow: 0 1px 3px rgba(20, 184, 166, 0.2);
+    padding: 0 6px;
 }
 
 .gantt-ret-bar:hover {
-    background: #ccfbf1 !important;
-    box-shadow: 0 3px 8px rgba(20, 184, 166, 0.3);
+    border-color: var(--entity-checkin) !important;
+    box-shadow: 0 2px 8px var(--entity-checkin-glow, rgba(59, 130, 246, 0.25)) !important;
 }
 
-/* Connection line between phases */
+.gantt-ret-bar .gantt-bar__icon {
+    color: var(--entity-checkin);
+    stroke: var(--entity-checkin);
+}
+
+/* ── Éléments internes des barres ── */
+.gantt-bar-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+}
+
+.gantt-bar__icon {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    vertical-align: -1px;
+}
+
+.gantt-bar-title {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 0 1 auto;
+    min-width: 0;
+}
+
+.gantt-bar-prod {
+    font-size: 0.68rem;
+    opacity: 0.75;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 0 1000 auto;
+    min-width: 0;
+    max-width: 130px;
+}
+
+.gantt-bar-prod::before {
+    content: "•";
+    margin-right: 4px;
+    opacity: 0.6;
+}
+
+/* ── Ligne de connexion entre les phases ── */
 .gantt-booking-connection {
     position: absolute;
-    height: 3px;
-    top: 26px;
+    height: 2px;
+    top: 25px;
     border-radius: 2px;
     z-index: 1;
     pointer-events: none;
-    opacity: 0.25;
+    background-color: var(--entity-project);
+    opacity: 0.35;
 }
 
-/* Double booking / Conflict indicator */
+/* ── Conflit de réservation ── */
 .gantt-booking-bar.has-conflict {
-    border: 2px dashed var(--red-error) !important;
-    animation: pulse-border 2s infinite;
+    border: 2px dashed var(--entity-incident) !important;
+    animation: pulse-conflict 2s infinite;
 }
 
-@keyframes pulse-border {
+@keyframes pulse-conflict {
     0% {
-        border-color: var(--red-error);
+        border-color: var(--entity-incident);
     }
-
     50% {
-        border-color: rgba(185, 28, 28, 0.4);
+        border-color: rgba(239, 68, 68, 0.4);
     }
-
     100% {
-        border-color: var(--red-error);
+        border-color: var(--entity-incident);
     }
 }
 
-/* ── Legend ── */
+/* ── Légende conforme au Design System ── */
 .gantt-legend {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
-    padding: 0.75rem 1.25rem;
-    background: var(--grey-bg);
+    gap: 1.25rem;
+    padding: 0.85rem 1.5rem;
+    background: var(--admin-bg);
     border-top: 1px solid var(--white-3);
     font-size: 0.8rem;
     color: var(--grey-2);
+    flex-wrap: wrap;
 }
 
-.gantt-legend-item {
+.gantt-legend-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--grey-2);
+}
+
+.gantt-legend .badge-pill {
+    font-size: 0.75rem;
+}
+
+.gantt-legend-period {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--grey-2);
+}
+
+.gantt-legend-period-line {
+    display: inline-block;
+    width: 20px;
+    height: 3px;
+    border-radius: 2px;
+    background-color: var(--entity-project);
+    opacity: 0.45;
+}
+
+/* ── Infobulle Personnalisée (Tooltip Card) ── */
+.gantt-tooltip {
+    display: none;
+    position: absolute;
+    background: #ffffff;
+    color: var(--grey-1);
+    padding: 0.85rem 1.1rem;
+    border-radius: 8px;
+    font-family: var(--font-primary);
+    font-size: 0.82rem;
+    line-height: 1.45;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+    z-index: 1000;
+    pointer-events: none;
+    border: 1px solid var(--white-3);
+    max-width: 320px;
+    min-width: 230px;
+}
+
+.gantt-tooltip__title {
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--grey-1);
+    margin-bottom: 2px;
+}
+
+.gantt-tooltip__prod {
+    font-size: 0.75rem;
+    color: var(--grey-2);
+    margin-bottom: 8px;
+}
+
+.gantt-tooltip__phases {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 0.75rem;
+    border-top: 1px solid var(--white-3);
+    padding-top: 8px;
+}
+
+.gantt-tooltip__phase {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
-    font-weight: 500;
+    gap: 7px;
 }
 
-.gantt-legend-swatch {
-    width: 22px;
-    height: 14px;
+.gantt-tooltip__phase-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
     border-radius: 4px;
     flex-shrink: 0;
 }
 
-.gantt-legend-swatch.swatch-dep {
-    background: #fffbeb;
-    border: 2px solid #f59e0b;
+.gantt-tooltip__phase-badge--checkout {
+    background-color: var(--entity-checkout-bg);
+    color: var(--entity-checkout);
 }
 
-.gantt-legend-swatch.swatch-shoot {
-    background: #618b4acc;
+.gantt-tooltip__phase-badge--project {
+    background-color: var(--entity-project-bg);
+    color: var(--entity-project);
 }
 
-.gantt-legend-swatch.swatch-ret {
-    background: #f0fdfa;
-    border: 2px solid #14b8a6;
+.gantt-tooltip__phase-badge--checkin {
+    background-color: var(--entity-checkin-bg);
+    color: var(--entity-checkin);
 }
 
-.gantt-legend-swatch.swatch-line {
-    background: rgba(100, 100, 100, 0.25);
-    height: 3px;
-    border-radius: 2px;
-}
-
-.gantt-legend-swatch.swatch-conflict {
-    background: white;
-    border: 2px dashed var(--red-error);
-}
-
-/* ── Custom Tooltip ── */
-.gantt-tooltip {
-    display: none;
-    position: absolute;
-    background: var(--grey-3);
-    color: white;
-    padding: 0.85rem 1.1rem;
-    border-radius: 10px;
-    font-size: 0.82rem;
-    line-height: 1.5;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-    z-index: 1000;
-    pointer-events: none;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    max-width: 300px;
-    min-width: 200px;
-}
-
-.gantt-tooltip strong {
-    color: var(--admin-accent);
-    display: block;
-    margin-bottom: 6px;
-    font-size: 0.9rem;
-}
-
-.gantt-tooltip .tooltip-prod {
-    font-size: 0.75rem;
-    color: #aaa;
-    margin-bottom: 8px;
-}
-
-.gantt-tooltip .tooltip-phases {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    font-size: 0.75rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+.gantt-tooltip__footer {
+    margin-top: 8px;
     padding-top: 6px;
-}
-
-.gantt-tooltip .tooltip-phase {
+    border-top: 1px dashed var(--white-3);
+    font-size: 0.7rem;
+    color: var(--grey-2);
     display: flex;
     align-items: center;
-    gap: 6px;
+    justify-content: flex-end;
 }
 
-.gantt-tooltip .tooltip-phase-icon {
-    flex-shrink: 0;
-    width: 18px;
-    text-align: center;
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .gantt-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .gantt-toolbar-nav {
+        justify-content: center;
+    }
+
+    .gantt-toolbar-title {
+        text-align: center;
+    }
+
+    .gantt-toolbar-filters {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .gantt-select-wrapper {
+        flex-grow: 1;
+    }
 }

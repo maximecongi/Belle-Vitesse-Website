@@ -1,55 +1,64 @@
 {% extends "admin/admin_base.html" %}
 
-{% block title %}Calendrier des Bookings{% endblock %}
+{% block title %}Calendrier matériel{% endblock %}
 {% block page_title %}Calendrier matériel{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-booking.css') }}?v={{ asset_version('css/admin/admin-booking.css') }}">
+<link rel="stylesheet"
+    href="{{ url_for('static', filename='css/admin/admin-booking.css') }}?v={{ asset_version('css/admin/admin-booking.css') }}">
 {% endblock %}
 
 {% block content %}
-<div class="admin-card booking-controls-card">
-    <div class="booking-filters">
-        <!-- Catégories (Véhicules / Têtes) -->
-        <div class="category-tabs">
-            <button type="button" class="tab-btn active" data-category="vehicle">
-                🏎️ Véhicules
+<div class="admin-card gantt-card">
+    <!-- En-tête de la carte avec Titre et Filtres par Catégorie (modèle Dashboard) -->
+    <div class="admin-card-title admin-card-header u-flex-wrap u-gap-2">
+        <span>Calendrier matériel</span>
+        <div class="u-flex u-gap-1 u-flex-wrap" id="categoryFilters">
+            <button type="button"
+                class="admin-btn admin-btn-sm admin-btn-primary filter-pill category-filter-btn active"
+                data-category="vehicle">
+                <i data-lucide="car"></i> Véhicules
             </button>
-            <button type="button" class="tab-btn" data-category="head">
-                🤖 Têtes
-            </button>
-        </div>
-
-        <!-- Filtre équipement spécifique -->
-        <div class="item-filter-group">
-            <label for="itemSelect" class="form-label">Filtrer par équipement :</label>
-            <select id="itemSelect" class="form-input searchable-select">
-                <option value="">— Tous —</option>
-            </select>
-        </div>
-
-        <!-- Navigation dans le temps -->
-        <div class="date-navigation">
-            <button type="button" class="admin-btn admin-btn-secondary nav-btn" id="prevMonthBtn">
-                ◀
-            </button>
-            <span class="current-month-display" id="monthDisplay">
-                Mai 2026
-            </span>
-            <button type="button" class="admin-btn admin-btn-secondary nav-btn" id="nextMonthBtn">
-                ▶
-            </button>
-            <button type="button" class="admin-btn admin-btn-secondary" id="todayBtn">
-                Aujourd'hui
+            <button type="button" class="admin-btn admin-btn-sm admin-btn-quaternary filter-pill category-filter-btn"
+                data-category="head">
+                <i data-lucide="bot"></i> Têtes
             </button>
         </div>
     </div>
-</div>
 
-<!-- Gantt Chart Container -->
-<div class="admin-card gantt-card">
+    <!-- Toolbar de navigation temporelle et sélection de matériel (style FullCalendar) -->
+    <div class="gantt-toolbar">
+        <div class="gantt-toolbar-nav">
+            <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary gantt-nav-btn" id="prevMonthBtn"
+                aria-label="Mois précédent" title="Mois précédent">
+                <i data-lucide="chevron-left"></i>
+            </button>
+            <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary gantt-nav-btn" id="nextMonthBtn"
+                aria-label="Mois suivant" title="Mois suivant">
+                <i data-lucide="chevron-right"></i>
+            </button>
+            <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary" id="todayBtn">
+                Aujourd'hui
+            </button>
+        </div>
+
+        <h2 class="gantt-toolbar-title" id="monthDisplay">
+            Mai 2026
+        </h2>
+
+        <div class="gantt-toolbar-filters">
+            <label for="itemSelect" class="form-label u-mb-0 u-text-xs u-text-muted">Équipement :</label>
+            <div class="gantt-select-wrapper">
+                <select id="itemSelect" class="form-input form-input-sm searchable-select">
+                    <option value="">— Tous les équipements —</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteneur Gantt Timeline -->
     <div class="gantt-outer-container">
-        <!-- Liste des équipements (Sticky à gauche) -->
+        <!-- Colonne gauche des équipements (Sticky) -->
         <div class="gantt-sidebar">
             <div class="gantt-sidebar-header">Équipement</div>
             <div class="gantt-sidebar-rows" id="ganttSidebarRows">
@@ -57,7 +66,7 @@
             </div>
         </div>
 
-        <!-- Grille de la timeline (Scrollable) -->
+        <!-- Grille de la timeline (Scrollable horizontalement) -->
         <div class="gantt-timeline-container" id="ganttTimelineContainer">
             <div class="gantt-timeline-header" id="ganttTimelineHeader">
                 <!-- Rempli dynamiquement par JS (jours du mois) -->
@@ -67,38 +76,28 @@
             </div>
         </div>
     </div>
-    <!-- Legend -->
+
+    <!-- Légende sémantique conforme au Design System Belle Vitesse -->
     <div class="gantt-legend">
-        <div class="gantt-legend-item">
-            <div class="gantt-legend-swatch swatch-dep"></div>
-            <span>🚚 Départ</span>
-        </div>
-        <div class="gantt-legend-item">
-            <div class="gantt-legend-swatch swatch-shoot"></div>
-            <span>🎬 Tournage</span>
-        </div>
-        <div class="gantt-legend-item">
-            <div class="gantt-legend-swatch swatch-ret"></div>
-            <span>📦 Retour</span>
-        </div>
-        <div class="gantt-legend-item">
-            <div class="gantt-legend-swatch swatch-line"></div>
+        <span class="gantt-legend-label">Légende :</span>
+        <span class="badge-pill u-bg-checkout-light u-text-checkout"><i data-lucide="truck"></i> Départs</span>
+        <span class="badge-pill u-bg-project-light u-text-project"><i data-lucide="clapperboard"></i> Tournages</span>
+        <span class="badge-pill u-bg-checkin-light u-text-checkin"><i data-lucide="package-check"></i> Retours</span>
+        <div class="gantt-legend-period">
+            <span class="gantt-legend-period-line"></span>
             <span>Période de réservation</span>
         </div>
-        <div class="gantt-legend-item">
-            <div class="gantt-legend-swatch swatch-conflict"></div>
-            <span>Conflit</span>
-        </div>
+        <span class="badge-pill u-bg-danger-light u-text-danger"><i data-lucide="alert-triangle"></i> Conflit</span>
     </div>
 </div>
 
-<!-- Tooltip Custom -->
+<!-- Infobulle personnalisée (Tooltip) -->
 <div id="ganttTooltip" class="gantt-tooltip"></div>
-
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="{{ url_for('static', filename='js/admin/admin-booking.js') }}"></script>
+<script
+    src="{{ url_for('static', filename='js/admin/admin-booking.js') }}?v={{ asset_version('js/admin/admin-booking.js') }}"></script>
 {% endblock %}
