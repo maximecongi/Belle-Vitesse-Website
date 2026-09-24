@@ -174,7 +174,7 @@
                     {% if incident.equipments %}
                     {% for eq in incident.equipments %}
                     <span class="admin-multiselect-tag admin-multiselect-tag--sealed {{ eq.tag_class }}">
-                        <span class="admin-multiselect-tag-icon">{{ eq.icon }}</span>
+                        <span class="admin-multiselect-tag-icon">{{ eq.icon|safe }}</span>
                         <span class="admin-multiselect-tag-label">{{ eq.name }}{% if eq.unique_id %} ({{ eq.unique_id
                             }}){% endif %}</span>
                     </span>
@@ -182,13 +182,13 @@
                     {% else %}
                     {% if incident.vehicle %}
                     <span class="admin-multiselect-tag admin-multiselect-tag--sealed admin-multiselect-tag--vehicle">
-                        <span class="admin-multiselect-tag-icon"><i data-lucide="car"></i></span>
+                        <span class="admin-multiselect-tag-icon"><i data-lucide="motorbike"></i></span>
                         <span class="admin-multiselect-tag-label">{{ incident.vehicle.name }}{% if
                             incident.vehicle.unique_id %} ({{ incident.vehicle.unique_id }}){% endif %}</span>
                     </span>
                     {% elif incident.vehicle_name and incident.vehicle_name != '—' %}
                     <span class="admin-multiselect-tag admin-multiselect-tag--sealed admin-multiselect-tag--vehicle">
-                        <span class="admin-multiselect-tag-icon"><i data-lucide="car"></i></span>
+                        <span class="admin-multiselect-tag-icon"><i data-lucide="motorbike"></i></span>
                         <span class="admin-multiselect-tag-label">{{ incident.vehicle_name }}</span>
                     </span>
                     {% endif %}
@@ -293,7 +293,8 @@
                     <!-- Groupe Véhicules -->
                     <div class="admin-multiselect-group" id="groupVehicles">
                         <div class="admin-multiselect-group-header">
-                            <span class="admin-multiselect-group-title">🏎️ Véhicules du tournage</span>
+                            <span class="admin-multiselect-group-title"><i data-lucide="motorbike"></i> Véhicules du
+                                tournage</span>
                             <span class="admin-multiselect-group-count" id="vehicleCountBadge">0</span>
                         </div>
                         <div class="admin-multiselect-items" id="vehicleItemsList">
@@ -304,7 +305,7 @@
                     <!-- Groupe Têtes gyrostabilisées -->
                     <div class="admin-multiselect-group" id="groupHeads">
                         <div class="admin-multiselect-group-header">
-                            <span class="admin-multiselect-group-title">🤖 Têtes gyrostabilisées</span>
+                            <span class="admin-multiselect-group-title"><i data-lucide="bot"></i> Têtes</span>
                             <span class="admin-multiselect-group-count" id="headCountBadge">0</span>
                         </div>
                         <div class="admin-multiselect-items" id="headItemsList">
@@ -315,7 +316,8 @@
                     <!-- Groupe Autres matériels & accessoires libres -->
                     <div class="admin-multiselect-group admin-multiselect-group--custom" id="groupCustom">
                         <div class="admin-multiselect-group-header">
-                            <span class="admin-multiselect-group-title">📦 Autres matériels & accessoires</span>
+                            <span class="admin-multiselect-group-title"><i data-lucide="box"></i> Autres matériels &
+                                accessoires</span>
                             <span class="admin-multiselect-group-count" id="customCountBadge">0</span>
                         </div>
                         <div class="admin-multiselect-custom-add-bar">
@@ -540,13 +542,16 @@
         customEquipmentItems.forEach(item => {
             html += `
                 <span class="admin-multiselect-custom-pill">
-                    <span class="admin-multiselect-item-icon">📦</span>
+                    <span class="admin-multiselect-item-icon"><i data-lucide="box"></i></span>
                     <span class="admin-multiselect-custom-text" title="${escapeHtml(item)}">${escapeHtml(item)}</span>
                     <button type="button" class="admin-multiselect-custom-remove" data-action="remove-custom-item" data-value="${escapeHtml(item)}" title="Supprimer cet accessoire" aria-label="Supprimer">&times;</button>
                 </span>
             `;
         });
         container.innerHTML = html;
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
     }
 
     function addCustomEquipment(val) {
@@ -759,7 +764,7 @@
             const vName = cb.dataset.name || cb.value;
             tagsHtml += `
                 <span class="admin-multiselect-tag admin-multiselect-tag--vehicle">
-                    <span class="admin-multiselect-tag-icon">🏎️</span>
+                    <span class="admin-multiselect-tag-icon"><i data-lucide="motorbike"></i></span>
                     <span class="admin-multiselect-tag-label" title="${escapeHtml(vName)}">${escapeHtml(vName)}</span>
                     <button type="button" class="admin-multiselect-tag-remove" data-action="remove-vehicle" data-id="${escapeHtml(vId)}" title="Désélectionner" aria-label="Désélectionner">&times;</button>
                 </span>
@@ -770,7 +775,7 @@
             const hName = cb.value;
             tagsHtml += `
                 <span class="admin-multiselect-tag admin-multiselect-tag--head">
-                    <span class="admin-multiselect-tag-icon">🤖</span>
+                    <span class="admin-multiselect-tag-icon"><i data-lucide="bot"></i></span>
                     <span class="admin-multiselect-tag-label" title="${escapeHtml(hName)}">${escapeHtml(hName)}</span>
                     <button type="button" class="admin-multiselect-tag-remove" data-action="remove-head" data-name="${escapeHtml(hName)}" title="Désélectionner" aria-label="Désélectionner">&times;</button>
                 </span>
@@ -780,7 +785,7 @@
         customEquipmentItems.forEach(item => {
             tagsHtml += `
                 <span class="admin-multiselect-tag admin-multiselect-tag--custom">
-                    <span class="admin-multiselect-tag-icon">📦</span>
+                    <span class="admin-multiselect-tag-icon"><i data-lucide="box"></i></span>
                     <span class="admin-multiselect-tag-label" title="${escapeHtml(item)}">${escapeHtml(item)}</span>
                     <button type="button" class="admin-multiselect-tag-remove" data-action="remove-custom-item" data-value="${escapeHtml(item)}" title="Désélectionner" aria-label="Désélectionner">&times;</button>
                 </span>

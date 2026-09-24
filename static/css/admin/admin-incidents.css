@@ -647,6 +647,11 @@
     gap: 0.35rem;
 }
 
+.admin-multiselect-group-title .lucide {
+    height: 12px;
+    width: 12px;
+}
+
 .admin-multiselect-group-count {
     font-size: 0.7rem;
     font-weight: 600;

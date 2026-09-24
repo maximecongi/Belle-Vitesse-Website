@@ -415,7 +415,7 @@ incident_signature_badge, equipment_icon, empty_state %}
                 <div class="incident-detail-equipment-list u-mb-2">
                     {% for eq in incident.equipments %}
                     <div class="incident-detail-equipment-item">
-                        <span class="incident-detail-equipment-icon">{{ eq.icon }}</span>
+                        <span class="incident-detail-equipment-icon">{{ eq.icon|safe }}</span>
                         <div class="incident-detail-equipment-content">
                             <span class="u-font-semibold">{{ eq.name }}</span>
                             {% if eq.unique_id %}

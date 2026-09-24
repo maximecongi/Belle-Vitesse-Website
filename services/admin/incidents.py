@@ -8,6 +8,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from flask import current_app, render_template
+from markupsafe import Markup
 from werkzeug.utils import secure_filename
 
 from sqlalchemy.exc import IntegrityError
@@ -334,10 +335,14 @@ def get_incident_filter_options():
 def resolve_incident_equipments(inc, vehicle_data=None):
     """
     Construit la liste unifiée et typée de tous les équipements impliqués dans un incident :
-    - Véhicules : type="vehicle", icon="🏎️", tag_class="admin-multiselect-tag--vehicle"
-    - Têtes gyrostabilisées : type="head", icon="🤖", tag_class="admin-multiselect-tag--head"
-    - Autres accessoires : type="custom", icon="📦", tag_class="admin-multiselect-tag--custom"
+    - Véhicules : type="vehicle", icon="<i data-lucide='motorbike'></i>", tag_class="admin-multiselect-tag--vehicle"
+    - Têtes gyrostabilisées : type="head", icon="<i data-lucide='bot'></i>", tag_class="admin-multiselect-tag--head"
+    - Autres accessoires : type="custom", icon="<i data-lucide='box'></i>", tag_class="admin-multiselect-tag--custom"
     """
+    icon_vehicle = Markup("<i data-lucide='motorbike'></i>")
+    icon_head = Markup("<i data-lucide='bot'></i>")
+    icon_custom = Markup("<i data-lucide='box'></i>")
+
     equipments = []
     added_names = set()
 
@@ -347,7 +352,7 @@ def resolve_incident_equipments(inc, vehicle_data=None):
         equipments.append({
             "type": "vehicle",
             "name": v_name,
-            "icon": "🏎️",
+            "icon": icon_vehicle,
             "unique_id": vehicle_data.get("unique_id", ""),
             "id": vehicle_data.get("id"),
             "tag_class": "admin-multiselect-tag--vehicle",
@@ -358,7 +363,7 @@ def resolve_incident_equipments(inc, vehicle_data=None):
         equipments.append({
             "type": "vehicle",
             "name": inc.vehicle_name,
-            "icon": "🏎️",
+            "icon": icon_vehicle,
             "unique_id": "",
             "id": None,
             "tag_class": "admin-multiselect-tag--vehicle",
@@ -452,7 +457,7 @@ def resolve_incident_equipments(inc, vehicle_data=None):
                 equipments.append({
                     "type": "vehicle",
                     "name": matched_veh.get("name") or item,
-                    "icon": "🏎️",
+                    "icon": icon_vehicle,
                     "unique_id": matched_veh.get("unique_id", ""),
                     "id": matched_veh.get("id"),
                     "tag_class": "admin-multiselect-tag--vehicle",
@@ -465,7 +470,7 @@ def resolve_incident_equipments(inc, vehicle_data=None):
                 equipments.append({
                     "type": "custom",
                     "name": item,
-                    "icon": "📦",
+                    "icon": icon_custom,
                     "tag_class": "admin-multiselect-tag--custom",
                     "is_primary_vehicle": False,
                 })
@@ -475,7 +480,7 @@ def resolve_incident_equipments(inc, vehicle_data=None):
                 equipments.append({
                     "type": "head",
                     "name": item,
-                    "icon": "🤖",
+                    "icon": icon_head,
                     "tag_class": "admin-multiselect-tag--head",
                     "is_primary_vehicle": False,
                 })
@@ -485,7 +490,7 @@ def resolve_incident_equipments(inc, vehicle_data=None):
                 equipments.append({
                     "type": "custom",
                     "name": item,
-                    "icon": "📦",
+                    "icon": icon_custom,
                     "tag_class": "admin-multiselect-tag--custom",
                     "is_primary_vehicle": False,
                 })
