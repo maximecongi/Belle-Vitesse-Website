@@ -173,7 +173,221 @@
     color: inherit !important;
 }
 
-/* ── Structure Interne de l'Événement (eventContent) ──────────── */
+/* ── Événements Unifiés avec Trait de Continuité (Modèle Calendrier Matériel) ── */
+
+.fc-event.fc-event--unified,
+.fc-daygrid-event.fc-event--unified {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 2px 2px !important;
+    overflow: visible !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+}
+
+.fc-event.fc-event--unified:hover {
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.fc-event.fc-event--unified .fc-event-main {
+    padding: 0 !important;
+    overflow: visible !important;
+    width: 100%;
+}
+
+.fc-unified-track {
+    position: relative;
+    width: 100%;
+    min-height: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    user-select: none;
+}
+
+/* ── Ligne de continuité reliant départ à retour (idem .gantt-booking-connection) ── */
+.fc-unified-track__line {
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 2px;
+    background-color: var(--entity-project, #f59e0b);
+    opacity: 0.35;
+    z-index: 1;
+    pointer-events: none;
+    border-radius: 2px;
+    transition: opacity 0.15s ease;
+}
+
+.fc-event.fc-event--unified:hover .fc-unified-track__line {
+    opacity: 0.7;
+}
+
+.fc-unified-track__badges {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+}
+
+/* ── Badges / Jalons de Phases ── */
+.fc-phase-badge {
+    position: absolute;
+    top: 1px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 6px;
+    border-radius: 4px;
+    font-family: var(--font-primary);
+    font-size: 0.78rem;
+    line-height: 1.35;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    box-sizing: border-box;
+    z-index: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    user-select: none;
+}
+
+.fc-phase-badge:hover {
+    filter: brightness(0.97);
+}
+
+/* ── Départs (Check-out) : Vert Émeraude ── */
+.fc-phase-badge--checkout {
+    background-color: var(--entity-checkout-bg) !important;
+    border: 1px solid var(--entity-checkout-border) !important;
+    border-left: 3.5px solid var(--entity-checkout) !important;
+    color: var(--entity-checkout-text) !important;
+    flex: 0 0 auto;
+}
+
+.fc-phase-badge--checkout:hover {
+    border-color: var(--entity-checkout) !important;
+    box-shadow: 0 2px 8px var(--entity-checkout-glow, rgba(16, 185, 129, 0.25)) !important;
+}
+
+.fc-phase-icon--checkout {
+    color: var(--entity-checkout);
+    stroke: var(--entity-checkout);
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+}
+
+.fc-phase-badge__label {
+    font-weight: 600;
+}
+
+/* ── Tournages (Projets) : Ambre Chaud ── */
+.fc-phase-badge--project {
+    background-color: var(--entity-project-bg) !important;
+    border: 1px solid var(--entity-project-border) !important;
+    border-left: 3.5px solid var(--entity-project) !important;
+    color: var(--entity-project-text) !important;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.fc-phase-badge--project:hover {
+    border-color: var(--entity-project) !important;
+    box-shadow: 0 2px 8px var(--entity-project-glow, rgba(245, 158, 11, 0.25)) !important;
+}
+
+.fc-phase-icon--project {
+    color: var(--entity-project);
+    stroke: var(--entity-project);
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+}
+
+.fc-phase-badge__icon {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.fc-phase-badge__title {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.fc-phase-badge__suite {
+    font-size: 0.7rem;
+    font-weight: 400;
+    opacity: 0.7;
+    font-style: italic;
+}
+
+.fc-phase-badge__prod {
+    font-size: 0.68rem;
+    opacity: 0.8;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.fc-phase-badge__prod::before {
+    content: "•";
+    margin-right: 4px;
+    opacity: 0.6;
+}
+
+/* ── Retours (Check-in) : Bleu Océan ── */
+.fc-phase-badge--checkin {
+    background-color: var(--entity-checkin-bg) !important;
+    border: 1px solid var(--entity-checkin-border) !important;
+    border-left: 3.5px solid var(--entity-checkin) !important;
+    color: var(--entity-checkin-text) !important;
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
+.fc-phase-badge--checkin:hover {
+    border-color: var(--entity-checkin) !important;
+    box-shadow: 0 2px 8px var(--entity-checkin-glow, rgba(59, 130, 246, 0.25)) !important;
+}
+
+.fc-phase-icon--checkin {
+    color: var(--entity-checkin);
+    stroke: var(--entity-checkin);
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+}
+
+/* ── Icônes coïncidentes (Départ ou Retour sur la même journée que le Tournage) ── */
+.fc-phase-coincide {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.fc-phase-coincide--checkout {
+    margin-right: 2px;
+}
+
+.fc-phase-coincide--checkin {
+    margin-left: 4px;
+}
+
+/* ── Structure Interne de l'Événement Standard (eventContent Fallback) ── */
 
 .fc-event-custom {
     display: flex;
@@ -295,10 +509,24 @@
 
 /* ── Filtrage Interactif du Calendrier ────────────────────────── */
 
-#calendar[data-filter="checkout"] .fc-event:not(.fc-event--checkout),
-#calendar[data-filter="project"] .fc-event:not(.fc-event--project),
-#calendar[data-filter="checkin"] .fc-event:not(.fc-event--checkin) {
+#calendar[data-filter="checkout"] .fc-event:not(.has-checkout):not(.fc-event--checkout),
+#calendar[data-filter="project"] .fc-event:not(.has-project):not(.fc-event--project),
+#calendar[data-filter="checkin"] .fc-event:not(.has-checkin):not(.fc-event--checkin) {
     display: none !important;
+}
+
+#calendar[data-filter="checkout"] .fc-phase-badge:not(.fc-phase-badge--checkout),
+#calendar[data-filter="checkout"] .fc-unified-track__line {
+    opacity: 0.2 !important;
+}
+
+#calendar[data-filter="project"] .fc-phase-badge:not(.fc-phase-badge--project) {
+    opacity: 0.2 !important;
+}
+
+#calendar[data-filter="checkin"] .fc-phase-badge:not(.fc-phase-badge--checkin),
+#calendar[data-filter="checkin"] .fc-unified-track__line {
+    opacity: 0.2 !important;
 }
 
 /* ICS Subscription Page Styles */
