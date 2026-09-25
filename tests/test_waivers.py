@@ -344,6 +344,30 @@ class WaiversTest(unittest.TestCase):
             resp404 = self.client.get("/pilot-waiver/verify/BVDW-NONEXISTENT")
             self.assertEqual(resp404.status_code, 404)
 
+    def test_finalize_signed_document_production_waiver(self):
+        """Vérifie le cycle complet de signature et génération PDF d'une décharge production."""
+        from services.common.signatures import finalize_signed_document
+
+        with self.app.app_context(), self.app.test_request_context("/"):
+            prod, proj = self._create_mock_data()
+            create_production_waiver(project_id=proj.id)
+            pw = ProductionWaiver.query.filter_by(project_id=proj.id).first()
+            pw.production_representative = "Marie Directrice"
+            pw.production_insurance_company = "Assurance Ciné"
+            pw.production_insurance_policy = "POL12345"
+            db.session.commit()
+            sig_data = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+            res = finalize_signed_document(
+                mode="production",
+                record_id=pw.id,
+                signature_data=sig_data,
+                signed_ip="127.0.0.1",
+            )
+            self.assertTrue(res)
+            self.assertEqual(res["document_id"], pw.waiver_id)
+            self.assertTrue(res["pdf_url"])
+            self.assertEqual(pw.status, "signed")
+
 
 if __name__ == "__main__":
     unittest.main()

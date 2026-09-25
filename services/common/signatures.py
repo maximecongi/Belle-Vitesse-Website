@@ -295,6 +295,8 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         filename = f"{document_id}_{secrets.token_hex(8)}.pdf"
         file_path = os.path.join(pdf_dir, filename)
 
+        html_content = render_template(config["template"], **render_ctx)
+
         # 4. Stockage physique
         output_base = current_app.config.get(
             "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
