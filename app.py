@@ -163,6 +163,15 @@ def create_app():
 
         return response
 
+    @app.teardown_request
+    def teardown_request_cleanup(exception=None):
+        """Assure le rollback systématique des transactions SQLAlchemy en cas d'erreur non interceptée."""
+        if exception:
+            try:
+                db.session.rollback()
+            except Exception:
+                pass
+
     # Initialisation de la DB et migrations de schéma
     if os.getenv("RUN_MIGRATIONS") == "true":
         try:

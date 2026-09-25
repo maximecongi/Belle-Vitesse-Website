@@ -23,7 +23,12 @@ from services.admin.status_mapping import (
     get_checkpoint_key,
     get_inspection_key,
 )
-from services.admin.utils import _delete_inspection_files, _is_ready, _parse_photos_json
+from services.admin.utils import (
+    _delete_inspection_files,
+    _is_ready,
+    _parse_photos_json,
+    handle_admin_service_error,
+)
 from utils.checkpoints import (
     ALL_POSSIBLE_CHECKPOINTS,
     BASE_CHECKPOINTS,
@@ -187,6 +192,7 @@ def get_signed_document_info(inspection_id, is_checkout=True):
     }
 
 
+@handle_admin_service_error
 def delete_inspection_unified(mode, record_id):
     """
     Supprime génériquement une inspection (Checkout ou Checkin).
@@ -222,6 +228,7 @@ def delete_inspection_unified(mode, record_id):
     return True
 
 
+@handle_admin_service_error
 def upload_inspection_photos_shared(mode, record, files):
     """
     Gère l'upload des photos pour n'importe quel type d'inspection.

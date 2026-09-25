@@ -165,6 +165,7 @@ def init_waiver_routes(app):
             return jsonify({"success": True})
 
         except Exception as e:
+            db.session.rollback()
             current_app.logger.error(
                 f"Error processing {mode} waiver sign: {e}")
             return jsonify({"success": False, "error": "Une erreur serveur est survenue."}), 500

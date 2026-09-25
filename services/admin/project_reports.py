@@ -15,6 +15,7 @@ from models import (
 from models.db import _utcnow
 from services.admin.status_mapping import format_waiver_status
 from services.admin.projects import _format_vehicle_state, _get_secured_document_url
+from services.admin.utils import handle_admin_service_error
 from utils.database import get_vehicles, get_heads
 from utils.formatting import format_date_fr
 
@@ -48,6 +49,7 @@ def _format_waiver_data(waiver, beneficiary_name: str, doc_type: str) -> dict:
     }
 
 
+@handle_admin_service_error
 def add_project_report(project_id, user_id, content, title=None):
     """
     Ajoute un rapport / commentaire libre à un projet.
@@ -91,6 +93,7 @@ def add_project_report(project_id, user_id, content, title=None):
 REPORT_EDIT_WINDOW_SECONDS = 3 * 3600  # 3 heures
 
 
+@handle_admin_service_error
 def update_project_report(report_id, current_user_id, content, title=None, is_admin=False):
     """
     Met à jour un rapport d'équipe existant (titre et contenu).
@@ -129,6 +132,7 @@ def update_project_report(report_id, current_user_id, content, title=None, is_ad
     return report
 
 
+@handle_admin_service_error
 def delete_project_report(report_id, current_user_id, is_admin=False):
     """
     Supprime un rapport / commentaire.

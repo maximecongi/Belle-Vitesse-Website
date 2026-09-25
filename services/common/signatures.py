@@ -194,6 +194,7 @@ def abandon_inspection_signature(token_str, mode):
             db.session.commit()
         logger.info(f"🔙 Signature abandonnée pour {entry.inspection_id}")
     except Exception as e:
+        db.session.rollback()
         logger.error(f"❌ Échec de l'abandon de la signature : {e}")
     return True
 
@@ -213,6 +214,7 @@ def resume_inspection_signature(token_str, mode):
             record.status = "pending"
             db.session.commit()
     except Exception as e:
+        db.session.rollback()
         logger.error(f"❌ Échec de la reprise de la signature : {e}")
     return True
 

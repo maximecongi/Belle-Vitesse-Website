@@ -122,7 +122,7 @@ def register_inspection_routes(app, mode):
                 record.status = "pending"
                 db.session.commit()
             except Exception:
-                pass
+                db.session.rollback()
 
         from services.admin.inspections import _format_base_inspection_admin
         from utils.database import get_vehicles

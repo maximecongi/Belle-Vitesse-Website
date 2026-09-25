@@ -8,6 +8,7 @@ from services.admin.status_mapping import format_waiver_status
 from utils.database import get_vehicles, get_heads
 from utils.formatting import format_date_fr, get_today_paris
 from utils.document_utils import generate_pdf_access_token
+from services.admin.utils import handle_admin_service_error
 
 logger = logging.getLogger(__name__)
 
@@ -260,6 +261,7 @@ def _parse_date(d):
     return d if d else None
 
 
+@handle_admin_service_error
 def create_project(form, user_id=None):
     """Crée un nouvel enregistrement de projet en base de données."""
     veh_ids = form.getlist("vehicle_ids") if hasattr(form, 'getlist') else []
@@ -299,6 +301,7 @@ def create_project(form, user_id=None):
     return True
 
 
+@handle_admin_service_error
 def update_project(record_id, form, user_id=None):
     """Met à jour un projet existant en base de données."""
     project = db.session.get(Project, record_id)
@@ -358,6 +361,7 @@ def update_project(record_id, form, user_id=None):
     return True
 
 
+@handle_admin_service_error
 def update_project_notes(record_id, notes, user_id=None):
     """
     Met à jour spécifiquement les notes / consignes d'un projet.
@@ -409,6 +413,7 @@ def get_project_for_edit(record_id):
     }
 
 
+@handle_admin_service_error
 def delete_project(record_id, user_id=None):
     """Supprime un projet et ses décharges associées de la base de données via soft-delete."""
     p = db.session.get(Project, record_id)

@@ -268,6 +268,14 @@ test_temp_email_preview_access_and_prod_guard (test_routes.RouteSmokeTest.test_t
 Vérifie que la route temporaire est accessible en dev/test et bloquée (404) en production. ... ok
 test_unsubscribe_success (test_routes.RouteSmokeTest.test_unsubscribe_success)
 Test that unsubscribing with a valid token works and does not 500. ... ok
+test_add_project_report_rollback_on_failure (test_transactions_rollback.TransactionRollbackTest.test_add_project_report_rollback_on_failure)
+Vérifie que add_project_report rollback systématiquement en cas d'échec. ... ok
+test_create_project_rollback_on_failure (test_transactions_rollback.TransactionRollbackTest.test_create_project_rollback_on_failure)
+Vérifie que create_project rollback systématiquement en cas d'échec de commit. ... ok
+test_handle_admin_service_error_decorator_rolls_back (test_transactions_rollback.TransactionRollbackTest.test_handle_admin_service_error_decorator_rolls_back)
+Vérifie que le décorateur handle_admin_service_error rollback la session sur exception. ... ok
+test_teardown_request_rolls_back_on_unhandled_exception (test_transactions_rollback.TransactionRollbackTest.test_teardown_request_rolls_back_on_unhandled_exception)
+Vérifie que le teardown_request global rollback une session dirty si une exception non gérée survient. ... ok
 test_create_and_list_waivers (test_waivers.WaiversTest.test_create_and_list_waivers) ... ok
 test_explicit_delete_and_recreate (test_waivers.WaiversTest.test_explicit_delete_and_recreate)
 Vérifie la suppression unitaire par ID et la capacité de recréer une décharge pour le même projet. ... ok
@@ -294,6 +302,6 @@ test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.W
 Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
 ----------------------------------------------------------------------
-Ran 189 tests in 11.842s
+Ran 193 tests in 11.978s
 
 OK (skipped=2)

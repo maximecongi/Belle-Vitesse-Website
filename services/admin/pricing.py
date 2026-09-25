@@ -7,6 +7,7 @@ Handles salary_rates and logistics_rates CRUD operations.
 import logging
 
 from models import AppSetting, GripProduct, Head, LogisticsRate, SalaryPosition, SalaryRate, Vehicle, db
+from services.admin.utils import handle_admin_service_error
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,7 @@ def get_invoice_factor():
         return INVOICE_FACTOR_DEFAULT
 
 
+@handle_admin_service_error
 def update_invoice_factor(new_factor):
     """Met à jour le facteur et recalcule TOUTES les lignes Facture à partir de Publicité."""
     new_factor = round(float(new_factor), 4)
@@ -141,6 +143,7 @@ def list_equipment_rates():
     return result
 
 
+@handle_admin_service_error
 def reorder_equipment(table_name, item_ids):
     """Réordonne les items d'une catégorie d'équipement."""
     table_map = {"vehicles": Vehicle, "heads": Head, "grip_products": GripProduct}
@@ -155,6 +158,7 @@ def reorder_equipment(table_name, item_ids):
     return True
 
 
+@handle_admin_service_error
 def update_equipment_daily_rate(table_name, record_id, value):
     """Met à jour le daily_rate d'un item dans sa table source."""
     table_map = {"vehicles": Vehicle,
@@ -246,6 +250,7 @@ def list_salary_groups():
     return sorted([g[0] for g in groups if g[0]])
 
 
+@handle_admin_service_error
 def add_salary_rate(group_name="", annexe="Annexe 1"):
     """Ajoute une nouvelle position (avec toutes ses annexes) dans un groupe donné."""
     # display_order = max global + 1
@@ -287,6 +292,7 @@ def add_salary_rate(group_name="", annexe="Annexe 1"):
     return res_dict
 
 
+@handle_admin_service_error
 def delete_salary_rate(rate_id):
     """Supprime une position (et toutes ses déclinaisons d'annexes)."""
     if str(rate_id).startswith("renfort_"):
@@ -302,6 +308,7 @@ def delete_salary_rate(rate_id):
     return True
 
 
+@handle_admin_service_error
 def reorder_salary_rates(groups_order):
     """Réordonne toutes les lignes de salaire.
     Synchronise display_order pour toutes les annexes de chaque position.
@@ -322,6 +329,7 @@ def reorder_salary_rates(groups_order):
     return True
 
 
+@handle_admin_service_error
 def rename_salary_group(old_name, new_name):
     """Renomme toutes les lignes d'un groupe."""
     new_name = new_name.strip()
@@ -337,6 +345,7 @@ def rename_salary_group(old_name, new_name):
     return new_name
 
 
+@handle_admin_service_error
 def delete_salary_group(group_name):
     """Supprime toutes les lignes d'un groupe."""
     positions = SalaryPosition.query.filter_by(group_name=group_name).all()
@@ -351,6 +360,7 @@ def delete_salary_group(group_name):
 
 
 
+@handle_admin_service_error
 def update_salary_rate(rate_id, field, value):
     """Met à jour un champ spécifique d'un SalaryRate.
     Si base_hourly est modifié, recalcule TOUTES les colonnes.
@@ -438,6 +448,7 @@ def list_logistics_rates():
         return []
 
 
+@handle_admin_service_error
 def add_logistics_rate():
     """Ajoute une nouvelle ligne logistique."""
     max_order = db.session.query(db.func.max(
@@ -452,6 +463,7 @@ def add_logistics_rate():
     return new_rate.to_dict()
 
 
+@handle_admin_service_error
 def delete_logistics_rate(rate_id):
     """Supprime une ligne logistique."""
     rate = db.session.get(LogisticsRate, rate_id)
@@ -462,6 +474,7 @@ def delete_logistics_rate(rate_id):
     return True
 
 
+@handle_admin_service_error
 def update_logistics_rate(rate_id, field, value):
     """Met à jour un champ spécifique d'un LogisticsRate."""
     if field not in LOGISTICS_EDITABLE_FIELDS:
@@ -481,6 +494,7 @@ def update_logistics_rate(rate_id, field, value):
     return rate.to_dict()
 
 
+@handle_admin_service_error
 def reorder_logistics_rates(item_ids):
     """Réordonne les tarifs logistiques."""
     for i, rate_id in enumerate(item_ids):

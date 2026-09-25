@@ -5,6 +5,7 @@ from sqlalchemy import case
 from sqlalchemy.orm.attributes import flag_modified
 from utils.checkpoints import ALL_POSSIBLE_CHECKPOINTS, SPECIFIC_DETAILS
 from utils.database import get_vehicles
+from services.admin.utils import handle_admin_service_error
 
 logger = logging.getLogger(__name__)
 
@@ -202,6 +203,7 @@ def get_empty_checkpoint_for_create():
     }
 
 
+@handle_admin_service_error
 def create_checkpoint(form_data: dict):
     """Crée un nouveau point de contrôle avec ses configurations par véhicule."""
     ensure_default_checkpoints()
@@ -272,6 +274,7 @@ def create_checkpoint(form_data: dict):
     return new_cp
 
 
+@handle_admin_service_error
 def update_checkpoint(checkpoint_id: int, form_data: dict) -> bool:
     """Met à jour un point de contrôle : nom, catégorie, ordre, indication par défaut et véhicules concernés avec indications."""
     cp = CheckpointDefinition.query.get(checkpoint_id)
@@ -333,6 +336,7 @@ def update_checkpoint(checkpoint_id: int, form_data: dict) -> bool:
     return True
 
 
+@handle_admin_service_error
 def reorder_checkpoints(ordered_ids: list) -> bool:
     """Met à jour l'ordre d'affichage des points de contrôle d'après la liste ordonnée de leurs IDs."""
     try:
@@ -350,6 +354,7 @@ def reorder_checkpoints(ordered_ids: list) -> bool:
         return False
 
 
+@handle_admin_service_error
 def delete_checkpoint(checkpoint_id: int) -> tuple[bool, str]:
     """Supprime un point de contrôle et nettoie les configurations associées."""
     try:
@@ -428,6 +433,7 @@ def get_vehicles_with_config():
     return results
 
 
+@handle_admin_service_error
 def save_vehicle_checkpoint_config(vehicle_id, enabled_keys):
     """Enregistre les points de contrôle activés pour un véhicule spécifique depuis la vue matrice."""
     ensure_default_checkpoints()

@@ -17,6 +17,7 @@ from models import (
 )
 from models.db import _utcnow
 from services.admin.status_mapping import format_waiver_status
+from services.admin.utils import handle_admin_service_error
 from utils.database import get_vehicles
 
 # Keep here for list view
@@ -124,6 +125,7 @@ def _reset_waiver_fields(mode, waiver):
 
 # ── Décharges Production ───────────────────────────────────────────
 
+@handle_admin_service_error
 def create_production_waiver(project_id):
     """Crée une décharge production pour un projet s'il n'en existe pas déjà une active."""
     existing = ProductionWaiver.query.filter_by(project_id=project_id).first()
@@ -165,6 +167,7 @@ def create_production_waiver(project_id):
     return True, "Décharge production créée avec succès."
 
 
+@handle_admin_service_error
 def delete_production_waiver(waiver_id):
     """Supprime logiquement une décharge production (soft-delete et nettoyage assets)."""
     waiver = None
@@ -255,6 +258,7 @@ def list_production_waivers():
     return formatted
 
 
+@handle_admin_service_error
 def generate_production_waiver(waiver_id):
     """
     Génère (fige les données de snapshot) une décharge production.
@@ -291,6 +295,7 @@ def generate_production_waiver(waiver_id):
     return True, "Décharge production générée avec succès."
 
 
+@handle_admin_service_error
 def send_production_waiver(waiver_id, base_url=None):
     """Envoie l'invitation de signature par e-mail au contact production."""
     from flask import current_app, has_request_context, request
@@ -357,6 +362,7 @@ def send_production_waiver(waiver_id, base_url=None):
     return True, f"{msg_type} à la production ({contact_prod.mail})."
 
 
+@handle_admin_service_error
 def reset_production_waiver(waiver_id):
     """Réinitialise complètement une décharge production (supprime signature et PDF)."""
     waiver = ProductionWaiver.query.filter_by(waiver_id=waiver_id).first()
@@ -380,6 +386,7 @@ def reset_production_waiver(waiver_id):
         return False, f"Erreur lors du reset : {e}"
 
 
+@handle_admin_service_error
 def delete_production_waiver_internal(project_id):
     """Supprime proprement une décharge production en interne (appelé lors de suppression de projet)."""
     waiver = ProductionWaiver.query.filter_by(project_id=project_id).first()
@@ -402,6 +409,7 @@ def delete_production_waiver_internal(project_id):
 
 # ── Décharges Pilote ────────────────────────────────────────────────
 
+@handle_admin_service_error
 def create_pilot_waiver(project_id):
     """Crée une décharge pilote pour un projet s'il n'en existe pas déjà une active."""
     existing = PilotWaiver.query.filter_by(project_id=project_id).first()
@@ -451,6 +459,7 @@ def create_pilot_waiver(project_id):
     return True, "Décharge créée avec succès."
 
 
+@handle_admin_service_error
 def delete_pilot_waiver(waiver_id):
     """Supprime logiquement une décharge pilote (soft-delete et nettoyage assets)."""
     waiver = None
@@ -549,6 +558,7 @@ def list_pilot_waivers():
     return formatted
 
 
+@handle_admin_service_error
 def generate_pilot_waiver(waiver_id):
     """
     Génère (fige les données de snapshot) une décharge pilote.
@@ -594,6 +604,7 @@ def generate_pilot_waiver(waiver_id):
     return True, "Décharge générée avec succès."
 
 
+@handle_admin_service_error
 def send_pilot_waiver(waiver_id, base_url=None):
     """Envoie l'invitation de signature par e-mail au pilote."""
     from flask import current_app, has_request_context, request
@@ -659,6 +670,7 @@ def send_pilot_waiver(waiver_id, base_url=None):
     return True, f"{msg_type} au pilote ({pilot_contact.mail})."
 
 
+@handle_admin_service_error
 def reset_pilot_waiver(waiver_id):
     """Réinitialise complètement une décharge pilote (supprime signature et PDF)."""
     waiver = PilotWaiver.query.filter_by(waiver_id=waiver_id).first()
@@ -684,6 +696,7 @@ def reset_pilot_waiver(waiver_id):
         return False, f"Erreur lors de la réinitialisation : {str(e)}"
 
 
+@handle_admin_service_error
 def delete_pilot_waiver_internal(project_id):
     """Supprime proprement une décharge pilote en interne (appelé lors de suppression de projet)."""
     waiver = PilotWaiver.query.filter_by(project_id=project_id).first()
@@ -707,6 +720,7 @@ def delete_pilot_waiver_internal(project_id):
 
 # ── Relances Automatiques de Décharges ────────────────────────────
 
+@handle_admin_service_error
 def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> dict:
     """
     Identifie et relance automatiquement les décharges (production et pilote)

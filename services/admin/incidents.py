@@ -25,6 +25,7 @@ from utils.document_utils import (
 )
 from utils.storage import get_incident_path, ensure_dir
 from utils.image_utils import optimize_and_save_image
+from services.admin.utils import handle_admin_service_error
 
 logger = logging.getLogger(__name__)
 
@@ -665,6 +666,7 @@ def get_incident_detail(record_id):
     }
 
 
+@handle_admin_service_error
 def create_incident(form_data, uploaded_photos=None, uploaded_documents=None):
     """
     Crée un nouvel incident de tournage avec téléversement sécurisé de photos et pièces.
@@ -784,6 +786,7 @@ def create_incident(form_data, uploaded_photos=None, uploaded_documents=None):
     return incident
 
 
+@handle_admin_service_error
 def update_incident(record_id, form_data, uploaded_photos=None, uploaded_documents=None, removed_photos=None):
     """
     Met à jour un incident existant, gère l'ajout/suppression de photos, les changements de statut
@@ -963,6 +966,7 @@ def update_incident(record_id, form_data, uploaded_photos=None, uploaded_documen
     return incident
 
 
+@handle_admin_service_error
 def update_incident_status(record_id, new_status, resolution_notes=None, actual_cost=None):
     """
     Met à jour directement le statut d'un incident (action rapide ou API).
@@ -1003,6 +1007,7 @@ def update_incident_status(record_id, new_status, resolution_notes=None, actual_
     return incident
 
 
+@handle_admin_service_error
 def delete_incident(record_id, confirm=True):
     """
     Suppression logique (soft-delete) d'un incident.
@@ -1173,6 +1178,7 @@ def get_incident_form_context():
 
 # ── Double Signature & Scellement ─────────────────────────────────
 
+@handle_admin_service_error
 def sign_incident_bv(incident_id, signer_name, signer_role, signature_data, ip_address=None):
     """
     Enregistre le visa et la signature manuscrite de Belle Vitesse pour un incident.
@@ -1239,6 +1245,7 @@ def sign_incident_bv(incident_id, signer_name, signer_role, signature_data, ip_a
     }
 
 
+@handle_admin_service_error
 def sign_incident_prod(incident_id, signer_name, signer_role, signature_data, ip_address=None, token_str=None):
     """
     Enregistre le visa et la signature manuscrite de la Production (sur place ou via token).
@@ -1300,6 +1307,7 @@ def sign_incident_prod(incident_id, signer_name, signer_role, signature_data, ip
     }
 
 
+@handle_admin_service_error
 def generate_incident_token(incident_id, recipient_email=None):
     """
     Génère un jeton sécurisé temporaire (48h) pour la signature distante par la Production.
