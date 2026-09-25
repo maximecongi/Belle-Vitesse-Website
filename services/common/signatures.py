@@ -295,20 +295,11 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         filename = f"{document_id}_{secrets.token_hex(8)}.pdf"
         file_path = os.path.join(pdf_dir, filename)
 
-        html_content = render_template(config["template"], **render_ctx)
-        pdf_bytes = render_pdf_from_template(
-            html_content, base_url, config["stylesheets"], filename=filename)
-
         # 4. Stockage physique
         output_base = current_app.config.get(
             "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
         rel_pdf_path = os.path.relpath(file_path, output_base)
-
-        with open(file_path, "wb") as f:
-            f.write(pdf_bytes)
-
         pdf_public_url = f"{base_url}/{config['url_path']}/document/{rel_pdf_path}"
-        pdf_file_hash = compute_pdf_hash(pdf_bytes)
 
         # 5. Persistance en base de données
         if hasattr(record, "signed_pdf_path"):
@@ -318,13 +309,12 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
             record.hash = current_hash
 
         # Création de l'enregistrement d'archive
-        # Détermine le nom de la PK pour le modèle de document signé
         pk_name = "inspection_id" if mode in [
             "checkout", "checkin"] else "waiver_id"
         signed_doc = signed_model(
             **{pk_name: document_id},
             hash=current_hash,
-            pdf_file_hash=pdf_file_hash,
+            pdf_file_hash="",
             data_snapshot={
                 **snapshot,
                 "signer_ip": signed_ip,
@@ -337,12 +327,25 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         db.session.add(signed_doc)
         db.session.commit()
 
-        # 6. Post-traitement (kDrive et Emails)
-        _dispatch_kdrive_document_bundle(
-            mode, record, rel_pdf_path, base_url, current_hash, snapshot)
-
-        if mode in ["pilot", "production"]:
-            _send_waiver_confirmation_email(mode, record, file_path)
+        # 6. Compilation PDF asynchrone via RQ & Post-traitements (kDrive, Emails)
+        from services.common.pdf_tasks import dispatch_pdf_generation
+        dispatch_pdf_generation(
+            html_content=html_content,
+            output_file_path=file_path,
+            base_url=base_url,
+            stylesheets=config["stylesheets"],
+            compress=True,
+            filename=filename,
+            entity_type="waiver" if mode in ["pilot", "production"] else "inspection",
+            entity_id=document_id,
+            post_action="waiver_post_actions" if mode in ["pilot", "production"] else "inspection_post_actions",
+            extra_context={
+                "mode": mode,
+                "rel_pdf_path": rel_pdf_path,
+                "current_hash": current_hash,
+                "snapshot": snapshot,
+            },
+        )
 
         return {
             "document_id": document_id,
@@ -553,26 +556,14 @@ def seal_incident_contradictory_document(incident, incident_data, base_url=None)
     }
 
     html = render_template("pdf/incident_report.html", **render_ctx)
-    pdf_bytes = render_pdf_from_template(
-        html_content=html,
-        base_url=current_app.root_path,
-        stylesheets=["css/styles.css",
-                     "css/checkout.css", "css/incident_pdf.css"],
-        filename=filename,
-    )
 
     output_base = current_app.config.get(
         "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
     rel_pdf_path = os.path.relpath(file_path, output_base)
 
-    with open(file_path, "wb") as f:
-        f.write(pdf_bytes)
-
-    pdf_file_hash = compute_pdf_hash(pdf_bytes)
-
     incident.signed_pdf_path = rel_pdf_path
     incident.hash = current_hash
-    incident.pdf_file_hash = pdf_file_hash
+    incident.pdf_file_hash = ""
     incident.signature_status = "signed"
 
     # Transition automatique vers "en_expertise" si "signale"
@@ -590,7 +581,7 @@ def seal_incident_contradictory_document(incident, incident_data, base_url=None)
                 incident_number=incident.incident_number,
                 incident_id=incident.id,
                 hash=current_hash,
-                pdf_file_hash=pdf_file_hash,
+                pdf_file_hash="",
                 data_snapshot=incident.to_dict(),
                 signature=incident.prod_signature_data or incident.bv_signature_data,
                 pdf_url=f"/incidents/document/{rel_pdf_path}",
@@ -601,7 +592,7 @@ def seal_incident_contradictory_document(incident, incident_data, base_url=None)
         else:
             signed_doc.incident_id = incident.id
             signed_doc.hash = current_hash
-            signed_doc.pdf_file_hash = pdf_file_hash
+            signed_doc.pdf_file_hash = ""
             signed_doc.data_snapshot = incident.to_dict()
             signed_doc.signature = incident.prod_signature_data or incident.bv_signature_data
             signed_doc.pdf_url = f"/incidents/document/{rel_pdf_path}"
@@ -618,7 +609,7 @@ def seal_incident_contradictory_document(incident, incident_data, base_url=None)
         if existing_doc:
             existing_doc.incident_id = incident.id
             existing_doc.hash = current_hash
-            existing_doc.pdf_file_hash = pdf_file_hash
+            existing_doc.pdf_file_hash = ""
             existing_doc.data_snapshot = incident.to_dict()
             existing_doc.signature = incident.prod_signature_data or incident.bv_signature_data
             existing_doc.pdf_url = f"/incidents/document/{rel_pdf_path}"
@@ -627,6 +618,26 @@ def seal_incident_contradictory_document(incident, incident_data, base_url=None)
             db.session.commit()
         else:
             raise commit_err
+
+    # Délégation asynchrone de la compilation WeasyPrint
+    from services.common.pdf_tasks import dispatch_pdf_generation
+    dispatch_pdf_generation(
+        html_content=html,
+        output_file_path=file_path,
+        base_url=current_app.root_path,
+        stylesheets=["css/styles.css", "css/checkout.css", "css/incident_pdf.css"],
+        compress=True,
+        filename=filename,
+        entity_type="incident",
+        entity_id=incident.id,
+    )
+
+    try:
+        if signed_doc:
+            db.session.refresh(signed_doc)
+        db.session.refresh(incident)
+    except Exception:
+        pass
 
     # Synchronisation kDrive native (bundle PDF + photos + documents)
     _dispatch_kdrive_document_bundle(

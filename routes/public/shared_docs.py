@@ -50,6 +50,15 @@ def handle_document_download(filepath):
 
     output_base = current_app.config.get(
         "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
+    full_path = os.path.join(output_base, filepath)
+
+    # Si le document est en cours de compilation en tâche de fond, attendre brièvement qu'il soit écrit
+    if not os.path.exists(full_path):
+        import time
+        for _ in range(6):
+            time.sleep(0.5)
+            if os.path.exists(full_path):
+                break
 
     try:
         return send_from_directory(output_base, filepath)

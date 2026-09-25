@@ -83,7 +83,8 @@ services:
       - REDIS_PORT=6379
       - REDIS_DB_KDRIVE=1
       - REDIS_DB_EMAILS=1
-    command: rq worker -u redis://bv_redis:6379/1 sql_logs kdrive emails
+      - REDIS_DB_PDF=1
+    command: rq worker -u redis://bv_redis:6379/1 sql_logs kdrive emails pdf
     volumes:
       - /srv/bellevitesse/logs:/app/logs
       - /srv/bellevitesse/output:/app/output

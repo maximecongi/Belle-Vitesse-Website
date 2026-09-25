@@ -225,6 +225,14 @@ test_optimize_image_downscaling_and_rgba (test_pdf_compression.PDFCompressionTes
 Vérifie la conversion et le redimensionnement d'une image avec canal alpha. ... ok
 test_render_pdf_from_template_invokes_compress_pdf (test_pdf_compression.PDFCompressionTestCase.test_render_pdf_from_template_invokes_compress_pdf)
 Vérifie que render_pdf_from_template appelle bien compress_pdf du nouveau module. ... ok
+test_async_dispatch_enqueues_to_rq (test_pdf_tasks_rq.PDFTasksRQTestCase.test_async_dispatch_enqueues_to_rq)
+Vérifie que dispatch_pdf_generation enfile le job dans la queue RQ 'pdf' hors testing. ... ok
+test_async_dispatch_falls_back_to_daemon_thread_when_redis_unavailable (test_pdf_tasks_rq.PDFTasksRQTestCase.test_async_dispatch_falls_back_to_daemon_thread_when_redis_unavailable)
+Vérifie le repli automatique sur un thread daemon lorsque Redis est indisponible. ... ok
+test_sync_execution_in_testing_mode (test_pdf_tasks_rq.PDFTasksRQTestCase.test_sync_execution_in_testing_mode)
+Vérifie que la compilation s'exécute de façon synchrone et écrit le fichier en mode test. ... ok
+test_task_render_pdf_updates_waiver_entity (test_pdf_tasks_rq.PDFTasksRQTestCase.test_task_render_pdf_updates_waiver_entity)
+Vérifie que la tâche worker met à jour les chemins et hashes de l'entité décharge. ... ok
 test_all_rates_api (test_pre_quote_salary.PreQuoteSalaryTest.test_all_rates_api) ... skipped "Routes d'administration désactivées conformément à la règle d'exclusion des pré-devis"
 test_edit_enrichment (test_pre_quote_salary.PreQuoteSalaryTest.test_edit_enrichment) ... skipped "Routes d'administration désactivées conformément à la règle d'exclusion des pré-devis"
 test_grouped_prestations_pdf (test_pre_quote_salary.PreQuoteSalaryTest.test_grouped_prestations_pdf) ... ok
@@ -324,6 +332,6 @@ test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.W
 Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
 ----------------------------------------------------------------------
-Ran 204 tests in 13.627s
+Ran 208 tests in 23.974s
 
 OK (skipped=2)

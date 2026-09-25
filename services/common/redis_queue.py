@@ -63,6 +63,8 @@ def get_rq_queue(name: str = "default", db_index: Optional[int] = None) -> Optio
     if db_index is None:
         if name == "emails":
             db_index = int(os.getenv("REDIS_DB_EMAILS", "1"))
+        elif name in ("pdf", "documents"):
+            db_index = int(os.getenv("REDIS_DB_PDF", "1"))
         elif name == "kdrive":
             db_index = int(os.getenv("REDIS_DB_KDRIVE", "1"))
         elif name == "sql_logs":
