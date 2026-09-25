@@ -110,7 +110,7 @@ def init_users_routes(app):
 
         return render_template("admin/user_form.html", is_edit=False, data=None, assignable_roles=assignable)
 
-    @app.route("/admin/users/<record_id>/edit", methods=["GET", "POST"])
+    @app.route("/admin/users/<int:record_id>/edit", methods=["GET", "POST"])
     @require_roles('administrator', 'manager')
     def admin_user_edit(record_id):
         user = get_user(record_id)
@@ -154,7 +154,7 @@ def init_users_routes(app):
 
         return render_template("admin/user_form.html", is_edit=True, data=user, record_id=record_id, assignable_roles=assignable, editing_self=editing_self)
 
-    @app.route("/admin/users/<record_id>/delete", methods=["POST"])
+    @app.route("/admin/users/<int:record_id>/delete", methods=["POST"])
     @require_roles('administrator', 'manager')
     def admin_user_delete(record_id):
         user = get_user(record_id)

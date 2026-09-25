@@ -26,6 +26,7 @@ from utils.document_utils import (
 from utils.storage import get_incident_path, ensure_dir
 from utils.image_utils import optimize_and_save_image
 from services.admin.utils import handle_admin_service_error
+from utils.entity_resolvers import resolve_incident, resolve_project
 
 logger = logging.getLogger(__name__)
 
@@ -504,11 +505,7 @@ def get_incident_detail(record_id):
     """
     Récupère le détail exhaustif d'un incident par son ID ou numéro.
     """
-    inc = None
-    if isinstance(record_id, int) or (isinstance(record_id, str) and record_id.isdigit()):
-        inc = db.session.get(Incident, int(record_id))
-    if not inc:
-        inc = Incident.query.filter_by(incident_number=str(record_id)).first()
+    inc = resolve_incident(record_id)
 
     if not inc or inc.deleted_at is not None:
         return None
@@ -680,8 +677,8 @@ def create_incident(form_data, uploaded_photos=None, uploaded_documents=None):
 
     # Conversion des clés relationnelles
     project_id = form_data.get("project_id")
-    project_id = int(project_id) if project_id and str(
-        project_id).isdigit() else None
+    p = resolve_project(project_id)
+    project_id = p.id if p else None
 
     reported_by_id = form_data.get("reported_by_id")
     if not reported_by_id:
@@ -795,7 +792,7 @@ def update_incident(record_id, form_data, uploaded_photos=None, uploaded_documen
     (date, lieu, véhicule, circonstances, photos du choc) sont protégés, tandis que le suivi
     opérationnel (statut, coûts, assurance, résolution, justificatifs) reste modifiable.
     """
-    incident = db.session.get(Incident, int(record_id))
+    incident = resolve_incident(record_id)
     if not incident or incident.deleted_at is not None:
         raise ValueError(f"Incident #{record_id} introuvable.")
 
@@ -804,9 +801,8 @@ def update_incident(record_id, form_data, uploaded_photos=None, uploaded_documen
     # 1. Contexte du Tournage & Matériel Concerné (SCELLÉ UNIQUEMENT SI LES 2 SIGNATURES SONT APPOSÉES)
     if not is_sealed:
         if "project_id" in form_data:
-            pid = form_data.get("project_id")
-            if pid and str(pid).isdigit():
-                incident.project_id = int(pid)
+            p = resolve_project(form_data.get("project_id"))
+            incident.project_id = p.id if p else None
 
         if "vehicle_id" in form_data:
             incident.vehicle_id = _clean_str(form_data.get("vehicle_id"))
@@ -972,7 +968,7 @@ def update_incident_status(record_id, new_status, resolution_notes=None, actual_
     Met à jour directement le statut d'un incident (action rapide ou API).
     Gère la cohérence de resolved_at, les notes de résolution et le coût réel.
     """
-    incident = db.session.get(Incident, int(record_id))
+    incident = resolve_incident(record_id)
     if not incident or incident.deleted_at is not None:
         raise ValueError(f"Incident #{record_id} introuvable.")
 
@@ -1015,8 +1011,8 @@ def delete_incident(record_id, confirm=True):
     if not confirm:
         return {"status": "requires_confirmation", "message": "Veuillez confirmer la suppression de cet incident."}
 
-    incident = db.session.get(Incident, int(record_id))
-    if not incident:
+    incident = resolve_incident(record_id)
+    if not incident or incident.deleted_at is not None:
         return {"success": False, "message": "Incident introuvable."}
 
     incident_number = incident.incident_number
@@ -1183,8 +1179,7 @@ def sign_incident_bv(incident_id, signer_name, signer_role, signature_data, ip_a
     """
     Enregistre le visa et la signature manuscrite de Belle Vitesse pour un incident.
     """
-    inc = db.session.get(Incident, int(incident_id)) if isinstance(incident_id, int) or (isinstance(
-        incident_id, str) and incident_id.isdigit()) else Incident.query.filter_by(incident_number=str(incident_id)).first()
+    inc = resolve_incident(incident_id)
     if not inc or inc.deleted_at is not None:
         raise ValueError(f"Incident #{incident_id} introuvable.")
 
@@ -1251,8 +1246,7 @@ def sign_incident_prod(incident_id, signer_name, signer_role, signature_data, ip
     Enregistre le visa et la signature manuscrite de la Production (sur place ou via token).
     Déclenche le scellement contradictoire final UNIQUEMENT si Belle Vitesse a déjà signé.
     """
-    inc = db.session.get(Incident, int(incident_id)) if isinstance(incident_id, int) or (isinstance(
-        incident_id, str) and incident_id.isdigit()) else Incident.query.filter_by(incident_number=str(incident_id)).first()
+    inc = resolve_incident(incident_id)
     if not inc or inc.deleted_at is not None:
         raise ValueError(f"Incident #{incident_id} introuvable.")
 
@@ -1312,8 +1306,7 @@ def generate_incident_token(incident_id, recipient_email=None):
     """
     Génère un jeton sécurisé temporaire (48h) pour la signature distante par la Production.
     """
-    inc = db.session.get(Incident, int(incident_id)) if isinstance(incident_id, int) or (isinstance(
-        incident_id, str) and incident_id.isdigit()) else Incident.query.filter_by(incident_number=str(incident_id)).first()
+    inc = resolve_incident(incident_id)
     if not inc or inc.deleted_at is not None:
         raise ValueError(f"Incident #{incident_id} introuvable.")
 

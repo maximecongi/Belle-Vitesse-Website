@@ -9,6 +9,7 @@ from utils.database import get_vehicles, get_heads
 from utils.formatting import format_date_fr, get_today_paris
 from utils.document_utils import generate_pdf_access_token
 from services.admin.utils import handle_admin_service_error
+from utils.entity_resolvers import resolve_project
 
 logger = logging.getLogger(__name__)
 
@@ -304,8 +305,8 @@ def create_project(form, user_id=None):
 @handle_admin_service_error
 def update_project(record_id, form, user_id=None):
     """Met à jour un projet existant en base de données."""
-    project = db.session.get(Project, record_id)
-    if not project:
+    project = resolve_project(record_id)
+    if not project or project.deleted_at is not None:
         return False
 
     # Capture de l'ancien état pour détecter un éventuel déplacement kDrive
@@ -366,7 +367,7 @@ def update_project_notes(record_id, notes, user_id=None):
     """
     Met à jour spécifiquement les notes / consignes d'un projet.
     """
-    project = db.session.get(Project, record_id)
+    project = resolve_project(record_id)
     if not project or project.deleted_at is not None:
         return None
 
@@ -383,8 +384,8 @@ def get_project_for_edit(record_id):
     """
     Récupère un projet et le formate spécifiquement pour le pré-remplissage du formulaire d'édition.
     """
-    p = db.session.get(Project, record_id)
-    if not p:
+    p = resolve_project(record_id)
+    if not p or p.deleted_at is not None:
         return None
 
     veh_ids = [v.strip() for v in (p.vehicles_to_check or "").split(
@@ -416,8 +417,8 @@ def get_project_for_edit(record_id):
 @handle_admin_service_error
 def delete_project(record_id, user_id=None):
     """Supprime un projet et ses décharges associées de la base de données via soft-delete."""
-    p = db.session.get(Project, record_id)
-    if p:
+    p = resolve_project(record_id)
+    if p and p.deleted_at is None:
         from models.db import _utcnow
         from services.admin.waivers import (
             delete_pilot_waiver_internal,

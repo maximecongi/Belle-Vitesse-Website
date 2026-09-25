@@ -19,6 +19,11 @@ from models.db import _utcnow
 from services.admin.status_mapping import format_waiver_status
 from services.admin.utils import handle_admin_service_error
 from utils.database import get_vehicles
+from utils.entity_resolvers import (
+    resolve_pilot_waiver,
+    resolve_production_waiver,
+    resolve_project,
+)
 
 # Keep here for list view
 from utils.document_utils import (
@@ -128,6 +133,11 @@ def _reset_waiver_fields(mode, waiver):
 @handle_admin_service_error
 def create_production_waiver(project_id):
     """Crée une décharge production pour un projet s'il n'en existe pas déjà une active."""
+    p = resolve_project(project_id)
+    if not p:
+        return False, "Projet introuvable."
+    project_id = p.id
+
     existing = ProductionWaiver.query.filter_by(project_id=project_id).first()
     if existing:
         if existing.deleted_at is None:
@@ -136,10 +146,6 @@ def create_production_waiver(project_id):
         _cleanup_waiver_assets("production", existing)
         db.session.delete(existing)
         db.session.flush()
-
-    p = db.session.get(Project, int(project_id))
-    if not p:
-        return False, "Projet introuvable."
 
     waiver = ProductionWaiver(project_id=project_id)
     waiver.project_name = p.name
@@ -170,11 +176,7 @@ def create_production_waiver(project_id):
 @handle_admin_service_error
 def delete_production_waiver(waiver_id):
     """Supprime logiquement une décharge production (soft-delete et nettoyage assets)."""
-    waiver = None
-    if str(waiver_id).isdigit():
-        waiver = db.session.get(ProductionWaiver, int(waiver_id))
-    if not waiver:
-        waiver = ProductionWaiver.query.filter_by(waiver_id=str(waiver_id)).first()
+    waiver = resolve_production_waiver(waiver_id)
 
     if not waiver:
         return False, "Décharge production introuvable."
@@ -264,7 +266,7 @@ def generate_production_waiver(waiver_id):
     Génère (fige les données de snapshot) une décharge production.
     Passe le statut de 'to_generate' à 'to_send'.
     """
-    waiver = ProductionWaiver.query.filter_by(waiver_id=waiver_id).first()
+    waiver = resolve_production_waiver(waiver_id)
     if not waiver or waiver.status != "to_generate":
         return False, "Décharge non trouvée ou statut invalide."
 
@@ -301,12 +303,7 @@ def send_production_waiver(waiver_id, base_url=None):
     from flask import current_app, has_request_context, request
     from utils.mailer import send_production_waiver_invitation_email
 
-    if isinstance(waiver_id, int) or (isinstance(waiver_id, str) and waiver_id.isdigit()):
-        waiver = ProductionWaiver.query.filter(
-            (ProductionWaiver.id == int(waiver_id)) | (ProductionWaiver.waiver_id == str(waiver_id))
-        ).first()
-    else:
-        waiver = ProductionWaiver.query.filter_by(waiver_id=waiver_id).first()
+    waiver = resolve_production_waiver(waiver_id)
 
     if not waiver:
         return False, "Décharge non trouvée."
@@ -365,7 +362,7 @@ def send_production_waiver(waiver_id, base_url=None):
 @handle_admin_service_error
 def reset_production_waiver(waiver_id):
     """Réinitialise complètement une décharge production (supprime signature et PDF)."""
-    waiver = ProductionWaiver.query.filter_by(waiver_id=waiver_id).first()
+    waiver = resolve_production_waiver(waiver_id)
     if not waiver:
         return False, "Décharge non trouvée."
 
@@ -389,7 +386,10 @@ def reset_production_waiver(waiver_id):
 @handle_admin_service_error
 def delete_production_waiver_internal(project_id):
     """Supprime proprement une décharge production en interne (appelé lors de suppression de projet)."""
-    waiver = ProductionWaiver.query.filter_by(project_id=project_id).first()
+    p = resolve_project(project_id)
+    if not p:
+        return
+    waiver = ProductionWaiver.query.filter_by(project_id=p.id).first()
     if not waiver:
         return
     try:
@@ -412,6 +412,11 @@ def delete_production_waiver_internal(project_id):
 @handle_admin_service_error
 def create_pilot_waiver(project_id):
     """Crée une décharge pilote pour un projet s'il n'en existe pas déjà une active."""
+    p = resolve_project(project_id)
+    if not p:
+        return False, "Projet introuvable."
+    project_id = p.id
+
     existing = PilotWaiver.query.filter_by(project_id=project_id).first()
     if existing:
         if existing.deleted_at is None:
@@ -420,10 +425,6 @@ def create_pilot_waiver(project_id):
         _cleanup_waiver_assets("pilot", existing)
         db.session.delete(existing)
         db.session.flush()
-
-    p = db.session.get(Project, int(project_id))
-    if not p:
-        return False, "Projet introuvable."
 
     waiver = PilotWaiver(project_id=project_id)
     waiver.project_name = p.name
@@ -462,11 +463,7 @@ def create_pilot_waiver(project_id):
 @handle_admin_service_error
 def delete_pilot_waiver(waiver_id):
     """Supprime logiquement une décharge pilote (soft-delete et nettoyage assets)."""
-    waiver = None
-    if str(waiver_id).isdigit():
-        waiver = db.session.get(PilotWaiver, int(waiver_id))
-    if not waiver:
-        waiver = PilotWaiver.query.filter_by(waiver_id=str(waiver_id)).first()
+    waiver = resolve_pilot_waiver(waiver_id)
 
     if not waiver:
         return False, "Décharge pilote introuvable."
@@ -564,7 +561,7 @@ def generate_pilot_waiver(waiver_id):
     Génère (fige les données de snapshot) une décharge pilote.
     Passe le statut de 'to_generate' à 'to_send'.
     """
-    waiver = PilotWaiver.query.filter_by(waiver_id=waiver_id).first()
+    waiver = resolve_pilot_waiver(waiver_id)
     if not waiver or waiver.status != "to_generate":
         return False, "Décharge non trouvée ou statut invalide."
 
@@ -610,12 +607,7 @@ def send_pilot_waiver(waiver_id, base_url=None):
     from flask import current_app, has_request_context, request
     from utils.mailer import send_waiver_invitation_email
 
-    if isinstance(waiver_id, int) or (isinstance(waiver_id, str) and waiver_id.isdigit()):
-        waiver = PilotWaiver.query.filter(
-            (PilotWaiver.id == int(waiver_id)) | (PilotWaiver.waiver_id == str(waiver_id))
-        ).first()
-    else:
-        waiver = PilotWaiver.query.filter_by(waiver_id=waiver_id).first()
+    waiver = resolve_pilot_waiver(waiver_id)
 
     if not waiver:
         return False, "Décharge non trouvée."
@@ -673,7 +665,7 @@ def send_pilot_waiver(waiver_id, base_url=None):
 @handle_admin_service_error
 def reset_pilot_waiver(waiver_id):
     """Réinitialise complètement une décharge pilote (supprime signature et PDF)."""
-    waiver = PilotWaiver.query.filter_by(waiver_id=waiver_id).first()
+    waiver = resolve_pilot_waiver(waiver_id)
     if not waiver:
         return False, "Décharge non trouvée."
 
@@ -699,7 +691,10 @@ def reset_pilot_waiver(waiver_id):
 @handle_admin_service_error
 def delete_pilot_waiver_internal(project_id):
     """Supprime proprement une décharge pilote en interne (appelé lors de suppression de projet)."""
-    waiver = PilotWaiver.query.filter_by(project_id=project_id).first()
+    p = resolve_project(project_id)
+    if not p:
+        return
+    waiver = PilotWaiver.query.filter_by(project_id=p.id).first()
     if not waiver:
         return
     try:

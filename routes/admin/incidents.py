@@ -26,6 +26,7 @@ from services.admin.incidents import (
     generate_incident_token,
 )
 from utils.decorators import require_roles
+from utils.entity_resolvers import resolve_incident
 
 
 def init_incidents_routes(app):
@@ -81,7 +82,7 @@ def init_incidents_routes(app):
                 context=get_incident_form_context(),
             )
 
-    @app.route("/admin/incidents/<record_id>")
+    @app.route("/admin/incidents/<int:record_id>")
     @require_roles("administrator", "manager", "user")
     def admin_incident_detail(record_id):
         try:
@@ -93,6 +94,15 @@ def init_incidents_routes(app):
             current_app.logger.error(f"❌ Erreur dans admin_incident_detail : {e}")
             flash("Erreur lors de la récupération du détail de l'incident.", "error")
             return redirect(url_for("admin_incidents_list"))
+
+    @app.route("/admin/incidents/<string:incident_code>")
+    @require_roles("administrator", "manager", "user")
+    def admin_incident_detail_by_code(incident_code):
+        """Redirige les requêtes utilisant le numéro de dossier BVIC-* vers la route canonique avec ID."""
+        inc = resolve_incident(incident_code)
+        if not inc or inc.deleted_at is not None:
+            abort(404)
+        return redirect(url_for("admin_incident_detail", record_id=inc.id))
 
     @app.route("/admin/incidents/new", methods=["GET", "POST"])
     @require_roles("administrator", "manager", "user")
@@ -151,7 +161,7 @@ def init_incidents_routes(app):
             is_edit=False,
         )
 
-    @app.route("/admin/incidents/<record_id>/edit", methods=["GET", "POST"])
+    @app.route("/admin/incidents/<int:record_id>/edit", methods=["GET", "POST"])
     @require_roles("administrator", "manager", "user")
     def admin_incident_edit(record_id):
         data = get_incident_detail(record_id)
@@ -187,7 +197,7 @@ def init_incidents_routes(app):
             is_sealed=is_sealed,
         )
 
-    @app.route("/admin/incidents/<record_id>/status", methods=["POST"])
+    @app.route("/admin/incidents/<int:record_id>/status", methods=["POST"])
     @require_roles("administrator", "manager", "user")
     def admin_incident_status(record_id):
         try:
@@ -230,7 +240,7 @@ def init_incidents_routes(app):
 
         return redirect(url_for("admin_incident_detail", record_id=record_id))
 
-    @app.route("/admin/incidents/<record_id>/delete", methods=["POST"])
+    @app.route("/admin/incidents/<int:record_id>/delete", methods=["POST"])
     @require_roles("administrator", "manager")
     def admin_incident_delete(record_id):
         try:
@@ -245,7 +255,7 @@ def init_incidents_routes(app):
 
         return redirect(url_for("admin_incidents_list"))
 
-    @app.route("/admin/incidents/<record_id>/pdf")
+    @app.route("/admin/incidents/<int:record_id>/pdf")
     @require_roles("administrator", "manager", "user")
     def admin_incident_pdf(record_id):
         try:
@@ -263,7 +273,7 @@ def init_incidents_routes(app):
             flash(f"Erreur lors de la génération du PDF : {e}", "error")
             return redirect(url_for("admin_incident_detail", record_id=record_id))
 
-    @app.route("/admin/incidents/<record_id>/sign/bv", methods=["POST"])
+    @app.route("/admin/incidents/<int:record_id>/sign/bv", methods=["POST"])
     @require_roles("administrator", "manager", "user")
     def admin_incident_sign_bv(record_id):
         try:
@@ -292,7 +302,7 @@ def init_incidents_routes(app):
 
         return redirect(url_for("admin_incident_detail", record_id=record_id))
 
-    @app.route("/admin/incidents/<record_id>/sign/prod", methods=["POST"])
+    @app.route("/admin/incidents/<int:record_id>/sign/prod", methods=["POST"])
     @require_roles("administrator", "manager", "user")
     def admin_incident_sign_prod(record_id):
         try:
@@ -315,7 +325,7 @@ def init_incidents_routes(app):
 
         return redirect(url_for("admin_incident_detail", record_id=record_id))
 
-    @app.route("/admin/incidents/<record_id>/send-token", methods=["POST"])
+    @app.route("/admin/incidents/<int:record_id>/send-token", methods=["POST"])
     @require_roles("administrator", "manager", "user")
     def admin_incident_send_token(record_id):
         try:

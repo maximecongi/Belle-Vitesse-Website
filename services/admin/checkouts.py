@@ -13,6 +13,7 @@ from services.admin.inspections import (
     upload_inspection_photos_shared,
 )
 from services.admin.utils import handle_admin_service_error
+from utils.entity_resolvers import resolve_inspection, resolve_project
 
 logger = logging.getLogger(__name__)
 
@@ -43,10 +44,12 @@ def create_checkout(form, files=None):
         current_app.logger.warning(f"⚠️ Identifiant contrôleur invalide : {uid}")
         controller_id = None
 
+    proj = resolve_project(pid) if pid and pid != "None" else None
+
     record = CheckoutVehicle(
         status="in_progress",
         inspection_date=date.today(),
-        project_id=int(pid) if pid and pid != "None" else None,
+        project_id=proj.id if proj else None,
         controller_id=controller_id,
         vehicle_id=form.get("vehicle_id") if form.get("vehicle_id") != "None" else None,
     )
@@ -64,8 +67,8 @@ def create_checkout(form, files=None):
 @handle_admin_service_error
 def update_checkout(record_id, form, files=None):
     """Met à jour un départ existant."""
-    record = db.session.get(CheckoutVehicle, record_id)
-    if not record:
+    record = resolve_inspection("checkout", record_id)
+    if not record or record.deleted_at is not None:
         return False
 
     apply_inspection_data(record, form, is_checkout=True)

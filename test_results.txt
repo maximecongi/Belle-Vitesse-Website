@@ -94,6 +94,16 @@ test_sql_alert_rendering (test_email_templates.EmailTemplatesTest.test_sql_alert
 test_waiver_invitation_rendering_reminder (test_email_templates.EmailTemplatesTest.test_waiver_invitation_rendering_reminder) ... ok
 test_waiver_invitation_rendering_standard (test_email_templates.EmailTemplatesTest.test_waiver_invitation_rendering_standard) ... ok
 test_waiver_signed_confirmation_rendering (test_email_templates.EmailTemplatesTest.test_waiver_signed_confirmation_rendering) ... ok
+test_resolve_incident (test_entity_resolvers.EntityResolversTestCase.test_resolve_incident)
+Vérifie la résolution d'incident par int, str num, ou numéro BVIC-*. ... ok
+test_resolve_inspections (test_entity_resolvers.EntityResolversTestCase.test_resolve_inspections)
+Vérifie la résolution d'inspections checkout et checkin. ... ok
+test_resolve_project (test_entity_resolvers.EntityResolversTestCase.test_resolve_project)
+Vérifie la résolution de projet par entier, chaîne numérique ou code BVPR-*. ... ok
+test_resolve_waivers (test_entity_resolvers.EntityResolversTestCase.test_resolve_waivers)
+Vérifie la résolution des décharges pilote et production. ... ok
+test_routes_code_redirects (test_entity_resolvers.EntityResolversTestCase.test_routes_code_redirects)
+Vérifie que les routes admin redirigent correctement les codes métier vers l'ID canonique. ... ok
 test_fleet_overview (test_fleet.FleetTest.test_fleet_overview) ... ok
 test_fleet_routes (test_fleet.FleetTest.test_fleet_routes) ... ok
 test_fleet_sidebar_visibility_for_all_roles (test_fleet.FleetTest.test_fleet_sidebar_visibility_for_all_roles)
@@ -302,6 +312,6 @@ test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.W
 Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
 ----------------------------------------------------------------------
-Ran 193 tests in 11.978s
+Ran 198 tests in 29.480s
 
 OK (skipped=2)

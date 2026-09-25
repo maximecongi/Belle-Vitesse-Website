@@ -29,6 +29,7 @@ from services.admin import (
 )
 from models import Project, db
 from utils.decorators import require_roles
+from utils.entity_resolvers import resolve_project
 
 
 def init_projects_routes(app):
@@ -118,7 +119,7 @@ def init_projects_routes(app):
 
         return render_template("admin/project_form.html", is_edit=False, **context)
 
-    @app.route("/admin/projects/<record_id>/edit", methods=["GET", "POST"])
+    @app.route("/admin/projects/<int:record_id>/edit", methods=["GET", "POST"])
     @require_roles('administrator', 'manager', 'commercial')
     def admin_project_edit(record_id):
         context = get_project_form_context()
@@ -138,7 +139,7 @@ def init_projects_routes(app):
             flash(f"Erreur lors de la modification : {str(e)}", "error")
             return redirect(url_for("admin_projects_list"))
 
-    @app.route("/admin/projects/<record_id>/delete", methods=["POST"])
+    @app.route("/admin/projects/<int:record_id>/delete", methods=["POST"])
     @require_roles('administrator', 'manager', 'commercial')
     def admin_project_delete(record_id):
         try:
@@ -151,7 +152,7 @@ def init_projects_routes(app):
             return redirect(url_for("admin_project_edit", record_id=record_id))
 
     # ── Hub / Fiche Projet & Rapports Collectifs ──────────────────
-    @app.route("/admin/projects/<record_id>", methods=["GET"])
+    @app.route("/admin/projects/<int:record_id>", methods=["GET"])
     @require_roles('administrator', 'manager', 'commercial', 'user', 'technicien')
     def admin_project_detail(record_id):
         try:
@@ -169,12 +170,21 @@ def init_projects_routes(app):
             flash("Erreur lors de l'accès à la fiche projet.", "error")
             return redirect(url_for("admin_projects_list"))
 
-    @app.route("/admin/projects/<record_id>/kdrive/resync", methods=["POST"])
+    @app.route("/admin/projects/<string:project_code>", methods=["GET"])
+    @require_roles('administrator', 'manager', 'commercial', 'user', 'technicien')
+    def admin_project_detail_by_code(project_code):
+        """Redirige les requêtes utilisant le code métier BVPR-* vers la route canonique avec ID."""
+        p = resolve_project(project_code)
+        if not p or p.deleted_at is not None:
+            abort(404)
+        return redirect(url_for("admin_project_detail", record_id=p.id))
+
+    @app.route("/admin/projects/<int:record_id>/kdrive/resync", methods=["POST"])
     @require_roles('administrator', 'manager')
     def admin_project_kdrive_resync(record_id):
         try:
-            project = db.session.get(Project, record_id)
-            if not project:
+            project = resolve_project(record_id)
+            if not project or project.deleted_at is not None:
                 abort(404)
 
             from services.common.kdrive import dispatch_create_project_tree
@@ -186,7 +196,7 @@ def init_projects_routes(app):
             flash(f"Erreur lors de la synchronisation : {e}", "error")
             return redirect(url_for("admin_project_detail", record_id=record_id))
 
-    @app.route("/admin/projects/<record_id>/notes", methods=["POST"])
+    @app.route("/admin/projects/<int:record_id>/notes", methods=["POST"])
     @require_roles('administrator', 'manager', 'commercial', 'user', 'technicien')
     def admin_project_notes_edit(record_id):
         try:
@@ -210,7 +220,7 @@ def init_projects_routes(app):
             flash(f"Erreur lors de l'enregistrement de la note : {str(e)}", "error")
             return redirect(url_for("admin_project_detail", record_id=record_id))
 
-    @app.route("/admin/projects/<record_id>/reports", methods=["POST"])
+    @app.route("/admin/projects/<int:record_id>/reports", methods=["POST"])
     @require_roles('administrator', 'manager', 'commercial', 'user', 'technicien')
     def admin_project_reports_add(record_id):
         try:
@@ -238,7 +248,7 @@ def init_projects_routes(app):
             flash(f"Erreur lors de l'enregistrement : {str(e)}", "error")
             return redirect(url_for("admin_project_detail", record_id=record_id) + "#reports")
 
-    @app.route("/admin/projects/<record_id>/reports/<int:report_id>/delete", methods=["POST"])
+    @app.route("/admin/projects/<int:record_id>/reports/<int:report_id>/delete", methods=["POST"])
     @require_roles('administrator', 'manager', 'commercial', 'user', 'technicien')
     def admin_project_report_delete(record_id, report_id):
         try:
@@ -265,7 +275,7 @@ def init_projects_routes(app):
             flash("Erreur lors de la suppression.", "error")
             return redirect(url_for("admin_project_detail", record_id=record_id) + "#reports")
 
-    @app.route("/admin/projects/<record_id>/reports/<int:report_id>/edit", methods=["POST"])
+    @app.route("/admin/projects/<int:record_id>/reports/<int:report_id>/edit", methods=["POST"])
     @require_roles('administrator', 'manager', 'commercial', 'user', 'technicien')
     def admin_project_report_edit(record_id, report_id):
         try:
@@ -306,7 +316,7 @@ def init_projects_routes(app):
             flash(f"Erreur lors de la modification : {str(e)}", "error")
             return redirect(url_for("admin_project_detail", record_id=record_id) + f"#report-{report_id}")
 
-    @app.route("/admin/projects/<record_id>/print", methods=["GET"])
+    @app.route("/admin/projects/<int:record_id>/print", methods=["GET"])
     @require_roles('administrator', 'manager', 'commercial', 'user', 'technicien')
     def admin_project_print(record_id):
         try:

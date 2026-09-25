@@ -176,7 +176,7 @@ def register_inspection_routes(app, mode):
             return jsonify({"error": "Internal server error during signature processing"}), 500
 
     # 7. Vérification de document scellé (GET/POST)
-    @app.route(f"/{route_base}/verify/<inspection_id>", methods=["GET", "POST"], endpoint=f"{mode}_verify")
+    @app.route(f"/{route_base}/verify/<string:inspection_id>", methods=["GET", "POST"], endpoint=f"{mode}_verify")
     @csrf.exempt
     def inspection_verify(inspection_id):
         config = {

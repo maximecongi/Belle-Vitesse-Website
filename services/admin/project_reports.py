@@ -18,6 +18,7 @@ from services.admin.projects import _format_vehicle_state, _get_secured_document
 from services.admin.utils import handle_admin_service_error
 from utils.database import get_vehicles, get_heads
 from utils.formatting import format_date_fr
+from utils.entity_resolvers import resolve_project
 
 logger = logging.getLogger(__name__)
 
@@ -63,9 +64,8 @@ def add_project_report(project_id, user_id, content, title=None):
     if not content:
         raise ValueError("Le contenu du rapport ne peut pas être vide.")
 
-    project = Project.query.filter(
-        Project.id == project_id, Project.deleted_at.is_(None)).first()
-    if not project:
+    project = resolve_project(project_id)
+    if not project or project.deleted_at is not None:
         raise ValueError("Projet introuvable.")
 
     author_name = "Collaborateur"
@@ -181,8 +181,12 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
     """
     Assemble l'ensemble du contexte pour la vue Fiche / Hub Projet (Option 4).
     """
+    p = resolve_project(project_id)
+    if not p or p.deleted_at is not None:
+        return None
+
     project = Project.query.filter(
-        Project.id == project_id,
+        Project.id == p.id,
         Project.deleted_at.is_(None)
     ).options(
         joinedload(Project.production),

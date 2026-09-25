@@ -111,7 +111,7 @@ def init_incident_public_routes(app):
             app.logger.error(f"❌ Erreur lors de la signature contradictoire de l'incident : {e}")
             return jsonify({"error": str(e)}), 500
 
-    @app.route("/incidents/verify/<incident_number>", methods=["GET", "POST"])
+    @app.route("/incidents/verify/<string:incident_number>", methods=["GET", "POST"])
     @csrf.exempt
     def incident_verify_doc(incident_number):
         config = {

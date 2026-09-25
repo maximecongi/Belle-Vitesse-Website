@@ -52,7 +52,7 @@ def init_productions_routes(app):
                 )
         return render_template("admin/production_form.html", is_edit=False)
 
-    @app.route("/admin/productions/<record_id>/edit", methods=["GET", "POST"])
+    @app.route("/admin/productions/<int:record_id>/edit", methods=["GET", "POST"])
     @require_roles('administrator', 'manager', 'commercial')
     def admin_production_edit(record_id):
         try:
@@ -73,7 +73,7 @@ def init_productions_routes(app):
             flash(f"Erreur lors de la modification : {str(e)}", "error")
             return redirect(url_for("admin_productions_list"))
 
-    @app.route("/admin/productions/<record_id>/delete", methods=["POST"])
+    @app.route("/admin/productions/<int:record_id>/delete", methods=["POST"])
     @require_roles('administrator', 'manager', 'commercial')
     def admin_production_delete(record_id):
         try:

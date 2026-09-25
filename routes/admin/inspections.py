@@ -113,7 +113,7 @@ def register_admin_inspection_routes(app, mode):
             )
 
     # 2. Détail d'une inspection
-    @app.route(f"/admin/{plural}/<record_id>", endpoint=endpoint_detail)
+    @app.route(f"/admin/{plural}/<int:record_id>", endpoint=endpoint_detail)
     @require_roles('administrator', 'manager', 'user')
     def admin_inspection_detail(record_id):
         try:
@@ -125,6 +125,16 @@ def register_admin_inspection_routes(app, mode):
             current_app.logger.error(f"❌ Erreur dans {endpoint_detail} : {e}")
             flash("Erreur lors de la récupération du détail.", "error")
             return redirect(url_for(endpoint_list))
+
+    @app.route(f"/admin/{plural}/<string:inspection_code>", endpoint=f"{endpoint_detail}_by_code")
+    @require_roles('administrator', 'manager', 'user')
+    def admin_inspection_detail_by_code(inspection_code):
+        """Redirige les requêtes utilisant le code d'inspection (BVCO-*, BVCI-*) vers l'ID canonique."""
+        from utils.entity_resolvers import resolve_inspection
+        rec = resolve_inspection(mode, inspection_code)
+        if not rec or rec.deleted_at is not None:
+            abort(404)
+        return redirect(url_for(endpoint_detail, record_id=rec.id))
 
     # 3. Création d'une inspection
     @app.route(f"/admin/{plural}/new", methods=["GET", "POST"], endpoint=endpoint_new)
@@ -157,7 +167,7 @@ def register_admin_inspection_routes(app, mode):
         return render_template(template_form, data=initial_data, is_edit=False, **context)
 
     # 4. Modification d'une inspection
-    @app.route(f"/admin/{plural}/<record_id>/edit", methods=["GET", "POST"], endpoint=endpoint_edit)
+    @app.route(f"/admin/{plural}/<int:record_id>/edit", methods=["GET", "POST"], endpoint=endpoint_edit)
     @require_roles('administrator', 'manager', 'user')
     def admin_inspection_edit(record_id):
         context = get_context_func()
@@ -181,7 +191,7 @@ def register_admin_inspection_routes(app, mode):
             return redirect(url_for(endpoint_detail, record_id=record_id))
 
     # 5. Suppression d'une inspection
-    @app.route(f"/admin/{plural}/<record_id>/delete", methods=["POST"], endpoint=endpoint_delete)
+    @app.route(f"/admin/{plural}/<int:record_id>/delete", methods=["POST"], endpoint=endpoint_delete)
     @require_roles('administrator', 'manager', 'user')
     def admin_inspection_delete(record_id):
         try:
@@ -194,7 +204,7 @@ def register_admin_inspection_routes(app, mode):
             return redirect(url_for(endpoint_detail, record_id=record_id))
 
     # 6. Scellement d'une inspection
-    @app.route(f"/admin/{plural}/<record_id>/seal", methods=["POST"], endpoint=endpoint_seal)
+    @app.route(f"/admin/{plural}/<int:record_id>/seal", methods=["POST"], endpoint=endpoint_seal)
     @require_roles('administrator', 'manager', 'user')
     def admin_inspection_seal(record_id):
         try:

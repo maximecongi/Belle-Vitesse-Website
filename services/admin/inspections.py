@@ -39,6 +39,7 @@ from utils.database import get_vehicles
 from utils.document_utils import generate_pdf_access_token
 from utils.formatting import format_date_fr
 from utils.image_utils import optimize_and_save_image
+from utils.entity_resolvers import resolve_inspection
 
 logger = logging.getLogger(__name__)
 
@@ -127,9 +128,12 @@ def get_inspection_detail_unified(mode, record_id):
     config = get_inspection_config(mode)
     record_model = config["model"]
     resp_attr = config["responsible_attr"]
+    record_cand = resolve_inspection(mode, record_id)
+    if not record_cand or record_cand.deleted_at is not None:
+        return None
 
     record = record_model.query.join(Project).filter(
-        record_model.id == record_id,
+        record_model.id == record_cand.id,
         record_model.deleted_at == None,
         Project.deleted_at == None
     ).options(
@@ -199,7 +203,7 @@ def delete_inspection_unified(mode, record_id):
     Supprime également les documents signés et les jetons.
     """
     config = get_inspection_config(mode)
-    record = db.session.get(config["model"], record_id)
+    record = resolve_inspection(mode, record_id)
     if not record or record.deleted_at is not None:
         return False
 
