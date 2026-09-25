@@ -1,7 +1,8 @@
 {% import "public/verification_macros.html" as vmacro %}
 <!DOCTYPE html>
 <html lang="fr">
-{% set rb = route_base or (config.route_base if (config is defined and config is mapping and 'route_base' in config) else 'checkout') %}
+{% set rb = route_base or (config.route_base if (config is defined and config is mapping and 'route_base' in config)
+else 'checkout') %}
 
 <head>
     <meta charset="UTF-8">
@@ -38,7 +39,10 @@
 
 
         <!-- ── Badge sceau de données ── -->
-        {{ vmacro.seal_banner(seal_valid, ok_label="Données certifiées & intactes", error_label="Sceau invalide — données altérées", ok_hint="Le sceau cryptographique correspond. Les données n'ont pas été modifiées depuis la signature.", error_hint="Le sceau ne correspond pas à l'enregistrement. Les données peuvent avoir été modifiées après signature.") }}
+        {{ vmacro.seal_banner(seal_valid, ok_label="Données certifiées & intactes", error_label="Sceau invalide —
+        données altérées", ok_hint="Le sceau cryptographique correspond. Les données n'ont pas été modifiées depuis la
+        signature.", error_hint="Le sceau ne correspond pas à l'enregistrement. Les données peuvent avoir été modifiées
+        après signature.") }}
 
         <!-- ── Badge résultat vérification PDF (après upload) ── -->
         {{ vmacro.pdf_verification_result(pdf_valid, pdf_error) }}
@@ -95,7 +99,9 @@
         {% endif %}
 
         <!-- ═══════════ UPLOAD VÉRIFICATION PDF ═══════════ -->
-        {{ vmacro.pdf_upload_verifier(has_pdf_hash, action_url=url_for(rb + '_verify', inspection_id=inspection_id), old_notice="Ce document a été signé avant l'introduction de la vérification par empreinte PDF. Seul le sceau de données est disponible.") }}
+        {{ vmacro.pdf_upload_verifier(has_pdf_hash, action_url=url_for(rb + '_verify', inspection_id=inspection_id),
+        old_notice="Ce document a été signé avant l'introduction de la vérification par empreinte PDF. Seul le sceau de
+        données est disponible.") }}
 
         <!-- ═══════════ FOOTER ═══════════ -->
         <footer class="{{ rb }}-footer verify-footer">
@@ -107,7 +113,7 @@
 
     </div>
 
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@1.48.0/dist/umd/lucide.min.js"></script>
     <script>
         if (window.lucide && typeof window.lucide.createIcons === 'function') {
             window.lucide.createIcons();

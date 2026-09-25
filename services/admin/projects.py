@@ -107,12 +107,12 @@ def _format_project_admin(p, vehicle_map, heads_map):
             shoot_status = "in_progress"
             shoot_status_label = "En tournage"
             shoot_status_id = "in_progress"
-            shoot_status_color = "#F59E0B"
+            shoot_status_color = "var(--entity-project, #F59E0B)"
         elif today_date > p.shoot_end_date:
             shoot_status = "completed"
             shoot_status_label = "Clôturé"
             shoot_status_id = "completed"
-            shoot_status_color = "#515151"
+            shoot_status_color = "var(--status-neutral, #64748B)"
         else:
             shoot_status = "upcoming"
             shoot_status_label = "À venir"

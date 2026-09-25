@@ -19,7 +19,7 @@ if [ -f "scripts/build_bundles.py" ]; then
         cat static/css/admin/admin-base.css static/css/admin/admin-sidebar.css static/css/admin/admin-components.css \
             static/css/admin/admin-login.css static/css/admin/admin-dashboard.css static/css/admin/admin-contacts.css \
             static/css/admin/calendar.css static/css/admin/admin-pricing.css static/css/admin/admin-utilities.css \
-            static/css/admin/admin-projects.css static/css/admin/prequote.css static/css/admin/admin-js.css \
+            static/css/admin/admin-projects.css static/css/admin/admin-js.css \
             static/css/admin/admin-booking.css static/css/admin/admin-cmdk.css static/css/admin/admin-fleet.css \
             static/css/admin/admin-incidents.css static/css/admin/admin-mcp.css > static/css/admin/admin.bundle.css
     }
@@ -33,7 +33,7 @@ else
     cat static/css/admin/admin-base.css static/css/admin/admin-sidebar.css static/css/admin/admin-components.css \
         static/css/admin/admin-login.css static/css/admin/admin-dashboard.css static/css/admin/admin-contacts.css \
         static/css/admin/calendar.css static/css/admin/admin-pricing.css static/css/admin/admin-utilities.css \
-        static/css/admin/admin-projects.css static/css/admin/prequote.css static/css/admin/admin-js.css \
+        static/css/admin/admin-projects.css static/css/admin/admin-js.css \
         static/css/admin/admin-booking.css static/css/admin/admin-cmdk.css static/css/admin/admin-fleet.css \
         static/css/admin/admin-incidents.css static/css/admin/admin-mcp.css > static/css/admin/admin.bundle.css
 fi

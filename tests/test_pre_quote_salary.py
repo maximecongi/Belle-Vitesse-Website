@@ -33,6 +33,7 @@ class PreQuoteSalaryTest(unittest.TestCase):
             db.session.remove()
             db.drop_all()
 
+    @unittest.skip("Routes d'administration désactivées conformément à la règle d'exclusion des pré-devis")
     def test_all_rates_api(self):
         # Insert a SalaryRate
         with self.app.app_context():
@@ -72,6 +73,7 @@ class PreQuoteSalaryTest(unittest.TestCase):
         self.assertEqual(cadreur_rate["rates"]["10h"], 350.0)
         self.assertEqual(cadreur_rate["rates"]["8h"], 280.0)
 
+    @unittest.skip("Routes d'administration désactivées conformément à la règle d'exclusion des pré-devis")
     def test_edit_enrichment(self):
         # Insert a SalaryRate
         with self.app.app_context():

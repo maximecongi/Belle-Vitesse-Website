@@ -43,7 +43,6 @@ ADMIN_CSS_FILES: List[str] = [
     "css/admin/admin-pricing.css",
     "css/admin/admin-utilities.css",
     "css/admin/admin-projects.css",
-    "css/admin/prequote.css",
     "css/admin/admin-js.css",
     "css/admin/admin-booking.css",
     "css/admin/admin-cmdk.css",

@@ -13,7 +13,6 @@ from .dashboard import init_dashboard_routes
 from .files import init_files_routes
 from .newsletter import init_newsletter_routes
 from .projects import init_projects_routes
-from .pre_quotes import init_pre_quotes_routes
 from .pricing import init_pricing_routes
 from .settings import settings_bp
 from .mcp_tokens import mcp_tokens_bp
@@ -46,7 +45,6 @@ def init_admin_routes(app):
     init_users_routes(app)
     init_pricing_routes(app)
     init_calendar_routes(app)
-    init_pre_quotes_routes(app)
     init_catalog_routes(app)
     app.register_blueprint(settings_bp)
     app.register_blueprint(mcp_tokens_bp)

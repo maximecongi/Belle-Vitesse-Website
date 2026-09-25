@@ -36,7 +36,10 @@
         </header>
 
         <!-- ── Badge sceau de données ── -->
-        {{ vmacro.seal_banner(seal_valid, ok_label="Données Certifiées & Intactes", error_label="Sceau Invalide — Données Altérées", ok_hint="Le sceau cryptographique correspond. Les données n'ont pas été modifiées depuis la signature.", error_hint="Le sceau ne correspond pas à l'enregistrement. Les données peuvent avoir été modifiées après signature.") }}
+        {{ vmacro.seal_banner(seal_valid, ok_label="Données Certifiées & Intactes", error_label="Sceau Invalide —
+        Données Altérées", ok_hint="Le sceau cryptographique correspond. Les données n'ont pas été modifiées depuis la
+        signature.", error_hint="Le sceau ne correspond pas à l'enregistrement. Les données peuvent avoir été modifiées
+        après signature.") }}
 
         <!-- ── Badge résultat vérification PDF (après upload) ── -->
         {{ vmacro.pdf_verification_result(pdf_valid, pdf_error) }}
@@ -47,15 +50,18 @@
             <div class="checkout-info-grid">
                 <div class="checkout-info-item">
                     <span class="checkout-info-label">Production</span>
-                    <span class="checkout-info-value">{{ data.production_name or data.production or data._seal_production_name or (waiver.production_name if waiver else '—') }}</span>
+                    <span class="checkout-info-value">{{ data.production_name or data.production or
+                        data._seal_production_name or (waiver.production_name if waiver else '—') }}</span>
                 </div>
                 <div class="checkout-info-item">
                     <span class="checkout-info-label">Représentant</span>
-                    <span class="checkout-info-value">{{ data.representative or data._seal_representative or (waiver.production_representative if waiver else '—') }}</span>
+                    <span class="checkout-info-value">{{ data.representative or data._seal_representative or
+                        (waiver.production_representative if waiver else '—') }}</span>
                 </div>
                 <div class="checkout-info-item">
                     <span class="checkout-info-label">Projet</span>
-                    <span class="checkout-info-value">{{ data.project_name or data.project or project_name or (waiver.project_name if waiver else '—') }}</span>
+                    <span class="checkout-info-value">{{ data.project_name or data.project or project_name or
+                        (waiver.project_name if waiver else '—') }}</span>
                 </div>
                 <div class="checkout-info-item">
                     <span class="checkout-info-label">Signé le</span>
@@ -79,19 +85,22 @@
         </section>
 
         <!-- ── Empreinte numérique ── -->
-        {{ vmacro.crypto_fingerprints(document_hash, signed_doc.pdf_file_hash, title="Sécurité Numérique (Production)") }}
+        {{ vmacro.crypto_fingerprints(document_hash, signed_doc.pdf_file_hash, title="Sécurité Numérique (Production)")
+        }}
 
         <!-- ═══════════ UPLOAD VÉRIFICATION PDF ═══════════ -->
-        {{ vmacro.pdf_upload_verifier(has_pdf_hash, old_notice="Ce document a été signé avant l'introduction de la vérification par empreinte PDF. Seul le sceau de données est disponible.") }}
+        {{ vmacro.pdf_upload_verifier(has_pdf_hash, old_notice="Ce document a été signé avant l'introduction de la
+        vérification par empreinte PDF. Seul le sceau de données est disponible.") }}
 
         <!-- ═══════════ FOOTER ═══════════ -->
         <footer class="checkout-footer verify-footer">
-            <p><strong>{{ company_name or 'Belle Vitesse SAS' }}</strong> — {{ company_address or '39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine' }}</p>
+            <p><strong>{{ company_name or 'Belle Vitesse SAS' }}</strong> — {{ company_address or '39 rue Maurice
+                Gunsbourg, 94200 Ivry-sur-Seine' }}</p>
         </footer>
 
     </div>
 
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@1.48.0/dist/umd/lucide.min.js"></script>
     <script>
         if (typeof lucide !== 'undefined') {
             lucide.createIcons();

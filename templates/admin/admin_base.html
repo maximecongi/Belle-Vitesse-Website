@@ -114,7 +114,8 @@
                 {% macro nav_item(href, title, item_key, target=none) %}
                 {% if has_item(item_key) %}
                 <a href="{{ href }}" class="admin-nav-item" {% if target %}target="{{ target }}" {% endif %}>
-                    {{ title }} {% if href == "#"%} <span class="badge-pill" data-val="incoming"><i data-lucide="sparkles"></i> Bientôt</span>{% endif
+                    {{ title }} {% if href == "#"%} <span class="badge-pill" data-val="incoming"><i
+                            data-lucide="sparkles"></i> Bientôt</span>{% endif
                     %}
                 </a>
                 {% endif %}
@@ -295,7 +296,7 @@
     <script src="{{ url_for('static', filename='js/src/admin/photo-annotator.js') }}"></script>
     <script src="{{ url_for('static', filename='js/src/admin/ios-bridge.js') }}"></script>
     <script src="{{ url_for('static', filename='js/src/admin.js') }}"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@1.48.0/dist/umd/lucide.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             lucide.createIcons();

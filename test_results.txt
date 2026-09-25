@@ -203,8 +203,8 @@ test_optimize_image_downscaling_and_rgba (test_pdf_compression.PDFCompressionTes
 Vérifie la conversion et le redimensionnement d'une image avec canal alpha. ... ok
 test_render_pdf_from_template_invokes_compress_pdf (test_pdf_compression.PDFCompressionTestCase.test_render_pdf_from_template_invokes_compress_pdf)
 Vérifie que render_pdf_from_template appelle bien compress_pdf du nouveau module. ... ok
-test_all_rates_api (test_pre_quote_salary.PreQuoteSalaryTest.test_all_rates_api) ... ok
-test_edit_enrichment (test_pre_quote_salary.PreQuoteSalaryTest.test_edit_enrichment) ... ok
+test_all_rates_api (test_pre_quote_salary.PreQuoteSalaryTest.test_all_rates_api) ... skipped "Routes d'administration désactivées conformément à la règle d'exclusion des pré-devis"
+test_edit_enrichment (test_pre_quote_salary.PreQuoteSalaryTest.test_edit_enrichment) ... skipped "Routes d'administration désactivées conformément à la règle d'exclusion des pré-devis"
 test_grouped_prestations_pdf (test_pre_quote_salary.PreQuoteSalaryTest.test_grouped_prestations_pdf) ... ok
 test_insurance_calculation_based_on_undiscounted (test_pre_quote_salary.PreQuoteSalaryTest.test_insurance_calculation_based_on_undiscounted) ... ok
 test_intermittent_salaries_exclusion_and_annex (test_pre_quote_salary.PreQuoteSalaryTest.test_intermittent_salaries_exclusion_and_annex) ... ok
@@ -274,6 +274,10 @@ Vérifie la suppression unitaire par ID et la capacité de recréer une décharg
 test_no_automatic_waivers_on_project_create (test_waivers.WaiversTest.test_no_automatic_waivers_on_project_create)
 Vérifie qu'aucune décharge n'est créée automatiquement lors de la création d'un projet. ... ok
 test_soft_delete_waivers (test_waivers.WaiversTest.test_soft_delete_waivers) ... ok
+test_verify_pilot_waiver_route (test_waivers.WaiversTest.test_verify_pilot_waiver_route)
+Vérifie l'accès à la route de vérification pour une décharge pilote scellée. ... ok
+test_verify_production_waiver_route (test_waivers.WaiversTest.test_verify_production_waiver_route)
+Vérifie l'accès à la route de vérification pour une décharge production scellée. ... ok
 test_waivers_created_directly_in_to_send_status (test_waivers.WaiversTest.test_waivers_created_directly_in_to_send_status)
 Vérifie que la création d'une décharge la place directement au statut 'to_send' avec snapshot. ... ok
 test_waivers_search_and_project_links (test_waivers.WaiversTest.test_waivers_search_and_project_links)
@@ -290,6 +294,6 @@ test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.W
 Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
 ----------------------------------------------------------------------
-Ran 187 tests in 15.228s
+Ran 189 tests in 11.842s
 
-OK
+OK (skipped=2)
