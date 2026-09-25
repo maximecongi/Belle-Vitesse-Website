@@ -82,6 +82,68 @@ class EmailService:
             return False
 
     @classmethod
+    def build_mime_message(
+        cls,
+        to_email,
+        subject,
+        html_content,
+        text_content=None,
+        cc=None,
+        attachments=None,
+        extra_headers=None,
+    ):
+        """
+        Construit l'objet MIMEMultipart avec le corps HTML/texte, les pièces jointes
+        et les en-têtes personnalisés.
+        """
+        has_attachments = bool(attachments)
+        if has_attachments:
+            msg = MIMEMultipart("mixed")
+            body = MIMEMultipart("alternative")
+            if text_content:
+                body.attach(MIMEText(text_content, "plain", "utf-8"))
+            body.attach(MIMEText(html_content, "html", "utf-8"))
+            msg.attach(body)
+
+            for att in attachments:
+                att_path = att if isinstance(att, str) else att.get("path")
+                att_name = (
+                    att.get("name")
+                    if isinstance(att, dict)
+                    else os.path.basename(att_path)
+                )
+                if att_path and os.path.exists(att_path):
+                    with open(att_path, "rb") as f:
+                        part = MIMEApplication(f.read(), Name=att_name)
+                    part["Content-Disposition"] = f'attachment; filename="{att_name}"'
+                    msg.attach(part)
+                else:
+                    if current_app:
+                        current_app.logger.error(f"❌ Attachment not found at {att_path}")
+        else:
+            msg = MIMEMultipart("alternative")
+            if text_content:
+                msg.attach(MIMEText(text_content, "plain", "utf-8"))
+            msg.attach(MIMEText(html_content, "html", "utf-8"))
+
+        msg["Subject"] = subject
+        msg["To"] = to_email
+        msg["Date"] = formatdate(localtime=True)
+        msg["Message-ID"] = make_msgid(domain="bellevitesse.com")
+
+        if cc:
+            if isinstance(cc, list):
+                msg["Cc"] = ", ".join(cc)
+            else:
+                msg["Cc"] = str(cc)
+
+        if extra_headers:
+            for header_key, header_val in extra_headers.items():
+                msg[header_key] = header_val
+
+        return msg
+
+    @classmethod
     def send_templated_email(
         cls,
         to_email,
@@ -94,10 +156,12 @@ class EmailService:
         attachments=None,
         extra_headers=None,
         timeout=10,
+        sync=False,
     ):
         """
         Helper générique pour construire et expédier un e-mail transactionnel (HTML + fallback texte).
         Injecte automatiquement l'année en cours et prend en charge les pièces jointes.
+        Délègue l'envoi SMTP à la file asynchrone RQ (ou repli thread/synchrone).
         """
         try:
             ctx = dict(context or {})
@@ -106,6 +170,7 @@ class EmailService:
 
             try:
                 from utils.context_processors import get_company_context
+
                 company_data = get_company_context()
                 for k, v in company_data.items():
                     if k not in ctx:
@@ -115,61 +180,26 @@ class EmailService:
 
             html_content = render_template(template_name, **ctx)
 
-            has_attachments = bool(attachments)
-            if has_attachments:
-                msg = MIMEMultipart("mixed")
-                body = MIMEMultipart("alternative")
-                if text_content:
-                    body.attach(MIMEText(text_content, "plain", "utf-8"))
-                body.attach(MIMEText(html_content, "html", "utf-8"))
-                msg.attach(body)
+            from services.common.mailer_tasks import dispatch_email
 
-                for att in attachments:
-                    att_path = att if isinstance(att, str) else att.get("path")
-                    att_name = att.get("name") if isinstance(
-                        att, dict) else os.path.basename(att_path)
-                    if att_path and os.path.exists(att_path):
-                        with open(att_path, "rb") as f:
-                            part = MIMEApplication(f.read(), Name=att_name)
-                        part["Content-Disposition"] = f'attachment; filename="{att_name}"'
-                        msg.attach(part)
-                    else:
-                        current_app.logger.error(
-                            f"❌ Attachment not found at {att_path}")
-            else:
-                msg = MIMEMultipart("alternative")
-                if text_content:
-                    msg.attach(MIMEText(text_content, "plain", "utf-8"))
-                msg.attach(MIMEText(html_content, "html", "utf-8"))
-
-            msg["Subject"] = subject
-            msg["To"] = to_email
-            msg["Date"] = formatdate(localtime=True)
-            msg["Message-ID"] = make_msgid(domain="bellevitesse.com")
-
-            if cc:
-                if isinstance(cc, list):
-                    msg["Cc"] = ", ".join(cc)
-                else:
-                    msg["Cc"] = str(cc)
-
-            if extra_headers:
-                for header_key, header_val in extra_headers.items():
-                    msg[header_key] = header_val
-
-            recipients = [to_email]
-            if cc:
-                if isinstance(cc, list):
-                    recipients.extend(cc)
-                else:
-                    recipients.append(cc)
-
-            return cls._send_smtp_message(msg, recipients, sender_type=sender_type, timeout=timeout)
+            return dispatch_email(
+                to_email=to_email,
+                subject=subject,
+                html_content=html_content,
+                text_content=text_content,
+                sender_type=sender_type,
+                cc=cc,
+                attachments=attachments,
+                extra_headers=extra_headers,
+                timeout=timeout,
+                sync=sync,
+            )
 
         except Exception as e:
-            current_app.logger.error(
-                f"❌ Erreur sending templated email '{subject}' to {to_email}: {e}"
-            )
+            if current_app:
+                current_app.logger.error(
+                    f"❌ Erreur sending templated email '{subject}' to {to_email}: {e}"
+                )
             return False
 
 

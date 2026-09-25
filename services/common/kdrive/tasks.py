@@ -15,40 +15,18 @@ from services.common.kdrive.service import KDriveService
 
 logger = logging.getLogger("kdrive.tasks")
 
-FLASK_ENV = os.getenv("FLASK_ENV", "production")
-REDIS_HOST = os.getenv("REDIS_HOST", "bv_redis" if FLASK_ENV == "production" else "localhost")
-REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
-REDIS_DB = int(os.getenv("REDIS_DB_KDRIVE", 1))
-REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", None)
-
-_redis_conn: Optional[Redis] = None
-_rq_queue: Optional[RQQueue] = None
+from services.common.redis_queue import (
+    get_redis_connection as _get_redis_conn,
+    get_rq_queue as _get_rq_queue,
+)
 
 
 def get_redis_connection() -> Optional[Redis]:
-    global _redis_conn
-    if _redis_conn is None:
-        try:
-            _redis_conn = Redis(
-                host=REDIS_HOST,
-                port=REDIS_PORT,
-                db=REDIS_DB,
-                password=REDIS_PASSWORD,
-                socket_connect_timeout=2,
-            )
-            _redis_conn.ping()
-        except Exception as err:
-            logger.warning(f"⚠️ Redis non disponible pour kDrive ({err}), repli local.")
-            _redis_conn = None
-    return _redis_conn
+    return _get_redis_conn(db_index=int(os.getenv("REDIS_DB_KDRIVE", 1)))
 
 
 def get_rq_queue() -> Optional[RQQueue]:
-    global _rq_queue
-    conn = get_redis_connection()
-    if conn and _rq_queue is None:
-        _rq_queue = RQQueue("kdrive", connection=conn)
-    return _rq_queue
+    return _get_rq_queue(name="kdrive", db_index=int(os.getenv("REDIS_DB_KDRIVE", 1)))
 
 
 # ── Tâches Workers (exécutées dans le conteneur worker RQ ou thread local) ──────

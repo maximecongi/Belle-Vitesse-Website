@@ -173,6 +173,18 @@ test_list_and_details (test_inspections.InspectionsTest.test_list_and_details) .
 test_soft_delete (test_inspections.InspectionsTest.test_soft_delete) ... ok
 test_unified_form_context (test_inspections.InspectionsTest.test_unified_form_context) ... ok
 test_verify_public_routes (test_inspections.InspectionsTest.test_verify_public_routes) ... ok
+test_async_dispatch_enqueues_to_rq (test_mailer_rq.MailerRQTestCase.test_async_dispatch_enqueues_to_rq)
+Vérifie que dispatch_email enfile le job dans la queue RQ 'emails' hors testing. ... ok
+test_async_dispatch_falls_back_to_daemon_thread_when_redis_unavailable (test_mailer_rq.MailerRQTestCase.test_async_dispatch_falls_back_to_daemon_thread_when_redis_unavailable)
+Vérifie le repli automatique sur un thread daemon lorsque Redis est indisponible. ... ok
+test_build_mime_message_structure (test_mailer_rq.MailerRQTestCase.test_build_mime_message_structure)
+Vérifie la bonne construction de l'objet MIME avec et sans pièces jointes. ... ok
+test_redis_queue_provider (test_mailer_rq.MailerRQTestCase.test_redis_queue_provider)
+Vérifie la mise en cache et la récupération des connexions Redis et files RQ. ... ok
+test_sync_execution_in_testing_mode (test_mailer_rq.MailerRQTestCase.test_sync_execution_in_testing_mode)
+Vérifie qu'en mode test (ou sync=True), l'envoi s'exécute de façon synchrone. ... ok
+test_task_send_email_executes_correctly (test_mailer_rq.MailerRQTestCase.test_task_send_email_executes_correctly)
+Vérifie l'exécution directe de task_send_email avec construction MIME. ... ok
 test_asgi_auth_middleware_strict_fail_close (test_mcp_server.MCPServerFullTestSuite.test_asgi_auth_middleware_strict_fail_close)
 Vérifie le durcissement Zero-Trust du middleware ASGI (Fail-Close, 401 sur token absent/invalide/expiré/révoqué). ... ok
 test_calendars_lifecycle (test_mcp_server.MCPServerFullTestSuite.test_calendars_lifecycle) ... ok
@@ -312,6 +324,6 @@ test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.W
 Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
 ----------------------------------------------------------------------
-Ran 198 tests in 29.480s
+Ran 204 tests in 13.627s
 
 OK (skipped=2)
