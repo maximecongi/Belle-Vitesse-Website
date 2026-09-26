@@ -8,6 +8,18 @@
     margin-top: 5vw;
 }
 
+/* Protection anti-bot : champ honeypot masqué aux humains sans style inline */
+.newsletter-hp {
+    position: absolute;
+    left: -9999px;
+    top: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
 .newsletter-form {
     display: flex;
     border-bottom: 1px solid var(--white-2);

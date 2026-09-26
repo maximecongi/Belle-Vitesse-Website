@@ -19,6 +19,7 @@ from extensions import cache, csrf
 from services.public.newsletter import (
     add_newsletter_subscriber,
     remove_newsletter_subscriber,
+    validate_newsletter_submission,
 )
 from utils.database import (
     get_configs_for_vehicle,
@@ -238,6 +239,19 @@ def init_web_routes(app):
         raw_ip = request.headers.get(
             "X-Forwarded-For") or request.remote_addr or ""
         ip = raw_ip.split(",")[0].strip()[:45]
+
+        # ── Protection Anti-Bot (Honeypot + Time-Trap + Heuristiques) ──
+        is_legit, bot_reason, bot_detail = validate_newsletter_submission(
+            request.form, email=email, client_ip=ip
+        )
+        if not is_legit:
+            current_app.logger.warning(
+                f"🛡️ [Anti-Spam Newsletter] Bot neutralisé : raison='{bot_reason}' "
+                f"({bot_detail}) - email='{email}' - IP='{ip}'"
+            )
+            # Silent Drop : Faux succès HTTP 200 pour leurrer le bot sans enregistrer en base ni envoyer d'e-mail
+            return jsonify({"status": "success", "message": msg["success"]}), 200
+
         rate_key = f"rate_limit_{ip}"
         requests_count = cache.get(rate_key) or 0
 

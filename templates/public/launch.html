@@ -40,6 +40,11 @@
                     <div class="newsletter-box">
                         <p class="dot-before">Be the first to know when we launch.</p>
                         <form class="newsletter-form">
+                            <input type="hidden" name="subscribe_token" value="{{ get_newsletter_token() }}">
+                            <div class="newsletter-hp" aria-hidden="true">
+                                <label for="launch_website_hp">Leave this field empty</label>
+                                <input type="text" id="launch_website_hp" name="website_hp" tabindex="-1" autocomplete="off">
+                            </div>
                             <div class="input-group">
                                 <input type="email" name="email" placeholder="Enter your email" required
                                     class="newsletter-input">
@@ -77,9 +82,9 @@
                     messageDiv.classList.add('show');
 
                     try {
-                        const formData = new FormData();
-                        formData.append('email', email);
-                        formData.append('lang', 'en');
+                        const formData = new FormData(form);
+                        formData.set('email', email);
+                        formData.set('lang', 'en');
 
                         const response = await fetch('/subscribe', {
                             method: 'POST',

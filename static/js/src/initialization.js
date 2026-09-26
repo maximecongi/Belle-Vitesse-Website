@@ -97,9 +97,9 @@ function initNewsletterForm() {
             if (button) button.disabled = true;
 
             try {
-                const formData = new FormData();
-                formData.append('email', email);
-                formData.append('lang', isFr ? 'fr' : 'en');
+                const formData = new FormData(form);
+                formData.set('email', email);
+                formData.set('lang', isFr ? 'fr' : 'en');
 
                 const response = await fetch('/subscribe', {
                     method: 'POST',

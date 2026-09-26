@@ -252,6 +252,20 @@ test_idempotent_upgrade (test_migrations.MigrationsTestCase.test_idempotent_upgr
 Vérifie que l'exécution répétée de upgrade() ne provoque aucune erreur. ... ok
 test_upgrade_from_previous_head_stamp (test_migrations.MigrationsTestCase.test_upgrade_from_previous_head_stamp)
 Vérifie qu'une base déjà estampillée à g00d7fe3c467 migre vers i00d7fe3c469 et supprime pre_quotes. ... ok
+test_disposable_domain_detection (test_newsletter_anti_spam.NewsletterAntiSpamTestCase.test_disposable_domain_detection)
+Vérifie le blocage silencieux des domaines d'emails jetables. ... ok
+test_dot_stuffing_detection (test_newsletter_anti_spam.NewsletterAntiSpamTestCase.test_dot_stuffing_detection)
+Vérifie que les adresses artificiellement truffées de points sont neutralisées. ... ok
+test_gov_institution_detection (test_newsletter_anti_spam.NewsletterAntiSpamTestCase.test_gov_institution_detection)
+Vérifie le blocage silencieux des domaines institutionnels ciblés par flood. ... ok
+test_honeypot_triggered (test_newsletter_anti_spam.NewsletterAntiSpamTestCase.test_honeypot_triggered)
+Vérifie que le remplissage du honeypot déclenche un silent drop. ... ok
+test_legit_user_submission_succeeds (test_newsletter_anti_spam.NewsletterAntiSpamTestCase.test_legit_user_submission_succeeds)
+Vérifie qu'un humain normal (token valide, délai normal, champ vide) est bien inscrit. ... ok
+test_token_generation (test_newsletter_anti_spam.NewsletterAntiSpamTestCase.test_token_generation)
+Vérifie que la génération du jeton produit un token valide et décodable. ... ok
+test_too_fast_submission_time_trap (test_newsletter_anti_spam.NewsletterAntiSpamTestCase.test_too_fast_submission_time_trap)
+Vérifie qu'une soumission en moins de 1.5s est détectée comme bot. ... ok
 test_compress_pdf_resilience_on_corruption (test_pdf_compression.PDFCompressionTestCase.test_compress_pdf_resilience_on_corruption)
 Vérifie que le compresseur renvoie l'original sans lever d'exception en cas de corruption. ... ok
 test_compress_pdf_short_or_empty_bytes (test_pdf_compression.PDFCompressionTestCase.test_compress_pdf_short_or_empty_bytes)
@@ -364,6 +378,6 @@ test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.W
 Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
 ----------------------------------------------------------------------
-Ran 220 tests in 23.905s
+Ran 227 tests in 23.739s
 
 OK

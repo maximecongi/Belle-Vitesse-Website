@@ -37,6 +37,11 @@
                 </p>
                 <div class="newsletter newsletter-contact">
                     <form class="newsletter-form" novalidate>
+                        <input type="hidden" name="subscribe_token" value="{{ get_newsletter_token() }}">
+                        <div class="newsletter-hp" aria-hidden="true">
+                            <label for="contact_website_hp">Ne pas remplir ce champ</label>
+                            <input type="text" id="contact_website_hp" name="website_hp" tabindex="-1" autocomplete="off">
+                        </div>
                         <input type="email" name="email" placeholder="{{ ts('newsletter.placeholder') }}" required
                             class="newsletter-input">
                         <button type="submit" class="newsletter-button" aria-label="S'abonner à la newsletter">

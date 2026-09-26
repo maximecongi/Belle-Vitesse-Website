@@ -408,3 +408,8 @@ def init_context_processors(app):
                                "grips_categories": []})
 
         return ctx
+
+    @app.context_processor
+    def inject_newsletter_security():
+        from services.public.newsletter import generate_newsletter_token
+        return {"get_newsletter_token": generate_newsletter_token}

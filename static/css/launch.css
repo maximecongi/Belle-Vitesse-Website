@@ -125,6 +125,18 @@ html {
     text-align: center;
 }
 
+/* Protection anti-bot : champ honeypot masqué aux humains sans style inline */
+.newsletter-hp {
+    position: absolute;
+    left: -9999px;
+    top: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
 .newsletter-form {
     display: flex;
     flex-direction: column;
