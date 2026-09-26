@@ -11,19 +11,22 @@ initials, empty_state, waiver_card, doc_download_badge %}
     <a href="{{ url_for('admin_projects.admin_projects_list') }}" class="admin-btn admin-btn-secondary">
         ← Liste des projets
     </a>
-    <form action="{{ url_for('admin_projects.admin_project_kdrive_resync', record_id=project.id) }}" method="POST" class="u-inline">
+    <form action="{{ url_for('admin_projects.admin_project_kdrive_resync', record_id=project.id) }}" method="POST"
+        class="u-inline">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="admin-btn admin-btn-secondary" title="Relancer la synchronisation kDrive">
             <i data-lucide="cloud-cog"></i>
             <span>kDrive</span>
         </button>
     </form>
-    <a href="{{ url_for('admin_projects.admin_project_edit', record_id=project.id) }}" class="admin-btn admin-btn-primary">
+    <a href="{{ url_for('admin_projects.admin_project_edit', record_id=project.id) }}"
+        class="admin-btn admin-btn-primary">
         <i data-lucide="edit-3"></i>
         <span>Modifier</span>
     </a>
     {% if is_admin or session.get('admin_user_role') in ['administrator', 'manager', 'commercial'] %}
-    <form method="POST" action="{{ url_for('admin_projects.admin_project_delete', record_id=project.id) }}" class="u-d-inline"
+    <form method="POST" action="{{ url_for('admin_projects.admin_project_delete', record_id=project.id) }}"
+        class="u-d-inline"
         onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce projet ? Cette action supprimera également son dossier sur kDrive.');">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="admin-btn admin-btn-danger" title="Supprimer le projet">
@@ -222,7 +225,8 @@ initials, empty_state, waiver_card, doc_download_badge %}
                             <span class="u-text-muted">Départ :</span>
                             {% if v.checkout_id %}
                             <div class="projects-cell-item">
-                                <a href="{{ url_for('admin_checkouts.admin_checkout_detail', record_id=v.checkout_id) }}">
+                                <a
+                                    href="{{ url_for('admin_checkouts.admin_checkout_detail', record_id=v.checkout_id) }}">
                                     {{ status_badge(v.checkout_status, v.checkout_status_id, class_name='u-m-1',
                                     **{'data-conform': v.checkout_conform}) }}
                                 </a>
@@ -230,7 +234,8 @@ initials, empty_state, waiver_card, doc_download_badge %}
                             </div>
                             {% else %}
                             <div class="projects-cell-item">
-                                <a href="{{ url_for('admin_checkouts.admin_checkout_new', project_id=project.id, vehicle_id=v.id) }}">
+                                <a
+                                    href="{{ url_for('admin_checkouts.admin_checkout_new', project_id=project.id, vehicle_id=v.id) }}">
                                     {{ status_badge('À contrôler', 'to_check', class_name='u-m-1') }}
                                 </a>
                                 {{ doc_download_badge(None) }}
@@ -251,7 +256,8 @@ initials, empty_state, waiver_card, doc_download_badge %}
                             </div>
                             {% else %}
                             <div class="projects-cell-item">
-                                <a href="{{ url_for('admin_checkins.admin_checkin_new', project_id=project.id, vehicle_id=v.id) }}">
+                                <a
+                                    href="{{ url_for('admin_checkins.admin_checkin_new', project_id=project.id, vehicle_id=v.id) }}">
                                     {{ status_badge('À contrôler', 'to_check', class_name='u-m-1') }}
                                 </a>
                                 {{ doc_download_badge(None) }}
@@ -619,7 +625,8 @@ initials, empty_state, waiver_card, doc_download_badge %}
                     lié{{ 's' if incidents|length > 1 else '' }} ({{ incidents|length }})</div>
                 <div class="u-flex u-flex-column u-gap-1">
                     {% for inc in incidents %}
-                    <div class="project-doc-item u-flex u-justify-between u-align-center u-p-2 u-flex-wrap u-gap-2">
+                    <div
+                        class="project-doc-item u-flex u-justify-between u-align-center u-p-2 u-flex-wrap u-gap-2 u-flex-column u-align-start">
                         <div class="project-doc-info">
                             <span class="u-text-xs u-font-semibold">{{ inc.title | truncate(60) }}</span>
                             <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
@@ -629,8 +636,8 @@ initials, empty_state, waiver_card, doc_download_badge %}
                         <div class="projects-cell-item u-flex u-align-center u-gap-2">
                             {{ incident_severity_badge(inc.severity, inc.severity_label) }}
                             {{ incident_status_badge(inc.status, inc.status_label) }}
-                            <a href="{{ url_for('admin_incidents.admin_incident_detail', record_id=inc.id) }}" data-val="link"
-                                title="Voir l'incident" target="_blank"
+                            <a href="{{ url_for('admin_incidents.admin_incident_detail', record_id=inc.id) }}"
+                                data-val="link" title="Voir l'incident" target="_blank"
                                 class="badge-pill u-flex u-justify-center u-align-center u-text-xs projects-badge-link"><i
                                     data-lucide="square-arrow-out-up-right" stroke-width="2.5"></i></a>
                         </div>

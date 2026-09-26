@@ -87,6 +87,13 @@
     margin-right: 4px;
 }
 
+.badge-pill--icon-only .lucide,
+.badge-pill--icon-only svg.lucide,
+.projects-badge-link .lucide,
+.projects-badge-link svg.lucide {
+    margin-right: 0 !important;
+}
+
 .filter-pill.active:hover,
 .filter-pill.active:focus {
     background-color: var(--grey-1) !important;

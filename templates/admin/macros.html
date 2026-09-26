@@ -104,35 +104,58 @@
 
 {# ═══════════ MACROS INCIDENTS ═══════════ #}
 
-{% macro incident_severity_badge(severity, label=None, class_name='') %}
+{% macro incident_severity_badge(severity, label=None, class_name='', show_label=true) %}
 {% set s = (severity or 'mineur')|lower %}
 {% if s == 'critique' %}
-<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="critique"><i data-lucide="alert-octagon"></i> {{ 'Critique' if (not label or
-    label|lower == 'critique') else label }}</span>
+    {% set default_label = 'Critique' %}
+    {% set icon_name = 'alert-octagon' %}
+    {% set data_val = 'critique' %}
 {% elif s in ('modere', 'modéré') %}
-<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="warning"><i data-lucide="alert-triangle"></i> {{ 'Modéré' if (not label or
-    label|lower in ('modere', 'modéré')) else label }}</span>
+    {% set default_label = 'Modéré' %}
+    {% set icon_name = 'alert-triangle' %}
+    {% set data_val = 'warning' %}
 {% else %}
-<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="neutral"><i data-lucide="info"></i> {{ 'Mineur' if (not label or label|lower ==
-    'mineur') else label }}</span>
+    {% set default_label = 'Mineur' %}
+    {% set icon_name = 'info' %}
+    {% set data_val = 'neutral' %}
 {% endif %}
+{% set is_label_disabled = (show_label is false or label is false or label == '') %}
+{% set display_label = '' if is_label_disabled else (label if label is not none else default_label) %}
+{% set icon_only_class = ' badge-pill--icon-only' if is_label_disabled else '' %}
+<span class="badge-pill{{ icon_only_class }}{% if class_name %} {{ class_name }}{% endif %}" data-val="{{ data_val }}"{% if is_label_disabled %} title="{{ default_label }}"{% endif %}><i data-lucide="{{ icon_name }}"{% if is_label_disabled %} class="u-mr-0"{% endif %}></i>{% if display_label %} {{ display_label }}{% endif %}</span>
 {% endmacro %}
 
-{% macro incident_status_badge(status, label=None, class_name='') %}
+{% macro incident_status_badge(status, label=None, class_name='', show_label=true) %}
 {% set st = (status or 'signale')|lower %}
 {% if st == 'cloture' %}
-<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="cloture"><i data-lucide="lock"></i> {{ label or 'Clôturé' }}</span>
+    {% set default_label = 'Clôturé' %}
+    {% set icon_name = 'lock' %}
+    {% set data_val = 'cloture' %}
 {% elif st == 'resolu' %}
-<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="ok"><i data-lucide="check-circle"></i> {{ label or 'Résolu' }}</span>
+    {% set default_label = 'Résolu' %}
+    {% set icon_name = 'check-circle' %}
+    {% set data_val = 'ok' %}
 {% elif st == 'en_reparation' %}
-<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="in_progress"><i data-lucide="wrench"></i> {{ label or 'En réparation' }}</span>
+    {% set default_label = 'En réparation' %}
+    {% set icon_name = 'wrench' %}
+    {% set data_val = 'in_progress' %}
 {% elif st == 'en_expertise' %}
-<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="warning"><i data-lucide="search"></i> {{ label or 'En expertise' }}</span>
+    {% set default_label = 'En expertise' %}
+    {% set icon_name = 'search' %}
+    {% set data_val = 'warning' %}
 {% elif st == 'assurance' %}
-<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="assurance"><i data-lucide="clipboard-list"></i> {{ label or 'Assurance' }}</span>
+    {% set default_label = 'Assurance' %}
+    {% set icon_name = 'clipboard-list' %}
+    {% set data_val = 'assurance' %}
 {% else %}
-<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="warning"><i data-lucide="megaphone"></i> {{ label or 'Signalé' }}</span>
+    {% set default_label = 'Signalé' %}
+    {% set icon_name = 'megaphone' %}
+    {% set data_val = 'warning' %}
 {% endif %}
+{% set is_label_disabled = (show_label is false or label is false or label == '') %}
+{% set display_label = '' if is_label_disabled else (label if label is not none else default_label) %}
+{% set icon_only_class = ' badge-pill--icon-only' if is_label_disabled else '' %}
+<span class="badge-pill{{ icon_only_class }}{% if class_name %} {{ class_name }}{% endif %}" data-val="{{ data_val }}"{% if is_label_disabled %} title="{{ default_label }}"{% endif %}><i data-lucide="{{ icon_name }}"{% if is_label_disabled %} class="u-mr-0"{% endif %}></i>{% if display_label %} {{ display_label }}{% endif %}</span>
 {% endmacro %}
 
 {% macro incident_impact_badge(impact, label=None) %}

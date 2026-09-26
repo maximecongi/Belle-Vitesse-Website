@@ -1391,6 +1391,7 @@
 
 .project-doc-item--error {
     border-left: 3px solid var(--red-error, #b91c1c) !important;
+    border-radius: 0 !important;
 }
 
 .project-doc-item--error .project-doc-item {
