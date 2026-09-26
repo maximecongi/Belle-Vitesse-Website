@@ -16,7 +16,7 @@ initials, empty_state, waiver_card, doc_download_badge %}
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="admin-btn admin-btn-secondary" title="Relancer la synchronisation kDrive">
             <i data-lucide="cloud-cog"></i>
-            <span>kDrive</span>
+            <span>Cloud</span>
         </button>
     </form>
     <a href="{{ url_for('admin_projects.admin_project_edit', record_id=project.id) }}"
