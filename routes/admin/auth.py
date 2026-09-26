@@ -58,6 +58,13 @@ def init_auth_routes(app):
             session["admin_user_role"] = user_data.get("role", "admin")
             session["admin_login_time"] = datetime.now(
                 timezone.utc).isoformat()
+
+            # Enregistrer la session serveur pour révocation ciblée
+            sid = getattr(session, "sid", None)
+            if sid:
+                from services.common.session_manager import register_user_session
+                register_user_session(user_data.get("id"), sid)
+
             flash(
                 f"Bienvenue, {user_data.get('firstname', 'Admin')} !", "success")
             return redirect(url_for("admin_dashboard"))
@@ -67,12 +74,13 @@ def init_auth_routes(app):
 
     @app.route("/admin/logout")
     def admin_logout():
-        session.pop("admin_authenticated", None)
-        session.pop("admin_user_id", None)
-        session.pop("admin_user_firstname", None)
-        session.pop("admin_user_lastname", None)
-        session.pop("admin_user_role", None)
-        session.pop("admin_login_time", None)
+        user_id = session.get("admin_user_id")
+        sid = getattr(session, "sid", None)
+        if user_id and sid:
+            from services.common.session_manager import unregister_user_session
+            unregister_user_session(user_id, sid)
+
+        session.clear()
         flash("Vous avez été déconnecté.", "info")
         return redirect(url_for("admin_login"))
 
@@ -106,6 +114,7 @@ def init_auth_routes(app):
         if target_role.lower() in valid_roles:
             new_role = valid_roles[target_role.lower()]
             session["admin_user_role"] = new_role
+            session["admin_dev_role_simulated"] = True
 
             if user_id:
                 cache.delete(f"user:{user_id}")
@@ -114,6 +123,7 @@ def init_auth_routes(app):
 
             flash(f"🛠️ Rôle simulé : {new_role} (session temporaire)", "info")
         elif target_role.lower() == "reset":
+            session.pop("admin_dev_role_simulated", None)
             if user_id:
                 user = db.session.get(User, user_id)
                 if user and user.role:

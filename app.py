@@ -19,7 +19,7 @@ from flask import Flask, request
 from flask_migrate import Migrate
 
 from config import config
-from extensions import cache, compress, csrf, limiter
+from extensions import cache, compress, csrf, limiter, server_session
 from models import db
 from routes import init_error_handlers, init_routes
 from services.admin.sql_logger import init_sql_logger
@@ -88,6 +88,41 @@ def create_app():
     compress.init_app(app)
     limiter.init_app(app)
     csrf.init_app(app)
+
+    # Initialisation de Flask-Session (côté serveur avec Redis)
+    session_type = app.config.get("SESSION_TYPE")
+    if session_type == "redis":
+        from redis import Redis
+        session_redis = app.config.get("SESSION_REDIS")
+        if session_redis is None:
+            redis_host = app.config.get("REDIS_HOST", "bv_redis" if env == "production" else "localhost")
+            redis_port = int(app.config.get("REDIS_PORT", 6379))
+            redis_db = int(app.config.get("REDIS_DB_SESSION", 2))
+            redis_password = os.getenv("REDIS_PASSWORD", None)
+            try:
+                session_redis = Redis(
+                    host=redis_host,
+                    port=redis_port,
+                    db=redis_db,
+                    password=redis_password,
+                    socket_connect_timeout=2.0,
+                    socket_timeout=3.0,
+                )
+                session_redis.ping()
+                app.config["SESSION_REDIS"] = session_redis
+                server_session.init_app(app)
+                app.logger.info("✅ Flask-Session initialisé avec Redis (db=%s sur %s:%s)", redis_db, redis_host, redis_port)
+            except Exception as err:
+                app.logger.warning(
+                    "⚠️ Redis non joignable pour Flask-Session (%s:%s/db%s: %s). "
+                    "Repli automatique sur sessions cookies signées.",
+                    redis_host, redis_port, redis_db, err
+                )
+        else:
+            server_session.init_app(app)
+    elif session_type and session_type != "null":
+        server_session.init_app(app)
+
     init_cache(cache)
     db.init_app(app)
     Migrate(app, db, render_as_batch=True)

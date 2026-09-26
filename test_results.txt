@@ -104,6 +104,18 @@ test_resolve_waivers (test_entity_resolvers.EntityResolversTestCase.test_resolve
 Vérifie la résolution des décharges pilote et production. ... ok
 test_routes_code_redirects (test_entity_resolvers.EntityResolversTestCase.test_routes_code_redirects)
 Vérifie que les routes admin redirigent correctement les codes métier vers l'ID canonique. ... ok
+test_logout_clears_session_from_redis (test_flask_session.FlaskSessionTestCase.test_logout_clears_session_from_redis)
+La déconnexion doit purger la session de Redis et supprimer le cookie. ... ok
+test_session_fallback_when_redis_fails (test_flask_session.FlaskSessionTestCase.test_session_fallback_when_redis_fails)
+Vérifie que l'application démarre et bascule gracieusement sur les cookies si Redis est inaccessible. ... ok
+test_session_stored_in_redis_not_in_cookie (test_flask_session.FlaskSessionTestCase.test_session_stored_in_redis_not_in_cookie)
+Les données de session doivent être stockées dans Redis et non dans le cookie client. ... ok
+test_user_deletion_triggers_session_invalidation (test_flask_session.FlaskSessionTestCase.test_user_deletion_triggers_session_invalidation)
+La suppression d'un utilisateur révoque immédiatement ses sessions actives. ... ok
+test_user_role_update_triggers_session_invalidation (test_flask_session.FlaskSessionTestCase.test_user_role_update_triggers_session_invalidation)
+La modification du rôle d'un utilisateur révoque immédiatement ses sessions actives. ... ok
+test_user_session_registration_and_invalidation (test_flask_session.FlaskSessionTestCase.test_user_session_registration_and_invalidation)
+Enregistrement et révocation immédiate de toutes les sessions actives d'un utilisateur. ... ok
 test_fleet_overview (test_fleet.FleetTest.test_fleet_overview) ... ok
 test_fleet_routes (test_fleet.FleetTest.test_fleet_routes) ... ok
 test_fleet_sidebar_visibility_for_all_roles (test_fleet.FleetTest.test_fleet_sidebar_visibility_for_all_roles)
@@ -330,6 +342,6 @@ test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.W
 Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
 ----------------------------------------------------------------------
-Ran 203 tests in 22.259s
+Ran 209 tests in 23.226s
 
 OK

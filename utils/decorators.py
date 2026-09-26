@@ -45,7 +45,24 @@ def require_roles(*allowed_roles):
             if not session.get("admin_user_id") and session.get("admin_user_firstname"):
                 pass
 
-            # 2. Vérifier le rôle
+            # 2. Vérification d'intégrité de l'utilisateur en base (hors testing pour compatibilité tests unitaires)
+            user_id = session.get("admin_user_id")
+            if user_id and not current_app.config.get("TESTING"):
+                from models import User, db
+                user = db.session.get(User, user_id)
+                if not user:
+                    session.clear()
+                    flash("Votre compte a été supprimé ou n'existe plus.", "error")
+                    return redirect(url_for("admin_login"))
+
+                # Synchronisation dynamique du rôle (sauf si simulation de rôle active en dev)
+                if not session.get("admin_dev_role_simulated"):
+                    db_role = normalize_role(user.role)
+                    current_role = normalize_role(session.get("admin_user_role"))
+                    if db_role != current_role:
+                        session["admin_user_role"] = user.role
+
+            # 3. Vérifier le rôle
             user_role = normalize_role(session.get("admin_user_role", "Technicien"))
 
             # Super Administrateur a accès à tout

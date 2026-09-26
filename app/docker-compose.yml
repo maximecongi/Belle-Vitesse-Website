@@ -13,6 +13,7 @@ services:
       - REDIS_HOST=bv_redis
       - REDIS_PORT=6379
       - REDIS_DB_KDRIVE=1
+      - REDIS_DB_SESSION=2
     volumes:
       - /srv/bellevitesse/website/static:/app/static
       - /srv/bellevitesse/output:/app/output

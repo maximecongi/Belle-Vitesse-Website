@@ -10,8 +10,12 @@ class Config:
     # Flask settings
     PREFERRED_URL_SCHEME = "https"
     PERMANENT_SESSION_LIFETIME = timedelta(hours=12)
+    SESSION_COOKIE_NAME = "session"
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
+    SESSION_KEY_PREFIX = "bv_session:"
+    SESSION_USE_SIGNER = True
+    SESSION_PERMANENT = True
     RATELIMIT_SWALLOW_ERRORS = True
 
     # Cache settings
@@ -45,6 +49,8 @@ class Config:
 class DevelopmentConfig(Config):
     DEBUG = True
     CACHE_TYPE = "SimpleCache"
+    SESSION_TYPE = os.getenv("SESSION_TYPE", None)
+    REDIS_DB_SESSION = int(os.getenv("REDIS_DB_SESSION", 2))
     RATELIMIT_STORAGE_URI = "memory://"
     SEND_FILE_MAX_AGE_DEFAULT = timedelta(seconds=0)
 
@@ -70,8 +76,14 @@ class ProductionConfig(Config):
     REDIS_HOST = os.getenv("REDIS_HOST", "bv_redis")
     REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
     REDIS_DB = int(os.getenv("REDIS_DB_FLASK_CACHING", 0))
+    REDIS_DB_SESSION = int(os.getenv("REDIS_DB_SESSION", 2))
     REDIS_URL = os.getenv(
         "REDIS_URL", f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}")
+
+    SESSION_TYPE = os.getenv("SESSION_TYPE", "redis")
+    SESSION_REDIS_URL = os.getenv(
+        "SESSION_REDIS_URL", f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB_SESSION}"
+    )
 
     CACHE_REDIS_URL = REDIS_URL
     CACHE_OPTIONS = {
@@ -104,6 +116,7 @@ class ProductionConfig(Config):
 
 class TestingConfig(DevelopmentConfig):
     TESTING = True
+    SESSION_TYPE = None
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     SQLALCHEMY_ENGINE_OPTIONS = {}
 

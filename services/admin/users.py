@@ -68,6 +68,7 @@ def update_user(record_id, data):
         if not user:
             return None
 
+        old_role = user.role
         user.firstname = data.get('firstname', user.firstname)
         user.lastname = data.get('lastname', user.lastname)
         user.mail = data.get('mail', user.mail)
@@ -80,6 +81,15 @@ def update_user(record_id, data):
 
         db.session.commit()
         invalidate_user_cache(record_id)
+
+        # Si le rôle a changé, révoquer immédiatement toutes les sessions actives
+        if user.role != old_role:
+            try:
+                from services.common.session_manager import invalidate_user_sessions
+                invalidate_user_sessions(record_id)
+            except Exception as sess_err:
+                logger.warning(f"Erreur lors de l'invalidation des sessions pour {record_id}: {sess_err}")
+
         logger.info(f"Utilisateur mis à jour : {record_id}")
         return user
     except Exception as e:
@@ -100,6 +110,13 @@ def delete_user(record_id):
         db.session.delete(user)
         db.session.commit()
         invalidate_user_cache(record_id)
+
+        try:
+            from services.common.session_manager import invalidate_user_sessions
+            invalidate_user_sessions(record_id)
+        except Exception as sess_err:
+            logger.warning(f"Erreur lors de l'invalidation des sessions pour {record_id}: {sess_err}")
+
         logger.info(f"Utilisateur supprimé : {record_id}")
         return True
     except Exception as e:
