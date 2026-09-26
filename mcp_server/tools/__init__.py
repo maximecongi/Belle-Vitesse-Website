@@ -5,7 +5,6 @@ from mcp_server.tools import contacts
 from mcp_server.tools import productions
 from mcp_server.tools import users
 from mcp_server.tools import pricing
-from mcp_server.tools import pre_quotes
 from mcp_server.tools import calendars
 from mcp_server.tools import documents
 from mcp_server.tools import system
@@ -20,7 +19,6 @@ __all__ = [
     "productions",
     "users",
     "pricing",
-    "pre_quotes",
     "calendars",
     "documents",
     "system",

@@ -41,10 +41,19 @@ fi
 echo "✅ Bundles CSS générés avec succès"
 
 # ── Migration du schéma de base de données ─────────────────────────────
-if [ -f "scripts/migrate_kdrive_schema.py" ]; then
-    echo "🗄️ Application des migrations kDrive..."
-    python3 scripts/migrate_kdrive_schema.py || true
-fi
+echo "🗄️ Application des migrations de schéma (Flask-Migrate)..."
+python3 -c "
+from app import create_app
+from flask_migrate import upgrade
+app = create_app()
+with app.app_context():
+    upgrade()
+" || {
+    echo "⚠️ Avertissement lors des migrations Flask-Migrate, exécution du repli..."
+    if [ -f "scripts/migrate_kdrive_schema.py" ]; then
+        python3 scripts/migrate_kdrive_schema.py || true
+    fi
+}
 
 # ── Lancement de l'application ────────────────────────────────────────
 exec "$@"

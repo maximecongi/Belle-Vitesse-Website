@@ -8,7 +8,6 @@ from models import (
     Project,
     ProjectReport,
     User,
-    PreQuote,
     Incident,
     db
 )
@@ -199,7 +198,6 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
         joinedload(Project.key_grip_contact),
         joinedload(Project.pilot_waiver),
         joinedload(Project.production_waiver),
-        selectinload(Project.pre_quotes).selectinload(PreQuote.versions),
         selectinload(Project.incidents),
         selectinload(Project.reports).joinedload(ProjectReport.user)
     ).first()
@@ -387,12 +385,5 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
                 else (project.production.name if project.production else "")
             ),
             "production-waiver",
-        ),
-        "pre_quotes": [{
-            "id": pq.id,
-            "reference": pq.reference,
-            "total_ht": float(pq.total_ht),
-            "status": pq.status,
-            "latest_version": max([v.version_number for v in pq.versions]) if pq.versions else None
-        } for pq in project.pre_quotes] if getattr(project, 'pre_quotes', None) else []
+        )
     }

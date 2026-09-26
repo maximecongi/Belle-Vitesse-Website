@@ -199,19 +199,7 @@ def generate_token():
     )
 
     db.session.add(token_record)
-    try:
-        db.session.commit()
-    except Exception:
-        db.session.rollback()
-        try:
-            from sqlalchemy import text
-            db.session.execute(text("ALTER TABLE mcp_api_tokens ADD COLUMN scope VARCHAR(20) NOT NULL DEFAULT 'read_only'"))
-            db.session.commit()
-            db.session.add(token_record)
-            db.session.commit()
-        except Exception as retry_err:
-            db.session.rollback()
-            raise retry_err
+    db.session.commit()
 
     if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
         return jsonify({

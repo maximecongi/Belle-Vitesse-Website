@@ -90,7 +90,7 @@ def create_app():
     csrf.init_app(app)
     init_cache(cache)
     db.init_app(app)
-    Migrate(app, db)
+    Migrate(app, db, render_as_batch=True)
 
     # Journalisation des requêtes SQL
     init_sql_logger(app, db)

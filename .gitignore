@@ -301,7 +301,6 @@ backups/*
 static/images/airtable/
 BV.xlsx
 prequote_implementation_plan.md
-migrations/
 test_results.txt
 
 # Deploy script

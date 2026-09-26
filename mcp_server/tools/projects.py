@@ -59,7 +59,6 @@ def _format_project_summary(p: Dict[str, Any]) -> Dict[str, Any]:
             "pilot_status": p.get("pilot_waiver", {}).get("status", "—"),
             "production_status": p.get("production_waiver", {}).get("status", "—"),
         },
-        "pre_quotes_count": len(p.get("pre_quotes", [])),
     }
 
 
@@ -323,7 +322,6 @@ def get_project_hub(project_id: Any) -> Dict[str, Any]:
             "pilot": context.get("pilot_waiver"),
             "production": context.get("production_waiver"),
         },
-        "pre_quotes": context.get("pre_quotes", []),
         "incidents": context.get("incidents", []),
         "reports_count": context.get("reports_count", 0),
         "reports": context.get("reports", []),
@@ -565,7 +563,7 @@ def get_dashboard_summary() -> Dict[str, Any]:
     - Pré-devis récents en attente
     """
     from datetime import timedelta
-    from models import Project, PreQuote, PilotWaiver, ProductionWaiver
+    from models import Project, PilotWaiver, ProductionWaiver
 
     today = date.today()
     in_15_days = today + timedelta(days=15)
@@ -621,11 +619,6 @@ def get_dashboard_summary() -> Dict[str, Any]:
         .count()
     )
 
-    # Pré-devis récents (draft)
-    recent_quotes = [
-        q.to_dict() for q in PreQuote.query.order_by(PreQuote.created_at.desc()).limit(5).all()
-    ]
-
     return {
         "date": today_str,
         "active_shoots_count": len(active_now),
@@ -637,7 +630,6 @@ def get_dashboard_summary() -> Dict[str, Any]:
             "production_count": pending_prod_waivers,
             "total": pending_pilot_waivers + pending_prod_waivers,
         },
-        "recent_pre_quotes": recent_quotes,
     }
 
 

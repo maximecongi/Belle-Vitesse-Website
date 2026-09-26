@@ -34,7 +34,6 @@ from mcp_server.tools import (
     contacts,
     documents,
     inspections,
-    pre_quotes,
     pricing,
     productions,
     projects,
@@ -339,93 +338,7 @@ def run_all_tests():
             except Exception as e:
                 suite.record("projects.update_project", "FAIL", str(e))
 
-        # ----------------------------------------------------
-        # 5. DOMAINE PRÉ-DEVIS & DEVIS (7 outils)
-        # ----------------------------------------------------
-        print("\n💶 --- 5. Domaine Pré-Devis & Devis ---")
-        try:
-            pqs = pre_quotes.list_pre_quotes()
-            assert isinstance(pqs, dict) and "pre_quotes" in pqs
-            suite.record("pre_quotes.list_pre_quotes", "PASS", f"{len(pqs['pre_quotes'])} pré-devis enregistrés")
-        except Exception as e:
-            suite.record("pre_quotes.list_pre_quotes", "FAIL", str(e))
 
-        try:
-            ctx = pre_quotes.get_pre_quote_form_context(test_proj_id)
-            assert isinstance(ctx, dict) and "delivery_config" in ctx
-            suite.record("pre_quotes.get_pre_quote_form_context", "PASS", f"Contexte de pré-devis chargé avec grilles et paramètres")
-        except Exception as e:
-            suite.record("pre_quotes.get_pre_quote_form_context", "FAIL", str(e))
-
-        test_pq_id = None
-        if test_proj_id:
-            try:
-                res_c = pre_quotes.create_pre_quote(
-                    project_id=test_proj_id,
-                    version_label="V1",
-                    notes="Devis estimatif IA",
-                    items=[
-                        {
-                            "category": "equipment",
-                            "description": "Tracking Car Test MCP",
-                            "quantity": 2,
-                            "unit": "jour",
-                            "unit_price": 1200.0,
-                            "discount_rate": 0.0,
-                            "total": 2400.0,
-                        }
-                    ]
-                )
-                assert res_c.get("success") is True
-                test_pq_id = res_c.get("pre_quote_id")
-                suite.record("pre_quotes.create_pre_quote", "PASS", f"Pré-devis créé avec ID: {test_pq_id}")
-            except Exception as e:
-                suite.record("pre_quotes.create_pre_quote", "FAIL", str(e))
-
-            if test_pq_id:
-                try:
-                    res_g = pre_quotes.get_pre_quote(test_pq_id)
-                    assert res_g and res_g.get("id") == test_pq_id
-                    suite.record("pre_quotes.get_pre_quote", "PASS", f"Détails pré-devis #{test_pq_id} ({res_g.get('reference')}) récupérés")
-                except Exception as e:
-                    suite.record("pre_quotes.get_pre_quote", "FAIL", str(e))
-
-                try:
-                    res_u = pre_quotes.update_pre_quote(
-                        pre_quote_id=test_pq_id,
-                        notes="Devis ajusté avec remise",
-                        items=[
-                            {
-                                "category": "equipment",
-                                "description": "Tracking Car Test MCP",
-                                "quantity": 2,
-                                "unit": "jour",
-                                "unit_price": 1200.0,
-                                "discount_rate": 10.0,
-                                "total": 2160.0,
-                            }
-                        ]
-                    )
-                    assert res_u.get("success") is True
-                    suite.record("pre_quotes.update_pre_quote", "PASS", f"Pré-devis #{test_pq_id} mis à jour")
-                except Exception as e:
-                    suite.record("pre_quotes.update_pre_quote", "FAIL", str(e))
-
-                try:
-                    res_v = pre_quotes.create_pre_quote_version(test_pq_id, "V2")
-                    assert res_v.get("success") is True
-                    suite.record("pre_quotes.create_pre_quote_version", "PASS", f"Version V2 créée (ID: {res_v.get('new_version_id')})")
-                except Exception as e:
-                    suite.record("pre_quotes.create_pre_quote_version", "FAIL", str(e))
-
-                try:
-                    guard = pre_quotes.delete_pre_quote(test_pq_id, confirm=False)
-                    assert guard.get("status") == "requires_confirmation"
-                    deleted = pre_quotes.delete_pre_quote(test_pq_id, confirm=True)
-                    assert deleted.get("success") is True
-                    suite.record("pre_quotes.delete_pre_quote", "PASS", "Garde-fou et suppression pré-devis réussie")
-                except Exception as e:
-                    suite.record("pre_quotes.delete_pre_quote", "FAIL", str(e))
 
         # Suppression du projet de test
         if test_proj_id:

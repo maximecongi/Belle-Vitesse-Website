@@ -24,7 +24,6 @@ from mcp_server.tools import (  # noqa: E402
     contacts,
     documents,
     inspections,
-    pre_quotes,
     pricing,
     productions,
     projects,
@@ -263,56 +262,7 @@ class MCPServerFullTestSuite(unittest.TestCase):
         deleted = projects.delete_project(proj_id, confirm=True)
         self.assertTrue(deleted.get("success"))
 
-    # ── 5. PRÉ-DEVIS ─────────────────────────────────────────────
-    def test_pre_quotes_lifecycle(self):
-        res_pq_list = pre_quotes.list_pre_quotes()
-        self.assertIsInstance(res_pq_list, dict)
-        self.assertIn("pre_quotes", res_pq_list)
-        self.assertIn("delivery_config", pre_quotes.get_pre_quote_form_context())
 
-        first_prod = Production.query.first()
-        if not first_prod:
-            first_prod = Production(name="Production Test Pré-Devis")
-            db.session.add(first_prod)
-            db.session.commit()
-        prod_id = first_prod.id
-
-        res_c = pre_quotes.create_pre_quote(
-            production_id=prod_id,
-            version_label="V1",
-            notes="Pré-devis PyTest",
-            items=[{
-                "category": "equipment",
-                "description": "Véhicule travelling",
-                "quantity": 1,
-                "unit": "jour",
-                "unit_price": 1000.0,
-                "discount_rate": 0.0,
-                "total": 1000.0
-            }]
-        )
-        self.assertTrue(res_c.get("success"))
-        pq_id = res_c.get("pre_quote_id")
-
-        det = pre_quotes.get_pre_quote(pq_id)
-        self.assertEqual(det.get("id"), pq_id)
-        self.assertEqual(len(det.get("prestations", [])), 1)
-
-        # Test Patch mode: only update project_name without passing items, prestations should be preserved
-        res_u = pre_quotes.update_pre_quote(pq_id, project_name="Projet PyTest Patché")
-        self.assertTrue(res_u.get("success"))
-        det_after = pre_quotes.get_pre_quote(pq_id)
-        self.assertEqual(det_after.get("project_name"), "Projet PyTest Patché")
-        self.assertEqual(len(det_after.get("prestations", [])), 1)
-
-        res_v = pre_quotes.create_pre_quote_version(pq_id, "V2")
-        self.assertTrue(res_v.get("success"))
-
-        guard = pre_quotes.delete_pre_quote(pq_id, confirm=False)
-        self.assertEqual(guard.get("status"), "requires_confirmation")
-
-        deleted = pre_quotes.delete_pre_quote(pq_id, confirm=True)
-        self.assertTrue(deleted.get("success"))
 
     # ── 6. INSPECTIONS ───────────────────────────────────────────
     def test_inspections(self):
@@ -480,9 +430,7 @@ class MCPServerFullTestSuite(unittest.TestCase):
         pr_search = projects.list_projects(query="NonExistentProjectName999")
         self.assertEqual(pr_search.get("total", 0), 0)
 
-        # 4. Devis
-        q_list = pre_quotes.list_pre_quotes(limit=5, offset=0)
-        self.assertLessEqual(q_list.get("count", 0), 5)
+
 
     def test_enriched_details(self):
         # Production enrichie
@@ -530,25 +478,13 @@ class MCPServerFullTestSuite(unittest.TestCase):
         self.assertFalse(res_inv.get("success"))
         self.assertFalse(res_inv.get("available"))
 
-    def test_dashboard_summary_and_pre_quote_duplicate(self):
+    def test_dashboard_summary(self):
         # Dashboard summary
         dash = projects.get_dashboard_summary()
         self.assertIsInstance(dash, dict)
         self.assertIn("active_shoots", dash)
         self.assertIn("upcoming_shoots_15d", dash)
         self.assertIn("pending_waivers", dash)
-
-        # Pre-quote duplicate
-        first_pq = pre_quotes.list_pre_quotes(limit=1).get("pre_quotes", [])
-        if first_pq:
-            orig_id = first_pq[0]["id"]
-            res_dup = pre_quotes.duplicate_pre_quote(orig_id, new_project_name="Duplicated Project Test")
-            self.assertTrue(res_dup.get("success"))
-            dup_id = res_dup.get("new_pre_quote_id")
-            self.assertIsNotNone(dup_id)
-
-            # Cleanup duplicated pre-quote
-            pre_quotes.delete_pre_quote(dup_id, confirm=True)
 
     def test_mcp_resources_and_prompts(self):
         from mcp_server import resources, prompts
@@ -567,9 +503,6 @@ class MCPServerFullTestSuite(unittest.TestCase):
         # Prompts
         p_tournage = prompts.prompt_nouveau_tournage("Projet Test", "Prod Test")
         self.assertIn("Projet Test", p_tournage)
-
-        p_devis = prompts.prompt_chiffrer_devis("Projet Test", 3, "Mercedes Travelling")
-        self.assertIn("Projet Test", p_devis)
 
         p_audit = prompts.prompt_audit_tournage(123)
         self.assertIn("123", p_audit)
@@ -644,6 +577,11 @@ class MCPServerFullTestSuite(unittest.TestCase):
         prev_csrf = self.app.config.get("WTF_CSRF_ENABLED", True)
         self.app.config["WTF_CSRF_ENABLED"] = False
         try:
+            for uid, urole in [(901, "technicien"), (902, "commercial"), (903, "manager"), (904, "administrator")]:
+                if not User.query.get(uid):
+                    u = User(id=uid, mail=f"user{uid}@example.com", firstname="Test", lastname=f"User{uid}", role=urole)
+                    db.session.add(u)
+            db.session.commit()
             # 1. Technicien : accès refusé à la page (redirect 302)
             with client.session_transaction() as sess:
                 sess["admin_authenticated"] = True

@@ -29,7 +29,6 @@ from models.catalog import (
 from models.pricing import SalaryPosition, SalaryRate, LogisticsRate
 from models.system import SqlQueryLog, CalendarSubscription, AppSetting
 from models.newsletter import NewsletterSubscriber
-from models.pre_quote import PreQuote, PreQuoteVersion
 from models.mcp import McpApiToken, McpAuditLog
 from models.incident import Incident, IncidentToken, IncidentSignedDocument
 from models.project_report import ProjectReport

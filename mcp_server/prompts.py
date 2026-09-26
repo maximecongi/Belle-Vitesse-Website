@@ -21,25 +21,6 @@ def prompt_nouveau_tournage(
     )
 
 
-@mcp.prompt("chiffrer_devis")
-def prompt_chiffrer_devis(
-    nom_projet: str,
-    nb_jours_tournage: int = 1,
-    nom_vehicule: Optional[str] = None,
-) -> str:
-    """Guide pour structurer un pré-devis conforme à la grille tarifaire Belle Vitesse."""
-    return (
-        f"Tu dois établir une proposition de devis pour le projet '{nom_projet}' ({nb_jours_tournage} jour(s) de tournage).\n"
-        f"Véhicule pressenti : {nom_vehicule or 'Mercedes Travelling / Autre'}\n\n"
-        "Instructions :\n"
-        "1. Consulte la grille tarifaire via la ressource `bv://pricing/rates` ou l'outil `get_pre_quote_form_context`.\n"
-        "2. Inclus les lignes d'équipements nécessaires (véhicule travelling, tête gyro-stabilisée, monitoring).\n"
-        "3. Ajoute les lignes de salaires réglementaires (Pilote de précision, Opérateur tête, Assistant caméra).\n"
-        "4. Inclus les frais de logistique et kilomètres applicables.\n"
-        "5. Utilise `create_pre_quote` pour enregistrer le pré-devis dans le système Belle Vitesse."
-    )
-
-
 @mcp.prompt("audit_tournage")
 def prompt_audit_tournage(project_id: int) -> str:
     """Procédure d'audit avant départ d'un tournage (décharges signées, checkpoints véhicule)."""

@@ -189,7 +189,7 @@ test_asgi_auth_middleware_strict_fail_close (test_mcp_server.MCPServerFullTestSu
 Vérifie le durcissement Zero-Trust du middleware ASGI (Fail-Close, 401 sur token absent/invalide/expiré/révoqué). ... ok
 test_calendars_lifecycle (test_mcp_server.MCPServerFullTestSuite.test_calendars_lifecycle) ... ok
 test_contacts_lifecycle (test_mcp_server.MCPServerFullTestSuite.test_contacts_lifecycle) ... ok
-test_dashboard_summary_and_pre_quote_duplicate (test_mcp_server.MCPServerFullTestSuite.test_dashboard_summary_and_pre_quote_duplicate) ... ok
+test_dashboard_summary (test_mcp_server.MCPServerFullTestSuite.test_dashboard_summary) ... ok
 test_documents_and_vehicles (test_mcp_server.MCPServerFullTestSuite.test_documents_and_vehicles) ... ok
 test_enriched_details (test_mcp_server.MCPServerFullTestSuite.test_enriched_details) ... ok
 test_flexible_date_parsing (test_mcp_server.MCPServerFullTestSuite.test_flexible_date_parsing) ... ok
@@ -203,7 +203,6 @@ test_mcp_incidents_tools_checkpoints (test_mcp_server.MCPServerFullTestSuite.tes
 test_mcp_resources_and_prompts (test_mcp_server.MCPServerFullTestSuite.test_mcp_resources_and_prompts) ... ok
 test_mcp_waivers_tools (test_mcp_server.MCPServerFullTestSuite.test_mcp_waivers_tools) ... ok
 test_newsletter_subscribers (test_mcp_server.MCPServerFullTestSuite.test_newsletter_subscribers) ... ok
-test_pre_quotes_lifecycle (test_mcp_server.MCPServerFullTestSuite.test_pre_quotes_lifecycle) ... ok
 test_pricing (test_mcp_server.MCPServerFullTestSuite.test_pricing) ... ok
 test_productions_lifecycle (test_mcp_server.MCPServerFullTestSuite.test_productions_lifecycle) ... ok
 test_projects_lifecycle (test_mcp_server.MCPServerFullTestSuite.test_projects_lifecycle) ... ok
@@ -213,6 +212,12 @@ test_security_scopes_and_audit (test_mcp_server.MCPServerFullTestSuite.test_secu
 test_system_status (test_mcp_server.MCPServerFullTestSuite.test_system_status) ... ok
 test_users_lifecycle (test_mcp_server.MCPServerFullTestSuite.test_users_lifecycle) ... ok
 test_vehicle_availability (test_mcp_server.MCPServerFullTestSuite.test_vehicle_availability) ... ok
+test_clean_database_upgrade_from_zero_to_head (test_migrations.MigrationsTestCase.test_clean_database_upgrade_from_zero_to_head)
+Vérifie qu'une base vierge s'initialise de 0 à HEAD via flask_migrate.upgrade(). ... ok
+test_idempotent_upgrade (test_migrations.MigrationsTestCase.test_idempotent_upgrade)
+Vérifie que l'exécution répétée de upgrade() ne provoque aucune erreur. ... ok
+test_upgrade_from_previous_head_stamp (test_migrations.MigrationsTestCase.test_upgrade_from_previous_head_stamp)
+Vérifie qu'une base déjà estampillée à g00d7fe3c467 migre vers i00d7fe3c469 et supprime pre_quotes. ... ok
 test_compress_pdf_resilience_on_corruption (test_pdf_compression.PDFCompressionTestCase.test_compress_pdf_resilience_on_corruption)
 Vérifie que le compresseur renvoie l'original sans lever d'exception en cas de corruption. ... ok
 test_compress_pdf_short_or_empty_bytes (test_pdf_compression.PDFCompressionTestCase.test_compress_pdf_short_or_empty_bytes)
@@ -233,15 +238,6 @@ test_sync_execution_in_testing_mode (test_pdf_tasks_rq.PDFTasksRQTestCase.test_s
 Vérifie que la compilation s'exécute de façon synchrone et écrit le fichier en mode test. ... ok
 test_task_render_pdf_updates_waiver_entity (test_pdf_tasks_rq.PDFTasksRQTestCase.test_task_render_pdf_updates_waiver_entity)
 Vérifie que la tâche worker met à jour les chemins et hashes de l'entité décharge. ... ok
-test_all_rates_api (test_pre_quote_salary.PreQuoteSalaryTest.test_all_rates_api) ... skipped "Routes d'administration désactivées conformément à la règle d'exclusion des pré-devis"
-test_edit_enrichment (test_pre_quote_salary.PreQuoteSalaryTest.test_edit_enrichment) ... skipped "Routes d'administration désactivées conformément à la règle d'exclusion des pré-devis"
-test_grouped_prestations_pdf (test_pre_quote_salary.PreQuoteSalaryTest.test_grouped_prestations_pdf) ... ok
-test_insurance_calculation_based_on_undiscounted (test_pre_quote_salary.PreQuoteSalaryTest.test_insurance_calculation_based_on_undiscounted) ... ok
-test_intermittent_salaries_exclusion_and_annex (test_pre_quote_salary.PreQuoteSalaryTest.test_intermittent_salaries_exclusion_and_annex) ... ok
-test_mad_pricing_calculation (test_pre_quote_salary.PreQuoteSalaryTest.test_mad_pricing_calculation) ... ok
-test_pre_quote_creation_with_undiscounted_insurance (test_pre_quote_salary.PreQuoteSalaryTest.test_pre_quote_creation_with_undiscounted_insurance) ... ok
-test_salaries_pdf_route (test_pre_quote_salary.PreQuoteSalaryTest.test_salaries_pdf_route)
-Test the salaries PDF export route with authorization. ... ok
 test_add_and_list_reports (test_project_reports.ProjectReportsTest.test_add_and_list_reports) ... ok
 test_author_job_display (test_project_reports.ProjectReportsTest.test_author_job_display) ... ok
 test_cascade_delete_with_project (test_project_reports.ProjectReportsTest.test_cascade_delete_with_project) ... ok
@@ -334,6 +330,6 @@ test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.W
 Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
 ----------------------------------------------------------------------
-Ran 209 tests in 25.940s
+Ran 203 tests in 22.259s
 
-OK (skipped=2)
+OK
