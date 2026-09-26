@@ -5,7 +5,7 @@ indications par défaut, véhicules concernés et indications techniques par vé
 """
 
 import logging
-from flask import current_app, flash, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, url_for
 from services.admin.vehicle_config import (
     create_checkpoint,
     delete_checkpoint,
@@ -19,49 +19,49 @@ from utils.decorators import require_roles
 
 logger = logging.getLogger(__name__)
 
+checkpoints_bp = Blueprint("admin_checkpoints", __name__, url_prefix="/admin")
 
-def init_checkpoints_routes(app):
-    """Initialise les routes d'administration pour les points de contrôle."""
 
-    @app.route("/admin/checkpoints", methods=["GET"])
-    @require_roles("administrator")
-    def admin_checkpoints_list():
-        """Liste tous les points de contrôle avec filtres et indicateurs."""
-        try:
-            checkpoints = get_all_checkpoints()
+@checkpoints_bp.route("/checkpoints", methods=["GET"], endpoint="admin_checkpoints_list")
+@require_roles("administrator")
+def admin_checkpoints_list():
+    """Liste tous les points de contrôle avec filtres et indicateurs."""
+    try:
+        checkpoints = get_all_checkpoints()
 
-            total_count = len(checkpoints)
-            security_count = sum(1 for c in checkpoints if c.get("category") == "Sécurité")
-            equipment_count = sum(1 for c in checkpoints if c.get("category") == "Équipements")
+        total_count = len(checkpoints)
+        security_count = sum(1 for c in checkpoints if c.get("category") == "Sécurité")
+        equipment_count = sum(1 for c in checkpoints if c.get("category") == "Équipements")
 
-            stats = {
-                "total": total_count,
-                "security": security_count,
-                "equipment": equipment_count,
-            }
+        stats = {
+            "total": total_count,
+            "security": security_count,
+            "equipment": equipment_count,
+        }
 
-            return render_template(
-                "admin/checkpoints_list.html",
-                checkpoints=checkpoints,
-                stats=stats,
-            )
-        except Exception as e:
-            logger.error(f"❌ Erreur lors du chargement des points de contrôle : {e}", exc_info=True)
-            flash(f"Erreur lors du chargement des points de contrôle : {e}", "error")
-            return redirect(url_for("admin_dashboard"))
+        return render_template(
+            "admin/checkpoints_list.html",
+            checkpoints=checkpoints,
+            stats=stats,
+        )
+    except Exception as e:
+        logger.error(f"❌ Erreur lors du chargement des points de contrôle : {e}", exc_info=True)
+        flash(f"Erreur lors du chargement des points de contrôle : {e}", "error")
+        return redirect(url_for("admin_dashboard.admin_dashboard"))
 
-    @app.route("/admin/checkpoints/new", methods=["GET", "POST"])
-    @require_roles("administrator")
-    def admin_checkpoint_new():
-        """Formulaire de création d'un nouveau point de contrôle."""
-        try:
-            if request.method == "POST":
-                new_cp = create_checkpoint(request.form)
-                if new_cp:
-                    flash(f"Point de contrôle « {new_cp.label} » créé avec succès.", "success")
-                    return redirect(url_for("admin_checkpoints_list"))
-                else:
-                    flash("Impossible de créer le point de contrôle (nom obligatoire).", "error")
+
+@checkpoints_bp.route("/checkpoints/new", methods=["GET", "POST"], endpoint="admin_checkpoint_new")
+@require_roles("administrator")
+def admin_checkpoint_new():
+    """Formulaire de création d'un nouveau point de contrôle."""
+    try:
+        if request.method == "POST":
+            new_cp = create_checkpoint(request.form)
+            if new_cp:
+                flash(f"Point de contrôle « {new_cp.label} » créé avec succès.", "success")
+                return redirect(url_for("admin_checkpoints.admin_checkpoints_list"))
+            else:
+                flash("Impossible de créer le point de contrôle (nom obligatoire).", "error")
 
             checkpoint = get_empty_checkpoint_for_create()
             return render_template(
@@ -69,70 +69,87 @@ def init_checkpoints_routes(app):
                 checkpoint=checkpoint,
                 is_new=True,
             )
-        except Exception as e:
-            logger.error(f"❌ Erreur lors de la création d'un point de contrôle : {e}", exc_info=True)
-            flash(f"Erreur lors de la création : {e}", "error")
-            return redirect(url_for("admin_checkpoints_list"))
-
-    @app.route("/admin/checkpoints/<int:checkpoint_id>/edit", methods=["GET", "POST"])
-    @require_roles("administrator")
-    def admin_checkpoint_edit(checkpoint_id: int):
-        """Formulaire d'édition d'un point de contrôle."""
-        try:
-            if request.method == "POST":
-                success = update_checkpoint(checkpoint_id, request.form)
-                if success:
-                    flash("Point de contrôle mis à jour avec succès.", "success")
-                    return redirect(url_for("admin_checkpoints_list"))
-                else:
-                    flash("Impossible de mettre à jour le point de contrôle (introuvable).", "error")
-                    return redirect(url_for("admin_checkpoints_list"))
-
-            checkpoint = get_checkpoint_by_id(checkpoint_id)
-            if not checkpoint:
-                flash("Point de contrôle introuvable.", "error")
-                return redirect(url_for("admin_checkpoints_list"))
-
+        else:
+            checkpoint = get_empty_checkpoint_for_create()
             return render_template(
                 "admin/checkpoint_form.html",
                 checkpoint=checkpoint,
-                is_new=False,
+                is_new=True,
             )
-        except Exception as e:
-            logger.error(f"❌ Erreur lors de l'édition du point de contrôle {checkpoint_id} : {e}", exc_info=True)
-            flash(f"Erreur lors de l'édition : {e}", "error")
-            return redirect(url_for("admin_checkpoints_list"))
+    except Exception as e:
+            logger.error(f"❌ Erreur lors de la création d'un point de contrôle : {e}", exc_info=True)
+            flash(f"Erreur lors de la création : {e}", "error")
+            return redirect(url_for("admin_checkpoints.admin_checkpoints_list"))
 
-    @app.route("/admin/checkpoints/<int:checkpoint_id>/delete", methods=["POST"])
-    @require_roles("administrator")
-    def admin_checkpoint_delete(checkpoint_id: int):
-        """Supprime un point de contrôle."""
-        try:
-            success, message = delete_checkpoint(checkpoint_id)
+
+@checkpoints_bp.route("/checkpoints/<int:checkpoint_id>/edit", methods=["GET", "POST"], endpoint="admin_checkpoint_edit")
+@require_roles("administrator")
+def admin_checkpoint_edit(checkpoint_id: int):
+    """Formulaire d'édition d'un point de contrôle."""
+    try:
+        if request.method == "POST":
+            success = update_checkpoint(checkpoint_id, request.form)
             if success:
-                flash(message, "success")
+                flash("Point de contrôle mis à jour avec succès.", "success")
+                return redirect(url_for("admin_checkpoints.admin_checkpoints_list"))
             else:
-                flash(message, "error")
-            return redirect(url_for("admin_checkpoints_list"))
-        except Exception as e:
-            logger.error(f"❌ Erreur lors de la suppression du point de contrôle {checkpoint_id} : {e}", exc_info=True)
-            flash(f"Erreur lors de la suppression : {e}", "error")
-            return redirect(url_for("admin_checkpoints_list"))
+                flash("Impossible de mettre à jour le point de contrôle (introuvable).", "error")
+                return redirect(url_for("admin_checkpoints.admin_checkpoints_list"))
 
-    @app.route("/admin/api/checkpoints/reorder", methods=["PATCH", "POST"])
-    @require_roles("administrator")
-    def admin_api_checkpoints_reorder():
-        """Met à jour l'ordre d'affichage des points de contrôle."""
-        try:
-            data = request.get_json(silent=True) or {}
-            ids = data.get("ids", [])
-            if not ids:
-                return jsonify({"success": False, "error": "Aucun identifiant fourni"}), 400
+        checkpoint = get_checkpoint_by_id(checkpoint_id)
+        if not checkpoint:
+            flash("Point de contrôle introuvable.", "error")
+            return redirect(url_for("admin_checkpoints.admin_checkpoints_list"))
 
-            success = reorder_checkpoints(ids)
-            if success:
-                return jsonify({"success": True, "message": "Ordre mis à jour avec succès"})
-            return jsonify({"success": False, "error": "Erreur lors de la réorganisation"}), 500
-        except Exception as e:
-            logger.error(f"❌ Erreur lors de la réorganisation des checkpoints : {e}", exc_info=True)
-            return jsonify({"success": False, "error": str(e)}), 400
+        return render_template(
+            "admin/checkpoint_form.html",
+            checkpoint=checkpoint,
+            is_new=False,
+        )
+    except Exception as e:
+        logger.error(f"❌ Erreur lors de l'édition du point de contrôle {checkpoint_id} : {e}", exc_info=True)
+        flash(f"Erreur lors de l'édition : {e}", "error")
+        return redirect(url_for("admin_checkpoints.admin_checkpoints_list"))
+
+
+@checkpoints_bp.route("/checkpoints/<int:checkpoint_id>/delete", methods=["POST"], endpoint="admin_checkpoint_delete")
+@require_roles("administrator")
+def admin_checkpoint_delete(checkpoint_id: int):
+    """Supprime un point de contrôle."""
+    try:
+        success, message = delete_checkpoint(checkpoint_id)
+        if success:
+            flash(message, "success")
+        else:
+            flash(message, "error")
+        return redirect(url_for("admin_checkpoints.admin_checkpoints_list"))
+    except Exception as e:
+        logger.error(f"❌ Erreur lors de la suppression du point de contrôle {checkpoint_id} : {e}", exc_info=True)
+        flash(f"Erreur lors de la suppression : {e}", "error")
+        return redirect(url_for("admin_checkpoints.admin_checkpoints_list"))
+
+
+@checkpoints_bp.route("/api/checkpoints/reorder", methods=["PATCH", "POST"], endpoint="admin_api_checkpoints_reorder")
+@require_roles("administrator")
+def admin_api_checkpoints_reorder():
+    """Met à jour l'ordre d'affichage des points de contrôle."""
+    try:
+        data = request.get_json(silent=True) or {}
+        ids = data.get("ids", [])
+        if not ids:
+            return jsonify({"success": False, "error": "Aucun identifiant fourni"}), 400
+
+        success = reorder_checkpoints(ids)
+        if success:
+            return jsonify({"success": True, "message": "Ordre mis à jour avec succès"})
+        return jsonify({"success": False, "error": "Erreur lors de la réorganisation"}), 500
+    except Exception as e:
+        logger.error(f"❌ Erreur lors de la réorganisation des checkpoints : {e}", exc_info=True)
+        return jsonify({"success": False, "error": str(e)}), 400
+
+
+def init_checkpoints_routes(app):
+    """Enregistre le blueprint des points de contrôle admin (compatibilité ascendante)."""
+    if "admin_checkpoints" not in app.blueprints:
+        app.register_blueprint(checkpoints_bp)
+

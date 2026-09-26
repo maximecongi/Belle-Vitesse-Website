@@ -1,4 +1,4 @@
-from flask import flash, redirect, render_template, request, session, url_for
+from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
 from services.admin.users import (
     create_user,
@@ -68,111 +68,117 @@ def _can_manage_user(target_user):
     return current_level > target_level
 
 
-def init_users_routes(app):
 
-    @app.route("/admin/users")
-    @require_roles('administrator', 'manager')
-    def admin_users_list():
-        users = list_users()
-        current_level = _get_current_role_level()
-        return render_template(
-            "admin/users_list.html",
-            users=users,
-            current_level=current_level,
-            role_hierarchy=ROLE_HIERARCHY,
-        )
+users_bp = Blueprint('admin_users', __name__, url_prefix='/admin')
 
-    @app.route("/admin/users/new", methods=["GET", "POST"])
-    @require_roles('administrator', 'manager')
-    def admin_user_create():
-        assignable = _get_assignable_roles()
+@users_bp.route("/users")
+@require_roles('administrator', 'manager')
+def admin_users_list():
+    users = list_users()
+    current_level = _get_current_role_level()
+    return render_template(
+        "admin/users_list.html",
+        users=users,
+        current_level=current_level,
+        role_hierarchy=ROLE_HIERARCHY,
+    )
 
-        if request.method == "POST":
-            role = request.form.get("role", "Technicien")
+@users_bp.route("/users/new", methods=["GET", "POST"])
+@require_roles('administrator', 'manager')
+def admin_user_create():
+    assignable = _get_assignable_roles()
+
+    if request.method == "POST":
+        role = request.form.get("role", "Technicien")
+
+        # Validation : le rôle demandé doit être dans la liste autorisée
+        if role not in assignable:
+            flash("Vous n'avez pas les permissions pour attribuer ce rôle.", "error")
+            return render_template("admin/user_form.html", is_edit=False, data=None, assignable_roles=assignable)
+
+        data = {
+            "firstname": request.form.get("firstname"),
+            "lastname": request.form.get("lastname"),
+            "mail": request.form.get("mail"),
+            "role": role,
+            "phone": request.form.get("phone"),
+            "job": request.form.get("job")
+        }
+        if create_user(data):
+            flash("Utilisateur créé avec succès.", "success")
+            return redirect(url_for("admin_users.admin_users_list"))
+        flash("Erreur lors de la création de l'utilisateur.", "error")
+
+    return render_template("admin/user_form.html", is_edit=False, data=None, assignable_roles=assignable)
+
+@users_bp.route("/users/<int:record_id>/edit", methods=["GET", "POST"])
+@require_roles('administrator', 'manager')
+def admin_user_edit(record_id):
+    user = get_user(record_id)
+    if not user:
+        flash("Utilisateur introuvable.", "error")
+        return redirect(url_for("admin_users.admin_users_list"))
+
+    # Vérifier que l'utilisateur connecté peut gérer cet utilisateur
+    if not _can_manage_user(user):
+        flash("Vous ne pouvez pas modifier un utilisateur de rang égal ou supérieur.", "error")
+        return redirect(url_for("admin_users.admin_users_list"))
+
+    assignable = _get_assignable_roles()
+
+    editing_self = _is_self(user)
+
+    if request.method == "POST":
+        # Si l'utilisateur modifie son propre profil, le rôle reste inchangé
+        if editing_self:
+            role = user.role
+        else:
+            role = request.form.get("role", user.role)
 
             # Validation : le rôle demandé doit être dans la liste autorisée
             if role not in assignable:
                 flash("Vous n'avez pas les permissions pour attribuer ce rôle.", "error")
-                return render_template("admin/user_form.html", is_edit=False, data=None, assignable_roles=assignable)
+                return render_template("admin/user_form.html", is_edit=True, data=user, record_id=record_id, assignable_roles=assignable, editing_self=editing_self)
 
-            data = {
-                "firstname": request.form.get("firstname"),
-                "lastname": request.form.get("lastname"),
-                "mail": request.form.get("mail"),
-                "role": role,
-                "phone": request.form.get("phone"),
-                "job": request.form.get("job")
-            }
-            if create_user(data):
-                flash("Utilisateur créé avec succès.", "success")
-                return redirect(url_for("admin_users_list"))
-            flash("Erreur lors de la création de l'utilisateur.", "error")
+        data = {
+            "firstname": request.form.get("firstname"),
+            "lastname": request.form.get("lastname"),
+            "mail": request.form.get("mail"),
+            "role": role,
+            "phone": request.form.get("phone"),
+            "job": request.form.get("job")
+        }
+        if update_user(record_id, data):
+            flash("Utilisateur mis à jour avec succès.", "success")
+            return redirect(url_for("admin_users.admin_users_list"))
+        flash("Erreur lors de la mise à jour de l'utilisateur.", "error")
 
-        return render_template("admin/user_form.html", is_edit=False, data=None, assignable_roles=assignable)
+    return render_template("admin/user_form.html", is_edit=True, data=user, record_id=record_id, assignable_roles=assignable, editing_self=editing_self)
 
-    @app.route("/admin/users/<int:record_id>/edit", methods=["GET", "POST"])
-    @require_roles('administrator', 'manager')
-    def admin_user_edit(record_id):
-        user = get_user(record_id)
-        if not user:
-            flash("Utilisateur introuvable.", "error")
-            return redirect(url_for("admin_users_list"))
+@users_bp.route("/users/<int:record_id>/delete", methods=["POST"])
+@require_roles('administrator', 'manager')
+def admin_user_delete(record_id):
+    user = get_user(record_id)
+    if not user:
+        flash("Utilisateur introuvable.", "error")
+        return redirect(url_for("admin_users.admin_users_list"))
 
-        # Vérifier que l'utilisateur connecté peut gérer cet utilisateur
-        if not _can_manage_user(user):
-            flash("Vous ne pouvez pas modifier un utilisateur de rang égal ou supérieur.", "error")
-            return redirect(url_for("admin_users_list"))
+    # Interdire la suppression de son propre compte et des utilisateurs de rang >= 
+    if _is_self(user):
+        flash("Vous ne pouvez pas supprimer votre propre compte.", "error")
+        return redirect(url_for("admin_users.admin_users_list"))
 
-        assignable = _get_assignable_roles()
+    if _get_current_role_level() <= _get_target_role_level(user):
+        flash("Vous ne pouvez pas supprimer un utilisateur de rang égal ou supérieur.", "error")
+        return redirect(url_for("admin_users.admin_users_list"))
 
-        editing_self = _is_self(user)
+    if delete_user(record_id):
+        flash("Utilisateur supprimé avec succès.", "success")
+    else:
+        flash("Erreur lors de la suppression de l'utilisateur.", "error")
+    return redirect(url_for("admin_users.admin_users_list"))
 
-        if request.method == "POST":
-            # Si l'utilisateur modifie son propre profil, le rôle reste inchangé
-            if editing_self:
-                role = user.role
-            else:
-                role = request.form.get("role", user.role)
-
-                # Validation : le rôle demandé doit être dans la liste autorisée
-                if role not in assignable:
-                    flash("Vous n'avez pas les permissions pour attribuer ce rôle.", "error")
-                    return render_template("admin/user_form.html", is_edit=True, data=user, record_id=record_id, assignable_roles=assignable, editing_self=editing_self)
-
-            data = {
-                "firstname": request.form.get("firstname"),
-                "lastname": request.form.get("lastname"),
-                "mail": request.form.get("mail"),
-                "role": role,
-                "phone": request.form.get("phone"),
-                "job": request.form.get("job")
-            }
-            if update_user(record_id, data):
-                flash("Utilisateur mis à jour avec succès.", "success")
-                return redirect(url_for("admin_users_list"))
-            flash("Erreur lors de la mise à jour de l'utilisateur.", "error")
-
-        return render_template("admin/user_form.html", is_edit=True, data=user, record_id=record_id, assignable_roles=assignable, editing_self=editing_self)
-
-    @app.route("/admin/users/<int:record_id>/delete", methods=["POST"])
-    @require_roles('administrator', 'manager')
-    def admin_user_delete(record_id):
-        user = get_user(record_id)
-        if not user:
-            flash("Utilisateur introuvable.", "error")
-            return redirect(url_for("admin_users_list"))
-
-        # Interdire la suppression de son propre compte et des utilisateurs de rang >= 
-        if _is_self(user):
-            flash("Vous ne pouvez pas supprimer votre propre compte.", "error")
-            return redirect(url_for("admin_users_list"))
-
-        if _get_current_role_level() <= _get_target_role_level(user):
-            flash("Vous ne pouvez pas supprimer un utilisateur de rang égal ou supérieur.", "error")
-            return redirect(url_for("admin_users_list"))
-
-        if delete_user(record_id):
-            flash("Utilisateur supprimé avec succès.", "success")
-        else:
-            flash("Erreur lors de la suppression de l'utilisateur.", "error")
-        return redirect(url_for("admin_users_list"))
+def init_users_routes(app):
+    """Enregistre le blueprint admin_users (compatibilité ascendante)."""
+    if "admin_users" not in app.blueprints:
+        app.register_blueprint(users_bp)

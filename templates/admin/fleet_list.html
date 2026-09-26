@@ -10,10 +10,10 @@
     <input type="text" id="searchInput" class="form-input u-w-250" placeholder="Rechercher un véhicule..."
         autocomplete="off">
     {% if current_user and current_user.is_admin %}
-    <a href="{{ url_for('admin_checkpoints_list') }}" class="admin-btn admin-btn-secondary">
+    <a href="{{ url_for('admin_checkpoints.admin_checkpoints_list') }}" class="admin-btn admin-btn-secondary">
         <i class="admin-header__icon" data-lucide="list-checks"></i> Points de Contrôle
     </a>
-    <a href="{{ url_for('admin_vehicle_configs') }}" class="admin-btn admin-btn-secondary">
+    <a href="{{ url_for('admin_api.admin_vehicle_configs') }}" class="admin-btn admin-btn-secondary">
         <i class="admin-header__icon" data-lucide="grid-3x3"></i>Matrice Flotte
     </a>
     {% endif %}
@@ -69,7 +69,7 @@
 <!-- ═══════════ GRILLE DES VÉHICULES ═══════════ -->
 <div class="u-grid u-gap-4 fleet-vehicle-grid" id="fleet-cards-container">
     {% for v in vehicles %}
-    <a href="{{ url_for('admin_vehicle_timeline', vehicle_id=v.id) }}"
+    <a href="{{ url_for('admin_fleet.admin_vehicle_timeline', vehicle_id=v.id) }}"
         class="admin-card vehicle-card fleet-vehicle-card u-flex u-flex-column u-justify-between u-p-0 u-overflow-hidden"
         data-name="{{ v.name|lower }}" data-id="{{ v.id|lower }}" data-unique-id="{{ v.unique_id|lower }}"
         data-status="{{ v.operational_status }}">

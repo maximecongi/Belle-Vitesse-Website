@@ -7,7 +7,7 @@
 <a href="{{ url_for('checkin_verify', inspection_id=data.inspection_id) }}" target="_blank"
     class="admin-btn admin-btn-secondary">Page de vérification ↗</a>
 {% if data.status_id == 'in_progress' %}
-<a href="{{ url_for('admin_checkin_edit', record_id=record_id) }}" class="admin-btn admin-btn-primary">Éditer</a>
+<a href="{{ url_for('admin_checkins.admin_checkin_edit', record_id=record_id) }}" class="admin-btn admin-btn-primary">Éditer</a>
 {% endif %}
 {% endblock %}
 
@@ -29,7 +29,7 @@
                             class="checkout-doc-id">{{
                             data.vehicle.fields.unique_id }}</span>
                         {% if data.vehicle and data.vehicle.id %}
-                        <a href="{{ url_for('admin_vehicle_timeline', vehicle_id=data.vehicle.id) }}"
+                        <a href="{{ url_for('admin_fleet.admin_vehicle_timeline', vehicle_id=data.vehicle.id) }}"
                             class="admin-btn admin-btn-xs admin-btn-secondary u-ml-1" title="Consulter l'historique du véhicule">🏎️
                             Timeline</a>
 
@@ -184,7 +184,7 @@
         {% else %}
         <div class="admin-card">
             <div class="admin-card-title">Sceau numérique</div>
-            <form action="{{ url_for('admin_checkin_seal', record_id=record_id) }}" target="_blank" method="POST"
+            <form action="{{ url_for('admin_checkins.admin_checkin_seal', record_id=record_id) }}" target="_blank" method="POST"
                 onsubmit="const btn = this.querySelector('button[type=submit]'); btn.disabled = true; btn.classList.add('btn-disabled'); btn.innerText = 'Ouverture de la signature...'; return true;">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                 <button type="submit" class="admin-btn admin-btn-sign-blue">Signer ce checkin</button>
@@ -195,13 +195,13 @@
         <div class="admin-card danger-card-top">
             <div class="admin-card-title danger-card-title">Actions de sécurité</div>
             <p class="u-text-sm u-text-muted u-mb-2">Ces actions sont irréversibles.</p>
-            <form action="{{ url_for('admin_checkin_delete', record_id=record_id) }}" method="POST"
+            <form action="{{ url_for('admin_checkins.admin_checkin_delete', record_id=record_id) }}" method="POST"
                 onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce checkin ? Cette action est irréversible.');">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                 <button type="submit" class="admin-btn admin-btn-danger u-w-100">Supprimer ce checkin</button>
             </form>
         </div>
-        <a href="{{ url_for('admin_checkins_list') }}" class="admin-btn admin-btn-secondary">← Retour à la liste</a>
+        <a href="{{ url_for('admin_checkins.admin_checkins_list') }}" class="admin-btn admin-btn-secondary">← Retour à la liste</a>
     </div>
 </div>
 

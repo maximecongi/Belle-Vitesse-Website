@@ -1,4 +1,5 @@
 from flask import (
+    Blueprint,
     abort,
     current_app,
     flash,
@@ -20,99 +21,105 @@ from services.admin import (
 from utils.decorators import require_roles
 
 
-def init_productions_routes(app):
-    # ── CRUD Productions ──────────────────────────────────────────
 
-    @app.route("/admin/productions")
-    @require_roles('administrator', 'manager', 'commercial')
-    def admin_productions_list():
+productions_bp = Blueprint('admin_productions', __name__, url_prefix='/admin')
+# ── CRUD Productions ──────────────────────────────────────────
+
+@productions_bp.route("/productions")
+@require_roles('administrator', 'manager', 'commercial')
+def admin_productions_list():
+    try:
+        productions = list_productions()
+        productions.sort(key=lambda p: p.get("name", "").lower())
+        return render_template("admin/productions_list.html", productions=productions)
+    except Exception as e:
+        current_app.logger.error(f"❌ Erreur lors de la récupération des productions : {e}")
+        flash(
+            f"Erreur lors de la récupération des productions : {str(e)}", "error")
+        return render_template("admin/productions_list.html", productions=[])
+
+@productions_bp.route("/productions/new", methods=["GET", "POST"])
+@require_roles('administrator', 'manager', 'commercial')
+def admin_production_new():
+    if request.method == "POST":
         try:
-            productions = list_productions()
-            productions.sort(key=lambda p: p.get("name", "").lower())
-            return render_template("admin/productions_list.html", productions=productions)
+            create_production(request.form)
+            flash("Production créée avec succès !", "success")
+            return redirect(url_for("admin_productions.admin_productions_list"))
         except Exception as e:
-            current_app.logger.error(f"❌ Erreur lors de la récupération des productions : {e}")
-            flash(
-                f"Erreur lors de la récupération des productions : {str(e)}", "error")
-            return render_template("admin/productions_list.html", productions=[])
-
-    @app.route("/admin/productions/new", methods=["GET", "POST"])
-    @require_roles('administrator', 'manager', 'commercial')
-    def admin_production_new():
-        if request.method == "POST":
-            try:
-                create_production(request.form)
-                flash("Production créée avec succès !", "success")
-                return redirect(url_for("admin_productions_list"))
-            except Exception as e:
-                current_app.logger.error(f"❌ Erreur lors de la création de la production : {e}")
-                flash(f"Erreur lors de la création : {str(e)}", "error")
-                return render_template(
-                    "admin/production_form.html", data=request.form, is_edit=False
-                )
-        return render_template("admin/production_form.html", is_edit=False)
-
-    @app.route("/admin/productions/<int:record_id>/edit", methods=["GET", "POST"])
-    @require_roles('administrator', 'manager', 'commercial')
-    def admin_production_edit(record_id):
-        try:
-            if request.method == "POST":
-                res = update_production(record_id, request.form)
-                if isinstance(res, dict) and res.get("renamed_kdrive"):
-                    flash("Production modifiée avec succès ! La synchronisation des dossiers kDrive associés est en cours.", "success")
-                else:
-                    flash("Production modifiée avec succès !", "success")
-                return redirect(url_for("admin_productions_list"))
-
-            data = get_production_for_edit(record_id)
-            if not data:
-                abort(404)
-            return render_template("admin/production_form.html", data=data, is_edit=True)
-        except Exception as e:
-            current_app.logger.error(f"❌ Erreur lors de la modification de la production : {e}")
-            flash(f"Erreur lors de la modification : {str(e)}", "error")
-            return redirect(url_for("admin_productions_list"))
-
-    @app.route("/admin/productions/<int:record_id>/delete", methods=["POST"])
-    @require_roles('administrator', 'manager', 'commercial')
-    def admin_production_delete(record_id):
-        try:
-            delete_production(record_id)
-            flash("Production supprimée avec succès.", "success")
-            return redirect(url_for("admin_productions_list"))
-        except Exception as e:
-            current_app.logger.error(f"❌ Erreur lors de la suppression de la production : {e}")
-            flash(f"Erreur lors de la suppression : {str(e)}", "error")
-            return redirect(url_for("admin_productions_list"))
-
-    @app.route("/admin/api/productions/quick", methods=["POST"])
-    @require_roles('administrator', 'manager', 'commercial')
-    def admin_api_production_quick_create():
-        try:
-            data = request.get_json() or {}
-            name = data.get("name", "").strip()
-            address = data.get("address", "").strip()
-            mail = data.get("mail", "").strip()
-            phone = data.get("phone", "").strip()
-
-            if not name:
-                return jsonify({"error": "Le nom de la production est requis."}), 400
-
-            existing = Production.query.filter(Production.name.ilike(name)).first()
-            if existing:
-                return jsonify({"id": str(existing.id), "name": existing.name})
-
-            prod = Production(
-                name=name,
-                address=address or None,
-                mail=mail or None,
-                phone=phone or None
+            current_app.logger.error(f"❌ Erreur lors de la création de la production : {e}")
+            flash(f"Erreur lors de la création : {str(e)}", "error")
+            return render_template(
+                "admin/production_form.html", data=request.form, is_edit=False
             )
-            db.session.add(prod)
-            db.session.commit()
+    return render_template("admin/production_form.html", is_edit=False)
 
-            return jsonify({"id": str(prod.id), "name": prod.name})
-        except Exception as e:
-            db.session.rollback()
-            current_app.logger.error(f"❌ Erreur lors de la création rapide de production : {e}")
-            return jsonify({"error": str(e)}), 500
+@productions_bp.route("/productions/<int:record_id>/edit", methods=["GET", "POST"])
+@require_roles('administrator', 'manager', 'commercial')
+def admin_production_edit(record_id):
+    try:
+        if request.method == "POST":
+            res = update_production(record_id, request.form)
+            if isinstance(res, dict) and res.get("renamed_kdrive"):
+                flash("Production modifiée avec succès ! La synchronisation des dossiers kDrive associés est en cours.", "success")
+            else:
+                flash("Production modifiée avec succès !", "success")
+            return redirect(url_for("admin_productions.admin_productions_list"))
+
+        data = get_production_for_edit(record_id)
+        if not data:
+            abort(404)
+        return render_template("admin/production_form.html", data=data, is_edit=True)
+    except Exception as e:
+        current_app.logger.error(f"❌ Erreur lors de la modification de la production : {e}")
+        flash(f"Erreur lors de la modification : {str(e)}", "error")
+        return redirect(url_for("admin_productions.admin_productions_list"))
+
+@productions_bp.route("/productions/<int:record_id>/delete", methods=["POST"])
+@require_roles('administrator', 'manager', 'commercial')
+def admin_production_delete(record_id):
+    try:
+        delete_production(record_id)
+        flash("Production supprimée avec succès.", "success")
+        return redirect(url_for("admin_productions.admin_productions_list"))
+    except Exception as e:
+        current_app.logger.error(f"❌ Erreur lors de la suppression de la production : {e}")
+        flash(f"Erreur lors de la suppression : {str(e)}", "error")
+        return redirect(url_for("admin_productions.admin_productions_list"))
+
+@productions_bp.route("/api/productions/quick", methods=["POST"])
+@require_roles('administrator', 'manager', 'commercial')
+def admin_api_production_quick_create():
+    try:
+        data = request.get_json() or {}
+        name = data.get("name", "").strip()
+        address = data.get("address", "").strip()
+        mail = data.get("mail", "").strip()
+        phone = data.get("phone", "").strip()
+
+        if not name:
+            return jsonify({"error": "Le nom de la production est requis."}), 400
+
+        existing = Production.query.filter(Production.name.ilike(name)).first()
+        if existing:
+            return jsonify({"id": str(existing.id), "name": existing.name})
+
+        prod = Production(
+            name=name,
+            address=address or None,
+            mail=mail or None,
+            phone=phone or None
+        )
+        db.session.add(prod)
+        db.session.commit()
+
+        return jsonify({"id": str(prod.id), "name": prod.name})
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"❌ Erreur lors de la création rapide de production : {e}")
+        return jsonify({"error": str(e)}), 500
+
+def init_productions_routes(app):
+    """Enregistre le blueprint admin_productions (compatibilité ascendante)."""
+    if "admin_productions" not in app.blueprints:
+        app.register_blueprint(productions_bp)

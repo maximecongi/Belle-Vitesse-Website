@@ -211,7 +211,7 @@
             <div>
                 {% if is_edit %}
                 <button type="submit"
-                    formaction="{{ url_for('admin_project_delete', record_id=record_id or (data.id if data else '')) }}"
+                    formaction="{{ url_for('admin_projects.admin_project_delete', record_id=record_id or (data.id if data else '')) }}"
                     onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce projet ?');"
                     class="admin-btn admin-btn-danger" formnovalidate>
                     Supprimer
@@ -219,7 +219,7 @@
                 {% endif %}
             </div>
             <div>
-                <a href="{{ url_for('admin_project_detail', record_id=record_id) if (is_edit and record_id) else url_for('admin_projects_list') }}"
+                <a href="{{ url_for('admin_projects.admin_project_detail', record_id=record_id) if (is_edit and record_id) else url_for('admin_projects.admin_projects_list') }}"
                     class="admin-btn admin-btn-secondary u-mr-2">Annuler</a>
                 <button type="submit" class="admin-btn admin-btn-primary">
                     {% if is_edit %}Enregistrer{% else %}Créer le Projet{% endif %}

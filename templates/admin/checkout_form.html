@@ -317,7 +317,7 @@
         {% endfor %}
 
         <div class="u-mt-4 u-text-right">
-            <a href="{{ url_for('admin_checkouts_list') }}" class="admin-btn admin-btn-secondary u-mr-2">Annuler</a>
+            <a href="{{ url_for('admin_checkouts.admin_checkouts_list') }}" class="admin-btn admin-btn-secondary u-mr-2">Annuler</a>
             <button type="submit" class="admin-btn admin-btn-primary">
                 {% if is_edit %}Enregistrer les modifications{% else %}Créer le Checkout{% endif %}
             </button>

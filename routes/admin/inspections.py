@@ -67,11 +67,14 @@ def _get_admin_inspection_config(mode):
     raise ValueError(f"Unknown admin inspection mode: {mode}")
 
 
-def register_admin_inspection_routes(app, mode):
+def register_admin_inspection_routes(app_or_bp, mode):
     """
     Enregistre l'ensemble des routes d'administration pour les inspections (checkout ou checkin).
+    Prend en charge indifféremment un Blueprint Flask ou l'instance Flask application.
     Préserve strictement tous les noms d'endpoints Flask originaux.
     """
+    from flask import Blueprint
+
     cfg = _get_admin_inspection_config(mode)
     plural = cfg["plural"]
     label_fr = cfg["label_fr"]
@@ -94,8 +97,10 @@ def register_admin_inspection_routes(app, mode):
     endpoint_seal = f"admin_{mode}_seal"
     sign_page_endpoint = f"{mode}_sign_page"
 
+    base_path = f"/{plural}" if isinstance(app_or_bp, Blueprint) else f"/admin/{plural}"
+
     # 1. Liste des inspections
-    @app.route(f"/admin/{plural}", endpoint=endpoint_list)
+    @app_or_bp.route(f"{base_path}", endpoint=endpoint_list)
     @require_roles('administrator', 'manager', 'user')
     def admin_inspection_list():
         try:
@@ -113,7 +118,7 @@ def register_admin_inspection_routes(app, mode):
             )
 
     # 2. Détail d'une inspection
-    @app.route(f"/admin/{plural}/<int:record_id>", endpoint=endpoint_detail)
+    @app_or_bp.route(f"{base_path}/<int:record_id>", endpoint=endpoint_detail)
     @require_roles('administrator', 'manager', 'user')
     def admin_inspection_detail(record_id):
         try:
@@ -126,7 +131,7 @@ def register_admin_inspection_routes(app, mode):
             flash("Erreur lors de la récupération du détail.", "error")
             return redirect(url_for(endpoint_list))
 
-    @app.route(f"/admin/{plural}/<string:inspection_code>", endpoint=f"{endpoint_detail}_by_code")
+    @app_or_bp.route(f"{base_path}/<string:inspection_code>", endpoint=f"{endpoint_detail}_by_code")
     @require_roles('administrator', 'manager', 'user')
     def admin_inspection_detail_by_code(inspection_code):
         """Redirige les requêtes utilisant le code d'inspection (BVCO-*, BVCI-*) vers l'ID canonique."""
@@ -137,7 +142,7 @@ def register_admin_inspection_routes(app, mode):
         return redirect(url_for(endpoint_detail, record_id=rec.id))
 
     # 3. Création d'une inspection
-    @app.route(f"/admin/{plural}/new", methods=["GET", "POST"], endpoint=endpoint_new)
+    @app_or_bp.route(f"{base_path}/new", methods=["GET", "POST"], endpoint=endpoint_new)
     @require_roles('administrator', 'manager', 'user')
     def admin_inspection_new():
         context = get_context_func()
@@ -167,7 +172,7 @@ def register_admin_inspection_routes(app, mode):
         return render_template(template_form, data=initial_data, is_edit=False, **context)
 
     # 4. Modification d'une inspection
-    @app.route(f"/admin/{plural}/<int:record_id>/edit", methods=["GET", "POST"], endpoint=endpoint_edit)
+    @app_or_bp.route(f"{base_path}/<int:record_id>/edit", methods=["GET", "POST"], endpoint=endpoint_edit)
     @require_roles('administrator', 'manager', 'user')
     def admin_inspection_edit(record_id):
         context = get_context_func()
@@ -191,7 +196,7 @@ def register_admin_inspection_routes(app, mode):
             return redirect(url_for(endpoint_detail, record_id=record_id))
 
     # 5. Suppression d'une inspection
-    @app.route(f"/admin/{plural}/<int:record_id>/delete", methods=["POST"], endpoint=endpoint_delete)
+    @app_or_bp.route(f"{base_path}/<int:record_id>/delete", methods=["POST"], endpoint=endpoint_delete)
     @require_roles('administrator', 'manager', 'user')
     def admin_inspection_delete(record_id):
         try:
@@ -204,7 +209,7 @@ def register_admin_inspection_routes(app, mode):
             return redirect(url_for(endpoint_detail, record_id=record_id))
 
     # 6. Scellement d'une inspection
-    @app.route(f"/admin/{plural}/<int:record_id>/seal", methods=["POST"], endpoint=endpoint_seal)
+    @app_or_bp.route(f"{base_path}/<int:record_id>/seal", methods=["POST"], endpoint=endpoint_seal)
     @require_roles('administrator', 'manager', 'user')
     def admin_inspection_seal(record_id):
         try:
@@ -224,3 +229,4 @@ def register_admin_inspection_routes(app, mode):
             flash(
                 f"Erreur technique lors de la création du lien de signature : {str(e)}", "error")
             return redirect(url_for(endpoint_detail, record_id=record_id))
+

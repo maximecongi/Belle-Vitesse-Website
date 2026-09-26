@@ -54,7 +54,7 @@
                         {% for vehicle in project.vehicles %}
                         {% if vehicle.checkout_id %}
                         <a class="today-row-vehicle-link"
-                            href="{{ url_for('admin_checkout_detail', record_id=vehicle.checkout_id) }}">
+                            href="{{ url_for('admin_checkouts.admin_checkout_detail', record_id=vehicle.checkout_id) }}">
                             <span class="today-row-label u-text-medium">
                                 <i data-lucide="truck"></i>
                                 <span>{{ vehicle.fields.name }}</span>
@@ -64,7 +64,7 @@
                             vehicle.checkout_ready}) }}
                         </a>
                         {% else %}
-                        <a href="{{ url_for('admin_checkout_new', project_id=project.id, vehicle_id=vehicle.id) }}"
+                        <a href="{{ url_for('admin_checkouts.admin_checkout_new', project_id=project.id, vehicle_id=vehicle.id) }}"
                             class="today-row-vehicle-link">
                             <span class="today-row-label">
                                 <i data-lucide="truck"></i>
@@ -83,7 +83,7 @@
                     <div class="u-flex u-flex-column u-gap-1">
                         {% if project.pilot_waiver.id %}
                         <a class="today-row-waiver-link"
-                            href="{{ url_for('admin_pilot_waivers_list') }}?q={{ project.pilot_waiver.waiver_num|urlencode }}">
+                            href="{{ url_for('admin_waivers.admin_pilot_waivers_list') }}?q={{ project.pilot_waiver.waiver_num|urlencode }}">
                             <span class="today-row-label u-text-medium">
                                 <i data-lucide="file-signature"></i>
                                 <span>Décharge Pilote</span>
@@ -92,7 +92,7 @@
                             class_name='u-badge-agenda') }}
                         </a>
                         {% else %}
-                        <a href="{{ url_for('admin_pilot_waiver_new', project_id=project.id) }}"
+                        <a href="{{ url_for('admin_waivers.admin_pilot_waiver_new', project_id=project.id) }}"
                             class="today-row-waiver-link">
                             <span class="today-row-label">
                                 <i data-lucide="file-signature"></i>
@@ -104,7 +104,7 @@
 
                         {% if project.production_waiver.id %}
                         <a class="today-row-waiver-link"
-                            href="{{ url_for('admin_production_waivers_list') }}?q={{ project.production_waiver.waiver_num|urlencode }}">
+                            href="{{ url_for('admin_waivers.admin_production_waivers_list') }}?q={{ project.production_waiver.waiver_num|urlencode }}">
                             <span class="today-row-label u-text-medium">
                                 <i data-lucide="file-signature"></i>
                                 <span>Décharge Prod.</span>
@@ -113,7 +113,7 @@
                             project.production_waiver.raw_status, class_name='u-badge-agenda') }}
                         </a>
                         {% else %}
-                        <a href="{{ url_for('admin_production_waiver_new', project_id=project.id) }}"
+                        <a href="{{ url_for('admin_waivers.admin_production_waiver_new', project_id=project.id) }}"
                             class="today-row-waiver-link">
                             <span class="today-row-label">
                                 <i data-lucide="file-signature"></i>
@@ -154,7 +154,7 @@
                         {% for vehicle in project.vehicles %}
                         {% if vehicle.checkin_id %}
                         <a class="today-row-vehicle-link"
-                            href="{{ url_for('admin_checkin_detail', record_id=vehicle.checkin_id) }}">
+                            href="{{ url_for('admin_checkins.admin_checkin_detail', record_id=vehicle.checkin_id) }}">
                             <span class="today-row-label u-text-medium">
                                 <i data-lucide="truck"></i>
                                 <span>{{ vehicle.fields.name }}</span>
@@ -163,7 +163,7 @@
                             vehicle.checkin_status_id, class_name='u-badge-agenda') }}
                         </a>
                         {% else %}
-                        <a href="{{ url_for('admin_checkin_new', project_id=project.id, vehicle_id=vehicle.id) }}"
+                        <a href="{{ url_for('admin_checkins.admin_checkin_new', project_id=project.id, vehicle_id=vehicle.id) }}"
                             class="today-row-vehicle-link">
                             <span class="today-row-label">
                                 <i data-lucide="truck"></i>
@@ -181,7 +181,7 @@
                     <div class="agenda-section-title">
                         <span>Bilan retour</span>
                         {% if project.incidents and project.incidents|length > 0 %}
-                        <a href="{{ url_for('admin_incident_new', project_id=project.id) }}"
+                        <a href="{{ url_for('admin_incidents.admin_incident_new', project_id=project.id) }}"
                             class="agenda-section-action" title="Déclarer un autre incident">
                             <i data-lucide="plus"></i> <span>Incident</span>
                         </a>
@@ -191,7 +191,7 @@
                         {% if project.incidents and project.incidents|length > 0 %}
                         {% for inc in project.incidents %}
                         <a class="today-row-incident-link today-row-incident-link--active"
-                            href="{{ url_for('admin_incident_detail', record_id=inc.id) }}" title="{{ inc.title }}">
+                            href="{{ url_for('admin_incidents.admin_incident_detail', record_id=inc.id) }}" title="{{ inc.title }}">
                             <span class="today-row-label u-text-medium">
                                 <i data-lucide="wrench"></i>
                                 <span>{{ inc.title | truncate(30) }}</span>
@@ -203,7 +203,7 @@
                         </a>
                         {% endfor %}
                         {% else %}
-                        <a href="{{ url_for('admin_incident_new', project_id=project.id) }}"
+                        <a href="{{ url_for('admin_incidents.admin_incident_new', project_id=project.id) }}"
                             class="today-row-incident-link"
                             title="Aucun incident signalé · Déclarer un dommage constaté">
                             <span class="today-row-label">
@@ -216,7 +216,7 @@
 
                         {% if project.reports_count > 0 %}
                         <a class="today-row-report-link"
-                            href="{{ url_for('admin_project_detail', record_id=project.id) }}#reports"
+                            href="{{ url_for('admin_projects.admin_project_detail', record_id=project.id) }}#reports"
                             title="Consulter les comptes-rendus de tournage">
                             <span class="today-row-label u-text-medium">
                                 <i data-lucide="clipboard-list"></i>
@@ -226,7 +226,7 @@
                             else ' rapports'), 'signed', icon='file-check', class_name='u-badge-agenda') }}
                         </a>
                         {% else %}
-                        <a href="{{ url_for('admin_project_detail', record_id=project.id) }}#reports"
+                        <a href="{{ url_for('admin_projects.admin_project_detail', record_id=project.id) }}#reports"
                             class="today-row-report-link" title="Rédiger le débrief / compte-rendu de tournage">
                             <span class="today-row-label">
                                 <i data-lucide="clipboard-list"></i>

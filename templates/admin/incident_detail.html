@@ -8,12 +8,12 @@ incident_signature_badge, equipment_icon, empty_state %}
 
 {% block header_actions %}
 <div class="u-flex u-align-center u-gap-2">
-    <a href="{{ url_for('admin_incidents_list') }}" class="admin-btn admin-btn-secondary">← Retour à la liste</a>
+    <a href="{{ url_for('admin_incidents.admin_incidents_list') }}" class="admin-btn admin-btn-secondary">← Retour à la liste</a>
     {% if incident.is_sealed %}
-    <a href="{{ url_for('admin_incident_pdf', record_id=incident.id) }}" target="_blank"
+    <a href="{{ url_for('admin_incidents.admin_incident_pdf', record_id=incident.id) }}" target="_blank"
         class="admin-btn admin-btn-secondary">📄 Rapport PDF ↗</a>
     {% endif %}
-    <a href="{{ url_for('admin_incident_edit', record_id=incident.id) }}" class="admin-btn admin-btn-primary">
+    <a href="{{ url_for('admin_incidents.admin_incident_edit', record_id=incident.id) }}" class="admin-btn admin-btn-primary">
         {% if incident.is_sealed %}Modifier le suivi{% else %}Modifier l'incident{% endif %}
     </a>
 </div>
@@ -231,7 +231,7 @@ incident_signature_badge, equipment_icon, empty_state %}
                     </div>
                     <div class="u-flex u-gap-2 u-align-center">
                         {% if incident.signed_pdf_path %}
-                        <a href="{{ incident.signed_pdf_url or url_for('admin_incident_pdf', record_id=incident.id) }}"
+                        <a href="{{ incident.signed_pdf_url or url_for('admin_incidents.admin_incident_pdf', record_id=incident.id) }}"
                             target="_blank" class="admin-btn admin-btn-sm admin-btn-seal">
                             📄 PDF Scellé
                         </a>
@@ -345,7 +345,7 @@ incident_signature_badge, equipment_icon, empty_state %}
                     <span class="u-text-xs u-text-muted u-text-uppercase u-font-semibold">Projet :</span>
                     <div class="u-font-semibold u-mt-1">
                         {% if incident.project %}
-                        <a href="{{ url_for('admin_projects_list', q=incident.project.name) }}">
+                        <a href="{{ url_for('admin_projects.admin_projects_list', q=incident.project.name) }}">
                             {{ incident.project.name }}
                         </a>
                         {% else %}
@@ -423,7 +423,7 @@ incident_signature_badge, equipment_icon, empty_state %}
                             {% endif %}
                         </div>
                         {% if eq.type == 'vehicle' and eq.id %}
-                        <a href="{{ url_for('admin_vehicle_timeline', vehicle_id=eq.id) }}"
+                        <a href="{{ url_for('admin_fleet.admin_vehicle_timeline', vehicle_id=eq.id) }}"
                             class="admin-btn admin-btn-xs admin-btn-secondary u-ml-auto"
                             title="Consulter l'historique de ce véhicule">Timeline</a>
                         {% endif %}
@@ -445,7 +445,7 @@ incident_signature_badge, equipment_icon, empty_state %}
                 {% if incident.checkout %}
                 <div class="u-mb-1">
                     <span class="u-text-xs u-text-muted">Constaté au Check-out :</span>
-                    <a href="{{ url_for('admin_checkout_detail', record_id=incident.checkout.id) }}"
+                    <a href="{{ url_for('admin_checkouts.admin_checkout_detail', record_id=incident.checkout.id) }}"
                         class="u-text-xs u-font-semibold u-ml-1 u-text-info">
                         {{ incident.checkout.inspection_number }} →
                     </a>
@@ -454,7 +454,7 @@ incident_signature_badge, equipment_icon, empty_state %}
                 {% if incident.checkin %}
                 <div>
                     <span class="u-text-xs u-text-muted">Constaté au Check-in retour :</span>
-                    <a href="{{ url_for('admin_checkin_detail', record_id=incident.checkin.id) }}"
+                    <a href="{{ url_for('admin_checkins.admin_checkin_detail', record_id=incident.checkin.id) }}"
                         class="u-text-xs u-font-semibold u-ml-1 u-text-info">
                         {{ incident.checkin.inspection_number }} →
                     </a>
@@ -517,7 +517,7 @@ incident_signature_badge, equipment_icon, empty_state %}
         <div class="admin-card danger-card-top">
             <div class="admin-card-title danger-card-title">Actions de sécurité</div>
             <p class="u-text-sm u-text-muted u-mb-2">Ces actions sont irréversibles.</p>
-            <form action="{{ url_for('admin_incident_delete', record_id=incident.id) }}" method="POST"
+            <form action="{{ url_for('admin_incidents.admin_incident_delete', record_id=incident.id) }}" method="POST"
                 onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet incident ? Cette action est irréversible.');">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                 <button type="submit" class="admin-btn admin-btn-danger u-w-100">Supprimer cet incident</button>
@@ -540,7 +540,7 @@ incident_signature_badge, equipment_icon, empty_state %}
             Apposez votre visa manuscrit attestant de l'exactitude des constatations matérielles et circonstances du
             sinistre.
         </p>
-        <form id="formBvSign" action="{{ url_for('admin_incident_sign_bv', record_id=incident.id) }}" method="POST">
+        <form id="formBvSign" action="{{ url_for('admin_incidents.admin_incident_sign_bv', record_id=incident.id) }}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <input type="hidden" name="signature_data" id="bvSignatureData" />
 
@@ -589,7 +589,7 @@ incident_signature_badge, equipment_icon, empty_state %}
             Recueillez la signature contradictoire du représentant de la production sur le plateau. Le document sera
             scellé cryptographiquement dès validation.
         </p>
-        <form id="formProdSign" action="{{ url_for('admin_incident_sign_prod', record_id=incident.id) }}" method="POST">
+        <form id="formProdSign" action="{{ url_for('admin_incidents.admin_incident_sign_prod', record_id=incident.id) }}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <input type="hidden" name="signature_data" id="prodSignatureData" />
 
@@ -636,7 +636,7 @@ incident_signature_badge, equipment_icon, empty_state %}
             Générez un lien sécurisé valide <strong>48 heures</strong> transmis par email au représentant de la
             production. Il pourra vérifier les faits constatés et signer depuis son smartphone.
         </p>
-        <form action="{{ url_for('admin_incident_send_token', record_id=incident.id) }}" method="POST">
+        <form action="{{ url_for('admin_incidents.admin_incident_send_token', record_id=incident.id) }}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
             <div class="form-group u-mb-3">
@@ -670,7 +670,7 @@ incident_signature_badge, equipment_icon, empty_state %}
         <p class="u-text-xs u-text-muted u-mb-3">
             Enregistrez les conclusions de l'intervention, les réparations effectuées et le coût réel facturé.
         </p>
-        <form id="formQuickResolve" action="{{ url_for('admin_incident_status', record_id=incident.id) }}"
+        <form id="formQuickResolve" action="{{ url_for('admin_incidents.admin_incident_status', record_id=incident.id) }}"
             method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
@@ -748,7 +748,7 @@ incident_signature_badge, equipment_icon, empty_state %}
             if (!newStatus) return;
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = '{{ url_for("admin_incident_status", record_id=incident.id) }}';
+            form.action = '{{ url_for("admin_incidents.admin_incident_status", record_id=incident.id) }}';
 
             const csrfInput = document.createElement('input');
             csrfInput.type = 'hidden';

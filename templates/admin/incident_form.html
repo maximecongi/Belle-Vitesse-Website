@@ -491,7 +491,7 @@
         <div class="u-mt-4 u-flex u-justify-between u-align-center">
             <div>
                 {% if is_edit %}
-                <button type="submit" formaction="{{ url_for('admin_incident_delete', record_id=incident.id) }}"
+                <button type="submit" formaction="{{ url_for('admin_incidents.admin_incident_delete', record_id=incident.id) }}"
                     onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet incident ? Cette action est irréversible.');"
                     class="admin-btn admin-btn-danger" formnovalidate>
                     Supprimer
@@ -499,7 +499,7 @@
                 {% endif %}
             </div>
             <div>
-                <a href="{{ url_for('admin_incident_detail', record_id=incident.id) if is_edit else url_for('admin_incidents_list') }}"
+                <a href="{{ url_for('admin_incidents.admin_incident_detail', record_id=incident.id) if is_edit else url_for('admin_incidents.admin_incidents_list') }}"
                     class="admin-btn admin-btn-secondary u-mr-2">Annuler</a>
                 <button type="submit" class="admin-btn admin-btn-primary">
                     {% if is_edit %}Enregistrer les modifications{% else %}Déclarer l'incident{% endif %}

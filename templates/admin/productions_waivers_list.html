@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block header_actions %}
-{{ list_header_actions(placeholder="Rechercher une décharge...", new_url=url_for('admin_production_waiver_new'), new_label="+ Nouvelle décharge") }}
+{{ list_header_actions(placeholder="Rechercher une décharge...", new_url=url_for('admin_waivers.admin_production_waiver_new'), new_label="+ Nouvelle décharge") }}
 {% endblock %}
 
 
@@ -47,14 +47,14 @@
                         <div class="u-flex u-align-center u-justify-center u-gap-1">
                             {% if w.raw_status in ['to_generate', 'to_send'] %}
                             <form
-                                action="{{ url_for('admin_production_waiver_send', waiver_id=w.id, q=request.args.get('q')) }}"
+                                action="{{ url_for('admin_waivers.admin_production_waiver_send', waiver_id=w.id, q=request.args.get('q')) }}"
                                 method="POST" class="u-m-0">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="admin-btn admin-btn-primary">Envoyer</button>
                             </form>
                             {% elif w.raw_status == 'to_sign' %}
                             <form
-                                action="{{ url_for('admin_production_waiver_send', waiver_id=w.id, q=request.args.get('q')) }}"
+                                action="{{ url_for('admin_waivers.admin_production_waiver_send', waiver_id=w.id, q=request.args.get('q')) }}"
                                 method="POST" class="u-m-0">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="admin-btn admin-btn-secondary">Relancer</button>
@@ -67,7 +67,7 @@
                             {% endif %}
 
                             <form
-                                action="{{ url_for('admin_production_waiver_delete', waiver_id=w.id, q=request.args.get('q')) }}"
+                                action="{{ url_for('admin_waivers.admin_production_waiver_delete', waiver_id=w.id, q=request.args.get('q')) }}"
                                 method="POST" class="u-d-inline"
                                 onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette décharge ? Cette action est irréversible.');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

@@ -10,7 +10,7 @@ incident_signature_badge %}
 <div class="u-flex u-gap-2 u-align-center">
     <input type="text" id="searchInput" class="form-input u-w-250" placeholder="Rechercher un incident..."
         autocomplete="off">
-    <a href="{{ url_for('admin_incident_new') }}" class="admin-btn admin-btn-primary">+ Déclarer un Incident</a>
+    <a href="{{ url_for('admin_incidents.admin_incident_new') }}" class="admin-btn admin-btn-primary">+ Déclarer un Incident</a>
 </div>
 {% endblock %}
 
@@ -49,7 +49,7 @@ incident_signature_badge %}
 <div class="admin-card">
     {{ filter_header("Incidents filtrés", count=incidents|length) }}
     <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
-        <form method="GET" action="{{ url_for('admin_incidents_list') }}"
+        <form method="GET" action="{{ url_for('admin_incidents.admin_incidents_list') }}"
             class="u-flex u-align-center u-gap-2 u-flex-wrap" id="incident-filter-form">
             <select name="severity" class="form-input form-input-sm form-input-inline" onchange="this.form.submit()">
                 <option value="">Toutes gravités</option>
@@ -82,7 +82,7 @@ incident_signature_badge %}
             </select>
 
             {% if filters.severity or filters.status or filters.category %}
-            <a href="{{ url_for('admin_incidents_list') }}" class="admin-btn admin-btn-secondary admin-btn-sm">✕
+            <a href="{{ url_for('admin_incidents.admin_incidents_list') }}" class="admin-btn admin-btn-secondary admin-btn-sm">✕
                 Réinitialiser</a>
             {% endif %}
         </form>
@@ -140,7 +140,7 @@ incident_signature_badge %}
                     </td>
                     <td class="u-nowrap">
                         <div class="u-flex u-align-center u-gap-1">
-                            <a href="{{ url_for('admin_incident_detail', record_id=incident.id) }}"
+                            <a href="{{ url_for('admin_incidents.admin_incident_detail', record_id=incident.id) }}"
                                 class="admin-btn admin-btn-secondary admin-btn-sm">Détails →</a>
                         </div>
                     </td>

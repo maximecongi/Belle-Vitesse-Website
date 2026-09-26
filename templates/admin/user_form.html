@@ -77,7 +77,7 @@
         </div>
 
         <div class="u-text-right u-mt-4">
-            <a href="{{ url_for('admin_users_list') }}" class="admin-btn admin-btn-secondary u-mr-2">Annuler</a>
+            <a href="{{ url_for('admin_users.admin_users_list') }}" class="admin-btn admin-btn-secondary u-mr-2">Annuler</a>
             <button type="submit" class="admin-btn admin-btn-primary">
                 {% if is_edit %}Mettre à jour{% else %}Créer l'utilisateur{% endif %}
             </button>

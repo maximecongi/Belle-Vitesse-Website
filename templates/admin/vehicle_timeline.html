@@ -8,7 +8,7 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
 
 {% block header_actions %}
 <div class="u-flex u-align-center u-gap-2">
-    <a href="{{ url_for('admin_fleet_list') }}" class="admin-btn admin-btn-secondary">
+    <a href="{{ url_for('admin_fleet.admin_fleet_list') }}" class="admin-btn admin-btn-secondary">
         ← Retour au Parc
     </a>
 </div>
@@ -64,20 +64,20 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
             <!-- Ligne 2 : Titre unifié avec lien contextuel -->
             <h3 class="u-text-lg u-font-bold u-mt-2 u-mb-1">
                 {% if evt.type in ('project', 'project_mission') %}
-                <a href="{{ url_for('admin_projects_list', q=evt.project_unique_id or evt.reference) }}"
+                <a href="{{ url_for('admin_projects.admin_projects_list', q=evt.project_unique_id or evt.reference) }}"
                     class="u-text-inherit">
                     {{ evt.project_name or evt.title }}
                 </a>
                 {% elif evt.type == 'checkout' %}
-                <a href="{{ url_for('admin_checkout_detail', record_id=evt.raw_id) }}" class="u-text-inherit">
+                <a href="{{ url_for('admin_checkouts.admin_checkout_detail', record_id=evt.raw_id) }}" class="u-text-inherit">
                     Contrôle de départ
                 </a>
                 {% elif evt.type == 'checkin' %}
-                <a href="{{ url_for('admin_checkin_detail', record_id=evt.raw_id) }}" class="u-text-inherit">
+                <a href="{{ url_for('admin_checkins.admin_checkin_detail', record_id=evt.raw_id) }}" class="u-text-inherit">
                     Contrôle de retour
                 </a>
                 {% elif evt.type == 'incident' %}
-                <a href="{{ url_for('admin_incident_detail', record_id=evt.raw_id) }}" class="u-text-inherit">
+                <a href="{{ url_for('admin_incidents.admin_incident_detail', record_id=evt.raw_id) }}" class="u-text-inherit">
                     {{ evt.title|replace('Incident : ', '') }}
                 </a>
                 {% else %}
@@ -102,7 +102,7 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
                 <!-- Projet lié (si événement secondaire ou linéaire avec projet associé) -->
                 {% if not is_sub_event and evt.type not in ('project', 'project_mission') and evt.project_name and
                 evt.project_name != '—' %}
-                <span>Projet : <a href="{{ url_for('admin_projects_list', q=evt.project_unique_id or evt.reference) }}"
+                <span>Projet : <a href="{{ url_for('admin_projects.admin_projects_list', q=evt.project_unique_id or evt.reference) }}"
                         class="u-text-inherit u-underline"><strong>{{ evt.project_name }}</strong></a></span>
                 {% endif %}
 
@@ -140,22 +140,22 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
                 </a>
                 {% endif %}
                 {% if evt.type in ('project', 'project_mission') %}
-                <a href="{{ url_for('admin_projects_list', q=evt.project_unique_id or evt.reference) }}"
+                <a href="{{ url_for('admin_projects.admin_projects_list', q=evt.project_unique_id or evt.reference) }}"
                     class="admin-btn admin-btn-sm admin-btn-secondary" title="Consulter la fiche projet">
                     Détails →
                 </a>
                 {% elif evt.type == 'checkout' %}
-                <a href="{{ url_for('admin_checkout_detail', record_id=evt.raw_id) }}"
+                <a href="{{ url_for('admin_checkouts.admin_checkout_detail', record_id=evt.raw_id) }}"
                     class="admin-btn admin-btn-sm admin-btn-secondary">
                     Détails →
                 </a>
                 {% elif evt.type == 'checkin' %}
-                <a href="{{ url_for('admin_checkin_detail', record_id=evt.raw_id) }}"
+                <a href="{{ url_for('admin_checkins.admin_checkin_detail', record_id=evt.raw_id) }}"
                     class="admin-btn admin-btn-sm admin-btn-secondary">
                     Détails →
                 </a>
                 {% elif evt.type == 'incident' %}
-                <a href="{{ url_for('admin_incident_detail', record_id=evt.raw_id) }}"
+                <a href="{{ url_for('admin_incidents.admin_incident_detail', record_id=evt.raw_id) }}"
                     class="admin-btn admin-btn-sm admin-btn-secondary">
                     Détails →
                 </a>

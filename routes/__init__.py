@@ -40,12 +40,12 @@ def init_error_handlers(app):
                     if is_ajax:
                         return {"status": "error", "message": "Session expirée. Veuillez vous reconnecter."}, 401
                     flash("Session expirée. Veuillez vous reconnecter.", "error")
-                    return redirect(url_for('admin_login'))
+                    return redirect(url_for('admin_auth.admin_login'))
                 elif e.code == 403:
                     if is_ajax:
                         return {"status": "error", "message": "Accès refusé. Vous n'avez pas les autorisations nécessaires."}, 403
                     flash("Accès refusé : vous n'avez pas les autorisations nécessaires.", "error")
-                    return redirect(url_for('admin_dashboard'))
+                    return redirect(url_for('admin_dashboard.admin_dashboard'))
                 app.logger.warning(
                     f"⚠️ Erreur HTTP {e.code} sur {request.path}: {e.description}")
 
@@ -54,7 +54,7 @@ def init_error_handlers(app):
                 "public/error.html",
                 error_title=f"{e.code} - {e.name}",
                 error_message=e.description,
-                return_url=url_for('admin_dashboard') if is_admin else url_for('home'),
+                return_url=url_for('admin_dashboard.admin_dashboard') if is_admin else url_for('home'),
                 return_label="Retourner au tableau de bord" if is_admin else "Return to Home",
             ), e.code
 
@@ -76,6 +76,6 @@ def init_error_handlers(app):
                     if is_admin else
                     "An unexpected error occurred."
                 ),
-                return_url=url_for('admin_dashboard') if is_admin else url_for('home'),
+                return_url=url_for('admin_dashboard.admin_dashboard') if is_admin else url_for('home'),
                 return_label="Retourner au tableau de bord" if is_admin else "Return to Home",
             ), 500

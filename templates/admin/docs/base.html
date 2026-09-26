@@ -22,7 +22,7 @@
 <body>
     <div class="docs-layout">
         <aside class="docs-sidebar">
-            <a href="{{ url_for('admin_docs_index') }}" class="docs-logo">
+            <a href="{{ url_for('admin_tools.admin_docs_index') }}" class="docs-logo">
                 <svg xmlns="http://www.w3.org/2000/svg" width="200" height="87.15" viewBox="0 0 300 130.726"
                     class="admin-sidebar-logo">
                     <path
@@ -40,26 +40,26 @@
             <nav>
                 <div class="docs-nav-group">
                     <div class="docs-nav-title">Introduction</div>
-                    <a href="{{ url_for('admin_docs_index') }}" class="docs-nav-link">Vue d'ensemble</a>
-                    <a href="{{ url_for('admin_docs_chapter', chapter='architecture') }}" class="docs-nav-link">Architecture Système</a>
+                    <a href="{{ url_for('admin_tools.admin_docs_index') }}" class="docs-nav-link">Vue d'ensemble</a>
+                    <a href="{{ url_for('admin_tools.admin_docs_chapter', chapter='architecture') }}" class="docs-nav-link">Architecture Système</a>
                 </div>
                 
                 <div class="docs-nav-group">
                     <div class="docs-nav-title">Backend & Données</div>
-                    <a href="{{ url_for('admin_docs_chapter', chapter='data-models') }}" class="docs-nav-link">Modèles de Données</a>
-                    <a href="{{ url_for('admin_docs_chapter', chapter='sync-airtable') }}" class="docs-nav-link">Synchronisation Airtable</a>
-                    <a href="{{ url_for('admin_docs_chapter', chapter='api-internal') }}" class="docs-nav-link">API & Webhooks</a>
+                    <a href="{{ url_for('admin_tools.admin_docs_chapter', chapter='data-models') }}" class="docs-nav-link">Modèles de Données</a>
+                    <a href="{{ url_for('admin_tools.admin_docs_chapter', chapter='sync-airtable') }}" class="docs-nav-link">Synchronisation Airtable</a>
+                    <a href="{{ url_for('admin_tools.admin_docs_chapter', chapter='api-internal') }}" class="docs-nav-link">API & Webhooks</a>
                 </div>
                 
                 <div class="docs-nav-group">
                     <div class="docs-nav-title">Sécurité & Signatures</div>
-                    <a href="{{ url_for('admin_docs_chapter', chapter='signatures') }}" class="docs-nav-link">Système de Signature</a>
-                    <a href="{{ url_for('admin_docs_chapter', chapter='document-sealing') }}" class="docs-nav-link">Scellement des Documents</a>
+                    <a href="{{ url_for('admin_tools.admin_docs_chapter', chapter='signatures') }}" class="docs-nav-link">Système de Signature</a>
+                    <a href="{{ url_for('admin_tools.admin_docs_chapter', chapter='document-sealing') }}" class="docs-nav-link">Scellement des Documents</a>
                 </div>
 
                 <div class="docs-nav-group">
                     <div class="docs-nav-title">Retour au tableau de bord</div>
-                    <a href="{{ url_for('admin_dashboard') }}" class="docs-nav-link">← Quitter la documentation</a>
+                    <a href="{{ url_for('admin_dashboard.admin_dashboard') }}" class="docs-nav-link">← Quitter la documentation</a>
                 </div>
             </nav>
         </aside>

@@ -5,7 +5,7 @@
 
 {% block content %}
 <div class="admin-card">
-    <form action="{{ url_for('admin_newsletter_compose') }}" method="POST">
+    <form action="{{ url_for('admin_newsletter.admin_newsletter_compose') }}" method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-group">
             <label for="subject">Sujet de l'email</label>
@@ -23,7 +23,7 @@
         </div>
 
         <div class="form-actions u-mt-4 u-border-top u-pt-3">
-            <a href="{{ url_for('admin_newsletter_dashboard') }}" class="admin-btn admin-btn-secondary">Annuler</a>
+            <a href="{{ url_for('admin_newsletter.admin_newsletter_dashboard') }}" class="admin-btn admin-btn-secondary">Annuler</a>
             <button type="submit" class="admin-btn admin-btn-primary"
                 onclick="return confirm('Êtes-vous sûr de vouloir envoyer cette newsletter à TOUS les abonnés ?');">
                 Envoyer la campagne

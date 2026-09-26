@@ -61,7 +61,7 @@ def get_calendar_events():
             "end": end_str,
             "allDay": True,
             "classNames": class_names,
-            "url": url_for("admin_projects_list", q=r.project_id) if getattr(r, "project_id", None) else "",
+            "url": url_for("admin_projects.admin_projects_list", q=r.project_id) if getattr(r, "project_id", None) else "",
             "extendedProps": {
                 "projectId": r.project_id or "",
                 "projectName": name,

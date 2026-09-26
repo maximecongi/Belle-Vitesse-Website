@@ -1,3 +1,11 @@
+test_admin_blueprints_url_prefix (test_admin_blueprints.AdminBlueprintsTestCase.test_admin_blueprints_url_prefix)
+Vérifie que les Blueprints admin ont le préfixe /admin approprié. ... ok
+test_all_admin_modules_are_blueprints (test_admin_blueprints.AdminBlueprintsTestCase.test_all_admin_modules_are_blueprints)
+Vérifie que chaque module admin est bien une instance de Blueprint. ... ok
+test_init_functions_idempotence (test_admin_blueprints.AdminBlueprintsTestCase.test_init_functions_idempotence)
+Vérifie que réappeler les anciennes fonctions init_*_routes ne produit aucune erreur ni collision. ... ok
+test_url_for_aliasing_bidirectional (test_admin_blueprints.AdminBlueprintsTestCase.test_url_for_aliasing_bidirectional)
+Vérifie que url_for fonctionne identiquement avec l'alias historique ou le nom qualifié Blueprint. ... ok
 test_api_calendar_no_auth (test_api.APIRouteSmokeTest.test_api_calendar_no_auth)
 GET /api/v1/calendar/events without JWT returns 401. ... ok
 test_api_checkins_no_auth (test_api.APIRouteSmokeTest.test_api_checkins_no_auth)
@@ -356,6 +364,6 @@ test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.W
 Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
 ----------------------------------------------------------------------
-Ran 216 tests in 23.612s
+Ran 220 tests in 23.905s
 
 OK

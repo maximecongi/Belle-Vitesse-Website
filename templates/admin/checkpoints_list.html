@@ -9,18 +9,18 @@
 <div class="u-flex u-align-center u-gap-2">
     <input type="text" id="searchInput" class="form-input u-w-250" placeholder="Rechercher un point..."
         autocomplete="off">
-    <a href="{{ url_for('admin_checkpoint_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Point</a>
+    <a href="{{ url_for('admin_checkpoints.admin_checkpoint_new') }}" class="admin-btn admin-btn-primary">+ Nouveau Point</a>
 </div>
 {% endblock %}
 
 {% block content %}
 <!-- ═══════════ NAVIGATION PAR ONGLETS ═══════════ -->
 <div class="checkpoint-nav-tabs">
-    <a href="{{ url_for('admin_checkpoints_list') }}" class="checkpoint-nav-tab active">
+    <a href="{{ url_for('admin_checkpoints.admin_checkpoints_list') }}" class="checkpoint-nav-tab active">
         Points de Contrôle
         <span class="badge-pill u-ml-1" data-val="neutral">{{ stats.total }}</span>
     </a>
-    <a href="{{ url_for('admin_vehicle_configs') }}" class="checkpoint-nav-tab">
+    <a href="{{ url_for('admin_api.admin_vehicle_configs') }}" class="checkpoint-nav-tab">
         Matrice Flotte
     </a>
 </div>
@@ -130,9 +130,9 @@
                     </td>
                     <td class="u-text-center u-nowrap">
                         <div class="u-flex u-align-center u-justify-center u-gap-1">
-                            <a href="{{ url_for('admin_checkpoint_edit', checkpoint_id=cp.id) }}"
+                            <a href="{{ url_for('admin_checkpoints.admin_checkpoint_edit', checkpoint_id=cp.id) }}"
                                 class="admin-btn admin-btn-secondary admin-btn-sm">Modifier</a>
-                            <form method="POST" action="{{ url_for('admin_checkpoint_delete', checkpoint_id=cp.id) }}"
+                            <form method="POST" action="{{ url_for('admin_checkpoints.admin_checkpoint_delete', checkpoint_id=cp.id) }}"
                                 class="u-d-inline"
                                 onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer définitivement le point de contrôle « {{ cp.label }} » ? Cette action est irréversible.');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

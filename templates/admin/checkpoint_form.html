@@ -7,7 +7,7 @@ endblock %}
 
 {% block header_actions %}
 <div class="u-flex u-align-center u-gap-2">
-    <a href="{{ url_for('admin_checkpoints_list') }}" class="admin-btn admin-btn-secondary">
+    <a href="{{ url_for('admin_checkpoints.admin_checkpoints_list') }}" class="admin-btn admin-btn-secondary">
         ← Retour aux points de contrôle
     </a>
 </div>
@@ -16,7 +16,7 @@ endblock %}
 {% block content %}
 <div class="admin-card u-max-w-800">
     <form method="POST"
-        action="{% if is_new %}{{ url_for('admin_checkpoint_new') }}{% else %}{{ url_for('admin_checkpoint_edit', checkpoint_id=checkpoint.id) }}{% endif %}">
+        action="{% if is_new %}{{ url_for('admin_checkpoints.admin_checkpoint_new') }}{% else %}{{ url_for('admin_checkpoints.admin_checkpoint_edit', checkpoint_id=checkpoint.id) }}{% endif %}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <!-- ═══════════ 1. INFORMATIONS GÉNÉRALES ═══════════ -->
@@ -102,7 +102,7 @@ endblock %}
                 {% endif %}
             </div>
             <div class="u-flex u-align-center u-gap-2">
-                <a href="{{ url_for('admin_checkpoints_list') }}" class="admin-btn admin-btn-secondary">Annuler</a>
+                <a href="{{ url_for('admin_checkpoints.admin_checkpoints_list') }}" class="admin-btn admin-btn-secondary">Annuler</a>
                 <button type="submit" class="admin-btn admin-btn-primary">
                     {% if is_new %}Créer le point de contrôle{% else %}Enregistrer les modifications{% endif %}
                 </button>
@@ -112,7 +112,7 @@ endblock %}
 
     {% if not is_new %}
     <form id="deleteCheckpointForm" method="POST"
-        action="{{ url_for('admin_checkpoint_delete', checkpoint_id=checkpoint.id) }}" class="u-d-none">
+        action="{{ url_for('admin_checkpoints.admin_checkpoint_delete', checkpoint_id=checkpoint.id) }}" class="u-d-none">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     </form>
     {% endif %}

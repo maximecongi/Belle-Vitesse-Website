@@ -4,7 +4,7 @@
 {% block page_title %}Newsletter{% endblock %}
 
 {% block header_actions %}
-<a href="{{ url_for('admin_newsletter_compose') }}" class="admin-btn admin-btn-primary">
+<a href="{{ url_for('admin_newsletter.admin_newsletter_compose') }}" class="admin-btn admin-btn-primary">
     Composer une newsletter
 </a>
 {% endblock %}
@@ -31,7 +31,7 @@
                         {{ sub.subscribed_at.strftime('%d/%m/%Y %H:%M') }}
                     </td>
                     <td>
-                        <form action="{{ url_for('admin_newsletter_delete', subscriber_id=sub.id) }}" method="POST"
+                        <form action="{{ url_for('admin_newsletter.admin_newsletter_delete', subscriber_id=sub.id) }}" method="POST"
                             class="u-d-inline" onsubmit="return confirm('Supprimer cet abonné ?');">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="admin-btn admin-btn-danger admin-btn-sm">

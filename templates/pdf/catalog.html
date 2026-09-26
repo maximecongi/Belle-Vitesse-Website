@@ -260,11 +260,11 @@
         <div style="display: flex; align-items: center; gap: 15px;">
             <strong>Mode Aperçu Catalogue</strong>
             <div style="display: flex; background: #2d2d2d; border-radius: 4px; padding: 2px; gap: 2px;">
-                <a href="{{ url_for('admin_catalog_preview', prices='1') }}"
+                <a href="{{ url_for('admin_catalog.admin_catalog_preview', prices='1') }}"
                     style="padding: 4px 12px; font-size: 12px; text-decoration: none; border-radius: 3px; font-weight: 600; color: {% if with_prices %}#1d1d1d{% else %}#fff{% endif %}; background: {% if with_prices %}var(--yellow-1){% else %}transparent{% endif %}; transition: all 0.2s;">
                     Avec prix
                 </a>
-                <a href="{{ url_for('admin_catalog_preview', prices='0') }}"
+                <a href="{{ url_for('admin_catalog.admin_catalog_preview', prices='0') }}"
                     style="padding: 4px 12px; font-size: 12px; text-decoration: none; border-radius: 3px; font-weight: 600; color: {% if not with_prices %}#1d1d1d{% else %}#fff{% endif %}; background: {% if not with_prices %}var(--yellow-1){% else %}transparent{% endif %}; transition: all 0.2s;">
                     Sans prix
                 </a>
@@ -273,9 +273,9 @@
                 le PDF"</span>
         </div>
         <div>
-            <a href="{{ url_for('admin_catalog_pdf', prices='1' if with_prices else '0') }}"
+            <a href="{{ url_for('admin_catalog.admin_catalog_pdf', prices='1' if with_prices else '0') }}"
                 class="preview-btn preview-btn--secondary" target="_blank">Télécharger le PDF</a>
-            <a href="{{ url_for('admin_catalog_update', prices='1' if with_prices else '0') }}"
+            <a href="{{ url_for('admin_catalog.admin_catalog_update', prices='1' if with_prices else '0') }}"
                 class="preview-btn">Mettre à jour le PDF</a>
         </div>
     </div>

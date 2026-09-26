@@ -10,7 +10,7 @@
 {% endblock %}
 
 {% block header_actions %}
-{{ list_header_actions('Rechercher un checkout...', url_for('admin_checkout_new'), '+ Nouveau Checkout') }}
+{{ list_header_actions('Rechercher un checkout...', url_for('admin_checkouts.admin_checkout_new'), '+ Nouveau Checkout') }}
 {% endblock %}
 
 {% block content %}
@@ -50,7 +50,7 @@
                     </td>
                     <td>{{ checkout.controller.name }}</td>
                     <td>
-                        <a href="{{ url_for('admin_checkout_detail', record_id=checkout.id) }}"
+                        <a href="{{ url_for('admin_checkouts.admin_checkout_detail', record_id=checkout.id) }}"
                             class="admin-btn admin-btn-secondary">Détails →</a>
                     </td>
                 </tr>

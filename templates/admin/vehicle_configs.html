@@ -5,7 +5,7 @@
 
 {% block header_actions %}
 <div class="u-flex u-align-center u-gap-2">
-    <a href="{{ url_for('admin_fleet_list') }}" class="admin-btn admin-btn-secondary">
+    <a href="{{ url_for('admin_fleet.admin_fleet_list') }}" class="admin-btn admin-btn-secondary">
         ← Retour au Parc
     </a>
 </div>
@@ -14,10 +14,10 @@
 {% block content %}
 <!-- ═══════════ NAVIGATION PAR ONGLETS ═══════════ -->
 <div class="checkpoint-nav-tabs">
-    <a href="{{ url_for('admin_checkpoints_list') }}" class="checkpoint-nav-tab">
+    <a href="{{ url_for('admin_checkpoints.admin_checkpoints_list') }}" class="checkpoint-nav-tab">
         Points de Contrôle
     </a>
-    <a href="{{ url_for('admin_vehicle_configs') }}" class="checkpoint-nav-tab active">
+    <a href="{{ url_for('admin_api.admin_vehicle_configs') }}" class="checkpoint-nav-tab active">
         Matrice Flotte
     </a>
 </div>

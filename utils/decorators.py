@@ -30,7 +30,7 @@ def require_roles(*allowed_roles):
         def decorated_function(*args, **kwargs):
             # 1. S'assurer que l'utilisateur est authentifié
             if not session.get("admin_authenticated"):
-                return redirect(url_for("admin_login", next=request.url))
+                return redirect(url_for("admin_auth.admin_login", next=request.url))
 
             # Repli en cas de session incomplète
             if not session.get("admin_user_id") and session.get("admin_user_firstname"):
@@ -44,7 +44,7 @@ def require_roles(*allowed_roles):
                 if not user:
                     session.clear()
                     flash("Votre compte a été supprimé ou n'existe plus.", "error")
-                    return redirect(url_for("admin_login"))
+                    return redirect(url_for("admin_auth.admin_login"))
 
                 # Synchronisation dynamique du rôle (sauf si simulation de rôle active en dev)
                 if not session.get("admin_dev_role_simulated"):
@@ -69,7 +69,7 @@ def require_roles(*allowed_roles):
                 )
                 flash(
                     "Vous n'avez pas les permissions nécessaires pour accéder à cette page.", "error")
-                return redirect(url_for("admin_dashboard"))
+                return redirect(url_for("admin_dashboard.admin_dashboard"))
 
             return f(*args, **kwargs)
         return decorated_function

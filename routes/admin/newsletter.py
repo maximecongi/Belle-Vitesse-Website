@@ -1,4 +1,5 @@
 from flask import (
+    Blueprint,
     current_app,
     flash,
     redirect,
@@ -15,61 +16,67 @@ from utils.decorators import require_roles
 from utils.mailer import send_newsletter_campaign_async
 
 
-def init_newsletter_routes(app):
-    # ── Newsletter ────────────────────────────────────────────────
 
-    @app.route("/admin/newsletter")
-    @require_roles('administrator', 'manager')
-    def admin_newsletter_dashboard():
+newsletter_bp = Blueprint('admin_newsletter', __name__, url_prefix='/admin')
+# ── Newsletter ────────────────────────────────────────────────
+
+@newsletter_bp.route("/newsletter")
+@require_roles('administrator', 'manager')
+def admin_newsletter_dashboard():
+    try:
+        subscribers = list_newsletter_subscribers()
+        return render_template("admin/newsletter_dashboard.html", subscribers=subscribers)
+    except Exception as e:
+        current_app.logger.error(f"❌ Erreur dans le tableau de bord newsletter : {e}")
+        flash(
+            f"Erreur lors du chargement de la newsletter : {str(e)}", "error")
+        return redirect(url_for("admin_dashboard.admin_dashboard"))
+
+@newsletter_bp.route("/newsletter/delete/<int:subscriber_id>", methods=["POST"])
+@require_roles('administrator', 'manager')
+def admin_newsletter_delete(subscriber_id):
+    try:
+        if remove_newsletter_subscriber_by_id(subscriber_id):
+            flash("Abonné supprimé avec succès.", "success")
+        else:
+            flash("Abonné non trouvé.", "error")
+        return redirect(url_for("admin_newsletter.admin_newsletter_dashboard"))
+    except Exception as e:
+        current_app.logger.error(f"❌ Erreur lors de la suppression de l'abonné : {e}")
+        flash(f"Erreur lors de la suppression : {str(e)}", "error")
+        return redirect(url_for("admin_newsletter.admin_newsletter_dashboard"))
+
+@newsletter_bp.route("/newsletter/compose", methods=["GET", "POST"])
+@require_roles('administrator', 'manager')
+def admin_newsletter_compose():
+    if request.method == "POST":
+        subject = request.form.get("subject")
+        body = request.form.get("body")
+
+        if not subject or not body:
+            flash("Le sujet et le message sont obligatoires.", "error")
+            return render_template("admin/newsletter_compose.html", subject=subject, body=body)
+
         try:
             subscribers = list_newsletter_subscribers()
-            return render_template("admin/newsletter_dashboard.html", subscribers=subscribers)
-        except Exception as e:
-            current_app.logger.error(f"❌ Erreur dans le tableau de bord newsletter : {e}")
+            if not subscribers:
+                flash("Aucun abonné dans la liste.", "error")
+                return redirect(url_for("admin_newsletter.admin_newsletter_dashboard"))
+
+            send_newsletter_campaign_async(subject, body, subscribers)
             flash(
-                f"Erreur lors du chargement de la newsletter : {str(e)}", "error")
-            return redirect(url_for("admin_dashboard"))
+                f"Campagne de newsletter lancée en arrière-plan pour {len(subscribers)} abonnés.", "success")
 
-    @app.route("/admin/newsletter/delete/<int:subscriber_id>", methods=["POST"])
-    @require_roles('administrator', 'manager')
-    def admin_newsletter_delete(subscriber_id):
-        try:
-            if remove_newsletter_subscriber_by_id(subscriber_id):
-                flash("Abonné supprimé avec succès.", "success")
-            else:
-                flash("Abonné non trouvé.", "error")
-            return redirect(url_for("admin_newsletter_dashboard"))
+            return redirect(url_for("admin_newsletter.admin_newsletter_dashboard"))
         except Exception as e:
-            current_app.logger.error(f"❌ Erreur lors de la suppression de l'abonné : {e}")
-            flash(f"Erreur lors de la suppression : {str(e)}", "error")
-            return redirect(url_for("admin_newsletter_dashboard"))
+            current_app.logger.error(
+                f"❌ Erreur lors de l'envoi de la campagne newsletter : {e}")
+            flash(f"Erreur lors de l'envoi : {str(e)}", "error")
 
-    @app.route("/admin/newsletter/compose", methods=["GET", "POST"])
-    @require_roles('administrator', 'manager')
-    def admin_newsletter_compose():
-        if request.method == "POST":
-            subject = request.form.get("subject")
-            body = request.form.get("body")
+    return render_template("admin/newsletter_compose.html")
 
-            if not subject or not body:
-                flash("Le sujet et le message sont obligatoires.", "error")
-                return render_template("admin/newsletter_compose.html", subject=subject, body=body)
 
-            try:
-                subscribers = list_newsletter_subscribers()
-                if not subscribers:
-                    flash("Aucun abonné dans la liste.", "error")
-                    return redirect(url_for("admin_newsletter_dashboard"))
-
-                send_newsletter_campaign_async(subject, body, subscribers)
-                flash(
-                    f"Campagne de newsletter lancée en arrière-plan pour {len(subscribers)} abonnés.", "success")
-
-                return redirect(url_for("admin_newsletter_dashboard"))
-            except Exception as e:
-                current_app.logger.error(
-                    f"❌ Erreur lors de l'envoi de la campagne newsletter : {e}")
-                flash(f"Erreur lors de l'envoi : {str(e)}", "error")
-
-        return render_template("admin/newsletter_compose.html")
-
+def init_newsletter_routes(app):
+    """Enregistre le blueprint admin_newsletter (compatibilité ascendante)."""
+    if "admin_newsletter" not in app.blueprints:
+        app.register_blueprint(newsletter_bp)

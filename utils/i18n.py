@@ -53,6 +53,9 @@ def init_i18n(app):
     @app.url_defaults
     def inject_lang(endpoint, values):
         """Injecte automatiquement la langue dans url_for() pour les routes concernées."""
-        if 'lang' in values or not app.url_map.is_endpoint_expecting(endpoint, 'lang'):
+        if 'lang' in values or endpoint not in app.url_map._rules_by_endpoint:
+            return
+        if not app.url_map.is_endpoint_expecting(endpoint, 'lang'):
             return
         values['lang'] = g.get('lang', session.get('lang', DEFAULT_LANG))
+
