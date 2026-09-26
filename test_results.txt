@@ -185,6 +185,20 @@ test_list_and_details (test_inspections.InspectionsTest.test_list_and_details) .
 test_soft_delete (test_inspections.InspectionsTest.test_soft_delete) ... ok
 test_unified_form_context (test_inspections.InspectionsTest.test_unified_form_context) ... ok
 test_verify_public_routes (test_inspections.InspectionsTest.test_verify_public_routes) ... ok
+test_debug_mode_does_not_auto_login_on_admin_login (test_magic_links_security.MagicLinksSecurityTestCase.test_debug_mode_does_not_auto_login_on_admin_login)
+Le mode DEBUG=True en environnement de développement ne doit plus jamais authentifier automatiquement l'utilisateur anonyme. ... ok
+test_debug_mode_does_not_auto_login_on_protected_routes (test_magic_links_security.MagicLinksSecurityTestCase.test_debug_mode_does_not_auto_login_on_protected_routes)
+L'accès à une route protégée par @require_roles sans session doit rediriger vers login même avec DEBUG=True. ... ok
+test_expired_magic_link_rejected (test_magic_links_security.MagicLinksSecurityTestCase.test_expired_magic_link_rejected)
+Un jeton dont la durée dépasse 900s doit être rejeté. ... ok
+test_magic_link_http_flow_and_replay_protection (test_magic_links_security.MagicLinksSecurityTestCase.test_magic_link_http_flow_and_replay_protection)
+Test du flux HTTP complet de connexion par lien magique et rejet du rejeu. ... ok
+test_magic_link_jti_invalidation_with_redis (test_magic_links_security.MagicLinksSecurityTestCase.test_magic_link_jti_invalidation_with_redis)
+Vérifie l'enregistrement et le rejet d'un JTI consommé via le backend Redis. ... ok
+test_magic_link_single_use_jti_invalidation (test_magic_links_security.MagicLinksSecurityTestCase.test_magic_link_single_use_jti_invalidation)
+Un lien magique ne doit être utilisable qu'une seule et unique fois (JTI invalidé dès le premier usage). ... ok
+test_tampered_magic_link_rejected (test_magic_links_security.MagicLinksSecurityTestCase.test_tampered_magic_link_rejected)
+Un jeton altéré ou falsifié doit être rejeté. ... ok
 test_async_dispatch_enqueues_to_rq (test_mailer_rq.MailerRQTestCase.test_async_dispatch_enqueues_to_rq)
 Vérifie que dispatch_email enfile le job dans la queue RQ 'emails' hors testing. ... ok
 test_async_dispatch_falls_back_to_daemon_thread_when_redis_unavailable (test_mailer_rq.MailerRQTestCase.test_async_dispatch_falls_back_to_daemon_thread_when_redis_unavailable)
@@ -342,6 +356,6 @@ test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.W
 Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
 ----------------------------------------------------------------------
-Ran 209 tests in 23.226s
+Ran 216 tests in 23.612s
 
 OK
