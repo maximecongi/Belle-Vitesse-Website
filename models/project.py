@@ -159,6 +159,14 @@ class Project(db.Model):
         """Retourne la décharge production si elle existe et n'a pas été supprimée."""
         return self.production_waiver if (self.production_waiver and getattr(self.production_waiver, "deleted_at", None) is None) else None
 
+    @property
+    def kdrive_web_url(self):
+        """Retourne l'URL directe vers le dossier kDrive du projet sur l'interface Infomaniak."""
+        if not self.kdrive_folder_id:
+            return None
+        from services.common.kdrive.config import KDRIVE_DRIVE_ID
+        return f"https://kdrive.infomaniak.com/app/drive/{KDRIVE_DRIVE_ID}/files/{self.kdrive_folder_id}"
+
     def to_dict(self):
         """Convertit l'objet en dictionnaire pour les réponses API."""
         return {
@@ -181,6 +189,7 @@ class Project(db.Model):
             "kdrive_path": self.kdrive_path,
             "kdrive_sync_status": self.kdrive_sync_status,
             "kdrive_last_error": self.kdrive_last_error,
+            "kdrive_web_url": self.kdrive_web_url,
         }
 
     def __repr__(self):

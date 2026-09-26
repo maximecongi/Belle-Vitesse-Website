@@ -11,14 +11,22 @@ initials, empty_state, waiver_card, doc_download_badge %}
     <a href="{{ url_for('admin_projects.admin_projects_list') }}" class="admin-btn admin-btn-secondary">
         ← Liste des projets
     </a>
+    {% if project.kdrive_web_url %}
+    <a href="{{ project.kdrive_web_url }}" target="_blank" rel="noopener noreferrer"
+        class="admin-btn admin-btn-secondary" title="Ouvrir le dossier du projet dans kDrive Infomaniak">
+        <i data-lucide="cloud"></i>
+        <span>Dossier kDrive</span>
+    </a>
+    {% elif is_admin or session.get('admin_user_role') in ['administrator', 'manager'] %}
     <form action="{{ url_for('admin_projects.admin_project_kdrive_resync', record_id=project.id) }}" method="POST"
         class="u-inline">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="admin-btn admin-btn-secondary" title="Relancer la synchronisation kDrive">
-            <i data-lucide="cloud-cog"></i>
-            <span>Cloud</span>
+            <i data-lucide="refresh-cw"></i>
+            <span>Synchroniser kDrive</span>
         </button>
     </form>
+    {% endif %}
     <a href="{{ url_for('admin_projects.admin_project_edit', record_id=project.id) }}"
         class="admin-btn admin-btn-primary">
         <i data-lucide="edit-3"></i>
@@ -47,24 +55,12 @@ initials, empty_state, waiver_card, doc_download_badge %}
                 <!-- Titre du projet -->
                 <h1 class="project-hub-title">{{ project.name }}</h1>
                 {{ shoot_status_badge(shoot_status) }}
-                <div class="u-flex u-align-center u-gap-2">
-                    {% if project.kdrive_sync_status == 'synced' %}
-                    <span class="badge-pill u-bg-success-light u-text-success"
-                        title="{{ project.kdrive_path or 'Synchronisé sur kDrive' }}">
-                        <i data-lucide="cloud"></i> Synchronisé sur le Cloud
-                    </span>
-                    {% elif project.kdrive_sync_status == 'failed' %}
-                    <span class="badge-pill u-bg-danger-light u-text-danger"
-                        title="{{ project.kdrive_last_error or 'Erreur kDrive' }}">
-                        <i data-lucide="alert-triangle"></i> Erreur de synchronisation sur le Cloud
-                    </span>
-                    {% else %}
-                    <span class="badge-pill u-bg-warning-light u-text-warning"
-                        title="En attente de synchronisation kDrive">
-                        <i data-lucide="clock"></i> En attente de synchronisation sur le Cloud
-                    </span>
-                    {% endif %}
-                </div>
+                {% if project.kdrive_sync_status == 'failed' %}
+                <span class="badge-pill u-bg-danger-light u-text-danger"
+                    title="{{ project.kdrive_last_error or 'Erreur lors de la synchronisation kDrive' }}">
+                    <i data-lucide="alert-triangle"></i> Erreur synchronisation Cloud
+                </span>
+                {% endif %}
             </div>
             <!-- Ligne méta : Identifiant, Statut du tournage, Société de Production -->
             <div class="project-hub-meta">

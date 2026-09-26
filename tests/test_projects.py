@@ -354,6 +354,16 @@ class ProjectsTest(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertIn("Synchronisation kDrive relancée.".encode("utf-8"), resp.data)
 
+    def test_project_kdrive_web_url(self):
+        with self.app.app_context():
+            proj = Project(name="Project URL Test", production_id=1)
+            self.assertIsNone(proj.kdrive_web_url)
+
+            proj.kdrive_folder_id = 99999
+            self.assertIn("https://kdrive.infomaniak.com/app/drive/", proj.kdrive_web_url)
+            self.assertIn("/files/99999", proj.kdrive_web_url)
+            self.assertEqual(proj.to_dict()["kdrive_web_url"], proj.kdrive_web_url)
+
 
 if __name__ == "__main__":
     unittest.main()

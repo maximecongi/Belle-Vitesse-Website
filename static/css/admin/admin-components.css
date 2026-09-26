@@ -261,6 +261,13 @@
     font-weight: 500;
     white-space: nowrap;
     border: none;
+    text-decoration: none;
+    transition: opacity 0.15s ease;
+}
+
+a.badge-pill:hover {
+    text-decoration: none;
+    opacity: 0.85;
 }
 
 
