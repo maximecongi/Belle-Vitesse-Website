@@ -41,61 +41,52 @@ projects_bp = Blueprint('admin_projects', __name__, url_prefix='/admin')
 @require_roles('administrator', 'manager', 'commercial')
 def admin_projects_list():
     try:
-        projects = list_projects()
-        q = request.args.get('q', '').strip().lower()
-        if q:
-            matching_projects = []
-            for p in projects:
-                search_text = f"{p.get('project_id') or ''} {p.get('name') or ''} {p.get('production') or ''}".lower()
-                if q in search_text:
-                    matching_projects.append(p)
-            matching_projects.sort(
-                key=lambda x: (
-                    0 if x.get("raw_departure_date") else 1,
-                    x.get("raw_departure_date") or "",
-                    x.get("name") or ""
-                )
-            )
-            return render_template("admin/projects_list.html", projects=matching_projects, is_archive=False)
+        q = request.args.get('q', '').strip()
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
 
-        today_iso = datetime.now().strftime('%Y-%m-%d')
-        upcoming_projects = [p for p in projects
-                             if not p.get("raw_return_date") or p.get("raw_return_date") >= today_iso]
-        upcoming_projects.sort(
-            key=lambda x: (
-                0 if x.get("raw_departure_date") else 1,
-                x.get("raw_departure_date") or "",
-                x.get("name") or ""
-            )
+        pagination = list_projects(
+            is_archive=False,
+            q=q if q else None,
+            page=page,
+            per_page=per_page
         )
-        return render_template("admin/projects_list.html", projects=upcoming_projects, is_archive=False)
+        return render_template(
+            "admin/projects_list.html",
+            projects=pagination.items,
+            pagination=pagination,
+            is_archive=False
+        )
     except Exception as e:
         current_app.logger.error(f"❌ Erreur dans admin_projects_list : {e}")
         flash("Erreur lors de la récupération des projets.", "error")
-        return render_template("admin/projects_list.html", projects=[], is_archive=False)
+        return render_template("admin/projects_list.html", projects=[], pagination=None, is_archive=False)
 
 @projects_bp.route("/projects/archives")
 @require_roles('administrator', 'manager', 'commercial')
 def admin_projects_archives():
     try:
-        projects = list_projects()
-        today_iso = datetime.now().strftime('%Y-%m-%d')
-        past_projects = [p for p in projects
-                         if p.get("raw_return_date") and p.get("raw_return_date") < today_iso]
-        past_projects.sort(
-            key=lambda x: (
-                1 if x.get("raw_departure_date") else 0,
-                x.get("raw_departure_date") or "",
-                x.get("name") or ""
-            ),
-            reverse=True
+        q = request.args.get('q', '').strip()
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+
+        pagination = list_projects(
+            is_archive=True,
+            q=q if q else None,
+            page=page,
+            per_page=per_page
         )
-        return render_template("admin/projects_list.html", projects=past_projects, is_archive=True)
+        return render_template(
+            "admin/projects_list.html",
+            projects=pagination.items,
+            pagination=pagination,
+            is_archive=True
+        )
     except Exception as e:
         current_app.logger.error(
             f"❌ Erreur dans admin_projects_archives : {e}")
         flash("Erreur lors de la récupération des archives.", "error")
-        return render_template("admin/projects_list.html", projects=[], is_archive=True)
+        return render_template("admin/projects_list.html", projects=[], pagination=None, is_archive=True)
 
 @projects_bp.route("/projects/new", methods=["GET", "POST"])
 @require_roles('administrator', 'manager', 'commercial')

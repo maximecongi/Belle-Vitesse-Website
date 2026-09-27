@@ -18,9 +18,9 @@ from utils.entity_resolvers import resolve_inspection, resolve_project
 logger = logging.getLogger(__name__)
 
 
-def list_checkins():
-    """Récupère tous les enregistrements de retour par la logique unifiée."""
-    return list_inspections_unified("checkin")
+def list_checkins(page=None, per_page=10, q=None):
+    """Récupère les enregistrements de retour par la logique unifiée avec support de la pagination."""
+    return list_inspections_unified("checkin", page=page, per_page=per_page, q=q)
 
 
 def get_checkin_detail(record_id):

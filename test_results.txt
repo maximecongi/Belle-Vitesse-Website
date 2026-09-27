@@ -188,6 +188,8 @@ test_sealing_requires_both_signatures (test_incidents.IncidentsTestCase.test_sea
 Vérifie que le contexte n'est scellé que lorsque les 2 signatures sont apposées. ... ok
 test_update_incident_and_resolution (test_incidents.IncidentsTestCase.test_update_incident_and_resolution)
 Vérifie la mise à jour et l'horodatage de résolution. ... ok
+test_create_checkin_blocked_when_already_exists (test_inspections.InspectionsTest.test_create_checkin_blocked_when_already_exists) ... ok
+test_create_checkin_force_checkin (test_inspections.InspectionsTest.test_create_checkin_force_checkin) ... ok
 test_create_checkout_and_checkin_routes (test_inspections.InspectionsTest.test_create_checkout_and_checkin_routes) ... ok
 test_list_and_details (test_inspections.InspectionsTest.test_list_and_details) ... ok
 test_soft_delete (test_inspections.InspectionsTest.test_soft_delete) ... ok
@@ -235,6 +237,8 @@ Vérifie la génération de clé avec durée d'expiration et le micro-cache outi
 test_mcp_fleet_360_and_conflicts_tools (test_mcp_server.MCPServerFullTestSuite.test_mcp_fleet_360_and_conflicts_tools) ... ok
 test_mcp_incidents_tools_checkpoints (test_mcp_server.MCPServerFullTestSuite.test_mcp_incidents_tools_checkpoints) ... ok
 test_mcp_resources_and_prompts (test_mcp_server.MCPServerFullTestSuite.test_mcp_resources_and_prompts) ... ok
+test_mcp_token_is_expired_and_naive_aware_compatibility (test_mcp_server.MCPServerFullTestSuite.test_mcp_token_is_expired_and_naive_aware_compatibility)
+Vérifie la robustesse de McpApiToken.is_expired face aux datetimes naïves et conscientes. ... ok
 test_mcp_waivers_tools (test_mcp_server.MCPServerFullTestSuite.test_mcp_waivers_tools) ... ok
 test_newsletter_subscribers (test_mcp_server.MCPServerFullTestSuite.test_newsletter_subscribers) ... ok
 test_pricing (test_mcp_server.MCPServerFullTestSuite.test_pricing) ... ok
@@ -266,6 +270,12 @@ test_token_generation (test_newsletter_anti_spam.NewsletterAntiSpamTestCase.test
 Vérifie que la génération du jeton produit un token valide et décodable. ... ok
 test_too_fast_submission_time_trap (test_newsletter_anti_spam.NewsletterAntiSpamTestCase.test_too_fast_submission_time_trap)
 Vérifie qu'une soumission en moins de 1.5s est détectée comme bot. ... ok
+test_empty_pagination (test_pagination.TestPagination.test_empty_pagination) ... ok
+test_iter_pages_with_gaps (test_pagination.TestPagination.test_iter_pages_with_gaps) ... ok
+test_multi_pages_last (test_pagination.TestPagination.test_multi_pages_last) ... ok
+test_multi_pages_middle (test_pagination.TestPagination.test_multi_pages_middle) ... ok
+test_single_page (test_pagination.TestPagination.test_single_page) ... ok
+test_url_for_page_preserves_query_params (test_pagination.TestPagination.test_url_for_page_preserves_query_params) ... ok
 test_compress_pdf_resilience_on_corruption (test_pdf_compression.PDFCompressionTestCase.test_compress_pdf_resilience_on_corruption)
 Vérifie que le compresseur renvoie l'original sans lever d'exception en cas de corruption. ... ok
 test_compress_pdf_short_or_empty_bytes (test_pdf_compression.PDFCompressionTestCase.test_compress_pdf_short_or_empty_bytes)
@@ -302,6 +312,7 @@ test_update_project_report_unauthorized_user (test_project_reports.ProjectReport
 test_update_project_report_within_3h (test_project_reports.ProjectReportsTest.test_update_project_report_within_3h) ... ok
 test_admin_project_kdrive_resync (test_projects.ProjectsTest.test_admin_project_kdrive_resync) ... ok
 test_project_crud_tracking (test_projects.ProjectsTest.test_project_crud_tracking) ... ok
+test_project_kdrive_web_url (test_projects.ProjectsTest.test_project_kdrive_web_url) ... ok
 test_project_notes_edit (test_projects.ProjectsTest.test_project_notes_edit) ... ok
 test_soft_deleted_checks_and_waivers_on_projects (test_projects.ProjectsTest.test_soft_deleted_checks_and_waivers_on_projects) ... ok
 test_about_us_page (test_routes.RouteSmokeTest.test_about_us_page)
@@ -342,6 +353,18 @@ test_temp_email_preview_access_and_prod_guard (test_routes.RouteSmokeTest.test_t
 Vérifie que la route temporaire est accessible en dev/test et bloquée (404) en production. ... ok
 test_unsubscribe_success (test_routes.RouteSmokeTest.test_unsubscribe_success)
 Test that unsubscribing with a valid token works and does not 500. ... ok
+test_admin_routes_with_pagination_query_params (test_server_pagination.TestServerPagination.test_admin_routes_with_pagination_query_params)
+Vérifie que les routes admin acceptent les paramètres ?page= et ?q= sans erreur 500. ... ok
+test_list_checkouts_and_checkins_pagination (test_server_pagination.TestServerPagination.test_list_checkouts_and_checkins_pagination)
+Vérifie que list_checkouts et list_checkins retournent un conteneur paginé. ... ok
+test_list_incidents_pagination (test_server_pagination.TestServerPagination.test_list_incidents_pagination)
+Vérifie que list_incidents retourne un conteneur paginé avec stats. ... ok
+test_list_projects_backward_compatibility (test_server_pagination.TestServerPagination.test_list_projects_backward_compatibility)
+Vérifie que list_projects sans page retourne toujours une liste standard. ... ok
+test_list_projects_pagination_instance (test_server_pagination.TestServerPagination.test_list_projects_pagination_instance)
+Vérifie que list_projects avec page retourne un objet Pagination. ... ok
+test_list_projects_search_filter (test_server_pagination.TestServerPagination.test_list_projects_search_filter)
+Vérifie que le filtre de recherche q fonctionne avec la pagination. ... ok
 test_add_project_report_rollback_on_failure (test_transactions_rollback.TransactionRollbackTest.test_add_project_report_rollback_on_failure)
 Vérifie que add_project_report rollback systématiquement en cas d'échec. ... ok
 test_create_project_rollback_on_failure (test_transactions_rollback.TransactionRollbackTest.test_create_project_rollback_on_failure)
@@ -350,13 +373,15 @@ test_handle_admin_service_error_decorator_rolls_back (test_transactions_rollback
 Vérifie que le décorateur handle_admin_service_error rollback la session sur exception. ... ok
 test_teardown_request_rolls_back_on_unhandled_exception (test_transactions_rollback.TransactionRollbackTest.test_teardown_request_rolls_back_on_unhandled_exception)
 Vérifie que le teardown_request global rollback une session dirty si une exception non gérée survient. ... ok
+test_automatic_waivers_on_project_create (test_waivers.WaiversTest.test_automatic_waivers_on_project_create)
+Vérifie que les décharges sont créées automatiquement si production_id ou pilot_contact_id sont renseignés. ... ok
 test_create_and_list_waivers (test_waivers.WaiversTest.test_create_and_list_waivers) ... ok
 test_explicit_delete_and_recreate (test_waivers.WaiversTest.test_explicit_delete_and_recreate)
 Vérifie la suppression unitaire par ID et la capacité de recréer une décharge pour le même projet. ... ok
 test_finalize_signed_document_production_waiver (test_waivers.WaiversTest.test_finalize_signed_document_production_waiver)
 Vérifie le cycle complet de signature et génération PDF d'une décharge production. ... ok
-test_no_automatic_waivers_on_project_create (test_waivers.WaiversTest.test_no_automatic_waivers_on_project_create)
-Vérifie qu'aucune décharge n'est créée automatiquement lors de la création d'un projet. ... ok
+test_quick_create_waiver_routes (test_waivers.WaiversTest.test_quick_create_waiver_routes)
+Vérifie les routes quick-create en 1 clic pour pilote et production. ... ok
 test_soft_delete_waivers (test_waivers.WaiversTest.test_soft_delete_waivers) ... ok
 test_verify_pilot_waiver_route (test_waivers.WaiversTest.test_verify_pilot_waiver_route)
 Vérifie l'accès à la route de vérification pour une décharge pilote scellée. ... ok
@@ -378,6 +403,6 @@ test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.W
 Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
 ----------------------------------------------------------------------
-Ran 227 tests in 23.706s
+Ran 244 tests in 25.094s
 
 OK

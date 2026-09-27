@@ -158,12 +158,12 @@ class WaiversTest(unittest.TestCase):
             self.assertEqual(len(list_pilot_waivers()), 1)
             self.assertEqual(len(list_production_waivers()), 1)
 
-    def test_no_automatic_waivers_on_project_create(self):
-        """Vérifie qu'aucune décharge n'est créée automatiquement lors de la création d'un projet."""
+    def test_automatic_waivers_on_project_create(self):
+        """Vérifie que les décharges sont créées automatiquement si production_id ou pilot_contact_id sont renseignés."""
         with self.app.app_context():
             from services.admin.projects import create_project
 
-            prod = Production(name="Prod Sans Décharge Auto")
+            prod = Production(name="Prod Avec Décharge Auto")
             db.session.add(prod)
             db.session.flush()
 
@@ -186,9 +186,13 @@ class WaiversTest(unittest.TestCase):
             new_proj = Project.query.filter_by(name="Tournage Standalone").first()
             self.assertIsNotNone(new_proj)
 
-            # Aucune décharge ne doit exister pour ce projet
+            # La décharge production doit être automatiquement créée car production_id est renseigné
+            prod_waiver = ProductionWaiver.query.filter_by(project_id=new_proj.id).first()
+            self.assertIsNotNone(prod_waiver)
+            self.assertEqual(prod_waiver.status, "to_send")
+
+            # La décharge pilote ne doit pas être créée car aucun pilot_contact_id n'a été fourni
             self.assertIsNone(PilotWaiver.query.filter_by(project_id=new_proj.id).first())
-            self.assertIsNone(ProductionWaiver.query.filter_by(project_id=new_proj.id).first())
 
     def test_waivers_created_directly_in_to_send_status(self):
         """Vérifie que la création d'une décharge la place directement au statut 'to_send' avec snapshot."""
@@ -367,6 +371,31 @@ class WaiversTest(unittest.TestCase):
             self.assertEqual(res["document_id"], pw.waiver_id)
             self.assertTrue(res["pdf_url"])
             self.assertEqual(pw.status, "signed")
+
+    def test_quick_create_waiver_routes(self):
+        """Vérifie les routes quick-create en 1 clic pour pilote et production."""
+        with self.app.app_context():
+            user, proj = self._create_mock_data()
+
+            with self.client.session_transaction() as sess:
+                sess["admin_authenticated"] = True
+                sess["admin_user_id"] = user.id
+                sess["admin_user_role"] = "administrator"
+
+            # Quick-create pilot waiver
+            resp_pilot = self.client.get(f"/admin/waivers/pilots/quick-create/{proj.id}", follow_redirects=True)
+            self.assertEqual(resp_pilot.status_code, 200)
+            pw = PilotWaiver.query.filter_by(project_id=proj.id).first()
+            self.assertIsNotNone(pw)
+            self.assertEqual(pw.status, "to_send")
+
+            # Quick-create production waiver
+            resp_prod = self.client.get(f"/admin/waivers/productions/quick-create/{proj.id}", follow_redirects=True)
+            self.assertEqual(resp_prod.status_code, 200)
+            prw = ProductionWaiver.query.filter_by(project_id=proj.id).first()
+            self.assertIsNotNone(prw)
+            self.assertEqual(prw.status, "to_send")
+
 
 
 if __name__ == "__main__":

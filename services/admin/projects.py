@@ -1,6 +1,9 @@
 import logging
 import os
 
+from datetime import date
+from typing import Optional
+
 from sqlalchemy.orm import joinedload, selectinload
 
 from models import Contact, Production, Project, db
@@ -10,6 +13,7 @@ from utils.formatting import format_date_fr, get_today_paris
 from utils.document_utils import generate_pdf_access_token
 from services.admin.utils import handle_admin_service_error
 from utils.entity_resolvers import resolve_project
+from utils.pagination import Pagination
 
 logger = logging.getLogger(__name__)
 
@@ -208,11 +212,58 @@ def _format_project_admin(p, vehicle_map, heads_map):
     }
 
 
-def list_projects():
+def list_projects(
+    is_archive: Optional[bool] = None,
+    q: Optional[str] = None,
+    page: Optional[int] = None,
+    per_page: int = 10,
+):
     """
-    Récupère tous les projets et les formate pour la liste d'administration (avec chargement lié optimisé).
+    Récupère les projets et les formate pour la liste d'administration (avec chargement lié optimisé).
+    Supporte le filtrage SQL (archives, recherche textuelle) et la pagination serveur.
+    Si `page` est spécifié, retourne une instance `Pagination`.
+    Si `page` est None, retourne la liste complète (rétrocompatibilité totale).
     """
-    projects = Project.query.filter(Project.deleted_at.is_(None)).options(
+    query = Project.query.filter(Project.deleted_at.is_(None))
+
+    today = date.today()
+
+    if is_archive is True:
+        query = query.filter(Project.return_date.isnot(
+            None), Project.return_date < today)
+        order_clauses = [
+            db.case((Project.departure_date.is_(None), 1), else_=0),
+            Project.departure_date.desc(),
+            Project.name.asc(),
+        ]
+    elif is_archive is False:
+        query = query.filter(
+            db.or_(Project.return_date.is_(None), Project.return_date >= today)
+        )
+        order_clauses = [
+            db.case((Project.departure_date.is_(None), 1), else_=0),
+            Project.departure_date.asc(),
+            Project.name.asc(),
+        ]
+    else:
+        order_clauses = [
+            db.case((Project.departure_date.is_(None), 1), else_=0),
+            Project.departure_date.desc(),
+            Project.name.asc(),
+        ]
+
+    if q:
+        term = f"%{q.strip()}%"
+        query = query.outerjoin(Production, Project.production_id == Production.id).filter(
+            db.or_(
+                Project.project_id.ilike(term),
+                Project.name.ilike(term),
+                Production.name.ilike(term),
+                Project.notes.ilike(term),
+            )
+        )
+
+    eager_options = (
         joinedload(Project.production),
         selectinload(Project.checkout_vehicles),
         selectinload(Project.checkin_vehicles),
@@ -224,15 +275,35 @@ def list_projects():
         joinedload(Project.pilot_waiver),
         joinedload(Project.production_waiver),
         selectinload(Project.incidents),
-        selectinload(Project.reports)
-    ).order_by(Project.departure_date.desc(), Project.name.asc()).all()
+        selectinload(Project.reports),
+    )
 
     vehicles = get_vehicles()
     vehicle_map = {v["id"]: v.get("fields", {}) for v in vehicles}
-
     heads = get_heads()
     heads_map = {h["id"]: h.get("fields", {}) for h in heads}
 
+    if page is not None:
+        try:
+            total = query.order_by(None).count()
+        except Exception:
+            total = query.count()
+
+        page = max(1, int(page))
+        per_page = max(1, min(int(per_page), 200))
+        offset = (page - 1) * per_page
+        projects = (
+            query.options(*eager_options)
+            .order_by(*order_clauses)
+            .limit(per_page)
+            .offset(offset)
+            .all()
+        )
+        formatted = [_format_project_admin(
+            p, vehicle_map, heads_map) for p in projects]
+        return Pagination(items=formatted, page=page, per_page=per_page, total=total)
+
+    projects = query.options(*eager_options).order_by(*order_clauses).all()
     return [_format_project_admin(p, vehicle_map, heads_map) for p in projects]
 
 
@@ -299,6 +370,17 @@ def create_project(form, user_id=None):
     from services.common.kdrive import dispatch_create_project_tree
     dispatch_create_project_tree(project.id)
 
+    # Création automatique des décharges si les entités associées existent
+    try:
+        from services.admin.waivers import create_production_waiver, create_pilot_waiver
+        if project.production_id:
+            create_production_waiver(project.id)
+        if project.pilot_contact_id:
+            create_pilot_waiver(project.id)
+    except Exception as e_w:
+        logger.warning(
+            f"⚠️ Erreur lors de l'auto-création des décharges pour le projet {project.id}: {e_w}")
+
     return True
 
 
@@ -358,6 +440,18 @@ def update_project(record_id, form, user_id=None):
             old_prod_name=old_prod,
             old_proj_name=old_name,
         )
+
+    # Auto-création des décharges si non encore existantes et nouvelles entités assignées
+    try:
+        from services.admin.waivers import create_production_waiver, create_pilot_waiver
+        from models import PilotWaiver, ProductionWaiver
+        if project.production_id and not ProductionWaiver.query.filter_by(project_id=project.id, deleted_at=None).first():
+            create_production_waiver(project.id)
+        if project.pilot_contact_id and not PilotWaiver.query.filter_by(project_id=project.id, deleted_at=None).first():
+            create_pilot_waiver(project.id)
+    except Exception as e_w:
+        logger.warning(
+            f"⚠️ Erreur lors de l'auto-création des décharges à la mise à jour du projet {project.id}: {e_w}")
 
     return True
 
@@ -440,5 +534,6 @@ def delete_project(record_id, user_id=None):
             from services.common.kdrive import dispatch_delete_project
             dispatch_delete_project(project_db_id, folder_id)
         except Exception as k_err:
-            logger.error(f"❌ Erreur dispatch suppression kDrive projet {project_db_id} : {k_err}")
+            logger.error(
+                f"❌ Erreur dispatch suppression kDrive projet {project_db_id} : {k_err}")
     return True

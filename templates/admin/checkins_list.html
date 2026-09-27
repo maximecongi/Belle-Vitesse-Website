@@ -1,6 +1,6 @@
 {% extends "admin/admin_base.html" %}
 
-{% from "admin/macros.html" import status_badge, filter_header, list_header_actions, table_empty_row %}
+{% from "admin/macros.html" import status_badge, filter_header, list_header_actions, table_empty_row, render_pagination %}
 
 {% block title %}Liste des Checkins{% endblock %}
 {% block page_title %}Checkins{% endblock %}
@@ -12,10 +12,10 @@
 {% block content %}
 <!-- Search & Table -->
 <div class="admin-card">
-    {{ filter_header("Checkins filtrés", count=checkins|length) }}
+    {{ filter_header("Checkins filtrés", count=pagination.total if pagination else checkins|length) }}
     <div class="u-flex u-justify-end u-align-center u-mb-2">
         <div class="u-text-sm u-text-muted">
-            <span id="result-count">{{ checkins|length }}</span> résultats
+            <span id="result-count">{{ pagination.total if pagination else checkins|length }}</span> résultats
         </div>
     </div>
 
@@ -61,5 +61,6 @@
             Aucun résultat pour cette recherche.
         </div>
     </div>
+    {{ render_pagination(pagination, label_singular="retour", label_plural="retours") }}
 </div>
 {% endblock %}

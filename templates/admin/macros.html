@@ -328,7 +328,9 @@ admin-multiselect-tag--custom
 
 {% macro list_header_actions(placeholder="Rechercher...", new_url=None, new_label=None, is_archive=false) %}
 <div class="u-flex u-align-center u-gap-2">
-    <input type="text" id="searchInput" class="form-input u-w-250" placeholder="{{ placeholder }}" autocomplete="off">
+    <form method="GET" action="" class="u-m-0">
+        <input type="text" name="q" id="searchInput" class="form-input u-w-250" placeholder="{{ placeholder }}" value="{{ request.args.get('q', '') }}" autocomplete="off">
+    </form>
     {% if new_url and not is_archive %}
     <a href="{{ new_url }}" class="admin-btn admin-btn-primary">{{ new_label or '+ Nouveau' }}</a>
     {% endif %}
@@ -387,10 +389,63 @@ admin-multiselect-tag--custom
         </a>
         {{ doc_download_badge(waiver.pdf_path) }}
         {% else %}
-        <a href="{{ new_url }}">
-            {{ status_badge('À générer', 'to_generate') }}
-        </a>
+        <form action="{{ new_url }}" method="POST" class="u-m-0 u-d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="badge-pill u-pointer" data-val="to_generate" title="Créer et générer la décharge en 1 clic">
+                <i data-lucide="plus-circle"></i> À générer (1 clic)
+            </button>
+        </form>
         {% endif %}
     </div>
 </div>
+{% endmacro %}
+
+{# ── MACRO PAGINATION SERVEUR (Phase 3.2) ── #}
+
+{% macro render_pagination(pagination, endpoint=None, label_singular="élément", label_plural="éléments") %}
+{% if pagination and pagination.total > 0 %}
+<div class="admin-pagination-container">
+    <div class="admin-pagination-info">
+        Affichage de <strong>{{ pagination.start_index }}</strong> à <strong>{{ pagination.end_index }}</strong> sur <strong>{{ pagination.total }}</strong> {{ label_plural if pagination.total > 1 else label_singular }}
+    </div>
+    {% if pagination.pages > 1 %}
+    <nav class="admin-pagination-nav" aria-label="Pagination">
+        {# Bouton Précédent #}
+        {% if pagination.has_prev %}
+        <a href="{{ pagination.url_for_page(pagination.prev_num, endpoint) }}" class="admin-pagination-btn" title="Page précédente" aria-label="Page précédente">
+            <i data-lucide="chevron-left"></i>
+        </a>
+        {% else %}
+        <span class="admin-pagination-btn is-disabled" aria-disabled="true" title="Page précédente">
+            <i data-lucide="chevron-left"></i>
+        </span>
+        {% endif %}
+
+        {# Numéros de pages avec gestion des ellipses #}
+        {% for p in pagination.iter_pages() %}
+            {% if p %}
+                {% if p == pagination.page %}
+                <span class="admin-pagination-btn is-active" aria-current="page">{{ p }}</span>
+                {% else %}
+                <a href="{{ pagination.url_for_page(p, endpoint) }}" class="admin-pagination-btn">{{ p }}</a>
+                {% endif %}
+            {% else %}
+                <span class="admin-pagination-ellipsis" aria-hidden="true">&hellip;</span>
+            {% endif %}
+        {% endfor %}
+
+        {# Bouton Suivant #}
+        {% if pagination.has_next %}
+        <a href="{{ pagination.url_for_page(pagination.next_num, endpoint) }}" class="admin-pagination-btn" title="Page suivante" aria-label="Page suivante">
+            <i data-lucide="chevron-right"></i>
+        </a>
+        {% else %}
+        <span class="admin-pagination-btn is-disabled" aria-disabled="true" title="Page suivante">
+            <i data-lucide="chevron-right"></i>
+        </span>
+        {% endif %}
+    </nav>
+    {% endif %}
+</div>
+{% endif %}
 {% endmacro %}

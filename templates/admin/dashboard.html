@@ -92,8 +92,8 @@
                             class_name='u-badge-agenda') }}
                         </a>
                         {% else %}
-                        <a href="{{ url_for('admin_waivers.admin_pilot_waiver_new', project_id=project.id) }}"
-                            class="today-row-waiver-link">
+                        <a href="{{ url_for('admin_waivers.admin_pilot_waiver_quick_create', project_id=project.id) }}"
+                            class="today-row-waiver-link" title="Créer la décharge en 1 clic">
                             <span class="today-row-label">
                                 <i data-lucide="file-signature"></i>
                                 <span>Décharge Pilote</span>
@@ -113,8 +113,8 @@
                             project.production_waiver.raw_status, class_name='u-badge-agenda') }}
                         </a>
                         {% else %}
-                        <a href="{{ url_for('admin_waivers.admin_production_waiver_new', project_id=project.id) }}"
-                            class="today-row-waiver-link">
+                        <a href="{{ url_for('admin_waivers.admin_production_waiver_quick_create', project_id=project.id) }}"
+                            class="today-row-waiver-link" title="Créer la décharge en 1 clic">
                             <span class="today-row-label">
                                 <i data-lucide="file-signature"></i>
                                 <span>Décharge Prod.</span>

@@ -1,7 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
 {% from "admin/macros.html" import status_badge, filter_header, shoot_status_badge, doc_download_badge,
-list_header_actions, table_empty_row %}
+list_header_actions, table_empty_row, render_pagination %}
 
 {% block title %}{{ 'Archives' if is_archive else 'Projets' }}{% endblock %}
 {% block page_title %}{{ 'Archives' if is_archive else 'Projets' }}{% endblock %}
@@ -113,7 +113,7 @@ list_header_actions, table_empty_row %}
                             </a>
                             {{ doc_download_badge(project.pilot_waiver.pdf_path) }}
                             {% else %}
-                            <a href="{{ url_for('admin_waivers.admin_pilot_waiver_new', project_id=project.id) }}">
+                            <a href="{{ url_for('admin_waivers.admin_pilot_waiver_quick_create', project_id=project.id) }}" title="Créer la décharge en 1 clic">
                                 {{ status_badge('À générer', 'to_generate') }}
                             </a>
                             {% endif %}
@@ -130,7 +130,7 @@ list_header_actions, table_empty_row %}
                             </a>
                             {{ doc_download_badge(project.production_waiver.pdf_path) }}
                             {% else %}
-                            <a href="{{ url_for('admin_waivers.admin_production_waiver_new', project_id=project.id) }}">
+                            <a href="{{ url_for('admin_waivers.admin_production_waiver_quick_create', project_id=project.id) }}" title="Créer la décharge en 1 clic">
                                 {{ status_badge('À générer', 'to_generate') }}
                             </a>
                             {% endif %}
@@ -198,7 +198,7 @@ list_header_actions, table_empty_row %}
 {% block content %}
 <div class="admin-card">
     {% if request.args.get('q') %}
-    {{ filter_header("Projets filtrés", count=projects|length, clear_url=url_for('admin_projects.admin_projects_list')) }}
+    {{ filter_header("Projets filtrés", count=pagination.total if pagination else projects|length, clear_url=url_for('admin_projects.admin_projects_archives') if is_archive else url_for('admin_projects.admin_projects_list')) }}
     {% else %}
     <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
         <h2 class="admin-section-title u-m-0">
@@ -211,6 +211,7 @@ list_header_actions, table_empty_row %}
     </div>
     {% endif %}
     {{ project_table(projects) }}
+    {{ render_pagination(pagination, label_singular="projet", label_plural="projets") }}
 </div>
 
 {% endblock %}

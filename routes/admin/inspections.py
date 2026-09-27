@@ -104,9 +104,15 @@ def register_admin_inspection_routes(app_or_bp, mode):
     @require_roles('administrator', 'manager', 'user')
     def admin_inspection_list():
         try:
-            result = list_func()
+            page = request.args.get("page", 1, type=int)
+            per_page = request.args.get("per_page", 10, type=int)
+            q = request.args.get("q", "").strip()
+
+            result = list_func(page=page, per_page=per_page, q=q if q else None)
             return render_template(
                 template_list,
+                pagination=result.get("pagination"),
+                stats=result.get("stats", {}),
                 **{plural: result[plural]},
             )
         except Exception as e:
@@ -114,6 +120,8 @@ def register_admin_inspection_routes(app_or_bp, mode):
             flash("Erreur lors de la récupération de la liste.", "error")
             return render_template(
                 template_list,
+                pagination=None,
+                stats={},
                 **{plural: []},
             )
 

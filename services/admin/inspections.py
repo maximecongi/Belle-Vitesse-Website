@@ -40,6 +40,7 @@ from utils.document_utils import generate_pdf_access_token
 from utils.formatting import format_date_fr
 from utils.image_utils import optimize_and_save_image
 from utils.entity_resolvers import resolve_inspection
+from utils.pagination import Pagination
 
 logger = logging.getLogger(__name__)
 
@@ -76,23 +77,49 @@ def get_inspection_config(mode):
 
 # ── Opérations Cœur (Unifiées) ───────────────────────────────────
 
-def list_inspections_unified(mode):
+def list_inspections_unified(mode, page=None, per_page=10, q=None):
     """
     Récupérateur générique pour les listes de départs (Checkout) ou de retours (Checkin).
-    Calcule également les statistiques pour le tableau de bord.
+    Calcule également les statistiques pour le tableau de bord et gère la pagination serveur.
     """
     config = get_inspection_config(mode)
     record_model = config["model"]
     resp_attr = config["responsible_attr"]
 
-    # Chargement lié optimisé pour éviter le problème N+1
-    records = record_model.query.join(Project).filter(
-        record_model.deleted_at == None,
-        Project.deleted_at == None
-    ).options(
+    base_query = record_model.query.join(Project).filter(
+        record_model.deleted_at.is_(None),
+        Project.deleted_at.is_(None)
+    )
+
+    # Calcul des statistiques globales sur l'ensemble des enregistrements
+    stats_query = db.session.query(
+        db.func.count(record_model.id),
+        db.func.sum(db.case((record_model.status == "signed", 1), else_=0)),
+        db.func.sum(db.case((record_model.status == "completed", 1), else_=0)),
+    ).join(Project).filter(
+        record_model.deleted_at.is_(None),
+        Project.deleted_at.is_(None)
+    ).first()
+
+    total_stats = stats_query[0] or 0
+    signed = int(stats_query[1] or 0)
+    pending = int(stats_query[2] or 0)
+
+    # Filtrage textuel SQL si 'q' est spécifié
+    if q:
+        term = f"%{q.strip()}%"
+        base_query = base_query.filter(
+            db.or_(
+                record_model.inspection_id.ilike(term),
+                Project.name.ilike(term),
+            )
+        )
+
+    # Eager loading optimisé pour éviter le problème N+1
+    ordered_query = base_query.options(
         joinedload(record_model.project).joinedload(Project.production),
         joinedload(getattr(record_model, resp_attr))
-    ).order_by(record_model.created_at.desc()).all()
+    ).order_by(record_model.created_at.desc())
 
     vehicles = get_vehicles()
     vehicle_map = {v["id"]: v.get("fields", {}) for v in vehicles}
@@ -100,24 +127,53 @@ def list_inspections_unified(mode):
     from services.admin.vehicle_config import get_checkpoint_configs
     batch_configs = get_checkpoint_configs()
 
-    # Calcul des statistiques sommaires
-    total = len(records)
-    signed = sum(1 for r in records if get_inspection_key(
-        r.status) == "signed")
-    pending = sum(1 for r in records if get_inspection_key(
-        r.status) == "completed")
+    if page is not None:
+        try:
+            total_items = base_query.order_by(None).count()
+        except Exception:
+            total_items = base_query.count()
 
+        page = max(1, int(page))
+        per_page = max(1, min(int(per_page or 10), 200))
+        offset = (page - 1) * per_page
+        records = ordered_query.limit(per_page).offset(offset).all()
+
+        formatted = [_format_base_inspection_admin(
+            r, vehicle_map, batch_configs) for r in records]
+
+        pagination = Pagination(
+            items=formatted,
+            page=page,
+            per_page=per_page,
+            total=total_items,
+        )
+
+        return {
+            config["stats_key"]: formatted,
+            "pagination": pagination,
+            "total": total_items,
+            "stats": {
+                f"total_{config['stats_key']}": total_stats,
+                f"signed_{config['stats_key']}": signed,
+                f"pending_{config['stats_key']}": pending,
+            }
+        }
+
+    records = ordered_query.all()
     formatted = [_format_base_inspection_admin(
         r, vehicle_map, batch_configs) for r in records]
 
     return {
         config["stats_key"]: formatted,
+        "pagination": None,
+        "total": len(formatted),
         "stats": {
-            f"total_{config['stats_key']}": total,
+            f"total_{config['stats_key']}": total_stats,
             f"signed_{config['stats_key']}": signed,
             f"pending_{config['stats_key']}": pending,
         }
     }
+
 
 
 def get_inspection_detail_unified(mode, record_id):

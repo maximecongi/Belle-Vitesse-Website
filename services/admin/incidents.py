@@ -27,6 +27,7 @@ from utils.storage import get_incident_path, ensure_dir
 from utils.image_utils import optimize_and_save_image
 from services.admin.utils import handle_admin_service_error
 from utils.entity_resolvers import resolve_incident, resolve_project
+from utils.pagination import Pagination
 
 logger = logging.getLogger(__name__)
 
@@ -149,9 +150,10 @@ def _format_date(val):
 
 # ── Services Métier Incidents ────────────────────────────────────
 
-def list_incidents(status=None, severity=None, category=None, project_id=None, query=None, limit=None, offset=None):
+def list_incidents(status=None, severity=None, category=None, project_id=None, query=None, limit=None, offset=None, page=None, per_page=10):
     """
     Récupère la liste des incidents actifs (non supprimés) avec calcul des indicateurs KPI et filtres.
+    Supporte la pagination serveur avec l'objet Pagination.
     """
     base_query = Incident.query.filter(Incident.deleted_at.is_(None))
 
@@ -218,6 +220,17 @@ def list_incidents(status=None, severity=None, category=None, project_id=None, q
         )
 
     q = q.order_by(Incident.incident_date.desc(), Incident.created_at.desc())
+
+    total_filtered = 0
+    if page is not None:
+        try:
+            total_filtered = q.order_by(None).count()
+        except Exception:
+            total_filtered = q.count()
+        page = max(1, int(page))
+        per_page = max(1, min(int(per_page or 10), 200))
+        offset = (page - 1) * per_page
+        limit = per_page
 
     if offset:
         q = q.offset(offset)
@@ -313,9 +326,20 @@ def list_incidents(status=None, severity=None, category=None, project_id=None, q
             "search_text": " ".join(t.lower() for t in search_tokens if t),
         })
 
+    pagination = None
+    if page is not None:
+        pagination = Pagination(
+            items=formatted_incidents,
+            page=page,
+            per_page=per_page,
+            total=total_filtered,
+        )
+
     return {
         "incidents": formatted_incidents,
         "stats": stats,
+        "pagination": pagination,
+        "total": total_filtered if page is not None else len(formatted_incidents),
     }
 
 

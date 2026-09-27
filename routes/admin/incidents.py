@@ -44,12 +44,17 @@ def admin_incidents_list():
         project_filter = request.args.get("project_id")
         query_filter = request.args.get("q")
 
+        page = request.args.get("page", 1, type=int)
+        per_page = request.args.get("per_page", 10, type=int)
+
         data = list_incidents(
             status=status_filter,
             severity=severity_filter,
             category=category_filter,
             project_id=project_filter,
             query=query_filter,
+            page=page,
+            per_page=per_page,
         )
         form_context = get_incident_filter_options()
 
@@ -57,6 +62,7 @@ def admin_incidents_list():
             "admin/incidents_list.html",
             incidents=data["incidents"],
             stats=data["stats"],
+            pagination=data.get("pagination"),
             filters={
                 "status": status_filter,
                 "severity": severity_filter,

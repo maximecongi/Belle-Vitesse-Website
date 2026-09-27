@@ -1,45 +1,86 @@
 {% extends "admin/admin_base.html" %}
 
-{% block title %}Nouvelle décharge Production{% endblock %}
-{% block page_title %}Nouvelle décharge Production{% endblock %}
-{% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-pilot-waivers.css') }}?v={{ asset_version('css/admin/admin-pilot-waivers.css') }}">
-{% endblock %}
+{% block title %}Nouvelle décharge production{% endblock %}
+{% block page_title %}Nouvelle décharge production{% endblock %}
 
 {% block content %}
 <div class="admin-card u-max-w-600 u-m-auto">
-    <div class="admin-card-title">Sélectionner un projet</div>
+    <div class="admin-card-title u-flex u-align-center u-gap-2">
+        <i data-lucide="file-signature" class="u-text-waiver"></i>
+        <span>Sélectionner un projet</span>
+    </div>
     <p class="u-mb-4 u-text-muted u-text-sm">
-        Choisissez le projet lié à la nouvelle décharge production. Seuls les projets n'ayant pas encore de décharge
-        production sont listés.
+        Recherchez le projet auquel associer cette décharge production. Seuls les projets n'ayant pas encore de décharge production active sont listés.
     </p>
 
-    <form method="POST">
+    <form method="POST" id="waiverForm">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="project_id" id="selectedProjectId" value="{{ request.args.get('project_id', '') }}">
 
-        <div class="form-group u-mb-4">
-            <label for="project_id" class="form-label">Projet</label>
-            <select name="project_id" id="project_id" class="form-input u-w-100" required>
-                <option value="">-- Sélectionner un projet --</option>
-                {% for p in projects %}
-                <option value="{{ p.id }}" {% if request.args.get('project_id')|string == p.id|string %}selected{% endif %}>{{ p.name }} ({{ p.production.name if p.production else 'Sans Production' }})
-                </option>
-                {% endfor %}
-            </select>
+        <!-- Conteneur de recherche autocomplétée -->
+        <div class="form-group u-mb-4" id="waiverSearchContainer">
+            <label for="projectSearchInput" class="form-label">
+                Projet éligible <span class="u-text-error">*</span>
+            </label>
+            <div class="waiver-search-box">
+                <i data-lucide="search" class="waiver-search-icon"></i>
+                <input type="text" id="projectSearchInput" class="form-input u-w-100 waiver-search-input"
+                    placeholder="Tapez au moins 2 lettres (nom, production, dates)..." autocomplete="off" spellcheck="false">
+                <button type="button" class="waiver-search-clear u-d-none" id="clearSearchBtn" aria-label="Effacer la recherche">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="waiver-search-helper u-text-xs u-text-muted u-mt-1" id="searchHelperText">
+                <i data-lucide="info"></i> Tapez au moins 2 caractères pour filtrer la liste des projets éligibles ({{ projects|length }} disponible{{ 's' if projects|length > 1 else '' }}).
+            </div>
+
+            <!-- Liste déroulante des résultats filtrés -->
+            <div class="waiver-dropdown u-d-none" id="waiverDropdown">
+                <div class="waiver-results-header">
+                    Projets correspondants (<span id="resultsCount">0</span>)
+                </div>
+                <div class="waiver-results-list" id="waiverResultsList" role="listbox">
+                    <!-- Généré dynamiquement en JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Carte du projet sélectionné -->
+        <div class="waiver-selected-card u-d-none u-mb-4" id="waiverSelectedCard">
+            <div class="waiver-selected-info">
+                <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
+                    <span class="waiver-selected-title" id="selectedProjectName">—</span>
+                    <span class="badge-pill u-text-xs" data-val="neutral" id="selectedProjectProd">—</span>
+                </div>
+                <div class="waiver-selected-meta">
+                    <span class="waiver-item-meta-entry" id="selectedProjectDates">
+                        <i data-lucide="calendar"></i> <span>—</span>
+                    </span>
+                    <span class="waiver-item-meta-entry u-d-none" id="selectedProjectPilot">
+                        <i data-lucide="user"></i> <span>—</span>
+                    </span>
+                </div>
+            </div>
+            <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" id="changeProjectBtn" title="Changer de projet">
+                <i data-lucide="edit-2"></i> Changer
+            </button>
         </div>
 
         <div class="u-flex u-gap-2 u-justify-end">
             <a href="{{ url_for('admin_waivers.admin_production_waivers_list') }}" class="admin-btn admin-btn-secondary">Annuler</a>
-            <button type="submit" class="admin-btn admin-btn-primary">Créer la décharge</button>
+            <button type="submit" class="admin-btn admin-btn-primary" id="submitWaiverBtn" disabled>
+                <i data-lucide="plus-circle"></i> Créer la décharge
+            </button>
         </div>
     </form>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        if (typeof jQuery !== 'undefined' && jQuery().select2) {
-            $('#project_id').select2();
-        }
-    });
+<!-- Données des projets éligibles injectées en JSON -->
+<script id="projectsData" type="application/json">
+{{ projects_json | tojson }}
 </script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/src/admin/waiver-search.js') }}?v={{ asset_version('js/src/admin/waiver-search.js') }}"></script>
 {% endblock %}
