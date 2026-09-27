@@ -45,13 +45,26 @@ def create_checkin(form, files=None):
         controller_id = None
 
     proj = resolve_project(pid) if pid and pid != "None" else None
+    vehicle_id = form.get("vehicle_id") if form.get("vehicle_id") != "None" else None
+
+    # Sécurité : interdire la création d'un retour si un retour existe déjà pour ce véhicule sur ce projet
+    if vehicle_id and proj:
+        existing_checkin = CheckinVehicle.query.filter(
+            CheckinVehicle.vehicle_id == vehicle_id,
+            CheckinVehicle.project_id == proj.id,
+            CheckinVehicle.deleted_at.is_(None)
+        ).order_by(CheckinVehicle.id.desc()).first()
+
+        if existing_checkin:
+            code = existing_checkin.inspection_number or f"BVCI-#{existing_checkin.id}"
+            raise ValueError(f"un retour est déjà en cours ({code})")
 
     record = CheckinVehicle(
         status="in_progress",
         inspection_date=date.today(),
         project_id=proj.id if proj else None,
         controller_id=controller_id,
-        vehicle_id=form.get("vehicle_id") if form.get("vehicle_id") != "None" else None,
+        vehicle_id=vehicle_id,
     )
 
     apply_inspection_data(record, form, is_checkout=False)
@@ -69,7 +82,8 @@ def create_checkin(form, files=None):
         else:
             latest_checkout = query.order_by(CheckoutVehicle.id.desc()).first()
 
-        is_signed = bool(latest_checkout and latest_checkout.status in ["signed", "validated"])
+        signed_statuses = {"signed", "validated", "completed", "approved", "ok", "signé", "validé"}
+        is_signed = bool(latest_checkout and str(latest_checkout.status or "").strip().lower() in signed_statuses)
         if not is_signed:
             force_checkin = str(form.get("force_checkin", "")).strip().lower() in ["true", "1", "on"]
             if not force_checkin:

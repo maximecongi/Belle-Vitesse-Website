@@ -441,7 +441,7 @@ def get_unified_form_context(mode="checkout"):
     # Mapping des noms de projets pour un accès rapide
     project_names = {str(p.id): p.name for p in projects}
 
-    # Mapping des statuts par véhicule et par projet : {vehicule_id: {project_id: status}}
+    # Mapping des statuts par véhicule et par projet : {vehicule_id: {project_id: {status, id, code}}}
     vehicle_checkout_statuses = {}
     for c in checkouts:
         if c.vehicle_id and c.status and c.project_id:
@@ -449,7 +449,11 @@ def get_unified_form_context(mode="checkout"):
             pid = str(c.project_id)
             if vid not in vehicle_checkout_statuses:
                 vehicle_checkout_statuses[vid] = {}
-            vehicle_checkout_statuses[vid][pid] = c.status
+            vehicle_checkout_statuses[vid][pid] = {
+                "status": c.status,
+                "id": c.id,
+                "code": c.inspection_number,
+            }
 
     vehicle_checkin_statuses = {}
     for c in checkins:
@@ -458,14 +462,19 @@ def get_unified_form_context(mode="checkout"):
             pid = str(c.project_id)
             if vid not in vehicle_checkin_statuses:
                 vehicle_checkin_statuses[vid] = {}
-            vehicle_checkin_statuses[vid][pid] = c.status
+            vehicle_checkin_statuses[vid][pid] = {
+                "status": c.status,
+                "id": c.id,
+                "code": c.inspection_number,
+            }
 
     # Spécifiquement pour le départ (checkout) : logique des projets bloquants
     blocking_projects = {}
     if mode == "checkout":
         for vid, p_statuses in vehicle_checkout_statuses.items():
-            for pid, status in p_statuses.items():
-                if get_inspection_key(status) in ["signed", "completed"]:
+            for pid, c_info in p_statuses.items():
+                c_status = c_info.get("status") if isinstance(c_info, dict) else c_info
+                if get_inspection_key(c_status) in ["signed", "completed"]:
                     # Vérifie si le véhicule a été rendu pour ce projet
                     has_checkin = False
                     for ci in checkins:

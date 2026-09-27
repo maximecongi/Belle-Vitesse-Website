@@ -277,7 +277,18 @@ class ProjectsTest(unittest.TestCase):
             self.assertEqual(v1_detail["checkout_id"], "")
             self.assertEqual(v1_detail["checkout_status_id"], "to_check")
 
-            # 4. Attempting to create a new checkin when checkout is deleted must be rejected without force_checkin
+            # 4. Soft-delete checkin
+            success_in = delete_inspection_unified("checkin", checkin.id)
+            self.assertTrue(success_in)
+
+            projects_list = list_projects()
+            p_data = next(p for p in projects_list if p["id"] == proj.id)
+            v1_state = next(v for v in p_data["vehicles"] if v["id"] == "1")
+            self.assertEqual(v1_state["checkin_id"], "")
+            self.assertEqual(v1_state["checkin_status_id"], "to_check")
+            self.assertEqual(v1_state["checkin_status"], "À contrôler")
+
+            # 5. Attempting to create a new checkin when checkout is deleted must be rejected without force_checkin
             with self.assertRaises(ValueError) as cm:
                 create_checkin({
                     "project_id": str(proj.id),
@@ -287,7 +298,7 @@ class ProjectsTest(unittest.TestCase):
             self.assertIn(
                 "Le départ de ce véhicule n'a pas été validé", str(cm.exception))
 
-            # 4b. With explicit force_checkin confirmation, creating an exceptional checkin is allowed
+            # 5b. With explicit force_checkin confirmation, creating an exceptional checkin is allowed
             success_forced = create_checkin({
                 "project_id": str(proj.id),
                 "vehicle_id": "1",
@@ -299,17 +310,6 @@ class ProjectsTest(unittest.TestCase):
             self.assertIsNotNone(forced_ci)
             self.assertIn("Retour exceptionnel", forced_ci.notes or "")
             delete_inspection_unified("checkin", forced_ci.id)
-
-            # 5. Soft-delete checkin
-            success_in = delete_inspection_unified("checkin", checkin.id)
-            self.assertTrue(success_in)
-
-            projects_list = list_projects()
-            p_data = next(p for p in projects_list if p["id"] == proj.id)
-            v1_state = next(v for v in p_data["vehicles"] if v["id"] == "1")
-            self.assertEqual(v1_state["checkin_id"], "")
-            self.assertEqual(v1_state["checkin_status_id"], "to_check")
-            self.assertEqual(v1_state["checkin_status"], "À contrôler")
 
             # 6. Test Pilot & Production Waivers soft delete
             pw = PilotWaiver(project_id=proj.id, status="to_sign",

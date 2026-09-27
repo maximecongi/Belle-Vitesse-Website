@@ -76,6 +76,14 @@
     color: var(--white-1);
 }
 
+.admin-btn:disabled,
+.admin-btn.is-disabled {
+    opacity: 0.45 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+    box-shadow: none !important;
+}
+
 /* ── Boutons de filtrage / Filter Pills & Icônes Boutons ── */
 .admin-btn .lucide,
 .filter-pill .lucide,

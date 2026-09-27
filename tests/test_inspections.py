@@ -247,6 +247,91 @@ class InspectionsTest(unittest.TestCase):
         self.assertIn(b"BVCI-TEST5678", res_ci.data)
         self.assertIn("Données Scellées".encode("utf-8"), res_ci.data)
 
+    def test_create_checkin_force_checkin(self):
+        with self.app.app_context():
+            user, proj = self._create_mock_data()
+
+            with self.client.session_transaction() as sess:
+                sess['admin_authenticated'] = True
+                sess['admin_user_id'] = user.id
+                sess['admin_user_firstname'] = user.firstname
+                sess['admin_user_lastname'] = user.lastname
+                sess['admin_user_role'] = 'administrator'
+                sess['admin_logged_in'] = True
+
+            # Checkout exists but is in_progress (NOT signed)
+            checkout = CheckoutVehicle(
+                status="in_progress",
+                project_id=proj.id,
+                vehicle_id="1",
+                controller_id=user.id
+            )
+            db.session.add(checkout)
+            db.session.commit()
+
+            # 1. Attempt checkin without force_checkin -> fails with warning flash
+            res_fail = self.client.post("/admin/checkins/new", data={
+                "project_id": str(proj.id),
+                "vehicle_id": "1",
+                "controller_id": user.id,
+                "battery_level": "80",
+                "notes": "Attempt without force",
+            }, follow_redirects=True)
+            self.assertEqual(res_fail.status_code, 200)
+            self.assertIn("Le départ de ce véhicule".encode("utf-8"), res_fail.data)
+
+            # 2. Attempt checkin with force_checkin="1" -> succeeds
+            res_ok = self.client.post("/admin/checkins/new", data={
+                "project_id": str(proj.id),
+                "vehicle_id": "1",
+                "controller_id": user.id,
+                "battery_level": "80",
+                "notes": "Attempt with force",
+                "force_checkin": "1"
+            }, follow_redirects=False)
+            self.assertEqual(res_ok.status_code, 302)
+            self.assertIn("/admin/checkins", res_ok.headers.get("Location", ""))
+
+            # Check that record notes include the exceptional mention
+            saved_ci = CheckinVehicle.query.filter_by(project_id=proj.id).first()
+            self.assertIsNotNone(saved_ci)
+            self.assertIn("Retour exceptionnel", saved_ci.notes)
+
+    def test_create_checkin_blocked_when_already_exists(self):
+        with self.app.app_context():
+            user, proj = self._create_mock_data()
+
+            with self.client.session_transaction() as sess:
+                sess['admin_authenticated'] = True
+                sess['admin_user_id'] = user.id
+                sess['admin_user_firstname'] = user.firstname
+                sess['admin_user_lastname'] = user.lastname
+                sess['admin_user_role'] = 'administrator'
+                sess['admin_logged_in'] = True
+
+            # Existing checkin already in progress
+            existing_ci = CheckinVehicle(
+                status="in_progress",
+                inspection_number="BVCI-TESTEXISTING1",
+                project_id=proj.id,
+                vehicle_id="1",
+                controller_id=user.id
+            )
+            db.session.add(existing_ci)
+            db.session.commit()
+
+            # Attempt to create another checkin for the same vehicle and project
+            res = self.client.post("/admin/checkins/new", data={
+                "project_id": str(proj.id),
+                "vehicle_id": "1",
+                "controller_id": user.id,
+                "battery_level": "80",
+                "notes": "Attempt duplicate checkin",
+            }, follow_redirects=True)
+
+            self.assertEqual(res.status_code, 200)
+            self.assertIn("un retour est déjà en cours (BVCI-TESTEXISTING1)".encode("utf-8"), res.data)
+
 
 if __name__ == "__main__":
     unittest.main()

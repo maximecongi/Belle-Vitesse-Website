@@ -137,13 +137,16 @@
                                 data-checkout-statuses='{{ vf.get("_checkout_statuses", {}) | tojson | forceescape }}'
                                 data-blocked-by="{{ vf.get('_blocked_by', '') }}">
 
-                                <div class="u-flex u-align-center u-gap-2">
-                                    {% if thumb_url %}
-                                    <img src="{{ thumb_url }}" class="vehicle-med-thumbnail">
-                                    {% else %}
-                                    <div class="vehicle-med-thumbnail u-bg-gray-light"></div>
-                                    {% endif %}
-                                    <span class="rich-option-name">{{ vf.get('name', '—') }}</span>
+                                <div class="u-flex u-align-center u-justify-between u-w-100">
+                                    <div class="u-flex u-align-center u-gap-2">
+                                        {% if thumb_url %}
+                                        <img src="{{ thumb_url }}" class="vehicle-med-thumbnail">
+                                        {% else %}
+                                        <div class="vehicle-med-thumbnail u-bg-gray-light"></div>
+                                        {% endif %}
+                                        <span class="rich-option-name">{{ vf.get('name', '—') }}</span>
+                                    </div>
+                                    <div class="vehicle-option-status-slot"></div>
                                 </div>
                             </button>
                             {% endfor %}

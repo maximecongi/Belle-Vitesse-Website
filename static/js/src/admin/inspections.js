@@ -111,6 +111,33 @@ function initInspectionForm(checkpointsConfig, defaultCheckpoints) {
             const vInput = form.querySelector('input[name="vehicle_id"]');
             const cInput = form.querySelector('input[name="controller_id"]');
 
+            if (submitBtn && (submitBtn.disabled || submitBtn.classList.contains('is-disabled'))) {
+                e.preventDefault();
+                return false;
+            }
+
+            // Sécurité : interdire la soumission si un retour est déjà en cours ou validé
+            const vOpt = document.querySelector(`#vehicleOptions .rich-select-option[data-id="${vInput?.value}"]`);
+            if (vOpt && vOpt.hasAttribute('data-checkin-statuses') && pInput?.value) {
+                try {
+                    const checkinStatuses = JSON.parse(vOpt.dataset.checkinStatuses || '{}');
+                    const existing = checkinStatuses[pInput.value];
+                    if (existing) {
+                        e.preventDefault();
+                        const code = (typeof existing === 'object' && existing.code) ? existing.code : (typeof existing === 'object' && existing.id ? `BVCI-#${existing.id}` : '');
+                        const msg = `Erreur lors de la création : un retour est déjà en cours (${code || 'BVCI'})`;
+                        if (typeof window.showFlash === 'function') {
+                            window.showFlash(msg, 'warning');
+                        } else {
+                            alert(msg);
+                        }
+                        return false;
+                    }
+                } catch (err) {
+                    console.error("Erreur vérification checkinStatus:", err);
+                }
+            }
+
             if (pInput && !pInput.value) {
                 e.preventDefault();
                 if (typeof window.showFlash === 'function') {
