@@ -4,11 +4,16 @@
 {% block page_title %}Détail Checkin{% endblock %}
 
 {% block header_actions %}
-<a href="{{ url_for('checkin_verify', inspection_id=data.inspection_id) }}" target="_blank"
-    class="admin-btn admin-btn-secondary">Page de vérification ↗</a>
-{% if data.status_id == 'in_progress' %}
-<a href="{{ url_for('admin_checkins.admin_checkin_edit', record_id=record_id) }}" class="admin-btn admin-btn-primary">Éditer</a>
-{% endif %}
+<div class="u-flex u-align-center u-gap-2">
+    <a href="{{ url_for('admin_checkins.admin_checkins_list') }}" class="admin-btn admin-btn-secondary">← Retour à la
+        liste</a>
+    <a href="{{ url_for('checkin_verify', inspection_id=data.inspection_id) }}" target="_blank"
+        class="admin-btn admin-btn-secondary">Page de vérification ↗</a>
+    {% if data.status_id == 'in_progress' %}
+    <a href="{{ url_for('admin_checkins.admin_checkin_edit', record_id=record_id) }}"
+        class="admin-btn admin-btn-primary">Éditer</a>
+    {% endif %}
+</div>
 {% endblock %}
 
 {% block content %}
@@ -30,7 +35,8 @@
                             data.vehicle.fields.unique_id }}</span>
                         {% if data.vehicle and data.vehicle.id %}
                         <a href="{{ url_for('admin_fleet.admin_vehicle_timeline', vehicle_id=data.vehicle.id) }}"
-                            class="admin-btn admin-btn-xs admin-btn-secondary u-ml-1" title="Consulter l'historique du véhicule">🏎️
+                            class="admin-btn admin-btn-xs admin-btn-secondary u-ml-1"
+                            title="Consulter l'historique du véhicule">🏎️
                             Timeline</a>
 
                         {% endif %}
@@ -163,11 +169,19 @@
         {% if data.hash %}
         <div class="admin-card">
             <div class="admin-card-title">Sceau numérique</div>
-            <div class="seal-hash-container">
-                {{ data.hash }}
+            <div class="u-flex u-align-center u-gap-2 u-mb-2">
+                <span class="badge-pill u-bg-success-light u-text-success">
+                    <i data-lucide="shield-check"></i> Scellé & certifié conforme
+                </span>
             </div>
+            <details class="u-text-xs u-text-muted">
+                <summary class="u-cursor-pointer">Empreinte cryptographique</summary>
+                <div class="seal-hash-container u-mt-1">
+                    {{ data.hash }}
+                </div>
+            </details>
             {% if data.pdf_url %}
-            <div class="u-mt-2">
+            <div class="u-mt-3">
                 <a href="{{ data.pdf_url }}" target="_blank"
                     class="admin-btn admin-btn-secondary btn-download-pdf-sidebar">Télécharger le PDF 📄</a>
             </div>
@@ -184,7 +198,8 @@
         {% else %}
         <div class="admin-card">
             <div class="admin-card-title">Sceau numérique</div>
-            <form action="{{ url_for('admin_checkins.admin_checkin_seal', record_id=record_id) }}" target="_blank" method="POST"
+            <form action="{{ url_for('admin_checkins.admin_checkin_seal', record_id=record_id) }}" target="_blank"
+                method="POST"
                 onsubmit="const btn = this.querySelector('button[type=submit]'); btn.disabled = true; btn.classList.add('btn-disabled'); btn.innerText = 'Ouverture de la signature...'; return true;">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                 <button type="submit" class="admin-btn admin-btn-sign-blue">Signer ce checkin</button>
@@ -201,7 +216,6 @@
                 <button type="submit" class="admin-btn admin-btn-danger u-w-100">Supprimer ce checkin</button>
             </form>
         </div>
-        <a href="{{ url_for('admin_checkins.admin_checkins_list') }}" class="admin-btn admin-btn-secondary">← Retour à la liste</a>
     </div>
 </div>
 

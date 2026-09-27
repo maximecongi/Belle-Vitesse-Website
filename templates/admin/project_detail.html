@@ -224,7 +224,7 @@ initials, empty_state, waiver_card, doc_download_badge %}
                                 <a
                                     href="{{ url_for('admin_checkouts.admin_checkout_detail', record_id=v.checkout_id) }}">
                                     {{ status_badge(v.checkout_status, v.checkout_status_id, class_name='u-m-1',
-                                    **{'data-conform': v.checkout_conform}) }}
+                                     **{'data-conform': v.checkout_conform}) }}
                                 </a>
                                 {{ doc_download_badge(v.checkout_pdf) }}
                             </div>
@@ -234,7 +234,6 @@ initials, empty_state, waiver_card, doc_download_badge %}
                                     href="{{ url_for('admin_checkouts.admin_checkout_new', project_id=project.id, vehicle_id=v.id) }}">
                                     {{ status_badge('À contrôler', 'to_check', class_name='u-m-1') }}
                                 </a>
-                                {{ doc_download_badge(None) }}
                             </div>
                             {% endif %}
                         </div>
@@ -256,7 +255,6 @@ initials, empty_state, waiver_card, doc_download_badge %}
                                     href="{{ url_for('admin_checkins.admin_checkin_new', project_id=project.id, vehicle_id=v.id) }}">
                                     {{ status_badge('À contrôler', 'to_check', class_name='u-m-1') }}
                                 </a>
-                                {{ doc_download_badge(None) }}
                             </div>
                             {% endif %}
                         </div>

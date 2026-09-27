@@ -323,10 +323,6 @@ admin-multiselect-tag--custom
 <a href="{{ pdf_url }}" target="_blank" title="{{ title }}">
     <i data-lucide="download" stroke-width="2.5" class="badge-pill" data-val="download-available"></i>
 </a>
-{% else %}
-<span class="disabled" title="Document indisponible">
-    <i data-lucide="download" stroke-width="2.5" class="badge-pill" data-val="download-unavailable"></i>
-</span>
 {% endif %}
 {% endmacro %}
 
@@ -394,7 +390,6 @@ admin-multiselect-tag--custom
         <a href="{{ new_url }}">
             {{ status_badge('À générer', 'to_generate') }}
         </a>
-        {{ doc_download_badge(None) }}
         {% endif %}
     </div>
 </div>

@@ -74,7 +74,6 @@ list_header_actions, table_empty_row %}
                             {{ status_badge(v.fields.name or v.fields.Nom or 'Véhicule', 'to_check', class_name='u-m-1',
                             **{'title': 'Contrôle de départ : À contrôler'}) }}
                         </a>
-                        {{ doc_download_badge(None) }}
                     </div>
                     {% endif %}<br>
                     {% else %}
@@ -98,7 +97,6 @@ list_header_actions, table_empty_row %}
                             {{ status_badge(v.fields.name or v.fields.Nom or 'Véhicule', 'to_check', class_name='u-m-1',
                             **{'title': 'Contrôle de retour : À contrôler'}) }}
                         </a>
-                        {{ doc_download_badge(None) }}
                     </div>
                     {% endif %}<br>
                     {% else %}
@@ -118,7 +116,6 @@ list_header_actions, table_empty_row %}
                             <a href="{{ url_for('admin_waivers.admin_pilot_waiver_new', project_id=project.id) }}">
                                 {{ status_badge('À générer', 'to_generate') }}
                             </a>
-                            {{ doc_download_badge(None) }}
                             {% endif %}
                         </div>
                     </div>
@@ -136,7 +133,6 @@ list_header_actions, table_empty_row %}
                             <a href="{{ url_for('admin_waivers.admin_production_waiver_new', project_id=project.id) }}">
                                 {{ status_badge('À générer', 'to_generate') }}
                             </a>
-                            {{ doc_download_badge(None) }}
                             {% endif %}
                         </div>
                     </div>

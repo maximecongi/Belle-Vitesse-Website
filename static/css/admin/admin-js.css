@@ -66,6 +66,10 @@
     margin-bottom: 0.2rem;
 }
 
+.u-flex .rich-option-name {
+    margin-bottom: 0;
+}
+
 .rich-option-meta {
     display: flex;
     flex-wrap: wrap;

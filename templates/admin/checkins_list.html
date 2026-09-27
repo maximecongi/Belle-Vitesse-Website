@@ -5,10 +5,6 @@
 {% block title %}Liste des Checkins{% endblock %}
 {% block page_title %}Checkins{% endblock %}
 
-{% block extra_css %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-{% endblock %}
-
 {% block header_actions %}
 {{ list_header_actions('Rechercher un checkin...', url_for('admin_checkins.admin_checkin_new'), '+ Nouveau Checkin') }}
 {% endblock %}

@@ -460,6 +460,83 @@ a.badge-pill:hover {
     border: 1px solid var(--entity-waiver-border);
 }
 
+/* --- Vehicle Status Badge (Options des sélecteurs riches de véhicules) --- */
+.vehicle-status-badge,
+.badge-pill.vehicle-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 500;
+    line-height: 1.2;
+    padding: 0.15rem 0.55rem;
+    margin: 0;
+    border-radius: 9999px;
+    white-space: nowrap;
+    background: var(--status-neutral-bg, #F1F5F9);
+    color: var(--status-neutral-text, #475569);
+    border: 1px solid rgba(100, 116, 139, 0.25);
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.vehicle-status-badge[data-val="neutral"],
+.badge-pill.vehicle-status-badge[data-val="neutral"],
+.vehicle-status-badge[data-val="to_check"],
+.badge-pill.vehicle-status-badge[data-val="to_check"],
+.vehicle-status-badge[data-val="À contrôler"],
+.badge-pill.vehicle-status-badge[data-val="À contrôler"] {
+    background: var(--status-neutral-bg, #F1F5F9);
+    color: var(--status-neutral-text, #475569);
+    border: 1px solid rgba(100, 116, 139, 0.25);
+}
+
+.vehicle-status-badge[data-val="checkin"],
+.badge-pill.vehicle-status-badge[data-val="checkin"] {
+    background: var(--entity-checkin-bg, #DBEAFE);
+    color: var(--entity-checkin-text, #1E40AF);
+    border: 1px solid var(--entity-checkin-border, rgba(59, 130, 246, 0.3));
+}
+
+.vehicle-status-badge[data-val="checkout"],
+.badge-pill.vehicle-status-badge[data-val="checkout"] {
+    background: var(--entity-checkout-bg, #D1FAE5);
+    color: var(--entity-checkout-text, #065F46);
+    border: 1px solid var(--entity-checkout-border, rgba(16, 185, 129, 0.3));
+}
+
+.vehicle-status-badge[data-val="ok"],
+.badge-pill.vehicle-status-badge[data-val="ok"],
+.vehicle-status-badge[data-val="signed"],
+.badge-pill.vehicle-status-badge[data-val="signed"],
+.vehicle-status-badge[data-val="validated"],
+.badge-pill.vehicle-status-badge[data-val="validated"],
+.vehicle-status-badge[data-val="success"],
+.badge-pill.vehicle-status-badge[data-val="success"] {
+    background: var(--status-success-bg, #D1FAE5);
+    color: var(--status-success-text, #065F46);
+    border: 1px solid var(--status-success-border, rgba(16, 185, 129, 0.3));
+}
+
+.vehicle-status-badge[data-val="warning"],
+.badge-pill.vehicle-status-badge[data-val="warning"],
+.vehicle-status-badge[data-val="in_progress"],
+.badge-pill.vehicle-status-badge[data-val="in_progress"],
+.vehicle-status-badge[data-val="pending"],
+.badge-pill.vehicle-status-badge[data-val="pending"] {
+    background: var(--status-warning-bg, #FEF3C7);
+    color: var(--status-warning-text, #92400E);
+    border: 1px solid rgba(217, 119, 6, 0.3);
+}
+
+.vehicle-status-badge[data-val="danger"],
+.badge-pill.vehicle-status-badge[data-val="danger"],
+.vehicle-status-badge[data-val="critical"],
+.badge-pill.vehicle-status-badge[data-val="critical"] {
+    background: var(--status-danger-bg, #FEE2E2);
+    color: var(--status-danger-text, #991B1B);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
 /* --- User Roles & Contacts --- */
 .badge-pill[data-val="Super Administrateur"],
 .badge-pill[data-val="super administrateur"],

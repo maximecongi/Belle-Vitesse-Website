@@ -148,6 +148,10 @@ function initProjectSelect() {
                 const checkoutStatus = checkoutStatuses[selectedProjectId];
                 const checkinStatus = checkinStatuses[selectedProjectId];
                 const badgeEl = vOpt.querySelector('.vehicle-status-badge');
+                if (badgeEl) {
+                    badgeEl.style.background = '';
+                    badgeEl.style.color = '';
+                }
 
                 if (vOpt.hasAttribute('data-checkin-statuses')) {
                     // Formulaire de Retour (Check-in)
@@ -155,26 +159,22 @@ function initProjectSelect() {
                     if (checkinStatus) {
                         if (badgeEl) {
                             badgeEl.textContent = 'Retour : ' + (statusMap[checkinStatus] || checkinStatus);
-                            badgeEl.style.background = "var(--input-bg)";
-                            badgeEl.style.color = "var(--text-color)";
+                            badgeEl.dataset.val = (checkinStatus === 'signed' || checkinStatus === 'validated') ? 'ok' : 'warning';
                         }
                     } else if (isCheckoutSigned) {
                         if (badgeEl) {
                             badgeEl.textContent = "À contrôler";
-                            badgeEl.style.background = "#059669";
-                            badgeEl.style.color = "#ffffff";
+                            badgeEl.dataset.val = "checkin";
                         }
                     } else if (checkoutStatus) {
                         if (badgeEl) {
                             badgeEl.textContent = "Départ en cours (" + (statusMap[checkoutStatus] || checkoutStatus) + ")";
-                            badgeEl.style.background = "#fef3c7";
-                            badgeEl.style.color = "#92400e";
+                            badgeEl.dataset.val = "warning";
                         }
                     } else {
                         if (badgeEl) {
                             badgeEl.textContent = "À contrôler";
-                            badgeEl.style.background = "var(--brand-blue)";
-                            badgeEl.style.color = "#ffffff";
+                            badgeEl.dataset.val = "neutral";
                         }
                     }
                 } else if (vOpt.hasAttribute('data-checkout-statuses')) {
@@ -183,20 +183,17 @@ function initProjectSelect() {
                     if (checkoutStatus) {
                         if (badgeEl) {
                             badgeEl.textContent = 'Départ : ' + (statusMap[checkoutStatus] || checkoutStatus);
-                            badgeEl.style.background = "var(--input-bg)";
-                            badgeEl.style.color = "var(--text-color)";
+                            badgeEl.dataset.val = (checkoutStatus === 'signed' || checkoutStatus === 'validated') ? 'ok' : 'warning';
                         }
                     } else if (blockedByProject) {
                         if (badgeEl) {
                             badgeEl.textContent = "Retour en attente : " + blockedByProject;
-                            badgeEl.style.background = "#fee2e2";
-                            badgeEl.style.color = "#dc2626";
+                            badgeEl.dataset.val = "danger";
                         }
                     } else {
                         if (badgeEl) {
                             badgeEl.textContent = "À contrôler";
-                            badgeEl.style.background = "var(--brand-blue)";
-                            badgeEl.style.color = "#ffffff";
+                            badgeEl.dataset.val = "checkout";
                         }
                     }
                 }
@@ -314,8 +311,8 @@ function initVehicleSelect() {
             vInput.value = opt.dataset.id;
             const thumb = opt.dataset.thumb;
             if (thumb && vLabel) {
-                vLabel.innerHTML = `<span style="display:flex;align-items:center;gap:0.5rem;">
-                    <img src="${thumb}" style="width:28px;height:28px;border-radius:4px;object-fit:cover;">
+                vLabel.innerHTML = `<span class="u-flex u-align-center u-gap-2">
+                    <img src="${thumb}" class="vehicle-small-thumbnail">
                     ${opt.dataset.name}
                 </span>`;
             } else if (vLabel) {
