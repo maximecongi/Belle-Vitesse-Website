@@ -277,7 +277,7 @@ class ProjectsTest(unittest.TestCase):
             self.assertEqual(v1_detail["checkout_id"], "")
             self.assertEqual(v1_detail["checkout_status_id"], "to_check")
 
-            # 4. Attempting to create a new checkin when checkout is deleted must be rejected
+            # 4. Attempting to create a new checkin when checkout is deleted must be rejected without force_checkin
             with self.assertRaises(ValueError) as cm:
                 create_checkin({
                     "project_id": str(proj.id),
@@ -286,6 +286,19 @@ class ProjectsTest(unittest.TestCase):
                 })
             self.assertIn(
                 "Le départ de ce véhicule n'a pas été validé", str(cm.exception))
+
+            # 4b. With explicit force_checkin confirmation, creating an exceptional checkin is allowed
+            success_forced = create_checkin({
+                "project_id": str(proj.id),
+                "vehicle_id": "1",
+                "controller_id": str(user.id),
+                "force_checkin": "1"
+            })
+            self.assertTrue(success_forced)
+            forced_ci = CheckinVehicle.query.filter_by(project_id=proj.id, vehicle_id="1").order_by(CheckinVehicle.id.desc()).first()
+            self.assertIsNotNone(forced_ci)
+            self.assertIn("Retour exceptionnel", forced_ci.notes or "")
+            delete_inspection_unified("checkin", forced_ci.id)
 
             # 5. Soft-delete checkin
             success_in = delete_inspection_unified("checkin", checkin.id)

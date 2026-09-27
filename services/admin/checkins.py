@@ -69,8 +69,19 @@ def create_checkin(form, files=None):
         else:
             latest_checkout = query.order_by(CheckoutVehicle.id.desc()).first()
 
-        if not latest_checkout or latest_checkout.status not in ["signed", "validated"]:
-            raise ValueError("Le départ de ce véhicule n'a pas été validé par une signature.")
+        is_signed = bool(latest_checkout and latest_checkout.status in ["signed", "validated"])
+        if not is_signed:
+            force_checkin = str(form.get("force_checkin", "")).strip().lower() in ["true", "1", "on"]
+            if not force_checkin:
+                raise ValueError("Le départ de ce véhicule n'a pas été validé par une signature. Veuillez cocher la case de confirmation pour enregistrer ce retour exceptionnel.")
+
+            logger.warning(f"⚠️ Création d'un retour exceptionnel sans départ validé pour véhicule {record.vehicle_id} (projet {record.project_id})")
+            mention = "⚠️ [Retour exceptionnel sans départ préalable validé]"
+            if record.notes:
+                if mention not in record.notes:
+                    record.notes = f"{mention}\n{record.notes}"
+            else:
+                record.notes = mention
 
     db.session.add(record)
     db.session.commit()

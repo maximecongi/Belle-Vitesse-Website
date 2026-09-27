@@ -34,6 +34,16 @@ class McpApiToken(db.Model):
         """Calcule le hash SHA-256 d'un token brut."""
         return hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
 
+    @property
+    def is_expired(self) -> bool:
+        """Indique si le token a dépassé sa date d'expiration en gérant les fuseaux horaires (naive/aware)."""
+        if not self.expires_at:
+            return False
+        exp = self.expires_at
+        if exp.tzinfo is None:
+            exp = exp.replace(tzinfo=timezone.utc)
+        return exp < datetime.now(timezone.utc)
+
     def to_dict(self):
         return {
             "id": self.id,
@@ -42,6 +52,7 @@ class McpApiToken(db.Model):
             "token_prefix": self.token_prefix,
             "scope": self.scope or "read_only",
             "is_active": self.is_active,
+            "is_expired": self.is_expired,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "last_used_at": self.last_used_at.isoformat() if self.last_used_at else None,
             "expires_at": self.expires_at.isoformat() if self.expires_at else None,

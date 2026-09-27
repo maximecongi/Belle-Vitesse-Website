@@ -537,6 +537,114 @@ a.badge-pill:hover {
     border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
+/* --- Vehicle Context Alert (Formulaires Départs & Retours) --- */
+.vehicle-context-container {
+    position: relative;
+    width: 100%;
+}
+
+.vehicle-context-alert {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    width: 100%;
+    box-sizing: border-box;
+    z-index: 50;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding: 0.95rem 1.15rem;
+
+    background: var(--status-warning-bg, #FEF3C7);
+    border: 1px solid rgba(217, 119, 6, 0.25);
+    border-left: 4px solid var(--status-warning, #D97706);
+    box-shadow: 0 10px 25px -5px rgba(217, 119, 6, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+}
+
+.vehicle-context-alert.is-visible {
+    display: flex;
+    animation: vehicleAlertPop 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes vehicleAlertPop {
+    from {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.99);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.vehicle-context-alert-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(217, 119, 6, 0.16);
+    color: var(--status-warning, #D97706);
+    flex-shrink: 0;
+}
+
+.vehicle-context-alert-icon i,
+.vehicle-context-alert-icon svg {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2.2px;
+}
+
+.vehicle-context-alert-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.vehicle-context-alert-title {
+    font-weight: 600;
+    font-size: 0.875rem;
+    letter-spacing: -0.01em;
+    color: var(--status-warning-text, #92400E);
+    margin-bottom: 0.25rem;
+}
+
+.vehicle-context-alert-desc {
+    font-size: 0.6rem;
+    color: var(--status-warning-text, #92400E);
+    opacity: 0.95;
+    line-height: 1.45;
+}
+
+.vehicle-context-alert-action {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(217, 119, 6, 0.2);
+}
+
+.vehicle-context-alert-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(255, 255, 255, 0.65);
+    border: 1px solid rgba(217, 119, 6, 0.25);
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.6rem;
+    color: var(--status-warning-text, #92400E);
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.vehicle-context-alert-checkbox:hover {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(217, 119, 6, 0.4);
+}
+
+
 /* --- User Roles & Contacts --- */
 .badge-pill[data-val="Super Administrateur"],
 .badge-pill[data-val="super administrateur"],

@@ -42,7 +42,8 @@
                     </div>
                     <div class="rich-select-dropdown" id="projectDropdown">
                         <div class="u-p-1">
-                            <input type="text" class="form-input u-w-100 u-text-sm" id="projectSearch" placeholder="Rechercher un projet…" autocomplete="off">
+                            <input type="text" class="form-input u-w-100 u-text-sm" id="projectSearch"
+                                placeholder="Rechercher un projet…" autocomplete="off">
                         </div>
                         <div class="rich-select-options" id="projectOptions">
                             <button type="button" class="rich-select-option" data-id="" data-name="— Aucun projet —">
@@ -57,7 +58,8 @@
                                 <div class="rich-option-name">{{ pf.get('Nom', '—') }}</div>
                                 <div class="rich-option-meta">
                                     {% if pf.get('_production_name') %}
-                                    <span class="badge-pill u-text-xs" data-val="neutral">{{ pf.get('_production_name') }}</span>
+                                    <span class="badge-pill u-text-xs" data-val="neutral">{{ pf.get('_production_name')
+                                        }}</span>
                                     {% endif %}
                                     {% if pf.get('Date de départ') %}
                                     <span class="rich-meta-item">🚚 {{ pf.get('Date de départ', '') }}</span>
@@ -97,7 +99,8 @@
                             {% if v.id == data.vehicle_id %}
                             <span class="u-flex u-align-center u-gap-1">
                                 {% if v.fields.thumbnail %}
-                                <img src="{{ v.fields.thumbnail[0].thumbnails.small.url }}" class="vehicle-small-thumbnail">
+                                <img src="{{ v.fields.thumbnail[0].thumbnails.small.url }}"
+                                    class="vehicle-small-thumbnail">
                                 {% endif %}
                                 {{ v.fields.get('name', '—') }}
                             </span>
@@ -117,7 +120,8 @@
                                 placeholder="Rechercher un véhicule…" autocomplete="off">
                         </div>
                         <div class="rich-select-options" id="vehicleOptions">
-                            <div id="selectProjectNotice" class="u-p-3 u-text-sm u-text-muted u-text-center{% if data and data.project_id %} is-hidden{% endif %}">
+                            <div id="selectProjectNotice"
+                                class="u-p-3 u-text-sm u-text-muted u-text-center{% if data and data.project_id %} is-hidden{% endif %}">
                                 ⚠️ Veuillez d'abord sélectionner un projet ci-dessus
                             </div>
                             <div id="noVehicleNotice" class="u-p-3 u-text-sm u-text-muted u-text-center is-hidden">
@@ -126,8 +130,9 @@
                             {% for v in vehicles %}
                             {% set vf = v.fields %}
                             {% set thumb_url = vf.thumbnail[0].thumbnails.large.url if vf.thumbnail else '' %}
-                            <button type="button" class="rich-select-option{% if not (data and data.project_id) %} is-hidden{% endif %}" data-id="{{ v.id }}"
-                                data-name="{{ vf.get('name', '—') }}" data-thumb="{{ thumb_url }}"
+                            <button type="button"
+                                class="rich-select-option{% if not (data and data.project_id) %} is-hidden{% endif %}"
+                                data-id="{{ v.id }}" data-name="{{ vf.get('name', '—') }}" data-thumb="{{ thumb_url }}"
                                 data-search="{{ vf.get('name', '') }}"
                                 data-checkout-statuses='{{ vf.get("_checkout_statuses", {}) | tojson | forceescape }}'
                                 data-blocked-by="{{ vf.get('_blocked_by', '') }}">
@@ -138,15 +143,23 @@
                                     {% else %}
                                     <div class="vehicle-med-thumbnail u-bg-gray-light"></div>
                                     {% endif %}
-                                    <div class="u-flex u-align-center u-gap-1">
-                                        <span class="rich-option-name">{{ vf.get('name', '—') }}</span>
-                                        <span class="badge-pill vehicle-status-badge u-text-xs" data-val="neutral">
-                                            À contrôler
-                                        </span>
-                                    </div>
+                                    <span class="rich-option-name">{{ vf.get('name', '—') }}</span>
                                 </div>
                             </button>
                             {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alerte contextuelle de statut véhicule (masquée si tout va bien) -->
+                <div class="vehicle-context-container">
+                    <div id="vehicleContextAlert" class="vehicle-context-alert">
+                        <div class="vehicle-context-alert-icon" id="vehicleContextAlertIcon">
+                            <i data-lucide="alert-triangle"></i>
+                        </div>
+                        <div class="vehicle-context-alert-content">
+                            <div class="vehicle-context-alert-title" id="vehicleContextAlertTitle">Attention</div>
+                            <div class="vehicle-context-alert-desc" id="vehicleContextAlertDesc"></div>
                         </div>
                     </div>
                 </div>
@@ -249,8 +262,8 @@
                     {% if item.type == 'value' %}
                     <div class="checkpoint-value-container">
                         <input type="number" name="battery_level" class="form-input checkpoint-value-input"
-                            value="{{ data.battery_level if (data and data.battery_level is not none) else '100' }}" {% if
-                            field=='battery_level' %}min="0" max="100" {% endif %}>
+                            value="{{ data.battery_level if (data and data.battery_level is not none) else '100' }}" {%
+                            if field=='battery_level' %}min="0" max="100" {% endif %}>
                         {% if item.unit %}<span class="u-text-semibold">{{ item.unit }}</span>{% endif %}
                     </div>
                     {% else %}
@@ -308,8 +321,7 @@
                     <div class="u-text-semibold u-text-sm">Ajouter des photos</div>
                     <div class="u-text-xs u-text-muted">Cliquez ou glissez-déposez • JPG, PNG</div>
                 </div>
-                <input type="file" name="{{ field_name }}" multiple accept="image/*"
-                    class="u-file-input-hidden"
+                <input type="file" name="{{ field_name }}" multiple accept="image/*" class="u-file-input-hidden"
                     onchange="updatePhotoLabel(this)">
             </label>
             <div class="photo-preview u-flex u-flex-wrap u-gap-1 u-mt-1" data-for="{{ field_name }}"></div>
@@ -317,7 +329,8 @@
         {% endfor %}
 
         <div class="u-mt-4 u-text-right">
-            <a href="{{ url_for('admin_checkouts.admin_checkouts_list') }}" class="admin-btn admin-btn-secondary u-mr-2">Annuler</a>
+            <a href="{{ url_for('admin_checkouts.admin_checkouts_list') }}"
+                class="admin-btn admin-btn-secondary u-mr-2">Annuler</a>
             <button type="submit" class="admin-btn admin-btn-primary">
                 {% if is_edit %}Enregistrer les modifications{% else %}Créer le Checkout{% endif %}
             </button>
@@ -326,13 +339,16 @@
     </form>
 </div>
 
+<script id="checkpointsConfigData" type="application/json">{{ checkpoints_config_json|safe }}</script>
+<script id="defaultCheckpointsData" type="application/json">{{ default_checkpoints_json|safe }}</script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         if (typeof window.initInspectionForm === 'function') {
-            window.initInspectionForm(
-                {{ checkpoints_config_json|safe }},
-                {{ default_checkpoints_json|safe }}
-            );
+            const configEl = document.getElementById('checkpointsConfigData');
+            const defaultsEl = document.getElementById('defaultCheckpointsData');
+            const config = configEl ? JSON.parse(configEl.textContent) : {};
+            const defaults = defaultsEl ? JSON.parse(defaultsEl.textContent) : [];
+            window.initInspectionForm(config, defaults);
         }
     });
 </script>

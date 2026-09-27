@@ -647,12 +647,40 @@ class MCPServerFullTestSuite(unittest.TestCase):
 
             res_adm_admin = client.post(
                 "/admin/mcp-connector/generate",
-                json={"name": "Adm Full", "scope": "admin"},
+                json={"name": "Adm Full", "scope": "admin", "duration_days": 30},
                 headers={"X-Requested-With": "XMLHttpRequest"},
             )
             self.assertEqual(res_adm_admin.status_code, 201)
+
+            # Vérification du rendu HTML GET avec token ayant une date d'expiration (naive et aware)
+            res_page = client.get("/admin/mcp-connector")
+            self.assertEqual(res_page.status_code, 200)
+            self.assertIn(b"Adm Full", res_page.data)
         finally:
             self.app.config["WTF_CSRF_ENABLED"] = prev_csrf
+
+    def test_mcp_token_is_expired_and_naive_aware_compatibility(self):
+        """Vérifie la robustesse de McpApiToken.is_expired face aux datetimes naïves et conscientes."""
+        from datetime import datetime, timezone, timedelta
+        # 1. Token permanent
+        t_perm = McpApiToken(user_id=904, name="Perm", token_prefix="bv_mcp_perm", token_hash="hash_p", expires_at=None)
+        self.assertFalse(t_perm.is_expired)
+
+        # 2. Token futur (aware)
+        t_fut_aware = McpApiToken(user_id=904, name="Fut Aware", token_prefix="bv_mcp_fa", token_hash="hash_fa", expires_at=datetime.now(timezone.utc) + timedelta(days=10))
+        self.assertFalse(t_fut_aware.is_expired)
+
+        # 3. Token futur (naive)
+        t_fut_naive = McpApiToken(user_id=904, name="Fut Naive", token_prefix="bv_mcp_fn", token_hash="hash_fn", expires_at=datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=10))
+        self.assertFalse(t_fut_naive.is_expired)
+
+        # 4. Token passé (aware)
+        t_past_aware = McpApiToken(user_id=904, name="Past Aware", token_prefix="bv_mcp_pa", token_hash="hash_pa", expires_at=datetime.now(timezone.utc) - timedelta(days=2))
+        self.assertTrue(t_past_aware.is_expired)
+
+        # 5. Token passé (naive)
+        t_past_naive = McpApiToken(user_id=904, name="Past Naive", token_prefix="bv_mcp_pn", token_hash="hash_pn", expires_at=datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=2))
+        self.assertTrue(t_past_naive.is_expired)
 
     def test_asgi_auth_middleware_strict_fail_close(self):
         """Vérifie le durcissement Zero-Trust du middleware ASGI (Fail-Close, 401 sur token absent/invalide/expiré/révoqué)."""

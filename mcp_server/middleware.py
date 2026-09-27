@@ -37,8 +37,10 @@ class PureAsgiAuthMiddleware:
             if method == "OPTIONS":
                 response_headers = [
                     (b"access-control-allow-origin", b"*"),
-                    (b"access-control-allow-methods", b"GET, POST, OPTIONS, PUT, DELETE"),
-                    (b"access-control-allow-headers", b"Authorization, Content-Type, X-Requested-With, MCP-Protocol-Version"),
+                    (b"access-control-allow-methods",
+                     b"GET, POST, OPTIONS, PUT, DELETE"),
+                    (b"access-control-allow-headers",
+                     b"Authorization, Content-Type, X-Requested-With, MCP-Protocol-Version"),
                 ]
                 await send({
                     "type": "http.response.start",
@@ -55,10 +57,12 @@ class PureAsgiAuthMiddleware:
                         from models import db
                         from sqlalchemy import text
                         db.session.execute(text("SELECT 1"))
-                    body = json.dumps({"status": "healthy", "service": "BV-MCP"}).encode("utf-8")
+                    body = json.dumps(
+                        {"status": "healthy", "service": "BV-MCP"}).encode("utf-8")
                     status = 200
                 except Exception as e:
-                    body = json.dumps({"status": "unhealthy", "error": str(e)}).encode("utf-8")
+                    body = json.dumps(
+                        {"status": "unhealthy", "error": str(e)}).encode("utf-8")
                     status = 500
 
                 await send({
@@ -70,7 +74,8 @@ class PureAsgiAuthMiddleware:
                 return
 
             headers_dict = dict(scope.get("headers", []))
-            accept_header = headers_dict.get(b"accept", b"").decode("utf-8").lower()
+            accept_header = headers_dict.get(
+                b"accept", b"").decode("utf-8").lower()
 
             # 2.5 Navigateur direct sans en-tête SSE (page d'information publique)
             if method == "GET" and path in ("/mcp", "/mcp/") and "text/event-stream" not in accept_header and "application/x-ndjson" not in accept_header:
@@ -93,7 +98,8 @@ class PureAsgiAuthMiddleware:
             # 3. Extraction IP réelle (support Traefik, Nginx, Cloudflare)
             client_ip = "unknown"
             for header_name in (b"cf-connecting-ip", b"x-real-ip", b"x-forwarded-for"):
-                header_val = headers_dict.get(header_name, b"").decode("utf-8").strip()
+                header_val = headers_dict.get(
+                    header_name, b"").decode("utf-8").strip()
                 if header_val:
                     client_ip = header_val.split(",")[0].strip()
                     break
@@ -131,7 +137,8 @@ class PureAsgiAuthMiddleware:
 
             # 4. Rate limiting par IP / Session
             rate_key = session_id or client_ip
-            timestamps = [t for t in MCP_RATE_LIMITER[rate_key] if now - t < 60]
+            timestamps = [
+                t for t in MCP_RATE_LIMITER[rate_key] if now - t < 60]
             MCP_RATE_LIMITER[rate_key] = timestamps
 
             if len(timestamps) >= MAX_MCP_REQUESTS_PER_MINUTE:
@@ -153,7 +160,8 @@ class PureAsgiAuthMiddleware:
 
             # 5. Extraction et validation stricte du Token MCP
             raw_token = None
-            auth_header = headers_dict.get(b"authorization", b"").decode("utf-8")
+            auth_header = headers_dict.get(
+                b"authorization", b"").decode("utf-8")
             if auth_header and auth_header.startswith("Bearer "):
                 raw_token = auth_header.split("Bearer ")[-1].strip()
             elif "token" in query_params:
@@ -183,15 +191,12 @@ class PureAsgiAuthMiddleware:
                         if token_id:
                             with flask_app.app_context():
                                 from models import McpApiToken
-                                t_rec = McpApiToken.query.filter_by(id=token_id).first()
+                                t_rec = McpApiToken.query.filter_by(
+                                    id=token_id).first()
                                 if not t_rec or not t_rec.is_active:
                                     is_token_valid = False
-                                elif t_rec.expires_at:
-                                    exp = t_rec.expires_at
-                                    if exp.tzinfo is None:
-                                        exp = exp.replace(tzinfo=timezone.utc)
-                                    if exp < datetime.now(timezone.utc):
-                                        is_token_valid = False
+                                elif t_rec.is_expired:
+                                    is_token_valid = False
 
                         if is_token_valid:
                             session_data["last_seen"] = now
@@ -211,12 +216,14 @@ class PureAsgiAuthMiddleware:
                     f"⛔ Requête MCP non authentifiée ou token invalide [{method} {path}] depuis {client_ip}")
 
                 # Enregistrement de l'échec pour la protection Anti-Brute-Force
-                failures = [t for t in MCP_FAILED_AUTH_IP[client_ip] if now - t < 120]
+                failures = [
+                    t for t in MCP_FAILED_AUTH_IP[client_ip] if now - t < 120]
                 failures.append(now)
                 MCP_FAILED_AUTH_IP[client_ip] = failures
 
                 if len(failures) >= 5:
-                    MCP_BANNED_IPS[client_ip] = now + 900  # Bannissement 15 minutes
+                    MCP_BANNED_IPS[client_ip] = now + \
+                        900  # Bannissement 15 minutes
                     logger.warning(
                         f"🚨 Bannissement temporaire (15 min) déclenché pour l'IP {client_ip} après 5 échecs consécutifs.")
 

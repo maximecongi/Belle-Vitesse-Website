@@ -155,6 +155,20 @@ function initInspectionForm(checkpointsConfig, defaultCheckpoints) {
                 return false;
             }
 
+            // Vérification si confirmation requise pour retour exceptionnel sans départ validé
+            const forceAction = document.getElementById('forceCheckinAction');
+            const forceCheckbox = document.getElementById('forceCheckinCheckbox');
+            if (forceAction && !forceAction.classList.contains('u-d-none') && forceCheckbox && !forceCheckbox.checked) {
+                e.preventDefault();
+                if (typeof window.showFlash === 'function') {
+                    window.showFlash("Le départ n'est pas validé. Veuillez cocher la case de confirmation pour enregistrer ce retour exceptionnel.", "warning");
+                } else {
+                    alert("Le départ n'est pas validé. Veuillez cocher la case de confirmation pour enregistrer ce retour exceptionnel.");
+                }
+                forceCheckbox.focus();
+                return false;
+            }
+
             // Désactivation différée pour bloquer la double soumission
             setTimeout(() => {
                 if (submitBtn) {

@@ -82,14 +82,10 @@ def authenticate_mcp_token(raw_token: str) -> McpUserContext | None:
         return None
 
     # Vérification d'expiration
-    if token_rec.expires_at:
-        exp_at = token_rec.expires_at
-        if exp_at.tzinfo is None:
-            exp_at = exp_at.replace(tzinfo=timezone.utc)
-        if exp_at < datetime.now(timezone.utc):
-            logger.warning(
-                f"⚠️ Token MCP #{token_rec.id} expiré pour l'utilisateur {token_rec.user_id}.")
-            return None
+    if token_rec.is_expired:
+        logger.warning(
+            f"⚠️ Token MCP #{token_rec.id} expiré pour l'utilisateur {token_rec.user_id}.")
+        return None
 
     # Mise à jour traçabilité last_used_at
     try:

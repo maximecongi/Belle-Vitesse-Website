@@ -4,6 +4,112 @@
 
 let updateVehicleOptions = null;
 
+function updateVehicleContextAlert() {
+    const alertEl = document.getElementById('vehicleContextAlert');
+    if (!alertEl) return;
+
+    const titleEl = document.getElementById('vehicleContextAlertTitle');
+    const descEl = document.getElementById('vehicleContextAlertDesc');
+    const forceAction = document.getElementById('forceCheckinAction');
+    const forceCheckbox = document.getElementById('forceCheckinCheckbox');
+
+    const pInput = document.querySelector('#projectSelect input[name="project_id"]');
+    const vInput = document.querySelector('#vehicleSelect input[name="vehicle_id"]');
+
+    const selectedProjectId = pInput ? pInput.value : '';
+    const selectedVehicleId = vInput ? vInput.value : '';
+
+    if (!selectedProjectId || !selectedVehicleId) {
+        alertEl.classList.remove('is-visible');
+        if (forceAction) forceAction.classList.add('u-d-none');
+        return;
+    }
+
+    const vOpt = document.querySelector(`#vehicleOptions .rich-select-option[data-id="${selectedVehicleId}"]`);
+    if (!vOpt) {
+        alertEl.classList.remove('is-visible');
+        if (forceAction) forceAction.classList.add('u-d-none');
+        return;
+    }
+
+    const checkoutStatuses = JSON.parse(vOpt.dataset.checkoutStatuses || '{}');
+    const checkinStatuses = JSON.parse(vOpt.dataset.checkinStatuses || '{}');
+    const checkoutStatus = checkoutStatuses[selectedProjectId];
+    const checkinStatus = checkinStatuses[selectedProjectId];
+
+    // Vérifier si formulaire Check-in ou Checkout
+    const isCheckinForm = vOpt.hasAttribute('data-checkin-statuses');
+    const isCheckoutForm = vOpt.hasAttribute('data-checkout-statuses') && !isCheckinForm;
+
+    let hasWarning = false;
+    let titleText = 'Attention';
+    let descText = '';
+    let showForceCheckbox = false;
+
+    if (isCheckinForm) {
+        // En Check-in :
+        // Si tout va bien (départ signé/validé, et pas de check-in déjà fait) => ON N'AFFICHE RIEN
+        const isCheckoutSigned = (checkoutStatus === 'signed' || checkoutStatus === 'validated');
+
+        if (checkinStatus) {
+            // Un retour a déjà été enregistré pour ce projet
+            hasWarning = true;
+            titleText = 'Retour déjà enregistré';
+            const statusLabel = (checkinStatus === 'signed' || checkinStatus === 'validated') ? 'validé' : 'en cours';
+            descText = `Un état des lieux de retour a déjà été enregistré pour ce véhicule sur ce projet (${statusLabel}).`;
+        } else if (!isCheckoutSigned) {
+            // Aucun départ ou départ non signé
+            hasWarning = true;
+            titleText = 'Départ non validé';
+            if (checkoutStatus) {
+                descText = 'Le départ de ce véhicule est en cours mais n\'a pas encore été validé par une signature.';
+            } else {
+                descText = 'Aucun état des lieux de départ n\'a été enregistré pour ce véhicule sur ce projet.';
+            }
+            showForceCheckbox = true;
+        }
+    } else if (isCheckoutForm) {
+        // En Checkout :
+        // Si tout va bien (véhicule disponible, pas déjà parti pour ce projet) => ON N'AFFICHE RIEN
+        const blockedByProject = vOpt.dataset.blockedBy;
+
+        if (checkoutStatus) {
+            hasWarning = true;
+            titleText = 'Départ déjà existant';
+            const statusLabel = (checkoutStatus === 'signed' || checkoutStatus === 'validated') ? 'validé' : 'en cours';
+            descText = `Un départ a déjà été enregistré pour ce véhicule sur ce projet (${statusLabel}).`;
+        } else if (blockedByProject) {
+            hasWarning = true;
+            titleText = 'Véhicule en cours d\'utilisation';
+            descText = `Ce véhicule est actuellement engagé sur un autre projet (« ${blockedByProject} ») et son retour n'a pas encore été validé.`;
+        }
+    }
+
+    if (hasWarning) {
+        if (titleEl) titleEl.textContent = titleText;
+        if (descEl) descEl.textContent = descText;
+        alertEl.classList.add('is-visible');
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
+
+        if (forceAction) {
+            if (showForceCheckbox) {
+                forceAction.classList.remove('u-d-none');
+            } else {
+                forceAction.classList.add('u-d-none');
+                if (forceCheckbox) forceCheckbox.checked = false;
+            }
+        }
+    } else {
+        alertEl.classList.remove('is-visible');
+        if (forceAction) {
+            forceAction.classList.add('u-d-none');
+            if (forceCheckbox) forceCheckbox.checked = false;
+        }
+    }
+}
+
 function initBadgeSelects() {
     document.querySelectorAll('.badge-select').forEach(sel => {
         const trigger = sel.querySelector('.badge-select-trigger');
@@ -125,14 +231,6 @@ function initProjectSelect() {
 
         // Afficher UNIQUEMENT les véhicules rattachés au projet
         if (vOptions && vOptions.length) {
-            const statusMap = {
-                'signed': 'Signé',
-                'pending': 'À signer',
-                'in_progress': 'En cours',
-                'validated': 'Validé',
-                'to_sign': 'À signer'
-            };
-
             vOptions.forEach(vOpt => {
                 const vid = vOpt.dataset.id;
                 if (!vid || !allowedVehicles.includes(vid)) {
@@ -142,61 +240,6 @@ function initProjectSelect() {
 
                 vOpt.style.display = '';
                 vOpt.removeAttribute('data-disabled');
-
-                const checkoutStatuses = JSON.parse(vOpt.dataset.checkoutStatuses || '{}');
-                const checkinStatuses = JSON.parse(vOpt.dataset.checkinStatuses || '{}');
-                const checkoutStatus = checkoutStatuses[selectedProjectId];
-                const checkinStatus = checkinStatuses[selectedProjectId];
-                const badgeEl = vOpt.querySelector('.vehicle-status-badge');
-                if (badgeEl) {
-                    badgeEl.style.background = '';
-                    badgeEl.style.color = '';
-                }
-
-                if (vOpt.hasAttribute('data-checkin-statuses')) {
-                    // Formulaire de Retour (Check-in)
-                    const isCheckoutSigned = (checkoutStatus === 'signed' || checkoutStatus === 'validated');
-                    if (checkinStatus) {
-                        if (badgeEl) {
-                            badgeEl.textContent = 'Retour : ' + (statusMap[checkinStatus] || checkinStatus);
-                            badgeEl.dataset.val = (checkinStatus === 'signed' || checkinStatus === 'validated') ? 'ok' : 'warning';
-                        }
-                    } else if (isCheckoutSigned) {
-                        if (badgeEl) {
-                            badgeEl.textContent = "À contrôler";
-                            badgeEl.dataset.val = "checkin";
-                        }
-                    } else if (checkoutStatus) {
-                        if (badgeEl) {
-                            badgeEl.textContent = "Départ en cours (" + (statusMap[checkoutStatus] || checkoutStatus) + ")";
-                            badgeEl.dataset.val = "warning";
-                        }
-                    } else {
-                        if (badgeEl) {
-                            badgeEl.textContent = "À contrôler";
-                            badgeEl.dataset.val = "neutral";
-                        }
-                    }
-                } else if (vOpt.hasAttribute('data-checkout-statuses')) {
-                    // Formulaire de Départ (Check-out)
-                    const blockedByProject = vOpt.dataset.blockedBy;
-                    if (checkoutStatus) {
-                        if (badgeEl) {
-                            badgeEl.textContent = 'Départ : ' + (statusMap[checkoutStatus] || checkoutStatus);
-                            badgeEl.dataset.val = (checkoutStatus === 'signed' || checkoutStatus === 'validated') ? 'ok' : 'warning';
-                        }
-                    } else if (blockedByProject) {
-                        if (badgeEl) {
-                            badgeEl.textContent = "Retour en attente : " + blockedByProject;
-                            badgeEl.dataset.val = "danger";
-                        }
-                    } else {
-                        if (badgeEl) {
-                            badgeEl.textContent = "À contrôler";
-                            badgeEl.dataset.val = "checkout";
-                        }
-                    }
-                }
             });
 
             // Réinitialiser si le véhicule actuellement sélectionné ne fait plus partie du projet
@@ -206,6 +249,8 @@ function initProjectSelect() {
                 vInput.dispatchEvent(new Event('change', { bubbles: true }));
             }
         }
+
+        updateVehicleContextAlert();
     };
 
     pOptions.forEach(opt => {
@@ -320,8 +365,12 @@ function initVehicleSelect() {
             }
             vSelect.classList.remove('open');
             vInput.dispatchEvent(new Event('change', { bubbles: true }));
+            updateVehicleContextAlert();
         });
     });
+
+    vInput.addEventListener('change', updateVehicleContextAlert);
+    updateVehicleContextAlert();
 }
 
 function initControllerSelect() {
@@ -358,6 +407,8 @@ function initSelects() {
     initProjectSelect();
     initVehicleSelect();
     initControllerSelect();
+    updateVehicleContextAlert();
 }
 
 window.initSelects = initSelects;
+window.updateVehicleContextAlert = updateVehicleContextAlert;
