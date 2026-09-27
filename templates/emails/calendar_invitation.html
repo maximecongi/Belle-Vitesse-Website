@@ -18,14 +18,18 @@
 
 <a class="button" href="{{ webcal_url or feed_url }}">S'abonner au calendrier</a>
 
-<div>
-    <div class="qr-code-box">
-        <img src="data:image/png;base64,{{ qrcode_base64 }}" alt="QR Code Abonnement">
-    </div>
-    <p class="text-highlight">
-        Scannez ce code avec votre appareil photo pour vous abonner instantanément.
-    </p>
-</div>
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" align="center" style="margin: 20px 0;">
+    <tr>
+        <td align="center">
+            <div class="qr-code-box">
+                <img src="data:image/png;base64,{{ qrcode_base64 }}" alt="QR Code Abonnement" width="150" height="150" style="display: block; width: 150px; height: 150px; border: 0;">
+            </div>
+            <p class="text-highlight" style="margin-top: 10px;">
+                Scannez ce code avec votre appareil photo pour vous abonner instantanément.
+            </p>
+        </td>
+    </tr>
+</table>
 
 <p class="text-muted">
     Lien d'abonnement direct :<br>

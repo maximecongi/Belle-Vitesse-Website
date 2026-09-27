@@ -14,25 +14,29 @@
     status_badge_class='badge-warning',
     status_label='En attente de visa'
 ) %}
-<div class="info-card info-card-incident">
-    <div class="info-line"><strong>Projet :</strong> {{ project_name }}</div>
-    {% if production_name %}
-    <div class="info-line"><strong>Production :</strong> {{ production_name }}</div>
-    {% endif %}
-    {% if incident_title %}
-    <div class="info-line"><strong>Objet :</strong> {{ incident_title }}</div>
-    {% endif %}
-    {% if incident_number %}
-    <div class="info-line"><strong>N° de dossier :</strong> {{ incident_number }}</div>
-    {% endif %}
-    {% if incident_date %}
-    <div class="info-line"><strong>Date :</strong> {{ incident_date }}</div>
-    {% endif %}
-    {% if location %}
-    <div class="info-line"><strong>Lieu :</strong> {{ location }}</div>
-    {% endif %}
-    <div class="info-line"><strong>Statut :</strong> <span class="badge {{ status_badge_class }}">{{ status_label }}</span></div>
-</div>
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="info-card info-card-incident" style="width: 100%; border-collapse: separate; background-color: #1a1a1a; border: 1px solid #282828; border-left: 4px solid #EF4444 !important; margin: 20px 0 25px;">
+    <tr>
+        <td style="padding: 20px; text-align: left;">
+            <div class="info-line"><strong>Projet :</strong> {{ project_name }}</div>
+            {% if production_name %}
+            <div class="info-line"><strong>Production :</strong> {{ production_name }}</div>
+            {% endif %}
+            {% if incident_title %}
+            <div class="info-line"><strong>Objet :</strong> {{ incident_title }}</div>
+            {% endif %}
+            {% if incident_number %}
+            <div class="info-line"><strong>N° de dossier :</strong> {{ incident_number }}</div>
+            {% endif %}
+            {% if incident_date %}
+            <div class="info-line"><strong>Date :</strong> {{ incident_date }}</div>
+            {% endif %}
+            {% if location %}
+            <div class="info-line"><strong>Lieu :</strong> {{ location }}</div>
+            {% endif %}
+            <div class="info-line"><strong>Statut :</strong> <span class="badge {{ status_badge_class }}">{{ status_label }}</span></div>
+        </td>
+    </tr>
+</table>
 {% endmacro %}
 
 
@@ -44,17 +48,21 @@
     status_badge_class='badge-warning',
     status_label='En attente de signature'
 ) %}
-<div class="info-card info-card-waiver">
-    <div class="info-line"><strong>Projet :</strong> {{ project_name }}</div>
-    {% if production_name %}
-    <div class="info-line"><strong>Production :</strong> {{ production_name }}</div>
-    {% endif %}
-    {% if display_name %}
-    <div class="info-line"><strong>Destinataire :</strong> {{ display_name }}</div>
-    {% endif %}
-    {% if type_title %}
-    <div class="info-line"><strong>Type de décharge :</strong> {{ type_title }}</div>
-    {% endif %}
-    <div class="info-line"><strong>Statut :</strong> <span class="badge {{ status_badge_class }}">{{ status_label }}</span></div>
-</div>
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="info-card info-card-waiver" style="width: 100%; border-collapse: separate; background-color: #1a1a1a; border: 1px solid #282828; border-left: 4px solid #8B5CF6 !important; margin: 20px 0 25px;">
+    <tr>
+        <td style="padding: 20px; text-align: left;">
+            <div class="info-line"><strong>Projet :</strong> {{ project_name }}</div>
+            {% if production_name %}
+            <div class="info-line"><strong>Production :</strong> {{ production_name }}</div>
+            {% endif %}
+            {% if display_name %}
+            <div class="info-line"><strong>Destinataire :</strong> {{ display_name }}</div>
+            {% endif %}
+            {% if type_title %}
+            <div class="info-line"><strong>Type de décharge :</strong> {{ type_title }}</div>
+            {% endif %}
+            <div class="info-line"><strong>Statut :</strong> <span class="badge {{ status_badge_class }}">{{ status_label }}</span></div>
+        </td>
+    </tr>
+</table>
 {% endmacro %}
