@@ -192,6 +192,25 @@
     border-color: #aaa;
 }
 
+form.today-row-waiver-link {
+    padding: 0;
+}
+
+.today-row-waiver-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 0.45rem 0.65rem;
+    background: none;
+    border: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    text-decoration: none;
+    box-sizing: border-box;
+}
+
 .today-row-label {
     display: inline-flex;
     align-items: center;

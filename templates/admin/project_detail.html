@@ -596,7 +596,8 @@ initials, empty_state, waiver_card, doc_download_badge %}
                 'Pilote',
                 pilot_waiver.pilot_name,
                 url_for('admin_waivers.admin_pilot_waivers_list', q=pilot_waiver.waiver_num),
-                url_for('admin_waivers.admin_pilot_waiver_quick_create', project_id=project.id)
+                url_for('admin_waivers.admin_pilot_waiver_quick_create', project_id=project.id),
+                url_for('admin_waivers.admin_pilot_waiver_send', waiver_id=pilot_waiver.waiver_num or pilot_waiver.id) if (pilot_waiver.waiver_num or pilot_waiver.id) else None
                 ) }}
 
                 {{ waiver_card(
@@ -606,7 +607,8 @@ initials, empty_state, waiver_card, doc_download_badge %}
                 'Prod',
                 production_waiver.production_name,
                 url_for('admin_waivers.admin_production_waivers_list', q=production_waiver.waiver_num),
-                url_for('admin_waivers.admin_production_waiver_quick_create', project_id=project.id)
+                url_for('admin_waivers.admin_production_waiver_quick_create', project_id=project.id),
+                url_for('admin_waivers.admin_production_waiver_send', waiver_id=production_waiver.waiver_num or production_waiver.id) if (production_waiver.waiver_num or production_waiver.id) else None
                 ) }}
             </div>
 

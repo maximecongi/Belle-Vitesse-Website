@@ -180,6 +180,7 @@ def _format_project_admin(p, vehicle_map, heads_map):
         "pilot_waiver": {
             "id": p.pilot_waiver.id if (p.pilot_waiver and not p.pilot_waiver.deleted_at) else None,
             "waiver_num": p.pilot_waiver.waiver_id if (p.pilot_waiver and not p.pilot_waiver.deleted_at) else "",
+            "pilot_name": f"{p.pilot_waiver.pilot_first_name or ''} {p.pilot_waiver.pilot_last_name or ''}".strip() if (p.pilot_waiver and not p.pilot_waiver.deleted_at and (p.pilot_waiver.pilot_first_name or p.pilot_waiver.pilot_last_name)) else (f"{p.pilot_contact.first_name} {p.pilot_contact.last_name}" if p.pilot_contact else ""),
             "status": format_waiver_status(p.pilot_waiver.status) if (p.pilot_waiver and not p.pilot_waiver.deleted_at) else "",
             "raw_status": p.pilot_waiver.status if (p.pilot_waiver and not p.pilot_waiver.deleted_at) else "",
             "pdf_path": _get_secured_document_url(p.pilot_waiver.signed_pdf_path, "pilot-waiver") if (p.pilot_waiver and not p.pilot_waiver.deleted_at) else None,
@@ -187,6 +188,7 @@ def _format_project_admin(p, vehicle_map, heads_map):
         "production_waiver": {
             "id": p.production_waiver.id if (p.production_waiver and not p.production_waiver.deleted_at) else None,
             "waiver_num": p.production_waiver.waiver_id if (p.production_waiver and not p.production_waiver.deleted_at) else "",
+            "production_name": p.production_waiver.production_name if (p.production_waiver and not p.production_waiver.deleted_at and p.production_waiver.production_name) else (p.production.name if p.production else ""),
             "status": format_waiver_status(p.production_waiver.status) if (p.production_waiver and not p.production_waiver.deleted_at) else "",
             "raw_status": p.production_waiver.status if (p.production_waiver and not p.production_waiver.deleted_at) else "",
             "pdf_path": _get_secured_document_url(p.production_waiver.signed_pdf_path, "production-waiver") if (p.production_waiver and not p.production_waiver.deleted_at) else None,

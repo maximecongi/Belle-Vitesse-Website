@@ -369,13 +369,21 @@ admin-multiselect-tag--custom
 </div>
 {% endmacro %}
 
-{% macro waiver_card(waiver, title, icon, beneficiary_label, beneficiary_name, list_url, new_url) %}
+{% macro waiver_card(waiver, title, icon, beneficiary_label, beneficiary_name, list_url, new_url, send_url=None) %}
 <div class="project-doc-item u-flex u-flex-column u-justify-between u-p-2">
     <div class="project-doc-info">
         <div class="project-doc-title u-font-semibold u-text-xs">
             <i data-lucide="{{ icon }}"></i> {{ title }}
         </div>
-        <div class="checkout-doc-id">{{ waiver.waiver_num or 'Non créée' }}</div>
+        <div class="checkout-doc-id">
+            {% if waiver and waiver.waiver_num and list_url %}
+            <a href="{{ list_url }}" class="u-text-muted u-hover-underline" title="Voir dans la liste des décharges">
+                {{ waiver.waiver_num }}
+            </a>
+            {% else %}
+            {{ waiver.waiver_num or 'Non créée' }}
+            {% endif %}
+        </div>
         {% if beneficiary_name %}
         <div class="project-doc-beneficiary">
             {{ beneficiary_label }} : <span class="u-font-semibold">{{ beneficiary_name }}</span>
@@ -384,10 +392,20 @@ admin-multiselect-tag--custom
     </div>
     <div class="projects-cell-item u-flex u-justify-between u-align-center u-mt-2">
         {% if waiver and waiver.id and waiver.waiver_num %}
-        <a href="{{ list_url }}">
-            {{ status_badge(waiver.status, waiver.raw_status) }}
-        </a>
-        {{ doc_download_badge(waiver.pdf_path) }}
+            {% if waiver.raw_status in ['to_send', 'to_generate'] and send_url %}
+            <form action="{{ send_url }}" method="POST" class="u-m-0 u-d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                <button type="submit" class="badge-pill u-pointer" data-val="to_send" title="Envoyer la décharge par e-mail en 1 clic">
+                    <i data-lucide="send"></i> Envoyer (1 clic)
+                </button>
+            </form>
+            {% else %}
+            <a href="{{ list_url }}" title="Voir la décharge">
+                {{ status_badge(waiver.status, waiver.raw_status) }}
+            </a>
+            {% endif %}
+            {{ doc_download_badge(waiver.pdf_path) }}
         {% else %}
         <form action="{{ new_url }}" method="POST" class="u-m-0 u-d-inline">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

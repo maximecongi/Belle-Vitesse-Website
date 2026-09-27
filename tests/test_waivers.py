@@ -44,6 +44,7 @@ class WaiversTest(unittest.TestCase):
         os.environ["USE_SSH_TUNNEL"] = "false"
 
         self.app = create_app()
+        self.app.config["WTF_CSRF_ENABLED"] = False
         self.client = self.app.test_client()
 
         with self.app.app_context():
@@ -396,7 +397,65 @@ class WaiversTest(unittest.TestCase):
             self.assertIsNotNone(prw)
             self.assertEqual(prw.status, "to_send")
 
+    def test_send_waivers_1_click_routes(self):
+        """Vérifie l'envoi en 1 clic des décharges avec retour à la page d'origine (return_to)."""
+        from unittest.mock import patch
+        from models import Contact
+
+        with self.app.app_context():
+            user, proj = self._create_mock_data()
+
+            # Créer contacts avec e-mail
+            pilot_c = Contact(first_name="Luc", last_name="Pilote", mail="pilot@example.com")
+            prod_c = Contact(first_name="Marie", last_name="Prod", mail="prod@example.com")
+            db.session.add_all([pilot_c, prod_c])
+            db.session.flush()
+
+            proj.pilot_contact_id = pilot_c.id
+            proj.production_contact_id = prod_c.id
+            db.session.commit()
+
+            # Créer les décharges
+            create_pilot_waiver(proj.id)
+            create_production_waiver(proj.id)
+
+            pw = PilotWaiver.query.filter_by(project_id=proj.id).first()
+            prw = ProductionWaiver.query.filter_by(project_id=proj.id).first()
+
+            with self.client.session_transaction() as sess:
+                sess["admin_authenticated"] = True
+                sess["admin_user_id"] = user.id
+                sess["admin_user_role"] = "administrator"
+
+            with patch("utils.mailer.send_waiver_invitation_email", return_value=True), \
+                 patch("utils.mailer.send_production_waiver_invitation_email", return_value=True):
+
+                # 1-clic envoi décharge pilote avec return_to
+                target_url = f"/admin/projects/{proj.id}"
+                resp_p = self.client.post(
+                    f"/admin/waivers/pilots/{pw.waiver_id}/send",
+                    data={"return_to": target_url},
+                    follow_redirects=False
+                )
+                self.assertEqual(resp_p.status_code, 302)
+                self.assertEqual(resp_p.headers["Location"], target_url)
+
+                db.session.refresh(pw)
+                self.assertEqual(pw.status, "to_sign")
+
+                # 1-clic envoi décharge production avec return_to
+                resp_pr = self.client.post(
+                    f"/admin/waivers/productions/{prw.waiver_id}/send",
+                    data={"return_to": target_url},
+                    follow_redirects=False
+                )
+                self.assertEqual(resp_pr.status_code, 302)
+                self.assertEqual(resp_pr.headers["Location"], target_url)
+
+                db.session.refresh(prw)
+                self.assertEqual(prw.status, "to_sign")
 
 
 if __name__ == "__main__":
     unittest.main()
+

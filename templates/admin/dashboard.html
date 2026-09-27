@@ -82,6 +82,23 @@
                     <div class="agenda-section-title">Administratif</div>
                     <div class="u-flex u-flex-column u-gap-1">
                         {% if project.pilot_waiver.id %}
+                        {% if project.pilot_waiver.raw_status in ['to_send', 'to_generate'] %}
+                        <form
+                            action="{{ url_for('admin_waivers.admin_pilot_waiver_send', waiver_id=project.pilot_waiver.waiver_num or project.pilot_waiver.id) }}"
+                            method="POST" class="today-row-waiver-link u-m-0">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                            <button type="submit" class="today-row-waiver-btn"
+                                title="Envoyer la décharge pilote par e-mail en 1 clic">
+                                <span class="today-row-label u-text-medium">
+                                    <i data-lucide="file-signature"></i>
+                                    <span>Décharge Pilote</span>
+                                </span>
+                                <span class="badge-pill u-badge-agenda" data-val="to_send">
+                                    <i data-lucide="send"></i>Envoyer</span>
+                            </button>
+                        </form>
+                        {% else %}
                         <a class="today-row-waiver-link"
                             href="{{ url_for('admin_waivers.admin_pilot_waivers_list') }}?q={{ project.pilot_waiver.waiver_num|urlencode }}">
                             <span class="today-row-label u-text-medium">
@@ -91,6 +108,7 @@
                             {{ status_badge(project.pilot_waiver.status, project.pilot_waiver.raw_status,
                             class_name='u-badge-agenda') }}
                         </a>
+                        {% endif %}
                         {% else %}
                         <a href="{{ url_for('admin_waivers.admin_pilot_waiver_quick_create', project_id=project.id) }}"
                             class="today-row-waiver-link" title="Créer la décharge en 1 clic">
@@ -103,6 +121,23 @@
                         {% endif %}
 
                         {% if project.production_waiver.id %}
+                        {% if project.production_waiver.raw_status in ['to_send', 'to_generate'] %}
+                        <form
+                            action="{{ url_for('admin_waivers.admin_production_waiver_send', waiver_id=project.production_waiver.waiver_num or project.production_waiver.id) }}"
+                            method="POST" class="today-row-waiver-link u-m-0">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                            <button type="submit" class="today-row-waiver-btn"
+                                title="Envoyer la décharge production par e-mail en 1 clic">
+                                <span class="today-row-label u-text-medium">
+                                    <i data-lucide="file-signature"></i>
+                                    <span>Décharge Prod.</span>
+                                </span>
+                                <span class="badge-pill u-badge-agenda" data-val="to_send">
+                                    <i data-lucide="send"></i>Envoyer</span>
+                            </button>
+                        </form>
+                        {% else %}
                         <a class="today-row-waiver-link"
                             href="{{ url_for('admin_waivers.admin_production_waivers_list') }}?q={{ project.production_waiver.waiver_num|urlencode }}">
                             <span class="today-row-label u-text-medium">
@@ -112,6 +147,7 @@
                             {{ status_badge(project.production_waiver.status,
                             project.production_waiver.raw_status, class_name='u-badge-agenda') }}
                         </a>
+                        {% endif %}
                         {% else %}
                         <a href="{{ url_for('admin_waivers.admin_production_waiver_quick_create', project_id=project.id) }}"
                             class="today-row-waiver-link" title="Créer la décharge en 1 clic">
@@ -191,7 +227,8 @@
                         {% if project.incidents and project.incidents|length > 0 %}
                         {% for inc in project.incidents %}
                         <a class="today-row-incident-link today-row-incident-link--active"
-                            href="{{ url_for('admin_incidents.admin_incident_detail', record_id=inc.id) }}" title="{{ inc.title }}">
+                            href="{{ url_for('admin_incidents.admin_incident_detail', record_id=inc.id) }}"
+                            title="{{ inc.title }}">
                             <span class="today-row-label u-text-medium">
                                 <i data-lucide="wrench"></i>
                                 <span>{{ inc.title | truncate(30) }}</span>

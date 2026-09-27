@@ -9,7 +9,8 @@ list_header_actions, table_empty_row, render_pagination %}
 
 
 {% block header_actions %}
-{{ list_header_actions('Rechercher un projet...', url_for('admin_projects.admin_project_new'), '+ Nouveau Projet', is_archive) }}
+{{ list_header_actions('Rechercher un projet...', url_for('admin_projects.admin_project_new'), '+ Nouveau Projet',
+is_archive) }}
 {% endblock %}
 
 {% macro project_table(project_list) %}
@@ -70,7 +71,8 @@ list_header_actions, table_empty_row, render_pagination %}
                     </div>
                     {% else %}
                     <div class="projects-cell-item">
-                        <a href="{{ url_for('admin_checkouts.admin_checkout_new', project_id=project.id, vehicle_id=v.id) }}">
+                        <a
+                            href="{{ url_for('admin_checkouts.admin_checkout_new', project_id=project.id, vehicle_id=v.id) }}">
                             {{ status_badge(v.fields.name or v.fields.Nom or 'Véhicule', 'to_check', class_name='u-m-1',
                             **{'title': 'Contrôle de départ : À contrôler'}) }}
                         </a>
@@ -93,7 +95,8 @@ list_header_actions, table_empty_row, render_pagination %}
                     </div>
                     {% else %}
                     <div class="projects-cell-item">
-                        <a href="{{ url_for('admin_checkins.admin_checkin_new', project_id=project.id, vehicle_id=v.id) }}">
+                        <a
+                            href="{{ url_for('admin_checkins.admin_checkin_new', project_id=project.id, vehicle_id=v.id) }}">
                             {{ status_badge(v.fields.name or v.fields.Nom or 'Véhicule', 'to_check', class_name='u-m-1',
                             **{'title': 'Contrôle de retour : À contrôler'}) }}
                         </a>
@@ -108,12 +111,26 @@ list_header_actions, table_empty_row, render_pagination %}
                         <span class="u-text-xs u-text-muted projects-waiver-label">Pilote :</span>
                         <div class="projects-cell-item">
                             {% if project.pilot_waiver and project.pilot_waiver.waiver_num %}
-                            <a href="{{ url_for('admin_waivers.admin_pilot_waivers_list', q=project.pilot_waiver.waiver_num) }}">
+                            {% if project.pilot_waiver.raw_status in ['to_send', 'to_generate'] %}
+                            <form
+                                action="{{ url_for('admin_waivers.admin_pilot_waiver_send', waiver_id=project.pilot_waiver.waiver_num) }}"
+                                method="POST" class="u-m-0 u-d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                                <button type="submit" class="badge-pill u-pointer" data-val="to_send"
+                                    title="Envoyer la décharge pilote en 1 clic">
+                                    <i data-lucide="send"></i>Envoyer</button>
+                            </form>
+                            {% else %}
+                            <a
+                                href="{{ url_for('admin_waivers.admin_pilot_waivers_list', q=project.pilot_waiver.waiver_num) }}">
                                 {{ status_badge(project.pilot_waiver.status, project.pilot_waiver.raw_status) }}
                             </a>
+                            {% endif %}
                             {{ doc_download_badge(project.pilot_waiver.pdf_path) }}
                             {% else %}
-                            <a href="{{ url_for('admin_waivers.admin_pilot_waiver_quick_create', project_id=project.id) }}" title="Créer la décharge en 1 clic">
+                            <a href="{{ url_for('admin_waivers.admin_pilot_waiver_quick_create', project_id=project.id) }}"
+                                title="Créer la décharge en 1 clic">
                                 {{ status_badge('À générer', 'to_generate') }}
                             </a>
                             {% endif %}
@@ -123,14 +140,27 @@ list_header_actions, table_empty_row, render_pagination %}
                         <span class="u-text-xs u-text-muted projects-waiver-label">Prod :</span>
                         <div class="projects-cell-item">
                             {% if project.production_waiver and project.production_waiver.waiver_num %}
+                            {% if project.production_waiver.raw_status in ['to_send', 'to_generate'] %}
+                            <form
+                                action="{{ url_for('admin_waivers.admin_production_waiver_send', waiver_id=project.production_waiver.waiver_num) }}"
+                                method="POST" class="u-m-0 u-d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                                <button type="submit" class="badge-pill u-pointer" data-val="to_send"
+                                    title="Envoyer la décharge production en 1 clic">
+                                    <i data-lucide="send"></i>Envoyer</button>
+                            </form>
+                            {% else %}
                             <a
                                 href="{{ url_for('admin_waivers.admin_production_waivers_list', q=project.production_waiver.waiver_num) }}">
                                 {{ status_badge(project.production_waiver.status, project.production_waiver.raw_status)
                                 }}
                             </a>
+                            {% endif %}
                             {{ doc_download_badge(project.production_waiver.pdf_path) }}
                             {% else %}
-                            <a href="{{ url_for('admin_waivers.admin_production_waiver_quick_create', project_id=project.id) }}" title="Créer la décharge en 1 clic">
+                            <a href="{{ url_for('admin_waivers.admin_production_waiver_quick_create', project_id=project.id) }}"
+                                title="Créer la décharge en 1 clic">
                                 {{ status_badge('À générer', 'to_generate') }}
                             </a>
                             {% endif %}
@@ -172,7 +202,8 @@ list_header_actions, table_empty_row, render_pagination %}
                     </div><br>
                     <div class="projects-contacts-cell-item u-mt-1" title="Contact de Production"><span>🎬</span>
                         {% if project.production_contact_name and project.production_contact_name != '—' %}
-                        <a href="{{ url_for('admin_contacts.admin_contacts_list', q=project.production_contact_name) }}">{{
+                        <a
+                            href="{{ url_for('admin_contacts.admin_contacts_list', q=project.production_contact_name) }}">{{
                             project.production_contact_name }}</a>
                         {% else %}
                         <span class="u-text-muted">—</span>
@@ -198,7 +229,9 @@ list_header_actions, table_empty_row, render_pagination %}
 {% block content %}
 <div class="admin-card">
     {% if request.args.get('q') %}
-    {{ filter_header("Projets filtrés", count=pagination.total if pagination else projects|length, clear_url=url_for('admin_projects.admin_projects_archives') if is_archive else url_for('admin_projects.admin_projects_list')) }}
+    {{ filter_header("Projets filtrés", count=pagination.total if pagination else projects|length,
+    clear_url=url_for('admin_projects.admin_projects_archives') if is_archive else
+    url_for('admin_projects.admin_projects_list')) }}
     {% else %}
     <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
         <h2 class="admin-section-title u-m-0">
