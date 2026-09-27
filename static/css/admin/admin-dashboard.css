@@ -56,8 +56,8 @@
 }
 
 .dashboard-column--checkout .dashboard-column-title {
-    border-bottom: 2px solid var(--entity-checkout-border, #10B981);
-    color: var(--entity-checkout-text, #065F46);
+    border-bottom: 2px solid var(--entity-checkout-border, #15803D);
+    color: var(--entity-checkout-text, #14532D);
 }
 
 .dashboard-column--checkin .dashboard-column-title {
@@ -71,7 +71,7 @@
 }
 
 .admin-card.status-green {
-    border-left: 3px solid var(--status-success, #10B981);
+    border-left: 3px solid var(--status-success, #15803D);
 }
 
 @media (max-width: 1000px) {

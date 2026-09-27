@@ -26,7 +26,7 @@
     --blue-border: #bae6fd;
     --grey-bg: #f8f9fa;
     --grey-border: #e0e0e0;
-    --green-success: #28a745;
+    --green-success: #15803D;
     --neutral-bg: hsl(0, 0%, 94%);
     --neutral-color: hsl(0, 0%, 16%);
 
@@ -38,12 +38,12 @@
     --entity-checkin-border: rgba(59, 130, 246, 0.3);
     --entity-checkin-glow: rgba(59, 130, 246, 0.4);
 
-    /* Check-out (Départs) : Vert Émeraude */
-    --entity-checkout: #1ea461;
-    --entity-checkout-bg: #e9f6ef;
-    --entity-checkout-text: #065F46;
-    --entity-checkout-border: rgba(16, 185, 129, 0.3);
-    --entity-checkout-glow: rgba(16, 185, 129, 0.4);
+    /* Check-out (Départs) : Vert Forêt / Racing Green */
+    --entity-checkout: #15803D;
+    --entity-checkout-bg: #DCFCE7;
+    --entity-checkout-text: #14532D;
+    --entity-checkout-border: rgba(21, 128, 61, 0.3);
+    --entity-checkout-glow: rgba(21, 128, 61, 0.4);
 
     /* Tournage / Projets : Ambre / Orange chaud */
     --entity-project: #F59E0B;
@@ -67,23 +67,31 @@
     --entity-waiver-glow: rgba(139, 92, 246, 0.4);
 
     /* Statuts Opérationnels Transversaux */
-    --status-success: #10B981;
-    --status-success-bg: #D1FAE5;
-    --status-success-text: #065F46;
-    --status-success-border: rgba(16, 185, 129, 0.3);
-    --status-success-glow: rgba(16, 185, 129, 0.4);
-    --status-warning: #D97706;
+    --status-success: #15803D;
+    --status-success-bg: #DCFCE7;
+    --status-success-text: #14532D;
+    --status-success-border: rgba(21, 128, 61, 0.3);
+    --status-success-glow: rgba(21, 128, 61, 0.4);
+    --status-warning: #F59E0B;
     --status-warning-bg: #FEF3C7;
-    --status-warning-text: #92400E;
+    --status-warning-text: #B45309;
+    --status-warning-border: rgba(245, 158, 11, 0.35);
+    --status-warning-glow: rgba(245, 158, 11, 0.4);
     --status-danger: #EF4444;
     --status-danger-bg: #FEE2E2;
     --status-danger-text: #991B1B;
-    --status-info: #0284C7;
-    --status-info-bg: #E0F2FE;
-    --status-info-text: #0369A1;
-    --status-neutral: #64748B;
-    --status-neutral-bg: #F1F5F9;
-    --status-neutral-text: #475569;
+    --status-danger-border: rgba(239, 68, 68, 0.3);
+    --status-danger-glow: rgba(239, 68, 68, 0.4);
+    --status-info: #3B82F6;
+    --status-info-bg: #DBEAFE;
+    --status-info-text: #1E40AF;
+    --status-info-border: rgba(59, 130, 246, 0.3);
+    --status-info-glow: rgba(59, 130, 246, 0.4);
+    --status-neutral: #6B7280;
+    --status-neutral-bg: #F3F4F6;
+    --status-neutral-text: #374151;
+    --status-neutral-border: rgba(107, 114, 128, 0.25);
+    --status-neutral-glow: rgba(107, 114, 128, 0.35);
 }
 
 body {

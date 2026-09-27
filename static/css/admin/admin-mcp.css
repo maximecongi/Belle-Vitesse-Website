@@ -9,7 +9,7 @@
 }
 
 .mcp-status-pill-active {
-    background: #10b981 !important;
+    background: var(--status-success, #15803D) !important;
     color: #ffffff !important;
     font-weight: 700 !important;
     font-size: 11px !important;
@@ -173,6 +173,12 @@
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
 }
 
+.mcp-modal-dialog .lucide {
+    width: 12px;
+    height: 12px;
+    vertical-align: -2px;
+}
+
 .mcp-modal-close-btn {
     position: absolute;
     top: 16px;
@@ -189,7 +195,7 @@
 }
 
 .mcp-modal-result-box {
-    border-left: 4px solid #10b981 !important;
+    border-left: 4px solid var(--status-success, #15803D) !important;
 }
 
 .mcp-input-mono {

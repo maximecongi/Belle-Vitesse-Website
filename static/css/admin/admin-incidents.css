@@ -14,7 +14,7 @@
 }
 
 .incident-kpi-card--success {
-    border-left: 4px solid var(--status-success, #10b981) !important;
+    border-left: 4px solid var(--status-success, #15803D) !important;
 }
 
 /* ── Détail : Visas & Signatures contradictoires ── */
@@ -23,7 +23,7 @@
 }
 
 .incident-visas-card[data-signature-state="fully_signed"] {
-    border-top-color: var(--green-success, #28a745) !important;
+    border-top-color: var(--status-success, #15803D) !important;
 }
 
 .incident-visas-card[data-signature-state="partially_signed"] {

@@ -102,7 +102,7 @@
 }
 
 .filter-pill .lucide-circle-check {
-    color: var(--status-success, #10B981);
+    color: var(--status-success, #15803D);
 }
 
 .filter-pill .lucide-package-check {
@@ -110,7 +110,7 @@
 }
 
 .filter-pill .lucide-truck {
-    color: var(--entity-checkout, #0cb57de2);
+    color: var(--entity-checkout, #15803D);
 }
 
 .filter-pill .lucide-clapperboard {
@@ -122,7 +122,7 @@
 }
 
 .filter-pill .lucide-boxes {
-    color: var(--status-info, #0284C7);
+    color: var(--status-info, #3B82F6);
 }
 
 .filter-pill .lucide-shield-check {
@@ -311,7 +311,7 @@ a.badge-pill:hover {
 .badge-pill[data-val="neutral"] {
     background: var(--status-neutral-bg);
     color: var(--status-neutral-text);
-    border: 1px solid rgba(100, 116, 139, 0.25);
+    border: 1px solid var(--status-neutral-border, rgba(107, 114, 128, 0.25));
 }
 
 /* --- Shoot & Project Operational Statuses (Charte Belle Vitesse) --- */
@@ -324,13 +324,13 @@ a.badge-pill:hover {
 .badge-pill[data-val="upcoming"] {
     background: var(--status-info-bg);
     color: var(--status-info-text);
-    border: 1px solid rgba(2, 132, 199, 0.35);
+    border: 1px solid var(--status-info-border, rgba(59, 130, 246, 0.3));
 }
 
 .badge-pill[data-val="completed"] {
     background: var(--status-neutral-bg);
     color: var(--status-neutral-text);
-    border: 1px solid rgba(100, 116, 139, 0.25);
+    border: 1px solid var(--status-neutral-border, rgba(107, 114, 128, 0.25));
 }
 
 /* --- Equipment Check Statuses --- */
@@ -339,7 +339,7 @@ a.badge-pill:hover {
 .badge-pill[data-val="modéré"] {
     background: var(--status-warning-bg);
     color: var(--status-warning-text);
-    border: 1px solid rgba(217, 119, 6, 0.3);
+    border: 1px solid var(--status-warning-border, rgba(245, 158, 11, 0.35));
 }
 
 .badge-pill[data-val="to_check"],
@@ -349,7 +349,7 @@ a.badge-pill:hover {
 .badge-pill[data-val="A controler"] {
     background: var(--status-neutral-bg);
     color: var(--status-neutral-text);
-    border: 1px solid rgba(100, 116, 139, 0.25);
+    border: 1px solid var(--status-neutral-border, rgba(107, 114, 128, 0.25));
 }
 
 .badge-pill[data-val="waiting"],
@@ -357,7 +357,7 @@ a.badge-pill:hover {
 .badge-pill[data-val="En attente"] {
     background: var(--status-neutral-bg);
     color: var(--status-neutral-text);
-    border: 1px solid rgba(100, 116, 139, 0.25);
+    border: 1px solid var(--status-neutral-border, rgba(107, 114, 128, 0.25));
 }
 
 
@@ -374,7 +374,7 @@ a.badge-pill:hover {
 .badge-pill[data-val="non généré"] {
     background: var(--status-neutral-bg);
     color: var(--status-neutral-text);
-    border: 1px solid rgba(100, 116, 139, 0.25);
+    border: 1px solid var(--status-neutral-border, rgba(107, 114, 128, 0.25));
 }
 
 
@@ -388,7 +388,7 @@ a.badge-pill:hover {
 .badge-pill[data-val="Envoyé"] {
     background: var(--status-warning-bg);
     color: var(--status-warning-text);
-    border: 1px solid rgba(217, 119, 6, 0.3);
+    border: 1px solid var(--status-warning-border, rgba(245, 158, 11, 0.35));
 }
 
 
@@ -407,7 +407,7 @@ a.badge-pill:hover {
 .badge-pill[data-val="assurance"] {
     background: var(--status-info-bg);
     color: var(--status-info-text);
-    border: 1px solid rgba(2, 132, 199, 0.3);
+    border: 1px solid var(--status-info-border, rgba(59, 130, 246, 0.3));
 }
 
 
@@ -499,9 +499,9 @@ a.badge-pill:hover {
 
 .vehicle-status-badge[data-val="checkout"],
 .badge-pill.vehicle-status-badge[data-val="checkout"] {
-    background: var(--entity-checkout-bg, #D1FAE5);
-    color: var(--entity-checkout-text, #065F46);
-    border: 1px solid var(--entity-checkout-border, rgba(16, 185, 129, 0.3));
+    background: var(--entity-checkout-bg, #DCFCE7);
+    color: var(--entity-checkout-text, #14532D);
+    border: 1px solid var(--entity-checkout-border, rgba(21, 128, 61, 0.3));
 }
 
 .vehicle-status-badge[data-val="ok"],
@@ -512,9 +512,9 @@ a.badge-pill:hover {
 .badge-pill.vehicle-status-badge[data-val="validated"],
 .vehicle-status-badge[data-val="success"],
 .badge-pill.vehicle-status-badge[data-val="success"] {
-    background: var(--status-success-bg, #D1FAE5);
-    color: var(--status-success-text, #065F46);
-    border: 1px solid var(--status-success-border, rgba(16, 185, 129, 0.3));
+    background: var(--status-success-bg, #DCFCE7);
+    color: var(--status-success-text, #14532D);
+    border: 1px solid var(--status-success-border, rgba(21, 128, 61, 0.3));
 }
 
 .vehicle-status-badge[data-val="warning"],
@@ -524,8 +524,8 @@ a.badge-pill:hover {
 .vehicle-status-badge[data-val="pending"],
 .badge-pill.vehicle-status-badge[data-val="pending"] {
     background: var(--status-warning-bg, #FEF3C7);
-    color: var(--status-warning-text, #92400E);
-    border: 1px solid rgba(217, 119, 6, 0.3);
+    color: var(--status-warning-text, #B45309);
+    border: 1px solid var(--status-warning-border, rgba(245, 158, 11, 0.35));
 }
 
 .vehicle-status-badge[data-val="danger"],
@@ -557,9 +557,9 @@ a.badge-pill:hover {
     padding: 0.95rem 1.15rem;
 
     background: var(--status-warning-bg, #FEF3C7);
-    border: 1px solid rgba(217, 119, 6, 0.25);
-    border-left: 4px solid var(--status-warning, #D97706);
-    box-shadow: 0 10px 25px -5px rgba(217, 119, 6, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+    border: 1px solid var(--status-warning-border, rgba(245, 158, 11, 0.25));
+    border-left: 4px solid var(--status-warning, #F59E0B);
+    box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
 }
 
 .vehicle-context-alert.is-visible {
@@ -586,8 +586,8 @@ a.badge-pill:hover {
     width: 32px;
     height: 32px;
     border-radius: 8px;
-    background: rgba(217, 119, 6, 0.16);
-    color: var(--status-warning, #D97706);
+    background: rgba(245, 158, 11, 0.16);
+    color: var(--status-warning, #F59E0B);
     flex-shrink: 0;
 }
 
@@ -607,13 +607,13 @@ a.badge-pill:hover {
     font-weight: 600;
     font-size: 0.875rem;
     letter-spacing: -0.01em;
-    color: var(--status-warning-text, #92400E);
+    color: var(--status-warning-text, #B45309);
     margin-bottom: 0.25rem;
 }
 
 .vehicle-context-alert-desc {
     font-size: 0.6rem;
-    color: var(--status-warning-text, #92400E);
+    color: var(--status-warning-text, #B45309);
     opacity: 0.95;
     line-height: 1.45;
 }
@@ -621,7 +621,7 @@ a.badge-pill:hover {
 .vehicle-context-alert-action {
     margin-top: 0.75rem;
     padding-top: 0.75rem;
-    border-top: 1px solid rgba(217, 119, 6, 0.2);
+    border-top: 1px solid rgba(245, 158, 11, 0.2);
 }
 
 .vehicle-context-alert-checkbox {
@@ -630,18 +630,21 @@ a.badge-pill:hover {
     gap: 0.65rem;
     padding: 0.5rem 0.75rem;
     background: rgba(255, 255, 255, 0.65);
-    border: 1px solid rgba(217, 119, 6, 0.25);
-    border-radius: 6px;
+    border: 1px solid rgba(245, 158, 11, 0.25);
     cursor: pointer;
     font-weight: 500;
     font-size: 0.6rem;
-    color: var(--status-warning-text, #92400E);
+    color: var(--status-warning-text, #B45309);
     transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .vehicle-context-alert-checkbox:hover {
     background: rgba(255, 255, 255, 0.9);
-    border-color: rgba(217, 119, 6, 0.4);
+    border-color: rgba(245, 158, 11, 0.4);
+}
+
+.vehicle-context-alert-checkbox input[type="checkbox"] {
+    accent-color: var(--status-warning, #F59E0B);
 }
 
 
@@ -776,8 +779,8 @@ a:hover>.badge-pill[data-val="download-available"] {
 }
 
 .badge-signed {
-    background-color: #d1fae5;
-    color: #065f46;
+    background-color: var(--status-success-bg, #DCFCE7);
+    color: var(--status-success-text, #14532D);
 }
 
 .badge-pending {
@@ -1470,9 +1473,9 @@ input[type="checkbox"]:checked {
 }
 
 .mission-sub-node.node-checkout {
-    background: var(--entity-checkout, #10b981);
+    background: var(--entity-checkout, #15803D);
     color: #ffffff;
-    box-shadow: 0 1px 3px var(--entity-checkout-glow, rgba(16, 185, 129, 0.4));
+    box-shadow: 0 1px 3px var(--entity-checkout-glow, rgba(21, 128, 61, 0.4));
 }
 
 .mission-sub-node.node-checkin {

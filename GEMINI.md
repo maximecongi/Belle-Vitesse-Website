@@ -5,11 +5,11 @@
 - **Système de Couleurs & Cohérence des Entités Métier (Design System Belle Vitesse)** :
   - Respecter scrupuleusement la nomenclature et la palette sémantique du Design System sur l'ensemble du site (admin ERP et portails publics de signature) :
     * **Check-in (Retours)** : Bleu Océan (`--entity-checkin`: `#3B82F6`, bg: `#DBEAFE`, text: `#1E40AF`, icône Lucide: `package-check`).
-    * **Check-out (Départs)** : Vert Émeraude (`--entity-checkout`: `#10B981`, bg: `#D1FAE5`, text: `#065F46`, icône Lucide: `truck`).
+    * **Check-out (Départs)** : Vert Forêt / Racing Green (`--entity-checkout`: `#15803D`, bg: `#DCFCE7`, text: `#14532D`, icône Lucide: `truck`).
     * **Tournages / Projets** : Ambre Chaud (`--entity-project`: `#F59E0B`, bg: `#FEF3C7`, text: `#B45309`, icône Lucide: `clapperboard`).
     * **Incidents / Dommages** : Rouge Carmin (`--entity-incident`: `#EF4444`, bg: `#FEE2E2`, text: `#991B1B`, icône Lucide: `wrench` / `alert-triangle`).
     * **Décharges (Waivers)** : Violet / Indigo (`--entity-waiver`: `#8B5CF6`, bg: `#EDE9FE`, text: `#5B21B6`, icône Lucide: `file-signature` / `shield`).
-    * **Statuts transversaux** : Succès/Validé (`--status-success`: `#10B981`, bg: `#D1FAE5`, text: `#065F46`, icône Lucide: `circle-check`), Attention/Attente (`--status-warning`: `#D97706`), Danger/Critique (`--status-danger`: `#EF4444`), Info/À venir (`--status-info`: `#0284C7`), Neutre/Archivé (`--status-neutral`: `#64748B`).
+    * **Statuts transversaux** : Succès/Validé (`--status-success`: `#15803D`, bg: `#DCFCE7`, text: `#14532D`, icône Lucide: `circle-check`), Attention/Attente (`--status-warning`: `#F59E0B`, bg: `#FEF3C7`, text: `#B45309`, icône Lucide: `alert-triangle`), Danger/Critique (`--status-danger`: `#EF4444`, bg: `#FEE2E2`, text: `#991B1B`), Info/À venir (`--status-info`: `#3B82F6`, bg: `#DBEAFE`, text: `#1E40AF`, icône Lucide: `info`), Neutre/Archivé (`--status-neutral`: `#6B7280`, bg: `#F3F4F6`, text: `#374151`, icône Lucide: `minus-circle`).
   - **Cohérence des composants et utilitaires** :
     * Pour une même entité ou statut, synchroniser systématiquement la couleur du badge (`badge-pill`), de l'icône Lucide, de la puce de timeline, de la bordure (`.u-border-left-*`, `.u-border-*`) et des cartes KPI.
     * Ne jamais coder de couleurs hexadécimales en dur pour ces entités dans le HTML ou les styles spécifiques : toujours consommer les variables CSS `--entity-*` et `--status-*` ou les classes utilitaires dédiées (`.u-text-*`, `.u-bg-*`, `.u-bg-*-light`, `.u-border-left-*`).

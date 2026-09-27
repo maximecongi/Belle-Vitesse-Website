@@ -349,7 +349,7 @@
 }
 
 .u-text-success {
-    color: var(--green-success, #28a745) !important;
+    color: var(--status-success-text, #14532D) !important;
 }
 
 .u-text-warning {
@@ -903,19 +903,19 @@
     gap: 0.75rem !important;
     padding: 1rem 1.25rem !important;
     border-radius: 8px !important;
-    background: var(--status-success-bg, #D1FAE5) !important;
-    border: 1px solid var(--status-success-border, rgba(16, 185, 129, 0.3)) !important;
+    background: var(--status-success-bg, #DCFCE7) !important;
+    border: 1px solid var(--status-success-border, rgba(21, 128, 61, 0.3)) !important;
     margin: 1rem 0 !important;
 }
 
 .alert-banner-title-success {
     font-weight: 600 !important;
-    color: var(--status-success-text, #065F46) !important;
+    color: var(--status-success-text, #14532D) !important;
 }
 
 .alert-banner-desc-success {
     font-size: 0.85rem !important;
-    color: var(--status-success-text, #065F46) !important;
+    color: var(--status-success-text, #14532D) !important;
 }
 
 .alert-banner-danger {
@@ -944,18 +944,18 @@
     gap: 0.75rem !important;
     padding: 1rem 1.25rem !important;
     border-radius: 8px !important;
-    background: var(--status-warning-bg, #fef3c7) !important;
-    border: 1px solid rgba(245, 158, 11, 0.3) !important;
+    background: var(--status-warning-bg, #FEF3C7) !important;
+    border: 1px solid var(--status-warning-border, rgba(245, 158, 11, 0.35)) !important;
 }
 
 .alert-banner-title-warning {
     font-weight: 600 !important;
-    color: var(--status-warning-text, #92400e) !important;
+    color: var(--status-warning-text, #B45309) !important;
 }
 
 .alert-banner-desc-warning {
     font-size: 0.85rem !important;
-    color: var(--status-warning-text, #b45309) !important;
+    color: var(--status-warning-text, #B45309) !important;
 }
 
 .alert-banner-info {
@@ -964,18 +964,18 @@
     gap: 0.75rem !important;
     padding: 1rem 1.25rem !important;
     border-radius: 8px !important;
-    background: var(--status-info-bg, #e0f2fe) !important;
-    border: 1px solid rgba(2, 132, 199, 0.3) !important;
+    background: var(--status-info-bg, #DBEAFE) !important;
+    border: 1px solid var(--status-info-border, rgba(59, 130, 246, 0.3)) !important;
 }
 
 .alert-banner-title-info {
     font-weight: 600 !important;
-    color: var(--status-info-text, #0369a1) !important;
+    color: var(--status-info-text, #1E40AF) !important;
 }
 
 .alert-banner-desc-info {
     font-size: 0.85rem !important;
-    color: var(--status-info-text, #0284c7) !important;
+    color: var(--status-info-text, #1E40AF) !important;
 }
 
 .alert-banner-list {

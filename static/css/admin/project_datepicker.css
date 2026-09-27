@@ -66,7 +66,7 @@
     border-color: #f97316;
 }
 .pdp-milestone-card.type-return.active {
-    border-color: #10b981;
+    border-color: var(--entity-checkout, #15803D);
 }
 
 /* Header inside Card */
@@ -363,11 +363,11 @@
 }
 
 .pdp-day-cell.return-day {
-    background: #10b981 !important;
+    background: var(--entity-checkout, #15803D) !important;
     color: #ffffff !important;
     font-weight: 700;
     border-radius: 6px;
-    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+    box-shadow: 0 2px 6px var(--entity-checkout-glow, rgba(21, 128, 61, 0.4));
 }
 
 /* Dots / Indicators below day number if overlap occurs */
@@ -385,7 +385,7 @@
 }
 .pdp-dot.dot-dep { background: #3b82f6; }
 .pdp-dot.dot-shoot { background: #f97316; }
-.pdp-dot.dot-ret { background: #10b981; }
+.pdp-dot.dot-ret { background: var(--entity-checkout, #15803D); }
 
 /* ── Help / Legend Footer ─────────────────────────────────────── */
 .pdp-footer-legend {
@@ -422,4 +422,4 @@
 
 .pdp-legend-swatch.swatch-dep { background: #3b82f6; }
 .pdp-legend-swatch.swatch-shoot { background: #f97316; }
-.pdp-legend-swatch.swatch-ret { background: #10b981; }
+.pdp-legend-swatch.swatch-ret { background: var(--entity-checkout, #15803D); }
