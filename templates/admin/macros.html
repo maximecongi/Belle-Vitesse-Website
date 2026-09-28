@@ -107,55 +107,59 @@
 {% macro incident_severity_badge(severity, label=None, class_name='', show_label=true) %}
 {% set s = (severity or 'mineur')|lower %}
 {% if s == 'critique' %}
-    {% set default_label = 'Critique' %}
-    {% set icon_name = 'alert-octagon' %}
-    {% set data_val = 'critique' %}
+{% set default_label = 'Critique' %}
+{% set icon_name = 'alert-octagon' %}
+{% set data_val = 'critique' %}
 {% elif s in ('modere', 'modéré') %}
-    {% set default_label = 'Modéré' %}
-    {% set icon_name = 'alert-triangle' %}
-    {% set data_val = 'warning' %}
+{% set default_label = 'Modéré' %}
+{% set icon_name = 'alert-triangle' %}
+{% set data_val = 'warning' %}
 {% else %}
-    {% set default_label = 'Mineur' %}
-    {% set icon_name = 'info' %}
-    {% set data_val = 'neutral' %}
+{% set default_label = 'Mineur' %}
+{% set icon_name = 'info' %}
+{% set data_val = 'neutral' %}
 {% endif %}
 {% set is_label_disabled = (show_label is false or label is false or label == '') %}
 {% set display_label = '' if is_label_disabled else (label if label is not none else default_label) %}
 {% set icon_only_class = ' badge-pill--icon-only' if is_label_disabled else '' %}
-<span class="badge-pill{{ icon_only_class }}{% if class_name %} {{ class_name }}{% endif %}" data-val="{{ data_val }}"{% if is_label_disabled %} title="{{ default_label }}"{% endif %}><i data-lucide="{{ icon_name }}"{% if is_label_disabled %} class="u-mr-0"{% endif %}></i>{% if display_label %} {{ display_label }}{% endif %}</span>
+<span class="badge-pill{{ icon_only_class }}{% if class_name %} {{ class_name }}{% endif %}" data-val="{{ data_val }}"
+    {% if is_label_disabled %} title="{{ default_label }}" {% endif %}><i data-lucide="{{ icon_name }}" {% if
+        is_label_disabled %} class="u-mr-0" {% endif %}></i>{% if display_label %} {{ display_label }}{% endif %}</span>
 {% endmacro %}
 
 {% macro incident_status_badge(status, label=None, class_name='', show_label=true) %}
 {% set st = (status or 'signale')|lower %}
 {% if st == 'cloture' %}
-    {% set default_label = 'Clôturé' %}
-    {% set icon_name = 'lock' %}
-    {% set data_val = 'cloture' %}
+{% set default_label = 'Clôturé' %}
+{% set icon_name = 'lock' %}
+{% set data_val = 'cloture' %}
 {% elif st == 'resolu' %}
-    {% set default_label = 'Résolu' %}
-    {% set icon_name = 'check-circle' %}
-    {% set data_val = 'ok' %}
+{% set default_label = 'Résolu' %}
+{% set icon_name = 'check-circle' %}
+{% set data_val = 'ok' %}
 {% elif st == 'en_reparation' %}
-    {% set default_label = 'En réparation' %}
-    {% set icon_name = 'wrench' %}
-    {% set data_val = 'in_progress' %}
+{% set default_label = 'En réparation' %}
+{% set icon_name = 'wrench' %}
+{% set data_val = 'in_progress' %}
 {% elif st == 'en_expertise' %}
-    {% set default_label = 'En expertise' %}
-    {% set icon_name = 'search' %}
-    {% set data_val = 'warning' %}
+{% set default_label = 'En expertise' %}
+{% set icon_name = 'search' %}
+{% set data_val = 'warning' %}
 {% elif st == 'assurance' %}
-    {% set default_label = 'Assurance' %}
-    {% set icon_name = 'clipboard-list' %}
-    {% set data_val = 'assurance' %}
+{% set default_label = 'Assurance' %}
+{% set icon_name = 'clipboard-list' %}
+{% set data_val = 'assurance' %}
 {% else %}
-    {% set default_label = 'Signalé' %}
-    {% set icon_name = 'megaphone' %}
-    {% set data_val = 'warning' %}
+{% set default_label = 'Signalé' %}
+{% set icon_name = 'megaphone' %}
+{% set data_val = 'warning' %}
 {% endif %}
 {% set is_label_disabled = (show_label is false or label is false or label == '') %}
 {% set display_label = '' if is_label_disabled else (label if label is not none else default_label) %}
 {% set icon_only_class = ' badge-pill--icon-only' if is_label_disabled else '' %}
-<span class="badge-pill{{ icon_only_class }}{% if class_name %} {{ class_name }}{% endif %}" data-val="{{ data_val }}"{% if is_label_disabled %} title="{{ default_label }}"{% endif %}><i data-lucide="{{ icon_name }}"{% if is_label_disabled %} class="u-mr-0"{% endif %}></i>{% if display_label %} {{ display_label }}{% endif %}</span>
+<span class="badge-pill{{ icon_only_class }}{% if class_name %} {{ class_name }}{% endif %}" data-val="{{ data_val }}"
+    {% if is_label_disabled %} title="{{ default_label }}" {% endif %}><i data-lucide="{{ icon_name }}" {% if
+        is_label_disabled %} class="u-mr-0" {% endif %}></i>{% if display_label %} {{ display_label }}{% endif %}</span>
 {% endmacro %}
 
 {% macro incident_impact_badge(impact, label=None) %}
@@ -174,32 +178,40 @@
 
 {% macro incident_signature_badge(incident, compact=false, class_name='', show_subline=true) %}
 {% if incident.is_fully_signed or incident.signature_status == 'signed' %}
-<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="ok"><i data-lucide="shield-check"></i> {{ 'Scellé 2/2' if compact else 'Scellé
+<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="ok"><i data-lucide="shield-check"></i>
+    {{ 'Scellé 2/2' if compact else 'Scellé
     contradictoirement' }}</span>
 {% if compact and show_subline %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="check"
         class="u-text-success"></i> &bull; <span>Prod</span> <i data-lucide="check" class="u-text-success"></i></div>{%
 endif %}
 {% elif incident.signature_status == 'signed_bv' %}
-<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="to_sign"><i data-lucide="signature"></i> {{ 'Visé BV 1/2' if compact else 'Visé BV —
+<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="to_sign"><i
+        data-lucide="signature"></i> {{ 'Visé BV 1/2' if compact else 'Visé BV —
     En attente Production' }}</span>
 {% if compact and show_subline %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="check"
         class="u-text-success"></i> &bull; <span>Prod</span> <i data-lucide="clock"></i></div>{% endif %}
 {% elif incident.signature_status == 'signed_prod' %}
-<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="to_sign"><i data-lucide="signature"></i> {{ 'Signé Prod 1/2' if compact else 'Signé
+<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="to_sign"><i
+        data-lucide="signature"></i> {{ 'Signé Prod 1/2' if compact else 'Signé
     Prod — En attente visa BV' }}</span>
-{% if compact and show_subline %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="clock"></i> &bull;
+{% if compact and show_subline %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="clock"></i>
+    &bull;
     <span>Prod</span> <i data-lucide="check" class="u-text-success"></i>
 </div>{% endif %}
 {% elif incident.signature_status == 'pending_prod' %}
-<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="in_progress"><i data-lucide="mail"></i> {{ 'Invité 0/2' if compact else 'Invitation
+<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="in_progress"><i
+        data-lucide="mail"></i> {{ 'Invité 0/2' if compact else 'Invitation
     envoyée à la Production' }}</span>
-{% if compact and show_subline %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="clock"></i> &bull;
+{% if compact and show_subline %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="clock"></i>
+    &bull;
     <span>Prod</span> <i data-lucide="mail"></i>
 </div>{% endif %}
 {% else %}
-<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="neutral"><i data-lucide="file-text"></i> {{ 'Non signé' if compact else 'En attente
+<span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="neutral"><i
+        data-lucide="file-text"></i> {{ 'Non signé' if compact else 'En attente
     de signatures' }}</span>
-{% if compact and show_subline %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="clock"></i> &bull;
+{% if compact and show_subline %}<div class="incident-signature-subline"><span>BV</span> <i data-lucide="clock"></i>
+    &bull;
     <span>Prod</span> <i data-lucide="clock"></i>
 </div>{% endif %}
 {% endif %}
@@ -329,7 +341,8 @@ admin-multiselect-tag--custom
 {% macro list_header_actions(placeholder="Rechercher...", new_url=None, new_label=None, is_archive=false) %}
 <div class="u-flex u-align-center u-gap-2">
     <form method="GET" action="" class="u-m-0">
-        <input type="text" name="q" id="searchInput" class="form-input u-w-250" placeholder="{{ placeholder }}" value="{{ request.args.get('q', '') }}" autocomplete="off">
+        <input type="text" name="q" id="searchInput" class="form-input u-w-250" placeholder="{{ placeholder }}"
+            value="{{ request.args.get('q', '') }}" autocomplete="off">
     </form>
     {% if new_url and not is_archive %}
     <a href="{{ new_url }}" class="admin-btn admin-btn-primary">{{ new_label or '+ Nouveau' }}</a>
@@ -392,24 +405,26 @@ admin-multiselect-tag--custom
     </div>
     <div class="projects-cell-item u-flex u-justify-between u-align-center u-mt-2">
         {% if waiver and waiver.id and waiver.waiver_num %}
-            {% if waiver.raw_status in ['to_send', 'to_generate'] and send_url %}
-            <form action="{{ send_url }}" method="POST" class="u-m-0 u-d-inline">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <input type="hidden" name="return_to" value="{{ request.full_path }}">
-                <button type="submit" class="badge-pill u-pointer" data-val="to_send" title="Envoyer la décharge par e-mail en 1 clic">
-                    <i data-lucide="send"></i> Envoyer (1 clic)
-                </button>
-            </form>
-            {% else %}
-            <a href="{{ list_url }}" title="Voir la décharge">
-                {{ status_badge(waiver.status, waiver.raw_status) }}
-            </a>
-            {% endif %}
-            {{ doc_download_badge(waiver.pdf_path) }}
+        {% if waiver.raw_status in ['to_send', 'to_generate'] and send_url %}
+        <form action="{{ send_url }}" method="POST" class="u-m-0 u-d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="return_to" value="{{ request.full_path }}">
+            <button type="submit" class="badge-pill u-pointer" data-val="to_send"
+                title="Envoyer la décharge par e-mail en 1 clic">
+                <i data-lucide="send"></i> À envoyer
+            </button>
+        </form>
+        {% else %}
+        <a href="{{ list_url }}" title="Voir la décharge">
+            {{ status_badge(waiver.status, waiver.raw_status) }}
+        </a>
+        {% endif %}
+        {{ doc_download_badge(waiver.pdf_path) }}
         {% else %}
         <form action="{{ new_url }}" method="POST" class="u-m-0 u-d-inline">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="badge-pill u-pointer" data-val="to_generate" title="Créer et générer la décharge en 1 clic">
+            <button type="submit" class="badge-pill u-pointer" data-val="to_generate"
+                title="Créer et générer la décharge en 1 clic">
                 <i data-lucide="plus-circle"></i> À générer (1 clic)
             </button>
         </form>
@@ -424,13 +439,15 @@ admin-multiselect-tag--custom
 {% if pagination and pagination.total > 0 %}
 <div class="admin-pagination-container">
     <div class="admin-pagination-info">
-        Affichage de <strong>{{ pagination.start_index }}</strong> à <strong>{{ pagination.end_index }}</strong> sur <strong>{{ pagination.total }}</strong> {{ label_plural if pagination.total > 1 else label_singular }}
+        Affichage de <strong>{{ pagination.start_index }}</strong> à <strong>{{ pagination.end_index }}</strong> sur
+        <strong>{{ pagination.total }}</strong> {{ label_plural if pagination.total > 1 else label_singular }}
     </div>
     {% if pagination.pages > 1 %}
     <nav class="admin-pagination-nav" aria-label="Pagination">
         {# Bouton Précédent #}
         {% if pagination.has_prev %}
-        <a href="{{ pagination.url_for_page(pagination.prev_num, endpoint) }}" class="admin-pagination-btn" title="Page précédente" aria-label="Page précédente">
+        <a href="{{ pagination.url_for_page(pagination.prev_num, endpoint) }}" class="admin-pagination-btn"
+            title="Page précédente" aria-label="Page précédente">
             <i data-lucide="chevron-left"></i>
         </a>
         {% else %}
@@ -441,20 +458,21 @@ admin-multiselect-tag--custom
 
         {# Numéros de pages avec gestion des ellipses #}
         {% for p in pagination.iter_pages() %}
-            {% if p %}
-                {% if p == pagination.page %}
-                <span class="admin-pagination-btn is-active" aria-current="page">{{ p }}</span>
-                {% else %}
-                <a href="{{ pagination.url_for_page(p, endpoint) }}" class="admin-pagination-btn">{{ p }}</a>
-                {% endif %}
-            {% else %}
-                <span class="admin-pagination-ellipsis" aria-hidden="true">&hellip;</span>
-            {% endif %}
+        {% if p %}
+        {% if p == pagination.page %}
+        <span class="admin-pagination-btn is-active" aria-current="page">{{ p }}</span>
+        {% else %}
+        <a href="{{ pagination.url_for_page(p, endpoint) }}" class="admin-pagination-btn">{{ p }}</a>
+        {% endif %}
+        {% else %}
+        <span class="admin-pagination-ellipsis" aria-hidden="true">&hellip;</span>
+        {% endif %}
         {% endfor %}
 
         {# Bouton Suivant #}
         {% if pagination.has_next %}
-        <a href="{{ pagination.url_for_page(pagination.next_num, endpoint) }}" class="admin-pagination-btn" title="Page suivante" aria-label="Page suivante">
+        <a href="{{ pagination.url_for_page(pagination.next_num, endpoint) }}" class="admin-pagination-btn"
+            title="Page suivante" aria-label="Page suivante">
             <i data-lucide="chevron-right"></i>
         </a>
         {% else %}

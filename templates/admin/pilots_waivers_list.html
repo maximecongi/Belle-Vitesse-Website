@@ -1,15 +1,18 @@
 {% extends "admin/admin_base.html" %}
 
-{% from "admin/macros.html" import status_badge, filter_header, reminder_badge, list_header_actions, table_empty_row, doc_download_badge %}
+{% from "admin/macros.html" import status_badge, filter_header, reminder_badge, list_header_actions, table_empty_row,
+doc_download_badge %}
 
 {% block title %}Décharges Pilotes{% endblock %}
 {% block page_title %}Décharges Pilotes{% endblock %}
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-pilot-waivers.css') }}?v={{ asset_version('css/admin/admin-pilot-waivers.css') }}">
+<link rel="stylesheet"
+    href="{{ url_for('static', filename='css/admin/admin-pilot-waivers.css') }}?v={{ asset_version('css/admin/admin-pilot-waivers.css') }}">
 {% endblock %}
 
 {% block header_actions %}
-{{ list_header_actions(placeholder="Rechercher une décharge...", new_url=url_for('admin_waivers.admin_pilot_waiver_new'), new_label="+ Nouvelle décharge") }}
+{{ list_header_actions(placeholder="Rechercher une décharge...",
+new_url=url_for('admin_waivers.admin_pilot_waiver_new'), new_label="+ Nouvelle décharge") }}
 {% endblock %}
 
 
@@ -48,7 +51,7 @@
                                 action="{{ url_for('admin_waivers.admin_pilot_waiver_send', waiver_id=w.id, q=request.args.get('q')) }}"
                                 method="POST" class="u-m-0">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="admin-btn admin-btn-primary">Envoyer</button>
+                                <button type="submit" class="admin-btn admin-btn-primary">À envoyer</button>
                             </form>
                             {% elif w.raw_status == 'to_sign' %}
                             <form
@@ -60,8 +63,8 @@
                             <button type="button" class="admin-btn admin-btn-secondary"
                                 onclick="navigator.clipboard.writeText(window.location.origin + '/sign/waiver/{{ w.signature_token }}'); showFlash('Le lien a été copié dans le presse-papier.', 'info');">Lien</button>
                             {% elif w.raw_status == 'signed' %}
-                            <a href="{{ w.signed_pdf_path }}" class="admin-btn admin-btn-secondary"
-                                target="_blank"><i data-lucide="file-text"></i> PDF</a>
+                            <a href="{{ w.signed_pdf_path }}" class="admin-btn admin-btn-secondary" target="_blank"><i
+                                    data-lucide="file-text"></i> PDF</a>
                             {% endif %}
 
                             <form

@@ -10,7 +10,8 @@
         <span>Sélectionner un projet</span>
     </div>
     <p class="u-mb-4 u-text-muted u-text-sm">
-        Recherchez le projet auquel associer cette décharge production. Seuls les projets n'ayant pas encore de décharge production active sont listés.
+        Recherchez le projet auquel associer cette décharge production. Seuls les projets n'ayant pas encore de décharge
+        production active sont listés.
     </p>
 
     <form method="POST" id="waiverForm">
@@ -25,13 +26,14 @@
             <div class="waiver-search-box">
                 <i data-lucide="search" class="waiver-search-icon"></i>
                 <input type="text" id="projectSearchInput" class="form-input u-w-100 waiver-search-input"
-                    placeholder="Tapez au moins 2 lettres (nom, production, dates)..." autocomplete="off" spellcheck="false">
-                <button type="button" class="waiver-search-clear u-d-none" id="clearSearchBtn" aria-label="Effacer la recherche">
+                    placeholder="Tapez au moins 2 lettres (nom, production, dates)..." autocomplete="off"
+                    spellcheck="false">
+                <button type="button" class="waiver-search-clear u-d-none" id="clearSearchBtn"
+                    aria-label="Effacer la recherche">
                     <i data-lucide="x"></i>
                 </button>
             </div>
             <div class="waiver-search-helper u-text-xs u-text-muted u-mt-1" id="searchHelperText">
-                <i data-lucide="info"></i> Tapez au moins 2 caractères pour filtrer la liste des projets éligibles ({{ projects|length }} disponible{{ 's' if projects|length > 1 else '' }}).
             </div>
 
             <!-- Liste déroulante des résultats filtrés -->
@@ -61,13 +63,15 @@
                     </span>
                 </div>
             </div>
-            <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" id="changeProjectBtn" title="Changer de projet">
+            <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" id="changeProjectBtn"
+                title="Changer de projet">
                 <i data-lucide="edit-2"></i> Changer
             </button>
         </div>
 
         <div class="u-flex u-gap-2 u-justify-end">
-            <a href="{{ url_for('admin_waivers.admin_production_waivers_list') }}" class="admin-btn admin-btn-secondary">Annuler</a>
+            <a href="{{ url_for('admin_waivers.admin_production_waivers_list') }}"
+                class="admin-btn admin-btn-secondary">Annuler</a>
             <button type="submit" class="admin-btn admin-btn-primary" id="submitWaiverBtn" disabled>
                 <i data-lucide="plus-circle"></i> Créer la décharge
             </button>
@@ -82,5 +86,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/src/admin/waiver-search.js') }}?v={{ asset_version('js/src/admin/waiver-search.js') }}"></script>
+<script
+    src="{{ url_for('static', filename='js/src/admin/waiver-search.js') }}?v={{ asset_version('js/src/admin/waiver-search.js') }}"></script>
 {% endblock %}
