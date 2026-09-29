@@ -22,8 +22,9 @@ incident_signature_badge, equipment_icon, empty_state %}
 {% endblock %}
 
 {% block content %}
-<!-- ═══════════ EN-TÊTE RÉCAPITULATIF DE L'INCIDENT (INSPIRÉ DU HUB) ═══════════ -->
-<div class="admin-card u-mb-3 incident-header-card" data-severity="{{ incident.severity }}">
+<div class="admin-card u-mb-3 incident-header-card" id="incidentDetailView" data-severity="{{ incident.severity }}"
+    data-status-url="{{ url_for('admin_incidents.admin_incident_status', record_id=incident.id) }}"
+    data-csrf-token="{{ csrf_token() }}">
     <div class="u-flex u-flex-column u-gap-2 u-mb-1">
         <!-- 1. Ligne Principale : Titre, Sélecteur interactif de statut & Badges -->
         <div class="project-hub-header-main-row u-flex-wrap u-gap-2 u-align-center">
@@ -713,122 +714,9 @@ incident_signature_badge, equipment_icon, empty_state %}
         </form>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 <script src="{{ asset_url('js/src/common/signature-pad-controller.js') }}"></script>
-<script>
-    (function () {
-        const pads = {};
-
-        function getOrCreatePad(canvasId, clearBtnId) {
-            if (pads[canvasId]) return pads[canvasId];
-            const padObj = new BelleVitesseSignaturePad(canvasId, {
-                clearBtnId: clearBtnId,
-                padOptions: {
-                    backgroundColor: 'rgba(248, 250, 252, 0)',
-                    penColor: '#0f172a'
-                }
-            });
-            pads[canvasId] = padObj;
-            return padObj;
-        }
-
-        window.openIncidentModal = function (modalId) {
-            const modal = document.getElementById(modalId);
-            if (!modal) return;
-            modal.classList.add('is-open');
-
-            if (modalId === 'modalBvSign') {
-                const padObj = getOrCreatePad('bvCanvas', 'clearBvCanvas');
-                setTimeout(() => padObj && padObj.resize(), 50);
-            } else if (modalId === 'modalProdSign') {
-                const padObj = getOrCreatePad('prodCanvas', 'clearProdCanvas');
-                setTimeout(() => padObj && padObj.resize(), 50);
-            }
-        };
-
-        window.closeIncidentModal = function (modalId) {
-            const modal = document.getElementById(modalId);
-            if (modal) {
-                modal.classList.remove('is-open');
-            }
-        };
-
-        window.quickStatusChange = function (newStatus) {
-            if (!newStatus) return;
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '{{ url_for("admin_incidents.admin_incident_status", record_id=incident.id) }}';
-
-            const csrfInput = document.createElement('input');
-            csrfInput.type = 'hidden';
-            csrfInput.name = 'csrf_token';
-            csrfInput.value = '{{ csrf_token() }}';
-            form.appendChild(csrfInput);
-
-            const statusInput = document.createElement('input');
-            statusInput.type = 'hidden';
-            statusInput.name = 'status';
-            statusInput.value = newStatus;
-            form.appendChild(statusInput);
-
-            document.body.appendChild(form);
-            form.submit();
-        };
-
-        window.quickStatusSelect = function (newStatus) {
-            if (newStatus === 'resolu' || newStatus === 'cloture') {
-                const select = document.getElementById('quickResolveStatusSelect');
-                if (select) select.value = newStatus;
-                openIncidentModal('modalQuickResolve');
-            } else {
-                quickStatusChange(newStatus);
-            }
-        };
-
-        // Fermeture des modales : clic overlay ou touche Échap
-        document.querySelectorAll('.incident-modal-overlay').forEach(overlay => {
-            overlay.addEventListener('click', function (e) {
-                if (e.target === this) closeIncidentModal(this.id);
-            });
-        });
-
-        window.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') {
-                document.querySelectorAll('.incident-modal-overlay').forEach(m => closeIncidentModal(m.id));
-            }
-        });
-
-        // Liaison unifiée des formulaires avec signature
-        function bindSignatureForm(formId, canvasId, dataInputId, alertMsg, loadingText) {
-            const form = document.getElementById(formId);
-            if (!form) return;
-            let isSubmitting = false;
-
-            form.addEventListener('submit', function (e) {
-                if (isSubmitting) {
-                    e.preventDefault();
-                    return false;
-                }
-                const padObj = pads[canvasId];
-                if (!padObj || !padObj.pad || padObj.pad.isEmpty()) {
-                    e.preventDefault();
-                    alert(alertMsg);
-                    return false;
-                }
-                const input = document.getElementById(dataInputId);
-                if (input) input.value = padObj.pad.toDataURL('image/png');
-                isSubmitting = true;
-                const submitBtn = form.querySelector('button[type="submit"]');
-                if (submitBtn) {
-                    submitBtn.disabled = true;
-                    submitBtn.textContent = loadingText;
-                }
-            });
-        }
-
-        bindSignatureForm('formBvSign', 'bvCanvas', 'bvSignatureData', 'Veuillez apposer votre visa manuscrit avant de valider.', 'Enregistrement en cours...');
-        bindSignatureForm('formProdSign', 'prodCanvas', 'prodSignatureData', 'Veuillez recueillir la signature manuscrite avant de valider.', 'Scellement en cours...');
-    })();
-</script>
 {% endblock %}

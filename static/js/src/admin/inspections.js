@@ -211,3 +211,74 @@ function initInspectionForm(checkpointsConfig, defaultCheckpoints) {
 }
 
 window.initInspectionForm = initInspectionForm;
+
+function initInspectionDetail() {
+    const sealBtn = document.getElementById('sealCheckoutBtn') || document.getElementById('sealCheckinBtn');
+    const container = document.getElementById('inspectionDetailLayout') || document.querySelector('[data-inspection-type]');
+    if (!sealBtn && !container) return;
+
+    const recordId = (container && container.dataset.inspectionId) ? container.dataset.inspectionId : (sealBtn ? sealBtn.dataset.inspectionId : '');
+    const inspectionType = (container && container.dataset.inspectionType) ? container.dataset.inspectionType : (document.getElementById('sealCheckoutBtn') ? 'checkouts' : 'checkins');
+    const currentStatusId = container ? (container.dataset.statusId || '') : (sealBtn ? (sealBtn.dataset.statusId || '') : '');
+    const csrfToken = document.querySelector('input[name="csrf_token"]')?.value;
+
+    if (sealBtn && recordId) {
+        sealBtn.addEventListener('click', function () {
+            const label = inspectionType === 'checkouts' ? 'checkout' : 'checkin';
+            if (!confirm(`Êtes-vous sûr de vouloir sceller ce ${label} ? Cette action est irréversible.`)) return;
+
+            sealBtn.disabled = true;
+            sealBtn.classList.add('btn-disabled');
+            sealBtn.innerText = 'Scellage en cours...';
+
+            fetch(`/admin/api/${inspectionType}/${recordId}/status`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken
+                },
+                body: JSON.stringify({ status: "pending" })
+            })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.status_id === "pending") {
+                        window.location.reload();
+                    } else {
+                        console.error("Erreur serveur lors de la mise à jour :", res);
+                        sealBtn.disabled = false;
+                        sealBtn.classList.remove('btn-disabled');
+                        sealBtn.innerText = `Sceller ce ${label}`;
+                        alert("Erreur: " + (res.error || "Mise à jour échouée."));
+                    }
+                })
+                .catch(err => {
+                    console.error("Error setting inspection status:", err);
+                    sealBtn.disabled = false;
+                    sealBtn.classList.remove('btn-disabled');
+                    sealBtn.innerText = `Sceller ce ${label}`;
+                    alert("Erreur de connexion lors de la mise à jour.");
+                });
+        });
+    }
+
+    // Polling si statut pending
+    if (currentStatusId === "pending" && recordId) {
+        setInterval(() => {
+            fetch(`/admin/api/${inspectionType}/${recordId}/status`)
+                .then(r => r.json())
+                .then(res => {
+                    if (res.status_id && res.status_id !== currentStatusId) {
+                        window.location.reload();
+                    }
+                })
+                .catch(err => console.error("Error fetching inspection status:", err));
+        }, 3000);
+    }
+}
+window.initInspectionDetail = initInspectionDetail;
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initInspectionDetail);
+} else {
+    initInspectionDetail();
+}

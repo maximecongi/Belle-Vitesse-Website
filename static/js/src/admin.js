@@ -14,6 +14,10 @@ function init() {
     if (typeof window.initCalendar === 'function') window.initCalendar();
     if (typeof window.initProjectInteractions === 'function') window.initProjectInteractions();
     if (typeof window.initCmdK === 'function') window.initCmdK();
+    if (typeof window.initIncidentForm === 'function') window.initIncidentForm();
+    if (typeof window.initIncidentDetail === 'function') window.initIncidentDetail();
+    if (typeof window.initProjectForm === 'function') window.initProjectForm();
+    if (typeof window.initInspectionDetail === 'function') window.initInspectionDetail();
 }
 
 window.init = init;

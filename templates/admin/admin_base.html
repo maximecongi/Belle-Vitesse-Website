@@ -283,19 +283,8 @@
     </div>
 
     {% block extra_js %}{% endblock %}
-    <!-- Modules JavaScript spécialisés Admin -->
-    <script src="{{ url_for('static', filename='js/src/admin/flash.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/src/admin/nav.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/src/admin/selects.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/src/admin/tables.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/src/admin/charts.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/src/admin/calendar.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/src/admin/project.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/src/admin/cmdk.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/src/admin/inspections.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/src/admin/photo-annotator.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/src/admin/ios-bridge.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/src/admin.js') }}"></script>
+    <!-- Bundle JavaScript unifié Admin avec cache-busting automatique -->
+    <script src="{{ asset_url('js/admin/admin.bundle.js') }}"></script>
     <script src="https://unpkg.com/lucide@1.48.0/dist/umd/lucide.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {

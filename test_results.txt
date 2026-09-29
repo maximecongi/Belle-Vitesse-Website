@@ -195,6 +195,16 @@ test_list_and_details (test_inspections.InspectionsTest.test_list_and_details) .
 test_soft_delete (test_inspections.InspectionsTest.test_soft_delete) ... ok
 test_unified_form_context (test_inspections.InspectionsTest.test_unified_form_context) ... ok
 test_verify_public_routes (test_inspections.InspectionsTest.test_verify_public_routes) ... ok
+test_admin_js_files_exist (test_js_bundler.TestJsBundler.test_admin_js_files_exist)
+Vérifie que chaque fichier source déclaré dans ADMIN_JS_FILES existe sur le disque. ... ok
+test_build_admin_js_bundle (test_js_bundler.TestJsBundler.test_build_admin_js_bundle)
+Vérifie la génération du bundle JS admin et la présence des modules extraits. ... ok
+test_build_public_js_bundle (test_js_bundler.TestJsBundler.test_build_public_js_bundle)
+Vérifie la génération du bundle JS public. ... ok
+test_ensure_bundles_fresh (test_js_bundler.TestJsBundler.test_ensure_bundles_fresh)
+Vérifie que ensure_bundles_fresh fonctionne sans lever d'erreur. ... ok
+test_public_js_files_exist (test_js_bundler.TestJsBundler.test_public_js_files_exist)
+Vérifie que chaque fichier source déclaré dans PUBLIC_JS_FILES existe sur le disque. ... ok
 test_debug_mode_does_not_auto_login_on_admin_login (test_magic_links_security.MagicLinksSecurityTestCase.test_debug_mode_does_not_auto_login_on_admin_login)
 Le mode DEBUG=True en environnement de développement ne doit plus jamais authentifier automatiquement l'utilisateur anonyme. ... ok
 test_debug_mode_does_not_auto_login_on_protected_routes (test_magic_links_security.MagicLinksSecurityTestCase.test_debug_mode_does_not_auto_login_on_protected_routes)
@@ -382,6 +392,8 @@ test_finalize_signed_document_production_waiver (test_waivers.WaiversTest.test_f
 Vérifie le cycle complet de signature et génération PDF d'une décharge production. ... ok
 test_quick_create_waiver_routes (test_waivers.WaiversTest.test_quick_create_waiver_routes)
 Vérifie les routes quick-create en 1 clic pour pilote et production. ... ok
+test_send_waivers_1_click_routes (test_waivers.WaiversTest.test_send_waivers_1_click_routes)
+Vérifie l'envoi en 1 clic des décharges avec retour à la page d'origine (return_to). ... ok
 test_soft_delete_waivers (test_waivers.WaiversTest.test_soft_delete_waivers) ... ok
 test_verify_pilot_waiver_route (test_waivers.WaiversTest.test_verify_pilot_waiver_route)
 Vérifie l'accès à la route de vérification pour une décharge pilote scellée. ... ok
@@ -403,6 +415,6 @@ test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.W
 Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
 ----------------------------------------------------------------------
-Ran 244 tests in 25.094s
+Ran 250 tests in 25.610s
 
 OK

@@ -191,13 +191,16 @@ def delete_production_waiver(waiver_id):
             from services.common.kdrive import dispatch_delete_document
             dispatch_delete_document("production_waiver", waiver.waiver_id)
         except Exception as k_err:
-            logger.error(f"❌ Erreur dispatch suppression kDrive production_waiver : {k_err}")
+            logger.error(
+                f"❌ Erreur dispatch suppression kDrive production_waiver : {k_err}")
 
-        logger.info(f"🗑️ Décharge production {waiver.waiver_id} supprimée avec succès.")
+        logger.info(
+            f"🗑️ Décharge production {waiver.waiver_id} supprimée avec succès.")
         return True, "Décharge supprimée avec succès."
     except Exception as e:
         db.session.rollback()
-        logger.error(f"❌ Erreur lors de la suppression de la décharge production {waiver_id} : {e}")
+        logger.error(
+            f"❌ Erreur lors de la suppression de la décharge production {waiver_id} : {e}")
         return False, f"Erreur lors de la suppression : {str(e)}"
 
 
@@ -270,8 +273,9 @@ def generate_production_waiver(waiver_id):
     if not waiver or waiver.status != "to_generate":
         return False, "Décharge non trouvée ou statut invalide."
 
-    if not waiver.project.production_contact:
-        return False, "Aucun contact de production n'est assigné à ce projet."
+    contact_prod = waiver.project.production_contact
+    if not contact_prod or not contact_prod.mail:
+        return False, "La production n'a pas d'adresse e-mail de contact renseignée dans le projet."
 
     p = waiver.project
     waiver.project_name = p.name
@@ -329,12 +333,14 @@ def send_production_waiver(waiver_id, base_url=None):
     elif has_request_context():
         resolved_base_url = request.host_url.rstrip('/')
     else:
-        server_name = current_app.config.get("SERVER_NAME") if current_app else None
+        server_name = current_app.config.get(
+            "SERVER_NAME") if current_app else None
         resolved_base_url = f"http://{server_name}" if server_name else "http://localhost:5000"
 
     signature_link = f"{resolved_base_url}/sign/production-waiver/{new_token}"
 
-    is_reminder = (waiver.status == "to_sign") or bool(waiver.sent_at) or ((waiver.reminder_count or 0) > 0)
+    is_reminder = (waiver.status == "to_sign") or bool(
+        waiver.sent_at) or ((waiver.reminder_count or 0) > 0)
 
     success = send_production_waiver_invitation_email(
         to_email=contact_prod.mail,
@@ -342,7 +348,8 @@ def send_production_waiver(waiver_id, base_url=None):
         project_name=waiver.project.name,
         signature_link=signature_link,
         is_reminder=is_reminder,
-        production_name=(waiver.project.production.name if waiver.project and waiver.project.production else getattr(waiver, "production_name", None)),
+        production_name=(waiver.project.production.name if waiver.project and waiver.project.production else getattr(
+            waiver, "production_name", None)),
     )
 
     if not success:
@@ -375,7 +382,8 @@ def reset_production_waiver(waiver_id):
             from services.common.kdrive import dispatch_delete_document
             dispatch_delete_document("production_waiver", waiver.waiver_id)
         except Exception as k_err:
-            logger.error(f"❌ Erreur dispatch suppression kDrive production_waiver reset : {k_err}")
+            logger.error(
+                f"❌ Erreur dispatch suppression kDrive production_waiver reset : {k_err}")
 
         return True, "Décharge réinitialisée avec succès."
     except Exception as e:
@@ -401,7 +409,8 @@ def delete_production_waiver_internal(project_id):
             from services.common.kdrive import dispatch_delete_document
             dispatch_delete_document("production_waiver", waiver.waiver_id)
         except Exception as k_err:
-            logger.error(f"❌ Erreur dispatch suppression kDrive production_waiver internal : {k_err}")
+            logger.error(
+                f"❌ Erreur dispatch suppression kDrive production_waiver internal : {k_err}")
     except Exception as e:
         logger.error(f"❌ Erreur suppression décharge production : {e}")
         db.session.rollback()
@@ -478,13 +487,16 @@ def delete_pilot_waiver(waiver_id):
             from services.common.kdrive import dispatch_delete_document
             dispatch_delete_document("pilot_waiver", waiver.waiver_id)
         except Exception as k_err:
-            logger.error(f"❌ Erreur dispatch suppression kDrive pilot_waiver : {k_err}")
+            logger.error(
+                f"❌ Erreur dispatch suppression kDrive pilot_waiver : {k_err}")
 
-        logger.info(f"🗑️ Décharge pilote {waiver.waiver_id} supprimée avec succès.")
+        logger.info(
+            f"🗑️ Décharge pilote {waiver.waiver_id} supprimée avec succès.")
         return True, "Décharge supprimée avec succès."
     except Exception as e:
         db.session.rollback()
-        logger.error(f"❌ Erreur lors de la suppression de la décharge pilote {waiver_id} : {e}")
+        logger.error(
+            f"❌ Erreur lors de la suppression de la décharge pilote {waiver_id} : {e}")
         return False, f"Erreur lors de la suppression : {str(e)}"
 
 
@@ -632,12 +644,14 @@ def send_pilot_waiver(waiver_id, base_url=None):
     elif has_request_context():
         resolved_base_url = request.host_url.rstrip('/')
     else:
-        server_name = current_app.config.get("SERVER_NAME") if current_app else None
+        server_name = current_app.config.get(
+            "SERVER_NAME") if current_app else None
         resolved_base_url = f"http://{server_name}" if server_name else "http://localhost:5000"
 
     signature_link = f"{resolved_base_url}/sign/waiver/{new_token}"
 
-    is_reminder = (waiver.status == "to_sign") or bool(waiver.sent_at) or ((waiver.reminder_count or 0) > 0)
+    is_reminder = (waiver.status == "to_sign") or bool(
+        waiver.sent_at) or ((waiver.reminder_count or 0) > 0)
 
     success = send_waiver_invitation_email(
         to_email=pilot_contact.mail,
@@ -645,7 +659,8 @@ def send_pilot_waiver(waiver_id, base_url=None):
         project_name=waiver.project.name,
         signature_link=signature_link,
         is_reminder=is_reminder,
-        production_name=(waiver.project.production.name if waiver.project and waiver.project.production else None),
+        production_name=(
+            waiver.project.production.name if waiver.project and waiver.project.production else None),
     )
 
     if not success:
@@ -678,7 +693,8 @@ def reset_pilot_waiver(waiver_id):
             from services.common.kdrive import dispatch_delete_document
             dispatch_delete_document("pilot_waiver", waiver.waiver_id)
         except Exception as k_err:
-            logger.error(f"❌ Erreur dispatch suppression kDrive pilot_waiver reset : {k_err}")
+            logger.error(
+                f"❌ Erreur dispatch suppression kDrive pilot_waiver reset : {k_err}")
 
         return True, "Décharge réinitialisée avec succès."
     except Exception as e:
@@ -706,7 +722,8 @@ def delete_pilot_waiver_internal(project_id):
             from services.common.kdrive import dispatch_delete_document
             dispatch_delete_document("pilot_waiver", waiver.waiver_id)
         except Exception as k_err:
-            logger.error(f"❌ Erreur dispatch suppression kDrive pilot_waiver internal : {k_err}")
+            logger.error(
+                f"❌ Erreur dispatch suppression kDrive pilot_waiver internal : {k_err}")
     except Exception as e:
         logger.error(
             f"❌ Erreur lors de la suppression interne de la décharge pour projet {project_id} : {e}")
@@ -737,7 +754,8 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
         "details": [],
     }
 
-    base_url_str = (base_url or os.getenv("APP_BASE_URL") or os.getenv("BASE_URL") or "https://bellevitesse.com").rstrip("/")
+    base_url_str = (base_url or os.getenv("APP_BASE_URL") or os.getenv(
+        "BASE_URL") or "https://bellevitesse.com").rstrip("/")
 
     # 1. Décharges de Production
     prod_waivers = (
@@ -773,7 +791,8 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
         try:
             # Générer un nouveau token de signature 24h
             new_token = str(uuid.uuid4())
-            token_rec = ProductionWaiverToken(token=new_token, waiver_id=pw.waiver_id)
+            token_rec = ProductionWaiverToken(
+                token=new_token, waiver_id=pw.waiver_id)
             db.session.add(token_rec)
 
             sig_url = f"{base_url_str}/sign/production-waiver/{new_token}"
@@ -784,7 +803,8 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
                 project_name=p.name,
                 signature_link=sig_url,
                 is_reminder=True,
-                production_name=(p.production.name if p.production else getattr(pw, "production_name", None)),
+                production_name=(p.production.name if p.production else getattr(
+                    pw, "production_name", None)),
             )
 
             if sent:
@@ -805,7 +825,8 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
                 })
         except Exception as e:
             db.session.rollback()
-            logger.error(f"❌ Erreur relance décharge production {pw.waiver_id} : {e}")
+            logger.error(
+                f"❌ Erreur relance décharge production {pw.waiver_id} : {e}")
 
     # 2. Décharges Pilote
     pilot_waivers = (
@@ -838,7 +859,8 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
 
         try:
             new_token = str(uuid.uuid4())
-            token_rec = PilotWaiverToken(token=new_token, waiver_id=dw.waiver_id)
+            token_rec = PilotWaiverToken(
+                token=new_token, waiver_id=dw.waiver_id)
             db.session.add(token_rec)
 
             sig_url = f"{base_url_str}/sign/waiver/{new_token}"
@@ -870,7 +892,7 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
                 })
         except Exception as e:
             db.session.rollback()
-            logger.error(f"❌ Erreur relance décharge pilote {dw.waiver_id} : {e}")
+            logger.error(
+                f"❌ Erreur relance décharge pilote {dw.waiver_id} : {e}")
 
     return results
-

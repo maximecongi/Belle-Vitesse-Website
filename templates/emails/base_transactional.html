@@ -1,4 +1,5 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="fr">
 
 <head>
@@ -284,7 +285,6 @@
 
         /* ── Alert & Notification Boxes ─────────────────────────────── */
         .alert-box {
-            border-radius: 4px;
             padding: 14px 18px;
             margin: 0 auto 24px;
             max-width: 520px;
@@ -528,9 +528,12 @@
     {% block extra_style %}{% endblock %}
 </head>
 
-<body style="margin: 0; padding: 0; background-color: #151515; width: 100% !important; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
+<body
+    style="margin: 0; padding: 0; background-color: #151515; width: 100% !important; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
     <!-- Main Email Wrapper Table -->
-    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#151515" class="email-wrapper" style="background-color: #151515; width: 100% !important; margin: 0; padding: 0; border-collapse: collapse;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#151515"
+        class="email-wrapper"
+        style="background-color: #151515; width: 100% !important; margin: 0; padding: 0; border-collapse: collapse;">
         <tr>
             <td align="center" valign="top" style="padding: 20px 10px 40px 10px; background-color: #151515;">
                 <!--[if (gte mso 9)|(IE)]>
@@ -538,31 +541,39 @@
                 <tr>
                 <td align="center" valign="top">
                 <![endif]-->
-                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="container" style="max-width: 600px; width: 100%; margin: 0 auto; background-color: #151515; border-collapse: collapse;">
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="container"
+                    style="max-width: 600px; width: 100%; margin: 0 auto; background-color: #151515; border-collapse: collapse;">
                     <!-- Header -->
                     <tr>
-                        <td align="center" valign="top" class="header" style="padding: 40px 20px 25px; text-align: center;">
+                        <td align="center" valign="top" class="header"
+                            style="padding: 40px 20px 25px; text-align: center;">
                             <a href="https://bellevitesse.com" target="_blank" style="text-decoration: none;">
                                 <img src="https://bellevitesse.com/static/imgs/logos_and_name/blanc-fond-transparent.png"
-                                    alt="Belle Vitesse" class="logo" width="220" style="width: 220px; max-width: 80%; height: auto; display: inline-block; border: 0;">
+                                    alt="Belle Vitesse" class="logo" width="220"
+                                    style="width: 220px; max-width: 80%; height: auto; display: inline-block; border: 0;">
                             </a>
                         </td>
                     </tr>
                     <!-- Content -->
                     <tr>
-                        <td align="center" valign="top" class="content {% block content_class %}{% endblock %}" style="padding: 10px 30px 30px; text-align: center;">
+                        <td align="center" valign="top" class="content {% block content_class %}{% endblock %}"
+                            style="padding: 10px 30px 30px; text-align: center;">
                             {% block content %}{% endblock %}
                         </td>
                     </tr>
                     <!-- Footer -->
                     <tr>
-                        <td align="center" valign="top" class="footer" style="padding: 40px 20px; text-align: center; color: #555555; border-top: 1px solid #252525;">
-                            <p style="font-size: 11px; line-height: 1.6; margin-top: 0; margin-bottom: 6px; color: #555555;">
+                        <td align="center" valign="top" class="footer"
+                            style="padding: 40px 20px; text-align: center; color: #555555; border-top: 1px solid #252525;">
+                            <p
+                                style="font-size: 11px; line-height: 1.6; margin-top: 0; margin-bottom: 6px; color: #555555;">
                                 © {{ company_name or 'Belle Vitesse' }} {{ now_year }}. Tous droits réservés.<br>
-                                {{ company_name or 'Belle Vitesse' }} — {{ company_address or '39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine' }}
+                                {{ company_name or 'Belle Vitesse' }} — {{ company_address or '39 rue Maurice Gunsbourg,
+                                94200 Ivry-sur-Seine' }}
                                 {% if company_email or company_phone %}
                                 <br>
-                                {% if company_email %}<a href="mailto:{{ company_email }}" style="color: #888888; text-decoration: none;">{{ company_email }}</a>{% endif %}
+                                {% if company_email %}<a href="mailto:{{ company_email }}"
+                                    style="color: #888888; text-decoration: none;">{{ company_email }}</a>{% endif %}
                                 {% if company_email and company_phone %} • {% endif %}
                                 {% if company_phone %}<span>{{ company_phone }}</span>{% endif %}
                                 {% endif %}
