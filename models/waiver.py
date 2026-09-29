@@ -22,11 +22,17 @@ class SignedDocumentMixin:
     pdf_file_hash = db.Column(db.String(64))
     # Copie conforme des données au moment de la signature
     data_snapshot = db.Column(db.JSON, nullable=False)
-    # Données de la signature (MEDIUMTEXT)
-    signature = db.Column(db.Text(length=16777215))
+    # Chemin relatif du fichier signature PNG (ex: signatures/waivers/BVPW-123.png)
+    signature = db.Column(db.String(255), nullable=True)
     pdf_url = db.Column(db.Text)  # URL (ou chemin) vers le fichier PDF
     signed_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=_utcnow)
+
+    @property
+    def signature_data_uri(self):
+        """Retourne la Data URI de la signature pour injection directe dans les templates ou PDF."""
+        from utils.signature_storage import load_signature_data_uri
+        return load_signature_data_uri(self.signature)
 
 
 # ── Modèles de décharges ─────────────────────────────────────────
@@ -62,12 +68,16 @@ class PilotWaiver(db.Model):
     vehicles = db.Column(db.Text, nullable=True)
     shooting_dates = db.Column(db.String(255), nullable=True)
 
-    # Signature
-    signature_data = db.Column(
-        # Données de signature manuscrite (Base64)
-        db.Text(length=16777215), nullable=True)
+    # Signature (Chemin relatif PNG ex: signatures/waivers/BVDW-xxx.png)
+    signature_data = db.Column(db.String(255), nullable=True)
     # Chemin relatif du PDF signé
     signed_pdf_path = db.Column(db.String(500), nullable=True)
+
+    @property
+    def signature_data_uri(self):
+        """Retourne la Data URI de la signature pour injection directe dans les templates ou PDF."""
+        from utils.signature_storage import load_signature_data_uri
+        return load_signature_data_uri(self.signature_data)
 
     # Traçabilité de la signature
     signer_ip = db.Column(db.String(45), nullable=True)
@@ -137,10 +147,15 @@ class ProductionWaiver(db.Model):
     shooting_dates = db.Column(db.String(255), nullable=True)
     location_of_use = db.Column(db.Text, nullable=True)
 
-    # Signature
-    signature_data = db.Column(
-        db.Text(length=16777215), nullable=True)  # MEDIUMTEXT
+    # Signature (Chemin relatif PNG ex: signatures/waivers/BVPW-xxx.png)
+    signature_data = db.Column(db.String(255), nullable=True)
     signed_pdf_path = db.Column(db.String(500), nullable=True)
+
+    @property
+    def signature_data_uri(self):
+        """Retourne la Data URI de la signature pour injection directe dans les templates ou PDF."""
+        from utils.signature_storage import load_signature_data_uri
+        return load_signature_data_uri(self.signature_data)
 
     # Traçabilité de la signature
     signer_ip = db.Column(db.String(45), nullable=True)
@@ -199,7 +214,7 @@ class CheckoutToken(db.Model, TokenMixin):
     __tablename__ = "checkout_tokens"
     record_id = db.Column(db.String(255), nullable=False)
     inspection_id = db.Column(db.String(255), nullable=False)
-    signature = db.Column(db.Text(length=16777215))
+    signature = db.Column(db.String(255), nullable=True)
 
 
 class CheckinSignedDocument(db.Model, SignedDocumentMixin):
@@ -213,7 +228,7 @@ class CheckinToken(db.Model, TokenMixin):
     __tablename__ = "checkin_tokens"
     record_id = db.Column(db.String(255), nullable=False)
     inspection_id = db.Column(db.String(255), nullable=False)
-    signature = db.Column(db.Text(length=16777215))
+    signature = db.Column(db.String(255), nullable=True)
 
 
 class PilotWaiverToken(db.Model, TokenMixin):

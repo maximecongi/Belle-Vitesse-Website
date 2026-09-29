@@ -229,8 +229,8 @@
                 <div class="checkout-signature-block">
                     <div class="checkout-signature-label">Pour Belle Vitesse</div>
                     <div class="checkout-signature-pad">
-                        {% if incident.bv_signature_data %}
-                        <img src="{{ incident.bv_signature_data }}" alt="Signature Belle Vitesse" style="max-height: 50pt; max-width: 140pt; display: block; margin: 0 auto;">
+                        {% if incident.bv_signature_data_uri or incident.bv_signature_data %}
+                        <img src="{{ incident.bv_signature_data_uri or incident.bv_signature_data }}" alt="Signature Belle Vitesse" style="max-height: 50pt; max-width: 140pt; display: block; margin: 0 auto;">
                         {% else %}
                         <span style="font-size: 7.5pt; color: var(--grey-2); line-height: 40pt; display: block; text-align: center;">Visa Responsable Technique</span>
                         {% endif %}
@@ -250,8 +250,8 @@
                 <div class="checkout-signature-block">
                     <div class="checkout-signature-label">Pour la Production</div>
                     <div class="checkout-signature-pad">
-                        {% if incident.prod_signature_data %}
-                        <img src="{{ incident.prod_signature_data }}" alt="Signature Production" style="max-height: 50pt; max-width: 140pt; display: block; margin: 0 auto;">
+                        {% if incident.prod_signature_data_uri or incident.prod_signature_data %}
+                        <img src="{{ incident.prod_signature_data_uri or incident.prod_signature_data }}" alt="Signature Production" style="max-height: 50pt; max-width: 140pt; display: block; margin: 0 auto;">
                         {% else %}
                         <span style="font-size: 7.5pt; color: var(--grey-2); line-height: 40pt; display: block; text-align: center;">Visa Chargé de Production / Régie</span>
                         {% endif %}

@@ -1045,6 +1045,13 @@
     padding: 5% !important;
 }
 
+.btn-download-pdf-sidebar .lucide {
+    height: 16px !important;
+    width: 16px !important;
+    vertical-align: -2px;
+    margin-right: 0.5rem;
+}
+
 .admin-btn-seal-yellow {
     width: 100% !important;
     background: #ffc84526 !important;

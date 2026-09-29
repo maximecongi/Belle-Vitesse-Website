@@ -2603,7 +2603,8 @@ function initInspectionDetail() {
     const currentStatusId = container ? (container.dataset.statusId || '') : (sealBtn ? (sealBtn.dataset.statusId || '') : '');
     const csrfToken = document.querySelector('input[name="csrf_token"]')?.value;
 
-    if (sealBtn && recordId) {
+    if (sealBtn && recordId && !sealBtn.dataset.bound) {
+        sealBtn.dataset.bound = 'true';
         sealBtn.addEventListener('click', function () {
             const label = inspectionType === 'checkouts' ? 'checkout' : 'checkin';
             if (!confirm(`Êtes-vous sûr de vouloir sceller ce ${label} ? Cette action est irréversible.`)) return;
@@ -2642,8 +2643,9 @@ function initInspectionDetail() {
         });
     }
 
-    // Polling si statut pending
-    if (currentStatusId === "pending" && recordId) {
+    // Polling si statut pending (idempotent)
+    if (currentStatusId === "pending" && recordId && container && !container.dataset.pollingBound) {
+        container.dataset.pollingBound = 'true';
         setInterval(() => {
             fetch(`/admin/api/${inspectionType}/${recordId}/status`)
                 .then(r => r.json())
@@ -2657,12 +2659,6 @@ function initInspectionDetail() {
     }
 }
 window.initInspectionDetail = initInspectionDetail;
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initInspectionDetail);
-} else {
-    initInspectionDetail();
-}
 ;
 
 /* ── js/src/admin/photo-annotator.js ── */

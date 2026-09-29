@@ -114,9 +114,6 @@
             </div>
         </section>
 
-        <!-- ── 3. Empreintes cryptographiques ── -->
-        {{ vmacro.crypto_fingerprints(document_hash, pdf_file_hash, title="Sécurité Numérique & Sceau") }}
-
         <!-- ═══════════ UPLOAD VÉRIFICATION PDF ═══════════ -->
         {{ vmacro.pdf_upload_verifier(has_pdf_hash) }}
 

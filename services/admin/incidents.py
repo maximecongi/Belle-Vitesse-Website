@@ -28,6 +28,7 @@ from utils.image_utils import optimize_and_save_image
 from services.admin.utils import handle_admin_service_error
 from utils.entity_resolvers import resolve_incident, resolve_project
 from utils.pagination import Pagination
+from utils.signature_storage import save_signature_image, load_signature_data_uri, delete_signature_file
 
 logger = logging.getLogger(__name__)
 
@@ -658,12 +659,14 @@ def get_incident_detail(record_id):
         "bv_signer_name": inc.bv_signer_name,
         "bv_signer_role": inc.bv_signer_role,
         "bv_signature_data": inc.bv_signature_data,
+        "bv_signature_data_uri": inc.bv_signature_data_uri,
         "bv_signed_at": _format_date(inc.bv_signed_at) if inc.bv_signed_at else None,
         "bv_signed_at_raw": inc.bv_signed_at.isoformat() if inc.bv_signed_at else "",
         "bv_signer_ip": inc.bv_signer_ip,
         "prod_signer_name": inc.prod_signer_name,
         "prod_signer_role": inc.prod_signer_role,
         "prod_signature_data": inc.prod_signature_data,
+        "prod_signature_data_uri": inc.prod_signature_data_uri,
         "prod_signed_at": _format_date(inc.prod_signed_at) if inc.prod_signed_at else None,
         "prod_signed_at_raw": inc.prod_signed_at.isoformat() if inc.prod_signed_at else "",
         "prod_signer_ip": inc.prod_signer_ip,
@@ -1227,7 +1230,13 @@ def sign_incident_bv(incident_id, signer_name, signer_role, signature_data, ip_a
     inc.bv_signer_name = str(signer_name).strip()
     inc.bv_signer_role = str(signer_role).strip(
     ) if signer_role else "Responsable Technique Belle Vitesse"
-    inc.bv_signature_data = str(signature_data).strip()
+    sig_rel_path = save_signature_image(
+        signature_data,
+        entity_type="incidents",
+        record_id=inc.incident_number,
+        suffix="_bv"
+    )
+    inc.bv_signature_data = sig_rel_path
     inc.bv_signed_at = datetime.now(timezone.utc)
     inc.bv_signer_ip = ip_address or "127.0.0.1"
 
@@ -1294,14 +1303,20 @@ def sign_incident_prod(incident_id, signer_name, signer_role, signature_data, ip
     inc.prod_signer_name = str(signer_name).strip()
     inc.prod_signer_role = str(signer_role).strip(
     ) if signer_role else "Représentant Production"
-    inc.prod_signature_data = str(signature_data).strip()
+    sig_rel_path = save_signature_image(
+        signature_data,
+        entity_type="incidents",
+        record_id=inc.incident_number,
+        suffix="_prod"
+    )
+    inc.prod_signature_data = sig_rel_path
     inc.prod_signed_at = datetime.now(timezone.utc)
     inc.prod_signer_ip = ip_address or "127.0.0.1"
 
     if token_str:
         tok = db.session.get(IncidentToken, token_str)
         if tok:
-            tok.signature = inc.prod_signature_data
+            tok.signature = sig_rel_path
 
     # Scellement contradictoire UNIQUEMENT si Belle Vitesse a déjà signé
     if inc.is_signed_bv:

@@ -1883,7 +1883,6 @@ input[type="checkbox"]:checked {
     background-color: var(--entity-waiver-bg, #ede9fe);
     border: 1px solid rgba(139, 92, 246, 0.3);
     border-left: 4px solid var(--entity-waiver, #8b5cf6);
-    border-radius: 8px;
     gap: 12px;
 }
 

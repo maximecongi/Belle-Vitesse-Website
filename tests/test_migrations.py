@@ -49,7 +49,7 @@ class MigrationsTestCase(unittest.TestCase):
                 # 3. Vérification de la version finale dans alembic_version
                 with db.engine.connect() as conn:
                     current_rev = conn.execute(sa.text("SELECT version_num FROM alembic_version")).scalar()
-                    self.assertEqual(current_rev, "i00d7fe3c469")
+                    self.assertEqual(current_rev, "j00d7fe3c470")
 
                 # 4. Vérification que les tables décommissionnées pre_quotes sont bien absentes
                 self.assertNotIn("pre_quotes", tables)
@@ -77,7 +77,7 @@ class MigrationsTestCase(unittest.TestCase):
                 upgrade()
                 with db.engine.connect() as conn:
                     current_rev = conn.execute(sa.text("SELECT version_num FROM alembic_version")).scalar()
-                    self.assertEqual(current_rev, "i00d7fe3c469")
+                    self.assertEqual(current_rev, "j00d7fe3c470")
 
     def test_upgrade_from_previous_head_stamp(self):
         """Vérifie qu'une base déjà estampillée à g00d7fe3c467 migre vers i00d7fe3c469 et supprime pre_quotes."""
@@ -119,7 +119,7 @@ class MigrationsTestCase(unittest.TestCase):
 
                 with db.engine.connect() as conn:
                     current_rev = conn.execute(sa.text("SELECT version_num FROM alembic_version")).scalar()
-                    self.assertEqual(current_rev, "i00d7fe3c469")
+                    self.assertEqual(current_rev, "j00d7fe3c470")
 
 
 if __name__ == "__main__":

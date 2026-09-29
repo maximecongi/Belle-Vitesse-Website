@@ -84,9 +84,6 @@
             </div>
         </section>
 
-        <!-- ── Empreinte numérique ── -->
-        {{ vmacro.crypto_fingerprints(document_hash, signed_doc.pdf_file_hash, title="Sécurité Numérique (Pilote)") }}
-
         <!-- ═══════════ UPLOAD VÉRIFICATION PDF ═══════════ -->
         {{ vmacro.pdf_upload_verifier(has_pdf_hash, old_notice="Ce document a été signé avant l'introduction de la
         vérification par empreinte PDF. Seul le sceau de données est disponible.") }}

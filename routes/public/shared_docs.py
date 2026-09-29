@@ -106,6 +106,18 @@ def handle_document_verify(mode_config, identifier):
     seal_valid = verify_hmac_seal(
         signed_doc.hash, mode_config["seal_prefix"], *seal_args)
 
+    # Si le sceau ne correspond pas et que l'entité dispose d'une signature_data_uri (scellement historique au Data URI),
+    # tester avec la Data URI pour garantir la vérification des documents scellés antérieurement.
+    if not seal_valid and hasattr(signed_doc, "signature_data_uri"):
+        try:
+            data_uri = signed_doc.signature_data_uri
+            if data_uri and signed_doc.signature in seal_args:
+                fallback_seal_args = [data_uri if a == signed_doc.signature else a for a in seal_args]
+                seal_valid = verify_hmac_seal(
+                    signed_doc.hash, mode_config["seal_prefix"], *fallback_seal_args)
+        except Exception as fallback_err:
+            current_app.logger.warning(f"⚠️ Échec du fallback sceau signature_data_uri : {fallback_err}")
+
     pdf_valid = None
     pdf_error = None
     if request.method == "POST":

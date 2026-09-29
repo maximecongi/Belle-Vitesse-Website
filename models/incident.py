@@ -81,14 +81,14 @@ class Incident(db.Model):
     # 1. Visa & Signature Belle Vitesse (Technicien / Déclarant)
     bv_signer_name = db.Column(db.String(150), nullable=True)
     bv_signer_role = db.Column(db.String(150), nullable=True)
-    bv_signature_data = db.Column(db.Text(length=16777215), nullable=True)
+    bv_signature_data = db.Column(db.String(255), nullable=True)
     bv_signed_at = db.Column(db.DateTime, nullable=True)
     bv_signer_ip = db.Column(db.String(45), nullable=True)
 
     # 2. Visa & Signature Production (Sur place ou à distance)
     prod_signer_name = db.Column(db.String(150), nullable=True)
     prod_signer_role = db.Column(db.String(150), nullable=True)
-    prod_signature_data = db.Column(db.Text(length=16777215), nullable=True)
+    prod_signature_data = db.Column(db.String(255), nullable=True)
     prod_signed_at = db.Column(db.DateTime, nullable=True)
     prod_signer_ip = db.Column(db.String(45), nullable=True)
 
@@ -198,6 +198,18 @@ class Incident(db.Model):
             return "Signé par la Production"
         return "Non signé"
 
+    @property
+    def bv_signature_data_uri(self):
+        """Retourne la Data URI de la signature Belle Vitesse pour affichage web et PDF."""
+        from utils.signature_storage import load_signature_data_uri
+        return load_signature_data_uri(self.bv_signature_data)
+
+    @property
+    def prod_signature_data_uri(self):
+        """Retourne la Data URI de la signature Production pour affichage web et PDF."""
+        from utils.signature_storage import load_signature_data_uri
+        return load_signature_data_uri(self.prod_signature_data)
+
     def to_dict(self):
         return {
             "id": self.id,
@@ -264,7 +276,7 @@ class IncidentToken(db.Model, TokenMixin):
         index=True
     )
     recipient_email = db.Column(db.String(255), nullable=True)
-    signature = db.Column(db.Text(length=16777215), nullable=True)
+    signature = db.Column(db.String(255), nullable=True)
 
     incident = db.relationship("Incident", backref=db.backref(
         "tokens", lazy=True, cascade="all, delete-orphan"))

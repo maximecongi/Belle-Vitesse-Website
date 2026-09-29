@@ -207,10 +207,10 @@
                             incident.bv_signed_at }}</div>
                         {% endif %}
                     </div>
-                    {% if incident.bv_signature_data %}
+                    {% if incident.bv_signature_data_uri or incident.bv_signature_data %}
                     <div>
-                        <img src="{{ incident.bv_signature_data }}" alt="Signature Belle Vitesse"
-                            style="max-height: 60px; max-width: 160px; background: #ffffff; border: 1px solid var(--white-3); border-radius: 4px; padding: 4px; display: block;">
+                        <img src="{{ incident.bv_signature_data_uri or incident.bv_signature_data }}"
+                            alt="Signature Belle Vitesse" class="incident-signature-preview">
                     </div>
                     {% endif %}
                     {% else %}

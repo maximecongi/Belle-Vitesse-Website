@@ -111,29 +111,41 @@ def task_render_pdf_to_file(
                     _send_waiver_confirmation_email(mode, waiver, output_file_path)
 
         elif entity_type == "inspection" and entity_id:
+            from sqlalchemy import or_
             from models.db import db
-            from models.inspection import (
-                CheckinRecord,
-                CheckinSignedDocument,
-                CheckoutRecord,
-                CheckoutSignedDocument,
-            )
+            from models.inspection import CheckoutVehicle, CheckinVehicle
+            from models.waiver import CheckoutSignedDocument, CheckinSignedDocument
+
+            entity_str = str(entity_id)
+            entity_int = int(entity_id) if entity_str.isdigit() else None
+
+            checkout_cond = [CheckoutVehicle.inspection_number == entity_str]
+            checkin_cond = [CheckinVehicle.inspection_number == entity_str]
+            if entity_int is not None:
+                checkout_cond.append(CheckoutVehicle.id == entity_int)
+                checkin_cond.append(CheckinVehicle.id == entity_int)
 
             record = (
-                CheckoutRecord.query.filter(
-                    (CheckoutRecord.inspection_number == str(entity_id))
-                    | (CheckoutRecord.id == entity_id)
-                ).first()
-                or CheckinRecord.query.filter(
-                    (CheckinRecord.inspection_number == str(entity_id))
-                    | (CheckinRecord.id == entity_id)
-                ).first()
+                CheckoutVehicle.query.filter(or_(*checkout_cond)).first()
+                or CheckinVehicle.query.filter(or_(*checkin_cond)).first()
             )
             if record:
                 record.signed_pdf_path = rel_pdf_path
                 signed_doc = (
-                    CheckoutSignedDocument.query.filter_by(inspection_id=record.id).first()
-                    or CheckinSignedDocument.query.filter_by(inspection_id=record.id).first()
+                    CheckoutSignedDocument.query.filter(
+                        or_(
+                            CheckoutSignedDocument.inspection_id == entity_str,
+                            CheckoutSignedDocument.inspection_id == getattr(record, "inspection_number", ""),
+                            CheckoutSignedDocument.inspection_id == str(record.id),
+                        )
+                    ).first()
+                    or CheckinSignedDocument.query.filter(
+                        or_(
+                            CheckinSignedDocument.inspection_id == entity_str,
+                            CheckinSignedDocument.inspection_id == getattr(record, "inspection_number", ""),
+                            CheckinSignedDocument.inspection_id == str(record.id),
+                        )
+                    ).first()
                 )
                 if signed_doc:
                     signed_doc.pdf_file_hash = file_hash

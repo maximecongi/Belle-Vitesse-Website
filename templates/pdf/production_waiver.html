@@ -203,8 +203,8 @@
                 <div class="pilot-waiver-signature-block">
                     <p class="pilot-waiver-signature-label">Signature Production</p>
                     <div class="pilot-waiver-signature-pad">
-                        {% if waiver.signature_data %}
-                        <img src="{{ waiver.signature_data }}" alt="Signature">
+                        {% if waiver.signature_data_uri or signature %}
+                        <img src="{{ waiver.signature_data_uri or signature }}" alt="Signature">
                         {% else %}
                         <span class="pilot-waiver-text-muted">En attente</span>
                         {% endif %}

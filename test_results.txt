@@ -1,3 +1,17 @@
+/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/paramiko/pkey.py:100: CryptographyDeprecationWarning: TripleDES has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.TripleDES and will be removed from cryptography.hazmat.primitives.ciphers.algorithms in 48.0.0.
+  "cipher": algorithms.TripleDES,
+/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/paramiko/transport.py:259: CryptographyDeprecationWarning: TripleDES has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.TripleDES and will be removed from cryptography.hazmat.primitives.ciphers.algorithms in 48.0.0.
+  "class": algorithms.TripleDES,
+[2026-09-30 00:09:56,020] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:09:57,821] INFO in app: ✅ Development database tables created successfully (db.create_all).
+[2026-09-30 00:09:58,107] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:09:58,152] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+[2026-09-30 00:09:58,333] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:09:58,377] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
 test_admin_blueprints_url_prefix (test_admin_blueprints.AdminBlueprintsTestCase.test_admin_blueprints_url_prefix)
 Vérifie que les Blueprints admin ont le préfixe /admin approprié. ... ok
 test_all_admin_modules_are_blueprints (test_admin_blueprints.AdminBlueprintsTestCase.test_all_admin_modules_are_blueprints)
@@ -7,64 +21,260 @@ Vérifie que réappeler les anciennes fonctions init_*_routes ne produit aucune 
 test_url_for_aliasing_bidirectional (test_admin_blueprints.AdminBlueprintsTestCase.test_url_for_aliasing_bidirectional)
 Vérifie que url_for fonctionne identiquement avec l'alias historique ou le nom qualifié Blueprint. ... ok
 test_api_calendar_no_auth (test_api.APIRouteSmokeTest.test_api_calendar_no_auth)
-GET /api/v1/calendar/events without JWT returns 401. ... ok
+GET /api/v1/calendar/events without JWT returns 401. ... [2026-09-30 00:09:58,381] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:09:58,427] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_api_checkins_no_auth (test_api.APIRouteSmokeTest.test_api_checkins_no_auth)
-GET /api/v1/checkins without JWT returns 401. ... ok
+GET /api/v1/checkins without JWT returns 401. ... [2026-09-30 00:09:58,429] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:09:58,471] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_api_checkouts_no_auth (test_api.APIRouteSmokeTest.test_api_checkouts_no_auth)
-GET /api/v1/checkouts without JWT returns 401. ... ok
+GET /api/v1/checkouts without JWT returns 401. ... [2026-09-30 00:09:58,473] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:09:58,516] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_api_contacts_no_auth (test_api.APIRouteSmokeTest.test_api_contacts_no_auth)
-GET /api/v1/contacts without JWT returns 401. ... ok
+GET /api/v1/contacts without JWT returns 401. ... [2026-09-30 00:09:58,518] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:09:58,561] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_api_login_no_email (test_api.APIRouteSmokeTest.test_api_login_no_email)
-POST /api/v1/auth/login without email returns 400. ... ok
+POST /api/v1/auth/login without email returns 400. ... [2026-09-30 00:09:58,564] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:09:58,609] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_api_me_no_auth (test_api.APIRouteSmokeTest.test_api_me_no_auth)
-GET /api/v1/auth/me without JWT returns 401. ... ok
+GET /api/v1/auth/me without JWT returns 401. ... [2026-09-30 00:09:58,611] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:09:58,697] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_api_me_with_valid_jwt (test_api.APIRouteSmokeTest.test_api_me_with_valid_jwt)
-GET /api/v1/auth/me with valid JWT returns user profile. ... ok
+GET /api/v1/auth/me with valid JWT returns user profile. ... [2026-09-30 00:09:58,699] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:09:58,744] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+WARNING:py.warnings:/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/jwt/api_jwt.py:153: InsecureKeyLengthWarning: The HMAC key is 24 bytes long, which is below the minimum recommended length of 32 bytes for SHA256. See RFC 7518 Section 3.2.
+  return self._jws.encode(
+
+WARNING:py.warnings:/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/jwt/api_jwt.py:371: InsecureKeyLengthWarning: The HMAC key is 24 bytes long, which is below the minimum recommended length of 32 bytes for SHA256. See RFC 7518 Section 3.2.
+  decoded = self.decode_complete(
+
+ok
 test_api_productions_no_auth (test_api.APIRouteSmokeTest.test_api_productions_no_auth)
-GET /api/v1/productions without JWT returns 401. ... ok
+GET /api/v1/productions without JWT returns 401. ... [2026-09-30 00:09:58,778] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:09:58,821] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_api_projects_no_auth (test_api.APIRouteSmokeTest.test_api_projects_no_auth)
-GET /api/v1/projects without JWT returns 401. ... ok
+GET /api/v1/projects without JWT returns 401. ... [2026-09-30 00:09:58,824] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:09:58,865] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_api_with_invalid_token (test_api.APIRouteSmokeTest.test_api_with_invalid_token)
-GET /api/v1/checkouts with invalid token returns 401. ... ok
+GET /api/v1/checkouts with invalid token returns 401. ... [2026-09-30 00:09:58,868] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:09:58,915] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_api_with_valid_jwt (test_api.APIRouteSmokeTest.test_api_with_valid_jwt)
-GET /api/v1/checkouts with valid JWT returns 200. ... ok
+GET /api/v1/checkouts with valid JWT returns 200. ... [2026-09-30 00:09:58,917] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:09:58,959] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_administrator_sees_only_own_calendar (test_calendar_permissions.CalendarPermissionsTestCase.test_administrator_sees_only_own_calendar)
-Administrator user should only see their own calendar entry. ... ok
+Administrator user should only see their own calendar entry. ... [2026-09-30 00:09:59,032] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:09:59,073] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_commercial_sees_only_own_calendar (test_calendar_permissions.CalendarPermissionsTestCase.test_commercial_sees_only_own_calendar)
-Commercial user should only see their own calendar entry. ... ok
+Commercial user should only see their own calendar entry. ... [2026-09-30 00:09:59,140] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:09:59,182] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_manager_sees_only_own_calendar (test_calendar_permissions.CalendarPermissionsTestCase.test_manager_sees_only_own_calendar)
-Manager user should only see their own calendar entry. ... ok
+Manager user should only see their own calendar entry. ... [2026-09-30 00:09:59,248] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:09:59,290] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_non_super_admin_cannot_generate_for_other_user (test_calendar_permissions.CalendarPermissionsTestCase.test_non_super_admin_cannot_generate_for_other_user)
-If a commercial tries to generate a subscription with another user_id, it is forced to their own. ... ok
+If a commercial tries to generate a subscription with another user_id, it is forced to their own. ... [2026-09-30 00:09:59,353] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:09:59,399] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.calendar_subscriptions:Abonnement calendrier créé pour user 2 : token=53d49559...
+[2026-09-30 00:09:59,406] INFO in mailer: 🚀 Sending calendar invitation email to alice@bellevitesse.com
+INFO:app:🚀 Sending calendar invitation email to alice@bellevitesse.com
+[2026-09-30 00:09:59,423] INFO in mailer: 🧪 [TESTING] Email SMTP intercepté (non envoyé) pour : ['alice@bellevitesse.com']
+INFO:app:🧪 [TESTING] Email SMTP intercepté (non envoyé) pour : ['alice@bellevitesse.com']
+INFO:mailer.tasks:✅ [Mailer Job] E-mail 'Votre calendrier Belle Vitesse' expédié avec succès à alice@bellevitesse.com
+ok
 test_super_admin_can_generate_for_other_user (test_calendar_permissions.CalendarPermissionsTestCase.test_super_admin_can_generate_for_other_user)
-Super admin can generate subscription for any user specified in form. ... ok
+Super admin can generate subscription for any user specified in form. ... [2026-09-30 00:09:59,488] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:09:59,539] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.calendar_subscriptions:Abonnement calendrier créé pour user 3 : token=df3f7faf...
+[2026-09-30 00:09:59,544] INFO in mailer: 🚀 Sending calendar invitation email to bob@bellevitesse.com
+INFO:app:🚀 Sending calendar invitation email to bob@bellevitesse.com
+[2026-09-30 00:09:59,556] INFO in mailer: 🧪 [TESTING] Email SMTP intercepté (non envoyé) pour : ['bob@bellevitesse.com']
+INFO:app:🧪 [TESTING] Email SMTP intercepté (non envoyé) pour : ['bob@bellevitesse.com']
+INFO:mailer.tasks:✅ [Mailer Job] E-mail 'Votre calendrier Belle Vitesse' expédié avec succès à bob@bellevitesse.com
+ok
 test_super_administrator_sees_all_users (test_calendar_permissions.CalendarPermissionsTestCase.test_super_administrator_sees_all_users)
-Super Administrator user should see all users. ... ok
+Super Administrator user should see all users. ... [2026-09-30 00:09:59,622] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:09:59,664] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_unauthenticated_access_redirects_to_login (test_calendar_permissions.CalendarPermissionsTestCase.test_unauthenticated_access_redirects_to_login)
-Unauthenticated user should be redirected to login page. ... ok
+Unauthenticated user should be redirected to login page. ... [2026-09-30 00:09:59,725] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:09:59,767] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_user_role_cannot_access_calendar (test_calendar_permissions.CalendarPermissionsTestCase.test_user_role_cannot_access_calendar)
-User with role 'user' should be forbidden / redirected to dashboard. ... ok
-test_admin_checkpoint_edit_get_and_post (test_checkpoints_management.CheckpointsManagementTest.test_admin_checkpoint_edit_get_and_post) ... ok
-test_admin_checkpoints_list_view (test_checkpoints_management.CheckpointsManagementTest.test_admin_checkpoints_list_view) ... ok
-test_auto_seeding_checkpoints (test_checkpoints_management.CheckpointsManagementTest.test_auto_seeding_checkpoints) ... ok
-test_category_grouping_order (test_checkpoints_management.CheckpointsManagementTest.test_category_grouping_order) ... ok
-test_delete_checkpoint_route (test_checkpoints_management.CheckpointsManagementTest.test_delete_checkpoint_route) ... ok
-test_matrix_config_sync (test_checkpoints_management.CheckpointsManagementTest.test_matrix_config_sync) ... ok
-test_reorder_checkpoints_api (test_checkpoints_management.CheckpointsManagementTest.test_reorder_checkpoints_api) ... ok
-test_utils_get_checkpoints_for_vehicle_with_custom_definition (test_checkpoints_management.CheckpointsManagementTest.test_utils_get_checkpoints_for_vehicle_with_custom_definition) ... ok
+User with role 'user' should be forbidden / redirected to dashboard. ... [2026-09-30 00:09:59,774] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:09:59,815] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+[2026-09-30 00:09:59,819] WARNING in decorators: ⚠️ Tentative d'accès non autorisée : Le rôle 'technicien' a tenté d'accéder à https://localhost/admin/calendar. Autorisés : ['administrateur', 'manager', 'commercial']
+WARNING:app:⚠️ Tentative d'accès non autorisée : Le rôle 'technicien' a tenté d'accéder à https://localhost/admin/calendar. Autorisés : ['administrateur', 'manager', 'commercial']
+ok
+test_admin_checkpoint_edit_get_and_post (test_checkpoints_management.CheckpointsManagementTest.test_admin_checkpoint_edit_get_and_post) ... [2026-09-30 00:09:59,825] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:09:59,947] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.vehicle_config:🔧 Initialisation par défaut des CheckpointDefinition en base de données...
+INFO:services.admin.vehicle_config:✅ CheckpointDefinition initialisés avec succès.
+WARNING:py.warnings:/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/services/admin/vehicle_config.py:132: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  cp = CheckpointDefinition.query.get(checkpoint_id)
+
+WARNING:py.warnings:/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/services/admin/vehicle_config.py:280: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  cp = CheckpointDefinition.query.get(checkpoint_id)
+
+WARNING:py.warnings:/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/tests/test_checkpoints_management.py:120: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  updated_cp = CheckpointDefinition.query.get(cp_id)
+
+ok
+test_admin_checkpoints_list_view (test_checkpoints_management.CheckpointsManagementTest.test_admin_checkpoints_list_view) ... [2026-09-30 00:10:00,030] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:00,071] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.vehicle_config:🔧 Initialisation par défaut des CheckpointDefinition en base de données...
+INFO:services.admin.vehicle_config:✅ CheckpointDefinition initialisés avec succès.
+ok
+test_auto_seeding_checkpoints (test_checkpoints_management.CheckpointsManagementTest.test_auto_seeding_checkpoints) ... [2026-09-30 00:10:00,138] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:00,181] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.vehicle_config:🔧 Initialisation par défaut des CheckpointDefinition en base de données...
+INFO:services.admin.vehicle_config:✅ CheckpointDefinition initialisés avec succès.
+ok
+test_category_grouping_order (test_checkpoints_management.CheckpointsManagementTest.test_category_grouping_order) ... [2026-09-30 00:10:00,191] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:00,233] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.vehicle_config:🔧 Initialisation par défaut des CheckpointDefinition en base de données...
+INFO:services.admin.vehicle_config:✅ CheckpointDefinition initialisés avec succès.
+ok
+test_delete_checkpoint_route (test_checkpoints_management.CheckpointsManagementTest.test_delete_checkpoint_route) ... [2026-09-30 00:10:00,243] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:00,285] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.vehicle_config:🔧 Initialisation par défaut des CheckpointDefinition en base de données...
+INFO:services.admin.vehicle_config:✅ CheckpointDefinition initialisés avec succès.
+WARNING:py.warnings:/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/services/admin/vehicle_config.py:361: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  cp = CheckpointDefinition.query.get(checkpoint_id)
+
+WARNING:py.warnings:/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/tests/test_checkpoints_management.py:231: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  deleted = CheckpointDefinition.query.get(new_id)
+
+ok
+test_matrix_config_sync (test_checkpoints_management.CheckpointsManagementTest.test_matrix_config_sync) ... [2026-09-30 00:10:00,356] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:00,400] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.vehicle_config:🔧 Initialisation par défaut des CheckpointDefinition en base de données...
+INFO:services.admin.vehicle_config:✅ CheckpointDefinition initialisés avec succès.
+ok
+test_reorder_checkpoints_api (test_checkpoints_management.CheckpointsManagementTest.test_reorder_checkpoints_api) ... [2026-09-30 00:10:00,409] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:00,451] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.vehicle_config:🔧 Initialisation par défaut des CheckpointDefinition en base de données...
+INFO:services.admin.vehicle_config:✅ CheckpointDefinition initialisés avec succès.
+WARNING:py.warnings:/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/services/admin/vehicle_config.py:344: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  cp = CheckpointDefinition.query.get(int(cp_id))
+
+WARNING:py.warnings:/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/tests/test_checkpoints_management.py:208: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  first_cp = CheckpointDefinition.query.get(reversed_ids[0])
+
+WARNING:py.warnings:/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/tests/test_checkpoints_management.py:209: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  last_cp = CheckpointDefinition.query.get(reversed_ids[-1])
+
+ok
+test_utils_get_checkpoints_for_vehicle_with_custom_definition (test_checkpoints_management.CheckpointsManagementTest.test_utils_get_checkpoints_for_vehicle_with_custom_definition) ... [2026-09-30 00:10:00,464] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:00,509] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.vehicle_config:🔧 Initialisation par défaut des CheckpointDefinition en base de données...
+INFO:services.admin.vehicle_config:✅ CheckpointDefinition initialisés avec succès.
+ok
 test_api_check_conflicts_endpoint_with_exclusion (test_conflicts.ConflictsTest.test_api_check_conflicts_endpoint_with_exclusion)
-Vérifie que l'API HTTP exclut bien le projet en cours d'édition pour éviter l'auto-conflit. ... ok
+Vérifie que l'API HTTP exclut bien le projet en cours d'édition pour éviter l'auto-conflit. ... [2026-09-30 00:10:00,519] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:00,561] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_exclude_project_id_for_self_edit (test_conflicts.ConflictsTest.test_exclude_project_id_for_self_edit)
-Vérifie que l'édition d'un projet n'entre pas en conflit avec lui-même (par ID entier et par code). ... ok
+Vérifie que l'édition d'un projet n'entre pas en conflit avec lui-même (par ID entier et par code). ... [2026-09-30 00:10:00,574] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:00,616] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_get_project_for_edit_contains_ids (test_conflicts.ConflictsTest.test_get_project_for_edit_contains_ids)
-Vérifie que get_project_for_edit renvoie bien les clés id, record_id et project_id. ... ok
+Vérifie que get_project_for_edit renvoie bien les clés id, record_id et project_id. ... [2026-09-30 00:10:00,730] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:00,774] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_head_conflict_detected (test_conflicts.ConflictsTest.test_head_conflict_detected)
-Vérifie la détection d'un conflit sur une tête gyrostabilisée. ... ok
+Vérifie la détection d'un conflit sur une tête gyrostabilisée. ... [2026-09-30 00:10:00,781] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:00,837] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_no_overlap_no_conflict (test_conflicts.ConflictsTest.test_no_overlap_no_conflict)
-Vérifie qu'aucune alerte n'est levée si les dates sont disjointes. ... ok
+Vérifie qu'aucune alerte n'est levée si les dates sont disjointes. ... [2026-09-30 00:10:00,845] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:00,887] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_overlap_conflict_detected_on_vehicle (test_conflicts.ConflictsTest.test_overlap_conflict_detected_on_vehicle)
-Vérifie qu'un chevauchement de dates sur un véhicule est bien détecté. ... ok
-test_cron_report_template_rendering (test_cron_jobs.CronJobsVerificationTest.test_cron_report_template_rendering) ... ok
+Vérifie qu'un chevauchement de dates sur un véhicule est bien détecté. ... [2026-09-30 00:10:00,895] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:00,937] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
+test_cron_report_template_rendering (test_cron_jobs.CronJobsVerificationTest.test_cron_report_template_rendering) ... [2026-09-30 00:10:00,946] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:00,988] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_format_timestamp_empty (test_cron_jobs.CronJobsVerificationTest.test_format_timestamp_empty) ... ok
 test_format_timestamp_naive_string (test_cron_jobs.CronJobsVerificationTest.test_format_timestamp_naive_string) ... ok
 test_format_timestamp_summer_paris (test_cron_jobs.CronJobsVerificationTest.test_format_timestamp_summer_paris) ... ok
@@ -72,23 +282,81 @@ test_format_timestamp_winter_paris (test_cron_jobs.CronJobsVerificationTest.test
 test_format_timestamp_with_z (test_cron_jobs.CronJobsVerificationTest.test_format_timestamp_with_z) ... ok
 test_verify_jobs (test_cron_jobs.CronJobsVerificationTest.test_verify_jobs) ... ok
 test_docs_restricted_to_admin_and_super_admin (test_dev_role_switcher.DevRoleSwitcherTestCase.test_docs_restricted_to_admin_and_super_admin)
-Technical and API docs should only be accessible/visible to Administrator and Super Administrator. ... ok
+Technical and API docs should only be accessible/visible to Administrator and Super Administrator. ... [2026-09-30 00:10:00,995] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:01,041] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+[2026-09-30 00:10:01,126] WARNING in decorators: ⚠️ Tentative d'accès non autorisée : Le rôle 'manager' a tenté d'accéder à https://localhost/admin/docs. Autorisés : ['administrateur']
+WARNING:app:⚠️ Tentative d'accès non autorisée : Le rôle 'manager' a tenté d'accéder à https://localhost/admin/docs. Autorisés : ['administrateur']
+[2026-09-30 00:10:01,127] WARNING in decorators: ⚠️ Tentative d'accès non autorisée : Le rôle 'manager' a tenté d'accéder à https://localhost/admin/api-docs. Autorisés : ['administrateur']
+WARNING:app:⚠️ Tentative d'accès non autorisée : Le rôle 'manager' a tenté d'accéder à https://localhost/admin/api-docs. Autorisés : ['administrateur']
+[2026-09-30 00:10:01,130] WARNING in decorators: ⚠️ Tentative d'accès non autorisée : Le rôle 'commercial' a tenté d'accéder à https://localhost/admin/docs. Autorisés : ['administrateur']
+WARNING:app:⚠️ Tentative d'accès non autorisée : Le rôle 'commercial' a tenté d'accéder à https://localhost/admin/docs. Autorisés : ['administrateur']
+[2026-09-30 00:10:01,131] WARNING in decorators: ⚠️ Tentative d'accès non autorisée : Le rôle 'commercial' a tenté d'accéder à https://localhost/admin/api-docs. Autorisés : ['administrateur']
+WARNING:app:⚠️ Tentative d'accès non autorisée : Le rôle 'commercial' a tenté d'accéder à https://localhost/admin/api-docs. Autorisés : ['administrateur']
+ok
 test_manager_can_modify_only_users_and_commercials (test_dev_role_switcher.DevRoleSwitcherTestCase.test_manager_can_modify_only_users_and_commercials)
-Manager can only edit users with role User or Commercial, and cannot edit other Managers or Admins. ... ok
+Manager can only edit users with role User or Commercial, and cannot edit other Managers or Admins. ... [2026-09-30 00:10:01,135] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:01,176] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_reset_role_restores_db_role (test_dev_role_switcher.DevRoleSwitcherTestCase.test_reset_role_restores_db_role)
-Resetting role restores the original role from the database. ... ok
+Resetting role restores the original role from the database. ... [2026-09-30 00:10:01,254] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:01,295] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_switch_role_affects_template_context_and_permissions (test_dev_role_switcher.DevRoleSwitcherTestCase.test_switch_role_affects_template_context_and_permissions)
-After switching to Technicien, accessing restricted pages like calendar is blocked by require_roles. ... ok
+After switching to Technicien, accessing restricted pages like calendar is blocked by require_roles. ... [2026-09-30 00:10:01,303] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:01,345] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+[2026-09-30 00:10:01,406] WARNING in decorators: ⚠️ Tentative d'accès non autorisée : Le rôle 'technicien' a tenté d'accéder à https://localhost/admin/calendar. Autorisés : ['administrateur', 'manager', 'commercial']
+WARNING:app:⚠️ Tentative d'accès non autorisée : Le rôle 'technicien' a tenté d'accéder à https://localhost/admin/calendar. Autorisés : ['administrateur', 'manager', 'commercial']
+ok
 test_switch_role_in_dev_updates_session_only (test_dev_role_switcher.DevRoleSwitcherTestCase.test_switch_role_in_dev_updates_session_only)
-Switching role updates session role without altering the database. ... ok
+Switching role updates session role without altering the database. ... [2026-09-30 00:10:01,412] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:01,462] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_switch_role_in_production_blocked (test_dev_role_switcher.DevRoleSwitcherTestCase.test_switch_role_in_production_blocked)
-In production environment, role switching is forbidden. ... ok
+In production environment, role switching is forbidden. ... [2026-09-30 00:10:01,469] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:01,511] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_switch_role_unauthenticated (test_dev_role_switcher.DevRoleSwitcherTestCase.test_switch_role_unauthenticated)
-Unauthenticated call to switch role redirects to login. ... ok
+Unauthenticated call to switch role redirects to login. ... [2026-09-30 00:10:01,517] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:01,559] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_technicien_cannot_see_or_access_waivers (test_dev_role_switcher.DevRoleSwitcherTestCase.test_technicien_cannot_see_or_access_waivers)
-Technicien role should not see waiver links in sidebar nav and should be forbidden on waivers. ... ok
+Technicien role should not see waiver links in sidebar nav and should be forbidden on waivers. ... [2026-09-30 00:10:01,566] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:01,754] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+[2026-09-30 00:10:01,829] WARNING in decorators: ⚠️ Tentative d'accès non autorisée : Le rôle 'technicien' a tenté d'accéder à https://localhost/admin/waivers/pilots. Autorisés : ['administrateur', 'manager']
+WARNING:app:⚠️ Tentative d'accès non autorisée : Le rôle 'technicien' a tenté d'accéder à https://localhost/admin/waivers/pilots. Autorisés : ['administrateur', 'manager']
+[2026-09-30 00:10:01,829] WARNING in decorators: ⚠️ Tentative d'accès non autorisée : Le rôle 'technicien' a tenté d'accéder à https://localhost/admin/waivers/productions. Autorisés : ['administrateur', 'manager']
+WARNING:app:⚠️ Tentative d'accès non autorisée : Le rôle 'technicien' a tenté d'accéder à https://localhost/admin/waivers/productions. Autorisés : ['administrateur', 'manager']
+ok
 test_user_cannot_access_or_see_catalog_update (test_dev_role_switcher.DevRoleSwitcherTestCase.test_user_cannot_access_or_see_catalog_update)
-Technicien role should not see catalog_update in sidebar nav and should be forbidden on catalog preview/update. ... ok
+Technicien role should not see catalog_update in sidebar nav and should be forbidden on catalog preview/update. ... [2026-09-30 00:10:01,833] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:01,875] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+[2026-09-30 00:10:01,947] WARNING in decorators: ⚠️ Tentative d'accès non autorisée : Le rôle 'technicien' a tenté d'accéder à https://localhost/admin/catalog/preview. Autorisés : ['administrateur', 'manager', 'commercial']
+WARNING:app:⚠️ Tentative d'accès non autorisée : Le rôle 'technicien' a tenté d'accéder à https://localhost/admin/catalog/preview. Autorisés : ['administrateur', 'manager', 'commercial']
+[2026-09-30 00:10:01,947] WARNING in decorators: ⚠️ Tentative d'accès non autorisée : Le rôle 'technicien' a tenté d'accéder à https://localhost/admin/catalog/update. Autorisés : ['administrateur', 'manager', 'commercial']
+WARNING:app:⚠️ Tentative d'accès non autorisée : Le rôle 'technicien' a tenté d'accéder à https://localhost/admin/catalog/update. Autorisés : ['administrateur', 'manager', 'commercial']
+ok
+[2026-09-30 00:10:01,951] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:01,993] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
 test_calendar_invitation_rendering (test_email_templates.EmailTemplatesTest.test_calendar_invitation_rendering) ... ok
 test_company_settings_dynamic_in_email (test_email_templates.EmailTemplatesTest.test_company_settings_dynamic_in_email)
 Vérifie que les coordonnées société définies dans app_settings sont bien injectées dans le footer des emails. ... ok
@@ -103,98 +371,430 @@ test_waiver_invitation_rendering_reminder (test_email_templates.EmailTemplatesTe
 test_waiver_invitation_rendering_standard (test_email_templates.EmailTemplatesTest.test_waiver_invitation_rendering_standard) ... ok
 test_waiver_signed_confirmation_rendering (test_email_templates.EmailTemplatesTest.test_waiver_signed_confirmation_rendering) ... ok
 test_resolve_incident (test_entity_resolvers.EntityResolversTestCase.test_resolve_incident)
-Vérifie la résolution d'incident par int, str num, ou numéro BVIC-*. ... ok
+Vérifie la résolution d'incident par int, str num, ou numéro BVIC-*. ... [2026-09-30 00:10:02,019] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:02,062] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_resolve_inspections (test_entity_resolvers.EntityResolversTestCase.test_resolve_inspections)
-Vérifie la résolution d'inspections checkout et checkin. ... ok
+Vérifie la résolution d'inspections checkout et checkin. ... [2026-09-30 00:10:02,079] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:02,125] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_resolve_project (test_entity_resolvers.EntityResolversTestCase.test_resolve_project)
-Vérifie la résolution de projet par entier, chaîne numérique ou code BVPR-*. ... ok
+Vérifie la résolution de projet par entier, chaîne numérique ou code BVPR-*. ... [2026-09-30 00:10:02,140] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:02,182] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_resolve_waivers (test_entity_resolvers.EntityResolversTestCase.test_resolve_waivers)
-Vérifie la résolution des décharges pilote et production. ... ok
+Vérifie la résolution des décharges pilote et production. ... [2026-09-30 00:10:02,198] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:02,240] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_routes_code_redirects (test_entity_resolvers.EntityResolversTestCase.test_routes_code_redirects)
-Vérifie que les routes admin redirigent correctement les codes métier vers l'ID canonique. ... ok
+Vérifie que les routes admin redirigent correctement les codes métier vers l'ID canonique. ... [2026-09-30 00:10:02,256] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:02,298] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_logout_clears_session_from_redis (test_flask_session.FlaskSessionTestCase.test_logout_clears_session_from_redis)
-La déconnexion doit purger la session de Redis et supprimer le cookie. ... ok
+La déconnexion doit purger la session de Redis et supprimer le cookie. ... [2026-09-30 00:10:02,398] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:02,440] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+WARNING:py.warnings:/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/.venv/lib/python3.12/site-packages/flask_session/base.py:172: DeprecationWarning: The 'use_signer' option is deprecated and will be removed in the next minor release. Please update your configuration accordingly or open an issue.
+  warnings.warn(
+
+ok
 test_session_fallback_when_redis_fails (test_flask_session.FlaskSessionTestCase.test_session_fallback_when_redis_fails)
-Vérifie que l'application démarre et bascule gracieusement sur les cookies si Redis est inaccessible. ... ok
+Vérifie que l'application démarre et bascule gracieusement sur les cookies si Redis est inaccessible. ... [2026-09-30 00:10:02,456] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:02,498] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_session_stored_in_redis_not_in_cookie (test_flask_session.FlaskSessionTestCase.test_session_stored_in_redis_not_in_cookie)
-Les données de session doivent être stockées dans Redis et non dans le cookie client. ... ok
+Les données de session doivent être stockées dans Redis et non dans le cookie client. ... [2026-09-30 00:10:02,507] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:02,549] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_user_deletion_triggers_session_invalidation (test_flask_session.FlaskSessionTestCase.test_user_deletion_triggers_session_invalidation)
-La suppression d'un utilisateur révoque immédiatement ses sessions actives. ... ok
+La suppression d'un utilisateur révoque immédiatement ses sessions actives. ... [2026-09-30 00:10:02,555] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:02,598] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.common.session_manager:🔒 1 session(s) révoquée(s) immédiatement pour l'utilisateur 1
+INFO:services.admin.users:Utilisateur supprimé : 1
+ok
 test_user_role_update_triggers_session_invalidation (test_flask_session.FlaskSessionTestCase.test_user_role_update_triggers_session_invalidation)
-La modification du rôle d'un utilisateur révoque immédiatement ses sessions actives. ... ok
+La modification du rôle d'un utilisateur révoque immédiatement ses sessions actives. ... [2026-09-30 00:10:02,610] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:02,827] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.common.session_manager:🔒 1 session(s) révoquée(s) immédiatement pour l'utilisateur 1
+INFO:services.admin.users:Utilisateur mis à jour : 1
+ok
 test_user_session_registration_and_invalidation (test_flask_session.FlaskSessionTestCase.test_user_session_registration_and_invalidation)
-Enregistrement et révocation immédiate de toutes les sessions actives d'un utilisateur. ... ok
-test_fleet_overview (test_fleet.FleetTest.test_fleet_overview) ... ok
-test_fleet_routes (test_fleet.FleetTest.test_fleet_routes) ... ok
+Enregistrement et révocation immédiate de toutes les sessions actives d'un utilisateur. ... [2026-09-30 00:10:02,834] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:02,876] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.common.session_manager:🔒 2 session(s) révoquée(s) immédiatement pour l'utilisateur 1
+ok
+test_fleet_overview (test_fleet.FleetTest.test_fleet_overview) ... [2026-09-30 00:10:02,881] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:02,923] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
+test_fleet_routes (test_fleet.FleetTest.test_fleet_routes) ... [2026-09-30 00:10:02,935] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:02,976] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+WARNING:py.warnings:/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/services/admin/fleet.py:461: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  lv = Vehicle.query.get(vehicle_id)
+
+ok
 test_fleet_sidebar_visibility_for_all_roles (test_fleet.FleetTest.test_fleet_sidebar_visibility_for_all_roles)
-Vérifie que 'Flotte Véhicules' est visible pour tous les rôles, et que 'Points de Contrôle' n'est exposé qu'aux administrateurs. ... ok
+Vérifie que 'Flotte Véhicules' est visible pour tous les rôles, et que 'Points de Contrôle' n'est exposé qu'aux administrateurs. ... [2026-09-30 00:10:03,069] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:03,111] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_incident_moderate_severity_badge_accent (test_fleet.FleetTest.test_incident_moderate_severity_badge_accent)
-Vérifie qu'un incident modéré affiche bien 'Modéré' avec accent (et non 'Modere') sur la timeline. ... ok
-test_vehicle_timeline (test_fleet.FleetTest.test_vehicle_timeline) ... ok
-test_vehicle_timeline_with_critical_incident (test_fleet.FleetTest.test_vehicle_timeline_with_critical_incident) ... ok
+Vérifie qu'un incident modéré affiche bien 'Modéré' avec accent (et non 'Modere') sur la timeline. ... [2026-09-30 00:10:03,205] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:03,248] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
+test_vehicle_timeline (test_fleet.FleetTest.test_vehicle_timeline) ... [2026-09-30 00:10:03,327] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:03,371] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
+test_vehicle_timeline_with_critical_incident (test_fleet.FleetTest.test_vehicle_timeline_with_critical_incident) ... [2026-09-30 00:10:03,385] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:03,428] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_convert_rgba_to_jpeg (test_image_utils.ImageUtilsTest.test_convert_rgba_to_jpeg)
 Vérifie qu'une image avec canal alpha (RGBA) est convertie sans erreur en JPEG. ... ok
 test_fallback_non_image (test_image_utils.ImageUtilsTest.test_fallback_non_image)
-Vérifie le fallback gracieux lorsqu'un fichier texte ou corrompu est fourni. ... ok
+Vérifie le fallback gracieux lorsqu'un fichier texte ou corrompu est fourni. ... WARNING:utils.image_utils:⚠️ Pillow ne peut pas traiter le fichier comme image (cannot identify image file <_io.BytesIO object at 0x11fa4e7f0>), sauvegarde brute : /var/folders/7r/mrxfd_v95cg6cwlhyrr5hn1r0000gn/T/tmp8hy3secb/document.txt
+ok
 test_resize_large_image (test_image_utils.ImageUtilsTest.test_resize_large_image)
 Vérifie qu'une image de grande dimension est redimensionnée à max 1920px. ... ok
 test_save_png_format (test_image_utils.ImageUtilsTest.test_save_png_format)
 Vérifie la sauvegarde d'un fichier PNG. ... ok
 test_bv_signature (test_incident_signatures.IncidentSignaturesTestCase.test_bv_signature)
-Vérifie l'enregistrement du visa Belle Vitesse. ... ok
+Vérifie l'enregistrement du visa Belle Vitesse. ... [2026-09-30 00:10:03,576] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:03,620] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.incidents:✅ Incident créé : BVIC-CEJBPHHCS1RK - Frottement splitter carbone
+ok
 test_contradictory_double_signature_and_sealing (test_incident_signatures.IncidentSignaturesTestCase.test_contradictory_double_signature_and_sealing)
-Vérifie le cycle complet BV + Production menant au scellement contradictoire. ... ok
+Vérifie le cycle complet BV + Production menant au scellement contradictoire. ... [2026-09-30 00:10:03,631] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:03,673] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.incidents:✅ Incident créé : BVIC-8C49ABKWI4PH - Frottement splitter carbone
+INFO:services.common.signatures:⚡ Statut de l'incident BVIC-8C49ABKWI4PH passé automatiquement à 'en_expertise' suite au scellement contradictoire.
+INFO:pdf.tasks:🚀 [PDF Job] Démarrage compilation WeasyPrint pour Belle_Vitesse_INCIDENT_BVIC-8C49ABKWI4PH_93375d3d.pdf (/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/output/2026/09/STUDIO_CINEMA_TEST/TOURNAGE_PUB_SPORT/1_SÉCURITÉ/5_INCIDENTS/Belle_Vitesse_INCIDENT_BVIC-8C49ABKWI4PH_93375d3d.pdf)
+INFO:pdf.tasks:✅ [PDF Job] Fichier généré avec succès (328 octets, sha256=62e730b1b469...)
+ok
 test_incident_attached_inspection_linking (test_incident_signatures.IncidentSignaturesTestCase.test_incident_attached_inspection_linking)
-Vérifie le rattachement dynamique d'un Check-out ou Check-in à un incident. ... ok
+Vérifie le rattachement dynamique d'un Check-out ou Check-in à un incident. ... [2026-09-30 00:10:03,707] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:03,749] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.incidents:✅ Incident créé : BVIC-SWGN7BHML3HD - Frottement splitter carbone
+INFO:services.admin.incidents:✅ Incident créé : BVIC-Q902EO7GMJSY - Choc jupe avant
+INFO:services.admin.incidents:✅ Incident mis à jour : BVIC-Q902EO7GMJSY (Statut: signale)
+INFO:services.admin.incidents:✅ Incident mis à jour : BVIC-Q902EO7GMJSY (Statut: signale)
+ok
 test_incident_emails_rendering (test_incident_signatures.IncidentSignaturesTestCase.test_incident_emails_rendering)
-Vérifie le bon rendu des templates d'email d'invitation et de confirmation scellée avec la DA Belle Vitesse. ... ok
+Vérifie le bon rendu des templates d'email d'invitation et de confirmation scellée avec la DA Belle Vitesse. ... [2026-09-30 00:10:03,766] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:03,808] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.incidents:✅ Incident créé : BVIC-EK015KKXNGAG - Frottement splitter carbone
+[2026-09-30 00:10:03,814] INFO in mailer: 🚀 Envoi de la demande de visa incident BVIC-EK015KKXNGAG à test-prod@example.com
+INFO:app:🚀 Envoi de la demande de visa incident BVIC-EK015KKXNGAG à test-prod@example.com
+INFO:mailer.tasks:✅ [Mailer Job] E-mail 'Action requise : Visa du constat d'incident BVIC-EK015KKXNGAG (Tournage Pub Sport)' expédié avec succès à test-prod@example.com
+[2026-09-30 00:10:03,822] INFO in mailer: 🚀 Envoi de la confirmation d'incident scellé BVIC-EK015KKXNGAG à test-prod@example.com
+INFO:app:🚀 Envoi de la confirmation d'incident scellé BVIC-EK015KKXNGAG à test-prod@example.com
+INFO:mailer.tasks:✅ [Mailer Job] E-mail 'Constat scellé et signé - BVIC-EK015KKXNGAG (Tournage Pub Sport)' expédié avec succès à test-prod@example.com
+ok
 test_pdf_download_security (test_incident_signatures.IncidentSignaturesTestCase.test_pdf_download_security)
-Vérifie les permissions d'accès au PDF signé (Admin, Token public, et Rejet si non autorisé). ... ok
+Vérifie les permissions d'accès au PDF signé (Admin, Token public, et Rejet si non autorisé). ... [2026-09-30 00:10:03,828] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:03,870] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.incidents:✅ Incident créé : BVIC-HM5SKMJH0DHD - Frottement splitter carbone
+INFO:services.common.signatures:⚡ Statut de l'incident BVIC-HM5SKMJH0DHD passé automatiquement à 'en_expertise' suite au scellement contradictoire.
+INFO:pdf.tasks:🚀 [PDF Job] Démarrage compilation WeasyPrint pour Belle_Vitesse_INCIDENT_BVIC-HM5SKMJH0DHD_39759e7f.pdf (/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/output/2026/09/STUDIO_CINEMA_TEST/TOURNAGE_PUB_SPORT/1_SÉCURITÉ/5_INCIDENTS/Belle_Vitesse_INCIDENT_BVIC-HM5SKMJH0DHD_39759e7f.pdf)
+INFO:pdf.tasks:✅ [PDF Job] Fichier généré avec succès (328 octets, sha256=62e730b1b469...)
+WARNING:py.warnings:/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/unittest/case.py:589: ResourceWarning: unclosed file <_io.BufferedReader name='/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/output/2026/09/STUDIO_CINEMA_TEST/TOURNAGE_PUB_SPORT/1_SÉCURITÉ/5_INCIDENTS/Belle_Vitesse_INCIDENT_BVIC-HM5SKMJH0DHD_39759e7f.pdf'>
+  if method() is not None:
+
+ok
 test_production_signs_first_no_sealing_until_bv_signs (test_incident_signatures.IncidentSignaturesTestCase.test_production_signs_first_no_sealing_until_bv_signs)
-Vérifie que si la Production signe en premier, le document N'EST PAS scellé tant que BV n'a pas visé. ... ok
+Vérifie que si la Production signe en premier, le document N'EST PAS scellé tant que BV n'a pas visé. ... [2026-09-30 00:10:03,906] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:03,949] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.incidents:✅ Incident créé : BVIC-LHC4HXS37CT8 - Frottement splitter carbone
+INFO:services.common.signatures:⚡ Statut de l'incident BVIC-LHC4HXS37CT8 passé automatiquement à 'en_expertise' suite au scellement contradictoire.
+INFO:pdf.tasks:🚀 [PDF Job] Démarrage compilation WeasyPrint pour Belle_Vitesse_INCIDENT_BVIC-LHC4HXS37CT8_d71a1a2d.pdf (/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/output/2026/09/STUDIO_CINEMA_TEST/TOURNAGE_PUB_SPORT/1_SÉCURITÉ/5_INCIDENTS/Belle_Vitesse_INCIDENT_BVIC-LHC4HXS37CT8_d71a1a2d.pdf)
+INFO:pdf.tasks:✅ [PDF Job] Fichier généré avec succès (328 octets, sha256=62e730b1b469...)
+ok
 test_public_routes_sign_and_verify (test_incident_signatures.IncidentSignaturesTestCase.test_public_routes_sign_and_verify)
-Vérifie le fonctionnement des endpoints HTTP publics. ... ok
+Vérifie le fonctionnement des endpoints HTTP publics. ... [2026-09-30 00:10:03,980] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:04,032] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.incidents:✅ Incident créé : BVIC-501EITJNGP36 - Frottement splitter carbone
+[2026-09-30 00:10:04,041] INFO in mailer: 🚀 Envoi de la demande de visa incident BVIC-501EITJNGP36 à prod@cinema.com
+INFO:app:🚀 Envoi de la demande de visa incident BVIC-501EITJNGP36 à prod@cinema.com
+[2026-09-30 00:10:04,049] INFO in mailer: 🧪 [TESTING] Email SMTP intercepté (non envoyé) pour : ['prod@cinema.com']
+INFO:app:🧪 [TESTING] Email SMTP intercepté (non envoyé) pour : ['prod@cinema.com']
+INFO:mailer.tasks:✅ [Mailer Job] E-mail 'Action requise : Visa du constat d'incident BVIC-501EITJNGP36 (Tournage Pub Sport)' expédié avec succès à prod@cinema.com
+INFO:services.common.signatures:⚡ Statut de l'incident BVIC-501EITJNGP36 passé automatiquement à 'en_expertise' suite au scellement contradictoire.
+INFO:pdf.tasks:🚀 [PDF Job] Démarrage compilation WeasyPrint pour Belle_Vitesse_INCIDENT_BVIC-501EITJNGP36_758615f9.pdf (/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/output/2026/09/STUDIO_CINEMA_TEST/TOURNAGE_PUB_SPORT/1_SÉCURITÉ/5_INCIDENTS/Belle_Vitesse_INCIDENT_BVIC-501EITJNGP36_758615f9.pdf)
+INFO:pdf.tasks:✅ [PDF Job] Fichier généré avec succès (328 octets, sha256=62e730b1b469...)
+[2026-09-30 00:10:04,078] INFO in mailer: 🚀 Envoi de la confirmation d'incident scellé BVIC-501EITJNGP36 à prod@cinema.com
+INFO:app:🚀 Envoi de la confirmation d'incident scellé BVIC-501EITJNGP36 à prod@cinema.com
+[2026-09-30 00:10:04,080] INFO in mailer: 🧪 [TESTING] Email SMTP intercepté (non envoyé) pour : ['prod@cinema.com', 'maxime@bellevitesse.com']
+INFO:app:🧪 [TESTING] Email SMTP intercepté (non envoyé) pour : ['prod@cinema.com', 'maxime@bellevitesse.com']
+INFO:mailer.tasks:✅ [Mailer Job] E-mail 'Constat scellé et signé - BVIC-501EITJNGP36 (Tournage Pub Sport)' expédié avec succès à prod@cinema.com
+ok
 test_token_generation_and_validation (test_incident_signatures.IncidentSignaturesTestCase.test_token_generation_and_validation)
-Vérifie la génération d'un jeton 48h et sa validation. ... ok
+Vérifie la génération d'un jeton 48h et sa validation. ... [2026-09-30 00:10:04,092] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:04,135] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.incidents:✅ Incident créé : BVIC-LVH1MEHT7HSG - Frottement splitter carbone
+[2026-09-30 00:10:04,142] INFO in mailer: 🚀 Envoi de la demande de visa incident BVIC-LVH1MEHT7HSG à regie@studio-cinema.com
+INFO:app:🚀 Envoi de la demande de visa incident BVIC-LVH1MEHT7HSG à regie@studio-cinema.com
+[2026-09-30 00:10:04,149] INFO in mailer: 🧪 [TESTING] Email SMTP intercepté (non envoyé) pour : ['regie@studio-cinema.com']
+INFO:app:🧪 [TESTING] Email SMTP intercepté (non envoyé) pour : ['regie@studio-cinema.com']
+INFO:mailer.tasks:✅ [Mailer Job] E-mail 'Action requise : Visa du constat d'incident BVIC-LVH1MEHT7HSG (Tournage Pub Sport)' expédié avec succès à regie@studio-cinema.com
+ok
 test_admin_incident_status_route (test_incidents.IncidentsTestCase.test_admin_incident_status_route)
-Vérifie la route POST /admin/incidents/<id>/status. ... ok
+Vérifie la route POST /admin/incidents/<id>/status. ... [2026-09-30 00:10:04,154] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:04,457] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.incidents:✅ Incident créé : BVIC-UMTTTHZBWTYW - Test Route Statut
+INFO:services.admin.incidents:🔄 Statut incident BVIC-UMTTTHZBWTYW mis à jour : signale ➔ en_reparation
+INFO:services.admin.incidents:🔄 Statut incident BVIC-UMTTTHZBWTYW mis à jour : en_reparation ➔ resolu
+ok
 test_auto_reporter_and_project_equipment_context (test_incidents.IncidentsTestCase.test_auto_reporter_and_project_equipment_context)
-Vérifie l'assignation automatique du déclarant et le filtrage des véhicules/têtes par projet. ... ok
+Vérifie l'assignation automatique du déclarant et le filtrage des véhicules/têtes par projet. ... [2026-09-30 00:10:04,560] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:04,604] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.incidents:✅ Incident créé : BVIC-K5ND16HZXYZY - Incident sans déclarant explicite
+ok
 test_automatic_transition_on_contradictory_seal (test_incidents.IncidentsTestCase.test_automatic_transition_on_contradictory_seal)
-Vérifie que le scellement contradictoire fait passer le statut de 'signale' à 'en_expertise'. ... ok
+Vérifie que le scellement contradictoire fait passer le statut de 'signale' à 'en_expertise'. ... [2026-09-30 00:10:04,620] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:04,661] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.incidents:✅ Incident créé : BVIC-D8MR7RIFOML7 - Choc jupe avant
+INFO:services.common.signatures:⚡ Statut de l'incident BVIC-D8MR7RIFOML7 passé automatiquement à 'en_expertise' suite au scellement contradictoire.
+INFO:pdf.tasks:🚀 [PDF Job] Démarrage compilation WeasyPrint pour Belle_Vitesse_INCIDENT_BVIC-D8MR7RIFOML7_9adc0f41.pdf (/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/output/2026/09/PRODUCTION_MARVEL_STUDIO/PUBLICITE_CIRCUIT/1_SÉCURITÉ/5_INCIDENTS/Belle_Vitesse_INCIDENT_BVIC-D8MR7RIFOML7_9adc0f41.pdf)
+INFO:pdf.tasks:✅ [PDF Job] Fichier généré avec succès (328 octets, sha256=62e730b1b469...)
+ok
 test_automatic_transition_on_insurance_declaration (test_incidents.IncidentsTestCase.test_automatic_transition_on_insurance_declaration)
-Vérifie que déclarer une assurance bascule automatiquement le statut vers 'assurance'. ... ok
+Vérifie que déclarer une assurance bascule automatiquement le statut vers 'assurance'. ... [2026-09-30 00:10:04,691] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:04,738] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.incidents:✅ Incident créé : BVIC-W93XHK78B41S - Optique fêlée
+INFO:services.admin.incidents:⚡ Bascule automatique du statut incident vers 'assurance' (BVIC-W93XHK78B41S)
+INFO:services.admin.incidents:✅ Incident mis à jour : BVIC-W93XHK78B41S (Statut: assurance)
+ok
 test_automatic_transition_on_resolution_notes (test_incidents.IncidentsTestCase.test_automatic_transition_on_resolution_notes)
-Vérifie que la saisie d'une note de résolution bascule automatiquement le statut vers 'resolu'. ... ok
+Vérifie que la saisie d'une note de résolution bascule automatiquement le statut vers 'resolu'. ... [2026-09-30 00:10:04,749] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:04,791] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.incidents:✅ Incident créé : BVIC-F8UA5IRHXZQ7 - Rétroviseur brisé
+INFO:services.admin.incidents:⚡ Bascule automatique du statut incident vers 'resolu' (BVIC-F8UA5IRHXZQ7)
+INFO:services.admin.incidents:✅ Incident mis à jour : BVIC-F8UA5IRHXZQ7 (Statut: resolu)
+ok
 test_commercial_role_cannot_access_incidents (test_incidents.IncidentsTestCase.test_commercial_role_cannot_access_incidents)
-Vérifie qu'un utilisateur avec le rôle Commercial ne peut pas accéder aux incidents. ... ok
+Vérifie qu'un utilisateur avec le rôle Commercial ne peut pas accéder aux incidents. ... [2026-09-30 00:10:04,802] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:04,844] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+[2026-09-30 00:10:04,848] WARNING in decorators: ⚠️ Tentative d'accès non autorisée : Le rôle 'commercial' a tenté d'accéder à https://localhost/admin/incidents. Autorisés : ['administrateur', 'manager', 'technicien']
+WARNING:app:⚠️ Tentative d'accès non autorisée : Le rôle 'commercial' a tenté d'accéder à https://localhost/admin/incidents. Autorisés : ['administrateur', 'manager', 'technicien']
+[2026-09-30 00:10:04,849] WARNING in decorators: ⚠️ Tentative d'accès non autorisée : Le rôle 'commercial' a tenté d'accéder à https://localhost/admin/incidents/new. Autorisés : ['administrateur', 'manager', 'technicien']
+WARNING:app:⚠️ Tentative d'accès non autorisée : Le rôle 'commercial' a tenté d'accéder à https://localhost/admin/incidents/new. Autorisés : ['administrateur', 'manager', 'technicien']
+ok
 test_create_incident (test_incidents.IncidentsTestCase.test_create_incident)
-Vérifie la création d'un incident avec calcul automatique du numéro BVIC. ... ok
+Vérifie la création d'un incident avec calcul automatique du numéro BVIC. ... [2026-09-30 00:10:04,853] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:04,895] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.incidents:✅ Incident créé : BVIC-RFK3MZ23EBVS - Choc jupe avant sur vibreur
+ok
 test_delete_incident_soft_delete (test_incidents.IncidentsTestCase.test_delete_incident_soft_delete)
-Vérifie le soft-delete et le mécanisme de confirmation. ... ok
+Vérifie le soft-delete et le mécanisme de confirmation. ... [2026-09-30 00:10:04,905] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:04,947] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.incidents:✅ Incident créé : BVIC-UUG0BXO5EK56 - Incident temporaire
+INFO:services.admin.incidents:🗑️ Incident soft-deleted : BVIC-UUG0BXO5EK56
+ok
 test_direct_update_incident_status (test_incidents.IncidentsTestCase.test_direct_update_incident_status)
-Vérifie la fonction dédiée update_incident_status et la réouverture. ... ok
+Vérifie la fonction dédiée update_incident_status et la réouverture. ... [2026-09-30 00:10:04,961] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:05,002] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.incidents:✅ Incident créé : BVIC-V6PNYQDPQBVC - Rayure latérale
+INFO:services.admin.incidents:🔄 Statut incident BVIC-V6PNYQDPQBVC mis à jour : signale ➔ en_reparation
+INFO:services.admin.incidents:🔄 Statut incident BVIC-V6PNYQDPQBVC mis à jour : en_reparation ➔ cloture
+INFO:services.admin.incidents:🔄 Statut incident BVIC-V6PNYQDPQBVC mis à jour : cloture ➔ en_reparation
+ok
 test_generate_incident_pdf (test_incidents.IncidentsTestCase.test_generate_incident_pdf)
-Vérifie la génération du rapport PDF officiel selon la DA Belle Vitesse. ... ok
+Vérifie la génération du rapport PDF officiel selon la DA Belle Vitesse. ... [2026-09-30 00:10:05,015] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:05,056] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.incidents:✅ Incident créé : BVIC-KTY2TIZMDOMR - Dégât optique 24-70mm
+ok
 test_get_incident_detail (test_incidents.IncidentsTestCase.test_get_incident_detail)
-Vérifie la restitution des données enrichies d'un incident. ... ok
+Vérifie la restitution des données enrichies d'un incident. ... [2026-09-30 00:10:05,077] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:05,119] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.incidents:✅ Incident créé : BVIC-GZIO25J9TSW9 - Panne assistance caméra car
+ok
 test_list_incidents_and_kpi_stats (test_incidents.IncidentsTestCase.test_list_incidents_and_kpi_stats)
-Vérifie le calcul des statistiques KPI et les filtres de recherche. ... ok
+Vérifie le calcul des statistiques KPI et les filtres de recherche. ... [2026-09-30 00:10:05,131] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:05,173] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.incidents:✅ Incident créé : BVIC-I4TL2SAQH11M - Incident Mineur
+INFO:services.admin.incidents:✅ Incident créé : BVIC-C0C5BM64C8FM - Incident Critique Bloquant
+ok
 test_mcp_incident_tools (test_incidents.IncidentsTestCase.test_mcp_incident_tools)
-Vérifie l'exposition et le fonctionnement des outils MCP pour l'IA. ... ok
+Vérifie l'exposition et le fonctionnement des outils MCP pour l'IA. ... [2026-09-30 00:10:05,193] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:05,235] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.incidents:✅ Incident créé : BVIC-NIRJ3ONG5AV5 - Incident créé par MCP
+INFO:services.admin.incidents:✅ Incident mis à jour : BVIC-NIRJ3ONG5AV5 (Statut: cloture)
+INFO:services.admin.incidents:🗑️ Incident soft-deleted : BVIC-NIRJ3ONG5AV5
+ok
 test_post_signature_followup_editing (test_incidents.IncidentsTestCase.test_post_signature_followup_editing)
-Vérifie qu'un incident signé peut toujours recevoir des mises à jour de suivi financier et de statut sans altérer les faits scellés. ... ok
+Vérifie qu'un incident signé peut toujours recevoir des mises à jour de suivi financier et de statut sans altérer les faits scellés. ... [2026-09-30 00:10:05,256] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:05,297] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.incidents:✅ Incident créé : BVIC-T7Y12CI7EZ7P - Titre initial scellé
+INFO:services.common.signatures:⚡ Statut de l'incident BVIC-T7Y12CI7EZ7P passé automatiquement à 'en_expertise' suite au scellement contradictoire.
+INFO:pdf.tasks:🚀 [PDF Job] Démarrage compilation WeasyPrint pour Belle_Vitesse_INCIDENT_BVIC-T7Y12CI7EZ7P_1d0a725f.pdf (/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/output/2026/09/PRODUCTION_MARVEL_STUDIO/PUBLICITE_CIRCUIT/1_SÉCURITÉ/5_INCIDENTS/Belle_Vitesse_INCIDENT_BVIC-T7Y12CI7EZ7P_1d0a725f.pdf)
+INFO:pdf.tasks:✅ [PDF Job] Fichier généré avec succès (328 octets, sha256=62e730b1b469...)
+INFO:services.admin.incidents:✅ Incident mis à jour : BVIC-T7Y12CI7EZ7P (Statut: en_reparation)
+ok
 test_sealing_requires_both_signatures (test_incidents.IncidentsTestCase.test_sealing_requires_both_signatures)
-Vérifie que le contexte n'est scellé que lorsque les 2 signatures sont apposées. ... ok
+Vérifie que le contexte n'est scellé que lorsque les 2 signatures sont apposées. ... [2026-09-30 00:10:05,327] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:05,370] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.incidents:✅ Incident créé : BVIC-CLSDJRVURXDQ - Incident Test Scellement
+INFO:services.admin.incidents:✅ Incident mis à jour : BVIC-CLSDJRVURXDQ (Statut: signale)
+INFO:services.admin.incidents:✅ Incident mis à jour : BVIC-CLSDJRVURXDQ (Statut: signale)
+INFO:services.common.signatures:⚡ Statut de l'incident BVIC-CLSDJRVURXDQ passé automatiquement à 'en_expertise' suite au scellement contradictoire.
+INFO:pdf.tasks:🚀 [PDF Job] Démarrage compilation WeasyPrint pour Belle_Vitesse_INCIDENT_BVIC-CLSDJRVURXDQ_f745a338.pdf (/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/output/2026/09/PRODUCTION_MARVEL_STUDIO/PUBLICITE_CIRCUIT/1_SÉCURITÉ/5_INCIDENTS/Belle_Vitesse_INCIDENT_BVIC-CLSDJRVURXDQ_f745a338.pdf)
+INFO:pdf.tasks:✅ [PDF Job] Fichier généré avec succès (328 octets, sha256=62e730b1b469...)
+INFO:services.admin.incidents:✅ Incident mis à jour : BVIC-CLSDJRVURXDQ (Statut: en_expertise)
+ok
 test_update_incident_and_resolution (test_incidents.IncidentsTestCase.test_update_incident_and_resolution)
-Vérifie la mise à jour et l'horodatage de résolution. ... ok
-test_create_checkin_blocked_when_already_exists (test_inspections.InspectionsTest.test_create_checkin_blocked_when_already_exists) ... ok
-test_create_checkin_force_checkin (test_inspections.InspectionsTest.test_create_checkin_force_checkin) ... ok
-test_create_checkout_and_checkin_routes (test_inspections.InspectionsTest.test_create_checkout_and_checkin_routes) ... ok
-test_list_and_details (test_inspections.InspectionsTest.test_list_and_details) ... ok
-test_soft_delete (test_inspections.InspectionsTest.test_soft_delete) ... ok
-test_unified_form_context (test_inspections.InspectionsTest.test_unified_form_context) ... ok
-test_verify_public_routes (test_inspections.InspectionsTest.test_verify_public_routes) ... ok
+Vérifie la mise à jour et l'horodatage de résolution. ... [2026-09-30 00:10:05,402] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:05,444] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.incidents:✅ Incident créé : BVIC-9YRUE9C2UB2R - Crevaison pneu arrière
+INFO:services.admin.incidents:✅ Incident mis à jour : BVIC-9YRUE9C2UB2R (Statut: resolu)
+ok
+test_create_checkin_blocked_when_already_exists (test_inspections.InspectionsTest.test_create_checkin_blocked_when_already_exists) ... [2026-09-30 00:10:05,454] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:05,496] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ERROR:services.admin.utils:❌ Erreur dans create_checkin : un retour est déjà en cours (BVCI-TESTEXISTING1)
+[2026-09-30 00:10:05,505] ERROR in inspections: ❌ Erreur lors de la création du retour : un retour est déjà en cours (BVCI-TESTEXISTING1)
+ERROR:app:❌ Erreur lors de la création du retour : un retour est déjà en cours (BVCI-TESTEXISTING1)
+ok
+test_create_checkin_force_checkin (test_inspections.InspectionsTest.test_create_checkin_force_checkin) ... [2026-09-30 00:10:05,543] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:05,608] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.vehicle_config:🔧 Initialisation par défaut des CheckpointDefinition en base de données...
+INFO:services.admin.vehicle_config:✅ CheckpointDefinition initialisés avec succès.
+ERROR:services.admin.utils:❌ Erreur dans create_checkin : Le départ de ce véhicule n'a pas été validé par une signature. Veuillez cocher la case de confirmation pour enregistrer ce retour exceptionnel.
+[2026-09-30 00:10:05,622] ERROR in inspections: ❌ Erreur lors de la création du retour : Le départ de ce véhicule n'a pas été validé par une signature. Veuillez cocher la case de confirmation pour enregistrer ce retour exceptionnel.
+ERROR:app:❌ Erreur lors de la création du retour : Le départ de ce véhicule n'a pas été validé par une signature. Veuillez cocher la case de confirmation pour enregistrer ce retour exceptionnel.
+WARNING:services.admin.checkins:⚠️ Création d'un retour exceptionnel sans départ validé pour véhicule 1 (projet 1)
+ok
+test_create_checkout_and_checkin_routes (test_inspections.InspectionsTest.test_create_checkout_and_checkin_routes) ... [2026-09-30 00:10:05,662] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:05,705] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.vehicle_config:🔧 Initialisation par défaut des CheckpointDefinition en base de données...
+INFO:services.admin.vehicle_config:✅ CheckpointDefinition initialisés avec succès.
+ok
+test_list_and_details (test_inspections.InspectionsTest.test_list_and_details) ... [2026-09-30 00:10:05,726] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:05,768] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.vehicle_config:🔧 Initialisation par défaut des CheckpointDefinition en base de données...
+INFO:services.admin.vehicle_config:✅ CheckpointDefinition initialisés avec succès.
+ok
+test_re_sign_checkout_upsert_and_abandon_protection (test_inspections.InspectionsTest.test_re_sign_checkout_upsert_and_abandon_protection)
+Vérifie que re-signer un checkout met à jour le SignedDocument sans IntegrityError ... [2026-09-30 00:10:05,788] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:06,120] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:services.admin.vehicle_config:🔧 Initialisation par défaut des CheckpointDefinition en base de données...
+INFO:services.admin.vehicle_config:✅ CheckpointDefinition initialisés avec succès.
+INFO:pdf.tasks:🚀 [PDF Job] Démarrage compilation WeasyPrint pour BVCO-TESTUPSERT1_f91c97dfc281ec8a.pdf (/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/output/2026/06/TEST_PROD/TEST_PROJECT/1_SÉCURITÉ/1_CHECKOUT/BVCO-TESTUPSERT1_f91c97dfc281ec8a.pdf)
+INFO:pdf.tasks:✅ [PDF Job] Fichier généré avec succès (328 octets, sha256=62e730b1b469...)
+WARNING:py.warnings:/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/tests/test_inspections.py:363: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  updated_co = CheckoutVehicle.query.get(checkout.id)
+
+WARNING:py.warnings:/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/tests/test_inspections.py:373: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  self.assertEqual(CheckoutVehicle.query.get(checkout.id).status, "signed")
+
+INFO:services.common.signatures:🔙 Signature abandonnée pour BVCO-TESTUPSERT1
+WARNING:py.warnings:/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/tests/test_inspections.py:378: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  self.assertEqual(CheckoutVehicle.query.get(checkout.id).status, "signed")
+
+INFO:pdf.tasks:🚀 [PDF Job] Démarrage compilation WeasyPrint pour BVCO-TESTUPSERT1_dde6edb62d672398.pdf (/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/output/2026/06/TEST_PROD/TEST_PROJECT/1_SÉCURITÉ/1_CHECKOUT/BVCO-TESTUPSERT1_dde6edb62d672398.pdf)
+INFO:pdf.tasks:✅ [PDF Job] Fichier généré avec succès (328 octets, sha256=62e730b1b469...)
+ok
+test_soft_delete (test_inspections.InspectionsTest.test_soft_delete) ... [2026-09-30 00:10:06,166] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:06,209] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
+test_unified_form_context (test_inspections.InspectionsTest.test_unified_form_context) ... [2026-09-30 00:10:06,223] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:06,266] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
+test_verify_public_routes (test_inspections.InspectionsTest.test_verify_public_routes) ... [2026-09-30 00:10:06,276] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:06,319] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_admin_js_files_exist (test_js_bundler.TestJsBundler.test_admin_js_files_exist)
 Vérifie que chaque fichier source déclaré dans ADMIN_JS_FILES existe sur le disque. ... ok
 test_build_admin_js_bundle (test_js_bundler.TestJsBundler.test_build_admin_js_bundle)
@@ -206,42 +806,153 @@ Vérifie que ensure_bundles_fresh fonctionne sans lever d'erreur. ... ok
 test_public_js_files_exist (test_js_bundler.TestJsBundler.test_public_js_files_exist)
 Vérifie que chaque fichier source déclaré dans PUBLIC_JS_FILES existe sur le disque. ... ok
 test_debug_mode_does_not_auto_login_on_admin_login (test_magic_links_security.MagicLinksSecurityTestCase.test_debug_mode_does_not_auto_login_on_admin_login)
-Le mode DEBUG=True en environnement de développement ne doit plus jamais authentifier automatiquement l'utilisateur anonyme. ... ok
+Le mode DEBUG=True en environnement de développement ne doit plus jamais authentifier automatiquement l'utilisateur anonyme. ... [2026-09-30 00:10:07,554] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:07,599] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_debug_mode_does_not_auto_login_on_protected_routes (test_magic_links_security.MagicLinksSecurityTestCase.test_debug_mode_does_not_auto_login_on_protected_routes)
-L'accès à une route protégée par @require_roles sans session doit rediriger vers login même avec DEBUG=True. ... ok
+L'accès à une route protégée par @require_roles sans session doit rediriger vers login même avec DEBUG=True. ... [2026-09-30 00:10:07,610] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:07,652] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+ok
 test_expired_magic_link_rejected (test_magic_links_security.MagicLinksSecurityTestCase.test_expired_magic_link_rejected)
-Un jeton dont la durée dépasse 900s doit être rejeté. ... ok
+Un jeton dont la durée dépasse 900s doit être rejeté. ... [2026-09-30 00:10:07,659] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:07,700] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+[2026-09-30 00:10:07,703] WARNING in auth: ⚠️ Jeton de lien magique expiré.
+WARNING:app:⚠️ Jeton de lien magique expiré.
+ok
 test_magic_link_http_flow_and_replay_protection (test_magic_links_security.MagicLinksSecurityTestCase.test_magic_link_http_flow_and_replay_protection)
-Test du flux HTTP complet de connexion par lien magique et rejet du rejeu. ... ok
+Test du flux HTTP complet de connexion par lien magique et rejet du rejeu. ... [2026-09-30 00:10:07,706] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:07,749] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+WARNING:redis_queue:⚠️ Redis non disponible (host=bv_redis:6379, db=2): Error 8 connecting to bv_redis:6379. nodename nor servname provided, or not known.
+[2026-09-30 00:10:07,798] INFO in auth: ✅ Magic link sent to maxime@bellevitesse.com (JTI=95353abb151d4770bb8a6915699cbcf9)
+INFO:app:✅ Magic link sent to maxime@bellevitesse.com (JTI=95353abb151d4770bb8a6915699cbcf9)
+WARNING:redis_queue:⚠️ Redis non disponible (host=bv_redis:6379, db=2): Error 8 connecting to bv_redis:6379. nodename nor servname provided, or not known.
+WARNING:redis_queue:⚠️ Redis non disponible (host=bv_redis:6379, db=2): Error 8 connecting to bv_redis:6379. nodename nor servname provided, or not known.
+WARNING:redis_queue:⚠️ Redis non disponible (host=bv_redis:6379, db=2): Error 8 connecting to bv_redis:6379. nodename nor servname provided, or not known.
+[2026-09-30 00:10:07,815] WARNING in auth: ⚠️ Tentative de réutilisation d'un lien magique déjà consommé (JTI=95353abb151d4770bb8a6915699cbcf9, email=maxime@bellevitesse.com).
+WARNING:app:⚠️ Tentative de réutilisation d'un lien magique déjà consommé (JTI=95353abb151d4770bb8a6915699cbcf9, email=maxime@bellevitesse.com).
+ok
 test_magic_link_jti_invalidation_with_redis (test_magic_links_security.MagicLinksSecurityTestCase.test_magic_link_jti_invalidation_with_redis)
-Vérifie l'enregistrement et le rejet d'un JTI consommé via le backend Redis. ... ok
+Vérifie l'enregistrement et le rejet d'un JTI consommé via le backend Redis. ... [2026-09-30 00:10:07,820] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:07,865] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+[2026-09-30 00:10:07,868] INFO in auth: ✅ Magic link sent to maxime@bellevitesse.com (JTI=9a5cef3156fa49d099a8461267a0f02e)
+INFO:app:✅ Magic link sent to maxime@bellevitesse.com (JTI=9a5cef3156fa49d099a8461267a0f02e)
+[2026-09-30 00:10:07,868] WARNING in auth: ⚠️ Tentative de réutilisation d'un lien magique déjà consommé (JTI=9a5cef3156fa49d099a8461267a0f02e, email=maxime@bellevitesse.com).
+WARNING:app:⚠️ Tentative de réutilisation d'un lien magique déjà consommé (JTI=9a5cef3156fa49d099a8461267a0f02e, email=maxime@bellevitesse.com).
+ok
 test_magic_link_single_use_jti_invalidation (test_magic_links_security.MagicLinksSecurityTestCase.test_magic_link_single_use_jti_invalidation)
-Un lien magique ne doit être utilisable qu'une seule et unique fois (JTI invalidé dès le premier usage). ... ok
+Un lien magique ne doit être utilisable qu'une seule et unique fois (JTI invalidé dès le premier usage). ... [2026-09-30 00:10:07,872] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:07,914] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+WARNING:redis_queue:⚠️ Redis non disponible (host=bv_redis:6379, db=2): Error 8 connecting to bv_redis:6379. nodename nor servname provided, or not known.
+[2026-09-30 00:10:07,921] INFO in auth: ✅ Magic link sent to maxime@bellevitesse.com (JTI=57aa9d66e4f84e1c852b7ea6d3b82a36)
+INFO:app:✅ Magic link sent to maxime@bellevitesse.com (JTI=57aa9d66e4f84e1c852b7ea6d3b82a36)
+WARNING:redis_queue:⚠️ Redis non disponible (host=bv_redis:6379, db=2): Error 8 connecting to bv_redis:6379. nodename nor servname provided, or not known.
+WARNING:redis_queue:⚠️ Redis non disponible (host=bv_redis:6379, db=2): Error 8 connecting to bv_redis:6379. nodename nor servname provided, or not known.
+WARNING:redis_queue:⚠️ Redis non disponible (host=bv_redis:6379, db=2): Error 8 connecting to bv_redis:6379. nodename nor servname provided, or not known.
+[2026-09-30 00:10:07,933] WARNING in auth: ⚠️ Tentative de réutilisation d'un lien magique déjà consommé (JTI=57aa9d66e4f84e1c852b7ea6d3b82a36, email=maxime@bellevitesse.com).
+WARNING:app:⚠️ Tentative de réutilisation d'un lien magique déjà consommé (JTI=57aa9d66e4f84e1c852b7ea6d3b82a36, email=maxime@bellevitesse.com).
+ok
 test_tampered_magic_link_rejected (test_magic_links_security.MagicLinksSecurityTestCase.test_tampered_magic_link_rejected)
-Un jeton altéré ou falsifié doit être rejeté. ... ok
+Un jeton altéré ou falsifié doit être rejeté. ... [2026-09-30 00:10:07,936] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:07,978] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+[2026-09-30 00:10:07,980] WARNING in auth: ⚠️ Jeton de lien magique invalide.
+WARNING:app:⚠️ Jeton de lien magique invalide.
+ok
 test_async_dispatch_enqueues_to_rq (test_mailer_rq.MailerRQTestCase.test_async_dispatch_enqueues_to_rq)
-Vérifie que dispatch_email enfile le job dans la queue RQ 'emails' hors testing. ... ok
+Vérifie que dispatch_email enfile le job dans la queue RQ 'emails' hors testing. ... [2026-09-30 00:10:07,984] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:08,025] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:mailer.tasks:📬 [RQ emails] E-mail 'Test RQ Enqueue' mis en file pour client@production.com (job ID: rq-job-abc-123)
+ok
 test_async_dispatch_falls_back_to_daemon_thread_when_redis_unavailable (test_mailer_rq.MailerRQTestCase.test_async_dispatch_falls_back_to_daemon_thread_when_redis_unavailable)
-Vérifie le repli automatique sur un thread daemon lorsque Redis est indisponible. ... ok
+Vérifie le repli automatique sur un thread daemon lorsque Redis est indisponible. ... [2026-09-30 00:10:08,026] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:08,068] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:mailer.tasks:🧵 [Thread fallback] E-mail 'Test Thread Fallback' expédié en arrière-plan pour thread.fallback@example.com
+ok
 test_build_mime_message_structure (test_mailer_rq.MailerRQTestCase.test_build_mime_message_structure)
-Vérifie la bonne construction de l'objet MIME avec et sans pièces jointes. ... ok
+Vérifie la bonne construction de l'objet MIME avec et sans pièces jointes. ... [2026-09-30 00:10:08,070] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:08,111] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+[2026-09-30 00:10:08,111] ERROR in mailer: ❌ Attachment not found at /non/existent/path.pdf
+ERROR:app:❌ Attachment not found at /non/existent/path.pdf
+ok
 test_redis_queue_provider (test_mailer_rq.MailerRQTestCase.test_redis_queue_provider)
-Vérifie la mise en cache et la récupération des connexions Redis et files RQ. ... ok
+Vérifie la mise en cache et la récupération des connexions Redis et files RQ. ... [2026-09-30 00:10:08,112] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:08,154] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+WARNING:redis_queue:⚠️ Redis non disponible (host=bv_redis:6379, db=2): Redis unreachable
+WARNING:redis_queue:⚠️ Redis non disponible (host=bv_redis:6379, db=2): Redis unreachable
+ok
 test_sync_execution_in_testing_mode (test_mailer_rq.MailerRQTestCase.test_sync_execution_in_testing_mode)
-Vérifie qu'en mode test (ou sync=True), l'envoi s'exécute de façon synchrone. ... ok
+Vérifie qu'en mode test (ou sync=True), l'envoi s'exécute de façon synchrone. ... [2026-09-30 00:10:08,155] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:08,196] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:mailer.tasks:✅ [Mailer Job] E-mail 'Test Synchrone' expédié avec succès à test.client@example.com
+ok
 test_task_send_email_executes_correctly (test_mailer_rq.MailerRQTestCase.test_task_send_email_executes_correctly)
-Vérifie l'exécution directe de task_send_email avec construction MIME. ... ok
+Vérifie l'exécution directe de task_send_email avec construction MIME. ... [2026-09-30 00:10:08,202] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+[2026-09-30 00:10:08,244] INFO in app: ✅ Development database tables created successfully (db.create_all).
+INFO:app:✅ Development database tables created successfully (db.create_all).
+INFO:mailer.tasks:✅ [Mailer Job] E-mail 'Job RQ Exécuté' expédié avec succès à worker.target@example.com
+ok
 test_asgi_auth_middleware_strict_fail_close (test_mcp_server.MCPServerFullTestSuite.test_asgi_auth_middleware_strict_fail_close)
-Vérifie le durcissement Zero-Trust du middleware ASGI (Fail-Close, 401 sur token absent/invalide/expiré/révoqué). ... ok
-test_calendars_lifecycle (test_mcp_server.MCPServerFullTestSuite.test_calendars_lifecycle) ... ok
+Vérifie le durcissement Zero-Trust du middleware ASGI (Fail-Close, 401 sur token absent/invalide/expiré/révoqué). ... WARNING:BV-MCP:⛔ Requête MCP non authentifiée ou token invalide [GET /mcp] depuis 127.0.0.1
+WARNING:BV-MCP:⛔ Requête MCP non authentifiée ou token invalide [GET /mcp] depuis 127.0.0.1
+INFO:BV-MCP:🔑 Connexion MCP autorisée : User #999 (mcp_test_user@bellevitesse.com) [GET /mcp]
+INFO:BV-MCP:🔑 Connexion MCP autorisée : User #999 (mcp_test_user@bellevitesse.com) [GET /mcp]
+WARNING:mcp_auth.auth:⚠️ Token MCP invalide ou inactif.
+WARNING:BV-MCP:⛔ Requête MCP non authentifiée ou token invalide [GET /mcp] depuis 127.0.0.1
+WARNING:mcp_auth.auth:⚠️ Token MCP #1 expiré pour l'utilisateur 999.
+WARNING:BV-MCP:⛔ Requête MCP non authentifiée ou token invalide [GET /mcp] depuis 127.0.0.1
+INFO:BV-MCP:🔑 Connexion MCP autorisée : User #999 (mcp_test_user@bellevitesse.com) [GET /mcp]
+INFO:BV-MCP:🔑 Connexion MCP autorisée : User #999 (mcp_test_user@bellevitesse.com) [POST /mcp]
+WARNING:BV-MCP:🛑 Kill-Switch déclenché : Session sess_killswitch_test révoquée (clé #1 inactive ou expirée).
+WARNING:BV-MCP:⛔ Requête MCP non authentifiée ou token invalide [POST /mcp] depuis 127.0.0.1
+WARNING:BV-MCP:⛔ Requête MCP non authentifiée ou token invalide [GET /mcp] depuis 198.51.100.42
+WARNING:BV-MCP:⛔ Requête MCP non authentifiée ou token invalide [GET /mcp] depuis 198.51.100.42
+WARNING:BV-MCP:⛔ Requête MCP non authentifiée ou token invalide [GET /mcp] depuis 198.51.100.42
+WARNING:BV-MCP:⛔ Requête MCP non authentifiée ou token invalide [GET /mcp] depuis 198.51.100.42
+WARNING:BV-MCP:⛔ Requête MCP non authentifiée ou token invalide [GET /mcp] depuis 198.51.100.42
+WARNING:BV-MCP:🚨 Bannissement temporaire (15 min) déclenché pour l'IP 198.51.100.42 après 5 échecs consécutifs.
+WARNING:BV-MCP:⛔ Requête bloquée : IP 198.51.100.42 temporairement bannie pour brute-force (899s restantes).
+ok
+test_calendars_lifecycle (test_mcp_server.MCPServerFullTestSuite.test_calendars_lifecycle) ... INFO:services.admin.calendar_subscriptions:Abonnement calendrier créé pour user 1 : token=70703155...
+ok
 test_contacts_lifecycle (test_mcp_server.MCPServerFullTestSuite.test_contacts_lifecycle) ... ok
 test_dashboard_summary (test_mcp_server.MCPServerFullTestSuite.test_dashboard_summary) ... ok
-test_documents_and_vehicles (test_mcp_server.MCPServerFullTestSuite.test_documents_and_vehicles) ... ok
+test_documents_and_vehicles (test_mcp_server.MCPServerFullTestSuite.test_documents_and_vehicles) ... INFO:services.admin.vehicle_config:🔧 Initialisation par défaut des CheckpointDefinition en base de données...
+INFO:services.admin.vehicle_config:✅ CheckpointDefinition initialisés avec succès.
+ok
 test_enriched_details (test_mcp_server.MCPServerFullTestSuite.test_enriched_details) ... ok
 test_flexible_date_parsing (test_mcp_server.MCPServerFullTestSuite.test_flexible_date_parsing) ... ok
 test_inspections (test_mcp_server.MCPServerFullTestSuite.test_inspections) ... ok
 test_mcp_connector_routes_access_and_scoping (test_mcp_server.MCPServerFullTestSuite.test_mcp_connector_routes_access_and_scoping)
-Vérifie le contrôle d'accès aux routes web /admin/mcp-connector et la limitation de création de scope selon le rôle. ... ok
+Vérifie le contrôle d'accès aux routes web /admin/mcp-connector et la limitation de création de scope selon le rôle. ... WARNING:py.warnings:/Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/tests/test_mcp_server.py:581: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  if not User.query.get(uid):
+
+[2026-09-30 00:10:08,340] WARNING in decorators: ⚠️ Tentative d'accès non autorisée : Le rôle 'technicien' a tenté d'accéder à https://localhost/admin/mcp-connector. Autorisés : ['commercial', 'manager', 'administrateur', 'super administrateur']
+WARNING:app:⚠️ Tentative d'accès non autorisée : Le rôle 'technicien' a tenté d'accéder à https://localhost/admin/mcp-connector. Autorisés : ['commercial', 'manager', 'administrateur', 'super administrateur']
+ok
 test_mcp_expiration_and_caching (test_mcp_server.MCPServerFullTestSuite.test_mcp_expiration_and_caching)
 Vérifie la génération de clé avec durée d'expiration et le micro-cache outillage. ... ok
 test_mcp_fleet_360_and_conflicts_tools (test_mcp_server.MCPServerFullTestSuite.test_mcp_fleet_360_and_conflicts_tools) ... ok
@@ -254,18 +965,72 @@ test_newsletter_subscribers (test_mcp_server.MCPServerFullTestSuite.test_newslet
 test_pricing (test_mcp_server.MCPServerFullTestSuite.test_pricing) ... ok
 test_productions_lifecycle (test_mcp_server.MCPServerFullTestSuite.test_productions_lifecycle) ... ok
 test_projects_lifecycle (test_mcp_server.MCPServerFullTestSuite.test_projects_lifecycle) ... ok
-test_purge_system_cache (test_mcp_server.MCPServerFullTestSuite.test_purge_system_cache) ... ok
+test_purge_system_cache (test_mcp_server.MCPServerFullTestSuite.test_purge_system_cache) ... INFO:services.admin.system:✅ Cache système Flask/Jinja2 purgé avec succès.
+ok
 test_search_filters_and_pagination (test_mcp_server.MCPServerFullTestSuite.test_search_filters_and_pagination) ... ok
 test_security_scopes_and_audit (test_mcp_server.MCPServerFullTestSuite.test_security_scopes_and_audit) ... ok
 test_system_status (test_mcp_server.MCPServerFullTestSuite.test_system_status) ... ok
-test_users_lifecycle (test_mcp_server.MCPServerFullTestSuite.test_users_lifecycle) ... ok
+test_users_lifecycle (test_mcp_server.MCPServerFullTestSuite.test_users_lifecycle) ... INFO:services.admin.users:Nouvel utilisateur créé : 905 - pytest_temp_user@bellevitesse.com
+INFO:services.admin.users:Utilisateur mis à jour : 905
+WARNING:redis_queue:⚠️ Redis non disponible (host=bv_redis:6379, db=2): Error 8 connecting to bv_redis:6379. nodename nor servname provided, or not known.
+INFO:services.admin.users:Utilisateur supprimé : 905
+ok
 test_vehicle_availability (test_mcp_server.MCPServerFullTestSuite.test_vehicle_availability) ... ok
 test_clean_database_upgrade_from_zero_to_head (test_migrations.MigrationsTestCase.test_clean_database_upgrade_from_zero_to_head)
-Vérifie qu'une base vierge s'initialise de 0 à HEAD via flask_migrate.upgrade(). ... ok
+Vérifie qu'une base vierge s'initialise de 0 à HEAD via flask_migrate.upgrade(). ... [2026-09-30 00:10:08,499] DEBUG in logger: [sql_logger] SQL Logger is DISABLED in environment
+DEBUG:app:[sql_logger] SQL Logger is DISABLED in environment
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> 000000000000, Baseline schema
+INFO  [alembic.runtime.migration] Running upgrade 000000000000 -> 500d7fe3c456, Sync models
+INFO  [alembic.runtime.migration] Running upgrade 500d7fe3c456 -> 600d7fe3c457, Add deleted_at for soft delete
+INFO  [alembic.runtime.migration] Running upgrade 600d7fe3c457 -> 700d7fe3c458, Add insurance_based_on_undiscounted to pre_quotes and pre_quote_versions
+INFO  [alembic.runtime.migration] Running upgrade 700d7fe3c458 -> 800d7fe3c459, Add last_action_by_id to projects
+INFO  [alembic.runtime.migration] Running upgrade 800d7fe3c459 -> 900d7fe3c460, change sql query logs index
+INFO  [alembic.runtime.migration] Running upgrade 900d7fe3c460 -> a00d7fe3c461, add mcp_api_tokens table
+INFO  [alembic.runtime.migration] Running upgrade a00d7fe3c461 -> b00d7fe3c462, add scope column to mcp_api_tokens table
+INFO  [alembic.runtime.migration] Running upgrade b00d7fe3c462 -> c00d7fe3c463, add mcp_audit_logs table
+INFO  [alembic.runtime.migration] Running upgrade c00d7fe3c463 -> d00d7fe3c464, Add first_ac_contact_id and key_grip_contact_id to projects
+INFO  [alembic.runtime.migration] Running upgrade d00d7fe3c464 -> e00d7fe3c465, Add last_reminded_at and reminder_count to waivers
+INFO  [alembic.runtime.migration] Running upgrade e00d7fe3c465 -> f00d7fe3c466, Add title to project_reports
+INFO  [alembic.runtime.migration] Running upgrade f00d7fe3c466 -> g00d7fe3c467, Add indexes to projects and incidents
+INFO  [alembic.runtime.migration] Running upgrade g00d7fe3c467 -> h00d7fe3c468, Integrate kDrive schema into Alembic
+INFO  [alembic.runtime.migration] Running upgrade h00d7fe3c468 -> i00d7fe3c469, drop pre_quotes and pre_quote_versions tables
+INFO  [alembic.runtime.migration] Running upgrade i00d7fe3c469 -> j00d7fe3c470, migrate signature columns from mediumtext to varchar for file storage
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+ok
 test_idempotent_upgrade (test_migrations.MigrationsTestCase.test_idempotent_upgrade)
-Vérifie que l'exécution répétée de upgrade() ne provoque aucune erreur. ... ok
+Vérifie que l'exécution répétée de upgrade() ne provoque aucune erreur. ... INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> 000000000000, Baseline schema
+INFO  [alembic.runtime.migration] Running upgrade 000000000000 -> 500d7fe3c456, Sync models
+INFO  [alembic.runtime.migration] Running upgrade 500d7fe3c456 -> 600d7fe3c457, Add deleted_at for soft delete
+INFO  [alembic.runtime.migration] Running upgrade 600d7fe3c457 -> 700d7fe3c458, Add insurance_based_on_undiscounted to pre_quotes and pre_quote_versions
+INFO  [alembic.runtime.migration] Running upgrade 700d7fe3c458 -> 800d7fe3c459, Add last_action_by_id to projects
+INFO  [alembic.runtime.migration] Running upgrade 800d7fe3c459 -> 900d7fe3c460, change sql query logs index
+INFO  [alembic.runtime.migration] Running upgrade 900d7fe3c460 -> a00d7fe3c461, add mcp_api_tokens table
+INFO  [alembic.runtime.migration] Running upgrade a00d7fe3c461 -> b00d7fe3c462, add scope column to mcp_api_tokens table
+INFO  [alembic.runtime.migration] Running upgrade b00d7fe3c462 -> c00d7fe3c463, add mcp_audit_logs table
+INFO  [alembic.runtime.migration] Running upgrade c00d7fe3c463 -> d00d7fe3c464, Add first_ac_contact_id and key_grip_contact_id to projects
+INFO  [alembic.runtime.migration] Running upgrade d00d7fe3c464 -> e00d7fe3c465, Add last_reminded_at and reminder_count to waivers
+INFO  [alembic.runtime.migration] Running upgrade e00d7fe3c465 -> f00d7fe3c466, Add title to project_reports
+INFO  [alembic.runtime.migration] Running upgrade f00d7fe3c466 -> g00d7fe3c467, Add indexes to projects and incidents
+INFO  [alembic.runtime.migration] Running upgrade g00d7fe3c467 -> h00d7fe3c468, Integrate kDrive schema into Alembic
+INFO  [alembic.runtime.migration] Running upgrade h00d7fe3c468 -> i00d7fe3c469, drop pre_quotes and pre_quote_versions tables
+INFO  [alembic.runtime.migration] Running upgrade i00d7fe3c469 -> j00d7fe3c470, migrate signature columns from mediumtext to varchar for file storage
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+ok
 test_upgrade_from_previous_head_stamp (test_migrations.MigrationsTestCase.test_upgrade_from_previous_head_stamp)
-Vérifie qu'une base déjà estampillée à g00d7fe3c467 migre vers i00d7fe3c469 et supprime pre_quotes. ... ok
+Vérifie qu'une base déjà estampillée à g00d7fe3c467 migre vers i00d7fe3c469 et supprime pre_quotes. ... INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
+INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade g00d7fe3c467 -> h00d7fe3c468, Integrate kDrive schema into Alembic
+INFO  [alembic.runtime.migration] Running upgrade h00d7fe3c468 -> i00d7fe3c469, drop pre_quotes and pre_quote_versions tables
+INFO  [alembic.runtime.migration] Running upgrade i00d7fe3c469 -> j00d7fe3c470, migrate signature columns from mediumtext to varchar for file storage
+ok
 test_disposable_domain_detection (test_newsletter_anti_spam.NewsletterAntiSpamTestCase.test_disposable_domain_detection)
 Vérifie le blocage silencieux des domaines d'emails jetables. ... ok
 test_dot_stuffing_detection (test_newsletter_anti_spam.NewsletterAntiSpamTestCase.test_dot_stuffing_detection)
@@ -304,6 +1069,8 @@ test_async_dispatch_falls_back_to_daemon_thread_when_redis_unavailable (test_pdf
 Vérifie le repli automatique sur un thread daemon lorsque Redis est indisponible. ... ok
 test_sync_execution_in_testing_mode (test_pdf_tasks_rq.PDFTasksRQTestCase.test_sync_execution_in_testing_mode)
 Vérifie que la compilation s'exécute de façon synchrone et écrit le fichier en mode test. ... ok
+test_task_render_pdf_updates_inspection_entity (test_pdf_tasks_rq.PDFTasksRQTestCase.test_task_render_pdf_updates_inspection_entity)
+Vérifie que la tâche worker met à jour les chemins et hashes de l'entité inspection. ... ok
 test_task_render_pdf_updates_waiver_entity (test_pdf_tasks_rq.PDFTasksRQTestCase.test_task_render_pdf_updates_waiver_entity)
 Vérifie que la tâche worker met à jour les chemins et hashes de l'entité décharge. ... ok
 test_add_and_list_reports (test_project_reports.ProjectReportsTest.test_add_and_list_reports) ... ok
@@ -375,6 +1142,14 @@ test_list_projects_pagination_instance (test_server_pagination.TestServerPaginat
 Vérifie que list_projects avec page retourne un objet Pagination. ... ok
 test_list_projects_search_filter (test_server_pagination.TestServerPagination.test_list_projects_search_filter)
 Vérifie que le filtre de recherche q fonctionne avec la pagination. ... ok
+test_finalize_waiver_stores_relative_path (test_signature_storage.TestSignatureStorage.test_finalize_waiver_stores_relative_path)
+Vérifie qu'une décharge finalisée persiste le chemin relatif PNG et non le Base64 brut. ... ok
+test_incident_double_signatures_storage (test_signature_storage.TestSignatureStorage.test_incident_double_signatures_storage)
+Vérifie que les signatures BV et Prod d'un incident sont enregistrées sous forme de fichiers PNG distincts. ... ok
+test_migration_script_dry_run_and_execution (test_signature_storage.TestSignatureStorage.test_migration_script_dry_run_and_execution)
+Vérifie le bon fonctionnement du script de migration des signatures. ... ok
+test_save_and_load_signature_image (test_signature_storage.TestSignatureStorage.test_save_and_load_signature_image)
+Vérifie la sauvegarde d'un Base64 en PNG physique et sa relecture en Data URI. ... ok
 test_add_project_report_rollback_on_failure (test_transactions_rollback.TransactionRollbackTest.test_add_project_report_rollback_on_failure)
 Vérifie que add_project_report rollback systématiquement en cas d'échec. ... ok
 test_create_project_rollback_on_failure (test_transactions_rollback.TransactionRollbackTest.test_create_project_rollback_on_failure)
@@ -415,6 +1190,23 @@ test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.W
 Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
 ----------------------------------------------------------------------
-Ran 250 tests in 25.610s
+Ran 256 tests in 26.077s
 
 OK
+✅ Admin CSS bundle régénéré : /Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/static/css/admin/admin.bundle.css (210,536 octets)
+✅ Public CSS bundle régénéré : /Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/static/css/styles.bundle.css (51,813 octets)
+✅ Admin JS bundle régénéré : /Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/static/js/admin/admin.bundle.js (231,450 octets)
+✅ Public JS bundle régénéré : /Users/maximecongi/kDrive/Common documents/BELLE VITESSE/2_WEBSITE/2_WEBSITE/static/js/public.bundle.js (16,323 octets)
+🚀 Démarrage de la migration des signatures vers PNG (dry_run=True)...
+  [PilotWaiver] Migration BVDW-MIGRATE-01 (118 caractères)...
+🔍 [DRY-RUN] Détection de 1 signature(s) éligible(s).
+📦 Économie potentielle : ~0.1 Ko.
+🚀 Démarrage de la migration des signatures vers PNG (dry_run=False)...
+  [PilotWaiver] Migration BVDW-MIGRATE-01 (118 caractères)...
+✅ Migration terminée avec succès : 1 signature(s) déportée(s) sur disque.
+📦 Économie mémoire/base : ~0.1 Ko libérés.
+[2026-09-30 00:10:24.339506] 🔔 Vérification des décharges non signées à J-2 (SIMULATION / DRY-RUN)...
+   Fenêtre d'échéance : du 30/09/2026 au 02/10/2026
+   [PROD] Projet: Tournage Urgent J-1 | Décharge: BVPW-MMS9BGK50YNB | Contact: jean.dupont@example.com | Date: 2026-09-30
+   [PILOTE] Projet: Tournage Urgent J-1 | Décharge: BVDW-R6R9R1UKD6VU | Pilote: luc.pilote@example.com | Date: 2026-09-30
+[2026-09-30 00:10:24.343793] ℹ️ Total éligible : 1 production(s), 1 pilote(s).

@@ -144,7 +144,7 @@ def init_waiver_routes(app):
                     waiver.production_insurance_path = os.path.relpath(
                         file_path, output_base)
 
-            waiver.signature_data = data.get("signature_data")
+            signature_raw = data.get("signature_data")
             signer_ip = request.headers.get(
                 'X-Forwarded-For', request.remote_addr)
             if signer_ip and ',' in signer_ip:
@@ -154,7 +154,7 @@ def init_waiver_routes(app):
             db.session.commit()
 
             from services.common.signatures import finalize_signed_document
-            finalize_signed_document(mode, waiver.id, waiver.signature_data, signer_ip)
+            finalize_signed_document(mode, waiver.id, signature_raw, signer_ip)
 
             # Nous ne supprimons pas le jeton immédiatement pour permettre à l'utilisateur
             # de voir l'état "signé" s'il recharge la page.

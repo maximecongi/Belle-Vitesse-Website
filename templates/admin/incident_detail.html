@@ -159,9 +159,9 @@ incident_signature_badge, equipment_icon, empty_state %}
                     <div class="u-text-xs u-text-muted"><i data-lucide="globe"></i> {{ incident.bv_signer_ip }}</div>
                     {% endif %}
 
-                    {% if incident.bv_signature_data %}
+                    {% if incident.bv_signature_data_uri or incident.bv_signature_data %}
                     <div class="u-mt-2">
-                        <img src="{{ incident.bv_signature_data }}" alt="Signature Belle Vitesse"
+                        <img src="{{ incident.bv_signature_data_uri or incident.bv_signature_data }}" alt="Signature Belle Vitesse"
                             class="incident-signature-preview">
                     </div>
                     {% endif %}
@@ -198,9 +198,9 @@ incident_signature_badge, equipment_icon, empty_state %}
                     <div class="u-text-xs u-text-muted"><i data-lucide="globe"></i> {{ incident.prod_signer_ip }}</div>
                     {% endif %}
 
-                    {% if incident.prod_signature_data %}
+                    {% if incident.prod_signature_data_uri or incident.prod_signature_data %}
                     <div class="u-mt-2">
-                        <img src="{{ incident.prod_signature_data }}" alt="Signature Production"
+                        <img src="{{ incident.prod_signature_data_uri or incident.prod_signature_data }}" alt="Signature Production"
                             class="incident-signature-preview">
                     </div>
                     {% endif %}

@@ -332,6 +332,61 @@ class InspectionsTest(unittest.TestCase):
             self.assertEqual(res.status_code, 200)
             self.assertIn("un retour est déjà en cours (BVCI-TESTEXISTING1)".encode("utf-8"), res.data)
 
+    def test_re_sign_checkout_upsert_and_abandon_protection(self):
+        """Vérifie que re-signer un checkout met à jour le SignedDocument sans IntegrityError
+        et que l'abandon ne rétrograde jamais un checkout déjà signé."""
+        from models import CheckoutSignedDocument
+        from services.common.signatures import (
+            abandon_inspection_signature,
+            finalize_signed_document,
+            generate_inspection_token,
+        )
+
+        with self.app.app_context(), self.app.test_request_context("/"):
+            user, proj = self._create_mock_data()
+
+            checkout = CheckoutVehicle(
+                inspection_number="BVCO-TESTUPSERT1",
+                status="in_progress",
+                project_id=proj.id,
+                vehicle_id="1",
+                controller_id=user.id,
+            )
+            db.session.add(checkout)
+            db.session.commit()
+
+            # 1. Première signature
+            dummy_sig = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+            res1 = finalize_signed_document("checkout", checkout.id, dummy_sig, "127.0.0.1")
+            self.assertEqual(res1["document_id"], "BVCO-TESTUPSERT1")
+
+            updated_co = CheckoutVehicle.query.get(checkout.id)
+            self.assertEqual(updated_co.status, "signed")
+
+            signed_doc1 = CheckoutSignedDocument.query.filter_by(inspection_id="BVCO-TESTUPSERT1").first()
+            self.assertIsNotNone(signed_doc1)
+
+            # 2. Génération d'un token puis tentative d'abandon sur document déjà signé
+            token_res = generate_inspection_token(checkout.id, "checkout")
+            self.assertIsNotNone(token_res)
+            # Le statut doit rester signed
+            self.assertEqual(CheckoutVehicle.query.get(checkout.id).status, "signed")
+
+            abandon_ok = abandon_inspection_signature(token_res["token"], "checkout")
+            self.assertTrue(abandon_ok)
+            # Le statut ne doit JAMAIS rétrograder à in_progress
+            self.assertEqual(CheckoutVehicle.query.get(checkout.id).status, "signed")
+
+            # 3. Re-signature (doit faire un upsert sans IntegrityError Duplicate entry)
+            dummy_sig2 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+            res2 = finalize_signed_document("checkout", checkout.id, dummy_sig2, "127.0.0.1")
+            self.assertEqual(res2["document_id"], "BVCO-TESTUPSERT1")
+
+            # Vérifie qu'il n'y a toujours qu'une seule ligne d'archive et qu'elle est mise à jour
+            signed_docs = CheckoutSignedDocument.query.filter_by(inspection_id="BVCO-TESTUPSERT1").all()
+            self.assertEqual(len(signed_docs), 1)
+            self.assertEqual(signed_docs[0].hash, res2["hash"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -18,7 +18,8 @@
 
 {% block content %}
 
-<div class="u-grid u-grid-2-1 u-gap-3" id="inspectionDetailLayout" data-inspection-type="checkins" data-inspection-id="{{ record_id }}" data-status-id="{{ data.status_id }}">
+<div class="u-grid u-grid-2-1 u-gap-3" id="inspectionDetailLayout" data-inspection-type="checkins"
+    data-inspection-id="{{ record_id }}" data-status-id="{{ data.status_id }}">
     <!-- Main Info -->
     <div class="u-flex u-flex-column u-gap-3">
         <div class="admin-card u-border-left-checkin">
@@ -183,7 +184,8 @@
             {% if data.pdf_url %}
             <div class="u-mt-3">
                 <a href="{{ data.pdf_url }}" target="_blank"
-                    class="admin-btn admin-btn-secondary btn-download-pdf-sidebar">Télécharger le PDF 📄</a>
+                    class="admin-btn admin-btn-secondary btn-download-pdf-sidebar"><i
+                        data-lucide="file-down"></i>Télécharger le PDF</a>
             </div>
             {% endif %}
         </div>

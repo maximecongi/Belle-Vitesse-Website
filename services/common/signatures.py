@@ -42,6 +42,11 @@ from utils.document_utils import (
     render_pdf_from_template,
 )
 from utils.mailer import send_waiver_signed_email
+from utils.signature_storage import (
+    save_signature_image,
+    load_signature_data_uri,
+    delete_signature_file,
+)
 from utils.storage import (
     ensure_dir,
     get_checkin_path,
@@ -167,7 +172,8 @@ def generate_inspection_token(record_id, mode):
     )
     db.session.add(new_token)
 
-    record.status = "pending"
+    if record.status not in ["signed", "completed"]:
+        record.status = "pending"
     db.session.commit()
 
     base_url = os.getenv("BASE_URL", "https://bellevitesse.com")
@@ -189,7 +195,8 @@ def abandon_inspection_signature(token_str, mode):
 
     try:
         record = db.session.get(model, int(entry.record_id))
-        if record:
+        # Ne jamais rétrograder en 'in_progress' si le document est déjà scellé ou signé
+        if record and record.status not in ["signed", "completed"]:
             record.status = "in_progress"
             db.session.commit()
         logger.info(f"🔙 Signature abandonnée pour {entry.inspection_id}")
@@ -210,7 +217,7 @@ def resume_inspection_signature(token_str, mode):
 
     try:
         record = db.session.get(model, int(entry.record_id))
-        if record:
+        if record and record.status not in ["signed", "completed"]:
             record.status = "pending"
             db.session.commit()
     except Exception as e:
@@ -252,21 +259,33 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         if hasattr(record, "signer_ip"):
             record.signer_ip = signed_ip
 
-        # 2. Construction du Snapshot des données et Scellé (Hash)
+        # 2. Déport de la signature binaire sur disque en fichier PNG
         document_id = getattr(
-            record, "inspection_number", getattr(record, "waiver_id", None))
+            record, "inspection_number", getattr(record, "waiver_id", f"{mode}_{record.id}"))
+        entity_type = "waivers" if mode in ["pilot", "production"] else (
+            "checkouts" if mode == "checkout" else "checkins")
+        sig_file_rel_path = save_signature_image(
+            signature_data, entity_type=entity_type, record_id=document_id)
+        if hasattr(record, "signature_data"):
+            record.signature_data = sig_file_rel_path
+
+        # Construction du Snapshot des données et Scellé (Hash)
         snapshot, seal_args = _build_flow_data(mode, record, extra_data)
 
         current_hash = compute_hmac_seal(
-            config["prefix"], document_id, *seal_args, signature_data, signed_at.isoformat())
+            config["prefix"], document_id, *seal_args, sig_file_rel_path, signed_at.isoformat())
 
         # 3. QR code et génération du PDF
         verification_url = f"{base_url}/{config['url_path']}/verify/{document_id}"
         qr_code_img = generate_qr_code(verification_url)
 
+        # Résolution de la Data URI pour les moteurs de rendu (WeasyPrint)
+        sig_data_uri = load_signature_data_uri(
+            sig_file_rel_path) or signature_data
+
         # Préparation du contexte de rendu
         render_ctx = {
-            "signature": signature_data,
+            "signature": sig_data_uri,
             "qr": qr_code_img,
             "hash": current_hash,
             "document_hash": current_hash,  # utilisé pour les décharges
@@ -310,24 +329,59 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         if hasattr(record, "hash"):
             record.hash = current_hash
 
-        # Création de l'enregistrement d'archive
+        # Création ou mise à jour de l'enregistrement d'archive (Upsert)
         pk_name = "inspection_id" if mode in [
             "checkout", "checkin"] else "waiver_id"
-        signed_doc = signed_model(
-            **{pk_name: document_id},
-            hash=current_hash,
-            pdf_file_hash="",
-            data_snapshot={
+        existing_doc = db.session.get(signed_model, document_id)
+        if existing_doc:
+            existing_doc.hash = current_hash
+            existing_doc.pdf_file_hash = ""
+            existing_doc.data_snapshot = {
                 **snapshot,
                 "signer_ip": signed_ip,
                 "_seal_signed_at": signed_at.isoformat(),
-            },
-            signature=signature_data,
-            pdf_url=pdf_public_url,
-            signed_at=signed_at.replace(tzinfo=None)
-        )
-        db.session.add(signed_doc)
-        db.session.commit()
+            }
+            existing_doc.signature = sig_file_rel_path
+            existing_doc.pdf_url = pdf_public_url
+            existing_doc.signed_at = signed_at.replace(tzinfo=None)
+            signed_doc = existing_doc
+        else:
+            signed_doc = signed_model(
+                **{pk_name: document_id},
+                hash=current_hash,
+                pdf_file_hash="",
+                data_snapshot={
+                    **snapshot,
+                    "signer_ip": signed_ip,
+                    "_seal_signed_at": signed_at.isoformat(),
+                },
+                signature=sig_file_rel_path,
+                pdf_url=pdf_public_url,
+                signed_at=signed_at.replace(tzinfo=None)
+            )
+            db.session.add(signed_doc)
+
+        try:
+            db.session.commit()
+        except IntegrityError as commit_err:
+            db.session.rollback()
+            logger.warning(
+                f"⚠️ Archive légale déjà présente pour {document_id} ({commit_err}), mise à jour de l'existant...")
+            existing_doc = db.session.get(signed_model, document_id)
+            if existing_doc:
+                existing_doc.hash = current_hash
+                existing_doc.pdf_file_hash = ""
+                existing_doc.data_snapshot = {
+                    **snapshot,
+                    "signer_ip": signed_ip,
+                    "_seal_signed_at": signed_at.isoformat(),
+                }
+                existing_doc.signature = sig_file_rel_path
+                existing_doc.pdf_url = pdf_public_url
+                existing_doc.signed_at = signed_at.replace(tzinfo=None)
+                db.session.commit()
+            else:
+                raise commit_err
 
         # 6. Compilation PDF asynchrone via RQ & Post-traitements (kDrive, Emails)
         from services.common.pdf_tasks import dispatch_pdf_generation
@@ -338,9 +392,11 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
             stylesheets=config["stylesheets"],
             compress=True,
             filename=filename,
-            entity_type="waiver" if mode in ["pilot", "production"] else "inspection",
+            entity_type="waiver" if mode in [
+                "pilot", "production"] else "inspection",
             entity_id=document_id,
-            post_action="waiver_post_actions" if mode in ["pilot", "production"] else "inspection_post_actions",
+            post_action="waiver_post_actions" if mode in [
+                "pilot", "production"] else "inspection_post_actions",
             extra_context={
                 "mode": mode,
                 "rel_pdf_path": rel_pdf_path,
@@ -627,7 +683,8 @@ def seal_incident_contradictory_document(incident, incident_data, base_url=None)
         html_content=html,
         output_file_path=file_path,
         base_url=current_app.root_path,
-        stylesheets=["css/styles.css", "css/checkout.css", "css/incident_pdf.css"],
+        stylesheets=["css/styles.css",
+                     "css/checkout.css", "css/incident_pdf.css"],
         compress=True,
         filename=filename,
         entity_type="incident",

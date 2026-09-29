@@ -171,6 +171,67 @@ class PDFTasksRQTestCase(unittest.TestCase):
             db.session.delete(prod)
             db.session.commit()
 
+    def test_task_render_pdf_updates_inspection_entity(self):
+        """Vérifie que la tâche worker met à jour les chemins et hashes de l'entité inspection."""
+        from models.inspection import CheckoutVehicle
+        from models.waiver import CheckoutSignedDocument
+
+        prod = Production(name="Production Inspection Test")
+        db.session.add(prod)
+        db.session.commit()
+
+        project = Project(name="Projet Inspection Test", production_id=prod.id)
+        db.session.add(project)
+        db.session.commit()
+
+        checkout = CheckoutVehicle(
+            inspection_number="BVCO-TESTPDF01",
+            project_id=project.id,
+            status="signed",
+            vehicle_id="ecar_01",
+        )
+        db.session.add(checkout)
+        db.session.commit()
+
+        signed_doc = CheckoutSignedDocument(
+            inspection_id="BVCO-TESTPDF01",
+            hash="hmac-hash-checkout",
+            pdf_file_hash="",
+            data_snapshot={"vehicle": "ecar_01"},
+            signature="signatures/inspections/BVCO-TESTPDF01.png",
+            pdf_url="/checkout/document/BVCO-TESTPDF01.pdf",
+        )
+        db.session.add(signed_doc)
+        db.session.commit()
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            output_file = os.path.join(tmp_dir, "BVCO-TESTPDF01.pdf")
+
+            success = task_render_pdf_to_file(
+                html_content="<h1>Inspection départ signée</h1>",
+                output_file_path=output_file,
+                filename="BVCO-TESTPDF01.pdf",
+                compress=False,
+                entity_type="inspection",
+                entity_id="BVCO-TESTPDF01",
+            )
+
+            self.assertTrue(success)
+            self.assertTrue(os.path.exists(output_file))
+
+            updated_checkout = CheckoutVehicle.query.filter_by(inspection_number="BVCO-TESTPDF01").first()
+            updated_doc = CheckoutSignedDocument.query.filter_by(inspection_id="BVCO-TESTPDF01").first()
+
+            self.assertIsNotNone(updated_checkout.signed_pdf_path)
+            self.assertTrue(len(updated_doc.pdf_file_hash) > 0)
+
+            # Cleanup
+            db.session.delete(signed_doc)
+            db.session.delete(checkout)
+            db.session.delete(project)
+            db.session.delete(prod)
+            db.session.commit()
+
 
 if __name__ == "__main__":
     unittest.main()

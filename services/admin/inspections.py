@@ -204,12 +204,21 @@ def get_inspection_detail_unified(mode, record_id):
     vehicle_map = {v["id"]: v.get("fields", {}) for v in vehicles}
     data = _format_base_inspection_admin(record, vehicle_map)
 
-    # Si l'inspection est signée, on récupère les infos du PDF (URL sécurisée, Hash)
-    if get_inspection_key(data.get("raw_status")) == "signed":
-        doc_info = get_signed_document_info(
-            data["inspection_id"], is_checkout=config["is_checkout"])
-        if doc_info:
-            data.update(doc_info)
+    # Récupération des infos du document signé (URL sécurisée, Hash)
+    doc_info = get_signed_document_info(
+        data["inspection_id"], is_checkout=config["is_checkout"])
+    if doc_info:
+        data.update(doc_info)
+        # Si un document d'archive signé existe mais que le record était désynchronisé
+        if record.status not in ["signed", "completed"]:
+            try:
+                record.status = "signed"
+                db.session.commit()
+                data["status"] = INSPECTION_STATUS_MAP.get("signed", "Signé")
+                data["raw_status"] = "signed"
+                data["status_id"] = "signed"
+            except Exception:
+                db.session.rollback()
 
     return data
 
