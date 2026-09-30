@@ -151,6 +151,9 @@ const swup = new Swup({
 
 swup.hooks.on('content:replace', () => {
     initContent();
+    if (typeof window.initHomeIntro === 'function') {
+        window.initHomeIntro(true);
+    }
     // Header is now persistent, so we don't re-run initDropdowns()
 
     // Close mobile menu

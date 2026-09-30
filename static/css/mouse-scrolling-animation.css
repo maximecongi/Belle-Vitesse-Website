@@ -1,34 +1,116 @@
-.icon-scroll,
-.icon-scroll:before {
-    position: absolute;
-    left: 50%;
-}
+/* ==========================================================================
+   Indicateur de défilement cinématique — Belle Vitesse (Option 2)
+   Chevrons graphiques animés en cascade avec label chic "SCROLL"
+   ========================================================================== */
 
 .icon-scroll {
-    opacity: 0;
-    width: 20px;
-    height: 35px;
-    margin-left: -20px;
-    bottom: 5svh;
-    margin-top: -35px;
-    box-shadow: inset 0 0 0 1px var(--white-2);
-    animation-name: reveal;
-    animation-fill-mode: forwards;
-    animation-delay: 2s;
-    animation-duration: 1.5s;
-    border-radius: 12px;
+    position: absolute;
+    left: 50%;
+    bottom: 4svh;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    cursor: pointer;
+    user-select: none;
+    z-index: 20;
+    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.icon-scroll:before {
-    content: '';
-    width: 4px;
-    height: 4px;
-    background-color: var(--white-2);
-    margin-left: -2px;
-    top: 8px;
+.icon-scroll-text {
+    font-family: 'Space Grotesk', 'Poppins', sans-serif;
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.35em;
+    text-indent: 0.35em;
+    /* Compense le letter-spacing pour un centrage géométrique parfait */
+    text-transform: uppercase;
+    color: #FFFFFF;
+    opacity: 0.92;
+    transition: opacity 0.3s ease, letter-spacing 0.3s ease;
+}
+
+.icon-scroll-chevrons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 22px;
+    position: relative;
+}
+
+.icon-scroll-chevron {
+    width: 18px;
+    height: 12px;
+    color: #FFFFFF;
+    stroke: #FFFFFF;
+    will-change: transform, opacity;
+}
+
+.icon-scroll-chevron.chevron-1 {
+    animation: scrollChevronCascade 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.icon-scroll-chevron.chevron-2 {
+    margin-top: -5px;
+    animation: scrollChevronCascade 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    animation-delay: 0.28s;
+}
+
+@keyframes scrollChevronCascade {
+    0% {
+        opacity: 0.2;
+        transform: translateY(-3px);
+    }
+
+    40% {
+        opacity: 1;
+        transform: translateY(1px);
+    }
+
+    80%,
+    100% {
+        opacity: 0.15;
+        transform: translateY(5px);
+    }
+}
+
+/* États interactifs au survol et au focus */
+.icon-scroll:hover {
+    transform: translateX(-50%) translateY(2px) scale(1.08);
+}
+
+.icon-scroll:active {
+    transform: translateX(-50%) translateY(4px) scale(0.96);
+}
+
+.icon-scroll:hover .icon-scroll-text {
+    opacity: 1;
+    letter-spacing: 0.42em;
+    text-indent: 0.42em;
+    color: #FFFFFF;
+}
+
+.icon-scroll:hover .icon-scroll-chevron {
+    color: var(--yellow, #FACC15);
+    stroke: var(--yellow, #FACC15);
+}
+
+.icon-scroll:focus-visible {
+    outline: 2px solid var(--yellow, #FACC15);
+    outline-offset: 4px;
     border-radius: 4px;
-    animation-name: scroll;
-    animation-delay: 2s;
-    animation-duration: 1.5s;
-    animation-iteration-count: infinite;
+}
+
+/* Accessibilité : mouvements réduits */
+@media (prefers-reduced-motion: reduce) {
+
+    .icon-scroll-chevron.chevron-1,
+    .icon-scroll-chevron.chevron-2 {
+        animation: none !important;
+        opacity: 0.9;
+        transform: none;
+    }
 }

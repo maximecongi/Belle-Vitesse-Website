@@ -1,0 +1,257 @@
+/* ==========================================================================
+   Home Intro Cinematic Animation — Belle Vitesse
+   Séquence Quik / Cinéma :
+     1. Fond noir pur (#000000) -> Logo complet ("BELLE" + "V" + "ITESSE")
+     2. Rétraction vers le centre : "BELLE" et "ITESSE" se contractent et s'effacent
+     3. Le "V" central grossit (zoom immersif) jusqu'à dépasser l'écran et dévoile la vidéo
+     4. Vidéo du hero révélée en plein écran (100svh, scroll strictement verrouillé)
+     5. Après 3s, affichage de l'animation de défilement (.icon-scroll)
+     6. Au scroll, repositionnement fluide des éléments (vidéo 90svh, menu, slogan, boutons)
+   ========================================================================== */
+
+/* 1. Loader cinématographique plein écran */
+.intro-loader {
+    position: fixed;
+    inset: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100svh;
+    background-color: var(--grey-1);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    cursor: pointer;
+    overflow: hidden;
+    transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+        visibility 0.45s;
+}
+
+.intro-loader.is-fading {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.intro-loader.is-hidden {
+    display: none !important;
+}
+
+/* Scène centrale contenant le logo complet Belle Vitesse */
+.intro-brand-stage {
+    position: relative;
+    width: clamp(280px, 46vw, 640px);
+    aspect-ratio: 895 / 390;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    transform: translateZ(0);
+}
+
+/* Parties textuelles : "BELLE" et "ITESSE" */
+.intro-part-text {
+    position: absolute;
+    top: 49.74%;
+    transform-origin: center center;
+    will-change: transform, opacity;
+    transition: transform 0.5s cubic-bezier(0.7, 0, 0.25, 1),
+        opacity 0.4s cubic-bezier(0.7, 0, 0.25, 1);
+}
+
+.intro-img-text {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: none;
+}
+
+.intro-part-belle {
+    left: 0.33%;
+    width: 32.40%;
+    height: 18.46%;
+}
+
+.intro-part-itesse {
+    left: 62.23%;
+    width: 37.43%;
+    height: 18.46%;
+}
+
+/* Emblème central V (chevron) */
+.intro-part-v {
+    position: absolute;
+    left: 32.74%;
+    top: 0.51%;
+    width: 54.30%;
+    height: 98.72%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform-origin: 40% 40%;
+    will-change: transform, opacity;
+    transition: transform 0.5s cubic-bezier(0.7, 0, 0.25, 1);
+}
+
+.intro-v-svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.intro-v-svg path {
+    fill: #FFFFFF;
+}
+
+/* Étape 1 : Rétraction de "BELLE" et "ITESSE" vers le centre */
+.intro-loader.is-retracting .intro-part-belle {
+    transform: translateX(45%) scaleX(0.2);
+    opacity: 0;
+}
+
+.intro-loader.is-retracting .intro-part-itesse {
+    transform: translateX(-40%) scaleX(0.2);
+    opacity: 0;
+}
+
+.intro-loader.is-retracting .intro-part-v {
+    /* transform: translateX(-18.19%); */
+}
+
+/* Étape 2 : Le "V" grossit jusqu'à remplir/dépasser l'écran */
+.intro-loader.is-zooming .intro-part-belle {
+    transform: translateX(60%) scaleX(0);
+    opacity: 0;
+}
+
+.intro-loader.is-zooming .intro-part-itesse {
+    transform: translateX(-55%) scaleX(0);
+    opacity: 0;
+}
+
+@keyframes vZoom {
+    0% {
+        transform: scale(1);
+    }
+
+    100% {
+        transform: scale(55);
+    }
+}
+
+.intro-loader.is-zooming .intro-part-v {
+    animation: vZoom 0.8s cubic-bezier(0.85, 0, 0.15, 1) forwards;
+}
+
+/* 2. État plein écran : Verrouillage fluide sans overflow:hidden (évite de figer le curseur) */
+html.hero-intro-locked,
+body.hero-intro-mode {
+    overscroll-behavior: none;
+    scrollbar-width: none;
+}
+
+body.hero-intro-mode::-webkit-scrollbar {
+    display: none;
+}
+
+/* Header replié en haut hors écran */
+body.hero-intro-mode .header-section {
+    margin-top: -10svh;
+    transform: translateY(-100%);
+    opacity: 0;
+    pointer-events: none;
+    transition: margin-top 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.85s cubic-bezier(0.16, 1, 0.3, 1),
+        opacity 0.6s ease;
+}
+
+/* Hero vidéo prenant 100svh plein écran */
+body.hero-intro-mode .home-hero-banner {
+    height: 100svh;
+    transition: height 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Masquage initial du slogan et des boutons CTA */
+body.hero-intro-mode .home-hero-banner-slogan {
+    opacity: 0;
+    transform: translateY(28px);
+    pointer-events: none;
+    transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+body.hero-intro-mode .home-hero-banner-buttons {
+    opacity: 0;
+    transform: translateY(24px);
+    pointer-events: none;
+    transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Pastille de scroll masquée initialement tant qu'elle n'a pas été déclenchée */
+body.hero-intro-mode .icon-scroll:not(.is-visible) {
+    opacity: 0 !important;
+    pointer-events: none;
+    cursor: pointer;
+    transition: opacity 0.8s ease, transform 0.3s ease;
+    z-index: 10;
+}
+
+/* Une fois apparue, l'icône reste visible en permanence sans aucune disparition */
+.icon-scroll.is-visible {
+    opacity: 1 !important;
+    pointer-events: auto;
+    cursor: pointer;
+    z-index: 20;
+}
+
+/* 3. Phase de transition progressive au scroll (Scroll toujours verrouillé) */
+body.hero-intro-settling .header-section {
+    margin-top: 0;
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+body.hero-intro-settling .home-hero-banner {
+    height: 90svh;
+}
+
+body.hero-intro-settling .home-hero-banner-slogan {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    transition-delay: 0.18s;
+}
+
+body.hero-intro-settling .home-hero-banner-buttons {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    transition-delay: 0.32s;
+}
+
+/* 4. Préférence utilisateur pour les mouvements réduits */
+@media (prefers-reduced-motion: reduce) {
+    .intro-loader {
+        transition: opacity 0.2s ease;
+    }
+
+    .intro-part-belle,
+    .intro-part-itesse,
+    .intro-part-v {
+        transition-duration: 0.1s;
+    }
+
+    body.hero-intro-mode .header-section,
+    body.hero-intro-mode .home-hero-banner,
+    body.hero-intro-mode .home-hero-banner-slogan,
+    body.hero-intro-mode .home-hero-banner-buttons {
+        transition-duration: 0.2s;
+        transition-delay: 0s;
+    }
+}

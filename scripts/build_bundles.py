@@ -19,6 +19,7 @@ PUBLIC_CSS_FILES: List[str] = [
     "css/header.css",
     "css/footer.css",
     "css/home.css",
+    "css/home-intro.css",
     "css/categories.css",
     "css/vehicle.css",
     "css/grip.css",
@@ -72,6 +73,7 @@ ADMIN_JS_FILES: List[str] = [
 
 PUBLIC_JS_FILES: List[str] = [
     "js/src/initialization.js",
+    "js/src/home-intro.js",
     "js/src/splide.js",
     "js/src/countup.js",
     "js/src/configurator.js",

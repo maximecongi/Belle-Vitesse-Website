@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ lang }}" prefix="og: https://ogp.me/ns#">
+<html lang="{{ lang }}" prefix="og: https://ogp.me/ns#"{% if request.endpoint == 'home' %} class="hero-intro-locked"{% endif %}>
 
 <head>
   <meta charset="UTF-8">
@@ -84,11 +84,12 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.bundle.css') }}?v={{ asset_version('css/styles.bundle.css') }}">
   {% else %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v={{ asset_version('css/styles.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/home-intro.css') }}?v={{ asset_version('css/home-intro.css') }}">
   {% endif %}
 
 </head>
 
-<body id="home">
+<body id="home"{% if request.endpoint == 'home' %} class="hero-intro-mode hero-intro-locked"{% endif %}>
   {% if launch_mode %}
   <div class="launch-back-bar"
     style="padding: 20px 5vw; border-bottom: 1px solid rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: flex-start; z-index: 1000; position: relative;">
@@ -111,6 +112,7 @@
     {% include "public/footer.html" %}
     {% endif %}
   </main>
+  <script src="{{ url_for('static', filename='js/src/home-intro.js')}}?v={{ asset_version('js/src/home-intro.js') }}"></script>
   <script src="{{ url_for('static', filename='js/src/initialization.js')}}"></script>
   <script src="{{ url_for('static', filename='js/src/splide.js')}}"></script>
   <script src="{{ url_for('static', filename='js/src/countup.js')}}"></script>
