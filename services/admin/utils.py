@@ -82,33 +82,38 @@ def _delete_inspection_files(record):
                     f"❌ Échec de la suppression du PDF {pdf_path}: {e}")
 
 
-def _is_ready(form, vehicle_id=None, is_checkout=False):
+def _is_ready(form_or_statuses, vehicle_id=None, is_checkout=False, battery_val=None):
     """
     Calcule si le véhicule est 'prêt' basé sur les points de contrôle.
-    Retourne True si tous les points critiques sont 'OK' ou 'Non pertinent'.
+    Retourne True si tous les points de contrôle configurés pour ce véhicule sont conformes ('ok' ou 'not_applicable').
     Pour les départs (checkout), exige également une batterie à 100%.
     """
-    # 1. Battery check for checkout
+    # 1. Vérification du niveau de batterie pour les départs
     if is_checkout:
-        battery_val = form.get("battery_level") or form.get("battery")
+        b_val = battery_val
+        if b_val is None and hasattr(form_or_statuses, "get"):
+            b_val = form_or_statuses.get("battery_level") or form_or_statuses.get("battery")
         try:
-            if battery_val and float(battery_val) < 100:
+            if b_val is not None and float(b_val) < 100:
                 return False
         except (ValueError, TypeError):
             pass
 
-    # 2. Status checkpoints check
+    # 2. Vérification des points de contrôle configurés pour ce véhicule
     checkpoints = get_checkpoints_for_vehicle(vehicle_id)
-
-    # Only check 'status' type fields
-    status_keys = [cp['key']
-                   for cp in checkpoints if cp.get('type') == 'status']
-
-    for key in status_keys:
-        val = form.get(key)
-        # If it's not present (hidden/not pertinent), we treat it as OK
-        if val is not None and val not in ["ok", "non_applicable"]:
-            return False
+    for cp in checkpoints:
+        key = cp['key']
+        cp_type = cp.get('type', 'status')
+        if cp_type == 'value':
+            if key not in ("battery", "battery_level"):
+                val = form_or_statuses.get(key) if hasattr(form_or_statuses, "get") else None
+                if val is None or str(val).strip() in ("", "—", "None"):
+                    return False
+        else:
+            val = form_or_statuses.get(key) if hasattr(form_or_statuses, "get") else None
+            val_clean = str(val).lower().strip() if val is not None else ""
+            if val_clean not in ("ok", "non_applicable", "not_applicable"):
+                return False
     return True
 
 

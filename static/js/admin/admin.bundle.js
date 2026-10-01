@@ -1263,8 +1263,11 @@ function initVehiclesModal() {
             trigger.addEventListener('click', (e) => {
                 e.preventDefault();
                 const iframe = vehiclesModal.querySelector('iframe');
-                if (iframe && !iframe.getAttribute('src') && iframe.dataset.src) {
-                    iframe.setAttribute('src', iframe.dataset.src);
+                const targetSrc = trigger.dataset.protocolUrl || (iframe ? iframe.dataset.src : '');
+                if (iframe && targetSrc) {
+                    if (iframe.getAttribute('src') !== targetSrc) {
+                        iframe.setAttribute('src', targetSrc);
+                    }
                 }
                 vehiclesModal.classList.add('is-active');
             });
@@ -2427,7 +2430,7 @@ function updatePhotoLabel(input) {
 }
 window.updatePhotoLabel = updatePhotoLabel;
 
-function initInspectionForm(checkpointsConfig, defaultCheckpoints) {
+function initInspectionForm(checkpointsConfig) {
     const vehicleInput = document.querySelector('input[name="vehicle_id"]');
     const form = document.getElementById('inspectionForm');
     const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
@@ -2447,7 +2450,7 @@ function initInspectionForm(checkpointsConfig, defaultCheckpoints) {
         }
 
         // Déterminer la configuration des points de contrôle pour le véhicule sélectionné
-        let configToUse = defaultCheckpoints || [];
+        let configToUse = [];
         const vid = vehicleInput.value;
         if (vid && checkpointsConfig && checkpointsConfig[vid]) {
             configToUse = checkpointsConfig[vid];
@@ -2480,9 +2483,10 @@ function initInspectionForm(checkpointsConfig, defaultCheckpoints) {
         });
     }
 
-    // Écouter le changement de véhicule
+    // Écouter le changement de véhicule et initialiser l'affichage
     if (vehicleInput) {
         vehicleInput.addEventListener('change', updateCheckpoints);
+        updateCheckpoints();
     }
 
     // Validation et soumission du formulaire

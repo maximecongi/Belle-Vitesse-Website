@@ -104,13 +104,11 @@
 
         {% set grouped_check_items = {} %}
         {% for item in data.check_items %}
-        {% if item.type == 'status' %}
         {% set cat = item.category or 'Autre' %}
         {% if cat not in grouped_check_items %}
         {% set _ = grouped_check_items.update({cat: []}) %}
         {% endif %}
         {% set _ = grouped_check_items[cat].append(item) %}
-        {% endif %}
         {% endfor %}
 
         {% for cat, items in grouped_check_items.items() %}
@@ -127,11 +125,14 @@
             <tbody>
                 {% for item in items %}
                 {% set status = data[item.key] %}
-                {% if status and status != 'not_applicable' %}
+                {% if status %}
                 <tr>
                     <td>{{ item.label }}</td>
                     <td>
-                        {% if status == 'ok' %}
+                        {% if item.type == 'value' %}
+                        <span
+                            class="checkout-badge checkout-badge--neutral">{{ status }}{% if item.unit and status != '—' %} {{ item.unit }}{% endif %}</span>
+                        {% elif status == 'ok' %}
                         <span
                             class="{{ 'checkout' if 'checkout' in request.path else 'checkin' }}-badge {{ 'checkout' if 'checkout' in request.path else 'checkin' }}-badge--ok">OK</span>
                         {% elif status == 'warning' %}

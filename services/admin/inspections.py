@@ -29,12 +29,7 @@ from services.admin.utils import (
     _parse_photos_json,
     handle_admin_service_error,
 )
-from utils.checkpoints import (
-    ALL_POSSIBLE_CHECKPOINTS,
-    BASE_CHECKPOINTS,
-    CHECKPOINT_TO_MODEL_MAP,
-    get_checkpoints_for_vehicle,
-)
+from utils.checkpoints import get_checkpoints_for_vehicle
 from utils.database import get_vehicles
 from utils.document_utils import generate_pdf_access_token
 from utils.formatting import format_date_fr
@@ -345,31 +340,55 @@ def upload_inspection_photos_shared(mode, record, files):
 
 def apply_inspection_data(record, form, is_checkout=True):
     """
-    Mappe dynamiquement les champs du formulaire aux attributs du modèle basés sur ALL_POSSIBLE_CHECKPOINTS.
-    Gère également le niveau de batterie et le calcul de l'état 'prêt' (vehicle_ready).
+    Mappe dynamiquement les champs du formulaire vers la relation checkpoints de l'enregistrement.
+    Gère les points de statut et les points de mesure/valeur (dont la batterie) ainsi que le calcul de l'état 'prêt' (vehicle_ready).
     """
     vehicle_id = form.get("vehicle_id") or getattr(
         record, 'vehicle_id', None)
-    # Récupère uniquement les points de contrôle pertinents pour ce type de véhicule
+    # Récupère tous les points de contrôle pertinents pour ce type de véhicule
     checkpoints = get_checkpoints_for_vehicle(vehicle_id)
-    pertinent_keys = {cp['key']
-                      for cp in checkpoints if cp.get('type') == 'status'}
 
-    def get_val(key):
-        """Récupère la clé interne du statut, ou 'not_applicable' si le point n'est pas pertinent."""
-        if key not in pertinent_keys:
-            return "not_applicable"
-        return get_checkpoint_key(form.get(key, "pending"))
+    # Mapping des définitions de checkpoint disponibles pour lier les IDs
+    definitions_map = {}
+    try:
+        from models import CheckpointDefinition
+        definitions_map = {cp.key: cp for cp in CheckpointDefinition.query.all()}
+    except Exception:
+        pass
 
-    # 1. Mappe tous les points de contrôle de statut standard
-    for cp in ALL_POSSIBLE_CHECKPOINTS:
+    # 1. Enregistrement des points de contrôle configurés pour ce véhicule
+    for cp in checkpoints:
         key = cp['key']
-        if cp.get('type') == 'status':
-            column = CHECKPOINT_TO_MODEL_MAP.get(key, key)
-            if hasattr(record, column):
-                setattr(record, column, get_val(key))
+        cp_type = cp.get('type', 'status')
+        cp_def = definitions_map.get(key)
+        cp_id = cp_def.id if cp_def else None
 
-    # 2. Gestion du niveau de batterie (valeur numérique)
+        if cp_type == 'value':
+            if key in ('battery', 'battery_level'):
+                battery_val = form.get("battery_level") or form.get("battery")
+                b_num = None
+                val_status = "ok"
+                if battery_val is not None and str(battery_val).strip() != "":
+                    try:
+                        b_num = float(battery_val)
+                        record.battery_level = b_num
+                        val_status = "ok" if (not is_checkout or b_num >= 100) else "warning"
+                    except (ValueError, TypeError):
+                        val_status = "warning"
+                else:
+                    val_status = "warning"
+                record.set_checkpoint_status(key, status=val_status, value=str(battery_val) if battery_val is not None else None, checkpoint_id=cp_id)
+            else:
+                val_text = form.get(key)
+                val_str = str(val_text).strip() if val_text is not None else ""
+                val_status = "ok" if val_str != "" else "pending"
+                record.set_checkpoint_status(key, status=val_status, value=val_str if val_str != "" else None, checkpoint_id=cp_id)
+        else:
+            raw_val = form.get(key, "pending")
+            val = get_checkpoint_key(raw_val)
+            record.set_checkpoint_status(key, status=val, checkpoint_id=cp_id)
+
+    # 2. Gestion rétroactive de la batterie si absente des checkpoints mais présente dans le formulaire
     battery_val = form.get("battery_level") or form.get("battery")
     if battery_val is not None:
         try:
@@ -378,12 +397,9 @@ def apply_inspection_data(record, form, is_checkout=True):
             pass
 
     # 3. Calcul de l'état de préparation (si TOUS les points critiques sont conformes)
-    if is_checkout:
-        record.vehicle_ready = _is_ready(
-            form, vehicle_id, is_checkout=True)
-    else:
-        record.vehicle_ready = _is_ready(
-            form, vehicle_id, is_checkout=False)
+    statuses = record.checkpoint_statuses
+    record.vehicle_ready = _is_ready(
+        statuses, vehicle_id, is_checkout=is_checkout, battery_val=record.battery_level)
 
     record.notes = form.get("notes")
 
@@ -447,20 +463,36 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
     battery_val = getattr(c, 'battery_level', None)
     data["battery_level"] = battery_val if battery_val is not None else None
 
-    # Mappe dynamiquement tous les points de contrôle pour l'accès direct
-    for cp in ALL_POSSIBLE_CHECKPOINTS:
-        key = cp['key']
-        if cp.get('type') == 'status':
-            column = CHECKPOINT_TO_MODEL_MAP.get(key, key)
-            data[key] = getattr(c, column, "—") or "—"
+    # Mappe dynamiquement tous les points de contrôle depuis la relation
+    statuses = getattr(c, "checkpoint_statuses", {})
+    values = getattr(c, "checkpoint_values", {})
+    for item in data.get("check_items", []):
+        k = item["key"]
+        if item.get("type") == "value":
+            if k in ("battery", "battery_level"):
+                val = values.get(k)
+                data[k] = val if val is not None else (str(battery_val) if battery_val is not None else "—")
+            else:
+                data[k] = values.get(k) or "—"
+            data[f"{k}_status"] = statuses.get(k, "—")
+        else:
+            data[k] = statuses.get(k, "—")
 
     # Calcul centralisé des anomalies et défaillances
     failures = []
     for item in data.get("check_items", []):
-        if item.get("type") == "status":
-            k = item.get("key")
+        k = item.get("key")
+        if item.get("type") == "value":
+            if k in ("battery", "battery_level"):
+                pass  # Géré ci-dessous avec le seuil 100% au départ
+            else:
+                val = data.get(k)
+                if val is None or val == "—" or str(val).strip() == "":
+                    failures.append(f"{item.get('label') or k} (non renseigné)")
+        else:
             val = data.get(k)
-            if val and val != "—" and str(val).lower() not in ["ok", "not_applicable"]:
+            val_clean = str(val).lower().strip() if val is not None else ""
+            if val_clean not in ("ok", "not_applicable", "non_applicable"):
                 failures.append(item.get("label") or k)
 
     is_checkout = isinstance(c, CheckoutVehicle) or getattr(c, "__tablename__", "") == "checkout_vehicles"
@@ -470,6 +502,8 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
     data["failures"] = failures
     data["failure_count"] = len(failures)
     data["has_failures"] = len(failures) > 0
+    if failures:
+        data["ready"] = "false"
 
     data["interior_photos"] = _parse_photos_json(c.interior_photos)
     data["exterior_photos"] = _parse_photos_json(c.exterior_photos)
@@ -594,11 +628,16 @@ def get_unified_form_context(mode="checkout"):
     checkpoints_mapping = {v["id"]: get_checkpoints_for_vehicle(
         v["id"], vehicle_name=v.get("fields", {}).get("name")) for v in vehicles}
 
+    try:
+        from services.admin.vehicle_config import get_all_checkpoints
+        form_checkpoints = get_all_checkpoints() or []
+    except Exception:
+        form_checkpoints = []
+
     return {
         "projects": projects_formatted,
         "vehicles": vehicles,
         "users": users_formatted,
-        "checkpoints": ALL_POSSIBLE_CHECKPOINTS,
+        "checkpoints": form_checkpoints,
         "checkpoints_config_json": json.dumps(checkpoints_mapping),
-        "default_checkpoints_json": json.dumps(BASE_CHECKPOINTS),
     }

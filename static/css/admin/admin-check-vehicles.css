@@ -384,3 +384,7 @@ tr.data-row:hover td {
     align-items: center;
     gap: 10px;
 }
+
+select#checkpoint_type::picker-icon {
+    color: red;
+}

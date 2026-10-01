@@ -30,7 +30,7 @@ endblock %}
                 required placeholder="Ex : Pression des pneus, Contrôle des freins…">
         </div>
 
-        <div class="u-grid u-grid-2 u-gap-3 u-mb-4 u-grid-align-start">
+        <div class="u-grid u-grid-2 u-gap-3 u-mb-3 u-grid-align-start">
             <div class="form-group">
                 <label for="checkpoint_category" class="form-label">Catégorie <span
                         class="u-text-danger">*</span></label>
@@ -50,6 +50,42 @@ endblock %}
                 <div class="u-text-xs u-text-muted u-mt-1">
                     Si aucune consigne spécifique.
                 </div>
+            </div>
+        </div>
+
+        <div class="u-grid u-grid-2 u-gap-3 u-mb-3 u-grid-align-start">
+            <div class="form-group">
+                <label for="checkpoint_type" class="form-label">Type d'évaluation</label>
+                <select id="checkpoint_type" name="type" class="form-input">
+                    <option value="status" {% if checkpoint.type != 'value' %}selected{% endif %}>
+                        Statut (OK / À vérifier / Défaut)
+                    </option>
+                    <option value="value" {% if checkpoint.type == 'value' %}selected{% endif %}>
+                        Mesure / Valeur saisie
+                    </option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="checkpoint_unit" class="form-label">Unité de mesure (optionnelle)</label>
+                <input type="text" id="checkpoint_unit" name="unit" class="form-input"
+                    value="{{ checkpoint.unit or '' }}" placeholder="Ex : %, bar, Nm, km…">
+                <div class="u-text-xs u-text-muted u-mt-1">
+                    Affichée à côté de la valeur saisie.
+                </div>
+            </div>
+        </div>
+
+        <div class="u-bg-neutral-light u-p-3 u-rounded u-mb-4">
+            <div class="form-group u-mb-2">
+                <label class="u-flex u-align-center u-gap-2 u-cursor-pointer u-font-semibold">
+                    <input type="checkbox" name="has_protocol" value="1" {% if checkpoint.has_protocol %}checked{% endif %}>
+                    <span>Protocole technique disponible (icône information et modale d'aide)</span>
+                </label>
+            </div>
+            <div class="form-group u-mb-0">
+                <label for="checkpoint_protocol_url" class="form-label u-text-xs u-text-muted">URL spécifique du protocole (optionnelle)</label>
+                <input type="text" id="checkpoint_protocol_url" name="protocol_url" class="form-input form-input-sm"
+                    value="{{ checkpoint.protocol_url or '' }}" placeholder="Ex : /admin/check-vehicles (laisser vide pour la modale standard)">
             </div>
         </div>
 

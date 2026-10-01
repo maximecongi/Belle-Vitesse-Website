@@ -27,6 +27,10 @@ class CheckpointDefinition(db.Model):
     # }
     vehicle_overrides = db.Column(db.JSON, default=dict, nullable=False)
 
+    # Indique si un protocole technique spécifique est disponible (ex: freins, pneus...)
+    has_protocol = db.Column(db.Boolean, default=False, nullable=True)
+    protocol_url = db.Column(db.String(255), nullable=True)
+
     created_at = db.Column(db.DateTime, default=_utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow, nullable=False)
 
@@ -48,6 +52,10 @@ class CheckpointDefinition(db.Model):
             return overrides[vehicle_name]["indication"].strip()
         return (self.default_detail or "").strip()
 
+    def has_protocol_available(self) -> bool:
+        """Indique si un protocole technique est disponible pour ce point."""
+        return bool(self.has_protocol or self.key in ("tires", "brakes"))
+
     def to_dict(self) -> dict:
         """Sérialise le point de contrôle."""
         return {
@@ -57,6 +65,8 @@ class CheckpointDefinition(db.Model):
             "category": self.category,
             "type": self.type,
             "unit": self.unit,
+            "has_protocol": self.has_protocol_available(),
+            "protocol_url": self.protocol_url or "",
             "default_detail": self.default_detail,
             "order": self.order,
             "vehicle_overrides": self.vehicle_overrides or {},

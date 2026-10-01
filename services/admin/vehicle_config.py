@@ -3,11 +3,71 @@ from extensions import cache
 from models import VehicleCheckpointConfig, CheckpointDefinition, db
 from sqlalchemy import case
 from sqlalchemy.orm.attributes import flag_modified
-from utils.checkpoints import ALL_POSSIBLE_CHECKPOINTS, SPECIFIC_DETAILS
 from utils.database import get_vehicles
 from services.admin.utils import handle_admin_service_error
 
 logger = logging.getLogger(__name__)
+
+# Graines initiales par défaut lors de la toute première création d'une base de données vierge
+DEFAULT_CHECKPOINT_SEEDS = [
+    # SÉCURITÉ
+    {'key': 'tires', 'label': 'Pression des pneus', 'category': 'Sécurité', 'type': 'status',
+     'detail': 'eTrike/eTrike 360 : 3 bar · eBike : voir flanc pneu · eCar : 2 bar', 'has_protocol': True},
+    {'key': 'brakes', 'label': 'Contrôle des freins', 'category': 'Sécurité', 'type': 'status',
+     'detail': 'Voir protocole freins complet', 'has_protocol': True},
+    {'key': 'fonctionnement_vitesses', 'label': 'Fonctionnement des vitesses', 'category': 'Sécurité', 'type': 'status',
+     'detail': 'Rouler et passer toutes les vitesses'},
+    {'key': 'moteur_assistance', 'label': 'Moteur / Assistance électrique', 'category': 'Sécurité', 'type': 'status',
+     'detail': 'Vérifier tous les modes d\'assistance'},
+    {'key': 'test_roulage', 'label': 'Test roulage (D / R / N)', 'category': 'Sécurité', 'type': 'status',
+     'detail': 'Pas de bruit anormal en roulage'},
+    {'key': 'serrage_roues', 'label': 'Serrage des roues', 'category': 'Sécurité', 'type': 'status',
+     'detail': 'eTrike/eTrike 360 : 12 Nm · eCar : 110 Nm'},
+    {'key': 'tension_chaine', 'label': 'Tension chaîne', 'category': 'Sécurité', 'type': 'status',
+     'detail': 'Vérification du jeu'},
+    {'key': 'serrage_arceau', 'label': 'Serrage barres / arceau', 'category': 'Sécurité', 'type': 'status',
+     'detail': 'eBike : x Nm à définir · eCar : 45 Nm'},
+    {'key': 'serrage_plaques_sieges', 'label': 'Serrage plaques & sièges', 'category': 'Sécurité', 'type': 'status',
+     'detail': 'Vérification du serrage'},
+    {'key': 'ceinture_securite', 'label': 'Ceinture de sécurité', 'category': 'Sécurité', 'type': 'status',
+     'detail': 'Fonctionnement & état'},
+    {'key': 'lights', 'label': 'Phares & clignotants', 'category': 'Sécurité', 'type': 'status',
+     'detail': 'Fonctionnement complet'},
+    {'key': 'horn', 'label': 'Klaxon', 'category': 'Sécurité', 'type': 'status',
+     'detail': 'Fonctionnement'},
+
+    # ÉQUIPEMENTS
+    {'key': 'battery', 'label': 'Charge', 'unit': '%',
+     'type': 'value', 'category': 'Équipements'},
+    {'key': 'casques_passagers', 'label': 'Casques passagers', 'category': 'Équipements', 'type': 'status',
+     'detail': 'Trike : x casques à définir'},
+    {'key': 'protections_pilote', 'label': 'Protections pilote', 'category': 'Équipements', 'type': 'status',
+     'detail': 'Casque, combi, gants, bottes, jeans, veste, masque'},
+    {'key': 'systeme_communication', 'label': 'Système de communication', 'category': 'Équipements', 'type': 'status',
+     'detail': 'À définir'},
+    {'key': 'mallette_accessoires', 'label': 'Mallette / Roulante accessoires', 'category': 'Équipements', 'type': 'status',
+     'detail': 'eTrike/eTrike 360 : chambre à air ×2, chargeur, pompe, outils · eBike & eCar : pièces de rechange, outils, bijouterie, chargeur'},
+]
+
+DEFAULT_SPECIFIC_DETAILS = {
+    "eCar": [
+        ("tires", "eCar : 2 bar"),
+        ("serrage_roues", "eCar : 110 Nm"),
+        ("serrage_arceau", "eCar : 45 Nm"),
+        ("mallette_accessoires", "eCar : pièces de rechange, outils, bijouterie, chargeur"),
+    ],
+    "eTrike": [
+        ("tires", "eTrike/eTrike 360 : 3 bar"),
+        ("serrage_roues", "eTrike/eTrike 360 : 12 Nm"),
+        ("mallette_accessoires", "Trike : chambre à air ×2, chargeur, pompe, outils"),
+    ],
+    "eBike": [
+        ("tires", "eBike : voir flanc pneu"),
+        ("serrage_roues", "eBike : 110 Nm"),
+        ("serrage_arceau", "eBike : 45 Nm"),
+        ("mallette_accessoires", "eBike : pièces de rechange, outils, bijouterie, chargeur"),
+    ],
+}
 
 
 def ensure_default_checkpoints():
@@ -20,7 +80,7 @@ def ensure_default_checkpoints():
         vehicles = get_vehicles()
         existing_configs = {c.vehicle_id: c.config for c in VehicleCheckpointConfig.query.all()}
 
-        for idx, cp in enumerate(ALL_POSSIBLE_CHECKPOINTS):
+        for idx, cp in enumerate(DEFAULT_CHECKPOINT_SEEDS):
             key = cp["key"]
             label = cp["label"]
             category = cp.get("category", "Sécurité")
@@ -39,9 +99,9 @@ def ensure_default_checkpoints():
                 # Si non configuré, activer par défaut pour Sécurité ou selon historique
                 enabled = v_cfg.get(key, True if category == "Sécurité" else False)
 
-                # Vérifier si une indication spécifique existait dans SPECIFIC_DETAILS
+                # Vérifier si une indication spécifique existait dans DEFAULT_SPECIFIC_DETAILS
                 specific_ind = ""
-                for v_type, s_list in SPECIFIC_DETAILS.items():
+                for v_type, s_list in DEFAULT_SPECIFIC_DETAILS.items():
                     if v_type.lower() in v_name.lower():
                         for item in s_list:
                             if item[0] == key:
@@ -61,6 +121,8 @@ def ensure_default_checkpoints():
                 category=category,
                 type=cp_type,
                 unit=unit,
+                has_protocol=bool(cp.get("has_protocol", False)),
+                protocol_url=cp.get("protocol_url", None),
                 default_detail=default_detail,
                 order=idx,
                 vehicle_overrides=vehicle_overrides
@@ -115,6 +177,7 @@ def get_all_checkpoints():
             "type": cp.type,
             "unit": cp.unit,
             "default_detail": cp.default_detail,
+            "detail": cp.default_detail,
             "order": cp.order,
             "vehicle_overrides": overrides,
             "enabled_vehicles": enabled_vehicles,
@@ -155,6 +218,8 @@ def get_checkpoint_by_id(checkpoint_id: int):
         "category": cp.category,
         "type": cp.type,
         "unit": cp.unit,
+        "has_protocol": cp.has_protocol_available() if hasattr(cp, "has_protocol_available") else bool(getattr(cp, "has_protocol", False) or cp.key in ("tires", "brakes")),
+        "protocol_url": getattr(cp, "protocol_url", "") or "",
         "default_detail": cp.default_detail,
         "order": cp.order,
         "vehicles": vehicles_config
@@ -197,6 +262,8 @@ def get_empty_checkpoint_for_create():
         "category": "Sécurité",
         "type": "status",
         "unit": "",
+        "has_protocol": False,
+        "protocol_url": "",
         "default_detail": "",
         "order": 0,
         "vehicles": vehicles_config
@@ -257,11 +324,21 @@ def create_checkpoint(form_data: dict):
             v_rec = VehicleCheckpointConfig(vehicle_id=v_id, config={key: is_enabled})
             db.session.add(v_rec)
 
+    cp_type = form_data.get("type", "status").strip()
+    if cp_type not in ("status", "value"):
+        cp_type = "status"
+    unit = form_data.get("unit", "").strip() or None
+    has_protocol = bool(form_data.get("has_protocol"))
+    protocol_url = form_data.get("protocol_url", "").strip() or None
+
     new_cp = CheckpointDefinition(
         key=key,
         label=label,
         category=category,
-        type="status",
+        type=cp_type,
+        unit=unit,
+        has_protocol=has_protocol,
+        protocol_url=protocol_url,
         default_detail=default_detail,
         order=order,
         vehicle_overrides=vehicle_overrides
@@ -289,6 +366,21 @@ def update_checkpoint(checkpoint_id: int, form_data: dict) -> bool:
     category = form_data.get("category", "").strip()
     if category in ("Sécurité", "Équipements"):
         cp.category = category
+
+    cp_type = form_data.get("type", "").strip()
+    if cp_type in ("status", "value"):
+        cp.type = cp_type
+
+    unit_val = form_data.get("unit")
+    if unit_val is not None:
+        cp.unit = unit_val.strip() or None
+
+    if "has_protocol" in form_data:
+        cp.has_protocol = bool(form_data.get("has_protocol"))
+
+    protocol_url_val = form_data.get("protocol_url")
+    if protocol_url_val is not None:
+        cp.protocol_url = protocol_url_val.strip() or None
 
     default_detail = form_data.get("default_detail", "").strip()
     cp.default_detail = default_detail

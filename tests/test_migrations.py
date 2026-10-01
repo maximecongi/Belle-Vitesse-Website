@@ -41,6 +41,7 @@ class MigrationsTestCase(unittest.TestCase):
                     "sql_query_logs",
                     "mcp_api_tokens",
                     "mcp_audit_logs",
+                    "inspection_checkpoints",
                     "alembic_version",
                 ]
                 for tbl in critical_tables:
@@ -49,11 +50,16 @@ class MigrationsTestCase(unittest.TestCase):
                 # 3. Vérification de la version finale dans alembic_version
                 with db.engine.connect() as conn:
                     current_rev = conn.execute(sa.text("SELECT version_num FROM alembic_version")).scalar()
-                    self.assertEqual(current_rev, "j00d7fe3c470")
+                    self.assertEqual(current_rev, "k00d7fe3c471")
 
                 # 4. Vérification que les tables décommissionnées pre_quotes sont bien absentes
                 self.assertNotIn("pre_quotes", tables)
                 self.assertNotIn("pre_quote_versions", tables)
+
+                # 5. Vérification que les anciennes colonnes statiques de checkout_vehicles sont purgées
+                co_cols = [c["name"] for c in inspector.get_columns("checkout_vehicles")]
+                self.assertNotIn("tire_status", co_cols)
+                self.assertNotIn("brake_status", co_cols)
 
                 # 5. Vérification des colonnes kDrive sur projects
                 proj_cols = [c["name"] for c in inspector.get_columns("projects")]
@@ -77,7 +83,7 @@ class MigrationsTestCase(unittest.TestCase):
                 upgrade()
                 with db.engine.connect() as conn:
                     current_rev = conn.execute(sa.text("SELECT version_num FROM alembic_version")).scalar()
-                    self.assertEqual(current_rev, "j00d7fe3c470")
+                    self.assertEqual(current_rev, "k00d7fe3c471")
 
     def test_upgrade_from_previous_head_stamp(self):
         """Vérifie qu'une base déjà estampillée à g00d7fe3c467 migre vers i00d7fe3c469 et supprime pre_quotes."""
@@ -119,7 +125,7 @@ class MigrationsTestCase(unittest.TestCase):
 
                 with db.engine.connect() as conn:
                     current_rev = conn.execute(sa.text("SELECT version_num FROM alembic_version")).scalar()
-                    self.assertEqual(current_rev, "j00d7fe3c470")
+                    self.assertEqual(current_rev, "k00d7fe3c471")
 
 
 if __name__ == "__main__":

@@ -107,13 +107,11 @@
             {% endif %}
             {% set grouped_check_items = {} %}
             {% for item in data.check_items %}
-            {% if item.type == 'status' %}
             {% set cat = item.category or 'Autre' %}
             {% if cat not in grouped_check_items %}
             {% set _ = grouped_check_items.update({cat: []}) %}
             {% endif %}
             {% set _ = grouped_check_items[cat].append(item) %}
-            {% endif %}
             {% endfor %}
 
             {% for cat, items in grouped_check_items.items() %}
@@ -124,7 +122,15 @@
                     <div class="u-text-xs u-text-muted u-text-uppercase">{{ item.label }}</div>
                     <div class="u-text-semibold">
                         {% set val = data[item.key] %}
-                        {{ status_badge(format_checkpoint_status(val), val) }}
+                        {% if item.type == 'value' %}
+                            {% if val is defined and val != '—' and val != '' %}
+                                <span class="badge-pill" data-val="neutral">{{ val }}{% if item.unit %} {{ item.unit }}{% endif %}</span>
+                            {% else %}
+                                <span class="badge-pill" data-val="warning">Non renseigné</span>
+                            {% endif %}
+                        {% else %}
+                            {{ status_badge(format_checkpoint_status(val), val) }}
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}

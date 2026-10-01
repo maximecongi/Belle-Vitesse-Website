@@ -90,9 +90,9 @@ class FleetTest(unittest.TestCase):
                 vehicle_id="recTest123",
                 status="signed",
                 battery_level=100,
-                tire_status="ok",
-                brake_status="ok"
             )
+            co.set_checkpoint_status("tires", "ok")
+            co.set_checkpoint_status("brakes", "ok")
             db.session.add(co)
 
             # Checkin
@@ -103,9 +103,9 @@ class FleetTest(unittest.TestCase):
                 vehicle_id="recTest123",
                 status="signed",
                 battery_level=88,
-                tire_status="ok",
-                brake_status="ok"
             )
+            ci.set_checkpoint_status("tires", "ok")
+            ci.set_checkpoint_status("brakes", "ok")
             db.session.add(ci)
 
             # Incident
@@ -161,9 +161,9 @@ class FleetTest(unittest.TestCase):
                 vehicle_id="recTest123",
                 status="signed",
                 battery_level=100,
-                tire_status="ok",
-                brake_status="ok"
             )
+            co.set_checkpoint_status("tires", "ok")
+            co.set_checkpoint_status("brakes", "ok")
             db.session.add(co)
 
             ci = CheckinVehicle(
@@ -173,9 +173,9 @@ class FleetTest(unittest.TestCase):
                 vehicle_id="recTest123",
                 status="signed",
                 battery_level=90,
-                tire_status="ok",
-                brake_status="ok"
             )
+            ci.set_checkpoint_status("tires", "ok")
+            ci.set_checkpoint_status("brakes", "ok")
             db.session.add(ci)
 
             inc = Incident(
@@ -239,9 +239,9 @@ class FleetTest(unittest.TestCase):
                 vehicle_id="recCritical",
                 status="signed",
                 battery_level=90,  # Défaillance batterie au départ (<100%)
-                tire_status="ok",
-                brake_status="damage"  # Défaillance frein
             )
+            co.set_checkpoint_status("tires", "ok")
+            co.set_checkpoint_status("brakes", "damage")  # Défaillance frein
             db.session.add(co)
 
             # Incident critique non résolu

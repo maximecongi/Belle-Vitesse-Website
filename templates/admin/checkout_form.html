@@ -250,9 +250,10 @@
                     <label class="form-label u-flex u-align-center u-justify-between u-mb-1 u-text-bold">
                         <span>
                             {{ label }} <span class="u-text-error">*</span>
-                            {% if field in ['tires', 'brakes'] %}
+                            {% if item.has_protocol %}
                             <span class="vehicle-modal-trigger u-cursor-pointer u-ml-1 u-text-lg u-vertical-middle"
-                                title="Voir l'protocoles freins et pneus">
+                                data-protocol-url="{{ item.protocol_url or url_for('admin_tools.admin_check_vehicles') }}"
+                                title="Voir le protocole technique pour {{ label }}">
                                 <img src="{{ url_for('static', filename='imgs/icons/information.svg') }}"
                                     alt="Information" class="u-w-1rem u-h-1rem"></span>
                             {% endif %}
@@ -264,13 +265,19 @@
 
                     {% if item.type == 'value' %}
                     <div class="checkpoint-value-container">
+                        {% if field in ['battery', 'battery_level'] %}
                         <input type="number" name="battery_level" class="form-input checkpoint-value-input"
-                            value="{{ data.battery_level if (data and data.battery_level is not none) else '100' }}" {%
-                            if field=='battery_level' %}min="0" max="100" {% endif %}>
-                        {% if item.unit %}<span class="u-text-semibold">{{ item.unit }}</span>{% endif %}
+                            value="{{ data.battery_level if (data and data.battery_level is not none) else (data[field] if (data and data[field] is defined and data[field] != '—') else '100') }}"
+                            min="0" max="100">
+                        {% else %}
+                        <input type="text" name="{{ field }}" class="form-input checkpoint-value-input"
+                            value="{{ data[field] if (data and data[field] is defined and data[field] != '—') else '' }}"
+                            placeholder="Valeur...">
+                        {% endif %}
+                        {% if item.unit %}<span class="u-text-semibold u-ml-1">{{ item.unit }}</span>{% endif %}
                     </div>
                     {% else %}
-                    {% set current = get_checkpoint_key(data[field]) if data and data[field] else 'warning' %}
+                    {% set current = get_checkpoint_key(data[field]) if data and data[field] and data[field] != '—' else 'warning' %}
                     <div class="badge-select" data-field="{{ field }}">
                         <input type="text" name="{{ field }}" value="{{ current }}" required class="u-hidden-input">
                         <div class="badge-select-trigger badge-trigger-white">
@@ -343,15 +350,12 @@
 </div>
 
 <script id="checkpointsConfigData" type="application/json">{{ checkpoints_config_json|safe }}</script>
-<script id="defaultCheckpointsData" type="application/json">{{ default_checkpoints_json|safe }}</script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         if (typeof window.initInspectionForm === 'function') {
             const configEl = document.getElementById('checkpointsConfigData');
-            const defaultsEl = document.getElementById('defaultCheckpointsData');
             const config = configEl ? JSON.parse(configEl.textContent) : {};
-            const defaults = defaultsEl ? JSON.parse(defaultsEl.textContent) : [];
-            window.initInspectionForm(config, defaults);
+            window.initInspectionForm(config);
         }
     });
 </script>

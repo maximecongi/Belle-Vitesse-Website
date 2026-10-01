@@ -1,7 +1,12 @@
 from models.db import db, _utcnow, generate_inspection_number
 from models.user import User
 from models.project import Production, Contact, Project
-from models.inspection import CheckoutVehicle, CheckinVehicle, VehicleCheckpointConfig
+from models.inspection import (
+    CheckoutVehicle,
+    CheckinVehicle,
+    VehicleCheckpointConfig,
+    InspectionCheckpoint,
+)
 from models.checkpoint import CheckpointDefinition
 from models.waiver import (
     TokenMixin,

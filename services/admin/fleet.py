@@ -16,7 +16,6 @@ from models import (
     db,
 )
 from models.catalog import Vehicle
-from utils.checkpoints import ALL_POSSIBLE_CHECKPOINTS, CHECKPOINT_TO_MODEL_MAP
 from utils.database import get_vehicles
 from utils.formatting import format_date_fr
 
@@ -60,13 +59,18 @@ def _detect_inspection_anomalies(record: Any) -> List[str]:
     if not record:
         return failures
 
-    for cp in ALL_POSSIBLE_CHECKPOINTS:
-        if cp.get("type") == "status":
-            col = CHECKPOINT_TO_MODEL_MAP.get(cp.get("key"))
-            if col:
-                val = getattr(record, col, None)
-                if val and str(val).lower() not in ("ok", "not_applicable", "none", ""):
-                    failures.append(cp.get("label") or cp.get("key"))
+    statuses = getattr(record, "checkpoint_statuses", {})
+    try:
+        from services.admin.vehicle_config import get_all_checkpoints
+        all_cps = get_all_checkpoints() or []
+    except Exception:
+        all_cps = []
+
+    labels_map = {cp.get("key"): cp.get("label") for cp in all_cps if cp.get("key")}
+
+    for key, val in statuses.items():
+        if val and str(val).lower() not in ("ok", "not_applicable", "none", "", "—"):
+            failures.append(labels_map.get(key) or key)
 
     # Vérification batterie au départ (< 100%)
     is_checkout = isinstance(record, CheckoutVehicle) or getattr(

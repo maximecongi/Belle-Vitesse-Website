@@ -67,16 +67,21 @@ class InspectionsTest(unittest.TestCase):
         with self.app.app_context():
             user, proj = self._create_mock_data()
 
-            # Create checkout vehicle
+            from utils.checkpoints import get_checkpoints_for_vehicle
+
+            # Create checkout vehicle conforme
             checkout = CheckoutVehicle(
                 project_id=proj.id,
                 controller_id=user.id,
                 inspection_date=date(2026, 6, 2),
                 vehicle_id="1",
                 status="completed",
-                tire_status="ok",
-                brake_status="ok"
+                vehicle_ready=True,
+                battery_level=100.0,
             )
+            for cp in get_checkpoints_for_vehicle("1"):
+                if cp.get("type") == "status":
+                    checkout.set_checkpoint_status(cp["key"], "ok")
             db.session.add(checkout)
             db.session.commit()
 
@@ -91,9 +96,10 @@ class InspectionsTest(unittest.TestCase):
             self.assertEqual(detail["tires"], "ok")
             self.assertEqual(detail["failures"], [])
             self.assertFalse(detail["has_failures"])
+            self.assertEqual(detail["ready"], "true")
 
             # Test details with failure and low battery
-            checkout.tire_status = "critical"
+            checkout.set_checkpoint_status("tires", "critical")
             checkout.battery_level = 85
             db.session.commit()
 
@@ -101,6 +107,36 @@ class InspectionsTest(unittest.TestCase):
             self.assertTrue(detail_failed["has_failures"])
             self.assertIn("Charge batterie (< 100%)", detail_failed["failures"])
             self.assertEqual(detail_failed["failure_count"], 2)
+            self.assertEqual(detail_failed["ready"], "false")
+
+    def test_unfilled_checkpoints_appear_in_failures(self):
+        """Vérifie que les points non renseignés ('—', '--', None) apparaissent bien dans failures."""
+        with self.app.app_context():
+            user, proj = self._create_mock_data()
+            from utils.checkpoints import get_checkpoints_for_vehicle
+
+            checkout = CheckoutVehicle(
+                project_id=proj.id,
+                controller_id=user.id,
+                inspection_date=date(2026, 6, 2),
+                vehicle_id="1",
+                status="in_progress",
+                battery_level=100.0,
+            )
+            # On ne valide que les pneus, tous les autres points restent non renseignés (None / —)
+            checkout.set_checkpoint_status("tires", "ok")
+            db.session.add(checkout)
+            db.session.commit()
+
+            detail = get_inspection_detail_unified("checkout", checkout.id)
+            self.assertTrue(detail["has_failures"])
+            self.assertEqual(detail["ready"], "false")
+
+            # 'Contrôle des freins' (brakes) est non renseigné par défaut (valeur '—')
+            self.assertIn("Contrôle des freins", detail["failures"])
+            # 'Pression des pneus' (tires) est à 'ok', ne doit pas figurer dans failures
+            tires_label = next((cp["label"] for cp in get_checkpoints_for_vehicle("1") if cp["key"] == "tires"), "tires")
+            self.assertNotIn(tires_label, detail["failures"])
 
     def test_soft_delete(self):
         with self.app.app_context():

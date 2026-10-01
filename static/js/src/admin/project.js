@@ -62,8 +62,11 @@ function initVehiclesModal() {
             trigger.addEventListener('click', (e) => {
                 e.preventDefault();
                 const iframe = vehiclesModal.querySelector('iframe');
-                if (iframe && !iframe.getAttribute('src') && iframe.dataset.src) {
-                    iframe.setAttribute('src', iframe.dataset.src);
+                const targetSrc = trigger.dataset.protocolUrl || (iframe ? iframe.dataset.src : '');
+                if (iframe && targetSrc) {
+                    if (iframe.getAttribute('src') !== targetSrc) {
+                        iframe.setAttribute('src', targetSrc);
+                    }
                 }
                 vehiclesModal.classList.add('is-active');
             });

@@ -984,6 +984,7 @@ a:hover>.badge-pill[data-val="download-available"] {
     box-sizing: border-box;
     caret-color: var(--admin-accent);
     transition: all 0.2s ease;
+    line-height: 1.5 !important;
 }
 
 .form-input:focus {
