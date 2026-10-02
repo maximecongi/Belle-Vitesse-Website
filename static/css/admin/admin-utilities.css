@@ -644,6 +644,15 @@
     height: auto !important;
 }
 
+select.form-input-sm,
+select.form-input.form-input-sm {
+    height: 32px !important;
+    padding: 0.2rem 1.75rem 0.2rem 0.6rem !important;
+    background-position: right 0.5rem center !important;
+    background-size: 8px 5px !important;
+    line-height: normal !important;
+}
+
 .form-input-inline {
     display: inline-block !important;
     width: auto !important;

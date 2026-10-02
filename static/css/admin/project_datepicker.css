@@ -47,7 +47,6 @@
 .pdp-milestone-card:hover {
     border-color: #cbd5e1;
     background: #f8fafc;
-    transform: translateY(-1px);
 }
 
 .pdp-milestone-card.active {
@@ -59,12 +58,15 @@
 .pdp-milestone-card.type-departure.active {
     border-color: #3b82f6;
 }
+
 .pdp-milestone-card.type-shoot_start.active {
     border-color: #f97316;
 }
+
 .pdp-milestone-card.type-shoot_end.active {
     border-color: #f97316;
 }
+
 .pdp-milestone-card.type-return.active {
     border-color: var(--entity-checkout, #15803D);
 }
@@ -87,10 +89,21 @@
     gap: 0.4rem;
 }
 
-.type-departure .pdp-milestone-label { color: #2563eb; }
-.type-shoot_start .pdp-milestone-label { color: #ea580c; }
-.type-shoot_end .pdp-milestone-label { color: #ea580c; }
-.type-return .pdp-milestone-label { color: #059669; }
+.type-departure .pdp-milestone-label {
+    color: #2563eb;
+}
+
+.type-shoot_start .pdp-milestone-label {
+    color: #ea580c;
+}
+
+.type-shoot_end .pdp-milestone-label {
+    color: #ea580c;
+}
+
+.type-return .pdp-milestone-label {
+    color: #059669;
+}
 
 .pdp-step-badge {
     font-size: 0.7rem;
@@ -153,6 +166,7 @@
 .pdp-mini-btn.btn-clear {
     color: #ef4444;
 }
+
 .pdp-mini-btn.btn-clear:hover {
     background: #fee2e2;
     border-color: #fca5a5;
@@ -383,9 +397,18 @@
     height: 4px;
     border-radius: 50%;
 }
-.pdp-dot.dot-dep { background: #3b82f6; }
-.pdp-dot.dot-shoot { background: #f97316; }
-.pdp-dot.dot-ret { background: var(--entity-checkout, #15803D); }
+
+.pdp-dot.dot-dep {
+    background: #3b82f6;
+}
+
+.pdp-dot.dot-shoot {
+    background: #f97316;
+}
+
+.pdp-dot.dot-ret {
+    background: var(--entity-checkout, #15803D);
+}
 
 /* ── Help / Legend Footer ─────────────────────────────────────── */
 .pdp-footer-legend {
@@ -420,6 +443,14 @@
     border-radius: 3px;
 }
 
-.pdp-legend-swatch.swatch-dep { background: #3b82f6; }
-.pdp-legend-swatch.swatch-shoot { background: #f97316; }
-.pdp-legend-swatch.swatch-ret { background: var(--entity-checkout, #15803D); }
+.pdp-legend-swatch.swatch-dep {
+    background: #3b82f6;
+}
+
+.pdp-legend-swatch.swatch-shoot {
+    background: #f97316;
+}
+
+.pdp-legend-swatch.swatch-ret {
+    background: var(--entity-checkout, #15803D);
+}

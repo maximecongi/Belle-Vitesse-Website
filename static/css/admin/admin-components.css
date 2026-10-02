@@ -994,6 +994,82 @@ a:hover>.badge-pill[data-val="download-available"] {
     background-color: #ffc84510;
 }
 
+/* ── Sélecteurs Déroulants Natifs (Alignés sur le style Select2) ── */
+select.form-input,
+.form-select,
+.form-group select:not(.badge-select-pill select):not(.admin-dev-role-select):not(.select2-hidden-accessible):not(.u-disabled-select) {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    display: block;
+    width: 100%;
+    height: 42px;
+    padding: 0.6rem 2.25rem 0.6rem 0.8rem;
+    font-size: 0.9rem;
+    font-family: inherit;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--grey-1, #1e293b);
+    background-color: #ffffff;
+    border: 1px solid var(--white-3);
+    border-radius: 0;
+    box-sizing: border-box;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpolygon points='1 1, 9 1, 5 6' fill='%23888888'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 10px 6px;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+select.form-input:hover:not(:disabled),
+.form-select:hover:not(:disabled),
+.form-group select:not(.badge-select-pill select):not(.admin-dev-role-select):not(.select2-hidden-accessible):not(.u-disabled-select):hover:not(:disabled) {
+    border-color: var(--grey-4, #94a3b8);
+}
+
+select.form-input:focus,
+select.form-input:focus-visible,
+.form-select:focus,
+.form-select:focus-visible,
+.form-group select:not(.badge-select-pill select):not(.admin-dev-role-select):not(.select2-hidden-accessible):not(.u-disabled-select):focus,
+.form-group select:not(.badge-select-pill select):not(.admin-dev-role-select):not(.select2-hidden-accessible):not(.u-disabled-select):focus-visible {
+    outline: none;
+    box-shadow: none;
+    border: 1px solid var(--admin-accent);
+    background-color: #ffc84510;
+}
+
+select.form-input:disabled,
+.form-select:disabled,
+.form-group select:not(.badge-select-pill select):not(.admin-dev-role-select):not(.select2-hidden-accessible):not(.u-disabled-select):disabled {
+    background-color: var(--grey-5, #f8fafc);
+    border-color: var(--white-3);
+    color: var(--grey-4, #94a3b8);
+    cursor: not-allowed;
+    opacity: 0.7;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpolygon points='1 1, 9 1, 5 6' fill='%23cccccc'/%3E%3C/svg%3E");
+}
+
+select.form-input::-ms-expand,
+.form-select::-ms-expand {
+    display: none;
+}
+
+select.form-input option,
+.form-select option {
+    background-color: #ffffff;
+    color: var(--grey-1, #1e293b);
+    padding: 0.5rem;
+}
+
+select.form-input optgroup,
+.form-select optgroup {
+    font-weight: 600;
+    color: var(--grey-2, #475569);
+    background-color: #ffffff;
+}
+
 input[type="checkbox"] {
     appearance: none;
     -webkit-appearance: none;
@@ -1064,7 +1140,9 @@ input[type="checkbox"]:checked {
     border-radius: 0;
 }
 
-.select2-container .select2-selection--single:focus {
+.select2-container .select2-selection--single:focus,
+.select2-container--default.select2-container--open .select2-selection--single,
+.select2-container--default.select2-container--focus .select2-selection--single {
     border: 1px solid var(--admin-accent);
     background-color: #ffc84510;
     outline: none;
