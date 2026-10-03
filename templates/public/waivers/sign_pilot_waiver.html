@@ -23,6 +23,7 @@
     {% endif %}
     <link rel="stylesheet"
         href="{{ url_for('static', filename='css/admin/admin-pilot-waivers.css') }}?v={{ asset_version('css/admin/admin-pilot-waivers.css') }}">
+    <script src="https://unpkg.com/lucide@1.48.0/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <script src="{{ asset_url('js/src/common/signature-pad-controller.js') }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -466,7 +467,7 @@
                     if (el && !el.value.trim()) missing = true;
                 });
                 if (missing) {
-                    showFeedback('❌ Veuillez remplir tous les champs obligatoires avant de signer.', 'error');
+                    showFeedback('Veuillez remplir tous les champs obligatoires avant de signer.', 'error');
                     return;
                 }
 
@@ -477,7 +478,7 @@
                     if (el && (!el.files || el.files.length === 0)) missingFiles = true;
                 });
                 if (missingFiles) {
-                    showFeedback('❌ Veuillez joindre les trois documents requis (permis, attestation d\'assurance, pièce d\'identité).', 'error');
+                    showFeedback('Veuillez joindre les trois documents requis (permis, attestation d\'assurance, pièce d\'identité).', 'error');
                     return;
                 }
 
@@ -546,7 +547,7 @@
                     }
 
                     if (response.ok && result && result.success) {
-                        showFeedback('✅ Décharge signée avec succès. Vous allez recevoir un e-mail de confirmation.', 'success');
+                        showFeedback('<i data-lucide="circle-check-big"></i> Décharge signée avec succès. Vous allez recevoir un e-mail de confirmation.', 'success');
                         btnSign.textContent = 'Signé ✓';
                         if (signaturePad && signaturePad.canvas) {
                             signaturePad.canvas.style.pointerEvents = 'none';
@@ -566,6 +567,10 @@
                     btnSign.textContent = 'Signer le document';
                 }
             });
+
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
         });
     </script>
 

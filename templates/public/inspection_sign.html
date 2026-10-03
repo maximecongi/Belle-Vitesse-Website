@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/' + type + '.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-components.css') }}">
+    <script src="https://unpkg.com/lucide@1.48.0/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <script src="{{ asset_url('js/src/common/signature-pad-controller.js') }}"></script>
     <script src="{{ url_for('static', filename='js/src/ui-utils.js') }}"></script>
@@ -140,7 +141,7 @@
                     .then(function (result) {
                         if (result.status === 'signed') {
                             isSigned = true;
-                            showFeedback('✅ Document signé avec succès.', 'success');
+                            showFeedback('<i data-lucide="circle-check-big"></i> Document signé avec succès.', 'success');
                             btn.textContent = 'Signé ✓';
                             if (signaturePad && signaturePad.canvas) {
                                 signaturePad.canvas.style.pointerEvents = 'none';
@@ -157,6 +158,10 @@
                         btn.textContent = 'Signer le document';
                     });
             });
+
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
 
         })();
     </script>

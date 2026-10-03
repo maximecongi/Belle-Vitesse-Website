@@ -1348,18 +1348,41 @@ input[type="checkbox"]:checked {
     font-weight: 500;
     text-align: center;
     font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.feedback-box svg,
+.feedback-box i[data-lucide] {
+    display: inline-block;
+    vertical-align: -0.3em;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-right: 0.4rem;
+    flex-shrink: 0;
 }
 
 .feedback-box.success {
-    background: #f0faf3;
-    color: #1a7a3a;
-    border: 1px solid #a8dbb8;
+    background: var(--status-success-bg, #DCFCE7);
+    color: var(--status-success-text, #14532D);
+    border: 1px solid var(--status-success-border, rgba(21, 128, 61, 0.3));
+}
+
+.feedback-box.success svg,
+.feedback-box.success i[data-lucide] {
+    color: var(--status-success, #15803D);
+    stroke: var(--status-success, #15803D);
 }
 
 .feedback-box.error {
-    background: #fff5f5;
-    color: #c0392b;
-    border: 1px solid #f5c6c2;
+    background: var(--status-danger-bg, #FEE2E2);
+    color: var(--status-danger-text, #991B1B);
+    border: 1px solid var(--status-danger-border, rgba(239, 68, 68, 0.3));
+}
+
+.feedback-box.error svg,
+.feedback-box.error i[data-lucide] {
+    color: var(--status-danger, #EF4444);
+    stroke: var(--status-danger, #EF4444);
 }
 
 .feedback-box.neutral {
