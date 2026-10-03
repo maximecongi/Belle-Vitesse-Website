@@ -21,7 +21,8 @@ def _format_contact(contact, role_label):
     if not contact:
         return None
     name = f"{contact.first_name or ''} {contact.last_name or ''}".strip() or "Inconnu"
-    phone_part = f" ({contact.phone})" if getattr(contact, "phone", None) else ""
+    phone_part = f" ({contact.phone})" if getattr(
+        contact, "phone", None) else ""
     return f"• {role_label} : {name}{phone_part}"
 
 
@@ -48,11 +49,14 @@ def _build_event_description(project, phase_title, vehicle_map=None, head_map=No
     if project.dop_contact:
         contact_lines.append(_format_contact(project.dop_contact, "DOP"))
     if project.first_ac_contact:
-        contact_lines.append(_format_contact(project.first_ac_contact, "1er Ass. Caméra"))
+        contact_lines.append(_format_contact(
+            project.first_ac_contact, "1er Ass. Caméra"))
     if project.key_grip_contact:
-        contact_lines.append(_format_contact(project.key_grip_contact, "Chef Machiniste"))
+        contact_lines.append(_format_contact(
+            project.key_grip_contact, "Chef Machiniste"))
     if project.production_contact:
-        contact_lines.append(_format_contact(project.production_contact, "Contact Prod"))
+        contact_lines.append(_format_contact(
+            project.production_contact, "Contact Prod"))
 
     if contact_lines:
         lines.append("👥 ÉQUIPE & CONTACTS :")
@@ -83,35 +87,42 @@ def _build_event_description(project, phase_title, vehicle_map=None, head_map=No
     # 3. Planning synthétique global du projet
     lines.append("📅 PLANNING COMPLET :")
     is_punctual = (getattr(project, "date_mode", "continuous") == "punctual")
-    lines.append(f"• Mode de dates : {'Ponctuel' if is_punctual else 'Continu'}")
 
     if project.departure_date:
-        lines.append(f"• 🚚 Départ : {project.departure_date.strftime('%d/%m/%Y')}")
+        lines.append(
+            f"• 🚚 Départ : {project.departure_date.strftime('%d/%m/%Y')}")
 
     if is_punctual and project.shoot_dates:
         parsed_dates = []
         for d in project.shoot_dates:
             try:
-                parsed_dates.append(datetime.strptime(str(d).strip(), "%Y-%m-%d").date())
+                parsed_dates.append(datetime.strptime(
+                    str(d).strip(), "%Y-%m-%d").date())
             except Exception:
                 pass
         parsed_dates = sorted(list(set(parsed_dates)))
         if parsed_dates:
             dates_fr = [d.strftime("%d/%m/%Y") for d in parsed_dates]
-            lines.append(f"• 🎬 Tournage ({len(parsed_dates)}j) : {', '.join(dates_fr)}")
+            lines.append(
+                f"• 🎬 Tournage ({len(parsed_dates)}j) : {', '.join(dates_fr)}")
 
         # Intervalles intermédiaires
-        intervals = project.get_inter_shoot_intervals() if hasattr(project, "get_inter_shoot_intervals") else []
+        intervals = project.get_inter_shoot_intervals() if hasattr(
+            project, "get_inter_shoot_intervals") else []
         if intervals:
             for inter in intervals:
                 try:
-                    start_fr = datetime.strptime(inter["start"], "%Y-%m-%d").strftime("%d/%m/%Y")
-                    end_fr = datetime.strptime(inter["end"], "%Y-%m-%d").strftime("%d/%m/%Y")
+                    start_fr = datetime.strptime(
+                        inter["start"], "%Y-%m-%d").strftime("%d/%m/%Y")
+                    end_fr = datetime.strptime(
+                        inter["end"], "%Y-%m-%d").strftime("%d/%m/%Y")
                     cnt = inter.get("days_count", len(inter.get("days", [])))
                     if inter.get("is_immobilized"):
-                        lines.append(f"  └ 🔒 Entre {start_fr} et {end_fr} : Immobilisé sur place ({cnt}j)")
+                        lines.append(
+                            f"  └ 🔒 Entre {start_fr} et {end_fr} : Immobilisé sur place ({cnt}j)")
                     else:
-                        lines.append(f"  └ 🔄 Entre {start_fr} et {end_fr} : Relâché / dispo base ({cnt}j)")
+                        lines.append(
+                            f"  └ 🔄 Entre {start_fr} et {end_fr} : Relâché / dispo base ({cnt}j)")
                 except Exception:
                     pass
     elif project.shoot_start_date:
@@ -123,7 +134,8 @@ def _build_event_description(project, phase_title, vehicle_map=None, head_map=No
             lines.append(f"• 🎬 Tournage : le {s_start_fr}")
 
     if project.return_date:
-        lines.append(f"• 📦 Retour : {project.return_date.strftime('%d/%m/%Y')}")
+        lines.append(
+            f"• 📦 Retour : {project.return_date.strftime('%d/%m/%Y')}")
 
     # 4. Notes et demandes spécifiques
     if project.notes:
@@ -134,7 +146,8 @@ def _build_event_description(project, phase_title, vehicle_map=None, head_map=No
     # 5. Lien direct vers la fiche projet dans l'ERP
     if base_url and getattr(project, "project_id", None):
         lines.append("")
-        lines.append(f"🔗 Fiche ERP : {base_url}/admin/projects?q={project.project_id}")
+        lines.append(
+            f"🔗 Fiche ERP : {base_url}/admin/projects?q={project.project_id}")
 
     return "\n".join(lines)
 
@@ -205,16 +218,20 @@ def calendar_feed(token):
     # 5. Dictionnaires de résolution du matériel assigné
     try:
         raw_veh = get_vehicles() or []
-        vehicle_map = {str(v["id"]): v.get("fields", {}).get("name", f"ID {v['id']}") for v in raw_veh}
+        vehicle_map = {str(v["id"]): v.get("fields", {}).get(
+            "name", f"ID {v['id']}") for v in raw_veh}
     except Exception as e:
-        current_app.logger.warning(f"Erreur chargement véhicules pour calendar_feed: {e}")
+        current_app.logger.warning(
+            f"Erreur chargement véhicules pour calendar_feed: {e}")
         vehicle_map = {}
 
     try:
         raw_heads = get_heads() or []
-        head_map = {str(h["id"]): h.get("fields", {}).get("name", f"ID {h['id']}") for h in raw_heads}
+        head_map = {str(h["id"]): h.get("fields", {}).get(
+            "name", f"ID {h['id']}") for h in raw_heads}
     except Exception as e:
-        current_app.logger.warning(f"Erreur chargement têtes pour calendar_feed: {e}")
+        current_app.logger.warning(
+            f"Erreur chargement têtes pour calendar_feed: {e}")
         head_map = {}
 
     # 6. Construire le calendrier ICS
@@ -233,7 +250,8 @@ def calendar_feed(token):
 
     for project in projects:
         name = project.name or "Sans nom"
-        is_punctual = (getattr(project, "date_mode", "continuous") == "punctual")
+        is_punctual = (getattr(project, "date_mode",
+                       "continuous") == "punctual")
         project_url = (
             f"{base_url}/admin/projects?q={project.project_id}"
             if getattr(project, "project_id", None)
@@ -243,9 +261,11 @@ def calendar_feed(token):
         # ── A. JALON DÉPART (Check-out) ──
         if project.departure_date:
             checkout_evt = Event()
-            checkout_evt.add("uid", f"bv-project-{project.id}-checkout@bellevitesse.com")
+            checkout_evt.add(
+                "uid", f"bv-project-{project.id}-checkout@bellevitesse.com")
             checkout_evt.add("dtstart", project.departure_date)
-            checkout_evt.add("dtend", project.departure_date + timedelta(days=1))
+            checkout_evt.add(
+                "dtend", project.departure_date + timedelta(days=1))
             checkout_evt.add("summary", f"🚚 Départ : {name}")
             checkout_evt.add("dtstamp", now_utc)
             checkout_evt.add("categories", ["Belle Vitesse", "Départ"])
@@ -269,7 +289,8 @@ def calendar_feed(token):
             parsed_dates = []
             for d_str in (project.shoot_dates or []):
                 try:
-                    parsed_dates.append(datetime.strptime(str(d_str).strip(), "%Y-%m-%d").date())
+                    parsed_dates.append(datetime.strptime(
+                        str(d_str).strip(), "%Y-%m-%d").date())
                 except Exception:
                     pass
             parsed_dates = sorted(list(set(parsed_dates)))
@@ -300,10 +321,11 @@ def calendar_feed(token):
                     )
 
                     shoot_evt = Event()
-                    shoot_evt.add("uid", f"bv-project-{project.id}-shoot-{c_idx}@bellevitesse.com")
+                    shoot_evt.add(
+                        "uid", f"bv-project-{project.id}-shoot-{c_idx}@bellevitesse.com")
                     shoot_evt.add("dtstart", c_start)
                     shoot_evt.add("dtend", c_end + timedelta(days=1))
-                    shoot_evt.add("summary", f"🎬 Tournage : {name}")
+                    shoot_evt.add("summary", f"🎬 {name}")
                     shoot_evt.add("dtstamp", now_utc)
                     shoot_evt.add("categories", ["Belle Vitesse", "Tournage"])
                     if project_url:
@@ -321,13 +343,15 @@ def calendar_feed(token):
                     cal.add_component(shoot_evt)
 
                 # Génération des événements d'immobilisation pour les intervalles bloqués
-                intervals = project.get_inter_shoot_intervals() if hasattr(project, "get_inter_shoot_intervals") else []
+                intervals = project.get_inter_shoot_intervals() if hasattr(
+                    project, "get_inter_shoot_intervals") else []
                 for i_idx, inter in enumerate(intervals, 1):
                     if inter.get("is_immobilized") and inter.get("days"):
                         day_dates = []
                         for d_s in inter["days"]:
                             try:
-                                day_dates.append(datetime.strptime(str(d_s).strip(), "%Y-%m-%d").date())
+                                day_dates.append(datetime.strptime(
+                                    str(d_s).strip(), "%Y-%m-%d").date())
                             except Exception:
                                 pass
                         day_dates = sorted(list(set(day_dates)))
@@ -337,12 +361,15 @@ def calendar_feed(token):
                             count_days = len(day_dates)
 
                             immob_evt = Event()
-                            immob_evt.add("uid", f"bv-project-{project.id}-immob-{i_idx}@bellevitesse.com")
+                            immob_evt.add(
+                                "uid", f"bv-project-{project.id}-immob-{i_idx}@bellevitesse.com")
                             immob_evt.add("dtstart", immob_start)
-                            immob_evt.add("dtend", immob_end + timedelta(days=1))
+                            immob_evt.add("dtend", immob_end +
+                                          timedelta(days=1))
                             immob_evt.add("summary", f"🔒 Immobilisé : {name}")
                             immob_evt.add("dtstamp", now_utc)
-                            immob_evt.add("categories", ["Belle Vitesse", "Immobilisation"])
+                            immob_evt.add(
+                                "categories", ["Belle Vitesse", "Immobilisation"])
                             if project_url:
                                 immob_evt.add("url", project_url)
                             immob_evt.add(
@@ -361,7 +388,8 @@ def calendar_feed(token):
                 s_start = project.shoot_start_date
                 s_end = project.shoot_end_date or project.shoot_start_date
                 shoot_evt = Event()
-                shoot_evt.add("uid", f"bv-project-{project.id}-shoot@bellevitesse.com")
+                shoot_evt.add(
+                    "uid", f"bv-project-{project.id}-shoot@bellevitesse.com")
                 shoot_evt.add("dtstart", s_start)
                 shoot_evt.add("dtend", s_end + timedelta(days=1))
                 shoot_evt.add("summary", f"🎬 Tournage : {name}")
@@ -386,7 +414,8 @@ def calendar_feed(token):
                 s_start = project.shoot_start_date
                 s_end = project.shoot_end_date or project.shoot_start_date
                 shoot_evt = Event()
-                shoot_evt.add("uid", f"bv-project-{project.id}-shoot@bellevitesse.com")
+                shoot_evt.add(
+                    "uid", f"bv-project-{project.id}-shoot@bellevitesse.com")
                 shoot_evt.add("dtstart", s_start)
                 shoot_evt.add("dtend", s_end + timedelta(days=1))
                 shoot_evt.add("summary", f"🎬 Tournage : {name}")
@@ -409,7 +438,8 @@ def calendar_feed(token):
         # ── C. JALON RETOUR (Check-in) ──
         if project.return_date:
             checkin_evt = Event()
-            checkin_evt.add("uid", f"bv-project-{project.id}-checkin@bellevitesse.com")
+            checkin_evt.add(
+                "uid", f"bv-project-{project.id}-checkin@bellevitesse.com")
             checkin_evt.add("dtstart", project.return_date)
             checkin_evt.add("dtend", project.return_date + timedelta(days=1))
             checkin_evt.add("summary", f"📦 Retour : {name}")
@@ -440,4 +470,3 @@ def calendar_feed(token):
             "Expires": "0",
         },
     )
-
