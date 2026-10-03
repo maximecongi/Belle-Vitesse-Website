@@ -161,6 +161,87 @@ class Waiver(db.Model):
             "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
         }
 
+    @property
+    def vehicles_details(self):
+        """
+        Retourne la liste détaillée des véhicules concernés par la décharge :
+        nom, identifiant unique (unique_id) et numéro de contrôle au départ (checkout_doc_id).
+        """
+        results = []
+        p = self.project
+
+        # 1. Récupération des IDs véhicules du projet
+        veh_ids = []
+        if p and p.vehicles_to_check:
+            veh_ids = [v.strip() for v in p.vehicles_to_check.split(",") if v.strip()]
+        elif p and p.active_checkout_vehicles:
+            for cv in p.active_checkout_vehicles:
+                if cv.vehicle_id and str(cv.vehicle_id) not in veh_ids:
+                    veh_ids.append(str(cv.vehicle_id))
+
+        if veh_ids:
+            try:
+                from utils.database import get_vehicles
+                all_vehicles = get_vehicles() or []
+                vehicle_map = {str(v["id"]): v.get("fields", {}) for v in all_vehicles}
+            except Exception:
+                vehicle_map = {}
+
+            # Map des checkouts actifs par vehicle_id pour ce projet
+            checkout_map = {}
+            if p and p.active_checkout_vehicles:
+                for cv in p.active_checkout_vehicles:
+                    if cv.vehicle_id:
+                        checkout_map[str(cv.vehicle_id)] = cv.inspection_number
+
+            for vid in veh_ids:
+                v_fields = vehicle_map.get(str(vid), {})
+                v_name = v_fields.get("name") or f"ID {vid}"
+                u_id = v_fields.get("unique_id") or ""
+                co_num = checkout_map.get(str(vid)) or ""
+                results.append({
+                    "name": v_name,
+                    "unique_id": u_id,
+                    "checkout_doc_id": co_num,
+                })
+        elif self.vehicles:
+            # Fallback pour les décharges historiques sans veh_ids sur le projet : résolution par nom
+            try:
+                from utils.database import get_vehicles
+                all_vehicles = get_vehicles() or []
+            except Exception:
+                all_vehicles = []
+
+            # Dictionnaire nom -> fields
+            name_to_fields = {}
+            for v in all_vehicles:
+                f = v.get("fields", {})
+                v_name = f.get("name")
+                if v_name:
+                    name_to_fields[v_name.strip().lower()] = (v["id"], f)
+
+            # Map checkout par vehicle_id
+            checkout_map = {}
+            if p and p.active_checkout_vehicles:
+                for cv in p.active_checkout_vehicles:
+                    if cv.vehicle_id:
+                        checkout_map[str(cv.vehicle_id)] = cv.inspection_number
+
+            for v_str in self.vehicles.split(","):
+                clean = v_str.strip()
+                if not clean:
+                    continue
+                match_id, match_fields = name_to_fields.get(clean.lower(), (None, {}))
+                u_id = match_fields.get("unique_id", "")
+                co_num = checkout_map.get(str(match_id), "") if match_id else ""
+                results.append({
+                    "name": clean,
+                    "unique_id": u_id,
+                    "checkout_doc_id": co_num,
+                })
+
+        return results
+
     def __repr__(self):
         return f"<Waiver {self.waiver_id} ({self.waiver_type}) - {self.status}>"
 

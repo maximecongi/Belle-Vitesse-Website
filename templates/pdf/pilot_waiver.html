@@ -80,10 +80,30 @@
             <div class="pilot-waiver-info-item" style="margin-top: 12pt;">
                 <span class="pilot-waiver-info-label">Véhicule(s) à piloter</span>
                 <div class="pilot-waiver-info-item pilot-waiver-info-vehicles" style="grid-column: 1 / -1;">
-                    {% if waiver.vehicles %}
-                    {% for v in waiver.vehicles.split(',') %}
-                    <span class="pilot-waiver-vehicles-badge">{{ v.strip() }}</span>
-                    {% endfor %}
+                    {% if waiver.vehicles_details %}
+                    <div class="pilot-waiver-vehicles-list">
+                        {% for v in waiver.vehicles_details %}
+                        <div class="pilot-waiver-vehicle-card">
+                            <span class="pilot-waiver-vehicle-title">{{ v.name }}</span>
+                            <div class="pilot-waiver-vehicle-ids">
+                                {% if v.unique_id %}
+                                <span class="checkout-doc-id">{{ v.unique_id }}</span>
+                                {% endif %}
+                                {% if v.checkout_doc_id %}
+                                <span class="checkout-doc-id">{{ v.checkout_doc_id }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% elif waiver.vehicles %}
+                    <div class="pilot-waiver-vehicles-list">
+                        {% for v in waiver.vehicles.split(',') %}
+                        <div class="pilot-waiver-vehicle-card">
+                            <span class="pilot-waiver-vehicle-title">{{ v.strip() }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
                     {% else %}—{% endif %}
                 </div>
             </div>

@@ -504,6 +504,54 @@ class WaiversTest(unittest.TestCase):
                 self.assertIsNotNone(w.deleted_at)
 
 
+    def test_waiver_vehicles_details_with_checkout_doc_id(self):
+        """Vérifie que la propriété vehicles_details expose bien unique_id et checkout_doc_id et s'affiche dans les templates PDF."""
+        with self.app.app_context():
+            from models import CheckoutVehicle, Vehicle, Production
+            from flask import render_template
+
+            prod = Production(name="Production Test PDF")
+            db.session.add(prod)
+            db.session.flush()
+
+            # Création véhicule en base
+            veh = Vehicle(id="recVehTest01", fields={"name": "Porsche Macan Tracking", "unique_id": "CAR-01"})
+            db.session.add(veh)
+
+            proj = Project(name="Projet Test Véhicules PDF", production_id=prod.id, vehicles_to_check="recVehTest01")
+            db.session.add(proj)
+            db.session.flush()
+
+            # Création du contrôle départ associé
+            co = CheckoutVehicle(
+                project_id=proj.id,
+                vehicle_id="recVehTest01",
+                inspection_number="BVCO-2026-9999",
+                status="signed"
+            )
+            db.session.add(co)
+            db.session.flush()
+
+            # Création d'une décharge pilote
+            waiver = PilotWaiver(project_id=proj.id, vehicles="Porsche Macan Tracking")
+            db.session.add(waiver)
+            db.session.commit()
+
+            details = waiver.vehicles_details
+            self.assertEqual(len(details), 1)
+            self.assertEqual(details[0]["name"], "Porsche Macan Tracking")
+            self.assertEqual(details[0]["unique_id"], "CAR-01")
+            self.assertEqual(details[0]["checkout_doc_id"], "BVCO-2026-9999")
+
+            # Vérification du rendu du template PDF
+            with self.app.test_request_context():
+                rendered_html = render_template("pdf/pilot_waiver.html", waiver=waiver, company_name="Belle Vitesse SAS")
+                self.assertIn("Porsche Macan Tracking", rendered_html)
+                self.assertIn("CAR-01", rendered_html)
+                self.assertIn("BVCO-2026-9999", rendered_html)
+                self.assertIn("checkout-doc-id", rendered_html)
+
+
 if __name__ == "__main__":
     unittest.main()
 

@@ -132,7 +132,7 @@ def admin_pilot_waiver_preview(waiver_id):
         PilotWaiver.waiver_id == waiver_id,
         PilotWaiver.deleted_at.is_(None)
     ).first_or_404()
-    return render_template("pdf/pilot_waiver_pdf.html", waiver=waiver)
+    return render_template("pdf/pilot_waiver.html", waiver=waiver)
 
 @waivers_bp.route("/waivers/pilots/<string:waiver_id>/delete", methods=["POST"], endpoint='admin_pilot_waiver_delete')
 @waivers_bp.route("/waivers/pilots/<string:waiver_id>/reset", methods=["POST"], endpoint='admin_pilot_waiver_reset')
@@ -257,7 +257,7 @@ def admin_production_waiver_preview(waiver_id):
         ProductionWaiver.waiver_id == waiver_id,
         ProductionWaiver.deleted_at.is_(None)
     ).first_or_404()
-    return render_template("pdf/production_waiver_pdf.html", waiver=waiver)
+    return render_template("pdf/production_waiver.html", waiver=waiver)
 
 @waivers_bp.route("/waivers/productions/<string:waiver_id>/delete", methods=["POST"], endpoint='admin_production_waiver_delete')
 @waivers_bp.route("/waivers/productions/<string:waiver_id>/reset", methods=["POST"], endpoint='admin_production_waiver_reset')

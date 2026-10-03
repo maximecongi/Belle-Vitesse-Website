@@ -40,25 +40,13 @@ logger = logging.getLogger(__name__)
 
 
 def _format_project_shooting_dates(p, default_sep=" au "):
-    """Formate les dates de tournage selon le mode (continu ou ponctuel) et l'immobilisation."""
+    """Formate les dates de tournage pour les décharges selon le mode (continu ou ponctuel)."""
     if not p:
         return "—"
     if getattr(p, "date_mode", None) == "punctual" and p.shoot_dates:
         try:
             dates = [datetime.strptime(d, "%Y-%m-%d").strftime("%d/%m/%Y") for d in sorted(p.shoot_dates)]
-            joined = ", ".join(dates)
-            intervals = p.get_inter_shoot_intervals() if hasattr(p, "get_inter_shoot_intervals") else []
-            if intervals:
-                immob_count = sum(1 for i in intervals if i.get("is_immobilized"))
-                if immob_count == len(intervals):
-                    immob_suffix = " (Immobilisé)"
-                elif immob_count == 0:
-                    immob_suffix = " (Non immobilisé)"
-                else:
-                    immob_suffix = f" (Mixte : {immob_count} immobilisé(s), {len(intervals) - immob_count} relâché(s))"
-            else:
-                immob_suffix = " (Immobilisé)" if getattr(p, "is_immobilized_between", True) else " (Non immobilisé)"
-            return f"{joined}{immob_suffix}"
+            return ", ".join(dates)
         except Exception:
             pass
     if p.shoot_start_date and p.shoot_end_date:
