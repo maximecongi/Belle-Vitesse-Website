@@ -6,6 +6,7 @@ from services.admin.projects import (
     list_projects,
     update_project_notes,
 )
+from services.admin.calendar import get_calendar_events
 from models import db, Project, Production, User, Contact
 from app import create_app
 import os
@@ -492,6 +493,14 @@ class ProjectsTest(unittest.TestCase):
             edit_data = get_project_for_edit(proj.id)
             self.assertIn("inter_shoot_statuses_json", edit_data)
             self.assertIn("2026-11-10", edit_data["inter_shoot_statuses_json"])
+
+            # Test get_calendar_events inclut les intervalles inter-dates
+            events = get_calendar_events()
+            cal_ev = next((e for e in events if e["extendedProps"].get("projectId") == proj.project_id), None)
+            self.assertIsNotNone(cal_ev)
+            self.assertEqual(len(cal_ev["extendedProps"]["intervals"]), 2)
+            self.assertTrue(cal_ev["extendedProps"]["intervals"][0]["is_immobilized"])
+            self.assertFalse(cal_ev["extendedProps"]["intervals"][1]["is_immobilized"])
 
     def test_project_invalid_production_id_rejected(self):
         """Vérifie que 'Production à confirmer' ou chaîne invalide est rejetée proprement sans crash SQL."""

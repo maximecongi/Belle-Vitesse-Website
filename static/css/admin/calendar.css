@@ -106,7 +106,6 @@
 .fc-direction-rtl .fc-daygrid-event.fc-event-start {
     cursor: pointer !important;
     margin: 2px 3px !important;
-    padding: 3px 6px !important;
     font-family: var(--font-primary) !important;
     line-height: 1.35 !important;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
@@ -329,6 +328,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    flex: 0 1 auto;
     min-width: 0;
 }
 
@@ -337,6 +337,7 @@
     font-weight: 400;
     opacity: 0.7;
     font-style: italic;
+    flex-shrink: 0;
 }
 
 .fc-phase-badge__prod {
@@ -345,7 +346,9 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    flex-shrink: 0;
+    flex: 0 1000 auto;
+    min-width: 0;
+    max-width: 130px;
 }
 
 .fc-phase-badge__prod::before {
@@ -390,6 +393,44 @@
 
 .fc-phase-coincide--checkin {
     margin-left: 4px;
+}
+
+/* ── Intervalles Inter-Dates (Immobilisé vs Relâché) ── */
+.fc-phase-badge--interval {
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 0 4px;
+    height: 24px;
+    top: 2px;
+}
+
+.fc-phase-badge--interval-immob {
+    background: repeating-linear-gradient(45deg,
+            #fef3c7,
+            #fef3c7 6px,
+            #fde68a 6px,
+            #fde68a 12px) !important;
+    border: 1px solid #fcd34d !important;
+    border-left: 3px solid var(--entity-project, #f59e0b) !important;
+    color: #92400e !important;
+}
+
+.fc-phase-badge--interval-immob:hover {
+    border-color: var(--entity-project, #f59e0b) !important;
+    box-shadow: 0 2px 8px var(--entity-project-glow, rgba(245, 158, 11, 0.25)) !important;
+}
+
+.fc-phase-icon--immob {
+    color: var(--entity-project, #f59e0b);
+    stroke: var(--entity-project, #f59e0b);
+    width: 11px;
+    height: 11px;
+    flex-shrink: 0;
 }
 
 /* ── Structure Interne de l'Événement Standard (eventContent Fallback) ── */
@@ -525,13 +566,85 @@
     opacity: 0.2 !important;
 }
 
-#calendar[data-filter="project"] .fc-phase-badge:not(.fc-phase-badge--project) {
+#calendar[data-filter="project"] .fc-phase-badge:not(.fc-phase-badge--project):not(.fc-phase-badge--interval) {
     opacity: 0.2 !important;
 }
 
 #calendar[data-filter="checkin"] .fc-phase-badge:not(.fc-phase-badge--checkin),
 #calendar[data-filter="checkin"] .fc-unified-track__line {
     opacity: 0.2 !important;
+}
+
+/* ── Légende du Calendrier Dashboard ────────────────────────── */
+.calendar-dashboard-legend {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    margin-top: 0.75rem;
+    background: var(--admin-bg, #f8fafc);
+    border: 1px solid var(--white-3, #e2e8f0);
+    border-radius: 8px;
+    font-size: 0.8rem;
+    color: var(--grey-2, #64748b);
+    flex-wrap: wrap;
+}
+
+.calendar-legend-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--grey-2, #64748b);
+    flex-shrink: 0;
+}
+
+.calendar-legend-items {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.calendar-legend-items .badge-pill {
+    font-size: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.calendar-legend-badge--immob {
+    background: repeating-linear-gradient(45deg,
+            #fef3c7,
+            #fef3c7 4px,
+            #fde68a 4px,
+            #fde68a 8px) !important;
+    border: 1px solid #fcd34d !important;
+    color: #92400e !important;
+}
+
+.calendar-legend-badge--immob [data-lucide],
+.calendar-legend-badge--immob svg {
+    color: #b45309;
+    stroke: #b45309;
+}
+
+.calendar-legend-track {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--grey-2, #64748b);
+}
+
+.calendar-legend-track-line {
+    display: inline-block;
+    width: 20px;
+    height: 3px;
+    border-radius: 2px;
+    background-color: var(--entity-project, #f59e0b);
+    opacity: 0.45;
 }
 
 /* ICS Subscription Page Styles */

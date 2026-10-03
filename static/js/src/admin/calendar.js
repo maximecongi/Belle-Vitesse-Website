@@ -142,7 +142,9 @@ function initCalendar() {
                 // 1. JALON DÉPART (Vert)
                 if (depDate) {
                     const depIdx = segDates.indexOf(depDate);
-                    const depCoincides = (depDate === shootStart);
+                    const depCoincides = (props.dateMode === 'punctual' && Array.isArray(props.shootDates))
+                        ? props.shootDates.includes(depDate)
+                        : (depDate === shootStart);
                     if (depIdx !== -1 && !depCoincides) {
                         const left = (depIdx / totalCols) * 100;
                         const width = (1 / totalCols) * 100;
@@ -159,33 +161,58 @@ function initCalendar() {
 
                 // 2. JALON TOURNAGE (Ambre)
                 if (props.dateMode === 'punctual' && Array.isArray(props.shootDates) && props.shootDates.length > 0) {
-                    props.shootDates.forEach((sDate) => {
-                        const sColIdx = segDates.indexOf(sDate);
-                        if (sColIdx !== -1) {
-                            const left = (sColIdx / totalCols) * 100;
-                            const width = (1 / totalCols) * 100;
+                    // Regrouper les jours de tournage consécutifs sur la ligne affichée pour ne former qu'une seule entité
+                    const shootChunks = [];
+                    let curShootChunk = [];
 
-                            let shootPrefix = '';
-                            if (depDate === sDate) {
-                                shootPrefix = `<span class="fc-phase-coincide fc-phase-coincide--checkout" title="Départ : ${escapeHtml(depDate)}">${truckSvg}</span>`;
+                    segDates.forEach((segD, colIdx) => {
+                        if (props.shootDates.includes(segD)) {
+                            curShootChunk.push({ colIdx: colIdx, date: segD });
+                        } else {
+                            if (curShootChunk.length > 0) {
+                                shootChunks.push([...curShootChunk]);
+                                curShootChunk = [];
                             }
-
-                            let shootSuffix = '';
-                            if (retDate === sDate) {
-                                shootSuffix = `<span class="fc-phase-coincide fc-phase-coincide--checkin" title="Retour : ${escapeHtml(retDate)}">${checkinSvg}</span>`;
-                            }
-
-                            badgesHtml += `
-                                <span class="fc-phase-badge fc-phase-badge--project"
-                                      style="left: calc(${left}% + 1px); width: calc(${width}% - 2px);"
-                                      title="Tournage : ${formatDateFr(sDate)}">
-                                    ${shootPrefix}
-                                    <span class="fc-phase-badge__icon">${clapperSvg}</span>
-                                    <span class="fc-phase-badge__title">${escapeHtml(projectName)}</span>
-                                    ${shootSuffix}
-                                </span>
-                            `;
                         }
+                    });
+                    if (curShootChunk.length > 0) {
+                        shootChunks.push(curShootChunk);
+                    }
+
+                    shootChunks.forEach((chunk) => {
+                        const startCol = chunk[0].colIdx;
+                        const count = chunk.length;
+                        const left = (startCol / totalCols) * 100;
+                        const width = (count / totalCols) * 100;
+
+                        const firstDate = chunk[0].date;
+                        const lastDate = chunk[count - 1].date;
+
+                        let shootPrefix = '';
+                        if (depDate === firstDate) {
+                            shootPrefix = `<span class="fc-phase-coincide fc-phase-coincide--checkout" title="Départ : ${escapeHtml(depDate)}">${truckSvg}</span>`;
+                        }
+
+                        let shootSuffix = '';
+                        if (retDate === lastDate) {
+                            shootSuffix = `<span class="fc-phase-coincide fc-phase-coincide--checkin" title="Retour : ${escapeHtml(retDate)}">${checkinSvg}</span>`;
+                        }
+
+                        const rangeLabel = (count > 1)
+                            ? `du ${formatDateFr(firstDate)} au ${formatDateFr(lastDate)}`
+                            : formatDateFr(firstDate);
+
+                        badgesHtml += `
+                            <span class="fc-phase-badge fc-phase-badge--project"
+                                  style="left: calc(${left}% + 1px); width: calc(${width}% - 2px);"
+                                  title="Tournage : ${escapeHtml(rangeLabel)}">
+                                ${shootPrefix}
+                                <span class="fc-phase-badge__icon">${clapperSvg}</span>
+                                <span class="fc-phase-badge__title">${escapeHtml(projectName)}</span>
+                                ${production ? `<span class="fc-phase-badge__prod">${escapeHtml(production)}</span>` : ''}
+                                ${shootSuffix}
+                            </span>
+                        `;
                     });
                 } else if (shootStart && shootEnd) {
                     const shootIndices = [];
@@ -240,10 +267,63 @@ function initCalendar() {
                     `;
                 }
 
+                // 2.bis. INTERVALLES INTER-DATES IMMOBILISÉS (🔒 Immobilisé sur place)
+                const lockSvg = '<svg class="fc-phase-icon fc-phase-icon--immob" xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>';
+
+                if (props.dateMode === 'punctual' && Array.isArray(props.intervals) && props.intervals.length > 0) {
+                    props.intervals.forEach((inter) => {
+                        // On n'affiche que les intervalles immobilisés (le relâchement étant la norme par défaut, on évite de surcharger)
+                        if (!inter.is_immobilized || !Array.isArray(inter.days) || inter.days.length === 0) return;
+
+                        // Regrouper les jours de cet intervalle consécutifs dans la tranche affichée segDates
+                        const chunks = [];
+                        let curChunk = [];
+
+                        segDates.forEach((segD, colIdx) => {
+                            if (inter.days.includes(segD)) {
+                                curChunk.push({ colIdx: colIdx, date: segD });
+                            } else {
+                                if (curChunk.length > 0) {
+                                    chunks.push([...curChunk]);
+                                    curChunk = [];
+                                }
+                            }
+                        });
+                        if (curChunk.length > 0) {
+                            chunks.push(curChunk);
+                        }
+
+                        chunks.forEach((chunk) => {
+                            const startCol = chunk[0].colIdx;
+                            const count = chunk.length;
+                            const left = (startCol / totalCols) * 100;
+                            const width = (count / totalCols) * 100;
+
+                            const startDateFr = formatDateFr(chunk[0].date);
+                            const endDateFr = formatDateFr(chunk[count - 1].date);
+                            const rangeLabel = (count > 1) ? `du ${startDateFr} au ${endDateFr}` : `le ${startDateFr}`;
+
+                            const interTitle = `Immobilisé sur place : ${rangeLabel}`;
+                            const interLabel = `Immobilisé${count > 1 ? ` (${count}j)` : ''}`;
+
+                            badgesHtml += `
+                                <span class="fc-phase-badge fc-phase-badge--interval fc-phase-badge--interval-immob"
+                                      style="left: calc(${left}% + 1px); width: calc(${width}% - 2px);"
+                                      title="${escapeHtml(interTitle)}">
+                                    <span class="fc-phase-badge__icon">${lockSvg}</span>
+                                    <span class="fc-phase-badge__label">${escapeHtml(interLabel)}</span>
+                                </span>
+                            `;
+                        });
+                    });
+                }
+
                 // 3. JALON RETOUR (Bleu)
                 if (retDate) {
                     const retIdx = segDates.indexOf(retDate);
-                    const retCoincides = (retDate === shootEnd);
+                    const retCoincides = (props.dateMode === 'punctual' && Array.isArray(props.shootDates))
+                        ? props.shootDates.includes(retDate)
+                        : (retDate === shootEnd);
                     if (retIdx !== -1 && !retCoincides) {
                         const left = (retIdx / totalCols) * 100;
                         const width = (1 / totalCols) * 100;

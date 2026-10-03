@@ -43,6 +43,9 @@ def get_calendar_events():
         start_str = min_date.isoformat()
         end_str = (max_date + timedelta(days=1)).isoformat()
 
+        is_punctual = (getattr(r, "date_mode", "continuous") == "punctual")
+        intervals = r.get_inter_shoot_intervals() if is_punctual else []
+
         class_names = ["fc-event--unified"]
         if dep_d:
             class_names.append("has-checkout")
@@ -53,10 +56,15 @@ def get_calendar_events():
         if ret_d:
             class_names.append("has-checkin")
             class_names.append("fc-event--checkin")
-        if getattr(r, "date_mode", "continuous") == "punctual":
+        if is_punctual:
             class_names.append("fc-event--punctual")
             if not getattr(r, "is_immobilized_between", True):
                 class_names.append("fc-event--not-immobilized")
+
+        try:
+            event_url = url_for("admin_projects.admin_projects_list", q=r.project_id) if getattr(r, "project_id", None) else ""
+        except Exception:
+            event_url = f"/admin/projects?q={r.project_id}" if getattr(r, "project_id", None) else ""
 
         events.append({
             "id": f"project-{r.id}",
@@ -65,7 +73,7 @@ def get_calendar_events():
             "end": end_str,
             "allDay": True,
             "classNames": class_names,
-            "url": url_for("admin_projects.admin_projects_list", q=r.project_id) if getattr(r, "project_id", None) else "",
+            "url": event_url,
             "extendedProps": {
                 "projectId": r.project_id or "",
                 "projectName": name,
@@ -73,6 +81,7 @@ def get_calendar_events():
                 "dateMode": getattr(r, "date_mode", "continuous"),
                 "isImmobilized": getattr(r, "is_immobilized_between", True),
                 "shootDates": r.shoot_dates or [],
+                "intervals": intervals,
                 "departureDate": dep_d.isoformat() if dep_d else None,
                 "shootStartDate": shoot_start.isoformat() if shoot_start else None,
                 "shootEndDate": shoot_end.isoformat() if shoot_end else None,
