@@ -95,8 +95,8 @@ def admin_calendar():
     sub_data = {}
     for user_id, sub in sub_map.items():
         feed_url, webcal_url = _get_public_feed_urls(sub.token)
-        # Générer le QR code en base64 sur webcal:// pour déclencher l'abonnement calendrier natif sur smartphone
-        qr_b64 = _generate_qr_base64(webcal_url)
+        # Générer le QR code en base64 sur l'URL HTTPS sécurisée (garantit l'activation SSL sans avertissement de sécurité)
+        qr_b64 = _generate_qr_base64(feed_url)
         sub_data[user_id] = {
             "subscription": sub,
             "feed_url": feed_url,

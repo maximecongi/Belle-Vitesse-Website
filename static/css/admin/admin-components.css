@@ -882,9 +882,7 @@ a:hover>.badge-pill[data-val="download-available"] {
 }
 
 #calendarTable.admin-table td:last-child {
-    display: flex;
     width: 20vw;
-    justify-content: center;
 }
 
 .admin-table tr:hover {

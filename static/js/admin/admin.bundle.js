@@ -961,7 +961,84 @@ function getEntityIconSvg(type) {
     return '<svg class="fc-phase-icon fc-phase-icon--project" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.2 6 3 11l-.9-2.4 17.2-5z"/><path d="m6.2 5.3 3.1 3.9"/><path d="m12.4 3.4 3.1 4"/><path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg>';
 }
 
+// ── Gestion de la modale QR Code d'abonnement Calendrier ICS ──
+function initCalendarQrModal() {
+    const modal = document.getElementById('qrModal');
+    if (!modal) return;
+
+    const modalName = document.getElementById('qrModalName');
+    const modalImg = document.getElementById('qrModalImg');
+    const modalUrlInput = document.getElementById('qrModalUrlInput');
+    const copyBtn = document.getElementById('qrModalCopyBtn');
+    const webcalBtn = document.getElementById('qrModalWebcalBtn');
+    const closeBtn = document.getElementById('qrModalCloseBtn');
+
+    function closeModal() {
+        modal.classList.remove('is-active');
+    }
+
+    if (closeBtn) {
+        closeBtn.onclick = closeModal;
+    }
+
+    modal.onclick = function (e) {
+        if (e.target === modal) {
+            closeModal();
+        }
+    };
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && modal.classList.contains('is-active')) {
+            closeModal();
+        }
+    });
+
+    if (copyBtn && modalUrlInput) {
+        copyBtn.onclick = function () {
+            if (!modalUrlInput.value) return;
+            navigator.clipboard.writeText(modalUrlInput.value).then(() => {
+                const originalHtml = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<span>✅ Copié !</span>';
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalHtml;
+                    if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                        lucide.createIcons({ root: copyBtn });
+                    }
+                }, 1500);
+            }).catch(() => {
+                modalUrlInput.select();
+                document.execCommand('copy');
+            });
+        };
+    }
+
+    document.querySelectorAll('.cal-qr-trigger').forEach(trigger => {
+        trigger.onclick = function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (modalName) modalName.textContent = trigger.dataset.name || '';
+            if (modalImg && trigger.dataset.qr) {
+                modalImg.src = trigger.dataset.qr;
+            }
+            if (modalUrlInput) {
+                modalUrlInput.value = trigger.dataset.url || '';
+            }
+            if (webcalBtn) {
+                webcalBtn.href = trigger.dataset.url || trigger.dataset.webcal || '#';
+            }
+            modal.classList.add('is-active');
+
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons({ root: modal });
+            }
+        };
+    });
+}
+
 function initCalendar() {
+    initCalendarQrModal();
+
     const calendarEl = document.getElementById('calendar');
     if (calendarEl && typeof FullCalendar !== 'undefined' && !calendarEl.dataset.initialized) {
         calendarEl.dataset.initialized = 'true';
@@ -1307,6 +1384,7 @@ function initCalendar() {
     }
 }
 
+window.initCalendarQrModal = initCalendarQrModal;
 window.initCalendar = initCalendar;
 ;
 

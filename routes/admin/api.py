@@ -19,9 +19,9 @@ from services.admin.vehicle_config import (
 from utils.decorators import require_roles
 
 
-
 api_bp = Blueprint('admin_api', __name__, url_prefix='/admin')
 # ── API Administrative ────────────────────────────────────────
+
 
 @api_bp.route("/api/events")
 @require_roles('administrator', 'manager', 'commercial', 'user')
@@ -32,6 +32,7 @@ def admin_api_events():
     except Exception as e:
         current_app.logger.error(f"❌ Erreur dans admin_api_events : {e}")
         return jsonify([]), 500
+
 
 def _handle_status_update(model, record_id):
     from models import db
@@ -71,17 +72,20 @@ def _handle_status_update(model, record_id):
             f"❌ Erreur lors de la mise à jour du statut : {e}")
         return jsonify({"error": str(e)}), 500
 
+
 @api_bp.route("/api/checkouts/<int:record_id>/status", methods=["GET", "POST"])
 @require_roles('administrator', 'manager', 'user')
 def admin_api_checkout_status(record_id):
     from models import CheckoutVehicle
     return _handle_status_update(CheckoutVehicle, record_id)
 
+
 @api_bp.route("/api/checkins/<int:record_id>/status", methods=["GET", "POST"])
 @require_roles('administrator', 'manager', 'user')
 def admin_api_checkin_status(record_id):
     from models import CheckinVehicle
     return _handle_status_update(CheckinVehicle, record_id)
+
 
 @api_bp.route("/vehicle-configs")
 @require_roles('administrator')
@@ -100,6 +104,7 @@ def admin_vehicle_configs():
             f"Erreur lors du chargement des configurations: {e}", "error")
         return redirect(url_for('admin_dashboard.admin_dashboard'))
 
+
 @api_bp.route("/api/vehicle-configs", methods=["POST"])
 @require_roles('administrator')
 def admin_api_save_vehicle_config():
@@ -117,6 +122,7 @@ def admin_api_save_vehicle_config():
         current_app.logger.error(
             f"❌ Erreur dans admin_api_save_vehicle_config : {e}")
         return jsonify({"error": str(e)}), 500
+
 
 @api_bp.route("/api/search")
 @require_roles('administrator', 'manager', 'commercial', 'user')
@@ -277,31 +283,52 @@ def admin_api_search():
     # 1. Navigation & Actions rapides (uniquement si scope 'all')
     if scope == 'all':
         pages_and_actions = [
-            {"title": "Tableau de bord", "subtitle": "Vue d'ensemble", "url": url_for("admin_dashboard.admin_dashboard"), "category": "Page", "icon": "layout", "roles": ['all']},
-            {"title": "Nouveau Projet", "subtitle": "Créer un nouveau tournage", "url": url_for("admin_projects.admin_project_new"), "category": "Action", "icon": "plus", "roles": ['manager', 'commercial', 'admin']},
-            {"title": "Projets (En cours)", "subtitle": "Tournages en préparation ou en cours", "url": url_for("admin_projects.admin_projects_list"), "category": "Page", "icon": "folder", "roles": ['manager', 'commercial', 'admin']},
-            {"title": "Archives des Projets", "subtitle": "Projets terminés et archivés", "url": url_for("admin_projects.admin_projects_archives"), "category": "Page", "icon": "archive", "roles": ['manager', 'commercial', 'admin']},
-            {"title": "Productions", "subtitle": "Liste des sociétés clientes", "url": url_for("admin_productions.admin_productions_list"), "category": "Page", "icon": "building", "roles": ['manager', 'commercial', 'admin']},
-            {"title": "Nouvelle Production", "subtitle": "Créer une société de production", "url": url_for("admin_productions.admin_production_new"), "category": "Action", "icon": "plus", "roles": ['manager', 'commercial', 'admin']},
-            {"title": "Contacts", "subtitle": "Annuaire des contacts professionnels", "url": url_for("admin_contacts.admin_contacts_list"), "category": "Page", "icon": "user", "roles": ['manager', 'commercial', 'admin']},
-            {"title": "Nouveau Contact", "subtitle": "Ajouter un contact professionnel", "url": url_for("admin_contacts.admin_contact_new"), "category": "Action", "icon": "plus", "roles": ['manager', 'commercial', 'admin']},
+            {"title": "Tableau de bord", "subtitle": "Vue d'ensemble", "url": url_for(
+                "admin_dashboard.admin_dashboard"), "category": "Page", "icon": "layout", "roles": ['all']},
+            {"title": "Nouveau Projet", "subtitle": "Créer un nouveau tournage", "url": url_for(
+                "admin_projects.admin_project_new"), "category": "Action", "icon": "plus", "roles": ['manager', 'commercial', 'admin']},
+            {"title": "Projets (En cours)", "subtitle": "Tournages en préparation ou en cours", "url": url_for(
+                "admin_projects.admin_projects_list"), "category": "Page", "icon": "folder", "roles": ['manager', 'commercial', 'admin']},
+            {"title": "Archives des Projets", "subtitle": "Projets terminés et archivés", "url": url_for(
+                "admin_projects.admin_projects_archives"), "category": "Page", "icon": "archive", "roles": ['manager', 'commercial', 'admin']},
+            {"title": "Productions", "subtitle": "Liste des sociétés clientes", "url": url_for(
+                "admin_productions.admin_productions_list"), "category": "Page", "icon": "building", "roles": ['manager', 'commercial', 'admin']},
+            {"title": "Nouvelle Production", "subtitle": "Créer une société de production", "url": url_for(
+                "admin_productions.admin_production_new"), "category": "Action", "icon": "plus", "roles": ['manager', 'commercial', 'admin']},
+            {"title": "Contacts", "subtitle": "Annuaire des contacts professionnels", "url": url_for(
+                "admin_contacts.admin_contacts_list"), "category": "Page", "icon": "user", "roles": ['manager', 'commercial', 'admin']},
+            {"title": "Nouveau Contact", "subtitle": "Ajouter un contact professionnel", "url": url_for(
+                "admin_contacts.admin_contact_new"), "category": "Action", "icon": "plus", "roles": ['manager', 'commercial', 'admin']},
             {"title": "Nouveau Check-out", "subtitle": "Effectuer un contrôle de départ",
                 "url": url_for("admin_checkouts.admin_checkout_new"), "category": "Action", "icon": "truck", "roles": ['all']},
-            {"title": "Check-outs", "subtitle": "Historique des contrôles de départ", "url": url_for("admin_checkouts.admin_checkouts_list"), "category": "Page", "icon": "clipboard", "roles": ['all']},
-            {"title": "Nouveau Check-in", "subtitle": "Effectuer un contrôle de retour", "url": url_for("admin_checkins.admin_checkin_new"), "category": "Action", "icon": "check-circle", "roles": ['all']},
-            {"title": "Check-ins", "subtitle": "Historique des contrôles de retour", "url": url_for("admin_checkins.admin_checkins_list"), "category": "Page", "icon": "clipboard", "roles": ['all']},
-            {"title": "Gestion des Incidents", "subtitle": "Suivi des pannes, dommages et sinistres", "url": url_for("admin_incidents.admin_incidents_list"), "category": "Page", "icon": "alert", "roles": ['all']},
-            {"title": "Déclarer un Incident", "subtitle": "Signaler une anomalie en tournage", "url": url_for("admin_incidents.admin_incident_new"), "category": "Action", "icon": "alert", "roles": ['all']},
-            {"title": "Calendrier Matériel", "subtitle": "Disponibilités et planning des équipements", "url": url_for("admin_booking.admin_booking"), "category": "Page", "icon": "calendar", "roles": ['manager', 'commercial', 'admin']},
-            {"title": "Abonnements Calendrier (ICS)", "subtitle": "Flux iCal et synchronisation des agendas", "url": url_for("admin_calendar.admin_calendar"), "category": "Page", "icon": "calendar", "roles": ['manager', 'commercial', 'admin']},
+            {"title": "Check-outs", "subtitle": "Historique des contrôles de départ", "url": url_for(
+                "admin_checkouts.admin_checkouts_list"), "category": "Page", "icon": "clipboard", "roles": ['all']},
+            {"title": "Nouveau Check-in", "subtitle": "Effectuer un contrôle de retour", "url": url_for(
+                "admin_checkins.admin_checkin_new"), "category": "Action", "icon": "check-circle", "roles": ['all']},
+            {"title": "Check-ins", "subtitle": "Historique des contrôles de retour", "url": url_for(
+                "admin_checkins.admin_checkins_list"), "category": "Page", "icon": "clipboard", "roles": ['all']},
+            {"title": "Gestion des Incidents", "subtitle": "Suivi des pannes, dommages et sinistres", "url": url_for(
+                "admin_incidents.admin_incidents_list"), "category": "Page", "icon": "alert", "roles": ['all']},
+            {"title": "Déclarer un Incident", "subtitle": "Signaler une anomalie en tournage", "url": url_for(
+                "admin_incidents.admin_incident_new"), "category": "Action", "icon": "alert", "roles": ['all']},
+            {"title": "Calendrier Matériel", "subtitle": "Disponibilités et planning des équipements", "url": url_for(
+                "admin_booking.admin_booking"), "category": "Page", "icon": "calendar", "roles": ['manager', 'commercial', 'admin']},
+            {"title": "Abonnements Calendrier (ICS)", "subtitle": "Flux iCal et synchronisation des agendas", "url": url_for(
+                "admin_calendar.admin_calendar"), "category": "Page", "icon": "calendar", "roles": ['manager', 'commercial', 'admin']},
             {"title": "Flotte & Parc", "subtitle": "Parc de véhicules, départs, retours et incidents",
                 "url": url_for("admin_fleet.admin_fleet_list"), "category": "Page", "icon": "truck", "roles": ['all']},
-            {"title": "Tarification", "subtitle": "Grille tarifaire et options matériels", "url": url_for("admin_pricing.admin_pricing"), "category": "Page", "icon": "tag", "roles": ['manager', 'commercial', 'admin']},
-            {"title": "Configurations Véhicules", "subtitle": "Checkpoints et équipements", "url": url_for("admin_api.admin_vehicle_configs"), "category": "Page", "icon": "settings", "roles": ['admin']},
-            {"title": "Équipe & Utilisateurs", "subtitle": "Gestion des accès et collaborateurs", "url": url_for("admin_users.admin_users_list"), "category": "Page", "icon": "users", "roles": ['manager', 'admin']},
-            {"title": "Newsletter", "subtitle": "Abonnés et composition de campagnes", "url": url_for("admin_newsletter.admin_newsletter_dashboard"), "category": "Page", "icon": "mail", "roles": ['manager', 'admin']},
-            {"title": "Générateur de Signature", "subtitle": "Générer la signature email officielle", "url": url_for("admin_tools.admin_signature_generator"), "category": "Outil", "icon": "pen", "roles": ['all']},
-            {"title": "Documentation Technique", "subtitle": "Guides et documentations internes", "url": url_for("admin_tools.admin_docs_index"), "category": "Outil", "icon": "book", "roles": ['admin']},
+            {"title": "Tarification", "subtitle": "Grille tarifaire et options matériels", "url": url_for(
+                "admin_pricing.admin_pricing"), "category": "Page", "icon": "tag", "roles": ['manager', 'commercial', 'admin']},
+            {"title": "Configurations Véhicules", "subtitle": "Checkpoints et équipements", "url": url_for(
+                "admin_api.admin_vehicle_configs"), "category": "Page", "icon": "settings", "roles": ['admin']},
+            {"title": "Équipe & Utilisateurs", "subtitle": "Gestion des accès et collaborateurs", "url": url_for(
+                "admin_users.admin_users_list"), "category": "Page", "icon": "users", "roles": ['manager', 'admin']},
+            {"title": "Newsletter", "subtitle": "Abonnés et composition de campagnes", "url": url_for(
+                "admin_newsletter.admin_newsletter_dashboard"), "category": "Page", "icon": "mail", "roles": ['manager', 'admin']},
+            {"title": "Générateur de Signature", "subtitle": "Générer la signature email officielle", "url": url_for(
+                "admin_tools.admin_signature_generator"), "category": "Outil", "icon": "pen", "roles": ['all']},
+            {"title": "Documentation Technique", "subtitle": "Guides et documentations internes", "url": url_for(
+                "admin_tools.admin_docs_index"), "category": "Outil", "icon": "book", "roles": ['admin']},
         ]
 
         for item in pages_and_actions:
@@ -482,6 +509,7 @@ def admin_api_search():
                 f"⚠️ Erreur recherche incidents : {e}")
 
     return jsonify({"results": results[:20]})
+
 
 def init_api_routes(app):
     """Enregistre le blueprint admin_api (compatibilité ascendante)."""

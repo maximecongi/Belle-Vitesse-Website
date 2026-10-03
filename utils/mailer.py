@@ -560,7 +560,7 @@ def send_calendar_invitation_email(to_email, user_name, feed_url):
             box_size=10,
             border=4,
         )
-        qr.add_data(webcal_url)
+        qr.add_data(feed_url)
         qr.make(fit=True)
 
         img = qr.make_image(fill_color="black", back_color="white")
