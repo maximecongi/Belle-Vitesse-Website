@@ -325,7 +325,7 @@ def calendar_feed(token):
                         "uid", f"bv-project-{project.id}-shoot-{c_idx}@bellevitesse.com")
                     shoot_evt.add("dtstart", c_start)
                     shoot_evt.add("dtend", c_end + timedelta(days=1))
-                    shoot_evt.add("summary", f"🎬 {name}")
+                    shoot_evt.add("summary", f"🎬 Tournage : {name}")
                     shoot_evt.add("dtstamp", now_utc)
                     shoot_evt.add("categories", ["Belle Vitesse", "Tournage"])
                     if project_url:
