@@ -16,7 +16,7 @@
         <div>
             <div class="u-flex u-align-center u-gap-2 u-mb-2">
                 <span id="mcpStatusBadge" class="badge-pill mcp-status-pill-active">
-                    🟢 EN LIGNE (Streamable HTTP)
+                    EN LIGNE (Streamable HTTP)
                 </span>
 
                 <span class="u-text-xs mcp-hero-protocol">Protocol Model Context Protocol v1.0</span>
@@ -43,7 +43,9 @@
 <!-- Liste des Tokens API IA -->
 <div class="admin-card u-mb-4">
     <div class="admin-card-header u-flex u-justify-between u-align-center u-mb-3">
-        <h3 class="admin-card-title u-text-md u-fw-bold">🔑 Vos Clés d'Accès API IA (Bearer Tokens)</h3>
+        <h3 class="admin-card-title u-text-md u-fw-bold mcp-audit-title"><i data-lucide="key-round"></i>Vos Clés d'Accès
+            API IA (Bearer
+            Tokens)</h3>
         <span class="u-text-xs u-text-muted">{{ tokens|length }} clé(s) configurée(s)</span>
     </div>
 
@@ -144,7 +146,8 @@
 <details class="admin-card u-mb-4">
     <summary class="mcp-audit-summary u-flex u-align-center u-justify-between">
         <div class="u-flex u-align-center u-gap-2">
-            <h3 class="admin-card-title u-text-md u-fw-bold u-mb-0 mcp-audit-title">📊 Journal d'Audit
+            <h3 class="admin-card-title u-text-md u-fw-bold u-mb-0 mcp-audit-title"><i
+                    data-lucide="square-chart-gantt"></i>Journal d'Audit
                 &amp; Activité des Agents IA</h3>
             <span class="u-text-xs u-text-muted mcp-audit-toggle-hint">▶ Afficher /
                 Plier</span>
@@ -237,7 +240,8 @@
 <!-- Guides de connexion rapide -->
 <div class="admin-card u-mb-4">
 
-    <h3 class="admin-card-title u-text-md u-fw-bold u-mb-3">💡 Procédures de connexion</h3>
+    <h3 class="admin-card-title u-text-md u-fw-bold u-mb-3 mcp-audit-title"><i data-lucide="plug-2"></i>Procédures de
+        connexion</h3>
 
     <div class="u-flex u-gap-2 u-mb-3 border-bottom pb-2">
         <button type="button" class="tab-btn active admin-btn admin-btn-secondary admin-btn-sm"
@@ -471,15 +475,15 @@
                 .then(data => {
                     if (data && data.status === 'healthy') {
                         statusBadge.style.background = '#10b981';
-                        statusBadge.textContent = '🟢 EN LIGNE (Streamable HTTP)';
+                        statusBadge.textContent = 'EN LIGNE (Streamable HTTP)';
                     } else {
                         statusBadge.style.background = '#ef4444';
-                        statusBadge.textContent = '🔴 SERVEUR NON DISPONIBLE';
+                        statusBadge.textContent = 'SERVEUR NON DISPONIBLE';
                     }
                 })
                 .catch(() => {
                     statusBadge.style.background = '#ef4444';
-                    statusBadge.textContent = '🔴 HORS LIGNE';
+                    statusBadge.textContent = 'HORS LIGNE';
                 });
         }
 

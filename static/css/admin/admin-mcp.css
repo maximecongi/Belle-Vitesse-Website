@@ -104,6 +104,13 @@
     display: inline-block;
 }
 
+.mcp-audit-title .lucide {
+    width: 16px;
+    height: 16px;
+    vertical-align: -2px;
+    margin-right: 0.5rem;
+}
+
 .mcp-audit-toggle-hint {
     background: #f1f5f9;
     padding: 2px 8px;
@@ -208,4 +215,11 @@
     font-family: monospace;
     font-size: 12px;
     background: #f8fafc !important;
+}
+
+img.tab-btn-ai-logo {
+    height: 12px;
+    width: 12px;
+    vertical-align: -1px;
+    margin-right: 0.5rem;
 }
