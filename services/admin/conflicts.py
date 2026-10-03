@@ -3,7 +3,7 @@ Service de détection des conflits de réservation de matériel.
 Permet d'identifier les chevauchements de dates entre projets pour les véhicules et têtes gyrostabilisées.
 """
 import logging
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any, Dict, List, Optional, Union
 
 from sqlalchemy.orm import joinedload
@@ -26,31 +26,139 @@ def _parse_date(val: Optional[Union[str, date]]) -> Optional[date]:
         return None
 
 
+def _expand_date_range(d_start: date, d_end: date) -> set:
+    """Retourne l'ensemble de tous les jours compris entre d_start et d_end inclus."""
+    if not d_start or not d_end:
+        return set([d_start] if d_start else ([d_end] if d_end else []))
+    if d_start > d_end:
+        d_start, d_end = d_end, d_start
+    res = set()
+    cur = d_start
+    while cur <= d_end:
+        res.add(cur)
+        cur += timedelta(days=1)
+    return res
+
+
+def _get_project_active_dates(p: Project) -> set:
+    """Retourne l'ensemble des dates où le matériel est effectivement réservé pour le projet p."""
+    if hasattr(p, "effective_blocked_dates"):
+        try:
+            return p.effective_blocked_dates
+        except Exception as e:
+            logger.warning(f"Fallback effective_blocked_dates: {e}")
+
+    p_start = p.departure_date or p.shoot_start_date
+    p_end = p.return_date or p.shoot_end_date or p_start
+
+    # Si le projet est en mode ponctuel et explicitement NON immobilisé entre les dates
+    if getattr(p, "date_mode", None) == "punctual" and not getattr(p, "is_immobilized_between", True):
+        dates = set()
+        raw_shoot_dates = getattr(p, "shoot_dates", None) or []
+        for d_str in raw_shoot_dates:
+            parsed = _parse_date(d_str)
+            if parsed:
+                dates.add(parsed)
+        if p.departure_date:
+            dates.add(p.departure_date)
+        if p.return_date:
+            dates.add(p.return_date)
+        if not dates and p_start:
+            dates.add(p_start)
+        return dates
+
+    # Mode continu classique ou ponctuel immobilisé en continu
+    if p_start and p_end:
+        return _expand_date_range(p_start, p_end)
+    elif p_start:
+        return {p_start}
+    elif p_end:
+        return {p_end}
+    return set()
+
+
 def check_booking_conflicts(
     start_date_val: Optional[Union[str, date]],
     end_date_val: Optional[Union[str, date]],
     vehicle_ids: Optional[List[str]] = None,
     head_ids: Optional[List[str]] = None,
     exclude_project_id: Optional[Union[int, str]] = None,
+    date_mode: Optional[str] = "continuous",
+    is_immobilized_between: Optional[bool] = True,
+    shoot_dates: Optional[List[Union[str, date]]] = None,
+    inter_shoot_statuses: Optional[Union[List[Dict[str, Any]], Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     """
     Vérifie si un ou plusieurs matériels (véhicules, têtes) sont déjà réservés
     sur une période chevauchante par d'autres projets non supprimés.
 
-    Args:
-        start_date_val: Date de début (enlèvement ou tournage).
-        end_date_val: Date de fin (retour ou fin tournage).
-        vehicle_ids: Liste des identifiants de véhicules à vérifier.
-        head_ids: Liste des identifiants de têtes à vérifier.
-        exclude_project_id: ID du projet en cours d'édition (int ou string BVPR-...).
-
-    Returns:
-        Dictionnaire détaillant les conflits détectés.
+    Supporte le mode continu, le mode dates ponctuelles, et la gestion d'immobilisation par intervalle.
     """
     start_date = _parse_date(start_date_val)
     end_date = _parse_date(end_date_val)
 
-    if not start_date and not end_date:
+    # Détermination de l'ensemble des dates de réservation demandées
+    req_active_dates = set()
+    clean_date_mode = str(date_mode or "continuous").strip().lower()
+    is_immob = True if is_immobilized_between in (True, "true", "True", "1", 1) or is_immobilized_between is None else False
+
+    if clean_date_mode == "punctual" and shoot_dates:
+        parsed_shoots = sorted(list(set([_parse_date(s) for s in shoot_dates if _parse_date(s)])))
+        for s in parsed_shoots:
+            req_active_dates.add(s)
+
+        # Vérifier si des statuts d'intervalles sont spécifiés
+        custom_statuses = {}
+        if isinstance(inter_shoot_statuses, list):
+            for item in inter_shoot_statuses:
+                if isinstance(item, dict) and "start" in item and "end" in item:
+                    k = f"{item['start']}_{item['end']}"
+                    custom_statuses[k] = bool(item.get("is_immobilized", True))
+        elif isinstance(inter_shoot_statuses, dict):
+            for k, v in inter_shoot_statuses.items():
+                if isinstance(v, dict):
+                    custom_statuses[k] = bool(v.get("is_immobilized", True))
+                else:
+                    custom_statuses[k] = bool(v)
+
+        for i in range(len(parsed_shoots) - 1):
+            d1 = parsed_shoots[i]
+            d2 = parsed_shoots[i + 1]
+            diff = (d2 - d1).days
+            if diff > 1:
+                key = f"{d1.isoformat()}_{d2.isoformat()}"
+                interval_immob = custom_statuses.get(key, is_immob)
+                if interval_immob:
+                    req_active_dates.update(_expand_date_range(d1 + timedelta(days=1), d2 - timedelta(days=1)))
+
+        if start_date:
+            req_active_dates.add(start_date)
+        if end_date:
+            req_active_dates.add(end_date)
+    elif clean_date_mode == "punctual" and not is_immob:
+        if start_date:
+            req_active_dates.add(start_date)
+        if end_date:
+            req_active_dates.add(end_date)
+    else:
+        # Plage continue
+        effective_start = start_date
+        effective_end = end_date
+        if not effective_start and shoot_dates:
+            parsed_shoots = [_parse_date(s) for s in shoot_dates if _parse_date(s)]
+            if parsed_shoots:
+                effective_start = min(parsed_shoots)
+                if not effective_end:
+                    effective_end = max(parsed_shoots)
+        if effective_start and not effective_end:
+            effective_end = effective_start
+        elif effective_end and not effective_start:
+            effective_start = effective_end
+
+        if effective_start and effective_end:
+            req_active_dates = _expand_date_range(effective_start, effective_end)
+
+    if not req_active_dates:
         return {
             "has_conflicts": False,
             "total_conflicts": 0,
@@ -59,16 +167,6 @@ def check_booking_conflicts(
             "conflicts_by_item": {},
             "conflicts_list": [],
         }
-
-    # Si une seule date est renseignée, la période est d'un jour
-    if start_date and not end_date:
-        end_date = start_date
-    elif end_date and not start_date:
-        start_date = end_date
-
-    # Normalisation si inversé
-    if start_date > end_date:
-        start_date, end_date = end_date, start_date
 
     vehicle_set = set(str(v).strip() for v in (vehicle_ids or []) if v)
     head_set = set(str(h).strip() for h in (head_ids or []) if h)
@@ -120,17 +218,13 @@ def check_booking_conflicts(
             if clean_ex and clean_ex not in ("None", "null", "undefined", "0", ""):
                 if str(p.id) == clean_ex or (p.project_id and str(p.project_id).strip() == clean_ex):
                     continue
-        p_start = p.departure_date or p.shoot_start_date
-        p_end = p.return_date or p.shoot_end_date or p_start
 
-        if not p_start:
+        p_active_dates = _get_project_active_dates(p)
+        if not p_active_dates:
             continue
-        if not p_end:
-            p_end = p_start
 
-        # Vérification du chevauchement : start1 <= end2 and end1 >= start2
-        is_overlapping = (start_date <= p_end) and (end_date >= p_start)
-        if not is_overlapping:
+        overlap_dates = req_active_dates.intersection(p_active_dates)
+        if not overlap_dates:
             continue
 
         # Extraction des IDs assignés
@@ -141,11 +235,27 @@ def check_booking_conflicts(
         p_heads = set(h.strip() for h in raw_h.split(",") if h.strip())
 
         prod_name = p.production.name if p.production else "—"
-        period_label = (
-            f"du {p_start.strftime('%d/%m/%Y')} au {p_end.strftime('%d/%m/%Y')}"
-            if p_start != p_end
-            else f"le {p_start.strftime('%d/%m/%Y')}"
-        )
+        p_start = p.departure_date or p.shoot_start_date or min(p_active_dates)
+        p_end = p.return_date or p.shoot_end_date or max(p_active_dates)
+
+        sorted_overlaps = sorted(list(overlap_dates))
+        if len(sorted_overlaps) == 1:
+            overlap_str = f"le {sorted_overlaps[0].strftime('%d/%m/%Y')}"
+        elif len(sorted_overlaps) <= 3:
+            overlap_str = f"les {', '.join(d.strftime('%d/%m/%Y') for d in sorted_overlaps)}"
+        else:
+            overlap_str = f"du {sorted_overlaps[0].strftime('%d/%m/%Y')} au {sorted_overlaps[-1].strftime('%d/%m/%Y')} ({len(sorted_overlaps)} jours)"
+
+        if getattr(p, "date_mode", None) == "punctual" and not getattr(p, "is_immobilized_between", True):
+            period_label = f"Conflit {overlap_str} (dates ponctuelles, non immobilisé)"
+        elif getattr(p, "date_mode", None) == "punctual":
+            period_label = f"Conflit {overlap_str} (dates ponctuelles, immobilisé sur place)"
+        else:
+            period_label = (
+                f"du {p_start.strftime('%d/%m/%Y')} au {p_end.strftime('%d/%m/%Y')}"
+                if p_start != p_end
+                else f"le {p_start.strftime('%d/%m/%Y')}"
+            )
 
         # Vérifier conflits véhicules
         for vid in vehicle_set.intersection(p_vehicles):
@@ -161,6 +271,7 @@ def check_booking_conflicts(
                 "start_date": p_start.isoformat(),
                 "end_date": p_end.isoformat(),
                 "period_label": period_label,
+                "overlap_dates": [d.isoformat() for d in sorted_overlaps],
             }
             conflicting_vehicle_ids.add(vid)
             conflicts_by_item.setdefault(vid, []).append(conflict_info)
@@ -180,9 +291,11 @@ def check_booking_conflicts(
                 "start_date": p_start.isoformat(),
                 "end_date": p_end.isoformat(),
                 "period_label": period_label,
+                "overlap_dates": [d.isoformat() for d in sorted_overlaps],
             }
             conflicting_head_ids.add(hid)
             conflicts_by_item.setdefault(hid, []).append(conflict_info)
+            conflicts_list.append(conflict_info)
             conflicts_list.append(conflict_info)
 
     return {

@@ -229,6 +229,11 @@
     opacity: 0.7;
 }
 
+.fc-event.fc-event--not-immobilized .fc-unified-track__line {
+    background: repeating-linear-gradient(90deg, var(--entity-project, #f59e0b) 0, var(--entity-project, #f59e0b) 6px, transparent 6px, transparent 12px);
+    opacity: 0.5;
+}
+
 .fc-unified-track__badges {
     position: relative;
     width: 100%;

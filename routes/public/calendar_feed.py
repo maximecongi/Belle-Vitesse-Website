@@ -2,7 +2,7 @@
 Route publique pour le flux calendrier ICS.
 Accessible via un token unique dans l'URL : GET /cal/<token>.ics
 """
-from datetime import timedelta, timezone
+from datetime import datetime, timedelta, timezone
 
 from flask import Blueprint, Response, abort, current_app, request
 from icalendar import Calendar, Event
@@ -126,10 +126,15 @@ def calendar_feed(token):
         
         if project.departure_date:
             desc_parts.append(f"🚚 Départ : {project.departure_date.strftime('%d/%m/%Y')}")
-        if project.shoot_start_date:
-            desc_parts.append(f"🎬 Début tournage : {project.shoot_start_date.strftime('%d/%m/%Y')}")
-        if project.shoot_end_date:
-            desc_parts.append(f"🏁 Fin tournage : {project.shoot_end_date.strftime('%d/%m/%Y')}")
+        if getattr(project, "date_mode", None) == "punctual" and project.shoot_dates:
+            dates_fr = [datetime.strptime(d, "%Y-%m-%d").strftime("%d/%m/%Y") for d in sorted(project.shoot_dates)]
+            immob_txt = "Immobilisé sur place" if getattr(project, "is_immobilized_between", True) else "Relâché entre les dates (dispo base)"
+            desc_parts.append(f"🎬 Dates de tournage : {', '.join(dates_fr)} ({immob_txt})")
+        else:
+            if project.shoot_start_date:
+                desc_parts.append(f"🎬 Début tournage : {project.shoot_start_date.strftime('%d/%m/%Y')}")
+            if project.shoot_end_date:
+                desc_parts.append(f"🏁 Fin tournage : {project.shoot_end_date.strftime('%d/%m/%Y')}")
         if project.return_date:
             desc_parts.append(f"📦 Retour : {project.return_date.strftime('%d/%m/%Y')}")
 

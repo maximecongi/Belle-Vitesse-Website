@@ -378,5 +378,144 @@ class ProjectsTest(unittest.TestCase):
             self.assertEqual(proj.to_dict()["kdrive_web_url"], proj.kdrive_web_url)
 
 
+    def test_project_punctual_dates_crud(self):
+        """Vérifie la création, récupération et modification d'un projet avec dates ponctuelles."""
+        with self.app.app_context():
+            user = User(firstname="Bob", lastname="Test", mail="bob.test@example.com", role="administrator")
+            prod = Production(name="Punctual Prod")
+            db.session.add_all([user, prod])
+            db.session.commit()
+            u_id = user.id
+            prod_id = prod.id
+
+            class MockForm(dict):
+                def getlist(self, name):
+                    return []
+
+            form_data = {
+                "name": "Projet Ponctuel Test",
+                "production_id": str(prod_id),
+                "date_mode": "punctual",
+                "is_immobilized_between": "false",
+                "shoot_dates": '["2026-10-14", "2026-10-16", "2026-10-19"]',
+                "departure_date": date(2026, 10, 13),
+                "return_date": date(2026, 10, 20),
+            }
+            success = create_project(MockForm(form_data), user_id=u_id)
+            self.assertTrue(success)
+
+            proj = Project.query.filter_by(name="Projet Ponctuel Test").first()
+            self.assertIsNotNone(proj)
+            self.assertEqual(proj.date_mode, "punctual")
+            self.assertFalse(proj.is_immobilized_between)
+            self.assertEqual(proj.shoot_dates, ["2026-10-14", "2026-10-16", "2026-10-19"])
+            self.assertEqual(proj.shoot_start_date, date(2026, 10, 14))
+            self.assertEqual(proj.shoot_end_date, date(2026, 10, 19))
+            self.assertTrue(proj.is_punctual)
+            self.assertEqual(len(proj.effective_shoot_dates), 3)
+
+            # Test get_project_for_edit
+            edit_data = get_project_for_edit(proj.id)
+            self.assertTrue(edit_data["is_punctual"])
+            self.assertFalse(edit_data["is_immobilized_between"])
+            self.assertIn("2026-10-14", edit_data["shoot_dates_json"])
+
+            # Test update_project vers immobilisé
+            update_data = {
+                "name": "Projet Ponctuel Test Modifié",
+                "production_id": str(prod_id),
+                "date_mode": "punctual",
+                "is_immobilized_between": "true",
+                "shoot_dates": '["2026-10-14", "2026-10-19"]',
+            }
+            up_success = update_project(proj.id, MockForm(update_data), user_id=u_id)
+            self.assertTrue(up_success)
+
+            db.session.refresh(proj)
+            self.assertTrue(proj.is_immobilized_between)
+            self.assertEqual(proj.shoot_dates, ["2026-10-14", "2026-10-19"])
+
+    def test_project_inter_shoot_statuses_crud(self):
+        """Vérifie la persistance et le calcul des intervalles inter-dates personnalisés."""
+        with self.app.app_context():
+            user = User(firstname="Charlie", lastname="Test", mail="charlie@example.com", role="administrator")
+            prod = Production(name="Intervalles Prod")
+            db.session.add_all([user, prod])
+            db.session.commit()
+
+            class MockForm(dict):
+                def getlist(self, name):
+                    return []
+
+            form_data = {
+                "name": "Projet Intervalles Mixtes",
+                "production_id": str(prod.id),
+                "date_mode": "punctual",
+                "is_immobilized_between": "false",
+                "shoot_dates": '["2026-11-10", "2026-11-12", "2026-11-16"]',
+                "inter_shoot_statuses": '{"2026-11-10_2026-11-12": {"is_immobilized": true}, "2026-11-12_2026-11-16": {"is_immobilized": false}}',
+            }
+            success = create_project(MockForm(form_data), user_id=user.id)
+            self.assertTrue(success)
+
+            proj = Project.query.filter_by(name="Projet Intervalles Mixtes").first()
+            self.assertIsNotNone(proj)
+            self.assertIsNotNone(proj.inter_shoot_statuses)
+            self.assertEqual(len(proj.inter_shoot_statuses), 2)
+
+            # Test get_inter_shoot_intervals
+            intervals = proj.get_inter_shoot_intervals()
+            self.assertEqual(len(intervals), 2)
+            self.assertEqual(intervals[0]["start"], "2026-11-10")
+            self.assertEqual(intervals[0]["end"], "2026-11-12")
+            self.assertTrue(intervals[0]["is_immobilized"])
+            self.assertEqual(intervals[0]["days_count"], 1)  # Le 11 nov
+
+            self.assertEqual(intervals[1]["start"], "2026-11-12")
+            self.assertEqual(intervals[1]["end"], "2026-11-16")
+            self.assertFalse(intervals[1]["is_immobilized"])
+            self.assertEqual(intervals[1]["days_count"], 3)  # 13, 14, 15 nov
+
+            # Test effective_blocked_dates
+            blocked = proj.effective_blocked_dates
+            # Doit inclure 10, 11 (car 10->12 immobilisé), 12, 16
+            # Ne doit PAS inclure 13, 14, 15 (car 12->16 relâché)
+            self.assertIn(date(2026, 11, 10), blocked)
+            self.assertIn(date(2026, 11, 11), blocked)
+            self.assertIn(date(2026, 11, 12), blocked)
+            self.assertNotIn(date(2026, 11, 13), blocked)
+            self.assertNotIn(date(2026, 11, 14), blocked)
+            self.assertNotIn(date(2026, 11, 15), blocked)
+            self.assertIn(date(2026, 11, 16), blocked)
+
+            # Test get_project_for_edit contient inter_shoot_statuses_json
+            edit_data = get_project_for_edit(proj.id)
+            self.assertIn("inter_shoot_statuses_json", edit_data)
+            self.assertIn("2026-11-10", edit_data["inter_shoot_statuses_json"])
+
+    def test_project_invalid_production_id_rejected(self):
+        """Vérifie que 'Production à confirmer' ou chaîne invalide est rejetée proprement sans crash SQL."""
+        with self.app.app_context():
+            user = User(firstname="Dave", lastname="Test", mail="dave@example.com", role="administrator")
+            db.session.add(user)
+            db.session.commit()
+
+            class MockForm(dict):
+                def getlist(self, name):
+                    return []
+
+            form_data = {
+                "name": "Projet Sans Prod Valide",
+                "production_id": "Production à confirmer",
+                "departure_date": date(2026, 12, 1),
+                "return_date": date(2026, 12, 5),
+            }
+            # Doit lever une ValueError explicite sans crash SQL 1366
+            with self.assertRaises(ValueError):
+                create_project(MockForm(form_data), user_id=user.id)
+
+            self.assertIsNone(Project.query.filter_by(name="Projet Sans Prod Valide").first())
+
+
 if __name__ == "__main__":
     unittest.main()

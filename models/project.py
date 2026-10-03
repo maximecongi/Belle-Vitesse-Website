@@ -81,9 +81,13 @@ class Project(db.Model):
     key_grip_contact_id = db.Column(db.Integer, db.ForeignKey(
         "contacts.id"), nullable=True, index=True)
     departure_date = db.Column(db.Date, index=True)  # Date de départ (enlèvement)
-    shoot_start_date = db.Column(db.Date, index=True)  # Date de début de tournage
-    shoot_end_date = db.Column(db.Date)  # Date de fin de tournage
+    shoot_start_date = db.Column(db.Date, index=True)  # Date de début de tournage (ou 1re date ponctuelle)
+    shoot_end_date = db.Column(db.Date)  # Date de fin de tournage (ou dernière date ponctuelle)
     return_date = db.Column(db.Date)  # Date de retour prévu
+    date_mode = db.Column(db.String(20), default="continuous", nullable=False)  # 'continuous' ou 'punctual'
+    is_immobilized_between = db.Column(db.Boolean, default=True, nullable=False)  # Valeur par défaut d'immobilisation
+    shoot_dates = db.Column(db.JSON, nullable=True)  # Liste ordonnée des dates de tournage pour le mode ponctuel ex: ["2026-10-14", "2026-10-16"]
+    inter_shoot_statuses = db.Column(db.JSON, nullable=True)  # Statuts d'immobilisation spécifiques par intervalle ex: [{"start": "2026-10-12", "end": "2026-10-14", "is_immobilized": true}]
     # Liste des identifiants de véhicules séparés par virgules ex: "3,5"
     vehicles_to_check = db.Column(db.String(500))
     # Liste des identifiants de têtes séparés par virgules ex: "recXX,recYY"
@@ -167,6 +171,138 @@ class Project(db.Model):
         from services.common.kdrive.config import KDRIVE_DRIVE_ID
         return f"https://kdrive.infomaniak.com/app/drive/{KDRIVE_DRIVE_ID}/files/{self.kdrive_folder_id}"
 
+    @property
+    def is_punctual(self):
+        """Indique si le projet utilise le mode de dates ponctuelles."""
+        return self.date_mode == "punctual"
+
+    @property
+    def effective_shoot_dates(self):
+        """Retourne la liste des dates de tournage (ISO strings)."""
+        if self.is_punctual and self.shoot_dates:
+            return sorted(self.shoot_dates)
+        if self.shoot_start_date and self.shoot_end_date:
+            from datetime import timedelta
+            cur = self.shoot_start_date
+            dates = []
+            while cur <= self.shoot_end_date:
+                dates.append(cur.isoformat())
+                cur += timedelta(days=1)
+            return dates
+        if self.shoot_start_date:
+            return [self.shoot_start_date.isoformat()]
+        return []
+
+    def get_inter_shoot_intervals(self):
+        """
+        Calcule et retourne la liste détaillée des intervalles entre dates de tournage successives,
+        avec leurs jours intermédiaires et leur état d'immobilisation respectif.
+        """
+        if not self.is_punctual or not self.shoot_dates:
+            return []
+
+        from datetime import datetime, timedelta
+
+        # Dates de tournage uniques et triées
+        sorted_dates = []
+        for d_str in self.shoot_dates:
+            try:
+                sorted_dates.append(datetime.strptime(str(d_str).strip(), "%Y-%m-%d").date())
+            except Exception:
+                pass
+        sorted_dates = sorted(list(set(sorted_dates)))
+
+        if len(sorted_dates) < 2:
+            return []
+
+        # Mapping des statuts d'intervalles enregistrés
+        custom_statuses = {}
+        if isinstance(self.inter_shoot_statuses, list):
+            for item in self.inter_shoot_statuses:
+                if isinstance(item, dict) and "start" in item and "end" in item:
+                    k = f"{item['start']}_{item['end']}"
+                    custom_statuses[k] = bool(item.get("is_immobilized", True))
+        elif isinstance(self.inter_shoot_statuses, dict):
+            for k, v in self.inter_shoot_statuses.items():
+                if isinstance(v, dict):
+                    custom_statuses[k] = bool(v.get("is_immobilized", True))
+                else:
+                    custom_statuses[k] = bool(v)
+
+        default_immob = bool(self.is_immobilized_between) if self.is_immobilized_between is not None else True
+        intervals = []
+
+        for i in range(len(sorted_dates) - 1):
+            d1 = sorted_dates[i]
+            d2 = sorted_dates[i + 1]
+            diff = (d2 - d1).days
+
+            # S'il y a au moins un jour intermédiaire entre d1 et d2
+            if diff > 1:
+                cur = d1 + timedelta(days=1)
+                days_between = []
+                while cur < d2:
+                    days_between.append(cur.isoformat())
+                    cur += timedelta(days=1)
+
+                key = f"{d1.isoformat()}_{d2.isoformat()}"
+                is_immob = custom_statuses.get(key, default_immob)
+
+                intervals.append({
+                    "start": d1.isoformat(),
+                    "end": d2.isoformat(),
+                    "days": days_between,
+                    "days_count": len(days_between),
+                    "is_immobilized": is_immob,
+                })
+
+        return intervals
+
+    @property
+    def effective_blocked_dates(self):
+        """
+        Retourne l'ensemble de toutes les dates (objets date) où le matériel est bloqué,
+        en combinant dates de tournage, jours intermédiaires immobilisés et jalons départ/retour.
+        """
+        from datetime import datetime
+        blocked = set()
+
+        if self.departure_date:
+            blocked.add(self.departure_date)
+        if self.return_date:
+            blocked.add(self.return_date)
+
+        if not self.is_punctual or not self.shoot_dates:
+            # Mode continu classique
+            p_start = self.shoot_start_date or self.departure_date
+            p_end = self.shoot_end_date or self.return_date or p_start
+            if p_start and p_end:
+                from datetime import timedelta
+                cur = p_start
+                while cur <= p_end:
+                    blocked.add(cur)
+                    cur += timedelta(days=1)
+            return blocked
+
+        # Mode ponctuel : ajouter les jours de tournage
+        for d_str in self.shoot_dates:
+            try:
+                blocked.add(datetime.strptime(str(d_str).strip(), "%Y-%m-%d").date())
+            except Exception:
+                pass
+
+        # Ajouter les jours d'intervalles qui sont immobilisés
+        intervals = self.get_inter_shoot_intervals()
+        for inter in intervals:
+            if inter.get("is_immobilized"):
+                for day_str in inter.get("days", []):
+                    try:
+                        blocked.add(datetime.strptime(day_str, "%Y-%m-%d").date())
+                    except Exception:
+                        pass
+
+        return blocked
+
     def to_dict(self):
         """Convertit l'objet en dictionnaire pour les réponses API."""
         return {
@@ -183,6 +319,10 @@ class Project(db.Model):
             "shoot_start_date": self.shoot_start_date.isoformat() if self.shoot_start_date else None,
             "shoot_end_date": self.shoot_end_date.isoformat() if self.shoot_end_date else None,
             "return_date": self.return_date.isoformat() if self.return_date else None,
+            "date_mode": self.date_mode or "continuous",
+            "is_immobilized_between": bool(self.is_immobilized_between),
+            "shoot_dates": self.shoot_dates or [],
+            "inter_shoot_statuses": self.inter_shoot_statuses or [],
             "vehicles_to_check": self.vehicles_to_check,
             "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
             "kdrive_folder_id": self.kdrive_folder_id,

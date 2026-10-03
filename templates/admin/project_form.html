@@ -32,7 +32,7 @@
                     </button>
                 </div>
                 <select name="production_id" id="productionSelect" class="form-input searchable-select" required>
-                    <option value="Production à confirmer">— Sélectionner une production —</option>
+                    <option value="">— Sélectionner une production —</option>
                     {% for p in productions %}
                     <option value="{{ p.id }}" {% if data and data.production_id==p.id %}selected{% endif %}>
                         {{ p.fields.get('Nom', '—') }}
@@ -141,6 +141,14 @@
             <label class="form-label u-mb-2">Planning & Dates du Projet</label>
 
             <!-- Inputs cachés pour soumission formulaire (rétrocompatibilité totale) -->
+            <input type="hidden" name="date_mode" id="date_mode_input"
+                value="{{ data.date_mode if data and data.date_mode else 'continuous' }}">
+            <input type="hidden" name="is_immobilized_between" id="is_immobilized_between_input"
+                value="{{ 'true' if (not data or data.is_immobilized_between is not defined or data.is_immobilized_between) else 'false' }}">
+            <input type="hidden" name="shoot_dates" id="shoot_dates_input"
+                value="{{ data.shoot_dates_json if data and data.shoot_dates_json else '[]' }}">
+            <input type="hidden" name="inter_shoot_statuses" id="inter_shoot_statuses_input"
+                value="{{ data.inter_shoot_statuses_json if data and data.inter_shoot_statuses_json else '[]' }}">
             <input type="hidden" name="departure_date" id="departure_date_input"
                 value="{{ data.departure_date_raw if data else '' }}">
             <input type="hidden" name="shoot_start" id="shoot_start_input"

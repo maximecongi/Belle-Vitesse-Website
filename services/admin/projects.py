@@ -1,7 +1,8 @@
+import json
 import logging
 import os
 
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 
 from sqlalchemy.orm import joinedload, selectinload
@@ -108,7 +109,50 @@ def _format_project_admin(p, vehicle_map, heads_map):
                 for h in (p.heads_to_check or "").split(",") if h.strip()]
 
     today_date = get_today_paris()
-    if p.shoot_start_date and p.shoot_end_date:
+    is_punctual = (getattr(p, "date_mode", None) == "punctual")
+    shoot_dates = getattr(p, "shoot_dates", None) or []
+    is_immob = getattr(p, "is_immobilized_between", True)
+
+    if is_punctual and shoot_dates:
+        today_iso = today_date.isoformat()
+        first_shoot = _parse_date(shoot_dates[0])
+        last_shoot = _parse_date(shoot_dates[-1])
+        ret_d = p.return_date or last_shoot
+
+        if today_iso in shoot_dates:
+            shoot_status = "in_progress"
+            shoot_status_label = "En tournage"
+            shoot_status_id = "in_progress"
+            shoot_status_color = "var(--entity-project, #F59E0B)"
+        elif first_shoot and last_shoot and (first_shoot <= today_date <= last_shoot):
+            if is_immob:
+                shoot_status = "in_progress"
+                shoot_status_label = "Immobilisé"
+                shoot_status_id = "in_progress"
+                shoot_status_color = "var(--status-warning, #F59E0B)"
+            else:
+                shoot_status = "upcoming"
+                shoot_status_label = "Relâché (Dispo)"
+                shoot_status_id = "upcoming"
+                shoot_status_color = "var(--status-info, #0284C7)"
+        elif ret_d and today_date > ret_d:
+            shoot_status = "completed"
+            shoot_status_label = "Clôturé"
+            shoot_status_id = "completed"
+            shoot_status_color = "var(--status-neutral, #64748B)"
+        else:
+            shoot_status = "upcoming"
+            shoot_status_label = "À venir"
+            shoot_status_id = "upcoming"
+            shoot_status_color = "var(--status-info, #0284C7)"
+
+        if len(shoot_dates) == 1:
+            shoot_dates_label = f"Le {format_date_fr(shoot_dates[0])}"
+        elif len(shoot_dates) <= 3:
+            shoot_dates_label = f"Les {', '.join(format_date_fr(d) for d in shoot_dates)}"
+        else:
+            shoot_dates_label = f"{len(shoot_dates)} dates ({format_date_fr(shoot_dates[0])} → {format_date_fr(shoot_dates[-1])})"
+    elif p.shoot_start_date and p.shoot_end_date:
         if p.shoot_start_date <= today_date <= p.shoot_end_date:
             shoot_status = "in_progress"
             shoot_status_label = "En tournage"
@@ -124,6 +168,7 @@ def _format_project_admin(p, vehicle_map, heads_map):
             shoot_status_label = "À venir"
             shoot_status_id = "upcoming"
             shoot_status_color = "var(--status-info, #0284C7)"
+        shoot_dates_label = f"Du {format_date_fr(str(p.shoot_start_date))} au {format_date_fr(str(p.shoot_end_date))}"
     elif p.departure_date and p.return_date:
         if p.departure_date <= today_date <= p.return_date:
             shoot_status = "in_progress"
@@ -140,11 +185,13 @@ def _format_project_admin(p, vehicle_map, heads_map):
             shoot_status_label = "À venir"
             shoot_status_id = "upcoming"
             shoot_status_color = "var(--status-info, #0284C7)"
+        shoot_dates_label = f"Du {format_date_fr(str(p.departure_date))} au {format_date_fr(str(p.return_date))}"
     else:
         shoot_status = "upcoming"
         shoot_status_label = "À venir"
         shoot_status_id = "upcoming"
         shoot_status_color = "var(--status-info, #0284C7)"
+        shoot_dates_label = "Dates à confirmer"
 
     return {
         "id": p.id,
@@ -164,6 +211,11 @@ def _format_project_admin(p, vehicle_map, heads_map):
         "return_date": format_date_fr(str(p.return_date)) if p.return_date else "—",
         "raw_return_date": str(p.return_date) if p.return_date else "",
         "raw_checkin_date": str(p.return_date) if p.return_date else "",
+        "date_mode": getattr(p, "date_mode", "continuous") or "continuous",
+        "is_immobilized_between": bool(getattr(p, "is_immobilized_between", True)),
+        "shoot_dates": getattr(p, "shoot_dates", None) or [],
+        "shoot_dates_count": len(getattr(p, "shoot_dates", None) or []),
+        "shoot_dates_label": shoot_dates_label,
         "notes": p.notes or "",
         "pilot_contact_name": f"{p.pilot_contact.first_name} {p.pilot_contact.last_name}" if p.pilot_contact else "—",
         "production_contact_name": f"{p.production_contact.first_name} {p.production_contact.last_name}" if p.production_contact else "—",
@@ -331,8 +383,90 @@ def get_project_form_context():
 
 
 def _parse_date(d):
-    """Utilitaire pour parser les dates du formulaire (gère les vides)."""
-    return d if d else None
+    """Utilitaire pour parser les dates du formulaire (gère les vides, chaînes ISO et objets date)."""
+    if not d:
+        return None
+    if isinstance(d, datetime):
+        return d.date()
+    if isinstance(d, date):
+        return d
+    if isinstance(d, str):
+        d_str = d.strip()
+        if not d_str:
+            return None
+        try:
+            return datetime.strptime(d_str[:10], "%Y-%m-%d").date()
+        except ValueError:
+            return None
+    return None
+
+
+def _parse_shoot_dates(form):
+    """Parse et trie la liste des dates de tournage transmises par le formulaire."""
+    val = form.get("shoot_dates") if hasattr(form, "get") else None
+    if isinstance(val, str) and val.strip():
+        try:
+            dates = json.loads(val)
+            if not isinstance(dates, list):
+                dates = [s.strip() for s in val.split(",") if s.strip()]
+        except Exception:
+            dates = [s.strip() for s in val.split(",") if s.strip()]
+    elif isinstance(val, list):
+        dates = val
+    else:
+        dates = []
+
+    valid_dates = []
+    for d in dates:
+        if isinstance(d, str) and d.strip():
+            valid_dates.append(d.strip())
+    return sorted(list(set(valid_dates)))
+
+
+def _parse_int(val):
+    """Convertit en entier ou None si non numérique ou vide."""
+    if val is None:
+        return None
+    try:
+        s = str(val).strip()
+        return int(s) if s.isdigit() else None
+    except (ValueError, TypeError):
+        return None
+
+
+def _parse_inter_shoot_statuses(form):
+    """Parse la liste des statuts d'immobilisation personnalisés par intervalle."""
+    val = form.get("inter_shoot_statuses") if hasattr(form, "get") else None
+    if isinstance(val, str) and val.strip():
+        try:
+            parsed = json.loads(val)
+        except Exception:
+            parsed = []
+    elif isinstance(val, (list, dict)):
+        parsed = val
+    else:
+        parsed = []
+
+    valid = []
+    if isinstance(parsed, list):
+        for item in parsed:
+            if isinstance(item, dict) and "start" in item and "end" in item:
+                valid.append({
+                    "start": str(item["start"]).strip(),
+                    "end": str(item["end"]).strip(),
+                    "is_immobilized": bool(item.get("is_immobilized", True)),
+                })
+    elif isinstance(parsed, dict):
+        for k, v in parsed.items():
+            if "_" in k:
+                parts = k.split("_")
+                is_immob = bool(v.get("is_immobilized", True)) if isinstance(v, dict) else bool(v)
+                valid.append({
+                    "start": parts[0].strip(),
+                    "end": parts[1].strip(),
+                    "is_immobilized": is_immob,
+                })
+    return valid
 
 
 @handle_admin_service_error
@@ -340,25 +474,59 @@ def create_project(form, user_id=None):
     """Crée un nouvel enregistrement de projet en base de données."""
     veh_ids = form.getlist("vehicle_ids") if hasattr(form, 'getlist') else []
     head_ids = form.getlist("head_ids") if hasattr(form, 'getlist') else []
+
+    date_mode = form.get("date_mode", "continuous")
+    shoot_dates = _parse_shoot_dates(form) if date_mode == "punctual" else None
+    is_immob_raw = form.get("is_immobilized_between")
+    if date_mode == "continuous":
+        is_immobilized = True
+    else:
+        is_immobilized = True if is_immob_raw in ("true", "True", "1", True, "on") or is_immob_raw is None else False
+
+    shoot_start_date = _parse_date(form.get("shoot_start"))
+    shoot_end_date = _parse_date(form.get("shoot_end"))
+    if date_mode == "punctual" and shoot_dates:
+        if not shoot_start_date:
+            shoot_start_date = _parse_date(shoot_dates[0])
+        if not shoot_end_date:
+            shoot_end_date = _parse_date(shoot_dates[-1])
+
+    departure_date = _parse_date(form.get("departure_date"))
+    return_date = _parse_date(form.get("return_date"))
+    if date_mode == "punctual" and shoot_dates:
+        if not departure_date:
+            departure_date = shoot_start_date
+        if not return_date:
+            return_date = shoot_end_date
+
+    prod_id = _parse_int(form.get("production_id"))
+    if not prod_id:
+        raise ValueError("Veuillez sélectionner une société de production valide.")
+
+    pilot_contact_id = _parse_int(form.get("pilot_contact_id"))
+    production_contact_id = _parse_int(form.get("production_contact_id"))
+    dop_contact_id = _parse_int(form.get("dop_contact_id"))
+    first_ac_contact_id = _parse_int(form.get("first_ac_contact_id"))
+    key_grip_contact_id = _parse_int(form.get("key_grip_contact_id"))
+    inter_shoot_statuses = _parse_inter_shoot_statuses(form) if date_mode == "punctual" else None
+
     project = Project(
         name=form.get("name"),
-        production_id=form.get("production_id") if form.get(
-            "production_id") else None,
-        pilot_contact_id=form.get("pilot_contact_id") if form.get(
-            "pilot_contact_id") else None,
-        production_contact_id=form.get("production_contact_id") if form.get(
-            "production_contact_id") else None,
-        dop_contact_id=form.get("dop_contact_id") if form.get(
-            "dop_contact_id") else None,
-        first_ac_contact_id=form.get("first_ac_contact_id") if form.get(
-            "first_ac_contact_id") else None,
-        key_grip_contact_id=form.get("key_grip_contact_id") if form.get(
-            "key_grip_contact_id") else None,
+        production_id=prod_id,
+        pilot_contact_id=pilot_contact_id,
+        production_contact_id=production_contact_id,
+        dop_contact_id=dop_contact_id,
+        first_ac_contact_id=first_ac_contact_id,
+        key_grip_contact_id=key_grip_contact_id,
         notes=form.get("notes"),
-        departure_date=_parse_date(form.get("departure_date")),
-        shoot_start_date=_parse_date(form.get("shoot_start")),
-        shoot_end_date=_parse_date(form.get("shoot_end")),
-        return_date=_parse_date(form.get("return_date")),
+        departure_date=departure_date,
+        shoot_start_date=shoot_start_date,
+        shoot_end_date=shoot_end_date,
+        return_date=return_date,
+        date_mode=date_mode,
+        is_immobilized_between=is_immobilized,
+        shoot_dates=shoot_dates,
+        inter_shoot_statuses=inter_shoot_statuses,
         vehicles_to_check=",".join(veh_ids),
         heads_to_check=",".join(head_ids),
         last_action_by_id=user_id
@@ -402,24 +570,51 @@ def update_project(record_id, form, user_id=None):
 
     veh_ids = form.getlist("vehicle_ids") if hasattr(form, 'getlist') else []
     head_ids = form.getlist("head_ids") if hasattr(form, 'getlist') else []
+
+    date_mode = form.get("date_mode", project.date_mode or "continuous")
+    shoot_dates = _parse_shoot_dates(form) if date_mode == "punctual" else None
+    is_immob_raw = form.get("is_immobilized_between")
+    if date_mode == "continuous":
+        is_immobilized = True
+    else:
+        is_immobilized = True if is_immob_raw in ("true", "True", "1", True, "on") or is_immob_raw is None else False
+
+    shoot_start_date = _parse_date(form.get("shoot_start"))
+    shoot_end_date = _parse_date(form.get("shoot_end"))
+    if date_mode == "punctual" and shoot_dates:
+        if not shoot_start_date:
+            shoot_start_date = _parse_date(shoot_dates[0])
+        if not shoot_end_date:
+            shoot_end_date = _parse_date(shoot_dates[-1])
+
+    departure_date = _parse_date(form.get("departure_date"))
+    return_date = _parse_date(form.get("return_date"))
+    if date_mode == "punctual" and shoot_dates:
+        if not departure_date:
+            departure_date = shoot_start_date
+        if not return_date:
+            return_date = shoot_end_date
+
+    prod_id = _parse_int(form.get("production_id"))
+    if not prod_id:
+        raise ValueError("Veuillez sélectionner une société de production valide.")
+
     project.name = form.get("name")
-    project.production_id = form.get(
-        "production_id") if form.get("production_id") else None
-    project.pilot_contact_id = form.get(
-        "pilot_contact_id") if form.get("pilot_contact_id") else None
-    project.production_contact_id = form.get(
-        "production_contact_id") if form.get("production_contact_id") else None
-    project.dop_contact_id = form.get(
-        "dop_contact_id") if form.get("dop_contact_id") else None
-    project.first_ac_contact_id = form.get(
-        "first_ac_contact_id") if form.get("first_ac_contact_id") else None
-    project.key_grip_contact_id = form.get(
-        "key_grip_contact_id") if form.get("key_grip_contact_id") else None
+    project.production_id = prod_id
+    project.pilot_contact_id = _parse_int(form.get("pilot_contact_id"))
+    project.production_contact_id = _parse_int(form.get("production_contact_id"))
+    project.dop_contact_id = _parse_int(form.get("dop_contact_id"))
+    project.first_ac_contact_id = _parse_int(form.get("first_ac_contact_id"))
+    project.key_grip_contact_id = _parse_int(form.get("key_grip_contact_id"))
     project.notes = form.get("notes")
-    project.departure_date = _parse_date(form.get("departure_date"))
-    project.shoot_start_date = _parse_date(form.get("shoot_start"))
-    project.shoot_end_date = _parse_date(form.get("shoot_end"))
-    project.return_date = _parse_date(form.get("return_date"))
+    project.departure_date = departure_date
+    project.shoot_start_date = shoot_start_date
+    project.shoot_end_date = shoot_end_date
+    project.return_date = return_date
+    project.date_mode = date_mode
+    project.is_immobilized_between = is_immobilized
+    project.shoot_dates = shoot_dates
+    project.inter_shoot_statuses = _parse_inter_shoot_statuses(form) if date_mode == "punctual" else None
     project.vehicles_to_check = ",".join(veh_ids)
     project.heads_to_check = ",".join(head_ids)
     project.last_action_by_id = user_id
@@ -498,6 +693,14 @@ def get_project_for_edit(record_id):
         "shoot_start_raw": str(p.shoot_start_date) if p.shoot_start_date else "",
         "shoot_end_raw": str(p.shoot_end_date) if p.shoot_end_date else "",
         "return_date_raw": str(p.return_date) if p.return_date else "",
+        "date_mode": p.date_mode or "continuous",
+        "is_punctual": p.is_punctual,
+        "is_immobilized_between": p.is_immobilized_between if p.is_immobilized_between is not None else True,
+        "shoot_dates": p.shoot_dates or [],
+        "shoot_dates_json": json.dumps(p.shoot_dates or []),
+        "inter_shoot_statuses": p.inter_shoot_statuses or [],
+        "inter_shoot_statuses_json": json.dumps(p.inter_shoot_statuses or []),
+        "inter_shoot_intervals": p.get_inter_shoot_intervals() if p.is_punctual else [],
         "production_id": str(p.production_id) if p.production_id else "",
         "pilot_contact_id": str(p.pilot_contact_id) if p.pilot_contact_id else "",
         "production_contact_id": str(p.production_contact_id) if p.production_contact_id else "",

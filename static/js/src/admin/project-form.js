@@ -283,6 +283,9 @@
             conflictCheckTimer = setTimeout(function () {
                 const startDate = $('#departure_date_input').val() || $('#shoot_start_input').val();
                 const endDate = $('#return_date_input').val() || $('#shoot_end_input').val() || startDate;
+                const dateMode = $('#date_mode_input').val() || 'continuous';
+                const isImmobilized = $('#is_immobilized_between_input').val() !== 'false';
+                const shootDates = $('#shoot_dates_input').val() || '[]';
 
                 const selectedVehicles = [];
                 $('input[name="vehicle_ids"]:checked').each(function () {
@@ -301,6 +304,14 @@
                     return;
                 }
 
+                let interShootStatuses = [];
+                const interStatusesVal = $('#inter_shoot_statuses_input').val();
+                if (interStatusesVal) {
+                    try {
+                        interShootStatuses = JSON.parse(interStatusesVal);
+                    } catch (e) {}
+                }
+
                 const csrfToken = $('input[name="csrf_token"]').val();
 
                 $.ajax({
@@ -313,6 +324,10 @@
                     data: JSON.stringify({
                         start_date: startDate,
                         end_date: endDate,
+                        date_mode: dateMode,
+                        is_immobilized_between: isImmobilized,
+                        shoot_dates: shootDates,
+                        inter_shoot_statuses: interShootStatuses,
                         vehicle_ids: selectedVehicles,
                         head_ids: selectedHeads,
                         project_id: currentProjectId || null
@@ -358,12 +373,21 @@
         }
 
         $('input[name="vehicle_ids"], input[name="head_ids"]').on('change', checkBookingConflicts);
-        $('#departure_date_input, #shoot_start_input, #shoot_end_input, #return_date_input').on('change', checkBookingConflicts);
+        $('#departure_date_input, #shoot_start_input, #shoot_end_input, #return_date_input, #date_mode_input, #is_immobilized_between_input, #shoot_dates_input, #inter_shoot_statuses_input').on('change', checkBookingConflicts);
 
         // Observer les inputs cachés modifiés par ProjectTimelineDatePicker
         if (window.MutationObserver) {
             const dateObserver = new MutationObserver(checkBookingConflicts);
-            ['departure_date_input', 'shoot_start_input', 'shoot_end_input', 'return_date_input'].forEach(function (id) {
+            [
+                'departure_date_input',
+                'shoot_start_input',
+                'shoot_end_input',
+                'return_date_input',
+                'date_mode_input',
+                'is_immobilized_between_input',
+                'shoot_dates_input',
+                'inter_shoot_statuses_input'
+            ].forEach(function (id) {
                 const el = document.getElementById(id);
                 if (el) {
                     dateObserver.observe(el, { attributes: true, attributeFilter: ['value'] });

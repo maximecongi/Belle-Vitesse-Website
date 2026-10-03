@@ -35,6 +35,38 @@ logger = logging.getLogger(__name__)
 # ── Aides Internes Génériques ──────────────────────────────────────
 
 
+def _format_project_shooting_dates(p, default_sep=" au "):
+    """Formate les dates de tournage selon le mode (continu ou ponctuel) et l'immobilisation."""
+    if not p:
+        return "—"
+    if getattr(p, "date_mode", None) == "punctual" and p.shoot_dates:
+        try:
+            dates = [datetime.strptime(d, "%Y-%m-%d").strftime("%d/%m/%Y") for d in sorted(p.shoot_dates)]
+            joined = ", ".join(dates)
+            intervals = p.get_inter_shoot_intervals() if hasattr(p, "get_inter_shoot_intervals") else []
+            if intervals:
+                immob_count = sum(1 for i in intervals if i.get("is_immobilized"))
+                if immob_count == len(intervals):
+                    immob_suffix = " (Immobilisé)"
+                elif immob_count == 0:
+                    immob_suffix = " (Non immobilisé)"
+                else:
+                    immob_suffix = f" (Mixte : {immob_count} immobilisé(s), {len(intervals) - immob_count} relâché(s))"
+            else:
+                immob_suffix = " (Immobilisé)" if getattr(p, "is_immobilized_between", True) else " (Non immobilisé)"
+            return f"{joined}{immob_suffix}"
+        except Exception:
+            pass
+    if p.shoot_start_date and p.shoot_end_date:
+        if p.shoot_start_date == p.shoot_end_date:
+            return p.shoot_start_date.strftime("%d/%m/%Y")
+        return f"{p.shoot_start_date.strftime('%d/%m/%Y')}{default_sep}{p.shoot_end_date.strftime('%d/%m/%Y')}"
+    elif p.shoot_start_date:
+        return p.shoot_start_date.strftime("%d/%m/%Y")
+    return "—"
+
+
+
 def _get_waiver_config(mode):
     """
     Retourne la configuration (modèles, routes) selon le type de décharge (pilote ou production).
@@ -153,8 +185,7 @@ def create_production_waiver(project_id):
         waiver.production_name = p.production.name
         waiver.production_address = p.production.address
 
-    if p.shoot_start_date and p.shoot_end_date:
-        waiver.shooting_dates = f"{p.shoot_start_date.strftime('%d/%m/%Y')} au {p.shoot_end_date.strftime('%d/%m/%Y')}"
+    waiver.shooting_dates = _format_project_shooting_dates(p, default_sep=" au ")
 
     if p.vehicles_to_check:
         veh_ids = [v.strip()
@@ -227,11 +258,7 @@ def list_production_waivers():
             token = generate_waiver_pdf_access_token(clean_path)
             return f"/production-waiver/document/{clean_path}?t={token}"
 
-        shooting_dates = "—"
-        if p.shoot_start_date and p.shoot_end_date:
-            shooting_dates = f"{p.shoot_start_date.strftime('%d/%m/%Y')} → {p.shoot_end_date.strftime('%d/%m/%Y')}"
-        elif w.shooting_dates:
-            shooting_dates = w.shooting_dates
+        shooting_dates = w.shooting_dates or _format_project_shooting_dates(p, default_sep=" → ")
 
         # Récupère le jeton de signature actif si existant
         active_token = ProductionWaiverToken.query.filter_by(
@@ -283,8 +310,7 @@ def generate_production_waiver(waiver_id):
         waiver.production_name = p.production.name
         waiver.production_address = p.production.address
 
-    if p.shoot_start_date and p.shoot_end_date:
-        waiver.shooting_dates = f"{p.shoot_start_date.strftime('%d/%m/%Y')} au {p.shoot_end_date.strftime('%d/%m/%Y')}"
+    waiver.shooting_dates = _format_project_shooting_dates(p, default_sep=" au ")
 
     if p.vehicles_to_check:
         veh_ids = [v.strip()
@@ -446,8 +472,7 @@ def create_pilot_waiver(project_id):
         waiver.pilot_last_name = contact.last_name
         waiver.pilot_address = getattr(contact, 'address', "")
 
-    if p.shoot_start_date and p.shoot_end_date:
-        waiver.shooting_dates = f"{p.shoot_start_date.strftime('%d/%m/%Y')} au {p.shoot_end_date.strftime('%d/%m/%Y')}"
+    waiver.shooting_dates = _format_project_shooting_dates(p, default_sep=" au ")
 
     if p.vehicles_to_check:
         veh_ids = [v.strip()
@@ -533,11 +558,7 @@ def list_pilot_waivers():
             pilote_name = f"{w.pilot_first_name or ''} {w.pilot_last_name or ''}".strip(
             )
 
-        shooting_dates = "—"
-        if p.shoot_start_date and p.shoot_end_date:
-            shooting_dates = f"{p.shoot_start_date.strftime('%d/%m/%Y')} → {p.shoot_end_date.strftime('%d/%m/%Y')}"
-        elif w.shooting_dates:
-            shooting_dates = w.shooting_dates
+        shooting_dates = w.shooting_dates or _format_project_shooting_dates(p, default_sep=" → ")
 
         # Récupère le jeton de signature actif si existant
         active_token = PilotWaiverToken.query.filter_by(
@@ -591,8 +612,7 @@ def generate_pilot_waiver(waiver_id):
         waiver.production_name = p.production.name
     waiver.project_name = p.name
 
-    if p.shoot_start_date and p.shoot_end_date:
-        waiver.shooting_dates = f"{p.shoot_start_date.strftime('%d/%m/%Y')} au {p.shoot_end_date.strftime('%d/%m/%Y')}"
+    waiver.shooting_dates = _format_project_shooting_dates(p, default_sep=" au ")
 
     if p.vehicles_to_check:
         veh_ids = [v.strip()

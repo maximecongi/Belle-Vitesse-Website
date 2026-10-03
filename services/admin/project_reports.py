@@ -218,8 +218,62 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
                 for h in (project.heads_to_check or "").split(",") if h.strip()]
 
     # Statut opérationnel du projet : strictement aligné sur la charte officielle BV
+    from services.admin.conflicts import _parse_date
     today_date = date.today()
-    if project.shoot_start_date and project.shoot_end_date:
+    is_punctual = (getattr(project, "date_mode", None) == "punctual")
+    shoot_dates = getattr(project, "shoot_dates", None) or []
+    is_immob = getattr(project, "is_immobilized_between", True)
+
+    if is_punctual and shoot_dates:
+        today_iso = today_date.isoformat()
+        first_shoot = _parse_date(shoot_dates[0])
+        last_shoot = _parse_date(shoot_dates[-1])
+        ret_d = project.return_date or last_shoot
+
+        if today_iso in shoot_dates:
+            shoot_status = "in_progress"
+            shoot_status_label = "En tournage"
+            shoot_status_id = "in_progress"
+            shoot_status_color = "var(--entity-project, #F59E0B)"
+        elif first_shoot and last_shoot and (first_shoot <= today_date <= last_shoot):
+            inter_intervals = project.get_inter_shoot_intervals() if hasattr(project, "get_inter_shoot_intervals") else []
+            current_inter = None
+            for inter in inter_intervals:
+                if today_iso in inter.get("days", []):
+                    current_inter = inter
+                    break
+            day_immob = current_inter.get("is_immobilized") if current_inter else is_immob
+
+            if day_immob:
+                shoot_status = "in_progress"
+                shoot_status_label = "Immobilisé"
+                shoot_status_id = "in_progress"
+                shoot_status_color = "var(--status-warning, #F59E0B)"
+            else:
+                shoot_status = "upcoming"
+                shoot_status_label = "Relâché (Dispo)"
+                shoot_status_id = "upcoming"
+                shoot_status_color = "var(--status-info, #0284C7)"
+        elif ret_d and today_date > ret_d:
+            shoot_status = "completed"
+            shoot_status_label = "Clôturé"
+            shoot_status_id = "completed"
+            shoot_status_color = "var(--status-neutral, #64748B)"
+        else:
+            shoot_status = "upcoming"
+            shoot_status_label = "À venir"
+            shoot_status_id = "upcoming"
+            shoot_status_color = "var(--status-info, #0284C7)"
+
+        if len(shoot_dates) == 1:
+            shoot_dates_summary = f"Le {format_date_fr(shoot_dates[0])}"
+        elif len(shoot_dates) == 2:
+            shoot_dates_summary = f"Le {format_date_fr(shoot_dates[0])} et le {format_date_fr(shoot_dates[1])}"
+        elif len(shoot_dates) <= 4:
+            shoot_dates_summary = f"{', '.join(format_date_fr(d) for d in shoot_dates[:-1])} et {format_date_fr(shoot_dates[-1])} ({len(shoot_dates)} jours)"
+        else:
+            shoot_dates_summary = f"{len(shoot_dates)} dates ({format_date_fr(shoot_dates[0])} → {format_date_fr(shoot_dates[-1])})"
+    elif project.shoot_start_date and project.shoot_end_date:
         if project.shoot_start_date <= today_date <= project.shoot_end_date:
             shoot_status = "in_progress"
             shoot_status_label = "En tournage"
@@ -235,6 +289,7 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
             shoot_status_label = "À venir"
             shoot_status_id = "upcoming"
             shoot_status_color = "var(--status-info, #0284C7)"
+        shoot_dates_summary = f"{format_date_fr(str(project.shoot_start_date))} → {format_date_fr(str(project.shoot_end_date))}"
     elif project.departure_date and project.return_date:
         if project.departure_date <= today_date <= project.return_date:
             shoot_status = "in_progress"
@@ -251,11 +306,13 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
             shoot_status_label = "À venir"
             shoot_status_id = "upcoming"
             shoot_status_color = "var(--status-info, #0284C7)"
+        shoot_dates_summary = f"{format_date_fr(str(project.departure_date))} → {format_date_fr(str(project.return_date))}"
     else:
         shoot_status = "upcoming"
         shoot_status_label = "À venir"
         shoot_status_id = "upcoming"
         shoot_status_color = "var(--status-info, #0284C7)"
+        shoot_dates_summary = "Dates à confirmer"
 
     # Formattage des rapports avec permissions de modification et suppression
     now = datetime.now(timezone.utc)
@@ -356,6 +413,12 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
         "shoot_start_fr": format_date_fr(str(project.shoot_start_date)) if project.shoot_start_date else "—",
         "shoot_end_fr": format_date_fr(str(project.shoot_end_date)) if project.shoot_end_date else "—",
         "return_date_fr": format_date_fr(str(project.return_date)) if project.return_date else "—",
+        "date_mode": getattr(project, "date_mode", "continuous") or "continuous",
+        "is_punctual": is_punctual,
+        "is_immobilized_between": bool(is_immob),
+        "shoot_dates": shoot_dates,
+        "shoot_dates_summary": shoot_dates_summary,
+        "inter_shoot_intervals": project.get_inter_shoot_intervals() if is_punctual else [],
         "vehicles": [_format_vehicle_state(project, vid, vehicle_map) for vid in veh_ids],
         "heads": [{
             "id": hid,

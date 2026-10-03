@@ -86,9 +86,13 @@ initials, empty_state, waiver_card, doc_download_badge %}
                     title="Période effective du tournage">
                     <span class="project-date-step-icon">🎥</span>
                     <div class="project-date-step-body">
-                        <span class="project-date-step-lbl">Tournage</span>
+                        <span class="project-date-step-lbl">
+                            Tournage
+                        </span>
                         <span class="project-date-step-val">
-                            {% if shoot_start_fr != '—' and shoot_end_fr != '—' %}
+                            {% if is_punctual and shoot_dates_summary %}
+                            {{ shoot_dates_summary }}
+                            {% elif shoot_start_fr != '—' and shoot_end_fr != '—' %}
                             {{ shoot_start_fr }} → {{ shoot_end_fr }}
                             {% elif shoot_start_fr != '—' %}
                             À partir du {{ shoot_start_fr }}
@@ -108,6 +112,22 @@ initials, empty_state, waiver_card, doc_download_badge %}
                         <span class="project-date-step-val">{{ return_date_fr }}</span>
                     </div>
                 </div>
+
+                {% if is_punctual %}
+                <span class="project-date-sep">|</span>
+
+                <div class="project-date-step" title="Disponibilité du matériel entre les dates de tournage">
+                    <span class="project-date-step-icon">{% if inter_shoot_intervals %}{% set immob_count =
+                        inter_shoot_intervals|selectattr('is_immobilized')|list|length %}{% if immob_count ==
+                        inter_shoot_intervals|length %}🔒{% elif immob_count == 0 %}🔄{% else %}⚙️{% endif %}{% else
+                        %}{% if is_immobilized_between %}🔒{% else %}🔄{% endif %}{% endif %}</span>
+                    <div class="project-date-step-body">
+                        <span class="project-date-step-lbl">Inter-dates</span>
+                        <span class="project-date-step-val">
+                        </span>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
 
@@ -224,7 +244,7 @@ initials, empty_state, waiver_card, doc_download_badge %}
                                 <a
                                     href="{{ url_for('admin_checkouts.admin_checkout_detail', record_id=v.checkout_id) }}">
                                     {{ status_badge(v.checkout_status, v.checkout_status_id, class_name='u-m-1',
-                                     **{'data-conform': v.checkout_conform}) }}
+                                    **{'data-conform': v.checkout_conform}) }}
                                 </a>
                                 {{ doc_download_badge(v.checkout_pdf) }}
                             </div>
@@ -597,7 +617,8 @@ initials, empty_state, waiver_card, doc_download_badge %}
                 pilot_waiver.pilot_name,
                 url_for('admin_waivers.admin_pilot_waivers_list', q=pilot_waiver.waiver_num),
                 url_for('admin_waivers.admin_pilot_waiver_quick_create', project_id=project.id),
-                url_for('admin_waivers.admin_pilot_waiver_send', waiver_id=pilot_waiver.waiver_num or pilot_waiver.id) if (pilot_waiver.waiver_num or pilot_waiver.id) else None
+                url_for('admin_waivers.admin_pilot_waiver_send', waiver_id=pilot_waiver.waiver_num or pilot_waiver.id)
+                if (pilot_waiver.waiver_num or pilot_waiver.id) else None
                 ) }}
 
                 {{ waiver_card(
@@ -608,7 +629,8 @@ initials, empty_state, waiver_card, doc_download_badge %}
                 production_waiver.production_name,
                 url_for('admin_waivers.admin_production_waivers_list', q=production_waiver.waiver_num),
                 url_for('admin_waivers.admin_production_waiver_quick_create', project_id=project.id),
-                url_for('admin_waivers.admin_production_waiver_send', waiver_id=production_waiver.waiver_num or production_waiver.id) if (production_waiver.waiver_num or production_waiver.id) else None
+                url_for('admin_waivers.admin_production_waiver_send', waiver_id=production_waiver.waiver_num or
+                production_waiver.id) if (production_waiver.waiver_num or production_waiver.id) else None
                 ) }}
             </div>
 

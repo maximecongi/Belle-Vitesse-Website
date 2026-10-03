@@ -3,7 +3,7 @@ Routes admin pour le calendrier de booking matériel.
 Affiche un diagramme Gantt des réservations par équipement.
 """
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from flask import Blueprint, jsonify, render_template, request
 from sqlalchemy.orm import joinedload
@@ -92,6 +92,26 @@ def admin_booking_data():
         if not end:
             end = start
 
+        # Déterminer les plages de réservation effectives (regroupement de jours bloqués continus)
+        active_spans = []
+        if getattr(project, "date_mode", None) == "punctual" and hasattr(project, "effective_blocked_dates"):
+            blocked_sorted = sorted(list(project.effective_blocked_dates))
+            if blocked_sorted:
+                cur_start = blocked_sorted[0]
+                cur_end = blocked_sorted[0]
+                for next_d in blocked_sorted[1:]:
+                    if next_d == cur_end + timedelta(days=1):
+                        cur_end = next_d
+                    else:
+                        active_spans.append((cur_start, cur_end))
+                        cur_start = next_d
+                        cur_end = next_d
+                active_spans.append((cur_start, cur_end))
+            else:
+                active_spans.append((start, end))
+        else:
+            active_spans.append((start, end))
+
         # Récupérer les items assignés à ce projet et les dédupliquer
         raw_value = getattr(project, field_name, "") or ""
         assigned_ids = list(set([v.strip() for v in raw_value.split(",") if v.strip()]))
@@ -100,20 +120,23 @@ def admin_booking_data():
 
         for assigned_id in assigned_ids:
             if assigned_id in filtered_items:
-                bookings.append({
-                    "item_id": assigned_id,
-                    "project_id": project.id,
-                    "project_code": project.project_id,
-                    "project_name": project.name or "Sans nom",
-                    "production": project.production.name if project.production else "—",
-                    "start": start.isoformat(),
-                    "end": end.isoformat(),
-                    "departure_date": project.departure_date.isoformat() if project.departure_date else None,
-                    "shoot_start": project.shoot_start_date.isoformat() if project.shoot_start_date else None,
-                    "shoot_end": project.shoot_end_date.isoformat() if project.shoot_end_date else None,
-                    "return_date": project.return_date.isoformat() if project.return_date else None,
-                    "color": color,
-                })
+                for span_start, span_end in active_spans:
+                    bookings.append({
+                        "item_id": assigned_id,
+                        "project_id": project.id,
+                        "project_code": project.project_id,
+                        "project_name": project.name or "Sans nom",
+                        "production": project.production.name if project.production else "—",
+                        "start": span_start.isoformat(),
+                        "end": span_end.isoformat(),
+                        "departure_date": project.departure_date.isoformat() if project.departure_date else None,
+                        "shoot_start": project.shoot_start_date.isoformat() if project.shoot_start_date else None,
+                        "shoot_end": project.shoot_end_date.isoformat() if project.shoot_end_date else None,
+                        "return_date": project.return_date.isoformat() if project.return_date else None,
+                        "date_mode": getattr(project, "date_mode", "continuous"),
+                        "is_immobilized_between": getattr(project, "is_immobilized_between", True),
+                        "color": color,
+                    })
 
     # Liste des items pour le dropdown
     items_list = [

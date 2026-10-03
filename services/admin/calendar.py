@@ -53,6 +53,10 @@ def get_calendar_events():
         if ret_d:
             class_names.append("has-checkin")
             class_names.append("fc-event--checkin")
+        if getattr(r, "date_mode", "continuous") == "punctual":
+            class_names.append("fc-event--punctual")
+            if not getattr(r, "is_immobilized_between", True):
+                class_names.append("fc-event--not-immobilized")
 
         events.append({
             "id": f"project-{r.id}",
@@ -66,6 +70,9 @@ def get_calendar_events():
                 "projectId": r.project_id or "",
                 "projectName": name,
                 "production": production_name,
+                "dateMode": getattr(r, "date_mode", "continuous"),
+                "isImmobilized": getattr(r, "is_immobilized_between", True),
+                "shootDates": r.shoot_dates or [],
                 "departureDate": dep_d.isoformat() if dep_d else None,
                 "shootStartDate": shoot_start.isoformat() if shoot_start else None,
                 "shootEndDate": shoot_end.isoformat() if shoot_end else None,

@@ -79,7 +79,10 @@ function initCalendar() {
 
                 const tips = [`Projet : ${projectName}${production ? ' (' + production + ')' : ''}`];
                 if (depDate) tips.push(`Départ : ${formatDateFr(depDate)}`);
-                if (shootStart) {
+                if (props.dateMode === 'punctual' && Array.isArray(props.shootDates) && props.shootDates.length > 0) {
+                    const immobStr = props.isImmobilized ? 'Immobilisé' : 'Relâché';
+                    tips.push(`Tournage ponctuel : ${props.shootDates.map(formatDateFr).join(', ')} (${immobStr})`);
+                } else if (shootStart) {
                     const shootEndStr = shootEnd && shootEnd !== shootStart ? ` au ${formatDateFr(shootEnd)}` : '';
                     tips.push(`Tournage : du ${formatDateFr(shootStart)}${shootEndStr}`);
                 }
@@ -155,7 +158,36 @@ function initCalendar() {
                 }
 
                 // 2. JALON TOURNAGE (Ambre)
-                if (shootStart && shootEnd) {
+                if (props.dateMode === 'punctual' && Array.isArray(props.shootDates) && props.shootDates.length > 0) {
+                    props.shootDates.forEach((sDate) => {
+                        const sColIdx = segDates.indexOf(sDate);
+                        if (sColIdx !== -1) {
+                            const left = (sColIdx / totalCols) * 100;
+                            const width = (1 / totalCols) * 100;
+
+                            let shootPrefix = '';
+                            if (depDate === sDate) {
+                                shootPrefix = `<span class="fc-phase-coincide fc-phase-coincide--checkout" title="Départ : ${escapeHtml(depDate)}">${truckSvg}</span>`;
+                            }
+
+                            let shootSuffix = '';
+                            if (retDate === sDate) {
+                                shootSuffix = `<span class="fc-phase-coincide fc-phase-coincide--checkin" title="Retour : ${escapeHtml(retDate)}">${checkinSvg}</span>`;
+                            }
+
+                            badgesHtml += `
+                                <span class="fc-phase-badge fc-phase-badge--project"
+                                      style="left: calc(${left}% + 1px); width: calc(${width}% - 2px);"
+                                      title="Tournage : ${formatDateFr(sDate)}">
+                                    ${shootPrefix}
+                                    <span class="fc-phase-badge__icon">${clapperSvg}</span>
+                                    <span class="fc-phase-badge__title">${escapeHtml(projectName)}</span>
+                                    ${shootSuffix}
+                                </span>
+                            `;
+                        }
+                    });
+                } else if (shootStart && shootEnd) {
                     const shootIndices = [];
                     segDates.forEach((d, idx) => {
                         if (d >= shootStart && d <= shootEnd) {

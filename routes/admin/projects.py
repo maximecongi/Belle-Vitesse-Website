@@ -352,12 +352,39 @@ def admin_api_check_conflicts():
         if str(exclude_id).strip() in ("", "null", "None", "undefined"):
             exclude_id = None
 
+        date_mode = payload.get("date_mode", "continuous")
+        is_immob = payload.get("is_immobilized_between")
+        if is_immob is None:
+            is_immob = True
+        else:
+            is_immob = True if str(is_immob).lower() in ("true", "1", "yes", "on") else False
+
+        shoot_dates = payload.get("shoot_dates")
+        if isinstance(shoot_dates, str):
+            import json
+            try:
+                shoot_dates = json.loads(shoot_dates)
+            except Exception:
+                shoot_dates = [s.strip() for s in shoot_dates.split(",") if s.strip()]
+
+        inter_shoot_statuses = payload.get("inter_shoot_statuses")
+        if isinstance(inter_shoot_statuses, str):
+            import json
+            try:
+                inter_shoot_statuses = json.loads(inter_shoot_statuses)
+            except Exception:
+                inter_shoot_statuses = []
+
         result = check_booking_conflicts(
             start_date_val=start_date,
             end_date_val=end_date,
             vehicle_ids=vehicle_ids,
             head_ids=head_ids,
             exclude_project_id=exclude_id,
+            date_mode=date_mode,
+            is_immobilized_between=is_immob,
+            shoot_dates=shoot_dates,
+            inter_shoot_statuses=inter_shoot_statuses,
         )
         return jsonify({"status": "success", "data": result}), 200
     except Exception as e:
