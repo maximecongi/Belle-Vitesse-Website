@@ -49,9 +49,10 @@ class CalendarFeedTestCase(unittest.TestCase):
             )
             db.session.add(self.user)
             db.session.commit()
+            self.user_id = self.user.id
 
             self.sub = CalendarSubscription(
-                user_id=self.user.id,
+                user_id=self.user_id,
                 token="valid_test_token_12345",
                 is_active=True,
             )
@@ -96,12 +97,32 @@ class CalendarFeedTestCase(unittest.TestCase):
             db.drop_all()
 
     def test_calendar_feed_invalid_token(self):
-        """Vérifie qu'un token inexistant ou inactif retourne 404."""
+        """Vérifie qu'un token inexistant retourne 404."""
         resp = self.client.get("/cal/unknown_token.ics")
         self.assertEqual(resp.status_code, 404)
 
+        # Un token révoqué pour un utilisateur ayant un token actif est redirigé (302)
         resp_revoked = self.client.get("/cal/revoked_token_67890.ics")
-        self.assertEqual(resp_revoked.status_code, 404)
+        self.assertEqual(resp_revoked.status_code, 302)
+        self.assertIn("valid_test_token_12345", resp_revoked.headers.get("Location", ""))
+
+        # Suivre la redirection renvoie 200
+        resp_followed = self.client.get("/cal/revoked_token_67890.ics", follow_redirects=True)
+        self.assertEqual(resp_followed.status_code, 200)
+
+        # Si l'utilisateur n'a aucun token actif, renvoie 404
+        with self.app.app_context():
+            CalendarSubscription.query.filter_by(user_id=self.user_id).update({"is_active": False})
+            db.session.commit()
+
+        resp_no_active = self.client.get("/cal/revoked_token_67890.ics")
+        self.assertEqual(resp_no_active.status_code, 404)
+
+    def test_calendar_feed_alias_route(self):
+        """Vérifie que la route alias /calendar/feed.ics?token=... fonctionne."""
+        resp = self.client.get("/calendar/feed.ics?token=valid_test_token_12345")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.mimetype, "text/calendar")
 
     def test_calendar_feed_continuous_project(self):
         """Vérifie la génération d'un projet continu (départ, tournage continu, retour)."""

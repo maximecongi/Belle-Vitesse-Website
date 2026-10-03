@@ -5,7 +5,7 @@ Accessible via un token unique dans l'URL : GET /cal/<token>.ics
 from datetime import datetime, timedelta
 import os
 
-from flask import Blueprint, Response, abort, current_app, request
+from flask import Blueprint, Response, abort, current_app, redirect, request, url_for
 from icalendar import Calendar, Event
 from sqlalchemy.orm import joinedload
 
@@ -154,16 +154,34 @@ def _build_event_description(project, phase_title, vehicle_map=None, head_map=No
 
 @cal_feed_bp.route("/cal/<token>")
 @cal_feed_bp.route("/cal/<token>.ics")
+@cal_feed_bp.route("/calendar/feed.ics")
+@cal_feed_bp.route("/calendar/feed")
 @limiter.limit("30 per hour")
-def calendar_feed(token):
+def calendar_feed(token=None):
     """Génère dynamiquement un flux ICS à partir des projets en base."""
 
-    # 1. Valider le token d'abonnement
-    sub = CalendarSubscription.query.filter_by(
-        token=token, is_active=True
-    ).first()
+    # Si token non présent dans l'URL (ex: /calendar/feed.ics?token=xxx)
+    if not token:
+        token = request.args.get("token")
 
+    if not token:
+        abort(404)
+
+    # 1. Valider le token d'abonnement
+    sub = CalendarSubscription.query.filter_by(token=token).first()
     if not sub:
+        abort(404)
+
+    # Si le token a été révoqué ou régénéré, chercher si l'utilisateur possède un nouvel abonnement actif
+    if not sub.is_active:
+        active_sub = CalendarSubscription.query.filter_by(
+            user_id=sub.user_id, is_active=True
+        ).order_by(CalendarSubscription.id.desc()).first()
+        if active_sub:
+            current_app.logger.info(
+                f"🔄 Redirection d'un ancien token révoqué ({token[:8]}...) vers le token actif ({active_sub.token[:8]}...) pour l'utilisateur {sub.user_id}"
+            )
+            return redirect(url_for("cal_feed.calendar_feed", token=active_sub.token), code=302)
         abort(404)
 
     # 2. Mettre à jour la date de dernier accès

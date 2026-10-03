@@ -1841,7 +1841,6 @@ input[type="checkbox"]:checked {
 
     /* Amélioration des zones tactiles sur boutons d'action */
     .admin-btn {
-        min-height: 40px;
         touch-action: manipulation;
     }
 

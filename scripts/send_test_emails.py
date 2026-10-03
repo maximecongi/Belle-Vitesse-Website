@@ -44,9 +44,9 @@ def generate_qr_code(data_str: str) -> str:
 
 def get_all_test_emails():
     now_year = datetime.now(timezone.utc).year
-    feed_url = "https://bellevitesse.com/calendar/feed.ics?token=demo_test_token"
-    webcal_url = "webcal://bellevitesse.com/calendar/feed.ics?token=demo_test_token"
-    qr_b64 = generate_qr_code(webcal_url)
+    feed_url = "https://bellevitesse.com/cal/demo_test_token.ics"
+    webcal_url = "webcal://bellevitesse.com/cal/demo_test_token.ics"
+    qr_b64 = generate_qr_code(feed_url)
 
     emails = [
         # 1. Connexion Admin (Magic link)

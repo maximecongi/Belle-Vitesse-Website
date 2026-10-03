@@ -146,8 +146,8 @@ def get_demo_email_data(mail_type: str) -> dict:
             "subject": "Votre calendrier des projets Belle Vitesse",
             "context": {
                 "user_name": "Maxime Congi",
-                "feed_url": "https://bellevitesse.com/calendar/feed.ics?token=demo_token",
-                "webcal_url": "webcal://bellevitesse.com/calendar/feed.ics?token=demo_token",
+                "feed_url": "https://bellevitesse.com/cal/demo_token.ics",
+                "webcal_url": "webcal://bellevitesse.com/cal/demo_token.ics",
                 "qrcode_base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
                 "now_year": now_year,
             },

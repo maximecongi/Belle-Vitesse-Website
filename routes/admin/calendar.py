@@ -171,6 +171,14 @@ def admin_calendar_regenerate():
         name = f"{user.firstname} {user.lastname}" if user else f"ID {user_id}"
         flash(
             f"Lien calendrier régénéré pour {name}. L'ancien lien ne fonctionne plus.", "success")
+
+        # Envoyer automatiquement le nouveau lien par email
+        if user and user.mail:
+            feed_url, webcal_url = _get_public_feed_urls(sub.token)
+            if send_calendar_invitation_email(user.mail, f"{user.firstname} {user.lastname}", feed_url):
+                flash(f"Nouveau lien calendrier envoyé par email à {user.mail}.", "info")
+            else:
+                flash("Erreur lors de l'envoi de l'email d'invitation.", "warning")
     else:
         flash("Erreur lors de la régénération du lien calendrier.", "error")
 

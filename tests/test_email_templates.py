@@ -168,6 +168,8 @@ class EmailTemplatesTest(unittest.TestCase):
             self.assertIn("instructions-card", html)
             self.assertIn(
                 "webcal://bellevitesse.com/calendar/feed.ics?token=cal123", html)
+            self.assertIn(
+                '<a href="https://bellevitesse.com/calendar/feed.ics?token=cal123"', html)
             self.assertIn("blanc-fond-transparent.png", html)
 
     def test_newsletter_welcome_rendering(self):
