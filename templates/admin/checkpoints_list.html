@@ -79,14 +79,15 @@
                     <td class="u-font-semibold">
                         {{ cp.label }}
                         {% if cp.type == 'value' %}
-                        <span class="badge-pill u-ml-1" data-val="neutral" title="Saisie d'une valeur ou mesure">Mesure{% if cp.unit %} ({{ cp.unit }}){% endif %}</span>
+                        <span class="checkpoint-unit-badge u-ml-1"
+                            title="Saisie d'une valeur ou mesure">Mesure{% if cp.unit %} ({{ cp.unit }}){% endif %}</span>
                         {% endif %}
                         {% if cp.has_protocol %}
-                        <span class="vehicle-modal-trigger u-cursor-pointer u-ml-1 u-text-xs u-vertical-middle"
+                        <span class="vehicle-modal-trigger u-cursor-pointer u-ml-1 u-text-info u-inline-flex u-align-center u-vertical-middle"
                             data-protocol-url="{{ cp.protocol_url or url_for('admin_tools.admin_check_vehicles') }}"
                             title="Protocole technique disponible (cliquer pour ouvrir)">
-                            <img src="{{ url_for('static', filename='imgs/icons/information.svg') }}"
-                                alt="Protocole" class="u-w-1rem u-h-1rem"></span>
+                            <i data-lucide="info" class="u-w-1rem u-h-1rem"></i>
+                        </span>
                         {% endif %}
                     </td>
                     <td>
@@ -102,6 +103,7 @@
                     <td>
                         {% if cp.enabled_count == 0 %}
                         <span class="u-text-muted">—</span>
+                        {# Crée un bagde vert "Tous" si tous les véhicules sont concernés par ce point de contrôle #}
                         {# {% elif cp.enabled_count == cp.total_vehicles %}
                         <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
                             <span class="badge-pill" data-val="ok"
@@ -188,129 +190,4 @@
         </div>
     </div>
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // ── Recherche & Filtres ──
-        var searchInput = document.getElementById('searchInput') || document.getElementById('checkpointSearch');
-        var filterPills = document.querySelectorAll('#checkpoint-filter-pills .filter-pill');
-        var noResultsRow = document.getElementById('checkpoint-no-results');
-        var visibleCountEl = document.getElementById('checkpoint-visible-count');
-        var activeCategory = 'all';
-        var searchQuery = '';
-        var tbody = document.getElementById('checkpointsTableBody');
-
-        function normalizeStr(str) {
-            return (str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-        }
-
-        function filterRows() {
-            var count = 0;
-            var normalizedQuery = normalizeStr(searchQuery);
-            var normActiveCategory = normalizeStr(activeCategory);
-            var visiblePerCategory = {};
-
-            var allRows = tbody.querySelectorAll('.checkpoint-row');
-            allRows.forEach(function (row) {
-                var cat = normalizeStr(row.getAttribute('data-category') || '');
-                var text = normalizeStr(row.getAttribute('data-search') || '');
-
-                var matchesCategory = (normActiveCategory === 'all' || cat === normActiveCategory);
-                var matchesSearch = (!normalizedQuery || text.indexOf(normalizedQuery) !== -1);
-                var show = matchesCategory && matchesSearch;
-
-                row.classList.toggle('u-d-none', !show);
-                if (show) {
-                    count++;
-                    visiblePerCategory[cat] = (visiblePerCategory[cat] || 0) + 1;
-                }
-            });
-
-            var catHeaders = tbody.querySelectorAll('.checkpoint-category-header');
-            catHeaders.forEach(function (header) {
-                var cat = normalizeStr(header.getAttribute('data-category') || '');
-                var hasVisibleRows = (visiblePerCategory[cat] || 0) > 0;
-                var matchesCategoryFilter = (normActiveCategory === 'all' || cat === normActiveCategory);
-                var showHeader = hasVisibleRows && matchesCategoryFilter;
-                header.classList.toggle('u-d-none', !showHeader);
-                if (showHeader) {
-                    var countSpan = header.querySelector('.checkpoint-cat-count');
-                    if (countSpan) {
-                        countSpan.textContent = visiblePerCategory[cat] || 0;
-                    }
-                }
-            });
-
-            if (visibleCountEl) visibleCountEl.textContent = count;
-            if (noResultsRow) noResultsRow.classList.toggle('u-d-none', count > 0);
-        }
-
-        if (searchInput) {
-            searchInput.addEventListener('input', function (e) {
-                searchQuery = e.target.value;
-                filterRows();
-            });
-        }
-
-        filterPills.forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                filterPills.forEach(function (b) {
-                    b.classList.remove('active', 'admin-btn-primary');
-                    b.classList.add('admin-btn-quaternary');
-                });
-                btn.classList.add('active', 'admin-btn-primary');
-                btn.classList.remove('admin-btn-quaternary');
-                activeCategory = btn.getAttribute('data-category');
-                filterRows();
-            });
-        });
-
-        // ── Gestion de la Modale de Consigne Spécifique ──
-        var modal = document.getElementById('checkpointIndicationModal');
-        var modalVehicle = document.getElementById('modalVehicleName');
-        var modalCheckpoint = document.getElementById('modalCheckpointLabel');
-        var modalIndication = document.getElementById('modalIndicationText');
-        var closeModalBtn = document.getElementById('closeIndicationModal');
-        var closeModalFooterBtn = document.getElementById('closeIndicationModalBtn');
-
-        function openModal(vehicle, checkpoint, indication) {
-            if (!modal) return;
-            modalVehicle.textContent = '🏎️ ' + vehicle;
-            modalCheckpoint.textContent = checkpoint;
-            modalIndication.textContent = indication;
-            modal.classList.add('open');
-            document.body.classList.add('u-overflow-hidden');
-        }
-
-        function closeModal() {
-            if (!modal) return;
-            modal.classList.remove('open');
-            document.body.classList.remove('u-overflow-hidden');
-        }
-
-        document.addEventListener('click', function (e) {
-            var trigger = e.target.closest('.checkpoint-spec-trigger');
-            if (trigger) {
-                e.preventDefault();
-                e.stopPropagation();
-                openModal(
-                    trigger.getAttribute('data-vehicle') || '',
-                    trigger.getAttribute('data-checkpoint') || '',
-                    trigger.getAttribute('data-indication') || ''
-                );
-                return;
-            }
-
-            if (e.target === modal || e.target === closeModalBtn || e.target === closeModalFooterBtn || e.target.closest('#closeIndicationModal')) {
-                closeModal();
-            }
-        });
-
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape' && modal && modal.classList.contains('open')) {
-                closeModal();
-            }
-        });
-    });
-</script>
 {% endblock %}

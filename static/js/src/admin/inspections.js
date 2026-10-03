@@ -97,6 +97,13 @@ function initInspectionForm(checkpointsConfig) {
             });
             groupEl.style.display = hasVisibleField ? '' : 'none';
         });
+
+        if (typeof window.initVehiclesModal === 'function') {
+            window.initVehiclesModal();
+        }
+        if (typeof lucide !== 'undefined' && lucide.createIcons) {
+            lucide.createIcons();
+        }
     }
 
     // Écouter le changement de véhicule et initialiser l'affichage

@@ -89,6 +89,7 @@ function initVehiclesModal() {
         }
     }
 }
+window.initVehiclesModal = initVehiclesModal;
 
 // ── Fonctions utilitaires pour l'éditeur WYSIWYG Notion ──────────────
 

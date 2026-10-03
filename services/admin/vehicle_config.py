@@ -169,6 +169,9 @@ def get_all_checkpoints():
                     "indication": ov.get("indication", "")
                 })
 
+        has_protocol_val = cp.has_protocol_available() if hasattr(cp, "has_protocol_available") else bool(getattr(cp, "has_protocol", False) or cp.key in ("tires", "brakes"))
+        protocol_url_val = getattr(cp, "protocol_url", "") or ""
+
         results.append({
             "id": cp.id,
             "key": cp.key,
@@ -176,6 +179,8 @@ def get_all_checkpoints():
             "category": cp.category,
             "type": cp.type,
             "unit": cp.unit,
+            "has_protocol": has_protocol_val,
+            "protocol_url": protocol_url_val,
             "default_detail": cp.default_detail,
             "detail": cp.default_detail,
             "order": cp.order,
@@ -328,6 +333,8 @@ def create_checkpoint(form_data: dict):
     if cp_type not in ("status", "value"):
         cp_type = "status"
     unit = form_data.get("unit", "").strip() or None
+    if cp_type != "value":
+        unit = None
     has_protocol = bool(form_data.get("has_protocol"))
     protocol_url = form_data.get("protocol_url", "").strip() or None
 
@@ -375,8 +382,10 @@ def update_checkpoint(checkpoint_id: int, form_data: dict) -> bool:
     if unit_val is not None:
         cp.unit = unit_val.strip() or None
 
-    if "has_protocol" in form_data:
-        cp.has_protocol = bool(form_data.get("has_protocol"))
+    if cp.type != "value":
+        cp.unit = None
+
+    cp.has_protocol = bool(form_data.get("has_protocol"))
 
     protocol_url_val = form_data.get("protocol_url")
     if protocol_url_val is not None:
@@ -466,12 +475,36 @@ def delete_checkpoint(checkpoint_id: int) -> tuple[bool, str]:
                 vc.config = cfg
                 flag_modified(vc, "config")
 
+        # 1. Supprimer le point de contrôle et invalider les caches
         db.session.delete(cp)
         db.session.commit()
 
-        # Invalidation des caches
         cache.delete("checkpoint_definitions_all")
         cache.delete("checkpoint_configs")
+
+        # 2. Nettoyer les évaluations orphelines dans les inspections non scellées (in_progress)
+        try:
+            from models import InspectionCheckpoint, CheckoutVehicle, CheckinVehicle
+            from services.admin.utils import _is_ready
+
+            in_progress_checkouts = CheckoutVehicle.query.filter_by(status='in_progress').all()
+            for co in in_progress_checkouts:
+                InspectionCheckpoint.query.filter_by(checkout_id=co.id, checkpoint_key=cp_key).delete()
+                db.session.expire(co, ['checkpoints'])
+                statuses = co.checkpoint_statuses
+                co.vehicle_ready = _is_ready(statuses, co.vehicle_id, is_checkout=True, battery_val=co.battery_level)
+
+            in_progress_checkins = CheckinVehicle.query.filter_by(status='in_progress').all()
+            for ci in in_progress_checkins:
+                InspectionCheckpoint.query.filter_by(checkin_id=ci.id, checkpoint_key=cp_key).delete()
+                db.session.expire(ci, ['checkpoints'])
+                statuses = ci.checkpoint_statuses
+                ci.vehicle_ready = _is_ready(statuses, ci.vehicle_id, is_checkout=False, battery_val=ci.battery_level)
+
+            db.session.commit()
+        except Exception as e_clean:
+            logger.warning(f"⚠️ Nettoyage partiel des inspections lors de la suppression de {cp_key}: {e_clean}")
+
         return True, f"Point de contrôle « {cp_label} » supprimé avec succès."
     except Exception as e:
         db.session.rollback()

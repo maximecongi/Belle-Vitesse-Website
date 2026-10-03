@@ -380,7 +380,43 @@ class FleetTest(unittest.TestCase):
             self.assertNotIn(">⚠️ Modere<", html)
             self.assertNotIn("(Modere)", html)
 
+    def test_checkpoint_type_and_unit_sanitization(self):
+        """Vérifie que l'unité est conservée pour le type value et vidée pour le type status."""
+        from services.admin.vehicle_config import create_checkpoint, update_checkpoint
+        with self.app.app_context():
+            # 1. Création avec type value -> unit conservée
+            cp = create_checkpoint({
+                "label": "Pression turbo",
+                "type": "value",
+                "unit": "bar",
+                "has_protocol": "1",
+            })
+            self.assertIsNotNone(cp)
+            self.assertEqual(cp.type, "value")
+            self.assertEqual(cp.unit, "bar")
+
+            # 2. Mise à jour vers type status -> unit vidée à None
+            ok = update_checkpoint(cp.id, {
+                "label": "Pression turbo",
+                "type": "status",
+                "unit": "bar",
+            })
+            self.assertTrue(ok)
+            self.assertEqual(cp.type, "status")
+            self.assertIsNone(cp.unit)
+
+            # 3. Création directe en status avec unit transmise -> unit doit être None
+            cp_status = create_checkpoint({
+                "label": "Niveau huile",
+                "type": "status",
+                "unit": "litres",
+            })
+            self.assertIsNotNone(cp_status)
+            self.assertEqual(cp_status.type, "status")
+            self.assertIsNone(cp_status.unit)
+
 
 if __name__ == "__main__":
     unittest.main()
+
 

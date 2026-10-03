@@ -316,11 +316,13 @@
     text-align: right !important;
 }
 
-.u-text-bold {
+.u-text-bold,
+.u-font-bold {
     font-weight: 700 !important;
 }
 
-.u-text-semibold {
+.u-text-semibold,
+.u-font-semibold {
     font-weight: 600 !important;
 }
 
@@ -922,6 +924,13 @@ select.form-input.form-input-sm {
     color: var(--status-success-text, #14532D) !important;
 }
 
+.alert-banner-success .lucide {
+    height: 24px;
+    width: 24px;
+    vertical-align: -4px;
+    color: var(--status-success-text);
+}
+
 .alert-banner-desc-success {
     font-size: 0.85rem !important;
     color: var(--status-success-text, #14532D) !important;
@@ -937,9 +946,21 @@ select.form-input.form-input-sm {
     border: 1px solid rgba(239, 68, 68, 0.3) !important;
 }
 
+.alert-banner-danger-content {
+    position: relative;
+    top: 0.5ch;
+    padding-bottom: 0.5ch;
+}
+
 .alert-banner-title-danger {
     font-weight: 600 !important;
     color: var(--status-danger-text, #991b1b) !important;
+}
+
+.alert-banner-danger .lucide {
+    height: 24px;
+    width: 24px;
+    color: var(--status-danger-text);
 }
 
 .alert-banner-desc-danger {

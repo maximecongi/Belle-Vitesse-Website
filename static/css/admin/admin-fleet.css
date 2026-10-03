@@ -396,12 +396,32 @@
     background-color: var(--blue-1);
 }
 
+.checkpoint-row>td:first-child {
+    white-space: nowrap;
+}
+
 .checkpoint-category-title {
     font-size: 0.8rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--grey-1, #151515);
+}
+
+/* ── Badge d'indication de type d'évaluation (Mesure / Valeur) discret ── */
+.checkpoint-unit-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.08rem 0.42rem;
+    font-size: 0.68rem;
+    font-weight: 500;
+    line-height: 1.2;
+    color: var(--grey-2, #495057);
+    background-color: var(--grey-bg, #f8f9fa);
+    border: 1px solid var(--grey-border, #e0e0e0);
+    border-radius: 4px;
+    vertical-align: middle;
+    letter-spacing: 0.01em;
 }
 
 /* Rétrocompatibilité classes historiques */

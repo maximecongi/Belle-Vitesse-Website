@@ -251,11 +251,11 @@
                         <span>
                             {{ label }} <span class="u-text-error">*</span>
                             {% if item.has_protocol %}
-                            <span class="vehicle-modal-trigger u-cursor-pointer u-ml-1 u-text-lg u-vertical-middle"
+                            <span class="vehicle-modal-trigger u-cursor-pointer u-ml-1 u-text-info u-inline-flex u-align-center u-vertical-middle"
                                 data-protocol-url="{{ item.protocol_url or url_for('admin_tools.admin_check_vehicles') }}"
                                 title="Voir le protocole technique pour {{ label }}">
-                                <img src="{{ url_for('static', filename='imgs/icons/information.svg') }}"
-                                    alt="Information" class="u-w-1rem u-h-1rem"></span>
+                                <i data-lucide="info" class="u-w-1rem u-h-1rem"></i>
+                            </span>
                             {% endif %}
                         </span>
                     </label>
@@ -277,7 +277,8 @@
                         {% if item.unit %}<span class="u-text-semibold u-ml-1">{{ item.unit }}</span>{% endif %}
                     </div>
                     {% else %}
-                    {% set current = get_checkpoint_key(data[field]) if data and data[field] and data[field] != '—' else 'warning' %}
+                    {% set current = get_checkpoint_key(data[field]) if data and data[field] and data[field] != '—' else
+                    'warning' %}
                     <div class="badge-select" data-field="{{ field }}">
                         <input type="text" name="{{ field }}" value="{{ current }}" required class="u-hidden-input">
                         <div class="badge-select-trigger badge-trigger-white">
@@ -326,7 +327,7 @@
             {% endif %}
 
             <label class="photo-upload-label">
-                <span class="u-text-xl">📷</span>
+                <span class="u-text-xl"><i data-lucide="camera"></i></span>
                 <div>
                     <div class="u-text-semibold u-text-sm">Ajouter des photos</div>
                     <div class="u-text-xs u-text-muted">Cliquez ou glissez-déposez • JPG, PNG</div>

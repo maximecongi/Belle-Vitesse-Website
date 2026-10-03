@@ -423,6 +423,69 @@ class InspectionsTest(unittest.TestCase):
             self.assertEqual(len(signed_docs), 1)
             self.assertEqual(signed_docs[0].hash, res2["hash"])
 
+    def test_checkpoint_deletion_cleans_in_progress_and_recomputes_readiness(self):
+        """Vérifie que la suppression d'un checkpoint nettoie les inspections en cours et rétablit la conformité."""
+        from services.admin.inspections import apply_inspection_data
+        from services.admin.checkouts import get_checkout_detail
+        from services.admin.vehicle_config import create_checkpoint, delete_checkpoint
+
+        with self.app.app_context(), self.app.test_request_context("/"):
+            user, proj = self._create_mock_data()
+
+            # 1. Créer un checkpoint personnalisé
+            new_cp = create_checkpoint({
+                "label": "Point Temporaire Bug",
+                "category": "Sécurité",
+                "type": "status"
+            })
+            self.assertIsNotNone(new_cp)
+            cp_key = new_cp.key
+
+            # 2. Créer une inspection avec tous les points OK sauf le point temporaire
+            co = CheckoutVehicle(
+                status="in_progress",
+                inspection_number="BVCO-TESTCLEAN1",
+                project_id=proj.id,
+                vehicle_id="1",
+                battery_level=100,
+                controller_id=user.id
+            )
+            from utils.checkpoints import get_checkpoints_for_vehicle
+            form_data = {
+                "vehicle_id": "1",
+                "project_id": str(proj.id),
+                "battery_level": "100",
+            }
+            for cp_item in get_checkpoints_for_vehicle("1"):
+                if cp_item.get("type") == "value":
+                    form_data[cp_item["key"]] = "100" if cp_item["key"] in ("battery", "battery_level") else "10"
+                else:
+                    form_data[cp_item["key"]] = "ok"
+            form_data[cp_key] = "warning"  # Seul point non conforme
+
+            apply_inspection_data(co, form_data, is_checkout=True)
+            db.session.add(co)
+            db.session.commit()
+
+            # Le véhicule ne doit pas être prêt
+            self.assertFalse(co.vehicle_ready)
+            detail = get_checkout_detail(co.id)
+            self.assertEqual(detail["ready"], "false")
+            self.assertTrue(detail["has_failures"])
+            self.assertIn("Point Temporaire Bug", detail["failures"])
+
+            # 3. Supprimer le point de contrôle
+            success, msg = delete_checkpoint(new_cp.id)
+            self.assertTrue(success)
+
+            # 4. Vérifier que l'inspection en cours est redevenue conforme
+            updated_co = CheckoutVehicle.query.get(co.id)
+            self.assertTrue(updated_co.vehicle_ready)
+            updated_detail = get_checkout_detail(co.id)
+            self.assertEqual(updated_detail["ready"], "true")
+            self.assertEqual(updated_detail["failures"], [])
+            self.assertFalse(updated_detail["has_failures"])
+
 
 if __name__ == "__main__":
     unittest.main()

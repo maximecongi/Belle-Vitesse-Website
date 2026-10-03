@@ -47,9 +47,6 @@ endblock %}
                 <label for="default_detail" class="form-label">Consigne par défaut</label>
                 <input type="text" id="default_detail" name="default_detail" class="form-input"
                     value="{{ checkpoint.default_detail or '' }}" placeholder="Ex : Contrôle visuel, voir protocole…">
-                <div class="u-text-xs u-text-muted u-mt-1">
-                    Si aucune consigne spécifique.
-                </div>
             </div>
         </div>
 
@@ -57,35 +54,40 @@ endblock %}
             <div class="form-group">
                 <label for="checkpoint_type" class="form-label">Type d'évaluation</label>
                 <select id="checkpoint_type" name="type" class="form-input">
-                    <option value="status" {% if checkpoint.type != 'value' %}selected{% endif %}>
+                    <option value="status" {% if checkpoint.type !='value' %}selected{% endif %}>
                         Statut (OK / À vérifier / Défaut)
                     </option>
-                    <option value="value" {% if checkpoint.type == 'value' %}selected{% endif %}>
+                    <option value="value" {% if checkpoint.type=='value' %}selected{% endif %}>
                         Mesure / Valeur saisie
                     </option>
                 </select>
             </div>
-            <div class="form-group">
-                <label for="checkpoint_unit" class="form-label">Unité de mesure (optionnelle)</label>
+            <div class="form-group" id="checkpoint_unit_group">
+                <label for="checkpoint_unit" class="form-label" id="checkpoint_unit_label">Unité de mesure</label>
                 <input type="text" id="checkpoint_unit" name="unit" class="form-input"
-                    value="{{ checkpoint.unit or '' }}" placeholder="Ex : %, bar, Nm, km…">
-                <div class="u-text-xs u-text-muted u-mt-1">
+                    value="{{ checkpoint.unit or '' }}" placeholder="Ex : %, bar, Nm, km…" {% if checkpoint.type
+                    !='value' %}disabled{% endif %}>
+                <div class="u-text-xs u-text-muted u-mt-1" id="checkpoint_unit_hint">
+                    {% if checkpoint.type == 'value' %}
                     Affichée à côté de la valeur saisie.
+                    {% else %}
+                    Non applicable pour une évaluation par statut.
+                    {% endif %}
                 </div>
             </div>
         </div>
 
         <div class="u-bg-neutral-light u-p-3 u-rounded u-mb-4">
-            <div class="form-group u-mb-2">
-                <label class="u-flex u-align-center u-gap-2 u-cursor-pointer u-font-semibold">
-                    <input type="checkbox" name="has_protocol" value="1" {% if checkpoint.has_protocol %}checked{% endif %}>
-                    <span>Protocole technique disponible (icône information et modale d'aide)</span>
-                </label>
-            </div>
             <div class="form-group u-mb-0">
-                <label for="checkpoint_protocol_url" class="form-label u-text-xs u-text-muted">URL spécifique du protocole (optionnelle)</label>
-                <input type="text" id="checkpoint_protocol_url" name="protocol_url" class="form-input form-input-sm"
-                    value="{{ checkpoint.protocol_url or '' }}" placeholder="Ex : /admin/check-vehicles (laisser vide pour la modale standard)">
+                <label class="u-flex u-align-center u-gap-2 u-cursor-pointer u-font-semibold">
+                    <input type="checkbox" name="has_protocol" value="1" {% if checkpoint.has_protocol %}checked{% endif
+                        %}>
+                    <span class="u-text-bold">Protocole technique disponible</span>
+                </label>
+                <div class="u-text-xs u-text-muted u-mt-1 u-ml-4">
+                    Affiche une icône d'information sur les formulaires de départ et de retour pour ouvrir un popup du
+                    protocole technique.
+                </div>
             </div>
         </div>
 
@@ -138,7 +140,8 @@ endblock %}
                 {% endif %}
             </div>
             <div class="u-flex u-align-center u-gap-2">
-                <a href="{{ url_for('admin_checkpoints.admin_checkpoints_list') }}" class="admin-btn admin-btn-secondary">Annuler</a>
+                <a href="{{ url_for('admin_checkpoints.admin_checkpoints_list') }}"
+                    class="admin-btn admin-btn-secondary">Annuler</a>
                 <button type="submit" class="admin-btn admin-btn-primary">
                     {% if is_new %}Créer le point de contrôle{% else %}Enregistrer les modifications{% endif %}
                 </button>
@@ -148,7 +151,8 @@ endblock %}
 
     {% if not is_new %}
     <form id="deleteCheckpointForm" method="POST"
-        action="{{ url_for('admin_checkpoints.admin_checkpoint_delete', checkpoint_id=checkpoint.id) }}" class="u-d-none">
+        action="{{ url_for('admin_checkpoints.admin_checkpoint_delete', checkpoint_id=checkpoint.id) }}"
+        class="u-d-none">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     </form>
     {% endif %}

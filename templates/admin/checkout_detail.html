@@ -81,9 +81,9 @@
         </div>
 
         <div class="admin-card">
-            {% if data.ready=="true" %}
+            {% if data.ready == "true" and not data.failures %}
             <div class="alert-banner-success">
-                <span class="u-text-xl">✅</span>
+                <span class="u-text-xl"><i data-lucide="check-circle"></i></span>
                 <div>
                     <div class="alert-banner-title-success">Véhicule conforme</div>
                     <div class="alert-banner-desc-success">Tous les points de contrôle sont OK.</div>
@@ -91,9 +91,10 @@
             </div>
             {% else %}
             <div class="alert-banner-danger">
-                <span class="u-text-xl">⚠️</span>
-                <div>
+                <span class="u-text-xl"><i data-lucide="triangle-alert"></i></span>
+                <div class="alert-banner-danger-content">
                     <div class="alert-banner-title-danger">Véhicule non conforme</div><br>
+                    {% if data.failures %}
                     <div class="alert-banner-desc-danger">
                         Points à corriger :
                         <ul class="alert-banner-list">
@@ -102,6 +103,7 @@
                             {% endfor %}
                         </ul>
                     </div>
+                    {% endif %}
                 </div>
             </div><br>
             {% endif %}
@@ -123,13 +125,14 @@
                     <div class="u-text-semibold">
                         {% set val = data[item.key] %}
                         {% if item.type == 'value' %}
-                            {% if val is defined and val != '—' and val != '' %}
-                                <span class="badge-pill" data-val="neutral">{{ val }}{% if item.unit %} {{ item.unit }}{% endif %}</span>
-                            {% else %}
-                                <span class="badge-pill" data-val="warning">Non renseigné</span>
-                            {% endif %}
+                        {% if val is defined and val != '—' and val != '' %}
+                        <span class="badge-pill" data-val="neutral">{{ val }}{% if item.unit %} {{ item.unit }}{% endif
+                            %}</span>
                         {% else %}
-                            {{ status_badge(format_checkpoint_status(val), val) }}
+                        <span class="badge-pill" data-val="warning">Non renseigné</span>
+                        {% endif %}
+                        {% else %}
+                        {{ status_badge(format_checkpoint_status(val), val) }}
                         {% endif %}
                     </div>
                 </div>
@@ -200,7 +203,7 @@
         {% if data.status_id == 'in_progress' %}
         <div class="admin-card">
             <div class="admin-card-title">Sceau numérique</div>
-            <button type="button" id="sealCheckoutBtn" {% if data.failures or data.ready !="true" %}disabled
+            <button type="button" id="sealCheckoutBtn" {% if data.failures %}disabled
                 class="admin-btn btn-disabled admin-btn-seal-yellow" {% else %}class="admin-btn admin-btn-seal-yellow"
                 {% endif %}>
                 Sceller ce checkout

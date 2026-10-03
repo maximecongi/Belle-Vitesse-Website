@@ -502,8 +502,16 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
     data["failures"] = failures
     data["failure_count"] = len(failures)
     data["has_failures"] = len(failures) > 0
-    if failures:
-        data["ready"] = "false"
+    data["ready"] = "false" if failures else "true"
+
+    # Synchroniser l'état vehicle_ready en base s'il y a divergence (ex: checkpoint supprimé)
+    is_ready_bool = len(failures) == 0
+    if hasattr(c, "vehicle_ready") and c.vehicle_ready != is_ready_bool:
+        c.vehicle_ready = is_ready_bool
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
 
     data["interior_photos"] = _parse_photos_json(c.interior_photos)
     data["exterior_photos"] = _parse_photos_json(c.exterior_photos)
