@@ -170,6 +170,15 @@ class EntityResolversTestCase(unittest.TestCase):
             self.assertIsNone(resolve_pilot_waiver(None))
             self.assertIsNone(resolve_pilot_waiver("BVDW-INCONNU"))
 
+            # Résolution générique polymorphique Waiver
+            self.assertEqual(resolve_waiver("BVDW-PILOT001").waiver_id, "BVDW-PILOT001")
+            self.assertEqual(resolve_waiver("BVDW-PILOT001").waiver_type, "pilot")
+            self.assertEqual(resolve_waiver("BVPW-PROD001").waiver_id, "BVPW-PROD001")
+            self.assertEqual(resolve_waiver("BVPW-PROD001").waiver_type, "production")
+            self.assertEqual(resolve_waiver(self.pilot_waiver_id).id, self.pilot_waiver_id)
+            self.assertEqual(resolve_waiver(self.prod_waiver_id).id, self.prod_waiver_id)
+            self.assertIsNone(resolve_waiver("BVXX-INCONNU"))
+
             # Production par int, str num, code
             self.assertEqual(resolve_production_waiver(self.prod_waiver_id).waiver_id, "BVPW-PROD001")
             self.assertEqual(resolve_production_waiver(str(self.prod_waiver_id)).waiver_id, "BVPW-PROD001")

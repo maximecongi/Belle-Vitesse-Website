@@ -28,10 +28,12 @@ def upgrade():
         'production_waivers'
     ]
     
+    existing_tables = set(inspector.get_table_names())
     for table_name in tables_to_add_column:
-        columns = [col['name'] for col in inspector.get_columns(table_name)]
-        if 'deleted_at' not in columns:
-            op.add_column(table_name, sa.Column('deleted_at', sa.DateTime(), nullable=True))
+        if table_name in existing_tables:
+            columns = [col['name'] for col in inspector.get_columns(table_name)]
+            if 'deleted_at' not in columns:
+                op.add_column(table_name, sa.Column('deleted_at', sa.DateTime(), nullable=True))
 
 
 def downgrade():

@@ -40,9 +40,9 @@ def resolve_entity_info(
 
     if entity_type in ("checkout", "checkin", "incident"):
         pass
-    elif entity_type in ("pilot", "pilot_waiver") or class_name == "PilotWaiver":
+    elif entity_type in ("pilot", "pilot_waiver") or class_name == "PilotWaiver" or (class_name == "Waiver" and getattr(record, "waiver_type", None) == "pilot"):
         entity_type = "pilot_waiver"
-    elif entity_type in ("production", "production_waiver") or class_name == "ProductionWaiver":
+    elif entity_type in ("production", "production_waiver") or class_name == "ProductionWaiver" or (class_name == "Waiver" and getattr(record, "waiver_type", None) == "production"):
         entity_type = "production_waiver"
     elif class_name == "CheckoutVehicle":
         entity_type = "checkout"

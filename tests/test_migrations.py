@@ -34,8 +34,9 @@ class MigrationsTestCase(unittest.TestCase):
                     "productions",
                     "projects",
                     "contacts",
-                    "pilot_waivers",
-                    "production_waivers",
+                    "waivers",
+                    "waiver_tokens",
+                    "waiver_signed_documents",
                     "incidents",
                     "kdrive_objects",
                     "sql_query_logs",
@@ -50,11 +51,13 @@ class MigrationsTestCase(unittest.TestCase):
                 # 3. Vérification de la version finale dans alembic_version
                 with db.engine.connect() as conn:
                     current_rev = conn.execute(sa.text("SELECT version_num FROM alembic_version")).scalar()
-                    self.assertEqual(current_rev, "k00d7fe3c471")
+                    self.assertEqual(current_rev, "n00d7fe3c474")
 
-                # 4. Vérification que les tables décommissionnées pre_quotes sont bien absentes
+                # 4. Vérification que les tables décommissionnées sont bien absentes
                 self.assertNotIn("pre_quotes", tables)
                 self.assertNotIn("pre_quote_versions", tables)
+                self.assertNotIn("pilot_waivers", tables)
+                self.assertNotIn("production_waivers", tables)
 
                 # 5. Vérification que les anciennes colonnes statiques de checkout_vehicles sont purgées
                 co_cols = [c["name"] for c in inspector.get_columns("checkout_vehicles")]
@@ -83,7 +86,7 @@ class MigrationsTestCase(unittest.TestCase):
                 upgrade()
                 with db.engine.connect() as conn:
                     current_rev = conn.execute(sa.text("SELECT version_num FROM alembic_version")).scalar()
-                    self.assertEqual(current_rev, "k00d7fe3c471")
+                    self.assertEqual(current_rev, "n00d7fe3c474")
 
     def test_upgrade_from_previous_head_stamp(self):
         """Vérifie qu'une base déjà estampillée à g00d7fe3c467 migre vers i00d7fe3c469 et supprime pre_quotes."""
@@ -125,7 +128,7 @@ class MigrationsTestCase(unittest.TestCase):
 
                 with db.engine.connect() as conn:
                     current_rev = conn.execute(sa.text("SELECT version_num FROM alembic_version")).scalar()
-                    self.assertEqual(current_rev, "k00d7fe3c471")
+                    self.assertEqual(current_rev, "n00d7fe3c474")
 
 
 if __name__ == "__main__":

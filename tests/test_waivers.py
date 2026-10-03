@@ -20,8 +20,14 @@ mock_weasyprint.CSS = MagicMock()
 sys.modules["weasyprint"] = mock_weasyprint
 
 from app import create_app
-from models import db, Project, Production, User, PilotWaiver, ProductionWaiver
+from models import db, Project, Production, User, Waiver, PilotWaiver, ProductionWaiver
 from services.admin.waivers import (
+    create_waiver,
+    delete_waiver,
+    generate_waiver,
+    reset_waiver,
+    send_waiver,
+    delete_waiver_internal,
     create_pilot_waiver,
     create_production_waiver,
     list_pilot_waivers,
@@ -454,6 +460,48 @@ class WaiversTest(unittest.TestCase):
 
                 db.session.refresh(prw)
                 self.assertEqual(prw.status, "to_sign")
+
+    def test_generic_unified_waiver_functions(self):
+        """Vérifie le fonctionnement des fonctions factorisées génériques sur le modèle unifié Waiver."""
+        with self.app.app_context():
+            user, proj = self._create_mock_data()
+
+            # Création générique des deux types de décharges
+            s1, msg1 = create_waiver(proj.id, waiver_type="pilot")
+            self.assertTrue(s1, msg1)
+            s2, msg2 = create_waiver(proj.id, waiver_type="production")
+            self.assertTrue(s2, msg2)
+
+            # Vérification de la relation unifiée sur Project
+            db.session.refresh(proj)
+            self.assertEqual(len(proj.waivers), 2)
+            types = {w.waiver_type for w in proj.waivers}
+            self.assertEqual(types, {"pilot", "production"})
+
+            # Polymorphisme sur la table unifiée waivers
+            all_waivers = Waiver.query.filter_by(project_id=proj.id).all()
+            self.assertEqual(len(all_waivers), 2)
+            pilot_w = next(w for w in all_waivers if w.waiver_type == "pilot")
+            self.assertIsInstance(pilot_w, PilotWaiver)
+
+            # Reset générique
+            pilot_w.signature_data = "signed-test"
+            db.session.commit()
+            r_ok, _ = reset_waiver(pilot_w.waiver_id)
+            self.assertTrue(r_ok)
+            db.session.refresh(pilot_w)
+            self.assertIsNone(pilot_w.signature_data)
+
+            # Suppression unitaire générique
+            del_ok, _ = delete_waiver(pilot_w.waiver_id)
+            self.assertTrue(del_ok)
+            db.session.refresh(pilot_w)
+            self.assertIsNotNone(pilot_w.deleted_at)
+
+            # Suppression interne globale (toutes décharges du projet)
+            delete_waiver_internal(proj.id)
+            for w in Waiver.query.filter_by(project_id=proj.id).all():
+                self.assertIsNotNone(w.deleted_at)
 
 
 if __name__ == "__main__":

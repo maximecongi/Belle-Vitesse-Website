@@ -6,12 +6,15 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import joinedload
 
 from models import (
+    Waiver,
     PilotWaiver,
     PilotWaiverSignedDocument,
     PilotWaiverToken,
     ProductionWaiver,
     ProductionWaiverSignedDocument,
     ProductionWaiverToken,
+    WaiverToken,
+    WaiverSignedDocument,
     Project,
     db,
 )
@@ -20,6 +23,7 @@ from services.admin.status_mapping import format_waiver_status
 from services.admin.utils import handle_admin_service_error
 from utils.database import get_vehicles
 from utils.entity_resolvers import (
+    resolve_waiver,
     resolve_pilot_waiver,
     resolve_production_waiver,
     resolve_project,
@@ -160,79 +164,344 @@ def _reset_waiver_fields(mode, waiver):
             setattr(waiver, f, None)
 
 
-# ── Décharges Production ───────────────────────────────────────────
+# ── Fonctions Génériques de Gestion des Décharges ───────────────────
 
 @handle_admin_service_error
-def create_production_waiver(project_id):
-    """Crée une décharge production pour un projet s'il n'en existe pas déjà une active."""
+def create_waiver(project_id, waiver_type: str = "production"):
+    """Crée une décharge (pilote ou production) pour un projet s'il n'en existe pas déjà une active."""
     p = resolve_project(project_id)
     if not p:
         return False, "Projet introuvable."
     project_id = p.id
 
-    existing = ProductionWaiver.query.filter_by(project_id=project_id).first()
+    model = ProductionWaiver if waiver_type == "production" else PilotWaiver
+    existing = model.query.filter_by(project_id=project_id).first()
     if existing:
         if existing.deleted_at is None:
-            return False, "Une décharge production existe déjà pour ce projet."
+            label = " production" if waiver_type == "production" else ""
+            return False, f"Une décharge{label} existe déjà pour ce projet."
         # Si une ancienne décharge a été supprimée, on purge ses fichiers et son enregistrement pour réinsérer
-        _cleanup_waiver_assets("production", existing)
+        _cleanup_waiver_assets(waiver_type, existing)
         db.session.delete(existing)
         db.session.flush()
 
-    waiver = ProductionWaiver(project_id=project_id)
+    waiver = model(project_id=project_id)
     waiver.project_name = p.name
     if p.production:
         waiver.production_name = p.production.name
-        waiver.production_address = p.production.address
+        if waiver_type == "production":
+            waiver.production_address = p.production.address
+
+    if waiver_type == "pilot":
+        contact = p.pilot_contact
+        if contact:
+            waiver.pilot_first_name = contact.first_name
+            waiver.pilot_last_name = contact.last_name
+            waiver.pilot_address = getattr(contact, "address", "")
 
     waiver.shooting_dates = _format_project_shooting_dates(p, default_sep=" au ")
 
     if p.vehicles_to_check:
-        veh_ids = [v.strip()
-                   for v in p.vehicles_to_check.split(",") if v.strip()]
+        veh_ids = [v.strip() for v in p.vehicles_to_check.split(",") if v.strip()]
         all_vehicles = get_vehicles()
-        vehicle_map = {str(v["id"]): v.get("fields", {}).get(
-            "name", f"ID {v['id']}") for v in all_vehicles}
-        waiver.vehicles = ", ".join(
-            [vehicle_map.get(vid, vid) for vid in veh_ids])
+        vehicle_map = {str(v["id"]): v.get("fields", {}).get("name", f"ID {v['id']}") for v in all_vehicles}
+        waiver.vehicles = ", ".join([vehicle_map.get(vid, vid) for vid in veh_ids])
+    elif waiver_type == "pilot" and p.active_checkout_vehicles:
+        waiver.vehicles = ", ".join([cv.vehicle_name for cv in p.active_checkout_vehicles if cv.vehicle_name])
 
     waiver.status = "to_send"
     waiver.generated_at = _utcnow()
 
     db.session.add(waiver)
     db.session.commit()
-    return True, "Décharge production créée avec succès."
+    msg = "Décharge production créée avec succès." if waiver_type == "production" else "Décharge créée avec succès."
+    return True, msg
 
 
 @handle_admin_service_error
-def delete_production_waiver(waiver_id):
-    """Supprime logiquement une décharge production (soft-delete et nettoyage assets)."""
-    waiver = resolve_production_waiver(waiver_id)
+def generate_waiver(waiver_id, waiver_type: str = None):
+    """
+    Génère (fige les données de snapshot) une décharge (pilote ou production).
+    Passe le statut de 'to_generate' à 'to_send'.
+    """
+    if waiver_type == "production":
+        waiver = resolve_production_waiver(waiver_id)
+    elif waiver_type == "pilot":
+        waiver = resolve_pilot_waiver(waiver_id)
+    else:
+        waiver = resolve_waiver(waiver_id)
+
+    if not waiver or waiver.status != "to_generate":
+        return False, "Décharge non trouvée ou statut invalide."
+
+    mode = waiver.waiver_type or waiver_type or "pilot"
+    p = waiver.project
+
+    if mode == "production":
+        contact_prod = p.production_contact if p else None
+        if not contact_prod or not contact_prod.mail:
+            return False, "La production n'a pas d'adresse e-mail de contact renseignée dans le projet."
+        if p and p.production:
+            waiver.production_name = p.production.name
+            waiver.production_address = p.production.address
+    else:
+        if not p or not p.pilot_contact:
+            return False, "Aucun pilote n'est assigné à ce projet."
+        contact = p.pilot_contact
+        waiver.pilot_first_name = contact.first_name
+        waiver.pilot_last_name = contact.last_name
+        waiver.pilot_address = getattr(contact, "address", "")
+        if p.production:
+            waiver.production_name = p.production.name
+
+    if p:
+        waiver.project_name = p.name
+        waiver.shooting_dates = _format_project_shooting_dates(p, default_sep=" au ")
+
+        if p.vehicles_to_check:
+            veh_ids = [v.strip() for v in p.vehicles_to_check.split(",") if v.strip()]
+            all_vehicles = get_vehicles()
+            vehicle_map = {str(v["id"]): v.get("fields", {}).get("name", f"ID {v['id']}") for v in all_vehicles}
+            waiver.vehicles = ", ".join([vehicle_map.get(vid, vid) for vid in veh_ids])
+        elif mode == "pilot" and p.active_checkout_vehicles:
+            waiver.vehicles = ", ".join([cv.vehicle_name for cv in p.active_checkout_vehicles if cv.vehicle_name])
+
+    waiver.status = "to_send"
+    waiver.generated_at = _utcnow()
+    db.session.commit()
+    msg = "Décharge production générée avec succès." if mode == "production" else "Décharge générée avec succès."
+    return True, msg
+
+
+@handle_admin_service_error
+def send_waiver(waiver_id, waiver_type: str = None, base_url: str = None):
+    """Envoie l'invitation de signature par e-mail au signataire (pilote ou production)."""
+    from flask import current_app, has_request_context, request
+    from utils.mailer import (
+        send_production_waiver_invitation_email,
+        send_waiver_invitation_email,
+    )
+
+    if waiver_type == "production":
+        waiver = resolve_production_waiver(waiver_id)
+    elif waiver_type == "pilot":
+        waiver = resolve_pilot_waiver(waiver_id)
+    else:
+        waiver = resolve_waiver(waiver_id)
 
     if not waiver:
-        return False, "Décharge production introuvable."
+        return False, "Décharge non trouvée."
+
+    mode = waiver.waiver_type or waiver_type or "pilot"
+
+    if waiver.status == "to_generate":
+        generate_waiver(waiver.waiver_id, waiver_type=mode)
+
+    if waiver.status not in ["to_send", "to_sign"]:
+        return False, "Statut invalide pour l'envoi."
+
+    p = waiver.project
+    if mode == "production":
+        contact = p.production_contact if p else None
+        if not contact or not contact.mail:
+            return False, "La production n'a pas d'adresse e-mail de contact renseignée dans le projet."
+        recipient_mail = contact.mail
+        recipient_name = f"{contact.first_name} {contact.last_name}"
+        route_prefix = "production-waiver"
+    else:
+        contact = p.pilot_contact if p else None
+        if not contact or not contact.mail:
+            return False, "Le pilote n'a pas d'adresse e-mail renseignée dans le projet."
+        recipient_mail = contact.mail
+        recipient_name = f"{contact.first_name} {contact.last_name}"
+        route_prefix = "waiver"
+
+    # Crée un nouveau jeton de signature (validité 24h gérée en DB)
+    new_token = str(uuid.uuid4())
+    token_rec = WaiverToken(token=new_token, waiver_id=waiver.waiver_id)
+    db.session.add(token_rec)
+
+    if base_url:
+        resolved_base_url = base_url.rstrip('/')
+    elif has_request_context():
+        resolved_base_url = request.host_url.rstrip('/')
+    else:
+        server_name = current_app.config.get("SERVER_NAME") if current_app else None
+        resolved_base_url = f"http://{server_name}" if server_name else "http://localhost:5000"
+
+    signature_link = f"{resolved_base_url}/sign/{route_prefix}/{new_token}"
+    is_reminder = (waiver.status == "to_sign") or bool(waiver.sent_at) or ((waiver.reminder_count or 0) > 0)
+
+    if mode == "production":
+        success = send_production_waiver_invitation_email(
+            to_email=recipient_mail,
+            prod_contact_name=recipient_name,
+            project_name=p.name if p else "",
+            signature_link=signature_link,
+            is_reminder=is_reminder,
+            production_name=(p.production.name if p and p.production else getattr(waiver, "production_name", None)),
+        )
+    else:
+        success = send_waiver_invitation_email(
+            to_email=recipient_mail,
+            pilot_name=recipient_name,
+            project_name=p.name if p else "",
+            signature_link=signature_link,
+            is_reminder=is_reminder,
+            production_name=(p.production.name if p and p.production else None),
+        )
+
+    if not success:
+        return False, "Échec de l'envoi de l'e-mail."
+
+    now_utc = datetime.now(timezone.utc).replace(tzinfo=None)
+    waiver.status = "to_sign"
+    waiver.sent_at = waiver.sent_at or now_utc
+    if is_reminder:
+        waiver.reminder_count = (waiver.reminder_count or 0) + 1
+        waiver.last_reminded_at = now_utc
+    db.session.commit()
+
+    msg_type = "Relance envoyée" if is_reminder else "Décharge envoyée"
+    target_label = f"à la production ({recipient_mail})" if mode == "production" else f"au pilote ({recipient_mail})"
+    return True, f"{msg_type} {target_label}."
+
+
+@handle_admin_service_error
+def delete_waiver(waiver_id, waiver_type: str = None):
+    """Supprime logiquement une décharge (soft-delete et nettoyage assets)."""
+    if waiver_type == "production":
+        waiver = resolve_production_waiver(waiver_id)
+    elif waiver_type == "pilot":
+        waiver = resolve_pilot_waiver(waiver_id)
+    else:
+        waiver = resolve_waiver(waiver_id)
+
+    if not waiver:
+        label = f" {waiver_type}" if waiver_type else ""
+        return False, f"Décharge{label} introuvable."
+
+    mode = waiver.waiver_type or waiver_type or "pilot"
+    doc_type = f"{mode}_waiver"
 
     try:
-        _cleanup_waiver_assets("production", waiver)
+        _cleanup_waiver_assets(mode, waiver)
         waiver.deleted_at = datetime.now(timezone.utc)
         db.session.commit()
 
         # Suppression kDrive ciblée (post-commit)
         try:
             from services.common.kdrive import dispatch_delete_document
-            dispatch_delete_document("production_waiver", waiver.waiver_id)
+            dispatch_delete_document(doc_type, waiver.waiver_id)
         except Exception as k_err:
-            logger.error(
-                f"❌ Erreur dispatch suppression kDrive production_waiver : {k_err}")
+            logger.error(f"❌ Erreur dispatch suppression kDrive {doc_type} : {k_err}")
 
-        logger.info(
-            f"🗑️ Décharge production {waiver.waiver_id} supprimée avec succès.")
+        logger.info(f"🗑️ Décharge {mode} {waiver.waiver_id} supprimée avec succès.")
         return True, "Décharge supprimée avec succès."
     except Exception as e:
         db.session.rollback()
-        logger.error(
-            f"❌ Erreur lors de la suppression de la décharge production {waiver_id} : {e}")
+        logger.error(f"❌ Erreur lors de la suppression de la décharge {mode} {waiver_id} : {e}")
         return False, f"Erreur lors de la suppression : {str(e)}"
+
+
+@handle_admin_service_error
+def reset_waiver(waiver_id, waiver_type: str = None):
+    """Réinitialise complètement une décharge (supprime signature et PDF)."""
+    if waiver_type == "production":
+        waiver = resolve_production_waiver(waiver_id)
+    elif waiver_type == "pilot":
+        waiver = resolve_pilot_waiver(waiver_id)
+    else:
+        waiver = resolve_waiver(waiver_id)
+
+    if not waiver:
+        return False, "Décharge non trouvée."
+
+    mode = waiver.waiver_type or waiver_type or "pilot"
+    doc_type = f"{mode}_waiver"
+
+    try:
+        _cleanup_waiver_assets(mode, waiver)
+        _reset_waiver_fields(mode, waiver)
+        db.session.commit()
+
+        try:
+            from services.common.kdrive import dispatch_delete_document
+            dispatch_delete_document(doc_type, waiver.waiver_id)
+        except Exception as k_err:
+            logger.error(f"❌ Erreur dispatch suppression kDrive {doc_type} reset : {k_err}")
+
+        return True, "Décharge réinitialisée avec succès."
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"❌ Erreur lors du reset de la décharge {waiver_id} : {e}")
+        return False, f"Erreur lors de la réinitialisation : {str(e)}"
+
+
+@handle_admin_service_error
+def delete_waiver_internal(project_id, waiver_type: str = None):
+    """Supprime proprement une décharge en interne (appelé lors de suppression de projet)."""
+    p = resolve_project(project_id)
+    if not p:
+        return
+
+    if waiver_type == "production":
+        waivers = [ProductionWaiver.query.filter_by(project_id=p.id).first()]
+    elif waiver_type == "pilot":
+        waivers = [PilotWaiver.query.filter_by(project_id=p.id).first()]
+    else:
+        waivers = Waiver.query.filter_by(project_id=p.id).all()
+
+    for waiver in waivers:
+        if not waiver:
+            continue
+        mode = waiver.waiver_type or waiver_type or "pilot"
+        doc_type = f"{mode}_waiver"
+        try:
+            _cleanup_waiver_assets(mode, waiver)
+            waiver.deleted_at = datetime.now(timezone.utc)
+            db.session.commit()
+
+            try:
+                from services.common.kdrive import dispatch_delete_document
+                dispatch_delete_document(doc_type, waiver.waiver_id)
+            except Exception as k_err:
+                logger.error(f"❌ Erreur dispatch suppression kDrive {doc_type} internal : {k_err}")
+        except Exception as e:
+            logger.error(f"❌ Erreur suppression décharge {mode} pour projet {project_id} : {e}")
+            db.session.rollback()
+
+
+# ── Décharges Production (Wrappers Métier & Listes) ───────────────
+
+def create_production_waiver(project_id):
+    """Crée une décharge production pour un projet s'il n'en existe pas déjà une active."""
+    return create_waiver(project_id, waiver_type="production")
+
+
+def delete_production_waiver(waiver_id):
+    """Supprime logiquement une décharge production (soft-delete et nettoyage assets)."""
+    return delete_waiver(waiver_id, waiver_type="production")
+
+
+def generate_production_waiver(waiver_id):
+    """Génère (fige les données de snapshot) une décharge production."""
+    return generate_waiver(waiver_id, waiver_type="production")
+
+
+def send_production_waiver(waiver_id, base_url=None):
+    """Envoie l'invitation de signature par e-mail au contact production."""
+    return send_waiver(waiver_id, waiver_type="production", base_url=base_url)
+
+
+def reset_production_waiver(waiver_id):
+    """Réinitialise complètement une décharge production (supprime signature et PDF)."""
+    return reset_waiver(waiver_id, waiver_type="production")
+
+
+def delete_production_waiver_internal(project_id):
+    """Supprime proprement une décharge production en interne (appelé lors de suppression de projet)."""
+    delete_waiver_internal(project_id, waiver_type="production")
 
 
 def list_production_waivers():
@@ -261,8 +530,8 @@ def list_production_waivers():
         shooting_dates = w.shooting_dates or _format_project_shooting_dates(p, default_sep=" → ")
 
         # Récupère le jeton de signature actif si existant
-        active_token = ProductionWaiverToken.query.filter_by(
-            waiver_id=w.waiver_id).order_by(ProductionWaiverToken.created_at.desc()).first()
+        active_token = WaiverToken.query.filter_by(
+            waiver_id=w.waiver_id).order_by(WaiverToken.created_at.desc()).first()
 
         production_contact_name = "—"
         if p.production_contact:
@@ -290,239 +559,36 @@ def list_production_waivers():
     return formatted
 
 
-@handle_admin_service_error
-def generate_production_waiver(waiver_id):
-    """
-    Génère (fige les données de snapshot) une décharge production.
-    Passe le statut de 'to_generate' à 'to_send'.
-    """
-    waiver = resolve_production_waiver(waiver_id)
-    if not waiver or waiver.status != "to_generate":
-        return False, "Décharge non trouvée ou statut invalide."
+# ── Décharges Pilote (Wrappers Métier & Listes) ───────────────────
 
-    contact_prod = waiver.project.production_contact
-    if not contact_prod or not contact_prod.mail:
-        return False, "La production n'a pas d'adresse e-mail de contact renseignée dans le projet."
-
-    p = waiver.project
-    waiver.project_name = p.name
-    if p.production:
-        waiver.production_name = p.production.name
-        waiver.production_address = p.production.address
-
-    waiver.shooting_dates = _format_project_shooting_dates(p, default_sep=" au ")
-
-    if p.vehicles_to_check:
-        veh_ids = [v.strip()
-                   for v in p.vehicles_to_check.split(",") if v.strip()]
-        all_vehicles = get_vehicles()
-        vehicle_map = {str(v["id"]): v.get("fields", {}).get(
-            "name", f"ID {v['id']}") for v in all_vehicles}
-        waiver.vehicles = ", ".join(
-            [vehicle_map.get(vid, vid) for vid in veh_ids])
-
-    waiver.status = "to_send"
-    waiver.generated_at = _utcnow()
-    db.session.commit()
-    return True, "Décharge production générée avec succès."
-
-
-@handle_admin_service_error
-def send_production_waiver(waiver_id, base_url=None):
-    """Envoie l'invitation de signature par e-mail au contact production."""
-    from flask import current_app, has_request_context, request
-    from utils.mailer import send_production_waiver_invitation_email
-
-    waiver = resolve_production_waiver(waiver_id)
-
-    if not waiver:
-        return False, "Décharge non trouvée."
-
-    if waiver.status == "to_generate":
-        generate_production_waiver(waiver.waiver_id)
-
-    if waiver.status not in ["to_send", "to_sign"]:
-        return False, "Statut invalide pour l'envoi."
-
-    contact_prod = waiver.project.production_contact
-    if not contact_prod or not contact_prod.mail:
-        return False, "La production n'a pas d'adresse e-mail de contact renseignée dans le projet."
-
-    # Crée un nouveau jeton de signature (validité 24h gérée en DB)
-    new_token = str(uuid.uuid4())
-    token_rec = ProductionWaiverToken(
-        token=new_token, waiver_id=waiver.waiver_id)
-    db.session.add(token_rec)
-
-    if base_url:
-        resolved_base_url = base_url.rstrip('/')
-    elif has_request_context():
-        resolved_base_url = request.host_url.rstrip('/')
-    else:
-        server_name = current_app.config.get(
-            "SERVER_NAME") if current_app else None
-        resolved_base_url = f"http://{server_name}" if server_name else "http://localhost:5000"
-
-    signature_link = f"{resolved_base_url}/sign/production-waiver/{new_token}"
-
-    is_reminder = (waiver.status == "to_sign") or bool(
-        waiver.sent_at) or ((waiver.reminder_count or 0) > 0)
-
-    success = send_production_waiver_invitation_email(
-        to_email=contact_prod.mail,
-        prod_contact_name=f"{contact_prod.first_name} {contact_prod.last_name}",
-        project_name=waiver.project.name,
-        signature_link=signature_link,
-        is_reminder=is_reminder,
-        production_name=(waiver.project.production.name if waiver.project and waiver.project.production else getattr(
-            waiver, "production_name", None)),
-    )
-
-    if not success:
-        return False, "Échec de l'envoi de l'e-mail."
-
-    now_utc = datetime.now(timezone.utc).replace(tzinfo=None)
-    waiver.status = "to_sign"
-    waiver.sent_at = waiver.sent_at or now_utc
-    if is_reminder:
-        waiver.reminder_count = (waiver.reminder_count or 0) + 1
-        waiver.last_reminded_at = now_utc
-    db.session.commit()
-    msg_type = "Relance envoyée" if is_reminder else "Décharge envoyée"
-    return True, f"{msg_type} à la production ({contact_prod.mail})."
-
-
-@handle_admin_service_error
-def reset_production_waiver(waiver_id):
-    """Réinitialise complètement une décharge production (supprime signature et PDF)."""
-    waiver = resolve_production_waiver(waiver_id)
-    if not waiver:
-        return False, "Décharge non trouvée."
-
-    try:
-        _cleanup_waiver_assets("production", waiver)
-        _reset_waiver_fields("production", waiver)
-        db.session.commit()
-
-        try:
-            from services.common.kdrive import dispatch_delete_document
-            dispatch_delete_document("production_waiver", waiver.waiver_id)
-        except Exception as k_err:
-            logger.error(
-                f"❌ Erreur dispatch suppression kDrive production_waiver reset : {k_err}")
-
-        return True, "Décharge réinitialisée avec succès."
-    except Exception as e:
-        db.session.rollback()
-        return False, f"Erreur lors du reset : {e}"
-
-
-@handle_admin_service_error
-def delete_production_waiver_internal(project_id):
-    """Supprime proprement une décharge production en interne (appelé lors de suppression de projet)."""
-    p = resolve_project(project_id)
-    if not p:
-        return
-    waiver = ProductionWaiver.query.filter_by(project_id=p.id).first()
-    if not waiver:
-        return
-    try:
-        _cleanup_waiver_assets("production", waiver)
-        waiver.deleted_at = datetime.now(timezone.utc)
-        db.session.commit()
-
-        try:
-            from services.common.kdrive import dispatch_delete_document
-            dispatch_delete_document("production_waiver", waiver.waiver_id)
-        except Exception as k_err:
-            logger.error(
-                f"❌ Erreur dispatch suppression kDrive production_waiver internal : {k_err}")
-    except Exception as e:
-        logger.error(f"❌ Erreur suppression décharge production : {e}")
-        db.session.rollback()
-
-
-# ── Décharges Pilote ────────────────────────────────────────────────
-
-@handle_admin_service_error
 def create_pilot_waiver(project_id):
     """Crée une décharge pilote pour un projet s'il n'en existe pas déjà une active."""
-    p = resolve_project(project_id)
-    if not p:
-        return False, "Projet introuvable."
-    project_id = p.id
-
-    existing = PilotWaiver.query.filter_by(project_id=project_id).first()
-    if existing:
-        if existing.deleted_at is None:
-            return False, "Une décharge existe déjà pour ce projet."
-        # Si une ancienne décharge a été supprimée, on purge ses fichiers et son enregistrement pour réinsérer
-        _cleanup_waiver_assets("pilot", existing)
-        db.session.delete(existing)
-        db.session.flush()
-
-    waiver = PilotWaiver(project_id=project_id)
-    waiver.project_name = p.name
-    if p.production:
-        waiver.production_name = p.production.name
-
-    contact = p.pilot_contact
-    if contact:
-        waiver.pilot_first_name = contact.first_name
-        waiver.pilot_last_name = contact.last_name
-        waiver.pilot_address = getattr(contact, 'address', "")
-
-    waiver.shooting_dates = _format_project_shooting_dates(p, default_sep=" au ")
-
-    if p.vehicles_to_check:
-        veh_ids = [v.strip()
-                   for v in p.vehicles_to_check.split(",") if v.strip()]
-        all_vehicles = get_vehicles()
-        vehicle_map = {str(v["id"]): v.get("fields", {}).get(
-            "name", f"ID {v['id']}") for v in all_vehicles}
-        waiver.vehicles = ", ".join(
-            [vehicle_map.get(vid, vid) for vid in veh_ids])
-    elif p.active_checkout_vehicles:
-        waiver.vehicles = ", ".join(
-            [cv.vehicle_name for cv in p.active_checkout_vehicles if cv.vehicle_name])
-
-    waiver.status = "to_send"
-    waiver.generated_at = _utcnow()
-
-    db.session.add(waiver)
-    db.session.commit()
-    return True, "Décharge créée avec succès."
+    return create_waiver(project_id, waiver_type="pilot")
 
 
-@handle_admin_service_error
 def delete_pilot_waiver(waiver_id):
     """Supprime logiquement une décharge pilote (soft-delete et nettoyage assets)."""
-    waiver = resolve_pilot_waiver(waiver_id)
+    return delete_waiver(waiver_id, waiver_type="pilot")
 
-    if not waiver:
-        return False, "Décharge pilote introuvable."
 
-    try:
-        _cleanup_waiver_assets("pilot", waiver)
-        waiver.deleted_at = datetime.now(timezone.utc)
-        db.session.commit()
+def generate_pilot_waiver(waiver_id):
+    """Génère (fige les données de snapshot) une décharge pilote."""
+    return generate_waiver(waiver_id, waiver_type="pilot")
 
-        # Suppression kDrive ciblée (post-commit)
-        try:
-            from services.common.kdrive import dispatch_delete_document
-            dispatch_delete_document("pilot_waiver", waiver.waiver_id)
-        except Exception as k_err:
-            logger.error(
-                f"❌ Erreur dispatch suppression kDrive pilot_waiver : {k_err}")
 
-        logger.info(
-            f"🗑️ Décharge pilote {waiver.waiver_id} supprimée avec succès.")
-        return True, "Décharge supprimée avec succès."
-    except Exception as e:
-        db.session.rollback()
-        logger.error(
-            f"❌ Erreur lors de la suppression de la décharge pilote {waiver_id} : {e}")
-        return False, f"Erreur lors de la suppression : {str(e)}"
+def send_pilot_waiver(waiver_id, base_url=None):
+    """Envoie l'invitation de signature par e-mail au pilote."""
+    return send_waiver(waiver_id, waiver_type="pilot", base_url=base_url)
+
+
+def reset_pilot_waiver(waiver_id):
+    """Réinitialise complètement une décharge pilote (supprime signature et PDF)."""
+    return reset_waiver(waiver_id, waiver_type="pilot")
+
+
+def delete_pilot_waiver_internal(project_id):
+    """Supprime proprement une décharge pilote en interne (appelé lors de suppression de projet)."""
+    delete_waiver_internal(project_id, waiver_type="pilot")
 
 
 def list_pilot_waivers():
@@ -561,8 +627,8 @@ def list_pilot_waivers():
         shooting_dates = w.shooting_dates or _format_project_shooting_dates(p, default_sep=" → ")
 
         # Récupère le jeton de signature actif si existant
-        active_token = PilotWaiverToken.query.filter_by(
-            waiver_id=w.waiver_id).order_by(PilotWaiverToken.created_at.desc()).first()
+        active_token = WaiverToken.query.filter_by(
+            waiver_id=w.waiver_id).order_by(WaiverToken.created_at.desc()).first()
 
         formatted.append({
             "id": w.waiver_id,
@@ -586,168 +652,6 @@ def list_pilot_waivers():
             "last_reminded_at": w.last_reminded_at
         })
     return formatted
-
-
-@handle_admin_service_error
-def generate_pilot_waiver(waiver_id):
-    """
-    Génère (fige les données de snapshot) une décharge pilote.
-    Passe le statut de 'to_generate' à 'to_send'.
-    """
-    waiver = resolve_pilot_waiver(waiver_id)
-    if not waiver or waiver.status != "to_generate":
-        return False, "Décharge non trouvée ou statut invalide."
-
-    if not waiver.project.pilot_contact:
-        return False, "Aucun pilote n'est assigné à ce projet."
-
-    p = waiver.project
-    contact = p.pilot_contact
-    if contact:
-        waiver.pilot_first_name = contact.first_name
-        waiver.pilot_last_name = contact.last_name
-        waiver.pilot_address = getattr(contact, 'address', "")
-
-    if p.production:
-        waiver.production_name = p.production.name
-    waiver.project_name = p.name
-
-    waiver.shooting_dates = _format_project_shooting_dates(p, default_sep=" au ")
-
-    if p.vehicles_to_check:
-        veh_ids = [v.strip()
-                   for v in p.vehicles_to_check.split(",") if v.strip()]
-        all_vehicles = get_vehicles()
-        vehicle_map = {str(v["id"]): v.get("fields", {}).get(
-            "name", f"ID {v['id']}") for v in all_vehicles}
-        waiver.vehicles = ", ".join(
-            [vehicle_map.get(vid, vid) for vid in veh_ids])
-    else:
-        # Fallback sur les véhicules déjà contrôlés (checkout) non supprimés
-        waiver.vehicles = ", ".join(
-            [cv.vehicle_name for cv in p.active_checkout_vehicles if cv.vehicle_name])
-
-    waiver.status = "to_send"
-    waiver.generated_at = _utcnow()
-    db.session.commit()
-    return True, "Décharge générée avec succès."
-
-
-@handle_admin_service_error
-def send_pilot_waiver(waiver_id, base_url=None):
-    """Envoie l'invitation de signature par e-mail au pilote."""
-    from flask import current_app, has_request_context, request
-    from utils.mailer import send_waiver_invitation_email
-
-    waiver = resolve_pilot_waiver(waiver_id)
-
-    if not waiver:
-        return False, "Décharge non trouvée."
-
-    if waiver.status == "to_generate":
-        generate_pilot_waiver(waiver.waiver_id)
-
-    if waiver.status not in ["to_send", "to_sign"]:
-        return False, "Statut invalide pour l'envoi."
-
-    pilot_contact = waiver.project.pilot_contact
-    if not pilot_contact or not pilot_contact.mail:
-        return False, "Le pilote n'a pas d'adresse e-mail renseignée dans le projet."
-
-    # Crée un nouveau jeton de signature (validité 24h gérée en DB)
-    new_token = str(uuid.uuid4())
-    token_rec = PilotWaiverToken(token=new_token, waiver_id=waiver.waiver_id)
-    db.session.add(token_rec)
-
-    if base_url:
-        resolved_base_url = base_url.rstrip('/')
-    elif has_request_context():
-        resolved_base_url = request.host_url.rstrip('/')
-    else:
-        server_name = current_app.config.get(
-            "SERVER_NAME") if current_app else None
-        resolved_base_url = f"http://{server_name}" if server_name else "http://localhost:5000"
-
-    signature_link = f"{resolved_base_url}/sign/waiver/{new_token}"
-
-    is_reminder = (waiver.status == "to_sign") or bool(
-        waiver.sent_at) or ((waiver.reminder_count or 0) > 0)
-
-    success = send_waiver_invitation_email(
-        to_email=pilot_contact.mail,
-        pilot_name=f"{pilot_contact.first_name} {pilot_contact.last_name}",
-        project_name=waiver.project.name,
-        signature_link=signature_link,
-        is_reminder=is_reminder,
-        production_name=(
-            waiver.project.production.name if waiver.project and waiver.project.production else None),
-    )
-
-    if not success:
-        return False, "Échec de l'envoi de l'e-mail."
-
-    now_utc = datetime.now(timezone.utc).replace(tzinfo=None)
-    waiver.status = "to_sign"
-    waiver.sent_at = waiver.sent_at or now_utc
-    if is_reminder:
-        waiver.reminder_count = (waiver.reminder_count or 0) + 1
-        waiver.last_reminded_at = now_utc
-    db.session.commit()
-    msg_type = "Relance envoyée" if is_reminder else "Décharge envoyée"
-    return True, f"{msg_type} au pilote ({pilot_contact.mail})."
-
-
-@handle_admin_service_error
-def reset_pilot_waiver(waiver_id):
-    """Réinitialise complètement une décharge pilote (supprime signature et PDF)."""
-    waiver = resolve_pilot_waiver(waiver_id)
-    if not waiver:
-        return False, "Décharge non trouvée."
-
-    try:
-        _cleanup_waiver_assets("pilot", waiver)
-        _reset_waiver_fields("pilot", waiver)
-        db.session.commit()
-
-        try:
-            from services.common.kdrive import dispatch_delete_document
-            dispatch_delete_document("pilot_waiver", waiver.waiver_id)
-        except Exception as k_err:
-            logger.error(
-                f"❌ Erreur dispatch suppression kDrive pilot_waiver reset : {k_err}")
-
-        return True, "Décharge réinitialisée avec succès."
-    except Exception as e:
-        db.session.rollback()
-        logger.error(
-            f"❌ Erreur lors du reset de la décharge {waiver_id} : {e}")
-        return False, f"Erreur lors de la réinitialisation : {str(e)}"
-
-
-@handle_admin_service_error
-def delete_pilot_waiver_internal(project_id):
-    """Supprime proprement une décharge pilote en interne (appelé lors de suppression de projet)."""
-    p = resolve_project(project_id)
-    if not p:
-        return
-    waiver = PilotWaiver.query.filter_by(project_id=p.id).first()
-    if not waiver:
-        return
-    try:
-        _cleanup_waiver_assets("pilot", waiver)
-        waiver.deleted_at = datetime.now(timezone.utc)
-        db.session.commit()
-
-        try:
-            from services.common.kdrive import dispatch_delete_document
-            dispatch_delete_document("pilot_waiver", waiver.waiver_id)
-        except Exception as k_err:
-            logger.error(
-                f"❌ Erreur dispatch suppression kDrive pilot_waiver internal : {k_err}")
-    except Exception as e:
-        logger.error(
-            f"❌ Erreur lors de la suppression interne de la décharge pour projet {project_id} : {e}")
-        db.session.rollback()
 
 
 # ── Relances Automatiques de Décharges ────────────────────────────

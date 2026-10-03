@@ -130,12 +130,15 @@ class Project(db.Model):
     # Contact Chef Machiniste du projet
     key_grip_contact = db.relationship(
         "Contact", foreign_keys=[key_grip_contact_id], backref="key_grip_projects", lazy=True)
+    # Décharges associées au projet
+    waivers = db.relationship(
+        "Waiver", backref="project", cascade="all, delete-orphan", lazy=True)
     # Décharge pilote associée (unique pour le projet)
     pilot_waiver = db.relationship(
-        "PilotWaiver", backref="project", uselist=False, lazy=True)
+        "PilotWaiver", uselist=False, lazy=True, overlaps="project,waivers")
     # Décharge production associée (unique pour le projet)
     production_waiver = db.relationship(
-        "ProductionWaiver", backref="project", uselist=False, lazy=True)
+        "ProductionWaiver", uselist=False, lazy=True, overlaps="project,waivers,pilot_waiver")
     # Utilisateur ayant effectué la dernière action
     last_action_by = db.relationship(
         "User", foreign_keys=[last_action_by_id], lazy=True)

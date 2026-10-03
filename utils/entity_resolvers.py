@@ -9,6 +9,7 @@ from models import (
     CheckinVehicle,
     CheckoutVehicle,
     Incident,
+    Waiver,
     PilotWaiver,
     ProductionWaiver,
     Project,
@@ -34,22 +35,30 @@ def resolve_project(identifier: Union[int, str, None]) -> Optional[Project]:
 
 
 def resolve_waiver(
-    model: Type[Union[PilotWaiver, ProductionWaiver]],
-    identifier: Union[int, str, None]
-) -> Optional[Union[PilotWaiver, ProductionWaiver]]:
+    model_or_identifier: Union[Type[Waiver], int, str, None],
+    identifier: Union[int, str, None] = None
+) -> Optional[Union[Waiver, PilotWaiver, ProductionWaiver]]:
     """
-    Résout une décharge (PilotWaiver ou ProductionWaiver) soit par son ID numérique,
+    Résout une décharge (Waiver, PilotWaiver ou ProductionWaiver) soit par son ID numérique,
     soit par sa référence métier unique (ex: 'BVDW-...', 'BVPW-...').
+    Peut être appelée sous la forme resolve_waiver(identifier) ou resolve_waiver(model, identifier).
     """
-    if identifier is None:
+    if identifier is None and not (isinstance(model_or_identifier, type) and issubclass(model_or_identifier, db.Model)):
+        model = Waiver
+        ident = model_or_identifier
+    else:
+        model = model_or_identifier
+        ident = identifier
+
+    if ident is None:
         return None
 
-    if isinstance(identifier, int) or (isinstance(identifier, str) and identifier.strip().isdigit()):
-        rec = db.session.get(model, int(identifier))
+    if isinstance(ident, int) or (isinstance(ident, str) and ident.strip().isdigit()):
+        rec = db.session.get(model, int(ident))
         if rec:
             return rec
 
-    ident_str = str(identifier).strip()
+    ident_str = str(ident).strip()
     return model.query.filter_by(waiver_id=ident_str).first()
 
 

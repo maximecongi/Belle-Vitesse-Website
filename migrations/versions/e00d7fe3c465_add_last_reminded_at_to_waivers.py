@@ -19,20 +19,23 @@ depends_on = None
 def upgrade():
     conn = op.get_bind()
     inspector = sa.inspect(conn)
+    existing_tables = set(inspector.get_table_names())
 
     # 1. Update pilot_waivers table
-    pilot_cols = [col['name'] for col in inspector.get_columns('pilot_waivers')]
-    if 'last_reminded_at' not in pilot_cols:
-        op.add_column('pilot_waivers', sa.Column('last_reminded_at', sa.DateTime(), nullable=True))
-    if 'reminder_count' not in pilot_cols:
-        op.add_column('pilot_waivers', sa.Column('reminder_count', sa.Integer(), server_default='0', nullable=False))
+    if 'pilot_waivers' in existing_tables:
+        pilot_cols = [col['name'] for col in inspector.get_columns('pilot_waivers')]
+        if 'last_reminded_at' not in pilot_cols:
+            op.add_column('pilot_waivers', sa.Column('last_reminded_at', sa.DateTime(), nullable=True))
+        if 'reminder_count' not in pilot_cols:
+            op.add_column('pilot_waivers', sa.Column('reminder_count', sa.Integer(), server_default='0', nullable=False))
 
     # 2. Update production_waivers table
-    prod_cols = [col['name'] for col in inspector.get_columns('production_waivers')]
-    if 'last_reminded_at' not in prod_cols:
-        op.add_column('production_waivers', sa.Column('last_reminded_at', sa.DateTime(), nullable=True))
-    if 'reminder_count' not in prod_cols:
-        op.add_column('production_waivers', sa.Column('reminder_count', sa.Integer(), server_default='0', nullable=False))
+    if 'production_waivers' in existing_tables:
+        prod_cols = [col['name'] for col in inspector.get_columns('production_waivers')]
+        if 'last_reminded_at' not in prod_cols:
+            op.add_column('production_waivers', sa.Column('last_reminded_at', sa.DateTime(), nullable=True))
+        if 'reminder_count' not in prod_cols:
+            op.add_column('production_waivers', sa.Column('reminder_count', sa.Integer(), server_default='0', nullable=False))
 
 
 def downgrade():
