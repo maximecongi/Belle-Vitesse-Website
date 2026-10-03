@@ -192,7 +192,12 @@ def create_app():
         # Gestion de la politique de cache HTTP pour les assets statiques
         if request.path.startswith('/static/'):
             if os.getenv("FLASK_ENV") == "production":
-                response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+                # Si l'asset dispose d'un paramètre de version ?v=, il peut être mis en cache de façon immuable.
+                # Sinon, forcer la revalidation avec max-age court pour éviter le blocage des clients.
+                if 'v' in request.args:
+                    response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+                else:
+                    response.headers['Cache-Control'] = 'public, max-age=3600, must-revalidate'
             else:
                 response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
 

@@ -111,12 +111,16 @@
     {% include "public/footer.html" %}
     {% endif %}
   </main>
-  <script src="{{ url_for('static', filename='js/src/initialization.js')}}"></script>
-  <script src="{{ url_for('static', filename='js/src/splide.js')}}"></script>
-  <script src="{{ url_for('static', filename='js/src/countup.js')}}"></script>
-  <script src="{{ url_for('static', filename='js/src/configurator.js')}}"></script>
-  <script src="{{ url_for('static', filename='js/src/infinite-scroll.js')}}"></script>
-  <script src="{{ url_for('static', filename='js/src/filtersliders.js')}}"></script>
+  {% if config.FLASK_ENV == 'production' %}
+  <script src="{{ asset_url('js/public.bundle.js') }}"></script>
+  {% else %}
+  <script src="{{ asset_url('js/src/initialization.js') }}"></script>
+  <script src="{{ asset_url('js/src/splide.js') }}"></script>
+  <script src="{{ asset_url('js/src/countup.js') }}"></script>
+  <script src="{{ asset_url('js/src/configurator.js') }}"></script>
+  <script src="{{ asset_url('js/src/infinite-scroll.js') }}"></script>
+  <script src="{{ asset_url('js/src/filtersliders.js') }}"></script>
+  {% endif %}
 </body>
 
 </html>
