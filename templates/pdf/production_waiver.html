@@ -68,15 +68,15 @@
             <div class="pilot-waiver-info-grid">
                 <div class="pilot-waiver-info-item">
                     <span class="pilot-waiver-info-label">Projet</span>
-                    <span class="pilot-waiver-info-value">{{ waiver.project_name or '—' }}</span>
+                    <span class="pilot-waiver-info-value u-text-sm">{{ waiver.project_name or '—' }}</span>
                 </div>
                 <div class="pilot-waiver-info-item">
                     <span class="pilot-waiver-info-label">Lieu(x) d'utilisation</span>
-                    <span class="pilot-waiver-info-value">{{ waiver.location_of_use or '—' }}</span>
+                    <span class="pilot-waiver-info-value u-text-sm">{{ waiver.location_of_use or '—' }}</span>
                 </div>
                 <div class="pilot-waiver-info-item">
                     <span class="pilot-waiver-info-label">Date(s) de tournage</span>
-                    <span class="pilot-waiver-info-value">{{ waiver.shooting_dates or '—' }}</span>
+                    <span class="pilot-waiver-info-value u-text-sm">{{ waiver.shooting_dates or '—' }}</span>
                 </div>
             </div>
             <div class="pilot-waiver-info-item" style="margin-top: 12pt;">
@@ -121,11 +121,11 @@
             <div class="pilot-waiver-info-grid">
                 <div class="pilot-waiver-info-item">
                     <span class="pilot-waiver-info-label">Compagnie d'assurance</span>
-                    <span class="pilot-waiver-info-value">{{ waiver.production_insurance_company }}</span>
+                    <span class="pilot-waiver-info-value u-text-sm">{{ waiver.production_insurance_company }}</span>
                 </div>
                 <div class="pilot-waiver-info-item">
                     <span class="pilot-waiver-info-label">Numéro de police</span>
-                    <span class="pilot-waiver-info-value">{{ waiver.production_insurance_policy }}</span>
+                    <span class="pilot-waiver-info-value u-text-sm">{{ waiver.production_insurance_policy }}</span>
                 </div>
             </div>
         </section>
@@ -152,7 +152,8 @@
                     <tr>
                         <td>✓</td>
                         <td>Utiliser les Véhicules exclusivement dans le cadre de la prestation définie ci-dessus et
-                            dans les lieux déclarés, conformément aux consignes de sécurité remises par {{ company_name }}.
+                            dans les lieux déclarés, conformément aux consignes de sécurité remises par {{ company_name
+                            }}.
                         </td>
                     </tr>
                     <tr>
@@ -167,7 +168,8 @@
                     </tr>
                     <tr>
                         <td>✓</td>
-                        <td>Signaler immédiatement à {{ company_name }} tout incident, accident ou dommage survenant sur les
+                        <td>Signaler immédiatement à {{ company_name }} tout incident, accident ou dommage survenant sur
+                            les
                             Véhicules ou à leur périphérie.</td>
                     </tr>
                     <tr>

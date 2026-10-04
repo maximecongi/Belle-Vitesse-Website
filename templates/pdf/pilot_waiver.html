@@ -66,15 +66,16 @@
             <div class="pilot-waiver-info-grid">
                 <div class="pilot-waiver-info-item">
                     <span class="pilot-waiver-info-label">Projet</span>
-                    <span class="pilot-waiver-info-value">{{ waiver.project.name if waiver.project else '—' }}</span>
+                    <span class="pilot-waiver-info-value u-text-sm ">{{ waiver.project.name if waiver.project else '—'
+                        }}</span>
                 </div>
                 <div class="pilot-waiver-info-item">
                     <span class="pilot-waiver-info-label">Production</span>
-                    <span class="pilot-waiver-info-value">{{ waiver.production_name or '—' }}</span>
+                    <span class="pilot-waiver-info-value u-text-sm">{{ waiver.production_name or '—' }}</span>
                 </div>
                 <div class="pilot-waiver-info-item">
                     <span class="pilot-waiver-info-label">Date(s) de tournage</span>
-                    <span class="pilot-waiver-info-value">{{ waiver.shooting_dates or '—' }}</span>
+                    <span class="pilot-waiver-info-value u-text-sm">{{ waiver.shooting_dates or '—' }}</span>
                 </div>
             </div>
             <div class="pilot-waiver-info-item" style="margin-top: 12pt;">
@@ -118,11 +119,11 @@
             <div class="pilot-waiver-info-grid">
                 <div class="pilot-waiver-info-item">
                     <span class="pilot-waiver-info-label">Compagnie d'assurance</span>
-                    <span class="pilot-waiver-info-value">{{ waiver.pilot_insurance_company }}</span>
+                    <span class="pilot-waiver-info-value u-text-sm">{{ waiver.pilot_insurance_company }}</span>
                 </div>
                 <div class="pilot-waiver-info-item">
                     <span class="pilot-waiver-info-label">Numéro de police</span>
-                    <span class="pilot-waiver-info-value">{{ waiver.pilot_insurance_policy }}</span>
+                    <span class="pilot-waiver-info-value u-text-sm">{{ waiver.pilot_insurance_policy }}</span>
                 </div>
             </div>
         </section>

@@ -1329,6 +1329,14 @@
 .project-doc-beneficiary {
     font-size: 0.75rem;
     color: var(--grey-2, #515151);
+    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+}
+
+.project-doc-beneficiary-name {
+    font-weight: 500;
+    font-size: 0.65rem;
 }
 
 /* Badge dans la liste des projets */

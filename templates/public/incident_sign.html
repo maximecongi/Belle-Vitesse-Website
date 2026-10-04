@@ -89,28 +89,31 @@
                 <div class="pilot-waiver-info-grid">
                     <div class="pilot-waiver-info-item">
                         <span class="pilot-waiver-info-label">Projet</span>
-                        <span class="pilot-waiver-info-value">{{ incident.project_name if incident.project_name and
+                        <span class="pilot-waiver-info-value u-text-sm">{{ incident.project_name if
+                            incident.project_name and
                             incident.project_name != '—' else (incident.project.name if incident.project else '—')
                             }}</span>
                     </div>
                     <div class="pilot-waiver-info-item">
                         <span class="pilot-waiver-info-label">Production</span>
-                        <span class="pilot-waiver-info-value">{{ incident.production_name if incident.production_name
+                        <span class="pilot-waiver-info-value u-text-sm">{{ incident.production_name if
+                            incident.production_name
                             and incident.production_name != '—' else (incident.project.production_name if
                             incident.project else '—') }}</span>
                     </div>
                     <div class="pilot-waiver-info-item">
                         <span class="pilot-waiver-info-label">Date & Heure</span>
-                        <span class="pilot-waiver-info-value">{{ incident.incident_date }} à {{ incident.incident_time
+                        <span class="pilot-waiver-info-value u-text-sm">{{ incident.incident_date }} à {{
+                            incident.incident_time
                             }}</span>
                     </div>
                     <div class="pilot-waiver-info-item">
                         <span class="pilot-waiver-info-label">Lieu</span>
-                        <span class="pilot-waiver-info-value">{{ incident.location or '—' }}</span>
+                        <span class="pilot-waiver-info-value u-text-sm">{{ incident.location or '—' }}</span>
                     </div>
                     <div class="pilot-waiver-info-item">
                         <span class="pilot-waiver-info-label">Véhicule / Équipement</span>
-                        <span class="pilot-waiver-info-value">
+                        <span class="pilot-waiver-info-value u-text-sm">
                             {% if incident.vehicle_name and incident.vehicle_name != '—' %}
                             {{ incident.vehicle_name }}
                             {% elif incident.equipment_name and incident.equipment_name != '—' %}
@@ -120,7 +123,7 @@
                     </div>
                     <div class="pilot-waiver-info-item">
                         <span class="pilot-waiver-info-label">Gravité</span>
-                        <span class="pilot-waiver-info-value">
+                        <span class="pilot-waiver-info-value u-text-sm">
                             {% if incident.severity == 'critique' %}
                             <span class="badge-pill" data-val="critique"><i data-lucide="alert-octagon"></i> {{
                                 incident.severity_label or 'Critique' }}</span>
@@ -135,7 +138,7 @@
                     </div>
                     <div class="pilot-waiver-info-item">
                         <span class="pilot-waiver-info-label">Impact Tournage</span>
-                        <span class="pilot-waiver-info-value">
+                        <span class="pilot-waiver-info-value u-text-sm">
                             {% if incident.shooting_impact in ('annulation', 'arret') %}
                             <span class="badge-pill" data-val="critique"><i data-lucide="ban"></i> {{
                                 incident.shooting_impact_label or 'Annulation de session' }}</span>

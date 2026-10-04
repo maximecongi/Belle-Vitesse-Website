@@ -388,7 +388,7 @@ admin-multiselect-tag--custom
         <div class="project-doc-title u-font-semibold u-text-xs">
             <i data-lucide="{{ icon }}"></i> {{ title }}
         </div>
-        <div class="checkout-doc-id">
+        <div class="checkout-doc-id u-mb-1">
             {% if waiver and waiver.waiver_num and list_url %}
             <a href="{{ list_url }}" class="u-text-muted u-hover-underline" title="Voir dans la liste des décharges">
                 {{ waiver.waiver_num }}
@@ -399,11 +399,11 @@ admin-multiselect-tag--custom
         </div>
         {% if beneficiary_name %}
         <div class="project-doc-beneficiary">
-            {{ beneficiary_label }} : <span class="u-font-semibold">{{ beneficiary_name }}</span>
+            {{ beneficiary_label }} : <span class="project-doc-beneficiary-name">{{ beneficiary_name }}</span>
         </div>
         {% endif %}
     </div>
-    <div class="projects-cell-item u-flex u-justify-between u-align-center u-mt-2">
+    <div class="projects-cell-item u-flex u-flex-column u-justify-between u-align-center u-mt-2">
         {% if waiver and waiver.id and waiver.waiver_num %}
         {% if waiver.raw_status in ['to_send', 'to_generate'] and send_url %}
         <form action="{{ send_url }}" method="POST" class="u-m-0 u-d-inline">

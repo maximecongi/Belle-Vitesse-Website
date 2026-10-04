@@ -568,45 +568,14 @@ initials, empty_state, waiver_card, doc_download_badge %}
     <!-- COLONNE LATÉRALE (DROITE : CONTACTS, DOCUMENTS, NOTES) -->
     <div class="u-flex u-flex-column u-gap-3">
 
-        <!-- 3. CONTACTS CLÉS DU TOURNAGE -->
-        <div class="admin-card">
-            <div class="admin-card-title u-mb-3">
-                Contacts
-            </div>
-            {% if contacts and contacts|length > 0 %}
-            <div class="u-flex u-flex-column u-gap-3">
-                {% for c in contacts %}
-                <div class="project-contact-row">
-                    <div class="u-flex u-justify-between u-align-center u-mb-1">
-                        <span class="project-contact-role">{{ c.role_title }}</span>
-                    </div>
-                    <div class="u-font-semibold u-text-sm">{{ c.full_name }}</div>
-                    <div class="u-flex u-flex-column u-gap-2 u-mt-1 u-text-xs u-flex-wrap">
-                        {% if c.phone %}
-                        <a href="tel:{{ c.phone }}" class="project-contact-action" title="Appeler">
-                            <i data-lucide="phone"></i> {{ c.phone }}
-                        </a>
-                        {% endif %}
-                        {% if c.mail %}
-                        <a href="mailto:{{ c.mail }}" class="project-contact-action" title="Envoyer un e-mail">
-                            <i data-lucide="mail"></i> {{ c.mail }}
-                        </a>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <p class="u-text-muted u-text-xs u-m-0">Aucun contact spécifique rattaché à ce tournage.</p>
-            {% endif %}
-        </div>
-
-        <!-- 4. DOCUMENTS & DÉCHARGES ASSOCIÉES -->
+        <!-- 3. DOCUMENTS & DÉCHARGES ASSOCIÉES -->
         <div class="admin-card">
             <div class="admin-card-title u-mb-3">
                 Documents
             </div>
-
+            <h3 class="u-text-sm u-text-uppercase u-text-muted u-font-bold u-mb-2 u-tracking-wide">
+                Décharges
+            </h3>
             <!-- Grille des Décharges (Pilote & Production) -->
             <div class="project-docs-grid">
                 {{ waiver_card(
@@ -623,7 +592,7 @@ initials, empty_state, waiver_card, doc_download_badge %}
 
                 {{ waiver_card(
                 production_waiver,
-                'Décharge Production',
+                'Décharge Prod.',
                 'building',
                 'Prod',
                 production_waiver.production_name,
@@ -665,6 +634,39 @@ initials, empty_state, waiver_card, doc_download_badge %}
             </div>
             {% endif %}
         </div>
+        <!-- 4. CONTACTS CLÉS DU TOURNAGE -->
+        <div class="admin-card">
+            <div class="admin-card-title u-mb-3">
+                Contacts
+            </div>
+            {% if contacts and contacts|length > 0 %}
+            <div class="u-flex u-flex-column u-gap-3">
+                {% for c in contacts %}
+                <div class="project-contact-row">
+                    <div class="u-flex u-justify-between u-align-center u-mb-1">
+                        <span class="project-contact-role">{{ c.role_title }}</span>
+                    </div>
+                    <div class="u-font-semibold u-text-sm">{{ c.full_name }}</div>
+                    <div class="u-flex u-flex-column u-gap-2 u-mt-1 u-text-xs u-flex-wrap">
+                        {% if c.phone %}
+                        <a href="tel:{{ c.phone }}" class="project-contact-action" title="Appeler">
+                            <i data-lucide="phone"></i> {{ c.phone }}
+                        </a>
+                        {% endif %}
+                        {% if c.mail %}
+                        <a href="mailto:{{ c.mail }}" class="project-contact-action" title="Envoyer un e-mail">
+                            <i data-lucide="mail"></i> {{ c.mail }}
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="u-text-muted u-text-xs u-m-0">Aucun contact spécifique rattaché à ce tournage.</p>
+            {% endif %}
+        </div>
+
 
     </div>
 </div>

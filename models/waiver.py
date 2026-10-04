@@ -39,6 +39,65 @@ def _generate_default_waiver_id(context):
     return generate_inspection_number(prefix)
 
 
+def _extract_vehicle_thumbnail(fields):
+    """Extrait l'URL de la miniature du véhicule depuis ses champs Airtable / BDD."""
+    if not fields or not isinstance(fields, dict):
+        return None
+
+    # 1. Champ 'thumbnail'
+    thumb = fields.get("thumbnail")
+    if isinstance(thumb, str) and thumb.strip():
+        return thumb.strip()
+    if isinstance(thumb, list) and len(thumb) > 0:
+        item = thumb[0]
+        if isinstance(item, dict):
+            thumbnails = item.get("thumbnails", {})
+            if isinstance(thumbnails, dict):
+                large = thumbnails.get("large", {}).get("url")
+                if large:
+                    return large
+                full = thumbnails.get("full", {}).get("url")
+                if full:
+                    return full
+                small = thumbnails.get("small", {}).get("url")
+                if small:
+                    return small
+            if item.get("url"):
+                return item["url"]
+        elif isinstance(item, str) and item.strip():
+            return item.strip()
+
+    # 2. Fallback champ 'gallery'
+    gallery = fields.get("gallery")
+    if isinstance(gallery, list) and len(gallery) > 0:
+        item = gallery[0]
+        if isinstance(item, dict):
+            thumbnails = item.get("thumbnails", {})
+            if isinstance(thumbnails, dict):
+                large = thumbnails.get("large", {}).get("url")
+                if large:
+                    return large
+            if item.get("url"):
+                return item["url"]
+
+    # 3. Fallback champ 'banner'
+    banner = fields.get("banner")
+    if isinstance(banner, list) and len(banner) > 0:
+        item = banner[0]
+        if isinstance(item, dict):
+            thumbnails = item.get("thumbnails", {})
+            if isinstance(thumbnails, dict):
+                large = thumbnails.get("large", {}).get("url")
+                if large:
+                    return large
+            if item.get("url"):
+                return item["url"]
+        elif isinstance(item, str) and item.strip():
+            return item.strip()
+
+    return None
+
+
 class Waiver(db.Model):
     """
     Modèle unifié représentant une décharge de responsabilité (pilote, production, etc.).
@@ -161,11 +220,14 @@ class Waiver(db.Model):
             "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
         }
 
+
+
     @property
     def vehicles_details(self):
         """
         Retourne la liste détaillée des véhicules concernés par la décharge :
-        nom, identifiant unique (unique_id) et numéro de contrôle au départ (checkout_doc_id).
+        nom, identifiant unique (unique_id), numéro de contrôle au départ (checkout_doc_id)
+        et URL de la miniature (thumbnail).
         """
         results = []
         p = self.project
@@ -199,10 +261,14 @@ class Waiver(db.Model):
                 v_name = v_fields.get("name") or f"ID {vid}"
                 u_id = v_fields.get("unique_id") or ""
                 co_num = checkout_map.get(str(vid)) or ""
+                thumb = _extract_vehicle_thumbnail(v_fields)
+                v_slug = v_fields.get("slug") or ""
                 results.append({
                     "name": v_name,
                     "unique_id": u_id,
                     "checkout_doc_id": co_num,
+                    "thumbnail": thumb,
+                    "slug": v_slug,
                 })
         elif self.vehicles:
             # Fallback pour les décharges historiques sans veh_ids sur le projet : résolution par nom
@@ -234,10 +300,14 @@ class Waiver(db.Model):
                 match_id, match_fields = name_to_fields.get(clean.lower(), (None, {}))
                 u_id = match_fields.get("unique_id", "")
                 co_num = checkout_map.get(str(match_id), "") if match_id else ""
+                thumb = _extract_vehicle_thumbnail(match_fields)
+                v_slug = match_fields.get("slug") or ""
                 results.append({
                     "name": clean,
                     "unique_id": u_id,
                     "checkout_doc_id": co_num,
+                    "thumbnail": thumb,
+                    "slug": v_slug,
                 })
 
         return results

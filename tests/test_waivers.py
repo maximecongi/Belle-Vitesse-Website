@@ -514,8 +514,23 @@ class WaiversTest(unittest.TestCase):
             db.session.add(prod)
             db.session.flush()
 
-            # Création véhicule en base
-            veh = Vehicle(id="recVehTest01", fields={"name": "Porsche Macan Tracking", "unique_id": "CAR-01"})
+            # Création véhicule en base avec thumbnail et slug
+            veh = Vehicle(
+                id="recVehTest01",
+                fields={
+                    "name": "Porsche Macan Tracking",
+                    "unique_id": "CAR-01",
+                    "slug": "porsche-macan-tracking",
+                    "thumbnail": [
+                        {
+                            "url": "/static/images/airtable/vehicles/recVehTest01/macan.png",
+                            "thumbnails": {
+                                "large": {"url": "/static/images/airtable/vehicles/recVehTest01/thumbnails/large/macan.png"}
+                            }
+                        }
+                    ]
+                }
+            )
             db.session.add(veh)
 
             proj = Project(name="Projet Test Véhicules PDF", production_id=prod.id, vehicles_to_check="recVehTest01")
@@ -533,7 +548,7 @@ class WaiversTest(unittest.TestCase):
             db.session.flush()
 
             # Création d'une décharge pilote
-            waiver = PilotWaiver(project_id=proj.id, vehicles="Porsche Macan Tracking")
+            waiver = PilotWaiver(project_id=proj.id, vehicles="Porsche Macan Tracking", status="to_sign")
             db.session.add(waiver)
             db.session.commit()
 
@@ -542,14 +557,27 @@ class WaiversTest(unittest.TestCase):
             self.assertEqual(details[0]["name"], "Porsche Macan Tracking")
             self.assertEqual(details[0]["unique_id"], "CAR-01")
             self.assertEqual(details[0]["checkout_doc_id"], "BVCO-2026-9999")
+            self.assertEqual(details[0]["thumbnail"], "/static/images/airtable/vehicles/recVehTest01/thumbnails/large/macan.png")
+            self.assertEqual(details[0]["slug"], "porsche-macan-tracking")
 
             # Vérification du rendu du template PDF
             with self.app.test_request_context():
-                rendered_html = render_template("pdf/pilot_waiver.html", waiver=waiver, company_name="Belle Vitesse SAS")
-                self.assertIn("Porsche Macan Tracking", rendered_html)
-                self.assertIn("CAR-01", rendered_html)
-                self.assertIn("BVCO-2026-9999", rendered_html)
-                self.assertIn("checkout-doc-id", rendered_html)
+                rendered_pdf_html = render_template("pdf/pilot_waiver.html", waiver=waiver, company_name="Belle Vitesse SAS")
+                self.assertIn("Porsche Macan Tracking", rendered_pdf_html)
+                self.assertIn("CAR-01", rendered_pdf_html)
+                self.assertIn("BVCO-2026-9999", rendered_pdf_html)
+                self.assertIn("checkout-doc-id", rendered_pdf_html)
+
+                # Vérification du rendu du template public de signature pilote
+                rendered_sign_html = render_template("public/waivers/sign_pilot_waiver.html", waiver=waiver)
+                self.assertIn("pilot-waiver-vehicle-card", rendered_sign_html)
+                self.assertIn("pilot-waiver-vehicle-thumb-wrapper", rendered_sign_html)
+                self.assertIn("/static/images/airtable/vehicles/recVehTest01/thumbnails/large/macan.png", rendered_sign_html)
+                self.assertIn("Porsche Macan Tracking", rendered_sign_html)
+                self.assertIn("CAR-01", rendered_sign_html)
+                self.assertIn('href="/fr/vehicles/porsche-macan-tracking"', rendered_sign_html)
+                self.assertIn('target="_blank"', rendered_sign_html)
+                self.assertIn('rel="noopener noreferrer"', rendered_sign_html)
 
 
 if __name__ == "__main__":

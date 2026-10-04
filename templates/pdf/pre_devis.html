@@ -97,7 +97,7 @@
             <div class="pilot-waiver-info-grid">
                 <div class="pilot-waiver-info-item">
                     <span class="pilot-waiver-info-label">Émetteur</span>
-                    <span class="pilot-waiver-info-value">
+                    <span class="pilot-waiver-info-value u-text-sm">
                         <strong>{{ settings.company_name }}</strong><br>
                         {{ settings.company_address }}<br>
                         {% if settings.company_siret %}
@@ -107,14 +107,15 @@
                 </div>
                 <div class="pilot-waiver-info-item">
                     <span class="pilot-waiver-info-label">Destinataire (Production)</span>
-                    <span class="pilot-waiver-info-value">
+                    <span class="pilot-waiver-info-value u-text-sm">
                         <strong>{{ quote.production.name }}</strong><br>
                         {{ quote.production.address or '—' }}
                     </span>
                 </div>
                 <div class="pilot-waiver-info-item">
                     <span class="pilot-waiver-info-label">Projet</span>
-                    <span class="pilot-waiver-info-value"><strong>{{ quote.project_name or '—' }}</strong></span>
+                    <span class="pilot-waiver-info-value u-text-sm"><strong>{{ quote.project_name or '—'
+                            }}</strong></span>
                 </div>
             </div>
         </section>
