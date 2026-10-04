@@ -415,6 +415,73 @@ class FleetTest(unittest.TestCase):
             self.assertEqual(cp_status.type, "status")
             self.assertIsNone(cp_status.unit)
 
+    @patch("services.admin.fleet.get_vehicles")
+    def test_completed_project_with_unreturned_checkout_remains_available(self, mock_get_vehicles):
+        """Vérifie qu'un véhicule dont le projet est clôturé (dates passées) reste disponible même si un départ n'a pas été soldé."""
+        mock_get_vehicles.return_value = [
+            {
+                "id": "recPastProjectVeh",
+                "fields": {
+                    "name": "eTrike 360",
+                    "unique_id": "ETRIKE-360",
+                    "brand": "Belle Vitesse",
+                    "model": "360",
+                    "order": 1,
+                }
+            }
+        ]
+        with self.app.app_context():
+            user = User(
+                firstname="Technicien",
+                lastname="BV",
+                mail="tech@example.com",
+                role="administrator"
+            )
+            db.session.add(user)
+
+            prod = Production(name="Pyramide")
+            db.session.add(prod)
+            db.session.flush()
+
+            # Projet terminé dans le passé (ex: juin 2026 alors qu'on est en octobre)
+            past_project = Project(
+                name="Anatole Latuile",
+                production_id=prod.id,
+                departure_date=date(2026, 6, 15),
+                shoot_start_date=date(2026, 6, 15),
+                shoot_end_date=date(2026, 6, 17),
+                return_date=date(2026, 6, 17),
+                vehicles_to_check="recPastProjectVeh"
+            )
+            db.session.add(past_project)
+            db.session.flush()
+
+            # Un départ signé sur ce projet terminé, sans retour
+            co = CheckoutVehicle(
+                project_id=past_project.id,
+                controller_id=user.id,
+                inspection_date=date(2026, 6, 15),
+                vehicle_id="recPastProjectVeh",
+                status="signed",
+                battery_level=95,
+            )
+            db.session.add(co)
+            db.session.commit()
+
+            # 1. Vérification dans l'aperçu de la flotte (/admin/fleet)
+            overview = get_fleet_overview()
+            v_data = next(v for v in overview["vehicles"] if v["id"] == "recPastProjectVeh")
+            self.assertEqual(v_data["operational_status"], "disponible")
+            self.assertEqual(v_data["operational_status_label"], "Disponible")
+            self.assertIsNone(v_data["active_project"])
+            self.assertEqual(overview["stats"]["available"], 1)
+            self.assertEqual(overview["stats"]["on_tournage"], 0)
+
+            # 2. Vérification dans la timeline détaillée du véhicule (/admin/fleet/<id>)
+            timeline = get_vehicle_timeline("recPastProjectVeh")
+            self.assertEqual(timeline["stats"]["current_status"], "disponible")
+            self.assertEqual(timeline["stats"]["current_status_label"], "Disponible")
+
 
 if __name__ == "__main__":
     unittest.main()

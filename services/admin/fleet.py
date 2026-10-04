@@ -16,6 +16,7 @@ from models import (
     db,
 )
 from models.catalog import Vehicle
+from services.admin.projects import get_project_shoot_status
 from utils.database import get_vehicles
 from utils.formatting import format_date_fr
 
@@ -172,9 +173,9 @@ def get_fleet_overview() -> Dict[str, Any]:
     # Suivi des batteries récentes par véhicule : {vid: (date_or_created, battery_val)}
     latest_batteries: Dict[str, tuple] = {}
 
-    # Comptabilisation des checkouts
-    # vid -> list of project_id
-    open_checkout_projects: Dict[str, List[int]] = {}
+    # Comptabilisation des checkouts signés par véhicule et projet
+    # vid -> {project_id: count_signed}
+    signed_checkouts_map: Dict[str, Dict[int, int]] = {}
     for co in checkouts:
         vid = str(co.vehicle_id) if co.vehicle_id else None
         if vid and vid in vehicles_dict:
@@ -186,12 +187,12 @@ def get_fleet_overview() -> Dict[str, Any]:
                 if not prev or co_date >= prev[0]:
                     latest_batteries[vid] = (co_date, co.battery_level)
 
-            if co.status in ("in_progress", "signed"):
-                open_checkout_projects.setdefault(
-                    vid, []).append(co.project_id)
+            if co.status == "signed" and co.project_id:
+                veh_cos = signed_checkouts_map.setdefault(vid, {})
+                veh_cos[co.project_id] = veh_cos.get(co.project_id, 0) + 1
 
-    # Comptabilisation des checkins
-    closed_checkin_projects: Dict[str, set] = {}
+    # Comptabilisation des checkins signés par véhicule et projet
+    signed_checkins_map: Dict[str, Dict[int, int]] = {}
     for ci in checkins:
         vid = str(ci.vehicle_id) if ci.vehicle_id else None
         if vid and vid in vehicles_dict:
@@ -203,9 +204,9 @@ def get_fleet_overview() -> Dict[str, Any]:
                 if not prev or ci_date >= prev[0]:
                     latest_batteries[vid] = (ci_date, ci.battery_level)
 
-            if ci.status == "signed":
-                closed_checkin_projects.setdefault(
-                    vid, set()).add(ci.project_id)
+            if ci.status == "signed" and ci.project_id:
+                veh_cis = signed_checkins_map.setdefault(vid, {})
+                veh_cis[ci.project_id] = veh_cis.get(ci.project_id, 0) + 1
 
     # Comptabilisation des incidents et détection des alertes critiques
     for inc in incidents:
@@ -217,27 +218,28 @@ def get_fleet_overview() -> Dict[str, Any]:
             if is_unresolved and is_severe:
                 vehicles_dict[vid]["critical_incident"] = True
 
-    # Comptabilisation des projets rattachés
+    # Comptabilisation des projets rattachés et détection des tournages actifs
     for p in projects:
         p_veh_ids = set()
         if p.vehicles_to_check:
             p_veh_ids.update(
                 [v.strip() for v in p.vehicles_to_check.split(",") if v.strip()])
 
+        p_status_info = get_project_shoot_status(p, today)
+        p_status = p_status_info["status"]
+
         for vid in p_veh_ids:
             if vid in vehicles_dict:
                 vehicles_dict[vid]["projects_count"] += 1
 
-                # Vérifier si ce projet est actuellement en cours pour ce véhicule
-                is_current = False
-                if p.shoot_start_date and p.shoot_end_date:
-                    if p.shoot_start_date <= today <= p.shoot_end_date:
-                        is_current = True
-                elif p.departure_date and p.return_date:
-                    if p.departure_date <= today <= p.return_date:
-                        is_current = True
+                # Un véhicule est considéré sur tournage actif pour ce projet si :
+                # - Le projet est actuellement en tournage / immobilisé (in_progress)
+                # - OU le projet n'est pas encore clôturé et a un départ signé non soldé par un retour
+                cos_count = signed_checkouts_map.get(vid, {}).get(p.id, 0)
+                cis_count = signed_checkins_map.get(vid, {}).get(p.id, 0)
+                has_unreturned = cos_count > cis_count
 
-                if is_current and not vehicles_dict[vid]["active_project"]:
+                if (p_status == "in_progress" or (p_status != "completed" and has_unreturned)) and not vehicles_dict[vid]["active_project"]:
                     vehicles_dict[vid]["active_project"] = {
                         "id": p.id,
                         "project_id": p.project_id,
@@ -250,28 +252,12 @@ def get_fleet_overview() -> Dict[str, Any]:
         if vid in latest_batteries:
             v_data["latest_battery"] = latest_batteries[vid][1]
 
-        # Si le véhicule a un départ non soldé par un retour signé
-        open_projects = open_checkout_projects.get(vid, [])
-        closed_set = closed_checkin_projects.get(vid, set())
-        has_unreturned = any(pid not in closed_set for pid in open_projects)
-
         if v_data["critical_incident"]:
             v_data["operational_status"] = "incident"
             v_data["operational_status_label"] = "Incident / À réviser"
-        elif has_unreturned or v_data["active_project"]:
+        elif v_data["active_project"]:
             v_data["operational_status"] = "tournage"
             v_data["operational_status_label"] = "Sur tournage"
-            if not v_data["active_project"] and open_projects:
-                for pid in open_projects:
-                    if pid not in closed_set and pid in project_map:
-                        proj = project_map[pid]
-                        v_data["active_project"] = {
-                            "id": proj.id,
-                            "project_id": proj.project_id,
-                            "name": proj.name,
-                            "production": proj.production.name if proj.production else "—",
-                        }
-                        break
         else:
             v_data["operational_status"] = "disponible"
             v_data["operational_status_label"] = "Disponible"
@@ -331,40 +317,10 @@ def _build_vehicle_missions(vehicle_projects: List[Any], events: List[Dict[str, 
             sub_events[0].get("datetime") if sub_events else None)
 
         today_date = date.today()
-        if p.shoot_start_date and p.shoot_end_date:
-            if p.shoot_start_date <= today_date <= p.shoot_end_date:
-                status = "in_progress"
-                status_label = "En tournage"
-            elif today_date > p.shoot_end_date:
-                status = "completed"
-                status_label = "Clôturé"
-            else:
-                status = "upcoming"
-                status_label = "À venir"
-        elif p.departure_date and p.return_date:
-            if p.departure_date <= today_date <= p.return_date:
-                status = "in_progress"
-                status_label = "En tournage"
-            elif today_date > p.return_date:
-                status = "completed"
-                status_label = "Clôturé"
-            else:
-                status = "upcoming"
-                status_label = "À venir"
-        else:
-            status = "upcoming"
-            status_label = "À venir"
-
-        # Formatage des dates de tournage
-        date_range_label = ""
-        if p.shoot_start_date and p.shoot_end_date:
-            date_range_label = f"Du {format_date_fr(str(p.shoot_start_date))} au {format_date_fr(str(p.shoot_end_date))}"
-        elif p.shoot_start_date:
-            date_range_label = f"À partir du {format_date_fr(str(p.shoot_start_date))}"
-        elif mission_date != date.min:
-            date_range_label = format_date_fr(str(mission_date))
-        else:
-            date_range_label = "—"
+        status_info = get_project_shoot_status(p, today_date)
+        status = status_info["status"]
+        status_label = status_info["label"]
+        date_range_label = status_info["dates_label"]
 
         # Synthèse des anomalies
         total_failures = sum(e.get("failure_count", 0)
@@ -620,39 +576,10 @@ def get_vehicle_timeline(vehicle_id: str) -> Optional[Dict[str, Any]]:
         p_date = p.shoot_start_date or p.departure_date or (
             p.created_at.date() if hasattr(p, "created_at") and p.created_at else date.min)
         p_today = date.today()
-        if p.shoot_start_date and p.shoot_end_date:
-            if p.shoot_start_date <= p_today <= p.shoot_end_date:
-                p_status = "in_progress"
-                p_status_label = "En tournage"
-            elif p_today > p.shoot_end_date:
-                p_status = "completed"
-                p_status_label = "Clôturé"
-            else:
-                p_status = "upcoming"
-                p_status_label = "À venir"
-        elif p.departure_date and p.return_date:
-            if p.departure_date <= p_today <= p.return_date:
-                p_status = "in_progress"
-                p_status_label = "En tournage"
-            elif p_today > p.return_date:
-                p_status = "completed"
-                p_status_label = "Clôturé"
-            else:
-                p_status = "upcoming"
-                p_status_label = "À venir"
-        else:
-            p_status = "upcoming"
-            p_status_label = "À venir"
-
-        # Calcul du libellé de période et des anomalies/incidents associés pour la vue linéaire
-        if p.shoot_start_date and p.shoot_end_date:
-            p_date_range_label = f"Du {format_date_fr(str(p.shoot_start_date))} au {format_date_fr(str(p.shoot_end_date))}"
-        elif p.shoot_start_date:
-            p_date_range_label = f"À partir du {format_date_fr(str(p.shoot_start_date))}"
-        elif p_date != date.min:
-            p_date_range_label = format_date_fr(str(p_date))
-        else:
-            p_date_range_label = "—"
+        status_info = get_project_shoot_status(p, p_today)
+        p_status = status_info["status"]
+        p_status_label = status_info["label"]
+        p_date_range_label = status_info["dates_label"]
 
         p_failures = sum(e.get("failure_count", 0) for e in events if e.get("type") in ("checkout", "checkin") and e.get("project_id") == p.id)
         p_incidents = [e for e in events if e.get("type") == "incident" and e.get("project_id") == p.id]
@@ -720,10 +647,25 @@ def get_vehicle_timeline(vehicle_id: str) -> Optional[Dict[str, Any]]:
 
     # Statut opérationnel actuel
     today = date.today()
-    is_on_shoot = any(
-        p.shoot_start_date and p.shoot_end_date and p.shoot_start_date <= today <= p.shoot_end_date
-        for p in vehicle_projects
-    )
+    signed_cos_by_proj: Dict[int, int] = {}
+    for co in checkouts:
+        if co.status == "signed" and co.project_id:
+            signed_cos_by_proj[co.project_id] = signed_cos_by_proj.get(co.project_id, 0) + 1
+
+    signed_cis_by_proj: Dict[int, int] = {}
+    for ci in checkins:
+        if ci.status == "signed" and ci.project_id:
+            signed_cis_by_proj[ci.project_id] = signed_cis_by_proj.get(ci.project_id, 0) + 1
+
+    is_on_shoot = False
+    for p in vehicle_projects:
+        p_status_info = get_project_shoot_status(p, today)
+        p_status = p_status_info["status"]
+        has_unreturned = signed_cos_by_proj.get(p.id, 0) > signed_cis_by_proj.get(p.id, 0)
+        if p_status == "in_progress" or (p_status != "completed" and has_unreturned):
+            is_on_shoot = True
+            break
+
     if open_critical_incidents > 0:
         current_status = "incident"
         current_status_label = "Incident / À réviser"

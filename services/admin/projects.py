@@ -99,16 +99,33 @@ def _format_vehicle_state(project, vehicle_id, vehicle_map):
     }
 
 
-def _format_project_admin(p, vehicle_map, heads_map):
-    """
-    Formate un enregistrement de projet pour l'affichage dans la liste d'administration.
-    """
-    veh_ids = [v.strip()
-               for v in (p.vehicles_to_check or "").split(",") if v.strip()]
-    head_ids = [h.strip()
-                for h in (p.heads_to_check or "").split(",") if h.strip()]
+def _parse_date(d):
+    """Utilitaire pour parser les dates (gère les vides, chaînes ISO et objets date)."""
+    if not d:
+        return None
+    if isinstance(d, datetime):
+        return d.date()
+    if isinstance(d, date):
+        return d
+    if isinstance(d, str):
+        d_str = d.strip()
+        if not d_str:
+            return None
+        try:
+            return datetime.strptime(d_str[:10], "%Y-%m-%d").date()
+        except ValueError:
+            return None
+    return None
 
-    today_date = get_today_paris()
+
+def get_project_shoot_status(p, today_date=None):
+    """
+    Détermine le statut opérationnel d'un projet (in_progress, completed, upcoming),
+    son libellé, son identifiant, sa couleur sémantique et le libellé de ses dates de tournage.
+    """
+    if today_date is None:
+        today_date = get_today_paris()
+
     is_punctual = (getattr(p, "date_mode", None) == "punctual")
     shoot_dates = getattr(p, "shoot_dates", None) or []
     is_immob = getattr(p, "is_immobilized_between", True)
@@ -192,6 +209,32 @@ def _format_project_admin(p, vehicle_map, heads_map):
         shoot_status_id = "upcoming"
         shoot_status_color = "var(--status-info, #0284C7)"
         shoot_dates_label = "Dates à confirmer"
+
+    return {
+        "status": shoot_status,
+        "label": shoot_status_label,
+        "id": shoot_status_id,
+        "color": shoot_status_color,
+        "dates_label": shoot_dates_label,
+    }
+
+
+def _format_project_admin(p, vehicle_map, heads_map):
+    """
+    Formate un enregistrement de projet pour l'affichage dans la liste d'administration.
+    """
+    veh_ids = [v.strip()
+               for v in (p.vehicles_to_check or "").split(",") if v.strip()]
+    head_ids = [h.strip()
+                 for h in (p.heads_to_check or "").split(",") if h.strip()]
+
+    today_date = get_today_paris()
+    status_info = get_project_shoot_status(p, today_date)
+    shoot_status = status_info["status"]
+    shoot_status_label = status_info["label"]
+    shoot_status_id = status_info["id"]
+    shoot_status_color = status_info["color"]
+    shoot_dates_label = status_info["dates_label"]
 
     return {
         "id": p.id,
@@ -381,24 +424,6 @@ def get_project_form_context():
         "heads": get_heads(),
     }
 
-
-def _parse_date(d):
-    """Utilitaire pour parser les dates du formulaire (gère les vides, chaînes ISO et objets date)."""
-    if not d:
-        return None
-    if isinstance(d, datetime):
-        return d.date()
-    if isinstance(d, date):
-        return d
-    if isinstance(d, str):
-        d_str = d.strip()
-        if not d_str:
-            return None
-        try:
-            return datetime.strptime(d_str[:10], "%Y-%m-%d").date()
-        except ValueError:
-            return None
-    return None
 
 
 def _parse_shoot_dates(form):
