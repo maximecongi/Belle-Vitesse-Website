@@ -449,6 +449,12 @@
     color: #0f172a;
 }
 
+.pdp-nav-spacer {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+}
+
 /* ── Weekdays Grid ────────────────────────────────────────────── */
 .pdp-weekdays {
     display: grid;
@@ -650,8 +656,19 @@
     border: 1px solid #fcd34d;
 }
 
+.pdp-legend-swatch.swatch-free {
+    background: #f0fdf4;
+    border: 1px dashed #a7f3d0;
+}
+
 .pdp-legend-swatch.swatch-ret {
     background: var(--entity-checkout, #15803D);
+}
+
+.pdp-legend-hint {
+    font-style: italic;
+    color: #64748b;
+    font-size: 0.78rem;
 }
 
 /* ── Section de Gestion des Intervalles Ponctuels ──────────────── */
@@ -698,6 +715,7 @@
     justify-content: space-between;
     background: #ffffff;
     border: 1px solid #e2e8f0;
+    border-radius: 8px;
     padding: 0.65rem 0.85rem;
     transition: all 0.15s ease;
     flex-wrap: wrap;

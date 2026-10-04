@@ -6,6 +6,10 @@ initials, empty_state, waiver_card, doc_download_badge %}
 {% block title %}{{ project.name }}{% endblock %}
 {% block page_title %}Détail Projet{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/project_datepicker.css') }}?v={{ asset_version('css/admin/project_datepicker.css') }}">
+{% endblock %}
+
 {% block header_actions %}
 <div class="u-flex u-align-center u-gap-2">
     <a href="{{ url_for('admin_projects.admin_projects_list') }}" class="admin-btn admin-btn-secondary">
@@ -116,23 +120,6 @@ initials, empty_state, waiver_card, doc_download_badge %}
                     </div>
                 </div>
 
-                {% if is_punctual %}
-                <span class="project-date-sep">|</span>
-
-                <div class="project-date-step" title="Disponibilité du matériel entre les dates de tournage">
-                    <span class="project-date-step-icon">{% if inter_shoot_intervals %}{% set immob_count =
-                        inter_shoot_intervals|selectattr('is_immobilized')|list|length %}{% if immob_count ==
-                        inter_shoot_intervals|length %}<i data-lucide="lock"></i>{% elif immob_count == 0 %}<i
-                            data-lucide="refresh-cw"></i>{% else %}<i data-lucide="cog"></i>{% endif %}{% else
-                        %}{% if is_immobilized_between %}<i data-lucide="lock"></i>{% else %}<i
-                            data-lucide="refresh-cw"></i>{% endif %}{% endif %}</span>
-                    <div class="project-date-step-body">
-                        <span class="project-date-step-lbl">Inter-dates</span>
-                        <span class="project-date-step-val">
-                        </span>
-                    </div>
-                </div>
-                {% endif %}
             </div>
         </div>
 
@@ -157,6 +144,26 @@ initials, empty_state, waiver_card, doc_download_badge %}
             {% endif %}
         </div>
     </div>
+
+    {% set has_dates = (is_punctual and shoot_dates) or (not is_punctual and (project.shoot_start_date or project.shoot_end_date or project.departure_date or project.return_date)) %}
+    {% if has_dates %}
+    <!-- Calendrier des dates du projet (identique à project_form.html) -->
+    <div class="project-datepicker-container u-mt-3 u-mb-0" id="projectShootCalendarWrapper">
+        <div id="projectShootCalendar"></div>
+    </div>
+    <script id="projectShootCalendarData" type="application/json">
+        {{ {
+            "date_mode": "punctual" if is_punctual else "continuous",
+            "is_punctual": is_punctual,
+            "shoot_dates": shoot_dates,
+            "shoot_start": project.shoot_start_date|string if project.shoot_start_date else None,
+            "shoot_end": project.shoot_end_date|string if project.shoot_end_date else None,
+            "departure_date": project.departure_date|string if project.departure_date else None,
+            "return_date": project.return_date|string if project.return_date else None,
+            "inter_shoot_intervals": inter_shoot_intervals
+        }|tojson|safe }}
+    </script>
+    {% endif %}
 </div>
 
 <!-- ═══════════ NOTE / CONSIGNES DU PROJET ═══════════ -->

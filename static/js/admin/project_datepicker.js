@@ -195,7 +195,7 @@
                         <div class="pdp-legend-items">
                             <div class="pdp-legend-item">
                                 <div class="pdp-legend-swatch swatch-dep"></div>
-                                <span>Prépa / Enlèvement</span>
+                                <span>Départ</span>
                             </div>
                             <div class="pdp-legend-item">
                                 <div class="pdp-legend-swatch swatch-shoot"></div>
@@ -203,14 +203,14 @@
                             </div>
                             <div class="pdp-legend-item">
                                 <div class="pdp-legend-swatch swatch-standby"></div>
-                                <span>Immobilisé / Stand-by (si coché)</span>
+                                <span>Immobilisé</span>
                             </div>
                             <div class="pdp-legend-item">
                                 <div class="pdp-legend-swatch swatch-ret"></div>
-                                <span>Restitution / Retour</span>
+                                <span>Retour</span>
                             </div>
                         </div>
-                        <div style="font-style: italic;">
+                        <div class="pdp-legend-hint">
                             ${isPunctual
                     ? 'En mode ponctuel, cliquez sur les jours pour composer votre calendrier de tournage.'
                     : 'Cliquez sur un jour pour placer le jalon actif ou sélectionnez une puce ci-dessus.'}
@@ -773,9 +773,9 @@
             return `
                 <div class="pdp-month-card">
                     <div class="pdp-month-header">
-                        ${showPrev ? '<button type="button" class="pdp-nav-btn" id="pdp-prev-month" title="Mois précédent"><i data-lucide="chevron-left"></i></button>' : '<div style="width:32px;"></div>'}
+                        ${showPrev ? '<button type="button" class="pdp-nav-btn" id="pdp-prev-month" title="Mois précédent"><i data-lucide="chevron-left"></i></button>' : '<div class="pdp-nav-spacer"></div>'}
                         <div class="pdp-month-title">${this.monthNames[month]} ${year}</div>
-                        ${showNext ? '<button type="button" class="pdp-nav-btn" id="pdp-next-month" title="Mois suivant"><i data-lucide="chevron-right"></i></button>' : '<div style="width:32px;"></div>'}
+                        ${showNext ? '<button type="button" class="pdp-nav-btn" id="pdp-next-month" title="Mois suivant"><i data-lucide="chevron-right"></i></button>' : '<div class="pdp-nav-spacer"></div>'}
                     </div>
                     <div class="pdp-weekdays">
                         ${this.weekdayNames.map(w => `<div>${w}</div>`).join('')}

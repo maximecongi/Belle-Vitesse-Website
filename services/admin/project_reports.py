@@ -103,7 +103,8 @@ def update_project_report(report_id, current_user_id, content, title=None, is_ad
     if not report:
         raise ValueError("Rapport introuvable.")
 
-    is_author = (current_user_id is not None and report.user_id == current_user_id)
+    is_author = (current_user_id is not None and report.user_id ==
+                 current_user_id)
     created_at = report.created_at
     if created_at.tzinfo is None:
         created_at = created_at.replace(tzinfo=timezone.utc)
@@ -113,9 +114,11 @@ def update_project_report(report_id, current_user_id, content, title=None, is_ad
 
     if not is_admin:
         if not is_author:
-            raise PermissionError("Vous n'êtes pas autorisé à modifier ce rapport.")
+            raise PermissionError(
+                "Vous n'êtes pas autorisé à modifier ce rapport.")
         if not within_window:
-            raise PermissionError("La modification de ce rapport n'est plus autorisée (délai de 3 heures dépassé).")
+            raise PermissionError(
+                "La modification de ce rapport n'est plus autorisée (délai de 3 heures dépassé).")
 
     title = (title or "").strip()
     content = (content or "").strip()
@@ -236,13 +239,15 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
             shoot_status_id = "in_progress"
             shoot_status_color = "var(--entity-project, #F59E0B)"
         elif first_shoot and last_shoot and (first_shoot <= today_date <= last_shoot):
-            inter_intervals = project.get_inter_shoot_intervals() if hasattr(project, "get_inter_shoot_intervals") else []
+            inter_intervals = project.get_inter_shoot_intervals() if hasattr(
+                project, "get_inter_shoot_intervals") else []
             current_inter = None
             for inter in inter_intervals:
                 if today_iso in inter.get("days", []):
                     current_inter = inter
                     break
-            day_immob = current_inter.get("is_immobilized") if current_inter else is_immob
+            day_immob = current_inter.get(
+                "is_immobilized") if current_inter else is_immob
 
             if day_immob:
                 shoot_status = "in_progress"
@@ -318,7 +323,8 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
     now = datetime.now(timezone.utc)
     formatted_reports = []
     for r in sorted(project.reports, key=lambda x: x.created_at, reverse=True):
-        is_author = (current_user_id is not None and r.user_id == current_user_id)
+        is_author = (current_user_id is not None and r.user_id ==
+                     current_user_id)
         can_delete = is_author or is_admin
 
         created_at = r.created_at
@@ -330,7 +336,8 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
 
         is_edited = False
         if r.updated_at and r.created_at:
-            up_at = r.updated_at.replace(tzinfo=timezone.utc) if r.updated_at.tzinfo is None else r.updated_at
+            up_at = r.updated_at.replace(
+                tzinfo=timezone.utc) if r.updated_at.tzinfo is None else r.updated_at
             if (up_at - created_at).total_seconds() > 2:
                 is_edited = True
 
@@ -372,10 +379,10 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
             project.production_contact, "Production"))
     if project.dop_contact:
         contacts_list.append(_format_contact(
-            project.dop_contact, "Directeur de la Photo (DOP)"))
+            project.dop_contact, "Chef Opérateur"))
     if project.pilot_contact:
         contacts_list.append(_format_contact(
-            project.pilot_contact, "Pilote de précision"))
+            project.pilot_contact, "Pilote"))
     if project.first_ac_contact:
         contacts_list.append(_format_contact(
             project.first_ac_contact, "1er Assistant Caméra"))
@@ -390,7 +397,8 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
             continue
         eq_label = inc.equipment_name or ""
         if not eq_label and inc.vehicle_id:
-            eq_label = vehicle_map.get(inc.vehicle_id, {}).get("name", inc.vehicle_id)
+            eq_label = vehicle_map.get(
+                inc.vehicle_id, {}).get("name", inc.vehicle_id)
         incidents_list.append({
             "id": inc.id,
             "incident_number": inc.incident_number,
