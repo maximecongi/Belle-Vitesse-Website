@@ -73,7 +73,8 @@ initials, empty_state, waiver_card, doc_download_badge %}
             <!-- Barre de jalons temporels (Enlèvement, Tournage, Restitution) -->
             <div class="project-hub-dates-strip">
                 <div class="project-date-step" title="Date d'enlèvement du matériel">
-                    <span class="project-date-step-icon">🚚</span>
+                    <span class="project-date-step-icon project-date-step-icon-departure"><i
+                            data-lucide="truck"></i></span>
                     <div class="project-date-step-body">
                         <span class="project-date-step-lbl">Enlèvement</span>
                         <span class="project-date-step-val">{{ departure_date_fr }}</span>
@@ -84,7 +85,8 @@ initials, empty_state, waiver_card, doc_download_badge %}
 
                 <div class="project-date-step {% if shoot_status == 'in_progress' %}is-active{% endif %}"
                     title="Période effective du tournage">
-                    <span class="project-date-step-icon">🎥</span>
+                    <span class="project-date-step-icon project-date-step-icon-shoot"><i
+                            data-lucide="clapperboard"></i></span>
                     <div class="project-date-step-body">
                         <span class="project-date-step-lbl">
                             Tournage
@@ -106,7 +108,8 @@ initials, empty_state, waiver_card, doc_download_badge %}
                 <span class="project-date-sep">→</span>
 
                 <div class="project-date-step" title="Date de restitution et réintégration du matériel">
-                    <span class="project-date-step-icon">📦</span>
+                    <span class="project-date-step-icon project-date-step-icon-return"><i
+                            data-lucide="package"></i></span>
                     <div class="project-date-step-body">
                         <span class="project-date-step-lbl">Retour</span>
                         <span class="project-date-step-val">{{ return_date_fr }}</span>
@@ -119,8 +122,10 @@ initials, empty_state, waiver_card, doc_download_badge %}
                 <div class="project-date-step" title="Disponibilité du matériel entre les dates de tournage">
                     <span class="project-date-step-icon">{% if inter_shoot_intervals %}{% set immob_count =
                         inter_shoot_intervals|selectattr('is_immobilized')|list|length %}{% if immob_count ==
-                        inter_shoot_intervals|length %}🔒{% elif immob_count == 0 %}🔄{% else %}⚙️{% endif %}{% else
-                        %}{% if is_immobilized_between %}🔒{% else %}🔄{% endif %}{% endif %}</span>
+                        inter_shoot_intervals|length %}<i data-lucide="lock"></i>{% elif immob_count == 0 %}<i
+                            data-lucide="refresh-cw"></i>{% else %}<i data-lucide="cog"></i>{% endif %}{% else
+                        %}{% if is_immobilized_between %}<i data-lucide="lock"></i>{% else %}<i
+                            data-lucide="refresh-cw"></i>{% endif %}{% endif %}</span>
                     <div class="project-date-step-body">
                         <span class="project-date-step-lbl">Inter-dates</span>
                         <span class="project-date-step-val">

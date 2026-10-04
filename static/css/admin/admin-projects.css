@@ -293,10 +293,25 @@
     color: #92400e;
 }
 
-.project-date-step-icon {
-    font-size: 1.15rem;
-    line-height: 1;
+.project-date-step-icon .lucide {
+    height: 20px;
+    width: 20px;
+    margin-right: 0.3rem;
 }
+
+.project-date-step-icon-departure {
+    color: var(--entity-checkout);
+}
+
+.project-date-step-icon-shoot {
+    color: var(--entity-project);
+}
+
+.project-date-step-icon-return {
+    color: var(--entity-checkin);
+}
+
+
 
 .project-date-step-body {
     display: flex;
