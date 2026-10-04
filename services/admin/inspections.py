@@ -1,6 +1,9 @@
+import base64
+import io
 import json
 import logging
 import os
+import uuid
 from datetime import datetime
 from pathlib import Path
 
@@ -293,12 +296,13 @@ def delete_inspection_unified(mode, record_id):
 
 
 @handle_admin_service_error
-def upload_inspection_photos_shared(mode, record, files):
+def upload_inspection_photos_shared(mode, record, files=None, form=None):
     """
-    Gère l'upload des photos pour n'importe quel type d'inspection.
-    Organise les photos dans des dossiers par projet et numéro d'inspection.
+    Gère l'upload et la persistance des photos pour n'importe quel type d'inspection.
+    Prend en charge les fichiers multipart standards (files) et les photos annotées encodées en base64 (form).
+    Organise les photos dans des dossiers par projet et numéro d'inspection en garantissant l'unicité des noms.
     """
-    if not files:
+    if not files and not form:
         return
 
     config = get_inspection_config(mode)
@@ -319,19 +323,82 @@ def upload_inspection_photos_shared(mode, record, files):
         "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
 
     for form_field, model_attr in photo_fields.items():
-        uploaded = files.getlist(form_field)
         paths = []
-        for f in uploaded:
-            if f and f.filename:
-                filename = secure_filename(f.filename)
-                file_path = upload_dir / filename
-                optimize_and_save_image(f, file_path)
+        uploaded = files.getlist(form_field) if files else []
+
+        # 1. Détecter les photos annotées en base64 transmises via le formulaire
+        annotated_items = {}
+        if form:
+            for key, val in form.items():
+                if key.startswith(f"{form_field}_annotated_") and val and val.startswith("data:image/"):
+                    try:
+                        idx = int(key.split("_")[-1])
+                        annotated_items[idx] = val
+                    except (ValueError, TypeError):
+                        pass
+
+        # 2. Déterminer le nombre d'éléments à traiter
+        max_items = max(len(uploaded), max(annotated_items.keys()) + 1 if annotated_items else 0)
+
+        for i in range(max_items):
+            file_storage = None
+            filename = None
+
+            # Priorité absolue aux photos annotées si présentes
+            if i in annotated_items:
+                b64_data = annotated_items[i]
+                try:
+                    if "," in b64_data:
+                        _, b64_str = b64_data.split(",", 1)
+                    else:
+                        b64_str = b64_data
+                    raw_bytes = base64.b64decode(b64_str)
+                    file_storage = io.BytesIO(raw_bytes)
+
+                    orig_name = uploaded[i].filename if (i < len(uploaded) and uploaded[i] and uploaded[i].filename) else ""
+                    if orig_name:
+                        base_stem = Path(orig_name).stem
+                        filename = f"{base_stem}_annotated.jpg"
+                    else:
+                        filename = f"photo_{i+1}_annotated.jpg"
+                except Exception as b64_err:
+                    logger.error(f"Erreur décodage photo annotée base64 champ {form_field} index {i} : {b64_err}")
+                    file_storage = None
+
+            # Fallback sur le fichier standard uploadé si non annoté
+            if not file_storage and i < len(uploaded):
+                f = uploaded[i]
+                if f and f.filename:
+                    file_storage = f
+                    filename = f.filename
+
+            if file_storage and filename:
+                safe_name = secure_filename(filename) or f"photo_{i+1}.jpg"
+                stem = Path(safe_name).stem
+                ext = Path(safe_name).suffix or ".jpg"
+
+                # Garantir l'unicité du fichier pour éviter tout écrasement accidentel
+                counter = 1
+                target_file_path = upload_dir / safe_name
+                while target_file_path.exists():
+                    target_file_path = upload_dir / f"{stem}_{counter}{ext}"
+                    counter += 1
+
+                optimize_and_save_image(file_storage, target_file_path)
                 # Enregistre le chemin relatif par rapport à OUTPUT_FOLDER
-                paths.append(os.path.relpath(file_path, output_base))
+                paths.append(os.path.relpath(target_file_path, output_base))
 
         if paths:
-            # Stockage des chemins sous forme de liste JSON en base de données
-            setattr(record, model_attr, json.dumps(paths))
+            # Conserver les photos existantes lors d'une mise à jour (ne pas les écraser)
+            existing_paths = []
+            current_val = getattr(record, model_attr, None)
+            if current_val:
+                try:
+                    existing_paths = json.loads(current_val) if isinstance(current_val, str) else list(current_val)
+                except Exception:
+                    existing_paths = []
+            combined = existing_paths + [p for p in paths if p not in existing_paths]
+            setattr(record, model_attr, json.dumps(combined))
 
     db.session.commit()
 

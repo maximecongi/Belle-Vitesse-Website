@@ -486,6 +486,44 @@ class InspectionsTest(unittest.TestCase):
             self.assertEqual(updated_detail["failures"], [])
             self.assertFalse(updated_detail["has_failures"])
 
+    def test_upload_inspection_photos_annotated_base64_and_multipart(self):
+        """Vérifie que upload_inspection_photos_shared prend en compte les photos annotées encodées en base64."""
+        import json
+        from services.admin.inspections import upload_inspection_photos_shared
+        from werkzeug.datastructures import MultiDict
+
+        with self.app.app_context():
+            user, proj = self._create_mock_data()
+            co = CheckoutVehicle(
+                inspection_number="BVCO-2026-TEST-PHOTOS",
+                status="in_progress",
+                inspection_date=date(2026, 10, 5),
+                project_id=proj.id,
+                controller_id=user.id,
+                vehicle_id="1"
+            )
+            db.session.add(co)
+            db.session.commit()
+
+            # 1x1 transparent/valid base64 JPEG
+            tiny_b64 = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA="
+            form = {
+                "exterior_photos_annotated_0": tiny_b64
+            }
+
+            upload_inspection_photos_shared("checkout", co, files=None, form=form)
+
+            self.assertIsNotNone(co.exterior_photos)
+            paths = json.loads(co.exterior_photos)
+            self.assertEqual(len(paths), 1)
+            self.assertTrue(paths[0].endswith(".jpg"))
+
+            # Nettoyer les fichiers créés sur le disque
+            output_base = self.app.config.get("OUTPUT_FOLDER", os.path.join(self.app.root_path, "output"))
+            saved_file = os.path.join(output_base, paths[0])
+            if os.path.exists(saved_file):
+                os.remove(saved_file)
+
 
 if __name__ == "__main__":
     unittest.main()

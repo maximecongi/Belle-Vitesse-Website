@@ -1,0 +1,580 @@
+/* ── ANNOTATEUR PHOTO LIGHT MODE — DIRECTION ARTISTIQUE BELLE VITESSE ── */
+
+.bv-annotator-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 99999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    font-family: var(--font-primary, 'Poppins', sans-serif);
+}
+
+.bv-annotator-overlay.is-active {
+    display: flex;
+}
+
+.bv-annotator-container {
+    background: #FFFFFF;
+    color: var(--grey-1, #151515);
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.16);
+    width: 100%;
+    max-width: 1060px;
+    height: 92vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--white-3, #e9ecef);
+}
+
+.bv-annotator-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1.4rem;
+    background: #FFFFFF;
+    border-bottom: 1px solid var(--white-3, #e9ecef);
+    flex-shrink: 0;
+}
+
+.bv-annotator-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.bv-annotator-badge-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: var(--neutral-bg, #f4f4f4);
+    border-radius: 6px;
+    color: var(--grey-1, #151515);
+}
+
+.bv-annotator-badge-icon i,
+.bv-annotator-badge-icon svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2;
+}
+
+.bv-annotator-title-text {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--grey-1, #151515);
+}
+
+.bv-annotator-close {
+    background: none;
+    border: none;
+    color: var(--grey-2, #515151);
+    font-size: 1.2rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0.35rem;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.bv-annotator-close i,
+.bv-annotator-close svg {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2;
+}
+
+.bv-annotator-close:hover {
+    background: var(--white-3, #e9ecef);
+    color: var(--grey-1, #151515);
+}
+
+/* ── Barre d'outils ── */
+.bv-annotator-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    background: #f8f9fa;
+    border-bottom: 1px solid var(--white-3, #e9ecef);
+    flex-shrink: 0;
+}
+
+.bv-tool-group {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.bv-tool-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--grey-2, #6b7280);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-right: 0.15rem;
+}
+
+.bv-tool-label i,
+.bv-tool-label svg {
+    width: 13px;
+    height: 13px;
+    stroke-width: 2;
+}
+
+.bv-tool-divider {
+    width: 1px;
+    height: 22px;
+    background: var(--white-3, #e9ecef);
+    margin: 0 0.25rem;
+}
+
+.bv-btn-tool,
+.bv-btn-size {
+    background: #FFFFFF;
+    color: var(--grey-1, #151515);
+    border: 1px solid var(--white-3, #e9ecef);
+    border-radius: 5px;
+    padding: 0.4rem 0.65rem;
+    font-size: 0.8rem;
+    font-family: var(--font-primary, 'Poppins', sans-serif);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.bv-btn-tool i,
+.bv-btn-tool svg,
+.bv-btn-size i,
+.bv-btn-size svg {
+    width: 14px;
+    height: 14px;
+    stroke-width: 2;
+}
+
+.bv-btn-tool:hover,
+.bv-btn-size:hover {
+    background: var(--white-2, #fafafa);
+    border-color: #d1d5db;
+    color: var(--grey-1, #151515);
+}
+
+.bv-btn-tool.active,
+.bv-btn-size.active {
+    background: var(--grey-1, #151515) !important;
+    border-color: var(--grey-1, #151515) !important;
+    color: var(--white-2, #fafafa) !important;
+    font-weight: 600 !important;
+}
+
+.bv-btn-danger {
+    background: #fdf2f2 !important;
+    border-color: #fbd5d5 !important;
+    color: #C32F27 !important;
+    font-weight: 600;
+}
+
+.bv-btn-danger:hover {
+    background: #f8b4b4 !important;
+    color: #991b1b !important;
+}
+
+/* Nuancier */
+.bv-swatch {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid #FFFFFF;
+    box-shadow: 0 0 0 1px #d1d5db;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    padding: 0;
+}
+
+.bv-swatch:hover {
+    transform: scale(1.15);
+}
+
+.bv-swatch.active {
+    box-shadow: 0 0 0 2px var(--admin-accent, #FFC845);
+    transform: scale(1.1);
+}
+
+.bv-swatch[data-color="#C32F27"] {
+    background-color: #C32F27;
+}
+
+.bv-swatch[data-color="#F59E0B"] {
+    background-color: #F59E0B;
+}
+
+.bv-swatch[data-color="#FFC845"] {
+    background-color: #FFC845;
+}
+
+.bv-swatch[data-color="#5299D3"] {
+    background-color: #5299D3;
+}
+
+.bv-swatch[data-color="#618B4A"] {
+    background-color: #618B4A;
+}
+
+.bv-swatch[data-color="#151515"] {
+    background-color: #151515;
+}
+
+.bv-swatch[data-color="#FFFFFF"] {
+    background-color: #FFFFFF;
+    border-color: #d1d5db;
+}
+
+/* ── Canvas Wrap ── */
+.bv-annotator-canvas-wrap {
+    position: relative;
+    flex: 1;
+    background: #f1f3f5;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    overflow-y: auto;
+    overflow-x: auto;
+    padding: 1.5rem 1rem;
+    -webkit-overflow-scrolling: touch;
+}
+
+.bv-annotator-canvas-wrap::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.bv-annotator-canvas-wrap::-webkit-scrollbar-track {
+    background: #f1f3f5;
+}
+
+.bv-annotator-canvas-wrap::-webkit-scrollbar-thumb {
+    background: #ced4da;
+    border-radius: 4px;
+}
+
+.bv-annotator-canvas-wrap::-webkit-scrollbar-thumb:hover {
+    background: #adb5bd;
+}
+
+/* Mode Défilement */
+.bv-annotator-canvas-wrap.mode-scroll #photoAnnotatorCanvas {
+    width: 100%;
+    max-width: 900px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    background: #FFFFFF;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    border: 1px solid #dcdfe3;
+    border-radius: 4px;
+    touch-action: none;
+    -webkit-touch-callout: none;
+    user-select: none;
+}
+
+/* Mode Vue Globale */
+.bv-annotator-canvas-wrap.mode-fit {
+    align-items: center;
+}
+
+.bv-annotator-canvas-wrap.mode-fit #photoAnnotatorCanvas {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    display: block;
+    margin: auto;
+    object-fit: contain;
+    background: #FFFFFF;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    border: 1px solid #dcdfe3;
+    touch-action: none;
+    -webkit-touch-callout: none;
+    user-select: none;
+    border-radius: 4px;
+}
+
+/* ── Popover Texte ── */
+.bv-text-popover {
+    position: absolute;
+    z-index: 1000;
+    background: #FFFFFF;
+    border: 1.5px solid var(--admin-accent, #FFC845);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    display: none;
+    flex-direction: column;
+    width: 280px;
+    overflow: hidden;
+}
+
+.bv-text-popover.is-active {
+    display: flex;
+}
+
+.bv-popover-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    background: #f8f9fa;
+    border-bottom: 1px solid var(--white-3, #e9ecef);
+}
+
+.bv-popover-title {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--grey-1, #151515);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.bv-popover-title i,
+.bv-popover-title svg {
+    width: 13px;
+    height: 13px;
+}
+
+.bv-popover-btn-close {
+    background: none;
+    border: none;
+    color: var(--grey-2, #6b7280);
+    cursor: pointer;
+    padding: 0.2rem;
+    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bv-popover-btn-close i,
+.bv-popover-btn-close svg {
+    width: 14px;
+    height: 14px;
+}
+
+.bv-popover-btn-close:hover {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+.bv-popover-body {
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.bv-popover-input {
+    background: #f8f9fa;
+    border: 1px solid var(--white-3, #e9ecef);
+    border-radius: 5px;
+    color: var(--grey-1, #151515);
+    padding: 0.45rem 0.6rem;
+    font-size: 0.82rem;
+    font-family: var(--font-primary, 'Poppins', sans-serif);
+    width: 100%;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.bv-popover-input:focus {
+    border-color: var(--admin-accent, #FFC845);
+    background: #FFFFFF;
+}
+
+.bv-popover-size-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.bv-popover-size-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--grey-2, #6b7280);
+    margin-right: 0.2rem;
+}
+
+.bv-popover-size-btn {
+    flex: 1;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 0.25rem 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--grey-1, #151515);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: center;
+}
+
+.bv-popover-size-btn:hover {
+    background: #e5e7eb;
+}
+
+.bv-popover-size-btn.active {
+    background: var(--admin-accent, #FFC845);
+    border-color: var(--admin-accent, #FFC845);
+    color: #151515;
+}
+
+.bv-popover-footer {
+    padding: 0.5rem 0.75rem;
+    background: #f8f9fa;
+    border-top: 1px solid var(--white-3, #e9ecef);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.bv-popover-btn-ok {
+    background: var(--grey-1, #151515);
+    color: #FFFFFF;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.4rem 0.75rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: all 0.15s ease;
+}
+
+.bv-popover-btn-ok i,
+.bv-popover-btn-ok svg {
+    width: 13px;
+    height: 13px;
+}
+
+.bv-popover-btn-ok:hover {
+    background: var(--admin-accent, #FFC845);
+    color: var(--grey-1, #151515);
+}
+
+/* ── Footer Modal ── */
+.bv-annotator-footer {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 0.85rem 1.4rem;
+    background: #FFFFFF;
+    border-top: 1px solid var(--white-3, #e9ecef);
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    flex-direction: column;
+}
+
+.bv-annotator-tip {
+    font-size: 0.8rem;
+    color: var(--grey-2, #515151);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.bv-annotator-tip i,
+.bv-annotator-tip svg {
+    width: 14px;
+    height: 14px;
+    color: var(--admin-accent, #FFC845);
+    flex-shrink: 0;
+}
+
+/* ── Vignettes de prévisualisation dans les formulaires (Checks / Incidents) ── */
+.photo-preview-item {
+    position: relative;
+    display: inline-block;
+    margin: 4px;
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 1px solid var(--grey-border, #e0e0e0);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.photo-preview-item:hover {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.photo-preview-img {
+    width: 82px;
+    height: 82px;
+    object-fit: cover;
+    display: block;
+}
+
+.annotator-edit-badge {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--grey-1, #151515);
+    border: 1px solid var(--white-3, #e9ecef);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-family: var(--font-primary, 'Poppins', sans-serif);
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    transition: all 0.15s ease;
+}
+
+.annotator-edit-badge .lucide {
+    width: 10px;
+    height: 10px;
+    vertical-align: -0.5px;
+    margin-right: 0.1rem;
+}
+
+.annotator-edit-badge:hover {
+    background: var(--admin-accent, #FFC845);
+    border-color: var(--admin-accent, #FFC845);
+    color: var(--grey-1, #151515);
+}
+
+.annotator-edit-badge.is-annotated {
+    background: #DCFCE7;
+    border-color: #86EFAC;
+    color: #14532D;
+}
+
+.annotator-edit-badge.is-annotated:hover {
+    background: var(--admin-accent, #FFC845);
+    border-color: var(--admin-accent, #FFC845);
+    color: var(--grey-1, #151515);
+}

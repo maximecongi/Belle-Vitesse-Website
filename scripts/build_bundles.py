@@ -49,6 +49,7 @@ ADMIN_CSS_FILES: List[str] = [
     "css/admin/admin-fleet.css",
     "css/admin/admin-incidents.css",
     "css/admin/admin-mcp.css",
+    "css/admin/photo-annotator.css",
 ]
 
 ADMIN_JS_FILES: List[str] = [

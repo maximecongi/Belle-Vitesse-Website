@@ -2,43 +2,107 @@
  * inspections.js — Contrôleur des formulaires de départ et retour (Check-in & Check-out).
  */
 
+// Registre des annotations et photos pour les contrôles (Check-in & Check-out)
+const inspectionPhotoRegistry = window.inspectionPhotoRegistry || {};
+window.inspectionPhotoRegistry = inspectionPhotoRegistry;
+
 function updatePhotoLabel(input) {
     const preview = document.querySelector(`.photo-preview[data-for="${input.name}"]`);
     if (!preview) return;
     preview.innerHTML = '';
+
+    // Initialise le registre pour ce champ
+    inspectionPhotoRegistry[input.name] = [];
+
     if (input.files && input.files.length > 0) {
         Array.from(input.files).forEach((file, index) => {
+            const photoState = {
+                originalFile: file,
+                currentFile: file,
+                baseImage: file,
+                dataUrl: null,
+                annotations: [],
+                isAnnotated: false
+            };
+            inspectionPhotoRegistry[input.name][index] = photoState;
+
             const reader = new FileReader();
             reader.onload = function (e) {
+                photoState.dataUrl = e.target.result;
+
                 const wrapper = document.createElement('div');
                 wrapper.className = 'photo-preview-item';
-                wrapper.style.cssText = 'position: relative; display: inline-block; margin: 4px;';
+                wrapper.title = "Cliquer pour visualiser ou annoter cette photo";
 
                 const img = document.createElement('img');
                 img.src = e.target.result;
-                img.style.cssText = 'width: 76px; height: 76px; object-fit: cover; border-radius: 4px; border: 1px solid var(--grey-border, #e0e0e0); display: block;';
+                img.className = 'photo-preview-img';
                 wrapper.appendChild(img);
 
+                // Champ caché pour transmettre les données annotées fiables en base64 au backend
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = `${input.name}_annotated_${index}`;
+                hiddenInput.value = '';
+                wrapper.appendChild(hiddenInput);
+
+                let btn = null;
                 if (typeof window.openPhotoAnnotator === 'function') {
-                    const btn = document.createElement('button');
+                    btn = document.createElement('button');
                     btn.type = 'button';
                     btn.className = 'annotator-edit-badge';
-                    btn.title = "Annoter cette photo (cercle, flèche)";
-                    btn.innerHTML = '✏️ Annoter';
-                    btn.onclick = function (ev) {
-                        ev.preventDefault();
-                        ev.stopPropagation();
-                        window.openPhotoAnnotator(file, function (annotatedFile, dataUrl) {
-                            img.src = dataUrl;
-                            if (typeof window.replaceFileInInput === 'function') {
-                                window.replaceFileInInput(input, index, annotatedFile);
-                            }
-                        });
-                    };
+                    btn.title = "Annoter cette photo (cercle, flèche, texte)";
+                    btn.innerHTML = '<i data-lucide="pencil"></i> Annoter';
                     wrapper.appendChild(btn);
                 }
 
+                function openAnnotatorForThisPhoto(ev) {
+                    if (ev) {
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                    }
+                    if (typeof window.openPhotoAnnotator !== 'function') return;
+
+                    window.openPhotoAnnotator(
+                        photoState.currentFile,
+                        function (annotatedFile, dataUrl, annotations) {
+                            photoState.currentFile = annotatedFile;
+                            photoState.dataUrl = dataUrl;
+                            photoState.annotations = annotations || [];
+                            photoState.isAnnotated = true;
+
+                            img.src = dataUrl;
+                            hiddenInput.value = dataUrl;
+
+                            if (btn) {
+                                btn.classList.add('is-annotated');
+                                btn.innerHTML = '<i data-lucide="check"></i> Annotée';
+                                if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                                    window.lucide.createIcons();
+                                }
+                            }
+
+                            if (typeof window.replaceFileInInput === 'function') {
+                                window.replaceFileInInput(input, index, annotatedFile);
+                            }
+                        },
+                        {
+                            annotations: photoState.annotations,
+                            baseImage: photoState.baseImage
+                        }
+                    );
+                }
+
+                if (btn) {
+                    btn.onclick = openAnnotatorForThisPhoto;
+                }
+                wrapper.onclick = openAnnotatorForThisPhoto;
+
                 preview.appendChild(wrapper);
+
+                if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                    window.lucide.createIcons();
+                }
             };
             reader.readAsDataURL(file);
         });

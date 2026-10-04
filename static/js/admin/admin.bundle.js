@@ -2577,43 +2577,107 @@ window.initCmdK = initCmdK;
  * inspections.js — Contrôleur des formulaires de départ et retour (Check-in & Check-out).
  */
 
+// Registre des annotations et photos pour les contrôles (Check-in & Check-out)
+const inspectionPhotoRegistry = window.inspectionPhotoRegistry || {};
+window.inspectionPhotoRegistry = inspectionPhotoRegistry;
+
 function updatePhotoLabel(input) {
     const preview = document.querySelector(`.photo-preview[data-for="${input.name}"]`);
     if (!preview) return;
     preview.innerHTML = '';
+
+    // Initialise le registre pour ce champ
+    inspectionPhotoRegistry[input.name] = [];
+
     if (input.files && input.files.length > 0) {
         Array.from(input.files).forEach((file, index) => {
+            const photoState = {
+                originalFile: file,
+                currentFile: file,
+                baseImage: file,
+                dataUrl: null,
+                annotations: [],
+                isAnnotated: false
+            };
+            inspectionPhotoRegistry[input.name][index] = photoState;
+
             const reader = new FileReader();
             reader.onload = function (e) {
+                photoState.dataUrl = e.target.result;
+
                 const wrapper = document.createElement('div');
                 wrapper.className = 'photo-preview-item';
-                wrapper.style.cssText = 'position: relative; display: inline-block; margin: 4px;';
+                wrapper.title = "Cliquer pour visualiser ou annoter cette photo";
 
                 const img = document.createElement('img');
                 img.src = e.target.result;
-                img.style.cssText = 'width: 76px; height: 76px; object-fit: cover; border-radius: 4px; border: 1px solid var(--grey-border, #e0e0e0); display: block;';
+                img.className = 'photo-preview-img';
                 wrapper.appendChild(img);
 
+                // Champ caché pour transmettre les données annotées fiables en base64 au backend
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = `${input.name}_annotated_${index}`;
+                hiddenInput.value = '';
+                wrapper.appendChild(hiddenInput);
+
+                let btn = null;
                 if (typeof window.openPhotoAnnotator === 'function') {
-                    const btn = document.createElement('button');
+                    btn = document.createElement('button');
                     btn.type = 'button';
                     btn.className = 'annotator-edit-badge';
-                    btn.title = "Annoter cette photo (cercle, flèche)";
-                    btn.innerHTML = '✏️ Annoter';
-                    btn.onclick = function (ev) {
-                        ev.preventDefault();
-                        ev.stopPropagation();
-                        window.openPhotoAnnotator(file, function (annotatedFile, dataUrl) {
-                            img.src = dataUrl;
-                            if (typeof window.replaceFileInInput === 'function') {
-                                window.replaceFileInInput(input, index, annotatedFile);
-                            }
-                        });
-                    };
+                    btn.title = "Annoter cette photo (cercle, flèche, texte)";
+                    btn.innerHTML = '<i data-lucide="pencil"></i> Annoter';
                     wrapper.appendChild(btn);
                 }
 
+                function openAnnotatorForThisPhoto(ev) {
+                    if (ev) {
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                    }
+                    if (typeof window.openPhotoAnnotator !== 'function') return;
+
+                    window.openPhotoAnnotator(
+                        photoState.currentFile,
+                        function (annotatedFile, dataUrl, annotations) {
+                            photoState.currentFile = annotatedFile;
+                            photoState.dataUrl = dataUrl;
+                            photoState.annotations = annotations || [];
+                            photoState.isAnnotated = true;
+
+                            img.src = dataUrl;
+                            hiddenInput.value = dataUrl;
+
+                            if (btn) {
+                                btn.classList.add('is-annotated');
+                                btn.innerHTML = '<i data-lucide="check"></i> Annotée';
+                                if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                                    window.lucide.createIcons();
+                                }
+                            }
+
+                            if (typeof window.replaceFileInInput === 'function') {
+                                window.replaceFileInInput(input, index, annotatedFile);
+                            }
+                        },
+                        {
+                            annotations: photoState.annotations,
+                            baseImage: photoState.baseImage
+                        }
+                    );
+                }
+
+                if (btn) {
+                    btn.onclick = openAnnotatorForThisPhoto;
+                }
+                wrapper.onclick = openAnnotatorForThisPhoto;
+
                 preview.appendChild(wrapper);
+
+                if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                    window.lucide.createIcons();
+                }
             };
             reader.readAsDataURL(file);
         });
@@ -2866,17 +2930,23 @@ window.initInspectionDetail = initInspectionDetail;
 /* ── js/src/admin/photo-annotator.js ── */
 /**
  * photo-annotator.js — Outil d'annotation directe sur photos (Canvas Image Marker).
- * Direction Artistique Belle Vitesse (Light Mode, finesse, aligné sur incidents_list.html et productions_list.html).
+ * Direction Artistique Belle Vitesse (Light Mode, finesse, aligné sur incidents_list.html et checkins_list.html).
+ * Icônes Lucide officielles (zéro émoji), dimensionnement vectoriel précis du texte et réouverture avec état préservé.
  */
 
 (function () {
     'use strict';
 
-    // Outils et réglages par défaut (couleurs fidèles à la charte BV officielle : #C32F27, #F59E0B, #FFC845, etc.)
+    const CANVAS_FONT_FAMILY = "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+
+    // Outils et réglages par défaut
     let currentTool = 'circle'; // 'select', 'circle', 'arrow', 'freehand', 'text'
-    let currentColor = '#C32F27'; // Rouge BV officiel par défaut (--red-1)
-    let currentLineWidth = 5;
+    let currentColor = '#C32F27'; // Rouge BV officiel par défaut
+    let currentLineWidth = 5; // Utilisé pour les tracés (3: S, 5: M, 9: L, 14: XL)
+    let currentTextSizeIndex = 5; // 3: S, 5: M, 9: L, 14: XL
+
     let originalImage = null;
+    let originalBaseSource = null;
     let originalFile = null;
     let onSaveCallback = null;
 
@@ -2896,69 +2966,100 @@ window.initInspectionDetail = initInspectionDetail;
 
     // Coordonnées pour l'annotation texte en cours
     let pendingTextCanvasCoords = null;
+    let editingTextIndex = null;
 
     // Pile des actions / annotations
     let historyStack = [];
+
+    function renderLucideIcons() {
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
+    }
 
     function createModalDom() {
         if (document.getElementById('photoAnnotatorModal')) return;
 
         const modalHtml = `
-        <div id="photoAnnotatorModal" class="bv-annotator-overlay" style="display: none;">
+        <div id="photoAnnotatorModal" class="bv-annotator-overlay" style="display: none;" aria-hidden="true">
             <div class="bv-annotator-container">
                 <!-- Header Light Mode -->
                 <div class="bv-annotator-header">
                     <div class="bv-annotator-title">
-                        <span class="bv-annotator-badge-icon">✏️</span>
+                        <span class="bv-annotator-badge-icon"><i data-lucide="pen-tool"></i></span>
                         <span class="bv-annotator-title-text">Constat & Annotation Photo</span>
                     </div>
-                    <button type="button" class="bv-annotator-close" id="annotatorCloseBtn" title="Fermer (Échap)">&times;</button>
+                    <button type="button" class="bv-annotator-close" id="annotatorCloseBtn" title="Fermer (Échap)">
+                        <i data-lucide="x"></i>
+                    </button>
                 </div>
 
                 <!-- Barre d'outils Fine & Épurée -->
                 <div class="bv-annotator-toolbar">
                     <div class="bv-tool-group">
-                        <button type="button" class="bv-btn-tool" data-tool="select" title="Sélectionner, déplacer ou redimensionner">👆 Sélection</button>
-                        <button type="button" class="bv-btn-tool active" data-tool="circle" title="Cercle (entourer un impact)">⭕ Cercle</button>
-                        <button type="button" class="bv-btn-tool" data-tool="arrow" title="Flèche (pointer un défaut)">➡️ Flèche</button>
-                        <button type="button" class="bv-btn-tool" data-tool="freehand" title="Tracé libre">✏️ Pinceau</button>
-                        <button type="button" class="bv-btn-tool" data-tool="text" title="Ajouter une étiquette texte">🔤 Texte</button>
+                        <button type="button" class="bv-btn-tool" data-tool="select" title="Sélectionner, déplacer ou redimensionner">
+                            <i data-lucide="mouse-pointer-2"></i> Sélection
+                        </button>
+                        <button type="button" class="bv-btn-tool active" data-tool="circle" title="Cercle (entourer un impact)">
+                            <i data-lucide="circle"></i> Cercle
+                        </button>
+                        <button type="button" class="bv-btn-tool" data-tool="arrow" title="Flèche (pointer un défaut)">
+                            <i data-lucide="arrow-up-right"></i> Flèche
+                        </button>
+                        <button type="button" class="bv-btn-tool" data-tool="freehand" title="Tracé libre">
+                            <i data-lucide="pencil"></i> Pinceau
+                        </button>
+                        <button type="button" class="bv-btn-tool" data-tool="text" title="Ajouter une étiquette texte">
+                            <i data-lucide="type"></i> Texte
+                        </button>
                     </div>
 
                     <div class="bv-tool-divider"></div>
 
                     <!-- Nuancier officiel Belle Vitesse -->
                     <div class="bv-tool-group" title="Couleur de l'annotation">
-                        <button type="button" class="bv-swatch active" data-color="#C32F27" style="background:#C32F27;" title="Rouge BV (#C32F27 — Impact / Défaut critique)"></button>
-                        <button type="button" class="bv-swatch" data-color="#F59E0B" style="background:#F59E0B;" title="Ambre BV (#F59E0B — Attention / À surveiller)"></button>
-                        <button type="button" class="bv-swatch" data-color="#FFC845" style="background:#FFC845;" title="Jaune BV (#FFC845 — Repère prioritaire)"></button>
-                        <button type="button" class="bv-swatch" data-color="#5299D3" style="background:#5299D3;" title="Bleu Acier BV (#5299D3 — Repère technique)"></button>
-                        <button type="button" class="bv-swatch" data-color="#618B4A" style="background:#618B4A;" title="Vert Sauge BV (#618B4A — Conforme / Réf)"></button>
-                        <button type="button" class="bv-swatch" data-color="#151515" style="background:#151515;" title="Noir Carbone BV (#151515 — Contraste carrosserie claire)"></button>
-                        <button type="button" class="bv-swatch" data-color="#FFFFFF" style="background:#FFFFFF; border-color:#d1d5db;" title="Blanc Pur BV (#FFFFFF — Contraste carrosserie sombre)"></button>
+                        <button type="button" class="bv-swatch active" data-color="#C32F27" title="Rouge BV (#C32F27 — Impact / Défaut critique)"></button>
+                        <button type="button" class="bv-swatch" data-color="#F59E0B" title="Ambre BV (#F59E0B — Attention / À surveiller)"></button>
+                        <button type="button" class="bv-swatch" data-color="#FFC845" title="Jaune BV (#FFC845 — Repère prioritaire)"></button>
+                        <button type="button" class="bv-swatch" data-color="#5299D3" title="Bleu Acier BV (#5299D3 — Repère technique)"></button>
+                        <button type="button" class="bv-swatch" data-color="#618B4A" title="Vert Sauge BV (#618B4A — Conforme / Réf)"></button>
+                        <button type="button" class="bv-swatch" data-color="#151515" title="Noir Carbone BV (#151515 — Contraste carrosserie claire)"></button>
+                        <button type="button" class="bv-swatch" data-color="#FFFFFF" title="Blanc Pur BV (#FFFFFF — Contraste carrosserie sombre)"></button>
                     </div>
 
                     <div class="bv-tool-divider"></div>
 
-                    <!-- Épaisseur -->
-                    <div class="bv-tool-group">
-                        <button type="button" class="bv-btn-size" data-size="3" title="Tracé fin">Fin</button>
-                        <button type="button" class="bv-btn-size active" data-size="5" title="Tracé moyen">Moyen</button>
-                        <button type="button" class="bv-btn-size" data-size="9" title="Tracé épais">Épais</button>
+                    <!-- Sélecteur de Taille / Épaisseur -->
+                    <div class="bv-tool-group" id="annotatorSizeGroup" title="Taille du texte ou épaisseur du tracé">
+                        <span class="bv-tool-label" id="annotatorSizeLabel"><i data-lucide="scaling"></i> Taille :</span>
+                        <button type="button" class="bv-btn-size" data-size="3" title="Taille fine / Petite (S)">S</button>
+                        <button type="button" class="bv-btn-size active" data-size="5" title="Taille moyenne (M)">M</button>
+                        <button type="button" class="bv-btn-size" data-size="9" title="Grande taille (L)">L</button>
+                        <button type="button" class="bv-btn-size" data-size="14" title="Très grande taille (XL)">XL</button>
                     </div>
 
                     <div class="bv-tool-divider"></div>
 
                     <!-- Mode d'affichage (Défilement scrollable vs Vue globale) -->
                     <div class="bv-tool-group">
-                        <button type="button" class="bv-btn-tool active" id="annotatorViewScrollBtn" title="Photo grand format avec défilement vertical complet">↕️ Défilement</button>
-                        <button type="button" class="bv-btn-tool" id="annotatorViewFitBtn" title="Ajuster l'ensemble de la photo à la fenêtre">🔍 Vue globale</button>
+                        <button type="button" class="bv-btn-tool active" id="annotatorViewScrollBtn" title="Photo grand format avec défilement vertical complet">
+                            <i data-lucide="arrow-up-down"></i> Défilement
+                        </button>
+                        <button type="button" class="bv-btn-tool" id="annotatorViewFitBtn" title="Ajuster l'ensemble de la photo à la fenêtre">
+                            <i data-lucide="maximize-2"></i> Vue globale
+                        </button>
                     </div>
 
                     <div class="bv-tool-group u-ml-auto">
-                        <button type="button" class="bv-btn-tool bv-btn-danger" id="annotatorDeleteSelectedBtn" title="Supprimer l'annotation sélectionnée (Touche Suppr)" style="display: none;">🗑️ Supprimer</button>
-                        <button type="button" class="bv-btn-tool" id="annotatorUndoBtn" title="Annuler le dernier tracé (Ctrl+Z)">↩️ Annuler</button>
-                        <button type="button" class="bv-btn-tool" id="annotatorClearBtn" title="Tout effacer">🔄 Effacer tout</button>
+                        <button type="button" class="bv-btn-tool bv-btn-danger" id="annotatorDeleteSelectedBtn" title="Supprimer l'annotation sélectionnée (Touche Suppr)" style="display: none;">
+                            <i data-lucide="trash-2"></i> Supprimer
+                        </button>
+                        <button type="button" class="bv-btn-tool" id="annotatorUndoBtn" title="Annuler le dernier tracé (Ctrl+Z)">
+                            <i data-lucide="undo-2"></i> Annuler
+                        </button>
+                        <button type="button" class="bv-btn-tool" id="annotatorClearBtn" title="Tout effacer">
+                            <i data-lucide="rotate-ccw"></i> Effacer tout
+                        </button>
                     </div>
                 </div>
 
@@ -2967,353 +3068,52 @@ window.initInspectionDetail = initInspectionDetail;
                     <canvas id="photoAnnotatorCanvas"></canvas>
 
                     <!-- Popover flottant de texte Light Mode -->
-                    <div id="annotatorTextPopover" class="bv-text-popover" style="display: none;">
-                        <input type="text" id="annotatorTextInput" placeholder="Ex: Rayure 15cm, éclat carrosserie..." maxlength="75" />
-                        <button type="button" id="annotatorTextOkBtn" class="bv-popover-btn bv-popover-btn-ok" title="Valider">OK</button>
-                        <button type="button" id="annotatorTextCancelBtn" class="bv-popover-btn bv-popover-btn-cancel" title="Annuler">&times;</button>
+                    <div id="annotatorTextPopover" class="bv-text-popover">
+                        <div class="bv-popover-header">
+                            <span class="bv-popover-title"><i data-lucide="type"></i> Texte d'annotation</span>
+                            <button type="button" id="annotatorTextCancelBtn" class="bv-popover-btn-close" title="Fermer (Échap)">
+                                <i data-lucide="x"></i>
+                            </button>
+                        </div>
+                        <div class="bv-popover-body">
+                            <input type="text" id="annotatorTextInput" class="bv-popover-input" placeholder="Ex: Rayure 15cm, éclat carrosserie..." maxlength="80" autocomplete="off" />
+                            <div class="bv-popover-size-bar">
+                                <span class="bv-popover-size-label">Taille :</span>
+                                <button type="button" class="bv-popover-size-btn" data-popover-size="3" title="Petite (S)">S</button>
+                                <button type="button" class="bv-popover-size-btn active" data-popover-size="5" title="Moyenne (M)">M</button>
+                                <button type="button" class="bv-popover-size-btn" data-popover-size="9" title="Grande (L)">L</button>
+                                <button type="button" class="bv-popover-size-btn" data-popover-size="14" title="Très grande (XL)">XL</button>
+                            </div>
+                        </div>
+                        <div class="bv-popover-footer">
+                            <button type="button" id="annotatorTextOkBtn" class="bv-popover-btn-ok" title="Valider">
+                                <i data-lucide="check"></i> Insérer le texte
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Footer Light Mode -->
                 <div class="bv-annotator-footer">
                     <span class="bv-annotator-tip" id="annotatorTip">
-                        Tracez sur la photo pour annoter. Utilisez 👆 Sélection pour déplacer ou redimensionner un repère.
+                        <i data-lucide="info"></i> Tracez sur la photo pour annoter. Utilisez Sélection pour déplacer ou redimensionner un repère.
                     </span>
                     <div class="u-flex u-gap-2">
                         <button type="button" class="admin-btn admin-btn-secondary" id="annotatorCancelBtn">Annuler</button>
-                        <button type="button" class="admin-btn admin-btn-primary" id="annotatorSaveBtn">💾 Enregistrer l'annotation</button>
+                        <button type="button" class="admin-btn admin-btn-primary" id="annotatorSaveBtn">
+                            <i data-lucide="check"></i> Enregistrer l'annotation
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
         `;
 
-        const style = document.createElement('style');
-        style.textContent = `
-            /* ── ANNOTATEUR PHOTO LIGHT MODE — DIRECTION ARTISTIQUE BELLE VITESSE ── */
-            .bv-annotator-overlay {
-                position: fixed;
-                top: 0; left: 0; right: 0; bottom: 0;
-                background: rgba(15, 23, 42, 0.45);
-                backdrop-filter: blur(4px);
-                -webkit-backdrop-filter: blur(4px);
-                z-index: 99999;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 1rem;
-                font-family: var(--font-primary, 'Poppins', sans-serif);
-            }
-            .bv-annotator-container {
-                background: #FFFFFF;
-                color: var(--grey-1, #151515);
-                border-radius: 8px;
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.16);
-                width: 100%;
-                max-width: 1020px;
-                height: 92vh;
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-                border: 1px solid var(--white-3, #e9ecef);
-            }
-            .bv-annotator-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 0.85rem 1.4rem;
-                background: #FFFFFF;
-                border-bottom: 1px solid var(--white-3, #e9ecef);
-                flex-shrink: 0;
-            }
-            .bv-annotator-title {
-                display: flex;
-                align-items: center;
-                gap: 0.6rem;
-            }
-            .bv-annotator-badge-icon {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                width: 28px;
-                height: 28px;
-                background: var(--neutral-bg, #f4f4f4);
-                border-radius: 6px;
-                font-size: 0.85rem;
-            }
-            .bv-annotator-title-text {
-                font-size: 1rem;
-                font-weight: 600;
-                color: var(--grey-1, #151515);
-            }
-            .bv-annotator-close {
-                background: none;
-                border: none;
-                color: var(--grey-2, #515151);
-                font-size: 1.5rem;
-                cursor: pointer;
-                line-height: 1;
-                padding: 0.2rem 0.5rem;
-                border-radius: 4px;
-                transition: background 0.15s ease, color 0.15s ease;
-            }
-            .bv-annotator-close:hover {
-                background: var(--white-3, #e9ecef);
-                color: var(--grey-1, #151515);
-            }
-
-            /* Toolbar Light */
-            .bv-annotator-toolbar {
-                display: flex;
-                align-items: center;
-                flex-wrap: wrap;
-                gap: 0.5rem;
-                padding: 0.6rem 1.2rem;
-                background: #f8f9fa;
-                border-bottom: 1px solid var(--white-3, #e9ecef);
-                flex-shrink: 0;
-            }
-            .bv-tool-group {
-                display: flex;
-                align-items: center;
-                gap: 0.35rem;
-            }
-            .bv-tool-divider {
-                width: 1px;
-                height: 22px;
-                background: var(--white-3, #e9ecef);
-                margin: 0 0.25rem;
-            }
-            .bv-btn-tool, .bv-btn-size {
-                background: #FFFFFF;
-                color: var(--grey-1, #151515);
-                border: 1px solid var(--white-3, #e9ecef);
-                border-radius: 5px;
-                padding: 0.4rem 0.75rem;
-                font-size: 0.8rem;
-                font-family: var(--font-primary, 'Poppins', sans-serif);
-                font-weight: 500;
-                cursor: pointer;
-                transition: all 0.15s ease;
-                white-space: nowrap;
-            }
-            .bv-btn-tool:hover, .bv-btn-size:hover {
-                background: var(--white-2, #fafafa);
-                border-color: #d1d5db;
-                color: var(--grey-1, #151515);
-            }
-            .bv-btn-tool.active, .bv-btn-size.active {
-                background: var(--admin-accent, #FFC845) !important;
-                border-color: var(--admin-accent, #FFC845) !important;
-                color: var(--grey-1, #151515) !important;
-                font-weight: 600 !important;
-                box-shadow: 0 1px 3px rgba(255, 200, 69, 0.3);
-            }
-            .bv-btn-danger {
-                background: #fdf2f2 !important;
-                border-color: #fbd5d5 !important;
-                color: #C32F27 !important;
-                font-weight: 600;
-            }
-            .bv-btn-danger:hover {
-                background: #f8b4b4 !important;
-                color: #991b1b !important;
-            }
-
-            /* Swatches */
-            .bv-swatch {
-                width: 22px;
-                height: 22px;
-                border-radius: 50%;
-                border: 2px solid #FFFFFF;
-                box-shadow: 0 0 0 1px #d1d5db;
-                cursor: pointer;
-                transition: transform 0.15s ease, box-shadow 0.15s ease;
-            }
-            .bv-swatch:hover {
-                transform: scale(1.15);
-            }
-            .bv-swatch.active {
-                box-shadow: 0 0 0 2px var(--admin-accent, #FFC845);
-                transform: scale(1.1);
-            }
-
-            /* Canvas Wrap Light */
-            .bv-annotator-canvas-wrap {
-                position: relative;
-                flex: 1;
-                background: #f1f3f5;
-                display: flex;
-                justify-content: center;
-                align-items: flex-start;
-                overflow-y: auto;
-                overflow-x: auto;
-                padding: 1.5rem 1rem;
-                -webkit-overflow-scrolling: touch;
-            }
-            .bv-annotator-canvas-wrap::-webkit-scrollbar {
-                width: 8px;
-                height: 8px;
-            }
-            .bv-annotator-canvas-wrap::-webkit-scrollbar-track {
-                background: #f1f3f5;
-            }
-            .bv-annotator-canvas-wrap::-webkit-scrollbar-thumb {
-                background: #ced4da;
-                border-radius: 4px;
-            }
-            .bv-annotator-canvas-wrap::-webkit-scrollbar-thumb:hover {
-                background: #adb5bd;
-            }
-
-            /* Mode Défilement */
-            .bv-annotator-canvas-wrap.mode-scroll #photoAnnotatorCanvas {
-                width: 100%;
-                max-width: 900px;
-                height: auto;
-                display: block;
-                margin: 0 auto;
-                background: #FFFFFF;
-                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-                border: 1px solid #dcdfe3;
-                border-radius: 4px;
-                touch-action: none;
-                -webkit-touch-callout: none;
-                user-select: none;
-            }
-
-            /* Mode Vue Globale */
-            .bv-annotator-canvas-wrap.mode-fit {
-                align-items: center;
-            }
-            .bv-annotator-canvas-wrap.mode-fit #photoAnnotatorCanvas {
-                max-width: 100%;
-                max-height: 100%;
-                width: auto;
-                height: auto;
-                display: block;
-                margin: auto;
-                object-fit: contain;
-                background: #FFFFFF;
-                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-                border: 1px solid #dcdfe3;
-                touch-action: none;
-                -webkit-touch-callout: none;
-                user-select: none;
-                border-radius: 4px;
-            }
-
-            /* Popover Texte Light */
-            .bv-text-popover {
-                position: absolute;
-                z-index: 1000;
-                background: #FFFFFF;
-                border: 1.5px solid var(--admin-accent, #FFC845);
-                border-radius: 6px;
-                padding: 5px 6px;
-                display: flex;
-                align-items: center;
-                gap: 5px;
-                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-            }
-            .bv-text-popover input {
-                background: #f8f9fa;
-                border: 1px solid var(--white-3, #e9ecef);
-                border-radius: 4px;
-                color: var(--grey-1, #151515);
-                padding: 5px 8px;
-                font-size: 0.82rem;
-                font-family: var(--font-primary, 'Poppins', sans-serif);
-                width: 190px;
-                outline: none;
-            }
-            .bv-text-popover input:focus {
-                border-color: var(--admin-accent, #FFC845);
-                background: #FFFFFF;
-            }
-            .bv-popover-btn {
-                border: none;
-                border-radius: 4px;
-                padding: 5px 9px;
-                font-size: 0.8rem;
-                cursor: pointer;
-                font-family: var(--font-primary, 'Poppins', sans-serif);
-                transition: all 0.15s ease;
-            }
-            .bv-popover-btn-ok {
-                background: var(--grey-1, #151515);
-                color: #FFFFFF;
-                font-weight: 600;
-            }
-            .bv-popover-btn-ok:hover {
-                background: var(--admin-accent, #FFC845);
-                color: var(--grey-1, #151515);
-            }
-            .bv-popover-btn-cancel {
-                background: var(--white-3, #e9ecef);
-                color: var(--grey-2, #515151);
-                font-size: 0.9rem;
-            }
-            .bv-popover-btn-cancel:hover {
-                background: #d1d5db;
-                color: var(--grey-1, #151515);
-            }
-
-            /* Footer Light */
-            .bv-annotator-footer {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 0.85rem 1.4rem;
-                background: #FFFFFF;
-                border-top: 1px solid var(--white-3, #e9ecef);
-                flex-wrap: wrap;
-                gap: 0.5rem;
-                flex-shrink: 0;
-            }
-            .bv-annotator-tip {
-                font-size: 0.8rem;
-                color: var(--grey-2, #515151);
-            }
-
-            /* Vignettes de prévisualisation avec badge d'édition discret */
-            .photo-preview-item {
-                position: relative;
-                display: inline-block;
-                margin: 4px;
-            }
-            .photo-preview-item img {
-                display: block;
-                border-radius: 4px;
-            }
-            .photo-preview-item .annotator-edit-badge {
-                position: absolute;
-                bottom: 4px;
-                right: 4px;
-                background: #FFFFFF;
-                color: var(--grey-1, #151515);
-                border: 1px solid var(--white-3, #e9ecef);
-                border-radius: 4px;
-                padding: 2px 6px;
-                font-size: 11px;
-                font-family: var(--font-primary, 'Poppins', sans-serif);
-                font-weight: 500;
-                cursor: pointer;
-                box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-                transition: all 0.15s ease;
-            }
-            .photo-preview-item .annotator-edit-badge:hover {
-                background: var(--admin-accent, #FFC845);
-                border-color: var(--admin-accent, #FFC845);
-                color: var(--grey-1, #151515);
-            }
-        `;
-        document.head.appendChild(style);
-
         const div = document.createElement('div');
         div.innerHTML = modalHtml;
         document.body.appendChild(div.firstElementChild);
 
+        renderLucideIcons();
         initModalEvents();
     }
 
@@ -3335,6 +3135,7 @@ window.initInspectionDetail = initInspectionDetail;
                 currentTool = btn.getAttribute('data-tool');
                 hideTextPopover();
 
+                updateSizeToolbarUI();
                 updateToolCursor();
                 updateTipText();
             };
@@ -3357,22 +3158,19 @@ window.initInspectionDetail = initInspectionDetail;
             };
         });
 
-        // Épaisseur
+        // Tailles dans la toolbar
         modal.querySelectorAll('[data-size]').forEach(btn => {
             btn.onclick = () => {
-                modal.querySelectorAll('[data-size]').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentLineWidth = parseInt(btn.getAttribute('data-size'), 10);
+                const sz = parseInt(btn.getAttribute('data-size'), 10);
+                setActiveSize(sz);
+            };
+        });
 
-                if (selectedShapeIndex !== null && historyStack[selectedShapeIndex]) {
-                    const sh = historyStack[selectedShapeIndex];
-                    if (sh.type === 'text') {
-                        sh.sizeIndex = currentLineWidth;
-                    } else {
-                        sh.lineWidth = currentLineWidth;
-                    }
-                    redrawCanvas();
-                }
+        // Tailles dans le popover texte
+        modal.querySelectorAll('[data-popover-size]').forEach(btn => {
+            btn.onclick = () => {
+                const sz = parseInt(btn.getAttribute('data-popover-size'), 10);
+                setActiveSize(sz);
             };
         });
 
@@ -3444,7 +3242,7 @@ window.initInspectionDetail = initInspectionDetail;
         // Raccourcis clavier
         window.addEventListener('keydown', (e) => {
             const modal = document.getElementById('photoAnnotatorModal');
-            if (!modal || modal.style.display === 'none') return;
+            if (!modal || !modal.classList.contains('is-active')) return;
             if (document.activeElement === popoverInput) return;
 
             if (e.key === 'Delete' || e.key === 'Backspace') {
@@ -3454,6 +3252,9 @@ window.initInspectionDetail = initInspectionDetail;
                 }
             } else if (e.key === 'Escape') {
                 closeModal();
+            } else if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) {
+                e.preventDefault();
+                document.getElementById('annotatorUndoBtn')?.click();
             }
         });
 
@@ -3462,6 +3263,76 @@ window.initInspectionDetail = initInspectionDetail;
         canvas.addEventListener('pointermove', handlePointerMove);
         canvas.addEventListener('pointerup', handlePointerUp);
         canvas.addEventListener('pointercancel', handlePointerUp);
+
+        // Double-clic pour éditer une annotation texte existante
+        canvas.addEventListener('dblclick', handleCanvasDblClick);
+    }
+
+    function setActiveSize(sizeValue) {
+        const modal = document.getElementById('photoAnnotatorModal');
+        if (!modal) return;
+
+        currentLineWidth = sizeValue;
+        currentTextSizeIndex = sizeValue;
+
+        // Met à jour les boutons toolbar
+        modal.querySelectorAll('[data-size]').forEach(b => {
+            const bVal = parseInt(b.getAttribute('data-size'), 10);
+            b.classList.toggle('active', bVal === sizeValue);
+        });
+
+        // Met à jour les boutons popover
+        modal.querySelectorAll('[data-popover-size]').forEach(b => {
+            const bVal = parseInt(b.getAttribute('data-popover-size'), 10);
+            b.classList.toggle('active', bVal === sizeValue);
+        });
+
+        // Applique à la forme sélectionnée si active
+        if (selectedShapeIndex !== null && historyStack[selectedShapeIndex]) {
+            const sh = historyStack[selectedShapeIndex];
+            if (sh.type === 'text') {
+                sh.sizeIndex = sizeValue;
+            } else {
+                sh.lineWidth = sizeValue;
+            }
+            redrawCanvas();
+        }
+    }
+
+    function updateSizeToolbarUI() {
+        const modal = document.getElementById('photoAnnotatorModal');
+        const label = document.getElementById('annotatorSizeLabel');
+        if (!modal || !label) return;
+
+        const isTextContext = (currentTool === 'text') ||
+            (selectedShapeIndex !== null && historyStack[selectedShapeIndex] && historyStack[selectedShapeIndex].type === 'text');
+
+        if (isTextContext) {
+            label.innerHTML = '<i data-lucide="type"></i> Taille texte :';
+            const activeSz = (selectedShapeIndex !== null && historyStack[selectedShapeIndex]) ?
+                (historyStack[selectedShapeIndex].sizeIndex || currentTextSizeIndex) : currentTextSizeIndex;
+            setActiveSizeButtonsOnly(activeSz);
+        } else {
+            label.innerHTML = '<i data-lucide="scaling"></i> Épaisseur :';
+            const activeSz = (selectedShapeIndex !== null && historyStack[selectedShapeIndex]) ?
+                (historyStack[selectedShapeIndex].lineWidth || currentLineWidth) : currentLineWidth;
+            setActiveSizeButtonsOnly(activeSz);
+        }
+        renderLucideIcons();
+    }
+
+    function setActiveSizeButtonsOnly(sizeValue) {
+        const modal = document.getElementById('photoAnnotatorModal');
+        if (!modal) return;
+
+        modal.querySelectorAll('[data-size]').forEach(b => {
+            const bVal = parseInt(b.getAttribute('data-size'), 10);
+            b.classList.toggle('active', bVal === sizeValue);
+        });
+        modal.querySelectorAll('[data-popover-size]').forEach(b => {
+            const bVal = parseInt(b.getAttribute('data-popover-size'), 10);
+            b.classList.toggle('active', bVal === sizeValue);
+        });
     }
 
     function updateToolCursor() {
@@ -3479,18 +3350,19 @@ window.initInspectionDetail = initInspectionDetail;
         const tip = document.getElementById('annotatorTip');
         if (!tip) return;
         if (currentTool === 'select') {
-            tip.textContent = "💡 Cliquez sur une annotation pour la sélectionner. Glissez pour déplacer, attrapez les poignées pour redimensionner.";
+            tip.innerHTML = '<i data-lucide="mouse-pointer-2"></i> Cliquez sur une annotation pour la sélectionner. Glissez pour déplacer, étirez les poignées pour agrandir.';
         } else if (currentTool === 'text') {
-            tip.textContent = "💡 Cliquez sur la photo à l'endroit désiré pour saisir votre texte d'annotation.";
+            tip.innerHTML = '<i data-lucide="type"></i> Cliquez sur la photo à l\'endroit désiré pour saisir votre texte d\'annotation.';
         } else {
-            tip.textContent = "💡 Tracez sur la photo pour entourer ou pointer. Basculez sur 👆 Sélection pour déplacer ou redimensionner.";
+            tip.innerHTML = '<i data-lucide="info"></i> Tracez sur la photo pour entourer ou pointer. Basculez sur Sélection pour déplacer ou redimensionner.';
         }
+        renderLucideIcons();
     }
 
     function updateDeleteBtnVisibility() {
         const btn = document.getElementById('annotatorDeleteSelectedBtn');
         if (btn) {
-            btn.style.display = (selectedShapeIndex !== null && historyStack[selectedShapeIndex]) ? 'inline-block' : 'none';
+            btn.style.display = (selectedShapeIndex !== null && historyStack[selectedShapeIndex]) ? 'inline-flex' : 'none';
         }
     }
 
@@ -3499,6 +3371,7 @@ window.initInspectionDetail = initInspectionDetail;
             historyStack.splice(selectedShapeIndex, 1);
             selectedShapeIndex = null;
             updateDeleteBtnVisibility();
+            updateSizeToolbarUI();
             redrawCanvas();
         }
     }
@@ -3513,7 +3386,21 @@ window.initInspectionDetail = initInspectionDetail;
         };
     }
 
-    /* ══════════════ CALCUL DES BORNES & POIGNÉES ══════════════ */
+    /* ══════════════ TAILLE DU TEXTE & BORNES ══════════════ */
+
+    function getFontSizeForShape(shape) {
+        const baseScale = Math.max(1, canvas.width / 1100);
+        const sz = shape.sizeIndex || 5;
+
+        // Paliers nets et très lisibles
+        let mult = 26; // M par défaut
+        if (sz <= 3) mult = 16;       // S
+        else if (sz <= 5) mult = 26;  // M
+        else if (sz <= 9) mult = 42;  // L (Grand)
+        else mult = 64;               // XL (Très grand)
+
+        return Math.max(13, Math.round(mult * baseScale));
+    }
 
     function getShapeBounds(shape) {
         if (!shape) return { minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0 };
@@ -3526,17 +3413,17 @@ window.initInspectionDetail = initInspectionDetail;
             return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY };
         } else if (shape.type === 'text') {
             const baseScale = Math.max(1, canvas.width / 1100);
-            const fontMultiplier = shape.sizeIndex === 3 ? 16 : (shape.sizeIndex === 9 ? 28 : 22);
-            const fontSize = Math.round(fontMultiplier * baseScale);
-            const paddingX = Math.round(12 * baseScale);
-            const paddingY = Math.round(6 * baseScale);
+            const fontSize = getFontSizeForShape(shape);
+            const paddingX = Math.round(14 * baseScale);
+            const paddingY = Math.round(8 * baseScale);
 
             ctx.save();
-            ctx.font = `600 ${fontSize}px var(--font-primary, 'Poppins', sans-serif)`;
-            const metrics = ctx.measureText(shape.text);
+            ctx.font = `600 ${fontSize}px ${CANVAS_FONT_FAMILY}`;
+            const metrics = ctx.measureText(shape.text || '');
             ctx.restore();
 
-            const boxWidth = metrics.width + (paddingX * 2);
+            const textWidth = Math.max(10, metrics.width);
+            const boxWidth = textWidth + (paddingX * 2);
             const boxHeight = fontSize + (paddingY * 2);
             const boxX = Math.max(4, Math.min(shape.x, canvas.width - boxWidth - 4));
             const boxY = Math.max(4, Math.min(shape.y - boxHeight, canvas.height - boxHeight - 4));
@@ -3570,7 +3457,7 @@ window.initInspectionDetail = initInspectionDetail;
             ];
         }
 
-        const pad = 5 * scale;
+        const pad = 6 * scale;
         const x = bounds.minX - pad;
         const y = bounds.minY - pad;
         const w = bounds.width + (pad * 2);
@@ -3620,7 +3507,7 @@ window.initInspectionDetail = initInspectionDetail;
             const rx = Math.abs(shape.endX - shape.startX) / 2;
             const ry = Math.abs(shape.endY - shape.startY) / 2;
             const normDist = Math.pow((coords.x - cx) / (rx + tolerance), 2) + Math.pow((coords.y - cy) / (ry + tolerance), 2);
-            return normDist <= 1.1;
+            return normDist <= 1.15;
         } else if (shape.type === 'arrow') {
             const dist = distanceToSegment(coords, { x: shape.startX, y: shape.startY }, { x: shape.endX, y: shape.endY });
             return dist <= tolerance;
@@ -3640,7 +3527,7 @@ window.initInspectionDetail = initInspectionDetail;
 
     /* ══════════════ POPOVER TEXTE ══════════════ */
 
-    function showTextPopover(e, coords) {
+    function showTextPopover(e, coords, existingText = '', existingSize = null) {
         const wrap = document.getElementById('canvasWrap');
         const popover = document.getElementById('annotatorTextPopover');
         const input = document.getElementById('annotatorTextInput');
@@ -3649,25 +3536,34 @@ window.initInspectionDetail = initInspectionDetail;
         pendingTextCanvasCoords = coords;
         popover.style.borderColor = currentColor;
 
+        const sizeToUse = existingSize !== null ? existingSize : currentTextSizeIndex;
+        setActiveSizeButtonsOnly(sizeToUse);
+
         const wrapRect = wrap.getBoundingClientRect();
         const relativeX = e.clientX - wrapRect.left + wrap.scrollLeft;
         const relativeY = e.clientY - wrapRect.top + wrap.scrollTop;
 
-        const posX = Math.max(10, Math.min(relativeX - 20, wrap.scrollWidth - 250));
-        const posY = Math.max(10, Math.min(relativeY - 45, wrap.scrollHeight - 50));
+        const posX = Math.max(10, Math.min(relativeX - 30, wrap.scrollWidth - 300));
+        const posY = Math.max(10, Math.min(relativeY - 60, wrap.scrollHeight - 160));
 
         popover.style.left = `${posX}px`;
         popover.style.top = `${posY}px`;
-        popover.style.display = 'flex';
+        popover.classList.add('is-active');
 
-        input.value = '';
-        setTimeout(() => input.focus(), 50);
+        input.value = existingText || '';
+        setTimeout(() => {
+            input.focus();
+            if (existingText) input.select();
+        }, 50);
+
+        renderLucideIcons();
     }
 
     function hideTextPopover() {
         const popover = document.getElementById('annotatorTextPopover');
-        if (popover) popover.style.display = 'none';
+        if (popover) popover.classList.remove('is-active');
         pendingTextCanvasCoords = null;
+        editingTextIndex = null;
     }
 
     function submitTextAnnotation() {
@@ -3676,19 +3572,46 @@ window.initInspectionDetail = initInspectionDetail;
 
         const textVal = input.value.trim();
         if (textVal) {
-            historyStack.push({
-                type: 'text',
-                x: pendingTextCanvasCoords.x,
-                y: pendingTextCanvasCoords.y,
-                text: textVal,
-                color: currentColor,
-                sizeIndex: currentLineWidth
-            });
-            selectedShapeIndex = historyStack.length - 1;
+            if (editingTextIndex !== null && historyStack[editingTextIndex]) {
+                // Modification d'un texte existant
+                const sh = historyStack[editingTextIndex];
+                sh.text = textVal;
+                sh.color = currentColor;
+                sh.sizeIndex = currentTextSizeIndex;
+                selectedShapeIndex = editingTextIndex;
+            } else {
+                // Nouveau texte
+                historyStack.push({
+                    type: 'text',
+                    x: pendingTextCanvasCoords.x,
+                    y: pendingTextCanvasCoords.y,
+                    text: textVal,
+                    color: currentColor,
+                    sizeIndex: currentTextSizeIndex
+                });
+                selectedShapeIndex = historyStack.length - 1;
+            }
             updateDeleteBtnVisibility();
+            updateSizeToolbarUI();
             redrawCanvas();
         }
         hideTextPopover();
+    }
+
+    function handleCanvasDblClick(e) {
+        const coords = getCanvasCoordinates(e);
+        for (let i = historyStack.length - 1; i >= 0; i--) {
+            const shape = historyStack[i];
+            if (shape.type === 'text' && hitTestShape(shape, coords)) {
+                editingTextIndex = i;
+                selectedShapeIndex = i;
+                currentColor = shape.color || currentColor;
+                currentTextSizeIndex = shape.sizeIndex || currentTextSizeIndex;
+                updateSizeToolbarUI();
+                showTextPopover(e, { x: shape.x, y: shape.y }, shape.text, shape.sizeIndex);
+                return;
+            }
+        }
     }
 
     /* ══════════════ POINTER EVENTS (DESSIN & MANIPULATION) ══════════════ */
@@ -3727,12 +3650,14 @@ window.initInspectionDetail = initInspectionDetail;
                 dragStartCoords = coords;
                 shapeSnapshot = JSON.parse(JSON.stringify(historyStack[selectedShapeIndex]));
                 updateDeleteBtnVisibility();
+                updateSizeToolbarUI();
                 canvas.setPointerCapture(e.pointerId);
                 redrawCanvas();
                 return;
             } else {
                 selectedShapeIndex = null;
                 updateDeleteBtnVisibility();
+                updateSizeToolbarUI();
                 redrawCanvas();
                 return;
             }
@@ -3742,6 +3667,7 @@ window.initInspectionDetail = initInspectionDetail;
         if (currentTool === 'text') {
             e.preventDefault();
             selectedShapeIndex = null;
+            editingTextIndex = null;
             updateDeleteBtnVisibility();
             showTextPopover(e, coords);
             return;
@@ -3805,9 +3731,11 @@ window.initInspectionDetail = initInspectionDetail;
                 const initialDist = Math.hypot(initialBounds.width, initialBounds.height);
                 if (initialDist > 0) {
                     const ratio = currentDist / initialDist;
-                    if (ratio < 0.75) shape.sizeIndex = 3;
-                    else if (ratio > 1.35) shape.sizeIndex = 9;
-                    else shape.sizeIndex = 5;
+                    if (ratio < 0.7) shape.sizeIndex = 3;      // S
+                    else if (ratio < 1.25) shape.sizeIndex = 5; // M
+                    else if (ratio < 1.7) shape.sizeIndex = 9;  // L
+                    else shape.sizeIndex = 14;                  // XL
+                    setActiveSizeButtonsOnly(shape.sizeIndex);
                 }
             } else if (shape.type === 'freehand') {
                 const initialBounds = getShapeBounds(shapeSnapshot);
@@ -3916,6 +3844,7 @@ window.initInspectionDetail = initInspectionDetail;
                 historyStack.push(activeFreehandPath);
                 selectedShapeIndex = historyStack.length - 1;
                 updateDeleteBtnVisibility();
+                updateSizeToolbarUI();
             }
             activeFreehandPath = null;
         } else {
@@ -3932,6 +3861,7 @@ window.initInspectionDetail = initInspectionDetail;
                 });
                 selectedShapeIndex = historyStack.length - 1;
                 updateDeleteBtnVisibility();
+                updateSizeToolbarUI();
             }
         }
         redrawCanvas();
@@ -3973,7 +3903,7 @@ window.initInspectionDetail = initInspectionDetail;
             drawHandle(shape.startX, shape.startY, handleR, '#5299D3');
             drawHandle(shape.endX, shape.endY, handleR, '#5299D3');
         } else {
-            const pad = 5 * scale;
+            const pad = 6 * scale;
             const x = bounds.minX - pad;
             const y = bounds.minY - pad;
             const w = bounds.width + (pad * 2);
@@ -3995,7 +3925,7 @@ window.initInspectionDetail = initInspectionDetail;
         ctx.beginPath();
         ctx.arc(x, y, r, 0, 2 * Math.PI);
         ctx.fillStyle = '#FFFFFF';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
         ctx.shadowBlur = 4;
         ctx.fill();
         ctx.strokeStyle = strokeColor;
@@ -4008,7 +3938,7 @@ window.initInspectionDetail = initInspectionDetail;
         ctx.save();
         ctx.strokeStyle = shape.color;
         ctx.fillStyle = shape.color;
-        ctx.lineWidth = shape.lineWidth;
+        ctx.lineWidth = shape.lineWidth || currentLineWidth;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
@@ -4032,7 +3962,7 @@ window.initInspectionDetail = initInspectionDetail;
             const fromY = shape.startY;
             const toX = shape.endX;
             const toY = shape.endY;
-            const headlen = Math.max(16, shape.lineWidth * 3.2);
+            const headlen = Math.max(16, (shape.lineWidth || 5) * 3.2);
             const angle = Math.atan2(toY - fromY, toX - fromX);
 
             ctx.beginPath();
@@ -4057,17 +3987,15 @@ window.initInspectionDetail = initInspectionDetail;
                 ctx.stroke();
             }
         } else if (shape.type === 'text') {
-            // Étiquette Badge Finesse : Fond blanc pur semi-opaque, bordure colorée fine, typographie Poppins
             const baseScale = Math.max(1, canvas.width / 1100);
-            const fontMultiplier = shape.sizeIndex === 3 ? 15 : (shape.sizeIndex === 9 ? 25 : 19);
-            const fontSize = Math.round(fontMultiplier * baseScale);
-            const paddingX = Math.round(12 * baseScale);
-            const paddingY = Math.round(6 * baseScale);
-            const borderRadius = Math.round(4 * baseScale);
+            const fontSize = getFontSizeForShape(shape);
+            const paddingX = Math.round(14 * baseScale);
+            const paddingY = Math.round(8 * baseScale);
+            const borderRadius = Math.round(6 * baseScale);
 
-            ctx.font = `600 ${fontSize}px var(--font-primary, 'Poppins', sans-serif)`;
-            const metrics = ctx.measureText(shape.text);
-            const textWidth = metrics.width;
+            ctx.font = `600 ${fontSize}px ${CANVAS_FONT_FAMILY}`;
+            const metrics = ctx.measureText(shape.text || '');
+            const textWidth = Math.max(10, metrics.width);
             const textHeight = fontSize;
 
             const boxWidth = textWidth + (paddingX * 2);
@@ -4076,11 +4004,13 @@ window.initInspectionDetail = initInspectionDetail;
             const boxY = Math.max(4, Math.min(shape.y - boxHeight, canvas.height - boxHeight - 4));
 
             // Fond blanc net avec ombre douce
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
             ctx.shadowBlur = 6;
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 2;
             ctx.fillStyle = '#FFFFFF';
             ctx.strokeStyle = shape.color;
-            ctx.lineWidth = Math.max(1.5, Math.round(2 * baseScale));
+            ctx.lineWidth = Math.max(2, Math.round(2.5 * baseScale));
 
             ctx.beginPath();
             if (typeof ctx.roundRect === 'function') {
@@ -4094,14 +4024,15 @@ window.initInspectionDetail = initInspectionDetail;
             // Point d'ancrage subtil
             ctx.fillStyle = shape.color;
             ctx.beginPath();
-            ctx.arc(shape.x, shape.y, Math.round(3.5 * baseScale), 0, 2 * Math.PI);
+            ctx.arc(shape.x, shape.y, Math.round(4 * baseScale), 0, 2 * Math.PI);
             ctx.fill();
 
-            // Texte dans la couleur de repère ou gris-1
+            // Texte dans la couleur sombre contrastée
             ctx.fillStyle = '#151515';
             ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
             ctx.textBaseline = 'middle';
-            ctx.fillText(shape.text, boxX + paddingX, boxY + (boxHeight / 2));
+            ctx.fillText(shape.text || '', boxX + paddingX, boxY + (boxHeight / 2));
         }
 
         ctx.restore();
@@ -4112,11 +4043,16 @@ window.initInspectionDetail = initInspectionDetail;
     function closeModal() {
         hideTextPopover();
         const modal = document.getElementById('photoAnnotatorModal');
-        if (modal) modal.style.display = 'none';
+        if (modal) {
+            modal.style.display = 'none';
+            modal.classList.remove('is-active');
+        }
         originalImage = null;
+        originalBaseSource = null;
         originalFile = null;
         historyStack = [];
         selectedShapeIndex = null;
+        editingTextIndex = null;
         updateDeleteBtnVisibility();
         onSaveCallback = null;
     }
@@ -4128,6 +4064,8 @@ window.initInspectionDetail = initInspectionDetail;
         selectedShapeIndex = null;
         redrawCanvas();
 
+        const currentAnnotations = JSON.parse(JSON.stringify(historyStack));
+
         canvas.toBlob(blob => {
             if (!blob) return;
             const filename = originalFile ? originalFile.name : `annotated_${Date.now()}.jpg`;
@@ -4135,19 +4073,38 @@ window.initInspectionDetail = initInspectionDetail;
             const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
 
             if (typeof onSaveCallback === 'function') {
-                onSaveCallback(annotatedFile, dataUrl);
+                // Renvoie le fichier annoté, la dataUrl ET la pile d'annotations vectorielles
+                onSaveCallback(annotatedFile, dataUrl, currentAnnotations);
             }
             closeModal();
         }, 'image/jpeg', 0.92);
     }
 
-    function openPhotoAnnotator(imageSource, callback) {
+    /**
+     * Ouvre l'annotateur avec source d'image et support des annotations existantes.
+     * @param {File|Blob|string} imageSource Source de l'image (fichier, blob ou dataURL)
+     * @param {Function} callback Callback (annotatedFile, dataUrl, annotationsStack)
+     * @param {Object} options Options complémentaires { annotations: Array, baseImage: File|Blob|string }
+     */
+    function openPhotoAnnotator(imageSource, callback, options = {}) {
         createModalDom();
         onSaveCallback = callback;
-        historyStack = [];
-        selectedShapeIndex = null;
         hideTextPopover();
+
+        // Récupère l'historique d'annotations existant si fourni (permet d'éditer sans reset)
+        if (options && options.annotations && Array.isArray(options.annotations)) {
+            historyStack = JSON.parse(JSON.stringify(options.annotations));
+        } else {
+            historyStack = [];
+        }
+
+        selectedShapeIndex = null;
+        editingTextIndex = null;
         updateDeleteBtnVisibility();
+        updateSizeToolbarUI();
+
+        // Image de fond originale (sans brûlure de pixel si disponible)
+        originalBaseSource = (options && options.baseImage) ? options.baseImage : imageSource;
 
         const img = new Image();
         img.crossOrigin = 'anonymous';
@@ -4159,39 +4116,48 @@ window.initInspectionDetail = initInspectionDetail;
             redrawCanvas();
 
             const modal = document.getElementById('photoAnnotatorModal');
-            modal.style.display = 'flex';
+            if (modal) {
+                modal.style.display = 'flex';
+                modal.classList.add('is-active');
+            }
 
             const wrap = document.getElementById('canvasWrap');
             if (wrap) wrap.scrollTop = 0;
+
+            renderLucideIcons();
         }
 
-        if (imageSource instanceof File || imageSource instanceof Blob) {
-            originalFile = imageSource;
+        if (originalBaseSource instanceof File || originalBaseSource instanceof Blob) {
+            originalFile = originalBaseSource;
             const reader = new FileReader();
             reader.onload = e => {
                 img.onload = onLoad;
                 img.src = e.target.result;
             };
-            reader.readAsDataURL(imageSource);
-        } else if (typeof imageSource === 'string') {
+            reader.readAsDataURL(originalBaseSource);
+        } else if (typeof originalBaseSource === 'string') {
             originalFile = null;
             img.onload = onLoad;
-            img.src = imageSource;
+            img.src = originalBaseSource;
         }
     }
 
     function replaceFileInInput(input, index, newFile) {
         if (!input || !window.DataTransfer) return;
-        const dt = new DataTransfer();
-        const files = Array.from(input.files);
-        files.forEach((f, i) => {
-            if (i === index) {
-                dt.items.add(newFile);
-            } else {
-                dt.items.add(f);
-            }
-        });
-        input.files = dt.files;
+        try {
+            const dt = new DataTransfer();
+            const files = Array.from(input.files);
+            files.forEach((f, i) => {
+                if (i === index) {
+                    dt.items.add(newFile);
+                } else {
+                    dt.items.add(f);
+                }
+            });
+            input.files = dt.files;
+        } catch (err) {
+            console.warn("replaceFileInInput: non supporté par ce navigateur, stockage de secours actif", err);
+        }
     }
 
     // Export global
@@ -4875,43 +4841,103 @@ window.initInspectionDetail = initInspectionDetail;
     }
     window.syncSelectedEquipment = syncSelectedEquipment;
 
+    const incidentPhotoRegistry = {};
+
     function previewFiles(input, containerId) {
         const container = document.getElementById(containerId);
         if (!container) return;
         container.innerHTML = '';
+        incidentPhotoRegistry[input.name || containerId] = [];
+
         if (input.files) {
             Array.from(input.files).forEach((file, index) => {
                 if (file.type.startsWith('image/')) {
+                    const photoState = {
+                        originalFile: file,
+                        currentFile: file,
+                        baseImage: file,
+                        dataUrl: null,
+                        annotations: [],
+                        isAnnotated: false
+                    };
+                    incidentPhotoRegistry[input.name || containerId][index] = photoState;
+
                     const reader = new FileReader();
                     reader.onload = function (e) {
+                        photoState.dataUrl = e.target.result;
+
                         const wrapper = document.createElement('div');
                         wrapper.className = 'photo-preview-item';
+                        wrapper.title = "Cliquer pour visualiser ou annoter cette photo";
 
                         const img = document.createElement('img');
                         img.src = e.target.result;
                         img.className = 'photo-preview-img';
                         wrapper.appendChild(img);
 
+                        const hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = `${input.name || 'photos'}_annotated_${index}`;
+                        hiddenInput.value = '';
+                        wrapper.appendChild(hiddenInput);
+
+                        let btn = null;
                         if (typeof window.openPhotoAnnotator === 'function') {
-                            const btn = document.createElement('button');
+                            btn = document.createElement('button');
                             btn.type = 'button';
                             btn.className = 'annotator-edit-badge';
-                            btn.title = "Annoter cette photo (cercle, flèche)";
-                            btn.innerHTML = '✏️ Annoter';
-                            btn.onclick = function (ev) {
-                                ev.preventDefault();
-                                ev.stopPropagation();
-                                window.openPhotoAnnotator(file, function (annotatedFile, dataUrl) {
-                                    img.src = dataUrl;
-                                    if (typeof window.replaceFileInInput === 'function') {
-                                        window.replaceFileInInput(input, index, annotatedFile);
-                                    }
-                                });
-                            };
+                            btn.title = "Annoter cette photo (cercle, flèche, texte)";
+                            btn.innerHTML = '<i data-lucide="pencil"></i> Annoter';
                             wrapper.appendChild(btn);
                         }
 
+                        function openAnnotatorForPhoto(ev) {
+                            if (ev) {
+                                ev.preventDefault();
+                                ev.stopPropagation();
+                            }
+                            if (typeof window.openPhotoAnnotator !== 'function') return;
+
+                            window.openPhotoAnnotator(
+                                photoState.currentFile,
+                                function (annotatedFile, dataUrl, annotations) {
+                                    photoState.currentFile = annotatedFile;
+                                    photoState.dataUrl = dataUrl;
+                                    photoState.annotations = annotations || [];
+                                    photoState.isAnnotated = true;
+
+                                    img.src = dataUrl;
+                                    hiddenInput.value = dataUrl;
+
+                                    if (btn) {
+                                        btn.classList.add('is-annotated');
+                                        btn.innerHTML = '<i data-lucide="check"></i> Annotée';
+                                        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                                            window.lucide.createIcons();
+                                        }
+                                    }
+
+                                    if (typeof window.replaceFileInInput === 'function') {
+                                        window.replaceFileInInput(input, index, annotatedFile);
+                                    }
+                                },
+                                {
+                                    annotations: photoState.annotations,
+                                    baseImage: photoState.baseImage
+                                }
+                            );
+                        }
+
+                        if (btn) {
+                            btn.onclick = openAnnotatorForPhoto;
+                        }
+                        wrapper.onclick = openAnnotatorForPhoto;
+
                         container.appendChild(wrapper);
+
+                        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                            window.lucide.createIcons();
+                        }
                     };
                     reader.readAsDataURL(file);
                 }

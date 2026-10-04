@@ -100,8 +100,8 @@ def create_checkin(form, files=None):
     db.session.add(record)
     db.session.commit()
 
-    if files:
-        upload_inspection_photos_shared("checkin", record, files)
+    if files or form:
+        upload_inspection_photos_shared("checkin", record, files=files, form=form)
 
     return True
 
@@ -116,8 +116,8 @@ def update_checkin(record_id, form, files=None):
     apply_inspection_data(record, form, is_checkout=False)
     db.session.commit()
 
-    if files:
-        upload_inspection_photos_shared("checkin", record, files)
+    if files or form:
+        upload_inspection_photos_shared("checkin", record, files=files, form=form)
 
     return True
 

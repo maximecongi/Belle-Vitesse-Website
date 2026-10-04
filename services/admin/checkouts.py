@@ -58,8 +58,8 @@ def create_checkout(form, files=None):
     db.session.add(record)
     db.session.commit()
 
-    if files:
-        upload_inspection_photos_shared("checkout", record, files)
+    if files or form:
+        upload_inspection_photos_shared("checkout", record, files=files, form=form)
 
     return True
 
@@ -74,8 +74,8 @@ def update_checkout(record_id, form, files=None):
     apply_inspection_data(record, form, is_checkout=True)
     db.session.commit()
 
-    if files:
-        upload_inspection_photos_shared("checkout", record, files)
+    if files or form:
+        upload_inspection_photos_shared("checkout", record, files=files, form=form)
 
     return True
 
