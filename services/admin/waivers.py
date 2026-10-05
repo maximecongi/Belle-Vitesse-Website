@@ -684,12 +684,16 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
         if not p or p.deleted_at is not None:
             continue
 
-        p_date = p.departure_date or p.shoot_start_date
-        if not p_date:
+        start_dates = [d for d in (p.departure_date, p.shoot_start_date) if d]
+        if not start_dates:
             continue
+        p_start = min(start_dates)
+        end_dates = [d for d in (p.return_date, p.shoot_end_date) if d]
+        p_end = max(end_dates) if end_dates else p_start
 
-        # Vérifier si dans la fenêtre d'échéance [today, target_limit]
-        if not (today <= p_date <= target_limit):
+        # Relancer si le projet n'est pas terminé (today <= p_end)
+        # et que la date de départ est entrée dans la fenêtre d'échéance (p_start <= target_limit)
+        if not (p_start <= target_limit and today <= p_end):
             continue
 
         # Éviter de relancer deux fois le même jour
@@ -732,7 +736,7 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
                     "waiver_id": pw.waiver_id,
                     "project_name": p.name,
                     "recipient": contact_prod.mail,
-                    "departure_date": p_date.isoformat(),
+                    "departure_date": p_start.isoformat(),
                     "reminder_count": pw.reminder_count,
                 })
         except Exception as e:
@@ -755,11 +759,16 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
         if not p or p.deleted_at is not None:
             continue
 
-        p_date = p.departure_date or p.shoot_start_date
-        if not p_date:
+        start_dates = [d for d in (p.departure_date, p.shoot_start_date) if d]
+        if not start_dates:
             continue
+        p_start = min(start_dates)
+        end_dates = [d for d in (p.return_date, p.shoot_end_date) if d]
+        p_end = max(end_dates) if end_dates else p_start
 
-        if not (today <= p_date <= target_limit):
+        # Relancer si le projet n'est pas terminé (today <= p_end)
+        # et que la date de départ est entrée dans la fenêtre d'échéance (p_start <= target_limit)
+        if not (p_start <= target_limit and today <= p_end):
             continue
 
         if dw.last_reminded_at and dw.last_reminded_at.date() == today:
@@ -800,7 +809,7 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
                     "waiver_id": dw.waiver_id,
                     "project_name": p.name,
                     "recipient": pilot.mail,
-                    "departure_date": p_date.isoformat(),
+                    "departure_date": p_start.isoformat(),
                     "reminder_count": dw.reminder_count,
                 })
         except Exception as e:

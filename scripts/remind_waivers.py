@@ -66,12 +66,18 @@ def run_reminders(days_before: int = 2, dry_run: bool = False):
                     p = pw.project
                     if not p or p.deleted_at is not None:
                         continue
-                    p_date = p.departure_date or p.shoot_start_date
-                    if p_date and today <= p_date <= target_limit:
+                    start_dates = [d for d in (p.departure_date, p.shoot_start_date) if d]
+                    if not start_dates:
+                        continue
+                    p_start = min(start_dates)
+                    end_dates = [d for d in (p.return_date, p.shoot_end_date) if d]
+                    p_end = max(end_dates) if end_dates else p_start
+
+                    if p_start <= target_limit and today <= p_end:
                         contact = p.production_contact
                         mail = contact.mail if contact else "AUCUN EMAIL"
                         already = " (déjà relancée aujourd'hui)" if (pw.last_reminded_at and pw.last_reminded_at.date() == today) else ""
-                        print(f"   [PROD] Projet: {p.name} | Décharge: {pw.waiver_id} | Contact: {mail} | Date: {p_date}{already}")
+                        print(f"   [PROD] Projet: {p.name} | Décharge: {pw.waiver_id} | Contact: {mail} | Départ: {p_start} (Fin: {p_end}){already}")
                         prod_count += 1
 
                 # Pilotes
@@ -88,12 +94,18 @@ def run_reminders(days_before: int = 2, dry_run: bool = False):
                     p = dw.project
                     if not p or p.deleted_at is not None:
                         continue
-                    p_date = p.departure_date or p.shoot_start_date
-                    if p_date and today <= p_date <= target_limit:
+                    start_dates = [d for d in (p.departure_date, p.shoot_start_date) if d]
+                    if not start_dates:
+                        continue
+                    p_start = min(start_dates)
+                    end_dates = [d for d in (p.return_date, p.shoot_end_date) if d]
+                    p_end = max(end_dates) if end_dates else p_start
+
+                    if p_start <= target_limit and today <= p_end:
                         pilot = p.pilot_contact
                         mail = pilot.mail if pilot else "AUCUN EMAIL"
                         already = " (déjà relancée aujourd'hui)" if (dw.last_reminded_at and dw.last_reminded_at.date() == today) else ""
-                        print(f"   [PILOTE] Projet: {p.name} | Décharge: {dw.waiver_id} | Pilote: {mail} | Date: {p_date}{already}")
+                        print(f"   [PILOTE] Projet: {p.name} | Décharge: {dw.waiver_id} | Pilote: {mail} | Départ: {p_start} (Fin: {p_end}){already}")
                         pilot_count += 1
 
                 print(f"[{datetime.now()}] ℹ️ Total éligible : {prod_count} production(s), {pilot_count} pilote(s).")

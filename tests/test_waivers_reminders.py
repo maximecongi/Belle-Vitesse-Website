@@ -72,6 +72,9 @@ class WaiversRemindersTest(unittest.TestCase):
             db.session.add_all([self.pw, self.dw])
             db.session.commit()
 
+            self.prod_id = self.prod.id
+            self.contact_prod_id = self.contact_prod.id
+            self.contact_pilot_id = self.contact_pilot.id
             self.project_id = self.project.id
             self.pw_id = self.pw.id
             self.dw_id = self.dw.id
@@ -111,6 +114,60 @@ class WaiversRemindersTest(unittest.TestCase):
             res2 = auto_remind_pending_waivers(days_before=2, base_url="http://testserver")
             self.assertEqual(res2["production_reminders_sent"], 0)
             self.assertEqual(res2["pilot_reminders_sent"], 0)
+
+    @patch("utils.mailer.send_production_waiver_invitation_email", return_value=True)
+    @patch("utils.mailer.send_waiver_invitation_email", return_value=True)
+    def test_auto_remind_ongoing_shoot_after_departure(self, mock_pilot_mail, mock_prod_mail):
+        """Vérifie que les décharges non signées sont toujours relancées si le départ a eu lieu mais le tournage est en cours."""
+        with self.app.app_context():
+            yesterday = datetime.now(timezone.utc).date() - timedelta(days=1)
+            future_return = datetime.now(timezone.utc).date() + timedelta(days=2)
+
+            # Projet en cours : départ hier, retour dans 2 jours
+            p_ongoing = Project(
+                name="Tournage En Cours",
+                production_id=self.prod_id,
+                production_contact_id=self.contact_prod_id,
+                pilot_contact_id=self.contact_pilot_id,
+                departure_date=yesterday,
+                return_date=future_return,
+            )
+            db.session.add(p_ongoing)
+            db.session.commit()
+
+            pw_ongoing = ProductionWaiver(project_id=p_ongoing.id, status="to_sign")
+            dw_ongoing = PilotWaiver(project_id=p_ongoing.id, status="to_sign")
+            db.session.add_all([pw_ongoing, dw_ongoing])
+            db.session.commit()
+
+            # Projet passé et achevé : retour hier
+            p_past = Project(
+                name="Tournage Passé Terminé",
+                production_id=self.prod_id,
+                production_contact_id=self.contact_prod_id,
+                pilot_contact_id=self.contact_pilot_id,
+                departure_date=yesterday - timedelta(days=3),
+                return_date=yesterday,
+            )
+            db.session.add(p_past)
+            db.session.commit()
+
+            pw_past = ProductionWaiver(project_id=p_past.id, status="to_sign")
+            dw_past = PilotWaiver(project_id=p_past.id, status="to_sign")
+            db.session.add_all([pw_past, dw_past])
+            db.session.commit()
+
+            res = auto_remind_pending_waivers(days_before=2, base_url="http://testserver")
+
+            # self.project (J-1) + p_ongoing (départ hier, retour J+2) doivent être relancés = 2
+            # p_past (retour hier) ne doit PAS être relancé
+            self.assertEqual(res["production_reminders_sent"], 2)
+            self.assertEqual(res["pilot_reminders_sent"], 2)
+
+            relanced_projects = [d["project_name"] for d in res["details"]]
+            self.assertIn("Tournage Urgent J-1", relanced_projects)
+            self.assertIn("Tournage En Cours", relanced_projects)
+            self.assertNotIn("Tournage Passé Terminé", relanced_projects)
 
     @patch("utils.mailer.send_production_waiver_invitation_email", return_value=True)
     @patch("utils.mailer.send_waiver_invitation_email", return_value=True)
