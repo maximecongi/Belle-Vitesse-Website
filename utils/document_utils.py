@@ -175,7 +175,8 @@ def render_pdf_from_template(
     base_url: str,
     stylesheets: list[str] = None,
     compress: bool = True,
-    filename: str = "document.pdf"
+    filename: str = "document.pdf",
+    continuous: bool = False
 ) -> bytes:
     """
     Générateur de PDF générique utilisant WeasyPrint avec compression automatique.
@@ -185,6 +186,7 @@ def render_pdf_from_template(
         stylesheets (list[str]) : Liste des fichiers statiques CSS (ex: ['css/styles.css']).
         compress (bool) : Si True (par défaut), applique la compression PDF locale haute performance.
         filename (str) : Nom indicatif du document pour le traitement de compression.
+        continuous (bool) : Si True, génère une page continue sans saut de page (A4) à la hauteur exacte du contenu.
     """
     from flask import current_app
     dummy_pdf = (
@@ -208,7 +210,26 @@ def render_pdf_from_template(
                     css_list.append(
                         CSS(filename=str(css_file), url_fetcher=fetcher))
 
-        res = html.write_pdf(stylesheets=css_list)
+        if continuous:
+            doc = html.render(stylesheets=css_list)
+            if hasattr(doc, "pages") and doc.pages:
+                try:
+                    p = doc.pages[0]
+                    if hasattr(p, "_page_box") and hasattr(p._page_box, "children") and p._page_box.children:
+                        html_box = p._page_box.children[0]
+                        exact_height = getattr(html_box, "height", None)
+                        if exact_height and isinstance(exact_height, (int, float)):
+                            p.height = exact_height
+                            p._page_box.height = exact_height
+                            doc.pages = [p]
+                except Exception as render_err:
+                    if current_app:
+                        current_app.logger.warning(
+                            f"⚠️ Avertissement lors de l'ajustement du PDF continu : {render_err}"
+                        )
+            res = doc.write_pdf()
+        else:
+            res = html.write_pdf(stylesheets=css_list)
         if isinstance(res, bytes) and len(res) > 0:
             if compress:
                 try:

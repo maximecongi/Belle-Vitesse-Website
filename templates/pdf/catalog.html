@@ -4,312 +4,72 @@
 <head>
     <meta charset="UTF-8">
     <title>{% if with_prices %}CATALOGUE DE PRIX{% else %}CATALOGUE FLOTTE{% endif %} - BELLE VITESSE</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-pilot-waivers.css') }}">
-    <style>
-        @page {
-            size: 210mm {{estimated_height}}mm;
-            /* Hauteur calculée dynamiquement */
-            margin: 0;
-            padding: 0;
-        }
-
-        :root {
-            --yellow-1: #FFC845;
-            --grey-1: #1d1d1d;
-            --grey-2: #4a4a4a;
-            --white-2: #f9f9f9;
-            --white-3: #e5e7eb;
-        }
-
-        /* Désactiver les sauts de page forcés du style waiver pour le catalogue */
-        .pilot-waiver-section {
-            page-break-inside: auto !important;
-            margin-bottom: 20pt !important;
-        }
-
-        .catalog-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 25px;
-            margin-top: 20px;
-            page-break-before: avoid;
-        }
-
-        .catalog-card {
-            background: #fff;
-            border: 1px solid var(--white-3);
-            border-radius: 4px;
-            padding: 15px;
-            page-break-inside: avoid;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-        }
-
-        .catalog-card-img {
-            width: 100%;
-            object-fit: cover;
-            border-radius: 2px;
-            margin-bottom: 15px;
-            background: var(--white-2);
-        }
-
-        .catalog-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 10px;
-        }
-
-        .catalog-card-title {
-            font-size: 14pt;
-            font-weight: 700;
-            margin: 0;
-            color: var(--grey-1);
-            text-transform: uppercase;
-        }
-
-        .catalog-card-price {
-            font-size: 11pt;
-            font-weight: 700;
-            color: var(--grey-1);
-            background: var(--yellow-1);
-            padding: 2px 8px;
-            border-radius: 2px;
-        }
-
-        .catalog-card-specs {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--white-3);
-        }
-
-        .catalog-card-setups {
-            display: grid;
-            grid-template-columns: repeat(1, 1fr);
-            gap: 10px;
-        }
-
-        .catalog-card-setup {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .catalog-card-setups img {
-            width: 24px;
-
-        }
-
-        .catalog-card-setups-icons {
-            display: flex;
-            gap: 10px;
-            flex-direction: row;
-            align-items: flex-end;
-            justify-content: space-between;
-        }
-
-        .catalog-spec-item-text {
-            font-size: 0.4rem;
-            display: inline-block;
-        }
-
-        .catalog-spec-item {
-            font-size: 8pt;
-            color: var(--grey-2);
-            text-transform: uppercase;
-        }
-
-        .catalog-spec-item strong {
-            display: block;
-            color: var(--grey-1);
-            font-size: 9pt;
-            margin-top: 2px;
-        }
-
-        .catalog-config-list {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-        }
-
-        .catalog-config-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-        }
-
-        .catalog-config-img {
-            width: 100%;
-            object-fit: cover;
-            border-radius: 2px;
-            margin-bottom: 3px;
-            background: var(--white-2);
-            border: 1px solid var(--white-3);
-        }
-
-        .catalog-config-label {
-            font-size: 6pt;
-            color: var(--grey-1);
-            font-weight: 500;
-            line-height: 1;
-        }
-
-        .catalog-heads-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .catalog-head-card {
-            background: #fff;
-            border: 1px solid var(--white-3);
-            padding: 10px;
-            text-align: center;
-            border-radius: 4px;
-            page-break-inside: avoid;
-        }
-
-        .catalog-head-img {
-            width: 100%;
-            object-fit: contain;
-            margin-bottom: 10px;
-        }
-
-        .catalog-head-name {
-            display: block;
-            font-weight: 600;
-            font-size: 9pt;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-        }
-
-        /* Footer Stylisé */
-        .catalog-footer {
-            margin-top: 50px;
-            padding-top: 20px;
-            border-top: 2px solid var(--grey-1);
-            display: flex;
-            justify-content: space-between;
-            font-size: 8pt;
-            color: var(--grey-2);
-        }
-
-        /* Barre de contrôle pour la preview */
-        .preview-controls {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: #1d1d1d;
-            color: white;
-            padding: 10px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 10000;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-            font-family: sans-serif;
-        }
-
-        .preview-btn {
-            background: var(--yellow-1);
-            color: #1d1d1d;
-            padding: 6px 15px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 13px;
-            margin-left: 10px;
-            transition: transform 0.1s;
-            border: none;
-            cursor: pointer;
-        }
-
-        .preview-btn:active {
-            transform: scale(0.95);
-        }
-
-        .preview-btn--secondary {
-            background: #4a4a4a;
-            color: white;
-        }
-
-        @media print {
-            .no-print {
-                display: none !important;
-            }
-
-            body {
-                padding-top: 0 !important;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/catalog.css') }}">
 </head>
 
-<body class="pilot-waiver-container" style="padding-top: 60px;">
-    <!-- Barre de contrôle visible uniquement en HTML -->
+<body class="catalog-body">
+    <!-- Barre de contrôle visible uniquement en HTML pour l'administrateur -->
     <div class="preview-controls no-print">
-        <div style="display: flex; align-items: center; gap: 15px;">
-            <strong>Mode Aperçu Catalogue</strong>
-            <div style="display: flex; background: #2d2d2d; border-radius: 4px; padding: 2px; gap: 2px;">
+        <div class="preview-controls-left">
+            <span class="preview-controls-title">Mode Aperçu Catalogue</span>
+            <div class="preview-toggle-group">
                 <a href="{{ url_for('admin_catalog.admin_catalog_preview', prices='1') }}"
-                    style="padding: 4px 12px; font-size: 12px; text-decoration: none; border-radius: 3px; font-weight: 600; color: {% if with_prices %}#1d1d1d{% else %}#fff{% endif %}; background: {% if with_prices %}var(--yellow-1){% else %}transparent{% endif %}; transition: all 0.2s;">
+                    class="preview-toggle-btn {% if with_prices %}is-active{% endif %}">
                     Avec prix
                 </a>
                 <a href="{{ url_for('admin_catalog.admin_catalog_preview', prices='0') }}"
-                    style="padding: 4px 12px; font-size: 12px; text-decoration: none; border-radius: 3px; font-weight: 600; color: {% if not with_prices %}#1d1d1d{% else %}#fff{% endif %}; background: {% if not with_prices %}var(--yellow-1){% else %}transparent{% endif %}; transition: all 0.2s;">
+                    class="preview-toggle-btn {% if not with_prices %}is-active{% endif %}">
                     Sans prix
                 </a>
             </div>
-            <span style="font-size: 11px; color: #aaa;">Le PDF ne sera mis à jour que si vous cliquez sur "Mettre à jour
-                le PDF"</span>
+            <span class="preview-controls-hint">Le PDF ne sera mis à jour que si vous cliquez sur « Mettre à jour le PDF »</span>
         </div>
-        <div>
+        <div class="preview-controls-actions">
             <a href="{{ url_for('admin_catalog.admin_catalog_pdf', prices='1' if with_prices else '0') }}"
                 class="preview-btn preview-btn--secondary" target="_blank">Télécharger le PDF</a>
             <a href="{{ url_for('admin_catalog.admin_catalog_update', prices='1' if with_prices else '0') }}"
                 class="preview-btn">Mettre à jour le PDF</a>
         </div>
     </div>
-    <div class="pilot-waiver">
+
+    <!-- Conteneur principal identique en aperçu Web et export PDF continu -->
+    <div class="catalog-container">
         <!-- ═══════════ HEADER ═══════════ -->
-        <header class="pilot-waiver-header" style="margin-bottom: 40px;">
-            <div class="pilot-waiver-header-logo">
+        <header class="catalog-header">
+            <div class="catalog-header-logo">
                 <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
                     alt="Belle Vitesse">
             </div>
-            <div class="pilot-waiver-header-meta">
-                <strong style="text-transform: uppercase; letter-spacing: 1px;">
+            <div class="catalog-header-meta">
+                <strong class="catalog-header-doc-title">
                     {% if with_prices %}Catalogue de Prix Officiel{% else %}Catalogue Officiel{% endif %}
-                </strong><br>
-                <span class="pilot-waiver-doc-id">Édition : {{ now.strftime('%d/%m/%Y') }}</span><br>
+                </strong>
+                <span class="catalog-doc-edition">Édition : {{ now.strftime('%d/%m/%Y') }}</span><br>
                 Belle Vitesse SAS
             </div>
         </header>
 
-        <h1 class="pilot-waiver-title">Catalogue Flotte</h1>
-        <p class="pilot-waiver-subtitle">Découvrez nos solutions de prises de vues électriques et têtes stabilisées.</p>
+        <h1 class="catalog-title">Catalogue Flotte</h1>
+        <p class="catalog-subtitle">Découvrez nos solutions de prises de vues électriques et têtes stabilisées.</p>
 
         <!-- ═══════════ VÉHICULES ═══════════ -->
-        <section class="pilot-waiver-section">
-            <h2 class="pilot-waiver-section-title dot-before">Nos Véhicules Électriques</h2>
+        <section class="catalog-section">
+            <h2 class="catalog-section-title dot-before">Nos Véhicules Électriques</h2>
             <div class="catalog-grid">
                 {% for vehicle in vehicles %}
                 <div class="catalog-card">
-                    <img src="{{ vehicle.thumbnail }}" class="catalog-card-img" alt="{{ vehicle.name }}">
+                    <div class="catalog-card-img-wrapper">
+                        {% if vehicle.thumbnail %}
+                        <img src="{{ vehicle.thumbnail }}" class="catalog-card-img" alt="{{ vehicle.name }}">
+                        {% else %}
+                        <img src="{{ url_for('static', filename='imgs/icons/car.svg') }}"
+                            class="catalog-card-placeholder-icon" alt="{{ vehicle.name }}">
+                        {% endif %}
+                    </div>
                     <div class="catalog-card-header">
                         <h3 class="catalog-card-title">{{ vehicle.name }}</h3>
                         {% if with_prices %}
-                        <div class="catalog-card-price">{{ "{:,.0f}".format(vehicle.daily_rate |
-                            default(0))|replace(',', ' ') }} € <small>HT /jr</small></div>
+                        <div class="catalog-card-price">{{ "{:,.0f}".format(vehicle.daily_rate | default(0))|replace(',', ' ') }} € <small>HT /jr</small></div>
                         {% endif %}
                     </div>
 
@@ -329,33 +89,36 @@
                             {% endif %}
                         </div>
                     </div>
+
+                    {% if vehicle.specs.setups %}
                     <div class="catalog-card-setups">
-                        {% if vehicle.specs.setups %}
                         <div class="catalog-spec-item">
                             Setups
                             <div class="catalog-card-setups-icons">
                                 {% for s in vehicle.specs.setups %}
                                 <div class="catalog-card-setup">
-                                    <img src="{{ url_for('static', filename='imgs/icons/' ~ s| slugify ~ '.svg') }}" />
+                                    <img src="{{ url_for('static', filename='imgs/icons/' ~ s| slugify ~ '.svg') }}" alt="{{ s }}" />
                                     <span class="catalog-spec-item-text">{{ s }}</span>
                                 </div>
                                 {% endfor %}
                             </div>
                         </div>
-                        {% endif %}
                     </div>
+                    {% endif %}
 
                     {% if vehicle.configs %}
-                    <div style="flex-grow: 1;">
-                        <div
-                            style="font-size: 7pt; text-transform: uppercase; color: var(--grey-2); margin-top: 10px; margin-bottom: 8px; font-weight: 600; border-top: 1px solid var(--white-3); padding-top: 8px;">
-                            Configurations</div>
+                    <div class="catalog-card-configs-wrapper">
+                        <div class="catalog-config-title">Configurations</div>
                         <div class="catalog-config-list">
                             {% for type, items in vehicle.configs.items() %}
                             {% for config in items %}
                             <div class="catalog-config-item">
                                 {% if config.image %}
                                 <img src="{{ config.image }}" class="catalog-config-img" alt="{{ config.name }}">
+                                {% else %}
+                                <div class="catalog-config-placeholder">
+                                    <span>{{ config.name }}</span>
+                                </div>
                                 {% endif %}
                                 <span class="catalog-config-label">{{ config.name }}</span>
                             </div>
@@ -369,19 +132,26 @@
             </div>
         </section>
 
-        <!-- ═══════════ TÊTES ═══════════ -->
-        <section class="pilot-waiver-section" style="margin-top: 40px;">
-            <h2 class="pilot-waiver-section-title dot-before">Systèmes de Stabilisation</h2>
+        <!-- ═══════════ TÊTES STABILISÉES ═══════════ -->
+        <section class="catalog-section catalog-section--heads">
+            <h2 class="catalog-section-title dot-before">Systèmes de Stabilisation</h2>
             <div class="catalog-heads-grid">
                 {% for head in heads %}
                 <div class="catalog-head-card">
-                    <img src="{{ head.thumbnail }}" class="catalog-head-img" alt="{{ head.name }}">
-                    <span class="catalog-head-name">{{ head.name }}</span>
-                    {% if with_prices %}
-                    <span class="catalog-card-price">{{ "{:,.0f}".format(head.daily_rate | default(0))|replace(',', '
-                        ')
-                        }} € HT</span>
-                    {% endif %}
+                    <div class="catalog-head-img-wrapper">
+                        {% if head.thumbnail %}
+                        <img src="{{ head.thumbnail }}" class="catalog-head-img" alt="{{ head.name }}">
+                        {% else %}
+                        <img src="{{ url_for('static', filename='imgs/icons/gimbal.svg') }}"
+                            class="catalog-head-placeholder-icon" alt="{{ head.name }}">
+                        {% endif %}
+                    </div>
+                    <div class="catalog-head-info">
+                        <span class="catalog-head-name">{{ head.name }}</span>
+                        {% if with_prices %}
+                        <span class="catalog-head-price">{{ "{:,.0f}".format(head.daily_rate | default(0))|replace(',', ' ') }} € HT</span>
+                        {% endif %}
+                    </div>
                 </div>
                 {% endfor %}
             </div>
@@ -389,16 +159,16 @@
 
         <!-- ═══════════ FOOTER ═══════════ -->
         <footer class="catalog-footer">
-            <div>
+            <div class="catalog-footer-left">
                 <strong>{{ settings.company_name }}</strong><br>
                 {{ settings.company_address }}
             </div>
-            <div style="text-align: right;">
+            <div class="catalog-footer-right">
                 {% if settings.company_siret %}
                 SIRET : {{ settings.company_siret }}<br>
                 {% endif %}
-                {% if settings.company_email %} {{ settings.company_email }}{% endif %}
-                {% if settings.company_phone %}| {{ settings.company_phone }}{% endif %}
+                {% if settings.company_email %}{{ settings.company_email }}{% endif %}
+                {% if settings.company_phone %} | {{ settings.company_phone }}{% endif %}
             </div>
         </footer>
     </div>

@@ -1,0 +1,556 @@
+/* ==========================================================================
+   BELLE VITESSE — CATALOGUE DE PRIX & FLOTTE
+   Feuille de style unifiée pour l'aperçu Web et l'export PDF continu (WeasyPrint)
+   ========================================================================== */
+
+/* ── 1. Variables Globales & Design System ────────────────────────────── */
+:root {
+    --yellow-1: #FFC845;
+    --grey-1: #1d1d1d;
+    --grey-2: #4a4a4a;
+    --white-1: #ffffff;
+    --white-2: #f9f9f9;
+    --white-3: #e5e7eb;
+    --white-4: #9ca3af;
+}
+
+/* ── 2. Configuration Page Continue (WeasyPrint) ───────────────────────── */
+@page {
+    size: 860px 50000px;
+    margin: 0;
+    padding: 0;
+}
+
+/* ── 3. Reset & Corps de Page ─────────────────────────────────────────── */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body.catalog-body {
+    font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--grey-1);
+    background-color: #f0f2f5;
+    margin: 0;
+    padding: 70px 0 40px 0;
+    -webkit-font-smoothing: antialiased;
+}
+
+@media print {
+    body.catalog-body {
+        background-color: var(--white-1);
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+}
+
+/* ── 4. Conteneur Principal du Catalogue ──────────────────────────────── */
+.catalog-container {
+    width: 860px;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 40px 45px;
+    background-color: var(--white-1);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    color: var(--grey-1);
+}
+
+@media print {
+    .catalog-container {
+        margin: 0 !important;
+        padding: 40px 45px !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        width: 860px !important;
+        max-width: 860px !important;
+    }
+}
+
+/* ── 5. En-tête du Document ───────────────────────────────────────────── */
+.catalog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--grey-1);
+    margin-bottom: 24px;
+}
+
+.catalog-header-logo img {
+    height: 42px;
+    width: auto;
+    display: block;
+}
+
+.catalog-header-meta {
+    text-align: right;
+    font-size: 11px;
+    color: var(--grey-2);
+    line-height: 1.6;
+}
+
+.catalog-header-doc-title {
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--grey-1);
+    font-weight: 700;
+    display: block;
+    margin-bottom: 2px;
+}
+
+.catalog-doc-edition {
+    font-family: monospace;
+    font-size: 11px;
+    background-color: var(--white-3);
+    color: var(--grey-1);
+    padding: 2px 7px;
+    border-radius: 3px;
+    display: inline-block;
+    margin: 2px 0;
+}
+
+/* ── 6. Titres & Sous-titres ─────────────────────────────────────────── */
+.catalog-title {
+    font-size: 30px;
+    font-weight: 700;
+    margin: 0 0 6px 0;
+    letter-spacing: -0.02em;
+    color: var(--grey-1);
+}
+
+.catalog-subtitle {
+    font-size: 13px;
+    color: var(--grey-2);
+    font-weight: 400;
+    margin-bottom: 26px;
+}
+
+.catalog-section {
+    margin-bottom: 32px;
+}
+
+.catalog-section--heads {
+    margin-top: 36px;
+}
+
+.catalog-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--white-3);
+    margin-bottom: 18px;
+    color: var(--grey-1);
+}
+
+.dot-before:before {
+    content: "■ ";
+    color: var(--yellow-1);
+    font-size: 0.85em;
+    margin-right: 4px;
+    position: relative;
+    top: -1px;
+}
+
+/* ── 7. Grille des Véhicules ──────────────────────────────────────────── */
+.catalog-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 22px;
+}
+
+.catalog-card {
+    background: var(--white-1);
+    border: 1px solid var(--white-3);
+    border-radius: 6px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.catalog-card-img-wrapper {
+    width: 100%;
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    background: transparent;
+    overflow: hidden;
+}
+
+.catalog-card-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.catalog-card-placeholder-icon {
+    width: 48px;
+    height: 48px;
+    opacity: 0.25;
+}
+
+.catalog-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.catalog-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0;
+    color: var(--grey-1);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.catalog-card-price {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--grey-1);
+    background: var(--yellow-1);
+    padding: 3px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+}
+
+.catalog-card-price small {
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.catalog-card-specs {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--white-3);
+}
+
+.catalog-spec-item {
+    flex: 1 1 0;
+    min-width: 0;
+    font-size: 9px;
+    color: var(--grey-2);
+    text-transform: uppercase;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+}
+
+.catalog-spec-item strong {
+    display: block;
+    color: var(--grey-1);
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 2px;
+    white-space: nowrap;
+}
+
+.catalog-card-setups {
+    margin-bottom: 10px;
+}
+
+.catalog-card-setups-icons {
+    display: flex;
+    gap: 6px;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    margin-top: 4px;
+}
+
+.catalog-card-setup {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    flex: 1 1 0;
+    max-width: 58px;
+}
+
+.catalog-card-setup img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    margin-bottom: 2px;
+}
+
+.catalog-spec-item-text {
+    font-size: 7px;
+    color: var(--grey-2);
+    text-transform: uppercase;
+    display: block;
+    line-height: 1.1;
+    word-break: break-word;
+}
+
+.catalog-card-configs-wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.catalog-config-title {
+    font-size: 9px;
+    text-transform: uppercase;
+    color: var(--grey-2);
+    margin-top: 10px;
+    margin-bottom: 8px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    border-top: 1px solid var(--white-3);
+    padding-top: 8px;
+}
+
+.catalog-config-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.catalog-config-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.catalog-config-img {
+    width: 100%;
+    height: 60px;
+    object-fit: contain;
+    border-radius: 3px;
+    margin-bottom: 3px;
+    background: var(--white-2);
+    border: 1px solid var(--white-3);
+}
+
+.catalog-config-placeholder {
+    width: 100%;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--white-2);
+    border: 1px dashed var(--white-3);
+    border-radius: 3px;
+    margin-bottom: 3px;
+    padding: 4px;
+    text-align: center;
+}
+
+.catalog-config-placeholder span {
+    font-size: 7px;
+    color: var(--grey-2);
+    line-height: 1.2;
+}
+
+.catalog-config-label {
+    font-size: 8px;
+    color: var(--grey-1);
+    font-weight: 500;
+    line-height: 1.2;
+    margin-top: 2px;
+}
+
+/* ── 8. Grille des Têtes Stabilisées ─────────────────────────────────── */
+.catalog-heads-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.catalog-head-card {
+    background: var(--white-1);
+    border: 1px solid var(--white-3);
+    padding: 14px 10px;
+    text-align: center;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 175px;
+}
+
+.catalog-head-img-wrapper {
+    width: 100%;
+    height: 95px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    background: transparent;
+    overflow: hidden;
+}
+
+.catalog-head-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.catalog-head-placeholder-icon {
+    width: 36px;
+    height: 36px;
+    opacity: 0.3;
+}
+
+.catalog-head-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+}
+
+.catalog-head-name {
+    display: block;
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--grey-1);
+    letter-spacing: 0.03em;
+}
+
+.catalog-head-price {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--grey-1);
+    background: var(--yellow-1);
+    padding: 2px 8px;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+/* ── 9. Pied de Page Stylisé ─────────────────────────────────────────── */
+.catalog-footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 2px solid var(--grey-1);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    font-size: 10px;
+    color: var(--grey-2);
+    line-height: 1.5;
+}
+
+.catalog-footer-left strong {
+    color: var(--grey-1);
+    font-size: 11px;
+}
+
+.catalog-footer-right {
+    text-align: right;
+}
+
+/* ── 10. Barre de Contrôle pour Aperçu Web ───────────────────────────── */
+.preview-controls {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #1d1d1d;
+    color: #ffffff;
+    padding: 10px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 10000;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+}
+
+.preview-controls-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.preview-controls-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.preview-toggle-group {
+    display: flex;
+    background: #2d2d2d;
+    border-radius: 4px;
+    padding: 2px;
+    gap: 2px;
+}
+
+.preview-toggle-btn {
+    padding: 4px 12px;
+    font-size: 12px;
+    text-decoration: none;
+    border-radius: 3px;
+    font-weight: 600;
+    color: #ffffff;
+    background: transparent;
+    transition: all 0.15s ease;
+}
+
+.preview-toggle-btn.is-active {
+    color: #1d1d1d;
+    background: var(--yellow-1);
+}
+
+.preview-controls-hint {
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+.preview-controls-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.preview-btn {
+    background: var(--yellow-1);
+    color: #1d1d1d;
+    padding: 7px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 13px;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s, filter 0.15s;
+    display: inline-block;
+}
+
+.preview-btn:hover {
+    filter: brightness(0.95);
+}
+
+.preview-btn:active {
+    transform: scale(0.97);
+}
+
+.preview-btn--secondary {
+    background: #374151;
+    color: #ffffff;
+}
+
+.preview-btn--secondary:hover {
+    background: #4b5563;
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+}

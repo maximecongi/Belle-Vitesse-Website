@@ -147,18 +147,18 @@ def get_catalog_data(with_prices=True):
 
 
 def generate_catalog_pdf(with_prices=True, filename: str = None):
-    """Génère le PDF du catalogue de prix."""
+    """Génère le PDF du catalogue de prix en page continue fluide."""
     target_filename = filename or f"Belle_Vitesse_CATALOGUE_{'P' if with_prices else 'WP'}.pdf"
     from flask import has_request_context
     if not has_request_context():
         with current_app.test_request_context(base_url="https://team.bellevitesse.com"):
             data = get_catalog_data(with_prices=with_prices)
             html = render_template("pdf/catalog.html", **data)
-            return render_pdf_from_template(html, base_url=current_app.root_path, filename=target_filename)
+            return render_pdf_from_template(html, base_url=current_app.root_path, filename=target_filename, continuous=True)
 
     data = get_catalog_data(with_prices=with_prices)
     html = render_template("pdf/catalog.html", **data)
-    pdf_bytes = render_pdf_from_template(html, base_url=current_app.root_path, filename=target_filename)
+    pdf_bytes = render_pdf_from_template(html, base_url=current_app.root_path, filename=target_filename, continuous=True)
     return pdf_bytes
 
 
