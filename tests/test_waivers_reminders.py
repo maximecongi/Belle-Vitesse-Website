@@ -182,6 +182,11 @@ class WaiversRemindersTest(unittest.TestCase):
             pilot_full_text = "\n".join(pilot_payloads)
             self.assertIn("RAPPEL : Le tournage approche", pilot_full_text)
             self.assertIn("Signature en attente", pilot_full_text)
+            self.assertIn("Rappel : Signature Décharge Pilote", pilot_full_text)
+            self.assertIn("décharge de responsabilité pilote", pilot_full_text)
+            self.assertIn("Pilote :", pilot_full_text)
+            self.assertNotIn("Signature Décharge Production", pilot_full_text)
+            self.assertNotIn("décharge de responsabilité production", pilot_full_text)
 
             mock_send_smtp.reset_mock()
 
@@ -200,6 +205,11 @@ class WaiversRemindersTest(unittest.TestCase):
             prod_full_text = "\n".join(prod_payloads)
             self.assertIn("RAPPEL : Le tournage approche", prod_full_text)
             self.assertIn("Signature en attente", prod_full_text)
+            self.assertIn("Rappel : Signature Décharge Production", prod_full_text)
+            self.assertIn("décharge de responsabilité production", prod_full_text)
+            self.assertIn("Contact production :", prod_full_text)
+            self.assertNotIn("Signature Décharge Pilote", prod_full_text)
+            self.assertNotIn("décharge de responsabilité pilote", prod_full_text)
 
     @patch("utils.mailer.EmailService._send_smtp_message", return_value=True)
     def test_send_templated_email_with_attachments_and_headers(self, mock_send_smtp):

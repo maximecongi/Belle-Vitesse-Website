@@ -783,7 +783,8 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
                 project_name=p.name,
                 signature_link=sig_url,
                 is_reminder=True,
-                production_name=(p.production.name if p.production else None),
+                production_name=(p.production.name if p and p.production else getattr(
+                    dw, "production_name", None)),
             )
 
             if sent:

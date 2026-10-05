@@ -407,15 +407,17 @@ def _build_waiver_email_context(
     """Construit un contexte Jinja standardisé pour les invitations et confirmations de décharge."""
     is_prod = waiver_type in ("production", "prod")
     type_title = "Production" if is_prod else ("Pilote" if waiver_type == "pilot" else None)
+    type_label = "production" if is_prod else ("pilote" if waiver_type == "pilot" else "")
     context = {
         "waiver_type": waiver_type,
         "recipient_name": recipient_name,
         "display_name": recipient_name,
-        "pilot_name": recipient_name,
-        "prod_contact_name": recipient_name,
+        "pilot_name": recipient_name if not is_prod else None,
+        "prod_contact_name": recipient_name if is_prod else None,
         "project_name": project_name,
         "production_name": production_name,
         "type_title": type_title,
+        "type_label": type_label,
         "is_reminder": is_reminder,
     }
     if signature_link:

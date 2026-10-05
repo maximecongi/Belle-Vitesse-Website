@@ -7,7 +7,8 @@ initials, empty_state, waiver_card, doc_download_badge %}
 {% block page_title %}Détail Projet{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/project_datepicker.css') }}?v={{ asset_version('css/admin/project_datepicker.css') }}">
+<link rel="stylesheet"
+    href="{{ url_for('static', filename='css/admin/project_datepicker.css') }}?v={{ asset_version('css/admin/project_datepicker.css') }}">
 {% endblock %}
 
 {% block header_actions %}
@@ -132,10 +133,6 @@ initials, empty_state, waiver_card, doc_download_badge %}
                 <span class="project-stat-num">{{ heads|length }}</span>
                 <span class="project-stat-lbl">Têtes</span>
             </div>
-            <div class="project-stat-box">
-                <span class="project-stat-num">{{ reports_count }}</span>
-                <span class="project-stat-lbl">Rapports</span>
-            </div>
             {% if incidents|length > 0 %}
             <div class="project-stat-box warning">
                 <span class="project-stat-num">{{ incidents|length }}</span>
@@ -145,7 +142,8 @@ initials, empty_state, waiver_card, doc_download_badge %}
         </div>
     </div>
 
-    {% set has_dates = (is_punctual and shoot_dates) or (not is_punctual and (project.shoot_start_date or project.shoot_end_date or project.departure_date or project.return_date)) %}
+    {% set has_dates = (is_punctual and shoot_dates) or (not is_punctual and (project.shoot_start_date or
+    project.shoot_end_date or project.departure_date or project.return_date)) %}
     {% if has_dates %}
     <!-- Calendrier des dates du projet (identique à project_form.html) -->
     <div class="project-datepicker-container u-mt-3 u-mb-0" id="projectShootCalendarWrapper">

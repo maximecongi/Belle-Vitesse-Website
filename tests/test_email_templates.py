@@ -46,8 +46,12 @@ class EmailTemplatesTest(unittest.TestCase):
                 now_year=2026,
             )
             self.assertIn("Signature Décharge Pilote", html)
+            self.assertIn("décharge de responsabilité pilote", html)
             self.assertIn("Tournage Pub Vitesse", html)
             self.assertIn("Studio Test Prod", html)
+            self.assertIn("Pilote :", html)
+            self.assertIn("Type de décharge :", html)
+            self.assertIn("Pilote", html)
             self.assertIn("info-card info-card-waiver", html)
             self.assertNotIn("project-pill", html)
             self.assertIn(
@@ -67,11 +71,39 @@ class EmailTemplatesTest(unittest.TestCase):
                 now_year=2026,
             )
             self.assertIn("Rappel : Signature Décharge Production", html)
+            self.assertIn("décharge de responsabilité production", html)
+            self.assertIn("Contact production :", html)
             self.assertIn("alert-box alert-box-warning", html)
             self.assertIn("Signature en attente", html)
             self.assertIn("Film Long Métrage", html)
             self.assertIn("Studio Grand Angle", html)
             self.assertNotIn("project-pill", html)
+            self.assertNotIn("Signature Décharge Pilote", html)
+
+    def test_waiver_invitation_rendering_pilot_reminder(self):
+        with self.app.app_context():
+            html = render_template(
+                "emails/waiver_invitation.html",
+                waiver_type="pilot",
+                recipient_name="Luc Pilote",
+                project_name="Film Course Automobile",
+                production_name="Studio Grand Angle",
+                signature_link="https://bellevitesse.com/waivers/pilot/token789",
+                is_reminder=True,
+                now_year=2026,
+            )
+            self.assertIn("Rappel : Signature Décharge Pilote", html)
+            self.assertIn("décharge de responsabilité pilote", html)
+            self.assertIn("Pilote :", html)
+            self.assertIn("Type de décharge :", html)
+            self.assertIn("Pilote", html)
+            self.assertIn("alert-box alert-box-warning", html)
+            self.assertIn("Signature en attente", html)
+            self.assertIn("Film Course Automobile", html)
+            self.assertIn("Studio Grand Angle", html)
+            self.assertNotIn("project-pill", html)
+            self.assertNotIn("Signature Décharge Production", html)
+            self.assertNotIn("décharge de responsabilité production", html)
 
     def test_waiver_signed_confirmation_rendering(self):
         with self.app.app_context():

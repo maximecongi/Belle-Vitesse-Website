@@ -1,9 +1,9 @@
 {% extends "emails/base_transactional.html" %}
 {% from "emails/macros.html" import info_card_waiver %}
 
-{% set is_prod = (waiver_type == 'production') or (prod_contact_name is defined and prod_contact_name) %}
+{% set is_prod = (waiver_type == 'production') if waiver_type else (prod_contact_name is defined and prod_contact_name and not pilot_name) %}
 {% set type_title = type_title or ('Production' if is_prod else ('Pilote' if waiver_type == 'pilot' else '')) %}
-{% set display_name = display_name or recipient_name %}
+{% set display_name = display_name or recipient_name or (prod_contact_name if is_prod else pilot_name) %}
 
 {% block title %}Décharge Signée - Belle Vitesse{% endblock %}
 
