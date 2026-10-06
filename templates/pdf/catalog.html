@@ -22,7 +22,8 @@
                     Sans prix
                 </a>
             </div>
-            <span class="preview-controls-hint">Le PDF ne sera mis à jour que si vous cliquez sur « Mettre à jour le PDF »</span>
+            <span class="preview-controls-hint">Le PDF ne sera mis à jour que si vous cliquez sur « Mettre à jour le PDF
+                »</span>
         </div>
         <div class="preview-controls-actions">
             <a href="{{ url_for('admin_catalog.admin_catalog_pdf', prices='1' if with_prices else '0') }}"
@@ -69,7 +70,8 @@
                     <div class="catalog-card-header">
                         <h3 class="catalog-card-title">{{ vehicle.name }}</h3>
                         {% if with_prices %}
-                        <div class="catalog-card-price">{{ "{:,.0f}".format(vehicle.daily_rate | default(0))|replace(',', ' ') }} € <small>HT /jr</small></div>
+                        <div class="catalog-card-price">{{ "{:,.0f}".format(vehicle.daily_rate |
+                            default(0))|replace(',', ' ') }} € <small>HT /jr</small></div>
                         {% endif %}
                     </div>
 
@@ -97,7 +99,8 @@
                             <div class="catalog-card-setups-icons">
                                 {% for s in vehicle.specs.setups %}
                                 <div class="catalog-card-setup">
-                                    <img src="{{ url_for('static', filename='imgs/icons/' ~ s| slugify ~ '.svg') }}" alt="{{ s }}" />
+                                    <img src="{{ url_for('static', filename='imgs/icons/' ~ s| slugify ~ '.svg') }}"
+                                        alt="{{ s }}" />
                                     <span class="catalog-spec-item-text">{{ s }}</span>
                                 </div>
                                 {% endfor %}
@@ -134,7 +137,7 @@
 
         <!-- ═══════════ TÊTES STABILISÉES ═══════════ -->
         <section class="catalog-section catalog-section--heads">
-            <h2 class="catalog-section-title dot-before">Systèmes de Stabilisation</h2>
+            <h2 class="catalog-section-title dot-before">Nos Systèmes de Stabilisation</h2>
             <div class="catalog-heads-grid">
                 {% for head in heads %}
                 <div class="catalog-head-card">
@@ -149,7 +152,8 @@
                     <div class="catalog-head-info">
                         <span class="catalog-head-name">{{ head.name }}</span>
                         {% if with_prices %}
-                        <span class="catalog-head-price">{{ "{:,.0f}".format(head.daily_rate | default(0))|replace(',', ' ') }} € HT</span>
+                        <span class="catalog-head-price">{{ "{:,.0f}".format(head.daily_rate | default(0))|replace(',',
+                            ' ') }} € HT</span>
                         {% endif %}
                     </div>
                 </div>

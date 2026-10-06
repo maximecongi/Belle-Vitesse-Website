@@ -11,7 +11,7 @@ from pathlib import Path
 
 import requests
 from pyairtable import Api
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, bindparam
 
 IMAGE_STORE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static", "images", "airtable")
 STATIC_URL_PREFIX = "/static/images/airtable"
@@ -244,15 +244,19 @@ def cleanup_records(connection, table_name, active_ids):
     """Supprime les enregistrements de MySQL qui ne sont plus présents dans Airtable."""
     if not active_ids:
         print(f"  Nettoyage : suppression de TOUS les enregistrements de {table_name}")
-        connection.execute(text(f"DELETE FROM `{table_name}`"))
+        result = connection.execute(text(f"DELETE FROM `{table_name}`"))
+        deleted_count = result.rowcount if hasattr(result, "rowcount") else 0
+        if deleted_count > 0:
+            print(f"  Nettoyage {table_name} : {deleted_count} enregistrement(s) supprimé(s).")
         return
 
-    query = text(f"DELETE FROM `{table_name}` WHERE id NOT IN (:active_ids)")
-    connection.execute(query, {"active_ids": active_ids})
-    
-    # Dans SQLAlchemy Core, nous pouvons obtenir les lignes affectées via le résultat
-    # mais pour simplifier dans ce script, nous logguons juste que le nettoyage a eu lieu
-    print(f"  Nettoyage des enregistrements obsolètes de {table_name}")
+    query = text(f"DELETE FROM `{table_name}` WHERE id NOT IN :active_ids").bindparams(
+        bindparam("active_ids", expanding=True)
+    )
+    result = connection.execute(query, {"active_ids": list(active_ids)})
+    deleted_count = result.rowcount if hasattr(result, "rowcount") else 0
+    if deleted_count > 0:
+        print(f"  Nettoyage {table_name} : {deleted_count} enregistrement(s) obsolète(s) supprimé(s).")
 
 
 def cleanup_images(table_name, active_ids):
@@ -305,11 +309,17 @@ def run_sync(config, sync_db=True, sync_images=True):
     def _do_sync(connection):
         for table_name in TABLES:
             if sync_db:
-                sync_table(table_name, api, config["airtable_base_id"],
-                           connection, download_images=sync_images)
+                active_ids = sync_table(
+                    table_name, api, config["airtable_base_id"],
+                    connection, download_images=sync_images
+                )
+                cleanup_records(connection, table_name, active_ids)
+                if sync_images:
+                    cleanup_images(table_name, active_ids)
             elif sync_images:
                 table = api.table(config["airtable_base_id"], table_name)
                 records = table.all()
+                active_ids = [r["id"] for r in records]
                 print(f"\n{'='*50}")
                 print(f"Downloading images for: {table_name}")
                 print(f"{'='*50}")
@@ -317,6 +327,7 @@ def run_sync(config, sync_db=True, sync_images=True):
                     print(f"\nProcessing record: {record['id']}")
                     process_attachments_in_fields(
                         record["fields"], table_name, record["id"])
+                cleanup_images(table_name, active_ids)
 
     # Centralized connection handling
     use_ssh = config.get("use_ssh_tunnel") or os.getenv("FLASK_ENV") != "production"
