@@ -2,6 +2,7 @@ import logging
 
 from models import Contact, Production, db
 from services.admin.utils import (
+    BusinessIntegrityError,
     generic_delete_record,
     generic_get_record_for_edit,
     generic_list_records,
@@ -70,7 +71,44 @@ def get_contact_for_edit(record_id):
 
 
 def delete_contact(record_id):
-    """Supprime un enregistrement de contact."""
+    """
+    Supprime un enregistrement de contact après vérification de son rattachement aux projets.
+    Empêche la suppression si le contact est actuellement référencé sur des projets actifs.
+    """
+    contact = db.session.get(Contact, record_id)
+    if not contact:
+        return True
+
+    from models import Project
+    from sqlalchemy import or_
+
+    full_name = f"{contact.first_name} {contact.last_name}".strip() or f"Contact #{record_id}"
+
+    # Vérifier l'assignation sur les projets (pilote, production, dop, 1er ac, chef machino)
+    linked_projects = Project.query.filter(
+        or_(
+            Project.pilot_contact_id == record_id,
+            Project.production_contact_id == record_id,
+            Project.dop_contact_id == record_id,
+            Project.first_ac_contact_id == record_id,
+            Project.key_grip_contact_id == record_id,
+        )
+    ).all()
+
+    if linked_projects:
+        active_projects = [p for p in linked_projects if p.deleted_at is None]
+        projects_to_show = active_projects if active_projects else linked_projects
+        count = len(projects_to_show)
+        sample_names = ", ".join(f"« {p.name} »" for p in projects_to_show[:3])
+        if count > 3:
+            sample_names += f" et {count - 3} autre(s)"
+
+        raise BusinessIntegrityError(
+            f"Impossible de supprimer le contact « {full_name} » : "
+            f"il est actuellement désigné comme intervenant clé sur {count} projet(s) ({sample_names}). "
+            "Veuillez réassigner ces postes sur les projets concernés avant de supprimer ce contact."
+        )
+
     return generic_delete_record(Contact, record_id)
 
 

@@ -212,8 +212,9 @@ def register_admin_inspection_routes(app_or_bp, mode):
             flash(f"{label_title} supprimé définitivement.", "success")
             return redirect(url_for(endpoint_list))
         except Exception as e:
+            from services.admin.utils import format_user_friendly_error
             current_app.logger.error(f"❌ Erreur lors de la suppression du {label_fr} : {e}")
-            flash(f"Erreur lors de la suppression : {str(e)}", "error")
+            flash(format_user_friendly_error(e, f"Erreur lors de la suppression du {label_fr}."), "error")
             return redirect(url_for(endpoint_detail, record_id=record_id))
 
     # 6. Scellement d'une inspection

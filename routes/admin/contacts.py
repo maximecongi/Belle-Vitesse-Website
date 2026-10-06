@@ -74,8 +74,9 @@ def admin_contact_new():
             flash("Contact créé avec succès !", "success")
             return redirect(url_for("admin_contacts.admin_contacts_list"))
         except Exception as e:
+            from services.admin.utils import format_user_friendly_error
             current_app.logger.error(f"❌ Erreur lors de la création du contact : {e}")
-            flash(f"Erreur lors de la création : {str(e)}", "error")
+            flash(format_user_friendly_error(e, "Erreur lors de la création du contact."), "error")
             return render_template(
                 "admin/contact_form.html",
                 data=request.form,
@@ -107,8 +108,9 @@ def admin_contact_edit(record_id):
             is_edit=True,
         )
     except Exception as e:
+        from services.admin.utils import format_user_friendly_error
         current_app.logger.error(f"❌ Erreur lors de la modification du contact : {e}")
-        flash(f"Erreur lors de la modification : {str(e)}", "error")
+        flash(format_user_friendly_error(e, "Erreur lors de la modification du contact."), "error")
         return redirect(url_for("admin_contacts.admin_contacts_list"))
 
 @contacts_bp.route("/contacts/<int:record_id>/delete", methods=["POST"])
@@ -119,8 +121,9 @@ def admin_contact_delete(record_id):
         flash("Contact supprimé avec succès.", "success")
         return redirect(url_for("admin_contacts.admin_contacts_list"))
     except Exception as e:
+        from services.admin.utils import format_user_friendly_error
         current_app.logger.error(f"❌ Erreur lors de la suppression du contact : {e}")
-        flash(f"Erreur lors de la suppression : {str(e)}", "error")
+        flash(format_user_friendly_error(e, "Erreur lors de la suppression du contact."), "error")
         return redirect(url_for("admin_contacts.admin_contacts_list"))
 
 @contacts_bp.route("/api/contacts/quick", methods=["POST"])

@@ -132,8 +132,9 @@ def admin_incident_new():
             flash(f"✅ Incident {incident.incident_number} déclaré avec succès.", "success")
             return redirect(url_for("admin_incidents.admin_incident_detail", record_id=incident.id))
         except Exception as e:
+            from services.admin.utils import format_user_friendly_error
             current_app.logger.error(f"❌ Erreur lors de la création d'incident : {e}")
-            flash(f"Erreur lors de la déclaration de l'incident : {e}", "error")
+            flash(format_user_friendly_error(e, "Erreur lors de la déclaration de l'incident."), "error")
             return render_template(
                 "admin/incident_form.html",
                 context=context,
@@ -194,8 +195,9 @@ def admin_incident_edit(record_id):
             flash(f"✅ Incident {incident.incident_number} mis à jour.", "success")
             return redirect(url_for("admin_incidents.admin_incident_detail", record_id=incident.id))
         except Exception as e:
+            from services.admin.utils import format_user_friendly_error
             current_app.logger.error(f"❌ Erreur lors de la mise à jour d'incident : {e}")
-            flash(f"Erreur lors de la mise à jour : {e}", "error")
+            flash(format_user_friendly_error(e, "Erreur lors de la mise à jour de l'incident."), "error")
 
     return render_template(
         "admin/incident_form.html",
@@ -241,10 +243,12 @@ def admin_incident_status(record_id):
 
         flash(f"✅ {msg}", "success")
     except Exception as e:
+        from services.admin.utils import format_user_friendly_error
         current_app.logger.error(f"❌ Erreur changement statut incident #{record_id} : {e}")
+        friendly_msg = format_user_friendly_error(e, "Erreur lors du changement de statut de l'incident.")
         if request.is_json or request.headers.get("X-Requested-With") == "XMLHttpRequest":
-            return jsonify({"success": False, "error": str(e)}), 400
-        flash(f"Erreur lors du changement de statut : {e}", "error")
+            return jsonify({"success": False, "error": friendly_msg}), 400
+        flash(friendly_msg, "error")
 
     return redirect(url_for("admin_incidents.admin_incident_detail", record_id=record_id))
 
@@ -258,8 +262,9 @@ def admin_incident_delete(record_id):
         else:
             flash(res.get("message", "Échec de la suppression."), "error")
     except Exception as e:
+        from services.admin.utils import format_user_friendly_error
         current_app.logger.error(f"❌ Erreur suppression incident : {e}")
-        flash("Erreur lors de la suppression.", "error")
+        flash(format_user_friendly_error(e, "Erreur lors de la suppression de l'incident."), "error")
 
     return redirect(url_for("admin_incidents.admin_incidents_list"))
 

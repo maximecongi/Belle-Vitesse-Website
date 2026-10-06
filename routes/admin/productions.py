@@ -47,8 +47,9 @@ def admin_production_new():
             flash("Production créée avec succès !", "success")
             return redirect(url_for("admin_productions.admin_productions_list"))
         except Exception as e:
+            from services.admin.utils import format_user_friendly_error
             current_app.logger.error(f"❌ Erreur lors de la création de la production : {e}")
-            flash(f"Erreur lors de la création : {str(e)}", "error")
+            flash(format_user_friendly_error(e, "Erreur lors de la création de la production."), "error")
             return render_template(
                 "admin/production_form.html", data=request.form, is_edit=False
             )
@@ -71,8 +72,9 @@ def admin_production_edit(record_id):
             abort(404)
         return render_template("admin/production_form.html", data=data, is_edit=True)
     except Exception as e:
+        from services.admin.utils import format_user_friendly_error
         current_app.logger.error(f"❌ Erreur lors de la modification de la production : {e}")
-        flash(f"Erreur lors de la modification : {str(e)}", "error")
+        flash(format_user_friendly_error(e, "Erreur lors de la modification de la production."), "error")
         return redirect(url_for("admin_productions.admin_productions_list"))
 
 @productions_bp.route("/productions/<int:record_id>/delete", methods=["POST"])
@@ -83,8 +85,9 @@ def admin_production_delete(record_id):
         flash("Production supprimée avec succès.", "success")
         return redirect(url_for("admin_productions.admin_productions_list"))
     except Exception as e:
+        from services.admin.utils import format_user_friendly_error
         current_app.logger.error(f"❌ Erreur lors de la suppression de la production : {e}")
-        flash(f"Erreur lors de la suppression : {str(e)}", "error")
+        flash(format_user_friendly_error(e, "Erreur lors de la suppression de la production."), "error")
         return redirect(url_for("admin_productions.admin_productions_list"))
 
 @productions_bp.route("/api/productions/quick", methods=["POST"])

@@ -12,6 +12,48 @@ from utils.checkpoints import get_checkpoints_for_vehicle
 logger = logging.getLogger(__name__)
 
 
+class BusinessIntegrityError(Exception):
+    """Exception levée lorsqu'une contrainte métier ou d'intégrité référentielle empêche une action."""
+    pass
+
+
+def format_user_friendly_error(error: Exception, default_message: str = "Une erreur est survenue lors de l'opération.") -> str:
+    """
+    Traduit les exceptions techniques (IntegrityError, ValueError, etc.) en messages clairs et compréhensibles en français,
+    sans afficher de détails Python ou SQL bruts à l'utilisateur.
+    """
+    if isinstance(error, BusinessIntegrityError):
+        return str(error)
+
+    err_str = str(error)
+
+    # Détection des contraintes de clés étrangères (MySQL / SQLite / SQLAlchemy)
+    if "foreign key constraint fails" in err_str.lower() or "1451" in err_str:
+        return (
+            "Impossible de supprimer cet élément car il est actuellement lié à d'autres données "
+            "(projets, inspections, décharges, contacts ou rapports). "
+            "Veuillez dissocier ou supprimer ces éléments liés avant de réessayer."
+        )
+
+    # Détection des contraintes NOT NULL violées lors d'une tentative de suppression/détachement
+    if "cannot be null" in err_str.lower() or "1048" in err_str:
+        return (
+            "Impossible de supprimer cet enregistrement car un ou plusieurs projets ou formulaires en dépendent directement. "
+            "Veuillez réassigner ou archiver les éléments associés au préalable."
+        )
+
+    # Détection des contraintes d'unicité (Duplicate entry / UNIQUE constraint)
+    if "duplicate entry" in err_str.lower() or "unique constraint" in err_str.lower() or "1062" in err_str:
+        return "Une entrée portant le même nom, email ou identifiant existe déjà dans le système."
+
+    # Si c'est une ValueError explicite déjà rédigée
+    if isinstance(error, ValueError) and err_str and not err_str.startswith("("):
+        return err_str
+
+    # Message générique propre pour masquer le bruit technique
+    return default_message
+
+
 def handle_admin_service_error(func):
     """Décorateur pour centraliser la gestion des erreurs dans les services admin (rollback et log)."""
     @functools.wraps(func)

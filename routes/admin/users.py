@@ -172,10 +172,13 @@ def admin_user_delete(record_id):
         flash("Vous ne pouvez pas supprimer un utilisateur de rang égal ou supérieur.", "error")
         return redirect(url_for("admin_users.admin_users_list"))
 
-    if delete_user(record_id):
+    try:
+        delete_user(record_id)
         flash("Utilisateur supprimé avec succès.", "success")
-    else:
-        flash("Erreur lors de la suppression de l'utilisateur.", "error")
+    except Exception as e:
+        from services.admin.utils import format_user_friendly_error
+        current_app.logger.error(f"❌ Erreur lors de la suppression de l'utilisateur {record_id} : {e}")
+        flash(format_user_friendly_error(e, "Erreur lors de la suppression de l'utilisateur."), "error")
     return redirect(url_for("admin_users.admin_users_list"))
 
 def init_users_routes(app):

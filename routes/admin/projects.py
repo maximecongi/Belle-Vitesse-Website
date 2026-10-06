@@ -104,8 +104,9 @@ def admin_project_new():
             flash("Projet créé avec succès !", "success")
             return redirect(url_for("admin_projects.admin_projects_list"))
         except Exception as e:
+            from services.admin.utils import format_user_friendly_error
             current_app.logger.error(f"❌ Erreur lors de la création du projet : {e}")
-            flash(f"Erreur lors de la création : {str(e)}", "error")
+            flash(format_user_friendly_error(e, "Erreur lors de la création du projet."), "error")
             return render_template(
                 "admin/project_form.html", data=request.form, is_edit=False, **context
             )
@@ -128,8 +129,9 @@ def admin_project_edit(record_id):
             abort(404)
         return render_template("admin/project_form.html", data=data, is_edit=True, record_id=record_id, **context)
     except Exception as e:
+        from services.admin.utils import format_user_friendly_error
         current_app.logger.error(f"❌ Erreur lors de la modification du projet : {e}")
-        flash(f"Erreur lors de la modification : {str(e)}", "error")
+        flash(format_user_friendly_error(e, "Erreur lors de la modification du projet."), "error")
         return redirect(url_for("admin_projects.admin_projects_list"))
 
 @projects_bp.route("/projects/<int:record_id>/delete", methods=["POST"])
@@ -140,8 +142,9 @@ def admin_project_delete(record_id):
         flash("Projet supprimé avec succès.", "success")
         return redirect(url_for("admin_projects.admin_projects_list"))
     except Exception as e:
+        from services.admin.utils import format_user_friendly_error
         current_app.logger.error(f"❌ Erreur lors de la suppression du projet : {e}")
-        flash(f"Erreur lors de la suppression : {str(e)}", "error")
+        flash(format_user_friendly_error(e, "Erreur lors de la suppression du projet."), "error")
         return redirect(url_for("admin_projects.admin_project_edit", record_id=record_id))
 
 # ── Hub / Fiche Projet & Rapports Collectifs ──────────────────

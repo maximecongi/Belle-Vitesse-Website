@@ -2,6 +2,7 @@ import logging
 
 from models import Production, db
 from services.admin.utils import (
+    BusinessIntegrityError,
     generic_delete_record,
     generic_get_record_for_edit,
     generic_list_records,
@@ -83,5 +84,44 @@ def get_production_for_edit(record_id):
 
 
 def delete_production(record_id):
-    """Supprime un enregistrement de production."""
+    """
+    Supprime un enregistrement de production après vérification de l'intégrité référentielle.
+    Empêche la suppression si des projets ou des contacts y sont rattachés.
+    """
+    prod = db.session.get(Production, record_id)
+    if not prod:
+        return True
+
+    from models import Contact, Project
+
+    # 1. Vérifier si des projets sont associés à cette société de production
+    linked_projects = Project.query.filter_by(production_id=record_id).all()
+    if linked_projects:
+        active_projects = [p for p in linked_projects if p.deleted_at is None]
+        projects_to_show = active_projects if active_projects else linked_projects
+        count = len(projects_to_show)
+        sample_names = ", ".join(f"« {p.name} »" for p in projects_to_show[:3])
+        if count > 3:
+            sample_names += f" et {count - 3} autre(s)"
+
+        raise BusinessIntegrityError(
+            f"Impossible de supprimer la société de production « {prod.name} » : "
+            f"elle est actuellement associée à {count} projet(s) ({sample_names}). "
+            "Veuillez d'abord réassigner ou archiver ces projets."
+        )
+
+    # 2. Vérifier si des contacts sont associés à cette production
+    linked_contacts = Contact.query.filter_by(production_id=record_id).all()
+    if linked_contacts:
+        count = len(linked_contacts)
+        sample_names = ", ".join(f"{c.first_name} {c.last_name}".strip() for c in linked_contacts[:3])
+        if count > 3:
+            sample_names += f" et {count - 3} autre(s)"
+
+        raise BusinessIntegrityError(
+            f"Impossible de supprimer la société de production « {prod.name} » : "
+            f"{count} contact(s) y sont rattaché(s) ({sample_names}). "
+            "Veuillez réassigner ou supprimer ces contacts avant de continuer."
+        )
+
     return generic_delete_record(Production, record_id)

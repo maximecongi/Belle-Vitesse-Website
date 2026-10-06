@@ -42,8 +42,9 @@ def admin_newsletter_delete(subscriber_id):
             flash("Abonné non trouvé.", "error")
         return redirect(url_for("admin_newsletter.admin_newsletter_dashboard"))
     except Exception as e:
+        from services.admin.utils import format_user_friendly_error
         current_app.logger.error(f"❌ Erreur lors de la suppression de l'abonné : {e}")
-        flash(f"Erreur lors de la suppression : {str(e)}", "error")
+        flash(format_user_friendly_error(e, "Erreur lors de la suppression de l'abonné."), "error")
         return redirect(url_for("admin_newsletter.admin_newsletter_dashboard"))
 
 @newsletter_bp.route("/newsletter/compose", methods=["GET", "POST"])

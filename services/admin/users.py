@@ -100,13 +100,52 @@ def update_user(record_id, data):
 
 def delete_user(record_id):
     """
-    Supprime un utilisateur de la base de données.
+    Supprime un utilisateur de la base de données après vérification de ses dépendances.
     """
-    try:
-        user = db.session.get(User, record_id)
-        if not user:
-            return False
+    from services.admin.utils import BusinessIntegrityError
 
+    user = db.session.get(User, record_id)
+    if not user:
+        return False
+
+    user_name = f"{user.firstname} {user.lastname}".strip() or f"Utilisateur #{record_id}"
+
+    # 1. Vérification des départs (checkouts) contrôlés par cet utilisateur
+    from models import CheckoutVehicle
+    checkouts = CheckoutVehicle.query.filter_by(controller_id=record_id).all()
+    if checkouts:
+        count = len(checkouts)
+        raise BusinessIntegrityError(
+            f"Impossible de supprimer le compte de « {user_name} » : "
+            f"il est enregistré en tant que contrôleur sur {count} fiche(s) de départ (check-out). "
+            "Afin de préserver l'historique réglementaire des contrôles, ce compte ne peut pas être supprimé."
+        )
+
+    # 2. Vérification des incidents signalés par cet utilisateur
+    from models import Incident
+    incidents = Incident.query.filter_by(reported_by_id=record_id).all()
+    if incidents:
+        count = len(incidents)
+        raise BusinessIntegrityError(
+            f"Impossible de supprimer le compte de « {user_name} » : "
+            f"il est auteur de {count} déclaration(s) d'incident / dommage. "
+            "Pour des raisons de traçabilité, ce compte ne peut être supprimé."
+        )
+
+    # 3. Vérification des rapports de tournage rédigés par cet utilisateur
+    from models import ProjectReport
+    reports = ProjectReport.query.filter_by(user_id=record_id).all()
+    if reports:
+        count = len(reports)
+        raise BusinessIntegrityError(
+            f"Impossible de supprimer le compte de « {user_name} » : "
+            f"il est rattaché à {count} rapport(s) de tournage. "
+            "Pour préserver l'historique des tournages, ce compte ne peut être supprimé."
+        )
+
+    try:
+        # Nettoyage des relations autorisées en cascade (ex: abonnements calendrier, tokens MCP)
+        # Note: calendar_subscriptions et mcp_tokens sont en cascade delete-orphan sur le modèle User.
         db.session.delete(user)
         db.session.commit()
         invalidate_user_cache(record_id)
@@ -119,7 +158,10 @@ def delete_user(record_id):
 
         logger.info(f"Utilisateur supprimé : {record_id}")
         return True
+    except BusinessIntegrityError:
+        raise
     except Exception as e:
         db.session.rollback()
         logger.error(f"Erreur lors de la suppression de l'utilisateur {record_id} : {e}")
-        return False
+        from services.admin.utils import format_user_friendly_error
+        raise BusinessIntegrityError(format_user_friendly_error(e, "Erreur lors de la suppression de l'utilisateur."))

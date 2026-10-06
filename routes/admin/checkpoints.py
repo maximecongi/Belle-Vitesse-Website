@@ -124,8 +124,9 @@ def admin_checkpoint_delete(checkpoint_id: int):
             flash(message, "error")
         return redirect(url_for("admin_checkpoints.admin_checkpoints_list"))
     except Exception as e:
+        from services.admin.utils import format_user_friendly_error
         logger.error(f"❌ Erreur lors de la suppression du point de contrôle {checkpoint_id} : {e}", exc_info=True)
-        flash(f"Erreur lors de la suppression : {e}", "error")
+        flash(format_user_friendly_error(e, "Erreur lors de la suppression du point de contrôle."), "error")
         return redirect(url_for("admin_checkpoints.admin_checkpoints_list"))
 
 

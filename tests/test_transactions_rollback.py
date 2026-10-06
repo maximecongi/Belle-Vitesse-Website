@@ -127,6 +127,77 @@ class TransactionRollbackTest(unittest.TestCase):
         with self.app.app_context():
             self.assertIsNone(Project.query.filter_by(name="Crash Route Dirty Project").first())
 
+    def test_delete_production_with_linked_projects_raises_friendly_error(self):
+        """Vérifie que la suppression d'une production liée à un projet lève une BusinessIntegrityError explicite."""
+        from services.admin.productions import delete_production
+        from services.admin.utils import BusinessIntegrityError
+
+        with self.app.app_context():
+            prod = Production(name="Production Test Bloquante")
+            db.session.add(prod)
+            db.session.flush()
+
+            proj = Project(name="Tournage Pub Bloquant", production_id=prod.id)
+            db.session.add(proj)
+            db.session.commit()
+
+            prod_id = prod.id
+
+            with self.assertRaises(BusinessIntegrityError) as ctx:
+                delete_production(prod_id)
+
+            err_msg = str(ctx.exception)
+            self.assertIn("Impossible de supprimer la société de production", err_msg)
+            self.assertIn("Tournage Pub Bloquant", err_msg)
+
+    def test_delete_contact_with_linked_projects_raises_friendly_error(self):
+        """Vérifie que la suppression d'un contact assigné à un projet lève une BusinessIntegrityError explicite."""
+        from models import Contact
+        from services.admin.contacts import delete_contact
+        from services.admin.utils import BusinessIntegrityError
+
+        with self.app.app_context():
+            prod = Production(name="Prod Alpha")
+            db.session.add(prod)
+            db.session.flush()
+
+            cnt = Contact(first_name="Jean", last_name="Dupont", mail="jean@test.com")
+            db.session.add(cnt)
+            db.session.flush()
+
+            proj = Project(name="Tournage Feature", production_id=prod.id, pilot_contact_id=cnt.id)
+            db.session.add(proj)
+            db.session.commit()
+
+            cnt_id = cnt.id
+
+            with self.assertRaises(BusinessIntegrityError) as ctx:
+                delete_contact(cnt_id)
+
+            err_msg = str(ctx.exception)
+            self.assertIn("Impossible de supprimer le contact", err_msg)
+            self.assertIn("Jean Dupont", err_msg)
+
+    def test_format_user_friendly_error_patterns(self):
+        """Vérifie la traduction des erreurs SQL brutes en messages français clairs."""
+        from services.admin.utils import format_user_friendly_error, BusinessIntegrityError
+
+        # 1. BusinessIntegrityError renvoie son propre texte
+        b_err = BusinessIntegrityError("Erreur métier sur-mesure.")
+        self.assertEqual(format_user_friendly_error(b_err), "Erreur métier sur-mesure.")
+
+        # 2. Erreur clé étrangère MySQL 1451
+        fk_err = Exception("(pymysql.err.IntegrityError) (1451, 'Cannot delete or update a parent row: a foreign key constraint fails')")
+        self.assertIn("Impossible de supprimer cet élément car il est actuellement lié à d'autres données", format_user_friendly_error(fk_err))
+
+        # 3. Erreur NOT NULL 1048
+        nn_err = Exception("(pymysql.err.IntegrityError) (1048, \"Column 'production_id' cannot be null\")")
+        self.assertIn("Impossible de supprimer cet enregistrement car un ou plusieurs projets", format_user_friendly_error(nn_err))
+
+        # 4. Erreur d'unicité 1062
+        dup_err = Exception("(pymysql.err.IntegrityError) (1062, \"Duplicate entry 'test@bellevitesse.com' for key 'mail'\")")
+        self.assertIn("existe déjà dans le système", format_user_friendly_error(dup_err))
+
 
 if __name__ == '__main__':
     unittest.main()
