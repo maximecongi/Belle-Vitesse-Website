@@ -294,12 +294,12 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
             "signed_ip": signed_ip,
             # Données de l'entreprise tirées de la DB
             "company_name": AppSetting.get("company_name", "Belle Vitesse SAS"),
-            "company_representative": AppSetting.get("company_representative", "Simon Maignan"),
-            "company_siret": AppSetting.get("company_siret", "981 514 040 00014"),
-            "company_vat": AppSetting.get("company_vat", "FR32981514040"),
-            "company_address": AppSetting.get("company_address", "39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine, France"),
+            "company_representative": AppSetting.get("company_representative", ""),
+            "company_siret": AppSetting.get("company_siret", ""),
+            "company_vat": AppSetting.get("company_vat", ""),
+            "company_address": AppSetting.get("company_address", ""),
             "company_phone": AppSetting.get("company_phone", ""),
-            "company_email": AppSetting.get("company_email", "contact@bellevitesse.com"),
+            "company_email": AppSetting.get("company_email", ""),
             "bank_iban": AppSetting.get("bank_iban", ""),
             "bank_bic": AppSetting.get("bank_bic", ""),
         }
@@ -583,14 +583,14 @@ def seal_incident_contradictory_document(incident, incident_data, base_url=None)
         prod_signed_iso,
     )
 
-    company_address = "39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine"
+    company_address = ""
     company_name = "Belle Vitesse SAS"
     try:
         from utils.context_processors import DEFAULT_SETTINGS
         company_address = AppSetting.get(
-            "company_address", DEFAULT_SETTINGS["company_address"])
+            "company_address", DEFAULT_SETTINGS.get("company_address", ""))
         company_name = AppSetting.get(
-            "company_name", DEFAULT_SETTINGS["company_name"])
+            "company_name", DEFAULT_SETTINGS.get("company_name", "Belle Vitesse SAS"))
     except Exception:
         pass
 

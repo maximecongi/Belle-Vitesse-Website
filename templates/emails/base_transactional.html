@@ -568,8 +568,7 @@
                             <p
                                 style="font-size: 11px; line-height: 1.6; margin-top: 0; margin-bottom: 6px; color: #555555;">
                                 © {{ company_name or 'Belle Vitesse' }} {{ now_year }}. Tous droits réservés.<br>
-                                {{ company_name or 'Belle Vitesse' }} — {{ company_address or '39 rue Maurice Gunsbourg,
-                                94200 Ivry-sur-Seine' }}
+                                {{ company_name or 'Belle Vitesse' }}{% if company_address %} — {{ company_address }}{% endif %}
                                 {% if company_email or company_phone %}
                                 <br>
                                 {% if company_email %}<a href="mailto:{{ company_email }}"

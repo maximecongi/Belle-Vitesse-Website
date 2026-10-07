@@ -1447,15 +1447,15 @@ def generate_incident_pdf(record_id):
         raise ValueError(
             f"Incident #{record_id} introuvable pour la génération PDF.")
 
-    company_address = "39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine"
+    company_address = ""
     company_name = "Belle Vitesse SAS"
     try:
         from models import AppSetting
         from utils.context_processors import DEFAULT_SETTINGS
         company_address = AppSetting.get(
-            "company_address", DEFAULT_SETTINGS["company_address"])
+            "company_address", DEFAULT_SETTINGS.get("company_address", ""))
         company_name = AppSetting.get(
-            "company_name", DEFAULT_SETTINGS["company_name"])
+            "company_name", DEFAULT_SETTINGS.get("company_name", "Belle Vitesse SAS"))
     except Exception:
         pass
 

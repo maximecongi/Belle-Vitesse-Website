@@ -146,7 +146,7 @@ def handle_document_verify(mode_config, identifier):
         pdf_download_url = f"/{mode_config['route_base']}/document/{path_part}?t={token}"
 
     company_name = AppSetting.get("company_name", "Belle Vitesse SAS")
-    company_address = AppSetting.get("company_address", "39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine, France")
+    company_address = AppSetting.get("company_address", "")
 
     return render_template(
         mode_config["template_verify"],

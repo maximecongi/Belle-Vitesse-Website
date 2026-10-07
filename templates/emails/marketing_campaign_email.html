@@ -149,10 +149,12 @@
                                 <p style="color: #ffffff; font-size: 14px; font-weight: 600; margin-bottom: 10px;">
                                     {{company_name}}
                                 </p>
+                                {% if company_address %}
                                 <p style="color: #a1a1a1; font-size: 12px; line-height: 1.5; margin-bottom: 5px;">
-                                    {{ company_address or '39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine' }}<br>
+                                    {{ company_address }}<br>
                                     France
                                 </p>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>

@@ -220,15 +220,22 @@ class EmailTemplatesTest(unittest.TestCase):
     def test_company_settings_dynamic_in_email(self):
         """Vérifie que les coordonnées société définies dans app_settings sont bien injectées dans le footer des emails."""
         with self.app.app_context():
-            html = render_template(
-                "emails/magic_link.html",
-                firstname="Maxime",
-                magic_link="https://bellevitesse.com/admin/login?token=xyz123",
-                now_year=2026,
-            )
-            self.assertIn("39 rue Maurice Gunsbourg", html)
-            self.assertIn("94200 Ivry-sur-Seine", html)
-            self.assertIn("contact@bellevitesse.com", html)
+            from models import db, AppSetting
+            try:
+                AppSetting.set("company_address", "39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine")
+                AppSetting.set("company_email", "contact@bellevitesse.com")
+                html = render_template(
+                    "emails/magic_link.html",
+                    firstname="Maxime",
+                    magic_link="https://bellevitesse.com/admin/login?token=xyz123",
+                    now_year=2026,
+                )
+                self.assertIn("39 rue Maurice Gunsbourg", html)
+                self.assertIn("94200 Ivry-sur-Seine", html)
+                self.assertIn("contact@bellevitesse.com", html)
+            finally:
+                AppSetting.query.filter(AppSetting.key.in_(["company_address", "company_email"])).delete()
+                db.session.commit()
 
     def test_newsletter_campaign_rendering(self):
         with self.app.app_context():
