@@ -1425,6 +1425,7 @@
 /* ── Notes Spécifiques du Projet ── */
 .project-notes-card {
     background: #ffffff;
+    border-left: 3px solid var(--entity-project, #F59E0B);
 }
 
 .project-notes-title {
@@ -1442,9 +1443,18 @@
 .project-notes-content {
     white-space: pre-wrap;
     line-height: 1.6;
-    font-size: 0.68rem;
-    color: var(--grey-2);
+    font-size: 0.88rem;
     word-break: break-word;
+    color: var(--grey-2);
+    font-style: italic;
+}
+
+.project-hub-calendar-card {
+    background: #ffffff;
+}
+
+.project-hub-calendar-viewport {
+    width: 100%;
 }
 
 .project-notes-card .empty-state {

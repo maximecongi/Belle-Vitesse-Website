@@ -62,9 +62,9 @@ def get_calendar_events():
                 class_names.append("fc-event--not-immobilized")
 
         try:
-            event_url = url_for("admin_projects.admin_projects_list", q=r.project_id) if getattr(r, "project_id", None) else ""
+            event_url = url_for("admin_projects.admin_project_detail", record_id=r.id) if getattr(r, "id", None) else ""
         except Exception:
-            event_url = f"/admin/projects?q={r.project_id}" if getattr(r, "project_id", None) else ""
+            event_url = f"/admin/projects/{r.id}" if getattr(r, "id", None) else ""
 
         events.append({
             "id": f"project-{r.id}",

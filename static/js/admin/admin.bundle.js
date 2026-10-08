@@ -6335,6 +6335,9 @@ function init() {
     if (typeof window.initIncidentDetail === 'function') window.initIncidentDetail();
     if (typeof window.initProjectForm === 'function') window.initProjectForm();
     if (typeof window.initInspectionDetail === 'function') window.initInspectionDetail();
+    if (document.querySelector('[data-auto-print="true"]')) {
+        window.print();
+    }
 }
 
 window.init = init;
