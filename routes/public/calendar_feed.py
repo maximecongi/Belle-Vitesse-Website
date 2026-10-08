@@ -120,9 +120,6 @@ def _build_event_description(project, phase_title, vehicle_map=None, head_map=No
                     if inter.get("is_immobilized"):
                         lines.append(
                             f"  └ 🔒 Entre {start_fr} et {end_fr} : Immobilisé sur place ({cnt}j)")
-                    else:
-                        lines.append(
-                            f"  └ 🔄 Entre {start_fr} et {end_fr} : Relâché / dispo base ({cnt}j)")
                 except Exception:
                     pass
     elif project.shoot_start_date:

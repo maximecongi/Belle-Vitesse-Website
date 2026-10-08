@@ -598,13 +598,7 @@
     filter: brightness(0.96);
 }
 
-/* Intermediate free day (Relâché / Disponible à la base) */
-.pdp-day-cell.intermediate-free-day {
-    color: #047857;
-    font-weight: 600;
-    border: 1px dashed #a7f3d0;
-    background: #f0fdf4;
-}
+
 
 /* ── Help / Legend Footer ─────────────────────────────────────── */
 .pdp-footer-legend {
@@ -656,10 +650,7 @@
     border: 1px solid #fcd34d;
 }
 
-.pdp-legend-swatch.swatch-free {
-    background: #f0fdf4;
-    border: 1px dashed #a7f3d0;
-}
+
 
 .pdp-legend-swatch.swatch-ret {
     background: var(--entity-checkout, #15803D);
@@ -715,6 +706,7 @@
     justify-content: space-between;
     background: #ffffff;
     border: 1px solid #e2e8f0;
+    border-radius: 6px;
     padding: 0.65rem 0.85rem;
     transition: all 0.15s ease;
     flex-wrap: wrap;
@@ -724,11 +716,6 @@
 .pdp-interval-card.is-immob {
     border-left: 4px solid var(--entity-project, #f59e0b);
     background: #fffdfa;
-}
-
-.pdp-interval-card.is-free {
-    border-left: 4px solid var(--status-success, #15803d);
-    background: #fcfdfc;
 }
 
 .pdp-interval-left {
@@ -748,6 +735,11 @@
     text-align: center;
 }
 
+.pdp-interval-card.is-immob .pdp-interval-badge {
+    background: #fef3c7;
+    color: #b45309;
+}
+
 .pdp-interval-text {
     display: flex;
     flex-direction: column;
@@ -764,49 +756,49 @@
     color: #64748b;
 }
 
-.pdp-interval-toggle-group {
+.pdp-interval-actions {
     display: inline-flex;
-    background: #f1f5f9;
-    border-radius: 6px;
-    padding: 2px;
-    gap: 2px;
+    align-items: center;
 }
 
-.pdp-interval-btn {
-    border: none;
-    background: transparent;
-    font-size: 0.76rem;
+.pdp-interval-btn.btn-immob {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    font-size: 0.78rem;
     font-weight: 600;
-    padding: 0.35rem 0.65rem;
-    border-radius: 5px;
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
     cursor: pointer;
     color: #64748b;
     transition: all 0.15s ease;
 }
 
-.pdp-interval-btn:hover {
-    color: #0f172a;
+.pdp-interval-btn.btn-immob:hover {
+    border-color: #94a3b8;
+    color: #334155;
+    background: #f8fafc;
 }
 
 .pdp-interval-btn.btn-immob.active {
     background: #fef3c7;
+    border-color: #fcd34d;
     color: #b45309;
     font-weight: 700;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 2px rgba(245, 158, 11, 0.15);
 }
 
-.pdp-interval-btn.btn-free.active {
-    background: #dcfce7;
-    color: #14532d;
-    font-weight: 700;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+.pdp-interval-btn.btn-immob.active:hover {
+    background: #fde68a;
+    border-color: #f59e0b;
 }
 
 .pdp-interval-btn .lucide {
-    height: 12px;
-    width: 12px;
+    height: 13px;
+    width: 13px;
     vertical-align: -1px;
-    margin-right: 0.5rem;
 }
 
 .pdp-milestone-label .lucide {

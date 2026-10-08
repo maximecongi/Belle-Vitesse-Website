@@ -84,16 +84,13 @@
         // Sets for punctual lookup
         var shootDatesSet = new Set(shootDates);
         var immobilizedDays = new Set();
-        var releasedDays = new Set();
 
         intervals.forEach(function (inter) {
-            (inter.days || []).forEach(function (day) {
-                if (inter.is_immobilized !== false) {
+            if (inter.is_immobilized !== false) {
+                (inter.days || []).forEach(function (day) {
                     immobilizedDays.add(day);
-                } else {
-                    releasedDays.add(day);
-                }
-            });
+                });
+            }
         });
 
         // Date de référence pour le mois 1
@@ -140,7 +137,6 @@
                 var isRet = (returnDate === dateIso);
                 var isShootDay = false;
                 var isStandbyDay = false;
-                var isFreeInterDay = false;
 
                 if (isPunctual) {
                     if (shootDatesSet.has(dateIso)) {
@@ -149,9 +145,6 @@
                     } else if (immobilizedDays.has(dateIso)) {
                         classes.push('intermediate-standby-day');
                         isStandbyDay = true;
-                    } else if (releasedDays.has(dateIso)) {
-                        classes.push('intermediate-free-day');
-                        isFreeInterDay = true;
                     }
                 } else {
                     // Mode continu
@@ -192,7 +185,6 @@
                 if (isPunctual) {
                     if (isShootDay) titleTooltip = 'Jour de tournage (' + formatDateFrench(dateIso) + ')';
                     else if (isStandbyDay) titleTooltip = 'Véhicule immobilisé (' + formatDateFrench(dateIso) + ')';
-                    else if (isFreeInterDay) titleTooltip = 'Véhicule disponible à la base (' + formatDateFrench(dateIso) + ')';
                     else if (isDep) titleTooltip = 'Prépa / Enlèvement matériel (' + formatDateFrench(dateIso) + ')';
                     else if (isRet) titleTooltip = 'Restitution matériel (' + formatDateFrench(dateIso) + ')';
                     else titleTooltip = formatDateFrench(dateIso);
@@ -274,13 +266,6 @@
                     legendSwatchesHtml += '<div class="pdp-legend-item">' +
                         '<div class="pdp-legend-swatch swatch-standby"></div>' +
                         '<span>Immobilisé</span>' +
-                        '</div>';
-                }
-
-                if (releasedDays.size > 0) {
-                    legendSwatchesHtml += '<div class="pdp-legend-item">' +
-                        '<div class="pdp-legend-swatch swatch-free"></div>' +
-                        '<span>Relâché</span>' +
                         '</div>';
                 }
             }

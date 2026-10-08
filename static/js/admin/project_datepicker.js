@@ -3,7 +3,7 @@
  * Sélecteur de dates interactif multi-jalons pour projets.
  * Supporte :
  * 1. Le mode 'Plage Continue' (Départ, Début Tournage, Fin Tournage, Retour)
- * 2. Le mode 'Dates Ponctuelles' (Sélection multi-dates libres avec gestion d'immobilisation ou relâchement)
+ * 2. Le mode 'Dates Ponctuelles' (Sélection multi-dates libres avec gestion d'immobilisation)
  */
 
 (function (window, document) {
@@ -175,7 +175,7 @@
                                 </button>
                             ` : `
                                 <button type="button" class="pdp-preset-btn" id="pdp-preset-toggle-immob" title="Basculer le statut d'immobilisation du véhicule entre les dates">
-                                    ${this.isImmobilized ? '<i data-lucide="unlock"></i> Relâcher entre les dates' : '<i data-lucide="lock"></i> Immobiliser entre les dates'}
+                                    ${this.isImmobilized ? '<i data-lucide="unlock"></i> Retour entre les dates' : '<i data-lucide="lock"></i> Immobilisation entre les dates'}
                                 </button>
                             `}
                         </div>
@@ -425,10 +425,27 @@
                 this.interShootStatuses = {};
             }
             this.interShootStatuses[key] = Boolean(isImmob);
+
+            const intervals = this.calculateIntervals();
+            const immobCount = intervals.filter(i => i.is_immobilized).length;
+            if (immobCount === intervals.length) {
+                this.isImmobilized = true;
+            } else if (immobCount === 0) {
+                this.isImmobilized = false;
+            }
+
             this.syncInputs();
             this.updateMilestoneCards();
             this.renderIntervalsSection();
             this.renderCalendars();
+
+            const globalBtn = document.getElementById('pdp-preset-toggle-immob');
+            if (globalBtn) {
+                globalBtn.innerHTML = this.isImmobilized
+                    ? '<i data-lucide="unlock"></i> Retour entre les dates'
+                    : '<i data-lucide="lock"></i> Immobilisation entre les dates';
+            }
+            this.refreshIcons();
         }
 
         renderIntervalsSection() {
@@ -456,20 +473,18 @@
                     : `${inter.daysCount} jours intermédiaires : ${this.formatDateShort(inter.days[0])} → ${this.formatDateShort(inter.days[inter.days.length - 1])}`;
 
                 listHtml += `
-                    <div class="pdp-interval-card ${inter.is_immobilized ? 'is-immob' : 'is-free'}">
+                    <div class="pdp-interval-card ${inter.is_immobilized ? 'is-immob' : ''}">
                         <div class="pdp-interval-left">
                             <span class="pdp-interval-badge">${inter.daysCount}j</span>
                             <div class="pdp-interval-text">
                                 <strong>Du ${this.formatDateShort(inter.start)} au ${this.formatDateShort(inter.end)}</strong>
-                                <span class="pdp-interval-detail">${daysDesc}</span>
+                                <span class="pdp-interval-detail">${daysDesc}${inter.is_immobilized ? ' • Véhicule immobilisé sur place' : ''}</span>
                             </div>
                         </div>
-                        <div class="pdp-interval-toggle-group">
-                            <button type="button" class="pdp-interval-btn btn-immob ${inter.is_immobilized ? 'active' : ''}" data-key="${inter.key}" data-immob="true" title="Le véhicule reste réservé pour ce projet">
-                                <i data-lucide="lock"></i> Immobilisé
-                            </button>
-                            <button type="button" class="pdp-interval-btn btn-free ${!inter.is_immobilized ? 'active' : ''}" data-key="${inter.key}" data-immob="false" title="Le véhicule retourne à la base et redevient disponible pour d'autres tournages">
-                                <i data-lucide="rotate-ccw"></i> Relâché
+                        <div class="pdp-interval-actions">
+                            <button type="button" class="pdp-interval-btn btn-immob ${inter.is_immobilized ? 'active' : ''}" data-key="${inter.key}" data-immob="${!inter.is_immobilized}" title="${inter.is_immobilized ? 'Véhicule immobilisé sur place (cliquez pour désactiver)' : 'Cliquez pour immobiliser le véhicule entre ces dates'}">
+                                <i data-lucide="${inter.is_immobilized ? 'lock' : 'lock-open'}"></i>
+                                <span>${inter.is_immobilized ? 'Immobilisé' : 'Non immobilisé'}</span>
                             </button>
                         </div>
                     </div>
@@ -563,18 +578,29 @@
                     const intervals = this.calculateIntervals();
                     if (intervals.length > 1) {
                         const immobCount = intervals.filter(i => i.is_immobilized).length;
-                        const freeCount = intervals.length - immobCount;
-                        if (immobCount > 0 && freeCount > 0) {
-                            immobEl.innerHTML = `<i data-lucide="lock"></i> ${immobCount} / <i data-lucide="rotate-ccw"></i> ${freeCount}`;
-                        } else if (immobCount > 0) {
+                        if (immobCount > 0) {
                             immobEl.innerHTML = `<i data-lucide="lock"></i> ${immobCount} immobilisé(s)`;
+                            immobEl.classList.remove('empty');
                         } else {
-                            immobEl.innerHTML = `<i data-lucide="rotate-ccw"></i> ${freeCount} relâché(s)`;
+                            immobEl.innerHTML = `<span class="empty">Non immobilisé</span>`;
+                            immobEl.classList.add('empty');
                         }
                     } else if (intervals.length === 1) {
-                        immobEl.innerHTML = intervals[0].is_immobilized ? '<i data-lucide="lock"></i> Immobilisé sur place' : '<i data-lucide="rotate-ccw"></i> Relâché à la base';
+                        if (intervals[0].is_immobilized) {
+                            immobEl.innerHTML = '<i data-lucide="lock"></i> Immobilisé sur place';
+                            immobEl.classList.remove('empty');
+                        } else {
+                            immobEl.innerHTML = '<span class="empty">Non immobilisé</span>';
+                            immobEl.classList.add('empty');
+                        }
                     } else {
-                        immobEl.innerHTML = this.isImmobilized ? '<i data-lucide="lock"></i> Immobilisé par défaut' : '<i data-lucide="rotate-ccw"></i> Relâché par défaut';
+                        if (this.isImmobilized) {
+                            immobEl.innerHTML = '<i data-lucide="lock"></i> Immobilisé sur place';
+                            immobEl.classList.remove('empty');
+                        } else {
+                            immobEl.innerHTML = '<span class="empty">Non immobilisé</span>';
+                            immobEl.classList.add('empty');
+                        }
                     }
                 }
 
@@ -706,7 +732,6 @@
 
                 let isShootDay = false;
                 let isStandbyDay = false;
-                let isFreeInterDay = false;
 
                 if (isPunctual) {
                     if (this.shootDates.includes(dateIso)) {
@@ -718,9 +743,6 @@
                         if (isInterImmob) {
                             isStandbyDay = true;
                             classes.push('intermediate-standby-day');
-                        } else {
-                            isFreeInterDay = true;
-                            classes.push('intermediate-free-day');
                         }
                     }
                 } else {
@@ -758,7 +780,6 @@
                 let titleTooltip = '';
                 if (isShootDay) titleTooltip = 'Jour de tournage';
                 else if (isStandbyDay) titleTooltip = 'Véhicule immobilisé (bloqué pour ce tournage)';
-                else if (isFreeInterDay) titleTooltip = 'Véhicule disponible à la base (non immobilisé)';
                 else if (isDep) titleTooltip = 'Prépa / Enlèvement matériel';
                 else if (isRet) titleTooltip = 'Restitution matériel';
 

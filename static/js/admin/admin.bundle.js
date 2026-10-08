@@ -1092,8 +1092,8 @@ function initCalendar() {
                 const tips = [`Projet : ${projectName}${production ? ' (' + production + ')' : ''}`];
                 if (depDate) tips.push(`Départ : ${formatDateFr(depDate)}`);
                 if (props.dateMode === 'punctual' && Array.isArray(props.shootDates) && props.shootDates.length > 0) {
-                    const immobStr = props.isImmobilized ? 'Immobilisé' : 'Relâché';
-                    tips.push(`Tournage ponctuel : ${props.shootDates.map(formatDateFr).join(', ')} (${immobStr})`);
+                    const immobStr = props.isImmobilized ? ' (Immobilisé)' : '';
+                    tips.push(`Tournage ponctuel : ${props.shootDates.map(formatDateFr).join(', ')}${immobStr}`);
                 } else if (shootStart) {
                     const shootEndStr = shootEnd && shootEnd !== shootStart ? ` au ${formatDateFr(shootEnd)}` : '';
                     tips.push(`Tournage : du ${formatDateFr(shootStart)}${shootEndStr}`);
@@ -1284,7 +1284,7 @@ function initCalendar() {
 
                 if (props.dateMode === 'punctual' && Array.isArray(props.intervals) && props.intervals.length > 0) {
                     props.intervals.forEach((inter) => {
-                        // On n'affiche que les intervalles immobilisés (le relâchement étant la norme par défaut, on évite de surcharger)
+                        // On n'affiche que les intervalles immobilisés (le retour atelier étant la norme par défaut, on évite de surcharger)
                         if (!inter.is_immobilized || !Array.isArray(inter.days) || inter.days.length === 0) return;
 
                         // Regrouper les jours de cet intervalle consécutifs dans la tranche affichée segDates
@@ -5462,16 +5462,13 @@ window.initInspectionDetail = initInspectionDetail;
         // Sets for punctual lookup
         var shootDatesSet = new Set(shootDates);
         var immobilizedDays = new Set();
-        var releasedDays = new Set();
 
         intervals.forEach(function (inter) {
-            (inter.days || []).forEach(function (day) {
-                if (inter.is_immobilized !== false) {
+            if (inter.is_immobilized !== false) {
+                (inter.days || []).forEach(function (day) {
                     immobilizedDays.add(day);
-                } else {
-                    releasedDays.add(day);
-                }
-            });
+                });
+            }
         });
 
         // Date de référence pour le mois 1
@@ -5518,7 +5515,6 @@ window.initInspectionDetail = initInspectionDetail;
                 var isRet = (returnDate === dateIso);
                 var isShootDay = false;
                 var isStandbyDay = false;
-                var isFreeInterDay = false;
 
                 if (isPunctual) {
                     if (shootDatesSet.has(dateIso)) {
@@ -5527,9 +5523,6 @@ window.initInspectionDetail = initInspectionDetail;
                     } else if (immobilizedDays.has(dateIso)) {
                         classes.push('intermediate-standby-day');
                         isStandbyDay = true;
-                    } else if (releasedDays.has(dateIso)) {
-                        classes.push('intermediate-free-day');
-                        isFreeInterDay = true;
                     }
                 } else {
                     // Mode continu
@@ -5570,7 +5563,6 @@ window.initInspectionDetail = initInspectionDetail;
                 if (isPunctual) {
                     if (isShootDay) titleTooltip = 'Jour de tournage (' + formatDateFrench(dateIso) + ')';
                     else if (isStandbyDay) titleTooltip = 'Véhicule immobilisé (' + formatDateFrench(dateIso) + ')';
-                    else if (isFreeInterDay) titleTooltip = 'Véhicule disponible à la base (' + formatDateFrench(dateIso) + ')';
                     else if (isDep) titleTooltip = 'Prépa / Enlèvement matériel (' + formatDateFrench(dateIso) + ')';
                     else if (isRet) titleTooltip = 'Restitution matériel (' + formatDateFrench(dateIso) + ')';
                     else titleTooltip = formatDateFrench(dateIso);
@@ -5652,13 +5644,6 @@ window.initInspectionDetail = initInspectionDetail;
                     legendSwatchesHtml += '<div class="pdp-legend-item">' +
                         '<div class="pdp-legend-swatch swatch-standby"></div>' +
                         '<span>Immobilisé</span>' +
-                        '</div>';
-                }
-
-                if (releasedDays.size > 0) {
-                    legendSwatchesHtml += '<div class="pdp-legend-item">' +
-                        '<div class="pdp-legend-swatch swatch-free"></div>' +
-                        '<span>Relâché</span>' +
                         '</div>';
                 }
             }

@@ -276,7 +276,7 @@ class ConflictsTest(unittest.TestCase):
             self.assertTrue(res_immob_interval["has_conflicts"])
             self.assertIn("recVeh66", res_immob_interval["conflicting_vehicle_ids"])
 
-            # 2. Le 16 octobre : entre le 14 et le 18 (intervalle relâché/libre) -> AUCUN CONFLIT
+            # 2. Le 16 octobre : entre le 14 et le 18 (intervalle non immobilisé/libre) -> AUCUN CONFLIT
             res_free_interval = check_booking_conflicts(
                 start_date_val="2027-10-16",
                 end_date_val="2027-10-16",
@@ -315,7 +315,7 @@ class ConflictsTest(unittest.TestCase):
             db.session.commit()
 
             # Requête entrante ponctuelle : 10 nov, 13 nov, 17 nov
-            # Intervalles : 10->13 relâché (le 11 est libre), 13->17 immobilisé (le 15 est bloqué)
+            # Intervalles : 10->13 non immobilisé (le 11 est libre), 13->17 immobilisé (le 15 est bloqué)
             incoming_inter_statuses = {
                 "2027-11-10_2027-11-13": {"is_immobilized": False},
                 "2027-11-13_2027-11-17": {"is_immobilized": True},

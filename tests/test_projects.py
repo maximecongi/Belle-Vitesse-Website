@@ -480,7 +480,7 @@ class ProjectsTest(unittest.TestCase):
             # Test effective_blocked_dates
             blocked = proj.effective_blocked_dates
             # Doit inclure 10, 11 (car 10->12 immobilisé), 12, 16
-            # Ne doit PAS inclure 13, 14, 15 (car 12->16 relâché)
+            # Ne doit PAS inclure 13, 14, 15 (car 12->16 non immobilisé / retour atelier)
             self.assertIn(date(2026, 11, 10), blocked)
             self.assertIn(date(2026, 11, 11), blocked)
             self.assertIn(date(2026, 11, 12), blocked)

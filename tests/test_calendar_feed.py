@@ -191,7 +191,7 @@ class CalendarFeedTestCase(unittest.TestCase):
         - Bloc de dates consécutives regroupé
         - Date isolée en bloc distinct
         - Période intermédiaire immobilisée générée avec '🔒 Immobilisé'
-        - Période intermédiaire relâchée non générée (laisse le calendrier libre)
+        - Période intermédiaire non immobilisée non générée (laisse le calendrier libre)
         """
         with self.app.app_context():
             p = Project(
@@ -203,7 +203,7 @@ class CalendarFeedTestCase(unittest.TestCase):
                 # Tournages : 3-4 Oct (bloc 1), 8 Oct (bloc 2), 12 Oct (bloc 3)
                 shoot_dates=["2026-10-03", "2026-10-04", "2026-10-08", "2026-10-12"],
                 # Intervalle 1 (5 au 7 Oct) : Immobilisé sur place
-                # Intervalle 2 (9 au 11 Oct) : Relâché (is_immobilized = False)
+                # Intervalle 2 (9 au 11 Oct) : Non immobilisé (is_immobilized = False)
                 inter_shoot_statuses=[
                     {"start": "2026-10-04", "end": "2026-10-08", "is_immobilized": True},
                     {"start": "2026-10-08", "end": "2026-10-12", "is_immobilized": False},
@@ -224,7 +224,7 @@ class CalendarFeedTestCase(unittest.TestCase):
         # 1x Départ (1er Oct)
         # 3x Tournage (3-4 Oct, 8 Oct, 12 Oct)
         # 1x Immobilisation (5 au 7 Oct inclus)
-        # 0x pour l'intervalle relâché (9 au 11 Oct reste libre)
+        # 0x pour l'intervalle non immobilisé (9 au 11 Oct reste libre)
         # 1x Retour (13 Oct)
         # Total = 6 événements
         self.assertEqual(len(events), 6)
@@ -257,7 +257,7 @@ class CalendarFeedTestCase(unittest.TestCase):
         self.assertEqual(str(immob.get("uid")), f"bv-project-{proj_id}-immob-1@bellevitesse.com")
         self.assertIn("Immobilisation sur place (3j)", str(immob.get("description")))
 
-        # Vérifier qu'aucun événement ne bloque la période relâchée du 9 au 11 Octobre
+        # Vérifier qu'aucun événement ne bloque la période non immobilisée du 9 au 11 Octobre
         all_dates_covered = []
         for e in events:
             cur = e.get("dtstart").dt

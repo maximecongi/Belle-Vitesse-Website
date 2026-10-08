@@ -157,8 +157,8 @@ function initCalendar() {
                 const tips = [`Projet : ${projectName}${production ? ' (' + production + ')' : ''}`];
                 if (depDate) tips.push(`Départ : ${formatDateFr(depDate)}`);
                 if (props.dateMode === 'punctual' && Array.isArray(props.shootDates) && props.shootDates.length > 0) {
-                    const immobStr = props.isImmobilized ? 'Immobilisé' : 'Relâché';
-                    tips.push(`Tournage ponctuel : ${props.shootDates.map(formatDateFr).join(', ')} (${immobStr})`);
+                    const immobStr = props.isImmobilized ? ' (Immobilisé)' : '';
+                    tips.push(`Tournage ponctuel : ${props.shootDates.map(formatDateFr).join(', ')}${immobStr}`);
                 } else if (shootStart) {
                     const shootEndStr = shootEnd && shootEnd !== shootStart ? ` au ${formatDateFr(shootEnd)}` : '';
                     tips.push(`Tournage : du ${formatDateFr(shootStart)}${shootEndStr}`);
@@ -349,7 +349,7 @@ function initCalendar() {
 
                 if (props.dateMode === 'punctual' && Array.isArray(props.intervals) && props.intervals.length > 0) {
                     props.intervals.forEach((inter) => {
-                        // On n'affiche que les intervalles immobilisés (le relâchement étant la norme par défaut, on évite de surcharger)
+                        // On n'affiche que les intervalles immobilisés (le retour atelier étant la norme par défaut, on évite de surcharger)
                         if (!inter.is_immobilized || !Array.isArray(inter.days) || inter.days.length === 0) return;
 
                         // Regrouper les jours de cet intervalle consécutifs dans la tranche affichée segDates
