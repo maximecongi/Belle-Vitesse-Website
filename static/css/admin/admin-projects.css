@@ -1430,10 +1430,6 @@
 }
 
 /* ── Notes Spécifiques du Projet ── */
-.project-notes-card {
-    background: #ffffff;
-    border-left: 3px solid var(--entity-project, #F59E0B);
-}
 
 .project-notes-title {
     color: var(--grey-1);

@@ -147,10 +147,9 @@ initials, empty_state, waiver_card, doc_download_badge %}
 </div>
 
 <!-- ═══════════ 2. NOTE / CONSIGNES DU PROJET ═══════════ -->
-<div class="admin-card u-mb-3 project-notes-card" id="projectNotesCard">
+<div class="admin-card u-mb-3" id="projectNotesCard">
     <div class="u-flex u-justify-between u-align-center u-mb-2">
         <div class="u-flex u-align-center u-gap-2">
-            <i data-lucide="clipboard-pen" class="u-text-project"></i>
             <span class="project-notes-title u-font-bold u-text-sm">Consignes & Notes Spécifiques</span>
         </div>
         <div>
@@ -202,7 +201,6 @@ initials, empty_state, waiver_card, doc_download_badge %}
     <div class="admin-card">
         <div class="u-flex u-justify-between u-align-center u-mb-3">
             <div class="u-flex u-align-center u-gap-2">
-                <i data-lucide="truck" class="u-text-checkout"></i>
                 <h2 class="admin-card-title u-m-0">Matériel engagé sur le tournage</h2>
             </div>
             <div class="u-flex u-align-center u-gap-1">
@@ -315,14 +313,12 @@ initials, empty_state, waiver_card, doc_download_badge %}
     <div class="admin-card">
         <div class="u-flex u-justify-between u-align-center u-mb-3">
             <div class="u-flex u-align-center u-gap-2">
-                <i data-lucide="shield" class="u-text-waiver"></i>
                 <h2 class="admin-card-title u-m-0">Documents & Décharges</h2>
             </div>
             {% if incidents and incidents|length > 0 %}
-            <span class="badge-pill u-bg-danger-light u-text-danger">
-                <i data-lucide="alert-triangle"></i> {{ incidents|length }} incident{{ 's' if incidents|length > 1 else
-                '' }}
-            </span>
+            <span class="badge-pill u-bg-danger-light u-text-danger">{{ incidents|length }} incident{{ 's' if
+                incidents|length > 1 else
+                '' }}</span>
             {% endif %}
         </div>
 
@@ -396,7 +392,6 @@ initials, empty_state, waiver_card, doc_download_badge %}
     <div class="admin-card project-hub-calendar-card" id="projectShootCalendarWrapper">
         <div class="u-flex u-justify-between u-align-center u-mb-3">
             <div class="u-flex u-align-center u-gap-2">
-                <i data-lucide="calendar" class="u-text-project"></i>
                 <h2 class="admin-card-title u-m-0">Planning & Dates du Tournage</h2>
             </div>
             {% if is_punctual %}
@@ -432,7 +427,6 @@ initials, empty_state, waiver_card, doc_download_badge %}
     <div class="admin-card">
         <div class="u-flex u-justify-between u-align-center u-mb-3">
             <div class="u-flex u-align-center u-gap-2">
-                <i data-lucide="users" class="u-text-info"></i>
                 <h2 class="admin-card-title u-m-0">Contacts Clés</h2>
             </div>
             {% if contacts and contacts|length > 0 %}
@@ -474,7 +468,6 @@ initials, empty_state, waiver_card, doc_download_badge %}
     <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
         <div class="project-reports-header-title">
             <div class="u-flex u-align-center u-gap-2">
-                <i data-lucide="message-square" class="u-text-primary"></i>
                 <h2 class="admin-card-title u-m-0">Rapports d'Équipe</h2>
             </div>
             <p class="u-text-xs u-text-muted u-mt-1 u-mb-0">

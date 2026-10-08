@@ -706,10 +706,10 @@
     justify-content: space-between;
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 6px;
     padding: 0.65rem 0.85rem;
     transition: all 0.15s ease;
     flex-wrap: wrap;
+    border-left: 4px solid var(--entity-checkout, #15803D);
     gap: 0.6rem;
 }
 
