@@ -757,7 +757,7 @@
 
                 let titleTooltip = '';
                 if (isShootDay) titleTooltip = 'Jour de tournage';
-                else if (isStandbyDay) titleTooltip = 'Véhicule immobilisé / Stand-by (bloqué pour ce tournage)';
+                else if (isStandbyDay) titleTooltip = 'Véhicule immobilisé (bloqué pour ce tournage)';
                 else if (isFreeInterDay) titleTooltip = 'Véhicule disponible à la base (non immobilisé)';
                 else if (isDep) titleTooltip = 'Prépa / Enlèvement matériel';
                 else if (isRet) titleTooltip = 'Restitution matériel';

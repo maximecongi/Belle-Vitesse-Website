@@ -581,7 +581,7 @@
     box-shadow: 0 2px 6px rgba(249, 115, 22, 0.4);
 }
 
-/* Intermediate stand-by / immobilized day (Ambre doux hachuré) */
+/* Intermediate Immobilisé / immobilized day (Ambre doux hachuré) */
 .pdp-day-cell.intermediate-standby-day {
     background: repeating-linear-gradient(45deg,
             #fef3c7,

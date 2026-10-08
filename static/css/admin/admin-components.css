@@ -261,7 +261,9 @@
 
 /* --- Base Styles --- */
 .badge-pill {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
     padding: 0.2rem 0.65rem;
     margin: 0.2rem 0;
     border-radius: 20px;
@@ -333,6 +335,16 @@ a.badge-pill:hover {
     background: var(--status-info-bg);
     color: var(--status-info-text);
     border: 1px solid var(--status-info-border, rgba(59, 130, 246, 0.3));
+}
+
+.badge-pill[data-val="standby"],
+.badge-pill[data-val="stand-by"],
+.badge-pill[data-val="immobilise"],
+.badge-pill[data-val="immobilisé"],
+.badge-pill[data-val="Immobilisé"] {
+    background: var(--status-warning-bg);
+    color: var(--status-warning-text);
+    border: 1px solid var(--status-warning-border, rgba(245, 158, 11, 0.35));
 }
 
 .badge-pill[data-val="completed"] {
@@ -693,15 +705,15 @@ a.badge-pill:hover {
 .badge-pill[data-val="technicien"],
 .badge-pill[data-val="User"],
 .badge-pill[data-val="user"] {
-    background: #ffedd5;
-    color: #c2410c;
-    border: 1px solid rgba(194, 65, 12, 0.3);
+    background: var(--status-warning-bg);
+    color: var(--status-warning-text);
+    border: 1px solid var(--status-warning-border, rgba(245, 158, 11, 0.35));
 }
 
 .badge-pill[data-val="Freelance"] {
     background: var(--status-info-bg);
     color: var(--status-info-text);
-    border: 1px solid rgba(2, 132, 199, 0.3);
+    border: 1px solid var(--status-info-border, rgba(2, 132, 199, 0.3));
 }
 
 .badge-pill[data-val="Production"] {
@@ -712,9 +724,10 @@ a.badge-pill:hover {
 
 /* --- Misc --- */
 .badge-pill[data-val="incoming"] {
-    background: #fef3c7;
-    color: #92400e;
-    font-size: 0.4rem;
+    background: var(--status-warning-bg);
+    color: var(--status-warning-text);
+    border: 1px solid var(--status-warning-border, rgba(245, 158, 11, 0.35));
+    font-size: 0.65rem;
     padding: 0.1rem 0.35rem;
     margin: 0.1rem 0;
 }
@@ -722,15 +735,17 @@ a.badge-pill:hover {
 
 
 .badge-pill[data-val="download-available"] {
-    background: #dbeafe;
-    color: #1e40af;
+    background: var(--status-info-bg);
+    color: var(--status-info-text);
+    border: 1px solid var(--status-info-border, rgba(59, 130, 246, 0.3));
     stroke-width: 2.5;
-    transition: background 0.15s ease, color 0.15s ease;
+    transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
 }
 
 a:hover>.badge-pill[data-val="download-available"] {
-    background: #bfdbfe;
-    color: #1e3a8a;
+    background: var(--status-info-bg);
+    color: var(--status-info-text);
+    opacity: 0.85;
 }
 
 .badge-pill[data-val="download-unavailable"] {

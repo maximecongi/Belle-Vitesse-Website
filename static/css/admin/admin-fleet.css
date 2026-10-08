@@ -352,14 +352,16 @@
 /* ── Badges Catégorie Checkpoints (Homogénéisation avec le système standard .badge-pill) ── */
 .badge-pill[data-val="Sécurité"],
 .badge-pill[data-val="securite"] {
-    background: #fee2e2;
-    color: #991b1b;
+    background: var(--status-danger-bg);
+    color: var(--status-danger-text);
+    border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .badge-pill[data-val="Équipements"],
 .badge-pill[data-val="equipements"] {
-    background: #e0f2fe;
-    color: #0369a1;
+    background: var(--status-info-bg);
+    color: var(--status-info-text);
+    border: 1px solid var(--status-info-border, rgba(59, 130, 246, 0.3));
 }
 
 /* ── Ligne d'en-tête de catégorie dans la liste ── */

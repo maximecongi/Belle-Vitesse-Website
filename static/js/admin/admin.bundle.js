@@ -5381,7 +5381,7 @@ window.initInspectionDetail = initInspectionDetail;
  * Conforme au design system et au calendrier de project_form.html (ProjectTimelineDatePicker).
  * - Supporte à la fois les dates continues (plage de tournage) et ponctuelles (multi-dates)
  * - Vue double mois responsive avec navigation (< et >)
- * - Rendu identique des cellules (in-shoot-range, shoot-punctual-day, stand-by hachuré, départ, retour, aujourd'hui)
+ * - Rendu identique des cellules (in-shoot-range, shoot-punctual-day, Immobilisé hachuré, départ, retour, aujourd'hui)
  * - Légende compacte avec pastilles colorées
  */
 
@@ -5569,7 +5569,7 @@ window.initInspectionDetail = initInspectionDetail;
                 var titleTooltip = '';
                 if (isPunctual) {
                     if (isShootDay) titleTooltip = 'Jour de tournage (' + formatDateFrench(dateIso) + ')';
-                    else if (isStandbyDay) titleTooltip = 'Véhicule immobilisé / Stand-by (' + formatDateFrench(dateIso) + ')';
+                    else if (isStandbyDay) titleTooltip = 'Véhicule immobilisé (' + formatDateFrench(dateIso) + ')';
                     else if (isFreeInterDay) titleTooltip = 'Véhicule disponible à la base (' + formatDateFrench(dateIso) + ')';
                     else if (isDep) titleTooltip = 'Prépa / Enlèvement matériel (' + formatDateFrench(dateIso) + ')';
                     else if (isRet) titleTooltip = 'Restitution matériel (' + formatDateFrench(dateIso) + ')';

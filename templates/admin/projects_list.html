@@ -35,6 +35,7 @@ is_archive) }}
                     <br><span class="u-text-xs u-text-muted">{{ project.production }}</span><br><br>
                     <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
                         <span class="checkout-doc-id">{{ project.project_id }}</span>
+                        {{ shoot_status_badge(project.shoot_status) }}
                     </div>
                     <div class="projects-dates-info u-mt-2">
                         🚚 {{ project.departure_date }}<br><br>
@@ -119,7 +120,7 @@ is_archive) }}
                                 <input type="hidden" name="return_to" value="{{ request.full_path }}">
                                 <button type="submit" class="badge-pill u-pointer" data-val="to_send"
                                     title="Envoyer la décharge pilote en 1 clic">
-                                    <i data-lucide="send"></i>À envoyer</button>
+                                    <i data-lucide="send"></i> À envoyer</button>
                             </form>
                             {% else %}
                             <a
@@ -148,7 +149,7 @@ is_archive) }}
                                 <input type="hidden" name="return_to" value="{{ request.full_path }}">
                                 <button type="submit" class="badge-pill u-pointer" data-val="to_send"
                                     title="Envoyer la décharge production en 1 clic">
-                                    <i data-lucide="send"></i>À envoyer</button>
+                                    <i data-lucide="send"></i> À envoyer</button>
                             </form>
                             {% else %}
                             <a

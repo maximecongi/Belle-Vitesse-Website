@@ -615,18 +615,18 @@
 
 .calendar-legend-badge--immob {
     background: repeating-linear-gradient(45deg,
-            #fef3c7,
-            #fef3c7 4px,
-            #fde68a 4px,
-            #fde68a 8px) !important;
-    border: 1px solid #fcd34d !important;
-    color: #92400e !important;
+            var(--status-warning-bg),
+            var(--status-warning-bg) 4px,
+            rgba(245, 158, 11, 0.2) 4px,
+            rgba(245, 158, 11, 0.2) 8px) !important;
+    border: 1px solid var(--status-warning-border, rgba(245, 158, 11, 0.35)) !important;
+    color: var(--status-warning-text) !important;
 }
 
 .calendar-legend-badge--immob [data-lucide],
 .calendar-legend-badge--immob svg {
-    color: #b45309;
-    stroke: #b45309;
+    color: var(--status-warning-text);
+    stroke: var(--status-warning-text);
 }
 
 .calendar-legend-track {

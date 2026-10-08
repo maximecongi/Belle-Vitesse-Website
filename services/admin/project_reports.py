@@ -250,13 +250,13 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
                 "is_immobilized") if current_inter else is_immob
 
             if day_immob:
-                shoot_status = "in_progress"
+                shoot_status = "standby"
                 shoot_status_label = "Immobilisé"
-                shoot_status_id = "in_progress"
+                shoot_status_id = "standby"
                 shoot_status_color = "var(--status-warning, #F59E0B)"
             else:
                 shoot_status = "upcoming"
-                shoot_status_label = "Relâché (Dispo)"
+                shoot_status_label = "À venir"
                 shoot_status_id = "upcoming"
                 shoot_status_color = "var(--status-info, #0284C7)"
         elif ret_d and today_date > ret_d:

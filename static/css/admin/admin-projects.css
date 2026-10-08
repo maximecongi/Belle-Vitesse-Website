@@ -1398,6 +1398,13 @@
     border-left-color: var(--entity-project, #F59E0B) !important;
 }
 
+.project-hub-header[data-status="standby"],
+.project-hub-header[data-status="stand-by"],
+.project-hub-header[data-status="immobilise"],
+.project-hub-header[data-status="immobilisé"] {
+    border-left-color: var(--status-warning, #F59E0B) !important;
+}
+
 .project-hub-header[data-status="completed"] {
     border-left-color: var(--status-neutral, #515151) !important;
 }

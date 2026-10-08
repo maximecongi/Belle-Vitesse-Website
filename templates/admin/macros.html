@@ -7,7 +7,11 @@
 'pending': 'À signer',
 'signed': 'Signé',
 'in_progress': 'En cours',
-'waiting': 'En attente'
+'waiting': 'En attente',
+'standby': 'Immobilisé',
+'stand-by': 'Immobilisé',
+'immobilise': 'Immobilisé',
+'immobilisé': 'Immobilisé'
 } %}
 {% set s_raw = (status or '')|string|trim %}
 {% set display_status = label_map.get(s_raw|lower, s_raw) %}
@@ -58,7 +62,11 @@
 'défaut': 'alert-octagon',
 'defaut': 'alert-octagon',
 'upcoming': 'calendar',
-'à venir': 'calendar'
+'à venir': 'calendar',
+'standby': 'pause-circle',
+'stand-by': 'pause-circle',
+'immobilise': 'pause-circle',
+'immobilisé': 'pause-circle'
 } %}
 {% set determined_icon = icon or icon_map.get(sid) or icon_map.get(s_raw|lower) or icon_map.get(display_status|lower) %}
 <span class="badge-pill{% if class_name %} {{ class_name }}{% endif %}" data-val="{{ status_id or s_raw }}" {{ kwargs |
@@ -224,7 +232,9 @@ endif %}
 {% if st == 'incident' %}
 <span class="badge-pill" data-val="critique"><i data-lucide="wrench"></i> {{ label or 'Incident' }}</span>
 {% elif st in ('tournage', 'active', 'in_progress') %}
-<span class="badge-pill" data-val="in_progress"><i data-lucide="clapperboard"></i> {{ label or 'En tournage' }}</span>
+<span class="badge-pill" data-val="in_progress"><i data-lucide="clapperboard"></i> {{ label or 'Sur tournage' }}</span>
+{% elif st in ('standby', 'stand-by', 'immobilise', 'immobilisé') %}
+<span class="badge-pill" data-val="standby"><i data-lucide="pause-circle"></i> {{ label or 'Immobilisé' }}</span>
 {% else %}
 <span class="badge-pill" data-val="ok"><i data-lucide="circle-check"></i> {{ label or 'Disponible' }}</span>
 {% endif %}
@@ -254,6 +264,8 @@ severity_label|lower == 'critique' else ('Mineur' if severity_label|lower == 'mi
 {% set s = (status or '')|lower %}
 {% if s in ('in_progress', 'active', 'tournage') %}
 <span class="badge-pill badge-shoot" data-val="in_progress"><i data-lucide="clapperboard"></i> En tournage</span>
+{% elif s in ('standby', 'stand-by', 'immobilise', 'immobilisé') %}
+<span class="badge-pill badge-shoot" data-val="standby"><i data-lucide="pause-circle"></i> Immobilisé</span>
 {% elif s in ('completed', 'cloture', 'clôturé') %}
 <span class="badge-pill badge-shoot" data-val="completed"><i data-lucide="lock"></i> Clôturé</span>
 {% else %}
@@ -425,7 +437,7 @@ admin-multiselect-tag--custom
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="badge-pill u-pointer" data-val="to_generate"
                 title="Créer et générer la décharge en 1 clic">
-                <i data-lucide="refresh-cw"></i>À générer</button>
+                <i data-lucide="refresh-cw"></i> À générer</button>
         </form>
         {% endif %}
     </div>

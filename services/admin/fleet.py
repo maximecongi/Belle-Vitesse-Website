@@ -67,7 +67,8 @@ def _detect_inspection_anomalies(record: Any) -> List[str]:
     except Exception:
         all_cps = []
 
-    labels_map = {cp.get("key"): cp.get("label") for cp in all_cps if cp.get("key")}
+    labels_map = {cp.get("key"): cp.get("label")
+                  for cp in all_cps if cp.get("key")}
 
     for key, val in statuses.items():
         if val and str(val).lower() not in ("ok", "not_applicable", "none", "", "—"):
@@ -239,12 +240,13 @@ def get_fleet_overview() -> Dict[str, Any]:
                 cis_count = signed_checkins_map.get(vid, {}).get(p.id, 0)
                 has_unreturned = cos_count > cis_count
 
-                if (p_status == "in_progress" or (p_status != "completed" and has_unreturned)) and not vehicles_dict[vid]["active_project"]:
+                if (p_status in ("in_progress", "standby") or (p_status != "completed" and has_unreturned)) and not vehicles_dict[vid]["active_project"]:
                     vehicles_dict[vid]["active_project"] = {
                         "id": p.id,
                         "project_id": p.project_id,
                         "name": p.name,
                         "production": p.production.name if p.production else "—",
+                        "status": p_status,
                     }
 
     # Calcul final des statuts et batteries
@@ -256,8 +258,12 @@ def get_fleet_overview() -> Dict[str, Any]:
             v_data["operational_status"] = "incident"
             v_data["operational_status_label"] = "Incident / À réviser"
         elif v_data["active_project"]:
-            v_data["operational_status"] = "tournage"
-            v_data["operational_status_label"] = "Sur tournage"
+            if v_data["active_project"].get("status") == "standby":
+                v_data["operational_status"] = "standby"
+                v_data["operational_status_label"] = "Immobilisé"
+            else:
+                v_data["operational_status"] = "tournage"
+                v_data["operational_status_label"] = "Sur tournage"
         else:
             v_data["operational_status"] = "disponible"
             v_data["operational_status_label"] = "Disponible"
@@ -581,8 +587,10 @@ def get_vehicle_timeline(vehicle_id: str) -> Optional[Dict[str, Any]]:
         p_status_label = status_info["label"]
         p_date_range_label = status_info["dates_label"]
 
-        p_failures = sum(e.get("failure_count", 0) for e in events if e.get("type") in ("checkout", "checkin") and e.get("project_id") == p.id)
-        p_incidents = [e for e in events if e.get("type") == "incident" and e.get("project_id") == p.id]
+        p_failures = sum(e.get("failure_count", 0) for e in events if e.get(
+            "type") in ("checkout", "checkin") and e.get("project_id") == p.id)
+        p_incidents = [e for e in events if e.get(
+            "type") == "incident" and e.get("project_id") == p.id]
 
         events.append({
             "id": f"project_{p.id}",
@@ -650,28 +658,37 @@ def get_vehicle_timeline(vehicle_id: str) -> Optional[Dict[str, Any]]:
     signed_cos_by_proj: Dict[int, int] = {}
     for co in checkouts:
         if co.status == "signed" and co.project_id:
-            signed_cos_by_proj[co.project_id] = signed_cos_by_proj.get(co.project_id, 0) + 1
+            signed_cos_by_proj[co.project_id] = signed_cos_by_proj.get(
+                co.project_id, 0) + 1
 
     signed_cis_by_proj: Dict[int, int] = {}
     for ci in checkins:
         if ci.status == "signed" and ci.project_id:
-            signed_cis_by_proj[ci.project_id] = signed_cis_by_proj.get(ci.project_id, 0) + 1
+            signed_cis_by_proj[ci.project_id] = signed_cis_by_proj.get(
+                ci.project_id, 0) + 1
 
+    active_shoot_status = None
     is_on_shoot = False
     for p in vehicle_projects:
         p_status_info = get_project_shoot_status(p, today)
         p_status = p_status_info["status"]
-        has_unreturned = signed_cos_by_proj.get(p.id, 0) > signed_cis_by_proj.get(p.id, 0)
-        if p_status == "in_progress" or (p_status != "completed" and has_unreturned):
+        has_unreturned = signed_cos_by_proj.get(
+            p.id, 0) > signed_cis_by_proj.get(p.id, 0)
+        if p_status in ("in_progress", "standby") or (p_status != "completed" and has_unreturned):
             is_on_shoot = True
+            active_shoot_status = p_status
             break
 
     if open_critical_incidents > 0:
         current_status = "incident"
         current_status_label = "Incident / À réviser"
     elif is_on_shoot:
-        current_status = "tournage"
-        current_status_label = "Sur tournage"
+        if active_shoot_status == "standby":
+            current_status = "standby"
+            current_status_label = "Immobilisé"
+        else:
+            current_status = "tournage"
+            current_status_label = "Sur tournage"
     else:
         current_status = "disponible"
         current_status_label = "Disponible"
