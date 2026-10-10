@@ -22,11 +22,19 @@ def list_users() -> Dict[str, Any]:
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
-def get_user(user_id: int) -> Optional[Dict[str, Any]]:
+def get_user(user_id: int) -> Dict[str, Any]:
     """Récupère le profil d'un utilisateur par son ID."""
     from services.admin.users import get_user as _get_user
     u = _get_user(user_id)
-    return u.to_dict() if u and hasattr(u, "to_dict") else None
+    if not u or not hasattr(u, "to_dict"):
+        return {
+            "success": False,
+            "message": f"Utilisateur '{user_id}' introuvable.",
+            "error": f"Utilisateur '{user_id}' introuvable.",
+        }
+    data = u.to_dict()
+    data["success"] = True
+    return data
 
 
 @mcp.tool()

@@ -66,7 +66,7 @@ class CheckpointDefinition(db.Model):
             "type": self.type,
             "unit": self.unit,
             "has_protocol": self.has_protocol_available(),
-            "protocol_url": self.protocol_url or "",
+            "protocol_url": self.protocol_url or ("/admin/check-vehicles" if self.has_protocol_available() else ""),
             "default_detail": self.default_detail,
             "order": self.order,
             "vehicle_overrides": self.vehicle_overrides or {},

@@ -60,8 +60,13 @@ def get_vehicle_timeline(vehicle_id: str, compact: bool = True) -> Optional[Dict
 
     raw_data = _get(resolved_id)
     if not raw_data:
-        return None
+        return {
+            "success": False,
+            "message": f"Véhicule '{vehicle_id}' introuvable dans la flotte.",
+            "error": f"Véhicule '{vehicle_id}' introuvable dans la flotte.",
+        }
     safe_data = _make_json_safe(raw_data)
+    safe_data["success"] = True
     if compact and isinstance(safe_data.get("vehicle"), dict):
         safe_data["vehicle"].pop("fields", None)
     return safe_data
@@ -324,6 +329,9 @@ def get_checkpoints_for_vehicle(vehicle_id: str) -> Dict[str, Any]:
     )
     if not matching_v:
         return {
+            "success": False,
+            "message": f"Véhicule '{vehicle_id}' introuvable.",
+            "error": f"Véhicule '{vehicle_id}' introuvable.",
             "vehicle_id": vehicle_id,
             "vehicle_name": vehicle_id,
             "total": 0,
@@ -334,6 +342,7 @@ def get_checkpoints_for_vehicle(vehicle_id: str) -> Dict[str, Any]:
     vehicle_name = matching_v.get("fields", {}).get("name") or vehicle_id
     checkpoints = _get(actual_id, vehicle_name=vehicle_name)
     return {
+        "success": True,
         "vehicle_id": actual_id,
         "vehicle_name": vehicle_name,
         "total": len(checkpoints),

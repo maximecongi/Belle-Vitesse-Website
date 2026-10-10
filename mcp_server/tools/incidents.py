@@ -38,10 +38,19 @@ def list_incidents(
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
-def get_incident(incident_id: Any) -> Optional[Dict[str, Any]]:
+def get_incident(incident_id: Any) -> Dict[str, Any]:
     """Récupère le détail exhaustif d'un incident par son ID numérique ou son numéro BVIC-XXXX."""
     from services.admin.incidents import get_incident_detail
-    return get_incident_detail(incident_id)
+    res = get_incident_detail(incident_id)
+    if not res:
+        return {
+            "success": False,
+            "message": f"Incident '{incident_id}' introuvable ou supprimé.",
+            "error": f"Incident '{incident_id}' introuvable ou supprimé.",
+        }
+    if isinstance(res, dict):
+        res["success"] = True
+    return res
 
 
 @mcp.tool()

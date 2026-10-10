@@ -662,6 +662,16 @@ def update_project(record_id, form, user_id=None):
     project.heads_to_check = ",".join(head_ids)
     project.last_action_by_id = user_id
 
+    # Synchronisation des décharges non signées avec les nouvelles dates et métadonnées du projet
+    from services.admin.waivers import _format_project_shooting_dates
+    formatted_dates = _format_project_shooting_dates(project, default_sep=" au ")
+    for w in [project.pilot_waiver, project.production_waiver]:
+        if w and w.status in ("to_generate", "to_send"):
+            w.project_name = project.name
+            w.shooting_dates = formatted_dates
+            if project.production:
+                w.production_name = project.production.name
+
     db.session.commit()
 
     # Détection de renommage / déplacement kDrive

@@ -50,13 +50,19 @@ def list_contacts(
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
-def get_contact(contact_id: int) -> Optional[Dict[str, Any]]:
+def get_contact(contact_id: int) -> Dict[str, Any]:
     """Récupère les détails d'un contact par son ID."""
     from services.admin.contacts import get_contact_for_edit
     res = get_contact_for_edit(contact_id)
-    if res:
-        res["job"] = res.get("job_title", "")
-        res["email"] = res.get("mail", "")
+    if not res:
+        return {
+            "success": False,
+            "message": f"Contact '{contact_id}' introuvable.",
+            "error": f"Contact '{contact_id}' introuvable.",
+        }
+    res["success"] = True
+    res["job"] = res.get("job_title", "")
+    res["email"] = res.get("mail", "")
     return res
 
 

@@ -48,7 +48,11 @@ def get_production(production_id: int) -> Optional[Dict[str, Any]]:
 
     prod = db.session.get(Production, production_id)
     if not prod:
-        return None
+        return {
+            "success": False,
+            "message": f"Société de production '{production_id}' introuvable.",
+            "error": f"Société de production '{production_id}' introuvable.",
+        }
 
     contacts_list = [
         {
@@ -79,6 +83,7 @@ def get_production(production_id: int) -> Optional[Dict[str, Any]]:
     ][:5]
 
     return {
+        "success": True,
         "id": prod.id,
         "name": prod.name,
         "address": prod.address or "",

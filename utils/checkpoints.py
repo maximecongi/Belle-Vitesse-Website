@@ -77,7 +77,7 @@ def get_checkpoints_for_vehicle(vehicle_id: str, batch_configs=None, vehicle_nam
                             'type': cp.get('type', 'status'),
                             'detail': indication,
                             'has_protocol': bool(cp.get('has_protocol') or cp['key'] in ('tires', 'brakes')),
-                            'protocol_url': cp.get('protocol_url') or '',
+                            'protocol_url': cp.get('protocol_url') or ('/admin/check-vehicles' if (cp.get('has_protocol') or cp['key'] in ('tires', 'brakes')) else ''),
                         }
                         if cp.get('unit'):
                             item['unit'] = cp['unit']

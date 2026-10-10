@@ -10,13 +10,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
     rel="stylesheet">
   {% if config.FLASK_ENV == 'production' %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.bundle.css') }}?v={{ asset_version('css/styles.bundle.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.bundle.css') }}?v={{ asset_version('css/admin/admin.bundle.css') }}">
+  <link rel="stylesheet"
+    href="{{ url_for('static', filename='css/styles.bundle.css') }}?v={{ asset_version('css/styles.bundle.css') }}">
+  <link rel="stylesheet"
+    href="{{ url_for('static', filename='css/admin/admin.bundle.css') }}?v={{ asset_version('css/admin/admin.bundle.css') }}">
   {% else %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v={{ asset_version('css/styles.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin.css') }}?v={{ asset_version('css/admin/admin.css') }}">
+  <link rel="stylesheet"
+    href="{{ url_for('static', filename='css/styles.css') }}?v={{ asset_version('css/styles.css') }}">
+  <link rel="stylesheet"
+    href="{{ url_for('static', filename='css/admin/admin.css') }}?v={{ asset_version('css/admin/admin.css') }}">
   {% endif %}
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin-check-vehicles.css') }}?v={{ asset_version('css/admin/admin-check-vehicles.css') }}">
+  <link rel="stylesheet"
+    href="{{ url_for('static', filename='css/admin/admin-check-vehicles.css') }}?v={{ asset_version('css/admin/admin-check-vehicles.css') }}">
 </head>
 
 <body>
@@ -231,7 +236,7 @@
         <tr class="data-row">
           <td>
             <div class="check-name">Serrage barres / arceau</div>
-            <div class="check-detail">eBike : x Nm à définir · eCar : 45 Nm</div>
+            <div class="check-detail">eBike : 45 Nm · eCar : 45 Nm</div>
           </td>
           <td>
             <div class="cell">
@@ -368,7 +373,7 @@
         <tr class="data-row">
           <td>
             <div class="check-name">Casques passagers</div>
-            <div class="check-detail">eTrike : x casques à définir</div>
+            <div class="check-detail">eTrike : casques homologués (tailles S à XL)</div>
           </td>
           <td>
             <div class="cell">
@@ -412,7 +417,7 @@
         <tr class="data-row">
           <td>
             <div class="check-name">Système de communication</div>
-            <div class="check-detail">À définir</div>
+            <div class="check-detail">Intercom pilote / cadreur opérationnel (casques & boîtiers chargés)</div>
           </td>
           <td>
             <div class="cell">
@@ -500,7 +505,8 @@
         </div>
 
         <div class="warn-banner">
-          <i data-lucide="alert-triangle"></i> Si un seul critère n'est pas validé — véhicule à réparer avant utilisation
+          <i data-lucide="alert-triangle"></i> Si un seul critère n'est pas validé — véhicule à réparer avant
+          utilisation
         </div>
       </div>
     </div>

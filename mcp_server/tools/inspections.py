@@ -35,14 +35,27 @@ def get_inspection_detail(mode: str, record_id: int) -> Optional[Dict[str, Any]]
     mode_clean = (mode or "").lower().strip()
     if mode_clean == "checkout":
         from services.admin.checkouts import get_checkout_detail
-        return get_checkout_detail(record_id)
+        res = get_checkout_detail(record_id)
     elif mode_clean == "checkin":
         from services.admin.checkins import get_checkin_detail
-        return get_checkin_detail(record_id)
-    return {
-        "error": f"Mode d'inspection invalide '{mode}'. Modes acceptés : 'checkout', 'checkin'.",
-        "allowed_modes": ["checkout", "checkin"],
-    }
+        res = get_checkin_detail(record_id)
+    else:
+        return {
+            "success": False,
+            "message": f"Mode d'inspection invalide '{mode}'. Modes acceptés : 'checkout', 'checkin'.",
+            "error": f"Mode d'inspection invalide '{mode}'. Modes acceptés : 'checkout', 'checkin'.",
+            "allowed_modes": ["checkout", "checkin"],
+        }
+
+    if not res:
+        return {
+            "success": False,
+            "message": f"Fiche d'inspection {mode_clean} '{record_id}' introuvable.",
+            "error": f"Fiche d'inspection {mode_clean} '{record_id}' introuvable.",
+        }
+    if isinstance(res, dict):
+        res["success"] = True
+    return res
 
 
 @mcp.tool()

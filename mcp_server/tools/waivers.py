@@ -9,6 +9,7 @@ from mcp_server.decorators import require_mcp_scope, run_in_flask_context
 def _serialize_waiver(w: Dict[str, Any]) -> Dict[str, Any]:
     """Sérialise proprement les objets date et datetime pour la réponse JSON et sécurise les jetons."""
     item = dict(w)
+    item["success"] = True
     # Sécurité : masquer le jeton de signature actif pour éviter toute fuite non autorisée
     has_token = bool(item.pop("signature_token", None))
     item["has_signature_token"] = has_token
@@ -102,7 +103,11 @@ def get_waiver_detail(mode: Optional[str] = None, waiver_id: Optional[str] = Non
             mode = None
 
     if not waiver_id:
-        return None
+        return {
+            "success": False,
+            "message": "Identifiant de décharge manquant.",
+            "error": "Identifiant de décharge manquant.",
+        }
 
     wid_str = str(waiver_id).strip()
     mode_clean = (mode or "").lower().strip()
@@ -118,6 +123,8 @@ def get_waiver_detail(mode: Optional[str] = None, waiver_id: Optional[str] = Non
     valid_modes = {"all", "pilot", "production"}
     if mode_clean not in valid_modes:
         return {
+            "success": False,
+            "message": f"Mode de décharge invalide '{mode}'. Modes acceptés : 'pilot', 'production', 'all'.",
             "error": f"Mode de décharge invalide '{mode}'. Modes acceptés : 'pilot', 'production', 'all'.",
             "allowed_modes": ["pilot", "production", "all"],
         }
@@ -198,7 +205,11 @@ def get_waiver_detail(mode: Optional[str] = None, waiver_id: Optional[str] = Non
                 "last_reminded_at": prw.last_reminded_at,
             })
 
-    return None
+    return {
+        "success": False,
+        "message": f"Décharge '{wid_str}' introuvable.",
+        "error": f"Décharge '{wid_str}' introuvable.",
+    }
 
 
 @mcp.tool()

@@ -158,7 +158,11 @@ def get_project(project_id: Any) -> Optional[Dict[str, Any]]:
 
     project = _resolve_project(project_id)
     if not project or project.deleted_at:
-        return None
+        return {
+            "success": False,
+            "message": f"Projet '{project_id}' introuvable ou supprimé.",
+            "error": f"Projet '{project_id}' introuvable ou supprimé.",
+        }
 
     # Mapping véhicules & têtes pour enrichissement
     all_veh_map = {v.get("id"): v for v in get_vehicles()}
@@ -233,6 +237,7 @@ def get_project(project_id: Any) -> Optional[Dict[str, Any]]:
 
     # Format de retour enrichi tout en conservant les clés legacy
     return {
+        "success": True,
         "id": project.id,
         "project_id": project.project_id,
         "name": project.name,
@@ -292,12 +297,20 @@ def get_project_hub(project_id: Any, compact: bool = True) -> Optional[Dict[str,
     from services.admin.project_reports import get_project_detail_context
 
     project = _resolve_project(project_id)
-    if not project:
-        return None
+    if not project or project.deleted_at:
+        return {
+            "success": False,
+            "message": f"Projet '{project_id}' introuvable ou supprimé.",
+            "error": f"Projet '{project_id}' introuvable ou supprimé.",
+        }
 
     context = get_project_detail_context(project.id)
     if not context:
-        return None
+        return {
+            "success": False,
+            "message": f"Détails du hub pour le projet '{project_id}' indisponibles.",
+            "error": f"Détails du hub pour le projet '{project_id}' indisponibles.",
+        }
 
     # Optimisation tokens : épurer les véhicules et têtes si compact
     vehicles_list = []
@@ -320,6 +333,7 @@ def get_project_hub(project_id: Any, compact: bool = True) -> Optional[Dict[str,
 
     # Sérialiser les données du contexte de manière propre et directement utilisable par l'agent IA
     return {
+        "success": True,
         "id": project.id,
         "project_id": project.project_id,
         "name": project.name,
