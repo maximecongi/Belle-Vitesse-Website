@@ -73,6 +73,7 @@ def matches_search_query(item: Union[Dict[str, Any], Any], query: Optional[str],
     if not q_norm:
         return True
 
+    field_vals = []
     for field in fields:
         val = None
         if isinstance(item, dict):
@@ -84,6 +85,15 @@ def matches_search_query(item: Union[Dict[str, Any], Any], query: Optional[str],
             val_norm = _normalize_text(val)
             if q_norm in val_norm:
                 return True
+            field_vals.append(val_norm)
+
+    # Recherche multi-termes (ex: "Isabelle Culver" sur first_name + last_name)
+    words = [w for w in q_norm.split() if len(w) > 1]
+    if len(words) > 1 and field_vals:
+        combined = " ".join(field_vals)
+        if all(w in combined for w in words):
+            return True
+
     return False
 
 

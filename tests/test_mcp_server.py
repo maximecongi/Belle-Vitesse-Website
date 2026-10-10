@@ -194,6 +194,8 @@ class MCPServerFullTestSuite(unittest.TestCase):
 
         det = contacts.get_contact(cnt_id)
         self.assertEqual(det.get("first_name"), "PyTest")
+        self.assertEqual(det.get("phone"), "0600000000")
+        self.assertIsNone(det.get("production_id"))
 
         # Test Patch mode: only update job without passing first_name/last_name
         res_u = contacts.update_contact(cnt_id, job="Chef Opérateur")
@@ -202,6 +204,28 @@ class MCPServerFullTestSuite(unittest.TestCase):
         self.assertEqual(det_after.get("first_name"), "PyTest")
         self.assertEqual(det_after.get("last_name"), "ContactMCP")
         self.assertEqual(det_after.get("job"), "Chef Opérateur")
+
+        # Test recherche multi-mots (nom complet)
+        search_full = contacts.list_contacts(query="PyTest ContactMCP")
+        self.assertGreaterEqual(search_full.get("total", 0), 1)
+
+        # Test contact sans téléphone ni production : valeurs manquantes à None
+        res_np = contacts.create_contact(
+            first_name="PyTestNoPhone",
+            last_name="ContactMCP",
+            job="Assistant",
+        )
+        self.assertTrue(res_np.get("success"))
+        all_c_np = contacts.list_contacts().get("contacts", [])
+        np_cnt = next((c for c in all_c_np if c.get("first_name") == "PyTestNoPhone"), None)
+        self.assertIsNotNone(np_cnt)
+        self.assertIsNone(np_cnt.get("phone"))
+        self.assertIsNone(np_cnt.get("production_id"))
+        np_det = contacts.get_contact(np_cnt["id"])
+        self.assertIsNone(np_det.get("phone"))
+        self.assertIsNone(np_det.get("production_id"))
+        self.assertIsNone(np_det.get("email"))
+        contacts.delete_contact(np_cnt["id"], confirm=True)
 
         guard = contacts.delete_contact(cnt_id, confirm=False)
         self.assertEqual(guard.get("status"), "requires_confirmation")

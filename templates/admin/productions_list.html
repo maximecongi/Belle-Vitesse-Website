@@ -31,9 +31,9 @@
                 <tr class="searchable-row"
                     data-search="{{ prod.name|lower }} {{ prod.address|lower if prod.address else '' }} {{ prod.email|lower if prod.email else '' }} {{ prod.phone if prod.phone else '' }}">
                     <td class="u-text-semibold">{{ prod.name }}</td>
-                    <td>{{ prod.address }}</td>
-                    <td>{{ prod.email }}</td>
-                    <td>{{ prod.phone }}</td>
+                    <td>{{ prod.address or "—" }}</td>
+                    <td>{{ prod.email or "—" }}</td>
+                    <td>{{ prod.phone or "—" }}</td>
                     <td>
                         <a href="{{ url_for('admin_productions.admin_production_edit', record_id=prod.id) }}"
                             class="admin-btn admin-btn-secondary">Éditer</a>

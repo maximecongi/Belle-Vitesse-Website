@@ -17,15 +17,15 @@ def list_contacts():
     fields_map = {
         "first_name": "first_name",
         "last_name": "last_name",
-        "phone": "phone",
-        "mail": "mail",
-        "email": "mail",
-        "job_title": "job_title",
-        "job": "job_title",
+        "phone": lambda r: r.phone.strip() if r.phone and r.phone.strip() not in ("", "—", "None") else None,
+        "mail": lambda r: r.mail.strip() if r.mail and r.mail.strip() not in ("", "—", "None") else None,
+        "email": lambda r: r.mail.strip() if r.mail and r.mail.strip() not in ("", "—", "None") else None,
+        "job_title": lambda r: r.job_title.strip() if r.job_title and r.job_title.strip() not in ("", "—", "None") else None,
+        "job": lambda r: r.job_title.strip() if r.job_title and r.job_title.strip() not in ("", "—", "None") else None,
         "production_id": lambda r: r.production_id,
         "production_name": lambda r: r.production_rel.name if r.production_rel else "Freelance",
     }
-    return generic_list_records(Contact, fields_map, order_by_attr=Contact.last_name)
+    return generic_list_records(Contact, fields_map, order_by_attr=Contact.last_name, default_empty=None)
 
 
 @handle_admin_service_error
@@ -68,8 +68,12 @@ def get_contact_for_edit(record_id):
     """Récupère les données d'un contact pour l'édition."""
     fields = ["first_name", "last_name", "phone", "mail", "production_id", "job_title"]
     data = generic_get_record_for_edit(Contact, record_id, fields)
-    if data and data.get("production_id") in ("", "—", "None"):
-        data["production_id"] = None
+    if data:
+        for k in ("phone", "mail", "job_title"):
+            if data.get(k) in ("", "—", "None"):
+                data[k] = None
+        if data.get("production_id") in ("", "—", "None"):
+            data["production_id"] = None
     return data
 
 

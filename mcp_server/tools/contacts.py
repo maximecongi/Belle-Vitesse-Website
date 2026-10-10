@@ -27,6 +27,12 @@ def list_contacts(
     all_contacts = _list()
     filtered = []
     for c in all_contacts:
+        # Nettoyage uniforme des valeurs manquantes vers None
+        for k in ("phone", "mail", "email", "job", "job_title"):
+            val = c.get(k)
+            if val in ("", "—", "None", None):
+                c[k] = None
+
         pid = c.get("production_id")
         if pid in ("", "—", "None", None):
             c["production_id"] = None
@@ -36,12 +42,15 @@ def list_contacts(
             except (ValueError, TypeError):
                 c["production_id"] = None
 
+        # Ajouter le champ combiné name pour faciliter la recherche multi-mots
+        c["name"] = f"{c.get('first_name', '')} {c.get('last_name', '')}".strip()
+
         if production_id is not None:
             c_pid = c.get("production_id")
             if c_pid != production_id:
                 continue
         if query and not matches_search_query(
-            c, query, ["first_name", "last_name", "job", "job_title", "mail", "email", "phone", "production_name"]
+            c, query, ["first_name", "last_name", "name", "job", "job_title", "mail", "email", "phone", "production_name"]
         ):
             continue
         filtered.append(c)
@@ -61,26 +70,33 @@ def list_contacts(
 @require_mcp_scope("read_only")
 def get_contact(contact_id: int) -> Dict[str, Any]:
     """Récupère les détails d'un contact par son ID."""
-    from services.admin.contacts import get_contact_for_edit
-    res = get_contact_for_edit(contact_id)
-    if not res:
+    from models import Contact, db
+    contact = db.session.get(Contact, contact_id)
+    if not contact:
         return {
             "success": False,
             "message": f"Contact '{contact_id}' introuvable.",
             "error": f"Contact '{contact_id}' introuvable.",
         }
-    res["success"] = True
-    pid = res.get("production_id")
-    if pid in ("", "—", "None", None):
-        res["production_id"] = None
-    else:
-        try:
-            res["production_id"] = int(pid)
-        except (ValueError, TypeError):
-            res["production_id"] = None
-    res["job"] = res.get("job_title", "")
-    res["email"] = res.get("mail", "")
-    return res
+
+    phone = contact.phone.strip() if contact.phone and contact.phone.strip() not in ("", "—", "None") else None
+    mail = contact.mail.strip() if contact.mail and contact.mail.strip() not in ("", "—", "None") else None
+    job_title = contact.job_title.strip() if contact.job_title and contact.job_title.strip() not in ("", "—", "None") else None
+
+    return {
+        "success": True,
+        "id": contact.id,
+        "first_name": contact.first_name or "",
+        "last_name": contact.last_name or "",
+        "name": f"{contact.first_name or ''} {contact.last_name or ''}".strip(),
+        "phone": phone,
+        "mail": mail,
+        "email": mail,
+        "job": job_title,
+        "job_title": job_title,
+        "production_id": contact.production_id,
+        "production_name": contact.production_rel.name if contact.production_rel else "Freelance",
+    }
 
 
 @mcp.tool()

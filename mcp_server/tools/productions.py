@@ -25,6 +25,9 @@ def list_productions(
     all_prods = _list()
     filtered = []
     for p in all_prods:
+        for k in ("address", "email", "phone"):
+            if p.get(k) in ("", "—", "None", None):
+                p[k] = None
         if query and not matches_search_query(p, query, ["name", "email", "phone", "address"]):
             continue
         filtered.append(p)
@@ -59,10 +62,11 @@ def get_production(production_id: int) -> Optional[Dict[str, Any]]:
             "id": c.id,
             "first_name": c.first_name,
             "last_name": c.last_name,
-            "job": c.job_title or "",
-            "job_title": c.job_title or "",
-            "email": c.mail or "",
-            "phone": c.phone or "",
+            "name": f"{c.first_name or ''} {c.last_name or ''}".strip(),
+            "job": c.job_title if c.job_title and c.job_title not in ("", "—", "None") else None,
+            "job_title": c.job_title if c.job_title and c.job_title not in ("", "—", "None") else None,
+            "email": c.mail if c.mail and c.mail not in ("", "—", "None") else None,
+            "phone": c.phone if c.phone and c.phone not in ("", "—", "None") else None,
         }
         for c in (prod.contacts or [])
     ]
@@ -86,9 +90,9 @@ def get_production(production_id: int) -> Optional[Dict[str, Any]]:
         "success": True,
         "id": prod.id,
         "name": prod.name,
-        "address": prod.address or "",
-        "email": prod.mail or "",
-        "phone": prod.phone or "",
+        "address": prod.address if prod.address and prod.address not in ("", "—", "None") else None,
+        "email": prod.mail if prod.mail and prod.mail not in ("", "—", "None") else None,
+        "phone": prod.phone if prod.phone and prod.phone not in ("", "—", "None") else None,
         "contacts": contacts_list,
         "contacts_count": len(contacts_list),
         "recent_projects": recent_projects,

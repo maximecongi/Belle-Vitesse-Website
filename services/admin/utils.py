@@ -162,7 +162,7 @@ def _is_ready(form_or_statuses, vehicle_id=None, is_checkout=False, battery_val=
 # ── Aides CRUD Génériques ──────────────────────────────────────────
 
 
-def generic_list_records(model, fields_map, order_by_attr=None):
+def generic_list_records(model, fields_map, order_by_attr=None, default_empty=None):
     """
     Récupérateur générique qui retourne une liste d'enregistrements formattés.
 
@@ -170,9 +170,10 @@ def generic_list_records(model, fields_map, order_by_attr=None):
         model: Classe du modèle SQLAlchemy.
         fields_map: Dict mappant les clés frontend aux attributs du modèle ou callables.
         order_by_attr: Attribut optionnel pour le tri.
+        default_empty: Valeur par défaut pour les champs vides ou None (None par défaut).
     """
     query = model.query
-    if order_by_attr:
+    if order_by_attr is not None:
         query = query.order_by(order_by_attr)
 
     records = query.all()
@@ -182,9 +183,11 @@ def generic_list_records(model, fields_map, order_by_attr=None):
         formatted = {"id": r.id}
         for key, attr in fields_map.items():
             if callable(attr):
-                formatted[key] = attr(r)
+                val = attr(r)
+                formatted[key] = val if val is not None and val != "" and val != "—" else default_empty
             else:
-                formatted[key] = getattr(r, attr) or "—"
+                val = getattr(r, attr, None)
+                formatted[key] = val if val is not None and val != "" and val != "—" else default_empty
         result.append(formatted)
 
     return result

@@ -21,7 +21,7 @@ def list_productions():
         "email": "mail",
         "phone": "phone",
     }
-    return generic_list_records(Production, fields_map, order_by_attr=Production.name)
+    return generic_list_records(Production, fields_map, order_by_attr=Production.name, default_empty=None)
 
 
 @handle_admin_service_error
