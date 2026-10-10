@@ -239,8 +239,8 @@ class MCPServerFullTestSuite(unittest.TestCase):
         det = projects.get_project(proj_id)
         self.assertEqual(det.get("name"), "PyTest Tournage MCP")
         if contact_id:
-            self.assertEqual(det.get("first_ac_contact_id"), str(contact_id))
-            self.assertEqual(det.get("key_grip_contact_id"), str(contact_id))
+            self.assertEqual(det.get("first_ac_contact_id"), contact_id)
+            self.assertEqual(det.get("key_grip_contact_id"), contact_id)
 
         # Test Patch mode: only updating notes without passing name or contacts
         res_u = projects.update_project(
@@ -252,8 +252,8 @@ class MCPServerFullTestSuite(unittest.TestCase):
         self.assertEqual(det_after.get("name"), "PyTest Tournage MCP")
         self.assertEqual(det_after.get("notes"), "Notes patchées uniquement")
         if contact_id:
-            self.assertEqual(det_after.get("first_ac_contact_id"), str(contact_id))
-            self.assertEqual(det_after.get("key_grip_contact_id"), str(contact_id))
+            self.assertEqual(det_after.get("first_ac_contact_id"), contact_id)
+            self.assertEqual(det_after.get("key_grip_contact_id"), contact_id)
 
         # Delete Guard & Confirm
         guard = projects.delete_project(proj_id, confirm=False)

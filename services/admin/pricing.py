@@ -208,10 +208,11 @@ def list_salary_rates():
     try:
         rates = SalaryRate.query.join(SalaryPosition).order_by(
             SalaryPosition.display_order, SalaryRate.id).all()
+        has_renfort = {r.position_id for r in rates if r.annexe == "Annexe 1 renfort"}
         results = []
         for r in rates:
             results.append(r.to_dict())
-            if r.annexe == "Annexe 1":
+            if r.annexe == "Annexe 1" and r.position_id not in has_renfort:
                 results.append(_make_renfort_rate_dict(r))
         return results
     except Exception as e:
@@ -229,13 +230,14 @@ def list_salary_rates_grouped():
         rates = SalaryRate.query.join(SalaryPosition).order_by(
             SalaryPosition.display_order, SalaryRate.id).all()
 
+        has_renfort = {r.position_id for r in rates if r.annexe == "Annexe 1 renfort"}
         grouped = OrderedDict()
         for r in rates:
             gname = r.group_name or "Sans groupe"
             if gname not in grouped:
                 grouped[gname] = []
             grouped[gname].append(r.to_dict())
-            if r.annexe == "Annexe 1":
+            if r.annexe == "Annexe 1" and r.position_id not in has_renfort:
                 grouped[gname].append(_make_renfort_rate_dict(r))
 
         return grouped
@@ -269,8 +271,8 @@ def add_salary_rate(group_name="", annexe="Annexe 1"):
     db.session.add(pos_obj)
     db.session.flush()
     
-    # Créer les 7 annexes pour cette nouvelle position
-    annexes = ["Annexe 1", "Annexe 3", "USPA", "USPA renfort", "Court-métrage", "Publicité", "Facture"]
+    # Créer les 8 annexes pour cette nouvelle position
+    annexes = ["Annexe 1", "Annexe 1 renfort", "Annexe 3", "USPA", "USPA renfort", "Court-métrage", "Publicité", "Facture"]
     new_rates = []
     
     for ann in annexes:
@@ -424,6 +426,25 @@ def update_salary_rate(rate_id, field, value):
                 _calculate_salary_columns(facture_rate)
                 if facture_rate not in affected_rates:
                     affected_rates.append(facture_rate)
+
+        # Synchroniser Annexe 1 renfort si Annexe 1 est modifiée
+        if field == "base_hourly" and rate.annexe == "Annexe 1":
+            renfort_rate = next((r for r in rate.position_ref.rates if r.annexe == "Annexe 1 renfort"), None)
+            if not renfort_rate:
+                renfort_rate = SalaryRate(
+                    position_id=rate.position_ref.id,
+                    annexe="Annexe 1 renfort",
+                    base_hourly=rate.base_hourly
+                )
+                _calculate_salary_columns(renfort_rate)
+                db.session.add(renfort_rate)
+                if renfort_rate not in affected_rates:
+                    affected_rates.append(renfort_rate)
+            else:
+                renfort_rate.base_hourly = rate.base_hourly
+                _calculate_salary_columns(renfort_rate)
+                if renfort_rate not in affected_rates:
+                    affected_rates.append(renfort_rate)
 
     db.session.commit()
     

@@ -255,8 +255,8 @@ def get_project(project_id: Any) -> Optional[Dict[str, Any]]:
         "pilot_contact_id": project.pilot_contact_id,
         "production_contact_id": project.production_contact_id,
         "dop_contact_id": project.dop_contact_id,
-        "first_ac_contact_id": str(project.first_ac_contact_id) if project.first_ac_contact_id else "",
-        "key_grip_contact_id": str(project.key_grip_contact_id) if project.key_grip_contact_id else "",
+        "first_ac_contact_id": project.first_ac_contact_id,
+        "key_grip_contact_id": project.key_grip_contact_id,
         "vehicle_ids": veh_ids,
         "head_ids": head_ids,
         # Données enrichies

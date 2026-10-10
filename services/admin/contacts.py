@@ -22,7 +22,7 @@ def list_contacts():
         "email": "mail",
         "job_title": "job_title",
         "job": "job_title",
-        "production_id": "production_id",
+        "production_id": lambda r: r.production_id,
         "production_name": lambda r: r.production_rel.name if r.production_rel else "Freelance",
     }
     return generic_list_records(Contact, fields_map, order_by_attr=Contact.last_name)
@@ -67,7 +67,10 @@ def update_contact(record_id, form):
 def get_contact_for_edit(record_id):
     """Récupère les données d'un contact pour l'édition."""
     fields = ["first_name", "last_name", "phone", "mail", "production_id", "job_title"]
-    return generic_get_record_for_edit(Contact, record_id, fields)
+    data = generic_get_record_for_edit(Contact, record_id, fields)
+    if data and data.get("production_id") in ("", "—", "None"):
+        data["production_id"] = None
+    return data
 
 
 def delete_contact(record_id):

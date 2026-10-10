@@ -27,9 +27,18 @@ def list_contacts(
     all_contacts = _list()
     filtered = []
     for c in all_contacts:
+        pid = c.get("production_id")
+        if pid in ("", "—", "None", None):
+            c["production_id"] = None
+        else:
+            try:
+                c["production_id"] = int(pid)
+            except (ValueError, TypeError):
+                c["production_id"] = None
+
         if production_id is not None:
             c_pid = c.get("production_id")
-            if c_pid != production_id and str(c_pid) != str(production_id):
+            if c_pid != production_id:
                 continue
         if query and not matches_search_query(
             c, query, ["first_name", "last_name", "job", "job_title", "mail", "email", "phone", "production_name"]
@@ -61,6 +70,14 @@ def get_contact(contact_id: int) -> Dict[str, Any]:
             "error": f"Contact '{contact_id}' introuvable.",
         }
     res["success"] = True
+    pid = res.get("production_id")
+    if pid in ("", "—", "None", None):
+        res["production_id"] = None
+    else:
+        try:
+            res["production_id"] = int(pid)
+        except (ValueError, TypeError):
+            res["production_id"] = None
     res["job"] = res.get("job_title", "")
     res["email"] = res.get("mail", "")
     return res
