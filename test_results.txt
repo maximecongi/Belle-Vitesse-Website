@@ -28,6 +28,14 @@ test_api_with_invalid_token (test_api.APIRouteSmokeTest.test_api_with_invalid_to
 GET /api/v1/checkouts with invalid token returns 401. ... ok
 test_api_with_valid_jwt (test_api.APIRouteSmokeTest.test_api_with_valid_jwt)
 GET /api/v1/checkouts with valid JWT returns 200. ... ok
+test_purge_old_kdrive_backups (test_backup_sql.BackupSQLTestCase.test_purge_old_kdrive_backups)
+Vérifie la détection et la suppression des anciennes archives sur kDrive. ... ok
+test_purge_old_local_backups (test_backup_sql.BackupSQLTestCase.test_purge_old_local_backups)
+Vérifie que les archives locales antérieures au seuil de rétention sont supprimées. ... ok
+test_run_backup_creates_valid_gzip (test_backup_sql.BackupSQLTestCase.test_run_backup_creates_valid_gzip)
+Vérifie que run_backup produit bien un fichier .sql.gz lisible et valide. ... ok
+test_sync_backup_to_kdrive (test_backup_sql.BackupSQLTestCase.test_sync_backup_to_kdrive)
+Vérifie l'arborescence kDrive et le téléversement de l'archive SQL. ... ok
 test_calendar_feed_alias_route (test_calendar_feed.CalendarFeedTestCase.test_calendar_feed_alias_route)
 Vérifie que la route alias /calendar/feed.ics?token=... fonctionne. ... ok
 test_calendar_feed_continuous_project (test_calendar_feed.CalendarFeedTestCase.test_calendar_feed_continuous_project)
@@ -490,6 +498,6 @@ test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.W
 Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
 ----------------------------------------------------------------------
-Ran 288 tests in 30.261s
+Ran 292 tests in 29.833s
 
 OK
