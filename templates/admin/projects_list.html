@@ -31,14 +31,15 @@ is_archive) }}
             <tr class="searchable-row"
                 data-search="{{ project.name|lower }} {{ project.production|lower }} {{ project.project_id|lower }} {{ project.notes|lower if project.notes else '' }} {% for h in project.heads %}{{ h.name|lower }} {% endfor %}">
                 <td class="u-text-semibold u-text-lg">
-                    {{ project.name }}<br>
-                    <br><span class="u-text-xs u-text-muted">{{ project.production }}</span><br><br>
-                    <div class="u-flex u-align-center u-gap-2 u-flex-wrap">
-                        <span class="checkout-doc-id">{{ project.project_id }}</span>
+                    <div class="u-flex u-align-start u-flex-column u-gap-1">
+                        {{ project.name }} <span class="u-text-xs u-text-muted">{{ project.production }}</span>
+
                         {{ shoot_status_badge(project.shoot_status) }}
                     </div>
+                    <br>
                     <div class="project-hub-dates-pills project-table-dates-pills u-mt-2">
-                        <span class="project-hub-date-pill pill-departure" title="Date de départ (enlèvement du matériel)">
+                        <span class="project-hub-date-pill pill-departure"
+                            title="Date de départ (enlèvement du matériel)">
                             <i data-lucide="truck"></i>
                             <span>{{ project.departure_date }}</span>
                         </span>
@@ -46,39 +47,25 @@ is_archive) }}
                             <i data-lucide="clapperboard"></i>
                             <span>
                                 {% if project.date_mode == 'punctual' and project.shoot_dates %}
-                                    {{ project.shoot_dates_label }}
-                                {% elif project.shoot_start != '—' and project.shoot_end != '—' and project.shoot_start != project.shoot_end %}
-                                    {{ project.shoot_start }} → {{ project.shoot_end }}
+                                {{ project.shoot_dates_label }}
+                                {% elif project.shoot_start != '—' and project.shoot_end != '—' and project.shoot_start
+                                != project.shoot_end %}
+                                {{ project.shoot_start }} → {{ project.shoot_end }}
                                 {% elif project.shoot_start != '—' %}
-                                    {{ project.shoot_start }}
+                                {{ project.shoot_start }}
                                 {% elif project.shoot_end != '—' %}
-                                    Jusqu'au {{ project.shoot_end }}
+                                Jusqu'au {{ project.shoot_end }}
                                 {% else %}
-                                    Dates à confirmer
+                                Dates à confirmer
                                 {% endif %}
                             </span>
                         </span>
-                        <span class="project-hub-date-pill pill-return" title="Date de retour (restitution du matériel)">
+                        <span class="project-hub-date-pill pill-return"
+                            title="Date de retour (restitution du matériel)">
                             <i data-lucide="package-check"></i>
                             <span>{{ project.return_date }}</span>
                         </span>
                     </div>
-                    {% if project.heads %}
-                    <div class="projects-heads-container">
-                        {% for h in project.heads %}
-                        <span class="projects-head-badge">
-                            🤖 {{ h.name }}
-                        </span>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                    {% if project.notes %}
-                    <div class="admin-tooltip-container u-mt-2">
-                        <div class="note-tooltip-trigger projects-note-trigger">
-                            📝 {{ project.notes | truncate(80) }}
-                        </div>
-                    </div>
-                    {% endif %}
                 </td>
                 <td>
                     {% for v in project.vehicles %}

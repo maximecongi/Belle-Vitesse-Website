@@ -116,13 +116,6 @@
 }
 
 
-.projects-heads-container {
-    margin-top: 0.8rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.3rem;
-}
-
 .projects-head-badge {
     background: #f1f5f9;
     color: #475569;
@@ -1563,14 +1556,17 @@
 
 .project-table-dates-pills {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 0.3rem;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
 .project-table-dates-pills .project-hub-date-pill {
     font-size: 0.7rem;
     padding: 0.15rem 0.45rem;
     line-height: 1.3;
+    white-space: nowrap;
 }
 
 .project-hub-calendar-viewport {
