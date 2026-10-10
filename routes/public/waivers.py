@@ -20,6 +20,7 @@ from utils.storage import (
     get_pilot_attachments_path,
     get_production_attachments_path,
 )
+from utils.image_utils import optimize_and_save_image, IMAGE_EXTENSIONS
 
 # ── Aides Partagées ─────────────────────────────────────────────
 
@@ -114,9 +115,16 @@ def init_waiver_routes(app):
                     if file and file.filename:
                         upload_dir = ensure_dir(
                             get_pilot_attachments_path(waiver.project, doc_type))
-                        fname = f"{field}_{int(datetime.now().timestamp())}_{secure_filename(file.filename)}"
+                        ext = os.path.splitext(file.filename)[1].lower()
+                        stem = os.path.splitext(secure_filename(file.filename))[0]
+                        if ext in ('.heic', '.heif'):
+                            ext = '.jpg'
+                        fname = f"{field}_{int(datetime.now().timestamp())}_{stem}{ext}"
                         file_path = os.path.join(upload_dir, fname)
-                        file.save(file_path)
+                        if ext in IMAGE_EXTENSIONS or ext == '.jpg':
+                            optimize_and_save_image(file, file_path)
+                        else:
+                            file.save(file_path)
                         setattr(waiver, attr, os.path.relpath(
                             file_path, output_base))
             else:
@@ -138,9 +146,16 @@ def init_waiver_routes(app):
                 if file and file.filename:
                     upload_dir = ensure_dir(
                         get_production_attachments_path(waiver.project, 'insurance'))
-                    fname = f"prod_insurance_{int(datetime.now().timestamp())}_{secure_filename(file.filename)}"
+                    ext = os.path.splitext(file.filename)[1].lower()
+                    stem = os.path.splitext(secure_filename(file.filename))[0]
+                    if ext in ('.heic', '.heif'):
+                        ext = '.jpg'
+                    fname = f"prod_insurance_{int(datetime.now().timestamp())}_{stem}{ext}"
                     file_path = os.path.join(upload_dir, fname)
-                    file.save(file_path)
+                    if ext in IMAGE_EXTENSIONS or ext == '.jpg':
+                        optimize_and_save_image(file, file_path)
+                    else:
+                        file.save(file_path)
                     waiver.production_insurance_path = os.path.relpath(
                         file_path, output_base)
 

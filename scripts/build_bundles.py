@@ -54,6 +54,7 @@ ADMIN_CSS_FILES: List[str] = [
 ]
 
 ADMIN_JS_FILES: List[str] = [
+    "js/src/common/image-compressor.js",
     "js/src/admin/flash.js",
     "js/src/admin/nav.js",
     "js/src/admin/selects.js",
@@ -64,6 +65,7 @@ ADMIN_JS_FILES: List[str] = [
     "js/src/admin/cmdk.js",
     "js/src/admin/inspections.js",
     "js/src/admin/photo-annotator.js",
+    "js/src/admin/inspection-autosave.js",
     "js/src/admin/ios-bridge.js",
     "js/src/admin/waiver-search.js",
     "js/src/admin/incident-form.js",
@@ -75,6 +77,7 @@ ADMIN_JS_FILES: List[str] = [
 ]
 
 PUBLIC_JS_FILES: List[str] = [
+    "js/src/common/image-compressor.js",
     "js/src/initialization.js",
     "js/src/splide.js",
     "js/src/countup.js",

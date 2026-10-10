@@ -8,6 +8,12 @@ import logging
 from pathlib import Path
 from PIL import Image, ImageOps
 
+try:
+    import pillow_heif
+    pillow_heif.register_heif_opener()
+except ImportError:
+    pass
+
 logger = logging.getLogger(__name__)
 
 IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif'}
@@ -17,14 +23,20 @@ def optimize_and_save_image(file_storage, target_path, max_dimension=1920, quali
     """
     Optimise et sauvegarde une image uploadée (Werkzeug FileStorage, bytes ou chemin).
 
-    1. Redresse l'image selon son orientation EXIF (smartphone).
-    2. Redimensionne proportionnellement si max(largeur, hauteur) > max_dimension.
-    3. Compresse en format optimisé (JPEG/WebP/PNG) avec une qualité configurable (défaut: 85).
-    4. Fallback gracieux vers un enregistrement brut si ce n'est pas une image ou en cas d'erreur.
+    1. Décode les formats standards ainsi que HEIC/HEIF (photos iPhone).
+    2. Redresse l'image selon son orientation EXIF (smartphone).
+    3. Redimensionne proportionnellement si max(largeur, hauteur) > max_dimension.
+    4. Compresse en format optimisé web (JPEG/WebP/PNG) avec une qualité configurable (défaut: 95).
+    5. Convertit systématiquement les sorties HEIC/HEIF en .jpg pour compatibilité web et PDF.
+    6. Fallback gracieux vers un enregistrement brut si ce n'est pas une image ou en cas d'erreur.
 
     Retourne True si l'image a été optimisée, False si sauvegardée brute.
     """
     target_path = Path(target_path)
+    # Conversion automatique de l'extension HEIC/HEIF vers .jpg pour compatibilité web & WeasyPrint
+    if target_path.suffix.lower() in ('.heic', '.heif'):
+        target_path = target_path.with_suffix('.jpg')
+
     target_path.parent.mkdir(parents=True, exist_ok=True)
 
     suffix = target_path.suffix.lower()

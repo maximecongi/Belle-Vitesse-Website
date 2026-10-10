@@ -318,9 +318,14 @@
 
     const incidentPhotoRegistry = {};
 
-    function previewFiles(input, containerId) {
+    async function previewFiles(input, containerId) {
         const container = document.getElementById(containerId);
         if (!container) return;
+
+        if (input.files && input.files.length > 0 && typeof window.compressFileInput === 'function' && input.dataset.compressed !== 'true') {
+            container.innerHTML = '<div class="u-text-xs u-text-muted u-p-1"><span class="image-compress-spinner"></span> Optimisation des photos en cours…</div>';
+            await window.compressFileInput(input);
+        }
         container.innerHTML = '';
         incidentPhotoRegistry[input.name || containerId] = [];
 

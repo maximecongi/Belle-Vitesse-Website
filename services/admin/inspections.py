@@ -376,6 +376,9 @@ def upload_inspection_photos_shared(mode, record, files=None, form=None):
                 safe_name = secure_filename(filename) or f"photo_{i+1}.jpg"
                 stem = Path(safe_name).stem
                 ext = Path(safe_name).suffix or ".jpg"
+                if ext.lower() in ('.heic', '.heif'):
+                    ext = ".jpg"
+                    safe_name = f"{stem}.jpg"
 
                 # Garantir l'unicité du fichier pour éviter tout écrasement accidentel
                 counter = 1

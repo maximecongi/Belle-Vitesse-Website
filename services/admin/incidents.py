@@ -1535,7 +1535,11 @@ def _save_uploaded_files(file_list, subfolder="photos"):
             continue
 
         unique_prefix = uuid.uuid4().hex[:8]
-        safe_name = f"{unique_prefix}_{original_name}"
+        stem = Path(original_name).stem
+        ext = Path(original_name).suffix or ".jpg"
+        if subfolder == "photos" and ext.lower() in ('.heic', '.heif'):
+            ext = ".jpg"
+        safe_name = f"{unique_prefix}_{stem}{ext}"
         target_path = dest_dir / safe_name
 
         try:

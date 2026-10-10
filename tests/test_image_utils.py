@@ -73,6 +73,23 @@ class ImageUtilsTest(unittest.TestCase):
         with open(target_path, "rb") as f:
             self.assertEqual(f.read(), raw_text)
 
+    def test_heic_extension_normalized_to_jpg(self):
+        """Vérifie qu'une cible avec extension .heic est automatiquement écrite sous format .jpg."""
+        img = Image.new("RGB", (600, 400), color=(100, 150, 200))
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG")
+        buf.seek(0)
+
+        target_path_heic = os.path.join(self.temp_dir.name, "photo_iphone.heic")
+        success = optimize_and_save_image(buf, target_path_heic)
+        self.assertTrue(success)
+
+        # Le fichier sauvegardé doit être photo_iphone.jpg
+        expected_jpg = os.path.join(self.temp_dir.name, "photo_iphone.jpg")
+        self.assertTrue(os.path.exists(expected_jpg))
+        with Image.open(expected_jpg) as out_img:
+            self.assertEqual(out_img.format, "JPEG")
+
 
 if __name__ == "__main__":
     unittest.main()

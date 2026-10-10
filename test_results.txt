@@ -161,6 +161,8 @@ test_convert_rgba_to_jpeg (test_image_utils.ImageUtilsTest.test_convert_rgba_to_
 Vérifie qu'une image avec canal alpha (RGBA) est convertie sans erreur en JPEG. ... ok
 test_fallback_non_image (test_image_utils.ImageUtilsTest.test_fallback_non_image)
 Vérifie le fallback gracieux lorsqu'un fichier texte ou corrompu est fourni. ... ok
+test_heic_extension_normalized_to_jpg (test_image_utils.ImageUtilsTest.test_heic_extension_normalized_to_jpg)
+Vérifie qu'une cible avec extension .heic est automatiquement écrite sous format .jpg. ... ok
 test_resize_large_image (test_image_utils.ImageUtilsTest.test_resize_large_image)
 Vérifie qu'une image de grande dimension est redimensionnée à max 1920px. ... ok
 test_save_png_format (test_image_utils.ImageUtilsTest.test_save_png_format)
@@ -488,6 +490,6 @@ test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.W
 Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
 ----------------------------------------------------------------------
-Ran 287 tests in 31.120s
+Ran 288 tests in 30.261s
 
 OK

@@ -3,6 +3,250 @@
  * Concaténé et validé automatiquement par scripts/build_bundles.py.
  */
 
+/* ── js/src/common/image-compressor.js ── */
+/**
+ * image-compressor.js — Optimisation et compression automatique des photos côté client.
+ *
+ * Réduit la résolution (max 1920px) et compresse en JPEG 85% avant l'envoi HTTP
+ * pour prévenir les timeouts 4G sur mobile et réduire la charge serveur / RAM WeasyPrint.
+ */
+
+(function () {
+    'use strict';
+
+    /**
+     * Formate une taille en octets de manière lisible (ex: 1.4 Mo).
+     */
+    function formatBytes(bytes) {
+        if (!bytes || bytes <= 0) return '0 o';
+        const k = 1024;
+        const sizes = ['o', 'Ko', 'Mo', 'Go'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    /**
+     * Compresse un fichier Image unique via Canvas HTML5.
+     * @param {File} file 
+     * @param {Object} options { maxDimension: 1920, quality: 0.85 }
+     * @returns {Promise<File>}
+     */
+    function compressImageFile(file, options) {
+        options = options || {};
+        const maxDimension = options.maxDimension || 1920;
+        const quality = options.quality !== undefined ? options.quality : 0.85;
+
+        // Ne traiter que les fichiers images (ignorer les PDFs ou documents)
+        const isImage = (file.type && file.type.startsWith('image/')) ||
+            /\.(jpe?g|png|webp|heic|heif)$/i.test(file.name);
+
+        if (!isImage || file.type === 'image/svg+xml') {
+            return Promise.resolve(file);
+        }
+
+        return new Promise((resolve) => {
+            const img = new Image();
+            let objectUrl = null;
+
+            try {
+                objectUrl = URL.createObjectURL(file);
+            } catch (err) {
+                resolve(file);
+                return;
+            }
+
+            img.onload = function () {
+                if (objectUrl) URL.revokeObjectURL(objectUrl);
+
+                let width = img.naturalWidth || img.width;
+                let height = img.naturalHeight || img.height;
+
+                // Si l'image est déjà légère (< 400 Ko) et dans les dimensions cibles, conserver
+                if (file.size < 400 * 1024 && width <= maxDimension && height <= maxDimension && file.type === 'image/jpeg') {
+                    resolve(file);
+                    return;
+                }
+
+                // Calcul du redimensionnement proportionnel
+                if (width > maxDimension || height > maxDimension) {
+                    if (width > height) {
+                        height = Math.round((height * maxDimension) / width);
+                        width = maxDimension;
+                    } else {
+                        width = Math.round((width * maxDimension) / height);
+                        height = maxDimension;
+                    }
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    resolve(file);
+                    return;
+                }
+
+                // Fond blanc uni pour éviter toute transparence noire lors de la conversion JPEG
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, width, height);
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob(
+                    function (blob) {
+                        if (!blob) {
+                            resolve(file);
+                            return;
+                        }
+
+                        // Conserver le fichier d'origine s'il était déjà plus léger et de bonne dimension
+                        if (blob.size >= file.size && width === img.naturalWidth && height === img.naturalHeight) {
+                            resolve(file);
+                            return;
+                        }
+
+                        const baseName = file.name.replace(/\.(heic|heif|png|webp|jpeg|jpg)$/i, '');
+                        const newName = (baseName || 'photo') + '.jpg';
+
+                        const compressedFile = new File([blob], newName, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now(),
+                        });
+
+                        resolve(compressedFile);
+                    },
+                    'image/jpeg',
+                    quality
+                );
+            };
+
+            img.onerror = function () {
+                if (objectUrl) URL.revokeObjectURL(objectUrl);
+                // Repli gracieux vers le fichier original (géré côté serveur par Pillow/pillow-heif)
+                resolve(file);
+            };
+
+            img.src = objectUrl;
+        });
+    }
+
+    /**
+     * Compresse tous les fichiers présents dans un HTMLInputElement type="file".
+     * @param {HTMLInputElement} input 
+     * @param {Object} options 
+     * @returns {Promise<{originalTotal: number, compressedTotal: number, count: number}>}
+     */
+    async function compressFileInput(input, options) {
+        if (!input || !input.files || input.files.length === 0) {
+            return { originalTotal: 0, compressedTotal: 0, count: 0 };
+        }
+
+        // Éviter les doubles compressions récursives
+        if (input.dataset.compressing === 'true' || input.dataset.compressed === 'true') {
+            return { originalTotal: 0, compressedTotal: 0, count: 0 };
+        }
+
+        input.dataset.compressing = 'true';
+
+        const files = Array.from(input.files);
+        let originalTotal = 0;
+        files.forEach(f => originalTotal += f.size);
+
+        // Afficher l'indicateur visuel de compression si un conteneur parent existe
+        renderStatusBadge(input, 'compressing', files.length);
+
+        const promises = files.map(f => compressImageFile(f, options));
+        const compressedFiles = await Promise.all(promises);
+
+        let compressedTotal = 0;
+        compressedFiles.forEach(f => compressedTotal += f.size);
+
+        // Remplacer la FileList via DataTransfer standard
+        try {
+            const dt = new DataTransfer();
+            compressedFiles.forEach(f => dt.items.add(f));
+            input.files = dt.files;
+            input.dataset.compressed = 'true';
+        } catch (dtErr) {
+            console.warn('DataTransfer non supporté par ce navigateur :', dtErr);
+        } finally {
+            input.dataset.compressing = 'false';
+        }
+
+        renderStatusBadge(input, 'success', compressedFiles.length, originalTotal, compressedTotal);
+
+        return {
+            originalTotal: originalTotal,
+            compressedTotal: compressedTotal,
+            count: compressedFiles.length
+        };
+    }
+
+    /**
+     * Rendu visuel d'un badge d'état non intrusif pour l'utilisateur.
+     */
+    function renderStatusBadge(input, state, count, origSize, compSize) {
+        // Trouver ou créer l'élément de feedback
+        let container = input.closest('.form-group') || input.parentElement;
+        if (!container) return;
+
+        let badge = container.querySelector('.image-compress-status');
+        if (!badge) {
+            badge = document.createElement('div');
+            badge.className = 'image-compress-status';
+            // Insérer après l'input ou son label
+            if (input.nextSibling) {
+                container.insertBefore(badge, input.nextSibling);
+            } else {
+                container.appendChild(badge);
+            }
+        }
+
+        if (state === 'compressing') {
+            badge.className = 'image-compress-status is-compressing';
+            badge.innerHTML = '<span class="image-compress-spinner"></span> Optimisation de ' + count + ' photo(s) en cours…';
+        } else if (state === 'success') {
+            badge.className = 'image-compress-status is-success';
+            const gain = origSize > compSize ? ' (' + formatBytes(compSize) + ' au lieu de ' + formatBytes(origSize) + ')' : '';
+            badge.innerHTML = '<i data-lucide="sparkles"></i> ' + count + ' photo(s) optimisée(s)' + gain;
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
+        }
+    }
+
+    /**
+     * Initialisation globale sur tous les inputs photos de la page.
+     */
+    function initAutoImageCompression() {
+        document.addEventListener('change', async function (e) {
+            const target = e.target;
+            if (target && target.tagName === 'INPUT' && target.type === 'file') {
+                const accept = target.getAttribute('accept') || '';
+                const isImageInput = accept.includes('image') || target.classList.contains('u-file-compress');
+                if (isImageInput && target.files && target.files.length > 0) {
+                    if (target.dataset.compressing !== 'true' && target.dataset.compressed !== 'true') {
+                        await compressFileInput(target);
+                        // Émettre un événement pour signaler que les fichiers compressés sont prêts
+                        target.dispatchEvent(new CustomEvent('photos-compressed', { bubbles: true }));
+                    }
+                }
+            }
+        });
+    }
+
+    // Export des méthodes dans window pour utilisation par inspections.js et annotator
+    window.compressImageFile = compressImageFile;
+    window.compressFileInput = compressFileInput;
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAutoImageCompression);
+    } else {
+        initAutoImageCompression();
+    }
+})();
+;
+
 /* ── js/src/admin/flash.js ── */
 /**
  * flash.js — Gestion des messages flash et toasts d'administration.
@@ -2580,9 +2824,15 @@ window.initCmdK = initCmdK;
 const inspectionPhotoRegistry = window.inspectionPhotoRegistry || {};
 window.inspectionPhotoRegistry = inspectionPhotoRegistry;
 
-function updatePhotoLabel(input) {
+async function updatePhotoLabel(input) {
     const preview = document.querySelector(`.photo-preview[data-for="${input.name}"]`);
     if (!preview) return;
+
+    // Compression et optimisation préalable si des fichiers sont sélectionnés
+    if (input.files && input.files.length > 0 && typeof window.compressFileInput === 'function' && input.dataset.compressed !== 'true') {
+        preview.innerHTML = '<div class="u-text-xs u-text-muted u-p-1"><span class="image-compress-spinner"></span> Optimisation des photos en cours…</div>';
+        await window.compressFileInput(input);
+    }
     preview.innerHTML = '';
 
     // Initialise le registre pour ce champ
@@ -4166,6 +4416,265 @@ window.initInspectionDetail = initInspectionDetail;
 })();
 ;
 
+/* ── js/src/admin/inspection-autosave.js ── */
+/**
+ * inspection-autosave.js — Sauvegarde automatique locale (localStorage) et résilience hors-ligne
+ * pour les formulaires d'inspection (Check-out & Check-in).
+ *
+ * Évite la perte des données de saisie (jauges, kilomètres, cases à cocher, notes)
+ * en cas de coupure 4G sur le terrain ou rechargement involontaire de la page.
+ */
+
+(function () {
+    'use strict';
+
+    const STORAGE_PREFIX = 'bv_autosave_';
+    const MAX_DRAFT_AGE_HOURS = 48;
+
+    function getStorageKey() {
+        const path = window.location.pathname || 'inspection';
+        return STORAGE_PREFIX + encodeURIComponent(path);
+    }
+
+    function formatTimeAgo(timestamp) {
+        if (!timestamp) return 'récemment';
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diffMinutes = Math.floor((now - date) / (1000 * 60));
+
+        if (diffMinutes < 1) return "à l'instant";
+        if (diffMinutes < 60) return `il y a ${diffMinutes} min`;
+
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const isToday = date.toDateString() === now.toDateString();
+
+        if (isToday) {
+            return `aujourd'hui à ${hours}:${minutes}`;
+        }
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        return `le ${day}/${month} à ${hours}:${minutes}`;
+    }
+
+    function serializeForm(form) {
+        const data = {};
+        const elements = form.elements;
+
+        for (let i = 0; i < elements.length; i++) {
+            const el = elements[i];
+            const name = el.name;
+
+            // Ignorer les champs sans nom, les tokens CSRF et les fichiers (non sérialisables en texte)
+            if (!name || name === 'csrf_token' || el.type === 'file' || el.type === 'password') {
+                continue;
+            }
+
+            if (el.type === 'checkbox') {
+                data[name] = el.checked;
+            } else if (el.type === 'radio') {
+                if (el.checked) {
+                    data[name] = el.value;
+                }
+            } else {
+                data[name] = el.value;
+            }
+        }
+
+        return {
+            timestamp: Date.now(),
+            fields: data
+        };
+    }
+
+    function saveDraft(form) {
+        try {
+            const serialized = serializeForm(form);
+            // Si le formulaire est totalement vide, ne pas encombrer le localStorage
+            const nonEmp = Object.keys(serialized.fields).filter(k => {
+                const val = serialized.fields[k];
+                return val !== '' && val !== false && val !== null;
+            });
+            if (nonEmp.length === 0) return;
+
+            localStorage.setItem(getStorageKey(), JSON.stringify(serialized));
+        } catch (e) {
+            console.warn('Impossible de sauvegarder le brouillon dans localStorage :', e);
+        }
+    }
+
+    function clearDraft() {
+        try {
+            localStorage.removeItem(getStorageKey());
+        } catch (e) {
+            // Ignorer silencieusement
+        }
+    }
+
+    function restoreDraft(form, fields) {
+        if (!form || !fields) return;
+
+        Object.keys(fields).forEach(name => {
+            const val = fields[name];
+            const elements = form.querySelectorAll(`[name="${name}"]`);
+
+            if (elements.length === 0) return;
+
+            if (elements.length === 1 && elements[0].type === 'checkbox') {
+                elements[0].checked = Boolean(val);
+                elements[0].dispatchEvent(new Event('change', { bubbles: true }));
+            } else if (elements[0].type === 'radio') {
+                elements.forEach(radio => {
+                    if (radio.value === String(val)) {
+                        radio.checked = true;
+                        radio.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+            } else {
+                elements.forEach(el => {
+                    el.value = val;
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                    el.dispatchEvent(new Event('change', { bubbles: true }));
+
+                    // Mettre à jour l'affichage des sélecteurs riches personnalisés si existants
+                    const parentRich = el.closest('.rich-select');
+                    if (parentRich) {
+                        const triggerLabel = parentRich.querySelector('.badge-select-trigger span:first-child');
+                        const selectedBtn = parentRich.querySelector(`.rich-select-option[data-id="${val}"]`);
+                        if (triggerLabel && selectedBtn) {
+                            const nameAttr = selectedBtn.getAttribute('data-name');
+                            if (nameAttr) triggerLabel.textContent = nameAttr;
+                        }
+                    }
+                });
+            }
+        });
+
+        // Déclencher un événement personnalisé signalant la restauration
+        form.dispatchEvent(new CustomEvent('inspection-draft-restored', { bubbles: true }));
+    }
+
+    function initAutosave() {
+        const form = document.getElementById('inspectionForm');
+        if (!form) return;
+
+        const storageKey = getStorageKey();
+        let rawDraft = null;
+
+        try {
+            rawDraft = localStorage.getItem(storageKey);
+        } catch (e) {
+            return;
+        }
+
+        if (rawDraft) {
+            try {
+                const draft = JSON.parse(rawDraft);
+                const ageHours = (Date.now() - (draft.timestamp || 0)) / (1000 * 60 * 60);
+
+                if (ageHours <= MAX_DRAFT_AGE_HOURS && draft.fields && Object.keys(draft.fields).length > 0) {
+                    showAutosaveBanner(form, draft);
+                } else {
+                    clearDraft();
+                }
+            } catch (err) {
+                clearDraft();
+            }
+        }
+
+        // Écouter les modifications avec debounce de 400ms
+        let debounceTimer = null;
+        function onFieldInput() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                saveDraft(form);
+            }, 400);
+        }
+
+        form.addEventListener('input', onFieldInput);
+        form.addEventListener('change', onFieldInput);
+
+        // Nettoyer le brouillon lors de la soumission validée
+        form.addEventListener('submit', function () {
+            clearDraft();
+        });
+    }
+
+    function showAutosaveBanner(form, draft) {
+        // Supprimer toute bannière préexistante
+        const existing = form.querySelector('.inspection-autosave-banner');
+        if (existing) existing.remove();
+
+        const banner = document.createElement('div');
+        banner.className = 'inspection-autosave-banner u-mb-4';
+        banner.id = 'autosaveBanner';
+
+        const formattedDate = formatTimeAgo(draft.timestamp);
+
+        banner.innerHTML = `
+            <div class="inspection-autosave-content">
+                <span class="inspection-autosave-icon"><i data-lucide="history"></i></span>
+                <div class="inspection-autosave-text">
+                    <strong class="inspection-autosave-title">Brouillon local non validé détecté</strong>
+                    <div class="inspection-autosave-desc">Une saisie précédente a été conservée (${formattedDate}). Souhaitez-vous la restaurer ?</div>
+                </div>
+            </div>
+            <div class="inspection-autosave-actions">
+                <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" id="btnRestoreAutosave">
+                    <i data-lucide="rotate-ccw"></i> Restaurer la saisie
+                </button>
+                <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary" id="btnDiscardAutosave">
+                    Ignorer
+                </button>
+            </div>
+        `;
+
+        form.insertBefore(banner, form.firstChild);
+
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
+
+        const btnRestore = banner.querySelector('#btnRestoreAutosave');
+        const btnDiscard = banner.querySelector('#btnDiscardAutosave');
+
+        if (btnRestore) {
+            btnRestore.addEventListener('click', function () {
+                restoreDraft(form, draft.fields);
+                banner.className = 'inspection-autosave-banner is-restored u-mb-4';
+                banner.innerHTML = `
+                    <div class="inspection-autosave-content">
+                        <span class="inspection-autosave-icon"><i data-lucide="circle-check"></i></span>
+                        <div class="inspection-autosave-text">
+                            <strong class="inspection-autosave-title">Données du brouillon restaurées avec succès</strong>
+                        </div>
+                    </div>
+                `;
+                if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                    window.lucide.createIcons();
+                }
+                setTimeout(() => {
+                    banner.remove();
+                }, 3500);
+            });
+        }
+
+        if (btnDiscard) {
+            btnDiscard.addEventListener('click', function () {
+                clearDraft();
+                banner.remove();
+            });
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAutosave);
+    } else {
+        initAutosave();
+    }
+})();
+;
+
 /* ── js/src/admin/ios-bridge.js ── */
 /**
  * ios-bridge.js — Passerelle de communication entre l'Admin Belle Vitesse et l'application iPadOS Native (Swift / WKWebView).
@@ -4842,9 +5351,14 @@ window.initInspectionDetail = initInspectionDetail;
 
     const incidentPhotoRegistry = {};
 
-    function previewFiles(input, containerId) {
+    async function previewFiles(input, containerId) {
         const container = document.getElementById(containerId);
         if (!container) return;
+
+        if (input.files && input.files.length > 0 && typeof window.compressFileInput === 'function' && input.dataset.compressed !== 'true') {
+            container.innerHTML = '<div class="u-text-xs u-text-muted u-p-1"><span class="image-compress-spinner"></span> Optimisation des photos en cours…</div>';
+            await window.compressFileInput(input);
+        }
         container.innerHTML = '';
         incidentPhotoRegistry[input.name || containerId] = [];
 
