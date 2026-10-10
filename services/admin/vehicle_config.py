@@ -12,9 +12,9 @@ logger = logging.getLogger(__name__)
 DEFAULT_CHECKPOINT_SEEDS = [
     # SÉCURITÉ
     {'key': 'tires', 'label': 'Pression des pneus', 'category': 'Sécurité', 'type': 'status',
-     'detail': 'eTrike/eTrike 360 : 3 bar · eBike : voir flanc pneu · eCar : 2 bar', 'has_protocol': True, 'protocol_url': '/admin/check-vehicles'},
+     'detail': 'eTrike/eTrike 360 : 3 bar · eBike : voir flanc pneu · eCar : 2 bar', 'has_protocol': True, 'protocol_url': '/admin/tools/check-vehicles'},
     {'key': 'brakes', 'label': 'Contrôle des freins', 'category': 'Sécurité', 'type': 'status',
-     'detail': 'Voir protocole freins complet', 'has_protocol': True, 'protocol_url': '/admin/check-vehicles'},
+     'detail': 'Voir protocole freins complet', 'has_protocol': True, 'protocol_url': '/admin/tools/check-vehicles'},
     {'key': 'fonctionnement_vitesses', 'label': 'Fonctionnement des vitesses', 'category': 'Sécurité', 'type': 'status',
      'detail': 'Rouler et passer toutes les vitesses'},
     {'key': 'moteur_assistance', 'label': 'Moteur / Assistance électrique', 'category': 'Sécurité', 'type': 'status',
@@ -73,6 +73,11 @@ DEFAULT_SPECIFIC_DETAILS = {
 def ensure_default_checkpoints():
     """Initialise automatiquement les définitions de checkpoints en base de données si la table est vide."""
     try:
+        from sqlalchemy import inspect
+        inspector = inspect(db.engine)
+        if "checkpoint_definitions" not in inspector.get_table_names():
+            CheckpointDefinition.__table__.create(db.engine, checkfirst=True)
+
         if CheckpointDefinition.query.count() > 0:
             return
 

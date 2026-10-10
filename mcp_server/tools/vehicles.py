@@ -348,3 +348,22 @@ def get_checkpoints_for_vehicle(vehicle_id: str) -> Dict[str, Any]:
         "total": len(checkpoints),
         "checkpoints": checkpoints,
     }
+
+
+@mcp.tool()
+@run_in_flask_context
+@require_mcp_scope("read_only")
+@mcp_cache(ttl_seconds=60)
+def list_checkpoints() -> Dict[str, Any]:
+    """
+    Récupère la liste de tous les points de contrôle (checkpoints) configurés dans Belle Vitesse
+    avec leurs libellés, catégories (Sécurité, Équipements), consignes standard et véhicules concernés.
+    """
+    from services.admin.vehicle_config import get_all_checkpoints
+    cps = get_all_checkpoints()
+    return {
+        "success": True,
+        "total": len(cps),
+        "checkpoints": cps,
+    }
+

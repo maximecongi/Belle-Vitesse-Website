@@ -50,6 +50,7 @@ def create_app():
     )
     app.config.from_object(app_config)
     app.config['FLASK_ENV'] = env
+    app.url_map.strict_slashes = False
 
     # Validation de la configuration critique
     if not app.config.get("SECRET_KEY"):

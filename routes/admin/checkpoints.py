@@ -22,7 +22,9 @@ logger = logging.getLogger(__name__)
 checkpoints_bp = Blueprint("admin_checkpoints", __name__, url_prefix="/admin")
 
 
-@checkpoints_bp.route("/checkpoints", methods=["GET"], endpoint="admin_checkpoints_list")
+@checkpoints_bp.route("/checkpoints", methods=["GET"], strict_slashes=False, endpoint="admin_checkpoints_list")
+@checkpoints_bp.route("/checkpoint", methods=["GET"], strict_slashes=False, endpoint="admin_checkpoint_alias")
+@checkpoints_bp.route("/api/checkpoints", methods=["GET"], strict_slashes=False, endpoint="admin_api_checkpoints_list")
 @require_roles("administrator")
 def admin_checkpoints_list():
     """Liste tous les points de contrôle avec filtres et indicateurs."""
@@ -39,6 +41,20 @@ def admin_checkpoints_list():
             "equipment": equipment_count,
         }
 
+        # Détection d'un appel API/JSON ou AJAX
+        is_json = (
+            request.is_json
+            or request.headers.get("Accept") == "application/json"
+            or request.args.get("format") == "json"
+            or request.path.endswith("/api/checkpoints")
+        )
+        if is_json:
+            return jsonify({
+                "success": True,
+                "checkpoints": checkpoints,
+                "stats": stats,
+            })
+
         return render_template(
             "admin/checkpoints_list.html",
             checkpoints=checkpoints,
@@ -46,11 +62,19 @@ def admin_checkpoints_list():
         )
     except Exception as e:
         logger.error(f"❌ Erreur lors du chargement des points de contrôle : {e}", exc_info=True)
+        is_json = (
+            request.is_json
+            or request.headers.get("Accept") == "application/json"
+            or request.args.get("format") == "json"
+            or request.path.endswith("/api/checkpoints")
+        )
+        if is_json:
+            return jsonify({"success": False, "error": str(e)}), 500
         flash(f"Erreur lors du chargement des points de contrôle : {e}", "error")
         return redirect(url_for("admin_dashboard.admin_dashboard"))
 
 
-@checkpoints_bp.route("/checkpoints/new", methods=["GET", "POST"], endpoint="admin_checkpoint_new")
+@checkpoints_bp.route("/checkpoints/new", methods=["GET", "POST"], strict_slashes=False, endpoint="admin_checkpoint_new")
 @require_roles("administrator")
 def admin_checkpoint_new():
     """Formulaire de création d'un nouveau point de contrôle."""
@@ -82,7 +106,7 @@ def admin_checkpoint_new():
             return redirect(url_for("admin_checkpoints.admin_checkpoints_list"))
 
 
-@checkpoints_bp.route("/checkpoints/<int:checkpoint_id>/edit", methods=["GET", "POST"], endpoint="admin_checkpoint_edit")
+@checkpoints_bp.route("/checkpoints/<int:checkpoint_id>/edit", methods=["GET", "POST"], strict_slashes=False, endpoint="admin_checkpoint_edit")
 @require_roles("administrator")
 def admin_checkpoint_edit(checkpoint_id: int):
     """Formulaire d'édition d'un point de contrôle."""
@@ -112,7 +136,7 @@ def admin_checkpoint_edit(checkpoint_id: int):
         return redirect(url_for("admin_checkpoints.admin_checkpoints_list"))
 
 
-@checkpoints_bp.route("/checkpoints/<int:checkpoint_id>/delete", methods=["POST"], endpoint="admin_checkpoint_delete")
+@checkpoints_bp.route("/checkpoints/<int:checkpoint_id>/delete", methods=["POST"], strict_slashes=False, endpoint="admin_checkpoint_delete")
 @require_roles("administrator")
 def admin_checkpoint_delete(checkpoint_id: int):
     """Supprime un point de contrôle."""
@@ -130,7 +154,7 @@ def admin_checkpoint_delete(checkpoint_id: int):
         return redirect(url_for("admin_checkpoints.admin_checkpoints_list"))
 
 
-@checkpoints_bp.route("/api/checkpoints/reorder", methods=["PATCH", "POST"], endpoint="admin_api_checkpoints_reorder")
+@checkpoints_bp.route("/api/checkpoints/reorder", methods=["PATCH", "POST"], strict_slashes=False, endpoint="admin_api_checkpoints_reorder")
 @require_roles("administrator")
 def admin_api_checkpoints_reorder():
     """Met à jour l'ordre d'affichage des points de contrôle."""

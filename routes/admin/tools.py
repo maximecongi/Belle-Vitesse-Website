@@ -14,7 +14,8 @@ def admin_signature_generator():
     """Outil de génération de signature visuelle."""
     return render_template("admin/signature_generator.html")
 
-@tools_bp.route("/tools/check-vehicles", endpoint='admin_check_vehicles')
+@tools_bp.route("/tools/check-vehicles", strict_slashes=False, endpoint='admin_check_vehicles')
+@tools_bp.route("/check-vehicles", strict_slashes=False, endpoint='admin_check_vehicles_alias')
 @require_roles('administrator', 'manager', 'commercial', 'user')
 def admin_check_vehicles():
     """Outil de vérification et protocole des véhicules."""

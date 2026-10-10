@@ -77,12 +77,38 @@ class CheckpointsManagementTest(unittest.TestCase):
         ]
         self._login_as("administrator")
 
+        # Test route standard sans slash
         resp = self.client.get("/admin/checkpoints")
         self.assertEqual(resp.status_code, 200)
         html = resp.data.decode("utf-8")
         self.assertIn("Points de Contr", html)
         self.assertIn("Pression des pneus", html)
         self.assertIn("Matrice Flotte", html)
+
+        # Test tolérance au slash terminal (évite l'erreur 404)
+        resp_slash = self.client.get("/admin/checkpoints/")
+        self.assertEqual(resp_slash.status_code, 200)
+
+        # Test alias singulier /admin/checkpoint
+        resp_singular = self.client.get("/admin/checkpoint")
+        self.assertEqual(resp_singular.status_code, 200)
+
+        # Test réponse JSON via en-tête Accept
+        resp_json = self.client.get("/admin/checkpoints", headers={"Accept": "application/json"})
+        self.assertEqual(resp_json.status_code, 200)
+        self.assertTrue(resp_json.is_json)
+        data = resp_json.get_json()
+        self.assertTrue(data.get("success"))
+        self.assertGreater(data.get("stats", {}).get("total", 0), 0)
+
+        # Test endpoint API /admin/api/checkpoints
+        resp_api = self.client.get("/admin/api/checkpoints")
+        self.assertEqual(resp_api.status_code, 200)
+        self.assertTrue(resp_api.is_json)
+
+        # Test alias protocole /admin/check-vehicles
+        resp_proto = self.client.get("/admin/check-vehicles")
+        self.assertEqual(resp_proto.status_code, 200)
 
     @patch("services.admin.vehicle_config.get_vehicles")
     def test_admin_checkpoint_edit_get_and_post(self, mock_get_vehicles):
