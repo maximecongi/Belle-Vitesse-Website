@@ -6,12 +6,10 @@
 {% block page_title %}Points de Contrôle{% endblock %}
 
 {% block header_actions %}
-<div class="u-flex u-align-center u-gap-2">
-    <input type="text" id="searchInput" class="form-input u-w-250" placeholder="Rechercher un point..."
-        autocomplete="off">
-    <a href="{{ url_for('admin_checkpoints.admin_checkpoint_new') }}" class="admin-btn admin-btn-primary">+ Nouveau
-        Point</a>
-</div>
+<input type="text" id="searchInput" class="form-input u-w-250" placeholder="Rechercher un point..."
+    autocomplete="off">
+<a href="{{ url_for('admin_checkpoints.admin_checkpoint_new') }}" class="admin-btn admin-btn-primary">+ Nouveau
+    Point</a>
 {% endblock %}
 
 {% block content %}
@@ -79,11 +77,12 @@
                     <td class="u-font-semibold">
                         {{ cp.label }}
                         {% if cp.type == 'value' %}
-                        <span class="checkpoint-unit-badge u-ml-1"
-                            title="Saisie d'une valeur ou mesure">Mesure{% if cp.unit %} ({{ cp.unit }}){% endif %}</span>
+                        <span class="checkpoint-unit-badge u-ml-1" title="Saisie d'une valeur ou mesure">Mesure{% if
+                            cp.unit %} ({{ cp.unit }}){% endif %}</span>
                         {% endif %}
                         {% if cp.has_protocol %}
-                        <span class="vehicle-modal-trigger u-cursor-pointer u-ml-1 u-text-info u-inline-flex u-align-center u-vertical-middle"
+                        <span
+                            class="vehicle-modal-trigger u-cursor-pointer u-ml-1 u-text-info u-inline-flex u-align-center u-vertical-middle"
                             data-protocol-url="{{ cp.protocol_url or url_for('admin_tools.admin_check_vehicles') }}"
                             title="Protocole technique disponible (cliquer pour ouvrir)">
                             <i data-lucide="info" class="u-w-1rem u-h-1rem"></i>

@@ -6,18 +6,16 @@
 {% block page_title %}Flotte Véhicules{% endblock %}
 
 {% block header_actions %}
-<div class="u-flex u-align-center u-gap-2">
-    <input type="text" id="searchInput" class="form-input u-w-250" placeholder="Rechercher un véhicule..."
-        autocomplete="off">
-    {% if current_user and current_user.is_admin %}
-    <a href="{{ url_for('admin_checkpoints.admin_checkpoints_list') }}" class="admin-btn admin-btn-secondary">
-        <i class="admin-header__icon" data-lucide="list-checks"></i> Points de Contrôle
-    </a>
-    <a href="{{ url_for('admin_api.admin_vehicle_configs') }}" class="admin-btn admin-btn-secondary">
-        <i class="admin-header__icon" data-lucide="grid-3x3"></i>Matrice Flotte
-    </a>
-    {% endif %}
-</div>
+<input type="text" id="searchInput" class="form-input u-w-250" placeholder="Rechercher un véhicule..."
+    autocomplete="off">
+{% if current_user and current_user.is_admin %}
+<a href="{{ url_for('admin_checkpoints.admin_checkpoints_list') }}" class="admin-btn admin-btn-secondary">
+    <i class="admin-header__icon" data-lucide="list-checks"></i> Points de Contrôle
+</a>
+<a href="{{ url_for('admin_api.admin_vehicle_configs') }}" class="admin-btn admin-btn-secondary">
+    <i class="admin-header__icon" data-lucide="grid-3x3"></i>Matrice Flotte
+</a>
+{% endif %}
 {% endblock %}
 
 {% block content %}

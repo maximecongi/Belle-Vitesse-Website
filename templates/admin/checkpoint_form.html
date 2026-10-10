@@ -6,11 +6,9 @@ Belle Vitesse{% endblock %}
 endblock %}
 
 {% block header_actions %}
-<div class="u-flex u-align-center u-gap-2">
-    <a href="{{ url_for('admin_checkpoints.admin_checkpoints_list') }}" class="admin-btn admin-btn-secondary">
-        ← Retour aux points de contrôle
-    </a>
-</div>
+<a href="{{ url_for('admin_checkpoints.admin_checkpoints_list') }}" class="admin-btn admin-btn-secondary">
+    ← Retour aux points de contrôle
+</a>
 {% endblock %}
 
 {% block content %}

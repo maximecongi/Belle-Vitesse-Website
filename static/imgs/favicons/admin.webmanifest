@@ -1,12 +1,13 @@
 {
-  "name": "Belle Vitesse",
-  "short_name": "Belle Vitesse",
-  "start_url": "/",
-  "scope": "/",
+  "name": "Belle Vitesse ERP",
+  "short_name": "BV Admin",
+  "description": "Portail d'administration et de gestion terrain Belle Vitesse",
+  "start_url": "/admin/dashboard",
+  "scope": "/admin/",
   "display": "standalone",
   "orientation": "any",
-  "theme_color": "#151515",
-  "background_color": "#151515",
+  "theme_color": "#0f172a",
+  "background_color": "#0f172a",
   "icons": [
     {
       "src": "/static/imgs/favicons/web-app-manifest-192x192.png",

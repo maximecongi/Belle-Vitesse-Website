@@ -4,16 +4,14 @@
 {% block page_title %}Détail Checkout{% endblock %}
 
 {% block header_actions %}
-<div class="u-flex u-align-center u-gap-2">
-    <a href="{{ url_for('admin_checkouts.admin_checkouts_list') }}" class="admin-btn admin-btn-secondary">← Retour à la
-        liste</a>
-    <a href="{{ url_for('checkout_verify', inspection_id=data.inspection_id) }}" target="_blank"
-        class="admin-btn admin-btn-secondary">Page de vérification ↗</a>
-    {% if data.status_id == 'in_progress' %}
-    <a href="{{ url_for('admin_checkouts.admin_checkout_edit', record_id=record_id) }}"
-        class="admin-btn admin-btn-primary">Éditer</a>
-    {% endif %}
-</div>
+<a href="{{ url_for('admin_checkouts.admin_checkouts_list') }}" class="admin-btn admin-btn-secondary">← Retour à la
+    liste</a>
+<a href="{{ url_for('checkout_verify', inspection_id=data.inspection_id) }}" target="_blank"
+    class="admin-btn admin-btn-secondary">Page de vérification ↗</a>
+{% if data.status_id == 'in_progress' %}
+<a href="{{ url_for('admin_checkouts.admin_checkout_edit', record_id=record_id) }}"
+    class="admin-btn admin-btn-primary">Éditer</a>
+{% endif %}
 {% endblock %}
 
 {% block content %}

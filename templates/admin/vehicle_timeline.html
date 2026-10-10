@@ -7,18 +7,17 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
 {% block page_title %}Timeline{% endblock %}
 
 {% block header_actions %}
-<div class="u-flex u-align-center u-gap-2">
-    <a href="{{ url_for('admin_fleet.admin_fleet_list') }}" class="admin-btn admin-btn-secondary">
-        ← Retour au Parc
-    </a>
-</div>
+<a href="{{ url_for('admin_fleet.admin_fleet_list') }}" class="admin-btn admin-btn-secondary">
+    ← Retour au Parc
+</a>
 {% endblock %}
 
 {% block content %}
 <!-- ═══════════ MACRO LOCALE : CARTE D'ÉVÉNEMENT UNIFIÉE (DRY) ═══════════ -->
 {% macro render_timeline_event_card(evt, is_sub_event=false, is_autonomous=false, card_id=none) %}
-<div class="admin-card u-p-3 mission-card timeline-event-card timeline-event-card--{{ evt.type }}" data-type="{{ evt.type }}" {% if card_id %}id="{{ card_id }}" {% elif evt.id
-    %}id="event-card-{{ evt.id }}" {% endif %}>
+<div class="admin-card u-p-3 mission-card timeline-event-card timeline-event-card--{{ evt.type }}"
+    data-type="{{ evt.type }}" {% if card_id %}id="{{ card_id }}" {% elif evt.id %}id="event-card-{{ evt.id }}" {% endif
+    %}>
     <div class="u-flex u-justify-between u-align-start u-flex-wrap u-gap-2">
         <!-- Colonne gauche : Badges, Titre, Référence et Métadonnées -->
         <div>
@@ -27,17 +26,20 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
                 {% if evt.type in ('project', 'project_mission') %}
                 {{ shoot_status_badge(evt.status) }}
                 {% if evt.has_incidents %}
-                <span class="badge-pill" data-val="critique"><i data-lucide="alert-triangle"></i> {{ evt.incident_count }} incident{{ 's' if
+                <span class="badge-pill" data-val="critique"><i data-lucide="alert-triangle"></i> {{ evt.incident_count
+                    }} incident{{ 's' if
                     evt.incident_count > 1 else '' }}</span>
                 {% endif %}
                 {% if evt.total_failures > 0 %}
-                <span class="badge-pill" data-val="warning"><i data-lucide="alert-triangle"></i> {{ evt.total_failures }} anomalie(s)</span>
+                <span class="badge-pill" data-val="warning"><i data-lucide="alert-triangle"></i> {{ evt.total_failures
+                    }} anomalie(s)</span>
                 {% endif %}
                 {% elif evt.type in ('checkout', 'checkin') %}
                 {{ timeline_event_type_badge(evt.type) }}
                 {{ timeline_event_status_badge(evt) }}
                 {% if evt.failures %}
-                <span class="badge-pill" data-val="critique"><i data-lucide="alert-triangle"></i> {{ evt.failure_count }} anomalie{{ 's' if
+                <span class="badge-pill" data-val="critique"><i data-lucide="alert-triangle"></i> {{ evt.failure_count
+                    }} anomalie{{ 's' if
                     evt.failure_count > 1 else '' }}</span>
                 {% for f in evt.failures %}
                 <span class="badge-pill badge-pill-xs" data-val="critique">{{ f }}</span>
@@ -68,15 +70,18 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
                     {{ evt.project_name or evt.title }}
                 </a>
                 {% elif evt.type == 'checkout' %}
-                <a href="{{ url_for('admin_checkouts.admin_checkout_detail', record_id=evt.raw_id) }}" class="u-text-inherit">
+                <a href="{{ url_for('admin_checkouts.admin_checkout_detail', record_id=evt.raw_id) }}"
+                    class="u-text-inherit">
                     Contrôle de départ
                 </a>
                 {% elif evt.type == 'checkin' %}
-                <a href="{{ url_for('admin_checkins.admin_checkin_detail', record_id=evt.raw_id) }}" class="u-text-inherit">
+                <a href="{{ url_for('admin_checkins.admin_checkin_detail', record_id=evt.raw_id) }}"
+                    class="u-text-inherit">
                     Contrôle de retour
                 </a>
                 {% elif evt.type == 'incident' %}
-                <a href="{{ url_for('admin_incidents.admin_incident_detail', record_id=evt.raw_id) }}" class="u-text-inherit">
+                <a href="{{ url_for('admin_incidents.admin_incident_detail', record_id=evt.raw_id) }}"
+                    class="u-text-inherit">
                     {{ evt.title|replace('Incident : ', '') }}
                 </a>
                 {% else %}
@@ -101,7 +106,8 @@ vehicle_status_badge, vehicle_avatar, timeline_event_type_badge, timeline_event_
                 <!-- Projet lié (si événement secondaire ou linéaire avec projet associé) -->
                 {% if not is_sub_event and evt.type not in ('project', 'project_mission') and evt.project_name and
                 evt.project_name != '—' %}
-                <span>Projet : <a href="{{ url_for('admin_projects.admin_projects_list', q=evt.project_unique_id or evt.reference) }}"
+                <span>Projet : <a
+                        href="{{ url_for('admin_projects.admin_projects_list', q=evt.project_unique_id or evt.reference) }}"
                         class="u-text-inherit u-underline"><strong>{{ evt.project_name }}</strong></a></span>
                 {% endif %}
 

@@ -578,3 +578,80 @@
     border-color: var(--admin-accent, #FFC845);
     color: var(--grey-1, #151515);
 }
+
+/* ── Responsive Tablette, iPad & Smartphone ─────────────────── */
+@media (max-width: 1024px) {
+    .bv-annotator-overlay {
+        padding: 0;
+    }
+
+    .bv-annotator-container {
+        width: 100vw;
+        max-width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        border-radius: 0;
+        border: none;
+    }
+
+    .bv-annotator-header {
+        padding: 0.65rem 1rem;
+        padding-top: max(0.65rem, env(safe-area-inset-top, 0));
+        padding-left: max(1rem, env(safe-area-inset-left, 0));
+        padding-right: max(1rem, env(safe-area-inset-right, 0));
+    }
+
+    .bv-annotator-toolbar {
+        padding: 0.5rem 0.85rem;
+        gap: 0.4rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        flex-wrap: nowrap;
+    }
+
+    .bv-tool-group {
+        flex-shrink: 0;
+    }
+
+    .bv-btn-tool,
+    .bv-btn-size {
+        min-height: 40px;
+        padding: 0.45rem 0.65rem;
+        touch-action: manipulation;
+    }
+
+    .bv-swatch {
+        width: 26px;
+        height: 26px;
+        min-width: 26px;
+        min-height: 26px;
+    }
+
+    .bv-annotator-close {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .bv-annotator-footer {
+        padding: 0.65rem 1rem;
+        padding-bottom: max(0.65rem, env(safe-area-inset-bottom, 0));
+        padding-left: max(1rem, env(safe-area-inset-left, 0));
+        padding-right: max(1rem, env(safe-area-inset-right, 0));
+    }
+}
+
+@media (max-width: 640px) {
+    .bv-annotator-title-text {
+        font-size: 0.95rem;
+    }
+
+    .bv-tool-label {
+        display: none;
+    }
+
+    .bv-annotator-tip {
+        display: none;
+    }
+}

@@ -7,17 +7,16 @@ incident_signature_badge, render_pagination %}
 {% block page_title %}Incidents de Tournage{% endblock %}
 
 {% block header_actions %}
-<div class="u-flex u-gap-2 u-align-center">
-    <form method="GET" action="{{ url_for('admin_incidents.admin_incidents_list') }}" class="u-m-0">
-        {% if filters.status %}<input type="hidden" name="status" value="{{ filters.status }}">{% endif %}
-        {% if filters.severity %}<input type="hidden" name="severity" value="{{ filters.severity }}">{% endif %}
-        {% if filters.category %}<input type="hidden" name="category" value="{{ filters.category }}">{% endif %}
-        {% if filters.project_id %}<input type="hidden" name="project_id" value="{{ filters.project_id }}">{% endif %}
-        <input type="text" name="q" id="searchInput" class="form-input u-w-250" placeholder="Rechercher un incident..."
-            value="{{ filters.q or '' }}" autocomplete="off">
-    </form>
-    <a href="{{ url_for('admin_incidents.admin_incident_new') }}" class="admin-btn admin-btn-primary">+ Déclarer un Incident</a>
-</div>
+<form method="GET" action="{{ url_for('admin_incidents.admin_incidents_list') }}" class="u-m-0">
+    {% if filters.status %}<input type="hidden" name="status" value="{{ filters.status }}">{% endif %}
+    {% if filters.severity %}<input type="hidden" name="severity" value="{{ filters.severity }}">{% endif %}
+    {% if filters.category %}<input type="hidden" name="category" value="{{ filters.category }}">{% endif %}
+    {% if filters.project_id %}<input type="hidden" name="project_id" value="{{ filters.project_id }}">{% endif %}
+    <input type="text" name="q" id="searchInput" class="form-input u-w-250" placeholder="Rechercher un incident..."
+        value="{{ filters.q or '' }}" autocomplete="off">
+</form>
+<a href="{{ url_for('admin_incidents.admin_incident_new') }}" class="admin-btn admin-btn-primary">+ Déclarer un
+    Incident</a>
 {% endblock %}
 
 {% block content %}
@@ -53,7 +52,8 @@ incident_signature_badge, render_pagination %}
 
 <!-- ═══════════ FILTRES & LISTE ═══════════ -->
 <div class="admin-card">
-    {{ filter_header("Incidents filtrés", count=pagination.total if pagination else incidents|length, clear_url=url_for('admin_incidents.admin_incidents_list')) }}
+    {{ filter_header("Incidents filtrés", count=pagination.total if pagination else incidents|length,
+    clear_url=url_for('admin_incidents.admin_incidents_list')) }}
     <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
         <form method="GET" action="{{ url_for('admin_incidents.admin_incidents_list') }}"
             class="u-flex u-align-center u-gap-2 u-flex-wrap" id="incident-filter-form">
@@ -89,13 +89,15 @@ incident_signature_badge, render_pagination %}
             </select>
 
             {% if filters.severity or filters.status or filters.category or filters.q %}
-            <a href="{{ url_for('admin_incidents.admin_incidents_list') }}" class="admin-btn admin-btn-secondary admin-btn-sm">✕
+            <a href="{{ url_for('admin_incidents.admin_incidents_list') }}"
+                class="admin-btn admin-btn-secondary admin-btn-sm">✕
                 Réinitialiser</a>
             {% endif %}
         </form>
 
         <div class="u-text-sm u-text-muted">
-            <span id="result-count">{{ pagination.total if pagination else incidents|length }}</span> incident(s) répertorié(s)
+            <span id="result-count">{{ pagination.total if pagination else incidents|length }}</span> incident(s)
+            répertorié(s)
         </div>
     </div>
 

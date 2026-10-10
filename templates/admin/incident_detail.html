@@ -7,18 +7,16 @@ incident_signature_badge, equipment_icon, empty_state %}
 {% block page_title %}Détail Incident{% endblock %}
 
 {% block header_actions %}
-<div class="u-flex u-align-center u-gap-2">
-    <a href="{{ url_for('admin_incidents.admin_incidents_list') }}" class="admin-btn admin-btn-secondary">← Retour à la
-        liste</a>
-    {% if incident.is_sealed %}
-    <a href="{{ url_for('admin_incidents.admin_incident_pdf', record_id=incident.id) }}" target="_blank"
-        class="admin-btn admin-btn-secondary">📄 Rapport PDF ↗</a>
-    {% endif %}
-    <a href="{{ url_for('admin_incidents.admin_incident_edit', record_id=incident.id) }}"
-        class="admin-btn admin-btn-primary">
-        {% if incident.is_sealed %}Modifier le suivi{% else %}Modifier l'incident{% endif %}
-    </a>
-</div>
+<a href="{{ url_for('admin_incidents.admin_incidents_list') }}" class="admin-btn admin-btn-secondary">← Retour à la
+    liste</a>
+{% if incident.is_sealed %}
+<a href="{{ url_for('admin_incidents.admin_incident_pdf', record_id=incident.id) }}" target="_blank"
+    class="admin-btn admin-btn-secondary">📄 Rapport PDF ↗</a>
+{% endif %}
+<a href="{{ url_for('admin_incidents.admin_incident_edit', record_id=incident.id) }}"
+    class="admin-btn admin-btn-primary">
+    {% if incident.is_sealed %}Modifier le suivi{% else %}Modifier l'incident{% endif %}
+</a>
 {% endblock %}
 
 {% block content %}
@@ -161,8 +159,8 @@ incident_signature_badge, equipment_icon, empty_state %}
 
                     {% if incident.bv_signature_data_uri or incident.bv_signature_data %}
                     <div class="u-mt-2">
-                        <img src="{{ incident.bv_signature_data_uri or incident.bv_signature_data }}" alt="Signature Belle Vitesse"
-                            class="incident-signature-preview">
+                        <img src="{{ incident.bv_signature_data_uri or incident.bv_signature_data }}"
+                            alt="Signature Belle Vitesse" class="incident-signature-preview">
                     </div>
                     {% endif %}
                     {% else %}
@@ -200,8 +198,8 @@ incident_signature_badge, equipment_icon, empty_state %}
 
                     {% if incident.prod_signature_data_uri or incident.prod_signature_data %}
                     <div class="u-mt-2">
-                        <img src="{{ incident.prod_signature_data_uri or incident.prod_signature_data }}" alt="Signature Production"
-                            class="incident-signature-preview">
+                        <img src="{{ incident.prod_signature_data_uri or incident.prod_signature_data }}"
+                            alt="Signature Production" class="incident-signature-preview">
                     </div>
                     {% endif %}
                     {% else %}

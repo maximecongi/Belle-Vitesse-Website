@@ -4,11 +4,9 @@
 {% block page_title %}Configuration des Points de Contrôle{% endblock %}
 
 {% block header_actions %}
-<div class="u-flex u-align-center u-gap-2">
-    <a href="{{ url_for('admin_fleet.admin_fleet_list') }}" class="admin-btn admin-btn-secondary">
-        ← Retour au Parc
-    </a>
-</div>
+<a href="{{ url_for('admin_fleet.admin_fleet_list') }}" class="admin-btn admin-btn-secondary">
+    ← Retour au Parc
+</a>
 {% endblock %}
 
 {% block content %}

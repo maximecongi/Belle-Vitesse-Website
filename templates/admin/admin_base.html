@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>{% block title %}{% endblock %} - Admin Belle Vitesse</title>
 
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -27,14 +27,19 @@
         href="{{ url_for('static', filename='css/admin/admin.css') }}?v={{ asset_version('css/admin/admin.css') }}">
     {% endif %}
 
+    <!-- PWA & Métadonnées Apple / Mobile -->
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BV Admin">
+    <meta name="application-name" content="BV Admin">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="format-detection" content="telephone=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="manifest" href="/static/imgs/favicons/admin.webmanifest">
     <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
     <link rel="apple-touch-icon" href="/static/imgs/favicons/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/imgs/favicons/apple-touch-icon.png">
     {% block extra_css %}{% endblock %}
 </head>
 

@@ -184,8 +184,10 @@
     justify-content: center;
     flex-direction: column;
     gap: 5px;
-    width: 42px;
-    height: 42px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
     padding: 0;
     background: transparent;
     border: 1px solid var(--grey-border);
@@ -247,8 +249,9 @@
         max-width: 85vw;
         transform: translateX(-100%);
         box-shadow: none;
-        padding-top: env(safe-area-inset-top, 0);
-        padding-bottom: env(safe-area-inset-bottom, 0);
+        padding-top: max(1rem, env(safe-area-inset-top, 0));
+        padding-bottom: max(1rem, env(safe-area-inset-bottom, 0));
+        padding-left: max(0.5rem, env(safe-area-inset-left, 0));
     }
 
     .admin-sidebar.is-open {
@@ -263,13 +266,15 @@
         position: absolute;
         right: 1rem;
         top: 1.25rem;
-        width: 36px;
-        height: 36px;
-        background: rgba(255, 255, 255, 0.12);
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+        background: rgba(255, 255, 255, 0.15);
         color: white;
         border: none;
         border-radius: 50%;
-        font-size: 1.4rem;
+        font-size: 1.5rem;
         line-height: 1;
         cursor: pointer;
         transition: background-color 0.2s ease;
@@ -278,6 +283,6 @@
 
     .admin-sidebar-close:hover,
     .admin-sidebar-close:active {
-        background: rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.3);
     }
 }

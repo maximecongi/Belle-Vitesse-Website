@@ -145,8 +145,32 @@ body {
 
 .admin-header-actions {
     display: flex;
-    align-items: center;
-    gap: 1vw;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+
+/* Tout conteneur ou wrapper dans header_actions hérite automatiquement du stretch et du gap */
+.admin-header-actions > .u-flex,
+.admin-header-actions > div {
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+
+/* Les formulaires de recherche ou d'actions s'étirent également de manière fluide */
+.admin-header-actions form,
+.admin-header-actions > .u-flex form,
+.admin-header-actions > div form {
+    display: flex;
+    align-items: stretch;
+    margin: 0;
+}
+
+.admin-header-actions .form-input,
+.admin-header-actions .admin-btn,
+.admin-header-actions button,
+.admin-header-actions a.admin-btn {
+    box-sizing: border-box;
 }
 
 .admin-header-title h1 {
@@ -202,7 +226,7 @@ body {
         padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0));
     }
 
-    /* Éviter le zoom automatique intempestif de Safari iPadOS au focus des champs */
+/* Éviter le zoom automatique intempestif de Safari iPadOS au focus des champs */
     .form-input,
     .form-select,
     select,
@@ -213,6 +237,52 @@ body {
     input[type="search"],
     input[type="tel"] {
         font-size: 16px !important;
+    }
+}
+
+/* ── Smartphone & Écrans Compacts (≤ 768px) ── */
+@media (max-width: 768px) {
+    .admin-header {
+        padding: 0.6rem 0.85rem;
+        padding-left: max(0.85rem, env(safe-area-inset-left, 0));
+        padding-right: max(0.85rem, env(safe-area-inset-right, 0));
+        padding-top: max(0.6rem, env(safe-area-inset-top, 0));
+        min-height: 52px;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .admin-header-left {
+        gap: 0.65rem;
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .admin-header-title h1 {
+        font-size: 1.1rem;
+    }
+
+    .admin-header-actions {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .admin-header-actions form {
+        flex: 1 1 auto;
+        min-width: 140px;
+    }
+
+    .admin-header-actions .form-input {
+        width: 100% !important;
+    }
+
+    .admin-content {
+        padding: 0.85rem;
+        padding-left: max(0.85rem, env(safe-area-inset-left, 0));
+        padding-right: max(0.85rem, env(safe-area-inset-right, 0));
+        padding-bottom: max(1.5rem, calc(1.5rem + env(safe-area-inset-bottom, 0)));
     }
 }
 

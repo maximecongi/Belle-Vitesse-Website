@@ -351,15 +351,13 @@ admin-multiselect-tag--custom
 {% endmacro %}
 
 {% macro list_header_actions(placeholder="Rechercher...", new_url=None, new_label=None, is_archive=false) %}
-<div class="u-flex u-align-center u-gap-2">
-    <form method="GET" action="" class="u-m-0">
-        <input type="text" name="q" id="searchInput" class="form-input u-w-250" placeholder="{{ placeholder }}"
-            value="{{ request.args.get('q', '') }}" autocomplete="off">
-    </form>
-    {% if new_url and not is_archive %}
-    <a href="{{ new_url }}" class="admin-btn admin-btn-primary">{{ new_label or '+ Nouveau' }}</a>
-    {% endif %}
-</div>
+<form method="GET" action="" class="u-m-0">
+    <input type="text" name="q" id="searchInput" class="form-input u-w-250" placeholder="{{ placeholder }}"
+        value="{{ request.args.get('q', '') }}" autocomplete="off">
+</form>
+{% if new_url and not is_archive %}
+<a href="{{ new_url }}" class="admin-btn admin-btn-primary">{{ new_label or '+ Nouveau' }}</a>
+{% endif %}
 {% endmacro %}
 
 {% macro table_empty_row(colspan, message="Aucun résultat trouvé.", icon="inbox") %}

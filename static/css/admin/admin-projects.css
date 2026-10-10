@@ -343,6 +343,27 @@
 }
 
 @media (max-width: 768px) {
+    .project-hub-header-main-row {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .project-hub-title {
+        font-size: 1.3rem;
+    }
+
+    .project-hub-left-side {
+        gap: 0.75rem !important;
+        width: 100%;
+    }
+
+    .project-hub-quick-stats {
+        width: 100%;
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 0.5rem !important;
+    }
+
     .project-hub-dates-strip {
         width: 100%;
         flex-direction: column;
@@ -352,6 +373,13 @@
 
     .project-date-sep {
         display: none;
+    }
+
+    .project-hub-dates-pills {
+        display: flex;
+        flex-wrap: wrap;
+        width: 100%;
+        gap: 0.35rem;
     }
 }
 

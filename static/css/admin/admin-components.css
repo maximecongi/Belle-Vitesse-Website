@@ -19,7 +19,9 @@
 
 /* Buttons */
 .admin-btn {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 0.6rem 1.2rem;
     font-weight: 600;
     text-decoration: none;
@@ -1341,6 +1343,49 @@ input[type="checkbox"]:checked {
     transform: scale(1.1);
 }
 
+@media (max-width: 640px) {
+    .admin-modal-container {
+        width: 100%;
+        max-width: 100%;
+        height: 100vh;
+        height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 0;
+    }
+
+    .admin-modal-container--sm,
+    .admin-modal-container--md,
+    .admin-modal-container--lg,
+    .admin-modal-container--xl {
+        max-width: 100%;
+        height: 100vh;
+        height: 100dvh;
+        max-height: 100dvh;
+        border-radius: 0;
+    }
+
+    .admin-modal-header {
+        padding: 1rem;
+        padding-top: max(1rem, env(safe-area-inset-top, 0));
+        padding-right: 3.5rem;
+    }
+
+    .admin-modal-body {
+        padding: 1rem;
+        padding-bottom: max(1.5rem, calc(1.5rem + env(safe-area-inset-bottom, 0)));
+    }
+
+    .admin-modal-close {
+        top: max(0.75rem, env(safe-area-inset-top, 0));
+        right: 1rem;
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        min-height: 44px;
+        touch-action: manipulation;
+    }
+}
+
 .admin-modal-content {
     flex: 1;
     overflow-y: auto;
@@ -1507,6 +1552,7 @@ input[type="checkbox"]:checked {
     width: 100%;
     height: 100%;
     cursor: crosshair;
+    touch-action: none;
 }
 
 /* ── TIMELINE HIÉRARCHIQUE & MISSIONS ────────────────────────── */
@@ -1854,19 +1900,42 @@ input[type="checkbox"]:checked {
         font-size: 0.62rem;
     }
 
-    /* Amélioration des zones tactiles sur boutons d'action */
+    /* Amélioration des zones tactiles sur boutons d'action (Apple HIG) */
     .admin-btn {
         touch-action: manipulation;
     }
 
     .admin-btn-action,
     .admin-table-action-btn {
-        min-width: 36px;
-        min-height: 36px;
+        min-width: 40px;
+        min-height: 40px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         touch-action: manipulation;
+    }
+}
+
+/* ── Smartphone & Écrans Compacts (≤ 768px) ── */
+@media (max-width: 768px) {
+    .admin-card {
+        padding: 1rem;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        padding: 0.65rem 0.5rem;
+    }
+
+    .admin-btn {
+        min-height: 44px;
+        padding: 0.65rem 1rem;
+    }
+
+    .admin-btn-action,
+    .admin-table-action-btn {
+        min-width: 44px;
+        min-height: 44px;
     }
 }
 
@@ -2148,7 +2217,9 @@ button.badge-pill:hover {
 }
 
 @keyframes bv-spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* --- Autosave & Résilience Hors-Ligne des Inspections --- */
