@@ -85,7 +85,7 @@ initials, empty_state, waiver_card, doc_download_badge %}
                         <i data-lucide="truck"></i>
                     </span>
                     <div class="project-date-step-body">
-                        <span class="project-date-step-lbl">Enlèvement</span>
+                        <span class="project-date-step-lbl">Départ</span>
                         <span class="project-date-step-val">{{ departure_date_fr }}</span>
                     </div>
                 </div>
@@ -100,12 +100,12 @@ initials, empty_state, waiver_card, doc_download_badge %}
                     <div class="project-date-step-body">
                         <span class="project-date-step-lbl">Tournage</span>
                         <span class="project-date-step-val">
-                            {% if is_punctual and shoot_dates_summary %}
-                            {{ shoot_dates_summary }}
-                            {% elif shoot_start_fr != '—' and shoot_end_fr != '—' %}
+                            {% if shoot_start_fr != '—' and shoot_end_fr != '—' and shoot_start_fr != shoot_end_fr %}
                             {{ shoot_start_fr }} → {{ shoot_end_fr }}
                             {% elif shoot_start_fr != '—' %}
-                            À partir du {{ shoot_start_fr }}
+                            {{ shoot_start_fr }}
+                            {% elif shoot_end_fr != '—' %}
+                            Jusqu'au {{ shoot_end_fr }}
                             {% else %}
                             Dates à confirmer
                             {% endif %}

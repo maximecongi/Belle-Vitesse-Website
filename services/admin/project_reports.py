@@ -272,12 +272,10 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
 
         if len(shoot_dates) == 1:
             shoot_dates_summary = f"Le {format_date_fr(shoot_dates[0])}"
-        elif len(shoot_dates) == 2:
-            shoot_dates_summary = f"Le {format_date_fr(shoot_dates[0])} et le {format_date_fr(shoot_dates[1])}"
-        elif len(shoot_dates) <= 4:
-            shoot_dates_summary = f"{', '.join(format_date_fr(d) for d in shoot_dates[:-1])} et {format_date_fr(shoot_dates[-1])} ({len(shoot_dates)} jours)"
+        elif len(shoot_dates) > 1:
+            shoot_dates_summary = f"{format_date_fr(shoot_dates[0])} → {format_date_fr(shoot_dates[-1])}"
         else:
-            shoot_dates_summary = f"{len(shoot_dates)} dates ({format_date_fr(shoot_dates[0])} → {format_date_fr(shoot_dates[-1])})"
+            shoot_dates_summary = "Dates à confirmer"
     elif project.shoot_start_date and project.shoot_end_date:
         if project.shoot_start_date <= today_date <= project.shoot_end_date:
             shoot_status = "in_progress"
@@ -411,6 +409,14 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
             "equipment_name": eq_label,
         })
 
+    first_shoot_date = project.shoot_start_date
+    last_shoot_date = project.shoot_end_date
+    if is_punctual and shoot_dates:
+        if not first_shoot_date:
+            first_shoot_date = _parse_date(shoot_dates[0])
+        if not last_shoot_date:
+            last_shoot_date = _parse_date(shoot_dates[-1])
+
     return {
         "project": project,
         "shoot_status": shoot_status,
@@ -418,8 +424,8 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
         "shoot_status_id": shoot_status_id,
         "shoot_status_color": shoot_status_color,
         "departure_date_fr": format_date_fr(str(project.departure_date)) if project.departure_date else "—",
-        "shoot_start_fr": format_date_fr(str(project.shoot_start_date)) if project.shoot_start_date else "—",
-        "shoot_end_fr": format_date_fr(str(project.shoot_end_date)) if project.shoot_end_date else "—",
+        "shoot_start_fr": format_date_fr(str(first_shoot_date)) if first_shoot_date else "—",
+        "shoot_end_fr": format_date_fr(str(last_shoot_date)) if last_shoot_date else "—",
         "return_date_fr": format_date_fr(str(project.return_date)) if project.return_date else "—",
         "date_mode": getattr(project, "date_mode", "continuous") or "continuous",
         "is_punctual": is_punctual,
