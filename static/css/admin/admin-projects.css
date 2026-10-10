@@ -115,10 +115,6 @@
     font-weight: bold;
 }
 
-.projects-dates-info {
-    font-size: 0.6rem;
-    color: var(--grey-2);
-}
 
 .projects-heads-container {
     margin-top: 0.8rem;
@@ -1562,6 +1558,19 @@
 .project-hub-date-pill .lucide {
     width: 12px;
     height: 12px;
+    flex-shrink: 0;
+}
+
+.project-table-dates-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+}
+
+.project-table-dates-pills .project-hub-date-pill {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.45rem;
+    line-height: 1.3;
 }
 
 .project-hub-calendar-viewport {

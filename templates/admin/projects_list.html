@@ -37,10 +37,31 @@ is_archive) }}
                         <span class="checkout-doc-id">{{ project.project_id }}</span>
                         {{ shoot_status_badge(project.shoot_status) }}
                     </div>
-                    <div class="projects-dates-info u-mt-2">
-                        🚚 {{ project.departure_date }}<br><br>
-                        🎥 {{ project.shoot_start }}<br> → {{ project.shoot_end }}<br><br>
-                        📦 {{ project.return_date }}
+                    <div class="project-hub-dates-pills project-table-dates-pills u-mt-2">
+                        <span class="project-hub-date-pill pill-departure" title="Date de départ (enlèvement du matériel)">
+                            <i data-lucide="truck"></i>
+                            <span>{{ project.departure_date }}</span>
+                        </span>
+                        <span class="project-hub-date-pill pill-shoot" title="Période de tournage">
+                            <i data-lucide="clapperboard"></i>
+                            <span>
+                                {% if project.date_mode == 'punctual' and project.shoot_dates %}
+                                    {{ project.shoot_dates_label }}
+                                {% elif project.shoot_start != '—' and project.shoot_end != '—' and project.shoot_start != project.shoot_end %}
+                                    {{ project.shoot_start }} → {{ project.shoot_end }}
+                                {% elif project.shoot_start != '—' %}
+                                    {{ project.shoot_start }}
+                                {% elif project.shoot_end != '—' %}
+                                    Jusqu'au {{ project.shoot_end }}
+                                {% else %}
+                                    Dates à confirmer
+                                {% endif %}
+                            </span>
+                        </span>
+                        <span class="project-hub-date-pill pill-return" title="Date de retour (restitution du matériel)">
+                            <i data-lucide="package-check"></i>
+                            <span>{{ project.return_date }}</span>
+                        </span>
                     </div>
                     {% if project.heads %}
                     <div class="projects-heads-container">
