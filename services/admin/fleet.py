@@ -279,6 +279,7 @@ def get_fleet_overview() -> Dict[str, Any]:
         "total": len(sorted_vehicles),
         "available": sum(1 for v in sorted_vehicles if v["operational_status"] == "disponible"),
         "on_tournage": sum(1 for v in sorted_vehicles if v["operational_status"] == "tournage"),
+        "standby": sum(1 for v in sorted_vehicles if v["operational_status"] == "standby"),
         "incident": sum(1 for v in sorted_vehicles if v["operational_status"] == "incident"),
     }
 
@@ -398,11 +399,17 @@ def get_vehicle_timeline(vehicle_id: str) -> Optional[Dict[str, Any]]:
     if not vehicle_id:
         return None
 
-    # 1. Identification du véhicule
+    # 1. Identification du véhicule (support tolérant ID Airtable, slug, unique_id ou nom)
+    target_clean = str(vehicle_id).strip().lower()
     vehicle_info: Optional[Dict[str, Any]] = None
     for v in get_vehicles() or []:
-        if str(v.get("id")) == str(vehicle_id):
-            fields = v.get("fields") or {}
+        fields = v.get("fields") or {}
+        v_id = str(v.get("id", "")).strip().lower()
+        v_slug = str(fields.get("slug", "")).strip().lower()
+        v_uid = str(fields.get("unique_id", "")).strip().lower()
+        v_name = str(fields.get("name", "") or fields.get("Nom", "")).strip().lower()
+        if target_clean in (v_id, v_slug, v_uid, v_name):
+            vehicle_id = str(v.get("id"))
             vehicle_info = {
                 "id": str(v.get("id")),
                 "name": fields.get("name") or fields.get("Nom") or "Véhicule",
@@ -637,7 +644,7 @@ def get_vehicle_timeline(vehicle_id: str) -> Optional[Dict[str, Any]]:
     )
     conformance_rate = (
         round((inspections_without_failures / total_inspections) * 100)
-        if total_inspections > 0 else 100
+        if total_inspections > 0 else None
     )
 
     # Dernière batterie enregistrée
@@ -698,10 +705,12 @@ def get_vehicle_timeline(vehicle_id: str) -> Optional[Dict[str, Any]]:
         "total_projects": len(vehicle_projects),
         "total_checkouts": len(checkouts),
         "total_checkins": len(checkins),
+        "total_inspections": total_inspections,
         "total_incidents": len(incidents),
         "open_critical_incidents": open_critical_incidents,
         "latest_battery": latest_battery,
         "conformance_rate": conformance_rate,
+        "conformance_rate_label": f"{conformance_rate}%" if conformance_rate is not None else "Aucun contrôle (N/A)",
         "current_status": current_status,
         "current_status_label": current_status_label,
     }

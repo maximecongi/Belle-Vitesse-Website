@@ -36,10 +36,13 @@ def _resolve_project(project_id_or_code: Any) -> Optional[Any]:
 
 def _format_project_summary(p: Dict[str, Any]) -> Dict[str, Any]:
     """Produit une synthèse légère et optimisée pour le listage de projets."""
+    raw_prod_id = p.get("production_id")
+    clean_prod_id = int(raw_prod_id) if (raw_prod_id and str(raw_prod_id).isdigit()) else None
     return {
         "id": p.get("id"),
         "project_id": p.get("project_id"),
         "name": p.get("name"),
+        "production_id": clean_prod_id,
         "production": p.get("production", "—"),
         "departure_date": p.get("departure_date", "—"),
         "shoot_start": p.get("shoot_start", "—"),
@@ -82,6 +85,18 @@ def list_projects(
     - offset: Décalage pour la pagination
     - detailed: Si False (défaut), retourne une synthèse épurée. Si True, inclut tous les sous-objets imbriqués.
     """
+    valid_statuses = {"all", "active", "upcoming", "past"}
+    if status and status.lower().strip() not in valid_statuses:
+        return {
+            "total": 0,
+            "count": 0,
+            "limit": limit,
+            "offset": offset,
+            "projects": [],
+            "error": f"Statut de projet invalide '{status}'. Statuts acceptés : 'all', 'active', 'upcoming', 'past'.",
+            "allowed_statuses": sorted(list(valid_statuses)),
+        }
+
     from services.admin.projects import list_projects as _list_projects
     all_projects = _list_projects()
     today_str = date.today().isoformat()
@@ -231,10 +246,10 @@ def get_project(project_id: Any) -> Optional[Dict[str, Any]]:
         "shoot_start_raw": str(project.shoot_start_date) if project.shoot_start_date else "",
         "shoot_end_raw": str(project.shoot_end_date) if project.shoot_end_date else "",
         "return_date_raw": str(project.return_date) if project.return_date else "",
-        "production_id": str(project.production_id) if project.production_id else "",
-        "pilot_contact_id": str(project.pilot_contact_id) if project.pilot_contact_id else "",
-        "production_contact_id": str(project.production_contact_id) if project.production_contact_id else "",
-        "dop_contact_id": str(project.dop_contact_id) if project.dop_contact_id else "",
+        "production_id": project.production_id,
+        "pilot_contact_id": project.pilot_contact_id,
+        "production_contact_id": project.production_contact_id,
+        "dop_contact_id": project.dop_contact_id,
         "first_ac_contact_id": str(project.first_ac_contact_id) if project.first_ac_contact_id else "",
         "key_grip_contact_id": str(project.key_grip_contact_id) if project.key_grip_contact_id else "",
         "vehicle_ids": veh_ids,
@@ -261,7 +276,7 @@ def get_project(project_id: Any) -> Optional[Dict[str, Any]]:
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
-def get_project_hub(project_id: Any) -> Dict[str, Any]:
+def get_project_hub(project_id: Any, compact: bool = True) -> Optional[Dict[str, Any]]:
     """
     Fournit la vue consolidée 360° du Hub Projet (Fiche opérationnelle complète) :
     - Informations générales et statut opérationnel (En tournage, Clôturé, À venir)
@@ -272,16 +287,36 @@ def get_project_hub(project_id: Any) -> Dict[str, Any]:
     - Incidents de tournage éventuels
     - Journal de bord et rapports d'équipe collectifs
     - project_id: ID numérique du projet ou code BVPR (ex: 'BVPR-0RLY80RD5LZB' ou 46)
+    - compact: Si True (défaut), omet les champs bruts lourds Airtable pour optimiser les tokens LLM.
     """
     from services.admin.project_reports import get_project_detail_context
 
     project = _resolve_project(project_id)
     if not project:
-        return {"error": f"Projet '{project_id}' introuvable."}
+        return None
 
     context = get_project_detail_context(project.id)
     if not context:
-        return {"error": f"Impossible de charger le hub du projet #{project.id}."}
+        return None
+
+    # Optimisation tokens : épurer les véhicules et têtes si compact
+    vehicles_list = []
+    for v in context.get("vehicles", []):
+        if compact:
+            v_clean = dict(v)
+            v_clean.pop("fields", None)
+            vehicles_list.append(v_clean)
+        else:
+            vehicles_list.append(v)
+
+    heads_list = []
+    for h in context.get("heads", []):
+        if compact:
+            h_clean = dict(h)
+            h_clean.pop("fields", None)
+            heads_list.append(h_clean)
+        else:
+            heads_list.append(h)
 
     # Sérialiser les données du contexte de manière propre et directement utilisable par l'agent IA
     return {
@@ -313,10 +348,10 @@ def get_project_hub(project_id: Any) -> Dict[str, Any]:
         },
         "contacts": context.get("contacts", []),
         "equipment": {
-            "vehicles_count": len(context.get("vehicles", [])),
-            "vehicles": context.get("vehicles", []),
-            "heads_count": len(context.get("heads", [])),
-            "heads": context.get("heads", []),
+            "vehicles_count": len(vehicles_list),
+            "vehicles": vehicles_list,
+            "heads_count": len(heads_list),
+            "heads": heads_list,
         },
         "waivers": {
             "pilot": context.get("pilot_waiver"),

@@ -296,7 +296,6 @@ def check_booking_conflicts(
             conflicting_head_ids.add(hid)
             conflicts_by_item.setdefault(hid, []).append(conflict_info)
             conflicts_list.append(conflict_info)
-            conflicts_list.append(conflict_info)
 
     return {
         "has_conflicts": len(conflicts_list) > 0,

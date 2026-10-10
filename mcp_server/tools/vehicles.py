@@ -21,36 +21,50 @@ def _make_json_safe(data: Any) -> Any:
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
-def get_fleet_overview() -> Dict[str, Any]:
+def get_fleet_overview(compact: bool = True) -> Dict[str, Any]:
     """
     Récupère la vue d'ensemble de la flotte de véhicules Belle Vitesse enrichie en direct :
-    - Statut opérationnel (disponible, sur tournage, incident / révision)
+    - Statut opérationnel (disponible, sur tournage, incident / révision, immobilisé)
     - Dernier niveau de batterie mesuré
     - Compteurs de tournages, checkouts, checkins, incidents
     - Projet actif en cours de tournage
     - Statistiques globales de la flotte
+    - compact: Si True (défaut), omet les champs bruts Airtable lourds (galeries photos, descriptions volumineuses) pour minimiser la consommation de tokens.
     """
     from services.admin.fleet import get_fleet_overview as _get
     raw_data = _get()
-    return _make_json_safe(raw_data)
+    safe_data = _make_json_safe(raw_data)
+    if compact and isinstance(safe_data.get("vehicles"), list):
+        for v in safe_data["vehicles"]:
+            v.pop("fields", None)
+    return safe_data
 
 
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
-def get_vehicle_timeline(vehicle_id: str) -> Optional[Dict[str, Any]]:
+def get_vehicle_timeline(vehicle_id: str, compact: bool = True) -> Optional[Dict[str, Any]]:
     """
     Agrège la timeline opérationnelle complète d'un véhicule spécifique :
     - Missions de tournage et sous-événements ordonnés (Départs -> Incidents -> Retours)
     - Statistiques clés : taux de conformité, incidents ouverts, batterie
     - Informations détaillées sur le véhicule
-    - vehicle_id: ID du véhicule (ex: 'rec1Rcg1rWWyzL9Qy' ou slug/numérique)
+    - vehicle_id: ID du véhicule (ex: 'rec1Rcg1rWWyzL9Qy', slug 'ecar', ou nom)
+    - compact: Si True (défaut), allège la charge utile en omettant les métadonnées brutes Airtable.
     """
     from services.admin.fleet import get_vehicle_timeline as _get
-    raw_data = _get(vehicle_id)
+    from utils.database import get_vehicles
+    all_v = get_vehicles() or []
+    resolved = _resolve_equipment_ids([vehicle_id], all_v)
+    resolved_id = resolved[0] if resolved else vehicle_id
+
+    raw_data = _get(resolved_id)
     if not raw_data:
         return None
-    return _make_json_safe(raw_data)
+    safe_data = _make_json_safe(raw_data)
+    if compact and isinstance(safe_data.get("vehicle"), dict):
+        safe_data["vehicle"].pop("fields", None)
+    return safe_data
 
 
 def _resolve_equipment_ids(

@@ -1,5 +1,4 @@
-"""Outils MCP : Domaine Tarification & Grilles Tarifaires."""
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 
 from mcp_server.cache import mcp_cache, invalidate_mcp_cache
 from mcp_server.core import mcp
@@ -23,8 +22,15 @@ def get_equipment_rates(
     from mcp_server.utils import matches_search_query
 
     raw = _list()
-    if category and category.lower() in raw:
-        raw = {category.lower(): raw[category.lower()]}
+    if category:
+        cat_clean = category.strip().lower()
+        if cat_clean in raw:
+            raw = {cat_clean: raw[cat_clean]}
+        else:
+            return {
+                "error": f"Catégorie invalide '{category}'. Catégories autorisées : {', '.join(raw.keys())}.",
+                "allowed_categories": list(raw.keys()),
+            }
 
     if query:
         filtered_res = {}
@@ -100,8 +106,8 @@ def get_salary_rates(
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("write")
-def update_salary_rate(rate_id: int, field: str, value: Any) -> Dict[str, Any]:
-    """Met à jour un champ spécifique d'un tarif salarial de rôle/technicien."""
+def update_salary_rate(rate_id: Union[int, str], field: str, value: Any) -> Dict[str, Any]:
+    """Met à jour un champ spécifique d'un tarif salarial de rôle/technicien (ID numérique ou 'renfort_X')."""
     from services.admin.pricing import update_salary_rate as _update
     success = _update(rate_id, field, value)
     if success:
@@ -112,7 +118,7 @@ def update_salary_rate(rate_id: int, field: str, value: Any) -> Dict[str, Any]:
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("admin")
-def delete_salary_rate(rate_id: int, confirm: bool = False) -> Dict[str, Any]:
+def delete_salary_rate(rate_id: Union[int, str], confirm: bool = False) -> Dict[str, Any]:
     """
     Supprime un tarif salarial de rôle par son ID.
     ATTENTION: Action destructrice (Scope 'admin' requis).
@@ -142,7 +148,7 @@ def get_logistics_rates(
 ) -> Dict[str, Any]:
     """
     Récupère les tarifs logistiques (kilométrage, carburant, convoyage) avec recherche et pagination.
-    - query: Recherche par libellé ou description
+    - query: Recherche par libellé ou description (ex: 'paris', 'livraison')
     - limit: Nombre max d'éléments (défaut 50, max 500)
     - offset: Décalage de pagination
     """
@@ -152,7 +158,10 @@ def get_logistics_rates(
     all_rates = _list()
     filtered = []
     for r in all_rates:
-        if query and not matches_search_query(r, query, ["name", "label", "description", "category"]):
+        # Exposer alias 'name' identique à 'item_name' pour homogénéité
+        if "item_name" in r and "name" not in r:
+            r["name"] = r["item_name"]
+        if query and not matches_search_query(r, query, ["item_name", "name", "notes", "description", "label", "category"]):
             continue
         filtered.append(r)
 

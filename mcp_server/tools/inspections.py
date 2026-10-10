@@ -32,13 +32,17 @@ def get_inspection_detail(mode: str, record_id: int) -> Optional[Dict[str, Any]]
     - mode: 'checkout' ou 'checkin'
     - record_id: ID de la fiche d'inspection
     """
-    if mode.lower() == "checkout":
+    mode_clean = (mode or "").lower().strip()
+    if mode_clean == "checkout":
         from services.admin.checkouts import get_checkout_detail
         return get_checkout_detail(record_id)
-    elif mode.lower() == "checkin":
+    elif mode_clean == "checkin":
         from services.admin.checkins import get_checkin_detail
         return get_checkin_detail(record_id)
-    return None
+    return {
+        "error": f"Mode d'inspection invalide '{mode}'. Modes acceptés : 'checkout', 'checkin'.",
+        "allowed_modes": ["checkout", "checkin"],
+    }
 
 
 @mcp.tool()

@@ -63,6 +63,10 @@ def get_production(production_id: int) -> Optional[Dict[str, Any]]:
         for c in (prod.contacts or [])
     ]
 
+    active_projects = [
+        p for p in (prod.projects or [])
+        if not getattr(p, "deleted_at", None)
+    ]
     recent_projects = [
         {
             "id": p.id,
@@ -71,8 +75,7 @@ def get_production(production_id: int) -> Optional[Dict[str, Any]]:
             "shoot_start": p.shoot_start_date.strftime("%Y-%m-%d") if p.shoot_start_date else None,
             "shoot_end": p.shoot_end_date.strftime("%Y-%m-%d") if p.shoot_end_date else None,
         }
-        for p in (prod.projects or [])
-        if not getattr(p, "deleted_at", None)
+        for p in active_projects
     ][:5]
 
     return {
@@ -84,7 +87,7 @@ def get_production(production_id: int) -> Optional[Dict[str, Any]]:
         "contacts": contacts_list,
         "contacts_count": len(contacts_list),
         "recent_projects": recent_projects,
-        "projects_count": len(prod.projects or []),
+        "projects_count": len(active_projects),
     }
 
 

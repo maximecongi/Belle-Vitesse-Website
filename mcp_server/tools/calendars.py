@@ -26,7 +26,8 @@ def list_calendar_subscriptions(
             "user_id": s.user_id,
             "user_name": f"{s.user.firstname} {s.user.lastname}" if s.user else "Inconnu",
             "user_email": s.user.mail if s.user else "",
-            "token": s.token,
+            "token_masked": f"{s.token[:4]}...{s.token[-4:]}" if s.token and len(s.token) > 8 else "***",
+            "has_token": bool(s.token),
             "is_active": s.is_active,
             "created_at": s.created_at.isoformat() if s.created_at else None,
         }

@@ -494,13 +494,14 @@ def delete_production_waiver_internal(project_id):
 
 def list_production_waivers():
     """Liste et formate toutes les décharges production pour l'administration."""
-    waivers = ProductionWaiver.query.join(Project).filter(
-        ProductionWaiver.deleted_at == None,
-        Project.deleted_at == None
+    waivers = ProductionWaiver.query.outerjoin(Project).filter(
+        ProductionWaiver.deleted_at == None
     ).options(joinedload(ProductionWaiver.project)).all()
     # Tri par date de départ du projet (décroissant)
     waivers.sort(key=lambda w: (
-        w.project.departure_date or datetime.min.date(), w.project.name), reverse=True)
+        (w.project.departure_date or datetime.min.date()) if (w.project and w.project.departure_date) else datetime.min.date(),
+        w.project.name if w.project else (w.project_name or "")
+    ), reverse=True)
 
     formatted = []
     for w in waivers:
@@ -515,23 +516,23 @@ def list_production_waivers():
             token = generate_waiver_pdf_access_token(clean_path)
             return f"/production-waiver/document/{clean_path}?t={token}"
 
-        shooting_dates = w.shooting_dates or _format_project_shooting_dates(p, default_sep=" → ")
+        shooting_dates = w.shooting_dates or (_format_project_shooting_dates(p, default_sep=" → ") if p else "—")
 
         # Récupère le jeton de signature actif si existant
         active_token = WaiverToken.query.filter_by(
             waiver_id=w.waiver_id).order_by(WaiverToken.created_at.desc()).first()
 
         production_contact_name = "—"
-        if p.production_contact:
+        if p and p.production_contact:
             production_contact_name = f"{p.production_contact.first_name} {p.production_contact.last_name}"
 
         formatted.append({
             "id": w.waiver_id,
             "db_id": w.id,
             "waiver_id": w.waiver_id,
-            "project_id": p.id,
-            "project_name": p.name,
-            "production_name": (p.production.name if p.production else w.production_name) or "—",
+            "project_id": p.id if p else w.project_id,
+            "project_name": p.name if p else (w.project_name or "—"),
+            "production_name": ((p.production.name if p.production else None) if p else w.production_name) or w.production_name or "—",
             "production_contact_name": production_contact_name,
             "shooting_dates": shooting_dates,
             "status": format_waiver_status(w.status),
@@ -581,15 +582,16 @@ def delete_pilot_waiver_internal(project_id):
 
 def list_pilot_waivers():
     """Liste et formate toutes les décharges pilote pour l'administration."""
-    waivers = PilotWaiver.query.join(Project).filter(
-        PilotWaiver.deleted_at == None,
-        Project.deleted_at == None
+    waivers = PilotWaiver.query.outerjoin(Project).filter(
+        PilotWaiver.deleted_at == None
     ).options(
         joinedload(PilotWaiver.project).joinedload(Project.pilot_contact)
     ).all()
     # Tri par date de départ du projet (décroissant)
     waivers.sort(key=lambda w: (
-        w.project.departure_date or datetime.min.date(), w.project.name), reverse=True)
+        (w.project.departure_date or datetime.min.date()) if (w.project and w.project.departure_date) else datetime.min.date(),
+        w.project.name if w.project else (w.project_name or "")
+    ), reverse=True)
 
     formatted = []
     for w in waivers:
@@ -606,13 +608,12 @@ def list_pilot_waivers():
             return f"{route}{clean_path}?t={token}"
 
         pilote_name = "—"
-        if p.pilot_contact:
+        if p and p.pilot_contact:
             pilote_name = f"{p.pilot_contact.first_name} {p.pilot_contact.last_name}"
         elif w.pilot_first_name or w.pilot_last_name:
-            pilote_name = f"{w.pilot_first_name or ''} {w.pilot_last_name or ''}".strip(
-            )
+            pilote_name = f"{w.pilot_first_name or ''} {w.pilot_last_name or ''}".strip()
 
-        shooting_dates = w.shooting_dates or _format_project_shooting_dates(p, default_sep=" → ")
+        shooting_dates = w.shooting_dates or (_format_project_shooting_dates(p, default_sep=" → ") if p else "—")
 
         # Récupère le jeton de signature actif si existant
         active_token = WaiverToken.query.filter_by(
@@ -622,8 +623,8 @@ def list_pilot_waivers():
             "id": w.waiver_id,
             "db_id": w.id,
             "waiver_id": w.waiver_id,
-            "project_id": p.id,
-            "project_name": p.name,
+            "project_id": p.id if p else w.project_id,
+            "project_name": p.name if p else (w.project_name or "—"),
             "pilot_name": pilote_name,
             "shooting_dates": shooting_dates,
             "status": format_waiver_status(w.status),
