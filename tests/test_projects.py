@@ -7,7 +7,11 @@ from services.admin.projects import (
     update_project_notes,
 )
 from services.admin.calendar import get_calendar_events
-from models import db, Project, Production, User, Contact
+from models import (
+    db, Project, Production, User, Contact,
+    CheckoutVehicle, CheckinVehicle, CheckoutToken,
+    ProjectReport, Incident
+)
 from app import create_app
 import os
 import sys
@@ -525,6 +529,112 @@ class ProjectsTest(unittest.TestCase):
 
             self.assertIsNone(Project.query.filter_by(name="Projet Sans Prod Valide").first())
 
+    def test_delete_project_cascading_cleanup(self):
+        """Vérifie le nettoyage complet lors de delete_project (inspections, tokens, rapports, dossier local) et la préservation des incidents."""
+        with self.app.app_context():
+            from utils.storage import get_project_base_path
+            from pathlib import Path
+
+            user = User(firstname="Alice", lastname="Admin", mail="alice.admin@example.com", role="administrator")
+            prod = Production(name="Cascade Prod")
+            db.session.add_all([user, prod])
+            db.session.commit()
+
+            proj = Project(
+                name="Projet Cascade Test",
+                production_id=prod.id,
+                departure_date=date(2026, 10, 15),
+                return_date=date(2026, 10, 20),
+            )
+            db.session.add(proj)
+            db.session.commit()
+
+            # Créer un checkout et un checkin associés
+            co = CheckoutVehicle(
+                project_id=proj.id,
+                inspection_number="BVCO-CASCADE01",
+                status="pending",
+                inspection_date=date(2026, 10, 15),
+            )
+            ci = CheckinVehicle(
+                project_id=proj.id,
+                inspection_number="BVCI-CASCADE01",
+                status="pending",
+                inspection_date=date(2026, 10, 20),
+            )
+            db.session.add_all([co, ci])
+            db.session.commit()
+
+            # Créer un jeton de signature pour le checkout
+            tok = CheckoutToken(
+                record_id=str(co.id),
+                inspection_id="BVCO-CASCADE01",
+                token="tok_cascade_test_123",
+            )
+            db.session.add(tok)
+
+            # Créer un rapport de projet
+            rep = ProjectReport(
+                project_id=proj.id,
+                title="Rapport Tournage",
+                content="Tournage sous la pluie",
+                author_name="Alice",
+            )
+            db.session.add(rep)
+
+            # Créer un incident lié au projet (doit être conservé pour la flotte)
+            inc = Incident(
+                project_id=proj.id,
+                title="Rayure pare-chocs",
+                equipment_name="Porsche 911",
+                incident_date=date(2026, 10, 16),
+                status="signale",
+                severity="mineur",
+                category="dommage",
+            )
+            db.session.add(inc)
+            db.session.commit()
+
+            # Créer un dossier physique local de test sous output/
+            local_path = get_project_base_path(proj)
+            test_file = local_path / "test_file.txt"
+            test_file.parent.mkdir(parents=True, exist_ok=True)
+            test_file.write_text("dummy content")
+            self.assertTrue(test_file.exists())
+
+            # Exécuter la suppression complète du projet
+            success = delete_project(proj.id, user_id=user.id)
+            self.assertTrue(success)
+
+            # 1. Vérifier que le projet est soft-deleté
+            proj_reloaded = db.session.get(Project, proj.id)
+            self.assertIsNotNone(proj_reloaded.deleted_at)
+            self.assertEqual(proj_reloaded.last_action_by_id, user.id)
+
+            # 2. Vérifier que les inspections sont soft-deletées
+            co_reloaded = db.session.get(CheckoutVehicle, co.id)
+            ci_reloaded = db.session.get(CheckinVehicle, ci.id)
+            self.assertIsNotNone(co_reloaded.deleted_at)
+            self.assertIsNotNone(ci_reloaded.deleted_at)
+
+            # 3. Vérifier que le jeton de signature a été purgé
+            tok_reloaded = CheckoutToken.query.filter_by(inspection_id="BVCO-CASCADE01").first()
+            self.assertIsNone(tok_reloaded)
+
+            # 4. Vérifier que le rapport d'équipe a été supprimé
+            rep_reloaded = ProjectReport.query.filter_by(project_id=proj.id).first()
+            self.assertIsNone(rep_reloaded)
+
+            # 5. Vérifier que l'incident est CONSERVÉ (traçabilité de la flotte)
+            inc_reloaded = db.session.get(Incident, inc.id)
+            self.assertIsNotNone(inc_reloaded)
+            self.assertEqual(inc_reloaded.title, "Rayure pare-chocs")
+            self.assertIsNone(inc_reloaded.deleted_at)
+
+            # 6. Vérifier que le dossier physique local a été nettoyé du disque
+            self.assertFalse(local_path.exists())
+
 
 if __name__ == "__main__":
     unittest.main()
+

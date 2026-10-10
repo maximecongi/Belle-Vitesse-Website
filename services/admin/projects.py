@@ -758,26 +758,93 @@ def get_project_for_edit(record_id):
 
 @handle_admin_service_error
 def delete_project(record_id, user_id=None):
-    """Supprime un projet et ses décharges associées de la base de données via soft-delete."""
+    """
+    Supprime un projet et ses entités associées via soft-delete et purge physique :
+    - Décharges (soft-delete, suppression des jetons, archivages et fichiers locaux)
+    - Contrôles au départ et au retour (soft-delete, suppression des jetons, archivages et photos/PDF locaux)
+    - Comptes-rendus d'équipe contextuels (suppression en base)
+    - Nettoyage du dossier physique local du projet sous output/
+    - Dossier distant kDrive et ses métadonnées
+    Note : Les incidents éventuels sont préservés pour garantir l'historique d'entretien de la flotte.
+    """
     p = resolve_project(record_id)
     if p and p.deleted_at is None:
+        import shutil
+        from pathlib import Path
+        from flask import current_app
+        from models import ProjectReport
         from models.db import _utcnow
+        from services.admin.inspections import delete_inspection_unified
         from services.admin.waivers import (
             delete_pilot_waiver_internal,
             delete_production_waiver_internal,
         )
-        # Supprime d'abord les décharges liées pour respecter l'intégrité
-        delete_pilot_waiver_internal(p.id)
-        delete_production_waiver_internal(p.id)
+        from utils.storage import get_project_base_path
 
         project_db_id = p.id
         folder_id = p.kdrive_folder_id
 
+        # 1. Calcul du chemin physique local avant modification
+        local_proj_path = None
+        try:
+            local_proj_path = get_project_base_path(p)
+        except Exception as path_err:
+            logger.warning(
+                f"⚠️ Impossible de déterminer le chemin local du projet {p.id} : {path_err}")
+
+        # 2. Supprime d'abord les décharges liées (assets locaux, jetons, archivage et soft-delete)
+        try:
+            delete_pilot_waiver_internal(p.id)
+            delete_production_waiver_internal(p.id)
+        except Exception as waiver_err:
+            logger.error(
+                f"❌ Erreur suppression décharges pour projet {p.id} : {waiver_err}")
+
+        # 3. Supprime les contrôles départ et retour liés (photos, PDF locaux, jetons et soft-delete)
+        try:
+            for co in list(p.checkout_vehicles or []):
+                if getattr(co, "deleted_at", None) is None:
+                    delete_inspection_unified("checkout", co.id)
+            for ci in list(p.checkin_vehicles or []):
+                if getattr(ci, "deleted_at", None) is None:
+                    delete_inspection_unified("checkin", ci.id)
+        except Exception as insp_err:
+            logger.error(
+                f"❌ Erreur suppression inspections pour projet {p.id} : {insp_err}")
+
+        # 4. Supprime les rapports d'équipe contextuels
+        try:
+            ProjectReport.query.filter_by(project_id=p.id).delete()
+        except Exception as rep_err:
+            logger.warning(
+                f"⚠️ Erreur suppression rapports d'équipe projet {p.id} : {rep_err}")
+
+        # 5. Nettoyage du dossier physique local du projet sur le serveur
+        if local_proj_path and local_proj_path.exists():
+            try:
+                shutil.rmtree(local_proj_path, ignore_errors=True)
+                logger.info(f"🗑️ Dossier physique local supprimé : {local_proj_path}")
+
+                # Élagage des dossiers parents vides éventuels dans output/ (prod, mois, année)
+                output_base = Path(current_app.config.get(
+                    "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output")))
+                parent = local_proj_path.parent
+                while parent != output_base and parent.exists():
+                    if not any(parent.iterdir()):
+                        parent.rmdir()
+                        parent = parent.parent
+                    else:
+                        break
+            except Exception as cleanup_err:
+                logger.warning(
+                    f"⚠️ Erreur nettoyage dossier local projet {project_db_id} : {cleanup_err}")
+
+        # 6. Soft-delete du projet
         p.deleted_at = _utcnow()
         p.last_action_by_id = user_id
         db.session.commit()
 
-        # Déclenchement de la suppression sur kDrive (post-commit)
+        # 7. Déclenchement de la suppression sur kDrive (post-commit)
         try:
             from services.common.kdrive import dispatch_delete_project
             dispatch_delete_project(project_db_id, folder_id)
