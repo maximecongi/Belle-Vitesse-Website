@@ -2297,12 +2297,11 @@ function initProjectNotesEdit() {
                     if (editBtnLabel) editBtnLabel.textContent = 'Modifier';
                 } else {
                     displayEl.innerHTML = `
-                        <div class="empty-state">
+                        <div class="empty-state empty-state-sm">
                             <div class="empty-state-icon">
                                 <i data-lucide="clipboard-pen"></i>
                             </div>
-                            <div class="empty-state-title">Aucune note n'a encore été enregistrée</div>
-                            <div class="empty-state-desc">Ajoutez les consignes spécifiques de ce tournage.</div>
+                            <div class="empty-state-title">Aucune consigne enregistrée</div>
                         </div>
                     `;
                     if (editBtnLabel) editBtnLabel.textContent = 'Ajouter une note';

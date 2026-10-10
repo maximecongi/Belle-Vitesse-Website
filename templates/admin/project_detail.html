@@ -77,54 +77,6 @@ initials, empty_state, waiver_card, doc_download_badge %}
                     confirmer' }}</span>
                 <span class="checkout-doc-id u-m-0 project-hub-id">{{ project.project_id }}</span>
             </div>
-
-            <!-- Barre de jalons temporels (Enlèvement, Tournage, Restitution) -->
-            <div class="project-hub-dates-strip">
-                <div class="project-date-step" title="Date d'enlèvement du matériel">
-                    <span class="project-date-step-icon project-date-step-icon-departure">
-                        <i data-lucide="truck"></i>
-                    </span>
-                    <div class="project-date-step-body">
-                        <span class="project-date-step-lbl">Départ</span>
-                        <span class="project-date-step-val">{{ departure_date_fr }}</span>
-                    </div>
-                </div>
-
-                <span class="project-date-sep">→</span>
-
-                <div class="project-date-step {% if shoot_status == 'in_progress' %}is-active{% endif %}"
-                    title="Période effective du tournage">
-                    <span class="project-date-step-icon project-date-step-icon-shoot">
-                        <i data-lucide="clapperboard"></i>
-                    </span>
-                    <div class="project-date-step-body">
-                        <span class="project-date-step-lbl">Tournage</span>
-                        <span class="project-date-step-val">
-                            {% if shoot_start_fr != '—' and shoot_end_fr != '—' and shoot_start_fr != shoot_end_fr %}
-                            {{ shoot_start_fr }} → {{ shoot_end_fr }}
-                            {% elif shoot_start_fr != '—' %}
-                            {{ shoot_start_fr }}
-                            {% elif shoot_end_fr != '—' %}
-                            Jusqu'au {{ shoot_end_fr }}
-                            {% else %}
-                            Dates à confirmer
-                            {% endif %}
-                        </span>
-                    </div>
-                </div>
-
-                <span class="project-date-sep">→</span>
-
-                <div class="project-date-step" title="Date de restitution et réintégration du matériel">
-                    <span class="project-date-step-icon project-date-step-icon-return">
-                        <i data-lucide="package"></i>
-                    </span>
-                    <div class="project-date-step-body">
-                        <span class="project-date-step-lbl">Retour</span>
-                        <span class="project-date-step-val">{{ return_date_fr }}</span>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <div class="project-hub-quick-stats u-flex u-gap-2 u-flex-wrap">
@@ -146,53 +98,163 @@ initials, empty_state, waiver_card, doc_download_badge %}
     </div>
 </div>
 
-<!-- ═══════════ 2. NOTE / CONSIGNES DU PROJET ═══════════ -->
-<div class="admin-card u-mb-3" id="projectNotesCard">
-    <div class="u-flex u-justify-between u-align-center u-mb-2">
-        <div class="u-flex u-align-center u-gap-2">
-            <span class="project-notes-title u-font-bold u-text-sm">Consignes & Notes Spécifiques</span>
+<!-- ═══════════ 2. PLANNING & COORDINATION (CALENDRIER, CONTACTS & NOTES) ═══════════ -->
+<div class="u-grid u-grid-2-1 u-gap-3 u-mb-3">
+    <!-- COLONNE PRINCIPALE (2/3 : PLANNING & CALENDRIER) -->
+    <div class="admin-card project-hub-calendar-card" id="projectShootCalendarWrapper">
+        <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
+            <div class="u-flex u-align-center u-gap-2">
+                <h2 class="admin-card-title u-m-0">Planning & Dates</h2>
+                {% if is_punctual %}
+                <span class="badge-pill u-bg-project-light u-text-project">Dates ponctuelles</span>
+                {% else %}
+                <span class="badge-pill u-bg-project-light u-text-project">Période continue</span>
+                {% endif %}
+            </div>
+            <!-- Date Pills compactes -->
+            <div class="project-hub-dates-pills">
+                <span class="project-hub-date-pill pill-departure" title="Date d'enlèvement du matériel">
+                    <i data-lucide="truck"></i>
+                    <span>{{ departure_date_fr }}</span>
+                </span>
+                <span class="project-hub-date-pill pill-shoot" title="Période de tournage">
+                    <i data-lucide="clapperboard"></i>
+                    <span>
+                        {% if shoot_start_fr != '—' and shoot_end_fr != '—' and shoot_start_fr != shoot_end_fr %}
+                        {{ shoot_start_fr }} → {{ shoot_end_fr }}
+                        {% elif shoot_start_fr != '—' %}
+                        {{ shoot_start_fr }}
+                        {% elif shoot_end_fr != '—' %}
+                        Jusqu'au {{ shoot_end_fr }}
+                        {% else %}
+                        Dates à confirmer
+                        {% endif %}
+                    </span>
+                </span>
+                <span class="project-hub-date-pill pill-return"
+                    title="Date de restitution et réintégration du matériel">
+                    <i data-lucide="package-check"></i>
+                    <span>{{ return_date_fr }}</span>
+                </span>
+            </div>
         </div>
-        <div>
-            <button type="button" class="admin-btn admin-btn-xs admin-btn-quaternary" id="projectNotesEditBtn"
-                data-action="edit-notes" title="Modifier la note du projet">
-                <i data-lucide="pencil" class="project-notes-btn-icon"></i>
-                <span id="projectNotesEditBtnLabel">{% if project.notes %}Modifier{% else %}Ajouter une note{% endif
-                    %}</span>
-            </button>
-        </div>
-    </div>
 
-    <!-- Mode Affichage -->
-    <div id="projectNotesDisplay" class="project-notes-display">
-        {% if project.notes %}
-        <div class="project-notes-content" id="projectNotesText">{{ project.notes | trim }}
-        </div>
+        {% set has_dates = (is_punctual and shoot_dates) or (not is_punctual and (project.shoot_start_date or
+        project.shoot_end_date or project.departure_date or project.return_date)) %}
+        {% if has_dates %}
+        <div id="projectShootCalendar" class="project-hub-calendar-viewport"></div>
+        <script id="projectShootCalendarData" type="application/json">
+            {{ {
+                "date_mode": "punctual" if is_punctual else "continuous",
+                "is_punctual": is_punctual,
+                "shoot_dates": shoot_dates,
+                "shoot_start": project.shoot_start_date|string if project.shoot_start_date else None,
+                "shoot_end": project.shoot_end_date|string if project.shoot_end_date else None,
+                "departure_date": project.departure_date|string if project.departure_date else None,
+                "return_date": project.return_date|string if project.return_date else None,
+                "inter_shoot_intervals": inter_shoot_intervals
+            }|tojson|safe }}
+        </script>
         {% else %}
-        {{ empty_state('clipboard-pen', "Aucune note n'a encore été enregistrée", "Ajoutez les consignes spécifiques de
-        ce tournage.") }}
+        {{ empty_state('calendar-x', "Aucune date définie", "Renseignez les dates de départ, tournage ou retour pour
+        afficher le calendrier du tournage.") }}
         {% endif %}
     </div>
 
-    <!-- Mode Édition -->
-    <form method="POST" action="{{ url_for('admin_projects.admin_project_notes_edit', record_id=project.id) }}"
-        class="project-notes-form is-hidden" id="projectNotesForm">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="u-mb-2">
-            <textarea name="notes" id="projectNotesInput" class="form-input project-notes-textarea" rows="3"
-                placeholder="Renseignez les spécificités du tournage, contraintes de production ou consignes particulières...">{{ project.notes or '' }}</textarea>
-        </div>
-        <div class="u-flex u-justify-between u-align-center u-flex-wrap u-gap-2">
-            <div class="u-flex u-align-center u-gap-2 u-ml-auto">
-                <button type="button" class="admin-btn admin-btn-xs admin-btn-quaternary" id="projectNotesCancelBtn"
-                    data-action="cancel-notes">
-                    Annuler
-                </button>
-                <button type="submit" class="admin-btn admin-btn-xs admin-btn-primary" id="projectNotesSubmitBtn">
-                    <i data-lucide="check" class="project-notes-btn-icon"></i> Enregistrer
-                </button>
+    <!-- COLONNE LATÉRALE (1/3 : CONTACTS & CONSIGNES) -->
+    <div class="u-flex u-flex-column u-gap-3">
+        <!-- Contacts Clés -->
+        <div class="admin-card">
+            <div class="u-flex u-justify-between u-align-center u-mb-2">
+                <div class="u-flex u-align-center u-gap-2">
+                    <h2 class="admin-card-title u-m-0">Contacts Clés</h2>
+                </div>
+                {% if contacts and contacts|length > 0 %}
+                {{ status_badge(contacts|length ~ (' contacts' if contacts|length > 1 else ' contact'), 'neutral') }}
+                {% endif %}
             </div>
+
+            {% if contacts and contacts|length > 0 %}
+            <div class="project-contacts-list">
+                {% for c in contacts %}
+                <div class="project-contact-row">
+                    <div class="project-contact-main">
+                        <span class="project-contact-name" title="{{ c.full_name }}">{{ c.full_name }}</span>
+                        {% if c.role_title %}
+                        <span class="project-contact-role">{{ c.role_title }}</span>
+                        {% endif %}
+                    </div>
+                    {% if c.phone or c.mail %}
+                    <div class="project-contact-actions">
+                        {% if c.phone %}
+                        <a href="tel:{{ c.phone }}" class="project-contact-icon-btn" title="Appeler {{ c.phone }}">
+                            <i data-lucide="phone"></i>
+                        </a>
+                        {% endif %}
+                        {% if c.mail %}
+                        <a href="mailto:{{ c.mail }}" class="project-contact-icon-btn"
+                            title="Envoyer un e-mail à {{ c.mail }}">
+                            <i data-lucide="mail"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="u-text-xs u-text-muted u-italic u-m-0">Aucun contact spécifique rattaché à ce tournage.</p>
+            {% endif %}
         </div>
-    </form>
+
+        <!-- Consignes & Notes Spécifiques -->
+        <div class="admin-card u-h-100" id="projectNotesCard">
+            <div class="u-flex u-justify-between u-align-center u-mb-2">
+                <div class="u-flex u-align-center u-gap-2">
+                    <span class="project-notes-title u-font-bold u-text-sm">Notes</span>
+                </div>
+                <div>
+                    <button type="button" class="admin-btn admin-btn-xs admin-btn-quaternary" id="projectNotesEditBtn"
+                        data-action="edit-notes" title="Modifier la note du projet">
+                        <i data-lucide="pencil" class="project-notes-btn-icon"></i>
+                        <span id="projectNotesEditBtnLabel">{% if project.notes %}Modifier{% else %}Ajouter une note{%
+                            endif %}</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mode Affichage -->
+            <div id="projectNotesDisplay" class="project-notes-display">
+                {% if project.notes %}
+                <div class="project-notes-content" id="projectNotesText">{{ project.notes | trim }}</div>
+                {% else %}
+                {{ empty_state('clipboard-pen', "Aucune note enregistrée", "", class_name='empty-state-sm') }}
+                {% endif %}
+            </div>
+
+            <!-- Mode Édition -->
+            <form method="POST" action="{{ url_for('admin_projects.admin_project_notes_edit', record_id=project.id) }}"
+                class="project-notes-form is-hidden" id="projectNotesForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="u-mb-2">
+                    <textarea name="notes" id="projectNotesInput" class="form-input project-notes-textarea" rows="3"
+                        placeholder="Renseignez les spécificités du tournage, contraintes de production ou consignes particulières...">{{ project.notes or '' }}</textarea>
+                </div>
+                <div class="u-flex u-justify-between u-align-center u-flex-wrap u-gap-2">
+                    <div class="u-flex u-align-center u-gap-2 u-ml-auto">
+                        <button type="button" class="admin-btn admin-btn-xs admin-btn-quaternary"
+                            id="projectNotesCancelBtn" data-action="cancel-notes">
+                            Annuler
+                        </button>
+                        <button type="submit" class="admin-btn admin-btn-xs admin-btn-primary"
+                            id="projectNotesSubmitBtn">
+                            <i data-lucide="check" class="project-notes-btn-icon"></i> Enregistrer
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <!-- ═══════════ 3. OPÉRATIONS & FLOTTE (MATÉRIEL & DOCUMENTS) ═══════════ -->
@@ -386,84 +448,7 @@ initials, empty_state, waiver_card, doc_download_badge %}
     </div>
 </div>
 
-<!-- ═══════════ 4. PLANNING & COORDINATION (CALENDRIER & CONTACTS) ═══════════ -->
-<div class="u-grid u-grid-2-1 u-gap-3 u-mb-3">
-    <!-- COLONNE PRINCIPALE (2/3 : PLANNING & CALENDRIER) -->
-    <div class="admin-card project-hub-calendar-card" id="projectShootCalendarWrapper">
-        <div class="u-flex u-justify-between u-align-center u-mb-3">
-            <div class="u-flex u-align-center u-gap-2">
-                <h2 class="admin-card-title u-m-0">Planning & Dates du Tournage</h2>
-            </div>
-            {% if is_punctual %}
-            <span class="badge-pill u-bg-project-light u-text-project">Dates ponctuelles</span>
-            {% else %}
-            <span class="badge-pill u-bg-project-light u-text-project">Période continue</span>
-            {% endif %}
-        </div>
-
-        {% set has_dates = (is_punctual and shoot_dates) or (not is_punctual and (project.shoot_start_date or
-        project.shoot_end_date or project.departure_date or project.return_date)) %}
-        {% if has_dates %}
-        <div id="projectShootCalendar" class="project-hub-calendar-viewport"></div>
-        <script id="projectShootCalendarData" type="application/json">
-            {{ {
-                "date_mode": "punctual" if is_punctual else "continuous",
-                "is_punctual": is_punctual,
-                "shoot_dates": shoot_dates,
-                "shoot_start": project.shoot_start_date|string if project.shoot_start_date else None,
-                "shoot_end": project.shoot_end_date|string if project.shoot_end_date else None,
-                "departure_date": project.departure_date|string if project.departure_date else None,
-                "return_date": project.return_date|string if project.return_date else None,
-                "inter_shoot_intervals": inter_shoot_intervals
-            }|tojson|safe }}
-        </script>
-        {% else %}
-        {{ empty_state('calendar-x', "Aucune date définie", "Renseignez les dates de départ, tournage ou retour pour
-        afficher le calendrier du tournage.") }}
-        {% endif %}
-    </div>
-
-    <!-- COLONNE LATÉRALE (1/3 : CONTACTS CLÉS DU TOURNAGE) -->
-    <div class="admin-card">
-        <div class="u-flex u-justify-between u-align-center u-mb-3">
-            <div class="u-flex u-align-center u-gap-2">
-                <h2 class="admin-card-title u-m-0">Contacts Clés</h2>
-            </div>
-            {% if contacts and contacts|length > 0 %}
-            {{ status_badge(contacts|length ~ (' contacts' if contacts|length > 1 else ' contact'), 'neutral') }}
-            {% endif %}
-        </div>
-
-        {% if contacts and contacts|length > 0 %}
-        <div class="u-flex u-flex-column u-gap-3">
-            {% for c in contacts %}
-            <div class="project-contact-row">
-                <div class="u-flex u-justify-between u-align-center u-mb-1">
-                    <span class="project-contact-role">{{ c.role_title }}</span>
-                </div>
-                <div class="u-font-semibold u-text-sm">{{ c.full_name }}</div>
-                <div class="u-flex u-flex-column u-gap-2 u-mt-1 u-text-xs u-flex-wrap">
-                    {% if c.phone %}
-                    <a href="tel:{{ c.phone }}" class="project-contact-action" title="Appeler">
-                        <i data-lucide="phone"></i> {{ c.phone }}
-                    </a>
-                    {% endif %}
-                    {% if c.mail %}
-                    <a href="mailto:{{ c.mail }}" class="project-contact-action" title="Envoyer un e-mail">
-                        <i data-lucide="mail"></i> {{ c.mail }}
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        {{ empty_state('users', "Aucun contact assigné", "Aucun contact spécifique rattaché à ce tournage.") }}
-        {% endif %}
-    </div>
-</div>
-
-<!-- ═══════════ 5. COLLABORATION & SUIVI (RAPPORTS D'ÉQUIPE) ═══════════ -->
+<!-- ═══════════ 4. COLLABORATION & SUIVI (RAPPORTS D'ÉQUIPE) ═══════════ -->
 <div class="admin-card project-reports-container u-mb-3" id="reports">
     <div class="u-flex u-justify-between u-align-center u-mb-3 u-flex-wrap u-gap-2">
         <div class="project-reports-header-title">
