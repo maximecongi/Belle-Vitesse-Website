@@ -4,6 +4,9 @@ Couvre la validation des tokens, la génération granulaire des événements
 (départ, tournage continu, tournage ponctuel par blocs, immobilisations, retour),
 et la conformité du format iCalendar.
 """
+from models import CalendarSubscription, Contact, Production, Project, User, db
+from icalendar import Calendar
+from app import create_app
 from datetime import date, timedelta
 import os
 import sys
@@ -11,17 +14,14 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 # Add project root to sys.path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..")))
 
 # Mock WeasyPrint
 mock_weasyprint = MagicMock()
 mock_weasyprint.HTML = MagicMock()
 mock_weasyprint.CSS = MagicMock()
 sys.modules["weasyprint"] = mock_weasyprint
-
-from app import create_app
-from icalendar import Calendar
-from models import CalendarSubscription, Contact, Production, Project, User, db
 
 
 class CalendarFeedTestCase(unittest.TestCase):
@@ -90,7 +90,6 @@ class CalendarFeedTestCase(unittest.TestCase):
             self.contact_pilot_id = self.contact_pilot.id
             self.contact_dop_id = self.contact_dop.id
 
-
     def tearDown(self):
         with self.app.app_context():
             db.session.remove()
@@ -104,15 +103,18 @@ class CalendarFeedTestCase(unittest.TestCase):
         # Un token révoqué pour un utilisateur ayant un token actif est redirigé (302)
         resp_revoked = self.client.get("/cal/revoked_token_67890.ics")
         self.assertEqual(resp_revoked.status_code, 302)
-        self.assertIn("valid_test_token_12345", resp_revoked.headers.get("Location", ""))
+        self.assertIn("valid_test_token_12345",
+                      resp_revoked.headers.get("Location", ""))
 
         # Suivre la redirection renvoie 200
-        resp_followed = self.client.get("/cal/revoked_token_67890.ics", follow_redirects=True)
+        resp_followed = self.client.get(
+            "/cal/revoked_token_67890.ics", follow_redirects=True)
         self.assertEqual(resp_followed.status_code, 200)
 
         # Si l'utilisateur n'a aucun token actif, renvoie 404
         with self.app.app_context():
-            CalendarSubscription.query.filter_by(user_id=self.user_id).update({"is_active": False})
+            CalendarSubscription.query.filter_by(
+                user_id=self.user_id).update({"is_active": False})
             db.session.commit()
 
         resp_no_active = self.client.get("/cal/revoked_token_67890.ics")
@@ -120,7 +122,8 @@ class CalendarFeedTestCase(unittest.TestCase):
 
     def test_calendar_feed_alias_route(self):
         """Vérifie que la route alias /calendar/feed.ics?token=... fonctionne."""
-        resp = self.client.get("/calendar/feed.ics?token=valid_test_token_12345")
+        resp = self.client.get(
+            "/calendar/feed.ics?token=valid_test_token_12345")
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.mimetype, "text/calendar")
 
@@ -164,17 +167,21 @@ class CalendarFeedTestCase(unittest.TestCase):
         dep_evt = next(e for e in events if "🚚" in str(e.get("summary")))
         self.assertEqual(dep_evt.get("dtstart").dt, date(2026, 10, 10))
         self.assertEqual(dep_evt.get("dtend").dt, date(2026, 10, 11))
-        self.assertEqual(str(dep_evt.get("uid")), f"bv-project-{proj_id}-checkout@bellevitesse.com")
+        self.assertEqual(str(dep_evt.get("uid")),
+                         f"bv-project-{proj_id}-checkout@bellevitesse.com")
 
         shoot_evt = next(e for e in events if "🎬" in str(e.get("summary")))
         self.assertEqual(shoot_evt.get("dtstart").dt, date(2026, 10, 12))
-        self.assertEqual(shoot_evt.get("dtend").dt, date(2026, 10, 15))  # 14 + 1 jour
-        self.assertEqual(str(shoot_evt.get("uid")), f"bv-project-{proj_id}-shoot@bellevitesse.com")
+        self.assertEqual(shoot_evt.get("dtend").dt,
+                         date(2026, 10, 15))  # 14 + 1 jour
+        self.assertEqual(str(shoot_evt.get("uid")),
+                         f"bv-project-{proj_id}-shoot@bellevitesse.com")
 
         ret_evt = next(e for e in events if "📦" in str(e.get("summary")))
         self.assertEqual(ret_evt.get("dtstart").dt, date(2026, 10, 15))
         self.assertEqual(ret_evt.get("dtend").dt, date(2026, 10, 16))
-        self.assertEqual(str(ret_evt.get("uid")), f"bv-project-{proj_id}-checkin@bellevitesse.com")
+        self.assertEqual(str(ret_evt.get("uid")),
+                         f"bv-project-{proj_id}-checkin@bellevitesse.com")
 
         # Vérification de la description riche
         desc = str(shoot_evt.get("description"))
@@ -190,7 +197,7 @@ class CalendarFeedTestCase(unittest.TestCase):
         Vérifie la génération d'un projet ponctuel :
         - Bloc de dates consécutives regroupé
         - Date isolée en bloc distinct
-        - Période intermédiaire immobilisée générée avec '🔒 Immobilisé'
+        - Période intermédiaire immobilisée générée avec '🔒  immobilisation'
         - Période intermédiaire non immobilisée non générée (laisse le calendrier libre)
         """
         with self.app.app_context():
@@ -201,12 +208,15 @@ class CalendarFeedTestCase(unittest.TestCase):
                 departure_date=date(2026, 10, 1),
                 date_mode="punctual",
                 # Tournages : 3-4 Oct (bloc 1), 8 Oct (bloc 2), 12 Oct (bloc 3)
-                shoot_dates=["2026-10-03", "2026-10-04", "2026-10-08", "2026-10-12"],
+                shoot_dates=["2026-10-03", "2026-10-04",
+                             "2026-10-08", "2026-10-12"],
                 # Intervalle 1 (5 au 7 Oct) : Immobilisé sur place
                 # Intervalle 2 (9 au 11 Oct) : Non immobilisé (is_immobilized = False)
                 inter_shoot_statuses=[
-                    {"start": "2026-10-04", "end": "2026-10-08", "is_immobilized": True},
-                    {"start": "2026-10-08", "end": "2026-10-12", "is_immobilized": False},
+                    {"start": "2026-10-04", "end": "2026-10-08",
+                        "is_immobilized": True},
+                    {"start": "2026-10-08", "end": "2026-10-12",
+                        "is_immobilized": False},
                 ],
                 return_date=date(2026, 10, 13),
             )
@@ -229,33 +239,41 @@ class CalendarFeedTestCase(unittest.TestCase):
         # Total = 6 événements
         self.assertEqual(len(events), 6)
 
-        shoot_events = [e for e in events if "Tournage" in str(e.get("summary"))]
+        shoot_events = [
+            e for e in events if "Tournage" in str(e.get("summary"))]
         self.assertEqual(len(shoot_events), 3)
 
         # Bloc 1 (3-4 Oct)
         self.assertEqual(shoot_events[0].get("dtstart").dt, date(2026, 10, 3))
         self.assertEqual(shoot_events[0].get("dtend").dt, date(2026, 10, 5))
-        self.assertEqual(str(shoot_events[0].get("uid")), f"bv-project-{proj_id}-shoot-1@bellevitesse.com")
+        self.assertEqual(str(shoot_events[0].get(
+            "uid")), f"bv-project-{proj_id}-shoot-1@bellevitesse.com")
 
         # Bloc 2 (8 Oct)
         self.assertEqual(shoot_events[1].get("dtstart").dt, date(2026, 10, 8))
         self.assertEqual(shoot_events[1].get("dtend").dt, date(2026, 10, 9))
-        self.assertEqual(str(shoot_events[1].get("uid")), f"bv-project-{proj_id}-shoot-2@bellevitesse.com")
+        self.assertEqual(str(shoot_events[1].get(
+            "uid")), f"bv-project-{proj_id}-shoot-2@bellevitesse.com")
 
         # Bloc 3 (12 Oct)
         self.assertEqual(shoot_events[2].get("dtstart").dt, date(2026, 10, 12))
         self.assertEqual(shoot_events[2].get("dtend").dt, date(2026, 10, 13))
-        self.assertEqual(str(shoot_events[2].get("uid")), f"bv-project-{proj_id}-shoot-3@bellevitesse.com")
+        self.assertEqual(str(shoot_events[2].get(
+            "uid")), f"bv-project-{proj_id}-shoot-3@bellevitesse.com")
 
         # Événement d'immobilisation (5 au 7 Oct inclus -> dtstart: 5, dtend: 8)
-        immob_events = [e for e in events if "Immobilisé" in str(e.get("summary"))]
+        immob_events = [
+            e for e in events if "immobilisation" in str(e.get("summary")).lower()]
         self.assertEqual(len(immob_events), 1)
         immob = immob_events[0]
-        self.assertEqual(str(immob.get("summary")), "🔒 Immobilisé : Clip Ponctuel Cascade")
+        self.assertEqual(str(immob.get("summary")),
+                         "🔒  immobilisation : Clip Ponctuel Cascade")
         self.assertEqual(immob.get("dtstart").dt, date(2026, 10, 5))
         self.assertEqual(immob.get("dtend").dt, date(2026, 10, 8))
-        self.assertEqual(str(immob.get("uid")), f"bv-project-{proj_id}-immob-1@bellevitesse.com")
-        self.assertIn("Immobilisation sur place (3j)", str(immob.get("description")))
+        self.assertEqual(str(immob.get("uid")),
+                         f"bv-project-{proj_id}-immob-1@bellevitesse.com")
+        self.assertIn("Immobilisation sur place (3j)",
+                      str(immob.get("description")))
 
         # Vérifier qu'aucun événement ne bloque la période non immobilisée du 9 au 11 Octobre
         all_dates_covered = []
@@ -295,7 +313,6 @@ class CalendarFeedTestCase(unittest.TestCase):
             )
             db.session.add(p)
             db.session.commit()
-
 
         resp = self.client.get("/cal/valid_test_token_12345.ics")
         self.assertEqual(resp.status_code, 200)

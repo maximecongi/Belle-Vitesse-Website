@@ -381,7 +381,8 @@ def calendar_feed(token=None):
                             immob_evt.add("dtstart", immob_start)
                             immob_evt.add("dtend", immob_end +
                                           timedelta(days=1))
-                            immob_evt.add("summary", f"🔒 Immobilisé : {name}")
+                            immob_evt.add(
+                                "summary", f"🔒  immobilisation : {name}")
                             immob_evt.add("dtstamp", now_utc)
                             immob_evt.add(
                                 "categories", ["Belle Vitesse", "Immobilisation"])
