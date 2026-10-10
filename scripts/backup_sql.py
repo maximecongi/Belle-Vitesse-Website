@@ -113,6 +113,8 @@ def sync_backup_to_kdrive(local_file: Path):
             name=year_month
         )
         month_dir_id = month_dir.get("id")
+        if not month_dir_id:
+            raise RuntimeError(f"Impossible de déterminer l'ID du dossier distant {year_month} sur kDrive ({month_dir}).")
 
         # 2. Upload du fichier .sql.gz
         with open(local_file, "rb") as f:
@@ -124,12 +126,14 @@ def sync_backup_to_kdrive(local_file: Path):
             directory_id=month_dir_id,
             filename=local_file.name,
             content_bytes=file_bytes,
-            conflict="replace"
+            conflict="version"
         )
         print(f"✅ Sauvegarde synchronisée sur kDrive avec succès sous {KDRIVE_SQL_BACKUP_PATH}/{year_month}/ (ID: {uploaded.get('id')}) !")
         return uploaded
     except Exception as err:
+        import traceback
         print(f"⚠️ Avertissement : Échec de la réplication sur kDrive ({err}). La sauvegarde locale est préservée.")
+        traceback.print_exc()
         return None
 
 

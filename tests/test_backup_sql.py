@@ -84,7 +84,12 @@ class BackupSQLTestCase(unittest.TestCase):
         self.assertIsNotNone(res)
         self.assertEqual(res["id"], 9999)
         self.assertEqual(mock_client.create_directory.call_count, 1)
-        mock_client.upload.assert_called_once()
+        mock_client.upload.assert_called_once_with(
+            directory_id=1002,
+            filename=dummy_file.name,
+            content_bytes=b"compressed_data",
+            conflict="version"
+        )
 
     @patch("scripts.backup_sql.KDriveClient")
     def test_purge_old_kdrive_backups(self, mock_client_cls):
