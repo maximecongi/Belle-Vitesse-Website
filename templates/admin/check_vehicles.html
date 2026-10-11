@@ -32,7 +32,8 @@
       <h1>Contrôle Technique Véhicules</h1>
     </div>
     <div class="header-actions">
-      <a href="{{ url_for('static', filename='pdfs/check_vehicles.pdf') }}"
+      {% if not is_pdf %}
+      <a href="{{ url_for('admin_tools.admin_check_vehicles_pdf') }}"
         class="admin-btn admin-btn-tertiary btn-download-pdf" target="_blank">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -42,6 +43,7 @@
         </svg>
         Télécharger PDF
       </a>
+      {% endif %}
       <div class="legend">
         <div class="legend-item">
           <div class="dot dot-sec"></div>Sécurité
@@ -58,407 +60,45 @@
       <thead>
         <tr>
           <th></th>
+          {% for col in protocol_data.columns %}
           <th>
-            <span class="vehicle-name">eTrike 360 / eTrike</span>
-            <span class="vehicle-sub">Vélo électriques</span>
+            <span class="vehicle-name">{{ col.name }}</span>
+            <span class="vehicle-sub">{{ col.sub }}</span>
           </th>
-          <th>
-            <span class="vehicle-name">eBike</span>
-            <span class="vehicle-sub">Moto électrique</span>
-          </th>
-          <th>
-            <span class="vehicle-name">eCar</span>
-            <span class="vehicle-sub">Voiture électrique</span>
-          </th>
+          {% endfor %}
         </tr>
       </thead>
       <tbody>
-
-        <!-- ═══ SÉCURITÉ ═══ -->
-        <tr class="section-row sec">
-          <td colspan="4"><span class="section-label">Sécurité</span></td>
+        {% for cat in protocol_data.categories %}
+        <tr class="section-row {{ cat.css_class }}">
+          <td colspan="{{ 1 + (protocol_data.columns|length) }}"><span class="section-label">{{ cat.name }}</span></td>
         </tr>
-
+        {% for cp in cat.checkpoints %}
         <tr class="data-row">
           <td>
-            <div class="check-name">Pression des pneus</div>
-            <div class="check-detail">eTrike : 3 bar · eBike : voir flanc pneu · eCar : 2 bar</div>
+            <div class="check-name">{{ cp.label }}</div>
+            {% if cp.detail %}
+            <div class="check-detail">{{ cp.detail }}</div>
+            {% endif %}
           </td>
+          {% for col in protocol_data.columns %}
           <td>
             <div class="cell">
-              <div class="check-icon sec"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon sec"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon sec"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-        </tr>
-
-        <tr class="data-row">
-          <td>
-            <div class="check-name">Contrôle des freins</div>
-            <div class="check-detail">Voir protocole freins complet ↓</div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon sec"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon sec"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon sec"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-        </tr>
-
-        <tr class="data-row">
-          <td>
-            <div class="check-name">Fonctionnement des vitesses</div>
-            <div class="check-detail">Rouler et passer toutes les vitesses</div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon sec"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon sec"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
+              {% if cp.vehicles[col.key] %}
+              <div class="check-icon {{ cat.css_class }}">
+                <svg class="icon-check" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{% if cat.css_class == 'sec' %}#FFC845{% else %}#5299D3{% endif %}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              {% else %}
               <div class="na"></div>
+              {% endif %}
             </div>
           </td>
+          {% endfor %}
         </tr>
-
-        <tr class="data-row">
-          <td>
-            <div class="check-name">Moteur / Assistance électrique</div>
-            <div class="check-detail">Vérifier tous les modes d'assistance</div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon sec"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon sec"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="na"></div>
-            </div>
-          </td>
-        </tr>
-
-        <tr class="data-row">
-          <td>
-            <div class="check-name">Test roulage (D / R / N)</div>
-            <div class="check-detail">Pas de bruit anormal en roulage</div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="na"></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="na"></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon sec"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-        </tr>
-
-        <tr class="data-row">
-          <td>
-            <div class="check-name">Serrage des roues</div>
-            <div class="check-detail">eTrike : 12 Nm · eCar : 110 Nm</div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon sec"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon sec"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon sec"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-        </tr>
-
-        <tr class="data-row">
-          <td>
-            <div class="check-name">Tension chaîne</div>
-            <div class="check-detail">Vérification du jeu</div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="na"></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon sec"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="na"></div>
-            </div>
-          </td>
-        </tr>
-
-        <tr class="data-row">
-          <td>
-            <div class="check-name">Serrage barres / arceau</div>
-            <div class="check-detail">eBike : 45 Nm · eCar : 45 Nm</div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="na"></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon sec"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon sec"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-        </tr>
-
-        <tr class="data-row">
-          <td>
-            <div class="check-name">Serrage plaques & sièges</div>
-            <div class="check-detail">Vérification du serrage</div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon sec"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="na"></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon sec"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-        </tr>
-
-        <tr class="data-row">
-          <td>
-            <div class="check-name">Ceinture de sécurité</div>
-            <div class="check-detail">Fonctionnement & état</div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon sec"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="na"></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="na"></div>
-            </div>
-          </td>
-        </tr>
-
-        <tr class="data-row">
-          <td>
-            <div class="check-name">Phares & clignotants</div>
-            <div class="check-detail">Fonctionnement complet</div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="na"></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="na"></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon sec"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-        </tr>
-
-        <tr class="data-row">
-          <td>
-            <div class="check-name">Klaxon</div>
-            <div class="check-detail">Fonctionnement</div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="na"></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="na"></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon sec"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-        </tr>
-
-        <!-- ═══ ÉQUIPEMENTS ═══ -->
-        <tr class="section-row eq">
-          <td colspan="4"><span class="section-label">Équipements</span></td>
-        </tr>
-
-        <tr class="data-row">
-          <td>
-            <div class="check-name">Batterie chargée à 100%</div>
-            <div class="check-detail">Vérification avant départ</div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon eq"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon eq"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon eq"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-        </tr>
-
-        <tr class="data-row">
-          <td>
-            <div class="check-name">Casques passagers</div>
-            <div class="check-detail">eTrike : casques homologués (tailles S à XL)</div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon eq"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="na"></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="na"></div>
-            </div>
-          </td>
-        </tr>
-
-        <tr class="data-row">
-          <td>
-            <div class="check-name">Protections pilote</div>
-            <div class="check-detail">Casque, combi, gants, bottes, jeans, veste, masque</div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="na"></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon eq"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="na"></div>
-            </div>
-          </td>
-        </tr>
-
-        <tr class="data-row">
-          <td>
-            <div class="check-name">Système de communication</div>
-            <div class="check-detail">Intercom pilote / cadreur opérationnel (casques & boîtiers chargés)</div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon eq"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon eq"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon eq"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-        </tr>
-
-        <tr class="data-row">
-          <td>
-            <div class="check-name">Mallette / Roulante accessoires</div>
-            <div class="check-detail">eTrike : chambre à air ×2, chargeur, pompe, outils<br>eBike & eCar : pièces de
-              rechange, outils, bijouterie, chargeur</div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon eq"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon eq"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-          <td>
-            <div class="cell">
-              <div class="check-icon eq"><i data-lucide="check"></i></div>
-            </div>
-          </td>
-        </tr>
-
+        {% endfor %}
+        {% endfor %}
       </tbody>
     </table>
   </div>
@@ -469,7 +109,13 @@
     <!-- FREINS -->
     <div class="detail-card">
       <div class="detail-card-header">
-        <div class="detail-card-icon"><i data-lucide="octagon-alert"></i></div>
+        <div class="detail-card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#FFC845" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
         <div>
           <div class="detail-card-title">Protocole Freins</div>
           <div class="detail-card-sub">Applicable : eTrike 360 · eBike · eCar</div>
@@ -505,8 +151,12 @@
         </div>
 
         <div class="warn-banner">
-          <i data-lucide="alert-triangle"></i> Si un seul critère n'est pas validé — véhicule à réparer avant
-          utilisation
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C32F27" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <span>Si un seul critère n'est pas validé — véhicule à réparer avant utilisation</span>
         </div>
       </div>
     </div>
@@ -514,7 +164,12 @@
     <!-- PNEUS -->
     <div class="detail-card">
       <div class="detail-card-header">
-        <div class="detail-card-icon"><i data-lucide="circle-dot"></i></div>
+        <div class="detail-card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#FFC845" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </div>
         <div>
           <div class="detail-card-title">Protocole Pneus</div>
           <div class="detail-card-sub">Applicable : eTrike 360 · eBike · eCar</div>
@@ -540,19 +195,18 @@
         </div>
 
         <div class="warn-banner">
-          <i data-lucide="alert-triangle"></i> Toujours vérifier la pression à froid, avant utilisation
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C32F27" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          <span>Toujours vérifier la pression à froid, avant utilisation</span>
         </div>
       </div>
     </div>
 
   </div>
 
-  <script src="https://unpkg.com/lucide@1.48.0/dist/umd/lucide.min.js"></script>
-  <script>
-    if (typeof lucide !== "undefined") {
-      lucide.createIcons();
-    }
-  </script>
 </body>
 
 </html>

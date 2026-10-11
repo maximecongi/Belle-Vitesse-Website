@@ -197,6 +197,26 @@ def render_pdf_from_template(
         b"trailer\n<< /Size 4 /Root 1 0 R >>\nstartxref\n190\n%%EOF"
     )
     try:
+        import sys
+        if sys.platform == "darwin":
+            import ctypes.util
+            if not getattr(ctypes.util, "_bv_macos_patched", False):
+                _orig_find_library = ctypes.util.find_library
+                def _macos_find_library(name):
+                    res = _orig_find_library(name)
+                    if res:
+                        return res
+                    for prefix in ("/opt/homebrew/lib", "/usr/local/lib"):
+                        for candidate in (
+                            f"{prefix}/{name}.dylib",
+                            f"{prefix}/lib{name}.dylib",
+                            f"{prefix}/{name}",
+                        ):
+                            if os.path.exists(candidate):
+                                return candidate
+                    return None
+                ctypes.util.find_library = _macos_find_library
+                ctypes.util._bv_macos_patched = True
         from weasyprint import CSS, HTML
         fetcher = make_url_fetcher(current_app)
         html = HTML(string=html_content, base_url=base_url, url_fetcher=fetcher)

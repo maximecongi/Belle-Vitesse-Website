@@ -60,11 +60,12 @@ header {
 }
 
 h1 {
-    font-size: 52px;
+    font-size: 42px;
     font-weight: 700;
     text-transform: uppercase;
     line-height: 1;
     letter-spacing: -0.02em;
+    color: var(--text);
 }
 
 h1::before {
@@ -76,13 +77,12 @@ h1::before {
 
 .legend {
     display: flex;
-    gap: 30px;
+    align-items: center;
 }
 
 .legend-item {
     display: flex;
     align-items: center;
-    gap: 10px;
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.15em;
@@ -90,10 +90,20 @@ h1::before {
     color: var(--text-muted);
 }
 
+.legend-item + .legend-item {
+    margin-left: 30px;
+}
+
 .dot {
+    display: inline-block;
+    margin-right: 10px;
+}
+
+.dot::before {
+    content: "";
     width: 10px;
     height: 10px;
-    border-radius: 0;
+    display: block;
 }
 
 .dot-sec {
@@ -241,32 +251,25 @@ tr.data-row:hover td {
 
 .na {
     width: 25px;
-    height: 1px;
+    height: 2px;
     background: var(--border);
+    margin: 0 auto;
 }
 
 /* --- Detail Protocol Cards --- */
 .detail-section {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
     gap: 40px;
 }
 
 .detail-card {
+    flex: 1;
+    min-width: 0;
     background: var(--surface);
     border: 1px solid var(--border);
+    border-left: 4px solid var(--yellow);
     padding: 50px;
     position: relative;
-}
-
-.detail-card::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: var(--yellow);
 }
 
 .detail-card-header {
@@ -286,6 +289,7 @@ tr.data-row:hover td {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    color: var(--text);
 }
 
 .detail-card-sub {
@@ -383,4 +387,57 @@ tr.data-row:hover td {
     display: inline-flex !important;
     align-items: center;
     gap: 10px;
+}
+
+/* --- SVG Icons styling --- */
+.check-icon svg {
+    display: block;
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+}
+
+.detail-card-icon svg {
+    display: block;
+    width: 38px;
+    height: 38px;
+    stroke: var(--yellow);
+}
+
+.warn-banner svg {
+    display: inline-block;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    stroke: var(--red);
+}
+
+/* --- Print & WeasyPrint Layout Rules --- */
+@page {
+    size: 1470px 50000px;
+    margin: 0;
+    padding: 0;
+}
+
+@media print {
+    body {
+        padding: 60px 40px !important;
+        background-color: var(--bg) !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .btn-download-pdf {
+        display: none !important;
+    }
+
+    .detail-section {
+        display: flex !important;
+        gap: 40px !important;
+    }
+
+    .detail-card {
+        flex: 1 !important;
+        min-width: 0 !important;
+    }
 }

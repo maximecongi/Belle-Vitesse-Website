@@ -110,6 +110,18 @@ class CheckpointsManagementTest(unittest.TestCase):
         resp_proto = self.client.get("/admin/check-vehicles")
         self.assertEqual(resp_proto.status_code, 200)
 
+        # Test génération PDF protocole continu
+        resp_pdf = self.client.get("/admin/tools/check-vehicles/pdf")
+        self.assertEqual(resp_pdf.status_code, 200)
+        self.assertEqual(resp_pdf.headers.get("Content-Type"), "application/pdf")
+        self.assertTrue(resp_pdf.data.startswith(b"%PDF"))
+        self.assertGreater(len(resp_pdf.data), 200)
+
+        resp_pdf_alias = self.client.get("/admin/check-vehicles/pdf")
+        self.assertEqual(resp_pdf_alias.status_code, 200)
+        self.assertEqual(resp_pdf_alias.headers.get("Content-Type"), "application/pdf")
+        self.assertTrue(resp_pdf_alias.data.startswith(b"%PDF"))
+
     @patch("services.admin.vehicle_config.get_vehicles")
     def test_admin_checkpoint_edit_get_and_post(self, mock_get_vehicles):
         mock_get_vehicles.return_value = [
@@ -143,7 +155,7 @@ class CheckpointsManagementTest(unittest.TestCase):
         self.assertIn("Point de contrôle mis à jour avec succès", resp_post.data.decode("utf-8"))
 
         with self.app.app_context():
-            updated_cp = CheckpointDefinition.query.get(cp_id)
+            updated_cp = db.session.get(CheckpointDefinition, cp_id)
             self.assertEqual(updated_cp.label, "Pression pneumatiques haute performance")
             self.assertEqual(updated_cp.default_detail, "Contrôle visuel systématique")
             self.assertTrue(updated_cp.is_vehicle_enabled("recCar1"))
@@ -231,8 +243,8 @@ class CheckpointsManagementTest(unittest.TestCase):
         self.assertTrue(data.get("success"))
 
         with self.app.app_context():
-            first_cp = CheckpointDefinition.query.get(reversed_ids[0])
-            last_cp = CheckpointDefinition.query.get(reversed_ids[-1])
+            first_cp = db.session.get(CheckpointDefinition, reversed_ids[0])
+            last_cp = db.session.get(CheckpointDefinition, reversed_ids[-1])
             self.assertEqual(first_cp.order, 1)
             self.assertEqual(last_cp.order, len(reversed_ids))
 
@@ -254,7 +266,7 @@ class CheckpointsManagementTest(unittest.TestCase):
         self.assertIn("supprimé avec succès", resp.data.decode("utf-8"))
 
         with self.app.app_context():
-            deleted = CheckpointDefinition.query.get(new_id)
+            deleted = db.session.get(CheckpointDefinition, new_id)
             self.assertIsNone(deleted)
 
     @patch("services.admin.vehicle_config.get_vehicles")
@@ -281,6 +293,73 @@ class CheckpointsManagementTest(unittest.TestCase):
             new_sec_idx = next(i for i, c in enumerate(cps) if c["id"] == new_sec.id)
             self.assertLess(new_sec_idx, min(eq_indices))
 
+    @patch("services.admin.vehicle_config.get_vehicles")
+    def test_get_protocol_data_matrix(self, mock_get_vehicles):
+        mock_get_vehicles.return_value = [
+            {"id": "recCar1", "fields": {"name": "eCar Proto"}},
+            {"id": "recTrike1", "fields": {"name": "eTrike 360"}},
+            {"id": "recBike1", "fields": {"name": "eRider Street"}},
+        ]
+        with self.app.app_context():
+            ensure_default_checkpoints()
+            from services.admin.vehicle_config import get_protocol_data
+            data = get_protocol_data()
+
+            self.assertIn("columns", data)
+            self.assertIn("categories", data)
+            self.assertEqual(len(data["columns"]), 3)
+            col_keys = [c["key"] for c in data["columns"]]
+            self.assertEqual(col_keys, ["etrike", "ebike", "ecar"])
+
+            cat_names = [c["name"] for c in data["categories"]]
+            self.assertIn("Sécurité", cat_names)
+            self.assertIn("Équipements", cat_names)
+
+            # Vérifier que chaque point contient l'état pour les 3 types de véhicules
+            sec_group = next(c for c in data["categories"] if c["name"] == "Sécurité")
+            self.assertGreater(len(sec_group["checkpoints"]), 0)
+            tires_cp = next(cp for cp in sec_group["checkpoints"] if cp["key"] == "tires")
+            self.assertTrue(tires_cp["vehicles"]["etrike"])
+            self.assertTrue(tires_cp["vehicles"]["ebike"])
+            self.assertTrue(tires_cp["vehicles"]["ecar"])
+
+    @patch("services.admin.vehicle_config.get_vehicles")
+    def test_admin_check_vehicles_and_pdf_generation(self, mock_get_vehicles):
+        mock_get_vehicles.return_value = [
+            {"id": "recCar1", "fields": {"name": "eCar Proto"}},
+            {"id": "recTrike1", "fields": {"name": "eTrike 360"}},
+            {"id": "recBike1", "fields": {"name": "eRider Street"}},
+        ]
+        self._login_as("administrator")
+
+        # 1. Vérification de la page HTML
+        resp = self.client.get("/admin/tools/check-vehicles")
+        self.assertEqual(resp.status_code, 200)
+        html = resp.data.decode("utf-8")
+        self.assertIn("Contrôle Technique Véhicules", html)
+        self.assertIn("/admin/tools/check-vehicles/pdf", html)
+        self.assertIn("eTrike 360 / eTrike", html)
+        self.assertIn("Pression des pneus", html)
+        # Vérification qu'aucun script inline n'est présent
+        self.assertNotIn("<script>", html)
+        self.assertNotIn("lucide.createIcons()", html)
+
+        # Vérification de l'alias /admin/check-vehicles
+        resp_alias = self.client.get("/admin/check-vehicles")
+        self.assertEqual(resp_alias.status_code, 200)
+
+        # 2. Vérification de l'endpoint de téléchargement PDF dynamique
+        resp_pdf = self.client.get("/admin/tools/check-vehicles/pdf")
+        self.assertEqual(resp_pdf.status_code, 200)
+        self.assertEqual(resp_pdf.content_type, "application/pdf")
+        self.assertTrue(resp_pdf.data.startswith(b"%PDF"))
+
+        # Vérification de l'alias PDF /admin/check-vehicles/pdf
+        resp_pdf_alias = self.client.get("/admin/check-vehicles/pdf")
+        self.assertEqual(resp_pdf_alias.status_code, 200)
+        self.assertEqual(resp_pdf_alias.content_type, "application/pdf")
+
 
 if __name__ == "__main__":
     unittest.main()
+

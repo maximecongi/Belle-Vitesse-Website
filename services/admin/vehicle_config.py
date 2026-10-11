@@ -73,13 +73,14 @@ DEFAULT_SPECIFIC_DETAILS = {
 def ensure_default_checkpoints():
     """Initialise automatiquement les définitions de checkpoints en base de données si la table est vide."""
     try:
-        from sqlalchemy import inspect
-        inspector = inspect(db.engine)
-        if "checkpoint_definitions" not in inspector.get_table_names():
-            CheckpointDefinition.__table__.create(db.engine, checkfirst=True)
-
-        if CheckpointDefinition.query.count() > 0:
-            return
+        try:
+            if CheckpointDefinition.query.count() > 0:
+                return
+        except Exception:
+            db.session.rollback()
+            CheckpointDefinition.__table__.create(db.session.connection(), checkfirst=True)
+            if CheckpointDefinition.query.count() > 0:
+                return
 
         logger.info("🔧 Initialisation par défaut des CheckpointDefinition en base de données...")
         vehicles = get_vehicles()
@@ -142,6 +143,17 @@ def ensure_default_checkpoints():
         logger.error(f"❌ Erreur lors de l'initialisation des CheckpointDefinition : {e}")
 
 
+def _invalidate_checkpoints_cache():
+    """Invalide l'ensemble des caches liés aux points de contrôle et déclenche la mise à jour différée du PDF."""
+    cache.delete("checkpoint_definitions_all")
+    cache.delete("checkpoint_configs")
+    cache.delete("protocol_data_matrix")
+    try:
+        dispatch_sync_check_vehicles_pdf()
+    except Exception as e:
+        logger.debug(f"Impossible de déclencher la mise à jour différée du PDF : {e}")
+
+
 def get_all_checkpoints():
     """Récupère toutes les définitions de points de contrôle triées avec informations enrichies."""
     ensure_default_checkpoints()
@@ -199,10 +211,206 @@ def get_all_checkpoints():
     return results
 
 
+def get_protocol_data() -> dict:
+    """Génère la matrice dynamique des points de contrôle pour le protocole technique (web & PDF).
+
+    Regroupe les checkpoints définis en base de données par catégorie (Sécurité, Équipements...)
+    et résout pour chacune des colonnes de référence de la flotte :
+      - eTrike 360 / eTrike (Vélos électriques)
+      - eBike (Moto électrique / eRider)
+      - eCar (Voiture électrique)
+    si le point de contrôle est applicable (coche) ou non (tiret), ainsi que le détail descriptif.
+    """
+    cached_data = cache.get("protocol_data_matrix")
+    if cached_data is not None:
+        return cached_data
+
+    ensure_default_checkpoints()
+    checkpoints = get_all_checkpoints()
+    vehicles = get_vehicles()
+
+    # Cartographie id -> nom en minuscules
+    v_map = {v["id"]: v["fields"].get("name", "").lower() for v in vehicles}
+
+    columns = [
+        {"key": "etrike", "name": "eTrike 360 / eTrike", "sub": "Vélos électriques"},
+        {"key": "ebike", "name": "eBike", "sub": "Moto électrique"},
+        {"key": "ecar", "name": "eCar", "sub": "Voiture électrique"},
+    ]
+
+    cat_order = ["Sécurité", "Équipements"]
+    groups = {}
+
+    for cp in checkpoints:
+        cat = cp.get("category", "Sécurité")
+        if cat not in groups:
+            groups[cat] = []
+
+        overrides = cp.get("vehicle_overrides") or {}
+
+        # Colonne eTrike : véhicules dont le nom contient 'trike'
+        trike_enabled = False
+        for vid, vname in v_map.items():
+            if "trike" in vname and overrides.get(vid, {}).get("enabled"):
+                trike_enabled = True
+                break
+
+        # Colonne eBike : véhicules dont le nom contient 'bike' ou 'rider'
+        bike_enabled = False
+        for vid, vname in v_map.items():
+            if ("bike" in vname or "rider" in vname) and overrides.get(vid, {}).get("enabled"):
+                bike_enabled = True
+                break
+
+        # Colonne eCar : véhicules dont le nom contient 'car'
+        car_enabled = False
+        for vid, vname in v_map.items():
+            if "car" in vname and overrides.get(vid, {}).get("enabled"):
+                car_enabled = True
+                break
+
+        # Fallback pour Sécurité si aucun override spécifique n'est défini
+        if not overrides and cat == "Sécurité":
+            trike_enabled = bike_enabled = car_enabled = True
+
+        detail_text = (cp.get("default_detail") or cp.get("detail") or "").strip()
+
+        groups[cat].append({
+            "id": cp.get("id"),
+            "key": cp.get("key"),
+            "label": cp.get("label"),
+            "category": cat,
+            "detail": detail_text,
+            "has_protocol": cp.get("has_protocol", False),
+            "vehicles": {
+                "etrike": trike_enabled,
+                "ebike": bike_enabled,
+                "ecar": car_enabled,
+            }
+        })
+
+    categories = []
+    # Catégories prioritaires
+    for cat_name in cat_order:
+        if cat_name in groups:
+            css_class = "sec" if cat_name == "Sécurité" else "eq"
+            categories.append({
+                "name": cat_name,
+                "css_class": css_class,
+                "checkpoints": groups[cat_name]
+            })
+
+    # Catégories additionnelles éventuelles
+    for cat_name, cp_list in groups.items():
+        if cat_name not in cat_order:
+            categories.append({
+                "name": cat_name,
+                "css_class": "eq",
+                "checkpoints": cp_list
+            })
+
+    result = {
+        "columns": columns,
+        "categories": categories,
+        "total_checkpoints": len(checkpoints),
+    }
+
+    cache.set("protocol_data_matrix", result, timeout=3600)
+    return result
+
+
+def sync_check_vehicles_static_pdf(app=None) -> bool:
+    """Met à jour le fichier PDF statique static/pdfs/check_vehicles.pdf à partir de la base."""
+    from flask import current_app, render_template, has_request_context
+    from pathlib import Path
+    from utils.document_utils import render_pdf_from_template
+
+    target_app = app or (current_app._get_current_object() if current_app else None)
+    if not target_app:
+        return False
+
+    if not has_request_context():
+        with target_app.test_request_context(base_url="https://team.bellevitesse.com"):
+            return sync_check_vehicles_static_pdf(target_app)
+
+    try:
+        protocol_data = get_protocol_data()
+        html_content = render_template(
+            "admin/check_vehicles.html",
+            protocol_data=protocol_data,
+            is_pdf=True
+        )
+        base_url = target_app.config.get("SERVER_NAME") or "https://team.bellevitesse.com"
+        if not base_url.startswith("http"):
+            base_url = f"https://{base_url}"
+        base_url = base_url.rstrip("/") + "/"
+
+        pdf_bytes = render_pdf_from_template(
+            html_content=html_content,
+            base_url=base_url,
+            stylesheets=["css/admin/admin-check-vehicles.css"],
+            filename="check_vehicles.pdf",
+            continuous=True
+        )
+
+        static_pdf_path = Path(target_app.static_folder) / "pdfs" / "check_vehicles.pdf"
+        if pdf_bytes and len(pdf_bytes) > 200:
+            static_pdf_path.parent.mkdir(parents=True, exist_ok=True)
+            static_pdf_path.write_bytes(pdf_bytes)
+            logger.info("✅ static/pdfs/check_vehicles.pdf synchronisé avec succès.")
+            return True
+    except Exception as e:
+        logger.warning(f"⚠️ Impossible de synchroniser static/pdfs/check_vehicles.pdf : {e}")
+    return False
+
+
+def dispatch_sync_check_vehicles_pdf(app=None) -> bool:
+    """Déclenche la mise à jour différée en arrière-plan du PDF statique des véhicules."""
+    import os
+    import threading
+    from flask import current_app
+
+    target_app = app or (current_app._get_current_object() if current_app else None)
+    if not target_app:
+        return False
+
+    # En mode test, exécuter immédiatement pour validation déterministe
+    if target_app.config.get("TESTING") or os.getenv("FLASK_ENV") == "testing":
+        return sync_check_vehicles_static_pdf(target_app)
+
+    # 1. Mise en file d'attente Redis Queue si disponible
+    try:
+        from services.common.redis_queue import get_rq_queue
+        queue = get_rq_queue("pdf")
+        if queue is not None:
+            job = queue.enqueue(
+                "services.admin.vehicle_config.sync_check_vehicles_static_pdf",
+                job_timeout=180,
+                result_ttl=3600,
+            )
+            logger.info(f"📬 [RQ pdf] Job de synchronisation check_vehicles.pdf mis en file (ID: {job.id})")
+            return True
+    except Exception as q_err:
+        logger.debug(f"File RQ non disponible pour check_vehicles.pdf ({q_err}), bascule sur thread daemon.")
+
+    # 2. Repli vers thread daemon asynchrone autonome
+    def _async_worker():
+        try:
+            with target_app.app_context():
+                sync_check_vehicles_static_pdf(target_app)
+        except Exception as bg_err:
+            logger.warning(f"⚠️ Erreur en thread d'arrière-plan pour check_vehicles.pdf : {bg_err}")
+
+    t = threading.Thread(target=_async_worker, daemon=True, name="sync-check-vehicles-pdf")
+    t.start()
+    logger.info("🚀 Tâche d'arrière-plan lancée pour la mise à jour différée de check_vehicles.pdf")
+    return True
+
+
 def get_checkpoint_by_id(checkpoint_id: int):
     """Récupère un point de contrôle par son ID avec les détails de tous les véhicules."""
     ensure_default_checkpoints()
-    cp = CheckpointDefinition.query.get(checkpoint_id)
+    cp = db.session.get(CheckpointDefinition, checkpoint_id)
     if not cp:
         return None
 
@@ -358,15 +566,14 @@ def create_checkpoint(form_data: dict):
     db.session.add(new_cp)
     db.session.commit()
 
-    cache.delete("checkpoint_definitions_all")
-    cache.delete("checkpoint_configs")
+    _invalidate_checkpoints_cache()
     return new_cp
 
 
 @handle_admin_service_error
 def update_checkpoint(checkpoint_id: int, form_data: dict) -> bool:
     """Met à jour un point de contrôle : nom, catégorie, ordre, indication par défaut et véhicules concernés avec indications."""
-    cp = CheckpointDefinition.query.get(checkpoint_id)
+    cp = db.session.get(CheckpointDefinition, checkpoint_id)
     if not cp:
         return False
 
@@ -437,8 +644,7 @@ def update_checkpoint(checkpoint_id: int, form_data: dict) -> bool:
     db.session.commit()
 
     # Invalidation des caches
-    cache.delete("checkpoint_definitions_all")
-    cache.delete("checkpoint_configs")
+    _invalidate_checkpoints_cache()
     return True
 
 
@@ -447,12 +653,11 @@ def reorder_checkpoints(ordered_ids: list) -> bool:
     """Met à jour l'ordre d'affichage des points de contrôle d'après la liste ordonnée de leurs IDs."""
     try:
         for index, cp_id in enumerate(ordered_ids, start=1):
-            cp = CheckpointDefinition.query.get(int(cp_id))
+            cp = db.session.get(CheckpointDefinition, int(cp_id))
             if cp:
                 cp.order = index
         db.session.commit()
-        cache.delete("checkpoint_definitions_all")
-        cache.delete("checkpoint_configs")
+        _invalidate_checkpoints_cache()
         return True
     except Exception as e:
         db.session.rollback()
@@ -464,7 +669,7 @@ def reorder_checkpoints(ordered_ids: list) -> bool:
 def delete_checkpoint(checkpoint_id: int) -> tuple[bool, str]:
     """Supprime un point de contrôle et nettoie les configurations associées."""
     try:
-        cp = CheckpointDefinition.query.get(checkpoint_id)
+        cp = db.session.get(CheckpointDefinition, checkpoint_id)
         if not cp:
             return False, "Point de contrôle introuvable."
         
@@ -484,8 +689,7 @@ def delete_checkpoint(checkpoint_id: int) -> tuple[bool, str]:
         db.session.delete(cp)
         db.session.commit()
 
-        cache.delete("checkpoint_definitions_all")
-        cache.delete("checkpoint_configs")
+        _invalidate_checkpoints_cache()
 
         # 2. Nettoyer les évaluations orphelines dans les inspections non scellées (in_progress)
         try:
@@ -593,6 +797,5 @@ def save_vehicle_checkpoint_config(vehicle_id, enabled_keys):
         flag_modified(config_record, "config")
 
     db.session.commit()
-    cache.delete("checkpoint_definitions_all")
-    cache.delete("checkpoint_configs")
+    _invalidate_checkpoints_cache()
     return True

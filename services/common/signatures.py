@@ -269,6 +269,8 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         if hasattr(record, "signature_data"):
             record.signature_data = sig_file_rel_path
 
+        db.session.flush()
+
         # Construction du Snapshot des données et Scellé (Hash)
         snapshot, seal_args = _build_flow_data(mode, record, extra_data)
 
