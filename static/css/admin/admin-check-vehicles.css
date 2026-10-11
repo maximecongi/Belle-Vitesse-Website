@@ -130,20 +130,20 @@ table {
 
 thead th {
     background: var(--surface);
-    padding: 40px 20px;
+    padding: 35px 15px;
     text-align: center;
     border-bottom: 1px solid var(--border);
     border-right: 1px solid var(--border);
 }
 
 thead th:first-child {
-    width: 35%;
+    width: 32%;
     text-align: left;
     padding-left: 30px;
 }
 
 .vehicle-name {
-    font-size: 24px;
+    font-size: 21px;
     font-weight: 700;
     text-transform: uppercase;
     color: var(--text);

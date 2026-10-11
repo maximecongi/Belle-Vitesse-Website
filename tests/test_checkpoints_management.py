@@ -359,6 +359,70 @@ class CheckpointsManagementTest(unittest.TestCase):
         self.assertEqual(resp_pdf_alias.status_code, 200)
         self.assertEqual(resp_pdf_alias.content_type, "application/pdf")
 
+    @patch("services.admin.vehicle_config.get_vehicles")
+    def test_dynamic_clustering_by_checkpoints_signature(self, mock_get_vehicles):
+        """Vérifie le regroupement automatique des véhicules par signature identique (Option D)."""
+        mock_get_vehicles.return_value = [
+            {"id": "v_trike_1", "fields": {"name": "eTrike 360", "status": "Online", "order": 4}},
+            {"id": "v_trike_2", "fields": {"name": "eTrike", "status": "Online", "order": 5}},
+            {"id": "v_car", "fields": {"name": "eCar", "status": "Online", "order": 2}},
+            {"id": "v_segway", "fields": {"name": "Segway x2", "status": "Online", "order": 6}},
+            {"id": "v_empty", "fields": {"name": "Jackal Rickshaw", "status": "Online", "order": 8}},
+            {"id": "test_car", "fields": {"name": "Mercedes Test", "status": "Online"}},
+        ]
+        with self.app.app_context():
+            ensure_default_checkpoints()
+            from models import CheckpointDefinition, db
+            from services.admin.vehicle_config import get_protocol_data
+            from sqlalchemy.orm.attributes import flag_modified
+            from extensions import cache
+
+            # Assigner explicitement des configurations :
+            # v_trike_1 et v_trike_2 : tires + brakes (signature identique)
+            # v_car : tires + brakes + ceinture_securite (signature distincte)
+            # v_segway : tires (signature distincte)
+            # v_empty : aucun point actif
+            # test_car : ignoré car préfixe test
+            for cp in CheckpointDefinition.query.all():
+                overrides = {
+                    "v_trike_1": {"enabled": cp.key in ("tires", "brakes")},
+                    "v_trike_2": {"enabled": cp.key in ("tires", "brakes")},
+                    "v_car": {"enabled": cp.key in ("tires", "brakes", "ceinture_securite")},
+                    "v_segway": {"enabled": cp.key == "tires"},
+                    "v_empty": {"enabled": False},
+                    "test_car": {"enabled": True},
+                }
+                cp.vehicle_overrides = overrides
+                flag_modified(cp, "vehicle_overrides")
+            db.session.commit()
+            cache.clear()
+
+            data = get_protocol_data()
+            cols = data["columns"]
+
+            # 3 colonnes actives : (Trikes regroupés), (eCar), (Segway)
+            self.assertEqual(len(cols), 3)
+
+            col_keys = [c["key"] for c in cols]
+            self.assertIn("etrike", col_keys)
+            self.assertIn("ecar", col_keys)
+            self.assertIn("segway", col_keys)
+
+            trike_col = next(c for c in cols if c["key"] == "etrike")
+            self.assertEqual(set(trike_col["vehicle_ids"]), {"v_trike_1", "v_trike_2"})
+            self.assertIn("eTrike 360", trike_col["name"])
+
+            car_col = next(c for c in cols if c["key"] == "ecar")
+            self.assertEqual(car_col["vehicle_ids"], ["v_car"])
+
+            segway_col = next(c for c in cols if c["key"] == "segway")
+            self.assertEqual(segway_col["vehicle_ids"], ["v_segway"])
+
+            # Vérifier que le véhicule vide et le véhicule test sont exclus de tous les groupes
+            all_grouped_ids = [vid for c in cols for vid in c["vehicle_ids"]]
+            self.assertNotIn("v_empty", all_grouped_ids)
+            self.assertNotIn("test_car", all_grouped_ids)
+
 
 if __name__ == "__main__":
     unittest.main()

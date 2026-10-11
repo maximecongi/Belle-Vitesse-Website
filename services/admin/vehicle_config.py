@@ -1,4 +1,5 @@
 import logging
+import re
 from extensions import cache
 from models import VehicleCheckpointConfig, CheckpointDefinition, db
 from sqlalchemy import case
@@ -100,10 +101,24 @@ def ensure_default_checkpoints():
                 v_id = v["id"]
                 v_name = v["fields"].get("name", "")
 
+                v_lower = v_name.lower()
+
                 # Vérifier si ce checkpoint était activé dans VehicleCheckpointConfig
                 v_cfg = existing_configs.get(v_id) or existing_configs.get(v_name) or {}
-                # Si non configuré, activer par défaut pour Sécurité ou selon historique
-                enabled = v_cfg.get(key, True if category == "Sécurité" else False)
+                if not v_cfg:
+                    # Initialisation intelligente selon le type de véhicule pour base vierge
+                    if key == "ceinture_securite":
+                        enabled = "car" in v_lower
+                    elif key == "serrage_arceau":
+                        enabled = "car" in v_lower or "bike" in v_lower or "rider" in v_lower
+                    elif key in ("cric", "cle_roue", "extincteur"):
+                        enabled = "car" in v_lower
+                    elif key == "mallette_accessoires":
+                        enabled = True
+                    else:
+                        enabled = True if category == "Sécurité" else False
+                else:
+                    enabled = v_cfg.get(key, True if category == "Sécurité" else False)
 
                 # Vérifier si une indication spécifique existait dans DEFAULT_SPECIFIC_DETAILS
                 specific_ind = ""
@@ -211,15 +226,74 @@ def get_all_checkpoints():
     return results
 
 
+def _resolve_protocol_group_metadata(group_vehicles: list) -> tuple:
+    """Détermine le nom d'en-tête, le sous-titre et la clé technique d'un groupe de véhicules."""
+    names = [v.get("fields", {}).get("name", "").strip() for v in group_vehicles if v.get("fields", {}).get("name")]
+    col_name = " / ".join(names) if names else "Véhicule"
+
+    combined = " ".join(
+        f"{v.get('fields', {}).get('name', '')} {v.get('fields', {}).get('model', '')} {v.get('fields', {}).get('brand', '')}"
+        for v in group_vehicles
+    ).lower()
+
+    if "trike" in combined:
+        col_sub = "Vélos électriques"
+        col_key = "etrike"
+        type_prio = 1
+        if any("etrike" in n.lower() for n in names):
+            col_name = "eTrike 360 / eTrike"
+    elif "bike" in combined or "rider" in combined:
+        col_sub = "Moto électrique"
+        col_key = "ebike"
+        type_prio = 2
+    elif "car" in combined or "twizy" in combined:
+        col_sub = "Voiture électrique"
+        col_key = "ecar"
+        type_prio = 3
+    elif "segway" in combined:
+        col_sub = "Gyropodes"
+        col_key = "segway"
+        type_prio = 4
+    elif "rickshaw" in combined:
+        col_sub = "Plateforme Rickshaw"
+        col_key = "rickshaw"
+        type_prio = 5
+    elif "drone" in combined:
+        col_sub = "Drone & nacelle"
+        col_key = "drone"
+        type_prio = 6
+    elif "quad" in combined or "kart" in combined:
+        col_sub = "Quad & Kart"
+        col_key = "quad"
+        type_prio = 7
+    else:
+        col_sub = "Véhicule électrique"
+        for v in group_vehicles:
+            brand = v.get("fields", {}).get("brand")
+            model = v.get("fields", {}).get("model")
+            if brand and model:
+                col_sub = f"{brand} {model}"
+                break
+            elif brand:
+                col_sub = brand
+                break
+        safe_slug = re.sub(r"[^a-z0-9]+", "_", col_name.lower()).strip("_")
+        col_key = f"col_{safe_slug}"[:20]
+        type_prio = 8
+
+    min_order = min((v.get("fields", {}).get("order") or 999) for v in group_vehicles)
+    sort_key = (type_prio, min_order, col_name)
+
+    return col_name, col_sub, col_key, sort_key
+
+
 def get_protocol_data() -> dict:
     """Génère la matrice dynamique des points de contrôle pour le protocole technique (web & PDF).
 
-    Regroupe les checkpoints définis en base de données par catégorie (Sécurité, Équipements...)
-    et résout pour chacune des colonnes de référence de la flotte :
-      - eTrike 360 / eTrike (Vélos électriques)
-      - eBike (Moto électrique / eRider)
-      - eCar (Voiture électrique)
-    si le point de contrôle est applicable (coche) ou non (tiret), ainsi que le détail descriptif.
+    Regroupe automatiquement les véhicules par empreinte technique (Option D) :
+    - Deux véhicules ayant rigoureusement la même liste de points de contrôle actifs partagent la même colonne.
+    - Tout véhicule ayant une configuration distincte génère automatiquement sa propre colonne.
+    - Les véhicules sans points configurés ou inactifs sont automatiquement ignorés.
     """
     cached_data = cache.get("protocol_data_matrix")
     if cached_data is not None:
@@ -229,14 +303,68 @@ def get_protocol_data() -> dict:
     checkpoints = get_all_checkpoints()
     vehicles = get_vehicles()
 
-    # Cartographie id -> nom en minuscules
-    v_map = {v["id"]: v["fields"].get("name", "").lower() for v in vehicles}
+    # 1. Filtrer les véhicules valides et calculer leur signature de points de contrôle
+    valid_vehicles = []
+    for v in vehicles:
+        vid = v.get("id", "")
+        fields = v.get("fields", {})
+        vname = (fields.get("name") or "").strip()
+        status = fields.get("status", "")
 
-    columns = [
-        {"key": "etrike", "name": "eTrike 360 / eTrike", "sub": "Vélos électriques"},
-        {"key": "ebike", "name": "eBike", "sub": "Moto électrique"},
-        {"key": "ecar", "name": "eCar", "sub": "Voiture électrique"},
-    ]
+        # Exclure les véhicules de test ou explicitement inactifs
+        if vid.lower().startswith("test") or "test" in vname.lower() or status in ("Inactive", "Archived"):
+            continue
+
+        active_keys = tuple(sorted(
+            cp["key"] for cp in checkpoints
+            if cp.get("vehicle_overrides", {}).get(vid, {}).get("enabled")
+        ))
+
+        # Ignorer les véhicules sans aucun point de contrôle configuré
+        if not active_keys:
+            continue
+
+        valid_vehicles.append((v, active_keys))
+
+    # 2. Regrouper par signature identique
+    groups_by_sig = {}
+    for v, sig in valid_vehicles:
+        groups_by_sig.setdefault(sig, []).append(v)
+
+    built_columns = []
+    for sig, group_vehicles in groups_by_sig.items():
+        c_name, c_sub, c_key, sort_key = _resolve_protocol_group_metadata(group_vehicles)
+        built_columns.append({
+            "key": c_key,
+            "name": c_name,
+            "sub": c_sub,
+            "vehicle_ids": [v["id"] for v in group_vehicles],
+            "sort_key": sort_key,
+        })
+
+    # Trier les colonnes selon sort_key
+    built_columns.sort(key=lambda c: c["sort_key"])
+
+    # Fallback si aucun véhicule configuré
+    if not built_columns:
+        built_columns = [
+            {"key": "etrike", "name": "eTrike 360 / eTrike", "sub": "Vélos électriques", "vehicle_ids": []},
+            {"key": "ebike", "name": "eBike", "sub": "Moto électrique", "vehicle_ids": []},
+            {"key": "ecar", "name": "eCar", "sub": "Voiture électrique", "vehicle_ids": []},
+        ]
+
+    # Garantir l'unicité des clés de colonnes
+    used_keys = set()
+    for col in built_columns:
+        base_key = col["key"]
+        candidate = base_key
+        counter = 2
+        while candidate in used_keys:
+            candidate = f"{base_key}_{counter}"
+            counter += 1
+        col["key"] = candidate
+        used_keys.add(candidate)
+        col.pop("sort_key", None)
 
     cat_order = ["Sécurité", "Équipements"]
     groups = {}
@@ -247,31 +375,14 @@ def get_protocol_data() -> dict:
             groups[cat] = []
 
         overrides = cp.get("vehicle_overrides") or {}
+        cp_vehicles = {}
 
-        # Colonne eTrike : véhicules dont le nom contient 'trike'
-        trike_enabled = False
-        for vid, vname in v_map.items():
-            if "trike" in vname and overrides.get(vid, {}).get("enabled"):
-                trike_enabled = True
-                break
-
-        # Colonne eBike : véhicules dont le nom contient 'bike' ou 'rider'
-        bike_enabled = False
-        for vid, vname in v_map.items():
-            if ("bike" in vname or "rider" in vname) and overrides.get(vid, {}).get("enabled"):
-                bike_enabled = True
-                break
-
-        # Colonne eCar : véhicules dont le nom contient 'car'
-        car_enabled = False
-        for vid, vname in v_map.items():
-            if "car" in vname and overrides.get(vid, {}).get("enabled"):
-                car_enabled = True
-                break
-
-        # Fallback pour Sécurité si aucun override spécifique n'est défini
-        if not overrides and cat == "Sécurité":
-            trike_enabled = bike_enabled = car_enabled = True
+        for col in built_columns:
+            enabled = any(overrides.get(vid, {}).get("enabled") for vid in col["vehicle_ids"]) if col["vehicle_ids"] else False
+            # Fallback pour Sécurité si aucun override spécifique n'est défini
+            if not overrides and cat == "Sécurité":
+                enabled = True
+            cp_vehicles[col["key"]] = enabled
 
         detail_text = (cp.get("default_detail") or cp.get("detail") or "").strip()
 
@@ -282,11 +393,7 @@ def get_protocol_data() -> dict:
             "category": cat,
             "detail": detail_text,
             "has_protocol": cp.get("has_protocol", False),
-            "vehicles": {
-                "etrike": trike_enabled,
-                "ebike": bike_enabled,
-                "ecar": car_enabled,
-            }
+            "vehicles": cp_vehicles,
         })
 
     categories = []
@@ -309,10 +416,49 @@ def get_protocol_data() -> dict:
                 "checkpoints": cp_list
             })
 
+    # Synthèse dynamique des protocoles détaillés (Freins & Pneus)
+    checkpoints_by_key = {cp.get("key"): cp for cp in checkpoints}
+    brakes_cp = checkpoints_by_key.get("brakes", {})
+    brakes_overrides = brakes_cp.get("vehicle_overrides", {}) if brakes_cp else {}
+    brakes_cols = [col["name"] for col in built_columns if any(
+        brakes_overrides.get(vid, {}).get("enabled") for vid in col["vehicle_ids"]
+    )]
+
+    tires_cp = checkpoints_by_key.get("tires", {})
+    tires_overrides = tires_cp.get("vehicle_overrides", {}) if tires_cp else {}
+    tires_cols = [col["name"] for col in built_columns if any(
+        tires_overrides.get(vid, {}).get("enabled") for vid in col["vehicle_ids"]
+    )]
+
+    tire_pressures = []
+    for col in built_columns:
+        if any(tires_overrides.get(vid, {}).get("enabled") for vid in col["vehicle_ids"]):
+            ind = ""
+            for vid in col["vehicle_ids"]:
+                raw_ind = (tires_overrides.get(vid, {}).get("indication") or "").strip()
+                if raw_ind:
+                    if ":" in raw_ind:
+                        raw_ind = raw_ind.split(":", 1)[1].strip()
+                    ind = raw_ind
+                    break
+            if not ind:
+                if "etrike" in col["key"]:
+                    ind = "3 bar"
+                elif "ecar" in col["key"]:
+                    ind = "2 bar"
+                elif "segway" in col["key"]:
+                    ind = "1 bar (ou selon flanc)"
+                else:
+                    ind = "voir flanc du pneu (modèle dépendant)"
+            tire_pressures.append({"name": col["name"], "pressure": ind})
+
     result = {
-        "columns": columns,
+        "columns": built_columns,
         "categories": categories,
         "total_checkpoints": len(checkpoints),
+        "brakes_applicable": " · ".join(brakes_cols) if brakes_cols else "Tous les véhicules",
+        "tires_applicable": " · ".join(tires_cols) if tires_cols else "Tous les véhicules",
+        "tire_pressures": tire_pressures,
     }
 
     cache.set("protocol_data_matrix", result, timeout=3600)
@@ -355,8 +501,11 @@ def sync_check_vehicles_static_pdf(app=None) -> bool:
 
         static_pdf_path = Path(target_app.static_folder) / "pdfs" / "check_vehicles.pdf"
         if pdf_bytes and len(pdf_bytes) > 200:
-            static_pdf_path.parent.mkdir(parents=True, exist_ok=True)
-            static_pdf_path.write_bytes(pdf_bytes)
+            import os
+            # En mode test, ne pas écraser le fichier statique du dépôt
+            if not target_app.config.get("TESTING") and os.getenv("FLASK_ENV") != "testing":
+                static_pdf_path.parent.mkdir(parents=True, exist_ok=True)
+                static_pdf_path.write_bytes(pdf_bytes)
             logger.info("✅ static/pdfs/check_vehicles.pdf synchronisé avec succès.")
             return True
     except Exception as e:
