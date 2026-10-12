@@ -13,7 +13,7 @@ api_auth_bp = Blueprint("api_auth", __name__)
 def api_login():
     """Send a magic link to the user's email."""
     data = request.get_json(silent=True) or {}
-    email = data.get("email", "").strip()
+    email = (data.get("email") or "").strip()
     if not email:
         return jsonify({"error": "L'adresse email est requise."}), 400
 

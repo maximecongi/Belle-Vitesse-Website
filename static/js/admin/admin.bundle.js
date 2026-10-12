@@ -6414,10 +6414,10 @@ window.initInspectionDetail = initInspectionDetail;
         $('#quickProductionForm').on('submit', function (e) {
             e.preventDefault();
 
-            const prodName = $('#modalProdName').val().trim();
-            const prodAddress = $('#modalProdAddress').val().trim();
-            const prodMail = $('#modalProdMail').val().trim();
-            const prodPhone = $('#modalProdPhone').val().trim();
+            const prodName = ($('#modalProdName').val() || '').trim();
+            const prodAddress = ($('#modalProdAddress').val() || '').trim();
+            const prodMail = ($('#modalProdMail').val() || '').trim();
+            const prodPhone = ($('#modalProdPhone').val() || '').trim();
 
             if (!prodName) {
                 alert("Le nom de la production est requis.");
@@ -6523,11 +6523,11 @@ window.initInspectionDetail = initInspectionDetail;
         $('#quickContactForm').on('submit', function (e) {
             e.preventDefault();
 
-            const firstName = $('#modalContactFirstName').val().trim();
-            const lastName = $('#modalContactLastName').val().trim();
-            const jobTitle = $('#modalContactJob').val();
-            const mail = $('#modalContactMail').val().trim();
-            const phone = $('#modalContactPhone').val().trim();
+            const firstName = ($('#modalContactFirstName').val() || '').trim();
+            const lastName = ($('#modalContactLastName').val() || '').trim();
+            const jobTitle = ($('#modalContactJob').val() || '').trim();
+            const mail = ($('#modalContactMail').val() || '').trim();
+            const phone = ($('#modalContactPhone').val() || '').trim();
             const productionId = $('#modalContactProduction').val();
             const targetSelectName = $('#modalTargetSelect').val();
 

@@ -148,10 +148,73 @@ class RouteSmokeTest(unittest.TestCase):
         self.assertEqual(data["phone"], "0601020304")
         self.assertEqual(data["production_id"], str(prod_id))
 
+        # Test creation with None fields (regression test against 'NoneType' object has no attribute 'strip')
+        resp_nulls = self.client.post("/admin/api/contacts/quick", json={
+            "first_name": "Jean",
+            "last_name": "Valjean",
+            "job_title": None,
+            "mail": None,
+            "phone": None,
+            "production_id": None
+        })
+        self.assertEqual(resp_nulls.status_code, 201)
+        data_nulls = resp_nulls.get_json()
+        self.assertIn("id", data_nulls)
+        self.assertEqual(data_nulls["first_name"], "Jean")
+        self.assertEqual(data_nulls["last_name"], "Valjean")
+
         with self.app.app_context():
             c = db.session.get(Contact, int(data["id"]))
             self.assertIsNotNone(c)
             self.assertEqual(c.first_name, "Sophie")
+
+    def test_quick_production_creation(self):
+        """Test the /admin/api/productions/quick endpoint."""
+        from models import User, Production
+        with self.app.app_context():
+            user = User(firstname="Admin", lastname="User", mail="admin2@test.com", role="administrator")
+            db.session.add(user)
+            db.session.commit()
+            user_id = user.id
+
+        with self.client.session_transaction() as sess:
+            sess["admin_authenticated"] = True
+            sess["admin_user_id"] = user_id
+            sess["admin_user_role"] = "administrator"
+
+        # Missing name validation
+        resp_missing = self.client.post("/admin/api/productions/quick", json={"name": ""})
+        self.assertEqual(resp_missing.status_code, 400)
+
+        # Null fields creation (regression test against 'NoneType' object has no attribute 'strip')
+        resp_nulls = self.client.post("/admin/api/productions/quick", json={
+            "name": "Nova Films",
+            "address": None,
+            "mail": None,
+            "phone": None
+        })
+        self.assertEqual(resp_nulls.status_code, 200)
+        data_nulls = resp_nulls.get_json()
+        self.assertIn("id", data_nulls)
+        self.assertEqual(data_nulls["name"], "Nova Films")
+
+        with self.app.app_context():
+            prod = db.session.get(Production, int(data_nulls["id"]))
+            self.assertIsNotNone(prod)
+            self.assertEqual(prod.name, "Nova Films")
+            self.assertIsNone(prod.address)
+            self.assertIsNone(prod.mail)
+            self.assertIsNone(prod.phone)
+
+        # Deduplication test: re-posting same name returns existing record
+        resp_dup = self.client.post("/admin/api/productions/quick", json={
+            "name": "nova films",
+            "address": "Other Address"
+        })
+        self.assertEqual(resp_dup.status_code, 200)
+        data_dup = resp_dup.get_json()
+        self.assertEqual(data_dup["id"], data_nulls["id"])
+        self.assertEqual(data_dup["name"], "Nova Films")
 
 
     def test_public_checkout_endpoints(self):

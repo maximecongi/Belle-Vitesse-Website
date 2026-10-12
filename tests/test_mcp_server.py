@@ -349,21 +349,39 @@ class MCPServerFullTestSuite(unittest.TestCase):
         res_cal = calendars.list_calendar_subscriptions()
         self.assertIsInstance(res_cal, dict)
         self.assertIn("subscriptions", res_cal)
-        res_c = calendars.create_calendar_subscription(user_id=1, label="PyTest iCal")
-        self.assertTrue(res_c.get("success"))
-        token_id = res_c.get("token_id")
-
-        guard = calendars.revoke_calendar_subscription(token_id, confirm=False)
-        self.assertEqual(guard.get("status"), "requires_confirmation")
-
-        revoked = calendars.revoke_calendar_subscription(token_id, confirm=True)
-        self.assertTrue(revoked.get("success"))
-
-        from models import CalendarSubscription
-        test_sub = db.session.get(CalendarSubscription, token_id)
-        if test_sub:
-            db.session.delete(test_sub)
+        # Utiliser un compte de test isolé pour ne JAMAIS impacter les abonnements réels (user_id=1)
+        test_user = User.query.filter_by(mail="pytest_cal_isolated@bellevitesse.com").first()
+        if not test_user:
+            test_user = User(
+                firstname="PyTestCal",
+                lastname="TempUser",
+                mail="pytest_cal_isolated@bellevitesse.com",
+                role="user"
+            )
+            db.session.add(test_user)
             db.session.commit()
+
+        try:
+            res_c = calendars.create_calendar_subscription(user_id=test_user.id, label="PyTest iCal")
+            self.assertTrue(res_c.get("success"))
+            token_id = res_c.get("token_id")
+
+            guard = calendars.revoke_calendar_subscription(token_id, confirm=False)
+            self.assertEqual(guard.get("status"), "requires_confirmation")
+
+            revoked = calendars.revoke_calendar_subscription(token_id, confirm=True)
+            self.assertTrue(revoked.get("success"))
+
+            from models import CalendarSubscription
+            test_sub = db.session.get(CalendarSubscription, token_id)
+            if test_sub:
+                db.session.delete(test_sub)
+                db.session.commit()
+        finally:
+            u_to_delete = db.session.get(User, test_user.id)
+            if u_to_delete:
+                db.session.delete(u_to_delete)
+                db.session.commit()
 
     # ── 10. DOCUMENTS & VÉHICULES ────────────────────────────────
     def test_documents_and_vehicles(self):

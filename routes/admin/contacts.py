@@ -133,11 +133,11 @@ def admin_api_contact_quick_create():
         from models import Contact, db
 
         data = request.get_json() or {}
-        first_name = data.get("first_name", "").strip()
-        last_name = data.get("last_name", "").strip()
-        job_title = data.get("job_title", "").strip()
-        mail = data.get("mail", "").strip()
-        phone = data.get("phone", "").strip()
+        first_name = (data.get("first_name") or "").strip()
+        last_name = (data.get("last_name") or "").strip()
+        job_title = (data.get("job_title") or "").strip()
+        mail = (data.get("mail") or data.get("email") or "").strip()
+        phone = (data.get("phone") or "").strip()
         production_id = data.get("production_id")
 
         if not first_name or not last_name:

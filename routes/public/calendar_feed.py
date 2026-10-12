@@ -149,11 +149,19 @@ def _build_event_description(project, phase_title, vehicle_map=None, head_map=No
     return "\n".join(lines)
 
 
+def _cal_limiter_key():
+    """Clé de rate limiting par jeton pour ne pas pénaliser plusieurs appareils d'un même réseau."""
+    token = (request.view_args or {}).get("token") or request.args.get("token")
+    if token:
+        return f"cal_feed:{token}"
+    return request.remote_addr or "127.0.0.1"
+
+
 @cal_feed_bp.route("/cal/<token>")
 @cal_feed_bp.route("/cal/<token>.ics")
 @cal_feed_bp.route("/calendar/feed.ics")
 @cal_feed_bp.route("/calendar/feed")
-@limiter.limit("30 per hour")
+@limiter.limit("120 per hour", key_func=_cal_limiter_key)
 def calendar_feed(token=None):
     """Génère dynamiquement un flux ICS à partir des projets en base."""
 

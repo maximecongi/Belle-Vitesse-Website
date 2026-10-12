@@ -62,9 +62,9 @@ def init_incident_public_routes(app):
         if not payload and request.form:
             payload = request.form
 
-        signer_name = payload.get("signer_name", "").strip()
-        signer_role = payload.get("signer_role", "").strip()
-        signature_data = payload.get("signature", "").strip() or payload.get("signature_data", "").strip()
+        signer_name = (payload.get("signer_name") or "").strip()
+        signer_role = (payload.get("signer_role") or "").strip()
+        signature_data = (payload.get("signature") or payload.get("signature_data") or "").strip()
 
         if not signer_name:
             return jsonify({"error": "Le nom et prénom du signataire sont requis."}), 400

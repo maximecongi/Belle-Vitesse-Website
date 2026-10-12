@@ -95,10 +95,10 @@ def admin_production_delete(record_id):
 def admin_api_production_quick_create():
     try:
         data = request.get_json() or {}
-        name = data.get("name", "").strip()
-        address = data.get("address", "").strip()
-        mail = data.get("mail", "").strip()
-        phone = data.get("phone", "").strip()
+        name = (data.get("name") or "").strip()
+        address = (data.get("address") or "").strip()
+        mail = (data.get("mail") or data.get("email") or "").strip()
+        phone = (data.get("phone") or "").strip()
 
         if not name:
             return jsonify({"error": "Le nom de la production est requis."}), 400
