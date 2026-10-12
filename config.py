@@ -9,7 +9,7 @@ class Config:
 
     # Flask settings
     PREFERRED_URL_SCHEME = "https"
-    PERMANENT_SESSION_LIFETIME = timedelta(hours=12)
+    PERMANENT_SESSION_LIFETIME = timedelta(days=90)
     SESSION_COOKIE_NAME = "session"
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
@@ -21,7 +21,7 @@ class Config:
     # Cache settings
     CACHE_KEY_PREFIX = "bv_cache_"
     CACHE_DEFAULT_TIMEOUT = 86400
-    
+
     # Database settings
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_POOL_PRE_PING = True
