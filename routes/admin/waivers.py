@@ -10,6 +10,7 @@ from services.admin.waivers import (
     delete_production_waiver,
     generate_pilot_waiver,
     generate_production_waiver,
+    get_or_create_waiver_signing_url,
     list_pilot_waivers,
     list_production_waivers,
     reset_pilot_waiver,
@@ -146,6 +147,15 @@ def admin_pilot_waiver_delete(waiver_id):
     q = request.args.get('q', '')
     return redirect(url_for('admin_waivers.admin_pilot_waivers_list', q=q if q else None))
 
+@waivers_bp.route("/waivers/pilots/<string:waiver_id>/copy-link", methods=["POST"], endpoint='admin_pilot_waiver_copy_link')
+@require_roles('administrator', 'manager')
+def admin_pilot_waiver_copy_link(waiver_id):
+    """Génère ou récupère l'URL de signature active pour une décharge pilote."""
+    success, result = get_or_create_waiver_signing_url(waiver_id, waiver_type="pilot")
+    if not success:
+        return jsonify({"success": False, "error": result}), 400
+    return jsonify({"success": True, "url": result})
+
 # --- DÉCHARGES PRODUCTIONS ---
 
 @waivers_bp.route("/waivers/productions/quick-create/<int:project_id>", methods=["GET", "POST"], endpoint='admin_production_waiver_quick_create')
@@ -270,6 +280,15 @@ def admin_production_waiver_delete(waiver_id):
         flash(msg, "error")
     q = request.args.get('q', '')
     return redirect(url_for('admin_waivers.admin_production_waivers_list', q=q if q else None))
+
+@waivers_bp.route("/waivers/productions/<string:waiver_id>/copy-link", methods=["POST"], endpoint='admin_production_waiver_copy_link')
+@require_roles('administrator', 'manager')
+def admin_production_waiver_copy_link(waiver_id):
+    """Génère ou récupère l'URL de signature active pour une décharge de production."""
+    success, result = get_or_create_waiver_signing_url(waiver_id, waiver_type="production")
+    if not success:
+        return jsonify({"success": False, "error": result}), 400
+    return jsonify({"success": True, "url": result})
 
 def init_waivers_routes(app):
     """Enregistre le blueprint admin_waivers (compatibilité ascendante)."""

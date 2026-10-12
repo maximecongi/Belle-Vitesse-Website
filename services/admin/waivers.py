@@ -45,8 +45,10 @@ def _format_project_shooting_dates(p, default_sep=" au "):
         return "—"
     if getattr(p, "date_mode", None) == "punctual" and p.shoot_dates:
         try:
-            dates = [datetime.strptime(d, "%Y-%m-%d").strftime("%d/%m/%Y") for d in sorted(p.shoot_dates)]
-            return ", ".join(dates)
+            from utils.formatting import parse_and_format_shooting_dates
+            dates_info = parse_and_format_shooting_dates(p.shoot_dates)
+            if dates_info and dates_info.get("has_dates"):
+                return dates_info["display_text"]
         except Exception:
             pass
     if p.shoot_start_date and p.shoot_end_date:
@@ -518,9 +520,12 @@ def list_production_waivers():
 
         shooting_dates = w.shooting_dates or (_format_project_shooting_dates(p, default_sep=" → ") if p else "—")
 
-        # Récupère le jeton de signature actif si existant
-        active_token = WaiverToken.query.filter_by(
-            waiver_id=w.waiver_id).order_by(WaiverToken.created_at.desc()).first()
+        # Récupère le jeton de signature actif et non expiré si existant
+        now_dt = _utcnow()
+        active_token = WaiverToken.query.filter(
+            WaiverToken.waiver_id == w.waiver_id,
+            WaiverToken.expires_at > now_dt
+        ).order_by(WaiverToken.created_at.desc()).first()
 
         production_contact_name = "—"
         if p and p.production_contact:
@@ -546,6 +551,61 @@ def list_production_waivers():
             "last_reminded_at": w.last_reminded_at
         })
     return formatted
+
+
+@handle_admin_service_error
+def get_or_create_waiver_signing_url(waiver_id: str, waiver_type: str = "production", base_url: str = None) -> tuple:
+    """
+    Génère ou récupère l'URL complète de signature active pour une décharge (pilote ou production).
+    Si la décharge est en 'to_generate', elle est automatiquement initialisée.
+    Si aucun jeton n'existe ou s'il a expiré, un nouveau jeton 24h est généré.
+    """
+    from flask import current_app, has_request_context, request
+
+    if waiver_type == "production":
+        waiver = resolve_production_waiver(waiver_id)
+    elif waiver_type == "pilot":
+        waiver = resolve_pilot_waiver(waiver_id)
+    else:
+        waiver = resolve_waiver(waiver_id)
+
+    if not waiver:
+        return False, "Décharge non trouvée."
+
+    if waiver.status == "signed":
+        return False, "Cette décharge est déjà signée."
+
+    mode = waiver.waiver_type or waiver_type or "production"
+
+    # Si la décharge n'était pas encore générée, la générer
+    if waiver.status == "to_generate":
+        gen_ok, gen_msg = generate_waiver(waiver.waiver_id, waiver_type=mode)
+        if not gen_ok:
+            return False, gen_msg
+
+    now = _utcnow()
+    active_token = WaiverToken.query.filter(
+        WaiverToken.waiver_id == waiver.waiver_id,
+        WaiverToken.expires_at > now
+    ).order_by(WaiverToken.created_at.desc()).first()
+
+    if not active_token:
+        new_token = str(uuid.uuid4())
+        active_token = WaiverToken(token=new_token, waiver_id=waiver.waiver_id)
+        db.session.add(active_token)
+        db.session.commit()
+
+    if base_url:
+        root_url = base_url.rstrip("/")
+    elif has_request_context():
+        root_url = request.host_url.rstrip("/")
+    else:
+        server_name = current_app.config.get("SERVER_NAME") if current_app else None
+        root_url = f"https://{server_name}" if server_name else "https://team.bellevitesse.com"
+
+    route_prefix = "production-waiver" if mode == "production" else "waiver"
+    signing_url = f"{root_url}/sign/{route_prefix}/{active_token.token}"
+    return True, signing_url
 
 
 # ── Décharges Pilote (Wrappers Métier & Listes) ───────────────────
@@ -615,9 +675,12 @@ def list_pilot_waivers():
 
         shooting_dates = w.shooting_dates or (_format_project_shooting_dates(p, default_sep=" → ") if p else "—")
 
-        # Récupère le jeton de signature actif si existant
-        active_token = WaiverToken.query.filter_by(
-            waiver_id=w.waiver_id).order_by(WaiverToken.created_at.desc()).first()
+        # Récupère le jeton de signature actif et non expiré si existant
+        now_dt = _utcnow()
+        active_token = WaiverToken.query.filter(
+            WaiverToken.waiver_id == w.waiver_id,
+            WaiverToken.expires_at > now_dt
+        ).order_by(WaiverToken.created_at.desc()).first()
 
         formatted.append({
             "id": w.waiver_id,

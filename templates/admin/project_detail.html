@@ -16,8 +16,8 @@ initials, empty_state, waiver_card, doc_download_badge %}
     ← Liste des projets
 </a>
 {% if project.kdrive_web_url %}
-<a href="{{ project.kdrive_web_url }}" target="_blank" rel="noopener noreferrer"
-    class="admin-btn admin-btn-secondary" title="Ouvrir le dossier du projet dans kDrive Infomaniak">
+<a href="{{ project.kdrive_web_url }}" target="_blank" rel="noopener noreferrer" class="admin-btn admin-btn-secondary"
+    title="Ouvrir le dossier du projet dans kDrive Infomaniak">
     <i data-lucide="cloud"></i>
     <span>Dossier kDrive</span>
 </a>
@@ -31,8 +31,7 @@ initials, empty_state, waiver_card, doc_download_badge %}
     </button>
 </form>
 {% endif %}
-<a href="{{ url_for('admin_projects.admin_project_edit', record_id=project.id) }}"
-    class="admin-btn admin-btn-primary">
+<a href="{{ url_for('admin_projects.admin_project_edit', record_id=project.id) }}" class="admin-btn admin-btn-primary">
     <i data-lucide="edit-3"></i>
     <span>Modifier</span>
 </a>

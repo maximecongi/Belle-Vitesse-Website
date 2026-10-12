@@ -76,7 +76,8 @@
                 </div>
                 <div class="pilot-waiver-info-item">
                     <span class="pilot-waiver-info-label">Date(s) de tournage</span>
-                    <span class="pilot-waiver-info-value u-text-sm">{{ waiver.shooting_dates or '—' }}</span>
+                    {% set dates_info = waiver.shooting_dates | parse_shooting_dates %}
+                    <span class="pilot-waiver-info-value u-text-sm">{{ dates_info.display_text if dates_info.has_dates else (waiver.shooting_dates or '—') }}</span>
                 </div>
             </div>
             <div class="pilot-waiver-info-item" style="margin-top: 12pt;">

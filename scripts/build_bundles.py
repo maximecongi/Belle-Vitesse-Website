@@ -68,6 +68,7 @@ ADMIN_JS_FILES: List[str] = [
     "js/src/admin/inspection-autosave.js",
     "js/src/admin/ios-bridge.js",
     "js/src/admin/waiver-search.js",
+    "js/src/admin/waivers.js",
     "js/src/admin/incident-form.js",
     "js/src/admin/incident-detail.js",
     "js/src/admin/project-detail-calendar.js",
