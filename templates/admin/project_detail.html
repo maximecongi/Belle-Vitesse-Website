@@ -1,7 +1,7 @@
 {% extends "admin/admin_base.html" %}
 
 {% from "admin/macros.html" import status_badge, incident_severity_badge, incident_status_badge, shoot_status_badge,
-initials, empty_state, waiver_card, doc_download_badge %}
+initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_avatar %}
 
 {% block title %}{{ project.name }}{% endblock %}
 {% block page_title %}Détail Projet{% endblock %}
@@ -279,12 +279,7 @@ initials, empty_state, waiver_card, doc_download_badge %}
             {% for v in vehicles %}
             <div class="project-equipment-card">
                 <div class="u-flex u-align-center u-gap-2">
-                    {% if v.fields.get('thumbnail') %}
-                    <img src="{{ v.fields.thumbnail[0].thumbnails.large.url }}" class="project-equipment-img"
-                        alt="{{ v.fields.get('name', 'Véhicule') }}">
-                    {% else %}
-                    <div class="project-equipment-placeholder">🚗</div>
-                    {% endif %}
+                    {{ vehicle_avatar(v.image or (v.fields.thumbnail[0].thumbnails.large.url if v.fields.get('thumbnail') else ''), v.fields.get('name', 'Véhicule'), class="project-equipment-img") }}
                     <div>
                         <div class="u-font-bold u-text-sm">{{ v.fields.get('name') or v.fields.get('Nom') or 'Véhicule'
                             }}</div>
@@ -350,11 +345,7 @@ initials, empty_state, waiver_card, doc_download_badge %}
             {% for h in heads %}
             <div class="project-equipment-card">
                 <div class="u-flex u-align-center u-gap-2">
-                    {% if h.image %}
-                    <img src="{{ h.image }}" class="project-equipment-img" alt="{{ h.name }}">
-                    {% else %}
-                    <div class="project-equipment-placeholder">🤖</div>
-                    {% endif %}
+                    {{ head_avatar(h.image, h.name, class="project-equipment-img") }}
                     <div>
                         <div class="u-font-bold u-text-sm">{{ h.name }}</div>
                         <div class="u-text-xs u-text-muted">{{ h.brand or 'Tête gyrostabilisée' }}</div>

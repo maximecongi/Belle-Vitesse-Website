@@ -482,6 +482,42 @@ class FleetTest(unittest.TestCase):
             self.assertEqual(timeline["stats"]["current_status"], "disponible")
             self.assertEqual(timeline["stats"]["current_status_label"], "Disponible")
 
+    def test_placeholders_and_avatar_macros(self):
+        """Vérifie la présence des placeholders unifiés et le rendu sécurisé des macros d'avatar."""
+        from services.admin.fleet import _extract_vehicle_image
+        from services.admin.projects import _extract_head_image
+        from flask import render_template_string
+
+        # 1. Vérification des extracteurs avec données vides
+        self.assertEqual(_extract_vehicle_image({}), "/static/imgs/placeholders/vehicle.svg")
+        self.assertEqual(_extract_head_image({}), "/static/imgs/placeholders/head.svg")
+
+        # 2. Vérification de l'accessibilité HTTP des fichiers de placeholder
+        for path in [
+            "/static/imgs/placeholders/vehicle.svg",
+            "/static/imgs/placeholders/head.svg",
+        ]:
+            resp = self.client.get(path)
+            self.assertEqual(resp.status_code, 200, f"Le fichier statique {path} doit être accessible.")
+            self.assertIn("image/svg+xml", resp.content_type)
+
+        # 3. Vérification du rendu des macros Jinja vehicle_avatar et head_avatar
+        with self.app.test_request_context():
+            tpl = """
+            {% from "admin/macros.html" import vehicle_avatar, head_avatar %}
+            <div id="v1">{{ vehicle_avatar('', 'Porsche') }}</div>
+            <div id="v2">{{ vehicle_avatar(None, 'Porsche') }}</div>
+            <div id="v3">{{ vehicle_avatar('https://cdn.example.com/veh.png', 'Porsche') }}</div>
+            <div id="h1">{{ head_avatar('', 'Shotover') }}</div>
+            <div id="h2">{{ head_avatar('https://cdn.example.com/head.png', 'Shotover') }}</div>
+            """
+            html = render_template_string(tpl)
+            # Vérifier l'anti-boucle JS onerror=null
+            self.assertIn("this.onerror=null;", html)
+            # Vérifier que le fallback vide injecte directement le placeholder
+            self.assertIn('src="/static/imgs/placeholders/vehicle.svg"', html)
+            self.assertIn('src="/static/imgs/placeholders/head.svg"', html)
+
 
 if __name__ == "__main__":
     unittest.main()

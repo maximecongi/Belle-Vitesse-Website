@@ -1,0 +1,279 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="100%" height="100%">
+  <defs>
+    <!-- Fond Cyclo Studio identique aux miniatures -->
+    <radialGradient id="studioBg" cx="50%" cy="45%" r="65%">
+      <stop offset="0%" stop-color="#F9F9F9" />
+      <stop offset="100%" stop-color="#F2F2F2" />
+    </radialGradient>
+
+    <!-- Ombre portée générale au sol -->
+    <radialGradient id="floorShadow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.22" />
+      <stop offset="50%" stop-color="#000000" stop-opacity="0.06" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Ombre de contact sous les pieds du Ronin 2 -->
+    <radialGradient id="footContact" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#000000" stop-opacity="0.40" />
+      <stop offset="65%" stop-color="#000000" stop-opacity="0.08" />
+      <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Trame Carbone / Grip pour l'anneau et la poignée -->
+    <pattern id="carbonWeave" width="5" height="5" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="0" y2="5" stroke="#1A1A1A" stroke-width="1.2" opacity="0.18" />
+    </pattern>
+
+    <!-- Bagues crantées d'objectif (Follow Focus Gears) -->
+    <pattern id="lensGear" width="4" height="8" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="4" y2="0" stroke="#181818" stroke-width="1.8" opacity="0.65" />
+    </pattern>
+
+    <!-- Ailettes de ventilation du corps caméra -->
+    <pattern id="ventSlots" width="6" height="5" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="6" y2="0" stroke="#181818" stroke-width="2" opacity="0.5" />
+    </pattern>
+  </defs>
+
+  <!-- 1. FOND STUDIO -->
+  <rect width="1200" height="800" fill="url(#studioBg)" />
+
+  <!-- 2. OMBRES AU SOL -->
+  <g transform="translate(215.1 154.5) scale(0.63)">
+    <ellipse cx="515" cy="668" rx="340" ry="22" fill="url(#floorShadow)" />
+    <ellipse cx="445" cy="666" rx="85" ry="10" fill="url(#footContact)" />
+    <ellipse cx="665" cy="668" rx="95" ry="10" fill="url(#footContact)" />
+  </g>
+
+  <!-- 3. GRILLE & LIGNES DE CONSTRUCTION BLUEPRINT (CAO) -->
+  <g transform="translate(215.1 154.5) scale(0.63)" stroke="#1A1A1A" fill="none" opacity="0.16" stroke-width="1">
+    <!-- Axes verticaux et horizontaux (Pan / Roll / Axe Optique) -->
+    <line x1="200" y1="668" x2="960" y2="668" stroke-dasharray="10 6" />
+    <line x1="600" y1="90" x2="600" y2="710" stroke-dasharray="6 6" />
+    <line x1="260" y1="435" x2="920" y2="435" stroke-dasharray="6 6" />
+    <line x1="382" y1="150" x2="382" y2="700" stroke-dasharray="4 8" />
+    <line x1="742" y1="150" x2="742" y2="700" stroke-dasharray="4 8" />
+
+    <!-- Cercles de gyration & axe optique -->
+    <circle cx="600" cy="435" r="218" stroke-dasharray="4 8" />
+    <ellipse cx="705" cy="435" rx="36" ry="52" stroke-dasharray="3 5" />
+
+    <!-- Cotes de largeur de l'anneau en bas -->
+    <line x1="382" y1="700" x2="742" y2="700" stroke-width="1.5" />
+    <polyline points="392,695 382,700 392,705" stroke-width="1.5" />
+    <polyline points="732,695 742,700 732,705" stroke-width="1.5" />
+  </g>
+
+  <!-- 4. BLUEPRINT DU DJI RONIN 2 & CAMÉRA CINÉMA -->
+  <g transform="translate(215.1 154.5) scale(0.63)" stroke="#181818" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.48">
+
+    <!-- ========================================== -->
+    <!-- A. CÂBLAGE SOUS LA CAGE (Power / SDI Loops)-->
+    <!-- ========================================== -->
+    <g stroke-width="5">
+      <!-- Boucle câble gauche -->
+      <path d="M 448 465 L 448 568 C 448 602, 488 602, 498 562" />
+      <!-- Boucles câbles sous la semelle -->
+      <path d="M 555 572 C 550 618, 592 618, 600 572" stroke-width="4.5" />
+      <path d="M 572 572 C 572 632, 685 642, 698 485" stroke-width="5.5" />
+    </g>
+
+    <!-- ========================================== -->
+    <!-- B. ANNEAU CARBONE (PARTIE DROITE & BASSE)  -->
+    <!-- ========================================== -->
+    <g>
+      <!-- Tube Carbone Droit (Passe derrière la Mattebox) -->
+      <path d="M 605 182 C 638 182, 648 205, 678 212 C 722 222, 742 295, 742 435 C 742 565, 718 642, 665 655 L 445 655" stroke-width="24" stroke="#181818" />
+      <path d="M 605 182 C 638 182, 648 205, 678 212 C 722 222, 742 295, 742 435 C 742 565, 718 642, 665 655 L 445 655" stroke-width="18" stroke="#EAEAEA" />
+      <path d="M 605 182 C 638 182, 648 205, 678 212 C 722 222, 742 295, 742 435 C 742 565, 718 642, 665 655 L 445 655" stroke-width="18" stroke="url(#carbonWeave)" />
+
+      <!-- Pieds rétractables (Base Feet Gauche et Droit) -->
+      <!-- Pied Gauche -->
+      <polygon points="435,642 538,655 538,668 422,668 422,648" fill="#E2E2E2" stroke-width="2.5" />
+      <line x1="435" y1="656" x2="528" y2="662" stroke-width="1.5" />
+      <!-- Pied Droit -->
+      <polygon points="622,642 748,660 748,669 615,669 615,648" fill="#E2E2E2" stroke-width="2.5" />
+      <line x1="630" y1="658" x2="735" y2="664" stroke-width="1.5" />
+      <!-- Jonction centrale basse -->
+      <rect x="612" y="638" width="32" height="30" rx="3" fill="#D8D8D8" stroke-width="2.2" />
+    </g>
+
+    <!-- ========================================== -->
+    <!-- C. POIGNÉE SUPÉRIEURE & MOTEUR PAN (HAUT)  -->
+    <!-- ========================================== -->
+    <g>
+      <!-- Poignée Top Handle cylindrique -->
+      <path d="M 580 180 L 575 135 L 592 135 L 598 180 Z" fill="#DDDDDD" stroke-width="2.2" />
+      <rect x="572" y="112" width="96" height="22" rx="4" fill="#EAEAEA" stroke-width="2.5" />
+      <rect x="585" y="112" width="72" height="22" fill="url(#carbonWeave)" stroke="none" />
+      <ellipse cx="668" cy="123" rx="5" ry="11" fill="#CCCCCC" stroke-width="2.2" />
+      <ellipse cx="668" cy="123" rx="2.5" ry="6" fill="#181818" />
+      <ellipse cx="574" cy="123" rx="4" ry="11" fill="#DDDDDD" stroke-width="2" />
+
+      <!-- Bloc Batterie / Distribution arrière haut -->
+      <polygon points="475,205 552,195 552,268 475,258" fill="#E0E0E0" stroke-width="2.5" />
+      <line x1="488" y1="205" x2="488" y2="258" stroke-width="1.5" />
+
+      <!-- Collier de montage supérieur sur l'anneau -->
+      <path d="M 555 172 L 628 175 L 635 215 L 550 212 Z" fill="#DCDCDC" stroke-width="2.5" />
+
+      <!-- Moteur PAN (Cylindre massif gradué + Quick Release) -->
+      <path d="M 552 212 L 642 215 L 642 280 L 552 276 Z" fill="#EAEAEA" stroke-width="2.5" />
+      <!-- Rainures techniques & ports LEMO sur le bloc Pan -->
+      <line x1="552" y1="235" x2="642" y2="238" stroke-width="1.8" />
+      <line x1="552" y1="262" x2="642" y2="265" stroke-width="1.8" />
+      <circle cx="585" cy="226" r="5" fill="#F5F5F5" stroke-width="1.8" />
+      <circle cx="608" cy="227" r="5" fill="#F5F5F5" stroke-width="1.8" />
+      <rect x="612" y="244" width="16" height="8" rx="2" stroke-width="1.5" />
+
+      <!-- Base sous le moteur Pan + Molette de serrage (Knob) -->
+      <path d="M 560 276 L 635 280 L 630 305 L 560 302 Z" fill="#DEDEDE" stroke-width="2.2" />
+      <ellipse cx="624" cy="292" rx="10" ry="12" fill="#CCCCCC" stroke-width="2.5" />
+      <ellipse cx="626" cy="292" rx="5" ry="7" fill="#181818" />
+    </g>
+
+    <!-- ========================================== -->
+    <!-- D. BRAS ROLL (CARBONE + LISERÉ TECHNIQUE)  -->
+    <!-- ========================================== -->
+    <g>
+      <!-- Bras coudé principal reliant le Pan au moteur Roll -->
+      <path d="M 565 282 L 458 272 C 442 270, 430 282, 424 300 L 395 425 L 438 432 L 478 312 C 482 302, 492 298, 505 298 L 585 302 Z" fill="#E4E4E4" stroke-width="2.8" />
+      
+      <!-- Liseré interne (La fameuse ligne rouge du Ronin 2) -->
+      <path d="M 560 289 L 462 280 C 448 279, 438 288, 432 304 L 404 420" stroke-width="2" />
+
+      <!-- Repère typographique technique stylisé sur le bras -->
+      <g stroke-width="1.8" opacity="0.7">
+        <rect x="424" y="340" width="16" height="55" rx="2" transform="rotate(16 432 367)" stroke-dasharray="6 3" />
+      </g>
+
+      <!-- Moteur ROLL (À l'arrière du bras) -->
+      <ellipse cx="436" cy="435" rx="24" ry="28" fill="#DCDCDC" stroke-width="2.5" />
+      <ellipse cx="436" cy="435" rx="14" ry="17" stroke-width="1.5" />
+    </g>
+
+    <!-- ========================================== -->
+    <!-- E. ANNEAU CARBONE (PARTIE GAUCHE AVANT-PLAN)-->
+    <!-- ========================================== -->
+    <g>
+      <!-- Tube Carbone Gauche (Premier plan avec graduations) -->
+      <path d="M 605 182 C 570 182, 555 198, 515 198 C 445 198, 392 275, 382 435 C 375 555, 395 642, 445 655" stroke-width="26" stroke="#181818" />
+      <path d="M 605 182 C 570 182, 555 198, 515 198 C 445 198, 392 275, 382 435 C 375 555, 395 642, 445 655" stroke-width="20" stroke="#EFEFEF" />
+      <path d="M 605 182 C 570 182, 555 198, 515 198 C 445 198, 392 275, 382 435 C 375 555, 395 642, 445 655" stroke-width="20" stroke="url(#carbonWeave)" />
+
+      <!-- Échelle graduée blanche gravée sur le tube gauche -->
+      <g stroke-width="1.5" opacity="0.85">
+        <line x1="382" y1="320" x2="392" y2="322" /><line x1="380" y1="332" x2="388" y2="334" />
+        <line x1="379" y1="344" x2="389" y2="346" /><line x1="378" y1="356" x2="386" y2="358" />
+        <line x1="377" y1="368" x2="387" y2="370" /><line x1="376" y1="380" x2="384" y2="382" />
+        <line x1="375" y1="392" x2="385" y2="394" /><line x1="374" y1="404" x2="382" y2="405" />
+        <line x1="373" y1="416" x2="383" y2="417" /><line x1="372" y1="428" x2="380" y2="429" />
+      </g>
+
+      <!-- Bague de serrage intermédiaire sur le tube gauche -->
+      <polygon points="370,362 418,370 416,384 368,376" fill="#D5D5D5" stroke-width="2.2" />
+
+      <!-- Collier & Bras TILT Gauche (Fixé sur l'anneau à mi-hauteur) -->
+      <polygon points="362,432 405,435 405,472 362,468" fill="#DCDCDC" stroke-width="2.5" />
+      <!-- Bras d'extension vers le moteur Tilt (Marqué RONIN) -->
+      <polygon points="405,440 495,452 495,492 405,476" fill="#EAEAEA" stroke-width="2.5" />
+      <rect x="415" y="448" width="52" height="22" rx="2" stroke-width="1.2" />
+      <!-- Cylindre du moteur Tilt Gauche -->
+      <ellipse cx="498" cy="472" rx="18" ry="24" fill="#DFDFDF" stroke-width="2.5" />
+      <ellipse cx="502" cy="472" rx="10" ry="15" stroke-width="1.5" />
+    </g>
+
+    <!-- ========================================== -->
+    <!-- F. CAGE CAMÉRA, CORPS CAMÉRA & BASEPLATE   -->
+    <!-- ========================================== -->
+    <g>
+      <!-- Montants verticaux de la Cage Ronin 2 (Gauche et Droit) -->
+      <rect x="492" y="360" width="14" height="205" rx="2" fill="#E2E2E2" stroke-width="2.2" />
+      <rect x="625" y="372" width="12" height="195" rx="2" fill="#E2E2E2" stroke-width="2.2" />
+      <!-- Échelles graduées sur le montant de cage gauche -->
+      <line x1="495" y1="385" x2="503" y2="385" stroke-width="1.2" />
+      <line x1="495" y1="400" x2="503" y2="400" stroke-width="1.2" />
+      <line x1="495" y1="415" x2="503" y2="415" stroke-width="1.2" />
+
+      <!-- Barre supérieure de la Cage (Top Crossbar + Vis de blocage) -->
+      <polygon points="490,352 642,372 642,385 490,366" fill="#EAEAEA" stroke-width="2.5" />
+      <rect x="552" y="346" width="22" height="14" rx="2" fill="#D0D0D0" stroke-width="2" />
+
+      <!-- CORPS DE LA CAMÉRA CINÉMA (Box Body + Ventilation) -->
+      <polygon points="452,402 525,388 585,395 585,512 452,505" fill="#EBEBEB" stroke-width="2.5" />
+      <!-- Grille de ventilation latérale -->
+      <polygon points="462,415 488,412 488,445 462,445" fill="url(#ventSlots)" stroke-width="1.5" />
+      <!-- Détails techniques & boutons du boîtier -->
+      <rect x="512" y="402" width="48" height="32" rx="2" stroke-width="1.5" />
+      <circle cx="525" cy="418" r="5" stroke-width="1.5" />
+      <circle cx="545" cy="418" r="5" stroke-width="1.5" />
+
+      <!-- SEMELLE INFÉRIEURE (Baseplate, Dovetail & Tiges 15mm) -->
+      <polygon points="490,520 648,528 648,572 490,562" fill="#E0E0E0" stroke-width="2.5" />
+      <line x1="490" y1="542" x2="648" y2="550" stroke-width="1.8" />
+      <rect x="502" y="562" width="16" height="16" rx="2" fill="#CCCCCC" stroke-width="2" />
+      <rect x="625" y="572" width="16" height="16" rx="2" fill="#CCCCCC" stroke-width="2" />
+
+      <!-- Tiges 15mm (Rods) + Moteurs Follow Focus / Support Objectif -->
+      <line x1="525" y1="498" x2="705" y2="508" stroke-width="7" stroke="#181818" />
+      <line x1="525" y1="498" x2="705" y2="508" stroke-width="3" stroke="#F5F5F5" />
+      <!-- Support moteur de point vertical -->
+      <rect x="568" y="452" width="22" height="68" rx="2" fill="#DCDCDC" stroke-width="2.2" />
+      <!-- Leviers de serrage (Wingnuts rouges sur la photo) -->
+      <path d="M 528 512 L 542 518 M 628 518 L 642 524 M 685 522 L 698 528" stroke-width="3.5" />
+    </g>
+
+    <!-- ========================================== -->
+    <!-- G. OBJECTIF ZOOM CINÉMA & MATTEBOX 3/4     -->
+    <!-- ========================================== -->
+    <g>
+      <!-- Monture PL / Bague anodisée (Anneau à la base de l'optique) -->
+      <path d="M 548 415 C 538 415, 538 475, 548 475 L 564 476 C 554 476, 554 416, 564 416 Z" fill="#D5D5D5" stroke-width="2.2" />
+
+      <!-- Fût de l'objectif Zoom Cinéma (Cylindre étagé avec 3 bagues crantées) -->
+      <path d="M 564 412 L 668 398 L 668 485 L 564 478 Z" fill="#EFEFEF" stroke-width="2.5" />
+      
+      <!-- Bague Crantée 1 (Iris) -->
+      <rect x="575" y="410" width="14" height="69" fill="url(#lensGear)" stroke-width="1.8" />
+      <!-- Bague Crantée 2 (Zoom) -->
+      <rect x="602" y="407" width="22" height="73" fill="url(#lensGear)" stroke-width="1.8" />
+      <!-- Bague Crantée 3 (Focus) -->
+      <rect x="638" y="402" width="20" height="80" fill="url(#lensGear)" stroke-width="1.8" />
+      
+      <!-- Fenêtre de marquage optique (Canon 17-120 style) -->
+      <rect x="625" y="425" width="12" height="32" rx="1" fill="#F8F8F8" stroke-width="1.2" />
+
+      <!-- MATTEBOX GRAND FORMAT (En perspective 3/4) -->
+      <!-- Dos de la Mattebox / Tiroirs à filtres 4x5.65 -->
+      <polygon points="658,352 672,348 672,498 658,494" fill="#E2E2E2" stroke-width="2.2" />
+      
+      <!-- Cadre extérieur du pare-soleil (Hood) -->
+      <polygon points="672,348 825,374 825,510 672,498" fill="#EAEAEA" stroke-width="3" />
+      
+      <!-- Profondeur intérieure du pare-soleil (Biseaux internes) -->
+      <polygon points="682,362 815,384 815,498 682,486" fill="#DFDFDF" stroke-width="2" />
+      <line x1="825" y1="374" x2="815" y2="384" stroke-width="1.8" />
+      <line x1="825" y1="510" x2="815" y2="498" stroke-width="1.8" />
+      <line x1="815" y1="384" x2="735" y2="402" stroke-width="1.5" />
+      <line x1="815" y1="498" x2="735" y2="478" stroke-width="1.5" />
+
+      <!-- Lentille Frontale & Reflets Optiques (Au fond de la Mattebox) -->
+      <ellipse cx="705" cy="435" rx="34" ry="50" fill="#D5D5D5" stroke-width="2.5" />
+      <ellipse cx="702" cy="435" rx="26" ry="40" fill="#EBEBEB" stroke-width="2" />
+      <ellipse cx="700" cy="435" rx="18" ry="28" fill="#DFDFDF" stroke-width="1.5" />
+      <!-- Courbes de reflets sur la lentille sphérique -->
+      <path d="M 692 412 C 702 408, 712 418, 712 435" stroke-width="2" />
+      <path d="M 688 448 C 692 456, 700 460, 706 456" stroke-width="1.5" />
+    </g>
+
+  </g>
+
+  <!-- 5. CADRE VIEWFINDER OPTIQUE DISCRET (Signature visuelle commune) -->
+  <g stroke="#181818" fill="none" opacity="0.22" stroke-width="2">
+    <path d="M 230 110 L 230 85 L 255 85" />
+    <path d="M 910 110 L 910 85 L 885 85" />
+    <path d="M 230 665 L 230 690 L 255 690" />
+    <path d="M 910 665 L 910 690 L 885 690" />
+  </g>
+</svg>

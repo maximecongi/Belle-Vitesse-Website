@@ -241,8 +241,17 @@ endif %}
 {% endmacro %}
 
 {% macro vehicle_avatar(image_url, name, class="") %}
-<img src="{{ image_url }}" alt="{{ name }}" class="vehicle-avatar-img {{ class }}"
-    onerror="this.src='/static/imgs/logo-bv.svg'; this.classList.add('vehicle-avatar-fallback');">
+{% set placeholder = url_for('static', filename='imgs/placeholders/vehicle.svg') %}
+{% set src_val = image_url if image_url else placeholder %}
+<img src="{{ src_val }}" alt="{{ name }}" class="{{ class }}"
+    onerror="this.onerror=null; this.src='{{ placeholder }}'; this.classList.add('vehicle-avatar-fallback');">
+{% endmacro %}
+
+{% macro head_avatar(image_url, name, class="") %}
+{% set placeholder = url_for('static', filename='imgs/placeholders/head.svg') %}
+{% set src_val = image_url if image_url else placeholder %}
+<img src="{{ src_val }}" alt="{{ name }}" class="{{ class }}"
+    onerror="this.onerror=null; this.src='{{ placeholder }}'; this.classList.add('vehicle-avatar-fallback');">
 {% endmacro %}
 
 

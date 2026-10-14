@@ -42,6 +42,50 @@ def _get_secured_document_url(path, doc_type):
 # ── Projets (Gestion métier) ─────────────────────────────────────
 
 
+def _extract_vehicle_image(fields: dict) -> str:
+    """Extrait l'URL de l'image principale d'un véhicule ou retourne le placeholder unifié."""
+    if not fields:
+        return "/static/imgs/placeholders/vehicle.svg"
+    thumb = fields.get("thumbnail")
+    if isinstance(thumb, list) and len(thumb) > 0 and isinstance(thumb[0], dict):
+        thumbnails = thumb[0].get("thumbnails", {})
+        if isinstance(thumbnails, dict):
+            large = thumbnails.get("large", {}).get("url") or thumbnails.get("full", {}).get("url")
+            if large:
+                return large
+        url = thumb[0].get("url")
+        if url:
+            return url
+    banner = fields.get("banner")
+    if isinstance(banner, list) and len(banner) > 0 and isinstance(banner[0], dict):
+        url = banner[0].get("url")
+        if url:
+            return url
+    return "/static/imgs/placeholders/vehicle.svg"
+
+
+def _extract_head_image(fields: dict) -> str:
+    """Extrait l'URL de l'image principale d'une tête gyrostabilisée ou retourne le placeholder unifié."""
+    if not fields:
+        return "/static/imgs/placeholders/head.svg"
+    thumb = fields.get("thumbnail")
+    if isinstance(thumb, list) and len(thumb) > 0 and isinstance(thumb[0], dict):
+        thumbnails = thumb[0].get("thumbnails", {})
+        if isinstance(thumbnails, dict):
+            large = thumbnails.get("large", {}).get("url") or thumbnails.get("full", {}).get("url")
+            if large:
+                return large
+        url = thumb[0].get("url")
+        if url:
+            return url
+    banner = fields.get("banner")
+    if isinstance(banner, list) and len(banner) > 0 and isinstance(banner[0], dict):
+        url = banner[0].get("url")
+        if url:
+            return url
+    return "/static/imgs/placeholders/head.svg"
+
+
 def _format_vehicle_state(project, vehicle_id, vehicle_map):
     """
     Formate l'état des contrôles (départ/retour) pour un véhicule spécifique au sein d'un projet.
@@ -83,6 +127,7 @@ def _format_vehicle_state(project, vehicle_id, vehicle_map):
     return {
         "id": vehicle_id,
         "fields": vehicle_map.get(vehicle_id, {}),
+        "image": _extract_vehicle_image(v_data),
         "type_fr": type_fr,
         "checkout_status": format_inspection_status(c_out.status) if c_out else "À contrôler",
         "checkout_status_id": get_inspection_key(c_out.status) if c_out else "to_check",
@@ -281,7 +326,8 @@ def _format_project_admin(p, vehicle_map, heads_map):
             "id": hid,
             "name": heads_map.get(hid, {}).get("name", "Sans nom"),
             "brand": heads_map.get(hid, {}).get("brand", ""),
-            "model": heads_map.get(hid, {}).get("model", "")
+            "model": heads_map.get(hid, {}).get("model", ""),
+            "image": _extract_head_image(heads_map.get(hid, {})),
         } for hid in head_ids],
         "pilot_waiver": {
             "id": p.pilot_waiver.id if (p.pilot_waiver and not p.pilot_waiver.deleted_at) else None,

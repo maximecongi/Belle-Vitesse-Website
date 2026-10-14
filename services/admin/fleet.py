@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 def _extract_vehicle_image(fields: Dict[str, Any]) -> str:
     """Extrait l'URL de l'image principale (thumbnail ou bannière) du véhicule."""
     if not fields:
-        return "/static/imgs/logo-bv.svg"
+        return "/static/imgs/placeholders/vehicle.svg"
 
     thumb = fields.get("thumbnail")
     if isinstance(thumb, list) and len(thumb) > 0 and isinstance(thumb[0], dict):
@@ -49,7 +49,7 @@ def _extract_vehicle_image(fields: Dict[str, Any]) -> str:
         if url:
             return url
 
-    return "/static/imgs/logo-bv.svg"
+    return "/static/imgs/placeholders/vehicle.svg"
 
 
 def _detect_inspection_anomalies(record: Any) -> List[str]:

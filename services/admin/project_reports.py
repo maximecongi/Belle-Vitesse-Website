@@ -439,7 +439,7 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
             "name": heads_map.get(hid, {}).get("name", "Sans nom"),
             "brand": heads_map.get(hid, {}).get("brand", ""),
             "model": heads_map.get(hid, {}).get("model", ""),
-            "image": heads_map.get(hid, {}).get("thumbnail", [{}])[0].get("thumbnails", {}).get("large", {}).get("url") if heads_map.get(hid, {}).get("thumbnail") else None
+            "image": heads_map.get(hid, {}).get("thumbnail", [{}])[0].get("thumbnails", {}).get("large", {}).get("url") if heads_map.get(hid, {}).get("thumbnail") else "/static/imgs/placeholders/head.svg"
         } for hid in head_ids],
         "contacts": contacts_list,
         "reports": formatted_reports,

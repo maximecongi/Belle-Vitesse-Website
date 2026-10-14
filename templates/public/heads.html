@@ -80,9 +80,10 @@
         <h3>{{ head.fields.name }}</h3>
         <a class="categories-solutions-categories-img-link" href="{{ url_for('head', slug=head.fields.slug) }}">
           {% if head.fields.thumbnail[0].thumbnails is defined %}
-          <img src="{{ head.fields.thumbnail[0].thumbnails.large.url }}" alt="{{ head.fields.name }} - Belle Vitesse" />
+          <img src="{{ head.fields.thumbnail[0].thumbnails.large.url }}" alt="{{ head.fields.name }} - Belle Vitesse"
+            onerror="this.onerror=null; this.src='{{ url_for('static', filename='imgs/placeholders/head.svg') }}';" />
           {% else %}
-          <img src="{{ url_for('static', filename='/imgs/placeholders/head.jpeg') }}" alt="{{ head.fields.name }} - Image indisponible" />
+          <img src="{{ url_for('static', filename='imgs/placeholders/head.svg') }}" alt="{{ head.fields.name }} - Image indisponible" />
           {% endif %}
         </a>
       </div>
