@@ -26,7 +26,31 @@ def _format_contact(contact, role_label):
     return f"• {role_label} : {name}{phone_part}"
 
 
-def _build_event_description(project, phase_title, vehicle_map=None, head_map=None, base_url=None):
+def _get_project_shoot_range(project):
+    """
+    Détermine la plage globale de tournage (date de début et date de fin) d'un projet.
+    Gère aussi bien le mode continu que le mode ponctuel.
+    Retourne (start_date, end_date) ou (None, None).
+    """
+    candidates = []
+    if getattr(project, "date_mode", "continuous") == "punctual" and project.shoot_dates:
+        for d in project.shoot_dates:
+            try:
+                candidates.append(datetime.strptime(str(d).strip(), "%Y-%m-%d").date())
+            except Exception:
+                pass
+    if project.shoot_start_date:
+        candidates.append(project.shoot_start_date)
+    if project.shoot_end_date:
+        candidates.append(project.shoot_end_date)
+
+    if not candidates:
+        return None, None
+
+    return min(candidates), max(candidates)
+
+
+def _build_event_description(project, phase_title="🎬 Tournage", vehicle_map=None, head_map=None, base_url=None):
     """
     Construit une description complète et structurée pour les événements iCal,
     incluant l'équipe, le matériel assigné, le planning complet et les notes.
@@ -201,7 +225,7 @@ def calendar_feed(token=None):
         f"user_id={sub.user_id} IP={request.remote_addr}"
     )
 
-    # 3. Récupérer tous les projets avec au moins une date (et non archivés/supprimés)
+    # 3. Récupérer tous les projets avec au moins une date de tournage (et non archivés/supprimés)
     projects = (
         Project.query.filter(Project.deleted_at == None)
         .options(
@@ -214,9 +238,7 @@ def calendar_feed(token=None):
         )
         .filter(
             db.or_(
-                Project.departure_date.isnot(None),
                 Project.shoot_start_date.isnot(None),
-                Project.return_date.isnot(None),
                 Project.shoot_dates.isnot(None),
             )
         )
@@ -272,216 +294,38 @@ def calendar_feed(token=None):
     now_utc = _utcnow()
 
     for project in projects:
+        shoot_start, shoot_end = _get_project_shoot_range(project)
+        if not shoot_start or not shoot_end:
+            continue
+
         name = project.name or "Sans nom"
-        is_punctual = (getattr(project, "date_mode",
-                       "continuous") == "punctual")
         project_url = (
             f"{base_url}/admin/projects?q={project.project_id}"
             if getattr(project, "project_id", None)
             else None
         )
 
-        # ── A. JALON DÉPART (Check-out) ──
-        if project.departure_date:
-            checkout_evt = Event()
-            checkout_evt.add(
-                "uid", f"bv-project-{project.id}-checkout@bellevitesse.com")
-            checkout_evt.add("dtstart", project.departure_date)
-            checkout_evt.add(
-                "dtend", project.departure_date + timedelta(days=1))
-            checkout_evt.add("summary", f"🚚 Départ : {name}")
-            checkout_evt.add("dtstamp", now_utc)
-            checkout_evt.add("categories", ["Belle Vitesse", "Départ"])
-            if project_url:
-                checkout_evt.add("url", project_url)
-            checkout_evt.add(
-                "description",
-                _build_event_description(
-                    project,
-                    "🚚 Départ (Check-out)",
-                    vehicle_map=vehicle_map,
-                    head_map=head_map,
-                    base_url=base_url,
-                ),
-            )
-            cal.add_component(checkout_evt)
-
-        # ── B. TOURNAGES & IMMOBILISATIONS ──
-        if is_punctual:
-            # Traitement des dates ponctuelles ordonnées
-            parsed_dates = []
-            for d_str in (project.shoot_dates or []):
-                try:
-                    parsed_dates.append(datetime.strptime(
-                        str(d_str).strip(), "%Y-%m-%d").date())
-                except Exception:
-                    pass
-            parsed_dates = sorted(list(set(parsed_dates)))
-
-            if parsed_dates:
-                # Regroupement des dates consécutives en blocs continus
-                shoot_chunks = []
-                cur_chunk = [parsed_dates[0]]
-                for d in parsed_dates[1:]:
-                    if (d - cur_chunk[-1]).days == 1:
-                        cur_chunk.append(d)
-                    else:
-                        shoot_chunks.append(cur_chunk)
-                        cur_chunk = [d]
-                if cur_chunk:
-                    shoot_chunks.append(cur_chunk)
-
-                # Génération des événements de tournage par bloc
-                for c_idx, chunk in enumerate(shoot_chunks, 1):
-                    c_start = chunk[0]
-                    c_end = chunk[-1]
-                    total_chunks = len(shoot_chunks)
-
-                    phase_label = (
-                        f"🎬 Tournage (Bloc {c_idx}/{total_chunks})"
-                        if total_chunks > 1
-                        else "🎬 Tournage"
-                    )
-
-                    shoot_evt = Event()
-                    shoot_evt.add(
-                        "uid", f"bv-project-{project.id}-shoot-{c_idx}@bellevitesse.com")
-                    shoot_evt.add("dtstart", c_start)
-                    shoot_evt.add("dtend", c_end + timedelta(days=1))
-                    shoot_evt.add("summary", f"🎬 Tournage : {name}")
-                    shoot_evt.add("dtstamp", now_utc)
-                    shoot_evt.add("categories", ["Belle Vitesse", "Tournage"])
-                    if project_url:
-                        shoot_evt.add("url", project_url)
-                    shoot_evt.add(
-                        "description",
-                        _build_event_description(
-                            project,
-                            phase_label,
-                            vehicle_map=vehicle_map,
-                            head_map=head_map,
-                            base_url=base_url,
-                        ),
-                    )
-                    cal.add_component(shoot_evt)
-
-                # Génération des événements d'immobilisation pour les intervalles bloqués
-                intervals = project.get_inter_shoot_intervals() if hasattr(
-                    project, "get_inter_shoot_intervals") else []
-                for i_idx, inter in enumerate(intervals, 1):
-                    if inter.get("is_immobilized") and inter.get("days"):
-                        day_dates = []
-                        for d_s in inter["days"]:
-                            try:
-                                day_dates.append(datetime.strptime(
-                                    str(d_s).strip(), "%Y-%m-%d").date())
-                            except Exception:
-                                pass
-                        day_dates = sorted(list(set(day_dates)))
-                        if day_dates:
-                            immob_start = day_dates[0]
-                            immob_end = day_dates[-1]
-                            count_days = len(day_dates)
-
-                            immob_evt = Event()
-                            immob_evt.add(
-                                "uid", f"bv-project-{project.id}-immob-{i_idx}@bellevitesse.com")
-                            immob_evt.add("dtstart", immob_start)
-                            immob_evt.add("dtend", immob_end +
-                                          timedelta(days=1))
-                            immob_evt.add(
-                                "summary", f"🔒  immobilisation : {name}")
-                            immob_evt.add("dtstamp", now_utc)
-                            immob_evt.add(
-                                "categories", ["Belle Vitesse", "Immobilisation"])
-                            if project_url:
-                                immob_evt.add("url", project_url)
-                            immob_evt.add(
-                                "description",
-                                _build_event_description(
-                                    project,
-                                    f"🔒 Immobilisation sur place ({count_days}j)",
-                                    vehicle_map=vehicle_map,
-                                    head_map=head_map,
-                                    base_url=base_url,
-                                ),
-                            )
-                            cal.add_component(immob_evt)
-            elif project.shoot_start_date:
-                # Fallback ponctuel sans shoot_dates détaillées
-                s_start = project.shoot_start_date
-                s_end = project.shoot_end_date or project.shoot_start_date
-                shoot_evt = Event()
-                shoot_evt.add(
-                    "uid", f"bv-project-{project.id}-shoot@bellevitesse.com")
-                shoot_evt.add("dtstart", s_start)
-                shoot_evt.add("dtend", s_end + timedelta(days=1))
-                shoot_evt.add("summary", f"🎬 Tournage : {name}")
-                shoot_evt.add("dtstamp", now_utc)
-                shoot_evt.add("categories", ["Belle Vitesse", "Tournage"])
-                if project_url:
-                    shoot_evt.add("url", project_url)
-                shoot_evt.add(
-                    "description",
-                    _build_event_description(
-                        project,
-                        "🎬 Tournage",
-                        vehicle_map=vehicle_map,
-                        head_map=head_map,
-                        base_url=base_url,
-                    ),
-                )
-                cal.add_component(shoot_evt)
-        else:
-            # Mode continu classique
-            if project.shoot_start_date:
-                s_start = project.shoot_start_date
-                s_end = project.shoot_end_date or project.shoot_start_date
-                shoot_evt = Event()
-                shoot_evt.add(
-                    "uid", f"bv-project-{project.id}-shoot@bellevitesse.com")
-                shoot_evt.add("dtstart", s_start)
-                shoot_evt.add("dtend", s_end + timedelta(days=1))
-                shoot_evt.add("summary", f"🎬 Tournage : {name}")
-                shoot_evt.add("dtstamp", now_utc)
-                shoot_evt.add("categories", ["Belle Vitesse", "Tournage"])
-                if project_url:
-                    shoot_evt.add("url", project_url)
-                shoot_evt.add(
-                    "description",
-                    _build_event_description(
-                        project,
-                        "🎬 Tournage",
-                        vehicle_map=vehicle_map,
-                        head_map=head_map,
-                        base_url=base_url,
-                    ),
-                )
-                cal.add_component(shoot_evt)
-
-        # ── C. JALON RETOUR (Check-in) ──
-        if project.return_date:
-            checkin_evt = Event()
-            checkin_evt.add(
-                "uid", f"bv-project-{project.id}-checkin@bellevitesse.com")
-            checkin_evt.add("dtstart", project.return_date)
-            checkin_evt.add("dtend", project.return_date + timedelta(days=1))
-            checkin_evt.add("summary", f"📦 Retour : {name}")
-            checkin_evt.add("dtstamp", now_utc)
-            checkin_evt.add("categories", ["Belle Vitesse", "Retour"])
-            if project_url:
-                checkin_evt.add("url", project_url)
-            checkin_evt.add(
-                "description",
-                _build_event_description(
-                    project,
-                    "📦 Retour (Check-in)",
-                    vehicle_map=vehicle_map,
-                    head_map=head_map,
-                    base_url=base_url,
-                ),
-            )
-            cal.add_component(checkin_evt)
+        shoot_evt = Event()
+        shoot_evt.add(
+            "uid", f"bv-project-{project.id}-shoot@bellevitesse.com")
+        shoot_evt.add("dtstart", shoot_start)
+        shoot_evt.add("dtend", shoot_end + timedelta(days=1))
+        shoot_evt.add("summary", f"🎬 Tournage : {name}")
+        shoot_evt.add("dtstamp", now_utc)
+        shoot_evt.add("categories", ["Belle Vitesse", "Tournage"])
+        if project_url:
+            shoot_evt.add("url", project_url)
+        shoot_evt.add(
+            "description",
+            _build_event_description(
+                project,
+                "🎬 Tournage",
+                vehicle_map=vehicle_map,
+                head_map=head_map,
+                base_url=base_url,
+            ),
+        )
+        cal.add_component(shoot_evt)
 
     # 7. Retourner la réponse ICS avec les en-têtes de cache appropriés
     return Response(

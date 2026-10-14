@@ -128,7 +128,7 @@ class CalendarFeedTestCase(unittest.TestCase):
         self.assertEqual(resp.mimetype, "text/calendar")
 
     def test_calendar_feed_continuous_project(self):
-        """Vérifie la génération d'un projet continu (départ, tournage continu, retour)."""
+        """Vérifie la génération d'un projet continu (un seul événement continu du début à la fin du tournage, sans départs ni retours)."""
         with self.app.app_context():
             p = Project(
                 name="Tournage Continu Pub",
@@ -155,35 +155,18 @@ class CalendarFeedTestCase(unittest.TestCase):
         cal = Calendar.from_ical(resp.data)
         events = [c for c in cal.walk() if c.name == "VEVENT"]
 
-        # Doit contenir 3 événements : Départ, Tournage, Retour
-        self.assertEqual(len(events), 3)
+        # Doit contenir exactement 1 événement continu (Départ et Retour exclus)
+        self.assertEqual(len(events), 1)
 
-        summaries = [str(e.get("summary")) for e in events]
-        self.assertIn("🚚 Départ : Tournage Continu Pub", summaries)
-        self.assertIn("🎬 Tournage : Tournage Continu Pub", summaries)
-        self.assertIn("📦 Retour : Tournage Continu Pub", summaries)
+        shoot_evt = events[0]
+        self.assertEqual(str(shoot_evt.get("summary")), "🎬 Tournage : Tournage Continu Pub")
 
-        # Vérification des dates
-        dep_evt = next(e for e in events if "🚚" in str(e.get("summary")))
-        self.assertEqual(dep_evt.get("dtstart").dt, date(2026, 10, 10))
-        self.assertEqual(dep_evt.get("dtend").dt, date(2026, 10, 11))
-        self.assertEqual(str(dep_evt.get("uid")),
-                         f"bv-project-{proj_id}-checkout@bellevitesse.com")
-
-        shoot_evt = next(e for e in events if "🎬" in str(e.get("summary")))
+        # Vérification des dates (du début à la fin du tournage + 1j pour dtend exclusif iCal)
         self.assertEqual(shoot_evt.get("dtstart").dt, date(2026, 10, 12))
-        self.assertEqual(shoot_evt.get("dtend").dt,
-                         date(2026, 10, 15))  # 14 + 1 jour
-        self.assertEqual(str(shoot_evt.get("uid")),
-                         f"bv-project-{proj_id}-shoot@bellevitesse.com")
+        self.assertEqual(shoot_evt.get("dtend").dt, date(2026, 10, 15))  # 14 + 1 jour
+        self.assertEqual(str(shoot_evt.get("uid")), f"bv-project-{proj_id}-shoot@bellevitesse.com")
 
-        ret_evt = next(e for e in events if "📦" in str(e.get("summary")))
-        self.assertEqual(ret_evt.get("dtstart").dt, date(2026, 10, 15))
-        self.assertEqual(ret_evt.get("dtend").dt, date(2026, 10, 16))
-        self.assertEqual(str(ret_evt.get("uid")),
-                         f"bv-project-{proj_id}-checkin@bellevitesse.com")
-
-        # Vérification de la description riche
+        # Vérification de la description riche conservée
         desc = str(shoot_evt.get("description"))
         self.assertIn("Alain Prost", desc)
         self.assertIn("+33 6 11 22 33 44", desc)
@@ -191,14 +174,15 @@ class CalendarFeedTestCase(unittest.TestCase):
         self.assertIn("Prévoir pneus pluie", desc)
         self.assertIn("SuperProd Films", desc)
         self.assertIn("PROJ-CONT-01", desc)
+        self.assertIn("Départ : 10/10/2026", desc)
+        self.assertIn("Retour : 15/10/2026", desc)
 
     def test_calendar_feed_punctual_project_with_immobilization(self):
         """
-        Vérifie la génération d'un projet ponctuel :
-        - Bloc de dates consécutives regroupé
-        - Date isolée en bloc distinct
-        - Période intermédiaire immobilisée générée avec '🔒  immobilisation'
-        - Période intermédiaire non immobilisée non générée (laisse le calendrier libre)
+        Vérifie la génération d'un projet ponctuel simplifié :
+        - Un seul événement continu couvrant de la 1re date de tournage à la dernière date de tournage
+        - Départs et retours exclus du calendrier
+        - Conservation de la description riche détaillant les dates ponctuelles et les immobilisations
         """
         with self.app.app_context():
             p = Project(
@@ -207,11 +191,10 @@ class CalendarFeedTestCase(unittest.TestCase):
                 production_id=self.prod_id,
                 departure_date=date(2026, 10, 1),
                 date_mode="punctual",
-                # Tournages : 3-4 Oct (bloc 1), 8 Oct (bloc 2), 12 Oct (bloc 3)
+                # Tournages : 3-4 Oct, 8 Oct, 12 Oct
                 shoot_dates=["2026-10-03", "2026-10-04",
                              "2026-10-08", "2026-10-12"],
                 # Intervalle 1 (5 au 7 Oct) : Immobilisé sur place
-                # Intervalle 2 (9 au 11 Oct) : Non immobilisé (is_immobilized = False)
                 inter_shoot_statuses=[
                     {"start": "2026-10-04", "end": "2026-10-08",
                         "is_immobilized": True},
@@ -230,63 +213,41 @@ class CalendarFeedTestCase(unittest.TestCase):
         cal = Calendar.from_ical(resp.data)
         events = [c for c in cal.walk() if c.name == "VEVENT"]
 
-        # Devrait générer :
-        # 1x Départ (1er Oct)
-        # 3x Tournage (3-4 Oct, 8 Oct, 12 Oct)
-        # 1x Immobilisation (5 au 7 Oct inclus)
-        # 0x pour l'intervalle non immobilisé (9 au 11 Oct reste libre)
-        # 1x Retour (13 Oct)
-        # Total = 6 événements
-        self.assertEqual(len(events), 6)
+        # Devrait générer exactement 1 événement continu couvrant du 3 au 12 Octobre
+        self.assertEqual(len(events), 1)
 
-        shoot_events = [
-            e for e in events if "Tournage" in str(e.get("summary"))]
-        self.assertEqual(len(shoot_events), 3)
+        shoot_evt = events[0]
+        self.assertEqual(str(shoot_evt.get("summary")), "🎬 Tournage : Clip Ponctuel Cascade")
+        self.assertEqual(shoot_evt.get("dtstart").dt, date(2026, 10, 3))
+        self.assertEqual(shoot_evt.get("dtend").dt, date(2026, 10, 13))  # 12 Oct + 1 jour
+        self.assertEqual(str(shoot_evt.get("uid")), f"bv-project-{proj_id}-shoot@bellevitesse.com")
 
-        # Bloc 1 (3-4 Oct)
-        self.assertEqual(shoot_events[0].get("dtstart").dt, date(2026, 10, 3))
-        self.assertEqual(shoot_events[0].get("dtend").dt, date(2026, 10, 5))
-        self.assertEqual(str(shoot_events[0].get(
-            "uid")), f"bv-project-{proj_id}-shoot-1@bellevitesse.com")
+        # Vérification que la description détaillée conserve le détail des jours et de l'immobilisation
+        desc = str(shoot_evt.get("description"))
+        self.assertIn("Tournage (4j) : 03/10/2026, 04/10/2026, 08/10/2026, 12/10/2026", desc)
+        self.assertIn("Immobilisé sur place (3j)", desc)
+        self.assertIn("Départ : 01/10/2026", desc)
+        self.assertIn("Retour : 13/10/2026", desc)
 
-        # Bloc 2 (8 Oct)
-        self.assertEqual(shoot_events[1].get("dtstart").dt, date(2026, 10, 8))
-        self.assertEqual(shoot_events[1].get("dtend").dt, date(2026, 10, 9))
-        self.assertEqual(str(shoot_events[1].get(
-            "uid")), f"bv-project-{proj_id}-shoot-2@bellevitesse.com")
+    def test_calendar_feed_excludes_projects_without_shoot_dates(self):
+        """Vérifie qu'un projet ayant seulement une date de départ ou retour (sans tournage) ne crée pas d'événement."""
+        with self.app.app_context():
+            p = Project(
+                name="Transport Pur",
+                project_id="PROJ-TRANS-01",
+                production_id=self.prod_id,
+                departure_date=date(2026, 10, 1),
+                return_date=date(2026, 10, 2),
+                date_mode="continuous",
+            )
+            db.session.add(p)
+            db.session.commit()
 
-        # Bloc 3 (12 Oct)
-        self.assertEqual(shoot_events[2].get("dtstart").dt, date(2026, 10, 12))
-        self.assertEqual(shoot_events[2].get("dtend").dt, date(2026, 10, 13))
-        self.assertEqual(str(shoot_events[2].get(
-            "uid")), f"bv-project-{proj_id}-shoot-3@bellevitesse.com")
-
-        # Événement d'immobilisation (5 au 7 Oct inclus -> dtstart: 5, dtend: 8)
-        immob_events = [
-            e for e in events if "immobilisation" in str(e.get("summary")).lower()]
-        self.assertEqual(len(immob_events), 1)
-        immob = immob_events[0]
-        self.assertEqual(str(immob.get("summary")),
-                         "🔒  immobilisation : Clip Ponctuel Cascade")
-        self.assertEqual(immob.get("dtstart").dt, date(2026, 10, 5))
-        self.assertEqual(immob.get("dtend").dt, date(2026, 10, 8))
-        self.assertEqual(str(immob.get("uid")),
-                         f"bv-project-{proj_id}-immob-1@bellevitesse.com")
-        self.assertIn("Immobilisation sur place (3j)",
-                      str(immob.get("description")))
-
-        # Vérifier qu'aucun événement ne bloque la période non immobilisée du 9 au 11 Octobre
-        all_dates_covered = []
-        for e in events:
-            cur = e.get("dtstart").dt
-            end = e.get("dtend").dt
-            while cur < end:
-                all_dates_covered.append(cur)
-                cur += timedelta(days=1)
-
-        self.assertNotIn(date(2026, 10, 9), all_dates_covered)
-        self.assertNotIn(date(2026, 10, 10), all_dates_covered)
-        self.assertNotIn(date(2026, 10, 11), all_dates_covered)
+        resp = self.client.get("/cal/valid_test_token_12345.ics")
+        self.assertEqual(resp.status_code, 200)
+        cal = Calendar.from_ical(resp.data)
+        events = [c for c in cal.walk() if c.name == "VEVENT"]
+        self.assertEqual(len(events), 0)
 
     @patch("routes.public.calendar_feed.get_vehicles")
     @patch("routes.public.calendar_feed.get_heads")
