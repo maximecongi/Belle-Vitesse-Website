@@ -82,43 +82,16 @@
                 <div class="pilot-waiver-info-grid">
                     <div class="pilot-waiver-info-item">
                         <span class="pilot-waiver-info-label">Projet</span>
-                        <span class="pilot-waiver-info-value u-text-sm">{{ waiver.project.name if waiver.project else
-                            '—'
-                            }}</span>
+                        <span class="pilot-waiver-info-value u-text-sm">{{ waiver.display_project_name }}</span>
                     </div>
                     <div class="pilot-waiver-info-item">
                         <span class="pilot-waiver-info-label">Production</span>
-                        <span class="pilot-waiver-info-value u-text-sm">{{ waiver.production_name or '—' }}</span>
+                        <span class="pilot-waiver-info-value u-text-sm">{{ waiver.display_production_name }}</span>
                     </div>
-                    {% set dates_info = waiver.shooting_dates | parse_shooting_dates %}
-                    {% if dates_info.is_punctual and dates_info.periods_count > 1 %}
-                    <div class="pilot-waiver-info-item pilot-waiver-info-dates u-col-span-full">
-                        <span class="pilot-waiver-info-label">Dates de tournage ({{ dates_info.total_days }} jours sur {{ dates_info.periods_count }} créneaux)</span>
-                        <div class="pilot-waiver-dates-summary-bar">
-                            <span class="pilot-waiver-dates-badge">
-                                <i data-lucide="calendar" class="u-icon-xs"></i>
-                                {{ dates_info.total_days }} jours au total
-                            </span>
-                            <span class="pilot-waiver-dates-range-text">{{ dates_info.global_label }}</span>
-                        </div>
-                        <div class="pilot-waiver-slots-grid">
-                            {% for p in dates_info.periods %}
-                            <div class="pilot-waiver-slot-chip">
-                                <i data-lucide="calendar-days" class="pilot-waiver-slot-chip-icon"></i>
-                                <span class="pilot-waiver-slot-chip-label">{{ p.label }}</span>
-                                {% if p.days_count > 1 %}
-                                <span class="pilot-waiver-slot-chip-duration">{{ p.days_count }}j</span>
-                                {% endif %}
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    {% else %}
                     <div class="pilot-waiver-info-item">
                         <span class="pilot-waiver-info-label">Date(s)</span>
-                        <span class="pilot-waiver-info-value u-text-sm">{{ dates_info.display_text if dates_info.has_dates else '—' }}</span>
+                        <span class="pilot-waiver-info-value u-text-sm">{{ waiver.display_shooting_dates }}</span>
                     </div>
-                    {% endif %}
                     <span class="pilot-waiver-info-label">Véhicule(s) à piloter</span>
                     <div class="pilot-waiver-info-item pilot-waiver-info-vehicles u-col-span-full">
                         {% if waiver.vehicles_details %}
@@ -334,10 +307,10 @@
                         véhicule de tracking caméra modifié (ci-après « le Véhicule ») au pilote, dans le cadre exclusif
                         de la production audiovisuelle suivante :</p>
                     <ul>
-                        <li>Projet : <strong>{{ waiver.project.name if waiver.project else '—' }}</strong></li>
-                        <li>Production / Tournage : <strong>{{ waiver.production_name or '—' }}</strong></li>
+                        <li>Projet : <strong>{{ waiver.display_project_name }}</strong></li>
+                        <li>Production / Tournage : <strong>{{ waiver.display_production_name }}</strong></li>
                         <li>Véhicule(s) : <strong>{{ waiver.vehicles or '—' }}</strong></li>
-                        <li>Date(s) et lieu(x) : <strong>{{ dates_info.legal_summary_text if dates_info.has_dates else (waiver.shooting_dates or '—') }}</strong></li>
+                        <li>Date(s) et lieu(x) : <strong>{{ waiver.display_shooting_dates }}</strong></li>
                     </ul>
                     <hr>
 

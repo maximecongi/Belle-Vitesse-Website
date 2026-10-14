@@ -341,7 +341,7 @@
 
             const days = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
             const dayName = days[dateObj.getDay()];
-            const monthName = this.monthNames[m].substring(0, 4).toLowerCase();
+            const monthName = this.monthNames[m].substring(0, 3).toLowerCase();
 
             return `${dayName} ${d} ${monthName} ${y}`;
         }

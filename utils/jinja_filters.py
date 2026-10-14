@@ -23,13 +23,10 @@ def _from_json(s):
 
 def init_jinja_filters(app):
     """Enregistre les filtres Jinja2 personnalisés dans l'application Flask."""
-    from utils.formatting import render_markdown, truncate_report, parse_and_format_shooting_dates
+    from utils.formatting import render_markdown, truncate_report
 
     app.jinja_env.filters["slugify"] = lambda s: s.lower().replace(" ", "_")
     app.jinja_env.filters["from_json"] = _from_json
     app.jinja_env.filters["markdown"] = render_markdown
     app.jinja_env.filters["truncate_report"] = truncate_report
-    app.jinja_env.filters["parse_shooting_dates"] = parse_and_format_shooting_dates
-    app.jinja_env.globals["parse_shooting_dates"] = parse_and_format_shooting_dates
-
 

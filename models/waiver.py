@@ -169,6 +169,26 @@ class Waiver(db.Model):
         from utils.signature_storage import load_signature_data_uri
         return load_signature_data_uri(self.signature_data)
 
+    @property
+    def display_shooting_dates(self):
+        """Retourne les dates de tournage simplifiées (date de début et date de fin)."""
+        from services.admin.waivers import format_waiver_shooting_dates
+        return format_waiver_shooting_dates(self.shooting_dates, default_sep=" au ")
+
+    @property
+    def display_project_name(self):
+        """Retourne le nom du projet associé ou enregistré."""
+        if self.project and self.project.name:
+            return self.project.name
+        return self.project_name or "—"
+
+    @property
+    def display_production_name(self):
+        """Retourne le nom de la production associée ou enregistrée."""
+        if self.project and self.project.production and self.project.production.name:
+            return self.project.production.name
+        return self.production_name or "—"
+
     # Traçabilité de la signature
     signer_ip = db.Column(db.String(45), nullable=True)
 

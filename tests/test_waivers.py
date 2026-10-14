@@ -40,6 +40,8 @@ from services.admin.waivers import (
     delete_production_waiver_internal,
     delete_pilot_waiver,
     delete_production_waiver,
+    _format_project_shooting_dates,
+    format_waiver_shooting_dates,
 )
 
 class WaiversTest(unittest.TestCase):
@@ -578,6 +580,81 @@ class WaiversTest(unittest.TestCase):
                 self.assertIn('href="/fr/vehicles/porsche-macan-tracking"', rendered_sign_html)
                 self.assertIn('target="_blank"', rendered_sign_html)
                 self.assertIn('rel="noopener noreferrer"', rendered_sign_html)
+
+    def test_shooting_dates_formatting_continuous_and_punctual(self):
+        """Vérifie que les dates de tournage sont toujours simplifiées avec date de début et fin."""
+        with self.app.app_context():
+            # 1. Projet ponctuel à multiples dates
+            proj_punctual = Project(
+                name="Tournage Ponctuel Multi-Dates",
+                date_mode="punctual",
+                shoot_dates=["2026-10-12", "2026-10-13", "2026-10-14", "2026-10-16", "2026-10-20", "2026-11-17"],
+                departure_date=date(2026, 10, 10),
+                return_date=date(2026, 11, 20)
+            )
+            self.assertEqual(_format_project_shooting_dates(proj_punctual, default_sep=" au "), "12/10/2026 au 17/11/2026")
+            self.assertEqual(_format_project_shooting_dates(proj_punctual, default_sep=" → "), "12/10/2026 → 17/11/2026")
+
+            # 2. Projet ponctuel à 1 seule date
+            proj_single = Project(
+                name="Tournage 1 Jour",
+                date_mode="punctual",
+                shoot_dates=["2026-10-14"]
+            )
+            self.assertEqual(_format_project_shooting_dates(proj_single, default_sep=" au "), "14/10/2026")
+
+            # 3. Projet continu
+            proj_continuous = Project(
+                name="Tournage Continu",
+                date_mode="continuous",
+                shoot_start_date=date(2026, 10, 1),
+                shoot_end_date=date(2026, 10, 5)
+            )
+            self.assertEqual(_format_project_shooting_dates(proj_continuous, default_sep=" au "), "01/10/2026 au 05/10/2026")
+            self.assertEqual(_format_project_shooting_dates(proj_continuous, default_sep=" → "), "01/10/2026 → 05/10/2026")
+
+            # 4. Helper format_waiver_shooting_dates avec chaîne à virgules
+            raw_multi = "12/10/2026, 13/10/2026, 14/10/2026, 16/10/2026, 20/10/2026, 17/11/2026"
+            self.assertEqual(format_waiver_shooting_dates(raw_multi, default_sep=" au "), "12/10/2026 au 17/11/2026")
+            self.assertEqual(format_waiver_shooting_dates(raw_multi, default_sep=" → "), "12/10/2026 → 17/11/2026")
+
+            # 5. Properties sur Waiver (display_shooting_dates, display_project_name, display_production_name)
+            waiver = PilotWaiver(
+                project_name="Projet Alpha",
+                production_name="Studio Prod",
+                shooting_dates=raw_multi,
+                status="to_sign",
+                project_id=1
+            )
+            self.assertEqual(waiver.display_shooting_dates, "12/10/2026 au 17/11/2026")
+            self.assertEqual(waiver.display_project_name, "Projet Alpha")
+            self.assertEqual(waiver.display_production_name, "Studio Prod")
+
+            # 6. Rendu dans les templates de signature et PDF
+            from flask import render_template
+            with self.app.test_request_context():
+                rendered_pilot = render_template("public/waivers/sign_pilot_waiver.html", waiver=waiver)
+                self.assertIn("12/10/2026 au 17/11/2026", rendered_pilot)
+                self.assertIn("Projet Alpha", rendered_pilot)
+                self.assertIn("Studio Prod", rendered_pilot)
+                self.assertNotIn("13/10/2026, 14/10/2026", rendered_pilot)
+
+                rendered_prod = render_template("public/waivers/sign_production_waiver.html", waiver=waiver, company_name="Belle Vitesse")
+                self.assertIn("12/10/2026 au 17/11/2026", rendered_prod)
+                self.assertIn("Projet Alpha", rendered_prod)
+                self.assertIn("Studio Prod", rendered_prod)
+                self.assertNotIn("13/10/2026, 14/10/2026", rendered_prod)
+
+                rendered_pdf_pilot = render_template("pdf/pilot_waiver.html", waiver=waiver, company_name="Belle Vitesse")
+                self.assertIn("12/10/2026 au 17/11/2026", rendered_pdf_pilot)
+                self.assertIn("Projet Alpha", rendered_pdf_pilot)
+                self.assertIn("Studio Prod", rendered_pdf_pilot)
+                self.assertNotIn("13/10/2026, 14/10/2026", rendered_pdf_pilot)
+
+                rendered_pdf_prod = render_template("pdf/production_waiver.html", waiver=waiver, company_name="Belle Vitesse")
+                self.assertIn("12/10/2026 au 17/11/2026", rendered_pdf_prod)
+                self.assertIn("Projet Alpha", rendered_pdf_prod)
+                self.assertNotIn("13/10/2026, 14/10/2026", rendered_pdf_prod)
 
 
 if __name__ == "__main__":

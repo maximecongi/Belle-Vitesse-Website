@@ -39,16 +39,67 @@ logger = logging.getLogger(__name__)
 # ── Aides Internes Génériques ──────────────────────────────────────
 
 
+def format_waiver_shooting_dates(shooting_dates_str, default_sep=" au "):
+    """
+    Simplifie une chaîne de dates de tournage pour n'afficher que la date de début et la date de fin.
+    Prend en charge :
+    - Les listes séparées par des virgules : '12/10/2026, 13/10/2026, ..., 17/11/2026' -> '12/10/2026 au 17/11/2026'
+    - Les plages existantes : '12/10/2026 au 17/11/2026' ou '12/10/2026 → 17/11/2026'
+    - Une date unique : '14/10/2026'
+    - '—' ou None -> '—'
+    """
+    if not shooting_dates_str or str(shooting_dates_str).strip() in ("", "—", "-"):
+        return "—"
+
+    val = str(shooting_dates_str).strip()
+
+    # Si c'est une liste de dates séparées par des virgules
+    if "," in val:
+        parts = [p.strip() for p in val.split(",") if p.strip()]
+        if not parts:
+            return "—"
+        if len(parts) == 1:
+            return parts[0]
+        if parts[0] == parts[-1]:
+            return parts[0]
+        return f"{parts[0]}{default_sep}{parts[-1]}"
+
+    # Si c'est une plage existante avec " au "
+    if " au " in val:
+        parts = [p.strip() for p in val.split(" au ") if p.strip()]
+        if len(parts) == 2:
+            if parts[0] == parts[1]:
+                return parts[0]
+            return f"{parts[0]}{default_sep}{parts[1]}"
+
+    # Si c'est une plage existante avec " → " ou " -> "
+    for arrow_sep in (" → ", " -> "):
+        if arrow_sep in val:
+            parts = [p.strip() for p in val.split(arrow_sep) if p.strip()]
+            if len(parts) == 2:
+                if parts[0] == parts[1]:
+                    return parts[0]
+                return f"{parts[0]}{default_sep}{parts[1]}"
+
+    return val
+
+
 def _format_project_shooting_dates(p, default_sep=" au "):
-    """Formate les dates de tournage pour les décharges selon le mode (continu ou ponctuel)."""
+    """
+    Formate les dates de tournage pour les décharges en affichant simplement
+    la date de début et la date de fin dans tous les cas (ponctuelles et continues).
+    """
     if not p:
         return "—"
     if getattr(p, "date_mode", None) == "punctual" and p.shoot_dates:
         try:
-            from utils.formatting import parse_and_format_shooting_dates
-            dates_info = parse_and_format_shooting_dates(p.shoot_dates)
-            if dates_info and dates_info.get("has_dates"):
-                return dates_info["display_text"]
+            sorted_dates = sorted([datetime.strptime(d, "%Y-%m-%d").date() for d in p.shoot_dates if d])
+            if sorted_dates:
+                d_start = sorted_dates[0]
+                d_end = sorted_dates[-1]
+                if d_start == d_end:
+                    return d_start.strftime("%d/%m/%Y")
+                return f"{d_start.strftime('%d/%m/%Y')}{default_sep}{d_end.strftime('%d/%m/%Y')}"
         except Exception:
             pass
     if p.shoot_start_date and p.shoot_end_date:
@@ -57,6 +108,8 @@ def _format_project_shooting_dates(p, default_sep=" au "):
         return f"{p.shoot_start_date.strftime('%d/%m/%Y')}{default_sep}{p.shoot_end_date.strftime('%d/%m/%Y')}"
     elif p.shoot_start_date:
         return p.shoot_start_date.strftime("%d/%m/%Y")
+    elif p.shoot_end_date:
+        return p.shoot_end_date.strftime("%d/%m/%Y")
     return "—"
 
 
@@ -518,7 +571,8 @@ def list_production_waivers():
             token = generate_waiver_pdf_access_token(clean_path)
             return f"/production-waiver/document/{clean_path}?t={token}"
 
-        shooting_dates = w.shooting_dates or (_format_project_shooting_dates(p, default_sep=" → ") if p else "—")
+        raw_shooting_dates = w.shooting_dates or (_format_project_shooting_dates(p, default_sep=" → ") if p else "—")
+        shooting_dates = format_waiver_shooting_dates(raw_shooting_dates, default_sep=" → ")
 
         # Récupère le jeton de signature actif et non expiré si existant
         now_dt = _utcnow()
@@ -673,7 +727,8 @@ def list_pilot_waivers():
         elif w.pilot_first_name or w.pilot_last_name:
             pilote_name = f"{w.pilot_first_name or ''} {w.pilot_last_name or ''}".strip()
 
-        shooting_dates = w.shooting_dates or (_format_project_shooting_dates(p, default_sep=" → ") if p else "—")
+        raw_shooting_dates = w.shooting_dates or (_format_project_shooting_dates(p, default_sep=" → ") if p else "—")
+        shooting_dates = format_waiver_shooting_dates(raw_shooting_dates, default_sep=" → ")
 
         # Récupère le jeton de signature actif et non expiré si existant
         now_dt = _utcnow()
