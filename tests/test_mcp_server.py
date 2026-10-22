@@ -58,6 +58,10 @@ class MCPServerFullTestSuite(unittest.TestCase):
         cls.app_context.pop()
 
     def setUp(self):
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
         db.create_all()
         token = McpApiToken.query.filter_by(is_active=True).first()
         token_id = token.id if token else None
@@ -91,6 +95,12 @@ class MCPServerFullTestSuite(unittest.TestCase):
                 db.session.commit()
             except Exception:
                 db.session.rollback()
+
+    def tearDown(self):
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
 
     # ── 1. SYSTÈME ───────────────────────────────────────────────
     def test_system_status(self):
@@ -321,6 +331,15 @@ class MCPServerFullTestSuite(unittest.TestCase):
         self.assertIsInstance(res_u, dict)
         self.assertIn("users", res_u)
 
+        # Nettoyage résiduel préventif
+        existing_u = User.query.filter_by(mail="pytest_temp_user@bellevitesse.com").first()
+        if existing_u:
+            try:
+                db.session.delete(existing_u)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+
         res_c = users.create_user(
             firstname="PyTestUser",
             lastname="MCP",
@@ -372,16 +391,20 @@ class MCPServerFullTestSuite(unittest.TestCase):
             revoked = calendars.revoke_calendar_subscription(token_id, confirm=True)
             self.assertTrue(revoked.get("success"))
 
-            from models import CalendarSubscription
-            test_sub = db.session.get(CalendarSubscription, token_id)
-            if test_sub:
-                db.session.delete(test_sub)
-                db.session.commit()
         finally:
-            u_to_delete = db.session.get(User, test_user.id)
-            if u_to_delete:
-                db.session.delete(u_to_delete)
+            try:
+                from models import CalendarSubscription
+                CalendarSubscription.query.filter_by(user_id=test_user.id).delete()
                 db.session.commit()
+            except Exception:
+                db.session.rollback()
+            try:
+                u_to_delete = db.session.get(User, test_user.id)
+                if u_to_delete:
+                    db.session.delete(u_to_delete)
+                    db.session.commit()
+            except Exception:
+                db.session.rollback()
 
     # ── 10. DOCUMENTS & VÉHICULES ────────────────────────────────
     def test_documents_and_vehicles(self):
@@ -495,7 +518,8 @@ class MCPServerFullTestSuite(unittest.TestCase):
             self.assertIn("assigned_contacts", proj_det)
             self.assertIn("vehicles", proj_det)
             self.assertIn("heads", proj_det)
-            self.assertIn("waivers", proj_det)
+            self.assertIn("cgl", proj_det)
+            self.assertIn("safety_rules", proj_det)
 
     def test_vehicle_availability(self):
         first_v = Vehicle.query.first()
@@ -550,22 +574,23 @@ class MCPServerFullTestSuite(unittest.TestCase):
         self.assertIn("123", p_audit)
 
     def test_mcp_waivers_tools(self):
-        # 1. Listing des décharges
+        # 1. Listing des CGL et Règles de sécurité
         res = waivers.list_waivers(mode="all")
         self.assertIsInstance(res, dict)
         self.assertIn("mode", res)
         self.assertIn("total", res)
         self.assertIn("pending_count", res)
-        self.assertIn("pilot_waivers", res)
-        self.assertIn("production_waivers", res)
+        self.assertIn("cgl_waivers", res)
+        self.assertIn("safety_rules_waivers", res)
 
         # 2. Test auto remind
         remind_res = waivers.auto_remind_waivers(days_before=2)
         self.assertTrue(remind_res.get("success"))
-        self.assertIn("production_reminders_sent", remind_res)
+        self.assertIn("cgl_reminders_sent", remind_res)
+        self.assertIn("safety_rules_reminders_sent", remind_res)
 
         # 3. Test reset confirmation guard
-        reset_res = waivers.reset_waiver(mode="pilot", waiver_id="test-uuid", confirm=False)
+        reset_res = waivers.reset_waiver(mode="cgl", waiver_id="test-uuid", confirm=False)
         self.assertFalse(reset_res.get("success"))
         self.assertEqual(reset_res.get("status"), "requires_confirmation")
 

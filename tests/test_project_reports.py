@@ -264,7 +264,8 @@ class ProjectReportsTest(unittest.TestCase):
             self.assertEqual(hub["project_id"], bvpr_code)
             self.assertIn("status", hub)
             self.assertIn("equipment", hub)
-            self.assertIn("waivers", hub)
+            self.assertIn("cgl", hub)
+            self.assertIn("safety_rules", hub)
             self.assertIn("reports", hub)
             self.assertEqual(hub["reports_count"], 1)
 

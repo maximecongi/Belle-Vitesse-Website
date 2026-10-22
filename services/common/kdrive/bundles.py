@@ -38,12 +38,12 @@ def resolve_entity_info(
     entity_type = mode_or_type
     class_name = record.__class__.__name__
 
-    if entity_type in ("checkout", "checkin", "incident"):
+    if entity_type in ("checkout", "checkin", "incident", "cgl", "safety_rules"):
         pass
-    elif entity_type in ("pilot", "pilot_waiver") or class_name == "PilotWaiver" or (class_name == "Waiver" and getattr(record, "waiver_type", None) == "pilot"):
-        entity_type = "pilot_waiver"
-    elif entity_type in ("production", "production_waiver") or class_name == "ProductionWaiver" or (class_name == "Waiver" and getattr(record, "waiver_type", None) == "production"):
-        entity_type = "production_waiver"
+    elif entity_type in ("cgl", "cgl_waiver") or class_name == "CglWaiver" or (class_name == "Waiver" and getattr(record, "waiver_type", None) == "cgl"):
+        entity_type = "cgl"
+    elif entity_type in ("safety_rules", "safety_rules_waiver") or class_name == "SafetyRulesWaiver" or (class_name == "Waiver" and getattr(record, "waiver_type", None) == "safety_rules"):
+        entity_type = "safety_rules"
     elif class_name == "CheckoutVehicle":
         entity_type = "checkout"
     elif class_name == "CheckinVehicle":
@@ -76,7 +76,7 @@ def extract_bundle_file_specs(
 ) -> List[Dict[str, Any]]:
     """
     Construit la liste unifiée des spécifications de fichiers (file_specs) pour kDrive.
-    Supporte les inspections (départ/retour), les décharges (pilote/production) et les incidents.
+    Supporte les inspections (départ/retour), les CGL, les règles de sécurité et les incidents.
     """
     resolved_type, _, _ = resolve_entity_info(record, entity_type)
     file_specs: List[Dict[str, Any]] = []
@@ -94,23 +94,13 @@ def extract_bundle_file_specs(
         for p in _parse_json_list(getattr(record, "exterior_photos", None)):
             file_specs.append({"role": "photo", "path": p})
 
-    elif resolved_type == "pilot_waiver":
-        license_path = getattr(record, "pilot_license_path", None)
-        if license_path:
-            file_specs.append({"role": "license", "path": license_path})
-
-        insurance_path = getattr(record, "pilot_insurance_path", None)
-        if insurance_path:
-            file_specs.append({"role": "insurance", "path": insurance_path})
-
-        identity_path = getattr(record, "pilot_identity_path", None)
-        if identity_path:
-            file_specs.append({"role": "identity", "path": identity_path})
-
-    elif resolved_type == "production_waiver":
+    elif resolved_type == "cgl":
         insurance_path = getattr(record, "production_insurance_path", None)
         if insurance_path:
             file_specs.append({"role": "insurance", "path": insurance_path})
+
+    elif resolved_type == "safety_rules":
+        pass
 
     elif resolved_type == "incident":
         # Photos

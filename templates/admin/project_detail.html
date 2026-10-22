@@ -373,34 +373,183 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
         </div>
 
         <h3 class="u-text-sm u-text-uppercase u-text-muted u-font-bold u-mb-2 u-tracking-wide">
-            Décharges
+            Contrat Cadre & Sécurité Plateau
         </h3>
-        <!-- Grille des Décharges (Pilote & Production) -->
-        <div class="project-docs-grid">
-            {{ waiver_card(
-            pilot_waiver,
-            'Décharge Pilote',
-            'id-card',
-            'Pilote',
-            pilot_waiver.pilot_name,
-            url_for('admin_waivers.admin_pilot_waivers_list', q=pilot_waiver.waiver_num),
-            url_for('admin_waivers.admin_pilot_waiver_quick_create', project_id=project.id),
-            url_for('admin_waivers.admin_pilot_waiver_send', waiver_id=pilot_waiver.waiver_num or pilot_waiver.id)
-            if (pilot_waiver.waiver_num or pilot_waiver.id) else None
-            ) }}
 
-            {{ waiver_card(
-            production_waiver,
-            'Décharge Prod.',
-            'building',
-            'Prod',
-            production_waiver.production_name,
-            url_for('admin_waivers.admin_production_waivers_list', q=production_waiver.waiver_num),
-            url_for('admin_waivers.admin_production_waiver_quick_create', project_id=project.id),
-            url_for('admin_waivers.admin_production_waiver_send', waiver_id=production_waiver.waiver_num or
-            production_waiver.id) if (production_waiver.waiver_num or production_waiver.id) else None
-            ) }}
+        <!-- 1. CONTRAT DE LOCATION (BVRA / CGL) -->
+        <div class="project-doc-item u-p-3 u-mb-3 u-border-left-waiver">
+            <div class="u-flex u-justify-between u-align-center u-mb-2">
+                <div class="u-flex u-align-center u-gap-2">
+                    <span class="project-doc-title u-font-semibold u-text-xs">
+                        <i data-lucide="file-signature" class="u-text-waiver"></i> Contrat Location (BVRA)
+                    </span>
+                    {% if cgl_waiver and cgl_waiver.waiver_num %}
+                    <span class="checkout-doc-id">{{ cgl_waiver.waiver_num }}</span>
+                    {% endif %}
+                </div>
+                {% if not (cgl_waiver and cgl_waiver.id and cgl_waiver.waiver_num) %}
+                <form action="{{ url_for('admin_waivers.admin_cgl_quick_create', project_id=project.id) }}" method="POST" class="u-m-0">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="admin-btn admin-btn-xs admin-btn-primary" title="Créer et générer le contrat BVRA">
+                        <i data-lucide="plus"></i> Créer
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+
+            {% if cgl_waiver and cgl_waiver.id and cgl_waiver.waiver_num %}
+            <div class="admin-card u-p-2 u-bg-neutral-light u-flex u-justify-between u-align-center u-flex-wrap u-gap-2">
+                <div>
+                    <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
+                        <strong class="u-text-xs">{{ cgl_waiver.production_name or (project.production_company.name if project.production_company else 'Locataire') }}</strong>
+                        <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-2xs">Locataire</span>
+                    </div>
+                    <div class="u-text-2xs u-text-muted">
+                        {% if project.production_contact and project.production_contact.mail %}
+                        {{ project.production_contact.mail }}
+                        {% elif project.production_contact and project.production_contact.full_name %}
+                        {{ project.production_contact.full_name }}
+                        {% else %}
+                        Production signataire
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="u-flex u-align-center u-gap-1">
+                    {{ status_badge(cgl_waiver.status, cgl_waiver.raw_status) }}
+
+                    {% if cgl_waiver.raw_status in ['to_send', 'to_generate'] %}
+                    <form action="{{ url_for('admin_waivers.admin_cgl_send', waiver_id=cgl_waiver.waiver_num or cgl_waiver.id) }}" method="POST" class="u-m-0">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                        <button type="submit" class="admin-btn admin-btn-xs admin-btn-primary" title="Envoyer le lien par e-mail">
+                            <i data-lucide="send"></i>
+                        </button>
+                    </form>
+                    <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
+                        data-copy-url="{{ url_for('admin_waivers.admin_cgl_copy_link', waiver_id=cgl_waiver.waiver_num or cgl_waiver.id) }}"
+                        title="Copier le lien de signature">
+                        <i data-lucide="copy"></i>
+                    </button>
+                    {% elif cgl_waiver.raw_status == 'to_sign' %}
+                    <form action="{{ url_for('admin_waivers.admin_cgl_send', waiver_id=cgl_waiver.waiver_num or cgl_waiver.id) }}" method="POST" class="u-m-0">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                        <button type="submit" class="admin-btn admin-btn-xs admin-btn-secondary" title="Relancer par e-mail">
+                            <i data-lucide="bell"></i>
+                        </button>
+                    </form>
+                    <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
+                        data-copy-url="{{ url_for('admin_waivers.admin_cgl_copy_link', waiver_id=cgl_waiver.waiver_num or cgl_waiver.id) }}"
+                        title="Copier le lien de signature">
+                        <i data-lucide="copy"></i>
+                    </button>
+                    {% elif cgl_waiver.raw_status == 'signed' %}
+                    <a href="{{ cgl_waiver.pdf_path }}" class="admin-btn admin-btn-xs admin-btn-secondary" target="_blank" rel="noopener noreferrer" title="Consulter le PDF signé et scellé">
+                        <i data-lucide="file-text"></i> PDF
+                    </a>
+                    {% endif %}
+
+                    <a href="{{ url_for('admin_waivers.admin_cgl_list', q=cgl_waiver.waiver_num) }}" class="admin-btn admin-btn-xs admin-btn-secondary" title="Consulter dans la liste des contrats CGL">
+                        <i data-lucide="external-link"></i>
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <p class="u-text-2xs u-text-muted u-mt-1 u-mb-0">
+                Aucun contrat de location généré pour ce tournage. Cliquez sur <strong>Créer</strong> pour initialiser le contrat-cadre CGL.
+            </p>
+            {% endif %}
         </div>
+
+        <!-- 2. RÈGLES DE SÉCURITÉ UNIVERSELLES (BVSR) -->
+        <div class="project-doc-item u-p-3 u-mb-3 u-border-left-waiver">
+            <div class="u-flex u-justify-between u-align-center u-mb-2">
+                <div class="u-flex u-align-center u-gap-2">
+                    <span class="project-doc-title u-font-semibold u-text-xs">
+                        <i data-lucide="shield-check" class="u-text-waiver"></i> Règles Sécurité (BVSR)
+                    </span>
+                    <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-2xs">
+                        {{ safety_rules_waivers|length }} signataire{{ 's' if safety_rules_waivers|length > 1 else '' }}
+                    </span>
+                </div>
+                <button type="button" class="admin-btn admin-btn-xs admin-btn-primary js-open-add-safety-signer-modal"
+                    title="Inviter un nouveau signataire aux règles de sécurité (Pilote, 1er AD, Cadreur, Régie...)">
+                    <i data-lucide="user-plus"></i> Inviter
+                </button>
+            </div>
+
+            {% if safety_rules_waivers and safety_rules_waivers|length > 0 %}
+            <div class="u-flex u-flex-column u-gap-2 u-mt-2">
+                {% for sr in safety_rules_waivers %}
+                <div class="admin-card u-p-2 u-bg-neutral-light u-flex u-justify-between u-align-center u-flex-wrap u-gap-2">
+                    <div>
+                        <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
+                            <strong class="u-text-xs">{{ sr.signer_name }}</strong>
+                            <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-2xs">
+                                {{ sr.signer_role_label }}
+                            </span>
+                        </div>
+                        <div class="u-text-2xs u-text-muted">
+                            {{ sr.signer_email or 'Sans e-mail' }}
+                            {% if sr.signer_company %} — {{ sr.signer_company }}{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="u-flex u-align-center u-gap-1">
+                        {{ status_badge(sr.status, sr.raw_status) }}
+
+                        {% if sr.raw_status in ['to_send', 'to_generate'] %}
+                        <form action="{{ url_for('admin_waivers.admin_safety_rules_send', waiver_id=sr.waiver_id) }}" method="POST" class="u-m-0">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                            <button type="submit" class="admin-btn admin-btn-xs admin-btn-primary" title="Envoyer le lien par e-mail">
+                                <i data-lucide="send"></i>
+                            </button>
+                        </form>
+                        <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
+                            data-copy-url="{{ url_for('admin_waivers.admin_safety_rules_copy_link', waiver_id=sr.waiver_id) }}"
+                            title="Copier le lien de signature">
+                            <i data-lucide="copy"></i>
+                        </button>
+                        {% elif sr.raw_status == 'to_sign' %}
+                        <form action="{{ url_for('admin_waivers.admin_safety_rules_send', waiver_id=sr.waiver_id) }}" method="POST" class="u-m-0">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                            <button type="submit" class="admin-btn admin-btn-xs admin-btn-secondary" title="Relancer par e-mail">
+                                <i data-lucide="bell"></i>
+                            </button>
+                        </form>
+                        <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
+                            data-copy-url="{{ url_for('admin_waivers.admin_safety_rules_copy_link', waiver_id=sr.waiver_id) }}"
+                            title="Copier le lien de signature">
+                            <i data-lucide="copy"></i>
+                        </button>
+                        {% elif sr.raw_status == 'signed' %}
+                        <a href="{{ sr.pdf_path }}" class="admin-btn admin-btn-xs admin-btn-secondary" target="_blank" rel="noopener noreferrer" title="Consulter le PDF signé et scellé">
+                            <i data-lucide="file-text"></i> PDF
+                        </a>
+                        {% endif %}
+
+                        <form action="{{ url_for('admin_waivers.admin_safety_rules_delete', waiver_id=sr.waiver_id) }}" method="POST" class="u-m-0"
+                            onsubmit="return confirm('Supprimer cet engagement BVSR pour {{ sr.signer_name }} ?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                            <button type="submit" class="admin-btn admin-btn-xs admin-btn-danger" title="Supprimer">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="u-text-2xs u-text-muted u-mt-2 u-mb-0">
+                Aucun signataire invité pour ce tournage. Cliquez sur <strong>Inviter</strong> pour faire signer les règles de sécurité à vos pilotes ou à l'équipe.
+            </p>
+            {% endif %}
+        </div>
+
 
         <!-- Incidents éventuels -->
         {% if incidents and incidents|length > 0 %}
@@ -675,6 +824,98 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
         {{ empty_state('clipboard-pen', 'Aucun rapport consigné pour le moment', "Rédigez la première observation de
         tournage, point technique ou débriefing d'équipe ci-dessus.") }}
         {% endif %}
+    </div>
+</div>
+
+<!-- ═══════════ MODAL AJOUT SIGNATAIRE RÈGLES DE SÉCURITÉ (BVSR) ═══════════ -->
+<div id="addSafetyRulesSignerModal" class="admin-modal-overlay u-d-none" role="dialog" aria-modal="true" aria-labelledby="safetySignerModalTitle">
+    <div class="admin-modal-container admin-modal-container--md">
+        <div class="admin-modal-header u-flex u-justify-between u-align-center u-p-4 u-border-b">
+            <div class="u-flex u-align-center u-gap-2">
+                <i data-lucide="shield-check" class="u-text-waiver"></i>
+                <h3 id="safetySignerModalTitle" class="admin-modal-title u-m-0 u-text-lg u-font-bold">
+                    Inviter un signataire aux Règles de Sécurité (BVSR)
+                </h3>
+            </div>
+            <button type="button" class="admin-modal-close js-close-safety-signer-modal" aria-label="Fermer">&times;</button>
+        </div>
+
+        <form method="POST" action="{{ url_for('admin_waivers.admin_safety_rules_create', project_id=project.id) }}" class="admin-modal-content u-p-4 u-overflow-y-auto">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="return_to" value="{{ request.full_path }}">
+
+            <p class="u-text-sm u-text-muted u-mb-4">
+                Générez un engagement individuel bilingue (FR/EN) sur-mesure pour cet intervenant de plateau. Le document intègre automatiquement les règles spécifiques aux véhicules réservés.
+            </p>
+
+            <div class="u-grid u-grid-cols-2 u-gap-3 u-mb-3">
+                <div class="form-group">
+                    <label for="new_signer_role" class="form-label u-font-semibold">Rôle sur le plateau <span class="u-text-danger">*</span></label>
+                    <select id="new_signer_role" name="signer_role" class="form-select" required>
+                        <option value="pilot">Pilote / Conducteur</option>
+                        <option value="first_ad">1er Assistant Réalisateur (1st AD)</option>
+                        <option value="production">Production / Régie</option>
+                        <option value="operator">Cadreur / Opérateur Caméra</option>
+                        <option value="stunt">Cascadeur / Coordinateur Stunt</option>
+                        <option value="other">Autre fonction...</option>
+                    </select>
+                </div>
+
+                <div id="new_signer_role_custom_group" class="form-group u-d-none">
+                    <label for="new_signer_role_custom" class="form-label u-font-semibold">Préciser la fonction <span class="u-text-danger">*</span></label>
+                    <input type="text" id="new_signer_role_custom" name="signer_role_custom" class="form-input" placeholder="Ex: Machiniste, Chef Électricien...">
+                </div>
+            </div>
+
+            <div class="u-grid u-grid-cols-2 u-gap-3 u-mb-3">
+                <div class="form-group">
+                    <label for="new_signer_first_name" class="form-label u-font-semibold">Prénom</label>
+                    <input type="text" id="new_signer_first_name" name="signer_first_name" class="form-input" placeholder="Ex: Jean">
+                </div>
+
+                <div class="form-group">
+                    <label for="new_signer_last_name" class="form-label u-font-semibold">Nom</label>
+                    <input type="text" id="new_signer_last_name" name="signer_last_name" class="form-input" placeholder="Ex: Dupont">
+                </div>
+            </div>
+
+            <div class="u-grid u-grid-cols-2 u-gap-3 u-mb-3">
+                <div class="form-group">
+                    <label for="new_signer_email" class="form-label u-font-semibold">E-mail <span class="u-text-xs u-text-muted">(envoi du lien de signature)</span></label>
+                    <input type="email" id="new_signer_email" name="signer_email" class="form-input" placeholder="jean.dupont@prod.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="new_signer_phone" class="form-label u-font-semibold">Téléphone mobile</label>
+                    <input type="tel" id="new_signer_phone" name="signer_phone" class="form-input" placeholder="+33 6 12 34 56 78">
+                </div>
+            </div>
+
+            <div class="form-group u-mb-3">
+                <label for="new_signer_company" class="form-label u-font-semibold">Société / Entité représentée</label>
+                <input type="text" id="new_signer_company" name="signer_company" class="form-input" value="{{ project.production_company.name if project.production_company else '' }}" placeholder="Ex: Société de production ou Freelance">
+            </div>
+
+            <div class="form-group u-mb-4">
+                <label for="new_safety_technicians" class="form-label u-font-semibold">
+                    Référent(s) technique(s) Belle Vitesse sur le tournage
+                </label>
+                <input type="text" id="new_safety_technicians" name="safety_technicians" class="form-input" placeholder="Ex: Maxime Perrard, Ewen Gicquel">
+                <small class="u-text-muted u-text-xs">
+                    Nom(s) des interlocuteurs Belle Vitesse autorisés à donner les consignes de sécurité sur ce plateau. Laisser vide si non renseigné.
+                </small>
+            </div>
+
+            <div class="u-flex u-justify-end u-align-center u-gap-2 u-pt-3 u-border-t">
+                <button type="button" class="admin-btn admin-btn-secondary js-close-safety-signer-modal">
+                    Annuler
+                </button>
+                <button type="submit" class="admin-btn admin-btn-primary">
+                    <i data-lucide="send" class="u-mr-1"></i>
+                    Créer l'invitation BVSR
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock %}

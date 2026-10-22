@@ -402,18 +402,18 @@ admin-multiselect-tag--custom
 {% endmacro %}
 
 {% macro waiver_card(waiver, title, icon, beneficiary_label, beneficiary_name, list_url, new_url, send_url=None) %}
-<div class="project-doc-item u-flex u-flex-column u-justify-between u-p-2">
+<div class="project-doc-item u-border-left-waiver u-flex u-flex-column u-justify-between u-p-3">
     <div class="project-doc-info">
         <div class="project-doc-title u-font-semibold u-text-xs">
-            <i data-lucide="{{ icon }}"></i> {{ title }}
+            <i data-lucide="{{ icon }}" class="u-text-waiver"></i> {{ title }}
         </div>
         <div class="checkout-doc-id u-mb-1">
             {% if waiver and waiver.waiver_num and list_url %}
-            <a href="{{ list_url }}" class="u-text-muted u-hover-underline" title="Voir dans la liste des décharges">
+            <a href="{{ list_url }}" class="u-text-muted u-hover-underline" title="Voir dans la liste des contrats CGL">
                 {{ waiver.waiver_num }}
             </a>
             {% else %}
-            {{ waiver.waiver_num or 'Non créée' }}
+            {{ waiver.waiver_num or 'Non créé' }}
             {% endif %}
         </div>
         {% if beneficiary_name %}
@@ -429,12 +429,12 @@ admin-multiselect-tag--custom
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="return_to" value="{{ request.full_path }}">
             <button type="submit" class="badge-pill u-pointer" data-val="to_send"
-                title="Envoyer la décharge par e-mail en 1 clic">
+                title="Envoyer le document par e-mail en 1 clic">
                 <i data-lucide="send"></i> À envoyer
             </button>
         </form>
         {% else %}
-        <a href="{{ list_url }}" title="Voir la décharge">
+        <a href="{{ list_url }}" title="Voir le document">
             {{ status_badge(waiver.status, waiver.raw_status) }}
         </a>
         {% endif %}
@@ -443,7 +443,7 @@ admin-multiselect-tag--custom
         <form action="{{ new_url }}" method="POST" class="u-m-0 u-d-inline">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="badge-pill u-pointer" data-val="to_generate"
-                title="Créer et générer la décharge en 1 clic">
+                title="Créer et générer le document en 1 clic">
                 <i data-lucide="refresh-cw"></i> À générer</button>
         </form>
         {% endif %}

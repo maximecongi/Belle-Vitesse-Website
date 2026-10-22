@@ -1,4 +1,4 @@
-"""Outils MCP : Domaine Décharges (Waivers) Pilotes & Production."""
+"""Outils MCP : Domaine Contrats de Location (CGL) & Règles de Sécurité Universelles (BVSR)."""
 from datetime import date, datetime
 from typing import Any, Dict, List, Optional
 
@@ -10,10 +10,10 @@ def _serialize_waiver(w: Dict[str, Any]) -> Dict[str, Any]:
     """Sérialise proprement les objets date et datetime pour la réponse JSON et sécurise les jetons."""
     item = dict(w)
     item["success"] = True
-    # Sécurité : masquer le jeton de signature actif pour éviter toute fuite non autorisée
+    # Masquer le jeton de signature actif pour la sécurité
     has_token = bool(item.pop("signature_token", None))
     item["has_signature_token"] = has_token
-    for k in ("generated_at", "sent_at", "signed_at", "last_reminded_at", "deleted_at"):
+    for k in ("generated_at", "sent_at", "signed_at", "bv_signed_at", "last_reminded_at", "deleted_at"):
         val = item.get(k)
         if isinstance(val, (datetime, date)):
             item[k] = val.isoformat()
@@ -29,56 +29,60 @@ def list_waivers(
     query: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Liste les décharges (pilote, production ou toutes) avec indicateurs d'état et de relance.
-    - mode: 'all', 'pilot' ou 'production'
+    Liste les contrats CGL et engagements aux règles de sécurité (BVSR) avec indicateurs d'état et de relance.
+    - mode: 'all', 'cgl' ou 'safety_rules'
     - status: 'to_generate', 'to_send', 'to_sign', 'signed'
-    - query: recherche textuelle (nom de projet, pilote, production, waiver_id)
+    - query: recherche textuelle (nom de projet, signataire, production, waiver_id)
     """
-    from services.admin.waivers import list_pilot_waivers, list_production_waivers
+    from services.admin.waivers import list_cgl, list_safety_rules_waivers
     from mcp_server.utils import matches_search_query
 
-    valid_modes = {"all", "pilot", "production"}
+    valid_modes = {"all", "cgl", "safety_rules"}
     mode_clean = (mode or "all").lower().strip()
     if mode_clean not in valid_modes:
         return {
-            "error": f"Mode de décharge invalide '{mode}'. Modes acceptés : 'all', 'pilot', 'production'.",
+            "error": f"Mode invalide '{mode}'. Modes acceptés : 'all', 'cgl', 'safety_rules'.",
             "allowed_modes": list(valid_modes),
         }
 
-    pilot_list = []
-    prod_list = []
+    cgl_list = []
+    safety_list = []
 
-    if mode_clean in ("all", "pilot"):
-        raw_pilots = list_pilot_waivers()
-        for w in raw_pilots:
+    if mode_clean in ("all", "cgl"):
+        raw_cgls = list_cgl()
+        for w in raw_cgls:
             if status and w.get("raw_status") != status:
                 continue
-            if query and not matches_search_query(w, query, ["project_name", "pilot_name", "waiver_id"]):
+            if query and not matches_search_query(w, query, ["project_name", "production_name", "production_contact_name", "id", "waiver_id"]):
                 continue
-            pilot_list.append(_serialize_waiver(w))
+            cgl_list.append(_serialize_waiver(w))
 
-    if mode_clean in ("all", "production"):
-        raw_prods = list_production_waivers()
-        for w in raw_prods:
+    if mode_clean in ("all", "safety_rules"):
+        raw_rules = list_safety_rules_waivers()
+        for w in raw_rules:
             if status and w.get("raw_status") != status:
                 continue
-            if query and not matches_search_query(w, query, ["project_name", "production_name", "production_contact_name", "waiver_id"]):
+            if query and not matches_search_query(w, query, ["project_name", "signer_name", "signer_role_label", "signer_email", "id", "waiver_id"]):
                 continue
-            prod_list.append(_serialize_waiver(w))
+            safety_list.append(_serialize_waiver(w))
 
-    all_list = pilot_list + prod_list
+    all_list = cgl_list + safety_list
     total = len(all_list)
-    pending_count = sum(
-        1 for w in all_list if w.get("raw_status") != "signed"
-    )
+    pending_count = sum(1 for w in all_list if w.get("raw_status") != "signed")
+
+    selected_list = all_list
+    if mode_clean == "cgl":
+        selected_list = cgl_list
+    elif mode_clean == "safety_rules":
+        selected_list = safety_list
 
     return {
         "mode": mode_clean,
         "total": total,
         "pending_count": pending_count,
-        "all_waivers": all_list if mode_clean == "all" else (pilot_list if mode_clean == "pilot" else prod_list),
-        "pilot_waivers": pilot_list if mode_clean in ("all", "pilot") else [],
-        "production_waivers": prod_list if mode_clean in ("all", "production") else [],
+        "all_waivers": selected_list,
+        "cgl_waivers": cgl_list,
+        "safety_rules_waivers": safety_list,
     }
 
 
@@ -87,54 +91,43 @@ def list_waivers(
 @require_mcp_scope("read_only")
 def get_waiver_detail(mode: Optional[str] = None, waiver_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """
-    Récupère le détail exhaustif d'une décharge pilote ou production par son identifiant.
-    - mode: 'pilot', 'production' ou 'all' (optionnel si waiver_id débute par 'BVDW-' ou 'BVPW-')
-    - waiver_id: ID UUID ou numérique de la décharge (ex: 'BVDW-33YKZV3TBECF' ou 16)
+    Récupère le détail exhaustif d'un contrat CGL ou engagement BVSR par son identifiant.
+    - mode: 'cgl', 'safety_rules' ou 'all'
+    - waiver_id: ID UUID ou numérique (ex: 'BVRA-xxx' ou 'BVSR-xxx')
     """
-    from models import PilotWaiver, ProductionWaiver, Project
+    from services.admin.waivers import list_cgl, list_safety_rules_waivers
+    from utils.entity_resolvers import resolve_cgl, resolve_safety_rules_waiver, resolve_waiver
     from services.admin.status_mapping import format_waiver_status
-    from services.admin.waivers import list_pilot_waivers, list_production_waivers
 
-    # Tolérance sur l'inversion d'arguments ou omission de mode
     if waiver_id is None and mode is not None:
-        wid_candidate = str(mode).strip()
-        if wid_candidate.upper().startswith(("BVDW-", "BVPW-")) or wid_candidate.isdigit():
-            waiver_id = wid_candidate
+        candidate = str(mode).strip()
+        if candidate.upper().startswith(("BVSR-", "BVRA-")) or candidate.isdigit():
+            waiver_id = candidate
             mode = None
 
     if not waiver_id:
         return {
             "success": False,
-            "message": "Identifiant de décharge manquant.",
-            "error": "Identifiant de décharge manquant.",
+            "error": "Identifiant manquant.",
         }
 
     wid_str = str(waiver_id).strip()
     mode_clean = (mode or "").lower().strip()
 
     if not mode_clean or mode_clean == "all":
-        if wid_str.upper().startswith("BVDW-"):
-            mode_clean = "pilot"
-        elif wid_str.upper().startswith("BVPW-"):
-            mode_clean = "production"
+        if wid_str.upper().startswith("BVSR-"):
+            mode_clean = "safety_rules"
+        elif wid_str.upper().startswith("BVRA-"):
+            mode_clean = "cgl"
         else:
             mode_clean = "all"
 
-    valid_modes = {"all", "pilot", "production"}
-    if mode_clean not in valid_modes:
-        return {
-            "success": False,
-            "message": f"Mode de décharge invalide '{mode}'. Modes acceptés : 'pilot', 'production', 'all'.",
-            "error": f"Mode de décharge invalide '{mode}'. Modes acceptés : 'pilot', 'production', 'all'.",
-            "allowed_modes": ["pilot", "production", "all"],
-        }
-
     # 1. Recherche dans les listes formatées en mémoire
     items = []
-    if mode_clean in ("all", "pilot"):
-        items.extend(list_pilot_waivers())
-    if mode_clean in ("all", "production"):
-        items.extend(list_production_waivers())
+    if mode_clean in ("all", "cgl"):
+        items.extend(list_cgl())
+    if mode_clean in ("all", "safety_rules"):
+        items.extend(list_safety_rules_waivers())
 
     match = next(
         (w for w in items if str(w.get("waiver_id")) == wid_str or str(w.get("db_id")) == wid_str or str(w.get("id")) == wid_str),
@@ -143,72 +136,44 @@ def get_waiver_detail(mode: Optional[str] = None, waiver_id: Optional[str] = Non
     if match:
         return _serialize_waiver(match)
 
-    # 2. Recherche directe en base SQL si projet orphelin ou décharge archivée
-    int_id = int(wid_str) if wid_str.isdigit() else -1
+    # 2. Résolution directe via entités
+    w = None
+    if mode_clean == "cgl":
+        w = resolve_cgl(wid_str)
+    elif mode_clean == "safety_rules":
+        w = resolve_safety_rules_waiver(wid_str)
+    else:
+        w = resolve_waiver(wid_str)
 
-    if mode_clean in ("all", "pilot"):
-        pw = PilotWaiver.query.filter(
-            (PilotWaiver.waiver_id == wid_str) | (PilotWaiver.id == int_id)
-        ).first()
-        if pw:
-            p = pw.project
-            pilote_name = f"{pw.pilot_first_name or ''} {pw.pilot_last_name or ''}".strip() or "—"
-            if p and p.pilot_contact:
-                pilote_name = f"{p.pilot_contact.first_name} {p.pilot_contact.last_name}"
-            return _serialize_waiver({
-                "id": pw.waiver_id,
-                "db_id": pw.id,
-                "waiver_id": pw.waiver_id,
-                "type": "pilot",
-                "project_id": p.id if p else pw.project_id,
-                "project_name": p.name if p else (pw.project_name or "—"),
-                "pilot_name": pilote_name,
-                "shooting_dates": pw.shooting_dates or "—",
-                "status": format_waiver_status(pw.status),
-                "raw_status": pw.status,
-                "generated_at": pw.generated_at,
-                "sent_at": pw.sent_at,
-                "signed_at": pw.signed_at,
-                "deleted_at": pw.deleted_at,
-                "is_deleted": pw.deleted_at is not None,
-                "is_project_deleted": p.deleted_at is not None if p else True,
-                "signed_pdf_path": pw.signed_pdf_path,
-                "reminder_count": pw.reminder_count or 0,
-                "last_reminded_at": pw.last_reminded_at,
-            })
-
-    if mode_clean in ("all", "production"):
-        prw = ProductionWaiver.query.filter(
-            (ProductionWaiver.waiver_id == wid_str) | (ProductionWaiver.id == int_id)
-        ).first()
-        if prw:
-            p = prw.project
-            return _serialize_waiver({
-                "id": prw.waiver_id,
-                "db_id": prw.id,
-                "waiver_id": prw.waiver_id,
-                "type": "production",
-                "project_id": p.id if p else prw.project_id,
-                "project_name": p.name if p else (prw.project_name or "—"),
-                "production_name": ((p.production.name if p.production else None) if p else prw.production_name) or prw.production_name or "—",
-                "shooting_dates": prw.shooting_dates or "—",
-                "status": format_waiver_status(prw.status),
-                "raw_status": prw.status,
-                "generated_at": prw.generated_at,
-                "sent_at": prw.sent_at,
-                "signed_at": prw.signed_at,
-                "deleted_at": prw.deleted_at,
-                "is_deleted": prw.deleted_at is not None,
-                "is_project_deleted": p.deleted_at is not None if p else True,
-                "signed_pdf_path": prw.signed_pdf_path,
-                "reminder_count": prw.reminder_count or 0,
-                "last_reminded_at": prw.last_reminded_at,
-            })
+    if w:
+        p = w.project
+        return _serialize_waiver({
+            "id": w.waiver_id,
+            "db_id": w.id,
+            "waiver_id": w.waiver_id,
+            "type": w.waiver_type,
+            "project_id": p.id if p else w.project_id,
+            "project_name": p.name if p else (w.project_name or "—"),
+            "signer_name": w.signer_name,
+            "signer_role": getattr(w, "signer_role", None),
+            "signer_role_label": getattr(w, "signer_role_label", None),
+            "production_name": w.display_production_name,
+            "shooting_dates": w.shooting_dates or "—",
+            "status": format_waiver_status(w.status),
+            "raw_status": w.status,
+            "generated_at": w.generated_at,
+            "sent_at": w.sent_at,
+            "signed_at": w.signed_at,
+            "deleted_at": w.deleted_at,
+            "is_deleted": w.deleted_at is not None,
+            "signed_pdf_path": w.signed_pdf_path,
+            "reminder_count": w.reminder_count or 0,
+            "last_reminded_at": w.last_reminded_at,
+        })
 
     return {
         "success": False,
-        "message": f"Décharge '{wid_str}' introuvable.",
-        "error": f"Décharge '{wid_str}' introuvable.",
+        "error": f"Document '{wid_str}' introuvable.",
     }
 
 
@@ -221,20 +186,20 @@ def send_waiver_invitation(
     base_url: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Envoie ou relance une décharge (pilote ou production) par e-mail avec jeton de signature sécurisé.
-    - mode: 'pilot' ou 'production'
-    - waiver_id: identifiant de la décharge (UUID ou ID DB)
-    - base_url: URL de base optionnelle (par défaut, l'hôte configuré du serveur)
+    Envoie ou relance un contrat CGL ou engagement BVSR par e-mail avec lien sécurisé.
+    - mode: 'cgl' ou 'safety_rules'
+    - waiver_id: identifiant (UUID ou ID DB)
+    - base_url: URL de base optionnelle
     """
-    from services.admin.waivers import send_pilot_waiver, send_production_waiver
+    from services.admin.waivers import send_cgl, send_safety_rules_waiver
 
     mode_clean = mode.lower().strip()
-    if mode_clean == "pilot":
-        success, msg = send_pilot_waiver(waiver_id, base_url=base_url)
-    elif mode_clean == "production":
-        success, msg = send_production_waiver(waiver_id, base_url=base_url)
+    if mode_clean == "cgl":
+        success, msg = send_cgl(waiver_id, base_url=base_url)
+    elif mode_clean == "safety_rules":
+        success, msg = send_safety_rules_waiver(waiver_id, base_url=base_url)
     else:
-        return {"success": False, "message": "Mode invalide. Utilisez 'pilot' ou 'production'."}
+        return {"success": False, "message": "Mode invalide. Utilisez 'cgl' ou 'safety_rules'."}
 
     return {"success": success, "message": msg, "mode": mode_clean, "waiver_id": waiver_id}
 
@@ -247,8 +212,8 @@ def auto_remind_waivers(
     base_url: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Déclenche la procédure de relance automatique pour toutes les décharges non signées dont le tournage démarre à J-N.
-    - days_before: Nombre de jours d'anticipation avant le début du tournage (défaut: 2)
+    Déclenche la procédure de relance automatique pour les contrats CGL et engagements BVSR non signés (tournage à J-N).
+    - days_before: Nombre de jours d'anticipation avant le départ/tournage (défaut: 2)
     """
     from services.admin.waivers import auto_remind_pending_waivers
 
@@ -256,13 +221,14 @@ def auto_remind_waivers(
     return {
         "success": True,
         "days_before": days_before,
-        "production_reminders_sent": results.get("production_reminders_sent", 0),
-        "pilot_reminders_sent": results.get("pilot_reminders_sent", 0),
+        "cgl_reminders_sent": results.get("cgl_reminders_sent", 0),
+        "safety_rules_reminders_sent": results.get("safety_rules_reminders_sent", 0),
+        "total_reminders_sent": results.get("total_reminders_sent", 0),
         "details": results.get("details", []),
         "message": (
             f"Relances automatiques envoyées : "
-            f"{results.get('pilot_reminders_sent', 0)} pilote(s), "
-            f"{results.get('production_reminders_sent', 0)} production(s)."
+            f"{results.get('cgl_reminders_sent', 0)} CGL, "
+            f"{results.get('safety_rules_reminders_sent', 0)} règles de sécurité (BVSR)."
         ),
     }
 
@@ -272,17 +238,17 @@ def auto_remind_waivers(
 @require_mcp_scope("admin")
 def reset_waiver(mode: str, waiver_id: str, confirm: bool = False) -> Dict[str, Any]:
     """
-    Réinitialise complètement une décharge (supprime la signature, les PDF scellés et les pièces jointes).
+    Réinitialise complètement un contrat CGL ou engagement BVSR (supprime signature, PDF scellé et pièces jointes).
     ATTENTION : Action destructive (Scope 'admin' requis).
-    Exiger confirm=True après confirmation explicite de l'utilisateur.
-    - mode: 'pilot' ou 'production'
-    - waiver_id: ID UUID de la décharge
+    Exiger confirm=True après confirmation explicite.
+    - mode: 'cgl' ou 'safety_rules'
+    - waiver_id: ID du document
     """
-    from services.admin.waivers import reset_pilot_waiver, reset_production_waiver
+    from services.admin.waivers import reset_cgl, reset_safety_rules_waiver
 
     mode_clean = mode.lower().strip()
-    if mode_clean not in ("pilot", "production"):
-        return {"success": False, "message": "Mode invalide. Utilisez 'pilot' ou 'production'."}
+    if mode_clean not in ("cgl", "safety_rules"):
+        return {"success": False, "message": "Mode invalide. Utilisez 'cgl' ou 'safety_rules'."}
 
     if not confirm:
         return {
@@ -291,15 +257,15 @@ def reset_waiver(mode: str, waiver_id: str, confirm: bool = False) -> Dict[str, 
             "mode": mode_clean,
             "waiver_id": waiver_id,
             "message": (
-                f"⚠️ ATTENTION : Vous êtes sur le point de réinitialiser la décharge {mode_clean.upper()} '{waiver_id}'. "
+                f"⚠️ ATTENTION : Vous êtes sur le point de réinitialiser le document {mode_clean.upper()} '{waiver_id}'. "
                 "Toutes les signatures, PDF archivés et pièces jointes associées seront définitivement effacés. "
                 "Demandez confirmation explicite à l'utilisateur, puis réexécutez avec confirm=True."
             ),
         }
 
-    if mode_clean == "pilot":
-        success, msg = reset_pilot_waiver(waiver_id)
+    if mode_clean == "cgl":
+        success, msg = reset_cgl(waiver_id)
     else:
-        success, msg = reset_production_waiver(waiver_id)
+        success, msg = reset_safety_rules_waiver(waiver_id)
 
     return {"success": success, "message": msg, "mode": mode_clean, "waiver_id": waiver_id}

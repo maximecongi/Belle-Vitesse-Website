@@ -89,26 +89,11 @@ components:
         notes: { type: string }
         created_at: { type: string, format: date-time }
 
-    PilotWaiver:
+    CglWaiver:
       type: object
       properties:
         id: { type: integer }
-        waiver_id: { type: string, example: "BVDW-XXXX" }
-        project_id: { type: integer }
-        status:
-          type: string
-          enum: [to_generate, generated, sent, signed]
-        generated_at: { type: string, format: date-time }
-        sent_at: { type: string, format: date-time }
-        signed_at: { type: string, format: date-time }
-        pilot_first_name: { type: string }
-        pilot_last_name: { type: string }
-
-    ProductionWaiver:
-      type: object
-      properties:
-        id: { type: integer }
-        waiver_id: { type: string, example: "BVPW-XXXX" }
+        waiver_id: { type: string, example: "BVRA-XXXX" }
         project_id: { type: integer }
         status:
           type: string
@@ -117,6 +102,21 @@ components:
         sent_at: { type: string, format: date-time }
         signed_at: { type: string, format: date-time }
         production_name: { type: string }
+
+    SafetyRulesWaiver:
+      type: object
+      properties:
+        id: { type: integer }
+        waiver_id: { type: string, example: "BVSR-XXXX" }
+        project_id: { type: integer }
+        signer_name: { type: string }
+        signer_role: { type: string }
+        status:
+          type: string
+          enum: [to_generate, generated, sent, signed]
+        generated_at: { type: string, format: date-time }
+        sent_at: { type: string, format: date-time }
+        signed_at: { type: string, format: date-time }
 
     Message:
       type: object
@@ -406,38 +406,39 @@ paths:
                   document_id: { type: string }
                   pdf_url: { type: string }
 
-  # ── Décharges ─────────────────────────────────────────────────
+  # ── CGL & Règles de Sécurité ─────────────────────────────────
 
-  /pilot-waivers:
+  /cgl:
     get:
-      summary: Liste des décharges pilotes
-      tags: [Décharges]
+      summary: Liste des contrats CGL (BVRA)
+      tags: [CGL]
       responses:
         200:
-          description: Liste
+          description: Liste des contrats CGL
           content:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/PilotWaiver' }
+                items: { $ref: '#/components/schemas/CglWaiver' }
     post:
-      summary: Créer une décharge pilote
-      tags: [Décharges]
+      summary: Créer un contrat CGL pour un projet
+      tags: [CGL]
       requestBody:
         content:
           application/json:
             schema:
               type: object
+              required: [project_id]
               properties:
                 project_id: { type: integer }
       responses:
         201:
-          description: Créée
+          description: Créé
 
-  /pilot-waivers/{id}/generate:
+  /cgl/{id}/generate:
     post:
-      summary: Générer le PDF pilote
-      tags: [Décharges]
+      summary: Générer le PDF du contrat CGL
+      tags: [CGL]
       parameters:
         - name: id
           in: path
@@ -447,10 +448,10 @@ paths:
         200:
           description: PDF généré
 
-  /pilot-waivers/{id}/send:
+  /cgl/{id}/send:
     post:
-      summary: Envoyer la décharge pilote
-      tags: [Décharges]
+      summary: Envoyer l'invitation de signature CGL
+      tags: [CGL]
       parameters:
         - name: id
           in: path
@@ -458,12 +459,12 @@ paths:
           schema: { type: string }
       responses:
         200:
-          description: Envoyée
+          description: Envoyé
 
-  /pilot-waivers/{id}/reset:
+  /cgl/{id}/reset:
     post:
-      summary: Réinitialiser la décharge pilote
-      tags: [Décharges]
+      summary: Réinitialiser le contrat CGL
+      tags: [CGL]
       parameters:
         - name: id
           in: path
@@ -471,74 +472,44 @@ paths:
           schema: { type: string }
       responses:
         200:
-          description: Réinitialisée
+          description: Réinitialisé
 
-  /pilot-waivers/{id}/finalize:
-    post:
-      summary: Finaliser une décharge pilote (Signature & Data)
-      tags: [Décharges]
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: integer }
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [signature_data]
-              properties:
-                signature_data: { type: string, description: "Base64 signature" }
-                first_name: { type: string }
-                last_name: { type: string }
-                dob: { type: string, format: date }
-                license_number: { type: string }
-                address: { type: string }
-                insurance_company: { type: string }
-                insurance_policy: { type: string }
-      responses:
-        200:
-          description: Finalisée
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message: { type: string }
-                  document_id: { type: string }
-                  pdf_url: { type: string }
-
-  /production-waivers:
+  /safety-rules:
     get:
-      summary: Liste des décharges production
-      tags: [Décharges]
+      summary: Liste des engagements aux Règles de Sécurité (BVSR)
+      tags: [Règles de Sécurité]
       responses:
         200:
-          description: Liste
+          description: Liste des engagements BVSR
           content:
             application/json:
               schema:
                 type: array
-                items: { $ref: '#/components/schemas/ProductionWaiver' }
+                items: { $ref: '#/components/schemas/SafetyRulesWaiver' }
     post:
-      summary: Créer une décharge production
-      tags: [Décharges]
+      summary: Créer un engagement BVSR pour un intervenant
+      tags: [Règles de Sécurité]
       requestBody:
         content:
           application/json:
             schema:
               type: object
+              required: [project_id]
               properties:
                 project_id: { type: integer }
+                signer_role: { type: string }
+                signer_first_name: { type: string }
+                signer_last_name: { type: string }
+                signer_email: { type: string }
+                signer_phone: { type: string }
       responses:
         201:
-          description: Créée
+          description: Créé
 
-  /production-waivers/{id}/generate:
+  /safety-rules/{id}/generate:
     post:
-      summary: Générer le PDF production
-      tags: [Décharges]
+      summary: Générer le PDF des Règles de Sécurité
+      tags: [Règles de Sécurité]
       parameters:
         - name: id
           in: path
@@ -548,10 +519,10 @@ paths:
         200:
           description: PDF généré
 
-  /production-waivers/{id}/send:
+  /safety-rules/{id}/send:
     post:
-      summary: Envoyer la décharge production
-      tags: [Décharges]
+      summary: Envoyer l'invitation de signature BVSR
+      tags: [Règles de Sécurité]
       parameters:
         - name: id
           in: path
@@ -559,12 +530,12 @@ paths:
           schema: { type: string }
       responses:
         200:
-          description: Envoyée
+          description: Envoyé
 
-  /production-waivers/{id}/reset:
+  /safety-rules/{id}/reset:
     post:
-      summary: Réinitialiser la décharge production
-      tags: [Décharges]
+      summary: Réinitialiser l'engagement BVSR
+      tags: [Règles de Sécurité]
       parameters:
         - name: id
           in: path
@@ -572,43 +543,7 @@ paths:
           schema: { type: string }
       responses:
         200:
-          description: Réinitialisée
-
-  /production-waivers/{id}/finalize:
-    post:
-      summary: Finaliser une décharge production (Signature & Data)
-      tags: [Décharges]
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: integer }
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [signature_data]
-              properties:
-                signature_data: { type: string, description: "Base64 signature" }
-                production_name: { type: string }
-                representative: { type: string }
-                address: { type: string }
-                siret: { type: string }
-                vat_number: { type: string }
-                insurance_company: { type: string }
-                insurance_policy: { type: string }
-      responses:
-        200:
-          description: Finalisée
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message: { type: string }
-                  document_id: { type: string }
-                  pdf_url: { type: string }
+          description: Réinitialisé
 
   # ── Administratif ─────────────────────────────────────────────
 

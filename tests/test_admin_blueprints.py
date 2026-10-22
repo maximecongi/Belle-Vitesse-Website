@@ -105,8 +105,8 @@ class AdminBlueprintsTestCase(unittest.TestCase):
             ("admin_calendar", "admin_calendar.admin_calendar", None),
             ("admin_catalog_preview", "admin_catalog.admin_catalog_preview", None),
             ("admin_users_list", "admin_users.admin_users_list", None),
-            ("admin_pilot_waivers_list", "admin_waivers.admin_pilot_waivers_list", None),
-            ("admin_production_waivers_list", "admin_waivers.admin_production_waivers_list", None),
+            ("admin_cgl_list", "admin_waivers.admin_cgl_list", None),
+            ("admin_safety_rules_list", "admin_waivers.admin_safety_rules_list", None),
         ]
 
         with self.app.test_request_context():

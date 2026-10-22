@@ -1,267 +1,197 @@
 from flask import Blueprint, current_app, jsonify, request
 
 from services.admin.waivers import (
-    create_pilot_waiver,
-    create_production_waiver,
-    delete_pilot_waiver,
-    delete_production_waiver,
-    generate_pilot_waiver,
-    generate_production_waiver,
-    list_pilot_waivers,
-    list_production_waivers,
-    reset_pilot_waiver,
-    reset_production_waiver,
-    send_pilot_waiver,
-    send_production_waiver,
+    create_cgl,
+    create_safety_rules_waiver,
+    delete_cgl,
+    delete_safety_rules_waiver,
+    generate_cgl,
+    generate_safety_rules_waiver,
+    list_cgl,
+    list_safety_rules_waivers,
+    reset_cgl,
+    reset_safety_rules_waiver,
+    send_cgl,
+    send_safety_rules_waiver,
 )
 from utils.jwt_auth import require_api_auth
 
 api_waivers_bp = Blueprint("api_waivers", __name__)
 
 
-# ── Pilot Waivers ────────────────────────────────────────────────
+# ── Conditions Générales de Location (CGL - BVRA) ────────────────────
 
-@api_waivers_bp.route("/pilot-waivers", methods=["GET"])
+@api_waivers_bp.route("/cgl", methods=["GET"])
 @require_api_auth("administrator", "manager", "user")
-def api_list_pilot_waivers():
+def api_list_cgl():
     try:
-        result = list_pilot_waivers()
+        result = list_cgl()
         return jsonify(result)
     except Exception as e:
-        current_app.logger.error(f"❌ API list_pilot_waivers error: {e}")
+        current_app.logger.error(f"❌ API list_cgl error: {e}")
         return jsonify({"error": str(e)}), 500
 
 
-@api_waivers_bp.route("/pilot-waivers", methods=["POST"])
+@api_waivers_bp.route("/cgl", methods=["POST"])
 @require_api_auth("administrator", "manager")
-def api_create_pilot_waiver():
-    """Create a pilot waiver for a given project_id."""
+def api_create_cgl():
+    """Crée des CGL pour un project_id donné."""
     try:
         data = request.get_json(silent=True) or {}
         project_id = data.get("project_id")
         if not project_id:
             return jsonify({"error": "project_id requis"}), 400
-        create_pilot_waiver(project_id)
-        return jsonify({"message": "Décharge pilote créée"}), 201
+        success, msg = create_cgl(project_id)
+        if success:
+            return jsonify({"message": msg}), 201
+        return jsonify({"error": msg}), 400
     except Exception as e:
-        current_app.logger.error(f"❌ API create_pilot_waiver error: {e}")
+        current_app.logger.error(f"❌ API create_cgl error: {e}")
         return jsonify({"error": str(e)}), 500
 
 
-@api_waivers_bp.route("/pilot-waivers/<waiver_id>/generate", methods=["POST"])
+@api_waivers_bp.route("/cgl/<waiver_id>/generate", methods=["POST"])
 @require_api_auth("administrator", "manager")
-def api_generate_pilot_waiver(waiver_id):
+def api_generate_cgl(waiver_id):
     try:
-        generate_pilot_waiver(waiver_id)
-        return jsonify({"message": "Décharge pilote générée"})
+        success, msg = generate_cgl(waiver_id)
+        if success:
+            return jsonify({"message": msg})
+        return jsonify({"error": msg}), 400
     except Exception as e:
-        current_app.logger.error(f"❌ API generate_pilot_waiver error: {e}")
+        current_app.logger.error(f"❌ API generate_cgl error: {e}")
         return jsonify({"error": str(e)}), 500
 
 
-@api_waivers_bp.route("/pilot-waivers/<waiver_id>/send", methods=["POST"])
+@api_waivers_bp.route("/cgl/<waiver_id>/send", methods=["POST"])
 @require_api_auth("administrator", "manager")
-def api_send_pilot_waiver(waiver_id):
+def api_send_cgl(waiver_id):
     try:
-        send_pilot_waiver(waiver_id)
-        return jsonify({"message": "Décharge pilote envoyée"})
+        success, msg = send_cgl(waiver_id)
+        if success:
+            return jsonify({"message": msg})
+        return jsonify({"error": msg}), 400
     except Exception as e:
-        current_app.logger.error(f"❌ API send_pilot_waiver error: {e}")
+        current_app.logger.error(f"❌ API send_cgl error: {e}")
         return jsonify({"error": str(e)}), 500
 
 
-@api_waivers_bp.route("/pilot-waivers/<waiver_id>", methods=["DELETE"])
-@api_waivers_bp.route("/pilot-waivers/<waiver_id>/delete", methods=["POST"])
+@api_waivers_bp.route("/cgl/<waiver_id>", methods=["DELETE"])
+@api_waivers_bp.route("/cgl/<waiver_id>/delete", methods=["POST"])
 @require_api_auth("administrator", "manager")
-def api_delete_pilot_waiver(waiver_id):
+def api_delete_cgl(waiver_id):
     try:
-        success, msg = delete_pilot_waiver(waiver_id)
+        success, msg = delete_cgl(waiver_id)
         if success:
             return jsonify({"message": msg})
         return jsonify({"error": msg}), 404
     except Exception as e:
-        current_app.logger.error(f"❌ API delete_pilot_waiver error: {e}")
+        current_app.logger.error(f"❌ API delete_cgl error: {e}")
         return jsonify({"error": str(e)}), 500
 
 
-@api_waivers_bp.route("/pilot-waivers/<waiver_id>/reset", methods=["POST"])
+@api_waivers_bp.route("/cgl/<waiver_id>/reset", methods=["POST"])
 @require_api_auth("administrator", "manager")
-def api_reset_pilot_waiver(waiver_id):
+def api_reset_cgl(waiver_id):
     try:
-        reset_pilot_waiver(waiver_id)
-        return jsonify({"message": "Décharge pilote réinitialisée"})
+        success, msg = reset_cgl(waiver_id)
+        if success:
+            return jsonify({"message": msg})
+        return jsonify({"error": msg}), 400
     except Exception as e:
-        current_app.logger.error(f"❌ API reset_pilot_waiver error: {e}")
+        current_app.logger.error(f"❌ API reset_cgl error: {e}")
         return jsonify({"error": str(e)}), 500
 
 
-# ── Production Waivers ────────────────────────────────────────────
+# ── Règles de Sécurité Universelles (BVSR) ───────────────────────────
 
-@api_waivers_bp.route("/production-waivers", methods=["GET"])
+@api_waivers_bp.route("/safety-rules", methods=["GET"])
 @require_api_auth("administrator", "manager", "user")
-def api_list_production_waivers():
+def api_list_safety_rules():
     try:
-        result = list_production_waivers()
+        result = list_safety_rules_waivers()
         return jsonify(result)
     except Exception as e:
-        current_app.logger.error(f"❌ API list_production_waivers error: {e}")
+        current_app.logger.error(f"❌ API list_safety_rules error: {e}")
         return jsonify({"error": str(e)}), 500
 
 
-@api_waivers_bp.route("/production-waivers", methods=["POST"])
+@api_waivers_bp.route("/safety-rules", methods=["POST"])
 @require_api_auth("administrator", "manager")
-def api_create_production_waiver():
-    """Create a production waiver for a given project_id."""
+def api_create_safety_rules():
+    """Crée un engagement BVSR pour un intervenant d'un projet."""
     try:
         data = request.get_json(silent=True) or {}
         project_id = data.get("project_id")
         if not project_id:
             return jsonify({"error": "project_id requis"}), 400
-        create_production_waiver(project_id)
-        return jsonify({"message": "Décharge production créée"}), 201
+        success, msg = create_safety_rules_waiver(
+            project_id=project_id,
+            signer_role=data.get("signer_role", "pilot"),
+            signer_role_custom=data.get("signer_role_custom"),
+            signer_first_name=data.get("signer_first_name"),
+            signer_last_name=data.get("signer_last_name"),
+            signer_email=data.get("signer_email"),
+            signer_phone=data.get("signer_phone"),
+            signer_company=data.get("signer_company"),
+            safety_technicians=data.get("safety_technicians"),
+        )
+        if success:
+            return jsonify({"message": msg}), 201
+        return jsonify({"error": msg}), 400
     except Exception as e:
-        current_app.logger.error(f"❌ API create_production_waiver error: {e}")
+        current_app.logger.error(f"❌ API create_safety_rules error: {e}")
         return jsonify({"error": str(e)}), 500
 
 
-@api_waivers_bp.route("/production-waivers/<waiver_id>/generate", methods=["POST"])
+@api_waivers_bp.route("/safety-rules/<waiver_id>/generate", methods=["POST"])
 @require_api_auth("administrator", "manager")
-def api_generate_production_waiver(waiver_id):
+def api_generate_safety_rules(waiver_id):
     try:
-        generate_production_waiver(waiver_id)
-        return jsonify({"message": "Décharge production générée"})
+        success, msg = generate_safety_rules_waiver(waiver_id)
+        if success:
+            return jsonify({"message": msg})
+        return jsonify({"error": msg}), 400
     except Exception as e:
-        current_app.logger.error(f"❌ API generate_production_waiver error: {e}")
+        current_app.logger.error(f"❌ API generate_safety_rules error: {e}")
         return jsonify({"error": str(e)}), 500
 
 
-@api_waivers_bp.route("/production-waivers/<waiver_id>/send", methods=["POST"])
+@api_waivers_bp.route("/safety-rules/<waiver_id>/send", methods=["POST"])
 @require_api_auth("administrator", "manager")
-def api_send_production_waiver(waiver_id):
+def api_send_safety_rules(waiver_id):
     try:
-        send_production_waiver(waiver_id)
-        return jsonify({"message": "Décharge production envoyée"})
+        success, msg = send_safety_rules_waiver(waiver_id)
+        if success:
+            return jsonify({"message": msg})
+        return jsonify({"error": msg}), 400
     except Exception as e:
-        current_app.logger.error(f"❌ API send_production_waiver error: {e}")
+        current_app.logger.error(f"❌ API send_safety_rules error: {e}")
         return jsonify({"error": str(e)}), 500
 
 
-@api_waivers_bp.route("/production-waivers/<waiver_id>", methods=["DELETE"])
-@api_waivers_bp.route("/production-waivers/<waiver_id>/delete", methods=["POST"])
+@api_waivers_bp.route("/safety-rules/<waiver_id>", methods=["DELETE"])
+@api_waivers_bp.route("/safety-rules/<waiver_id>/delete", methods=["POST"])
 @require_api_auth("administrator", "manager")
-def api_delete_production_waiver(waiver_id):
+def api_delete_safety_rules(waiver_id):
     try:
-        success, msg = delete_production_waiver(waiver_id)
+        success, msg = delete_safety_rules_waiver(waiver_id)
         if success:
             return jsonify({"message": msg})
         return jsonify({"error": msg}), 404
     except Exception as e:
-        current_app.logger.error(f"❌ API delete_production_waiver error: {e}")
+        current_app.logger.error(f"❌ API delete_safety_rules error: {e}")
         return jsonify({"error": str(e)}), 500
 
 
-@api_waivers_bp.route("/production-waivers/<waiver_id>/reset", methods=["POST"])
+@api_waivers_bp.route("/safety-rules/<waiver_id>/reset", methods=["POST"])
 @require_api_auth("administrator", "manager")
-def api_reset_production_waiver(waiver_id):
+def api_reset_safety_rules(waiver_id):
     try:
-        reset_production_waiver(waiver_id)
-        return jsonify({"message": "Décharge production réinitialisée"})
+        success, msg = reset_safety_rules_waiver(waiver_id)
+        if success:
+            return jsonify({"message": msg})
+        return jsonify({"error": msg}), 400
     except Exception as e:
-        current_app.logger.error(f"❌ API reset_production_waiver error: {e}")
-        return jsonify({"error": str(e)}), 500
-
-
-@api_waivers_bp.route("/pilot-waivers/<int:record_id>/finalize", methods=["POST"])
-@require_api_auth("administrator", "manager")
-def api_finalize_pilot_waiver(record_id):
-    """
-    Finalize a pilot waiver with provided data and signature.
-    """
-    from models import PilotWaiver, db
-    from services.common.signatures import finalize_signed_document
-    try:
-        data = request.get_json(silent=True) or {}
-        signature_data = data.get("signature_data")
-        if not signature_data:
-            return jsonify({"error": "signature_data requis"}), 400
-
-        record = db.session.get(PilotWaiver, record_id)
-        if not record:
-            return jsonify({"error": "Waiver non trouvé"}), 404
-
-        # Map optional data fields from JSON
-        record.pilot_first_name = data.get("first_name", record.pilot_first_name)
-        record.pilot_last_name = data.get("last_name", record.pilot_last_name)
-        record.pilot_dob = data.get("dob", record.pilot_dob)
-        record.pilot_license_number = data.get("license_number", record.pilot_license_number)
-        record.pilot_address = data.get("address", record.pilot_address)
-        record.pilot_insurance_company = data.get("insurance_company", record.pilot_insurance_company)
-        record.pilot_insurance_policy = data.get("insurance_policy", record.pilot_insurance_policy)
-
-        signer_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-        if signer_ip and ',' in signer_ip:
-            signer_ip = signer_ip.split(',')[0].strip()
-        signer_ip = signer_ip[:45] if signer_ip else None
-        record.signer_ip = signer_ip
-
-        db.session.commit()
-
-        result = finalize_signed_document("pilot", record_id, signature_data, signer_ip)
-        
-        return jsonify({
-            "message": "Décharge pilote finalisée",
-            "document_id": result.get("document_id"),
-            "pdf_url": result.get("pdf_url")
-        })
-    except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(f"❌ API finalize_pilot_waiver error: {e}")
-        return jsonify({"error": str(e)}), 500
-
-
-@api_waivers_bp.route("/production-waivers/<int:record_id>/finalize", methods=["POST"])
-@require_api_auth("administrator", "manager")
-def api_finalize_production_waiver(record_id):
-    """
-    Finalize a production waiver with provided data and signature.
-    """
-    from models import ProductionWaiver, db
-    from services.common.signatures import finalize_signed_document
-    try:
-        data = request.get_json(silent=True) or {}
-        signature_data = data.get("signature_data")
-        if not signature_data:
-            return jsonify({"error": "signature_data requis"}), 400
-
-        record = db.session.get(ProductionWaiver, record_id)
-        if not record:
-            return jsonify({"error": "Waiver non trouvé"}), 404
-
-        # Map optional data fields from JSON
-        record.production_name = data.get("production_name", record.production_name)
-        record.production_representative = data.get("representative", record.production_representative)
-        record.production_address = data.get("address", record.production_address)
-        record.production_siret = data.get("siret", record.production_siret)
-        record.production_vat = data.get("vat_number", record.production_vat)
-        record.production_insurance_company = data.get("insurance_company", record.production_insurance_company)
-        record.production_insurance_policy = data.get("insurance_policy", record.production_insurance_policy)
-
-        signer_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-        if signer_ip and ',' in signer_ip:
-            signer_ip = signer_ip.split(',')[0].strip()
-        signer_ip = signer_ip[:45] if signer_ip else None
-        record.signer_ip = signer_ip
-
-        db.session.commit()
-
-        result = finalize_signed_document("production", record_id, signature_data, signer_ip)
-        
-        return jsonify({
-            "message": "Décharge production finalisée",
-            "document_id": result.get("document_id"),
-            "pdf_url": result.get("pdf_url")
-        })
-    except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(f"❌ API finalize_production_waiver error: {e}")
+        current_app.logger.error(f"❌ API reset_safety_rules error: {e}")
         return jsonify({"error": str(e)}), 500

@@ -6,22 +6,21 @@ import json
 from services.common.kdrive.bundles import extract_bundle_file_specs, resolve_entity_info
 
 
-class DummyPilotWaiver:
+class DummyCglWaiver:
     def __init__(self):
-        self.waiver_id = "BVDW-TEST12345678"
-        self.project_id = 42
-        self.signed_pdf_path = "2026/09/PROD/PROJ/4_SÉCURITÉ/2_DÉCHARGE_PILOTE/BVDW-TEST12345678/doc.pdf"
-        self.pilot_license_path = "uploads/license.jpg"
-        self.pilot_insurance_path = "uploads/insurance.pdf"
-        self.pilot_identity_path = "uploads/id.png"
-
-
-class DummyProductionWaiver:
-    def __init__(self):
-        self.waiver_id = "BVPW-PROD87654321"
+        self.waiver_id = "BVRA-PROD87654321"
         self.project_id = 10
-        self.signed_pdf_path = "2026/09/PROD/PROJ/4_SÉCURITÉ/3_DÉCHARGE_PRODUCTION/BVPW-PROD87654321/doc.pdf"
+        self.waiver_type = "cgl"
+        self.signed_pdf_path = "2026/09/PROD/PROJ/4_SÉCURITÉ/3_CONTRATS_CGL/BVRA-PROD87654321/doc.pdf"
         self.production_insurance_path = "uploads/prod_insurance.pdf"
+
+
+class DummySafetyRulesWaiver:
+    def __init__(self):
+        self.waiver_id = "BVSR-TEST12345678"
+        self.project_id = 42
+        self.waiver_type = "safety_rules"
+        self.signed_pdf_path = "2026/09/PROD/PROJ/4_SÉCURITÉ/2_RÈGLES_SÉCURITÉ/BVSR-TEST12345678/doc.pdf"
 
 
 class DummyInspection:
@@ -43,11 +42,11 @@ class DummyIncident:
 
 
 def test_resolve_entity_info():
-    pw = DummyPilotWaiver()
-    assert resolve_entity_info(pw, "pilot") == ("pilot_waiver", "BVDW-TEST12345678", 42)
+    sr = DummySafetyRulesWaiver()
+    assert resolve_entity_info(sr, "safety_rules") == ("safety_rules", "BVSR-TEST12345678", 42)
 
-    prw = DummyProductionWaiver()
-    assert resolve_entity_info(prw, "production") == ("production_waiver", "BVPW-PROD87654321", 10)
+    cgl = DummyCglWaiver()
+    assert resolve_entity_info(cgl, "cgl") == ("cgl", "BVRA-PROD87654321", 10)
 
     co = DummyInspection("BVCO")
     assert resolve_entity_info(co, "checkout") == ("checkout", "BVCO-INSP99999999", 15)
@@ -59,23 +58,20 @@ def test_resolve_entity_info():
     assert resolve_entity_info(inc, "incident") == ("incident", "BVIC-INCID1111111", 20)
 
 
-def test_extract_pilot_waiver_file_specs():
-    pw = DummyPilotWaiver()
-    specs = extract_bundle_file_specs(pw, "pilot_waiver")
-    assert len(specs) == 4
+def test_extract_safety_rules_waiver_file_specs():
+    sr = DummySafetyRulesWaiver()
+    specs = extract_bundle_file_specs(sr, "safety_rules")
+    assert len(specs) == 1
     roles = {s["role"]: s["path"] for s in specs}
-    assert roles["pdf"] == pw.signed_pdf_path
-    assert roles["license"] == "uploads/license.jpg"
-    assert roles["insurance"] == "uploads/insurance.pdf"
-    assert roles["identity"] == "uploads/id.png"
+    assert roles["pdf"] == sr.signed_pdf_path
 
 
-def test_extract_production_waiver_file_specs():
-    prw = DummyProductionWaiver()
-    specs = extract_bundle_file_specs(prw, "production_waiver")
+def test_extract_cgl_waiver_file_specs():
+    cgl = DummyCglWaiver()
+    specs = extract_bundle_file_specs(cgl, "cgl")
     assert len(specs) == 2
     roles = {s["role"]: s["path"] for s in specs}
-    assert roles["pdf"] == prw.signed_pdf_path
+    assert roles["pdf"] == cgl.signed_pdf_path
     assert roles["insurance"] == "uploads/prod_insurance.pdf"
 
 

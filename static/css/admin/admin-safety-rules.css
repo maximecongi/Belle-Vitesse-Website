@@ -1,0 +1,303 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   BELLE VITESSE — BVSR : RÈGLES DE SÉCURITÉ FLOTTE (CATALOGUE & ÉDITEUR DYNAMIQUE)
+   Design System Belle Vitesse : Entité Sécurité / Décharges (--entity-waiver: #8B5CF6)
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Cartes du catalogue ── */
+.bvsr-catalog-card {
+    border-left: 4px solid var(--entity-waiver, #8B5CF6) !important;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.bvsr-catalog-card:hover {
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.bvsr-vehicle-avatar {
+    width: 68px;
+    height: 50px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--white-3, #E2E8F0);
+    flex-shrink: 0;
+    border: 1px solid var(--border-color, #E2E8F0);
+}
+
+.bvsr-vehicle-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.bvsr-modal-avatar {
+    width: 56px;
+    height: 42px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--white-3, #E2E8F0);
+    flex-shrink: 0;
+    border: 1px solid var(--border-color, #E2E8F0);
+}
+
+.bvsr-modal-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.bvsr-preview-box {
+    background-color: var(--white-2, #F8F9FA);
+    border: 1px solid var(--border-color, #E2E8F0);
+    border-radius: 6px;
+    padding: 0.85rem 1rem;
+    height: 100%;
+}
+
+.bvsr-preview-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0.5rem 0 0 0;
+}
+
+.bvsr-preview-item {
+    position: relative;
+    padding-left: 1.25rem;
+    margin-bottom: 0.4rem;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: var(--grey-1, #374151);
+}
+
+.bvsr-preview-item:last-child {
+    margin-bottom: 0;
+}
+
+.bvsr-preview-item::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 7px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--entity-waiver, #8B5CF6);
+}
+
+.bvsr-preview-more {
+    font-size: 0.75rem;
+    color: var(--grey-2, #6B7280);
+    font-style: italic;
+    margin-top: 0.4rem;
+    display: block;
+}
+
+/* ── Modale d'édition des règles de sécurité ── */
+.bvsr-modal-container {
+    max-width: 860px !important;
+    max-height: 88vh !important;
+    height: auto !important;
+    background: var(--white-1, #FFFFFF) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+.bvsr-modal-header {
+    padding: 1.25rem 1.75rem;
+    border-bottom: 1px solid var(--border-color, #E2E8F0);
+    background: var(--white-1, #FFFFFF);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+.bvsr-modal-body {
+    padding: 1.5rem 1.75rem;
+    overflow-y: auto;
+    flex: 1 1 auto;
+    background: var(--white-1, #FFFFFF);
+}
+
+.bvsr-modal-footer {
+    padding: 1rem 1.75rem;
+    border-top: 1px solid var(--border-color, #E2E8F0);
+    background: var(--white-2, #F8F9FA);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+/* ── Éditeur de liste à puces dynamique ── */
+.bvsr-rules-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.bvsr-rule-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--white-2, #F8F9FA);
+    border: 1px solid var(--border-color, #E2E8F0);
+    border-radius: 6px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.bvsr-rule-item:focus-within {
+    border-color: var(--entity-waiver, #8B5CF6);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12);
+    background: #FFFFFF;
+}
+
+.bvsr-bullet-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 38px;
+    flex-shrink: 0;
+}
+
+.bvsr-bullet-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background-color: var(--entity-waiver, #8B5CF6);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.bvsr-rule-item:focus-within .bvsr-bullet-dot {
+    transform: scale(1.2);
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.3);
+}
+
+.bvsr-rule-fields {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 0;
+}
+
+.bvsr-rule-input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.bvsr-lang-pill {
+    position: absolute;
+    left: 8px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    pointer-events: none;
+    background: #EDE9FE;
+    color: #5B21B6;
+}
+
+.bvsr-lang-pill--en {
+    background: #E0E7FF;
+    color: #3730A3;
+}
+
+.bvsr-rules-list.is-en-hidden .bvsr-group-en {
+    display: none !important;
+}
+
+.bvsr-rule-input {
+    width: 100%;
+    padding-left: 42px !important;
+    padding-right: 12px !important;
+    font-size: 0.875rem !important;
+    line-height: 1.4 !important;
+    height: 38px !important;
+    border-radius: 4px !important;
+    border: 1px solid var(--border-color, #E2E8F0) !important;
+    background: #FFFFFF !important;
+    color: var(--grey-1, #111827) !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.bvsr-rule-input:focus {
+    border-color: var(--entity-waiver, #8B5CF6) !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.bvsr-rule-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    height: 38px;
+    flex-shrink: 0;
+}
+
+.bvsr-action-btn {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--grey-2, #6B7280);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.bvsr-action-btn:hover {
+    background: var(--white-3, #E5E7EB);
+    color: var(--grey-1, #111827);
+}
+
+.bvsr-action-btn--delete:hover {
+    background: #FEE2E2;
+    color: #DC2626;
+    border-color: #FECACA;
+}
+
+.bvsr-add-btn-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed var(--border-color, #E2E8F0);
+}
+
+.bvsr-empty-state {
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    border: 2px dashed var(--border-color, #E2E8F0);
+    border-radius: 8px;
+    color: var(--grey-2, #6B7280);
+    background: var(--white-2, #F8F9FA);
+}
+
+.bvsr-kbd-hint {
+    display: inline-block;
+    padding: 2px 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--grey-2, #4B5563);
+    background-color: var(--white-1, #FFFFFF);
+    border: 1px solid var(--border-color, #D1D5DB);
+    border-radius: 4px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+}

@@ -3,29 +3,24 @@
 {% from "admin/macros.html" import status_badge, filter_header, reminder_badge, list_header_actions, table_empty_row,
 doc_download_badge %}
 
-{% block title %}Décharges Productions{% endblock %}
-{% block page_title %}Décharges Productions{% endblock %}
-{% block extra_css %}
-<link rel="stylesheet"
-    href="{{ url_for('static', filename='css/admin/admin-pilot-waivers.css') }}?v={{ asset_version('css/admin/admin-pilot-waivers.css') }}">
-{% endblock %}
+{% block title %}Contrats de Location (BVRA){% endblock %}
+{% block page_title %}Contrats de Location (BVRA / CGL){% endblock %}
 
 {% block header_actions %}
-{{ list_header_actions(placeholder="Rechercher une décharge...",
-new_url=url_for('admin_waivers.admin_production_waiver_new'), new_label="+ Nouvelle décharge") }}
+{{ list_header_actions(placeholder="Rechercher un contrat...",
+new_url=url_for('admin_waivers.admin_cgl_new'), new_label="+ Nouveau Contrat (BVRA)") }}
 {% endblock %}
-
 
 {% block content %}
 <div class="admin-card">
-    {{ filter_header("Décharges filtrées", count=waivers|length) }}
+    {{ filter_header("Contrats BVRA filtrés", count=cgl_items|length) }}
     <div class="u-overflow-x-auto">
         <table class="admin-table">
             <thead>
                 <tr>
-                    <th>N° Décharge</th>
+                    <th>N° Contrat</th>
                     <th>Projet</th>
-                    <th>Production</th>
+                    <th>Locataire / Production</th>
                     <th>Contact</th>
                     <th>Dates</th>
                     <th>Statut</th>
@@ -33,10 +28,14 @@ new_url=url_for('admin_waivers.admin_production_waiver_new'), new_label="+ Nouve
                 </tr>
             </thead>
             <tbody>
-                {% for w in waivers %}
+                {% for w in cgl_items %}
                 <tr class="searchable-row">
                     <td class="u-text-semibold u-nowrap">{{ w.id or '—' }}</td>
-                    <td>{{ w.project_name }}</td>
+                    <td>
+                        <a href="{{ url_for('admin_projects.admin_project_detail', record_id=w.project_id) }}" class="u-text-link">
+                            {{ w.project_name }}
+                        </a>
+                    </td>
                     <td>{{ w.production_name }}</td>
                     <td>{{ w.production_contact_name }}</td>
                     <td>{{ w.shooting_dates }}</td>
@@ -50,33 +49,34 @@ new_url=url_for('admin_waivers.admin_production_waiver_new'), new_label="+ Nouve
                         <div class="u-flex u-align-center u-justify-center u-gap-1">
                             {% if w.raw_status in ['to_generate', 'to_send'] %}
                             <form
-                                action="{{ url_for('admin_waivers.admin_production_waiver_send', waiver_id=w.id, q=request.args.get('q')) }}"
+                                action="{{ url_for('admin_waivers.admin_cgl_send', waiver_id=w.id, q=request.args.get('q')) }}"
                                 method="POST" class="u-m-0">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="admin-btn admin-btn-primary">Envoyer</button>
                             </form>
                             <button type="button" class="admin-btn admin-btn-secondary js-copy-waiver-link"
-                                data-copy-url="{{ url_for('admin_waivers.admin_production_waiver_copy_link', waiver_id=w.id) }}"
+                                data-copy-url="{{ url_for('admin_waivers.admin_cgl_copy_link', waiver_id=w.id) }}"
                                 title="Copier le lien de signature dans le presse-papier">Lien</button>
                             {% elif w.raw_status == 'to_sign' %}
                             <form
-                                action="{{ url_for('admin_waivers.admin_production_waiver_send', waiver_id=w.id, q=request.args.get('q')) }}"
+                                action="{{ url_for('admin_waivers.admin_cgl_send', waiver_id=w.id, q=request.args.get('q')) }}"
                                 method="POST" class="u-m-0">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="admin-btn admin-btn-secondary">Relancer</button>
                             </form>
                             <button type="button" class="admin-btn admin-btn-secondary js-copy-waiver-link"
-                                data-copy-url="{{ url_for('admin_waivers.admin_production_waiver_copy_link', waiver_id=w.id) }}"
+                                data-copy-url="{{ url_for('admin_waivers.admin_cgl_copy_link', waiver_id=w.id) }}"
                                 title="Copier le lien de signature dans le presse-papier">Lien</button>
                             {% elif w.raw_status == 'signed' %}
-                            <a href="{{ w.signed_pdf_path }}" class="admin-btn admin-btn-secondary" target="_blank"><i
-                                    data-lucide="file-text"></i> PDF</a>
+                            <a href="{{ w.signed_pdf_path }}" class="admin-btn admin-btn-secondary" target="_blank" rel="noopener noreferrer">
+                                <i data-lucide="file-text"></i> PDF
+                            </a>
                             {% endif %}
 
                             <form
-                                action="{{ url_for('admin_waivers.admin_production_waiver_delete', waiver_id=w.id, q=request.args.get('q')) }}"
+                                action="{{ url_for('admin_waivers.admin_cgl_delete', waiver_id=w.id, q=request.args.get('q')) }}"
                                 method="POST" class="u-d-inline"
-                                onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette décharge ? Cette action est irréversible.');">
+                                onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ces CGL ? Cette action est irréversible.');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="admin-btn admin-btn-danger">Supprimer</button>
                             </form>
@@ -84,44 +84,10 @@ new_url=url_for('admin_waivers.admin_production_waiver_new'), new_label="+ Nouve
                     </td>
                 </tr>
                 {% else %}
-                {{ table_empty_row(7, "Aucune décharge trouvée.") }}
+                {{ table_empty_row(7, "Aucun contrat CGL trouvé.") }}
                 {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const searchInput = document.getElementById('searchInput');
-        const searchableRows = document.querySelectorAll('.searchable-row');
-
-        if (searchInput) {
-            // Initialize search from URL param if present
-            const urlParams = new URLSearchParams(window.location.search);
-            const q = urlParams.get('q');
-            if (q) {
-                searchInput.value = q;
-                const searchTerm = q.toLowerCase().trim();
-                searchableRows.forEach(row => {
-                    const rowText = row.textContent.toLowerCase();
-                    row.style.display = rowText.includes(searchTerm) ? '' : 'none';
-                });
-            }
-
-            searchInput.addEventListener('input', function (e) {
-                const searchTerm = e.target.value.toLowerCase().trim();
-
-                searchableRows.forEach(row => {
-                    const rowText = row.textContent.toLowerCase();
-                    if (rowText.includes(searchTerm)) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-            });
-        }
-    });
-</script>
 {% endblock %}

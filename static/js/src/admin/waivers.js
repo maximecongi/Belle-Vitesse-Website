@@ -45,9 +45,9 @@
             var csrfInput = document.querySelector('input[name="csrf_token"]');
             var csrfToken = (csrfMeta && csrfMeta.getAttribute('content')) || (csrfInput && csrfInput.value) || '';
 
-            var originalText = btn.textContent;
+            var originalHtml = btn.innerHTML;
             btn.disabled = true;
-            btn.textContent = '...';
+            btn.innerHTML = '<span class="u-text-2xs">...</span>';
 
             fetch(copyUrl, {
                 method: 'POST',
@@ -63,7 +63,7 @@
                 })
                 .then(function (result) {
                     btn.disabled = false;
-                    btn.textContent = originalText;
+                    btn.innerHTML = originalHtml;
 
                     if (!result.ok || !result.data.success || !result.data.url) {
                         var errMsg = (result.data && result.data.error) || 'Impossible de récupérer le lien de signature.';
@@ -81,9 +81,15 @@
                             if (typeof window.showFlash === 'function') {
                                 window.showFlash('Le lien a été copié dans le presse-papier.', 'info');
                             }
-                            btn.textContent = 'Copié !';
+                            btn.innerHTML = '<i data-lucide="check"></i> Copié !';
+                            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                                window.lucide.createIcons();
+                            }
                             setTimeout(function () {
-                                btn.textContent = originalText;
+                                btn.innerHTML = originalHtml;
+                                if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                                    window.lucide.createIcons();
+                                }
                             }, 2000);
                         })
                         .catch(function () {
@@ -92,7 +98,10 @@
                 })
                 .catch(function (err) {
                     btn.disabled = false;
-                    btn.textContent = originalText;
+                    btn.innerHTML = originalHtml;
+                    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                        window.lucide.createIcons();
+                    }
                     console.error('Erreur lors de la génération du lien:', err);
                     if (typeof window.showFlash === 'function') {
                         window.showFlash('Erreur réseau lors de la récupération du lien.', 'danger');

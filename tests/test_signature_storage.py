@@ -24,7 +24,7 @@ from models.db import db
 from models.incident import Incident
 from models.project import Project, Production
 from models.user import User
-from models.waiver import PilotWaiver, ProductionWaiver, PilotWaiverSignedDocument
+from models.waiver import SafetyRulesWaiver, WaiverSignedDocument
 from services.admin.incidents import create_incident, sign_incident_bv, sign_incident_prod
 from services.common.signatures import finalize_signed_document
 from utils.signature_storage import (
@@ -103,10 +103,10 @@ class TestSignatureStorage(unittest.TestCase):
         db.session.add(project)
         db.session.flush()
 
-        waiver = PilotWaiver(
-            waiver_id="BVDW-TESTUNIT99",
-            pilot_first_name="Jean",
-            pilot_last_name="Testeur",
+        waiver = SafetyRulesWaiver(
+            waiver_id="BVSR-TESTUNIT99",
+            signer_first_name="Jean",
+            signer_last_name="Testeur",
             status="to_sign",
             project_id=project.id,
         )
@@ -115,7 +115,7 @@ class TestSignatureStorage(unittest.TestCase):
 
         # Finalisation de la signature
         res = finalize_signed_document(
-            mode="pilot",
+            mode="safety_rules",
             record_id=waiver.id,
             signature_data=SAMPLE_BASE64_PNG,
             signed_ip="127.0.0.1",
@@ -123,7 +123,7 @@ class TestSignatureStorage(unittest.TestCase):
 
         db.session.refresh(waiver)
         # La colonne en BDD doit être un chemin relatif
-        self.assertTrue(waiver.signature_data.startswith("signatures/waivers/BVDW-TESTUNIT99"))
+        self.assertTrue(waiver.signature_data.startswith("signatures/waivers/BVSR-TESTUNIT99"))
         self.assertFalse(waiver.signature_data.startswith("data:image/"))
 
         # La property signature_data_uri doit charger le Base64
@@ -202,10 +202,10 @@ class TestSignatureStorage(unittest.TestCase):
         db.session.add(project)
         db.session.flush()
 
-        pw = PilotWaiver(
-            waiver_id="BVDW-MIGRATE-01",
-            pilot_first_name="Paul",
-            pilot_last_name="Volant",
+        pw = SafetyRulesWaiver(
+            waiver_id="BVSR-MIGRATE-01",
+            signer_first_name="Paul",
+            signer_last_name="Volant",
             project_id=project.id,
             signature_data=SAMPLE_BASE64_PNG,
         )
@@ -220,7 +220,7 @@ class TestSignatureStorage(unittest.TestCase):
         # 2. Exécution réelle
         migrate_signatures(dry_run=False, app=self.app)
         db.session.refresh(pw)
-        self.assertTrue(pw.signature_data.startswith("signatures/waivers/BVDW-MIGRATE-01"))
+        self.assertTrue(pw.signature_data.startswith("signatures/waivers/BVSR-MIGRATE-01"))
 
         # Nettoyage
         delete_signature_file(pw.signature_data)

@@ -28,7 +28,7 @@ sys.modules["weasyprint"] = mock_weasyprint
 from app import create_app
 from models.db import db
 from models.project import Project, Production
-from models.waiver import PilotWaiver, PilotWaiverSignedDocument
+from models.waiver import SafetyRulesWaiver, WaiverSignedDocument
 from services.common.pdf_tasks import dispatch_pdf_generation, task_render_pdf_to_file
 from services.common.redis_queue import clear_redis_cache, get_rq_queue
 
@@ -122,44 +122,44 @@ class PDFTasksRQTestCase(unittest.TestCase):
         db.session.add(project)
         db.session.commit()
 
-        waiver = PilotWaiver(
-            waiver_id="BVDW-TESTPDF1",
+        waiver = SafetyRulesWaiver(
+            waiver_id="BVSR-TESTPDF1",
             project_id=project.id,
-            pilot_first_name="Jean",
-            pilot_last_name="Dupont",
+            signer_first_name="Jean",
+            signer_last_name="Dupont",
             status="signed",
         )
         db.session.add(waiver)
         db.session.commit()
 
-        signed_doc = PilotWaiverSignedDocument(
-            waiver_id="BVDW-TESTPDF1",
+        signed_doc = WaiverSignedDocument(
+            waiver_id="BVSR-TESTPDF1",
             hash="hmac-hash-initial",
             pdf_file_hash="",
-            data_snapshot={"pilot": "Jean Dupont"},
+            data_snapshot={"signer": "Jean Dupont"},
             signature="data:image/png;base64,mock",
-            pdf_url="/waivers/document/BVDW-TESTPDF1.pdf",
+            pdf_url="/waivers/document/BVSR-TESTPDF1.pdf",
         )
         db.session.add(signed_doc)
         db.session.commit()
 
         with tempfile.TemporaryDirectory() as tmp_dir:
-            output_file = os.path.join(tmp_dir, "BVDW-TESTPDF1.pdf")
+            output_file = os.path.join(tmp_dir, "BVSR-TESTPDF1.pdf")
 
             success = task_render_pdf_to_file(
-                html_content="<h1>Décharge signée</h1>",
+                html_content="<h1>Règles de sécurité signées</h1>",
                 output_file_path=output_file,
-                filename="BVDW-TESTPDF1.pdf",
+                filename="BVSR-TESTPDF1.pdf",
                 compress=False,
                 entity_type="waiver",
-                entity_id="BVDW-TESTPDF1",
+                entity_id="BVSR-TESTPDF1",
             )
 
             self.assertTrue(success)
             self.assertTrue(os.path.exists(output_file))
 
-            updated_waiver = PilotWaiver.query.filter_by(waiver_id="BVDW-TESTPDF1").first()
-            updated_doc = PilotWaiverSignedDocument.query.filter_by(waiver_id="BVDW-TESTPDF1").first()
+            updated_waiver = SafetyRulesWaiver.query.filter_by(waiver_id="BVSR-TESTPDF1").first()
+            updated_doc = WaiverSignedDocument.query.filter_by(waiver_id="BVSR-TESTPDF1").first()
 
             self.assertIsNotNone(updated_waiver.signed_pdf_path)
             self.assertTrue(len(updated_doc.pdf_file_hash) > 0)

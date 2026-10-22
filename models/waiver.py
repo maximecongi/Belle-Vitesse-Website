@@ -34,9 +34,10 @@ class SignedDocumentMixin:
 
 def _generate_default_waiver_id(context):
     params = context.get_current_parameters()
-    w_type = params.get("waiver_type", "pilot")
-    prefix = "BVPW" if w_type == "production" else "BVDW"
+    w_type = params.get("waiver_type", "safety_rules")
+    prefix = "BVRA" if w_type == "cgl" else "BVSR"
     return generate_inspection_number(prefix)
+
 
 
 def _extract_vehicle_thumbnail(fields):
@@ -100,18 +101,14 @@ def _extract_vehicle_thumbnail(fields):
 
 class Waiver(db.Model):
     """
-    Modèle unifié représentant une décharge de responsabilité (pilote, production, etc.).
-    Remplace les anciennes tables jumelles pilot_waivers et production_waivers.
-    Supporte le polymorphisme Single Table Inheritance pour PilotWaiver et ProductionWaiver.
+    Modèle unifié représentant un document juridique / décharge (CGL ou Règles de Sécurité BVSR).
+    Supporte le polymorphisme Single Table Inheritance pour CglWaiver et SafetyRulesWaiver.
     """
     __tablename__ = "waivers"
-    __table_args__ = (
-        db.UniqueConstraint("project_id", "waiver_type", name="uq_project_waiver_type"),
-    )
 
     id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
-    waiver_type = db.Column(db.String(20), nullable=False, default="pilot", index=True)
+    waiver_type = db.Column(db.String(20), nullable=False, default="safety_rules", index=True)
     waiver_id = db.Column(db.String(50), unique=True, default=_generate_default_waiver_id, nullable=False, index=True)
 
     __mapper_args__ = {
@@ -127,19 +124,22 @@ class Waiver(db.Model):
     sent_at = db.Column(db.DateTime, nullable=True)
     signed_at = db.Column(db.DateTime, nullable=True)
 
-    # Données signataire Pilote
-    pilot_first_name = db.Column(db.String(100), nullable=True)
-    pilot_last_name = db.Column(db.String(100), nullable=True)
-    pilot_dob = db.Column(db.Date, nullable=True)
-    pilot_license_number = db.Column(db.String(100), nullable=True)
-    pilot_address = db.Column(db.Text, nullable=True)
-    pilot_insurance_company = db.Column(db.String(255), nullable=True)
-    pilot_insurance_policy = db.Column(db.String(255), nullable=True)
-    pilot_license_path = db.Column(db.String(500), nullable=True)
-    pilot_insurance_path = db.Column(db.String(500), nullable=True)
-    pilot_identity_path = db.Column(db.String(500), nullable=True)
+    # Données signataire universel (BVSR)
+    signer_role = db.Column(db.String(50), nullable=True)  # 'pilot', 'first_ad', 'production', 'camera_operator', 'stunt', 'other'
+    signer_role_custom = db.Column(db.String(100), nullable=True)
+    signer_first_name = db.Column(db.String(100), nullable=True)
+    signer_last_name = db.Column(db.String(100), nullable=True)
+    signer_email = db.Column(db.String(120), nullable=True)
+    signer_phone = db.Column(db.String(50), nullable=True)
+    signer_company = db.Column(db.String(255), nullable=True)
+    safety_technicians = db.Column(db.Text, nullable=True)  # Noms des référents BV pour ce tournage (personnalisables)
+    helmets_inventory = db.Column(db.JSON, default=dict, nullable=True)
+    custom_rules_snapshot = db.Column(db.JSON, default=dict, nullable=True)
+    bv_signature_data = db.Column(db.String(255), nullable=True)
+    bv_signed_at = db.Column(db.DateTime, nullable=True)
+    bv_signer_name = db.Column(db.String(100), nullable=True)
 
-    # Données signataire Production
+    # Données signataire Production (BVRA / CGL)
     production_name = db.Column(db.String(255), nullable=True)
     production_representative = db.Column(db.String(255), nullable=True)
     production_address = db.Column(db.Text, nullable=True)
@@ -158,10 +158,39 @@ class Waiver(db.Model):
     # Snapshot JSON flexible pour toute extension future
     sign_data = db.Column(db.JSON, default=dict, nullable=True)
 
-    # Signature (Chemin relatif PNG ex: signatures/waivers/BVDW-xxx.png)
+    # Signature (Chemin relatif PNG ex: signatures/waivers/BVSR-xxx.png)
     signature_data = db.Column(db.String(255), nullable=True)
     # Chemin relatif du PDF signé
     signed_pdf_path = db.Column(db.String(500), nullable=True)
+
+
+    @property
+    def signer_name(self):
+        """Retourne le nom complet du signataire individuel ou du représentant."""
+        if self.signer_first_name or self.signer_last_name:
+            return f"{self.signer_first_name or ''} {self.signer_last_name or ''}".strip()
+        if self.production_representative:
+            return self.production_representative.strip()
+        return "—"
+
+    @property
+    def signer_role_label(self):
+        """Libellé en français du rôle du signataire."""
+        roles = {
+            "pilot": "Pilote",
+            "first_ad": "1er Assistant Réalisateur (1st AD)",
+            "production": "Production / Régie",
+            "camera_operator": "Opérateur Caméra",
+            "stunt": "Coordonnateur Cascades / Stunt",
+            "other": self.signer_role_custom or "Intervenant Plateau",
+        }
+        return roles.get(self.signer_role, self.signer_role_custom or self.signer_role or "Intervenant")
+
+    @property
+    def bv_signature_data_uri(self):
+        """Retourne la Data URI du contreseing Belle Vitesse pour injection directe dans les PDF."""
+        from utils.signature_storage import load_signature_data_uri
+        return load_signature_data_uri(self.bv_signature_data)
 
     @property
     def signature_data_uri(self):
@@ -203,6 +232,11 @@ class Waiver(db.Model):
     deleted_at = db.Column(db.DateTime, nullable=True)
 
     @property
+    def created_at(self):
+        """Alias pour generated_at pour cohérence avec les autres modèles et templates."""
+        return self.generated_at
+
+    @property
     def type(self):
         return self.waiver_type
 
@@ -213,14 +247,12 @@ class Waiver(db.Model):
     def __init__(self, **kwargs):
         if "waiver_type" not in kwargs:
             poly_id = getattr(self, "__mapper_args__", {}).get("polymorphic_identity")
-            if poly_id and poly_id != "waiver":
-                kwargs["waiver_type"] = poly_id
-            else:
-                kwargs["waiver_type"] = kwargs.get("type", "pilot")
+            kwargs["waiver_type"] = poly_id if poly_id != "waiver" else kwargs.get("type", "safety_rules")
         if "waiver_id" not in kwargs:
-            prefix = "BVPW" if kwargs.get("waiver_type") == "production" else "BVDW"
+            prefix = "BVRA" if kwargs.get("waiver_type") == "cgl" else "BVSR"
             kwargs["waiver_id"] = generate_inspection_number(prefix)
         super().__init__(**kwargs)
+
 
     def to_dict(self):
         """Convertit l'objet en dictionnaire pour les réponses API."""
@@ -228,15 +260,15 @@ class Waiver(db.Model):
             "id": self.id,
             "waiver_id": self.waiver_id,
             "waiver_type": self.waiver_type,
-            "type": self.waiver_type,
             "project_id": self.project_id,
             "status": self.status,
+            "signer_name": self.signer_name,
+            "signer_role": self.signer_role,
+            "signer_email": self.signer_email,
+            "production_name": self.production_name,
             "generated_at": self.generated_at.isoformat() if self.generated_at else None,
             "sent_at": self.sent_at.isoformat() if self.sent_at else None,
             "signed_at": self.signed_at.isoformat() if self.signed_at else None,
-            "pilot_first_name": self.pilot_first_name,
-            "pilot_last_name": self.pilot_last_name,
-            "production_name": self.production_name,
             "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
         }
 
@@ -291,7 +323,6 @@ class Waiver(db.Model):
                     "slug": v_slug,
                 })
         elif self.vehicles:
-            # Fallback pour les décharges historiques sans veh_ids sur le projet : résolution par nom
             try:
                 from utils.database import get_vehicles
                 all_vehicles = get_vehicles() or []
@@ -336,24 +367,24 @@ class Waiver(db.Model):
         return f"<Waiver {self.waiver_id} ({self.waiver_type}) - {self.status}>"
 
 
-class PilotWaiver(Waiver):
-    """Sous-classe polymorphique pour les décharges pilotes."""
+class CglWaiver(Waiver):
+    """Conditions Générales de Location (CGL - BVRA)."""
     __mapper_args__ = {
-        "polymorphic_identity": "pilot",
+        "polymorphic_identity": "cgl",
     }
 
     def __repr__(self):
-        return f"<PilotWaiver {self.waiver_id} - {self.status}>"
+        return f"<CglWaiver {self.waiver_id} - {self.status}>"
 
 
-class ProductionWaiver(Waiver):
-    """Sous-classe polymorphique pour les décharges productions."""
+class SafetyRulesWaiver(Waiver):
+    """Règles de Sécurité Universelles (BVSR)."""
     __mapper_args__ = {
-        "polymorphic_identity": "production",
+        "polymorphic_identity": "safety_rules",
     }
 
     def __repr__(self):
-        return f"<ProductionWaiver {self.waiver_id} - {self.status}>"
+        return f"<SafetyRulesWaiver {self.waiver_id} - {self.signer_role} - {self.status}>"
 
 
 # ── Tokens et Documents Signés Unifiés ───────────────────────────
@@ -371,11 +402,6 @@ class WaiverSignedDocument(db.Model, SignedDocumentMixin):
     waiver_id = db.Column(db.String(50), primary_key=True)
 
 
-# Aliases pour rétrocompatibilité
-PilotWaiverToken = WaiverToken
-ProductionWaiverToken = WaiverToken
-PilotWaiverSignedDocument = WaiverSignedDocument
-ProductionWaiverSignedDocument = WaiverSignedDocument
 
 
 # ── Modèles des Inspections (Préservés) ──────────────────────────

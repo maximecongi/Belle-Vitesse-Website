@@ -1360,7 +1360,7 @@
 /* Documents & Décharges */
 .project-docs-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 0.75rem;
 }
 
@@ -1380,7 +1380,6 @@
 .project-doc-item {
     background: var(--admin-bg, #f8fafc);
     border: 1px solid #e2e8f0;
-    border-radius: 6px;
     gap: 0.8rem;
 }
 

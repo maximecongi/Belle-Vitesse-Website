@@ -124,13 +124,13 @@ class MaintenanceMixin:
         if objects:
             project = objects[0].project
         if not project:
-            if entity_type == "pilot_waiver":
-                from models import PilotWaiver
-                rec = PilotWaiver.query.filter_by(waiver_id=entity_id).first()
+            if entity_type in ("cgl", "cgl_waiver"):
+                from models import CglWaiver
+                rec = CglWaiver.query.filter_by(waiver_id=entity_id).first()
                 project = rec.project if rec else None
-            elif entity_type == "production_waiver":
-                from models import ProductionWaiver
-                rec = ProductionWaiver.query.filter_by(waiver_id=entity_id).first()
+            elif entity_type in ("safety_rules", "safety_rules_waiver"):
+                from models import SafetyRulesWaiver
+                rec = SafetyRulesWaiver.query.filter_by(waiver_id=entity_id).first()
                 project = rec.project if rec else None
             elif entity_type == "checkout":
                 from models import CheckoutVehicle

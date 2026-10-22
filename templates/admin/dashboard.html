@@ -99,22 +99,22 @@
                     </div>
                 </div>
 
-                <!-- Administratif -->
+                <!-- Contrats & Sécurité -->
                 <div class="agenda-section">
-                    <div class="agenda-section-title">Administratif</div>
+                    <div class="agenda-section-title">Contrats & Sécurité</div>
                     <div class="u-flex u-flex-column u-gap-1">
-                        {% if project.pilot_waiver.id %}
-                        {% if project.pilot_waiver.raw_status in ['to_send', 'to_generate'] %}
+                        {% if project.cgl and project.cgl.id %}
+                        {% if project.cgl.raw_status in ['to_send', 'to_generate'] %}
                         <form
-                            action="{{ url_for('admin_waivers.admin_pilot_waiver_send', waiver_id=project.pilot_waiver.waiver_num or project.pilot_waiver.id) }}"
+                            action="{{ url_for('admin_waivers.admin_cgl_send', waiver_id=project.cgl.waiver_num or project.cgl.id) }}"
                             method="POST" class="today-row-waiver-link u-m-0">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="return_to" value="{{ request.full_path }}">
                             <button type="submit" class="today-row-waiver-btn"
-                                title="Envoyer la décharge pilote par e-mail en 1 clic">
+                                title="Envoyer le contrat de location BVRA par e-mail en 1 clic">
                                 <span class="today-row-label u-text-medium">
                                     <i data-lucide="file-signature"></i>
-                                    <span>Décharge Pilote</span>
+                                    <span>Contrat Location (BVRA)</span>
                                 </span>
                                 <span class="badge-pill u-badge-agenda" data-val="to_send">
                                     <i data-lucide="send"></i> À envoyer</span>
@@ -122,62 +122,57 @@
                         </form>
                         {% else %}
                         <a class="today-row-waiver-link"
-                            href="{{ url_for('admin_waivers.admin_pilot_waivers_list') }}?q={{ project.pilot_waiver.waiver_num|urlencode }}">
+                            href="{{ url_for('admin_waivers.admin_cgl_list') }}?q={{ project.cgl.waiver_num|urlencode }}"
+                            title="Consulter le contrat BVRA">
                             <span class="today-row-label u-text-medium">
                                 <i data-lucide="file-signature"></i>
-                                <span>Décharge Pilote</span>
+                                <span>Contrat Location (BVRA)</span>
                             </span>
-                            {{ status_badge(project.pilot_waiver.status, project.pilot_waiver.raw_status,
+                            {{ status_badge(project.cgl.status, project.cgl.raw_status,
                             class_name='u-badge-agenda') }}
                         </a>
                         {% endif %}
                         {% else %}
-                        <a href="{{ url_for('admin_waivers.admin_pilot_waiver_quick_create', project_id=project.id) }}"
-                            class="today-row-waiver-link" title="Créer la décharge en 1 clic">
+                        <a href="{{ url_for('admin_waivers.admin_cgl_quick_create', project_id=project.id) }}"
+                            class="today-row-waiver-link" title="Créer le contrat BVRA en 1 clic">
                             <span class="today-row-label">
                                 <i data-lucide="file-signature"></i>
-                                <span>Décharge Pilote</span>
+                                <span>Contrat Location (BVRA)</span>
                             </span>
-                            {{ status_badge('Non générée', 'to_generate', class_name='u-badge-agenda') }}
+                            {{ status_badge('Non généré', 'to_generate', class_name='u-badge-agenda') }}
                         </a>
                         {% endif %}
 
-                        {% if project.production_waiver.id %}
-                        {% if project.production_waiver.raw_status in ['to_send', 'to_generate'] %}
-                        <form
-                            action="{{ url_for('admin_waivers.admin_production_waiver_send', waiver_id=project.production_waiver.waiver_num or project.production_waiver.id) }}"
-                            method="POST" class="today-row-waiver-link u-m-0">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
-                            <button type="submit" class="today-row-waiver-btn"
-                                title="Envoyer la décharge production par e-mail en 1 clic">
-                                <span class="today-row-label u-text-medium">
-                                    <i data-lucide="file-signature"></i>
-                                    <span>Décharge Prod.</span>
-                                </span>
-                                <span class="badge-pill u-badge-agenda" data-val="to_send">
-                                    <i data-lucide="send"></i> À envoyer</span>
-                            </button>
-                        </form>
-                        {% else %}
+                        {% if project.safety_rules and project.safety_rules.count > 0 %}
                         <a class="today-row-waiver-link"
-                            href="{{ url_for('admin_waivers.admin_production_waivers_list') }}?q={{ project.production_waiver.waiver_num|urlencode }}">
+                            href="{{ url_for('admin_waivers.admin_safety_rules_list', q=project.name) }}"
+                            title="{{ project.safety_rules.signed_count }}/{{ project.safety_rules.count }} signataire(s) validé(s)">
                             <span class="today-row-label u-text-medium">
-                                <i data-lucide="file-signature"></i>
-                                <span>Décharge Prod.</span>
+                                <i data-lucide="shield-check"></i>
+                                <span>Règles Sécurité (BVSR)</span>
                             </span>
-                            {{ status_badge(project.production_waiver.status,
-                            project.production_waiver.raw_status, class_name='u-badge-agenda') }}
+                            {% if project.safety_rules.signed_count == project.safety_rules.count %}
+                            <span class="badge-pill u-badge-agenda" data-val="signed">
+                                <i data-lucide="circle-check"></i> {{ project.safety_rules.signed_count }}/{{ project.safety_rules.count }} signé{{ 's' if project.safety_rules.count > 1 else '' }}
+                            </span>
+                            {% elif project.safety_rules.has_pending %}
+                            <span class="badge-pill u-badge-agenda" data-val="to_sign">
+                                <i data-lucide="clock"></i> {{ project.safety_rules.signed_count }}/{{ project.safety_rules.count }} signé{{ 's' if project.safety_rules.signed_count > 1 else '' }}
+                            </span>
+                            {% else %}
+                            <span class="badge-pill u-badge-agenda" data-val="to_send">
+                                <i data-lucide="send"></i> {{ project.safety_rules.signed_count }}/{{ project.safety_rules.count }} signé{{ 's' if project.safety_rules.signed_count > 1 else '' }}
+                            </span>
+                            {% endif %}
                         </a>
-                        {% endif %}
                         {% else %}
-                        <a href="{{ url_for('admin_waivers.admin_production_waiver_quick_create', project_id=project.id) }}"
-                            class="today-row-waiver-link" title="Créer la décharge en 1 clic">
+                        <a href="{{ url_for('admin_projects.admin_project_detail', record_id=project.id) }}"
+                            class="today-row-waiver-link" title="Inviter des signataires aux règles de sécurité">
                             <span class="today-row-label">
-                                <i data-lucide="file-signature"></i>
-                                <span>Décharge Prod.</span>
+                                <i data-lucide="shield-check"></i>
+                                <span>Règles Sécurité (BVSR)</span>
                             </span>
-                            {{ status_badge('Non générée', 'to_generate', class_name='u-badge-agenda') }}
+                            <span class="badge-pill u-badge-agenda" data-val="neutral">0 invité</span>
                         </a>
                         {% endif %}
                     </div>

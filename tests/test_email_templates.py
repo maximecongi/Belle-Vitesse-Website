@@ -37,105 +37,105 @@ class EmailTemplatesTest(unittest.TestCase):
         with self.app.app_context():
             html = render_template(
                 "emails/waiver_invitation.html",
-                waiver_type="pilot",
-                recipient_name="Luc Pilote",
+                waiver_type="cgl",
+                recipient_name="Luc Contact",
                 project_name="Tournage Pub Vitesse",
                 production_name="Studio Test Prod",
-                signature_link="https://bellevitesse.com/waivers/pilot/token123",
+                signature_link="https://bellevitesse.com/cgl/sign/token123",
                 is_reminder=False,
                 now_year=2026,
             )
-            self.assertIn("Signature Décharge Pilote", html)
-            self.assertIn("décharge de responsabilité pilote", html)
+            self.assertIn("Signature Contrat de Location (BVRA)", html)
+            self.assertIn("du Contrat de Location (BVRA)", html)
             self.assertIn("Tournage Pub Vitesse", html)
             self.assertIn("Studio Test Prod", html)
-            self.assertIn("Pilote :", html)
-            self.assertIn("Type de décharge :", html)
-            self.assertIn("Pilote", html)
+            self.assertIn("Luc Contact", html)
+            self.assertIn("Document :", html)
+            self.assertIn("Contrat de Location (BVRA)", html)
             self.assertIn("info-card info-card-waiver", html)
             self.assertNotIn("project-pill", html)
             self.assertIn(
-                "https://bellevitesse.com/waivers/pilot/token123", html)
+                "https://bellevitesse.com/cgl/sign/token123", html)
             self.assertNotIn("Signature en attente", html)
 
     def test_waiver_invitation_rendering_reminder(self):
         with self.app.app_context():
             html = render_template(
                 "emails/waiver_invitation.html",
-                waiver_type="production",
+                waiver_type="cgl",
                 recipient_name="Jean Prod",
                 project_name="Film Long Métrage",
                 production_name="Studio Grand Angle",
-                signature_link="https://bellevitesse.com/waivers/prod/token456",
+                signature_link="https://bellevitesse.com/cgl/sign/token456",
                 is_reminder=True,
                 now_year=2026,
             )
-            self.assertIn("Rappel : Signature Décharge Production", html)
-            self.assertIn("décharge de responsabilité production", html)
-            self.assertIn("Contact production :", html)
+            self.assertIn("Rappel : Signature Contrat de Location (BVRA)", html)
+            self.assertIn("du Contrat de Location (BVRA)", html)
+            self.assertIn("Jean Prod", html)
             self.assertIn("alert-box alert-box-warning", html)
             self.assertIn("Signature en attente", html)
             self.assertIn("Film Long Métrage", html)
             self.assertIn("Studio Grand Angle", html)
             self.assertNotIn("project-pill", html)
-            self.assertNotIn("Signature Décharge Pilote", html)
 
-    def test_waiver_invitation_rendering_pilot_reminder(self):
+    def test_waiver_invitation_rendering_safety_rules_reminder(self):
         with self.app.app_context():
             html = render_template(
                 "emails/waiver_invitation.html",
-                waiver_type="pilot",
+                waiver_type="safety_rules",
                 recipient_name="Luc Pilote",
                 project_name="Film Course Automobile",
                 production_name="Studio Grand Angle",
-                signature_link="https://bellevitesse.com/waivers/pilot/token789",
+                signature_link="https://bellevitesse.com/safety-rules/sign/token789",
                 is_reminder=True,
                 now_year=2026,
             )
-            self.assertIn("Rappel : Signature Décharge Pilote", html)
-            self.assertIn("décharge de responsabilité pilote", html)
-            self.assertIn("Pilote :", html)
-            self.assertIn("Type de décharge :", html)
-            self.assertIn("Pilote", html)
+            self.assertIn("Rappel : Signature Règles de Sécurité (BVSR)", html)
+            self.assertIn("Règles de Sécurité Universelles (BVSR)", html)
+            self.assertIn("Luc Pilote", html)
+            self.assertIn("Document :", html)
+            self.assertIn("Règles de Sécurité (BVSR)", html)
             self.assertIn("alert-box alert-box-warning", html)
             self.assertIn("Signature en attente", html)
             self.assertIn("Film Course Automobile", html)
             self.assertIn("Studio Grand Angle", html)
             self.assertNotIn("project-pill", html)
-            self.assertNotIn("Signature Décharge Production", html)
-            self.assertNotIn("décharge de responsabilité production", html)
 
     def test_waiver_signed_confirmation_rendering(self):
         with self.app.app_context():
-            # Test 1 : Sans waiver_type explicite
+            # Test 1 : CGL
             html = render_template(
                 "emails/waiver_signed_confirmation.html",
                 recipient_name="Jean Dupont",
                 project_name="Spot Commercial",
                 production_name="Studio Test Prod",
+                waiver_type="cgl",
                 now_year=2026,
             )
-            self.assertIn("Décharge Signée.", html)
+            self.assertIn("Contrat de Location (BVRA) Signé.", html)
             self.assertIn("info-card info-card-waiver", html)
             self.assertIn("Spot Commercial", html)
             self.assertIn("Studio Test Prod", html)
             self.assertIn("Jean Dupont", html)
             self.assertIn("badge-success", html)
+            self.assertIn("Document :", html)
+            self.assertIn("Contrat de Location (BVRA)", html)
             self.assertNotIn("project-pill", html)
-            self.assertNotIn("<strong>Type de décharge :</strong> </div>", html)
 
-            # Test 2 : Avec waiver_type='production'
-            html_prod = render_template(
+            # Test 2 : Règles de sécurité
+            html_safety = render_template(
                 "emails/waiver_signed_confirmation.html",
                 recipient_name="Claire Martin",
                 project_name="Spot Commercial",
                 production_name="Studio Test Prod",
-                waiver_type="production",
+                waiver_type="safety_rules",
                 now_year=2026,
             )
-            self.assertIn("Claire Martin", html_prod)
-            self.assertIn("Type de décharge :", html_prod)
-            self.assertIn("Production", html_prod)
+            self.assertIn("Règles de Sécurité (BVSR) Signé.", html_safety)
+            self.assertIn("Claire Martin", html_safety)
+            self.assertIn("Document :", html_safety)
+            self.assertIn("Règles de Sécurité (BVSR)", html_safety)
 
     def test_incident_invitation_rendering(self):
         with self.app.app_context():

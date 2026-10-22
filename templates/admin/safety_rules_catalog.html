@@ -1,0 +1,173 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Règles de Sécurité par Véhicule (BVSR) — Flotte Belle Vitesse{% endblock %}
+{% block page_title %}Règles de Sécurité Flotte (BVSR){% endblock %}
+
+{% block header_actions %}
+<a href="{{ url_for('admin_fleet.admin_fleet_list') }}" class="admin-btn admin-btn-secondary">
+    <i class="admin-header__icon" data-lucide="arrow-left"></i> Retour à la Flotte
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- ═══════════ PRÉSENTATION & NOTICE BVSR ═══════════ -->
+<div class="admin-card u-p-4 u-mb-4 u-border-left-waiver">
+    <div class="u-flex u-align-start u-gap-3">
+        <div class="badge-pill u-bg-waiver-light u-text-waiver u-p-2">
+            <i data-lucide="shield-check" class="u-w-20 u-h-20"></i>
+        </div>
+        <div class="u-flex-1">
+            <div class="u-flex u-justify-between u-align-start">
+                <h3 class="u-text-lg u-font-bold u-m-0">Règles de Sécurité par Véhicule (BVSR)</h3>
+                <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-xs u-font-bold">
+                    {{ catalog|length }} véhicule{% if catalog|length > 1 %}s{% endif %} de la flotte
+                </span>
+            </div>
+            <p class="u-text-sm u-text-muted u-mt-1 u-mb-0">
+                Consignes de sécurité spécifiques associées à chaque véhicule réel de la flotte.
+                Ces règles bilingues (Français / Anglais) sont automatiquement injectées dans les protocoles de décharge (BVSR)
+                lorsque ces véhicules sont réservés dans un projet.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════ GRILLE DES VÉHICULES DE FLOTTE ═══════════ -->
+<div class="u-grid u-gap-4 u-grid-cols-2">
+    {% for key, cat in catalog.items() %}
+    <div class="admin-card bvsr-catalog-card u-p-4 u-flex u-flex-column u-justify-between">
+        <div>
+            <div class="u-flex u-justify-between u-align-start u-mb-3">
+                <div class="u-flex u-align-center u-gap-3">
+                    <div class="bvsr-vehicle-avatar">
+                        <img src="{{ cat.image or '/static/imgs/placeholders/vehicle.svg' }}" alt="{{ cat.name }}" class="bvsr-vehicle-img" loading="lazy">
+                    </div>
+                    <div>
+                        <h3 class="u-text-lg u-font-bold u-m-0">{{ cat.name }}</h3>
+                        {% if cat.label and cat.label != cat.name %}
+                        <span class="u-text-xs u-text-muted u-d-block u-mt-1">{{ cat.label }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary btn-edit-vehicle-rule"
+                    data-id="{{ cat.id }}" data-cat='{{ cat|tojson }}'>
+                    <i data-lucide="edit-3"></i> Modifier
+                </button>
+            </div>
+
+            <div class="u-grid u-gap-3 u-grid-cols-2 u-mt-3">
+                <!-- Règles Français avec puces violettes rondes -->
+                <div class="bvsr-preview-box">
+                    <div class="u-flex u-justify-between u-align-center u-mb-2">
+                        <span class="bvsr-lang-pill">FR</span>
+                        <span class="u-text-xs u-text-muted">{{ (cat.rules_fr or [])|length }} consigne{% if (cat.rules_fr or [])|length > 1 %}s{% endif %}</span>
+                    </div>
+                    <ul class="bvsr-preview-list">
+                        {% for rfr in cat.rules_fr %}
+                        <li class="bvsr-preview-item">{{ rfr }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Règles Anglais avec puces violettes rondes -->
+                <div class="bvsr-preview-box">
+                    <div class="u-flex u-justify-between u-align-center u-mb-2">
+                        <span class="bvsr-lang-pill bvsr-lang-pill--en">EN</span>
+                        <span class="u-text-xs u-text-muted">{{ (cat.rules_en or [])|length }} rule{% if (cat.rules_en or [])|length > 1 %}s{% endif %}</span>
+                    </div>
+                    <ul class="bvsr-preview-list">
+                        {% for ren in cat.rules_en %}
+                        <li class="bvsr-preview-item">{{ ren }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- ═══════════ MODAL ÉDITION RÈGLES VÉHICULE (BVSR) ═══════════ -->
+<div id="ruleModal" class="admin-modal-overlay u-d-none" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="modalTitle">
+    <div class="admin-modal-container admin-modal-container--lg bvsr-modal-container">
+        <!-- En-tête de la modale -->
+        <div class="bvsr-modal-header">
+            <div class="u-flex u-align-center u-gap-3">
+                <div class="bvsr-modal-avatar">
+                    <img id="modalVehicleImg" src="/static/imgs/placeholders/vehicle.svg" alt="Véhicule" class="bvsr-modal-img">
+                </div>
+                <div>
+                    <h3 id="modalTitle" class="u-text-xl u-font-bold u-m-0">Modifier les Règles de Sécurité</h3>
+                    <p id="modalSubtitle" class="u-text-sm u-text-muted u-mt-1 u-mb-0">Véhicule de la flotte</p>
+                </div>
+            </div>
+            <button type="button" class="admin-btn admin-btn-quaternary btn-close-rule-modal" aria-label="Fermer la boîte de dialogue">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <!-- Formulaire d'édition par puces dynamiques -->
+        <form id="ruleForm" method="POST" action="{{ url_for('admin_fleet.admin_safety_rules_config') }}" class="u-flex u-flex-column u-h-100 u-overflow-hidden">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" id="modal_vehicle_id" name="vehicle_id" value="">
+
+            <div class="bvsr-modal-body">
+                <div class="form-group u-mb-4">
+                    <label for="modal_label" class="form-label u-font-semibold">Nom d'affichage du véhicule dans le protocole <span class="u-text-danger">*</span></label>
+                    <input type="text" id="modal_label" name="label" class="form-input" required placeholder="ex: eRover (Polaris Kinetic)">
+                    <small class="u-text-muted u-text-xs">Titre tel qu'il apparaîtra dans le document BVSR signé par les équipes.</small>
+                </div>
+
+                <!-- Section de la liste à puces dynamique -->
+                <div class="u-border-t u-pt-3">
+                    <div class="u-flex u-justify-between u-align-center u-mb-2">
+                        <div class="u-flex u-align-center u-gap-2">
+                            <label class="form-label u-mb-0 u-font-bold">Consignes de Sécurité par Puces</label>
+                            <span id="bvsr-rules-count-badge" class="badge-pill u-bg-waiver-light u-text-waiver u-text-xs">0 consigne</span>
+                        </div>
+                        <div class="u-flex u-align-center u-gap-3">
+                            <span class="bvsr-kbd-hint"><kbd>Entrée ↵</kbd> pour ajouter une puce</span>
+                            <label class="u-flex u-align-center u-gap-1 u-text-xs u-text-muted u-cursor-pointer u-mb-0">
+                                <input type="checkbox" id="bvsr-toggle-en" checked class="form-checkbox">
+                                <span>Afficher EN</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- État vide -->
+                    <div id="bvsr-empty-state" class="bvsr-empty-state u-d-none">
+                        <i data-lucide="list-plus" class="u-w-24 u-h-24 u-text-muted u-mb-2"></i>
+                        <p class="u-m-0 u-text-sm">Aucune consigne configurée pour le moment.</p>
+                        <p class="u-text-xs u-text-muted u-mt-1">Cliquez sur « Ajouter une consigne » ci-dessous pour démarrer.</p>
+                    </div>
+
+                    <!-- Conteneur des lignes de puces interactives -->
+                    <div id="bvsr-rules-container" class="bvsr-rules-list"></div>
+
+                    <!-- Bouton d'ajout manuel de consigne -->
+                    <div class="bvsr-add-btn-wrapper">
+                        <button type="button" id="btn-add-rule-item" class="admin-btn admin-btn-sm admin-btn-secondary">
+                            <i data-lucide="plus"></i> Ajouter une consigne
+                        </button>
+                        <span class="u-text-xs u-text-muted">Chaque point correspondra à une puce violette dans le protocole de décharge signé.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pied de page de la modale -->
+            <div class="bvsr-modal-footer">
+                <div class="u-flex u-align-center u-gap-2">
+                    <i data-lucide="info" class="u-w-16 u-h-16 u-text-muted"></i>
+                    <span class="u-text-xs u-text-muted">Les consignes modifiées s'appliqueront instantanément aux futurs protocoles BVSR.</span>
+                </div>
+                <div class="u-flex u-align-center u-gap-2">
+                    <button type="button" class="admin-btn admin-btn-secondary btn-close-rule-modal">Annuler</button>
+                    <button type="submit" class="admin-btn admin-btn-primary">
+                        <i data-lucide="check"></i> Enregistrer les Règles
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

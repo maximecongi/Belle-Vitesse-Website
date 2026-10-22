@@ -307,6 +307,14 @@ def admin_api_search():
                 "admin_checkins.admin_checkin_new"), "category": "Action", "icon": "check-circle", "roles": ['all']},
             {"title": "Check-ins", "subtitle": "Historique des contrôles de retour", "url": url_for(
                 "admin_checkins.admin_checkins_list"), "category": "Page", "icon": "clipboard", "roles": ['all']},
+            {"title": "Contrats Location (BVRA)", "subtitle": "Conditions Générales de Location et contrats", "url": url_for(
+                "admin_waivers.admin_cgl_list"), "category": "Page", "icon": "file-text", "roles": ['manager', 'admin']},
+            {"title": "Nouveau Contrat (BVRA)", "subtitle": "Créer un contrat de location pour un tournage", "url": url_for(
+                "admin_waivers.admin_cgl_new"), "category": "Action", "icon": "plus", "roles": ['manager', 'admin']},
+            {"title": "Règles Sécurité (BVSR)", "subtitle": "Engagements et décharges de sécurité universelles", "url": url_for(
+                "admin_waivers.admin_safety_rules_list"), "category": "Page", "icon": "shield", "roles": ['manager', 'admin']},
+            {"title": "Catalogue Règles Sécurité", "subtitle": "Configuration des règles de sécurité par véhicule", "url": url_for(
+                "admin_fleet.admin_safety_rules_config"), "category": "Page", "icon": "settings", "roles": ['manager', 'admin']},
             {"title": "Gestion des Incidents", "subtitle": "Suivi des pannes, dommages et sinistres", "url": url_for(
                 "admin_incidents.admin_incidents_list"), "category": "Page", "icon": "alert", "roles": ['all']},
             {"title": "Déclarer un Incident", "subtitle": "Signaler une anomalie en tournage", "url": url_for(

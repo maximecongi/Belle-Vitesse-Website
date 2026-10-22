@@ -1,0 +1,37 @@
+{# ══════════════════════════════════════════════════════════════════════════════
+   BELLE VITESSE — FOOTER HARMONISÉ DES PORTAILS DE SIGNATURE ÉLECTRONIQUE
+   DA Globale Belle Vitesse : Fond sombre, logo blanc transparent, baseline marque,
+   sceau de conformité eIDAS / Code civil et coordonnées de l'entreprise.
+   ══════════════════════════════════════════════════════════════════════════════ #}
+<footer class="pilot-waiver-footer">
+    <div class="pilot-waiver-footer-brand">
+        <a href="/" target="_blank" rel="noopener noreferrer" class="pilot-waiver-footer-logo-link" aria-label="Belle Vitesse - Accueil">
+            <img src="{{ url_for('static', filename='imgs/logos_and_name/blanc-fond-transparent.png') }}"
+                alt="{{ company_name or 'Belle Vitesse' }}" class="pilot-waiver-footer-logo">
+        </a>
+        <p class="pilot-waiver-footer-tagline">Travelling cinématique • Prises de vue haute vitesse • Cascades de précision</p>
+    </div>
+
+    <div class="pilot-waiver-footer-seal">
+        <div class="pilot-waiver-footer-seal-badge">
+            <i data-lucide="shield-check" class="pilot-waiver-footer-seal-icon"></i>
+            <span>Signature Électronique Certifiée eIDAS • Valeur Probante Art. 1366 &amp; 1367 Code civil</span>
+        </div>
+        <p class="pilot-waiver-footer-seal-text">
+            Ce document numérique fait l'objet d'un scellement d'intégrité infalsifiable avec horodatage et empreinte cryptographique SHA-256.
+        </p>
+    </div>
+
+    <div class="pilot-waiver-footer-meta">
+        <div class="pilot-waiver-footer-coords">
+            <span>{{ company_address or '39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine' }}</span>
+            <span class="pilot-waiver-footer-separator">•</span>
+            <a href="mailto:{{ company_email or 'contact@bellevitesse.com' }}" class="pilot-waiver-footer-link">{{ company_email or 'contact@bellevitesse.com' }}</a>
+            <span class="pilot-waiver-footer-separator">•</span>
+            <a href="https://bellevitesse.com" target="_blank" rel="noopener noreferrer" class="pilot-waiver-footer-link">bellevitesse.com</a>
+        </div>
+        <p class="pilot-waiver-footer-copyright">
+            &copy; {{ now.year if now else '2026' }} {{ company_name or 'Belle Vitesse SAS' }}. Tous droits réservés.
+        </p>
+    </div>
+</footer>

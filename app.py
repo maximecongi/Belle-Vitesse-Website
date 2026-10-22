@@ -226,11 +226,59 @@ def create_app():
         try:
             with app.app_context():
                 db.create_all()
+                _ensure_waivers_schema()
                 app.logger.info("✅ Development database tables created successfully (db.create_all).")
         except Exception as e:
             app.logger.error(f"❌ Failed to initialize dev database: {e}")
 
     return app
+
+
+def _ensure_waivers_schema():
+    """Garantit la présence des colonnes BVSR sur la table waivers en mode dev local sans flask db upgrade."""
+    try:
+        from sqlalchemy import inspect, text
+        inspector = inspect(db.engine)
+        if "waivers" not in inspector.get_table_names():
+            return
+
+        existing_cols = {c["name"] for c in inspector.get_columns("waivers")}
+        is_mysql = db.engine.dialect.name == "mysql"
+        is_sqlite = db.engine.dialect.name == "sqlite"
+
+        cols_definitions = [
+            ("signer_role", "VARCHAR(50) NULL"),
+            ("signer_role_custom", "VARCHAR(100) NULL"),
+            ("signer_first_name", "VARCHAR(100) NULL"),
+            ("signer_last_name", "VARCHAR(100) NULL"),
+            ("signer_email", "VARCHAR(120) NULL"),
+            ("signer_phone", "VARCHAR(50) NULL"),
+            ("signer_company", "VARCHAR(255) NULL"),
+            ("safety_technicians", "TEXT NULL"),
+            ("helmets_inventory", "JSON NULL"),
+            ("custom_rules_snapshot", "JSON NULL"),
+            ("bv_signature_data", "VARCHAR(255) NULL"),
+            ("bv_signed_at", "DATETIME NULL"),
+            ("bv_signer_name", "VARCHAR(100) NULL"),
+        ]
+
+        for col_name, col_type in cols_definitions:
+            if col_name not in existing_cols:
+                db.session.execute(text(f"ALTER TABLE waivers ADD COLUMN {col_name} {col_type}"))
+                db.session.commit()
+                existing_cols.add(col_name)
+
+        uqs = inspector.get_unique_constraints("waivers")
+        uq_names = {u["name"] for u in uqs if u.get("name")}
+        if "uq_project_waiver_type" in uq_names:
+            if is_mysql:
+                db.session.execute(text("ALTER TABLE waivers DROP INDEX uq_project_waiver_type"))
+                db.session.commit()
+            elif not is_sqlite:
+                db.session.execute(text("ALTER TABLE waivers DROP CONSTRAINT uq_project_waiver_type"))
+                db.session.commit()
+    except Exception:
+        db.session.rollback()
 
 
 app = create_app()

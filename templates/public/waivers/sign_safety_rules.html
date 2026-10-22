@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/static/imgs/favicons/favicon.svg" />
+    <link rel="shortcut icon" href="/static/imgs/favicons/favicon.ico" />
+    <title>Signature Règles de Sécurité Universelles (BVSR) — Belle Vitesse</title>
+
+    {% if config.FLASK_ENV == 'production' %}
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/styles.bundle.css') }}?v={{ asset_version('css/styles.bundle.css') }}">
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/admin/admin.bundle.css') }}?v={{ asset_version('css/admin/admin.bundle.css') }}">
+    {% else %}
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/styles.css') }}?v={{ asset_version('css/styles.css') }}">
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/admin/admin.css') }}?v={{ asset_version('css/admin/admin.css') }}">
+    {% endif %}
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/public/sign-waiver.css') }}?v={{ asset_version('css/public/sign-waiver.css') }}">
+</head>
+
+<body class="pilot-waiver-container">
+
+    <div class="pilot-waiver">
+        <header class="pilot-waiver-header">
+            <div class="pilot-waiver-header-logo">
+                <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
+                    alt="Belle Vitesse">
+            </div>
+            <div class="pilot-waiver-header-meta">
+                <strong class="dot-before">Règles de Sécurité Universelles (BVSR)</strong><br>
+                <span class="pilot-waiver-doc-id">{{ waiver.waiver_id }}</span>
+            </div>
+        </header>
+
+        {% if waiver.status == 'signed' %}
+        <!-- ── État : déjà signé ────────────────────────────────────── -->
+        <section class="pilot-waiver-section pilot-waiver-state-banner">
+            <div class="pilot-waiver-status-icon u-text-success">✓</div>
+            <h2 class="pilot-waiver-section-title">Règles de Sécurité Signées</h2>
+            <p class="u-text-muted u-mt-2 u-text-center">
+                Votre engagement aux Règles de Sécurité Universelles (BVSR) a déjà été signé et scellé
+                électroniquement.<br><br>
+                Une copie certifiée a été transmise à votre adresse e-mail.
+            </p>
+        </section>
+
+        {% elif waiver.status not in ['to_sign', 'to_send'] %}
+        <!-- ── État : lien invalide ou expiré ───────────────────────── -->
+        <section class="pilot-waiver-section pilot-waiver-state-banner">
+            <div class="pilot-waiver-status-icon u-text-danger">✕</div>
+            <h2 class="pilot-waiver-section-title">Lien expiré ou invalide</h2>
+            <p class="u-text-muted u-mt-2">
+                Ce lien sécurisé de signature n'est plus actif ou a dépassé sa durée de validité (24h).
+            </p>
+        </section>
+
+        {% else %}
+        <!-- ── Formulaire de signature BVSR ─────────────────────────── -->
+        <form id="safety-rules-form" novalidate>
+            <input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token() }}">
+
+            <!-- 1. Récapitulatif projet & véhicules -->
+            <section class="pilot-waiver-section">
+                <h2 class="pilot-waiver-section-title dot-before">Projet & Véhicules Concernés</h2>
+                <div class="pilot-waiver-info-grid">
+                    <div class="pilot-waiver-info-item">
+                        <span class="pilot-waiver-info-label">Projet</span>
+                        <span class="pilot-waiver-info-value u-text-sm">{{ waiver.display_project_name }}</span>
+                    </div>
+                    <div class="pilot-waiver-info-item">
+                        <span class="pilot-waiver-info-label">Production</span>
+                        <span class="pilot-waiver-info-value u-text-sm">{{ waiver.display_production_name }}</span>
+                    </div>
+                    <div class="pilot-waiver-info-item">
+                        <span class="pilot-waiver-info-label">Période de tournage</span>
+                        <span class="pilot-waiver-info-value u-text-sm">{{ waiver.display_shooting_dates }}</span>
+                    </div>
+                    {% if waiver.safety_technicians %}
+                    <div class="pilot-waiver-info-item">
+                        <span class="pilot-waiver-info-label">Supervision technique BV</span>
+                        <span class="pilot-waiver-info-value u-text-sm">{{ waiver.safety_technicians }}</span>
+                    </div>
+                    {% endif %}
+                    <span class="pilot-waiver-info-label">Véhicule(s) de prise de vue réservé(s)</span>
+                    <div class="pilot-waiver-info-item pilot-waiver-info-vehicles u-col-span-full">
+                        {% if waiver.vehicles_details %}
+                        <div class="pilot-waiver-vehicles-list">
+                            {% for v in waiver.vehicles_details %}
+                            <div class="pilot-waiver-vehicle-card">
+                                <div class="pilot-waiver-vehicle-thumb-wrapper">
+                                    {% if v.thumbnail %}
+                                    <img src="{{ v.thumbnail }}" alt="{{ v.name }}" class="pilot-waiver-vehicle-thumb"
+                                        loading="lazy">
+                                    {% else %}
+                                    <div class="pilot-waiver-vehicle-thumb-placeholder" aria-hidden="true">
+                                        <svg class="pilot-waiver-vehicle-placeholder-icon" viewBox="0 0 24 24"
+                                            fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path
+                                                d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
+                                            <circle cx="7" cy="17" r="2" />
+                                            <path d="M9 17h6" />
+                                            <circle cx="17" cy="17" r="2" />
+                                        </svg>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="pilot-waiver-vehicle-info">
+                                    <span class="pilot-waiver-vehicle-title">{{ v.name }}</span>
+                                    {% if v.unique_id %}
+                                    <div class="pilot-waiver-vehicle-ids">
+                                        <span class="checkout-doc-id">{{ v.unique_id }}</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% elif waiver.vehicles %}
+                        <div class="pilot-waiver-vehicles-list">
+                            {% for v in waiver.vehicles.split(',') %}
+                            <div class="pilot-waiver-vehicle-card">
+                                <div class="pilot-waiver-vehicle-info">
+                                    <span class="pilot-waiver-vehicle-title">{{ v.strip() }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}—{% endif %}
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. Informations de l'Intervenant -->
+            <section class="pilot-waiver-section">
+                <h2 class="pilot-waiver-section-title dot-before">Identité & Rôle de l'Intervenant</h2>
+                <p class="u-text-sm u-text-muted u-mb-3">
+                    Veuillez confirmer ou compléter vos coordonnées et votre fonction sur le plateau.
+                </p>
+                <div class="pilot-form-grid">
+                    <div class="form-group">
+                        <label for="safety_first_name">Prénom <span class="u-text-danger">*</span></label>
+                        <input class="form-input" type="text" id="safety_first_name" name="first_name"
+                            value="{{ waiver.signer_first_name or '' }}" required autocomplete="given-name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="safety_last_name">Nom <span class="u-text-danger">*</span></label>
+                        <input class="form-input" type="text" id="safety_last_name" name="last_name"
+                            value="{{ waiver.signer_last_name or '' }}" required autocomplete="family-name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="safety_signer_role">Votre rôle sur le tournage <span
+                                class="u-text-danger">*</span></label>
+                        <select id="safety_signer_role" name="signer_role" class="form-select">
+                            <option value="pilot" {% if waiver.signer_role=='pilot' %}selected{% endif %}>Pilote /
+                                Concepteur de trajectoire</option>
+                            <option value="first_ad" {% if waiver.signer_role=='first_ad' %}selected{% endif %}>1er
+                                Assistant Réalisateur (1st AD)</option>
+                            <option value="production" {% if waiver.signer_role=='production' %}selected{% endif %}>
+                                Régie / Direction de Production</option>
+                            <option value="camera_operator" {% if waiver.signer_role=='camera_operator' %}selected{%
+                                endif %}>Cadreur / Opérateur Caméra</option>
+                            <option value="stunt" {% if waiver.signer_role=='stunt' %}selected{% endif %}>Cascadeur /
+                                Pilote Précision</option>
+                            <option value="technician" {% if waiver.signer_role=='technician' %}selected{% endif %}>
+                                Technicien / Grip / Machiniste</option>
+                            <option value="other" {% if waiver.signer_role=='other' %}selected{% endif %}>Autre
+                                intervenant</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group {% if waiver.signer_role != 'other' %}u-d-none{% endif %}"
+                        id="safety_role_custom_group">
+                        <label for="safety_role_custom">Précisez votre fonction <span
+                                class="u-text-danger">*</span></label>
+                        <input class="form-input" type="text" id="safety_role_custom" name="role_custom"
+                            value="{{ waiver.signer_role_custom or '' }}"
+                            placeholder="Ex: Steadycamer, Régisseur général...">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="safety_email">Adresse e-mail <span class="u-text-danger">*</span></label>
+                        <input class="form-input" type="email" id="safety_email" name="email"
+                            value="{{ waiver.signer_email or '' }}" placeholder="nom@exemple.com" required
+                            autocomplete="email">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="safety_phone">Téléphone portable</label>
+                        <input class="form-input" type="tel" id="safety_phone" name="phone"
+                            value="{{ waiver.signer_phone or '' }}" placeholder="+33 6 ..." autocomplete="tel">
+                    </div>
+
+                    <div class="form-group u-col-span-full">
+                        <label for="safety_company">Société / Employeur (optionnel)</label>
+                        <input class="form-input" type="text" id="safety_company" name="company"
+                            value="{{ waiver.signer_company or '' }}"
+                            placeholder="Ex: Société de production ou Freelance" autocomplete="organization">
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. Règles de Sécurité Universelles (BVSR) -->
+            <section class="pilot-waiver-section">
+                <h2 class="pilot-waiver-section-title dot-before">Règles de Sécurité Universelles (BVSR)</h2>
+
+                <!-- Callout Stop Work Authority -->
+                <div class="admin-card u-p-3 u-mb-3 u-bg-waiver-light u-border-left-waiver">
+                    <strong class="u-text-waiver u-text-sm">⚡ Droit et Devoir d'Interruption (Stop Work
+                        Authority)</strong>
+                    <p class="u-text-xs u-mt-1 u-m-0">
+                        Chaque personne sur le tournage est garante de la sécurité collective : si vous observez un
+                        risque
+                        imprévu, un obstacle ou une anomalie, vous avez le droit absolu et le devoir immédiat d’exiger
+                        l’arrêt de la prise ou du véhicule.
+                    </p>
+                </div>
+
+                <div class="cgl-reader-container">
+                    <h1>PROTOCOLE GÉNÉRAL DE SÉCURITÉ DE TOURNAGE</h1>
+                    <p class="u-text-semibold">BELLE VITESSE SAS — RÈGLES DE SÉCURITÉ UNIVERSELLES (BVSR)</p>
+                    <hr>
+
+                    <h2>CONSIGNES GÉNÉRALES IMPÉRATIVES (BILINGUE FR / EN)</h2>
+                    <ul>
+                        <li><strong>Instructions :</strong> Respect strict des consignes du pilote et de la supervision
+                            Belle Vitesse. <em>(Strict compliance with instructions from the pilot and Belle Vitesse
+                                crew.)</em></li>
+                        <li><strong>Sobriété :</strong> Tolérance zéro alcool et stupéfiants. Vigilance maximale
+                            requise. <em>(Zero tolerance for alcohol and drugs. Maximum alertness required.)</em></li>
+                        <li><strong>Périmètre :</strong> Interdiction formelle de monter ou descendre d'un véhicule en
+                            mouvement. <em>(Strictly forbidden to board or disembark from a moving vehicle.)</em></li>
+                        <li><strong>Équipements de protection :</strong> Port du casque obligatoire selon la
+                            configuration et la position sur le véhicule. <em>(Helmet mandatory depending on vehicle
+                                configuration and rider position.)</em></li>
+                        <li><strong>Ceintures et harnais :</strong> Attache obligatoire dès l'embarquement et pendant
+                            tout le roulage. <em>(Seatbelts and safety harnesses must be fastened at all times.)</em>
+                        </li>
+                    </ul>
+
+                    {% if vehicle_rules %}
+                    <h2>CONSIGNES SPÉCIFIQUES PAR VÉHICULE RÉSERVÉ</h2>
+                    {% for vr in vehicle_rules %}
+                    <h3>{{ vr.label }}</h3>
+                    <ul>
+                        {% for rfr in vr.rules_fr %}
+                        <li>{{ rfr }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endfor %}
+                    {% endif %}
+
+                    {% if helmets %}
+                    <hr>
+                    <h2>ÉQUIPEMENTS DE PROTECTION (CASQUES)</h2>
+                    <p class="u-text-sm">
+                        <strong>Casques mis à disposition :</strong> {{ helmets.description_fr }}
+                    </p>
+                    {% endif %}
+                </div>
+            </section>
+
+            <!-- 4. Engagements & Signature -->
+            <section class="pilot-waiver-section">
+                <div class="checkbox-container u-mb-3">
+                    <input type="checkbox" id="ack_rules" name="ack_rules" required>
+                    <label for="ack_rules">
+                        <strong>Je certifie avoir pris connaissance des Règles de Sécurité Universelles (BVSR) et des
+                            consignes spécifiques aux véhicules ci-dessus, et je m'engage à les respecter
+                            scrupuleusement.</strong><br>
+                        Je certifie l'exactitude des informations fournies sur mon rôle et mes coordonnées sur le
+                        plateau.
+                    </label>
+                </div>
+
+                <div class="checkbox-container">
+                    <input type="checkbox" id="ack_authority" name="ack_authority" required>
+                    <label for="ack_authority">
+                        <strong>Je reconnais expressément mon droit et mon devoir d'interrompre immédiatement toute
+                            manœuvre (Stop Work Authority)</strong> si les conditions de sécurité ne sont pas réunies
+                        sur le tournage.
+                    </label>
+                </div>
+
+                <div class="pilot-waiver-sign-canvas-wrapper u-mt-3">
+                    <canvas id="safety-signature-canvas"></canvas>
+                </div>
+
+                <div class="pilot-waiver-sign-actions">
+                    <button type="button" class="pilot-waiver-btn pilot-waiver-btn--secondary" id="safety-btn-clear">
+                        <i data-lucide="rotate-ccw"></i>
+                        <span>Effacer</span>
+                    </button>
+                    <button type="button" class="pilot-waiver-btn pilot-waiver-btn--primary" id="safety-btn-sign">
+                        <i data-lucide="shield-check"></i>
+                        <span>Signer et valider mon engagement</span>
+                    </button>
+                </div>
+            </section>
+
+            <div id="feedback" class="feedback-box"></div>
+
+        </form>
+        {% endif %}
+
+        {% include 'public/signature_footer.html' %}
+    </div>
+
+    <!-- Scripts externes modulaires (sans aucun JS inline) -->
+    <script src="https://unpkg.com/lucide@1.48.0/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="{{ asset_url('js/src/common/signature-pad-controller.js') }}"></script>
+    <script src="{{ asset_url('js/src/ui-utils.js') }}"></script>
+    <script src="{{ asset_url('js/src/public/sign-safety-rules.js') }}"></script>
+</body>
+
+</html>

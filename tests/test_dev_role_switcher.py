@@ -171,15 +171,10 @@ class DevRoleSwitcherTestCase(unittest.TestCase):
         self.assertNotIn("Décharge Pilote", dash_html)
         self.assertIn("Checkouts", dash_html)
 
-        # Accessing /admin/waivers/pilots directly should redirect to dashboard
-        resp_pilots = self.client.get("/admin/waivers/pilots", follow_redirects=False)
-        self.assertEqual(resp_pilots.status_code, 302)
-        self.assertIn("/admin/dashboard", resp_pilots.location)
-
-        # Accessing /admin/waivers/productions directly should redirect to dashboard
-        resp_prods = self.client.get("/admin/waivers/productions", follow_redirects=False)
-        self.assertEqual(resp_prods.status_code, 302)
-        self.assertIn("/admin/dashboard", resp_prods.location)
+        # Accessing /admin/cgl directly should redirect to dashboard (restricted to manager and admin)
+        resp_cgl = self.client.get("/admin/cgl", follow_redirects=False)
+        self.assertEqual(resp_cgl.status_code, 302)
+        self.assertIn("/admin/dashboard", resp_cgl.location)
 
     def test_docs_restricted_to_admin_and_super_admin(self):
         """Technical and API docs should only be accessible/visible to Administrator and Super Administrator."""

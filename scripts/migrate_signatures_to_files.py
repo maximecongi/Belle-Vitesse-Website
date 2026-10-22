@@ -21,10 +21,8 @@ from models.incident import Incident, IncidentSignedDocument, IncidentToken
 from models.waiver import (
     CheckinSignedDocument,
     CheckoutSignedDocument,
-    PilotWaiver,
-    PilotWaiverSignedDocument,
-    ProductionWaiver,
-    ProductionWaiverSignedDocument,
+    Waiver,
+    WaiverSignedDocument,
 )
 from utils.signature_storage import save_signature_image
 
@@ -44,29 +42,16 @@ def migrate_signatures(dry_run: bool = False, app=None):
         migrated_count = 0
         total_bytes_saved = 0
 
-        # 1. Pilot Waivers
-        pilot_waivers = PilotWaiver.query.filter(PilotWaiver.signature_data.isnot(None)).all()
-        for pw in pilot_waivers:
-            if is_base64_signature(pw.signature_data):
-                doc_id = pw.waiver_id or f"waiver_{pw.id}"
-                old_len = len(pw.signature_data)
-                print(f"  [PilotWaiver] Migration {doc_id} ({old_len:,} caractères)...")
+        # 1. Waivers (CGL et Règles de Sécurité)
+        waivers = Waiver.query.filter(Waiver.signature_data.isnot(None)).all()
+        for w in waivers:
+            if is_base64_signature(w.signature_data):
+                doc_id = w.waiver_id or f"waiver_{w.id}"
+                old_len = len(w.signature_data)
+                print(f"  [Waiver] Migration {doc_id} ({old_len:,} caractères)...")
                 if not dry_run:
-                    rel_path = save_signature_image(pw.signature_data, "waivers", doc_id)
-                    pw.signature_data = rel_path
-                migrated_count += 1
-                total_bytes_saved += old_len
-
-        # 2. Production Waivers
-        prod_waivers = ProductionWaiver.query.filter(ProductionWaiver.signature_data.isnot(None)).all()
-        for prw in prod_waivers:
-            if is_base64_signature(prw.signature_data):
-                doc_id = prw.waiver_id or f"waiver_{prw.id}"
-                old_len = len(prw.signature_data)
-                print(f"  [ProductionWaiver] Migration {doc_id} ({old_len:,} caractères)...")
-                if not dry_run:
-                    rel_path = save_signature_image(prw.signature_data, "waivers", doc_id)
-                    prw.signature_data = rel_path
+                    rel_path = save_signature_image(w.signature_data, "waivers", doc_id)
+                    w.signature_data = rel_path
                 migrated_count += 1
                 total_bytes_saved += old_len
 
@@ -93,12 +78,11 @@ def migrate_signatures(dry_run: bool = False, app=None):
                 migrated_count += 1
                 total_bytes_saved += old_len
 
-        # 4. Signed Documents Archives
+        # 3. Signed Documents Archives
         signed_doc_models = [
             ("CheckoutSignedDocument", CheckoutSignedDocument, "checkouts", "inspection_id"),
             ("CheckinSignedDocument", CheckinSignedDocument, "checkins", "inspection_id"),
-            ("PilotWaiverSignedDocument", PilotWaiverSignedDocument, "waivers", "waiver_id"),
-            ("ProductionWaiverSignedDocument", ProductionWaiverSignedDocument, "waivers", "waiver_id"),
+            ("WaiverSignedDocument", WaiverSignedDocument, "waivers", "waiver_id"),
             ("IncidentSignedDocument", IncidentSignedDocument, "incidents", "incident_number"),
         ]
 

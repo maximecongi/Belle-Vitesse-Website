@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/static/imgs/favicons/favicon.svg" />
+    <link rel="shortcut icon" href="/static/imgs/favicons/favicon.ico" />
+    <title>Signature Conditions Générales de Location — Belle Vitesse</title>
+
+    {% if config.FLASK_ENV == 'production' %}
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/styles.bundle.css') }}?v={{ asset_version('css/styles.bundle.css') }}">
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/admin/admin.bundle.css') }}?v={{ asset_version('css/admin/admin.bundle.css') }}">
+    {% else %}
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/styles.css') }}?v={{ asset_version('css/styles.css') }}">
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/admin/admin.css') }}?v={{ asset_version('css/admin/admin.css') }}">
+    {% endif %}
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/public/sign-waiver.css') }}?v={{ asset_version('css/public/sign-waiver.css') }}">
+</head>
+
+<body class="pilot-waiver-container">
+
+    <div class="pilot-waiver">
+        <header class="pilot-waiver-header">
+            <div class="pilot-waiver-header-logo">
+                <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
+                    alt="Belle Vitesse">
+            </div>
+            <div class="pilot-waiver-header-meta">
+                <strong class="dot-before">Conditions Générales de Location</strong><br>
+                <span class="pilot-waiver-doc-id">{{ waiver.waiver_id }}</span>
+            </div>
+        </header>
+
+        {% if waiver.status == 'signed' %}
+        <!-- ── État : déjà signé ────────────────────────────────────── -->
+        <section class="pilot-waiver-section pilot-waiver-state-banner">
+            <div class="pilot-waiver-status-icon u-text-success">✓</div>
+            <h2 class="pilot-waiver-section-title">CGL Signées</h2>
+            <p class="u-text-muted u-mt-2 u-text-center">
+                Ces Conditions Générales de Location ont déjà été signées électroniquement et sont scellées.<br><br>
+                Une copie certifiée a été transmise aux parties.
+            </p>
+        </section>
+
+        {% elif waiver.status not in ['to_sign', 'to_send'] %}
+        <!-- ── État : lien invalide ou expiré ───────────────────────── -->
+        <section class="pilot-waiver-section pilot-waiver-state-banner">
+            <div class="pilot-waiver-status-icon u-text-danger">✕</div>
+            <h2 class="pilot-waiver-section-title">Lien expiré ou invalide</h2>
+            <p class="u-text-muted u-mt-2">
+                Ce lien sécurisé de signature n'est plus actif ou a dépassé sa durée de validité (24h).
+            </p>
+        </section>
+
+        {% else %}
+        <!-- ── Formulaire de signature CGL ─────────────────────────── -->
+        <form id="cgl-form" novalidate>
+            <input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token() }}">
+
+            <!-- Récapitulatif projet -->
+            <section class="pilot-waiver-section">
+                <h2 class="pilot-waiver-section-title dot-before">Projet & Véhicules Concernés</h2>
+                <div class="pilot-waiver-info-grid">
+                    <div class="pilot-waiver-info-item">
+                        <span class="pilot-waiver-info-label">Projet</span>
+                        <span class="pilot-waiver-info-value u-text-sm">{{ waiver.display_project_name }}</span>
+                    </div>
+                    <div class="pilot-waiver-info-item">
+                        <span class="pilot-waiver-info-label">Production</span>
+                        <span class="pilot-waiver-info-value u-text-sm">{{ waiver.display_production_name }}</span>
+                    </div>
+                    <div class="pilot-waiver-info-item">
+                        <span class="pilot-waiver-info-label">Période de tournage</span>
+                        <span class="pilot-waiver-info-value u-text-sm">{{ waiver.display_shooting_dates }}</span>
+                    </div>
+                    <span class="pilot-waiver-info-label">Véhicule(s) de prise de vue réservé(s)</span>
+                    <div class="pilot-waiver-info-item pilot-waiver-info-vehicles u-col-span-full">
+                        {% if waiver.vehicles_details %}
+                        <div class="pilot-waiver-vehicles-list">
+                            {% for v in waiver.vehicles_details %}
+                            <div class="pilot-waiver-vehicle-card">
+                                <div class="pilot-waiver-vehicle-thumb-wrapper">
+                                    {% if v.thumbnail %}
+                                    <img src="{{ v.thumbnail }}" alt="{{ v.name }}" class="pilot-waiver-vehicle-thumb" loading="lazy">
+                                    {% else %}
+                                    <div class="pilot-waiver-vehicle-thumb-placeholder" aria-hidden="true">
+                                        <svg class="pilot-waiver-vehicle-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
+                                            <circle cx="7" cy="17" r="2" />
+                                            <path d="M9 17h6" />
+                                            <circle cx="17" cy="17" r="2" />
+                                        </svg>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="pilot-waiver-vehicle-info">
+                                    <span class="pilot-waiver-vehicle-title">{{ v.name }}</span>
+                                    {% if v.unique_id %}
+                                    <div class="pilot-waiver-vehicle-ids">
+                                        <span class="checkout-doc-id">{{ v.unique_id }}</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% elif waiver.vehicles %}
+                        <div class="pilot-waiver-vehicles-list">
+                            {% for v in waiver.vehicles.split(',') %}
+                            <div class="pilot-waiver-vehicle-card">
+                                <div class="pilot-waiver-vehicle-info">
+                                    <span class="pilot-waiver-vehicle-title">{{ v.strip() }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}—{% endif %}
+                    </div>
+                </div>
+            </section>
+
+            <!-- Informations juridiques du Locataire -->
+            <section class="pilot-waiver-section">
+                <h2 class="pilot-waiver-section-title dot-before">Informations Juridiques du Locataire</h2>
+                <p class="u-text-sm u-text-muted u-mb-3">
+                    Veuillez confirmer ou compléter les informations contractuelles de votre société.
+                </p>
+                <div class="pilot-form-grid">
+                    <div class="form-group u-col-span-full">
+                        <label for="cgl_production_name">Raison sociale du Locataire <span class="u-text-danger">*</span></label>
+                        <input class="form-input" type="text" id="cgl_production_name" name="cgl_production_name"
+                            value="{{ waiver.production_name or '' }}" required autocomplete="organization">
+                    </div>
+                    <div class="form-group">
+                        <label for="cgl_representative">Représentant légal (Prénom, Nom, Qualité) <span class="u-text-danger">*</span></label>
+                        <input class="form-input" type="text" id="cgl_representative" name="cgl_representative"
+                            value="{{ waiver.production_representative or '' }}" required autocomplete="name">
+                    </div>
+                    <div class="form-group">
+                        <label for="cgl_siret">Numéro SIRET <span class="u-text-danger">*</span></label>
+                        <input class="form-input" type="text" id="cgl_siret" name="cgl_siret"
+                            value="{{ waiver.production_siret or '' }}" required>
+                    </div>
+                    <div class="form-group u-col-span-full">
+                        <label for="cgl_address">Adresse du siège social <span class="u-text-danger">*</span></label>
+                        <input class="form-input" type="text" id="cgl_address" name="cgl_address" required autocomplete="off"
+                            value="{{ waiver.production_address or '' }}">
+                        <div id="cgl_address_suggestions" class="address-suggestions u-d-none"></div>
+                    </div>
+                    <div class="form-group u-col-span-full">
+                        <label for="cgl_vat_number">N° TVA Intracommunautaire</label>
+                        <input class="form-input" type="text" id="cgl_vat_number" name="cgl_vat_number"
+                            value="{{ waiver.production_vat or '' }}">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Lecteur des Conditions Générales de Location -->
+            <section class="pilot-waiver-section">
+                <h2 class="pilot-waiver-section-title dot-before">Texte Intégral des Conditions Générales de Location</h2>
+                <div class="cgl-reader-container">
+                    <h1>CONDITIONS GÉNÉRALES DE LOCATION DE VÉHICULES SPÉCIAUX DE TOURNAGE</h1>
+                    <p class="u-text-semibold">BELLE VITESSE SAS — CONTRAT-CADRE DE LOCATION</p>
+                    <hr>
+
+                    <h2>ENTRE LES SOUSSIGNÉS :</h2>
+                    <p>
+                        <strong>La société BELLE VITESSE</strong>, Société par Actions Simplifiée au capital social de {{ company_capital or '1 000 €' }}, immatriculée au Registre du Commerce et des Sociétés de {{ company_rcs or 'Créteil' }} sous le numéro {{ company_siret or '919 095 869' }}, dont le siège social est situé au {{ company_address or '39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine' }}, dûment représentée par son Président en exercice,<br>
+                        <em>Ci-après dénommée « Belle Vitesse » ou le « Loueur », d'une part,</em>
+                    </p>
+                    <p>
+                        <strong>ET :</strong><br>
+                        <strong><span id="cgl_text_production_name">{{ waiver.production_name or '…' }}</span></strong>, 
+                        représentée par <strong id="cgl_text_representative">{{ waiver.production_representative or '…' }}</strong>, 
+                        dont le siège social est situé <strong id="cgl_text_address">{{ waiver.production_address or '…' }}</strong>, 
+                        SIRET : <strong id="cgl_text_siret">{{ waiver.production_siret or '…' }}</strong>
+                        (TVA : <span id="cgl_text_vat">{{ waiver.production_vat or '—' }}</span>),<br>
+                        <em>Ci-après dénommée le « Locataire », d'autre part.</em>
+                    </p>
+                    <hr>
+
+                    <h2>ARTICLE 1 – DÉFINITIONS</h2>
+                    <p>Au sens des présentes Conditions Générales de Location, les termes débutant par une majuscule ont la signification suivante :</p>
+                    <ul>
+                        <li><strong>« Loueur »</strong> : La société Belle Vitesse SAS.</li>
+                        <li><strong>« Locataire »</strong> : La société de production ou toute personne morale contractant avec Belle Vitesse.</li>
+                        <li><strong>« Véhicules »</strong> : Les véhicules spéciaux de tournage équipés pour la prise de vue (Twizy camera car, Stark Varg, E-Trikes, Segways, E-Rickshaw, etc.).</li>
+                        <li><strong>« Bon de Commande »</strong> : Le devis ou contrat particulier validé par les deux parties spécifiant le projet et les dates.</li>
+                        <li><strong>« Projet »</strong> : La production audiovisuelle identifiée : <strong>{{ waiver.display_project_name }}</strong>.</li>
+                    </ul>
+
+                    <h2>ARTICLE 2 – CHAMP D'APPLICATION ET OPPOSABILITÉ</h2>
+                    <p>Les présentes CGL constituent le socle unique de la négociation commerciale et régissent sans réserve toutes les locations conclues entre Belle Vitesse et le Locataire.</p>
+
+                    <h2>ARTICLE 3 – RÉSERVATION ET FORMATION DU CONTRAT</h2>
+                    <p>La réservation des Véhicules n'est définitive qu'après acceptation du Bon de Commande, signature des présentes CGL et versement de l'acompte prévu.</p>
+
+                    <h2>ARTICLE 4 – MISE À DISPOSITION ET ÉTAT DES LIEUX (CHECK-OUT)</h2>
+                    <p>Les Véhicules sont remis en parfait état de fonctionnement. Un état des lieux contradictoire de départ (Check-out) est dressé et signé par les représentants habilités.</p>
+
+                    <h2>ARTICLE 5 – RESTITUTION ET ÉTAT DES LIEUX DE RETOUR (CHECK-IN)</h2>
+                    <p>Les Véhicules doivent être restitués à l'heure et au lieu convenus. Un état des lieux de retour contradictoire (Check-in) est dressé pour constater l'état du matériel.</p>
+
+                    <h2>ARTICLE 6 – PILOTAGE ET CONDUCTEURS AGRÉÉS</h2>
+                    <p>Seuls les pilotes professionnels titulaires des permis requis et agréés par Belle Vitesse sont autorisés à piloter les Véhicules, après signature de la Décharge Pilote (Annexe 3).</p>
+
+                    <h2>ARTICLE 7 – CONDITIONS D'UTILISATION ET SÉCURITÉ</h2>
+                    <p>Le Locataire s'engage à utiliser les Véhicules conformément à leur destination, dans le respect strict des consignes techniques et des règles de sécurité de tournage.</p>
+
+                    <h2>ARTICLE 8 – MODIFICATIONS DU MATÉRIEL</h2>
+                    <p>Toute modification, fixation mécanique ou électrique sur les Véhicules sans l'accord écrit préalable de Belle Vitesse est formellement interdite.</p>
+
+                    <h2>ARTICLE 9 – PRIX ET MODALITÉS DE PAIEMENT</h2>
+                    <p>Les prix sont stipulés en euros hors taxes. Sauf accord dérogatoire sur le Bon de Commande, le paiement s'effectue selon les échéances contractuelles prévues.</p>
+
+                    <h2>ARTICLE 10 – DÉPÔT DE GARANTIE / CAUTION</h2>
+                    <p>Un dépôt de garantie peut être exigé pour garantir la bonne exécution des obligations du Locataire et la couverture des franchises en cas de sinistre.</p>
+
+                    <h2>ARTICLE 11 – RESPONSABILITÉ ET DOMMAGES</h2>
+                    <p>Le Locataire assume la garde matérielle et juridique des Véhicules pendant toute la durée de la mise à disposition. En cas de dommage, perte ou vol, les frais de remise en état ou de remplacement sont à sa charge selon le barème contractuel de l'Annexe 1.</p>
+
+                    <h2>ARTICLE 12 – ASSURANCES</h2>
+                    <p>Le Locataire s'engage à justifier d'une police d'assurance responsabilité civile professionnelle et tous risques tournage couvrant les dommages aux matériels confiés.</p>
+
+                    <h2>ARTICLE 13 – SINISTRES ET PROCÉDURE DE DÉCLARATION</h2>
+                    <p>Tout accident, incident ou sinistre doit être notifié à Belle Vitesse sans délai et au plus tard sous 24 heures avec constat amiable ou rapport contradictoire.</p>
+
+                    <h2>ARTICLE 14 – FORCE MAJEURE</h2>
+                    <p>Aucune des parties ne pourra être tenue responsable de l'inexécution de ses obligations en cas de force majeure au sens de l'article 1218 du Code civil.</p>
+
+                    <h2>ARTICLE 15 – ANNULATION ET REPORT</h2>
+                    <p>En cas d'annulation ou de report du tournage par le Locataire, les conditions d'indemnisation et pénalités stipulées au Bon de Commande s'appliquent de plein droit.</p>
+
+                    <h2>ARTICLE 16 – RÉSOLUTIONS ET RÉSILIATION ANTICIPÉE</h2>
+                    <p>En cas de manquement grave ou d'utilisation dangereuse des Véhicules, Belle Vitesse se réserve le droit de reprendre immédiatement possession du matériel.</p>
+
+                    <h2>ARTICLE 17 – CONFIDENTIALITÉ</h2>
+                    <p>Les parties s'engagent à préserver la stricte confidentialité des informations techniques, commerciales et financières échangées.</p>
+
+                    <h2>ARTICLE 18 – DONNÉES PERSONNELLES (RGPD)</h2>
+                    <p>Les données collectées font l'objet d'un traitement informatique sécurisé destiné à la gestion contractuelle, conformément à la réglementation en vigueur.</p>
+
+                    <h2>ARTICLE 19 – PROPRIÉTÉ INTELLECTUELLE ET DROITS À L'IMAGE</h2>
+                    <p>Les créations, marques et aménagements techniques des Véhicules restent la propriété exclusive de Belle Vitesse.</p>
+
+                    <h2>ARTICLE 20 – MODIFICATIONS DES CGL</h2>
+                    <p>Toute modification contractuelle requiert un avenant écrit et signé par les deux parties.</p>
+
+                    <h2>ARTICLE 21 – DIVISIBILITÉ</h2>
+                    <p>La nullité d'une clause n'affecte pas la validité des autres stipulations des présentes CGL.</p>
+
+                    <h2>ARTICLE 22 – DROIT APPLICABLE ET ATTRIBUTION DE JURIDICTION</h2>
+                    <p>Les présentes CGL sont régies par le droit français. À défaut de résolution amiable sous 30 jours, tout litige sera soumis à la compétence exclusive des tribunaux de Paris.</p>
+                    <hr>
+
+                    <h2>ANNEXE 1 – VALEURS DE REMPLACEMENT DE RÉFÉRENCE DE LA FLOTTE (HT)</h2>
+                    <p>En cas de perte totale, vol ou destruction irréversible d'un Véhicule, les valeurs contractuelles forfaitaires de remplacement sont fixées comme suit :</p>
+                    <table class="cgl-contract-table">
+                        <thead>
+                            <tr>
+                                <th>Véhicule Spécial de Tournage</th>
+                                <th>Configuration Caméra</th>
+                                <th>Valeur de Référence (HT)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Renault Twizy Caméra Car</strong></td>
+                                <td>Rigging tubulaire complet, plates Arri, batteries régulées</td>
+                                <td>45 000 € HT</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Stark Varg Moto Électrique de Tracking</strong></td>
+                                <td>Support stabilisateur Ronin / MōVI, kit tout-terrain</td>
+                                <td>35 000 € HT</td>
+                            </tr>
+                            <tr>
+                                <td><strong>E-Trikes Électriques</strong></td>
+                                <td>Configuration opérateur assise basse / haute, harnais de sécurité</td>
+                                <td>25 000 € HT</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Segways Gyrostabilisés</strong></td>
+                                <td>Plates Steadicam / gimbal, commandes déportées</td>
+                                <td>15 000 € HT</td>
+                            </tr>
+                            <tr>
+                                <td><strong>E-Rickshaw Triporteur Caméra</strong></td>
+                                <td>Plateforme opérateur 360°, potence travelling</td>
+                                <td>25 000 € HT</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h2>ANNEXE 2 – DÉCHARGE DE RESPONSABILITÉ PRODUCTION</h2>
+                    <p>La décharge de responsabilité signée par la Société de Production fait corps avec les présentes CGL et en complète les engagements opérationnels sur le tournage.</p>
+
+                    <h2>ANNEXE 3 – DÉCHARGE DE RESPONSABILITÉ PILOTE</h2>
+                    <p>Chaque pilote habilité par le Locataire pour conduire les Véhicules souscrit préalablement la Décharge de Responsabilité Pilote certifiant ses qualifications et permis.</p>
+                </div>
+            </section>
+
+            <!-- Scellement & Signature -->
+            <section class="pilot-waiver-section">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="cgl_accept_terms">
+                    <label for="cgl_accept_terms">
+                        <strong>Je déclare avoir pris connaissance et accepter sans réserve l'intégralité des Conditions Générales de Location de Belle Vitesse et de ses Annexes au nom du Locataire ci-dessus mentionné.</strong><br>
+                        Je certifie l'exactitude des informations juridiques fournies et atteste disposer de tous les pouvoirs nécessaires pour engager valablement la société.
+                    </label>
+                </div>
+
+                <div class="pilot-waiver-sign-canvas-wrapper u-mt-2">
+                    <canvas id="cgl-signature-canvas"></canvas>
+                </div>
+
+                <div class="pilot-waiver-sign-actions">
+                    <button type="button" class="pilot-waiver-btn pilot-waiver-btn--secondary" id="cgl-btn-clear">
+                        <i data-lucide="rotate-ccw"></i>
+                        <span>Effacer</span>
+                    </button>
+                    <button type="button" class="pilot-waiver-btn pilot-waiver-btn--primary" id="cgl-btn-sign">
+                        <i data-lucide="file-signature"></i>
+                        <span>Signer et sceller les CGL</span>
+                    </button>
+                </div>
+            </section>
+
+            <div id="feedback" class="feedback-box"></div>
+
+        </form>
+        {% endif %}
+
+        {% include 'public/signature_footer.html' %}
+    </div>
+
+    <!-- Scripts externes modulaires (sans aucun JS inline) -->
+    <script src="https://unpkg.com/lucide@1.48.0/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="{{ asset_url('js/src/common/signature-pad-controller.js') }}"></script>
+    <script src="{{ asset_url('js/src/ui-utils.js') }}"></script>
+    <script src="{{ asset_url('js/src/public/sign-cgl.js') }}"></script>
+</body>
+
+</html>

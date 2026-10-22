@@ -19,13 +19,11 @@ from models import (
     CheckoutToken,
     # Inspections
     CheckoutVehicle,
-    # Waivers
-    PilotWaiver,
-    PilotWaiverSignedDocument,
-    PilotWaiverToken,
-    ProductionWaiver,
-    ProductionWaiverSignedDocument,
-    ProductionWaiverToken,
+    # Waivers & CGL
+    CglWaiver,
+    SafetyRulesWaiver,
+    WaiverToken,
+    WaiverSignedDocument,
     # Incidents
     Incident,
     IncidentToken,
@@ -49,11 +47,15 @@ from utils.signature_storage import (
 )
 from utils.storage import (
     ensure_dir,
+    get_cgl_path,
+    get_safety_rules_path,
     get_checkin_path,
     get_checkout_path,
     get_incident_path,
-    get_pilot_waiver_path,
-    get_production_waiver_path,
+)
+from services.admin.safety_rules_config import (
+    get_safety_rules_for_vehicles,
+    DEFAULT_HELMETS_INVENTORY,
 )
 
 logger = logging.getLogger(__name__)
@@ -83,28 +85,29 @@ FLOW_CONFIG = {
         "template": "pdf/checkin.html",
         "pk_name": "inspection_id",
     },
-    "pilot": {
-        "model": PilotWaiver,
-        "token_model": PilotWaiverToken,
-        "signed_model": PilotWaiverSignedDocument,
-        "prefix": "WAIVER",
-        "url_path": "pilot-waiver",
-        "storage_func": get_pilot_waiver_path,
-        "stylesheets": [],  # Utilise des styles en ligne ou globaux pour les décharges
-        "template": "pdf/pilot_waiver.html",
+    "cgl": {
+        "model": CglWaiver,
+        "token_model": WaiverToken,
+        "signed_model": WaiverSignedDocument,
+        "prefix": "BVRA",
+        "url_path": "cgl",
+        "storage_func": get_cgl_path,
+        "stylesheets": ["css/styles.css", "css/admin/cgl-pdf.css"],
+        "template": "pdf/cgl.html",
         "pk_name": "waiver_id",
     },
-    "production": {
-        "model": ProductionWaiver,
-        "token_model": ProductionWaiverToken,
-        "signed_model": ProductionWaiverSignedDocument,
-        "prefix": "WAIVER_PROD",
-        "url_path": "production-waiver",
-        "storage_func": get_production_waiver_path,
-        "stylesheets": [],  # Utilise des styles en ligne ou globaux pour les décharges
-        "template": "pdf/production_waiver.html",
+    "safety_rules": {
+        "model": SafetyRulesWaiver,
+        "token_model": WaiverToken,
+        "signed_model": WaiverSignedDocument,
+        "prefix": "BVSR",
+        "url_path": "safety-rules",
+        "storage_func": get_safety_rules_path,
+        "stylesheets": ["css/styles.css", "css/admin/safety-rules-pdf.css"],
+        "template": "pdf/safety_rules.html",
         "pk_name": "waiver_id",
     },
+
     "incident": {
         "model": Incident,
         "token_model": IncidentToken,
@@ -262,8 +265,9 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         # 2. Déport de la signature binaire sur disque en fichier PNG
         document_id = getattr(
             record, "inspection_number", getattr(record, "waiver_id", f"{mode}_{record.id}"))
-        entity_type = "waivers" if mode in ["pilot", "production"] else (
-            "checkouts" if mode == "checkout" else "checkins")
+        entity_type = "waivers" if mode in ["cgl", "safety_rules"] else (
+            "checkouts" if mode == "checkout" else "checkins"
+        )
         sig_file_rel_path = save_signature_image(
             signature_data, entity_type=entity_type, record_id=document_id)
         if hasattr(record, "signature_data"):
@@ -290,7 +294,7 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
             "signature": sig_data_uri,
             "qr": qr_code_img,
             "hash": current_hash,
-            "document_hash": current_hash,  # utilisé pour les décharges
+            "document_hash": current_hash,  # utilisé pour les décharges et CGL
             "verification_url": verification_url,
             "signed_at_str": signed_at.strftime("%d/%m/%Y %H:%M"),
             "signed_ip": signed_ip,
@@ -302,14 +306,27 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
             "company_address": AppSetting.get("company_address", ""),
             "company_phone": AppSetting.get("company_phone", ""),
             "company_email": AppSetting.get("company_email", ""),
+            "company_capital": AppSetting.get("company_capital", "1 000 €"),
+            "company_rcs": AppSetting.get("company_rcs", ""),
             "bank_iban": AppSetting.get("bank_iban", ""),
             "bank_bic": AppSetting.get("bank_bic", ""),
         }
         # Ajout des données spécifiques au flux
         if mode in ["checkout", "checkin"]:
             render_ctx["data"] = snapshot
+        elif mode == "cgl":
+            render_ctx["cgl"] = record
+            render_ctx["waiver"] = record
+        elif mode == "safety_rules":
+            render_ctx["safety_rules"] = record
+            render_ctx["waiver"] = record
+            render_ctx["vehicle_rules"] = get_safety_rules_for_vehicles(record.vehicles_details)
+            render_ctx["helmets"] = record.helmets_inventory or DEFAULT_HELMETS_INVENTORY
+            render_ctx["safety_technicians"] = record.safety_technicians or ""
+            render_ctx["bv_signature"] = record.bv_signature_data_uri
         else:
             render_ctx["waiver"] = record
+
 
         project_obj = getattr(record, "project", None)
         pdf_dir = ensure_dir(config["storage_func"](project_obj))
@@ -394,11 +411,9 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
             stylesheets=config["stylesheets"],
             compress=True,
             filename=filename,
-            entity_type="waiver" if mode in [
-                "pilot", "production"] else "inspection",
+            entity_type="waiver" if mode in ["cgl", "safety_rules"] else "inspection",
             entity_id=document_id,
-            post_action="waiver_post_actions" if mode in [
-                "pilot", "production"] else "inspection_post_actions",
+            post_action="waiver_post_actions" if mode in ["cgl", "safety_rules"] else "inspection_post_actions",
             extra_context={
                 "mode": mode,
                 "rel_pdf_path": rel_pdf_path,
@@ -430,19 +445,19 @@ def _build_flow_data(mode, record, extra_data):
         seal_args = [data["vehicle_id"]]
         return data, seal_args
 
-    elif mode == "pilot":
-        full_name = f"{record.pilot_first_name} {record.pilot_last_name}"
-        seal_args = [full_name, record.pilot_license_number or ""]
-        # Snapshot pour les décharges
+    elif mode == "safety_rules":
+        signer_name = record.signer_name if hasattr(record, "signer_name") else "Intervenant"
+        role_label = record.signer_role_label if hasattr(record, "signer_role_label") else "Intervenant"
+        seal_args = [signer_name, role_label]
         snapshot = {
-            "_seal_pilot_name": full_name,
-            "_seal_license": record.pilot_license_number or "",
+            "_seal_signer_name": signer_name,
+            "_seal_signer_role": role_label,
             "project": record.project_name or (record.project.name if record.project else "—"),
-            "production": record.production_name or (record.project.production.name if record.project and record.project.production else "—"),
+            "production": record.display_production_name if hasattr(record, "display_production_name") else "—",
         }
         return snapshot, seal_args
 
-    elif mode == "production":
+    elif mode == "cgl":
         seal_args = [record.production_name or "",
                      record.production_representative or ""]
         snapshot = {
@@ -457,7 +472,7 @@ def _build_flow_data(mode, record, extra_data):
 
 
 def process_waiver_signature(mode, record_id):
-    """Aide historique pour les décharges où les données sont déjà sur l'enregistrement."""
+    """Aide pour les décharges où les données sont déjà sur l'enregistrement."""
     config = FLOW_CONFIG.get(mode)
     record = db.session.get(config["model"], record_id)
     return finalize_signed_document(
@@ -519,10 +534,14 @@ def _send_waiver_confirmation_email(mode, waiver, pdf_path):
         recipient_email = None
         recipient_name = None
 
-        if mode == "pilot":
-            if waiver.project and waiver.project.pilot_contact:
-                recipient_email = waiver.project.pilot_contact.mail
-            recipient_name = f"{waiver.pilot_first_name} {waiver.pilot_last_name}"
+        if mode == "safety_rules":
+            recipient_email = getattr(waiver, "signer_email", None)
+            recipient_name = waiver.signer_name
+            if not recipient_email and waiver.project:
+                if waiver.project.pilot_contact and getattr(waiver, "signer_role", None) == "pilot":
+                    recipient_email = waiver.project.pilot_contact.mail
+                elif waiver.project.production_contact:
+                    recipient_email = waiver.project.production_contact.mail
         else:
             if waiver.project and waiver.project.production_contact:
                 recipient_email = waiver.project.production_contact.mail

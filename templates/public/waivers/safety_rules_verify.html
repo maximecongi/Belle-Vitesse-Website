@@ -13,7 +13,7 @@
     <meta name="apple-mobile-web-app-title" content="Belle Vitesse" />
     <link rel="manifest" href="/static/imgs/favicons/site.webmanifest" />
 
-    <title>Vérification Décharge Production — Belle Vitesse</title>
+    <title>Vérification Règles de Sécurité Universelles (BVSR) — Belle Vitesse</title>
     <link rel="stylesheet" href="{{ asset_url('css/styles.css') }}">
     <link rel="stylesheet" href="{{ asset_url('css/checkout.css') }}">
     <link rel="stylesheet" href="{{ asset_url('css/verification.css') }}">
@@ -30,41 +30,35 @@
                     alt="Belle Vitesse">
             </div>
             <div class="checkout-header-meta">
-                <strong class="dot-before">Vérification de Décharge Production</strong><br>
+                <strong class="dot-before">Vérification Règles de Sécurité (BVSR)</strong><br>
                 <span class="checkout-doc-id">{{ inspection_id }}</span>
             </div>
         </header>
 
         <!-- ── Badge sceau de données ── -->
-        {{ vmacro.seal_banner(seal_valid, ok_label="Données Certifiées & Intactes", error_label="Sceau Invalide —
-        Données Altérées", ok_hint="Le sceau cryptographique correspond. Les données n'ont pas été modifiées depuis la
-        signature.", error_hint="Le sceau ne correspond pas à l'enregistrement. Les données peuvent avoir été modifiées
-        après signature.") }}
+        {{ vmacro.seal_banner(seal_valid, ok_label="Règles BVSR Scellées & Intactes", error_label="Sceau Invalide — Données Altérées", ok_hint="Le sceau cryptographique correspond. L'engagement de l'intervenant aux règles de sécurité n'a pas été modifié depuis sa signature.", error_hint="Le sceau ne correspond pas à l'enregistrement original. Le document ou ses données ont pu être altérés.") }}
 
         <!-- ── Badge résultat vérification PDF (après upload) ── -->
         {{ vmacro.pdf_verification_result(pdf_valid, pdf_error) }}
 
         <!-- ── Données scellées ── -->
         <section class="checkout-section">
-            <h2 class="checkout-section-title dot-before">Données Scellées</h2>
+            <h2 class="checkout-section-title dot-before">Données de l'Engagement Scellé</h2>
             <div class="checkout-info-grid">
                 <div class="checkout-info-item">
-                    <span class="checkout-info-label">Production</span>
-                    <span class="checkout-info-value">{{ data.production_name or data.production or
-                        data._seal_production_name or (waiver.production_name if waiver else '—') }}</span>
+                    <span class="checkout-info-label">Intervenant / Signataire</span>
+                    <span class="checkout-info-value">{{ data.signer_name or data._seal_signer_name or data._seal_pilot_name or (waiver.signer_name if waiver else '—') }}</span>
                 </div>
                 <div class="checkout-info-item">
-                    <span class="checkout-info-label">Représentant</span>
-                    <span class="checkout-info-value">{{ data.representative or data._seal_representative or
-                        (waiver.production_representative if waiver else '—') }}</span>
+                    <span class="checkout-info-label">Rôle / Fonction</span>
+                    <span class="checkout-info-value">{{ data.signer_role_label or data._seal_signer_role or (waiver.signer_role_label if waiver else '—') }}</span>
                 </div>
                 <div class="checkout-info-item">
                     <span class="checkout-info-label">Projet</span>
-                    <span class="checkout-info-value">{{ data.project_name or data.project or project_name or
-                        (waiver.project_name if waiver else '—') }}</span>
+                    <span class="checkout-info-value">{{ data.project_name or data.project or project_name or (waiver.project_name if waiver else '—') }}</span>
                 </div>
                 <div class="checkout-info-item">
-                    <span class="checkout-info-label">Signé le</span>
+                    <span class="checkout-info-label">Date &amp; Heure de Signature</span>
                     <span class="checkout-info-value">
                         {% if data.signed_at and data.signed_at.strftime %}
                         {{ data.signed_at.strftime('%d/%m/%Y %H:%M') }}
@@ -75,33 +69,34 @@
                         {% endif %}
                     </span>
                 </div>
-                {% if data.location_of_use or (waiver and waiver.location_of_use) %}
+                {% if pdf_download_url %}
                 <div class="checkout-info-item verify-info-item--full">
-                    <span class="checkout-info-label">Lieu d'utilisation</span>
-                    <span class="checkout-info-value">{{ data.location_of_use or waiver.location_of_use }}</span>
+                    <span class="checkout-info-label">Document PDF Certifié</span>
+                    <span class="checkout-info-value">
+                        <a href="{{ pdf_download_url }}" class="checkout-btn checkout-btn--primary u-mt-1" target="_blank" rel="noopener noreferrer">
+                            <i data-lucide="download"></i> Télécharger l'exemplaire signé (PDF)
+                        </a>
+                    </span>
                 </div>
                 {% endif %}
             </div>
         </section>
 
+        <!-- ── Empreinte Cryptographique ── -->
+        {{ vmacro.crypto_fingerprints(document_hash, signed_doc.pdf_file_hash, title="Sceau Cryptographique & Horodatage") }}
+
         <!-- ═══════════ UPLOAD VÉRIFICATION PDF ═══════════ -->
-        {{ vmacro.pdf_upload_verifier(has_pdf_hash, old_notice="Ce document a été signé avant l'introduction de la
-        vérification par empreinte PDF. Seul le sceau de données est disponible.") }}
+        {{ vmacro.pdf_upload_verifier(has_pdf_hash, old_notice="Ce document a été signé avant l'enregistrement de l'empreinte de fichier PDF. Seul le sceau de données est actif.") }}
 
         <!-- ═══════════ FOOTER ═══════════ -->
         <footer class="checkout-footer verify-footer">
-            <p><strong>{{ company_name or 'Belle Vitesse SAS' }}</strong> — {{ company_address or '39 rue Maurice
-                Gunsbourg, 94200 Ivry-sur-Seine' }}</p>
+            <p><strong>{{ company_name or 'Belle Vitesse SAS' }}</strong> — {{ company_address or '39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine' }}</p>
         </footer>
 
     </div>
 
     <script src="https://unpkg.com/lucide@1.48.0/dist/umd/lucide.min.js"></script>
-    <script>
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-        }
-    </script>
+    <script src="{{ asset_url('js/src/ui-utils.js') }}"></script>
 </body>
 
 </html>

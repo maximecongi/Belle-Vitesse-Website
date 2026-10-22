@@ -57,11 +57,11 @@
             <div class="info-line"><strong>Production :</strong> {{ production_name }}</div>
             {% endif %}
             {% if display_name %}
-            {% set role_label = recipient_label or ('Pilote' if type_title == 'Pilote' else ('Contact production' if type_title == 'Production' else 'Destinataire')) %}
+            {% set role_label = recipient_label or 'Signataire' %}
             <div class="info-line"><strong>{{ role_label }} :</strong> {{ display_name }}</div>
             {% endif %}
             {% if type_title %}
-            <div class="info-line"><strong>Type de décharge :</strong> {{ type_title }}</div>
+            <div class="info-line"><strong>Document :</strong> {{ type_title }}</div>
             {% endif %}
             <div class="info-line"><strong>Statut :</strong> <span class="badge {{ status_badge_class }}">{{ status_label }}</span></div>
         </td>

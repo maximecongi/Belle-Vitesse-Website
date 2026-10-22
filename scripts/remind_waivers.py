@@ -43,27 +43,27 @@ def run_reminders(days_before: int = 2, dry_run: bool = False):
             )
 
             if dry_run:
-                # En mode dry-run, on affiche les décharges éligibles sans générer de tokens ni envoyer d'emails
+                # En mode dry-run, on affiche les documents éligibles sans générer de tokens ni envoyer d'emails
                 from datetime import date, timedelta
-                from models import PilotWaiver, ProductionWaiver, Project
+                from models import CglWaiver, SafetyRulesWaiver, Project
                 from sqlalchemy.orm import joinedload
 
                 today = date.today()
                 target_limit = today + timedelta(days=days_before)
                 print(f"   Fenêtre d'échéance : du {today.strftime('%d/%m/%Y')} au {target_limit.strftime('%d/%m/%Y')}")
 
-                # Productions
-                prods = (
-                    ProductionWaiver.query.filter(
-                        ProductionWaiver.deleted_at.is_(None),
-                        ProductionWaiver.status.in_(["to_send", "to_sign"]),
+                # 1. Contrats de Location (BVRA / CGL)
+                cgls = (
+                    CglWaiver.query.filter(
+                        CglWaiver.deleted_at.is_(None),
+                        CglWaiver.status.in_(["to_send", "to_sign"]),
                     )
-                    .options(joinedload(ProductionWaiver.project).joinedload(Project.production_contact))
+                    .options(joinedload(CglWaiver.project).joinedload(Project.production_contact))
                     .all()
                 )
-                prod_count = 0
-                for pw in prods:
-                    p = pw.project
+                cgl_count = 0
+                for cw in cgls:
+                    p = cw.project
                     if not p or p.deleted_at is not None:
                         continue
                     start_dates = [d for d in (p.departure_date, p.shoot_start_date) if d]
@@ -76,22 +76,22 @@ def run_reminders(days_before: int = 2, dry_run: bool = False):
                     if p_start <= target_limit and today <= p_end:
                         contact = p.production_contact
                         mail = contact.mail if contact else "AUCUN EMAIL"
-                        already = " (déjà relancée aujourd'hui)" if (pw.last_reminded_at and pw.last_reminded_at.date() == today) else ""
-                        print(f"   [PROD] Projet: {p.name} | Décharge: {pw.waiver_id} | Contact: {mail} | Départ: {p_start} (Fin: {p_end}){already}")
-                        prod_count += 1
+                        already = " (déjà relancée aujourd'hui)" if (cw.last_reminded_at and cw.last_reminded_at.date() == today) else ""
+                        print(f"   [BVRA] Projet: {p.name} | Contrat: {cw.waiver_id} | Production: {mail} | Départ: {p_start} (Fin: {p_end}){already}")
+                        cgl_count += 1
 
-                # Pilotes
-                pilots = (
-                    PilotWaiver.query.filter(
-                        PilotWaiver.deleted_at.is_(None),
-                        PilotWaiver.status.in_(["to_send", "to_sign"]),
+                # 2. Règles de Sécurité Universelles (BVSR)
+                safety_rules = (
+                    SafetyRulesWaiver.query.filter(
+                        SafetyRulesWaiver.deleted_at.is_(None),
+                        SafetyRulesWaiver.status.in_(["to_send", "to_sign"]),
                     )
-                    .options(joinedload(PilotWaiver.project).joinedload(Project.pilot_contact))
+                    .options(joinedload(SafetyRulesWaiver.project))
                     .all()
                 )
-                pilot_count = 0
-                for dw in pilots:
-                    p = dw.project
+                safety_count = 0
+                for sr in safety_rules:
+                    p = sr.project
                     if not p or p.deleted_at is not None:
                         continue
                     start_dates = [d for d in (p.departure_date, p.shoot_start_date) if d]
@@ -102,22 +102,25 @@ def run_reminders(days_before: int = 2, dry_run: bool = False):
                     p_end = max(end_dates) if end_dates else p_start
 
                     if p_start <= target_limit and today <= p_end:
-                        pilot = p.pilot_contact
-                        mail = pilot.mail if pilot else "AUCUN EMAIL"
-                        already = " (déjà relancée aujourd'hui)" if (dw.last_reminded_at and dw.last_reminded_at.date() == today) else ""
-                        print(f"   [PILOTE] Projet: {p.name} | Décharge: {dw.waiver_id} | Pilote: {mail} | Départ: {p_start} (Fin: {p_end}){already}")
-                        pilot_count += 1
+                        mail = sr.signer_email or (p.pilot_contact.mail if sr.signer_role == "pilot" and p.pilot_contact else "AUCUN EMAIL")
+                        already = " (déjà relancé aujourd'hui)" if (sr.last_reminded_at and sr.last_reminded_at.date() == today) else ""
+                        print(f"   [BVSR] Projet: {p.name} | Doc: {sr.waiver_id} | Signataire: {sr.signer_name} ({sr.signer_role}) -> {mail} | Départ: {p_start} (Fin: {p_end}){already}")
+                        safety_count += 1
 
-                print(f"[{datetime.now()}] ℹ️ Total éligible : {prod_count} production(s), {pilot_count} pilote(s).")
-                return {"production_reminders_sent": prod_count, "pilot_reminders_sent": pilot_count}
+                print(f"[{datetime.now()}] ℹ️ Total éligible : {cgl_count} contrat(s) BVRA, {safety_count} engagement(s) BVSR.")
+                return {
+                    "cgl_reminders_sent": cgl_count,
+                    "safety_rules_reminders_sent": safety_count,
+                    "total_reminders_sent": cgl_count + safety_count,
+                }
 
             # Mode envoi normal
             results = auto_remind_pending_waivers(days_before=days_before, base_url=base_url)
-            prod_sent = results.get("production_reminders_sent", 0)
-            pilot_sent = results.get("pilot_reminders_sent", 0)
+            cgl_sent = results.get("cgl_reminders_sent", 0)
+            safety_sent = results.get("safety_rules_reminders_sent", 0)
             print(
                 f"[{datetime.now()}] ✅ Relances terminées avec succès : "
-                f"{prod_sent} production(s), {pilot_sent} pilote(s)."
+                f"{cgl_sent} contrat(s) BVRA, {safety_sent} engagement(s) BVSR."
             )
             for d in results.get("details", []):
                 print(

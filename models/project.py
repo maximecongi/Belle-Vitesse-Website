@@ -133,12 +133,12 @@ class Project(db.Model):
     # Décharges associées au projet
     waivers = db.relationship(
         "Waiver", backref="project", cascade="all, delete-orphan", lazy=True)
-    # Décharge pilote associée (unique pour le projet)
-    pilot_waiver = db.relationship(
-        "PilotWaiver", uselist=False, lazy=True, overlaps="project,waivers")
-    # Décharge production associée (unique pour le projet)
-    production_waiver = db.relationship(
-        "ProductionWaiver", uselist=False, lazy=True, overlaps="project,waivers,pilot_waiver")
+    # Contrat Cadre / CGL (Rental Agreement - BVRA) associé (unique pour le projet)
+    cgl = db.relationship(
+        "CglWaiver", uselist=False, lazy=True, overlaps="project,waivers")
+    # Règles de sécurité universelles associées (BVSR, multiples possibles pour le projet)
+    safety_rules = db.relationship(
+        "SafetyRulesWaiver", lazy=True, order_by="SafetyRulesWaiver.id", overlaps="project,waivers")
     # Utilisateur ayant effectué la dernière action
     last_action_by = db.relationship(
         "User", foreign_keys=[last_action_by_id], lazy=True)
@@ -157,14 +157,17 @@ class Project(db.Model):
         return [c for c in (self.checkin_vehicles or []) if getattr(c, "deleted_at", None) is None]
 
     @property
-    def active_pilot_waiver(self):
-        """Retourne la décharge pilote si elle existe et n'a pas été supprimée."""
-        return self.pilot_waiver if (self.pilot_waiver and getattr(self.pilot_waiver, "deleted_at", None) is None) else None
+    def active_cgl(self):
+        """Retourne le contrat CGL / Rental Agreement (BVRA) si il existe et n'a pas été supprimé."""
+        return self.cgl if (self.cgl and getattr(self.cgl, "deleted_at", None) is None) else None
+
+
 
     @property
-    def active_production_waiver(self):
-        """Retourne la décharge production si elle existe et n'a pas été supprimée."""
-        return self.production_waiver if (self.production_waiver and getattr(self.production_waiver, "deleted_at", None) is None) else None
+    def active_safety_rules(self):
+        """Retourne la liste des règles de sécurité universelles (BVSR) actives pour ce projet."""
+        return [sr for sr in (self.safety_rules or []) if getattr(sr, "deleted_at", None) is None]
+
 
     @property
     def kdrive_web_url(self):

@@ -66,36 +66,19 @@ def get_checkout_photos_path(project, inspection_number):
     return get_checkout_path(project) / "PHOTOS" / inspection_number
 
 
-def get_pilot_waiver_path(project):
-    """output / ... / 1_SÉCURITÉ / 2_DÉCHARGE_PILOTE / 1_DÉCHARGE"""
-    return get_security_path(project) / "2_DÉCHARGE_PILOTE" / "1_DÉCHARGE"
+def get_cgl_path(project):
+    """output / ... / 1_SÉCURITÉ / 0_CGL / 1_CGL"""
+    return get_security_path(project) / "0_CGL" / "1_CGL"
 
 
-def get_pilot_attachments_path(project, doc_type):
-    """
-    doc_type : assurance, licence, identité
-    """
-    mapping = {
-        "insurance": "2_ATTESTATION_ASSURANCE",
-        "license": "3_PERMIS_DE_CONDUIRE",
-        "identity": "4_CARTE_IDENTITÉ"
-    }
-    return get_security_path(project) / "2_DÉCHARGE_PILOTE" / mapping.get(doc_type, "AUTRES")
+def get_cgl_attachments_path(project, doc_type="insurance"):
+    """output / ... / 1_SÉCURITÉ / 0_CGL / 2_ATTESTATION_ASSURANCE"""
+    return get_security_path(project) / "0_CGL" / "2_ATTESTATION_ASSURANCE"
 
 
-def get_production_waiver_path(project):
-    """output / ... / 1_SÉCURITÉ / 3_DÉCHARGE_PRODUCTION / 1_DÉCHARGE"""
-    return get_security_path(project) / "3_DÉCHARGE_PRODUCTION" / "1_DÉCHARGE"
-
-
-def get_production_attachments_path(project, doc_type):
-    """
-    doc_type : assurance
-    """
-    mapping = {
-        "insurance": "2_ATTESTATION_ASSURANCE"
-    }
-    return get_security_path(project) / "3_DÉCHARGE_PRODUCTION" / mapping.get(doc_type, "AUTRES")
+def get_safety_rules_path(project):
+    """output / ... / 1_SÉCURITÉ / 2_RÈGLES_SÉCURITÉ"""
+    return get_security_path(project) / "2_RÈGLES_SÉCURITÉ"
 
 
 def get_checkin_path(project):

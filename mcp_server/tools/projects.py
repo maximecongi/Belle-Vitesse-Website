@@ -58,10 +58,10 @@ def _format_project_summary(p: Dict[str, Any]) -> Dict[str, Any]:
         },
         "vehicles_count": len(p.get("vehicles", [])),
         "heads_count": len(p.get("heads", [])),
-        "waivers": {
-            "pilot_status": p.get("pilot_waiver", {}).get("status", "—"),
-            "production_status": p.get("production_waiver", {}).get("status", "—"),
+        "cgl": {
+            "status": p.get("cgl_status", "—"),
         },
+        "safety_rules_count": p.get("safety_rules_count", 0),
     }
 
 
@@ -204,26 +204,27 @@ def get_project(project_id: Any) -> Optional[Dict[str, Any]]:
             "phone": c.phone or "",
         }
 
-    # Statut décharges
-    pilot_waiver_data = None
-    if project.pilot_waiver:
-        pw = project.pilot_waiver
-        pilot_waiver_data = {
-            "waiver_id": pw.waiver_id,
-            "status": pw.status,
-            "signed_at": pw.signed_at.isoformat() if pw.signed_at else None,
-            "signed_pdf_url": pw.signed_pdf_path if pw.signed_pdf_path else None,
+    # Statut CGL et Règles de sécurité
+    cgl_data = None
+    if project.active_cgl:
+        cgl = project.active_cgl
+        cgl_data = {
+            "waiver_id": cgl.waiver_id,
+            "status": cgl.status,
+            "signed_at": cgl.signed_at.isoformat() if cgl.signed_at else None,
+            "signed_pdf_url": cgl.signed_pdf_path if cgl.signed_pdf_path else None,
         }
 
-    production_waiver_data = None
-    if project.production_waiver:
-        prw = project.production_waiver
-        production_waiver_data = {
-            "waiver_id": prw.waiver_id,
-            "status": prw.status,
-            "signed_at": prw.signed_at.isoformat() if prw.signed_at else None,
-            "signed_pdf_url": prw.signed_pdf_path if prw.signed_pdf_path else None,
-        }
+    safety_rules_data = []
+    if project.active_safety_rules:
+        for sr in project.active_safety_rules:
+            safety_rules_data.append({
+                "waiver_id": sr.waiver_id,
+                "signer_name": sr.signer_name,
+                "signer_role": sr.signer_role,
+                "status": sr.status,
+                "signed_at": sr.signed_at.isoformat() if sr.signed_at else None,
+            })
 
     production_data = None
     if project.production:
@@ -235,7 +236,7 @@ def get_project(project_id: Any) -> Optional[Dict[str, Any]]:
             "phone": project.production.phone or "",
         }
 
-    # Format de retour enrichi tout en conservant les clés legacy
+    # Format de retour enrichi
     return {
         "success": True,
         "id": project.id,
@@ -246,7 +247,6 @@ def get_project(project_id: Any) -> Optional[Dict[str, Any]]:
         "shoot_start_date": project.shoot_start_date.strftime("%Y-%m-%d") if project.shoot_start_date else None,
         "shoot_end_date": project.shoot_end_date.strftime("%Y-%m-%d") if project.shoot_end_date else None,
         "return_date": project.return_date.strftime("%Y-%m-%d") if project.return_date else None,
-        # Compatibilité formulaires et scripts existants
         "departure_date_raw": str(project.departure_date) if project.departure_date else "",
         "shoot_start_raw": str(project.shoot_start_date) if project.shoot_start_date else "",
         "shoot_end_raw": str(project.shoot_end_date) if project.shoot_end_date else "",
@@ -259,7 +259,6 @@ def get_project(project_id: Any) -> Optional[Dict[str, Any]]:
         "key_grip_contact_id": project.key_grip_contact_id,
         "vehicle_ids": veh_ids,
         "head_ids": head_ids,
-        # Données enrichies
         "production": production_data,
         "production_name": project.production.name if project.production else "Non assignée",
         "assigned_contacts": {
@@ -271,10 +270,8 @@ def get_project(project_id: Any) -> Optional[Dict[str, Any]]:
         },
         "vehicles": resolved_vehicles,
         "heads": resolved_heads,
-        "waivers": {
-            "pilot": pilot_waiver_data,
-            "production": production_waiver_data,
-        },
+        "cgl": cgl_data,
+        "safety_rules": safety_rules_data,
     }
 
 
@@ -367,10 +364,8 @@ def get_project_hub(project_id: Any, compact: bool = True) -> Optional[Dict[str,
             "heads_count": len(heads_list),
             "heads": heads_list,
         },
-        "waivers": {
-            "pilot": context.get("pilot_waiver"),
-            "production": context.get("production_waiver"),
-        },
+        "cgl": context.get("cgl"),
+        "safety_rules": context.get("safety_rules", []),
         "incidents": context.get("incidents", []),
         "reports_count": context.get("reports_count", 0),
         "reports": context.get("reports", []),
@@ -612,7 +607,7 @@ def get_dashboard_summary() -> Dict[str, Any]:
     - Pré-devis récents en attente
     """
     from datetime import timedelta
-    from models import Project, PilotWaiver, ProductionWaiver
+    from models import Project
 
     today = date.today()
     in_15_days = today + timedelta(days=15)
@@ -648,22 +643,23 @@ def get_dashboard_summary() -> Dict[str, Any]:
                     "shoot_end": str(p.shoot_end_date or ""),
                 })
 
-    # Décharges en attente pour projets non supprimés
-    pending_pilot_waivers = (
-        PilotWaiver.query.join(Project)
+    # CGL et règles de sécurité en attente pour projets non supprimés
+    from models import CglWaiver, SafetyRulesWaiver
+    pending_cgl_waivers = (
+        CglWaiver.query.join(Project)
         .filter(
-            PilotWaiver.deleted_at.is_(None),
+            CglWaiver.deleted_at.is_(None),
             Project.deleted_at.is_(None),
-            PilotWaiver.status != "signed",
+            CglWaiver.status != "signed",
         )
         .count()
     )
-    pending_prod_waivers = (
-        ProductionWaiver.query.join(Project)
+    pending_safety_rules = (
+        SafetyRulesWaiver.query.join(Project)
         .filter(
-            ProductionWaiver.deleted_at.is_(None),
+            SafetyRulesWaiver.deleted_at.is_(None),
             Project.deleted_at.is_(None),
-            ProductionWaiver.status != "signed",
+            SafetyRulesWaiver.status != "signed",
         )
         .count()
     )
@@ -675,9 +671,9 @@ def get_dashboard_summary() -> Dict[str, Any]:
         "upcoming_shoots_15d_count": len(upcoming_15d),
         "upcoming_shoots_15d": upcoming_15d,
         "pending_waivers": {
-            "pilot_count": pending_pilot_waivers,
-            "production_count": pending_prod_waivers,
-            "total": pending_pilot_waivers + pending_prod_waivers,
+            "cgl_count": pending_cgl_waivers,
+            "safety_rules_count": pending_safety_rules,
+            "total": pending_cgl_waivers + pending_safety_rules,
         },
     }
 

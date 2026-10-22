@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>BVSR — {{ waiver.waiver_id }} — {{ waiver.display_project_name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/safety-rules-pdf.css') }}">
+</head>
+
+<body class="bvsr-container">
+    <div class="bvsr-document">
+
+        <!-- ═══════════ EN-TÊTE ═══════════ -->
+        <header class="bvsr-header">
+            <div class="bvsr-header-logo">
+                <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
+                    alt="{{ company_name }}">
+            </div>
+            <div class="bvsr-header-meta">
+                <span class="bvsr-confidential-tag">Protocole Sécurité Tournage</span><br>
+                <span class="bvsr-header-doc-id">{{ waiver.waiver_id }}</span><br>
+                <span class="bvsr-meta-project">Projet : {{ waiver.display_project_name }}</span><br>
+                <span>Dates : {{ waiver.display_shooting_dates }}</span><br>
+                <span>Production : {{ waiver.display_production_name }}</span>
+            </div>
+        </header>
+
+        <!-- ═══════════ BANNIÈRE TITRE ═══════════ -->
+        <div class="bvsr-title-banner">
+            <h1 class="bvsr-main-title">Règles de Sécurité Universelles</h1>
+            <div class="bvsr-subtitle-en">Universal Safety Rules &amp; Operational Guidelines</div>
+            <div class="bvsr-signer-badge-strip">
+                <span class="bvsr-pill-signer">Signataire : {{ waiver.signer_name }}</span>
+                <span class="bvsr-pill-role">Rôle : {{ waiver.signer_role_label }}</span>
+                {% if waiver.signer_company %}
+                <span class="bvsr-pill-role">Société : {{ waiver.signer_company }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ═══════════ CADRE DU TOURNAGE & INTERVENANT ═══════════ -->
+        <div class="bvsr-meta-grid">
+            <div class="bvsr-meta-card">
+                <div class="bvsr-meta-card-title">Intervenant / Signataire</div>
+                <div class="bvsr-meta-row"><span class="bvsr-meta-label">Nom complet :</span> <span class="bvsr-meta-value">{{ waiver.signer_name }}</span></div>
+                <div class="bvsr-meta-row"><span class="bvsr-meta-label">Qualité / Fonction :</span> <span class="bvsr-meta-value">{{ waiver.signer_role_label }}</span></div>
+                {% if waiver.signer_email %}
+                <div class="bvsr-meta-row"><span class="bvsr-meta-label">E-mail :</span> <span class="bvsr-meta-value">{{ waiver.signer_email }}</span></div>
+                {% endif %}
+                {% if waiver.signer_phone %}
+                <div class="bvsr-meta-row"><span class="bvsr-meta-label">Téléphone :</span> <span class="bvsr-meta-value">{{ waiver.signer_phone }}</span></div>
+                {% endif %}
+                {% if waiver.signer_company %}
+                <div class="bvsr-meta-row"><span class="bvsr-meta-label">Société / Entité :</span> <span class="bvsr-meta-value">{{ waiver.signer_company }}</span></div>
+                {% endif %}
+            </div>
+
+            <div class="bvsr-meta-card">
+                <div class="bvsr-meta-card-title">Cadre Opérationnel Tournage</div>
+                <div class="bvsr-meta-row"><span class="bvsr-meta-label">Projet / Production :</span> <span class="bvsr-meta-value">{{ waiver.display_project_name }} ({{ waiver.display_production_name }})</span></div>
+                <div class="bvsr-meta-row"><span class="bvsr-meta-label">Période :</span> <span class="bvsr-meta-value">{{ waiver.display_shooting_dates }}</span></div>
+                <div class="bvsr-meta-row"><span class="bvsr-meta-label">Véhicules mobilisés :</span> <span class="bvsr-meta-value">{{ waiver.vehicles or 'Parc Belle Vitesse' }}</span></div>
+                {% if safety_technicians %}
+                <div class="bvsr-meta-row"><span class="bvsr-meta-label">Supervision technique BV :</span> <span class="bvsr-meta-value">{{ safety_technicians }}</span></div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ═══════════ DROIT D'INTERRUPTION ═══════════ -->
+        <div class="bvsr-authority-callout">
+            <div class="bvsr-authority-title">Droit et Devoir d'Interruption / Stop Work Authority</div>
+            <p class="bvsr-authority-text">
+                Toute personne présente sur le tournage (pilote, cadreur, régie, assistant réalisateur ou technicien)
+                a le droit et le devoir strict de demander l’interruption immédiate de toute action ou prise de vues
+                si les conditions de sécurité ne lui paraissent pas réunies. Aucune contrainte artistique ou horaire
+                ne saurait prévaloir sur l’intégrité physique des équipes.
+            </p>
+        </div>
+
+        <!-- ═══════════ SECTION 1 : RÈGLES GÉNÉRALES BILINGUES ═══════════ -->
+        <section class="bvsr-section">
+            <div class="bvsr-section-title-wrap">
+                <h2 class="bvsr-section-title-fr">1. Règles Générales de Sécurité</h2>
+                <span class="bvsr-section-title-en">General Safety Rules</span>
+            </div>
+
+            <div class="bvsr-rules-bilingual-grid">
+                <div class="bvsr-col-fr">
+                    <div class="bvsr-col-header">Français</div>
+                    <ol class="bvsr-rules-list">
+                        <li><strong>Respect des consignes :</strong> Respecter scrupuleusement les instructions opérationnelles du pilote désigné et des techniciens Belle Vitesse.</li>
+                        <li><strong>Sobriété absolue :</strong> Tolérance zéro alcool, stupéfiants ou substances psychotropes altérant la vigilance sur le plateau.</li>
+                        <li><strong>Périmètre et montée :</strong> Interdiction formelle de monter ou descendre d'un véhicule en mouvement. Attendre l'arrêt complet et l'accord du pilote.</li>
+                        <li><strong>Équipements de protection (EPI) :</strong> Port du casque obligatoire pour toute personne sur plateforme extérieure ou véhicule non carrossé.</li>
+                        <li><strong>Ceintures et harnais :</strong> Bouclage obligatoire dès la prise en place et pendant toute la durée du déplacement.</li>
+                        <li><strong>Arrêt d'urgence :</strong> En cas de doute ou d'anomalie perçue, signaler immédiatement l'arrêt par commande vocale ou gestuelle claire.</li>
+                    </ol>
+                </div>
+
+                <div class="bvsr-col-en">
+                    <div class="bvsr-col-header">English</div>
+                    <ol class="bvsr-rules-list">
+                        <li><strong>Instruction compliance :</strong> Strictly comply with operational directions from the designated driver and Belle Vitesse technicians.</li>
+                        <li><strong>Absolute sobriety :</strong> Zero-tolerance policy for alcohol, narcotics, or any alertness-altering substances on set.</li>
+                        <li><strong>Perimeter and boarding :</strong> Strictly prohibited to board or dismount moving vehicles. Await complete standstill and driver clearance.</li>
+                        <li><strong>Personal Protective Equipment (PPE) :</strong> Mandatory certified helmet for anyone on exterior rigs, beds, or unclosed platforms.</li>
+                        <li><strong>Seatbelts and harnesses :</strong> Mandatory buckle-up prior to any vehicle movement and throughout the entire take.</li>
+                        <li><strong>Emergency halt :</strong> In case of doubt or perceived hazard, immediately call for a full stop via clear voice or hand signal.</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════ SECTION 2 : RÈGLES SPÉCIFIQUES VÉHICULES MOBILISÉS ═══════════ -->
+        <section class="bvsr-section">
+            <div class="bvsr-section-title-wrap">
+                <h2 class="bvsr-section-title-fr">2. Règles Spécifiques aux Véhicules Réservés</h2>
+                <span class="bvsr-section-title-en">Vehicle-Specific Guidelines</span>
+            </div>
+
+            {% if vehicle_rules %}
+                {% for vr in vehicle_rules %}
+                <div class="bvsr-vehicle-rule-card">
+                    <div class="bvsr-vehicle-title">{{ vr.label }}</div>
+                    <div class="bvsr-rules-bilingual-grid">
+                        <div class="bvsr-col-fr">
+                            <ul class="bvsr-rules-list">
+                                {% for rfr in vr.rules_fr %}
+                                <li>{{ rfr }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="bvsr-col-en">
+                            <ul class="bvsr-rules-list">
+                                {% for ren in vr.rules_en %}
+                                <li>{{ ren }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="bvsr-vehicle-rule-card">
+                    <div class="bvsr-vehicle-title">Véhicules Techniques Polyvalents / Tracking Vehicles</div>
+                    <div class="bvsr-rules-bilingual-grid">
+                        <div class="bvsr-col-fr">
+                            <ul class="bvsr-rules-list">
+                                <li>Casque obligatoire pour toute personne sur plateforme extérieure ou en roulage dynamique.</li>
+                                <li>Double élingage de sécurité obligatoire pour toute tête caméra embarquée.</li>
+                                <li>Respect scrupuleux de la charge utile maximale et équilibrage des masses.</li>
+                            </ul>
+                        </div>
+                        <div class="bvsr-col-en">
+                            <ul class="bvsr-rules-list">
+                                <li>Helmet mandatory for anyone on exterior rig or during dynamic driving.</li>
+                                <li>Mandatory safety tethering for all camera heads and equipment rigs.</li>
+                                <li>Strict compliance with maximum payload capacity and weight balance.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </section>
+
+        <!-- ═══════════ SECTION 3 : CASQUES & ÉQUIPEMENTS DE PROTECTION ═══════════ -->
+        <section class="bvsr-section">
+            <div class="bvsr-section-title-wrap">
+                <h2 class="bvsr-section-title-fr">3. Inventaire des Équipements de Sécurité Mis à Disposition</h2>
+                <span class="bvsr-section-title-en">Provided Safety Equipment &amp; Helmets</span>
+            </div>
+
+            <div class="bvsr-equipment-box">
+                <div><strong>Dotation casques :</strong> {{ helmets.description_fr if helmets else '6 casques jet ouverts homologués' }}</div>
+                <div class="bvsr-subtitle-en"><strong>Helmet inventory :</strong> {{ helmets.description_en if helmets else '6 certified open face jet helmets' }}</div>
+                {% if helmets and helmets.sizes %}
+                <div class="bvsr-helmets-summary">
+                    {% for size_name, count in helmets.sizes.items() %}
+                    <span class="bvsr-size-pill">Taille {{ size_name }} : {{ count }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- ═══════════ SECTION 4 : SIGNATURES CONTRADICTOIRES ═══════════ -->
+        <section class="bvsr-signatures-section">
+            <div class="bvsr-section-title-wrap">
+                <h2 class="bvsr-section-title-fr">4. Engagement &amp; Signatures Contradictoires</h2>
+                <span class="bvsr-section-title-en">Acknowledgment &amp; Mutual Signatures</span>
+            </div>
+
+            <div class="bvsr-signatures-grid">
+                <!-- SIGNATAIRE (INTERVENANT) -->
+                <div class="bvsr-signature-box">
+                    <div class="bvsr-sig-header">
+                        <div class="bvsr-sig-title">Pour l'Intervenant</div>
+                        <div class="bvsr-sig-name">{{ waiver.signer_name }}</div>
+                        <div class="bvsr-sig-role">{{ waiver.signer_role_label }}{% if waiver.signer_company %} — {{ waiver.signer_company }}{% endif %}</div>
+                    </div>
+
+                    <div class="bvsr-sig-img-wrap">
+                        {% if waiver.signature_data_uri %}
+                        <img src="{{ waiver.signature_data_uri }}" alt="Signature {{ waiver.signer_name }}" class="bvsr-sig-img">
+                        {% elif waiver.status == 'signed' %}
+                        <span class="bvsr-sig-name">Signé électroniquement</span>
+                        {% else %}
+                        <span class="bvsr-sig-status-pending">En attente de signature</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="bvsr-sig-footer">
+                        <div class="bvsr-sig-mention">Lu et approuvé / Read and agreed</div>
+                        <div>Date : {{ waiver.signed_at.strftime('%d/%m/%Y à %H:%M') if waiver.signed_at else '—' }}</div>
+                        <div>IP : {{ waiver.signer_ip or '—' }}</div>
+                    </div>
+                </div>
+
+                <!-- BELLE VITESSE (RÉFÉRENT TECHNIQUE) -->
+                <div class="bvsr-signature-box">
+                    <div class="bvsr-sig-header">
+                        <div class="bvsr-sig-title">Pour Belle Vitesse</div>
+                        <div class="bvsr-sig-name">{{ waiver.bv_signer_name or 'Supervision Technique Belle Vitesse' }}</div>
+                        <div class="bvsr-sig-role">Gestion de Flotte &amp; Sécurité Plateau</div>
+                    </div>
+
+                    <div class="bvsr-sig-img-wrap">
+                        {% if bv_signature %}
+                        <img src="{{ bv_signature }}" alt="Signature Belle Vitesse" class="bvsr-sig-img">
+                        {% elif waiver.bv_signature_data_uri %}
+                        <img src="{{ waiver.bv_signature_data_uri }}" alt="Signature Belle Vitesse" class="bvsr-sig-img">
+                        {% else %}
+                        <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}" alt="Sceau Belle Vitesse" class="bvsr-sig-img">
+                        {% endif %}
+                    </div>
+
+                    <div class="bvsr-sig-footer">
+                        <div class="bvsr-sig-mention">Contre-signature &amp; visa technique</div>
+                        <div>Date : {{ waiver.bv_signed_at.strftime('%d/%m/%Y à %H:%M') if waiver.bv_signed_at else (waiver.signed_at.strftime('%d/%m/%Y à %H:%M') if waiver.signed_at else '—') }}</div>
+                        <div>Émetteur : Belle Vitesse SAS</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════ SECTION 5 : PREUVE LÉGALE & INTÉGRITÉ ═══════════ -->
+        <footer class="bvsr-evidence-seal">
+            {% if qr_data_uri %}
+            <div class="bvsr-seal-qr">
+                <img src="{{ qr_data_uri }}" alt="QR Code Intégrité">
+            </div>
+            {% endif %}
+            <div class="bvsr-seal-details">
+                <div class="bvsr-seal-title">Intégrité Numérique &amp; Scellement Cryptographique eIDAS</div>
+                <div>Empreinte HMAC-SHA256 : <span class="bvsr-seal-hash">{{ waiver.hash or seal_hash or 'EN COURS DE SCELLEMENT' }}</span></div>
+                <div class="bvsr-seal-legal">
+                    Document légal horodaté opposable. Conforme au Règlement européen (UE) n° 910/2014 (eIDAS)
+                    et aux articles 1366 et 1367 du Code civil. Vérification en ligne immédiate via QR code ou sur
+                    {{ base_url }}/safety-rules/verify/{{ waiver.waiver_id }}.
+                </div>
+            </div>
+        </footer>
+
+    </div>
+</body>
+
+</html>

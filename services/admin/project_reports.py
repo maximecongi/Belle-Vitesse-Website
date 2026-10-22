@@ -41,7 +41,7 @@ def _format_waiver_data(waiver, beneficiary_name: str, doc_type: str) -> dict:
         "id": waiver.id if is_valid else None,
         "waiver_num": waiver.waiver_id if (is_valid and waiver.waiver_id) else "",
         "pilot_name": beneficiary_name if (is_valid and doc_type == "pilot-waiver") else "",
-        "production_name": beneficiary_name if (is_valid and doc_type == "production-waiver") else "",
+        "production_name": beneficiary_name if (is_valid and doc_type in ("production-waiver", "cgl")) else "",
         "beneficiary_name": beneficiary_name if is_valid else "",
         "status": format_waiver_status(waiver.status) if is_valid else "",
         "raw_status": waiver.status if is_valid else "",
@@ -198,9 +198,8 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
         joinedload(Project.production_contact),
         joinedload(Project.dop_contact),
         joinedload(Project.first_ac_contact),
-        joinedload(Project.key_grip_contact),
-        joinedload(Project.pilot_waiver),
-        joinedload(Project.production_waiver),
+        joinedload(Project.cgl),
+        selectinload(Project.safety_rules),
         selectinload(Project.incidents),
         selectinload(Project.reports).joinedload(ProjectReport.user)
     ).first()
@@ -445,22 +444,33 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
         "reports": formatted_reports,
         "reports_count": len(formatted_reports),
         "incidents": incidents_list,
-        "pilot_waiver": _format_waiver_data(
-            project.pilot_waiver,
+        "cgl_waiver": _format_waiver_data(
+            project.active_cgl,
             (
-                f"{project.pilot_waiver.pilot_first_name or ''} {project.pilot_waiver.pilot_last_name or ''}".strip()
-                if (project.pilot_waiver and (project.pilot_waiver.pilot_first_name or project.pilot_waiver.pilot_last_name))
-                else (f"{project.pilot_contact.first_name} {project.pilot_contact.last_name}".strip() if project.pilot_contact else "")
-            ),
-            "pilot-waiver",
-        ),
-        "production_waiver": _format_waiver_data(
-            project.production_waiver,
-            (
-                project.production_waiver.production_name
-                if (project.production_waiver and project.production_waiver.production_name)
+                project.active_cgl.production_name
+                if (project.active_cgl and project.active_cgl.production_name)
                 else (project.production.name if project.production else "")
             ),
-            "production-waiver",
-        )
+            "cgl",
+        ),
+        "safety_rules_waivers": [
+            {
+                "id": sr.id,
+                "waiver_id": sr.waiver_id,
+                "signer_name": sr.signer_name,
+                "signer_role": sr.signer_role,
+                "signer_role_label": sr.signer_role_label,
+                "signer_email": sr.signer_email,
+                "signer_phone": sr.signer_phone,
+                "signer_company": sr.signer_company,
+                "safety_technicians": sr.safety_technicians,
+                "status": format_waiver_status(sr.status),
+                "raw_status": sr.status,
+                "signed_at": sr.signed_at,
+                "bv_signed_at": sr.bv_signed_at,
+                "pdf_path": _get_secured_document_url(sr.signed_pdf_path, "safety-rules"),
+            }
+            for sr in (project.safety_rules or [])
+            if getattr(sr, "deleted_at", None) is None
+        ]
     }

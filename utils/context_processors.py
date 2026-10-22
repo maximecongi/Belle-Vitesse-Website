@@ -72,8 +72,8 @@ ROLE_PERMISSIONS = {
         'sections': {'dashboard', 'tournages', 'departs', 'retours', 'flotte', 'admin', 'tools'},
         'nav': {
             'dashboard', 'projects', 'archives', 'booking',
-            'productions', 'contacts', 'checkouts', 'production_waivers',
-            'pilot_waivers', 'checkins', 'incidents', 'fleet', 'users', 'pricing',
+            'productions', 'contacts', 'checkouts', 'cgl', 'safety_rules',
+            'checkins', 'incidents', 'fleet', 'safety_rules_config', 'users', 'pricing',
             'catalog_pdf', 'mcp_connector', 'calendar', 'newsletter',
             'signature', 'catalog_update'
         },
@@ -82,8 +82,8 @@ ROLE_PERMISSIONS = {
         'sections': {'dashboard', 'tournages', 'departs', 'retours', 'flotte', 'admin', 'tools'},
         'nav': {
             'dashboard', 'projects', 'archives', 'booking',
-            'productions', 'contacts', 'checkouts', 'production_waivers',
-            'pilot_waivers', 'checkins', 'incidents', 'fleet', 'vehicles', 'checkpoints',
+            'productions', 'contacts', 'checkouts', 'cgl', 'safety_rules',
+            'checkins', 'incidents', 'fleet', 'vehicles', 'checkpoints', 'safety_rules_config',
             'users', 'pricing', 'catalog_pdf', 'mcp_connector', 'settings', 'calendar',
             'newsletter', 'signature', 'docs', 'api_docs', 'catalog_update'
         },
@@ -92,8 +92,8 @@ ROLE_PERMISSIONS = {
         'sections': {'dashboard', 'tournages', 'departs', 'retours', 'flotte', 'admin', 'tools'},
         'nav': {
             'dashboard', 'projects', 'archives', 'booking',
-            'productions', 'contacts', 'checkouts', 'production_waivers',
-            'pilot_waivers', 'checkins', 'incidents', 'fleet', 'vehicles', 'checkpoints',
+            'productions', 'contacts', 'checkouts', 'cgl', 'safety_rules',
+            'checkins', 'incidents', 'fleet', 'vehicles', 'checkpoints', 'safety_rules_config',
             'users', 'pricing', 'catalog_pdf', 'mcp_connector', 'settings', 'calendar',
             'newsletter', 'signature', 'docs', 'api_docs', 'catalog_update'
         },

@@ -21,49 +21,80 @@ def get_demo_email_data(mail_type: str) -> dict:
             "context": {"now_year": now_year},
         }
 
-    if m in ("waiver", "decharge", "waiver_signed"):
+    if m in ("waiver", "cgl", "cgl_signed"):
         return {
             "template": "emails/waiver_signed_confirmation.html",
-            "subject": "Décharge signée - Tournage Porsche 911 GT3 RS",
+            "subject": "Contrat de Location (BVRA) signé - Tournage Porsche 911 GT3 RS",
             "context": {
                 "recipient_name": "Maxime Congi",
                 "display_name": "Maxime Congi",
                 "project_name": "Tournage Porsche 911 GT3 RS",
                 "production_name": "Studio Transatlantique",
-                "waiver_type": "pilot",
-                "type_title": "Pilote",
+                "waiver_type": "cgl",
+                "type_title": "Contrat de Location (BVRA)",
                 "now_year": now_year,
             },
         }
 
-    if m in ("waiver_invitation", "waiver_pilot"):
+    if m in ("waiver_invitation", "cgl_invitation"):
         return {
             "template": "emails/waiver_invitation.html",
-            "subject": "Signature décharge pilote - Tournage Porsche 911 GT3 RS",
+            "subject": "Signature Contrat de Location (BVRA) - Tournage Porsche 911 GT3 RS",
             "context": {
-                "waiver_type": "pilot",
+                "waiver_type": "cgl",
                 "recipient_name": "Maxime Congi",
                 "display_name": "Maxime Congi",
                 "project_name": "Tournage Porsche 911 GT3 RS",
                 "production_name": "Studio Transatlantique",
-                "signature_link": "https://bellevitesse.com/waivers/pilot/demo_token",
+                "signature_link": "https://bellevitesse.com/cgl/sign/demo_token",
                 "is_reminder": False,
                 "now_year": now_year,
             },
         }
 
-    if m in ("waiver_reminder", "waiver_pilot_reminder"):
+    if m in ("waiver_reminder", "cgl_reminder"):
         return {
             "template": "emails/waiver_invitation.html",
-            "subject": "Rappel : Signature décharge pilote - Tournage Porsche 911 GT3 RS",
+            "subject": "Rappel : Signature Contrat de Location (BVRA) - Tournage Porsche 911 GT3 RS",
             "context": {
-                "waiver_type": "pilot",
+                "waiver_type": "cgl",
                 "recipient_name": "Maxime Congi",
                 "display_name": "Maxime Congi",
                 "project_name": "Tournage Porsche 911 GT3 RS",
                 "production_name": "Studio Transatlantique",
-                "signature_link": "https://bellevitesse.com/waivers/pilot/demo_token",
+                "signature_link": "https://bellevitesse.com/cgl/sign/demo_token",
                 "is_reminder": True,
+                "now_year": now_year,
+            },
+        }
+
+    if m in ("safety_rules", "safety_rules_signed", "bvsr", "bvsr_signed"):
+        return {
+            "template": "emails/waiver_signed_confirmation.html",
+            "subject": "Règles de Sécurité (BVSR) signées - Tournage Porsche 911 GT3 RS",
+            "context": {
+                "recipient_name": "Maxime Congi",
+                "display_name": "Maxime Congi",
+                "project_name": "Tournage Porsche 911 GT3 RS",
+                "production_name": "Studio Transatlantique",
+                "waiver_type": "safety_rules",
+                "type_title": "Règles de Sécurité Universelles (BVSR)",
+                "now_year": now_year,
+            },
+        }
+
+    if m in ("safety_rules_invitation", "bvsr_invitation"):
+        return {
+            "template": "emails/waiver_invitation.html",
+            "subject": "Signature Règles de Sécurité (BVSR) - Tournage Porsche 911 GT3 RS",
+            "context": {
+                "waiver_type": "safety_rules",
+                "recipient_name": "Maxime Congi",
+                "display_name": "Maxime Congi",
+                "project_name": "Tournage Porsche 911 GT3 RS",
+                "production_name": "Studio Transatlantique",
+                "signature_link": "https://bellevitesse.com/safety-rules/sign/demo_token",
+                "is_reminder": False,
                 "now_year": now_year,
             },
         }

@@ -936,6 +936,47 @@ function initProjectNotesEdit() {
     });
 }
 
+function initSafetyRulesSignerModal() {
+    const modal = document.getElementById('addSafetyRulesSignerModal');
+    if (!modal) return;
+
+    const openBtns = document.querySelectorAll('.js-open-add-safety-signer-modal');
+    openBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            modal.classList.remove('u-d-none');
+            modal.classList.add('is-active');
+        });
+    });
+
+    const closeBtns = modal.querySelectorAll('.js-close-safety-signer-modal');
+    closeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            modal.classList.add('u-d-none');
+            modal.classList.remove('is-active');
+        });
+    });
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.add('u-d-none');
+            modal.classList.remove('is-active');
+        }
+    });
+
+    const roleSelect = modal.querySelector('#new_signer_role');
+    const customRoleGroup = modal.querySelector('#new_signer_role_custom_group');
+    if (roleSelect && customRoleGroup) {
+        roleSelect.addEventListener('change', () => {
+            if (roleSelect.value === 'other') {
+                customRoleGroup.classList.remove('u-d-none');
+            } else {
+                customRoleGroup.classList.add('u-d-none');
+            }
+        });
+    }
+}
+
 function initProjectInteractions() {
     initProjectFormHighlight();
     initProjectDateValidation();
@@ -944,6 +985,7 @@ function initProjectInteractions() {
     initProjectReportsCollapsible();
     initProjectReportsEdit();
     initProjectNotesEdit();
+    initSafetyRulesSignerModal();
 }
 
 window.initProjectInteractions = initProjectInteractions;

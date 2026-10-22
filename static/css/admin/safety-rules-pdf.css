@@ -1,0 +1,458 @@
+/* ═══════════════════════════════════════════════════════════════════
+   BELLE VITESSE — SAFETY RULES PDF (BVSR) STYLESHEET
+   Format print-ready / WeasyPrint / wkhtmltopdf
+   Strictement sans styles inlines — Cohérence Design System BV
+   ═══════════════════════════════════════════════════════════════════ */
+
+@page {
+    size: A4 portrait;
+    margin: 14mm 12mm 14mm 12mm;
+    @bottom-center {
+        content: "Belle Vitesse — Règles de Sécurité Universelles (BVSR) — Page " counter(page) " sur " counter(pages);
+        font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 7pt;
+        color: #94A3B8;
+    }
+}
+
+:root {
+    --bvsr-primary: #8B5CF6;
+    --bvsr-primary-dark: #6D28D9;
+    --bvsr-primary-light: #EDE9FE;
+    --bvsr-primary-text: #5B21B6;
+    --bvsr-success: #15803D;
+    --bvsr-success-light: #DCFCE7;
+    --bvsr-warning: #B45309;
+    --bvsr-warning-light: #FEF3C7;
+    --bvsr-danger: #EF4444;
+    --bvsr-dark: #0F172A;
+    --bvsr-text: #1E293B;
+    --bvsr-muted: #64748B;
+    --bvsr-border: #E2E8F0;
+    --bvsr-bg-subtle: #F8FAFC;
+}
+
+body.bvsr-container {
+    margin: 0;
+    padding: 0;
+    background-color: #FFFFFF;
+    color: var(--bvsr-text);
+    font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 8.5pt;
+    line-height: 1.45;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.bvsr-document {
+    width: 100%;
+}
+
+/* ═══════════ EN-TÊTE ═══════════ */
+.bvsr-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--bvsr-primary);
+    margin-bottom: 14px;
+}
+
+.bvsr-header-logo img {
+    height: 38px;
+    width: auto;
+}
+
+.bvsr-header-meta {
+    text-align: right;
+    font-size: 7.5pt;
+    color: var(--bvsr-muted);
+    line-height: 1.35;
+}
+
+.bvsr-confidential-tag {
+    display: inline-block;
+    background-color: var(--bvsr-primary-light);
+    color: var(--bvsr-primary-text);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 6.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 3px;
+}
+
+.bvsr-header-doc-id {
+    font-size: 10pt;
+    font-weight: 800;
+    color: var(--bvsr-dark);
+    letter-spacing: 0.5px;
+}
+
+.bvsr-meta-project {
+    color: var(--bvsr-dark);
+    font-weight: 600;
+}
+
+/* ═══════════ BANNIÈRE TITRE ═══════════ */
+.bvsr-title-banner {
+    background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
+    color: #FFFFFF;
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 14px;
+    border-left: 4px solid var(--bvsr-primary);
+}
+
+.bvsr-main-title {
+    margin: 0;
+    font-size: 13pt;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.bvsr-subtitle-en {
+    font-size: 9pt;
+    color: #CBD5E1;
+    font-weight: 500;
+    margin-top: 2px;
+}
+
+.bvsr-signer-badge-strip {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 7.5pt;
+}
+
+.bvsr-pill-signer {
+    background-color: rgba(139, 92, 246, 0.25);
+    border: 1px solid rgba(139, 92, 246, 0.6);
+    color: #EDE9FE;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.bvsr-pill-role {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #FFFFFF;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+/* ═══════════ CARTES SYNTHÈSE INFOS ═══════════ */
+.bvsr-meta-grid {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.bvsr-meta-card {
+    flex: 1;
+    background-color: var(--bvsr-bg-subtle);
+    border: 1px solid var(--bvsr-border);
+    border-radius: 6px;
+    padding: 8px 10px;
+}
+
+.bvsr-meta-card-title {
+    font-size: 7pt;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--bvsr-muted);
+    margin-bottom: 5px;
+    border-bottom: 1px solid var(--bvsr-border);
+    padding-bottom: 3px;
+}
+
+.bvsr-meta-row {
+    font-size: 7.5pt;
+    margin-bottom: 2px;
+}
+
+.bvsr-meta-label {
+    color: var(--bvsr-muted);
+    font-weight: 600;
+}
+
+.bvsr-meta-value {
+    color: var(--bvsr-dark);
+    font-weight: 600;
+}
+
+/* ═══════════ SECTIONS DE RÈGLES ═══════════ */
+.bvsr-section {
+    margin-bottom: 14px;
+    page-break-inside: avoid;
+}
+
+.bvsr-section-title-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    border-bottom: 1.5px solid var(--bvsr-primary);
+    padding-bottom: 4px;
+    margin-bottom: 8px;
+}
+
+.bvsr-section-title-fr {
+    font-size: 10pt;
+    font-weight: 800;
+    color: var(--bvsr-dark);
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.bvsr-section-title-en {
+    font-size: 8pt;
+    color: var(--bvsr-muted);
+    font-weight: 600;
+    font-style: italic;
+    margin: 0;
+}
+
+.bvsr-rules-bilingual-grid {
+    display: flex;
+    gap: 12px;
+}
+
+.bvsr-col-fr,
+.bvsr-col-en {
+    flex: 1;
+}
+
+.bvsr-col-header {
+    font-size: 7pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--bvsr-muted);
+    margin-bottom: 4px;
+}
+
+.bvsr-rules-list {
+    margin: 0;
+    padding-left: 14px;
+}
+
+.bvsr-rules-list li {
+    font-size: 7.8pt;
+    line-height: 1.4;
+    margin-bottom: 4px;
+    color: var(--bvsr-text);
+}
+
+.bvsr-rules-list li strong {
+    color: var(--bvsr-dark);
+}
+
+/* ═══════════ CARTES RÈGLES VÉHICULE ═══════════ */
+.bvsr-vehicle-rule-card {
+    background-color: var(--bvsr-bg-subtle);
+    border: 1px solid var(--bvsr-border);
+    border-left: 3px solid var(--bvsr-primary);
+    border-radius: 5px;
+    padding: 7px 10px;
+    margin-bottom: 8px;
+    page-break-inside: avoid;
+}
+
+.bvsr-vehicle-title {
+    font-size: 8.5pt;
+    font-weight: 700;
+    color: var(--bvsr-dark);
+    margin: 0 0 6px 0;
+}
+
+/* ═══════════ SECTION CASQUES / MATÉRIEL ═══════════ */
+.bvsr-equipment-box {
+    background-color: var(--bvsr-bg-subtle);
+    border: 1px solid var(--bvsr-border);
+    border-radius: 5px;
+    padding: 8px 10px;
+    font-size: 7.8pt;
+}
+
+.bvsr-helmets-summary {
+    display: flex;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.bvsr-size-pill {
+    background-color: #FFFFFF;
+    border: 1px solid var(--bvsr-border);
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-weight: 600;
+    font-size: 7.5pt;
+}
+
+/* ═══════════ ENGAGEMENT ET DROIT D'INTERRUPTION ═══════════ */
+.bvsr-authority-callout {
+    background-color: var(--bvsr-primary-light);
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    border-left: 4px solid var(--bvsr-primary);
+    border-radius: 5px;
+    padding: 8px 12px;
+    margin-bottom: 14px;
+    page-break-inside: avoid;
+}
+
+.bvsr-authority-title {
+    font-size: 8.5pt;
+    font-weight: 800;
+    color: var(--bvsr-primary-text);
+    margin: 0 0 4px 0;
+    text-transform: uppercase;
+}
+
+.bvsr-authority-text {
+    font-size: 7.8pt;
+    line-height: 1.4;
+    color: var(--bvsr-text);
+    margin: 0;
+}
+
+/* ═══════════ BLOC DE SIGNATURES CONTRADICTOIRES ═══════════ */
+.bvsr-signatures-section {
+    border: 1px solid var(--bvsr-border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    page-break-inside: avoid;
+}
+
+.bvsr-signatures-grid {
+    display: flex;
+    gap: 16px;
+}
+
+.bvsr-signature-box {
+    flex: 1;
+    background-color: var(--bvsr-bg-subtle);
+    border: 1px dashed #CBD5E1;
+    border-radius: 5px;
+    padding: 8px 10px;
+    min-height: 110px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.bvsr-sig-header {
+    border-bottom: 1px solid var(--bvsr-border);
+    padding-bottom: 4px;
+    margin-bottom: 6px;
+}
+
+.bvsr-sig-title {
+    font-size: 7.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--bvsr-dark);
+}
+
+.bvsr-sig-name {
+    font-size: 8.5pt;
+    font-weight: 700;
+    color: var(--bvsr-primary-dark);
+}
+
+.bvsr-sig-role {
+    font-size: 7pt;
+    color: var(--bvsr-muted);
+}
+
+.bvsr-sig-img-wrap {
+    text-align: center;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 4px 0;
+}
+
+.bvsr-sig-img {
+    max-height: 48px;
+    max-width: 170px;
+    object-fit: contain;
+}
+
+.bvsr-sig-status-pending {
+    font-size: 7.5pt;
+    font-style: italic;
+    color: var(--bvsr-muted);
+}
+
+.bvsr-sig-footer {
+    border-top: 1px solid var(--bvsr-border);
+    padding-top: 4px;
+    font-size: 6.8pt;
+    color: var(--bvsr-muted);
+    line-height: 1.3;
+}
+
+.bvsr-sig-mention {
+    font-weight: 600;
+    color: var(--bvsr-dark);
+    margin-bottom: 2px;
+}
+
+/* ═══════════ CARTOUCHE DE CONFORMITÉ & PREUVE ═══════════ */
+.bvsr-evidence-seal {
+    background-color: #0F172A;
+    color: #CBD5E1;
+    border-radius: 6px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    page-break-inside: avoid;
+}
+
+.bvsr-seal-qr {
+    background-color: #FFFFFF;
+    padding: 4px;
+    border-radius: 4px;
+    line-height: 0;
+}
+
+.bvsr-seal-qr img {
+    width: 58px;
+    height: 58px;
+}
+
+.bvsr-seal-details {
+    flex: 1;
+    font-size: 6.8pt;
+    line-height: 1.35;
+}
+
+.bvsr-seal-title {
+    color: #FFFFFF;
+    font-weight: 700;
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.bvsr-seal-hash {
+    font-family: 'Courier New', Courier, monospace;
+    color: #38BDF8;
+    word-break: break-all;
+    font-size: 6.5pt;
+}
+
+.bvsr-seal-legal {
+    color: #94A3B8;
+    margin-top: 2px;
+}

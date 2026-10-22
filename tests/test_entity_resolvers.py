@@ -25,9 +25,9 @@ from models import (
     CheckinVehicle,
     CheckoutVehicle,
     Incident,
-    PilotWaiver,
+    CglWaiver,
+    SafetyRulesWaiver,
     Production,
-    ProductionWaiver,
     Project,
     User,
     db,
@@ -35,8 +35,8 @@ from models import (
 from utils.entity_resolvers import (
     resolve_incident,
     resolve_inspection,
-    resolve_pilot_waiver,
-    resolve_production_waiver,
+    resolve_cgl,
+    resolve_safety_rules_waiver,
     resolve_project,
     resolve_waiver,
 )
@@ -77,22 +77,22 @@ class EntityResolversTestCase(unittest.TestCase):
             db.session.add(self.project)
             db.session.flush()
 
-            # Décharges
-            self.pilot_waiver = PilotWaiver(
+            # Documents juridiques / décharges (CGL et Règles de Sécurité)
+            self.safety_rules_waiver = SafetyRulesWaiver(
                 project_id=self.project.id,
-                waiver_id="BVDW-PILOT001",
-                pilot_first_name="Jean",
-                pilot_last_name="Pilote",
+                waiver_id="BVSR-RULES001",
+                signer_first_name="Jean",
+                signer_last_name="Pilote",
                 status="to_send"
             )
-            self.prod_waiver = ProductionWaiver(
+            self.cgl_waiver = CglWaiver(
                 project_id=self.project.id,
-                waiver_id="BVPW-PROD001",
+                waiver_id="BVRA-CGL001",
                 production_name="Studio Alpes",
                 status="to_send"
             )
-            db.session.add(self.pilot_waiver)
-            db.session.add(self.prod_waiver)
+            db.session.add(self.safety_rules_waiver)
+            db.session.add(self.cgl_waiver)
 
             # Incident
             self.incident = Incident(
@@ -126,8 +126,8 @@ class EntityResolversTestCase(unittest.TestCase):
 
             self.user_id = self.user.id
             self.project_id = self.project.id
-            self.pilot_waiver_id = self.pilot_waiver.id
-            self.prod_waiver_id = self.prod_waiver.id
+            self.safety_rules_waiver_id = self.safety_rules_waiver.id
+            self.cgl_waiver_id = self.cgl_waiver.id
             self.incident_id = self.incident.id
             self.checkout_id = self.checkout.id
             self.checkin_id = self.checkin.id
@@ -161,30 +161,30 @@ class EntityResolversTestCase(unittest.TestCase):
             self.assertIsNone(resolve_project(None))
 
     def test_resolve_waivers(self):
-        """Vérifie la résolution des décharges pilote et production."""
+        """Vérifie la résolution des CGL et règles de sécurité."""
         with self.app.app_context():
-            # Pilote par int, str num, code
-            self.assertEqual(resolve_pilot_waiver(self.pilot_waiver_id).waiver_id, "BVDW-PILOT001")
-            self.assertEqual(resolve_pilot_waiver(str(self.pilot_waiver_id)).waiver_id, "BVDW-PILOT001")
-            self.assertEqual(resolve_pilot_waiver("BVDW-PILOT001").id, self.pilot_waiver_id)
-            self.assertIsNone(resolve_pilot_waiver(None))
-            self.assertIsNone(resolve_pilot_waiver("BVDW-INCONNU"))
+            # Règles de sécurité par int, str num, code
+            self.assertEqual(resolve_safety_rules_waiver(self.safety_rules_waiver_id).waiver_id, "BVSR-RULES001")
+            self.assertEqual(resolve_safety_rules_waiver(str(self.safety_rules_waiver_id)).waiver_id, "BVSR-RULES001")
+            self.assertEqual(resolve_safety_rules_waiver("BVSR-RULES001").id, self.safety_rules_waiver_id)
+            self.assertIsNone(resolve_safety_rules_waiver(None))
+            self.assertIsNone(resolve_safety_rules_waiver("BVSR-INCONNU"))
 
             # Résolution générique polymorphique Waiver
-            self.assertEqual(resolve_waiver("BVDW-PILOT001").waiver_id, "BVDW-PILOT001")
-            self.assertEqual(resolve_waiver("BVDW-PILOT001").waiver_type, "pilot")
-            self.assertEqual(resolve_waiver("BVPW-PROD001").waiver_id, "BVPW-PROD001")
-            self.assertEqual(resolve_waiver("BVPW-PROD001").waiver_type, "production")
-            self.assertEqual(resolve_waiver(self.pilot_waiver_id).id, self.pilot_waiver_id)
-            self.assertEqual(resolve_waiver(self.prod_waiver_id).id, self.prod_waiver_id)
+            self.assertEqual(resolve_waiver("BVSR-RULES001").waiver_id, "BVSR-RULES001")
+            self.assertEqual(resolve_waiver("BVSR-RULES001").waiver_type, "safety_rules")
+            self.assertEqual(resolve_waiver("BVRA-CGL001").waiver_id, "BVRA-CGL001")
+            self.assertEqual(resolve_waiver("BVRA-CGL001").waiver_type, "cgl")
+            self.assertEqual(resolve_waiver(self.safety_rules_waiver_id).id, self.safety_rules_waiver_id)
+            self.assertEqual(resolve_waiver(self.cgl_waiver_id).id, self.cgl_waiver_id)
             self.assertIsNone(resolve_waiver("BVXX-INCONNU"))
 
-            # Production par int, str num, code
-            self.assertEqual(resolve_production_waiver(self.prod_waiver_id).waiver_id, "BVPW-PROD001")
-            self.assertEqual(resolve_production_waiver(str(self.prod_waiver_id)).waiver_id, "BVPW-PROD001")
-            self.assertEqual(resolve_production_waiver("BVPW-PROD001").id, self.prod_waiver_id)
-            self.assertIsNone(resolve_production_waiver(None))
-            self.assertIsNone(resolve_production_waiver("BVPW-INCONNU"))
+            # CGL par int, str num, code
+            self.assertEqual(resolve_cgl(self.cgl_waiver_id).waiver_id, "BVRA-CGL001")
+            self.assertEqual(resolve_cgl(str(self.cgl_waiver_id)).waiver_id, "BVRA-CGL001")
+            self.assertEqual(resolve_cgl("BVRA-CGL001").id, self.cgl_waiver_id)
+            self.assertIsNone(resolve_cgl(None))
+            self.assertIsNone(resolve_cgl("BVRA-INCONNU"))
 
     def test_resolve_incident(self):
         """Vérifie la résolution d'incident par int, str num, ou numéro BVIC-*."""

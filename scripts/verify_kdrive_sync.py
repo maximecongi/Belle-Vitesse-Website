@@ -171,14 +171,14 @@ def run_kdrive_reconciliation(dry_run: bool = False):
             if not dry_run:
                 logger.info("🔍 Contrôle des documents signés non synchronisés (décharges)...")
                 import json
-                from models import PilotWaiver, ProductionWaiver, CheckoutVehicle, CheckinVehicle, Incident
+                from models import CglWaiver, SafetyRulesWaiver, CheckoutVehicle, CheckinVehicle, Incident
                 stats["documents_caught_up"] = 0
 
                 from services.common.kdrive import extract_bundle_file_specs
 
                 DOC_CONFIGS = [
-                    {"label": "décharges pilote", "type": "pilot_waiver", "model": PilotWaiver, "id_attr": "waiver_id", "filter": {"status": "signed"}},
-                    {"label": "décharges production", "type": "production_waiver", "model": ProductionWaiver, "id_attr": "waiver_id", "filter": {"status": "signed"}},
+                    {"label": "contrats CGL", "type": "cgl", "model": CglWaiver, "id_attr": "waiver_id", "filter": {"status": "signed"}},
+                    {"label": "règles de sécurité", "type": "safety_rules", "model": SafetyRulesWaiver, "id_attr": "waiver_id", "filter": {"status": "signed"}},
                     {"label": "inspections check-out", "type": "checkout", "model": CheckoutVehicle, "id_attr": "inspection_number", "filter": {"status": "signed"}},
                     {"label": "inspections check-in", "type": "checkin", "model": CheckinVehicle, "id_attr": "inspection_number", "filter": {"status": "signed"}},
                     {"label": "incidents", "type": "incident", "model": Incident, "id_attr": "incident_number", "filter": {"signature_status": "signed"}},

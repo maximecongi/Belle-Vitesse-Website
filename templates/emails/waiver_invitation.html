@@ -1,22 +1,23 @@
 {% extends "emails/base_transactional.html" %}
 {% from "emails/macros.html" import info_card_waiver %}
 
-{% set is_prod = (waiver_type == 'production') if waiver_type else (prod_contact_name is defined and prod_contact_name and not pilot_name) %}
-{% set type_title = type_title or ('Production' if is_prod else 'Pilote') %}
-{% set type_label = type_label or ('production' if is_prod else 'pilote') %}
-{% set display_name = display_name or recipient_name or (prod_contact_name if is_prod else pilot_name) %}
+{% set is_cgl = (waiver_type == 'cgl') %}
+{% set doc_title = doc_title or ('Contrat de Location (BVRA)' if is_cgl else 'Règles de Sécurité (BVSR)') %}
+{% set type_title = type_title or doc_title %}
+{% set type_label = type_label or ('du Contrat de Location (BVRA)' if is_cgl else 'de votre engagement aux Règles de Sécurité Universelles (BVSR)') %}
+{% set display_name = display_name or recipient_name or prod_contact_name or pilot_name %}
 
-{% block title %}{% if is_reminder %}Rappel : {% endif %}Signature Décharge {{ type_title }} - Belle Vitesse{% endblock %}
+{% block title %}{% if is_reminder %}Rappel : {% endif %}Signature {{ doc_title }} - Belle Vitesse{% endblock %}
 
 {% block content %}
-<h1 class="dot-before">{% if is_reminder %}Rappel : {% endif %}Signature Décharge {{ type_title }}.</h1>
+<h1 class="dot-before">{% if is_reminder %}Rappel : {% endif %}Signature {{ doc_title }}.</h1>
 
 {% if is_reminder %}
 <div class="alert-box alert-box-warning">
     <div class="alert-title">Signature en attente</div>
     <div class="alert-body">
-        Le tournage approche et sauf erreur de notre part, votre décharge de responsabilité {{ type_label }} n'a pas
-        encore été complétée.
+        Le tournage approche et sauf erreur de notre part, votre signature {{ type_label }} n'a pas
+        encore été enregistrée.
     </div>
 </div>
 {% endif %}
@@ -24,11 +25,9 @@
 <p>
     Bonjour {{ display_name }},<br><br>
     {% if is_reminder %}
-    Merci de bien vouloir finaliser et signer électroniquement votre <strong>décharge de responsabilité {{ type_label
-        }}</strong> pour le projet ci-dessous :
+    Merci de bien vouloir finaliser et signer électroniquement <strong>{{ type_label }}</strong> pour le projet ci-dessous :
     {% else %}
-    Vous êtes invité à compléter et signer électroniquement la <strong>décharge de responsabilité {{ type_label
-        }}</strong> pour le projet ci-dessous :
+    Vous êtes invité à compléter et signer électroniquement <strong>{{ type_label }}</strong> pour le projet ci-dessous :
     {% endif %}
 </p>
 

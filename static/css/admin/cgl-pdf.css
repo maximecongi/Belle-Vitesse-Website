@@ -1,0 +1,402 @@
+/* ==========================================================================
+   BELLE VITESSE — CONDITIONS GÉNÉRALES DE LOCATION (CGL)
+   Feuille de style d'impression & export PDF continu (WeasyPrint / A4)
+   ========================================================================== */
+
+/* ── 1. Configuration des Pages (WeasyPrint) ────────────────────────────── */
+@page {
+    size: A4 portrait;
+    margin: 18mm 15mm 22mm 15mm;
+    @bottom-right {
+        content: "Page " counter(page) " / " counter(pages) " — Paraphes : ______ / ______";
+        font-size: 7.5pt;
+        font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: #71717a;
+    }
+    @bottom-left {
+        content: "BELLE VITESSE — Conditions Générales de Location";
+        font-size: 7.5pt;
+        font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: #a1a1aa;
+    }
+}
+
+@page :first {
+    margin-top: 15mm;
+}
+
+/* ── 2. Conteneur Principal & Typographie ─────────────────────────────────── */
+.cgl-container * {
+    box-sizing: border-box;
+}
+
+.cgl-container {
+    margin: 0;
+    padding: 0;
+    background-color: #ffffff;
+    font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #18181b;
+    font-size: 8.5pt;
+    line-height: 1.5;
+}
+
+.cgl-document {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #ffffff;
+}
+
+/* ── 3. En-tête du Document ──────────────────────────────────────────────── */
+.cgl-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 12pt;
+    border-bottom: 1.5pt solid #18181b;
+    margin-bottom: 16pt;
+    page-break-after: avoid;
+}
+
+.cgl-header-logo img {
+    height: 32pt;
+    width: auto;
+}
+
+.cgl-header-meta {
+    text-align: right;
+    font-size: 8pt;
+    color: #52525b;
+    line-height: 1.35;
+}
+
+.cgl-header-doc-id {
+    font-weight: 700;
+    font-size: 9pt;
+    color: #8b5cf6;
+    letter-spacing: 0.5px;
+}
+
+.cgl-confidential-tag {
+    display: inline-block;
+    font-size: 6.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    background-color: #f4f4f5;
+    color: #71717a;
+    padding: 2pt 6pt;
+    border-radius: 3pt;
+    letter-spacing: 0.5px;
+    margin-bottom: 3pt;
+}
+
+/* ── 4. Bannière Titre ───────────────────────────────────────────────────── */
+.cgl-title-banner {
+    text-align: center;
+    margin-bottom: 18pt;
+    page-break-after: avoid;
+}
+
+.cgl-main-title {
+    font-size: 14pt;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin: 0 0 4pt 0;
+    color: #18181b;
+}
+
+.cgl-subtitle {
+    font-size: 10pt;
+    font-weight: 600;
+    color: #8b5cf6;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0 0 4pt 0;
+}
+
+.cgl-version-info {
+    font-size: 7.5pt;
+    color: #71717a;
+    font-style: italic;
+    margin: 0;
+}
+
+/* ── 5. Bloc Identification des Parties ─────────────────────────────────── */
+.cgl-parties-section {
+    margin-bottom: 16pt;
+    page-break-inside: avoid;
+}
+
+.cgl-parties-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16pt;
+    margin-bottom: 10pt;
+}
+
+.cgl-party-card {
+    background-color: #fafafa;
+    border: 1px solid #e4e4e7;
+    border-left: 3pt solid #8b5cf6;
+    border-radius: 4pt;
+    padding: 8pt 10pt;
+    font-size: 7.5pt;
+    line-height: 1.45;
+}
+
+.cgl-party-role {
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #18181b;
+    margin-bottom: 4pt;
+    border-bottom: 1px dashed #d4d4d8;
+    padding-bottom: 3pt;
+}
+
+.cgl-party-field-label {
+    font-weight: 600;
+    color: #52525b;
+}
+
+/* ── 6. Corps des Articles ───────────────────────────────────────────────── */
+.cgl-articles-container {
+    counter-reset: article-counter;
+}
+
+.cgl-article {
+    margin-bottom: 12pt;
+    page-break-inside: avoid;
+}
+
+.cgl-article-title {
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: #18181b;
+    margin: 0 0 5pt 0;
+    padding-bottom: 2pt;
+    border-bottom: 0.75pt solid #e4e4e7;
+    page-break-after: avoid;
+}
+
+.cgl-article-content {
+    font-size: 8pt;
+    color: #27272a;
+    line-height: 1.45;
+    text-align: justify;
+}
+
+.cgl-article-content p {
+    margin: 0 0 4pt 0;
+}
+
+.cgl-article-content p:last-child {
+    margin-bottom: 0;
+}
+
+.cgl-list {
+    margin: 3pt 0 5pt 0;
+    padding-left: 14pt;
+    list-style-type: disc;
+}
+
+.cgl-list li {
+    margin-bottom: 2pt;
+}
+
+.cgl-def-term {
+    font-weight: 700;
+    color: #18181b;
+}
+
+/* ── 7. Tableau de Flotte (Annexe 1) ─────────────────────────────────────── */
+.cgl-annexe-section {
+    margin-top: 18pt;
+    page-break-before: always;
+}
+
+.cgl-annexe-title {
+    font-size: 11pt;
+    font-weight: 800;
+    color: #18181b;
+    text-transform: uppercase;
+    margin: 0 0 6pt 0;
+    padding-bottom: 3pt;
+    border-bottom: 1.5pt solid #8b5cf6;
+    page-break-after: avoid;
+}
+
+.cgl-annexe-desc {
+    font-size: 7.5pt;
+    color: #52525b;
+    margin-bottom: 8pt;
+}
+
+.cgl-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 7pt;
+    line-height: 1.35;
+    margin-bottom: 14pt;
+    page-break-inside: avoid;
+}
+
+.cgl-table th {
+    background-color: #f4f4f5;
+    color: #18181b;
+    font-weight: 700;
+    text-align: left;
+    padding: 5pt 6pt;
+    border: 0.5pt solid #d4d4d8;
+    text-transform: uppercase;
+    font-size: 6.5pt;
+    letter-spacing: 0.3px;
+}
+
+.cgl-table td {
+    padding: 5pt 6pt;
+    border: 0.5pt solid #e4e4e7;
+    vertical-align: top;
+}
+
+.cgl-table tr:nth-child(even) td {
+    background-color: #fafafa;
+}
+
+.cgl-vehicle-badge {
+    font-weight: 700;
+    color: #8b5cf6;
+}
+
+.cgl-num-cell {
+    text-align: right;
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+/* ── 8. Références Annexes 2 & 3 ─────────────────────────────────────────── */
+.cgl-annexes-notes {
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4pt;
+    padding: 8pt 10pt;
+    margin-top: 12pt;
+    font-size: 7.5pt;
+    page-break-inside: avoid;
+}
+
+.cgl-annexes-notes-title {
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #1e293b;
+    margin-bottom: 4pt;
+}
+
+.cgl-annexes-notes p {
+    margin: 0 0 3pt 0;
+    color: #475569;
+}
+
+/* ── 9. Bloc de Scellement Légal & Signature ─────────────────────────────── */
+.cgl-seal-container {
+    margin-top: 18pt;
+    border: 1.5pt solid #18181b;
+    border-radius: 4pt;
+    background-color: #fafafa;
+    padding: 10pt;
+    page-break-inside: avoid;
+}
+
+.cgl-seal-header {
+    text-align: center;
+    border-bottom: 1px dashed #d4d4d8;
+    padding-bottom: 6pt;
+    margin-bottom: 8pt;
+}
+
+.cgl-seal-title {
+    font-size: 9pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 2pt 0;
+    color: #18181b;
+}
+
+.cgl-legal-mention {
+    font-size: 7pt;
+    font-style: italic;
+    color: #52525b;
+    margin: 0;
+}
+
+.cgl-seal-grid {
+    display: grid;
+    grid-template-columns: 80pt 1fr 130pt;
+    gap: 12pt;
+    align-items: center;
+}
+
+.cgl-qr-box {
+    text-align: center;
+}
+
+.cgl-qr-img {
+    width: 65pt;
+    height: 65pt;
+    display: block;
+    margin: 0 auto 3pt auto;
+}
+
+.cgl-qr-caption {
+    font-size: 5.5pt;
+    color: #71717a;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.cgl-integrity-info {
+    font-size: 7pt;
+    line-height: 1.4;
+    color: #3f3f46;
+}
+
+.cgl-hash-code {
+    font-family: monospace;
+    font-size: 5.5pt;
+    background-color: #f4f4f5;
+    padding: 2pt 4pt;
+    border-radius: 2pt;
+    word-break: break-all;
+    display: block;
+    margin-top: 2pt;
+    border: 0.5pt solid #e4e4e7;
+}
+
+.cgl-signature-box {
+    text-align: center;
+    border-left: 1px solid #e4e4e7;
+    padding-left: 10pt;
+}
+
+.cgl-signatory-name {
+    font-size: 7.5pt;
+    font-weight: 700;
+    color: #18181b;
+    margin-bottom: 2pt;
+}
+
+.cgl-signatory-quality {
+    font-size: 6.5pt;
+    color: #71717a;
+    margin-bottom: 4pt;
+}
+
+.cgl-sig-img {
+    max-height: 45pt;
+    max-width: 110pt;
+    display: block;
+    margin: 0 auto;
+}

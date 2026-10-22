@@ -200,9 +200,9 @@ class ProjectsTest(unittest.TestCase):
             "utf-8"), resp_form.data)
 
     def test_soft_deleted_checks_and_waivers_on_projects(self):
-        from models import CheckoutVehicle, CheckinVehicle, PilotWaiver, ProductionWaiver
+        from models import CheckoutVehicle, CheckinVehicle, CglWaiver, SafetyRulesWaiver
         from services.admin.inspections import delete_inspection_unified
-        from services.admin.waivers import delete_pilot_waiver, delete_production_waiver
+        from services.admin.waivers import delete_cgl, delete_safety_rules_waiver
         from services.admin.project_reports import get_project_detail_context
         from services.admin.checkins import create_checkin
 
@@ -316,38 +316,37 @@ class ProjectsTest(unittest.TestCase):
             self.assertIn("Retour exceptionnel", forced_ci.notes or "")
             delete_inspection_unified("checkin", forced_ci.id)
 
-            # 6. Test Pilot & Production Waivers soft delete
-            pw = PilotWaiver(project_id=proj.id, status="to_sign",
-                             pilot_first_name="Jean", pilot_last_name="Pilote")
-            prw = ProductionWaiver(
-                project_id=proj.id, status="to_sign", production_name="Prod Alpha")
-            db.session.add_all([pw, prw])
+            # 6. Test CGL & Safety Rules soft delete
+            cgl = CglWaiver(project_id=proj.id, status="to_sign",
+                            production_name="Prod Alpha")
+            sr = SafetyRulesWaiver(
+                project_id=proj.id, status="to_sign", signer_first_name="Jean", signer_last_name="Pilote")
+            db.session.add_all([cgl, sr])
             db.session.commit()
 
             projects_list = list_projects()
             p_data = next(p for p in projects_list if p["id"] == proj.id)
-            self.assertEqual(p_data["pilot_waiver"]["id"], pw.id)
-            self.assertEqual(p_data["production_waiver"]["id"], prw.id)
+            self.assertEqual(p_data["cgl"]["id"], cgl.id)
+            self.assertEqual(p_data["safety_rules"]["count"], 1)
 
             # Soft-delete waivers
-            del_pw_ok, _ = delete_pilot_waiver(pw.waiver_id)
-            del_prw_ok, _ = delete_production_waiver(prw.waiver_id)
-            self.assertTrue(del_pw_ok)
-            self.assertTrue(del_prw_ok)
+            del_cgl_ok, _ = delete_cgl(cgl.waiver_id)
+            del_sr_ok, _ = delete_safety_rules_waiver(sr.waiver_id)
+            self.assertTrue(del_cgl_ok)
+            self.assertTrue(del_sr_ok)
 
             projects_list = list_projects()
             p_data = next(p for p in projects_list if p["id"] == proj.id)
-            self.assertIsNone(p_data["pilot_waiver"]["id"])
-            self.assertEqual(p_data["pilot_waiver"]["waiver_num"], "")
-            self.assertIsNone(p_data["production_waiver"]["id"])
-            self.assertEqual(p_data["production_waiver"]["waiver_num"], "")
+            self.assertIsNone(p_data["cgl"]["id"])
+            self.assertEqual(p_data["cgl"]["waiver_num"], "")
+            self.assertEqual(p_data["safety_rules"]["count"], 0)
 
             # Check project model properties
             db.session.refresh(proj)
             self.assertEqual(len(proj.active_checkout_vehicles), 0)
             self.assertEqual(len(proj.active_checkin_vehicles), 0)
-            self.assertIsNone(proj.active_pilot_waiver)
-            self.assertIsNone(proj.active_production_waiver)
+            self.assertIsNone(proj.active_cgl)
+            self.assertEqual(len(proj.active_safety_rules), 0)
 
     def test_admin_project_kdrive_resync(self):
         with self.app.app_context():
@@ -634,7 +633,40 @@ class ProjectsTest(unittest.TestCase):
             # 6. Vérifier que le dossier physique local a été nettoyé du disque
             self.assertFalse(local_path.exists())
 
+    def test_admin_projects_list_render_with_bvsr_and_cgl(self):
+        """Vérifie que la page /admin/projects se rend sans aucune erreur Jinja avec BVSR et BVRA."""
+        from models import CglWaiver, SafetyRulesWaiver
+        with self.app.app_context():
+            user = User(firstname="Admin", lastname="User", mail="admin_render@example.com", role="administrator")
+            prod = Production(name="Production Test Render")
+            db.session.add_all([user, prod])
+            db.session.commit()
+
+            proj = Project(name="Tournage BVSR Test", production_id=prod.id)
+            db.session.add(proj)
+            db.session.commit()
+
+            cgl = CglWaiver(project_id=proj.id, waiver_id="BVRA-TEST01", status="to_send")
+            sr1 = SafetyRulesWaiver(project_id=proj.id, waiver_id="BVSR-TEST01", signer_role="pilot", signer_first_name="Romain", status="signed", signed_pdf_path="waivers/safety_rules/BVSR-TEST01.pdf")
+            db.session.add_all([cgl, sr1])
+            db.session.commit()
+
+            with self.client.session_transaction() as sess:
+                sess["admin_authenticated"] = True
+                sess["admin_user_id"] = user.id
+                sess["admin_user_role"] = user.role
+                sess["admin_user_email"] = user.mail
+
+            res = self.client.get("/admin/projects")
+            self.assertEqual(res.status_code, 200)
+            html = res.data.decode("utf-8")
+            self.assertIn("Contrats & Sécurité", html)
+            self.assertIn("BVRA :", html)
+            self.assertIn("BVSR :", html)
+            self.assertIn("1/1 signé", html)
+
 
 if __name__ == "__main__":
     unittest.main()
+
 

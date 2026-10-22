@@ -1,18 +1,19 @@
 {% extends "emails/base_transactional.html" %}
 {% from "emails/macros.html" import info_card_waiver %}
 
-{% set is_prod = (waiver_type == 'production') if waiver_type else (prod_contact_name is defined and prod_contact_name and not pilot_name) %}
-{% set type_title = type_title or ('Production' if is_prod else ('Pilote' if waiver_type == 'pilot' else '')) %}
-{% set display_name = display_name or recipient_name or (prod_contact_name if is_prod else pilot_name) %}
+{% set is_cgl = (waiver_type == 'cgl') %}
+{% set doc_title = doc_title or ('Contrat de Location (BVRA)' if is_cgl else 'Règles de Sécurité (BVSR)') %}
+{% set type_title = type_title or doc_title %}
+{% set display_name = display_name or recipient_name or prod_contact_name or pilot_name %}
 
-{% block title %}Décharge Signée - Belle Vitesse{% endblock %}
+{% block title %}{{ doc_title }} Signé - Belle Vitesse{% endblock %}
 
 {% block content %}
-<h1 class="dot-before">Décharge Signée.</h1>
+<h1 class="dot-before">{{ doc_title }} Signé.</h1>
 
 <p>
-    Bonjour {{ recipient_name or display_name or '' }}{% if not (recipient_name or display_name) %},{% endif %}<br><br>
-    Merci d'avoir complété et signé électroniquement votre décharge de responsabilité pour le projet ci-dessous :
+    Bonjour {{ display_name or '' }}{% if not display_name %},{% endif %}<br><br>
+    Merci d'avoir complété et signé électroniquement votre <strong>{{ doc_title }}</strong> pour le projet ci-dessous :
 </p>
 
 {{ info_card_waiver(
@@ -25,7 +26,7 @@
 ) }}
 
 <p>
-    Vous trouverez en pièce jointe de ce courriel votre exemplaire au format PDF.
+    Vous trouverez en pièce jointe de ce courriel votre exemplaire scellé au format PDF.
 </p>
 
 <p class="text-muted">

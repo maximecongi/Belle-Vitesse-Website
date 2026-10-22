@@ -1,0 +1,115 @@
+{% extends "admin/admin_base.html" %}
+
+{% from "admin/macros.html" import status_badge, filter_header, reminder_badge, table_empty_row %}
+
+{% block title %}Règles de Sécurité Universelles (BVSR){% endblock %}
+{% block page_title %}Règles de Sécurité Universelles (BVSR){% endblock %}
+
+{% block header_actions %}
+<div class="u-flex u-align-center u-gap-2">
+    <form method="GET" action="" class="u-m-0">
+        <input type="text" name="q" id="searchInput" class="form-input u-w-250" placeholder="Rechercher un signataire..."
+            value="{{ request.args.get('q', '') }}" autocomplete="off">
+    </form>
+    <a href="{{ url_for('admin_fleet.admin_safety_rules_config') }}" class="admin-btn admin-btn-secondary">
+        <i class="admin-header__icon" data-lucide="settings"></i> Config Flotte Règles
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="admin-card">
+    {{ filter_header("Engagements BVSR filtrés", count=safety_rules_items|length) }}
+    <div class="u-overflow-x-auto">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>N° Document</th>
+                    <th>Projet</th>
+                    <th>Intervenant / Signataire</th>
+                    <th>Rôle</th>
+                    <th>Contact</th>
+                    <th>Dates</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for w in safety_rules_items %}
+                <tr class="searchable-row">
+                    <td class="u-text-semibold u-nowrap">{{ w.id or '—' }}</td>
+                    <td>
+                        <a href="{{ url_for('admin_projects.admin_project_detail', record_id=w.project_id) }}" class="u-text-link">
+                            {{ w.project_name }}
+                        </a>
+                    </td>
+                    <td>
+                        <strong>{{ w.signer_name }}</strong>
+                        {% if w.signer_company %}
+                        <div class="u-text-xs u-text-muted">{{ w.signer_company }}</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-xs">
+                            {{ w.signer_role_label }}
+                        </span>
+                    </td>
+                    <td>
+                        <div>{{ w.signer_email or '—' }}</div>
+                        {% if w.signer_phone %}
+                        <div class="u-text-xs u-text-muted">{{ w.signer_phone }}</div>
+                        {% endif %}
+                    </td>
+                    <td>{{ w.shooting_dates }}</td>
+                    <td>
+                        <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
+                            {{ status_badge(w.status, w.raw_status) }}
+                            {{ reminder_badge(w.reminder_count, w.last_reminded_at) }}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="u-flex u-align-center u-justify-center u-gap-1">
+                            {% if w.raw_status in ['to_generate', 'to_send'] %}
+                            <form
+                                action="{{ url_for('admin_waivers.admin_safety_rules_send', waiver_id=w.id, q=request.args.get('q')) }}"
+                                method="POST" class="u-m-0">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="admin-btn admin-btn-primary">Envoyer</button>
+                            </form>
+                            <button type="button" class="admin-btn admin-btn-secondary js-copy-waiver-link"
+                                data-copy-url="{{ url_for('admin_waivers.admin_safety_rules_copy_link', waiver_id=w.id) }}"
+                                title="Copier le lien de signature dans le presse-papier">Lien</button>
+                            {% elif w.raw_status == 'to_sign' %}
+                            <form
+                                action="{{ url_for('admin_waivers.admin_safety_rules_send', waiver_id=w.id, q=request.args.get('q')) }}"
+                                method="POST" class="u-m-0">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="admin-btn admin-btn-secondary">Relancer</button>
+                            </form>
+                            <button type="button" class="admin-btn admin-btn-secondary js-copy-waiver-link"
+                                data-copy-url="{{ url_for('admin_waivers.admin_safety_rules_copy_link', waiver_id=w.id) }}"
+                                title="Copier le lien de signature dans le presse-papier">Lien</button>
+                            {% elif w.raw_status == 'signed' %}
+                            <a href="{{ w.signed_pdf_path }}" class="admin-btn admin-btn-secondary" target="_blank" rel="noopener noreferrer">
+                                <i data-lucide="file-text"></i> PDF
+                            </a>
+                            {% endif %}
+
+                            <form
+                                action="{{ url_for('admin_waivers.admin_safety_rules_delete', waiver_id=w.id, q=request.args.get('q')) }}"
+                                method="POST" class="u-d-inline"
+                                onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet engagement BVSR ?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="admin-btn admin-btn-danger">Supprimer</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                {{ table_empty_row(8, "Aucun engagement aux règles de sécurité BVSR trouvé.") }}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

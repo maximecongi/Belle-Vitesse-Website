@@ -10,8 +10,8 @@ from models import (
     CheckoutVehicle,
     Incident,
     Waiver,
-    PilotWaiver,
-    ProductionWaiver,
+    CglWaiver,
+    SafetyRulesWaiver,
     Project,
     db,
 )
@@ -37,10 +37,10 @@ def resolve_project(identifier: Union[int, str, None]) -> Optional[Project]:
 def resolve_waiver(
     model_or_identifier: Union[Type[Waiver], int, str, None],
     identifier: Union[int, str, None] = None
-) -> Optional[Union[Waiver, PilotWaiver, ProductionWaiver]]:
+) -> Optional[Union[Waiver, CglWaiver, SafetyRulesWaiver]]:
     """
-    Résout une décharge (Waiver, PilotWaiver ou ProductionWaiver) soit par son ID numérique,
-    soit par sa référence métier unique (ex: 'BVDW-...', 'BVPW-...').
+    Résout une décharge (Waiver, CglWaiver ou SafetyRulesWaiver) soit par son ID numérique,
+    soit par sa référence métier unique (ex: 'BVRA-...', 'BVSR-...').
     Peut être appelée sous la forme resolve_waiver(identifier) ou resolve_waiver(model, identifier).
     """
     if identifier is None and not (isinstance(model_or_identifier, type) and issubclass(model_or_identifier, db.Model)):
@@ -53,7 +53,7 @@ def resolve_waiver(
     if ident is None:
         return None
 
-    if isinstance(ident, int) or (isinstance(ident, str) and ident.strip().isdigit()):
+    if isinstance(ident, int) or (isinstance(ident, str) and str(ident).strip().isdigit()):
         rec = db.session.get(model, int(ident))
         if rec:
             return rec
@@ -62,14 +62,15 @@ def resolve_waiver(
     return model.query.filter_by(waiver_id=ident_str).first()
 
 
-def resolve_pilot_waiver(identifier: Union[int, str, None]) -> Optional[PilotWaiver]:
-    """Résout une décharge pilote par son ID ou code BVDW-*."""
-    return resolve_waiver(PilotWaiver, identifier)
+def resolve_cgl(identifier: Union[int, str, None]) -> Optional[CglWaiver]:
+    """Résout des CGL (BVRA) par leur ID ou code BVRA-*."""
+    return resolve_waiver(CglWaiver, identifier)
 
 
-def resolve_production_waiver(identifier: Union[int, str, None]) -> Optional[ProductionWaiver]:
-    """Résout une décharge production par son ID ou code BVPW-*."""
-    return resolve_waiver(ProductionWaiver, identifier)
+def resolve_safety_rules_waiver(identifier: Union[int, str, None]) -> Optional[SafetyRulesWaiver]:
+    """Résout des Règles de Sécurité Universelles (BVSR) par leur ID ou code BVSR-*."""
+    return resolve_waiver(SafetyRulesWaiver, identifier)
+
 
 
 def resolve_incident(identifier: Union[int, str, None]) -> Optional[Incident]:

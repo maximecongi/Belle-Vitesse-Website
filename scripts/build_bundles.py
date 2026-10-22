@@ -48,6 +48,7 @@ ADMIN_CSS_FILES: List[str] = [
     "css/admin/admin-booking.css",
     "css/admin/admin-cmdk.css",
     "css/admin/admin-fleet.css",
+    "css/admin/admin-safety-rules.css",
     "css/admin/admin-incidents.css",
     "css/admin/admin-mcp.css",
     "css/admin/photo-annotator.css",
@@ -74,6 +75,7 @@ ADMIN_JS_FILES: List[str] = [
     "js/src/admin/project-detail-calendar.js",
     "js/src/admin/project-form.js",
     "js/src/admin/checkpoints.js",
+    "js/src/admin/safety-rules-catalog.js",
     "js/src/admin.js",
 ]
 
@@ -85,6 +87,8 @@ PUBLIC_JS_FILES: List[str] = [
     "js/src/configurator.js",
     "js/src/infinite-scroll.js",
     "js/src/filtersliders.js",
+    "js/src/public/sign-cgl.js",
+    "js/src/public/sign-safety-rules.js",
 ]
 
 

@@ -74,22 +74,14 @@ def task_render_pdf_to_file(
         if entity_type == "waiver" and entity_id:
             from models.db import db
             from models.waiver import (
-                PilotWaiver,
-                PilotWaiverSignedDocument,
-                ProductionWaiver,
-                ProductionWaiverSignedDocument,
+                Waiver,
+                WaiverSignedDocument,
             )
 
-            waiver = (
-                PilotWaiver.query.filter_by(waiver_id=str(entity_id)).first()
-                or ProductionWaiver.query.filter_by(waiver_id=str(entity_id)).first()
-            )
+            waiver = Waiver.query.filter_by(waiver_id=str(entity_id)).first()
             if waiver:
                 waiver.signed_pdf_path = rel_pdf_path
-                signed_doc = (
-                    PilotWaiverSignedDocument.query.filter_by(waiver_id=str(entity_id)).first()
-                    or ProductionWaiverSignedDocument.query.filter_by(waiver_id=str(entity_id)).first()
-                )
+                signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=str(entity_id)).first()
                 if signed_doc:
                     signed_doc.pdf_file_hash = file_hash
                 db.session.commit()

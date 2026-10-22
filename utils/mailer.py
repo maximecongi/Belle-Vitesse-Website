@@ -404,10 +404,18 @@ def _build_waiver_email_context(
     signature_link: str = None,
     is_reminder: bool = False,
 ) -> dict:
-    """Construit un contexte Jinja standardisé pour les invitations et confirmations de décharge."""
-    is_prod = waiver_type in ("production", "prod")
-    type_title = "Production" if is_prod else ("Pilote" if waiver_type == "pilot" else None)
-    type_label = "production" if is_prod else ("pilote" if waiver_type == "pilot" else "")
+    """Construit un contexte Jinja standardisé pour les invitations et confirmations de contrat (BVRA / CGL) et règles de sécurité (BVSR)."""
+    if waiver_type == "cgl":
+        type_title = "Contrat de Location (BVRA)"
+        type_label = "du Contrat de Location (BVRA)"
+        doc_title = "Contrat de Location (BVRA)"
+        is_prod = True
+    else:
+        type_title = "Règles de Sécurité (BVSR)"
+        type_label = "de votre engagement aux Règles de Sécurité Universelles (BVSR)"
+        doc_title = "Règles de Sécurité Universelles (BVSR)"
+        is_prod = False
+
     context = {
         "waiver_type": waiver_type,
         "recipient_name": recipient_name,
@@ -418,6 +426,7 @@ def _build_waiver_email_context(
         "production_name": production_name,
         "type_title": type_title,
         "type_label": type_label,
+        "doc_title": doc_title,
         "is_reminder": is_reminder,
     }
     if signature_link:
@@ -436,31 +445,37 @@ def _send_waiver_invitation_email(
 ):
     """
     Fonction unifiée interne pour l'envoi d'une invitation ou d'une relance
-    de décharge de responsabilité (pilote ou production).
+    de contrat de location (BVRA) ou de règles de sécurité (BVSR).
     """
-    is_prod = (waiver_type == "production")
-    type_label = "production" if is_prod else "pilote"
+    if waiver_type == "cgl":
+        type_label = "Contrat BVRA"
+        subject_type = "du Contrat de Location (BVRA)"
+        doc_desc = "le Contrat Cadre et Conditions Générales de Location (BVRA)"
+    else:
+        type_label = "Règles de Sécurité BVSR"
+        subject_type = "des Règles de Sécurité Universelles (BVSR)"
+        doc_desc = "votre engagement aux Règles de Sécurité Universelles (BVSR)"
 
     current_app.logger.info(
-        f"🚀 Sending {type_label} waiver {'reminder' if is_reminder else 'invitation'} email to {to_email}"
+        f"🚀 Sending {type_label} {'reminder' if is_reminder else 'invitation'} email to {to_email}"
     )
 
     prefix = "Rappel : " if is_reminder else ""
-    subject = f"{prefix}Signature décharge {type_label} - {project_name}"
+    subject = f"{prefix}Signature {subject_type} - {project_name}"
 
     if is_reminder:
         text_content = (
             f"Bonjour {recipient_name},\n\n"
-            f"RAPPEL : Le tournage approche et sauf erreur de notre part, votre décharge de responsabilité {type_label} "
-            f"pour le projet : {project_name} n'a pas encore été signée.\n\n"
-            f"Merci de la compléter et la signer dès maintenant via ce lien : {signature_link}\n\n"
+            f"RAPPEL : Le tournage approche et sauf erreur de notre part, {doc_desc} "
+            f"pour le projet : {project_name} n'a pas encore été signé.\n\n"
+            f"Merci de le compléter et le signer dès maintenant via ce lien : {signature_link}\n\n"
             f"Ce document est indispensable avant le début du tournage.\n\n"
             f"L'équipe Belle Vitesse."
         )
     else:
         text_content = (
             f"Bonjour {recipient_name},\n\n"
-            f"Vous êtes invité à compléter et signer électroniquement votre décharge de responsabilité {type_label} "
+            f"Vous êtes invité à compléter et signer électroniquement {doc_desc} "
             f"pour le projet : {project_name}.\n\n"
             f"Suivez ce lien pour signer : {signature_link}\n\n"
             f"L'équipe Belle Vitesse."
@@ -485,23 +500,10 @@ def _send_waiver_invitation_email(
     )
 
 
-def send_waiver_invitation_email(to_email, pilot_name, project_name, signature_link, is_reminder=False, production_name=None):
-    """Envoie une invitation (ou un rappel de relance) à un pilote pour signer sa décharge."""
+def send_cgl_invitation_email(to_email, prod_contact_name, project_name, signature_link, is_reminder=False, production_name=None):
+    """Envoie une invitation (ou un rappel de relance) à un contact de production pour signer le Contrat de Location (BVRA / CGL)."""
     return _send_waiver_invitation_email(
-        waiver_type="pilot",
-        to_email=to_email,
-        recipient_name=pilot_name,
-        project_name=project_name,
-        signature_link=signature_link,
-        is_reminder=is_reminder,
-        production_name=production_name,
-    )
-
-
-def send_production_waiver_invitation_email(to_email, prod_contact_name, project_name, signature_link, is_reminder=False, production_name=None):
-    """Envoie une invitation (ou un rappel de relance) à un contact de production pour signer sa décharge."""
-    return _send_waiver_invitation_email(
-        waiver_type="production",
+        waiver_type="cgl",
         to_email=to_email,
         recipient_name=prod_contact_name,
         project_name=project_name,
@@ -511,13 +513,35 @@ def send_production_waiver_invitation_email(to_email, prod_contact_name, project
     )
 
 
+def send_safety_rules_invitation_email(to_email, recipient_name, project_name, signature_link, is_reminder=False, production_name=None):
+    """Envoie une invitation (ou un rappel) à un intervenant pour signer son engagement aux Règles de Sécurité Universelles (BVSR)."""
+    return _send_waiver_invitation_email(
+        waiver_type="safety_rules",
+        to_email=to_email,
+        recipient_name=recipient_name,
+        project_name=project_name,
+        signature_link=signature_link,
+        is_reminder=is_reminder,
+        production_name=production_name,
+    )
+
+
 def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path, production_name=None, waiver_type=None):
-    """Envoie un email avec le PDF de décharge signé en pièce jointe."""
+    """Envoie un email avec le PDF du contrat (BVRA) ou des règles de sécurité (BVSR) signé en pièce jointe."""
     admin_mail = os.getenv("SUPER_ADMIN_MAIL", "contact@bellevitesse.com")
     current_app.logger.info(
-        f"🚀 Sending signed waiver PDF to {to_email} and {admin_mail}")
+        f"🚀 Sending signed document PDF to {to_email} and {admin_mail}")
+    if waiver_type == "cgl":
+        doc_desc = "le Contrat de Location (BVRA) signé"
+        subject_desc = "Contrat de Location (BVRA) signé"
+        doc_title = "Contrat de Location (BVRA)"
+    else:
+        doc_desc = "les Règles de Sécurité Universelles (BVSR) signées"
+        subject_desc = "Règles de Sécurité (BVSR) signées"
+        doc_title = "Règles de Sécurité (BVSR)"
+
     text_content = (
-        f"Bonjour {recipient_name},\n\nVeuillez trouver ci-joint la décharge signée "
+        f"Bonjour {recipient_name},\n\nVeuillez trouver ci-joint {doc_desc} "
         f"pour le projet : {project_name}.\n\nBelle journée,\nL'équipe Belle Vitesse."
     )
     context = _build_waiver_email_context(
@@ -526,9 +550,12 @@ def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path, p
         project_name=project_name,
         production_name=production_name,
     )
+    context["doc_title"] = doc_title
+    context["subject_desc"] = subject_desc
+
     return EmailService.send_templated_email(
         to_email=to_email,
-        subject=f"Décharge signée - {project_name}",
+        subject=f"{subject_desc} - {project_name}",
         template_name="emails/waiver_signed_confirmation.html",
         context=context,
         text_content=text_content,

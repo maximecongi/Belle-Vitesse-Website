@@ -383,7 +383,7 @@ class RouteSmokeTest(unittest.TestCase):
         # 1. Accessible en dev/test
         resp = self.client.get("/temp-email-preview/waiver")
         self.assertEqual(resp.status_code, 200)
-        self.assertIn("Décharge Signée", resp.get_data(as_text=True))
+        self.assertIn("Contrat de Location (BVRA) Signé", resp.get_data(as_text=True))
 
         resp_cron = self.client.get("/temp-email-preview/cron")
         self.assertEqual(resp_cron.status_code, 200)

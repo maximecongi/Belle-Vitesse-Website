@@ -329,21 +329,32 @@ def _format_project_admin(p, vehicle_map, heads_map):
             "model": heads_map.get(hid, {}).get("model", ""),
             "image": _extract_head_image(heads_map.get(hid, {})),
         } for hid in head_ids],
-        "pilot_waiver": {
-            "id": p.pilot_waiver.id if (p.pilot_waiver and not p.pilot_waiver.deleted_at) else None,
-            "waiver_num": p.pilot_waiver.waiver_id if (p.pilot_waiver and not p.pilot_waiver.deleted_at) else "",
-            "pilot_name": f"{p.pilot_waiver.pilot_first_name or ''} {p.pilot_waiver.pilot_last_name or ''}".strip() if (p.pilot_waiver and not p.pilot_waiver.deleted_at and (p.pilot_waiver.pilot_first_name or p.pilot_waiver.pilot_last_name)) else (f"{p.pilot_contact.first_name} {p.pilot_contact.last_name}" if p.pilot_contact else ""),
-            "status": format_waiver_status(p.pilot_waiver.status) if (p.pilot_waiver and not p.pilot_waiver.deleted_at) else "",
-            "raw_status": p.pilot_waiver.status if (p.pilot_waiver and not p.pilot_waiver.deleted_at) else "",
-            "pdf_path": _get_secured_document_url(p.pilot_waiver.signed_pdf_path, "pilot-waiver") if (p.pilot_waiver and not p.pilot_waiver.deleted_at) else None,
+        "cgl": {
+            "id": p.active_cgl.id if p.active_cgl else None,
+            "waiver_num": p.active_cgl.waiver_id if p.active_cgl else "",
+            "production_name": p.active_cgl.production_name if (p.active_cgl and p.active_cgl.production_name) else (p.production.name if p.production else ""),
+            "status": format_waiver_status(p.active_cgl.status) if p.active_cgl else "",
+            "raw_status": p.active_cgl.status if p.active_cgl else "",
+            "pdf_path": _get_secured_document_url(p.active_cgl.signed_pdf_path, "cgl") if p.active_cgl else None,
         },
-        "production_waiver": {
-            "id": p.production_waiver.id if (p.production_waiver and not p.production_waiver.deleted_at) else None,
-            "waiver_num": p.production_waiver.waiver_id if (p.production_waiver and not p.production_waiver.deleted_at) else "",
-            "production_name": p.production_waiver.production_name if (p.production_waiver and not p.production_waiver.deleted_at and p.production_waiver.production_name) else (p.production.name if p.production else ""),
-            "status": format_waiver_status(p.production_waiver.status) if (p.production_waiver and not p.production_waiver.deleted_at) else "",
-            "raw_status": p.production_waiver.status if (p.production_waiver and not p.production_waiver.deleted_at) else "",
-            "pdf_path": _get_secured_document_url(p.production_waiver.signed_pdf_path, "production-waiver") if (p.production_waiver and not p.production_waiver.deleted_at) else None,
+        "safety_rules": {
+            "count": len(p.active_safety_rules),
+            "signed_count": sum(1 for sr in p.active_safety_rules if sr.status == "signed"),
+            "has_pending": any(sr.status in ("to_send", "to_sign") for sr in p.active_safety_rules),
+            "single_pdf_path": _get_secured_document_url(p.active_safety_rules[0].signed_pdf_path, "safety-rules") if (len(p.active_safety_rules) == 1 and p.active_safety_rules[0].status == "signed") else None,
+            "rules_list": [
+                {
+                    "id": sr.id,
+                    "waiver_num": sr.waiver_id,
+                    "signer_name": sr.signer_name or "—",
+                    "signer_role": sr.signer_role or "pilot",
+                    "signer_role_label": getattr(sr, "signer_role_label", sr.signer_role),
+                    "status": format_waiver_status(sr.status),
+                    "raw_status": sr.status,
+                    "pdf_path": _get_secured_document_url(sr.signed_pdf_path, "safety-rules"),
+                }
+                for sr in p.active_safety_rules
+            ],
         },
         "reports_count": len(p.reports) if hasattr(p, 'reports') and p.reports else 0,
         "incidents": [
@@ -426,8 +437,8 @@ def list_projects(
         joinedload(Project.dop_contact),
         joinedload(Project.first_ac_contact),
         joinedload(Project.key_grip_contact),
-        joinedload(Project.pilot_waiver),
-        joinedload(Project.production_waiver),
+        joinedload(Project.cgl),
+        selectinload(Project.safety_rules),
         selectinload(Project.incidents),
         selectinload(Project.reports),
     )
@@ -625,16 +636,15 @@ def create_project(form, user_id=None):
     from services.common.kdrive import dispatch_create_project_tree
     dispatch_create_project_tree(project.id)
 
-    # Création automatique des décharges si les entités associées existent
+    # Création automatique du contrat de location (CGL) si une production est assignée
     try:
-        from services.admin.waivers import create_production_waiver, create_pilot_waiver
-        if project.production_id:
-            create_production_waiver(project.id)
-        if project.pilot_contact_id:
-            create_pilot_waiver(project.id)
+        from services.admin.waivers import create_cgl
+        from models import CglWaiver
+        if project.production_id and not CglWaiver.query.filter_by(project_id=project.id, deleted_at=None).first():
+            create_cgl(project.id)
     except Exception as e_w:
         logger.warning(
-            f"⚠️ Erreur lors de l'auto-création des décharges pour le projet {project.id}: {e_w}")
+            f"⚠️ Erreur lors de l'auto-création du contrat CGL pour le projet {project.id}: {e_w}")
 
     return True
 
@@ -708,10 +718,11 @@ def update_project(record_id, form, user_id=None):
     project.heads_to_check = ",".join(head_ids)
     project.last_action_by_id = user_id
 
-    # Synchronisation des décharges non signées avec les nouvelles dates et métadonnées du projet
+    # Synchronisation des documents non signés avec les nouvelles dates et métadonnées du projet
     from services.admin.waivers import _format_project_shooting_dates
     formatted_dates = _format_project_shooting_dates(project, default_sep=" au ")
-    for w in [project.pilot_waiver, project.production_waiver]:
+    waivers_to_sync = ([project.active_cgl] if project.active_cgl else []) + list(project.active_safety_rules or [])
+    for w in waivers_to_sync:
         if w and w.status in ("to_generate", "to_send"):
             w.project_name = project.name
             w.shooting_dates = formatted_dates
@@ -737,17 +748,15 @@ def update_project(record_id, form, user_id=None):
             old_proj_name=old_name,
         )
 
-    # Auto-création des décharges si non encore existantes et nouvelles entités assignées
+    # Auto-création du contrat de location (CGL) si non encore existant et production assignée
     try:
-        from services.admin.waivers import create_production_waiver, create_pilot_waiver
-        from models import PilotWaiver, ProductionWaiver
-        if project.production_id and not ProductionWaiver.query.filter_by(project_id=project.id, deleted_at=None).first():
-            create_production_waiver(project.id)
-        if project.pilot_contact_id and not PilotWaiver.query.filter_by(project_id=project.id, deleted_at=None).first():
-            create_pilot_waiver(project.id)
+        from services.admin.waivers import create_cgl
+        from models import CglWaiver
+        if project.production_id and not CglWaiver.query.filter_by(project_id=project.id, deleted_at=None).first():
+            create_cgl(project.id)
     except Exception as e_w:
         logger.warning(
-            f"⚠️ Erreur lors de l'auto-création des décharges à la mise à jour du projet {project.id}: {e_w}")
+            f"⚠️ Erreur lors de l'auto-création du contrat CGL à la mise à jour du projet {project.id}: {e_w}")
 
     return True
 
@@ -832,8 +841,8 @@ def delete_project(record_id, user_id=None):
         from models.db import _utcnow
         from services.admin.inspections import delete_inspection_unified
         from services.admin.waivers import (
-            delete_pilot_waiver_internal,
-            delete_production_waiver_internal,
+            delete_cgl_internal,
+            delete_safety_rules_internal,
         )
         from utils.storage import get_project_base_path
 
@@ -850,8 +859,8 @@ def delete_project(record_id, user_id=None):
 
         # 2. Supprime d'abord les décharges liées (assets locaux, jetons, archivage et soft-delete)
         try:
-            delete_pilot_waiver_internal(p.id)
-            delete_production_waiver_internal(p.id)
+            delete_cgl_internal(p.id)
+            delete_safety_rules_internal(p.id)
         except Exception as waiver_err:
             logger.error(
                 f"❌ Erreur suppression décharges pour projet {p.id} : {waiver_err}")

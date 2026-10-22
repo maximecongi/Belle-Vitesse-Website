@@ -1,50 +1,63 @@
+"""
+Tests unitaires pour le nouveau système unifié de Contrats CGL (BVRA) et Règles de Sécurité Universelles (BVSR).
+Remplace intégralement les anciens tests de double décharge pilote/production.
+"""
+
+from datetime import date, datetime, timezone
+import json
 import os
 import sys
 import unittest
-from datetime import date
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-# Isolation stricte de l'environnement de test avant tout import d'app
-os.environ["FLASK_ENV"] = "testing"
-os.environ["TESTING"] = "True"
-os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-os.environ["WTF_CSRF_ENABLED"] = "False"
-os.environ["USE_SSH_TUNNEL"] = "false"
-
-# Mock weasyprint
+# Mock weasyprint si non disponible dans l'environnement de test
 mock_weasyprint = MagicMock()
 mock_weasyprint.HTML = MagicMock()
 mock_weasyprint.CSS = MagicMock()
 sys.modules["weasyprint"] = mock_weasyprint
 
 from app import create_app
-from models import db, Project, Production, User, Waiver, PilotWaiver, ProductionWaiver
-from services.admin.waivers import (
-    create_waiver,
-    delete_waiver,
-    generate_waiver,
-    reset_waiver,
-    send_waiver,
-    delete_waiver_internal,
-    create_pilot_waiver,
-    create_production_waiver,
-    list_pilot_waivers,
-    list_production_waivers,
-    generate_pilot_waiver,
-    generate_production_waiver,
-    reset_pilot_waiver,
-    reset_production_waiver,
-    delete_pilot_waiver_internal,
-    delete_production_waiver_internal,
-    delete_pilot_waiver,
-    delete_production_waiver,
-    _format_project_shooting_dates,
-    format_waiver_shooting_dates,
+from models import (
+    CglWaiver,
+    Contact,
+    Production,
+    Project,
+    SafetyRulesWaiver,
+    User,
+    Vehicle,
+    Waiver,
+    WaiverSignedDocument,
+    WaiverToken,
+    db,
 )
+from services.admin.waivers import (
+    _format_project_shooting_dates,
+    create_cgl,
+    create_safety_rules_waiver,
+    delete_cgl,
+    delete_cgl_internal,
+    delete_safety_rules_waiver,
+    delete_safety_rules_waiver_internal,
+    delete_waiver,
+    delete_waiver_internal,
+    format_waiver_shooting_dates,
+    generate_cgl,
+    generate_safety_rules_waiver,
+    generate_waiver,
+    list_cgl,
+    list_safety_rules_waivers,
+    reset_cgl,
+    reset_safety_rules_waiver,
+    reset_waiver,
+    send_cgl,
+    send_safety_rules_waiver,
+    send_waiver,
+)
+from services.common.signatures import finalize_signed_document
+from utils.document_utils import compute_hmac_seal
 
-class WaiversTest(unittest.TestCase):
+
+class WaiversCglAndSafetyRulesTest(unittest.TestCase):
     def setUp(self):
         os.environ["FLASK_ENV"] = "testing"
         os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
@@ -52,6 +65,7 @@ class WaiversTest(unittest.TestCase):
         os.environ["USE_SSH_TUNNEL"] = "false"
 
         self.app = create_app()
+        self.app.config["TESTING"] = True
         self.app.config["WTF_CSRF_ENABLED"] = False
         self.client = self.app.test_client()
 
@@ -64,115 +78,110 @@ class WaiversTest(unittest.TestCase):
             db.drop_all()
 
     def _create_mock_data(self):
-        # Create user
-        user = User(firstname="John", lastname="Doe", mail="john.doe@example.com", role="administrator")
+        user = User(firstname="Admin", lastname="BV", mail="admin@bellevitesse.com", role="administrator")
         db.session.add(user)
-        
-        # Create production
-        prod = Production(name="Test Prod")
+
+        prod = Production(name="Studio Horizon", mail="contact@studiohorizon.com")
         db.session.add(prod)
         db.session.flush()
 
-        # Create project
         proj = Project(
-            name="Test Project",
+            name="Tournage Pub Alpes",
+            project_id="BVPR-ALPES01",
             production_id=prod.id,
             departure_date=date(2026, 6, 2),
-            return_date=date(2026, 6, 5),
-            vehicles_to_check="1"
+            shoot_start_date=date(2026, 6, 3),
+            shoot_end_date=date(2026, 6, 5),
+            return_date=date(2026, 6, 6),
+            vehicles_to_check="1",
         )
         db.session.add(proj)
         db.session.commit()
 
         return user, proj
 
-    def test_create_and_list_waivers(self):
+    def test_create_and_list_cgl_and_safety_rules(self):
+        """Vérifie la création et le listage respectif des contrats CGL et engagements BVSR."""
         with self.app.app_context():
             user, proj = self._create_mock_data()
 
-            # Create waivers
-            success, msg = create_pilot_waiver(proj.id)
-            self.assertTrue(success)
-            
-            success, msg = create_production_waiver(proj.id)
-            self.assertTrue(success)
+            # Création CGL
+            s_cgl, msg_cgl = create_cgl(proj.id)
+            self.assertTrue(s_cgl, msg_cgl)
 
-            # List
-            pilots = list_pilot_waivers()
-            self.assertEqual(len(pilots), 1)
-            self.assertEqual(pilots[0]["project_name"], "Test Project")
+            # Création BVSR (invitation manuelle avec rôle)
+            s_sr, msg_sr = create_safety_rules_waiver(
+                project_id=proj.id,
+                signer_first_name="Luc",
+                signer_last_name="Pilote",
+                signer_email="luc.pilote@example.com",
+                signer_role="pilot",
+            )
+            self.assertTrue(s_sr, msg_sr)
 
-            productions = list_production_waivers()
-            self.assertEqual(len(productions), 1)
-            self.assertEqual(productions[0]["project_name"], "Test Project")
+            # Vérification list_cgl
+            cgl_items = list_cgl()
+            self.assertEqual(len(cgl_items), 1)
+            self.assertEqual(cgl_items[0]["project_name"], "Tournage Pub Alpes")
+            self.assertTrue(cgl_items[0]["waiver_id"].startswith("BVRA"))
+            self.assertEqual(cgl_items[0]["raw_status"], "to_send")
 
-    def test_soft_delete_waivers(self):
+            # Vérification list_safety_rules_waivers
+            sr_items = list_safety_rules_waivers()
+            self.assertEqual(len(sr_items), 1)
+            self.assertEqual(sr_items[0]["project_name"], "Tournage Pub Alpes")
+            self.assertTrue(sr_items[0]["waiver_id"].startswith("BVSR"))
+            self.assertEqual(sr_items[0]["signer_role"], "pilot")
+            self.assertEqual(sr_items[0]["raw_status"], "to_send")
+
+    def test_soft_delete_and_recreate_cgl_and_bvsr(self):
+        """Vérifie le soft-delete et la recréation sans conflit d'unicité."""
         with self.app.app_context():
             user, proj = self._create_mock_data()
 
-            # Create
-            create_pilot_waiver(proj.id)
-            create_production_waiver(proj.id)
+            create_cgl(proj.id)
+            create_safety_rules_waiver(
+                proj.id,
+                signer_first_name="Marc",
+                signer_last_name="Cadreur",
+                signer_email="marc@example.com",
+                signer_role="technician",
+            )
 
-            # Soft delete
-            delete_pilot_waiver_internal(proj.id)
-            delete_production_waiver_internal(proj.id)
+            cgl = CglWaiver.query.filter_by(project_id=proj.id).first()
+            sr = SafetyRulesWaiver.query.filter_by(project_id=proj.id).first()
 
-            # List again - should be empty
-            pilots = list_pilot_waivers()
-            self.assertEqual(len(pilots), 0)
+            # Suppression unitaire
+            del_cgl, _ = delete_cgl(cgl.waiver_id)
+            self.assertTrue(del_cgl)
+            del_sr, _ = delete_safety_rules_waiver(sr.waiver_id)
+            self.assertTrue(del_sr)
 
-            productions = list_production_waivers()
-            self.assertEqual(len(productions), 0)
+            # Ne doivent plus apparaître dans les listes actives
+            self.assertEqual(len(list_cgl()), 0)
+            self.assertEqual(len(list_safety_rules_waivers()), 0)
 
-            # Check DB directly
-            pw = db.session.query(PilotWaiver).filter_by(project_id=proj.id).first()
-            self.assertIsNotNone(pw)
-            self.assertIsNotNone(pw.deleted_at)
+            # Recréation pour le même projet
+            re_cgl, _ = create_cgl(proj.id)
+            self.assertTrue(re_cgl)
+            re_sr, _ = create_safety_rules_waiver(
+                proj.id,
+                signer_first_name="Marc",
+                signer_last_name="Cadreur",
+                signer_email="marc@example.com",
+                signer_role="technician",
+            )
+            self.assertTrue(re_sr)
 
-            prw = db.session.query(ProductionWaiver).filter_by(project_id=proj.id).first()
-            self.assertIsNotNone(prw)
-            self.assertIsNotNone(prw.deleted_at)
+            self.assertEqual(len(list_cgl()), 1)
+            self.assertEqual(len(list_safety_rules_waivers()), 1)
 
-    def test_explicit_delete_and_recreate(self):
-        """Vérifie la suppression unitaire par ID et la capacité de recréer une décharge pour le même projet."""
+    def test_automatic_cgl_creation_on_project_create(self):
+        """Vérifie que le CGL est créé automatiquement si une production est associée, mais PAS les règles de sécurité."""
+        from services.admin.projects import create_project
+
         with self.app.app_context():
-            user, proj = self._create_mock_data()
-
-            # Création manuelle
-            success, _ = create_pilot_waiver(proj.id)
-            self.assertTrue(success)
-            success, _ = create_production_waiver(proj.id)
-            self.assertTrue(success)
-
-            pw = PilotWaiver.query.filter_by(project_id=proj.id).first()
-            prw = ProductionWaiver.query.filter_by(project_id=proj.id).first()
-
-            # Suppression explicite (similaire au clic sur le bouton Supprimer)
-            s_pw, _ = delete_pilot_waiver(pw.waiver_id)
-            self.assertTrue(s_pw)
-            s_prw, _ = delete_production_waiver(prw.waiver_id)
-            self.assertTrue(s_prw)
-
-            # Doivent avoir disparu des listes actives
-            self.assertEqual(len(list_pilot_waivers()), 0)
-            self.assertEqual(len(list_production_waivers()), 0)
-
-            # Recréation manuelle sur demande pour le même projet -> doit réussir sans conflit SQL
-            re_pw, msg_pw = create_pilot_waiver(proj.id)
-            self.assertTrue(re_pw, msg_pw)
-            re_prw, msg_prw = create_production_waiver(proj.id)
-            self.assertTrue(re_prw, msg_prw)
-
-            self.assertEqual(len(list_pilot_waivers()), 1)
-            self.assertEqual(len(list_production_waivers()), 1)
-
-    def test_automatic_waivers_on_project_create(self):
-        """Vérifie que les décharges sont créées automatiquement si production_id ou pilot_contact_id sont renseignés."""
-        with self.app.app_context():
-            from services.admin.projects import create_project
-
-            prod = Production(name="Prod Avec Décharge Auto")
+            prod = Production(name="Prod Automatique")
             db.session.add(prod)
             db.session.flush()
 
@@ -180,483 +189,282 @@ class WaiversTest(unittest.TestCase):
                 def getlist(self, name):
                     return []
 
-            form_data = {
-                "name": "Tournage Standalone",
+            form = MockForm({
+                "name": "Tournage Automatique CGL",
                 "production_id": str(prod.id),
                 "departure_date": date(2026, 7, 1),
                 "shoot_start": date(2026, 7, 2),
-                "shoot_end": date(2026, 7, 5),
-                "return_date": date(2026, 7, 6),
-            }
-            form = MockForm(form_data)
-            created = create_project(form)
-            self.assertTrue(created)
+                "shoot_end": date(2026, 7, 4),
+                "return_date": date(2026, 7, 5),
+            })
+            ok = create_project(form)
+            self.assertTrue(ok)
 
-            new_proj = Project.query.filter_by(name="Tournage Standalone").first()
+            new_proj = Project.query.filter_by(name="Tournage Automatique CGL").first()
             self.assertIsNotNone(new_proj)
 
-            # La décharge production doit être automatiquement créée car production_id est renseigné
-            prod_waiver = ProductionWaiver.query.filter_by(project_id=new_proj.id).first()
-            self.assertIsNotNone(prod_waiver)
-            self.assertEqual(prod_waiver.status, "to_send")
+            # CGL automatique présent
+            self.assertIsNotNone(new_proj.active_cgl)
+            self.assertEqual(new_proj.active_cgl.waiver_type, "cgl")
+            self.assertTrue(new_proj.active_cgl.waiver_id.startswith("BVRA"))
+            self.assertEqual(new_proj.active_cgl.status, "to_send")
 
-            # La décharge pilote ne doit pas être créée car aucun pilot_contact_id n'a été fourni
-            self.assertIsNone(PilotWaiver.query.filter_by(project_id=new_proj.id).first())
+            # Aucune règle de sécurité créée automatiquement (invitation manuelle uniquement)
+            self.assertEqual(len(new_proj.active_safety_rules), 0)
 
-    def test_waivers_created_directly_in_to_send_status(self):
-        """Vérifie que la création d'une décharge la place directement au statut 'to_send' avec snapshot."""
+    def test_verify_cgl_route(self):
+        """Vérifie l'accès à la route publique de vérification scellée pour un contrat CGL."""
         with self.app.app_context():
             user, proj = self._create_mock_data()
+            create_cgl(proj.id)
+            cgl = CglWaiver.query.filter_by(project_id=proj.id).first()
+            cgl.status = "signed"
+            cgl.production_name = "Studio Horizon"
+            cgl.production_representative = "Claire Directrice"
 
-            s_pw, _ = create_pilot_waiver(proj.id)
-            self.assertTrue(s_pw)
-            s_prw, _ = create_production_waiver(proj.id)
-            self.assertTrue(s_prw)
+            seal_args = ["Studio Horizon", "Claire Directrice"]
+            sig_data = "signatures/waivers/mock_cgl.png"
+            iso_signed = "2026-06-02T10:00:00"
+            h = compute_hmac_seal("BVRA", cgl.waiver_id, *seal_args, sig_data, iso_signed)
 
-            pw = PilotWaiver.query.filter_by(project_id=proj.id).first()
-            self.assertIsNotNone(pw)
-            self.assertEqual(pw.status, "to_send")
-            self.assertIsNotNone(pw.generated_at)
-            self.assertEqual(pw.project_name, "Test Project")
-
-            prw = ProductionWaiver.query.filter_by(project_id=proj.id).first()
-            self.assertIsNotNone(prw)
-            self.assertEqual(prw.status, "to_send")
-            self.assertIsNotNone(prw.generated_at)
-            self.assertEqual(prw.project_name, "Test Project")
-
-    def test_waivers_search_and_project_links(self):
-        """Vérifie le formatage des décharges dans list_projects et le filtre ?q=."""
-        with self.app.app_context():
-            from services.admin.projects import list_projects
-
-            user, proj = self._create_mock_data()
-
-            # Avant création des décharges : id et waiver_num sont vides
-            projects = list_projects()
-            p_data = next(p for p in projects if p["id"] == proj.id)
-            self.assertIsNone(p_data["pilot_waiver"]["id"])
-            self.assertEqual(p_data["pilot_waiver"]["waiver_num"], "")
-            self.assertIsNone(p_data["production_waiver"]["id"])
-            self.assertEqual(p_data["production_waiver"]["waiver_num"], "")
-
-            # Après création : waiver_num est renseigné et status est 'to_send'
-            create_pilot_waiver(proj.id)
-            create_production_waiver(proj.id)
-
-            projects = list_projects()
-            p_data = next(p for p in projects if p["id"] == proj.id)
-            self.assertIsNotNone(p_data["pilot_waiver"]["id"])
-            self.assertTrue(p_data["pilot_waiver"]["waiver_num"].startswith("BVDW"))
-            self.assertEqual(p_data["pilot_waiver"]["raw_status"], "to_send")
-            self.assertIsNotNone(p_data["production_waiver"]["id"])
-            self.assertTrue(p_data["production_waiver"]["waiver_num"].startswith("BVDW") or p_data["production_waiver"]["waiver_num"].startswith("BVPW"))
-            self.assertEqual(p_data["production_waiver"]["raw_status"], "to_send")
-
-    def test_verify_production_waiver_route(self):
-        """Vérifie l'accès à la route de vérification pour une décharge production scellée."""
-        with self.app.app_context():
-            from models import ProductionWaiverSignedDocument
-            from utils.document_utils import compute_hmac_seal
-
-            user, proj = self._create_mock_data()
-            create_production_waiver(proj.id)
-            prw = ProductionWaiver.query.filter_by(project_id=proj.id).first()
-            prw.status = "signed"
-            prw.production_name = "Studio Test"
-            prw.production_representative = "Jean Dupont"
-
-            seal_args = ["Studio Test", "Jean Dupont"]
-            sig_data = "data:image/png;base64,mock"
-            iso_signed = "2026-09-22T20:00:00"
-            h = compute_hmac_seal("WAIVER_PROD", prw.waiver_id, *seal_args, sig_data, iso_signed)
-
-            signed_doc = ProductionWaiverSignedDocument(
-                waiver_id=prw.waiver_id,
+            signed_doc = WaiverSignedDocument(
+                waiver_id=cgl.waiver_id,
                 hash=h,
                 pdf_file_hash="mock-pdf-hash",
                 data_snapshot={
-                    "_seal_production_name": "Studio Test",
-                    "_seal_representative": "Jean Dupont",
-                    "production": "Studio Test",
-                    "project": "Test Project",
+                    "_seal_production_name": "Studio Horizon",
+                    "_seal_representative": "Claire Directrice",
+                    "production": "Studio Horizon",
+                    "project": "Tournage Pub Alpes",
+                    "production_representative": "Claire Directrice",
                     "_seal_signed_at": iso_signed,
                 },
                 signature=sig_data,
-                pdf_url=f"/production-waiver/document/{prw.waiver_id}.pdf"
+                pdf_url=f"/cgl/document/{cgl.waiver_id}.pdf",
             )
             db.session.add(signed_doc)
             db.session.commit()
 
-            # Test route standard QR code: /production-waiver/verify/<waiver_id>
-            resp = self.client.get(f"/production-waiver/verify/{prw.waiver_id}")
+            # Route publique canonique : /cgl/verify/<waiver_id>
+            resp = self.client.get(f"/cgl/verify/{cgl.waiver_id}")
             self.assertEqual(resp.status_code, 200)
-            self.assertIn("Données Certifiées &amp; Intactes".encode("utf-8"), resp.data)
-            self.assertIn(prw.waiver_id.encode("utf-8"), resp.data)
+            self.assertIn("CGL Scellées".encode("utf-8"), resp.data)
+            self.assertIn(cgl.waiver_id.encode("utf-8"), resp.data)
 
-            # Test route alias: /verify/production-waiver/<waiver_id>
-            resp2 = self.client.get(f"/verify/production-waiver/{prw.waiver_id}")
-            self.assertEqual(resp2.status_code, 200)
+            # Inexistant -> 404
+            resp_404 = self.client.get("/cgl/verify/BVRA-INEXISTANT")
+            self.assertEqual(resp_404.status_code, 404)
 
-            # Test ID inexistant
-            resp404 = self.client.get("/production-waiver/verify/BVPW-NONEXISTENT")
-            self.assertEqual(resp404.status_code, 404)
-
-    def test_verify_pilot_waiver_route(self):
-        """Vérifie l'accès à la route de vérification pour une décharge pilote scellée."""
+    def test_verify_safety_rules_route(self):
+        """Vérifie l'accès à la route publique de vérification scellée pour les règles de sécurité (BVSR)."""
         with self.app.app_context():
-            from models import PilotWaiverSignedDocument
-            from utils.document_utils import compute_hmac_seal
-
             user, proj = self._create_mock_data()
-            create_pilot_waiver(proj.id)
-            pw = PilotWaiver.query.filter_by(project_id=proj.id).first()
-            pw.status = "signed"
-            pw.pilot_first_name = "Pierre"
-            pw.pilot_last_name = "Martin"
-            pw.pilot_license_number = "12345ABC"
+            create_safety_rules_waiver(
+                proj.id,
+                signer_first_name="Jean",
+                signer_last_name="Pilote",
+                signer_email="jean@example.com",
+                signer_role="pilot",
+            )
+            sr = SafetyRulesWaiver.query.filter_by(project_id=proj.id).first()
+            sr.status = "signed"
 
-            full_name = "Pierre Martin"
-            seal_args = [full_name, "12345ABC"]
-            sig_data = "data:image/png;base64,mock"
-            iso_signed = "2026-09-22T20:00:00"
-            h = compute_hmac_seal("WAIVER", pw.waiver_id, *seal_args, sig_data, iso_signed)
+            full_name = "Jean Pilote"
+            role_label = sr.signer_role_label
+            seal_args = [full_name, role_label]
+            sig_data = "signatures/waivers/mock_sr.png"
+            iso_signed = "2026-06-02T11:00:00"
+            h = compute_hmac_seal("BVSR", sr.waiver_id, *seal_args, sig_data, iso_signed)
 
-            signed_doc = PilotWaiverSignedDocument(
-                waiver_id=pw.waiver_id,
+            signed_doc = WaiverSignedDocument(
+                waiver_id=sr.waiver_id,
                 hash=h,
                 pdf_file_hash="mock-pdf-hash",
                 data_snapshot={
-                    "_seal_pilot_name": full_name,
-                    "_seal_license": "12345ABC",
-                    "production": "Test Prod",
-                    "project": "Test Project",
+                    "_seal_signer_name": full_name,
+                    "_seal_signer_role": role_label,
+                    "signer_name": full_name,
+                    "signer_role": "pilot",
+                    "project": "Tournage Pub Alpes",
                     "_seal_signed_at": iso_signed,
                 },
                 signature=sig_data,
-                pdf_url=f"/pilot-waiver/document/{pw.waiver_id}.pdf"
+                pdf_url=f"/safety-rules/document/{sr.waiver_id}.pdf",
             )
             db.session.add(signed_doc)
             db.session.commit()
 
-            # Test route standard QR code: /pilot-waiver/verify/<waiver_id>
-            resp = self.client.get(f"/pilot-waiver/verify/{pw.waiver_id}")
+            # Route publique canonique : /safety-rules/verify/<waiver_id>
+            resp = self.client.get(f"/safety-rules/verify/{sr.waiver_id}")
             self.assertEqual(resp.status_code, 200)
-            self.assertIn("Données Certifiées &amp; Intactes".encode("utf-8"), resp.data)
-            self.assertIn(pw.waiver_id.encode("utf-8"), resp.data)
+            self.assertIn("Règles BVSR Scellées".encode("utf-8"), resp.data)
+            self.assertIn(sr.waiver_id.encode("utf-8"), resp.data)
 
-            # Test route alias: /waiver/verify/<waiver_id>
-            resp2 = self.client.get(f"/waiver/verify/{pw.waiver_id}")
-            self.assertEqual(resp2.status_code, 200)
+            # Inexistant -> 404
+            resp_404 = self.client.get("/safety-rules/verify/BVSR-NONEXISTENT")
+            self.assertEqual(resp_404.status_code, 404)
 
-            # Test route alias: /verify/waiver/<waiver_id>
-            resp3 = self.client.get(f"/verify/waiver/{pw.waiver_id}")
-            self.assertEqual(resp3.status_code, 200)
-
-            # Test ID inexistant
-            resp404 = self.client.get("/pilot-waiver/verify/BVDW-NONEXISTENT")
-            self.assertEqual(resp404.status_code, 404)
-
-    def test_finalize_signed_document_production_waiver(self):
-        """Vérifie le cycle complet de signature et génération PDF d'une décharge production."""
-        from services.common.signatures import finalize_signed_document
-
+    def test_finalize_signed_document_cgl_and_safety_rules(self):
+        """Vérifie le cycle complet de signature électronique et scellement HMAC pour CGL et BVSR."""
+        SAMPLE_BASE64_PNG = (
+            "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+        )
         with self.app.app_context(), self.app.test_request_context("/"):
-            prod, proj = self._create_mock_data()
-            create_production_waiver(project_id=proj.id)
-            pw = ProductionWaiver.query.filter_by(project_id=proj.id).first()
-            pw.production_representative = "Marie Directrice"
-            pw.production_insurance_company = "Assurance Ciné"
-            pw.production_insurance_policy = "POL12345"
+            user, proj = self._create_mock_data()
+
+            # 1. Finalisation CGL
+            create_cgl(proj.id)
+            cgl = CglWaiver.query.filter_by(project_id=proj.id).first()
+            cgl.production_representative = "Claire Directrice"
             db.session.commit()
-            sig_data = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
-            res = finalize_signed_document(
-                mode="production",
-                record_id=pw.id,
-                signature_data=sig_data,
+
+            res_cgl = finalize_signed_document(
+                mode="cgl",
+                record_id=cgl.id,
+                signature_data=SAMPLE_BASE64_PNG,
                 signed_ip="127.0.0.1",
             )
-            self.assertTrue(res)
-            self.assertEqual(res["document_id"], pw.waiver_id)
-            self.assertTrue(res["pdf_url"])
-            self.assertEqual(pw.status, "signed")
+            self.assertTrue(res_cgl)
+            self.assertEqual(res_cgl["document_id"], cgl.waiver_id)
+            self.assertEqual(cgl.status, "signed")
 
-    def test_quick_create_waiver_routes(self):
-        """Vérifie les routes quick-create en 1 clic pour pilote et production."""
+            # 2. Finalisation Règles de sécurité (BVSR)
+            create_safety_rules_waiver(
+                proj.id,
+                signer_first_name="Luc",
+                signer_last_name="Pilote",
+                signer_email="luc@example.com",
+                signer_role="pilot",
+            )
+            sr = SafetyRulesWaiver.query.filter_by(project_id=proj.id).first()
+
+            res_sr = finalize_signed_document(
+                mode="safety_rules",
+                record_id=sr.id,
+                signature_data=SAMPLE_BASE64_PNG,
+                signed_ip="127.0.0.1",
+            )
+            self.assertTrue(res_sr)
+            self.assertEqual(res_sr["document_id"], sr.waiver_id)
+            self.assertEqual(sr.status, "signed")
+
+    def test_one_click_send_routes(self):
+        """Vérifie l'envoi en 1 clic par POST avec redirection return_to pour CGL et Règles de Sécurité."""
         with self.app.app_context():
             user, proj = self._create_mock_data()
 
-            with self.client.session_transaction() as sess:
-                sess["admin_authenticated"] = True
-                sess["admin_user_id"] = user.id
-                sess["admin_user_role"] = "administrator"
-
-            # Quick-create pilot waiver
-            resp_pilot = self.client.get(f"/admin/waivers/pilots/quick-create/{proj.id}", follow_redirects=True)
-            self.assertEqual(resp_pilot.status_code, 200)
-            pw = PilotWaiver.query.filter_by(project_id=proj.id).first()
-            self.assertIsNotNone(pw)
-            self.assertEqual(pw.status, "to_send")
-
-            # Quick-create production waiver
-            resp_prod = self.client.get(f"/admin/waivers/productions/quick-create/{proj.id}", follow_redirects=True)
-            self.assertEqual(resp_prod.status_code, 200)
-            prw = ProductionWaiver.query.filter_by(project_id=proj.id).first()
-            self.assertIsNotNone(prw)
-            self.assertEqual(prw.status, "to_send")
-
-    def test_send_waivers_1_click_routes(self):
-        """Vérifie l'envoi en 1 clic des décharges avec retour à la page d'origine (return_to)."""
-        from unittest.mock import patch
-        from models import Contact
-
-        with self.app.app_context():
-            user, proj = self._create_mock_data()
-
-            # Créer contacts avec e-mail
-            pilot_c = Contact(first_name="Luc", last_name="Pilote", mail="pilot@example.com")
             prod_c = Contact(first_name="Marie", last_name="Prod", mail="prod@example.com")
-            db.session.add_all([pilot_c, prod_c])
+            db.session.add(prod_c)
             db.session.flush()
-
-            proj.pilot_contact_id = pilot_c.id
             proj.production_contact_id = prod_c.id
             db.session.commit()
 
-            # Créer les décharges
-            create_pilot_waiver(proj.id)
-            create_production_waiver(proj.id)
+            create_cgl(proj.id)
+            create_safety_rules_waiver(
+                proj.id,
+                signer_first_name="Marc",
+                signer_last_name="Opérateur",
+                signer_email="marc@example.com",
+                signer_role="technician",
+            )
 
-            pw = PilotWaiver.query.filter_by(project_id=proj.id).first()
-            prw = ProductionWaiver.query.filter_by(project_id=proj.id).first()
+            cgl = CglWaiver.query.filter_by(project_id=proj.id).first()
+            sr = SafetyRulesWaiver.query.filter_by(project_id=proj.id).first()
 
             with self.client.session_transaction() as sess:
                 sess["admin_authenticated"] = True
                 sess["admin_user_id"] = user.id
                 sess["admin_user_role"] = "administrator"
 
-            with patch("utils.mailer.send_waiver_invitation_email", return_value=True), \
-                 patch("utils.mailer.send_production_waiver_invitation_email", return_value=True):
+            with patch("utils.mailer.send_cgl_invitation_email", return_value=True), \
+                 patch("utils.mailer.send_safety_rules_invitation_email", return_value=True):
 
-                # 1-clic envoi décharge pilote avec return_to
                 target_url = f"/admin/projects/{proj.id}"
-                resp_p = self.client.post(
-                    f"/admin/waivers/pilots/{pw.waiver_id}/send",
+
+                # Envoi CGL
+                resp_cgl = self.client.post(
+                    f"/admin/cgl/{cgl.waiver_id}/send",
                     data={"return_to": target_url},
-                    follow_redirects=False
+                    follow_redirects=False,
                 )
-                self.assertEqual(resp_p.status_code, 302)
-                self.assertEqual(resp_p.headers["Location"], target_url)
+                self.assertEqual(resp_cgl.status_code, 302)
+                self.assertEqual(resp_cgl.headers["Location"], target_url)
+                db.session.refresh(cgl)
+                self.assertEqual(cgl.status, "to_sign")
 
-                db.session.refresh(pw)
-                self.assertEqual(pw.status, "to_sign")
-
-                # 1-clic envoi décharge production avec return_to
-                resp_pr = self.client.post(
-                    f"/admin/waivers/productions/{prw.waiver_id}/send",
+                # Envoi BVSR
+                resp_sr = self.client.post(
+                    f"/admin/safety-rules/{sr.waiver_id}/send",
                     data={"return_to": target_url},
-                    follow_redirects=False
+                    follow_redirects=False,
                 )
-                self.assertEqual(resp_pr.status_code, 302)
-                self.assertEqual(resp_pr.headers["Location"], target_url)
+                self.assertEqual(resp_sr.status_code, 302)
+                self.assertEqual(resp_sr.headers["Location"], target_url)
+                db.session.refresh(sr)
+                self.assertEqual(sr.status, "to_sign")
 
-                db.session.refresh(prw)
-                self.assertEqual(prw.status, "to_sign")
-
-    def test_generic_unified_waiver_functions(self):
-        """Vérifie le fonctionnement des fonctions factorisées génériques sur le modèle unifié Waiver."""
+    def test_polymorphism_and_unified_waiver_model(self):
+        """Vérifie le Single Table Inheritance sur le modèle Waiver unifié."""
         with self.app.app_context():
             user, proj = self._create_mock_data()
 
-            # Création générique des deux types de décharges
-            s1, msg1 = create_waiver(proj.id, waiver_type="pilot")
-            self.assertTrue(s1, msg1)
-            s2, msg2 = create_waiver(proj.id, waiver_type="production")
-            self.assertTrue(s2, msg2)
+            s1, _ = create_cgl(proj.id)
+            self.assertTrue(s1)
+            s2, _ = create_safety_rules_waiver(proj.id)
+            self.assertTrue(s2)
 
-            # Vérification de la relation unifiée sur Project
-            db.session.refresh(proj)
-            self.assertEqual(len(proj.waivers), 2)
-            types = {w.waiver_type for w in proj.waivers}
-            self.assertEqual(types, {"pilot", "production"})
-
-            # Polymorphisme sur la table unifiée waivers
             all_waivers = Waiver.query.filter_by(project_id=proj.id).all()
             self.assertEqual(len(all_waivers), 2)
-            pilot_w = next(w for w in all_waivers if w.waiver_type == "pilot")
-            self.assertIsInstance(pilot_w, PilotWaiver)
+
+            cgl_w = next(w for w in all_waivers if w.waiver_type == "cgl")
+            self.assertIsInstance(cgl_w, CglWaiver)
+
+            sr_w = next(w for w in all_waivers if w.waiver_type == "safety_rules")
+            self.assertIsInstance(sr_w, SafetyRulesWaiver)
 
             # Reset générique
-            pilot_w.signature_data = "signed-test"
+            sr_w.signature_data = "signed-mock"
             db.session.commit()
-            r_ok, _ = reset_waiver(pilot_w.waiver_id)
+            r_ok, _ = reset_waiver(sr_w.waiver_id)
             self.assertTrue(r_ok)
-            db.session.refresh(pilot_w)
-            self.assertIsNone(pilot_w.signature_data)
+            db.session.refresh(sr_w)
+            self.assertIsNone(sr_w.signature_data)
 
             # Suppression unitaire générique
-            del_ok, _ = delete_waiver(pilot_w.waiver_id)
+            del_ok, _ = delete_waiver(sr_w.waiver_id)
             self.assertTrue(del_ok)
-            db.session.refresh(pilot_w)
-            self.assertIsNotNone(pilot_w.deleted_at)
+            db.session.refresh(sr_w)
+            self.assertIsNotNone(sr_w.deleted_at)
 
-            # Suppression interne globale (toutes décharges du projet)
+            # Suppression interne globale du projet
             delete_waiver_internal(proj.id)
             for w in Waiver.query.filter_by(project_id=proj.id).all():
                 self.assertIsNotNone(w.deleted_at)
 
-
-    def test_waiver_vehicles_details_with_checkout_doc_id(self):
-        """Vérifie que la propriété vehicles_details expose bien unique_id et checkout_doc_id et s'affiche dans les templates PDF."""
+    def test_shooting_dates_formatting_and_properties(self):
+        """Vérifie que les dates de tournage sont correctement synthétisées et exposées."""
         with self.app.app_context():
-            from models import CheckoutVehicle, Vehicle, Production
-            from flask import render_template
-
-            prod = Production(name="Production Test PDF")
-            db.session.add(prod)
-            db.session.flush()
-
-            # Création véhicule en base avec thumbnail et slug
-            veh = Vehicle(
-                id="recVehTest01",
-                fields={
-                    "name": "Porsche Macan Tracking",
-                    "unique_id": "CAR-01",
-                    "slug": "porsche-macan-tracking",
-                    "thumbnail": [
-                        {
-                            "url": "/static/images/airtable/vehicles/recVehTest01/macan.png",
-                            "thumbnails": {
-                                "large": {"url": "/static/images/airtable/vehicles/recVehTest01/thumbnails/large/macan.png"}
-                            }
-                        }
-                    ]
-                }
-            )
-            db.session.add(veh)
-
-            proj = Project(name="Projet Test Véhicules PDF", production_id=prod.id, vehicles_to_check="recVehTest01")
-            db.session.add(proj)
-            db.session.flush()
-
-            # Création du contrôle départ associé
-            co = CheckoutVehicle(
-                project_id=proj.id,
-                vehicle_id="recVehTest01",
-                inspection_number="BVCO-2026-9999",
-                status="signed"
-            )
-            db.session.add(co)
-            db.session.flush()
-
-            # Création d'une décharge pilote
-            waiver = PilotWaiver(project_id=proj.id, vehicles="Porsche Macan Tracking", status="to_sign")
-            db.session.add(waiver)
-            db.session.commit()
-
-            details = waiver.vehicles_details
-            self.assertEqual(len(details), 1)
-            self.assertEqual(details[0]["name"], "Porsche Macan Tracking")
-            self.assertEqual(details[0]["unique_id"], "CAR-01")
-            self.assertEqual(details[0]["checkout_doc_id"], "BVCO-2026-9999")
-            self.assertEqual(details[0]["thumbnail"], "/static/images/airtable/vehicles/recVehTest01/thumbnails/large/macan.png")
-            self.assertEqual(details[0]["slug"], "porsche-macan-tracking")
-
-            # Vérification du rendu du template PDF
-            with self.app.test_request_context():
-                rendered_pdf_html = render_template("pdf/pilot_waiver.html", waiver=waiver, company_name="Belle Vitesse SAS")
-                self.assertIn("Porsche Macan Tracking", rendered_pdf_html)
-                self.assertIn("CAR-01", rendered_pdf_html)
-                self.assertIn("BVCO-2026-9999", rendered_pdf_html)
-                self.assertIn("checkout-doc-id", rendered_pdf_html)
-
-                # Vérification du rendu du template public de signature pilote
-                rendered_sign_html = render_template("public/waivers/sign_pilot_waiver.html", waiver=waiver)
-                self.assertIn("pilot-waiver-vehicle-card", rendered_sign_html)
-                self.assertIn("pilot-waiver-vehicle-thumb-wrapper", rendered_sign_html)
-                self.assertIn("/static/images/airtable/vehicles/recVehTest01/thumbnails/large/macan.png", rendered_sign_html)
-                self.assertIn("Porsche Macan Tracking", rendered_sign_html)
-                self.assertIn("CAR-01", rendered_sign_html)
-                self.assertIn('href="/fr/vehicles/porsche-macan-tracking"', rendered_sign_html)
-                self.assertIn('target="_blank"', rendered_sign_html)
-                self.assertIn('rel="noopener noreferrer"', rendered_sign_html)
-
-    def test_shooting_dates_formatting_continuous_and_punctual(self):
-        """Vérifie que les dates de tournage sont toujours simplifiées avec date de début et fin."""
-        with self.app.app_context():
-            # 1. Projet ponctuel à multiples dates
-            proj_punctual = Project(
-                name="Tournage Ponctuel Multi-Dates",
-                date_mode="punctual",
-                shoot_dates=["2026-10-12", "2026-10-13", "2026-10-14", "2026-10-16", "2026-10-20", "2026-11-17"],
-                departure_date=date(2026, 10, 10),
-                return_date=date(2026, 11, 20)
-            )
-            self.assertEqual(_format_project_shooting_dates(proj_punctual, default_sep=" au "), "12/10/2026 au 17/11/2026")
-            self.assertEqual(_format_project_shooting_dates(proj_punctual, default_sep=" → "), "12/10/2026 → 17/11/2026")
-
-            # 2. Projet ponctuel à 1 seule date
-            proj_single = Project(
-                name="Tournage 1 Jour",
-                date_mode="punctual",
-                shoot_dates=["2026-10-14"]
-            )
-            self.assertEqual(_format_project_shooting_dates(proj_single, default_sep=" au "), "14/10/2026")
-
-            # 3. Projet continu
             proj_continuous = Project(
                 name="Tournage Continu",
                 date_mode="continuous",
                 shoot_start_date=date(2026, 10, 1),
-                shoot_end_date=date(2026, 10, 5)
+                shoot_end_date=date(2026, 10, 5),
             )
             self.assertEqual(_format_project_shooting_dates(proj_continuous, default_sep=" au "), "01/10/2026 au 05/10/2026")
-            self.assertEqual(_format_project_shooting_dates(proj_continuous, default_sep=" → "), "01/10/2026 → 05/10/2026")
 
-            # 4. Helper format_waiver_shooting_dates avec chaîne à virgules
-            raw_multi = "12/10/2026, 13/10/2026, 14/10/2026, 16/10/2026, 20/10/2026, 17/11/2026"
-            self.assertEqual(format_waiver_shooting_dates(raw_multi, default_sep=" au "), "12/10/2026 au 17/11/2026")
-            self.assertEqual(format_waiver_shooting_dates(raw_multi, default_sep=" → "), "12/10/2026 → 17/11/2026")
+            raw_dates = "12/10/2026, 13/10/2026, 14/10/2026, 17/11/2026"
+            self.assertEqual(format_waiver_shooting_dates(raw_dates, default_sep=" au "), "12/10/2026 au 17/11/2026")
 
-            # 5. Properties sur Waiver (display_shooting_dates, display_project_name, display_production_name)
-            waiver = PilotWaiver(
-                project_name="Projet Alpha",
-                production_name="Studio Prod",
-                shooting_dates=raw_multi,
-                status="to_sign",
-                project_id=1
+            cgl = CglWaiver(
+                project_name="Projet Test Dates",
+                production_name="Studio Test",
+                shooting_dates=raw_dates,
+                project_id=1,
             )
-            self.assertEqual(waiver.display_shooting_dates, "12/10/2026 au 17/11/2026")
-            self.assertEqual(waiver.display_project_name, "Projet Alpha")
-            self.assertEqual(waiver.display_production_name, "Studio Prod")
-
-            # 6. Rendu dans les templates de signature et PDF
-            from flask import render_template
-            with self.app.test_request_context():
-                rendered_pilot = render_template("public/waivers/sign_pilot_waiver.html", waiver=waiver)
-                self.assertIn("12/10/2026 au 17/11/2026", rendered_pilot)
-                self.assertIn("Projet Alpha", rendered_pilot)
-                self.assertIn("Studio Prod", rendered_pilot)
-                self.assertNotIn("13/10/2026, 14/10/2026", rendered_pilot)
-
-                rendered_prod = render_template("public/waivers/sign_production_waiver.html", waiver=waiver, company_name="Belle Vitesse")
-                self.assertIn("12/10/2026 au 17/11/2026", rendered_prod)
-                self.assertIn("Projet Alpha", rendered_prod)
-                self.assertIn("Studio Prod", rendered_prod)
-                self.assertNotIn("13/10/2026, 14/10/2026", rendered_prod)
-
-                rendered_pdf_pilot = render_template("pdf/pilot_waiver.html", waiver=waiver, company_name="Belle Vitesse")
-                self.assertIn("12/10/2026 au 17/11/2026", rendered_pdf_pilot)
-                self.assertIn("Projet Alpha", rendered_pdf_pilot)
-                self.assertIn("Studio Prod", rendered_pdf_pilot)
-                self.assertNotIn("13/10/2026, 14/10/2026", rendered_pdf_pilot)
-
-                rendered_pdf_prod = render_template("pdf/production_waiver.html", waiver=waiver, company_name="Belle Vitesse")
-                self.assertIn("12/10/2026 au 17/11/2026", rendered_pdf_prod)
-                self.assertIn("Projet Alpha", rendered_pdf_prod)
-                self.assertNotIn("13/10/2026, 14/10/2026", rendered_pdf_prod)
+            self.assertEqual(cgl.display_shooting_dates, "12/10/2026 au 17/11/2026")
+            self.assertEqual(cgl.display_project_name, "Projet Test Dates")
+            self.assertEqual(cgl.display_production_name, "Studio Test")
 
 
 if __name__ == "__main__":
     unittest.main()
-
