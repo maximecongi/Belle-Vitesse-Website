@@ -94,28 +94,26 @@ def admin_production_delete(record_id):
 @require_roles('administrator', 'manager', 'commercial')
 def admin_api_production_quick_create():
     try:
+        from services.admin.utils import generic_find_or_create
+        from sqlalchemy import func
+
         data = request.get_json() or {}
         name = (data.get("name") or "").strip()
-        address = (data.get("address") or "").strip()
-        mail = (data.get("mail") or data.get("email") or "").strip()
-        phone = (data.get("phone") or "").strip()
-
         if not name:
             return jsonify({"error": "Le nom de la production est requis."}), 400
 
-        existing = Production.query.filter(Production.name.ilike(name)).first()
-        if existing:
-            return jsonify({"id": str(existing.id), "name": existing.name})
+        attrs = {
+            "name": name,
+            "address": (data.get("address") or "").strip() or None,
+            "mail": (data.get("mail") or data.get("email") or "").strip() or None,
+            "phone": (data.get("phone") or "").strip() or None,
+        }
 
-        prod = Production(
-            name=name,
-            address=address or None,
-            mail=mail or None,
-            phone=phone or None
+        prod, created = generic_find_or_create(
+            Production,
+            func.lower(func.trim(Production.name)) == name.lower(),
+            attrs
         )
-        db.session.add(prod)
-        db.session.commit()
-
         return jsonify({"id": str(prod.id), "name": prod.name})
     except Exception as e:
         db.session.rollback()

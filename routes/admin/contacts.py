@@ -130,34 +130,42 @@ def admin_contact_delete(record_id):
 @require_roles('administrator', 'manager', 'commercial')
 def admin_api_contact_quick_create():
     try:
-        from models import Contact, db
+        from models import Contact
+        from services.admin.utils import generic_find_or_create
+        from sqlalchemy import func
 
         data = request.get_json() or {}
         first_name = (data.get("first_name") or "").strip()
         last_name = (data.get("last_name") or "").strip()
-        job_title = (data.get("job_title") or "").strip()
-        mail = (data.get("mail") or data.get("email") or "").strip()
-        phone = (data.get("phone") or "").strip()
-        production_id = data.get("production_id")
-
         if not first_name or not last_name:
             return jsonify({"error": "Le prénom et le nom sont requis."}), 400
 
-        prod_id_int = int(production_id) if production_id and str(production_id).isdigit() else None
+        pid = data.get("production_id")
+        prod_id_int = int(pid) if pid and str(pid).isdigit() else None
 
-        contact = Contact(
-            first_name=first_name,
-            last_name=last_name,
-            job_title=job_title if job_title else None,
-            mail=mail if mail else None,
-            phone=phone if phone else None,
-            production_id=prod_id_int
+        attrs = {
+            "first_name": first_name,
+            "last_name": last_name,
+            "job_title": (data.get("job_title") or "").strip() or None,
+            "mail": (data.get("mail") or data.get("email") or "").strip() or None,
+            "phone": (data.get("phone") or "").strip() or None,
+            "production_id": prod_id_int,
+        }
+
+        match_filter = (
+            (func.lower(func.trim(Contact.first_name)) == first_name.lower()) &
+            (func.lower(func.trim(Contact.last_name)) == last_name.lower())
         )
-        db.session.add(contact)
-        db.session.commit()
+        order_by = (Contact.production_id == prod_id_int).desc() if prod_id_int else None
 
-        display_name = f"{contact.first_name} {contact.last_name} ({contact.job_title})" if contact.job_title else f"{contact.first_name} {contact.last_name}"
+        contact, created = generic_find_or_create(
+            Contact,
+            match_filter,
+            attrs,
+            order_by=order_by
+        )
 
+        display_name = f"{contact.first_name} {contact.last_name}" + (f" ({contact.job_title})" if contact.job_title else "")
         return jsonify({
             "id": str(contact.id),
             "name": display_name,
@@ -167,9 +175,8 @@ def admin_api_contact_quick_create():
             "mail": contact.mail or "",
             "phone": contact.phone or "",
             "production_id": str(contact.production_id) if contact.production_id else ""
-        }), 201
+        }), (201 if created else 200)
     except Exception as e:
-        db.session.rollback()
         current_app.logger.error(f"❌ Erreur lors de la création rapide de contact : {e}")
         return jsonify({"error": str(e)}), 500
 

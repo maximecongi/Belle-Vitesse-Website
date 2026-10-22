@@ -17,6 +17,10 @@
         const $pickerContainer = $('#projectDatePickerContainer');
         if (!$mainForm.length && !$pickerContainer.length) return;
 
+        // Garde d'idempotence : éviter les enregistrements multiples d'écouteurs d'événements
+        if ($mainForm.data('projectFormInitialized')) return;
+        $mainForm.data('projectFormInitialized', true);
+
         // 1. Initialisation du DatePicker Timeline unifié pour les projets
         if ($pickerContainer.length && typeof window.ProjectTimelineDatePicker === 'function') {
             new window.ProjectTimelineDatePicker({
@@ -39,9 +43,46 @@
         }
 
         // 3. Bascule d'état visuel sur les cartes à cocher
-        $('.project-checkbox-card input[type="checkbox"]').on('change', function () {
+        $('.project-checkbox-card input[type="checkbox"]').off('change.cardHighlight').on('change.cardHighlight', function () {
             $(this).closest('.project-checkbox-card').toggleClass('selected', this.checked);
         });
+
+        // Utilitaire générique pour insérer ou sélectionner une option dans un <select> / Select2 avec tri alphabétique
+        function upsertSelectOption($select, id, text, selectIt) {
+            if (!$select || !$select.length) return;
+            const currentVal = $select.val();
+
+            let $opt = $select.find("option[value='" + id + "']");
+            if ($opt.length === 0) {
+                $opt = $('<option>', { value: id, text: text });
+                $select.append($opt);
+            } else {
+                $opt.text(text);
+            }
+
+            // Tri alphabétique des options (en préservant le placeholder value="" en première position)
+            const $placeholder = $select.find('option[value=""]');
+            const $options = $select.find('option[value!=""]').get();
+
+            $options.sort(function (a, b) {
+                return (a.text || '').localeCompare(b.text || '', 'fr', { sensitivity: 'base' });
+            });
+
+            $select.empty();
+            if ($placeholder.length) {
+                $select.append($placeholder);
+            }
+            $options.forEach(function (opt) {
+                $select.append(opt);
+            });
+
+            if (selectIt) {
+                $select.val(id);
+            } else if (currentVal !== null && currentVal !== undefined) {
+                $select.val(currentVal);
+            }
+            $select.trigger('change');
+        }
 
         // 4. Modale Production Rapide
         function openProductionModal() {
@@ -49,6 +90,8 @@
             $('#modalProdAddress').val('');
             $('#modalProdMail').val('');
             $('#modalProdPhone').val('');
+            const $submitBtn = $('#submitProductionModalBtn');
+            $submitBtn.data('submitting', false).prop('disabled', false).text('Créer la production');
             $('#quickProductionModal').css('display', 'flex');
             setTimeout(function () {
                 $('#modalProdName').focus();
@@ -56,25 +99,32 @@
         }
 
         function closeProductionModal() {
+            const $submitBtn = $('#submitProductionModalBtn');
+            $submitBtn.data('submitting', false).prop('disabled', false).text('Créer la production');
             $('#quickProductionModal').css('display', 'none');
         }
 
-        $('#quickAddProductionBtn').on('click', function () {
+        $('#quickAddProductionBtn').off('click').on('click', function () {
             openProductionModal();
         });
 
-        $('#closeProductionModalBtn, #cancelProductionModalBtn').on('click', function () {
+        $('#closeProductionModalBtn, #cancelProductionModalBtn').off('click').on('click', function () {
             closeProductionModal();
         });
 
-        $('#quickProductionModal').on('click', function (e) {
+        $('#quickProductionModal').off('click').on('click', function (e) {
             if (e.target === this) {
                 closeProductionModal();
             }
         });
 
-        $('#quickProductionForm').on('submit', function (e) {
+        $('#quickProductionForm').off('submit').on('submit', function (e) {
             e.preventDefault();
+
+            const $submitBtn = $('#submitProductionModalBtn');
+            if ($submitBtn.data('submitting') || $submitBtn.prop('disabled')) {
+                return;
+            }
 
             const prodName = ($('#modalProdName').val() || '').trim();
             const prodAddress = ($('#modalProdAddress').val() || '').trim();
@@ -87,8 +137,7 @@
             }
 
             const csrfToken = $('input[name="csrf_token"]').val();
-            const $submitBtn = $('#submitProductionModalBtn');
-            $submitBtn.prop('disabled', true).text('Création...');
+            $submitBtn.data('submitting', true).prop('disabled', true).text('Création...');
 
             $.ajax({
                 url: "/admin/api/productions/quick",
@@ -104,38 +153,26 @@
                     phone: prodPhone || null
                 }),
                 success: function (response) {
-                    $submitBtn.prop('disabled', false).text('Créer la production');
                     if (response && response.id) {
-                        const $select = $('#productionSelect');
-                        if ($select.find("option[value='" + response.id + "']").length === 0) {
-                            const newOption = new Option(response.name, response.id, true, true);
-                            $select.append(newOption);
-                        } else {
-                            $select.val(response.id);
-                        }
-                        $select.trigger('change');
-
-                        // Mettre à jour aussi dans la modale de contact
-                        const $modalProd = $('#modalContactProduction');
-                        if ($modalProd.find("option[value='" + response.id + "']").length === 0) {
-                            $modalProd.append(new Option(response.name, response.id));
-                        }
-
+                        upsertSelectOption($('#productionSelect'), response.id, response.name, true);
+                        upsertSelectOption($('#modalContactProduction'), response.id, response.name, false);
                         closeProductionModal();
                     } else {
                         alert("Une erreur est survenue lors de la création de la production.");
                     }
                 },
                 error: function (xhr) {
-                    $submitBtn.prop('disabled', false).text('Créer la production');
                     const errorMsg = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : "Erreur serveur";
                     alert("Impossible de créer la production : " + errorMsg);
+                },
+                complete: function () {
+                    $submitBtn.data('submitting', false).prop('disabled', false).text('Créer la production');
                 }
             });
         });
 
         // 5. Modale Contact Rapide
-        $('.quick-add-contact-btn').on('click', function () {
+        $('.quick-add-contact-btn').off('click').on('click', function () {
             const targetSelectName = $(this).data('target');
             const defaultJob = $(this).data('job') || '';
 
@@ -144,13 +181,21 @@
             $('#modalContactLastName').val('');
             $('#modalContactMail').val('');
             $('#modalContactPhone').val('');
-            $('#modalContactProduction').val('');
+            const currentSelectedProd = $('#productionSelect').val() || '';
+            if (targetSelectName === 'production_contact_id' && currentSelectedProd) {
+                $('#modalContactProduction').val(currentSelectedProd);
+            } else {
+                $('#modalContactProduction').val('');
+            }
 
             if (defaultJob) {
                 $('#modalContactJob').val(defaultJob);
             } else {
                 $('#modalContactJob').val('');
             }
+
+            const $submitBtn = $('#submitContactModalBtn');
+            $submitBtn.data('submitting', false).prop('disabled', false).text('Créer le contact');
 
             $('#quickContactModal').css('display', 'flex');
             setTimeout(function () {
@@ -159,20 +204,22 @@
         });
 
         function closeContactModal() {
+            const $submitBtn = $('#submitContactModalBtn');
+            $submitBtn.data('submitting', false).prop('disabled', false).text('Créer le contact');
             $('#quickContactModal').css('display', 'none');
         }
 
-        $('#closeContactModalBtn, #cancelContactModalBtn').on('click', function () {
+        $('#closeContactModalBtn, #cancelContactModalBtn').off('click').on('click', function () {
             closeContactModal();
         });
 
-        $('#quickContactModal').on('click', function (e) {
+        $('#quickContactModal').off('click').on('click', function (e) {
             if (e.target === this) {
                 closeContactModal();
             }
         });
 
-        $(document).on('keydown', function (e) {
+        $(document).off('keydown.modalEscape').on('keydown.modalEscape', function (e) {
             if (e.key === 'Escape') {
                 if ($('#quickProductionModal').is(':visible')) {
                     closeProductionModal();
@@ -182,8 +229,14 @@
             }
         });
 
-        $('#quickContactForm').on('submit', function (e) {
+        $('#quickContactForm').off('submit').on('submit', function (e) {
             e.preventDefault();
+
+            const $submitBtn = $('#submitContactModalBtn');
+            // Verrou anti-double soumission
+            if ($submitBtn.data('submitting') || $submitBtn.prop('disabled')) {
+                return;
+            }
 
             const firstName = ($('#modalContactFirstName').val() || '').trim();
             const lastName = ($('#modalContactLastName').val() || '').trim();
@@ -199,8 +252,7 @@
             }
 
             const csrfToken = $('input[name="csrf_token"]').val();
-            const $submitBtn = $('#submitContactModalBtn');
-            $submitBtn.prop('disabled', true).text('Création...');
+            $submitBtn.data('submitting', true).prop('disabled', true).text('Création...');
 
             $.ajax({
                 url: "/admin/api/contacts/quick",
@@ -218,7 +270,6 @@
                     production_id: productionId || null
                 }),
                 success: function (response) {
-                    $submitBtn.prop('disabled', false).text('Créer le contact');
                     if (response && response.id) {
                         const contactSelectNames = [
                             'production_contact_id',
@@ -229,18 +280,7 @@
                         ];
 
                         contactSelectNames.forEach(function (name) {
-                            const $sel = $('select[name="' + name + '"]');
-                            if ($sel.length) {
-                                const isTarget = (name === targetSelectName);
-                                if ($sel.find("option[value='" + response.id + "']").length === 0) {
-                                    const newOpt = new Option(response.name, response.id, isTarget, isTarget);
-                                    $sel.append(newOpt);
-                                }
-                                if (isTarget) {
-                                    $sel.val(response.id);
-                                }
-                                $sel.trigger('change');
-                            }
+                            upsertSelectOption($('select[name="' + name + '"]'), response.id, response.name, name === targetSelectName);
                         });
 
                         closeContactModal();
@@ -249,9 +289,11 @@
                     }
                 },
                 error: function (xhr) {
-                    $submitBtn.prop('disabled', false).text('Créer le contact');
                     const errorMsg = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : "Erreur serveur";
                     alert("Impossible de créer le contact : " + errorMsg);
+                },
+                complete: function () {
+                    $submitBtn.data('submitting', false).prop('disabled', false).text('Créer le contact');
                 }
             });
         });

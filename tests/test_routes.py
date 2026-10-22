@@ -168,6 +168,21 @@ class RouteSmokeTest(unittest.TestCase):
             self.assertIsNotNone(c)
             self.assertEqual(c.first_name, "Sophie")
 
+        # Deduplication test: re-posting same contact returns existing record without creating duplicate
+        resp_dup = self.client.post("/admin/api/contacts/quick", json={
+            "first_name": "sophie",
+            "last_name": "lumière",
+            "phone": "0699999999"
+        })
+        self.assertEqual(resp_dup.status_code, 200)
+        data_dup = resp_dup.get_json()
+        self.assertEqual(data_dup["id"], data["id"])
+        self.assertEqual(data_dup["first_name"], "Sophie")
+
+        with self.app.app_context():
+            count = Contact.query.filter_by(first_name="Sophie", last_name="Lumière").count()
+            self.assertEqual(count, 1)
+
     def test_quick_production_creation(self):
         """Test the /admin/api/productions/quick endpoint."""
         from models import User, Production

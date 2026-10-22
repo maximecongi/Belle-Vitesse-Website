@@ -238,3 +238,38 @@ def generic_delete_record(model, record_id):
         db.session.delete(record)
         db.session.commit()
     return True
+
+
+@handle_admin_service_error
+def generic_find_or_create(model, lookup_filter, attributes, order_by=None, enrich_existing=True):
+    """
+    Recherche un enregistrement selon un filtre ou le crée de manière atomique.
+    
+    Si l'enregistrement existe déjà : enrichit automatiquement ses attributs vides
+    avec les nouvelles valeurs fournies dans attributes sans écraser les données existantes.
+    Si l'enregistrement n'existe pas : l'instancie avec attributes et l'insère en base.
+    
+    Retourne:
+        tuple (instance, created: bool)
+    """
+    query = model.query.filter(lookup_filter)
+    if order_by is not None:
+        query = query.order_by(order_by)
+    instance = query.first()
+
+    if instance:
+        if enrich_existing:
+            updated = False
+            for attr, val in attributes.items():
+                if val is not None and val != "" and not getattr(instance, attr, None):
+                    setattr(instance, attr, val)
+                    updated = True
+            if updated:
+                db.session.commit()
+        return instance, False
+
+    instance = model(**attributes)
+    db.session.add(instance)
+    db.session.commit()
+    return instance, True
+
