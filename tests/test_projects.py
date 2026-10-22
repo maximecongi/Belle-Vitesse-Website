@@ -660,8 +660,8 @@ class ProjectsTest(unittest.TestCase):
             res = self.client.get("/admin/projects")
             self.assertEqual(res.status_code, 200)
             html = res.data.decode("utf-8")
-            self.assertIn("Contrats & Sécurité", html)
-            self.assertIn("BVRA :", html)
+            self.assertIn("CGL & Sécurité", html)
+            self.assertIn("CGL :", html)
             self.assertIn("BVSR :", html)
             self.assertIn("1/1 signé", html)
 

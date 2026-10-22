@@ -622,16 +622,15 @@ a.pilot-waiver-vehicle-card:hover {
 
 .pilot-waiver-footer-logo-link {
     display: inline-block;
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    transition: opacity 0.2s ease;
 }
 
 .pilot-waiver-footer-logo-link:hover {
     opacity: 0.9;
-    transform: scale(1.02);
 }
 
 .pilot-waiver-footer-logo {
-    height: 28px;
+    height: 54px;
     width: auto;
     display: block;
     margin: 0 auto;
@@ -720,6 +719,7 @@ a.pilot-waiver-vehicle-card:hover {
     color: rgba(255, 255, 255, 0.45);
     margin-top: 0.75rem;
     margin-bottom: 0;
+    text-align: center;
 }
 
 /* ── 11. Responsive Mobile ───────────────────────────────────────────────── */

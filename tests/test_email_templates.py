@@ -45,13 +45,13 @@ class EmailTemplatesTest(unittest.TestCase):
                 is_reminder=False,
                 now_year=2026,
             )
-            self.assertIn("Signature Contrat de Location (BVRA)", html)
-            self.assertIn("du Contrat de Location (BVRA)", html)
+            self.assertIn("Signature Conditions Générales de Location (CGL)", html)
+            self.assertIn("des Conditions Générales de Location (CGL)", html)
             self.assertIn("Tournage Pub Vitesse", html)
             self.assertIn("Studio Test Prod", html)
             self.assertIn("Luc Contact", html)
             self.assertIn("Document :", html)
-            self.assertIn("Contrat de Location (BVRA)", html)
+            self.assertIn("Conditions Générales de Location (CGL)", html)
             self.assertIn("info-card info-card-waiver", html)
             self.assertNotIn("project-pill", html)
             self.assertIn(
@@ -70,8 +70,8 @@ class EmailTemplatesTest(unittest.TestCase):
                 is_reminder=True,
                 now_year=2026,
             )
-            self.assertIn("Rappel : Signature Contrat de Location (BVRA)", html)
-            self.assertIn("du Contrat de Location (BVRA)", html)
+            self.assertIn("Rappel : Signature Conditions Générales de Location (CGL)", html)
+            self.assertIn("des Conditions Générales de Location (CGL)", html)
             self.assertIn("Jean Prod", html)
             self.assertIn("alert-box alert-box-warning", html)
             self.assertIn("Signature en attente", html)
@@ -113,14 +113,14 @@ class EmailTemplatesTest(unittest.TestCase):
                 waiver_type="cgl",
                 now_year=2026,
             )
-            self.assertIn("Contrat de Location (BVRA) Signé.", html)
+            self.assertIn("Conditions Générales de Location (CGL) Signé.", html)
             self.assertIn("info-card info-card-waiver", html)
             self.assertIn("Spot Commercial", html)
             self.assertIn("Studio Test Prod", html)
             self.assertIn("Jean Dupont", html)
             self.assertIn("badge-success", html)
             self.assertIn("Document :", html)
-            self.assertIn("Contrat de Location (BVRA)", html)
+            self.assertIn("Conditions Générales de Location (CGL)", html)
             self.assertNotIn("project-pill", html)
 
             # Test 2 : Règles de sécurité

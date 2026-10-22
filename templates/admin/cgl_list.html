@@ -3,22 +3,22 @@
 {% from "admin/macros.html" import status_badge, filter_header, reminder_badge, list_header_actions, table_empty_row,
 doc_download_badge %}
 
-{% block title %}Contrats de Location (BVRA){% endblock %}
-{% block page_title %}Contrats de Location (BVRA / CGL){% endblock %}
+{% block title %}Conditions Générales de Location (CGL){% endblock %}
+{% block page_title %}Conditions Générales de Location (CGL){% endblock %}
 
 {% block header_actions %}
-{{ list_header_actions(placeholder="Rechercher un contrat...",
-new_url=url_for('admin_waivers.admin_cgl_new'), new_label="+ Nouveau Contrat (BVRA)") }}
+{{ list_header_actions(placeholder="Rechercher des CGL...",
+new_url=url_for('admin_waivers.admin_cgl_new'), new_label="+ Nouvelles CGL") }}
 {% endblock %}
 
 {% block content %}
 <div class="admin-card">
-    {{ filter_header("Contrats BVRA filtrés", count=cgl_items|length) }}
+    {{ filter_header("CGL filtrées", count=cgl_items|length) }}
     <div class="u-overflow-x-auto">
         <table class="admin-table">
             <thead>
                 <tr>
-                    <th>N° Contrat</th>
+                    <th>N° CGL</th>
                     <th>Projet</th>
                     <th>Locataire / Production</th>
                     <th>Contact</th>
@@ -84,7 +84,7 @@ new_url=url_for('admin_waivers.admin_cgl_new'), new_label="+ Nouveau Contrat (BV
                     </td>
                 </tr>
                 {% else %}
-                {{ table_empty_row(7, "Aucun contrat CGL trouvé.") }}
+                {{ table_empty_row(7, "Aucune CGL trouvée.") }}
                 {% endfor %}
             </tbody>
         </table>

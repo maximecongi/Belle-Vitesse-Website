@@ -50,7 +50,7 @@ def create_waiver(project_id, waiver_type: str = "cgl", **kwargs):
         existing = model.query.filter_by(project_id=project_id).first()
         if existing:
             if existing.deleted_at is None:
-                return False, "Un contrat de location (CGL) existe déjà pour ce projet."
+                return False, "Des Conditions Générales de Location (CGL) existent déjà pour ce projet."
             _cleanup_waiver_assets(waiver_type, existing)
             db.session.delete(existing)
             db.session.flush()
@@ -102,7 +102,7 @@ def create_waiver(project_id, waiver_type: str = "cgl", **kwargs):
     db.session.commit()
 
     if waiver_type == "cgl":
-        msg = "Contrat de location (CGL) créé avec succès."
+        msg = "Conditions Générales de Location (CGL) créées avec succès."
     else:
         msg = f"Règles de sécurité BVSR créées avec succès pour {waiver.signer_name} ({waiver.signer_role_label})."
     return True, msg
@@ -153,7 +153,7 @@ def generate_waiver(waiver_id, waiver_type: str = None):
     waiver.generated_at = _utcnow()
     db.session.commit()
 
-    msg = "Contrat de location (CGL) généré avec succès." if mode == "cgl" else "Règles de sécurité BVSR générées avec succès."
+    msg = "Conditions Générales de Location (CGL) générées avec succès." if mode == "cgl" else "Règles de sécurité BVSR générées avec succès."
     return True, msg
 
 
@@ -254,7 +254,7 @@ def send_waiver(waiver_id, waiver_type: str = None, base_url: str = None):
     elif mode == "safety_rules":
         msg_type = "Règles de sécurité (BVSR) envoyées"
     else:
-        msg_type = "Contrat de location (CGL) envoyé"
+        msg_type = "Conditions Générales de Location (CGL) envoyées"
 
     target_label = f"à {recipient_name} ({recipient_mail})"
     return True, f"{msg_type} {target_label}."

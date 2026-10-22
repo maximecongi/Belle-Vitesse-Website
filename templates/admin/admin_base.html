@@ -74,8 +74,8 @@
                         {{ current_user.firstname }} {{ current_user.lastname }}
                     </div>
                     {% if config.FLASK_ENV != 'production' %}
-                    <form action="{{ url_for('admin_auth.admin_dev_switch_role') }}" method="POST" class="admin-dev-role-form"
-                        id="devRoleForm" title="Mode Développement : Tester un autre rôle">
+                    <form action="{{ url_for('admin_auth.admin_dev_switch_role') }}" method="POST"
+                        class="admin-dev-role-form" id="devRoleForm" title="Mode Développement : Tester un autre rôle">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="next"
                             value="{{ request.full_path if request.query_string else request.path }}">
@@ -138,8 +138,8 @@
 
                 {% call nav_group('🚚 Départs', 'departs', 'departs', false) %}
                 {{ nav_item(url_for('admin_checkouts.admin_checkouts_list'), 'Checkouts', 'checkouts') }}
-                {{ nav_item(url_for('admin_waivers.admin_cgl_list'), 'Contrats Location (BVRA)', 'cgl') }}
-                {{ nav_item(url_for('admin_waivers.admin_safety_rules_list'), 'Règles Sécurité (BVSR)', 'safety_rules') }}
+                {{ nav_item(url_for('admin_waivers.admin_cgl_list'), 'Conditions Générales (CGL)', 'cgl') }}
+                {{ nav_item(url_for('admin_waivers.admin_safety_rules_list'), 'Règles Sécurité', 'safety_rules') }}
                 {% endcall %}
 
                 {% call nav_group('📦 Retours', 'retours', 'retours', false) %}
@@ -150,14 +150,17 @@
                 {% call nav_group('🏎️ Flotte', 'flotte', 'flotte', false) %}
                 {{ nav_item(url_for('admin_fleet.admin_fleet_list'), 'Flotte Véhicules', 'fleet') }}
                 {{ nav_item(url_for('admin_checkpoints.admin_checkpoints_list'), 'Points de Contrôle', 'checkpoints') }}
-                {{ nav_item(url_for('admin_fleet.admin_safety_rules_config'), 'Règles Sécurité (Catalogue)', 'safety_rules_config') }}
+                {{ nav_item(url_for('admin_fleet.admin_safety_rules_config'), 'Règles Sécurité (Catalogue)',
+                'safety_rules_config') }}
                 {% endcall %}
 
                 {% call nav_group('🧰 Administration', 'admin', 'admin', false) %}
                 {{ nav_item(url_for('admin_users.admin_users_list'), 'Équipe', 'users') }}
                 {{ nav_item(url_for('admin_pricing.admin_pricing'), 'Tarification', 'pricing') }}
-                {{ nav_item(url_for('admin_catalog.admin_catalog_pdf', prices='1'), 'Catalogue (avec prix)', 'catalog_pdf') }}
-                {{ nav_item(url_for('admin_catalog.admin_catalog_pdf', prices='0'), 'Catalogue (sans prix)', 'catalog_pdf') }}
+                {{ nav_item(url_for('admin_catalog.admin_catalog_pdf', prices='1'), 'Catalogue (avec prix)',
+                'catalog_pdf') }}
+                {{ nav_item(url_for('admin_catalog.admin_catalog_pdf', prices='0'), 'Catalogue (sans prix)',
+                'catalog_pdf') }}
                 {{ nav_item(url_for('admin_mcp_tokens.mcp_connector_page'), 'Connecteur IA (MCP)', 'mcp_connector') }}
                 {{ nav_item(url_for('admin_settings.admin_settings_edit'), ' Paramètres', 'settings') }}
                 {{ nav_item(url_for('admin_calendar.admin_calendar'), 'Calendrier', 'calendar') }}
@@ -166,10 +169,12 @@
 
 
                 {% call nav_group('🛠️ Outils', 'tools', 'tools', false) %}
-                {{ nav_item(url_for('admin_tools.admin_signature_generator'), 'Générateur de signature mail', 'signature') }}
+                {{ nav_item(url_for('admin_tools.admin_signature_generator'), 'Générateur de signature mail',
+                'signature') }}
                 {{ nav_item(url_for('admin_tools.admin_docs_index'), 'Documentation technique', 'docs') }}
                 {{ nav_item(url_for('admin_tools.admin_api_docs'), 'Documentation API', 'api_docs') }}
-                {{ nav_item(url_for('admin_catalog.admin_catalog_preview'), 'Mise à jour du catalogue', 'catalog_update',
+                {{ nav_item(url_for('admin_catalog.admin_catalog_preview'), 'Mise à jour du catalogue',
+                'catalog_update',
                 target='_blank') }}
                 {% endcall %}
 
@@ -255,7 +260,8 @@
         <div class="admin-modal-container">
             <button type="button" class="admin-modal-close" id="closeVehiclesModal">&times;</button>
             <div class="admin-modal-content">
-                <iframe src="" data-src="{{ url_for('admin_tools.admin_check_vehicles') }}" class="admin-modal-iframe"></iframe>
+                <iframe src="" data-src="{{ url_for('admin_tools.admin_check_vehicles') }}"
+                    class="admin-modal-iframe"></iframe>
             </div>
         </div>
     </div>

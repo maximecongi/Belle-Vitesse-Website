@@ -373,15 +373,15 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
         </div>
 
         <h3 class="u-text-sm u-text-uppercase u-text-muted u-font-bold u-mb-2 u-tracking-wide">
-            Contrat Cadre & Sécurité Plateau
+            CGL & Sécurité Plateau
         </h3>
 
-        <!-- 1. CONTRAT DE LOCATION (BVRA / CGL) -->
+        <!-- 1. CONDITIONS GÉNÉRALES DE LOCATION (CGL) -->
         <div class="project-doc-item u-p-3 u-mb-3 u-border-left-waiver">
             <div class="u-flex u-justify-between u-align-center u-mb-2">
                 <div class="u-flex u-align-center u-gap-2">
                     <span class="project-doc-title u-font-semibold u-text-xs">
-                        <i data-lucide="file-signature" class="u-text-waiver"></i> Contrat Location (BVRA)
+                        <i data-lucide="file-signature" class="u-text-waiver"></i> Conditions Générales de Location (CGL)
                     </span>
                     {% if cgl_waiver and cgl_waiver.waiver_num %}
                     <span class="checkout-doc-id">{{ cgl_waiver.waiver_num }}</span>
@@ -390,7 +390,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                 {% if not (cgl_waiver and cgl_waiver.id and cgl_waiver.waiver_num) %}
                 <form action="{{ url_for('admin_waivers.admin_cgl_quick_create', project_id=project.id) }}" method="POST" class="u-m-0">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="admin-btn admin-btn-xs admin-btn-primary" title="Créer et générer le contrat BVRA">
+                    <button type="submit" class="admin-btn admin-btn-xs admin-btn-primary" title="Créer et générer les CGL">
                         <i data-lucide="plus"></i> Créer
                     </button>
                 </form>
@@ -450,14 +450,14 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                     </a>
                     {% endif %}
 
-                    <a href="{{ url_for('admin_waivers.admin_cgl_list', q=cgl_waiver.waiver_num) }}" class="admin-btn admin-btn-xs admin-btn-secondary" title="Consulter dans la liste des contrats CGL">
+                    <a href="{{ url_for('admin_waivers.admin_cgl_list', q=cgl_waiver.waiver_num) }}" class="admin-btn admin-btn-xs admin-btn-secondary" title="Consulter dans la liste des CGL">
                         <i data-lucide="external-link"></i>
                     </a>
                 </div>
             </div>
             {% else %}
             <p class="u-text-2xs u-text-muted u-mt-1 u-mb-0">
-                Aucun contrat de location généré pour ce tournage. Cliquez sur <strong>Créer</strong> pour initialiser le contrat-cadre CGL.
+                Aucune CGL générée pour ce tournage. Cliquez sur <strong>Créer</strong> pour initialiser les Conditions Générales de Location.
             </p>
             {% endif %}
         </div>

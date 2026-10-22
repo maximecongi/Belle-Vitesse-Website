@@ -99,9 +99,9 @@
                     </div>
                 </div>
 
-                <!-- Contrats & Sécurité -->
+                <!-- CGL & Sécurité -->
                 <div class="agenda-section">
-                    <div class="agenda-section-title">Contrats & Sécurité</div>
+                    <div class="agenda-section-title">CGL & Sécurité</div>
                     <div class="u-flex u-flex-column u-gap-1">
                         {% if project.cgl and project.cgl.id %}
                         {% if project.cgl.raw_status in ['to_send', 'to_generate'] %}
@@ -111,10 +111,10 @@
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="return_to" value="{{ request.full_path }}">
                             <button type="submit" class="today-row-waiver-btn"
-                                title="Envoyer le contrat de location BVRA par e-mail en 1 clic">
+                                title="Envoyer les CGL par e-mail en 1 clic">
                                 <span class="today-row-label u-text-medium">
                                     <i data-lucide="file-signature"></i>
-                                    <span>Contrat Location (BVRA)</span>
+                                    <span>Conditions Générales (CGL)</span>
                                 </span>
                                 <span class="badge-pill u-badge-agenda" data-val="to_send">
                                     <i data-lucide="send"></i> À envoyer</span>
@@ -123,10 +123,10 @@
                         {% else %}
                         <a class="today-row-waiver-link"
                             href="{{ url_for('admin_waivers.admin_cgl_list') }}?q={{ project.cgl.waiver_num|urlencode }}"
-                            title="Consulter le contrat BVRA">
+                            title="Consulter les CGL">
                             <span class="today-row-label u-text-medium">
                                 <i data-lucide="file-signature"></i>
-                                <span>Contrat Location (BVRA)</span>
+                                <span>Conditions Générales (CGL)</span>
                             </span>
                             {{ status_badge(project.cgl.status, project.cgl.raw_status,
                             class_name='u-badge-agenda') }}
@@ -134,10 +134,10 @@
                         {% endif %}
                         {% else %}
                         <a href="{{ url_for('admin_waivers.admin_cgl_quick_create', project_id=project.id) }}"
-                            class="today-row-waiver-link" title="Créer le contrat BVRA en 1 clic">
+                            class="today-row-waiver-link" title="Créer les CGL en 1 clic">
                             <span class="today-row-label">
                                 <i data-lucide="file-signature"></i>
-                                <span>Contrat Location (BVRA)</span>
+                                <span>Conditions Générales (CGL)</span>
                             </span>
                             {{ status_badge('Non généré', 'to_generate', class_name='u-badge-agenda') }}
                         </a>
@@ -153,15 +153,20 @@
                             </span>
                             {% if project.safety_rules.signed_count == project.safety_rules.count %}
                             <span class="badge-pill u-badge-agenda" data-val="signed">
-                                <i data-lucide="circle-check"></i> {{ project.safety_rules.signed_count }}/{{ project.safety_rules.count }} signé{{ 's' if project.safety_rules.count > 1 else '' }}
+                                <i data-lucide="circle-check"></i> {{ project.safety_rules.signed_count }}/{{
+                                project.safety_rules.count }} signé{{ 's' if project.safety_rules.count > 1 else '' }}
                             </span>
                             {% elif project.safety_rules.has_pending %}
                             <span class="badge-pill u-badge-agenda" data-val="to_sign">
-                                <i data-lucide="clock"></i> {{ project.safety_rules.signed_count }}/{{ project.safety_rules.count }} signé{{ 's' if project.safety_rules.signed_count > 1 else '' }}
+                                <i data-lucide="clock"></i> {{ project.safety_rules.signed_count }}/{{
+                                project.safety_rules.count }} signé{{ 's' if project.safety_rules.signed_count > 1 else
+                                '' }}
                             </span>
                             {% else %}
                             <span class="badge-pill u-badge-agenda" data-val="to_send">
-                                <i data-lucide="send"></i> {{ project.safety_rules.signed_count }}/{{ project.safety_rules.count }} signé{{ 's' if project.safety_rules.signed_count > 1 else '' }}
+                                <i data-lucide="send"></i> {{ project.safety_rules.signed_count }}/{{
+                                project.safety_rules.count }} signé{{ 's' if project.safety_rules.signed_count > 1 else
+                                '' }}
                             </span>
                             {% endif %}
                         </a>

@@ -24,14 +24,14 @@ def get_demo_email_data(mail_type: str) -> dict:
     if m in ("waiver", "cgl", "cgl_signed"):
         return {
             "template": "emails/waiver_signed_confirmation.html",
-            "subject": "Contrat de Location (BVRA) signé - Tournage Porsche 911 GT3 RS",
+            "subject": "Conditions Générales de Location (CGL) signées - Tournage Porsche 911 GT3 RS",
             "context": {
                 "recipient_name": "Maxime Congi",
                 "display_name": "Maxime Congi",
                 "project_name": "Tournage Porsche 911 GT3 RS",
                 "production_name": "Studio Transatlantique",
                 "waiver_type": "cgl",
-                "type_title": "Contrat de Location (BVRA)",
+                "type_title": "Conditions Générales de Location (CGL)",
                 "now_year": now_year,
             },
         }
@@ -39,7 +39,7 @@ def get_demo_email_data(mail_type: str) -> dict:
     if m in ("waiver_invitation", "cgl_invitation"):
         return {
             "template": "emails/waiver_invitation.html",
-            "subject": "Signature Contrat de Location (BVRA) - Tournage Porsche 911 GT3 RS",
+            "subject": "Signature des Conditions Générales de Location (CGL) - Tournage Porsche 911 GT3 RS",
             "context": {
                 "waiver_type": "cgl",
                 "recipient_name": "Maxime Congi",
@@ -55,7 +55,7 @@ def get_demo_email_data(mail_type: str) -> dict:
     if m in ("waiver_reminder", "cgl_reminder"):
         return {
             "template": "emails/waiver_invitation.html",
-            "subject": "Rappel : Signature Contrat de Location (BVRA) - Tournage Porsche 911 GT3 RS",
+            "subject": "Rappel : Signature des Conditions Générales de Location (CGL) - Tournage Porsche 911 GT3 RS",
             "context": {
                 "waiver_type": "cgl",
                 "recipient_name": "Maxime Congi",

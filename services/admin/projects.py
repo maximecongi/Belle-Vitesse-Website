@@ -636,7 +636,7 @@ def create_project(form, user_id=None):
     from services.common.kdrive import dispatch_create_project_tree
     dispatch_create_project_tree(project.id)
 
-    # Création automatique du contrat de location (CGL) si une production est assignée
+    # Création automatique des Conditions Générales de Location (CGL) si une production est assignée
     try:
         from services.admin.waivers import create_cgl
         from models import CglWaiver
@@ -748,7 +748,7 @@ def update_project(record_id, form, user_id=None):
             old_proj_name=old_name,
         )
 
-    # Auto-création du contrat de location (CGL) si non encore existant et production assignée
+    # Auto-création des Conditions Générales de Location (CGL) si non encore existantes et production assignée
     try:
         from services.admin.waivers import create_cgl
         from models import CglWaiver

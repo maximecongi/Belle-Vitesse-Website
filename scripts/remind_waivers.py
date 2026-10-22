@@ -52,7 +52,7 @@ def run_reminders(days_before: int = 2, dry_run: bool = False):
                 target_limit = today + timedelta(days=days_before)
                 print(f"   Fenêtre d'échéance : du {today.strftime('%d/%m/%Y')} au {target_limit.strftime('%d/%m/%Y')}")
 
-                # 1. Contrats de Location (BVRA / CGL)
+                # 1. Conditions Générales de Location (CGL)
                 cgls = (
                     CglWaiver.query.filter(
                         CglWaiver.deleted_at.is_(None),
@@ -77,7 +77,7 @@ def run_reminders(days_before: int = 2, dry_run: bool = False):
                         contact = p.production_contact
                         mail = contact.mail if contact else "AUCUN EMAIL"
                         already = " (déjà relancée aujourd'hui)" if (cw.last_reminded_at and cw.last_reminded_at.date() == today) else ""
-                        print(f"   [BVRA] Projet: {p.name} | Contrat: {cw.waiver_id} | Production: {mail} | Départ: {p_start} (Fin: {p_end}){already}")
+                        print(f"   [CGL] Projet: {p.name} | N°: {cw.waiver_id} | Production: {mail} | Départ: {p_start} (Fin: {p_end}){already}")
                         cgl_count += 1
 
                 # 2. Règles de Sécurité Universelles (BVSR)
@@ -107,7 +107,7 @@ def run_reminders(days_before: int = 2, dry_run: bool = False):
                         print(f"   [BVSR] Projet: {p.name} | Doc: {sr.waiver_id} | Signataire: {sr.signer_name} ({sr.signer_role}) -> {mail} | Départ: {p_start} (Fin: {p_end}){already}")
                         safety_count += 1
 
-                print(f"[{datetime.now()}] ℹ️ Total éligible : {cgl_count} contrat(s) BVRA, {safety_count} engagement(s) BVSR.")
+                print(f"[{datetime.now()}] ℹ️ Total éligible : {cgl_count} CGL, {safety_count} engagement(s) BVSR.")
                 return {
                     "cgl_reminders_sent": cgl_count,
                     "safety_rules_reminders_sent": safety_count,
@@ -120,7 +120,7 @@ def run_reminders(days_before: int = 2, dry_run: bool = False):
             safety_sent = results.get("safety_rules_reminders_sent", 0)
             print(
                 f"[{datetime.now()}] ✅ Relances terminées avec succès : "
-                f"{cgl_sent} contrat(s) BVRA, {safety_sent} engagement(s) BVSR."
+                f"{cgl_sent} CGL, {safety_sent} engagement(s) BVSR."
             )
             for d in results.get("details", []):
                 print(

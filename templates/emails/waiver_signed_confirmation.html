@@ -2,7 +2,7 @@
 {% from "emails/macros.html" import info_card_waiver %}
 
 {% set is_cgl = (waiver_type == 'cgl') %}
-{% set doc_title = doc_title or ('Contrat de Location (BVRA)' if is_cgl else 'Règles de Sécurité (BVSR)') %}
+{% set doc_title = doc_title or ('Conditions Générales de Location (CGL)' if is_cgl else 'Règles de Sécurité (BVSR)') %}
 {% set type_title = type_title or doc_title %}
 {% set display_name = display_name or recipient_name or prod_contact_name or pilot_name %}
 

@@ -129,7 +129,7 @@ class CglComprehensiveTest(unittest.TestCase):
 
             success2, msg = create_cgl(proj.id)
             self.assertFalse(success2)
-            self.assertIn("existe déjà", msg)
+            self.assertIn("existent déjà", msg)
 
     def test_03_generate_cgl(self):
         """Vérifie que la génération des CGL capture les métadonnées du projet et passe en to_send."""

@@ -46,7 +46,7 @@
             </div>
             <div class="pilot-waiver-header-meta">
                 <strong class="dot-before">Constat d'Incident</strong><br>
-                <span class="pilot-waiver-doc-id">{{ incident.incident_number }}</span>
+                <span class="checkout-doc-id">{{ incident.incident_number }}</span>
             </div>
         </header>
 
@@ -180,7 +180,8 @@
                         {% for p in incident.photos %}
                         <div class="pilot-waiver-photo-card">
                             <a href="{{ p.url }}" target="_blank" title="Agrandir la photo">
-                                <img src="{{ p.url }}" alt="Photo dégât constat" class="pilot-waiver-photo-img" loading="lazy">
+                                <img src="{{ p.url }}" alt="Photo dégât constat" class="pilot-waiver-photo-img"
+                                    loading="lazy">
                             </a>
                         </div>
                         {% endfor %}
@@ -198,7 +199,8 @@
                         <strong class="pilot-waiver-visa-name">{{ incident.bv_signer_name or
                             (incident.reporter.name if incident.reporter else 'Responsable Technique Belle Vitesse')
                             }}</strong>
-                        <div class="pilot-waiver-visa-role">{{ incident.bv_signer_role or 'Responsable Technique Belle Vitesse' }}</div>
+                        <div class="pilot-waiver-visa-role">{{ incident.bv_signer_role or 'Responsable Technique Belle
+                            Vitesse' }}</div>
                         {% if incident.bv_signed_at %}
                         <div class="pilot-waiver-visa-status">✓ Visé le {{ incident.bv_signed_at }}</div>
                         {% endif %}
@@ -212,12 +214,14 @@
                     {% else %}
                     <div class="pilot-waiver-visa-pending">
                         <div>
-                            <span class="badge-pill u-mb-1" data-val="in_progress"><i data-lucide="clock"></i> En attente</span>
+                            <span class="badge-pill u-mb-1" data-val="in_progress"><i data-lucide="clock"></i> En
+                                attente</span>
                             <div class="pilot-waiver-visa-name">
                                 ⏳ Visa technique Belle Vitesse en attente de validation.
                             </div>
                             <div class="pilot-waiver-visa-role">
-                                Rédacteur : {{ incident.reporter.name if incident.reporter else 'Équipe Technique Belle Vitesse' }}
+                                Rédacteur : {{ incident.reporter.name if incident.reporter else 'Équipe Technique Belle
+                                Vitesse' }}
                             </div>
                         </div>
                     </div>
@@ -234,13 +238,15 @@
 
                 <div class="pilot-form-grid">
                     <div class="form-group">
-                        <label for="signer_name">Nom &amp; Prénom du Signataire <span class="u-text-danger">*</span></label>
+                        <label for="signer_name">Nom &amp; Prénom du Signataire <span
+                                class="u-text-danger">*</span></label>
                         <input class="form-input" type="text" id="signer_name" name="signer_name"
                             value="{{ default_signer_name or '' }}" required autocomplete="name"
                             placeholder="Ex: Marie Laurent">
                     </div>
                     <div class="form-group">
-                        <label for="signer_role">Qualité / Fonction sur le tournage <span class="u-text-danger">*</span></label>
+                        <label for="signer_role">Qualité / Fonction sur le tournage <span
+                                class="u-text-danger">*</span></label>
                         <input class="form-input" type="text" id="signer_role" name="signer_role" required
                             placeholder="Ex: Directrice de Production / Régisseur Général">
                     </div>

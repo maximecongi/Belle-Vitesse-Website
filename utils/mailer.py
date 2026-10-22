@@ -406,9 +406,9 @@ def _build_waiver_email_context(
 ) -> dict:
     """Construit un contexte Jinja standardisé pour les invitations et confirmations de contrat (BVRA / CGL) et règles de sécurité (BVSR)."""
     if waiver_type == "cgl":
-        type_title = "Contrat de Location (BVRA)"
-        type_label = "du Contrat de Location (BVRA)"
-        doc_title = "Contrat de Location (BVRA)"
+        type_title = "Conditions Générales de Location (CGL)"
+        type_label = "des Conditions Générales de Location (CGL)"
+        doc_title = "Conditions Générales de Location (CGL)"
         is_prod = True
     else:
         type_title = "Règles de Sécurité (BVSR)"
@@ -445,12 +445,12 @@ def _send_waiver_invitation_email(
 ):
     """
     Fonction unifiée interne pour l'envoi d'une invitation ou d'une relance
-    de contrat de location (BVRA) ou de règles de sécurité (BVSR).
+    de Conditions Générales de Location (CGL) ou de règles de sécurité (BVSR).
     """
     if waiver_type == "cgl":
-        type_label = "Contrat BVRA"
-        subject_type = "du Contrat de Location (BVRA)"
-        doc_desc = "le Contrat Cadre et Conditions Générales de Location (BVRA)"
+        type_label = "CGL"
+        subject_type = "des Conditions Générales de Location (CGL)"
+        doc_desc = "les Conditions Générales de Location (CGL)"
     else:
         type_label = "Règles de Sécurité BVSR"
         subject_type = "des Règles de Sécurité Universelles (BVSR)"
@@ -501,7 +501,7 @@ def _send_waiver_invitation_email(
 
 
 def send_cgl_invitation_email(to_email, prod_contact_name, project_name, signature_link, is_reminder=False, production_name=None):
-    """Envoie une invitation (ou un rappel de relance) à un contact de production pour signer le Contrat de Location (BVRA / CGL)."""
+    """Envoie une invitation (ou un rappel de relance) à un contact de production pour signer les Conditions Générales de Location (CGL)."""
     return _send_waiver_invitation_email(
         waiver_type="cgl",
         to_email=to_email,
@@ -527,14 +527,14 @@ def send_safety_rules_invitation_email(to_email, recipient_name, project_name, s
 
 
 def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path, production_name=None, waiver_type=None):
-    """Envoie un email avec le PDF du contrat (BVRA) ou des règles de sécurité (BVSR) signé en pièce jointe."""
+    """Envoie un email avec le PDF des CGL ou des règles de sécurité (BVSR) signé en pièce jointe."""
     admin_mail = os.getenv("SUPER_ADMIN_MAIL", "contact@bellevitesse.com")
     current_app.logger.info(
         f"🚀 Sending signed document PDF to {to_email} and {admin_mail}")
     if waiver_type == "cgl":
-        doc_desc = "le Contrat de Location (BVRA) signé"
-        subject_desc = "Contrat de Location (BVRA) signé"
-        doc_title = "Contrat de Location (BVRA)"
+        doc_desc = "les Conditions Générales de Location (CGL) signées"
+        subject_desc = "Conditions Générales de Location (CGL) signées"
+        doc_title = "Conditions Générales de Location (CGL)"
     else:
         doc_desc = "les Règles de Sécurité Universelles (BVSR) signées"
         subject_desc = "Règles de Sécurité (BVSR) signées"

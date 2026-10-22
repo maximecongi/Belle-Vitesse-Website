@@ -272,7 +272,7 @@ class WaiversRemindersTest(unittest.TestCase):
             self.assertTrue(ok_cgl)
             msg_cgl = mock_send_smtp.call_args[0][0]
             self.assertIn("Rappel :", msg_cgl["Subject"])
-            self.assertIn("Contrat de Location (BVRA)", msg_cgl["Subject"])
+            self.assertIn("Conditions Générales de Location (CGL)", msg_cgl["Subject"])
             cgl_payloads = [part.get_payload(decode=True).decode('utf-8') for part in msg_cgl.get_payload()]
             cgl_full_text = "\n".join(cgl_payloads)
             self.assertIn("RAPPEL : Le tournage approche", cgl_full_text)
