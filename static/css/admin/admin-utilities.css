@@ -79,6 +79,10 @@
     align-items: start !important;
 }
 
+.u-grid-colspan-2 {
+    grid-column: span 2 !important;
+}
+
 /* Tablette & iPad Portrait (≤ 1024px) */
 @media (max-width: 1024px) {
     .u-grid-2-1 {

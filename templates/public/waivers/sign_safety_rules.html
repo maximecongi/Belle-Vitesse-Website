@@ -88,7 +88,10 @@
                         <span class="pilot-waiver-info-value u-text-sm">{{ waiver.safety_technicians }}</span>
                     </div>
                     {% endif %}
-                    <span class="pilot-waiver-info-label">Véhicule(s) de prise de vue réservé(s)</span>
+                </div>
+                <div class="pilot-waiver-info-grid u-mt-3">
+                    <span class="pilot-waiver-info-label u-grid-colspan-2">Véhicule(s) de prise de vue
+                        réservé(s)</span>
                     <div class="pilot-waiver-info-item pilot-waiver-info-vehicles u-col-span-full">
                         {% if waiver.vehicles_details %}
                         <div class="pilot-waiver-vehicles-list">
@@ -297,12 +300,10 @@
 
                 <div class="pilot-waiver-sign-actions">
                     <button type="button" class="pilot-waiver-btn pilot-waiver-btn--secondary" id="safety-btn-clear">
-                        <i data-lucide="rotate-ccw"></i>
-                        <span>Effacer</span>
+                        Effacer
                     </button>
                     <button type="button" class="pilot-waiver-btn pilot-waiver-btn--primary" id="safety-btn-sign">
-                        <i data-lucide="shield-check"></i>
-                        <span>Signer et valider mon engagement</span>
+                        Signer le document
                     </button>
                 </div>
             </section>
