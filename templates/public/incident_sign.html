@@ -28,23 +28,23 @@
         href="{{ url_for('static', filename='css/admin/admin-components.css') }}?v={{ asset_version('css/admin/admin-components.css') }}">
     {% endif %}
     <link rel="stylesheet"
-        href="{{ url_for('static', filename='css/public/sign-waiver.css') }}?v={{ asset_version('css/public/sign-waiver.css') }}">
+        href="{{ url_for('static', filename='css/public/public-doc.css') }}?v={{ asset_version('css/public/public-doc.css') }}">
     <script src="https://unpkg.com/lucide@1.48.0/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
     <script src="{{ asset_url('js/src/common/signature-pad-controller.js') }}"></script>
     <script src="{{ asset_url('js/src/ui-utils.js') }}"></script>
 </head>
 
-<body class="pilot-waiver-container">
+<body class="public-doc-container">
 
-    <div class="pilot-waiver">
+    <div class="public-doc">
         <!-- ═══════════ HEADER ═══════════ -->
-        <header class="pilot-waiver-header">
-            <div class="pilot-waiver-header-logo">
+        <header class="public-doc-header">
+            <div class="public-doc-header-logo">
                 <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
                     alt="Belle Vitesse">
             </div>
-            <div class="pilot-waiver-header-meta">
+            <div class="public-doc-header-meta">
                 <strong class="dot-before">Constat d'Incident</strong><br>
                 <span class="checkout-doc-id">{{ incident.incident_number }}</span>
             </div>
@@ -52,9 +52,9 @@
 
         {% if is_already_signed %}
         <!-- ── État : déjà signé ────────────────────────────────────── -->
-        <section class="pilot-waiver-section pilot-waiver-state-banner">
-            <div class="pilot-waiver-status-icon u-text-success">✓</div>
-            <h2 class="pilot-waiver-section-title">Constat d'incident signé</h2>
+        <section class="public-doc-section public-doc-state-banner">
+            <div class="public-doc-status-icon u-text-success">✓</div>
+            <h2 class="public-doc-section-title">Constat d'incident signé</h2>
             <p class="u-text-muted u-mt-2 u-text-center">
                 Ce document a déjà été signé électroniquement par la Production.<br>
                 {% if incident.is_fully_signed %}
@@ -66,7 +66,7 @@
             {% if incident.signed_pdf_path %}
             <div class="u-mt-4 u-text-center">
                 <a href="{{ incident.signed_pdf_url or ('/incidents/document/' + incident.signed_pdf_path) }}"
-                    target="_blank" class="pilot-waiver-btn pilot-waiver-btn--primary">
+                    target="_blank" class="public-doc-btn public-doc-btn--primary">
                     <i data-lucide="file-down"></i>
                     <span>Télécharger le PDF Scellé Authentique</span>
                 </a>
@@ -85,36 +85,36 @@
         <form id="incident-form" novalidate>
 
             <!-- 1. Informations du tournage & de l'incident -->
-            <section class="pilot-waiver-section">
-                <h2 class="pilot-waiver-section-title dot-before">Informations de l'incident</h2>
-                <div class="pilot-waiver-info-grid">
-                    <div class="pilot-waiver-info-item">
-                        <span class="pilot-waiver-info-label">Projet</span>
-                        <span class="pilot-waiver-info-value u-text-sm">{{ incident.project_name if
+            <section class="public-doc-section">
+                <h2 class="public-doc-section-title dot-before">Informations de l'incident</h2>
+                <div class="public-doc-info-grid">
+                    <div class="public-doc-info-item">
+                        <span class="public-doc-info-label">Projet</span>
+                        <span class="public-doc-info-value u-text-sm">{{ incident.project_name if
                             incident.project_name and
                             incident.project_name != '—' else (incident.project.name if incident.project else '—')
                             }}</span>
                     </div>
-                    <div class="pilot-waiver-info-item">
-                        <span class="pilot-waiver-info-label">Production</span>
-                        <span class="pilot-waiver-info-value u-text-sm">{{ incident.production_name if
+                    <div class="public-doc-info-item">
+                        <span class="public-doc-info-label">Production</span>
+                        <span class="public-doc-info-value u-text-sm">{{ incident.production_name if
                             incident.production_name
                             and incident.production_name != '—' else (incident.project.production_name if
                             incident.project else '—') }}</span>
                     </div>
-                    <div class="pilot-waiver-info-item">
-                        <span class="pilot-waiver-info-label">Date & Heure</span>
-                        <span class="pilot-waiver-info-value u-text-sm">{{ incident.incident_date }} à {{
+                    <div class="public-doc-info-item">
+                        <span class="public-doc-info-label">Date & Heure</span>
+                        <span class="public-doc-info-value u-text-sm">{{ incident.incident_date }} à {{
                             incident.incident_time
                             }}</span>
                     </div>
-                    <div class="pilot-waiver-info-item">
-                        <span class="pilot-waiver-info-label">Lieu</span>
-                        <span class="pilot-waiver-info-value u-text-sm">{{ incident.location or '—' }}</span>
+                    <div class="public-doc-info-item">
+                        <span class="public-doc-info-label">Lieu</span>
+                        <span class="public-doc-info-value u-text-sm">{{ incident.location or '—' }}</span>
                     </div>
-                    <div class="pilot-waiver-info-item">
-                        <span class="pilot-waiver-info-label">Véhicule / Équipement</span>
-                        <span class="pilot-waiver-info-value u-text-sm">
+                    <div class="public-doc-info-item">
+                        <span class="public-doc-info-label">Véhicule / Équipement</span>
+                        <span class="public-doc-info-value u-text-sm">
                             {% if incident.vehicle_name and incident.vehicle_name != '—' %}
                             {{ incident.vehicle_name }}
                             {% elif incident.equipment_name and incident.equipment_name != '—' %}
@@ -122,9 +122,9 @@
                             {% else %}—{% endif %}
                         </span>
                     </div>
-                    <div class="pilot-waiver-info-item">
-                        <span class="pilot-waiver-info-label">Gravité</span>
-                        <span class="pilot-waiver-info-value u-text-sm">
+                    <div class="public-doc-info-item">
+                        <span class="public-doc-info-label">Gravité</span>
+                        <span class="public-doc-info-value u-text-sm">
                             {% if incident.severity == 'critique' %}
                             <span class="badge-pill" data-val="critique"><i data-lucide="alert-octagon"></i> {{
                                 incident.severity_label or 'Critique' }}</span>
@@ -137,9 +137,9 @@
                             {% endif %}
                         </span>
                     </div>
-                    <div class="pilot-waiver-info-item">
-                        <span class="pilot-waiver-info-label">Impact Tournage</span>
-                        <span class="pilot-waiver-info-value u-text-sm">
+                    <div class="public-doc-info-item">
+                        <span class="public-doc-info-label">Impact Tournage</span>
+                        <span class="public-doc-info-value u-text-sm">
                             {% if incident.shooting_impact in ('annulation', 'arret') %}
                             <span class="badge-pill" data-val="critique"><i data-lucide="ban"></i> {{
                                 incident.shooting_impact_label or 'Annulation de session' }}</span>
@@ -159,13 +159,13 @@
             </section>
 
             <!-- 2. Circonstances & Dommages Constatés -->
-            <section class="pilot-waiver-section">
-                <h2 class="pilot-waiver-section-title dot-before">Circonstances & Dommages Constatés</h2>
-                <div class="pilot-waiver-notes">{{ incident.description or "Aucun descriptif renseigné." }}</div>
+            <section class="public-doc-section">
+                <h2 class="public-doc-section-title dot-before">Circonstances & Dommages Constatés</h2>
+                <div class="public-doc-notes">{{ incident.description or "Aucun descriptif renseigné." }}</div>
 
                 {% if incident.immediate_actions %}
                 <div class="u-mb-3">
-                    <span class="pilot-waiver-info-label u-text-warning">Mesures conservatoires immédiates :</span>
+                    <span class="public-doc-info-label u-text-warning">Mesures conservatoires immédiates :</span>
                     <div class="incident-impact-banner u-p-2 u-mt-1 u-border-radius-4">
                         {{ incident.immediate_actions }}
                     </div>
@@ -174,13 +174,13 @@
 
                 {% if incident.photos %}
                 <div>
-                    <span class="pilot-waiver-info-label">Photographies des dommages constatés ({{
+                    <span class="public-doc-info-label">Photographies des dommages constatés ({{
                         incident.photos|length }}) :</span>
-                    <div class="pilot-waiver-photos">
+                    <div class="public-doc-photos">
                         {% for p in incident.photos %}
-                        <div class="pilot-waiver-photo-card">
+                        <div class="public-doc-photo-card">
                             <a href="{{ p.url }}" target="_blank" title="Agrandir la photo">
-                                <img src="{{ p.url }}" alt="Photo dégât constat" class="pilot-waiver-photo-img"
+                                <img src="{{ p.url }}" alt="Photo dégât constat" class="public-doc-photo-img"
                                     loading="lazy">
                             </a>
                         </div>
@@ -191,18 +191,18 @@
             </section>
 
             <!-- 3. Visa Belle Vitesse -->
-            <section class="pilot-waiver-section">
-                <h2 class="pilot-waiver-section-title dot-before">Constat & Visa Belle Vitesse</h2>
-                <div class="pilot-waiver-visa-box">
+            <section class="public-doc-section">
+                <h2 class="public-doc-section-title dot-before">Constat & Visa Belle Vitesse</h2>
+                <div class="public-doc-visa-box">
                     {% if incident.is_signed_bv %}
                     <div>
-                        <strong class="pilot-waiver-visa-name">{{ incident.bv_signer_name or
+                        <strong class="public-doc-visa-name">{{ incident.bv_signer_name or
                             (incident.reporter.name if incident.reporter else 'Responsable Technique Belle Vitesse')
                             }}</strong>
-                        <div class="pilot-waiver-visa-role">{{ incident.bv_signer_role or 'Responsable Technique Belle
+                        <div class="public-doc-visa-role">{{ incident.bv_signer_role or 'Responsable Technique Belle
                             Vitesse' }}</div>
                         {% if incident.bv_signed_at %}
-                        <div class="pilot-waiver-visa-status">✓ Visé le {{ incident.bv_signed_at }}</div>
+                        <div class="public-doc-visa-status">✓ Visé le {{ incident.bv_signed_at }}</div>
                         {% endif %}
                     </div>
                     {% if incident.bv_signature_data_uri or incident.bv_signature_data %}
@@ -212,14 +212,14 @@
                     </div>
                     {% endif %}
                     {% else %}
-                    <div class="pilot-waiver-visa-pending">
+                    <div class="public-doc-visa-pending">
                         <div>
                             <span class="badge-pill u-mb-1" data-val="in_progress"><i data-lucide="clock"></i> En
                                 attente</span>
-                            <div class="pilot-waiver-visa-name">
+                            <div class="public-doc-visa-name">
                                 ⏳ Visa technique Belle Vitesse en attente de validation.
                             </div>
-                            <div class="pilot-waiver-visa-role">
+                            <div class="public-doc-visa-role">
                                 Rédacteur : {{ incident.reporter.name if incident.reporter else 'Équipe Technique Belle
                                 Vitesse' }}
                             </div>
@@ -230,13 +230,13 @@
             </section>
 
             <!-- 4. Informations & Signature Production -->
-            <section class="pilot-waiver-section">
-                <h2 class="pilot-waiver-section-title dot-before">Signature de la Production</h2>
+            <section class="public-doc-section">
+                <h2 class="public-doc-section-title dot-before">Signature de la Production</h2>
                 <p class="u-text-sm u-text-muted u-mb-3">
                     Veuillez renseigner vos coordonnées et apposer votre signature contradictoire ci-dessous.
                 </p>
 
-                <div class="pilot-form-grid">
+                <div class="public-doc-form-grid">
                     <div class="form-group">
                         <label for="signer_name">Nom &amp; Prénom du Signataire <span
                                 class="u-text-danger">*</span></label>
@@ -261,15 +261,15 @@
                     </label>
                 </div>
 
-                <div class="pilot-waiver-sign-canvas-wrapper u-mt-3">
+                <div class="public-doc-sign-canvas-wrapper u-mt-3">
                     <canvas id="signature-canvas"></canvas>
                 </div>
 
-                <div class="pilot-waiver-sign-actions">
-                    <button type="button" class="pilot-waiver-btn pilot-waiver-btn--secondary" id="btn-clear">
+                <div class="public-doc-sign-actions">
+                    <button type="button" class="public-doc-btn public-doc-btn--secondary" id="btn-clear">
                         Effacer
                     </button>
-                    <button type="button" class="pilot-waiver-btn pilot-waiver-btn--primary" id="btn-sign">
+                    <button type="button" class="public-doc-btn public-doc-btn--primary" id="btn-sign">
                         Signer le document
                     </button>
                 </div>

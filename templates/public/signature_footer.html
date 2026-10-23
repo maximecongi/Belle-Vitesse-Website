@@ -1,28 +1,26 @@
 {# ══════════════════════════════════════════════════════════════════════════════
-BELLE VITESSE — BANDEAU GLOBAL DE CLÔTURE DES PORTAILS DE SIGNATURE
-Footer full-width, en dehors de la carte .pilot-waiver
-Design System Belle Vitesse : Badge eIDAS, scellement numérique & coordonnées
-══════════════════════════════════════════════════════════════════════════════ #}
-<footer class="pilot-waiver-footer">
-    <div class="pilot-waiver-footer-inner">
+   BELLE VITESSE — BANDEAU GLOBAL DE CLÔTURE DES DOCUMENTS PUBLICS
+   Design System Belle Vitesse : Scellement d'intégrité numérique & coordonnées
+   ══════════════════════════════════════════════════════════════════════════════ #}
+<footer class="public-doc-footer">
+    <div class="public-doc-footer-inner">
         <img src="{{ url_for('static', filename='imgs/logos_and_name/blanc-fond-transparent.png') }}"
-            alt="Belle Vitesse" class="pilot-waiver-footer-logo">
-        <div class="pilot-waiver-footer-subtitle">Document scellé électroniquement après signature • Conforme eIDAS &
-            Art. 1366 Code civil</div>
+            alt="Belle Vitesse" class="public-doc-footer-logo">
+        <div class="public-doc-footer-subtitle">Document scellé électroniquement après signature • Conforme eIDAS &amp; Art. 1366 Code civil</div>
 
-        <div class="pilot-waiver-footer-coords">
+        <div class="public-doc-footer-coords">
             <span>{{ company_name or 'Belle Vitesse SAS' }}</span>
-            <span class="pilot-waiver-footer-separator">•</span>
+            <span class="public-doc-footer-separator">•</span>
             <span>{{ company_address or '39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine' }}</span>
-            <span class="pilot-waiver-footer-separator">•</span>
-            <a href="mailto:{{ company_email or 'contact@bellevitesse.com' }}" class="pilot-waiver-footer-link">{{
+            <span class="public-doc-footer-separator">•</span>
+            <a href="mailto:{{ company_email or 'contact@bellevitesse.com' }}" class="public-doc-footer-link">{{
                 company_email or 'contact@bellevitesse.com' }}</a>
-            <span class="pilot-waiver-footer-separator">•</span>
+            <span class="public-doc-footer-separator">•</span>
             <a href="https://bellevitesse.com" target="_blank" rel="noopener noreferrer"
-                class="pilot-waiver-footer-link">bellevitesse.com</a>
+                class="public-doc-footer-link">bellevitesse.com</a>
         </div>
 
-        <div class="pilot-waiver-footer-copyright">
+        <div class="public-doc-footer-copyright">
             © {{ now.year }} Belle Vitesse SAS — Tous droits réservés
         </div>
     </div>

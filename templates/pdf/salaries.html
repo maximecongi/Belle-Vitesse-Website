@@ -12,7 +12,7 @@
             margin: 15mm;
         }
 
-        .pilot-waiver-container {
+        .public-doc-container {
             background-color: white;
             color: var(--grey-1);
         }
@@ -130,15 +130,15 @@
     </style>
 </head>
 
-<body class="pilot-waiver-container">
-    <div class="pilot-waiver">
+<body class="public-doc-container">
+    <div class="public-doc">
         <!-- ═══════════ HEADER ═══════════ -->
-        <header class="pilot-waiver-header" style="margin-bottom: 30px;">
-            <div class="pilot-waiver-header-logo">
+        <header class="public-doc-header" style="margin-bottom: 30px;">
+            <div class="public-doc-header-logo">
                 <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
                     alt="Belle Vitesse">
             </div>
-            <div class="pilot-waiver-header-meta">
+            <div class="public-doc-header-meta">
                 <strong style="text-transform: uppercase; letter-spacing: 1px;">Grille des Salaire</strong><br>
                 <span class="checkout-doc-id">{{ annexe }}</span><br>
                 Édition : {{ now.strftime('%d/%m/%Y') }}

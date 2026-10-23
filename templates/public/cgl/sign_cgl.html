@@ -22,18 +22,18 @@
         href="{{ url_for('static', filename='css/admin/admin.css') }}?v={{ asset_version('css/admin/admin.css') }}">
     {% endif %}
     <link rel="stylesheet"
-        href="{{ url_for('static', filename='css/public/sign-waiver.css') }}?v={{ asset_version('css/public/sign-waiver.css') }}">
+        href="{{ url_for('static', filename='css/public/public-doc.css') }}?v={{ asset_version('css/public/public-doc.css') }}">
 </head>
 
-<body class="pilot-waiver-container">
+<body class="public-doc-container">
 
-    <div class="pilot-waiver">
-        <header class="pilot-waiver-header">
-            <div class="pilot-waiver-header-logo">
+    <div class="public-doc">
+        <header class="public-doc-header">
+            <div class="public-doc-header-logo">
                 <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
                     alt="Belle Vitesse">
             </div>
-            <div class="pilot-waiver-header-meta">
+            <div class="public-doc-header-meta">
                 <strong class="dot-before">Conditions Générales de Location</strong><br>
                 <span class="checkout-doc-id">{{ waiver.waiver_id }}</span>
             </div>
@@ -41,9 +41,9 @@
 
         {% if waiver.status == 'signed' %}
         <!-- ── État : déjà signé ────────────────────────────────────── -->
-        <section class="pilot-waiver-section pilot-waiver-state-banner">
-            <div class="pilot-waiver-status-icon u-text-success">✓</div>
-            <h2 class="pilot-waiver-section-title">CGL Signées</h2>
+        <section class="public-doc-section public-doc-state-banner">
+            <div class="public-doc-status-icon u-text-success">✓</div>
+            <h2 class="public-doc-section-title">CGL Signées</h2>
             <p class="u-text-muted u-mt-2 u-text-center">
                 Ces Conditions Générales de Location ont déjà été signées électroniquement et sont scellées.<br><br>
                 Une copie certifiée a été transmise aux parties.
@@ -52,9 +52,9 @@
 
         {% elif waiver.status not in ['to_sign', 'to_send'] %}
         <!-- ── État : lien invalide ou expiré ───────────────────────── -->
-        <section class="pilot-waiver-section pilot-waiver-state-banner">
-            <div class="pilot-waiver-status-icon u-text-danger">✕</div>
-            <h2 class="pilot-waiver-section-title">Lien expiré ou invalide</h2>
+        <section class="public-doc-section public-doc-state-banner">
+            <div class="public-doc-status-icon u-text-danger">✕</div>
+            <h2 class="public-doc-section-title">Lien expiré ou invalide</h2>
             <p class="u-text-muted u-mt-2">
                 Ce lien sécurisé de signature n'est plus actif ou a dépassé sa durée de validité (24h).
             </p>
@@ -66,37 +66,37 @@
             <input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token() }}">
 
             <!-- Récapitulatif projet -->
-            <section class="pilot-waiver-section">
-                <h2 class="pilot-waiver-section-title dot-before">Projet & Véhicules Concernés</h2>
-                <div class="pilot-waiver-info-grid">
-                    <div class="pilot-waiver-info-item">
-                        <span class="pilot-waiver-info-label">Projet</span>
-                        <span class="pilot-waiver-info-value u-text-sm">{{ waiver.display_project_name }}</span>
+            <section class="public-doc-section">
+                <h2 class="public-doc-section-title dot-before">Projet & Véhicules Concernés</h2>
+                <div class="public-doc-info-grid">
+                    <div class="public-doc-info-item">
+                        <span class="public-doc-info-label">Projet</span>
+                        <span class="public-doc-info-value u-text-sm">{{ waiver.display_project_name }}</span>
                     </div>
-                    <div class="pilot-waiver-info-item">
-                        <span class="pilot-waiver-info-label">Production</span>
-                        <span class="pilot-waiver-info-value u-text-sm">{{ waiver.display_production_name }}</span>
+                    <div class="public-doc-info-item">
+                        <span class="public-doc-info-label">Production</span>
+                        <span class="public-doc-info-value u-text-sm">{{ waiver.display_production_name }}</span>
                     </div>
-                    <div class="pilot-waiver-info-item">
-                        <span class="pilot-waiver-info-label">Période de tournage</span>
-                        <span class="pilot-waiver-info-value u-text-sm">{{ waiver.display_shooting_dates }}</span>
+                    <div class="public-doc-info-item">
+                        <span class="public-doc-info-label">Période de tournage</span>
+                        <span class="public-doc-info-value u-text-sm">{{ waiver.display_shooting_dates }}</span>
                     </div>
                 </div>
-                <div class="pilot-waiver-info-grid u-mt-3">
-                    <span class="pilot-waiver-info-label u-grid-colspan-2">Véhicule(s) de prise de vue
+                <div class="public-doc-info-grid u-mt-3">
+                    <span class="public-doc-info-label u-grid-colspan-2">Véhicule(s) de prise de vue
                         réservé(s)</span>
-                    <div class="pilot-waiver-info-item pilot-waiver-info-vehicles u-col-span-full">
+                    <div class="public-doc-info-item public-doc-info-vehicles u-col-span-full">
                         {% if waiver.vehicles_details %}
-                        <div class="pilot-waiver-vehicles-list">
+                        <div class="public-doc-vehicles-list">
                             {% for v in waiver.vehicles_details %}
-                            <div class="pilot-waiver-vehicle-card">
-                                <div class="pilot-waiver-vehicle-thumb-wrapper">
+                            <div class="public-doc-vehicle-card">
+                                <div class="public-doc-vehicle-thumb-wrapper">
                                     {% if v.thumbnail %}
-                                    <img src="{{ v.thumbnail }}" alt="{{ v.name }}" class="pilot-waiver-vehicle-thumb"
+                                    <img src="{{ v.thumbnail }}" alt="{{ v.name }}" class="public-doc-vehicle-thumb"
                                         loading="lazy">
                                     {% else %}
-                                    <div class="pilot-waiver-vehicle-thumb-placeholder" aria-hidden="true">
-                                        <svg class="pilot-waiver-vehicle-placeholder-icon" viewBox="0 0 24 24"
+                                    <div class="public-doc-vehicle-thumb-placeholder" aria-hidden="true">
+                                        <svg class="public-doc-vehicle-placeholder-icon" viewBox="0 0 24 24"
                                             fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
                                             stroke-linejoin="round">
                                             <path
@@ -108,10 +108,10 @@
                                     </div>
                                     {% endif %}
                                 </div>
-                                <div class="pilot-waiver-vehicle-info">
-                                    <span class="pilot-waiver-vehicle-title">{{ v.name }}</span>
+                                <div class="public-doc-vehicle-info">
+                                    <span class="public-doc-vehicle-title">{{ v.name }}</span>
                                     {% if v.unique_id %}
-                                    <div class="pilot-waiver-vehicle-ids">
+                                    <div class="public-doc-vehicle-ids">
                                         <span class="checkout-doc-id">{{ v.unique_id }}</span>
                                     </div>
                                     {% endif %}
@@ -120,11 +120,11 @@
                             {% endfor %}
                         </div>
                         {% elif waiver.vehicles %}
-                        <div class="pilot-waiver-vehicles-list">
+                        <div class="public-doc-vehicles-list">
                             {% for v in waiver.vehicles.split(',') %}
-                            <div class="pilot-waiver-vehicle-card">
-                                <div class="pilot-waiver-vehicle-info">
-                                    <span class="pilot-waiver-vehicle-title">{{ v.strip() }}</span>
+                            <div class="public-doc-vehicle-card">
+                                <div class="public-doc-vehicle-info">
+                                    <span class="public-doc-vehicle-title">{{ v.strip() }}</span>
                                 </div>
                             </div>
                             {% endfor %}
@@ -135,12 +135,12 @@
             </section>
 
             <!-- Informations juridiques du Locataire -->
-            <section class="pilot-waiver-section">
-                <h2 class="pilot-waiver-section-title dot-before">Informations Juridiques du Locataire</h2>
+            <section class="public-doc-section">
+                <h2 class="public-doc-section-title dot-before">Informations Juridiques du Locataire</h2>
                 <p class="u-text-sm u-text-muted u-mb-3">
                     Veuillez confirmer ou compléter les informations contractuelles de votre société.
                 </p>
-                <div class="pilot-form-grid">
+                <div class="public-doc-form-grid">
                     <div class="form-group u-col-span-full">
                         <label for="cgl_production_name">Raison sociale du Locataire <span
                                 class="u-text-danger">*</span></label>
@@ -173,8 +173,8 @@
             </section>
 
             <!-- Lecteur des Conditions Générales de Location -->
-            <section class="pilot-waiver-section">
-                <h2 class="pilot-waiver-section-title dot-before">Texte Intégral des Conditions Générales de Location
+            <section class="public-doc-section">
+                <h2 class="public-doc-section-title dot-before">Texte Intégral des Conditions Générales de Location
                 </h2>
                 <div class="cgl-reader-container">
                     <h1>CONDITIONS GÉNÉRALES DE LOCATION DE VÉHICULES SPÉCIAUX DE TOURNAGE</h1>
@@ -353,7 +353,7 @@
             </section>
 
             <!-- Scellement & Signature -->
-            <section class="pilot-waiver-section">
+            <section class="public-doc-section">
                 <div class="checkbox-container">
                     <input type="checkbox" id="cgl_accept_terms">
                     <label for="cgl_accept_terms">
@@ -365,15 +365,15 @@
                     </label>
                 </div>
 
-                <div class="pilot-waiver-sign-canvas-wrapper u-mt-2">
+                <div class="public-doc-sign-canvas-wrapper u-mt-2">
                     <canvas id="cgl-signature-canvas"></canvas>
                 </div>
 
-                <div class="pilot-waiver-sign-actions">
-                    <button type="button" class="pilot-waiver-btn pilot-waiver-btn--secondary" id="cgl-btn-clear">
+                <div class="public-doc-sign-actions">
+                    <button type="button" class="public-doc-btn public-doc-btn--secondary" id="cgl-btn-clear">
                         Effacer
                     </button>
-                    <button type="button" class="pilot-waiver-btn pilot-waiver-btn--primary" id="cgl-btn-sign">
+                    <button type="button" class="public-doc-btn public-doc-btn--primary" id="cgl-btn-sign">
                         Signer le document
                     </button>
                 </div>
