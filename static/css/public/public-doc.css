@@ -257,7 +257,7 @@ a.public-doc-vehicle-card:hover {
 .cgl-reader-container {
     background-color: var(--white-2, #F8F9FA);
     padding: 1.75rem;
-    border-left: 4px solid var(--entity-waiver, #8B5CF6);
+    border-left: 4px solid var(--yellow-1);
     font-size: 0.925rem;
     line-height: 1.65;
     color: var(--grey-1, #111827);
