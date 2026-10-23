@@ -5,12 +5,14 @@ Design System Belle Vitesse : Badge eIDAS, scellement numérique & coordonnées
 ══════════════════════════════════════════════════════════════════════════════ #}
 <footer class="pilot-waiver-footer">
     <div class="pilot-waiver-footer-inner">
-
-        <div class="pilot-waiver-footer-title">{{ company_name or 'Belle Vitesse SAS' }}</div>
+        <img src="{{ url_for('static', filename='imgs/logos_and_name/blanc-fond-transparent.png') }}"
+            alt="Belle Vitesse" class="pilot-waiver-footer-logo">
         <div class="pilot-waiver-footer-subtitle">Document scellé électroniquement après signature • Conforme eIDAS &
             Art. 1366 Code civil</div>
 
         <div class="pilot-waiver-footer-coords">
+            <span>{{ company_name or 'Belle Vitesse SAS' }}</span>
+            <span class="pilot-waiver-footer-separator">•</span>
             <span>{{ company_address or '39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine' }}</span>
             <span class="pilot-waiver-footer-separator">•</span>
             <a href="mailto:{{ company_email or 'contact@bellevitesse.com' }}" class="pilot-waiver-footer-link">{{

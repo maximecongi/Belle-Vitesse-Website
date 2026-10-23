@@ -656,6 +656,11 @@ a.pilot-waiver-vehicle-card:hover {
     margin: 0 0 0.75rem 0;
 }
 
+.pilot-waiver-footer-logo {
+    width: 128px;
+    margin-bottom: 12px;
+}
+
 .pilot-waiver-footer-coords {
     display: flex;
     align-items: center;
