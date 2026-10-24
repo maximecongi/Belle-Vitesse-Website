@@ -414,3 +414,54 @@
     color: #a1a1aa;
     font-style: italic;
 }
+
+/* ── 9. Annexe 2 : Engagement de Sécurité ───────────────────────────────── */
+.cgl-annexe2-section {
+    page-break-before: always;
+    margin-top: 15pt;
+}
+
+.cgl-annexe2-intro {
+    font-size: 8pt;
+    margin-bottom: 8pt;
+}
+
+.cgl-annexe2-context {
+    margin-top: 10pt;
+    margin-bottom: 10pt;
+}
+
+.cgl-annexe2-list {
+    margin: 8pt 0;
+    padding-left: 15pt;
+    font-size: 7.8pt;
+    line-height: 1.45;
+}
+
+.cgl-annexe2-list > li {
+    margin-bottom: 6pt;
+}
+
+.cgl-annexe2-sublist {
+    margin: 4pt 0 4pt 10pt;
+    padding-left: 10pt;
+    list-style-type: disc;
+}
+
+.cgl-annexe2-sublist > li {
+    margin-bottom: 3pt;
+    font-size: 7.5pt;
+}
+
+.cgl-annexe2-subtext {
+    margin-top: 4pt;
+    font-style: italic;
+    font-size: 7.5pt;
+}
+
+.cgl-annexe2-closing {
+    margin-top: 10pt;
+    font-weight: 600;
+    font-size: 8pt;
+}
+

@@ -355,6 +355,36 @@ a.public-doc-vehicle-card:hover {
     font-weight: 600;
 }
 
+.cgl-annexe2-list {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+}
+
+.cgl-annexe2-list > li {
+    margin-bottom: 0.75rem;
+}
+
+.cgl-annexe2-sublist {
+    margin: 0.5rem 0 0.5rem 1.25rem;
+    padding-left: 1rem;
+    list-style-type: disc;
+}
+
+.cgl-annexe2-sublist > li {
+    margin-bottom: 0.35rem;
+}
+
+.cgl-annexe2-subtext {
+    margin-top: 0.35rem;
+    font-style: italic;
+    color: var(--grey-2, #6B7280);
+}
+
+.cgl-annexe2-closing {
+    margin-top: 1.25rem;
+    font-weight: 600;
+}
+
 /* ── 7. Constats d'Incidents (Notes, Photos & Visas) ─────────────────────── */
 .public-doc-notes {
     background-color: var(--white-2, #F8F9FA);
