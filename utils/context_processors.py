@@ -61,10 +61,11 @@ ROLE_PERMISSIONS = {
         },
     },
     'commercial': {
-        'sections': {'dashboard', 'tournages', 'flotte', 'admin', 'tools'},
+        'sections': {'dashboard', 'tournages', 'departs', 'flotte', 'admin', 'tools'},
         'nav': {
             'dashboard', 'projects', 'archives', 'booking',
-            'productions', 'contacts', 'fleet', 'pricing', 'catalog_pdf', 'mcp_connector',
+            'productions', 'contacts', 'cgl', 'safety_rules',
+            'fleet', 'pricing', 'catalog_pdf', 'mcp_connector',
             'calendar', 'signature'
         },
     },

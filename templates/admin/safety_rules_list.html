@@ -11,9 +11,11 @@
         <input type="text" name="q" id="searchInput" class="form-input u-w-250" placeholder="Rechercher un signataire..."
             value="{{ request.args.get('q', '') }}" autocomplete="off">
     </form>
+    {% if has_item('safety_rules_config') %}
     <a href="{{ url_for('admin_fleet.admin_safety_rules_config') }}" class="admin-btn admin-btn-secondary">
         <i class="admin-header__icon" data-lucide="settings"></i> Config Flotte Règles
     </a>
+    {% endif %}
 </div>
 {% endblock %}
 

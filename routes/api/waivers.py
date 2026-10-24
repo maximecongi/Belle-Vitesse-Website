@@ -22,7 +22,7 @@ api_waivers_bp = Blueprint("api_waivers", __name__)
 # ── Conditions Générales de Location (CGL - BVRA) ────────────────────
 
 @api_waivers_bp.route("/cgl", methods=["GET"])
-@require_api_auth("administrator", "manager", "user")
+@require_api_auth("administrator", "manager", "commercial", "user")
 def api_list_cgl():
     try:
         result = list_cgl()
@@ -33,7 +33,7 @@ def api_list_cgl():
 
 
 @api_waivers_bp.route("/cgl", methods=["POST"])
-@require_api_auth("administrator", "manager")
+@require_api_auth("administrator", "manager", "commercial")
 def api_create_cgl():
     """Crée des CGL pour un project_id donné."""
     try:
@@ -51,7 +51,7 @@ def api_create_cgl():
 
 
 @api_waivers_bp.route("/cgl/<waiver_id>/generate", methods=["POST"])
-@require_api_auth("administrator", "manager")
+@require_api_auth("administrator", "manager", "commercial")
 def api_generate_cgl(waiver_id):
     try:
         success, msg = generate_cgl(waiver_id)
@@ -64,7 +64,7 @@ def api_generate_cgl(waiver_id):
 
 
 @api_waivers_bp.route("/cgl/<waiver_id>/send", methods=["POST"])
-@require_api_auth("administrator", "manager")
+@require_api_auth("administrator", "manager", "commercial")
 def api_send_cgl(waiver_id):
     try:
         success, msg = send_cgl(waiver_id)
@@ -78,7 +78,7 @@ def api_send_cgl(waiver_id):
 
 @api_waivers_bp.route("/cgl/<waiver_id>", methods=["DELETE"])
 @api_waivers_bp.route("/cgl/<waiver_id>/delete", methods=["POST"])
-@require_api_auth("administrator", "manager")
+@require_api_auth("administrator", "manager", "commercial")
 def api_delete_cgl(waiver_id):
     try:
         success, msg = delete_cgl(waiver_id)
@@ -91,7 +91,7 @@ def api_delete_cgl(waiver_id):
 
 
 @api_waivers_bp.route("/cgl/<waiver_id>/reset", methods=["POST"])
-@require_api_auth("administrator", "manager")
+@require_api_auth("administrator", "manager", "commercial")
 def api_reset_cgl(waiver_id):
     try:
         success, msg = reset_cgl(waiver_id)
@@ -106,7 +106,7 @@ def api_reset_cgl(waiver_id):
 # ── Règles de Sécurité Universelles (BVSR) ───────────────────────────
 
 @api_waivers_bp.route("/safety-rules", methods=["GET"])
-@require_api_auth("administrator", "manager", "user")
+@require_api_auth("administrator", "manager", "commercial", "user")
 def api_list_safety_rules():
     try:
         result = list_safety_rules_waivers()
@@ -117,7 +117,7 @@ def api_list_safety_rules():
 
 
 @api_waivers_bp.route("/safety-rules", methods=["POST"])
-@require_api_auth("administrator", "manager")
+@require_api_auth("administrator", "manager", "commercial")
 def api_create_safety_rules():
     """Crée un engagement BVSR pour un intervenant d'un projet."""
     try:
@@ -145,7 +145,7 @@ def api_create_safety_rules():
 
 
 @api_waivers_bp.route("/safety-rules/<waiver_id>/generate", methods=["POST"])
-@require_api_auth("administrator", "manager")
+@require_api_auth("administrator", "manager", "commercial")
 def api_generate_safety_rules(waiver_id):
     try:
         success, msg = generate_safety_rules_waiver(waiver_id)
@@ -158,7 +158,7 @@ def api_generate_safety_rules(waiver_id):
 
 
 @api_waivers_bp.route("/safety-rules/<waiver_id>/send", methods=["POST"])
-@require_api_auth("administrator", "manager")
+@require_api_auth("administrator", "manager", "commercial")
 def api_send_safety_rules(waiver_id):
     try:
         success, msg = send_safety_rules_waiver(waiver_id)
@@ -172,7 +172,7 @@ def api_send_safety_rules(waiver_id):
 
 @api_waivers_bp.route("/safety-rules/<waiver_id>", methods=["DELETE"])
 @api_waivers_bp.route("/safety-rules/<waiver_id>/delete", methods=["POST"])
-@require_api_auth("administrator", "manager")
+@require_api_auth("administrator", "manager", "commercial")
 def api_delete_safety_rules(waiver_id):
     try:
         success, msg = delete_safety_rules_waiver(waiver_id)
@@ -185,7 +185,7 @@ def api_delete_safety_rules(waiver_id):
 
 
 @api_waivers_bp.route("/safety-rules/<waiver_id>/reset", methods=["POST"])
-@require_api_auth("administrator", "manager")
+@require_api_auth("administrator", "manager", "commercial")
 def api_reset_safety_rules(waiver_id):
     try:
         success, msg = reset_safety_rules_waiver(waiver_id)

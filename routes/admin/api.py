@@ -308,11 +308,11 @@ def admin_api_search():
             {"title": "Check-ins", "subtitle": "Historique des contrôles de retour", "url": url_for(
                 "admin_checkins.admin_checkins_list"), "category": "Page", "icon": "clipboard", "roles": ['all']},
             {"title": "Conditions Générales (CGL)", "subtitle": "Conditions Générales de Location", "url": url_for(
-                "admin_waivers.admin_cgl_list"), "category": "Page", "icon": "file-text", "roles": ['manager', 'admin']},
+                "admin_waivers.admin_cgl_list"), "category": "Page", "icon": "file-text", "roles": ['manager', 'commercial', 'admin']},
             {"title": "Nouvelles CGL", "subtitle": "Créer les Conditions Générales de Location pour un tournage", "url": url_for(
-                "admin_waivers.admin_cgl_new"), "category": "Action", "icon": "plus", "roles": ['manager', 'admin']},
+                "admin_waivers.admin_cgl_new"), "category": "Action", "icon": "plus", "roles": ['manager', 'commercial', 'admin']},
             {"title": "Règles Sécurité (BVSR)", "subtitle": "Engagements et décharges de sécurité universelles", "url": url_for(
-                "admin_waivers.admin_safety_rules_list"), "category": "Page", "icon": "shield", "roles": ['manager', 'admin']},
+                "admin_waivers.admin_safety_rules_list"), "category": "Page", "icon": "shield", "roles": ['manager', 'commercial', 'admin']},
             {"title": "Catalogue Règles Sécurité", "subtitle": "Configuration des règles de sécurité par véhicule", "url": url_for(
                 "admin_fleet.admin_safety_rules_config"), "category": "Page", "icon": "settings", "roles": ['manager', 'admin']},
             {"title": "Gestion des Incidents", "subtitle": "Suivi des pannes, dommages et sinistres", "url": url_for(

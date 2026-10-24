@@ -31,7 +31,7 @@ waivers_bp = Blueprint('admin_waivers', __name__, url_prefix='/admin')
 # ── CONDITIONS GÉNÉRALES DE LOCATION (CGL - BVRA) ────────────────────
 
 @waivers_bp.route("/cgl/quick-create/<int:project_id>", methods=["GET", "POST"], endpoint='admin_cgl_quick_create')
-@require_roles('administrator', 'manager')
+@require_roles('administrator', 'manager', 'commercial')
 def admin_cgl_quick_create(project_id):
     """Création en 1 clic des CGL depuis la fiche projet ou le dashboard."""
     success, msg = create_cgl(project_id)
@@ -46,7 +46,7 @@ def admin_cgl_quick_create(project_id):
 
 
 @waivers_bp.route("/cgl/new", methods=["GET", "POST"], endpoint='admin_cgl_new')
-@require_roles('administrator', 'manager')
+@require_roles('administrator', 'manager', 'commercial')
 def admin_cgl_new():
     if request.method == "POST":
         project_id = request.form.get("project_id")
@@ -93,7 +93,7 @@ def admin_cgl_new():
 
 
 @waivers_bp.route("/cgl", endpoint='admin_cgl_list')
-@require_roles('administrator', 'manager')
+@require_roles('administrator', 'manager', 'commercial')
 def admin_cgl_list():
     cgl_items = list_cgl()
     q = request.args.get('q', '').strip().lower()
@@ -110,7 +110,7 @@ def admin_cgl_list():
 
 
 @waivers_bp.route("/cgl/<string:waiver_id>/generate", methods=["POST"], endpoint='admin_cgl_generate')
-@require_roles('administrator', 'manager')
+@require_roles('administrator', 'manager', 'commercial')
 def admin_cgl_generate(waiver_id):
     success, msg = generate_cgl(waiver_id)
     if success:
@@ -122,7 +122,7 @@ def admin_cgl_generate(waiver_id):
 
 
 @waivers_bp.route("/cgl/<string:waiver_id>/send", methods=["GET", "POST"], endpoint='admin_cgl_send')
-@require_roles('administrator', 'manager')
+@require_roles('administrator', 'manager', 'commercial')
 def admin_cgl_send(waiver_id):
     success, msg = send_cgl(waiver_id)
     if success:
@@ -137,7 +137,7 @@ def admin_cgl_send(waiver_id):
 
 
 @waivers_bp.route("/cgl/<string:waiver_id>/preview", endpoint='admin_cgl_preview')
-@require_roles('administrator', 'manager')
+@require_roles('administrator', 'manager', 'commercial')
 def admin_cgl_preview(waiver_id):
     waiver = CglWaiver.query.filter(
         CglWaiver.waiver_id == waiver_id,
@@ -159,7 +159,7 @@ def admin_cgl_preview(waiver_id):
 
 
 @waivers_bp.route("/cgl/<string:waiver_id>/delete", methods=["POST"], endpoint='admin_cgl_delete')
-@require_roles('administrator', 'manager')
+@require_roles('administrator', 'manager', 'commercial')
 def admin_cgl_delete(waiver_id):
     success, msg = delete_cgl(waiver_id)
     if success:
@@ -171,7 +171,7 @@ def admin_cgl_delete(waiver_id):
 
 
 @waivers_bp.route("/cgl/<string:waiver_id>/reset", methods=["POST"], endpoint='admin_cgl_reset')
-@require_roles('administrator', 'manager')
+@require_roles('administrator', 'manager', 'commercial')
 def admin_cgl_reset(waiver_id):
     success, msg = reset_cgl(waiver_id)
     if success:
@@ -183,7 +183,7 @@ def admin_cgl_reset(waiver_id):
 
 
 @waivers_bp.route("/cgl/<string:waiver_id>/copy-link", methods=["POST"], endpoint='admin_cgl_copy_link')
-@require_roles('administrator', 'manager')
+@require_roles('administrator', 'manager', 'commercial')
 def admin_cgl_copy_link(waiver_id):
     """Génère ou récupère l'URL de signature active pour les CGL."""
     success, result = get_or_create_waiver_signing_url(waiver_id, waiver_type="cgl")
@@ -196,7 +196,7 @@ def admin_cgl_copy_link(waiver_id):
 
 @waivers_bp.route("/safety-rules", endpoint='admin_safety_rules_list')
 @waivers_bp.route("/waivers/safety-rules", endpoint='admin_safety_rules_list_alias')
-@require_roles('administrator', 'manager')
+@require_roles('administrator', 'manager', 'commercial')
 def admin_safety_rules_list():
     """Liste globale de tous les engagements de sécurité signés ou en attente."""
     items = list_safety_rules_waivers()
@@ -215,7 +215,7 @@ def admin_safety_rules_list():
 
 
 @waivers_bp.route("/projects/<int:project_id>/safety-rules/create", methods=["POST"], endpoint='admin_safety_rules_create')
-@require_roles('administrator', 'manager')
+@require_roles('administrator', 'manager', 'commercial')
 def admin_safety_rules_create(project_id):
     """Création d'un nouvel engagement aux règles de sécurité (BVSR) pour un intervenant."""
     signer_role = request.form.get("signer_role", "pilot").strip()
@@ -250,7 +250,7 @@ def admin_safety_rules_create(project_id):
 
 
 @waivers_bp.route("/safety-rules/<string:waiver_id>/send", methods=["GET", "POST"], endpoint='admin_safety_rules_send')
-@require_roles('administrator', 'manager')
+@require_roles('administrator', 'manager', 'commercial')
 def admin_safety_rules_send(waiver_id):
     success, msg = send_safety_rules_waiver(waiver_id)
     if success:
@@ -264,7 +264,7 @@ def admin_safety_rules_send(waiver_id):
 
 
 @waivers_bp.route("/safety-rules/<string:waiver_id>/delete", methods=["POST"], endpoint='admin_safety_rules_delete')
-@require_roles('administrator', 'manager')
+@require_roles('administrator', 'manager', 'commercial')
 def admin_safety_rules_delete(waiver_id):
     success, msg = delete_safety_rules_waiver(waiver_id)
     if success:
@@ -278,7 +278,7 @@ def admin_safety_rules_delete(waiver_id):
 
 
 @waivers_bp.route("/safety-rules/<string:waiver_id>/reset", methods=["POST"], endpoint='admin_safety_rules_reset')
-@require_roles('administrator', 'manager')
+@require_roles('administrator', 'manager', 'commercial')
 def admin_safety_rules_reset(waiver_id):
     success, msg = reset_safety_rules_waiver(waiver_id)
     if success:
@@ -292,7 +292,7 @@ def admin_safety_rules_reset(waiver_id):
 
 
 @waivers_bp.route("/safety-rules/<string:waiver_id>/copy-link", methods=["POST"], endpoint='admin_safety_rules_copy_link')
-@require_roles('administrator', 'manager')
+@require_roles('administrator', 'manager', 'commercial')
 def admin_safety_rules_copy_link(waiver_id):
     success, result = get_or_create_waiver_signing_url(waiver_id, waiver_type="safety_rules")
     if not success:
@@ -301,7 +301,7 @@ def admin_safety_rules_copy_link(waiver_id):
 
 
 @waivers_bp.route("/safety-rules/<string:waiver_id>/countersign", methods=["POST"], endpoint='admin_safety_rules_countersign')
-@require_roles('administrator', 'manager')
+@require_roles('administrator', 'manager', 'commercial')
 def admin_safety_rules_countersign(waiver_id):
     """Enregistre la contre-signature du superviseur technique Belle Vitesse."""
     sig_data = request.form.get("signature_data")
@@ -317,7 +317,7 @@ def admin_safety_rules_countersign(waiver_id):
 
 
 @waivers_bp.route("/safety-rules/<string:waiver_id>/preview", endpoint='admin_safety_rules_preview')
-@require_roles('administrator', 'manager')
+@require_roles('administrator', 'manager', 'commercial')
 def admin_safety_rules_preview(waiver_id):
     from models import SafetyRulesWaiver as SRW, AppSetting
     from services.admin.safety_rules_config import (
