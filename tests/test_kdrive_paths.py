@@ -13,6 +13,7 @@ from services.common.kdrive.paths import (
     DOC_FOLDERS,
     ROLE_SUBFOLDERS,
 )
+from services.common.kdrive.config import KDRIVE_BASE_PATH
 
 
 class MockProduction:
@@ -113,7 +114,7 @@ def test_build_project_path():
         departure_date=date(2026, 9, 15)
     )
     full_path = build_project_path(p)
-    expected = "Common documents/BELLE VITESSE/7_ADMINISTRATION/1_TOURNAGES/2026/09/ACADEMY FILMS/PROJETS TEST/BVPR-GG96XP13R8MU"
+    expected = f"{KDRIVE_BASE_PATH}/2026/09/ACADEMY FILMS/PROJETS TEST/BVPR-GG96XP13R8MU"
     assert full_path == expected
 
 

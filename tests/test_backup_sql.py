@@ -35,8 +35,8 @@ class BackupSQLTestCase(unittest.TestCase):
 
         # Exécuter la sauvegarde
         with patch.object(backup_module, "MYSQL_USER", "user"), \
-             patch.object(backup_module, "MYSQL_PASSWORD", "pass"), \
-             patch.object(backup_module, "MYSQL_DB", "bellevitesse"):
+                patch.object(backup_module, "MYSQL_PASSWORD", "pass"), \
+                patch.object(backup_module, "MYSQL_DB", "bellevitesse"):
             result_file = backup_module.run_backup("127.0.0.1", 3306)
 
         self.assertTrue(result_file.exists())
@@ -51,7 +51,7 @@ class BackupSQLTestCase(unittest.TestCase):
         """Vérifie que les archives locales antérieures au seuil de rétention sont supprimées."""
         now = datetime.now().timestamp()
         old_time = now - (35 * 86400)   # 35 jours avant
-        recent_time = now - (5 * 86400) # 5 jours avant
+        recent_time = now - (5 * 86400)  # 5 jours avant
 
         old_file = self.backup_dir / "dump_2026-08-01_04-00-00.sql.gz"
         recent_file = self.backup_dir / "dump_2026-10-05_04-00-00.sql.gz"
@@ -69,11 +69,13 @@ class BackupSQLTestCase(unittest.TestCase):
 
     @patch("scripts.backup_sql.KDriveClient")
     def test_sync_backup_to_kdrive(self, mock_client_cls):
-        """Vérifie l'arborescence kDrive et le téléversement de l'archive SQL sous 6_VPS/1_BACKUPS_SQL."""
+        """Vérifie l'arborescence kDrive et le téléversement de l'archive SQL sous 40_TECH/BACKUPS_SQL."""
         mock_client = MagicMock()
         mock_client.token = "fake_kdrive_token"
-        mock_client.create_directory.return_value = {"id": 1002, "name": "2026-10"}
-        mock_client.upload.return_value = {"id": 9999, "name": "dump_test.sql.gz"}
+        mock_client.create_directory.return_value = {
+            "id": 1002, "name": "2026-10"}
+        mock_client.upload.return_value = {
+            "id": 9999, "name": "dump_test.sql.gz"}
         mock_client_cls.return_value = mock_client
 
         dummy_file = self.backup_dir / "dump_2026-10-10_04-00-00.sql.gz"
@@ -97,7 +99,7 @@ class BackupSQLTestCase(unittest.TestCase):
         mock_client = MagicMock()
         mock_client.token = "fake_kdrive_token"
         mock_client.list_files.side_effect = [
-            # 1. Mois sous 1_BACKUPS_SQL
+            # 1. Mois sous BACKUPS_SQL
             ([{"id": 2001, "name": "2026-08", "type": "dir"}], None, False),
             # 2. Fichiers sous 2026-08
             ([

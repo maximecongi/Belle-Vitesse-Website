@@ -11,10 +11,12 @@ from dotenv import load_dotenv
 
 # Setup path for local imports
 _root = Path(__file__).parent.parent
-sys.path.append(str(_root))
+if str(_root) not in sys.path:
+    sys.path.insert(0, str(_root))
 
-from utils.cron_helper import monitor_cron_job
 from utils.ssh_helper import get_ssh_tunnel
+from utils.cron_helper import monitor_cron_job
+
 
 try:
     from services.common.kdrive.client import KDriveClient
@@ -27,7 +29,7 @@ except ImportError:
     KDriveClient = None
     KDRIVE_ROOT_FOLDER_ID = 48
     KDRIVE_SQL_BACKUP_FOLDER_ID = 133270
-    KDRIVE_SQL_BACKUP_PATH = "Common documents/BELLE VITESSE/6_VPS/1_BACKUPS_SQL"
+    KDRIVE_SQL_BACKUP_PATH = "Common documents/BELLE VITESSE/40_TECH/BACKUPS_SQL"
 
 # Load environment variables
 load_dotenv(_root / '.env')
@@ -60,16 +62,19 @@ def run_backup(host, port):
         f"-P{port}",
         f"-u{MYSQL_USER}",
         f"-p{MYSQL_PASSWORD}",
-        "--skip-ssl" if os.getenv("FLASK_ENV") == "production" else "--ssl-mode=DISABLED",
+        "--skip-ssl" if os.getenv(
+            "FLASK_ENV") == "production" else "--ssl-mode=DISABLED",
         "--single-transaction",
         "--quick",
         MYSQL_DB
     ]
 
-    print(f"📦 Démarrage de la sauvegarde MySQL vers {backup_file.name} via port {port}...")
+    print(
+        f"📦 Démarrage de la sauvegarde MySQL vers {backup_file.name} via port {port}...")
     try:
         with gzip.open(backup_file, "wb", compresslevel=9) as gz_out:
-            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            proc = subprocess.Popen(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             shutil.copyfileobj(proc.stdout, gz_out)
             stderr_output = proc.stderr.read().decode("utf-8", errors="ignore")
             proc.wait()
@@ -80,7 +85,8 @@ def run_backup(host, port):
                 )
 
         file_size_kb = backup_file.stat().st_size / 1024
-        print(f"✅ Sauvegarde locale compressée réussie ({file_size_kb:.1f} Ko) : {backup_file}")
+        print(
+            f"✅ Sauvegarde locale compressée réussie ({file_size_kb:.1f} Ko) : {backup_file}")
         return backup_file
     except Exception as e:
         print(f"❌ Échec de la sauvegarde locale : {e}")
@@ -92,7 +98,7 @@ def run_backup(host, port):
 def sync_backup_to_kdrive(local_file: Path):
     """
     Téléverse l'archive compressée sur Infomaniak kDrive dans :
-    Common documents/BELLE VITESSE/6_VPS/1_BACKUPS_SQL / YYYY-MM / dump_YYYY-MM-DD_HH-MM-SS.sql.gz
+    Common documents/BELLE VITESSE/40_TECH/BACKUPS_SQL / YYYY-MM / dump_YYYY-MM-DD_HH-MM-SS.sql.gz
     """
     if not KDriveClient:
         print("ℹ️ Module KDriveClient non disponible, saut du transfert distant.")
@@ -106,33 +112,38 @@ def sync_backup_to_kdrive(local_file: Path):
     year_month = datetime.now().strftime("%Y-%m")
 
     try:
-        print(f"☁️ Préparation du dossier de sauvegarde sur kDrive ({KDRIVE_SQL_BACKUP_PATH}/{year_month})...")
-        # 1. Sous-dossier par mois (YYYY-MM) directement sous 1_BACKUPS_SQL
+        print(
+            f"☁️ Préparation du dossier de sauvegarde sur kDrive ({KDRIVE_SQL_BACKUP_PATH}/{year_month})...")
+        # 1. Sous-dossier par mois (YYYY-MM) directement sous BACKUPS_SQL
         month_dir = client.create_directory(
             parent_id=KDRIVE_SQL_BACKUP_FOLDER_ID,
             name=year_month
         )
         month_dir_id = month_dir.get("id")
         if not month_dir_id:
-            raise RuntimeError(f"Impossible de déterminer l'ID du dossier distant {year_month} sur kDrive ({month_dir}).")
+            raise RuntimeError(
+                f"Impossible de déterminer l'ID du dossier distant {year_month} sur kDrive ({month_dir}).")
 
         # 2. Upload du fichier .sql.gz
         with open(local_file, "rb") as f:
             file_bytes = f.read()
 
         file_size_kb = len(file_bytes) / 1024
-        print(f"🚀 Upload de {local_file.name} vers kDrive ({file_size_kb:.1f} Ko)...")
+        print(
+            f"🚀 Upload de {local_file.name} vers kDrive ({file_size_kb:.1f} Ko)...")
         uploaded = client.upload(
             directory_id=month_dir_id,
             filename=local_file.name,
             content_bytes=file_bytes,
             conflict="version"
         )
-        print(f"✅ Sauvegarde synchronisée sur kDrive avec succès sous {KDRIVE_SQL_BACKUP_PATH}/{year_month}/ (ID: {uploaded.get('id')}) !")
+        print(
+            f"✅ Sauvegarde synchronisée sur kDrive avec succès sous {KDRIVE_SQL_BACKUP_PATH}/{year_month}/ (ID: {uploaded.get('id')}) !")
         return uploaded
     except Exception as err:
         import traceback
-        print(f"⚠️ Avertissement : Échec de la réplication sur kDrive ({err}). La sauvegarde locale est préservée.")
+        print(
+            f"⚠️ Avertissement : Échec de la réplication sur kDrive ({err}). La sauvegarde locale est préservée.")
         traceback.print_exc()
         return None
 
@@ -154,12 +165,13 @@ def purge_old_local_backups(retention_days: int = BACKUP_RETENTION_DAYS):
                 print(f"⚠️ Impossible de supprimer {f.name} : {err}")
 
     if purged > 0:
-        print(f"🧹 Purge locale : {purged} ancienne(s) sauvegarde(s) supprimée(s) (> {retention_days} jours).")
+        print(
+            f"🧹 Purge locale : {purged} ancienne(s) sauvegarde(s) supprimée(s) (> {retention_days} jours).")
 
 
 def purge_old_kdrive_backups(retention_days: int = BACKUP_RETENTION_DAYS):
     """
-    Supprime les sauvegardes SQL sur kDrive antérieures au seuil de rétention dans 6_VPS/1_BACKUPS_SQL/.
+    Supprime les sauvegardes SQL sur kDrive antérieures au seuil de rétention dans 40_TECH/BACKUPS_SQL/.
     """
     if not KDriveClient:
         return
@@ -181,10 +193,12 @@ def purge_old_kdrive_backups(retention_days: int = BACKUP_RETENTION_DAYS):
             files, _, _ = client.list_files(m_folder["id"])
             for item in files:
                 fname = item.get("name", "")
-                match = re.match(r"dump_(\d{4}-\d{2}-\d{2})_\d{2}-\d{2}-\d{2}\.sql(?:\.gz)?", fname)
+                match = re.match(
+                    r"dump_(\d{4}-\d{2}-\d{2})_\d{2}-\d{2}-\d{2}\.sql(?:\.gz)?", fname)
                 if match:
                     try:
-                        dump_date = datetime.strptime(match.group(1), "%Y-%m-%d")
+                        dump_date = datetime.strptime(
+                            match.group(1), "%Y-%m-%d")
                         if dump_date < cutoff_date:
                             client.delete(item["id"])
                             purged_kdrive += 1
@@ -192,15 +206,19 @@ def purge_old_kdrive_backups(retention_days: int = BACKUP_RETENTION_DAYS):
                         pass
 
         if purged_kdrive > 0:
-            print(f"🧹 Purge kDrive : {purged_kdrive} ancienne(s) archive(s) supprimée(s) (> {retention_days} jours).")
+            print(
+                f"🧹 Purge kDrive : {purged_kdrive} ancienne(s) archive(s) supprimée(s) (> {retention_days} jours).")
     except Exception as err:
         print(f"⚠️ Avertissement lors de la purge kDrive : {err}")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Sauvegarde SQL MySQL Belle Vitesse avec réplication kDrive.")
-    parser.add_argument("--skip-kdrive", action="store_true", help="Désactive le téléversement sur kDrive.")
-    parser.add_argument("--retention", type=int, default=BACKUP_RETENTION_DAYS, help="Durée de rétention en jours.")
+    parser = argparse.ArgumentParser(
+        description="Sauvegarde SQL MySQL Belle Vitesse avec réplication kDrive.")
+    parser.add_argument("--skip-kdrive", action="store_true",
+                        help="Désactive le téléversement sur kDrive.")
+    parser.add_argument("--retention", type=int,
+                        default=BACKUP_RETENTION_DAYS, help="Durée de rétention en jours.")
     args = parser.parse_args()
 
     if not all([MYSQL_USER, MYSQL_PASSWORD, MYSQL_DB]):

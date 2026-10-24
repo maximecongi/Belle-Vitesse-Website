@@ -22,8 +22,10 @@ class KDriveError(Exception):
         self.payload = payload or {}
         if isinstance(payload, dict):
             err_dict = payload.get("error", {})
-            self.error_code = error_code or (err_dict.get("code") if isinstance(err_dict, dict) else None)
-            self.description = description or (err_dict.get("description") if isinstance(err_dict, dict) else str(payload))
+            self.error_code = error_code or (err_dict.get(
+                "code") if isinstance(err_dict, dict) else None)
+            self.description = description or (err_dict.get(
+                "description") if isinstance(err_dict, dict) else str(payload))
         else:
             self.error_code = error_code
             self.description = description or str(payload)
@@ -46,10 +48,13 @@ class KDriveClient:
         timeout: Optional[int] = None,
     ):
         import os
-        self.token = token or os.getenv("KDRIVE_API_TOKEN") or os.getenv("N8N_API_TOKEN", "") or KDRIVE_API_TOKEN
-        self.drive_id = str(drive_id or os.getenv("KDRIVE_DRIVE_ID") or os.getenv("N8N_DRIVE_ID") or KDRIVE_DRIVE_ID)
-        self.base_url = (base_url or os.getenv("KDRIVE_API_BASE") or KDRIVE_API_BASE).rstrip("/")
-        self.timeout = timeout or int(os.getenv("KDRIVE_TIMEOUT", str(KDRIVE_TIMEOUT)))
+        self.token = token or os.getenv("KDRIVE_API_TOKEN") or KDRIVE_API_TOKEN
+        self.drive_id = str(drive_id or os.getenv(
+            "KDRIVE_DRIVE_ID") or KDRIVE_DRIVE_ID)
+        self.base_url = (base_url or os.getenv(
+            "KDRIVE_API_BASE") or KDRIVE_API_BASE).rstrip("/")
+        self.timeout = timeout or int(
+            os.getenv("KDRIVE_TIMEOUT", str(KDRIVE_TIMEOUT)))
         self.session = requests.Session()
 
     def _get_headers(self, additional_headers: Optional[Dict[str, str]] = None) -> Dict[str, str]:
@@ -82,7 +87,8 @@ class KDriveClient:
                     # Retry automatique sur les erreurs 5xx ou 429
                     if (status >= 500 or status == 429) and attempt <= retries:
                         backoff = 2 ** attempt
-                        logger.warning(f"⚠️ kDrive HTTP {status}, nouvel essai ({attempt}/{retries}) dans {backoff}s...")
+                        logger.warning(
+                            f"⚠️ kDrive HTTP {status}, nouvel essai ({attempt}/{retries}) dans {backoff}s...")
                         time.sleep(backoff)
                         continue
 
@@ -93,10 +99,12 @@ class KDriveClient:
             except requests.RequestException as exc:
                 if attempt <= retries:
                     backoff = 2 ** attempt
-                    logger.warning(f"⚠️ Erreur réseau kDrive: {exc}, tentative {attempt}/{retries} dans {backoff}s...")
+                    logger.warning(
+                        f"⚠️ Erreur réseau kDrive: {exc}, tentative {attempt}/{retries} dans {backoff}s...")
                     time.sleep(backoff)
                     continue
-                raise KDriveError(0, {"exception": str(exc)}, error_code="network_error", description=str(exc))
+                raise KDriveError(0, {"exception": str(
+                    exc)}, error_code="network_error", description=str(exc))
 
     def get_file(self, file_id: int) -> Dict[str, Any]:
         """Récupère les métadonnées d'un fichier ou dossier (GET /3/drive/{drive_id}/files/{file_id})."""
@@ -114,7 +122,8 @@ class KDriveClient:
         if cursor:
             params["cursor"] = cursor
 
-        res = self._request("GET", f"/3/drive/{self.drive_id}/files/{directory_id}/files", params=params)
+        res = self._request(
+            "GET", f"/3/drive/{self.drive_id}/files/{directory_id}/files", params=params)
         items = res.get("data", [])
         has_more = bool(res.get("has_more", False))
         next_cursor = res.get("cursor")
@@ -153,15 +162,18 @@ class KDriveClient:
             payload["relative_path"] = relative_path.strip("/")
 
         try:
-            res = self._request("POST", f"/3/drive/{self.drive_id}/files/{parent_id}/directory", json=payload)
+            res = self._request(
+                "POST", f"/3/drive/{self.drive_id}/files/{parent_id}/directory", json=payload)
             return res.get("data", {})
         except KDriveError as err:
             if err.error_code == "destination_already_exists":
-                logger.info(f"ℹ️ Le dossier '{name}' existe déjà sous {parent_id}. Récupération de l'existant...")
+                logger.info(
+                    f"ℹ️ Le dossier '{name}' existe déjà sous {parent_id}. Récupération de l'existant...")
                 # Si relative_path était renseigné, trouver le parent direct
                 curr_parent = parent_id
                 if relative_path:
-                    segments = [s for s in relative_path.strip("/").split("/") if s]
+                    segments = [s for s in relative_path.strip(
+                        "/").split("/") if s]
                     for seg in segments:
                         child = self.get_child_by_name(curr_parent, seg)
                         if not child:
@@ -204,7 +216,8 @@ class KDriveClient:
             return res.get("data", {})
         except KDriveError as err:
             if err.error_code == "file_already_exists_error":
-                logger.info(f"ℹ️ Le fichier '{filename}' existe déjà dans {directory_id}. Récupération de l'ID...")
+                logger.info(
+                    f"ℹ️ Le fichier '{filename}' existe déjà dans {directory_id}. Récupération de l'ID...")
                 child = self.get_child_by_name(directory_id, filename)
                 if child:
                     return child
@@ -242,10 +255,12 @@ class KDriveClient:
         Si le fichier est déjà supprimé (HTTP 404), retourne un dictionnaire de complétion sans erreur.
         """
         try:
-            res = self._request("DELETE", f"/2/drive/{self.drive_id}/files/{file_id}")
+            res = self._request(
+                "DELETE", f"/2/drive/{self.drive_id}/files/{file_id}")
             return res.get("data", {})
         except KDriveError as err:
             if err.status_code == 404 or err.error_code in {"not_found", "file_not_found"}:
-                logger.info(f"ℹ️ L'élément {file_id} est déjà supprimé sur kDrive (404).")
+                logger.info(
+                    f"ℹ️ L'élément {file_id} est déjà supprimé sur kDrive (404).")
                 return {"deleted": True, "already_deleted": True}
             raise

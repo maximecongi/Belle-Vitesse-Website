@@ -15,6 +15,7 @@ from app import create_app
 from models.db import db
 from models.kdrive import KDriveObject
 from models.project import Production, Project
+from services.common.kdrive.config import KDRIVE_BASE_PATH, KDRIVE_ROOT_FOLDER_ID
 from services.common.kdrive.service import KDriveService
 
 
@@ -58,7 +59,7 @@ def test_ensure_project_tree(app_ctx):
     assert folder_id is not None
     assert project.kdrive_folder_id == folder_id
     assert project.kdrive_sync_status == "synced"
-    assert "Common documents/BELLE VITESSE/7_ADMINISTRATION/1_TOURNAGES/2026/09/MARVEL STUDIOS/AVENGERS SHOOT/BVPR-AVENGERS" in project.kdrive_path
+    assert f"{KDRIVE_BASE_PATH}/2026/09/MARVEL STUDIOS/AVENGERS SHOOT/BVPR-AVENGERS" in project.kdrive_path
 
     # Doit avoir appelé create_directory pour la racine et les sous-dossiers
     assert mock_client.create_directory.call_count >= 7
@@ -395,7 +396,7 @@ def test_rename_production_folders_direct(app_ctx):
     mock_client = MagicMock()
     # Simuler 1_TOURNAGES contenant 2026, qui contient 09 - SEPTEMBRE
     mock_client.list_files.side_effect = lambda folder_id, limit=50: {
-        48: ([{"id": 2026, "name": "2026", "type": "dir"}], None, False),
+        KDRIVE_ROOT_FOLDER_ID: ([{"id": 2026, "name": "2026", "type": "dir"}], None, False),
         2026: ([{"id": 909, "name": "09 - SEPTEMBRE", "type": "dir"}], None, False),
     }.get(folder_id, ([], None, False))
 
@@ -427,7 +428,7 @@ def test_rename_production_folders_collision(app_ctx):
     """Teste le renommage kDrive d'une production avec collision (fusion du contenu et suppression de l'ancien dossier)."""
     mock_client = MagicMock()
     mock_client.list_files.side_effect = lambda folder_id, limit=50: {
-        48: ([{"id": 2026, "name": "2026", "type": "dir"}], None, False),
+        KDRIVE_ROOT_FOLDER_ID: ([{"id": 2026, "name": "2026", "type": "dir"}], None, False),
         2026: ([{"id": 909, "name": "09 - SEPTEMBRE", "type": "dir"}], None, False),
         555: ([{"id": 888, "name": "PROJET_ALPHA", "type": "dir"}], None, False),
     }.get(folder_id, ([], None, False))
@@ -474,7 +475,7 @@ def test_rename_production_folders_case_insensitivity_and_uppercase(app_ctx):
 
     mock_client = MagicMock()
     mock_client.list_files.side_effect = lambda folder_id, limit=50: {
-        48: ([{"id": 2026, "name": "2026", "type": "dir"}], None, False),
+        KDRIVE_ROOT_FOLDER_ID: ([{"id": 2026, "name": "2026", "type": "dir"}], None, False),
         2026: ([{"id": 909, "name": "09 - SEPTEMBRE", "type": "dir"}], None, False),
     }.get(folder_id, ([], None, False))
 
