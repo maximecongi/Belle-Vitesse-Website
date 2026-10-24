@@ -59,8 +59,8 @@ def _fetch_all_from_table(table_name, order_by=None):
         records = []
         for row in model.query.all():
             f = dict(row.fields) if row.fields else {}
-            if hasattr(row, "daily_rate") and row.daily_rate is not None:
-                f["daily_rate"] = float(row.daily_rate)
+            if hasattr(row, "daily_rate"):
+                f["daily_rate"] = float(row.daily_rate) if row.daily_rate is not None else None
             records.append({
                 "id": row.id,
                 "createdTime": str(row.createdTime) if row.createdTime else None,
@@ -96,8 +96,8 @@ def _fetch_by_field(table_name, field_name, field_value):
 
                 if row:
                     f = dict(row.fields) if row.fields else {}
-                    if hasattr(row, "daily_rate") and row.daily_rate is not None:
-                        f["daily_rate"] = float(row.daily_rate)
+                    if hasattr(row, "daily_rate"):
+                        f["daily_rate"] = float(row.daily_rate) if row.daily_rate is not None else None
                     return {
                         "id": row.id,
                         "createdTime": str(row.createdTime) if row.createdTime else None,
@@ -113,8 +113,8 @@ def _fetch_by_field(table_name, field_name, field_value):
             fields = row.fields or {}
             if fields.get(field_name) == field_value:
                 f = dict(fields)
-                if hasattr(row, "daily_rate") and row.daily_rate is not None:
-                    f["daily_rate"] = float(row.daily_rate)
+                if hasattr(row, "daily_rate"):
+                    f["daily_rate"] = float(row.daily_rate) if row.daily_rate is not None else None
                 return {
                     "id": row.id,
                     "createdTime": str(row.createdTime) if row.createdTime else None,

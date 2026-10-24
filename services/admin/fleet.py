@@ -126,12 +126,16 @@ def get_fleet_overview() -> Dict[str, Any]:
             "critical_incident": False,
         }
 
-    # Compléter avec les véhicules en base locale le cas échéant
+    # Compléter avec les véhicules en base locale le cas échéant et synchroniser prioritairement daily_rate
     try:
         local_vehicles = Vehicle.query.all()
         for lv in local_vehicles:
             lvid = str(lv.id)
-            if lvid not in vehicles_dict:
+            if lvid in vehicles_dict:
+                # Surcharge prioritaire par la colonne SQL daily_rate de la base locale
+                if getattr(lv, "daily_rate", None) is not None:
+                    vehicles_dict[lvid]["daily_rate"] = float(lv.daily_rate)
+            else:
                 lfields = lv.fields or {}
                 lname = lfields.get("name") or getattr(lv, "name", lvid)
                 vehicles_dict[lvid] = {
@@ -143,7 +147,7 @@ def get_fleet_overview() -> Dict[str, Any]:
                     "model": lfields.get("model") or "",
                     "order": getattr(lv, "display_order", 999),
                     "image_url": _extract_vehicle_image(lfields),
-                    "daily_rate": getattr(lv, "daily_rate", None),
+                    "daily_rate": float(lv.daily_rate) if getattr(lv, "daily_rate", None) is not None else None,
                     "max_speed": lfields.get("max_speed"),
                     "battery_life": lfields.get("battery_life"),
                     "fields": lfields,
@@ -443,7 +447,7 @@ def get_vehicle_timeline(vehicle_id: str) -> Optional[Dict[str, Any]]:
                     "model": lfields.get("model") or "",
                     "image_url": _extract_vehicle_image(lfields),
                     "banner_url": None,
-                    "daily_rate": getattr(lv, "daily_rate", None),
+                    "daily_rate": float(lv.daily_rate) if getattr(lv, "daily_rate", None) is not None else None,
                     "max_speed": lfields.get("max_speed"),
                     "battery_life": lfields.get("battery_life"),
                     "weight": lfields.get("weight"),
@@ -454,6 +458,14 @@ def get_vehicle_timeline(vehicle_id: str) -> Optional[Dict[str, Any]]:
         except Exception as e:
             logger.warning(
                 f"Erreur lors de la recherche du véhicule local {vehicle_id} : {e}")
+    else:
+        # Surcharge prioritaire par la colonne SQL daily_rate de la base locale si disponible
+        try:
+            lv = Vehicle.query.get(vehicle_id)
+            if lv and getattr(lv, "daily_rate", None) is not None:
+                vehicle_info["daily_rate"] = float(lv.daily_rate)
+        except Exception:
+            pass
 
     if not vehicle_info:
         return None

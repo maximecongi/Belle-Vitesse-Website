@@ -143,6 +143,39 @@ def list_equipment_rates():
     return result
 
 
+def _invalidate_equipment_cache(table_name, record=None):
+    """Invalide les caches applicatifs (Flask-Caching) et MCP associés aux équipements."""
+    try:
+        from extensions import cache
+        if table_name == "vehicles":
+            cache.delete("vehicles")
+            if record and hasattr(record, "fields") and record.fields:
+                slug = record.fields.get("slug")
+                if slug:
+                    cache.delete(f"vehicle_{slug}")
+        elif table_name == "heads":
+            cache.delete("heads")
+            if record and hasattr(record, "fields") and record.fields:
+                slug = record.fields.get("slug")
+                if slug:
+                    cache.delete(f"head_{slug}")
+        elif table_name == "grip_products":
+            cache.delete("grip_products")
+            if record and hasattr(record, "fields") and record.fields:
+                for cat_id in record.fields.get("category", []):
+                    cache.delete(f"grips_products_{cat_id}")
+    except Exception as e:
+        logger.warning(f"Erreur lors de l'invalidation du cache pour {table_name} : {e}")
+
+    try:
+        from mcp_server.cache import invalidate_mcp_cache
+        invalidate_mcp_cache("get_equipment_rates")
+        if table_name == "vehicles":
+            invalidate_mcp_cache("get_fleet_overview")
+    except Exception:
+        pass
+
+
 @handle_admin_service_error
 def reorder_equipment(table_name, item_ids):
     """Réordonne les items d'une catégorie d'équipement."""
@@ -155,6 +188,7 @@ def reorder_equipment(table_name, item_ids):
         if record:
             record.display_order = i
     db.session.commit()
+    _invalidate_equipment_cache(table_name)
     return True
 
 
@@ -172,9 +206,26 @@ def update_equipment_daily_rate(table_name, record_id, value):
         raise ValueError(
             f"Enregistrement {record_id} introuvable dans {table_name}")
 
-    record.daily_rate = _safe_float(value) if value not in (
+    new_rate = _safe_float(value) if value not in (
         None, "", "0") else float(value) if value == "0" else None
+    record.daily_rate = new_rate
+
+    # Synchroniser également le champ JSON fields pour cohérence globale
+    if hasattr(record, "fields") and record.fields is not None:
+        from sqlalchemy.orm.attributes import flag_modified
+        updated_fields = dict(record.fields)
+        if new_rate is not None:
+            updated_fields["daily_rate"] = float(new_rate)
+        else:
+            updated_fields.pop("daily_rate", None)
+        record.fields = updated_fields
+        flag_modified(record, "fields")
+
     db.session.commit()
+
+    # Invalidation systématique des caches
+    _invalidate_equipment_cache(table_name, record)
+
     return _item_from_record(record)
 
 

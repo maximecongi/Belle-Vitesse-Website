@@ -518,8 +518,76 @@ class FleetTest(unittest.TestCase):
             self.assertIn('src="/static/imgs/placeholders/vehicle.svg"', html)
             self.assertIn('src="/static/imgs/placeholders/head.svg"', html)
 
+    def test_pricing_update_reflected_in_fleet(self):
+        """Vérifie que la modification d'un tarif véhicule dans tarification est immédiatement répercutée dans la flotte."""
+        from services.admin.pricing import update_equipment_daily_rate
+        from extensions import cache
+        from models import Vehicle
+        from utils.database import get_vehicles
+
+        with self.app.app_context():
+            # 1. Création d'un véhicule initial en base avec tarif de 1000 €
+            v = Vehicle(
+                id="recVehPriceSync",
+                fields={
+                    "name": "eCar Sync Test",
+                    "slug": "ecar-sync-test",
+                    "unique_id": "ECAR-SYNC",
+                    "daily_rate": 1000,
+                    "order": 1,
+                },
+                daily_rate=1000,
+                display_order=1
+            )
+            db.session.add(v)
+            db.session.commit()
+
+            # 2. Amorcer le cache avec get_vehicles()
+            cached_v = get_vehicles()
+            self.assertEqual(len(cached_v), 1)
+            self.assertEqual(cached_v[0]["fields"]["daily_rate"], 1000)
+
+            # 3. Vérifier l'aperçu initial de la flotte
+            overview_before = get_fleet_overview()
+            self.assertEqual(len(overview_before["vehicles"]), 1)
+            self.assertEqual(overview_before["vehicles"][0]["daily_rate"], 1000)
+
+            timeline_before = get_vehicle_timeline("recVehPriceSync")
+            self.assertIsNotNone(timeline_before)
+            self.assertEqual(timeline_before["vehicle"]["daily_rate"], 1000)
+
+            # 4. Modification du tarif via le service de tarification (1000 € -> 1500 €)
+            res = update_equipment_daily_rate("vehicles", "recVehPriceSync", 1500)
+            self.assertEqual(res["daily_rate"], 1500)
+
+            # Vérifier que le cache 'vehicles' a été invalidé
+            self.assertIsNone(cache.get("vehicles"))
+
+            # 5. Vérifier que la flotte affiche immédiatement le nouveau tarif 1500 €
+            overview_after = get_fleet_overview()
+            self.assertEqual(overview_after["vehicles"][0]["daily_rate"], 1500)
+
+            timeline_after = get_vehicle_timeline("recVehPriceSync")
+            self.assertEqual(timeline_after["vehicle"]["daily_rate"], 1500)
+
+            # 6. Vérifier la remise à zéro / suppression du tarif
+            update_equipment_daily_rate("vehicles", "recVehPriceSync", "0")
+            overview_zero = get_fleet_overview()
+            self.assertEqual(overview_zero["vehicles"][0]["daily_rate"], 0.0)
+
+            update_equipment_daily_rate("vehicles", "recVehPriceSync", "")
+            overview_none = get_fleet_overview()
+            self.assertIsNone(overview_none["vehicles"][0]["daily_rate"])
+
+            # Nettoyage rigoureux
+            db.session.delete(v)
+            db.session.commit()
+            cache.delete("vehicles")
+            cache.delete("vehicle_ecar-sync-test")
+
 
 if __name__ == "__main__":
     unittest.main()
+
 
 
