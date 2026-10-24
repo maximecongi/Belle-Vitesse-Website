@@ -276,6 +276,14 @@
     font-weight: 600;
 }
 
+.cgl-col-vehicule { width: 12%; }
+.cgl-col-desc { width: 28%; }
+.cgl-col-voie { width: 11%; }
+.cgl-col-pilotage { width: 17%; }
+.cgl-col-charge { width: 11%; }
+.cgl-col-valeur { width: 11%; }
+.cgl-col-tarif { width: 10%; }
+
 /* ── 8. Références Annexes 2 & 3 ─────────────────────────────────────────── */
 .cgl-annexes-notes {
     background-color: #f8fafc;
@@ -399,4 +407,10 @@
     max-width: 110pt;
     display: block;
     margin: 0 auto;
+}
+
+.cgl-sig-pending {
+    font-size: 7pt;
+    color: #a1a1aa;
+    font-style: italic;
 }

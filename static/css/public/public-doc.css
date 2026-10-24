@@ -304,32 +304,55 @@ a.public-doc-vehicle-card:hover {
     margin-bottom: 0.4rem;
 }
 
+.cgl-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    margin: 1rem 0 1.5rem;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid var(--border-color, #E2E8F0);
+    border-radius: 4px;
+    background-color: var(--white-1, #FFFFFF);
+}
+
 .cgl-contract-table {
     width: 100%;
+    min-width: 820px;
     border-collapse: collapse;
-    margin: 1rem 0 1.5rem;
-    font-size: 0.85rem;
+    margin: 0;
+    font-size: 0.8rem;
     background-color: var(--white-1, #FFFFFF);
-    border-radius: 4px;
-    overflow: hidden;
-    border: 1px solid var(--border-color, #E2E8F0);
 }
 
 .cgl-contract-table th,
 .cgl-contract-table td {
-    padding: 8px 12px;
+    padding: 8px 10px;
     border-bottom: 1px solid var(--border-color, #E2E8F0);
     text-align: left;
+    vertical-align: top;
+    line-height: 1.4;
 }
 
 .cgl-contract-table th {
     background-color: var(--white-3, #E2E8F0);
     font-weight: 600;
     color: var(--grey-1, #111827);
+    font-size: 0.775rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
 
 .cgl-contract-table tr:last-child td {
     border-bottom: none;
+}
+
+.cgl-contract-table tr:nth-child(even) td {
+    background-color: var(--white-2, #F8F9FA);
+}
+
+.cgl-cell-num {
+    text-align: right;
+    white-space: nowrap;
+    font-weight: 600;
 }
 
 /* ── 7. Constats d'Incidents (Notes, Photos & Visas) ─────────────────────── */
