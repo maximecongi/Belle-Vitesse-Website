@@ -23,7 +23,7 @@ class MaintenanceMixin:
     def prune_orphan_project_containers(self, dry_run: bool = False) -> List[str]:
         """
         Scanne UNIQUEMENT le niveau externe de l'arborescence kDrive :
-        1_TOURNAGES / <Année> / <Mois> / <Production> / <Nom_Projet>
+        10_TOURNAGES / <Année> / <Mois> / <Production> / <Nom_Projet>
         Si un conteneur <Nom_Projet> ne contient aucun dossier projet (aucun BVPR-*) et est totalement vide,
         il est supprimé (ex: ancien dossier laissé après déplacement de projet comme 'TEST PROJET 4').
         Remonte ensuite supprimer la production et le mois s'ils sont devenus totalement vides.
@@ -32,7 +32,8 @@ class MaintenanceMixin:
         """
         purged = []
         try:
-            years, _, _ = self.client.list_files(KDRIVE_ROOT_FOLDER_ID, limit=50)
+            years, _, _ = self.client.list_files(
+                KDRIVE_ROOT_FOLDER_ID, limit=50)
             for y in years:
                 if y.get("type") != "dir":
                     continue
@@ -50,31 +51,38 @@ class MaintenanceMixin:
                             continue
                         prod_id, prod_name = prod["id"], prod.get("name")
 
-                        proj_containers, _, _ = self.client.list_files(prod_id, limit=100)
+                        proj_containers, _, _ = self.client.list_files(
+                            prod_id, limit=100)
                         for pc in proj_containers:
                             if pc.get("type") != "dir":
                                 continue
                             pc_id, pc_name = pc["id"], pc.get("name")
 
                             # Vérifier si ce conteneur de projet a des enfants
-                            children, _, _ = self.client.list_files(pc_id, limit=5)
+                            children, _, _ = self.client.list_files(
+                                pc_id, limit=5)
                             # S'il est totalement vide (aucun sous-dossier projet BVPR-*, aucun fichier)
                             if len(children) == 0:
                                 container_path = f"{y_name}/{m_name}/{prod_name}/{pc_name}"
                                 if dry_run:
-                                    logger.info(f"🔍 [DRY-RUN] Conteneur projet orphelin vide détecté : '{container_path}' (ID={pc_id})")
+                                    logger.info(
+                                        f"🔍 [DRY-RUN] Conteneur projet orphelin vide détecté : '{container_path}' (ID={pc_id})")
                                 else:
-                                    logger.info(f"🗑️ Purge du conteneur projet orphelin vide : '{container_path}' (ID={pc_id})...")
+                                    logger.info(
+                                        f"🗑️ Purge du conteneur projet orphelin vide : '{container_path}' (ID={pc_id})...")
                                     try:
                                         self.client.delete(pc_id)
                                         # Remonter vers la production puis le mois si devenus vides
-                                        self._prune_empty_parents_upwards(prod_id)
+                                        self._prune_empty_parents_upwards(
+                                            prod_id)
                                     except Exception as e_del:
-                                        logger.warning(f"⚠️ Impossible de supprimer {container_path}: {e_del}")
+                                        logger.warning(
+                                            f"⚠️ Impossible de supprimer {container_path}: {e_del}")
                                 purged.append(container_path)
 
         except Exception as e:
-            logger.error(f"❌ Erreur lors du scan des conteneurs de projet orphelins : {e}")
+            logger.error(
+                f"❌ Erreur lors du scan des conteneurs de projet orphelins : {e}")
 
         return purged
 
@@ -116,7 +124,8 @@ class MaintenanceMixin:
                     else:
                         entity_folder_ids.add(obj.kdrive_dir_id)
             except Exception as err:
-                logger.warning(f"⚠️ Erreur identification dossier pour {obj.kdrive_dir_id} : {err}")
+                logger.warning(
+                    f"⚠️ Erreur identification dossier pour {obj.kdrive_dir_id} : {err}")
                 entity_folder_ids.add(obj.kdrive_dir_id)
 
         # 2. Recherche complémentaire dans l'arborescence kDrive du projet si non trouvé
@@ -130,49 +139,60 @@ class MaintenanceMixin:
                 project = rec.project if rec else None
             elif entity_type in ("safety_rules", "safety_rules_waiver"):
                 from models import SafetyRulesWaiver
-                rec = SafetyRulesWaiver.query.filter_by(waiver_id=entity_id).first()
+                rec = SafetyRulesWaiver.query.filter_by(
+                    waiver_id=entity_id).first()
                 project = rec.project if rec else None
             elif entity_type == "checkout":
                 from models import CheckoutVehicle
-                rec = CheckoutVehicle.query.filter_by(inspection_number=entity_id).first()
+                rec = CheckoutVehicle.query.filter_by(
+                    inspection_number=entity_id).first()
                 project = rec.project if rec else None
             elif entity_type == "checkin":
                 from models import CheckinVehicle
-                rec = CheckinVehicle.query.filter_by(inspection_number=entity_id).first()
+                rec = CheckinVehicle.query.filter_by(
+                    inspection_number=entity_id).first()
                 project = rec.project if rec else None
             elif entity_type == "incident":
                 from models import Incident
-                rec = Incident.query.filter_by(incident_number=entity_id).first()
+                rec = Incident.query.filter_by(
+                    incident_number=entity_id).first()
                 project = rec.project if rec else None
 
         if project and project.kdrive_folder_id and entity_type in DOC_FOLDERS:
             try:
-                cat_rel = DOC_FOLDERS[entity_type]  # ex: 4_SÉCURITÉ/2_DÉCHARGE_PILOTE
-                cat_dir_id = self.ensure_directory_path(project.kdrive_folder_id, cat_rel)
+                # ex: 4_SÉCURITÉ/2_DÉCHARGE_PILOTE
+                cat_rel = DOC_FOLDERS[entity_type]
+                cat_dir_id = self.ensure_directory_path(
+                    project.kdrive_folder_id, cat_rel)
                 child = self.client.get_child_by_name(cat_dir_id, entity_id)
                 if child:
                     entity_folder_ids.add(child["id"])
             except Exception as e_find:
-                logger.warning(f"⚠️ Recherche du dossier {entity_id} dans {entity_type} : {e_find}")
+                logger.warning(
+                    f"⚠️ Recherche du dossier {entity_id} dans {entity_type} : {e_find}")
 
         if not entity_folder_ids and not objects:
-            logger.warning(f"⚠️ Aucun dossier kDrive ni objet trouvé en base pour {entity_type} {entity_id}.")
+            logger.warning(
+                f"⚠️ Aucun dossier kDrive ni objet trouvé en base pour {entity_type} {entity_id}.")
             return False
 
         # 3. Suppression du/des dossier(s) racine(s) de l'entité sur kDrive
         for folder_id in entity_folder_ids:
             try:
-                logger.info(f"🗑️ Suppression kDrive du dossier entité {folder_id} ({entity_id})...")
+                logger.info(
+                    f"🗑️ Suppression kDrive du dossier entité {folder_id} ({entity_id})...")
                 self.client.delete(folder_id)
             except Exception as err:
-                logger.error(f"❌ Erreur lors de la suppression du dossier {folder_id} : {err}")
+                logger.error(
+                    f"❌ Erreur lors de la suppression du dossier {folder_id} : {err}")
 
         # 4. Nettoyage de la base de données
         for obj in objects:
             db.session.delete(obj)
 
         db.session.commit()
-        logger.info(f"✅ Dossier entité kDrive et objets supprimés avec succès pour {entity_type} {entity_id}")
+        logger.info(
+            f"✅ Dossier entité kDrive et objets supprimés avec succès pour {entity_type} {entity_id}")
         return True
 
     def _prune_empty_parents_upwards(

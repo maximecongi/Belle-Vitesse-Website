@@ -116,8 +116,34 @@ def init_waiver_routes(app):
                 waiver.production_address = data.get("address")
                 waiver.production_siret = data.get("siret")
                 waiver.production_vat = data.get("vat_number")
+                if data.get("phone"):
+                    waiver.signer_phone = data.get("phone").strip()
+                if data.get("email"):
+                    waiver.signer_email = data.get("email").strip()
+                if data.get("representative_role"):
+                    waiver.signer_role_custom = data.get("representative_role").strip()
+                if data.get("insurance_company"):
+                    waiver.production_insurance_company = data.get("insurance_company").strip()
+                if data.get("insurance_policy"):
+                    waiver.production_insurance_policy = data.get("insurance_policy").strip()
                 if data.get("location_of_use"):
-                    waiver.location_of_use = data.get("location_of_use")
+                    waiver.location_of_use = data.get("location_of_use").strip()
+                elif data.get("city") and not waiver.location_of_use:
+                    waiver.location_of_use = data.get("city").strip()
+
+                # Snapshot structuré JSON
+                s_data = dict(waiver.sign_data or {})
+                if data.get("legal_form"):
+                    s_data["legal_form"] = data.get("legal_form").strip()
+                if data.get("representative_role"):
+                    s_data["representative_role"] = data.get("representative_role").strip()
+                if data.get("city"):
+                    s_data["signature_city"] = data.get("city").strip()
+                if data.get("insurance_company"):
+                    s_data["insurance_company"] = data.get("insurance_company").strip()
+                if data.get("insurance_policy"):
+                    s_data["insurance_policy"] = data.get("insurance_policy").strip()
+                waiver.sign_data = s_data
 
                 # Pièce jointe assurance production (CGL)
                 file = request.files.get('production_insurance')

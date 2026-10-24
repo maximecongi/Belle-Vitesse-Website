@@ -465,3 +465,17 @@
     font-size: 8pt;
 }
 
+.cgl-annexe2-sign-info {
+    margin-top: 10pt;
+    padding: 6pt 10pt;
+    background-color: #fafafa;
+    border: 0.5pt solid #e4e4e7;
+    border-radius: 3pt;
+    font-size: 7.5pt;
+    line-height: 1.45;
+}
+
+.cgl-annexe2-sign-info p {
+    margin: 2pt 0;
+}
+

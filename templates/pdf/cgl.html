@@ -49,11 +49,12 @@
                 <!-- LE LOCATAIRE -->
                 <div class="cgl-party-card">
                     <div class="cgl-party-role">Le Locataire (Production)</div>
-                    <div><span class="cgl-party-field-label">Raison sociale :</span> {{ cgl.display_production_name }}</div>
-                    <div><span class="cgl-party-field-label">Représentant :</span> {{ cgl.production_representative or '—' }}</div>
+                    <div><span class="cgl-party-field-label">Raison sociale :</span> {{ cgl.display_production_name }}{% if cgl.display_legal_form %} ({{ cgl.display_legal_form }}){% endif %}</div>
+                    <div><span class="cgl-party-field-label">Représentant :</span> {{ cgl.production_representative or '—' }}{% if cgl.display_representative_role %} — {{ cgl.display_representative_role }}{% endif %}</div>
                     <div><span class="cgl-party-field-label">Siège social :</span> {{ cgl.production_address or '—' }}</div>
                     <div><span class="cgl-party-field-label">SIRET :</span> {{ cgl.production_siret or '—' }} {% if cgl.production_vat %}— TVA : {{ cgl.production_vat }}{% endif %}</div>
-                    <div><span class="cgl-party-field-label">Assurance :</span> {{ cgl.production_insurance_company or '—' }} (Police : {{ cgl.production_insurance_policy or '—' }})</div>
+                    <div><span class="cgl-party-field-label">Contact :</span> {{ cgl.signer_email or '—' }}{% if cgl.signer_phone %} — {{ cgl.signer_phone }}{% endif %}</div>
+                    <div><span class="cgl-party-field-label">Assurance :</span> {{ cgl.production_insurance_company or '—' }} {% if cgl.production_insurance_policy %}(Police : {{ cgl.production_insurance_policy }}){% endif %}</div>
                     <div><span class="cgl-party-field-label">Projet associé :</span> {{ cgl.display_project_name }} ({{ cgl.display_shooting_dates }})</div>
                 </div>
             </div>
@@ -457,12 +458,12 @@
             <div class="cgl-parties-grid">
                 <div class="cgl-party-card">
                     <div><span class="cgl-party-field-label">Nom (dénomination sociale) de la société :</span> {{ cgl.display_production_name }}</div>
-                    <div><span class="cgl-party-field-label">Forme, n° d’immatriculation et pays :</span> {{ cgl.production_siret or '—' }}{% if cgl.production_vat %} (TVA : {{ cgl.production_vat }}){% endif %}</div>
+                    <div><span class="cgl-party-field-label">Forme, n° d’immatriculation et pays :</span> {{ cgl.display_legal_form or '—' }}{% if cgl.production_siret %}, SIRET : {{ cgl.production_siret }}{% endif %}{% if cgl.production_vat %} (TVA : {{ cgl.production_vat }}){% endif %}</div>
                     <div><span class="cgl-party-field-label">Nom du représentant :</span> {{ cgl.production_representative or '—' }}</div>
-                    <div><span class="cgl-party-field-label">Fonction :</span> Représentant légal</div>
+                    <div><span class="cgl-party-field-label">Fonction :</span> {{ cgl.display_representative_role }}</div>
                     <div><span class="cgl-party-field-label">Siège social :</span> {{ cgl.production_address or '—' }}</div>
-                    <div><span class="cgl-party-field-label">Téléphone :</span> {{ cgl.signer_phone or cgl.production_phone or '—' }}</div>
-                    <div><span class="cgl-party-field-label">E-mail :</span> {{ cgl.signer_email or cgl.production_email or '—' }}</div>
+                    <div><span class="cgl-party-field-label">Téléphone :</span> {{ cgl.signer_phone or '—' }}</div>
+                    <div><span class="cgl-party-field-label">E-mail :</span> {{ cgl.signer_email or '—' }}</div>
                 </div>
             </div>
 
@@ -510,6 +511,13 @@
                 </ul>
 
                 <p class="cgl-annexe2-closing">Le Locataire s’engage à faire respecter ces conditions par l’ensemble de ses préposés, prestataires et intervenants, et à collaborer avec le Loueur pour garantir un environnement de travail sécurisé. Le présent engagement fait partie intégrante du contrat de location.</p>
+
+                <div class="cgl-annexe2-sign-info">
+                    <p><strong>Fait à :</strong> {{ cgl.display_signature_city }}</p>
+                    <p><strong>Le :</strong> {{ signed_at_str or (cgl.signed_at.strftime('%d/%m/%Y') if cgl.signed_at else cgl.generated_at.strftime('%d/%m/%Y') if cgl.generated_at else '') }}</p>
+                    <p><strong>Signature du représentant de la production (nom, qualité et cachet) :</strong></p>
+                    <p><strong>Nom :</strong> {{ cgl.production_representative or '—' }} ({{ cgl.display_representative_role }})</p>
+                </div>
             </div>
         </section>
 

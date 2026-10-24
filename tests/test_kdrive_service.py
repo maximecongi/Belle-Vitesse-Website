@@ -1,3 +1,9 @@
+from services.common.kdrive.service import KDriveService
+from services.common.kdrive.config import KDRIVE_BASE_PATH, KDRIVE_ROOT_FOLDER_ID
+from models.project import Production, Project
+from models.kdrive import KDriveObject
+from models.db import db
+from app import create_app
 import os
 import tempfile
 from datetime import date
@@ -10,13 +16,6 @@ os.environ["FLASK_ENV"] = "testing"
 os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
 os.environ["WTF_CSRF_ENABLED"] = "False"
 os.environ["USE_SSH_TUNNEL"] = "false"
-
-from app import create_app
-from models.db import db
-from models.kdrive import KDriveObject
-from models.project import Production, Project
-from services.common.kdrive.config import KDRIVE_BASE_PATH, KDRIVE_ROOT_FOLDER_ID
-from services.common.kdrive.service import KDriveService
 
 
 @pytest.fixture
@@ -87,7 +86,8 @@ def test_upload_file_sync_and_idempotence(app_ctx):
         mock_client = MagicMock()
         mock_client.get_file.return_value = {"id": 200, "status": "ok"}
         mock_client.create_directory.return_value = {"id": 200, "name": "test"}
-        mock_client.upload.return_value = {"id": 9999, "name": os.path.basename(tmp_path)}
+        mock_client.upload.return_value = {
+            "id": 9999, "name": os.path.basename(tmp_path)}
 
         service = KDriveService(client=mock_client)
 
@@ -140,7 +140,8 @@ def test_move_project_folder(app_ctx):
     db.session.commit()
 
     mock_client = MagicMock()
-    mock_client.create_directory.return_value = {"id": 6000, "name": "PROJET RENOMME"}
+    mock_client.create_directory.return_value = {
+        "id": 6000, "name": "PROJET RENOMME"}
     mock_client.move.return_value = {"cancel_id": "cancel-move-123"}
 
     service = KDriveService(client=mock_client)
@@ -311,7 +312,8 @@ def test_check_and_repair_project_structure(app_ctx):
         5002: ([{"id": 5021, "name": "1_CHECKOUT", "type": "dir"}], None, False),
     }.get(folder_id, ([], None, False))
 
-    mock_client.create_directory.side_effect = lambda parent_id, name: {"id": 9900 + len(name), "name": name}
+    mock_client.create_directory.side_effect = lambda parent_id, name: {
+        "id": 9900 + len(name), "name": name}
 
     service = KDriveService(client=mock_client)
 
@@ -327,7 +329,8 @@ def test_check_and_repair_project_structure(app_ctx):
     assert mock_client.create_directory.call_count == 0
 
     # En mode réel : doit créer les manquants
-    repaired = service.check_and_repair_project_structure(project, dry_run=False)
+    repaired = service.check_and_repair_project_structure(
+        project, dry_run=False)
     assert len(repaired) == 7
     assert mock_client.create_directory.call_count == 7
 
@@ -388,13 +391,13 @@ def test_rename_production_folders_direct(app_ctx):
         production_id=prod.id,
         kdrive_folder_id=777,
         departure_date=date(2026, 9, 20),
-        kdrive_path="1_TOURNAGES/2026/09 - SEPTEMBRE/ANCIEN_NOM/PROJET_ALPHA/BVPR-ALPHA"
+        kdrive_path="10_TOURNAGES/2026/09 - SEPTEMBRE/ANCIEN_NOM/PROJET_ALPHA/BVPR-ALPHA"
     )
     db.session.add(project)
     db.session.commit()
 
     mock_client = MagicMock()
-    # Simuler 1_TOURNAGES contenant 2026, qui contient 09 - SEPTEMBRE
+    # Simuler 10_TOURNAGES contenant 2026, qui contient 09 - SEPTEMBRE
     mock_client.list_files.side_effect = lambda folder_id, limit=50: {
         KDRIVE_ROOT_FOLDER_ID: ([{"id": 2026, "name": "2026", "type": "dir"}], None, False),
         2026: ([{"id": 909, "name": "09 - SEPTEMBRE", "type": "dir"}], None, False),
@@ -468,7 +471,7 @@ def test_rename_production_folders_case_insensitivity_and_uppercase(app_ctx):
         production_id=prod.id,
         kdrive_folder_id=1234,
         departure_date=date(2026, 9, 20),
-        kdrive_path="1_TOURNAGES/2026/09 - SEPTEMBRE/ACADEMY FILMS/PUB_NIKE/BVPR-NIKE"
+        kdrive_path="10_TOURNAGES/2026/09 - SEPTEMBRE/ACADEMY FILMS/PUB_NIKE/BVPR-NIKE"
     )
     db.session.add(project)
     db.session.commit()
@@ -489,18 +492,16 @@ def test_rename_production_folders_case_insensitivity_and_uppercase(app_ctx):
 
     service = KDriveService(client=mock_client)
     # L'utilisateur renomme "Academy films" -> "Academy films international"
-    res = service.rename_production_folders("Academy films", "Academy films international")
+    res = service.rename_production_folders(
+        "Academy films", "Academy films international")
 
     assert res["renamed"] == 1
     assert res["merged"] == 0
 
     # Vérifie que rename a été appelé avec le nouveau nom en MAJUSCULES
-    mock_client.rename.assert_called_once_with(111, "ACADEMY FILMS INTERNATIONAL")
+    mock_client.rename.assert_called_once_with(
+        111, "ACADEMY FILMS INTERNATIONAL")
 
     # Vérifie que le kdrive_path a été mis à jour avec le nom en majuscules
     updated_project = db.session.get(Project, project.id)
     assert "ACADEMY FILMS INTERNATIONAL" in updated_project.kdrive_path
-
-
-
-

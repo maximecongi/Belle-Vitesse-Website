@@ -385,6 +385,20 @@ a.public-doc-vehicle-card:hover {
     font-weight: 600;
 }
 
+.cgl-annexe2-closing-sign {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: var(--white-1, #FFFFFF);
+    border: 1px solid var(--border-color, #E2E8F0);
+    border-radius: 6px;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.cgl-annexe2-closing-sign p {
+    margin: 0.35rem 0;
+}
+
 /* ── 7. Constats d'Incidents (Notes, Photos & Visas) ─────────────────────── */
 .public-doc-notes {
     background-color: var(--white-2, #F8F9FA);

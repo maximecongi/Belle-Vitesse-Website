@@ -269,6 +269,57 @@ class CglComprehensiveTest(unittest.TestCase):
             db.session.refresh(cgl)
             self.assertIsNotNone(cgl.deleted_at)
 
+    @patch("services.common.pdf_tasks.render_pdf_from_template", return_value=b"%PDF-1.4 mock cgl content")
+    def test_09_cgl_additional_fields_signing_and_properties(self, mock_render_pdf):
+        """Vérifie l'enregistrement et les propriétés des champs complémentaires CGL (forme juridique, rôle, assurance, ville)."""
+        with self.app.app_context():
+            proj, prod, contact = self._create_mock_project()
+            create_cgl(proj.id)
+            cgl = CglWaiver.query.filter_by(project_id=proj.id).first()
+
+            # Vérifie le pré-remplissage depuis le contact de production
+            self.assertEqual(cgl.production_representative, "Jean Dupont")
+            self.assertEqual(cgl.signer_phone, "0612345678")
+            self.assertEqual(cgl.signer_email, "jean.dupont@cinema.fr")
+            self.assertEqual(cgl.signer_role_custom, "Directeur de Production")
+
+            _, sign_url = get_or_create_waiver_signing_url(cgl.waiver_id, waiver_type="cgl")
+            token_val = sign_url.split("/sign/cgl/")[-1]
+            proj_id = proj.id
+
+        payload = {
+            "production_name": "Studio Lumière SAS",
+            "legal_form": "SAS au capital de 50 000 € (France)",
+            "representative": "Claire Delon",
+            "representative_role": "Directrice Générale",
+            "phone": "0789101112",
+            "email": "claire.delon@studiolumiere.fr",
+            "siret": "55566677700018",
+            "address": "42 Rue du Faubourg Saint-Honoré, 75008 Paris",
+            "vat_number": "FR55566677700",
+            "city": "Paris",
+            "insurance_company": "Allianz Cinéma & Audiovisuel",
+            "insurance_policy": "POL-ALLIANZ-88291",
+            "location_of_use": "Studios de Bry-sur-Marne",
+            "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+        }
+
+        resp_post = self.client.post(f"/sign/cgl/{token_val}", data=payload)
+        self.assertEqual(resp_post.status_code, 200)
+        self.assertTrue(resp_post.get_json().get("success"))
+
+        with self.app.app_context():
+            signed_cgl = CglWaiver.query.filter_by(project_id=proj_id).first()
+            self.assertEqual(signed_cgl.status, "signed")
+            self.assertEqual(signed_cgl.display_legal_form, "SAS au capital de 50 000 € (France)")
+            self.assertEqual(signed_cgl.display_representative_role, "Directrice Générale")
+            self.assertEqual(signed_cgl.display_signature_city, "Paris")
+            self.assertEqual(signed_cgl.signer_phone, "0789101112")
+            self.assertEqual(signed_cgl.signer_email, "claire.delon@studiolumiere.fr")
+            self.assertEqual(signed_cgl.production_insurance_company, "Allianz Cinéma & Audiovisuel")
+            self.assertEqual(signed_cgl.production_insurance_policy, "POL-ALLIANZ-88291")
+            self.assertEqual(signed_cgl.location_of_use, "Studios de Bry-sur-Marne")
+
 
 if __name__ == "__main__":
     unittest.main()

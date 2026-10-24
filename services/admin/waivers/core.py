@@ -61,6 +61,16 @@ def create_waiver(project_id, waiver_type: str = "cgl", **kwargs):
         waiver.production_name = p.production.name
         if waiver_type == "cgl":
             waiver.production_address = p.production.address
+            if p.production_contact:
+                waiver.production_representative = f"{p.production_contact.first_name} {p.production_contact.last_name}".strip()
+                waiver.signer_phone = getattr(p.production_contact, "tel", "") or getattr(p.production_contact, "phone", "")
+                waiver.signer_email = getattr(p.production_contact, "mail", "")
+                waiver.signer_role_custom = getattr(p.production_contact, "job_title", "")
+    elif waiver_type == "cgl" and p.production_contact:
+        waiver.production_representative = f"{p.production_contact.first_name} {p.production_contact.last_name}".strip()
+        waiver.signer_phone = getattr(p.production_contact, "tel", "") or getattr(p.production_contact, "phone", "")
+        waiver.signer_email = getattr(p.production_contact, "mail", "")
+        waiver.signer_role_custom = getattr(p.production_contact, "job_title", "")
 
     if waiver_type == "safety_rules":
         waiver.signer_role = kwargs.get("signer_role", "pilot")

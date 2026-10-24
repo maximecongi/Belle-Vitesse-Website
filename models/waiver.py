@@ -187,6 +187,27 @@ class Waiver(db.Model):
         return roles.get(self.signer_role, self.signer_role_custom or self.signer_role or "Intervenant")
 
     @property
+    def display_representative_role(self):
+        """Retourne la fonction ou qualité du représentant légal."""
+        if self.sign_data and self.sign_data.get("representative_role"):
+            return self.sign_data.get("representative_role")
+        return self.signer_role_custom or "Représentant légal"
+
+    @property
+    def display_legal_form(self):
+        """Retourne la forme juridique et pays du locataire."""
+        if self.sign_data and self.sign_data.get("legal_form"):
+            return self.sign_data.get("legal_form")
+        return ""
+
+    @property
+    def display_signature_city(self):
+        """Retourne la ville de signature (« Fait à »)."""
+        if self.sign_data and self.sign_data.get("signature_city"):
+            return self.sign_data.get("signature_city")
+        return self.location_of_use or "Paris"
+
+    @property
     def bv_signature_data_uri(self):
         """Retourne la Data URI du contreseing Belle Vitesse pour injection directe dans les PDF."""
         from utils.signature_storage import load_signature_data_uri
