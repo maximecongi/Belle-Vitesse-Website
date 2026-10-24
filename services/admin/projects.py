@@ -485,11 +485,52 @@ def get_project_form_context():
         {"id": str(c.id), "name": f"{c.first_name} {c.last_name} ({c.job_title})" if c.job_title else f"{c.first_name} {c.last_name}"} for c in contacts
     ]
 
+    # Récupération avec réconciliation des enregistrements SQL locaux
+    vehicles_list = list(get_vehicles() or [])
+    vehicles_map = {str(v.get("id")): v for v in vehicles_list}
+    try:
+        from models import Vehicle
+        for lv in Vehicle.query.all():
+            lvid = str(lv.id)
+            if lvid not in vehicles_map:
+                lfields = lv.fields or {}
+                vehicles_list.append({
+                    "id": lvid,
+                    "fields": {
+                        "name": lfields.get("name") or getattr(lv, "name", lvid),
+                        "slug": lfields.get("slug") or "",
+                        "order": getattr(lv, "display_order", 999),
+                        "daily_rate": float(lv.daily_rate) if getattr(lv, "daily_rate", None) is not None else None,
+                    }
+                })
+    except Exception as e:
+        logger.warning(f"Erreur réconciliation véhicules formulaire projet : {e}")
+
+    heads_list = list(get_heads() or [])
+    heads_map = {str(h.get("id")): h for h in heads_list}
+    try:
+        from models import Head
+        for lh in Head.query.all():
+            lhid = str(lh.id)
+            if lhid not in heads_map:
+                lhfields = lh.fields or {}
+                heads_list.append({
+                    "id": lhid,
+                    "fields": {
+                        "name": lhfields.get("name") or getattr(lh, "name", lhid),
+                        "slug": lhfields.get("slug") or "",
+                        "order": getattr(lh, "display_order", 999),
+                        "daily_rate": float(lh.daily_rate) if getattr(lh, "daily_rate", None) is not None else None,
+                    }
+                })
+    except Exception as e:
+        logger.warning(f"Erreur réconciliation têtes formulaire projet : {e}")
+
     return {
         "productions": productions_formatted,
         "contacts": contacts_formatted,
-        "vehicles": get_vehicles(),
-        "heads": get_heads(),
+        "vehicles": vehicles_list,
+        "heads": heads_list,
     }
 
 

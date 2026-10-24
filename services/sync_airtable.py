@@ -362,3 +362,12 @@ def run_sync(config, sync_db=True, sync_images=True):
         except Exception as e:
             print(f"\nErreur pendant la synchronisation : {e}")
             raise
+
+    # Invalidation du cache applicatif
+    if sync_db:
+        try:
+            from extensions import cache
+            cache.clear()
+            print("\n✅ Cache applicatif Flask-Caching vidé avec succès après synchronisation.")
+        except Exception:
+            pass

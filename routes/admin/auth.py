@@ -111,9 +111,8 @@ def admin_dev_switch_role():
         session["admin_dev_role_simulated"] = True
 
         if user_id:
-            cache.delete(f"user:{user_id}")
-            for r in list(valid_roles.keys()) + ["default"]:
-                cache.delete(f"user:{user_id}:{r}")
+            from services.admin.users import invalidate_user_cache
+            invalidate_user_cache(user_id)
 
         flash(f"🛠️ Rôle simulé : {new_role} (session temporaire)", "info")
     elif target_role.lower() == "reset":
@@ -122,9 +121,8 @@ def admin_dev_switch_role():
             user = db.session.get(User, user_id)
             if user and user.role:
                 session["admin_user_role"] = user.role
-                cache.delete(f"user:{user_id}")
-                for r in list(valid_roles.keys()) + ["default"]:
-                    cache.delete(f"user:{user_id}:{r}")
+                from services.admin.users import invalidate_user_cache
+                invalidate_user_cache(user_id)
                 flash(f"Rôle réinitialisé : {user.role}", "info")
     else:
         flash("Rôle invalide spécifié.", "warning")

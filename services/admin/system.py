@@ -101,13 +101,26 @@ def get_system_status() -> Dict[str, Any]:
 
 def purge_system_cache() -> bool:
     """
-    Purge les caches de templates Jinja2 et les résidus temporaires.
+    Purge complète des caches de templates Jinja2, de données Flask-Caching et du micro-cache MCP.
     """
     try:
+        # 1. Purge du cache des templates Jinja2
         if hasattr(current_app, "jinja_env") and hasattr(current_app.jinja_env, "cache"):
             if current_app.jinja_env.cache is not None:
                 current_app.jinja_env.cache.clear()
-        logger.info("✅ Cache système Flask/Jinja2 purgé avec succès.")
+
+        # 2. Purge du cache applicatif global (Flask-Caching)
+        from extensions import cache
+        cache.clear()
+
+        # 3. Purge du micro-cache MCP
+        try:
+            from mcp_server.cache import invalidate_mcp_cache
+            invalidate_mcp_cache()
+        except Exception:
+            pass
+
+        logger.info("✅ Cache système Flask/Jinja2, Flask-Caching et MCP purgé avec succès.")
         return True
     except Exception as e:
         logger.error(f"❌ Erreur lors de la purge du cache : {e}")

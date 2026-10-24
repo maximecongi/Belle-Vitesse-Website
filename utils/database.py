@@ -181,10 +181,13 @@ def get_grips_products_for_category(category_id):
 
                 records = []
                 for row in rows:
+                    f = dict(row.fields) if row.fields else {}
+                    if hasattr(row, "daily_rate"):
+                        f["daily_rate"] = float(row.daily_rate) if row.daily_rate is not None else None
                     records.append({
                         "id": row.id,
                         "createdTime": str(row.createdTime) if row.createdTime else None,
-                        "fields": row.fields
+                        "fields": f
                     })
                 return records
             except Exception as e:

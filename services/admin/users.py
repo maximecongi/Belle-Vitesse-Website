@@ -7,8 +7,44 @@ logger = logging.getLogger(__name__)
 
 
 def invalidate_user_cache(user_id):
-    """Efface le cache pour un identifiant utilisateur spécifique."""
-    cache.delete(f"user:{user_id}")
+    """Efface le cache pour un identifiant utilisateur spécifique (formats user et user_v3 avec tous rôles)."""
+    if not user_id:
+        return
+    try:
+        cache.delete(f"user:{user_id}")
+        cache.delete(f"user_v3:{user_id}")
+        from models.user import ROLE_TRANSLATION
+        known_roles = set(ROLE_TRANSLATION.keys()) | {
+            "default", "none", "", "lead_technician", "lead technician",
+            "technicien", "technician", "admin", "superadmin"
+        }
+        try:
+            from models import User, db
+            u = db.session.get(User, user_id)
+            if u and u.role:
+                known_roles.add(str(u.role).lower().strip())
+        except Exception:
+            pass
+
+        # Si le backend de cache supporte l'inspection directe (ex: SimpleCache en test/dev)
+        backend = getattr(cache, "cache", None)
+        internal_dict = getattr(backend, "_cache", None)
+        if isinstance(internal_dict, dict):
+            prefix_user = f"user:{user_id}:"
+            prefix_user_v3 = f"user_v3:{user_id}:"
+            keys_to_del = [
+                k for k in list(internal_dict.keys())
+                if k.startswith(prefix_user) or k.startswith(prefix_user_v3) or k in (f"user:{user_id}", f"user_v3:{user_id}")
+            ]
+            for k in keys_to_del:
+                cache.delete(k)
+
+        for r in known_roles:
+            r_clean = str(r).lower().strip()
+            cache.delete(f"user:{user_id}:{r_clean}")
+            cache.delete(f"user_v3:{user_id}:{r_clean}")
+    except Exception as e:
+        logger.warning(f"Erreur lors de l'invalidation du cache utilisateur {user_id} : {e}")
 
 
 def list_users():

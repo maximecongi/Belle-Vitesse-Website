@@ -153,17 +153,48 @@ def _invalidate_equipment_cache(table_name, record=None):
                 slug = record.fields.get("slug")
                 if slug:
                     cache.delete(f"vehicle_{slug}")
+            else:
+                try:
+                    for v in Vehicle.query.all():
+                        if v.fields and v.fields.get("slug"):
+                            cache.delete(f"vehicle_{v.fields.get('slug')}")
+                except Exception:
+                    pass
         elif table_name == "heads":
             cache.delete("heads")
             if record and hasattr(record, "fields") and record.fields:
                 slug = record.fields.get("slug")
                 if slug:
                     cache.delete(f"head_{slug}")
-        elif table_name == "grip_products":
+            else:
+                try:
+                    for h in Head.query.all():
+                        if h.fields and h.fields.get("slug"):
+                            cache.delete(f"head_{h.fields.get('slug')}")
+                except Exception:
+                    pass
+        elif table_name in ("grip_products", "grips_categories"):
             cache.delete("grip_products")
+            cache.delete("grips_categories")
             if record and hasattr(record, "fields") and record.fields:
-                for cat_id in record.fields.get("category", []):
-                    cache.delete(f"grips_products_{cat_id}")
+                slug = record.fields.get("slug")
+                if slug:
+                    cache.delete(f"grips_categories_{slug}")
+                categories = record.fields.get("category", [])
+                if isinstance(categories, list):
+                    for cat_id in categories:
+                        cache.delete(f"grips_products_{cat_id}")
+                elif categories:
+                    cache.delete(f"grips_products_{categories}")
+            else:
+                try:
+                    from models import GripCategory
+                    for cat in GripCategory.query.all():
+                        cache.delete(f"grips_products_{cat.id}")
+                        if cat.fields and cat.fields.get("slug"):
+                            cache.delete(f"grips_categories_{cat.fields.get('slug')}")
+                except Exception:
+                    pass
     except Exception as e:
         logger.warning(f"Erreur lors de l'invalidation du cache pour {table_name} : {e}")
 
@@ -179,14 +210,27 @@ def _invalidate_equipment_cache(table_name, record=None):
 @handle_admin_service_error
 def reorder_equipment(table_name, item_ids):
     """Réordonne les items d'une catégorie d'équipement."""
-    table_map = {"vehicles": Vehicle, "heads": Head, "grip_products": GripProduct}
+    from models import GripCategory
+    table_map = {
+        "vehicles": Vehicle,
+        "heads": Head,
+        "grip_products": GripProduct,
+        "grips_categories": GripCategory,
+    }
     model = table_map.get(table_name)
     if not model:
         raise ValueError(f"Table inconnue : {table_name}")
     for i, item_id in enumerate(item_ids):
         record = db.session.get(model, item_id)
         if record:
-            record.display_order = i
+            if hasattr(record, "display_order"):
+                record.display_order = i
+            elif hasattr(record, "fields") and record.fields is not None:
+                from sqlalchemy.orm.attributes import flag_modified
+                f = dict(record.fields)
+                f["order"] = i
+                record.fields = f
+                flag_modified(record, "fields")
     db.session.commit()
     _invalidate_equipment_cache(table_name)
     return True

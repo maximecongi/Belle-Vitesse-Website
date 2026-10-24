@@ -184,26 +184,30 @@ def get_all_vehicle_safety_rules_catalog():
     except Exception as e:
         logger.warning(f"Erreur lors de la lecture des règles de sécurité de flotte : {e}")
 
-    # Récupération des véhicules réels de la flotte
+    # Récupération des véhicules réels de la flotte avec fusion systématique des données SQL locales
     fleet_vehicles = []
+    seen_ids = set()
     try:
         from utils.database import get_vehicles
-        fleet_vehicles = get_vehicles() or []
+        for v in (get_vehicles() or []):
+            fleet_vehicles.append(v)
+            if v.get("id"):
+                seen_ids.add(str(v["id"]))
     except Exception as e:
         logger.warning(f"Impossible de charger les véhicules via get_vehicles : {e}")
 
-    # Si aucun véhicule retourné (ex: test unitaire isolé sans sync), tente via Vehicle.query
-    if not fleet_vehicles:
-        try:
-            from models.catalog import Vehicle
-            db_vehs = Vehicle.query.all()
-            for v in db_vehs:
+    try:
+        from models.catalog import Vehicle
+        db_vehs = Vehicle.query.all()
+        for v in db_vehs:
+            if str(v.id) not in seen_ids:
                 fleet_vehicles.append({
                     "id": v.id,
                     "fields": v.fields or {}
                 })
-        except Exception:
-            pass
+                seen_ids.add(str(v.id))
+    except Exception as e:
+        logger.warning(f"Erreur réconciliation véhicules règles de sécurité : {e}")
 
     # Si des véhicules existent dans la flotte
     if fleet_vehicles:
