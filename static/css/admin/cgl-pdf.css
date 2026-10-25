@@ -7,12 +7,14 @@
 @page {
     size: A4 portrait;
     margin: 18mm 15mm 22mm 15mm;
+
     @bottom-right {
         content: "Page " counter(page) " / " counter(pages) " — Paraphes : ______ / ______";
         font-size: 7.5pt;
         font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         color: #71717a;
     }
+
     @bottom-left {
         content: "BELLE VITESSE — Conditions Générales de Location";
         font-size: 7.5pt;
@@ -131,14 +133,15 @@
     }
 
     .pdf-preview-btn-primary {
-        background-color: #8b5cf6;
-        border-color: #7c3aed;
-        color: #ffffff;
+        background-color: #ffc845;
+        border-color: #f59e0b;
+        color: #18181b;
     }
 
     .pdf-preview-btn-primary:hover {
-        background-color: #7c3aed;
-        border-color: #6d28d9;
+        background-color: #fbbf24;
+        border-color: #d97706;
+        color: #000000;
     }
 
     .cgl-document {
@@ -235,47 +238,94 @@
     }
 }
 
-/* ── 3. En-tête du Document ──────────────────────────────────────────────── */
-.cgl-header {
+/* ── 3. En-tête du Document (Harmonisé avec /sign/cgl/) ─────────────────────── */
+.cgl-header,
+.public-doc-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding-bottom: 12pt;
-    border-bottom: 1.5pt solid #18181b;
-    margin-bottom: 16pt;
+    padding-bottom: 14pt;
+    border-bottom: 1.5pt solid #e2e8f0;
+    margin-bottom: 18pt;
     page-break-after: avoid;
 }
 
-.cgl-header-logo img {
-    height: 32pt;
+.cgl-header-logo img,
+.public-doc-header-logo img {
+    height: 30pt;
     width: auto;
+    display: block;
 }
 
-.cgl-header-meta {
+.cgl-header-meta,
+.public-doc-header-meta {
     text-align: right;
-    font-size: 8pt;
-    color: #52525b;
-    line-height: 1.35;
+    font-size: 8.5pt;
+    color: #64748b;
+    line-height: 1.6;
 }
 
-.cgl-header-doc-id {
-    font-weight: 700;
+.cgl-header-meta strong,
+.public-doc-header-meta strong {
+    color: #0f172a;
     font-size: 9pt;
-    color: #8b5cf6;
-    letter-spacing: 0.5px;
+    font-weight: 700;
 }
 
-.cgl-confidential-tag {
-    display: inline-block;
-    font-size: 6.5pt;
-    font-weight: 700;
-    text-transform: uppercase;
-    background-color: #f4f4f5;
-    color: #71717a;
+/* ── Signature Carré Jaune Belle Vitesse (Dot Before) ── */
+.dot-before:before {
+    content: "■ ";
+    color: #ffc845;
+    font-size: 0.85em;
+    position: relative;
+    left: -0.2ch;
+    top: -0.1ch;
+    z-index: 3;
+}
+
+/* ── Badge Identifiant Document ── */
+.checkout-doc-id,
+.cgl-header-doc-id,
+.public-doc-doc-id {
+    white-space: nowrap;
+    font-family: monospace;
+    color: var(--grey-1);
+    font-size: 6pt;
+    background-color: var(--white-3);
     padding: 2pt 6pt;
-    border-radius: 3pt;
+    border-radius: 2pt;
+    margin-top: 6pt;
+    width: fit-content;
+    vertical-align: middle;
+}
+
+.u-text-xxs,
+.cgl-header-date {
+    font-size: 7.5pt;
+    color: #64748b;
+}
+
+/* ── Titres de Section (Inspiration Décharge BV) ────────────────────────── */
+.cgl-section-title {
+    font-size: 8.5pt;
+    font-weight: 800;
+    text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 3pt;
+    color: #18181b;
+    margin: 14pt 0 8pt 0;
+    display: flex;
+    align-items: center;
+    gap: 5pt;
+    page-break-after: avoid;
+}
+
+.cgl-section-title::before {
+    content: "";
+    display: inline-block;
+    width: 6pt;
+    height: 6pt;
+    background-color: #ffc845;
+    flex-shrink: 0;
 }
 
 /* ── 4. Bannière Titre ───────────────────────────────────────────────────── */
@@ -286,21 +336,21 @@
 }
 
 .cgl-main-title {
-    font-size: 14pt;
+    font-size: 13pt;
     font-weight: 800;
     letter-spacing: 0.5px;
     text-transform: uppercase;
-    margin: 0 0 4pt 0;
+    margin: 0 0 3pt 0;
     color: #18181b;
 }
 
 .cgl-subtitle {
-    font-size: 10pt;
-    font-weight: 600;
-    color: #8b5cf6;
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: #18181b;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    margin: 0 0 4pt 0;
+    letter-spacing: 0.5px;
+    margin: 0 0 3pt 0;
 }
 
 .cgl-version-info {
@@ -326,8 +376,7 @@
 .cgl-party-card {
     background-color: #fafafa;
     border: 1px solid #e4e4e7;
-    border-left: 3pt solid #8b5cf6;
-    border-radius: 4pt;
+    border-left: 3pt solid #ffc845;
     padding: 8pt 10pt;
     font-size: 7.5pt;
     line-height: 1.45;
@@ -405,14 +454,26 @@
 }
 
 .cgl-annexe-title {
-    font-size: 11pt;
+    font-size: 10.5pt;
     font-weight: 800;
     color: #18181b;
     text-transform: uppercase;
     margin: 0 0 6pt 0;
     padding-bottom: 3pt;
-    border-bottom: 1.5pt solid #8b5cf6;
+    border-bottom: 2pt solid #ffc845;
     page-break-after: avoid;
+    display: flex;
+    align-items: center;
+    gap: 5pt;
+}
+
+.cgl-annexe-title::before {
+    content: "";
+    display: inline-block;
+    width: 6pt;
+    height: 6pt;
+    background-color: #ffc845;
+    flex-shrink: 0;
 }
 
 .cgl-annexe-desc {
@@ -452,24 +513,39 @@
     background-color: #fafafa;
 }
 
-.cgl-vehicle-badge {
-    font-weight: 700;
-    color: #8b5cf6;
-}
-
 .cgl-num-cell {
     text-align: right;
     white-space: nowrap;
     font-weight: 600;
 }
 
-.cgl-col-vehicule { width: 12%; }
-.cgl-col-desc { width: 28%; }
-.cgl-col-voie { width: 11%; }
-.cgl-col-pilotage { width: 17%; }
-.cgl-col-charge { width: 11%; }
-.cgl-col-valeur { width: 11%; }
-.cgl-col-tarif { width: 10%; }
+.cgl-col-vehicule {
+    width: 12%;
+}
+
+.cgl-col-desc {
+    width: 28%;
+}
+
+.cgl-col-voie {
+    width: 11%;
+}
+
+.cgl-col-pilotage {
+    width: 17%;
+}
+
+.cgl-col-charge {
+    width: 11%;
+}
+
+.cgl-col-valeur {
+    width: 11%;
+}
+
+.cgl-col-tarif {
+    width: 10%;
+}
 
 /* ── 8. Références Annexes 2 & 3 ─────────────────────────────────────────── */
 .cgl-annexes-notes {
@@ -518,6 +594,19 @@
     letter-spacing: 0.5px;
     margin: 0 0 2pt 0;
     color: #18181b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5pt;
+}
+
+.cgl-seal-title::before {
+    content: "";
+    display: inline-block;
+    width: 6pt;
+    height: 6pt;
+    background-color: #ffc845;
+    flex-shrink: 0;
 }
 
 .cgl-legal-mention {
@@ -625,7 +714,7 @@
     line-height: 1.45;
 }
 
-.cgl-annexe2-list > li {
+.cgl-annexe2-list>li {
     margin-bottom: 6pt;
 }
 
@@ -635,7 +724,7 @@
     list-style-type: disc;
 }
 
-.cgl-annexe2-sublist > li {
+.cgl-annexe2-sublist>li {
     margin-bottom: 3pt;
     font-size: 7.5pt;
 }
@@ -665,4 +754,3 @@
 .cgl-annexe2-sign-info p {
     margin: 2pt 0;
 }
-

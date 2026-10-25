@@ -131,14 +131,15 @@ body.bvsr-container {
     }
 
     .pdf-preview-btn-primary {
-        background-color: #8b5cf6;
-        border-color: #7c3aed;
-        color: #ffffff;
+        background-color: #ffc845;
+        border-color: #f59e0b;
+        color: #18181b;
     }
 
     .pdf-preview-btn-primary:hover {
-        background-color: #7c3aed;
-        border-color: #6d28d9;
+        background-color: #fbbf24;
+        border-color: #d97706;
+        color: #000000;
     }
 
     .bvsr-document {
