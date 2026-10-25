@@ -37,4 +37,5 @@ from models.mcp import McpApiToken, McpAuditLog
 from models.incident import Incident, IncidentToken, IncidentSignedDocument
 from models.project_report import ProjectReport
 from models.kdrive import KDriveObject
+from models.signature_event import SignatureEvent
 

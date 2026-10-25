@@ -8,9 +8,11 @@ import hmac
 import logging
 import os
 import unicodedata
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from io import BytesIO
+import json
 from pathlib import Path
+from typing import Union
 from urllib.parse import unquote, urlparse
 
 import qrcode
@@ -20,29 +22,76 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-# ── Scellement HMAC (Sealing) ────────────────────────────────────
+# ── Scellement HMAC & Sceau Canonique ────────────────────────────
 
 
 def _get_hmac_secret() -> bytes:
     """Récupère la clé secrète HMAC depuis l'environnement."""
     secret = os.getenv("HASH_SECRET_KEY")
     if not secret:
-        # Fallback to SECRET_KEY for dev, though distinct is better
-        secret = os.getenv("SECRET_KEY", "fallback_secret_for_dev_only")
+        # Fallback to SECRET_KEY for dev
+        secret = os.getenv("SECRET_KEY")
+
+    flask_env = os.getenv("FLASK_ENV", "production")
+    if not secret or secret == "fallback_secret_for_dev_only":
+        if flask_env == "production":
+            raise RuntimeError(
+                "❌ HASH_SECRET_KEY ou SECRET_KEY doit être définie avec un secret robuste en production !"
+            )
+        secret = "fallback_secret_for_dev_only"
+
     return secret.encode("utf-8")
+
+
+def compute_canonical_seal(payload: dict) -> str:
+    """
+    Calcule un sceau cryptographique HMAC-SHA256 déterministe sur un dictionnaire JSON canonique.
+    Les clés sont triées avec séparateurs stricts (sort_keys=True, separators=(',', ':')).
+    """
+    def _default_serializer(obj):
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        return str(obj)
+
+    canonical_json = json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        default=_default_serializer,
+    )
+    secret = _get_hmac_secret()
+    return hmac.new(secret, canonical_json.encode("utf-8"), hashlib.sha256).hexdigest()
+
+
+def verify_canonical_seal(expected_hash: str, payload: dict) -> bool:
+    """
+    Vérifie l'intégrité d'un sceau cryptographique canonique en temps constant.
+    """
+    if not expected_hash or not payload:
+        return False
+    actual_hash = compute_canonical_seal(payload)
+    return hmac.compare_digest(actual_hash, expected_hash)
+
+
+def compute_file_sha256(filepath: Union[str, Path]) -> str:
+    """Calcule l'empreinte SHA-256 d'un fichier sur disque."""
+    p = Path(filepath)
+    if not p.exists() or not p.is_file():
+        return ""
+    h = hashlib.sha256()
+    with open(p, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 def compute_hmac_seal(prefix, *args) -> str:
     """
-    Calcule un sceau cryptographique HMAC-SHA256 pour tout document.
-    Args:
-        prefix (str) : Ex: 'INSPECTION', 'WAIVER', 'WAIVER_PROD'
-        *args : Nombre variable de chaînes formant le contenu du sceau.
+    Calcule un sceau cryptographique HMAC-SHA256 pour tout document (compatibilité).
     """
-    # Join prefix and all args with a pipe
     content_parts = [prefix] + [str(arg) for arg in args]
     content = "|".join(content_parts)
-
     secret = _get_hmac_secret()
     return hmac.new(secret, content.encode("utf-8"), hashlib.sha256).hexdigest()
 
@@ -51,11 +100,13 @@ def verify_hmac_seal(expected_hash, prefix, *args) -> bool:
     """
     Vérifie l'intégrité d'un sceau cryptographique HMAC-SHA256.
     """
+    if not expected_hash:
+        return False
     actual_hash = compute_hmac_seal(prefix, *args)
     return hmac.compare_digest(actual_hash, expected_hash)
 
 
-# Alias de compatibilité descendante pour les inspections
+# Alias de compatibilité pour les inspections
 def compute_document_seal(inspection_id, vehicle_id, signature_data, signed_at):
     return compute_hmac_seal("INSPECTION", inspection_id, vehicle_id, signature_data, signed_at)
 
@@ -73,6 +124,8 @@ def compute_pdf_hash(pdf_bytes: bytes) -> str:
 
 def verify_pdf_hash(pdf_bytes: bytes, expected_hash: str) -> bool:
     """Vérifie qu'un fichier PDF correspond à l'empreinte enregistrée."""
+    if not expected_hash:
+        return False
     actual_hash = compute_pdf_hash(pdf_bytes)
     return hmac.compare_digest(actual_hash, expected_hash)
 
@@ -96,11 +149,17 @@ def generate_qr_code(data: str) -> str:
     return f"data:image/png;base64,{base64.b64encode(buffered.getvalue()).decode()}"
 
 
-# ── Jetons d'Accès PDF ───────────────────────────────────────────
+# ── Jetons d'Accès PDF (Clé dérivée sécurisée) ────────────────────
+
+def _get_pdf_access_secret() -> bytes:
+    """Dérive une sous-clé spécifique pour les jetons de consultation PDF."""
+    master = _get_hmac_secret()
+    return hmac.new(master, b"belle-vitesse-pdf-access-token-key-derivation", hashlib.sha256).digest()
+
 
 def generate_pdf_access_token(filename: str) -> str:
     """Génère un jeton d'accès signé HMAC, limité dans le temps, pour un nom de fichier PDF."""
-    secret = _get_hmac_secret()
+    secret = _get_pdf_access_secret()
     now_minutes = int(datetime.now(timezone.utc).timestamp() // 60)
     payload = f"{filename}:{now_minutes}".encode("utf-8")
     return hmac.new(secret, payload, hashlib.sha256).hexdigest()
@@ -110,7 +169,7 @@ def validate_pdf_access_token(filename: str, provided_token: str) -> bool:
     """Valide un jeton d'accès limité dans le temps pour un PDF."""
     if not provided_token:
         return False
-    secret = _get_hmac_secret()
+    secret = _get_pdf_access_secret()
     ttl = int(os.getenv("PDF_ACCESS_TOKEN_TTL_MINUTES", "60"))
     now_minutes = int(datetime.now(timezone.utc).timestamp() // 60)
 

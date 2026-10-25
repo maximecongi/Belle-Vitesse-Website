@@ -116,11 +116,8 @@ def api_finalize_checkout(record_id):
         if not signature_data:
             return jsonify({"error": "signature_data requis"}), 400
 
-        # We treat the API call as a trusted source (IP de l'app ou du proxy)
-        signer_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-        if signer_ip and ',' in signer_ip:
-            signer_ip = signer_ip.split(',')[0].strip()
-        signer_ip = signer_ip[:45] if signer_ip else None
+        from utils.request_utils import get_client_ip
+        signer_ip = get_client_ip()
 
         # If we have a token (sent by the app), we use the standard process
         if token:

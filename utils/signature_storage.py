@@ -6,14 +6,24 @@ from typing import Optional
 from flask import current_app
 
 
-def get_signatures_base_dir() -> Path:
-    """Retourne le répertoire de base pour le stockage des signatures (output/signatures/)."""
-    output_base = Path(
+def _get_output_folder() -> Path:
+    """Résout le chemin absolu du dossier output (config Flask ou variable d'environnement)."""
+    try:
+        if current_app and current_app.config.get("OUTPUT_FOLDER"):
+            return Path(current_app.config["OUTPUT_FOLDER"])
+    except RuntimeError:
+        pass
+    return Path(
         os.getenv(
             "OUTPUT_FOLDER",
             Path(current_app.root_path) / "output" if current_app else Path(__file__).resolve().parent.parent / "output"
         )
     )
+
+
+def get_signatures_base_dir() -> Path:
+    """Retourne le répertoire de base pour le stockage des signatures (output/signatures/)."""
+    output_base = _get_output_folder()
     sig_dir = output_base / "signatures"
     sig_dir.mkdir(parents=True, exist_ok=True)
     return sig_dir
@@ -53,6 +63,24 @@ def save_signature_image(base64_data: str, entity_type: str, record_id: str, suf
     except Exception as err:
         raise ValueError(f"Échec du décodage Base64 de la signature : {err}")
 
+    # Contrôle strict de la taille (max 500 Ko)
+    if len(binary_data) > 500 * 1024:
+        raise ValueError(f"Signature trop volumineuse ({len(binary_data)} octets, max 500 Ko).")
+
+    # Contrôle strict des octets magiques PNG
+    PNG_MAGIC_BYTES = b"\x89PNG\r\n\x1a\n"
+    if not binary_data.startswith(PNG_MAGIC_BYTES):
+        raise ValueError("Format de signature invalide : le fichier doit être une image PNG valide.")
+
+    # Validation de l'intégrité de l'image via Pillow
+    try:
+        from io import BytesIO
+        from PIL import Image
+        with Image.open(BytesIO(binary_data)) as img:
+            img.verify()
+    except Exception as img_err:
+        raise ValueError(f"Fichier image PNG corrompu ou invalide : {img_err}")
+
     clean_entity = sanitize_filename_part(entity_type)
     clean_id = sanitize_filename_part(record_id)
     clean_suffix = sanitize_filename_part(suffix) if suffix else ""
@@ -65,12 +93,7 @@ def save_signature_image(base64_data: str, entity_type: str, record_id: str, suf
 
     target_file.write_bytes(binary_data)
 
-    output_base = Path(
-        os.getenv(
-            "OUTPUT_FOLDER",
-            Path(current_app.root_path) / "output" if current_app else Path(__file__).resolve().parent.parent / "output"
-        )
-    )
+    output_base = _get_output_folder()
     return str(target_file.relative_to(output_base))
 
 
@@ -88,12 +111,7 @@ def load_signature_data_uri(signature_path: Optional[str]) -> Optional[str]:
     if clean_path.startswith("data:image/"):
         return clean_path
 
-    output_base = Path(
-        os.getenv(
-            "OUTPUT_FOLDER",
-            Path(current_app.root_path) / "output" if current_app else Path(__file__).resolve().parent.parent / "output"
-        )
-    )
+    output_base = _get_output_folder()
     full_path = output_base / clean_path
 
     if not full_path.exists() or not full_path.is_file():

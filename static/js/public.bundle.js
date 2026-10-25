@@ -765,6 +765,22 @@ window.initInfiniteScroll = function () {
  */
 
 document.addEventListener('DOMContentLoaded', function () {
+    // ── Décompte et redirection si document déjà signé ─────────────────────
+    const redirectCounterEl = document.getElementById('redirect-counter');
+    if (redirectCounterEl) {
+        let timeLeft = 10;
+        const countdownTimer = setInterval(function () {
+            timeLeft -= 1;
+            if (timeLeft <= 0) {
+                clearInterval(countdownTimer);
+                window.location.href = '/';
+            } else {
+                redirectCounterEl.textContent = timeLeft;
+            }
+        }, 1000);
+        return;
+    }
+
     const form = document.getElementById('cgl-form');
     if (!form) return;
 
@@ -960,6 +976,15 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
+        // Vérification de la déclaration de pouvoir
+        const signingAuthority = document.getElementById('cgl_signing_authority');
+        if (!signingAuthority || !signingAuthority.checked) {
+            if (typeof showFeedback === 'function') {
+                showFeedback('Vous devez certifier sur l\'honneur disposer du pouvoir d\'engager la société.', 'error');
+            }
+            return;
+        }
+
         // Vérification de la signature
         if (!signaturePad || signaturePad.isEmpty()) {
             if (typeof showFeedback === 'function') {
@@ -970,6 +995,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Préparation du FormData
         const formData = new FormData(form);
+        formData.set('accepted_terms', '1');
+        formData.set('has_signing_authority', '1');
         // Correspondance des champs pour le modèle Waiver backend
         formData.set('production_name', document.getElementById('cgl_production_name').value.trim());
         formData.set('representative', document.getElementById('cgl_representative').value.trim());
@@ -1051,7 +1078,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 setTimeout(function () {
                     window.location.reload();
-                }, 2500);
+                }, 800);
             } else {
                 const errMsg = (result && (result.error || result.message)) || ('Erreur lors de la signature (code ' + response.status + ').');
                 if (typeof showFeedback === 'function') {
@@ -1094,6 +1121,22 @@ document.addEventListener('DOMContentLoaded', function () {
  */
 
 document.addEventListener('DOMContentLoaded', function () {
+    // ── Décompte et redirection si document déjà signé ─────────────────────
+    const redirectCounterEl = document.getElementById('redirect-counter');
+    if (redirectCounterEl) {
+        let timeLeft = 10;
+        const countdownTimer = setInterval(function () {
+            timeLeft -= 1;
+            if (timeLeft <= 0) {
+                clearInterval(countdownTimer);
+                window.location.href = '/';
+            } else {
+                redirectCounterEl.textContent = timeLeft;
+            }
+        }, 1000);
+        return;
+    }
+
     const form = document.getElementById('safety-rules-form');
     if (!form) return;
 
@@ -1242,7 +1285,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 setTimeout(function () {
                     window.location.reload();
-                }, 2200);
+                }, 800);
             } else {
                 const errMsg = (result && (result.error || result.message)) || ('Erreur lors de la signature (code ' + response.status + ').');
                 if (typeof showFeedback === 'function') {

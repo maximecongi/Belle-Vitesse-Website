@@ -45,11 +45,19 @@
         <!-- ── État : déjà signé ────────────────────────────────────── -->
         <section class="public-doc-section public-doc-state-banner">
             <div class="public-doc-status-icon u-text-success">✓</div>
-            <h2 class="public-doc-section-title">CGL Signées</h2>
+            <h2 class="public-doc-section-title">CGL Signées &amp; Scellées</h2>
             <p class="u-text-muted u-mt-2 u-text-center">
-                Ces Conditions Générales de Location ont déjà été signées électroniquement et sont scellées.<br><br>
-                Une copie certifiée a été transmise aux parties.
+                Ces Conditions Générales de Location ont été signées électroniquement et sont scellées.<br><br>
+                Une copie certifiée a été transmise aux parties par e-mail.
             </p>
+            <div class="u-mt-4 u-text-center">
+                <p class="u-text-sm u-text-muted">
+                    Redirection vers le site public dans <strong id="redirect-counter">3</strong> secondes…
+                </p>
+                <a href="/" class="public-doc-btn public-doc-btn--primary u-mt-2">
+                    Accéder au site public
+                </a>
+            </div>
         </section>
 
         {% elif waiver.status not in ['to_sign', 'to_send'] %}
@@ -1083,15 +1091,24 @@
 
             <!-- Scellement & Signature -->
             <section class="public-doc-section">
-                <div class="checkbox-container">
-                    <input type="checkbox" id="cgl_accept_terms">
+                <div class="checkbox-container u-text-xs">
+                    <input type="checkbox" class="cgl_accept_terms" id="cgl_accept_terms" name="accepted_terms"
+                        required>
                     <label for="cgl_accept_terms">
-                        <strong>Je déclare avoir pris connaissance et accepter sans réserve l'intégralité des Conditions
-                            Générales de Location de Belle Vitesse et de ses Annexes (notamment l'Annexe 1 et l'Annexe 2
-                            — Engagement de sécurité du Locataire) au nom du Locataire ci-dessus
-                            mentionné.</strong><br>
-                        Je certifie l'exactitude des informations juridiques fournies et atteste disposer de tous les
-                        pouvoirs nécessaires pour engager valablement la société.
+                        <strong>Acceptation des Conditions Générales :</strong> Je déclare avoir pris connaissance et
+                        accepter expressément et sans réserve l'intégralité des 22 articles des Conditions Générales de
+                        Location de Belle Vitesse et de ses Annexes (notamment l'Annexe 1 — Flotte & Dépôts de garantie
+                        et l'Annexe 2 — Engagement de sécurité du Locataire).
+                    </label>
+                </div>
+
+                <div class="checkbox-container u-text-xs u-mt-2">
+                    <input type="checkbox" id="cgl_signing_authority" name="signing_authority" required>
+                    <label for="cgl_signing_authority">
+                        <strong>Déclaration de pouvoir (Mandat légal) :</strong> Je certifie sur l'honneur être dûment
+                        habilité(e) et disposer de tous les pouvoirs et délégations nécessaires pour représenter,
+                        engager juridiquement et obliger financièrement la société preneuse pour le présent contrat de
+                        location et l'ensemble de ses suites.
                     </label>
                 </div>
 

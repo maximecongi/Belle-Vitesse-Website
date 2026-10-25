@@ -162,8 +162,8 @@ def register_inspection_routes(app, mode):
         if not payload or "signature" not in payload:
             return jsonify({"error": "signature data is required"}), 400
 
-        raw_ip = request.headers.get("X-Forwarded-For") or request.remote_addr or ""
-        signed_ip = raw_ip.split(",")[0].strip()[:45]
+        from utils.request_utils import get_client_ip
+        signed_ip = get_client_ip()
 
         try:
             record = process_inspection_signature(token, mode, payload["signature"], signed_ip)

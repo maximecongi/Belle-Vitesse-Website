@@ -1407,6 +1407,7 @@ input[type="checkbox"]:checked {
     text-align: center;
     font-size: 0.95rem;
     line-height: 1.5;
+    margin-bottom: 2rem;
 }
 
 .feedback-box svg,

@@ -998,10 +998,7 @@
             <div class="cgl-seal-header">
                 <div class="cgl-seal-title">Acceptation sans réserve & Scellement Électronique</div>
                 <p class="cgl-legal-mention">
-                    « Le signataire atteste avoir le pouvoir d'engager la société Locataire, confirme avoir pris
-                    connaissance de l'intégralité des 22 articles des Conditions Générales de Location et de leurs
-                    Annexes (notamment l'Annexe 1 et l'Annexe 2 — Engagement de sécurité du Locataire), et déclare les
-                    accepter expressément et sans réserve. »
+                    « Le signataire ({% if cgl.production_representative %}{{ cgl.production_representative }}{% else %}le représentant désigné{% endif %}, agissant en qualité de {% if cgl.display_representative_role %}{{ cgl.display_representative_role }}{% else %}représentant habilité{% endif %}) atteste expressément sur l'honneur avoir la capacité juridique et le pouvoir d'engager la société Locataire ({{ cgl.display_production_name }}), confirme avoir pris connaissance de l'intégralité des 22 articles des Conditions Générales de Location et de leurs Annexes, et déclare les accepter expressément et sans réserve. »
                 </p>
             </div>
 

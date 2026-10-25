@@ -189,10 +189,22 @@ class CglComprehensiveTest(unittest.TestCase):
         self.assertIn('<option value="ES"', html_sign)
         self.assertIn('Espagne</option>', html_sign)
 
-        # 2. POST avec signature et informations locataire
+        # 2. Rejet si accepted_terms ou has_signing_authority absent
+        payload_invalid = {
+            "production_name": "Société Production Réelle SAS",
+            "representative": "Alice Martin",
+            "representative_role": "Gérante",
+            "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+        }
+        resp_invalid = self.client.post(f"/sign/cgl/{token_val}", data=payload_invalid)
+        self.assertEqual(resp_invalid.status_code, 400)
+        self.assertIn("Conditions Générales", resp_invalid.get_json().get("error", ""))
+
+        # 3. POST valide avec signature, consentement et déclaration de pouvoir
         payload = {
             "production_name": "Société Production Réelle SAS",
-            "representative": "Alice Martin, Gérante",
+            "representative": "Alice Martin",
+            "representative_role": "Gérante",
             "siret": "12345678900012",
             "address": "15 Avenue des Champs-Élysées, 75008 Paris",
             "vat_number": "FR12345678900",
@@ -201,6 +213,8 @@ class CglComprehensiveTest(unittest.TestCase):
             "order_ref": "BVPR-TEST-1234",
             "city": "Paris",
             "location_of_use": "Studio Bry-sur-Marne",
+            "accepted_terms": "1",
+            "has_signing_authority": "1",
             "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
         }
         resp_post = self.client.post(f"/sign/cgl/{token_val}", data=payload)
@@ -212,7 +226,7 @@ class CglComprehensiveTest(unittest.TestCase):
             cgl_signed = CglWaiver.query.filter_by(project_id=proj_id).first()
             self.assertEqual(cgl_signed.status, "signed")
             self.assertEqual(cgl_signed.production_name, "Société Production Réelle SAS")
-            self.assertEqual(cgl_signed.production_representative, "Alice Martin, Gérante")
+            self.assertEqual(cgl_signed.production_representative, "Alice Martin")
             self.assertEqual(cgl_signed.display_order_ref, "BVPR-TEST-1234")
             self.assertEqual(cgl_signed.display_legal_form_only, "SAS")
             self.assertEqual(cgl_signed.display_legal_country, "France")
@@ -220,11 +234,13 @@ class CglComprehensiveTest(unittest.TestCase):
             self.assertEqual(cgl_signed.display_signature_city, "Paris")
             self.assertIsNotNone(cgl_signed.signed_at)
 
-            # Vérifie l'archive signée WaiverSignedDocument
+            # Vérifie l'archive signée WaiverSignedDocument avec Sceau Canonique v2
             signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=waiver_id).first()
             self.assertIsNotNone(signed_doc)
             self.assertIsNotNone(signed_doc.hash)
+            self.assertEqual(signed_doc.data_snapshot.get("version"), "2.0")
             self.assertIn("127.0.0.1", signed_doc.data_snapshot.get("signer_ip", ""))
+            self.assertTrue(signed_doc.data_snapshot.get("snapshot", {}).get("has_signing_authority"))
 
     @patch("services.common.pdf_tasks.render_pdf_from_template", return_value=b"%PDF-1.4 mock cgl content")
     def test_06_verification_flow(self, mock_render_pdf):
@@ -239,12 +255,16 @@ class CglComprehensiveTest(unittest.TestCase):
             payload = {
                 "production_name": "Prod Authentique",
                 "representative": "Directeur Juridique",
+                "representative_role": "Directeur Juridique",
                 "siret": "98765432100019",
                 "address": "10 Boulevard Haussmann, Paris",
                 "legal_country": "ES",
+                "accepted_terms": "1",
+                "has_signing_authority": "1",
                 "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
             }
-            self.client.post(f"/sign/cgl/{token_val}", data=payload)
+            resp_sign = self.client.post(f"/sign/cgl/{token_val}", data=payload)
+            self.assertEqual(resp_sign.status_code, 200)
             self.assertEqual(cgl.display_legal_country, "Espagne")
             waiver_id = cgl.waiver_id
 
@@ -320,6 +340,8 @@ class CglComprehensiveTest(unittest.TestCase):
             "insurance_company": "Allianz Cinéma & Audiovisuel",
             "insurance_policy": "POL-ALLIANZ-88291",
             "location_of_use": "Studios de Bry-sur-Marne",
+            "accepted_terms": "1",
+            "has_signing_authority": "1",
             "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
         }
 

@@ -7,6 +7,8 @@ from flask import abort, current_app, render_template, request, send_from_direct
 from utils.document_utils import (
     generate_pdf_access_token,
     validate_pdf_access_token,
+    verify_canonical_seal,
+    compute_file_sha256,
     verify_hmac_seal,
     verify_pdf_hash,
 )
@@ -82,13 +84,8 @@ def handle_document_verify(mode_config, identifier):
     if not signed_doc:
         abort(404)
 
-    data = signed_doc.data_snapshot or {}
-    # Normaliser la date pour l'affichage dans le template
-    if 'signed_at' in data and isinstance(data['signed_at'], str):
-        try:
-            data['signed_at'] = datetime.fromisoformat(data['signed_at'])
-        except (ValueError, TypeError):
-            pass
+    raw_data = signed_doc.data_snapshot or {}
+    data = raw_data
 
     # Récupérer l'entité source si disponible
     source_record = None
@@ -102,21 +99,29 @@ def handle_document_verify(mode_config, identifier):
             source_record = model_cls.query.filter_by(inspection_number=identifier).first()
 
     # 1. Vérifier l'intégrité du Sceau (Seal)
-    seal_args = mode_config["get_seal_args"](data, signed_doc)
-    seal_valid = verify_hmac_seal(
-        signed_doc.hash, mode_config["seal_prefix"], *seal_args)
-
-    # Si le sceau ne correspond pas et que l'entité dispose d'une signature_data_uri (scellement historique au Data URI),
-    # tester avec la Data URI pour garantir la vérification des documents scellés antérieurement.
-    if not seal_valid and hasattr(signed_doc, "signature_data_uri"):
-        try:
-            data_uri = signed_doc.signature_data_uri
-            if data_uri and signed_doc.signature in seal_args:
-                fallback_seal_args = [data_uri if a == signed_doc.signature else a for a in seal_args]
-                seal_valid = verify_hmac_seal(
-                    signed_doc.hash, mode_config["seal_prefix"], *fallback_seal_args)
-        except Exception as fallback_err:
-            current_app.logger.warning(f"⚠️ Échec du fallback sceau signature_data_uri : {fallback_err}")
+    seal_valid = False
+    if isinstance(data, dict) and data.get("version") == "2.0":
+        # Vérification Sceau Canonique v2
+        expected_sig_sha = data.get("signature_sha256")
+        output_base = current_app.config.get(
+            "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
+        sig_path = signed_doc.signature
+        if sig_path:
+            full_sig_path = os.path.join(output_base, sig_path.lstrip("/"))
+            actual_sig_sha = compute_file_sha256(full_sig_path)
+            if actual_sig_sha and actual_sig_sha == expected_sig_sha:
+                seal_valid = verify_canonical_seal(signed_doc.hash, data)
+            else:
+                current_app.logger.warning(
+                    f"⚠️ Altération détectée du PNG de signature pour {identifier} : {actual_sig_sha} != {expected_sig_sha}")
+                seal_valid = False
+        else:
+            seal_valid = False
+    else:
+        # Fallback pour documents historiques v1
+        seal_args = mode_config["get_seal_args"](data, signed_doc)
+        seal_valid = verify_hmac_seal(
+            signed_doc.hash, mode_config["seal_prefix"], *seal_args)
 
     pdf_valid = None
     pdf_error = None
@@ -148,11 +153,20 @@ def handle_document_verify(mode_config, identifier):
     company_name = AppSetting.get("company_name", "Belle Vitesse SAS")
     company_address = AppSetting.get("company_address", "")
 
+    display_data = dict(data.get("snapshot", {})) if isinstance(data.get("snapshot"), dict) else dict(data)
+    display_data.setdefault("signed_at", data.get("signed_at"))
+    display_data.setdefault("signer_ip", data.get("signer_ip"))
+    if "signed_at" in display_data and isinstance(display_data["signed_at"], str):
+        try:
+            display_data["signed_at"] = datetime.fromisoformat(display_data["signed_at"])
+        except (ValueError, TypeError):
+            pass
+
     return render_template(
         mode_config["template_verify"],
         config=mode_config,
         route_base=mode_config.get("route_base", "checkout"),
-        data=data,
+        data=display_data,
         seal_valid=seal_valid,
         pdf_valid=pdf_valid,
         pdf_error=pdf_error,
@@ -161,7 +175,7 @@ def handle_document_verify(mode_config, identifier):
         waiver=source_record,
         inspection_id=identifier,
         document_hash=signed_doc.hash,
-        project_name=data.get('project_name', data.get('project', '—')),
+        project_name=display_data.get('project_name', display_data.get('project', '—')),
         has_pdf_hash=bool(signed_doc.pdf_file_hash),
         pdf_download_url=pdf_download_url,
         company_name=company_name,

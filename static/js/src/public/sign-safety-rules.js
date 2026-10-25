@@ -9,6 +9,22 @@
  */
 
 document.addEventListener('DOMContentLoaded', function () {
+    // ── Décompte et redirection si document déjà signé ─────────────────────
+    const redirectCounterEl = document.getElementById('redirect-counter');
+    if (redirectCounterEl) {
+        let timeLeft = 10;
+        const countdownTimer = setInterval(function () {
+            timeLeft -= 1;
+            if (timeLeft <= 0) {
+                clearInterval(countdownTimer);
+                window.location.href = '/';
+            } else {
+                redirectCounterEl.textContent = timeLeft;
+            }
+        }, 1000);
+        return;
+    }
+
     const form = document.getElementById('safety-rules-form');
     if (!form) return;
 
@@ -157,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 setTimeout(function () {
                     window.location.reload();
-                }, 2200);
+                }, 800);
             } else {
                 const errMsg = (result && (result.error || result.message)) || ('Erreur lors de la signature (code ' + response.status + ').');
                 if (typeof showFeedback === 'function') {

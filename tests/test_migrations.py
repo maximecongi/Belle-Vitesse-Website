@@ -43,6 +43,7 @@ class MigrationsTestCase(unittest.TestCase):
                     "mcp_api_tokens",
                     "mcp_audit_logs",
                     "inspection_checkpoints",
+                    "signature_events",
                     "alembic_version",
                 ]
                 for tbl in critical_tables:
@@ -51,7 +52,7 @@ class MigrationsTestCase(unittest.TestCase):
                 # 3. Vérification de la version finale dans alembic_version
                 with db.engine.connect() as conn:
                     current_rev = conn.execute(sa.text("SELECT version_num FROM alembic_version")).scalar()
-                    self.assertEqual(current_rev, "o00d7fe3c475")
+                    self.assertEqual(current_rev, "p00d7fe3c476")
 
                 # 4. Vérification que les tables décommissionnées sont bien absentes
                 self.assertNotIn("pre_quotes", tables)
@@ -86,7 +87,7 @@ class MigrationsTestCase(unittest.TestCase):
                 upgrade()
                 with db.engine.connect() as conn:
                     current_rev = conn.execute(sa.text("SELECT version_num FROM alembic_version")).scalar()
-                    self.assertEqual(current_rev, "o00d7fe3c475")
+                    self.assertEqual(current_rev, "p00d7fe3c476")
 
     def test_upgrade_from_previous_head_stamp(self):
         """Vérifie qu'une base déjà estampillée à g00d7fe3c467 migre vers i00d7fe3c469 et supprime pre_quotes."""
@@ -128,7 +129,7 @@ class MigrationsTestCase(unittest.TestCase):
 
                 with db.engine.connect() as conn:
                     current_rev = conn.execute(sa.text("SELECT version_num FROM alembic_version")).scalar()
-                    self.assertEqual(current_rev, "o00d7fe3c475")
+                    self.assertEqual(current_rev, "p00d7fe3c476")
 
 
 if __name__ == "__main__":

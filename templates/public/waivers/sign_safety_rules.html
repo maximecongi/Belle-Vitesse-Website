@@ -43,12 +43,20 @@
         <!-- ── État : déjà signé ────────────────────────────────────── -->
         <section class="public-doc-section public-doc-state-banner">
             <div class="public-doc-status-icon u-text-success">✓</div>
-            <h2 class="public-doc-section-title">Règles de Sécurité Signées</h2>
+            <h2 class="public-doc-section-title">Règles de Sécurité Signées &amp; Scellées</h2>
             <p class="u-text-muted u-mt-2 u-text-center">
-                Votre engagement aux Règles de Sécurité Universelles (BVSR) a déjà été signé et scellé
+                Votre engagement aux Règles de Sécurité Universelles (BVSR) a été signé et scellé
                 électroniquement.<br><br>
                 Une copie certifiée a été transmise à votre adresse e-mail.
             </p>
+            <div class="u-mt-4 u-text-center">
+                <p class="u-text-sm u-text-muted">
+                    Redirection vers le site public dans <strong id="redirect-counter">3</strong> secondes…
+                </p>
+                <a href="/" class="public-doc-btn public-doc-btn--primary u-mt-2">
+                    Accéder au site public
+                </a>
+            </div>
         </section>
 
         {% elif waiver.status not in ['to_sign', 'to_send'] %}
@@ -103,8 +111,8 @@
                                         loading="lazy">
                                     {% else %}
                                     <div class="public-doc-vehicle-thumb-placeholder" aria-hidden="true">
-                                        <svg class="public-doc-vehicle-placeholder-icon" viewBox="0 0 24 24"
-                                            fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+                                        <svg class="public-doc-vehicle-placeholder-icon" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
                                             stroke-linejoin="round">
                                             <path
                                                 d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
@@ -274,7 +282,7 @@
 
             <!-- 4. Engagements & Signature -->
             <section class="public-doc-section">
-                <div class="checkbox-container u-mb-3">
+                <div class="checkbox-container u-text-xs u-mb-3">
                     <input type="checkbox" id="ack_rules" name="ack_rules" required>
                     <label for="ack_rules">
                         <strong>Je certifie avoir pris connaissance des Règles de Sécurité Universelles (BVSR) et des
@@ -285,7 +293,7 @@
                     </label>
                 </div>
 
-                <div class="checkbox-container">
+                <div class="checkbox-container u-text-xs">
                     <input type="checkbox" id="ack_authority" name="ack_authority" required>
                     <label for="ack_authority">
                         <strong>Je reconnais expressément mon droit et mon devoir d'interrompre immédiatement toute

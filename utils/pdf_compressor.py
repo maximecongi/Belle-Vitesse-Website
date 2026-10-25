@@ -138,8 +138,16 @@ def compress_pdf(
         compressed_bytes = out_buf.getvalue()
 
         if compressed_bytes and len(compressed_bytes) > 0:
-            orig_kb = len(pdf_bytes) / 1024
-            comp_kb = len(compressed_bytes) / 1024
+            orig_bytes = len(pdf_bytes)
+            comp_bytes = len(compressed_bytes)
+            if comp_bytes >= orig_bytes:
+                _log_info(
+                    f"ℹ️ PDF '{filename}' déjà optimal : compression ignorée ({comp_bytes / 1024:.1f} Ko >= {orig_bytes / 1024:.1f} Ko)"
+                )
+                return pdf_bytes
+
+            orig_kb = orig_bytes / 1024
+            comp_kb = comp_bytes / 1024
             saved_pct = ((orig_kb - comp_kb) / orig_kb * 100) if orig_kb > 0 else 0
             _log_info(
                 f"✅ PDF '{filename}' compressé localement : "

@@ -32,8 +32,12 @@ from models import (
     db,
 )
 from models.db import _utcnow
+from models.signature_event import SignatureEvent
 from utils.database import get_vehicles
 from utils.document_utils import (
+    compute_canonical_seal,
+    verify_canonical_seal,
+    compute_file_sha256,
     compute_hmac_seal,
     compute_pdf_hash,
     generate_qr_code,
@@ -45,6 +49,28 @@ from utils.signature_storage import (
     load_signature_data_uri,
     delete_signature_file,
 )
+
+
+def log_signature_event(document_id: str, mode: str, event_type: str, details: dict = None, ip: str = None, user_agent: str = None):
+    """
+    Enregistre un événement d'audit immuable dans la table signature_events.
+    """
+    try:
+        event_record = SignatureEvent(
+            document_id=str(document_id),
+            mode=str(mode),
+            event_type=str(event_type),
+            ip=ip[:45] if ip else None,
+            user_agent=user_agent[:255] if user_agent else None,
+            details=details or {},
+            created_at=_utcnow()
+        )
+        db.session.add(event_record)
+        db.session.flush()
+        return event_record
+    except Exception as e:
+        logger.error(f"⚠️ Échec de l'enregistrement de signature_event ({event_type} pour {document_id}): {e}")
+        return None
 from utils.storage import (
     ensure_dir,
     get_cgl_path,
@@ -275,11 +301,25 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
 
         db.session.flush()
 
-        # Construction du Snapshot des données et Scellé (Hash)
+        output_base = current_app.config.get(
+            "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
+        sig_full_path = os.path.join(output_base, sig_file_rel_path)
+        sig_file_sha256 = compute_file_sha256(sig_full_path)
+
+        # Construction du Snapshot des données et Scellé Canonique (Hash)
         snapshot, seal_args = _build_flow_data(mode, record, extra_data)
 
-        current_hash = compute_hmac_seal(
-            config["prefix"], document_id, *seal_args, sig_file_rel_path, signed_at.isoformat())
+        canonical_payload = {
+            "version": "2.0",
+            "mode": mode,
+            "document_id": str(document_id),
+            "signed_at": signed_at.isoformat(),
+            "signer_ip": signed_ip,
+            "signature_sha256": sig_file_sha256,
+            "snapshot": snapshot,
+        }
+
+        current_hash = compute_canonical_seal(canonical_payload)
 
         # 3. QR code et génération du PDF
         verification_url = f"{base_url}/{config['url_path']}/verify/{document_id}"
@@ -327,7 +367,6 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         else:
             render_ctx["waiver"] = record
 
-
         project_obj = getattr(record, "project", None)
         pdf_dir = ensure_dir(config["storage_func"](project_obj))
         filename = f"{document_id}_{secrets.token_hex(8)}.pdf"
@@ -336,8 +375,6 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         html_content = render_template(config["template"], **render_ctx)
 
         # 4. Stockage physique
-        output_base = current_app.config.get(
-            "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
         rel_pdf_path = os.path.relpath(file_path, output_base)
         pdf_public_url = f"{base_url}/{config['url_path']}/document/{rel_pdf_path}"
 
@@ -353,32 +390,34 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
             "checkout", "checkin"] else "waiver_id"
         existing_doc = db.session.get(signed_model, document_id)
         if existing_doc:
+            old_hash = existing_doc.hash
             existing_doc.hash = current_hash
             existing_doc.pdf_file_hash = ""
-            existing_doc.data_snapshot = {
-                **snapshot,
-                "signer_ip": signed_ip,
-                "_seal_signed_at": signed_at.isoformat(),
-            }
+            existing_doc.data_snapshot = canonical_payload
             existing_doc.signature = sig_file_rel_path
             existing_doc.pdf_url = pdf_public_url
             existing_doc.signed_at = signed_at.replace(tzinfo=None)
             signed_doc = existing_doc
+            log_signature_event(document_id, mode, "archive_overwritten", {
+                "old_hash": old_hash,
+                "new_hash": current_hash,
+                "signature_sha256": sig_file_sha256,
+            }, ip=signed_ip)
         else:
             signed_doc = signed_model(
                 **{pk_name: document_id},
                 hash=current_hash,
                 pdf_file_hash="",
-                data_snapshot={
-                    **snapshot,
-                    "signer_ip": signed_ip,
-                    "_seal_signed_at": signed_at.isoformat(),
-                },
+                data_snapshot=canonical_payload,
                 signature=sig_file_rel_path,
                 pdf_url=pdf_public_url,
                 signed_at=signed_at.replace(tzinfo=None)
             )
             db.session.add(signed_doc)
+            log_signature_event(document_id, mode, "document_signed", {
+                "hash": current_hash,
+                "signature_sha256": sig_file_sha256,
+            }, ip=signed_ip)
 
         try:
             db.session.commit()
@@ -390,11 +429,7 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
             if existing_doc:
                 existing_doc.hash = current_hash
                 existing_doc.pdf_file_hash = ""
-                existing_doc.data_snapshot = {
-                    **snapshot,
-                    "signer_ip": signed_ip,
-                    "_seal_signed_at": signed_at.isoformat(),
-                }
+                existing_doc.data_snapshot = canonical_payload
                 existing_doc.signature = sig_file_rel_path
                 existing_doc.pdf_url = pdf_public_url
                 existing_doc.signed_at = signed_at.replace(tzinfo=None)
@@ -443,28 +478,66 @@ def _build_flow_data(mode, record, extra_data):
         vehicle_map = {v["id"]: v.get("fields", {}) for v in vehicles}
         data = _format_base_inspection_admin(record, vehicle_map)
         seal_args = [data["vehicle_id"]]
-        return data, seal_args
+        snapshot = dict(data)
+        snapshot["mode"] = mode
+        snapshot["_seal_vehicle_id"] = data["vehicle_id"]
+        return snapshot, seal_args
 
     elif mode == "safety_rules":
         signer_name = record.signer_name if hasattr(record, "signer_name") else "Intervenant"
         role_label = record.signer_role_label if hasattr(record, "signer_role_label") else "Intervenant"
         seal_args = [signer_name, role_label]
         snapshot = {
-            "_seal_signer_name": signer_name,
-            "_seal_signer_role": role_label,
+            "mode": "safety_rules",
+            "waiver_id": record.waiver_id,
+            "project_name": record.project_name or (record.project.name if record.project else "—"),
+            "production_name": record.display_production_name if hasattr(record, "display_production_name") else "—",
             "project": record.project_name or (record.project.name if record.project else "—"),
             "production": record.display_production_name if hasattr(record, "display_production_name") else "—",
+            "signer_name": signer_name,
+            "signer_role": role_label,
+            "signer_email": getattr(record, "signer_email", "") or "",
+            "signer_phone": getattr(record, "signer_phone", "") or "",
+            "signer_company": getattr(record, "signer_company", "") or "",
+            "bv_signature": record.bv_signature_data or "",
+            "bv_signed_at": record.bv_signed_at.isoformat() if record.bv_signed_at else "",
+            "bv_signer_name": record.bv_signer_name or "",
+            "_seal_signer_name": signer_name,
+            "_seal_signer_role": role_label,
         }
         return snapshot, seal_args
 
     elif mode == "cgl":
+        sign_data = record.sign_data or {}
         seal_args = [record.production_name or "",
                      record.production_representative or ""]
         snapshot = {
-            "_seal_production_name": record.production_name or "",
-            "_seal_representative": record.production_representative or "",
+            "mode": "cgl",
+            "waiver_id": record.waiver_id,
+            "project_name": record.project_name or (record.project.name if record.project else "—"),
+            "production_name": record.production_name or (record.project.production.name if record.project and record.project.production else "—"),
             "project": record.project_name or (record.project.name if record.project else "—"),
             "production": record.production_name or (record.project.production.name if record.project and record.project.production else "—"),
+            "representative_name": record.production_representative or "",
+            "representative_role": record.signer_role_custom or sign_data.get("representative_role", ""),
+            "has_signing_authority": sign_data.get("has_signing_authority", True),
+            "authority_declaration_text": sign_data.get("authority_declaration_text", ""),
+            "accepted_terms": sign_data.get("accepted_terms", True),
+            "accepted_at": sign_data.get("accepted_at", ""),
+            "terms_fingerprint": sign_data.get("terms_fingerprint", ""),
+            "signer_email": record.signer_email or "",
+            "signer_phone": record.signer_phone or "",
+            "siret": record.production_siret or "",
+            "address": record.production_address or "",
+            "vat_number": record.production_vat or "",
+            "legal_form": sign_data.get("legal_form", ""),
+            "legal_country": sign_data.get("legal_country", ""),
+            "insurance_company": record.production_insurance_company or "",
+            "insurance_policy": record.production_insurance_policy or "",
+            "insurance_file_sha256": sign_data.get("insurance_file_sha256", ""),
+            "location_of_use": record.location_of_use or "",
+            "_seal_production_name": record.production_name or "",
+            "_seal_representative": record.production_representative or "",
         }
         return snapshot, seal_args
 

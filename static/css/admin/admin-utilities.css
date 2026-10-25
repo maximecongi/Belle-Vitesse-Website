@@ -907,6 +907,14 @@ select.form-input.form-input-sm {
     min-height: 100px !important;
 }
 
+.checkbox-container input {
+    margin-right: 1ch !important;
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+    min-height: 18px !important;
+}
+
 .project-checkbox-card {
     display: flex !important;
     align-items: center !important;
