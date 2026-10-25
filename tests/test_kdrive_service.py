@@ -267,16 +267,17 @@ def test_delete_project_folder_with_upward_pruning(app_ctx):
 
     mock_client = MagicMock()
     # 7777 has parent 6666 (Film UGC)
+    # 7777 has parent 6666 (Film UGC)
     # 6666 has parent 5555 (UGC)
-    # 5555 has parent 48 (ROOT)
+    # 5555 has parent KDRIVE_ROOT_FOLDER_ID (ROOT)
     mock_client.get_file.side_effect = lambda file_id: {
         7777: {"id": 7777, "name": "BVPR-UGC-01", "parent_id": 6666},
         6666: {"id": 6666, "name": "FILM UGC", "parent_id": 5555},
-        5555: {"id": 5555, "name": "UGC", "parent_id": 48},
+        5555: {"id": 5555, "name": "UGC", "parent_id": KDRIVE_ROOT_FOLDER_ID},
     }.get(file_id, {})
 
     # 6666 is empty, 5555 is not empty
-    mock_client.list_files.side_effect = lambda file_id, limit=1: {
+    mock_client.list_files.side_effect = lambda file_id, limit=5, **kwargs: {
         6666: ([], None, False),  # empty -> delete!
         5555: ([{"id": 9999}], None, False),  # not empty -> STOP!
     }.get(file_id, ([], None, False))
@@ -287,6 +288,50 @@ def test_delete_project_folder_with_upward_pruning(app_ctx):
     assert success is True
     deleted_ids = [call.args[0] for call in mock_client.delete.call_args_list]
     assert deleted_ids == [7777, 6666]
+
+
+def test_delete_project_folder_pruning_all_the_way_to_root(app_ctx):
+    """
+    Vérifie la remontée complète lorsque tous les dossiers parents sont vides :
+    BVPR-SOLO -> PROJET -> PROD -> MOIS -> ANNÉE -> ARRÊT (KDRIVE_ROOT_FOLDER_ID préservé).
+    """
+    prod = Production(name="SoloProd")
+    db.session.add(prod)
+    db.session.flush()
+
+    project = Project(
+        name="Solo Project",
+        project_id="BVPR-SOLO",
+        production_id=prod.id,
+        departure_date=date(2026, 12, 1),
+        kdrive_folder_id=7001,
+        kdrive_sync_status="synced"
+    )
+    db.session.add(project)
+    db.session.commit()
+
+    mock_client = MagicMock()
+    # 7001 (BVPR-SOLO) -> 6001 (SOLO PROJECT) -> 5001 (SOLOPROD) -> 4001 (12) -> 3001 (2026) -> ROOT
+    mock_client.get_file.side_effect = lambda file_id: {
+        7001: {"id": 7001, "name": "BVPR-SOLO", "parent_id": 6001},
+        6001: {"id": 6001, "name": "SOLO PROJECT", "parent_id": 5001},
+        5001: {"id": 5001, "name": "SOLOPROD", "parent_id": 4001},
+        4001: {"id": 4001, "name": "12", "parent_id": 3001},
+        3001: {"id": 3001, "name": "2026", "parent_id": KDRIVE_ROOT_FOLDER_ID},
+    }.get(file_id, {})
+
+    # Tous les dossiers parents sont vides
+    mock_client.list_files.side_effect = lambda file_id, limit=5, **kwargs: ([], None, False)
+
+    service = KDriveService(client=mock_client)
+    success = service.delete_project_folder(project.id)
+
+    assert success is True
+    deleted_ids = [call.args[0] for call in mock_client.delete.call_args_list]
+    # Tous les parents vides ont été supprimés
+    assert deleted_ids == [7001, 6001, 5001, 4001, 3001]
+    # Le dossier racine KDRIVE_ROOT_FOLDER_ID n'a JAMAIS été supprimé
+    assert KDRIVE_ROOT_FOLDER_ID not in deleted_ids
 
 
 def test_check_and_repair_project_structure(app_ctx):

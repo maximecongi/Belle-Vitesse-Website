@@ -118,7 +118,9 @@ class KDriveClient:
         Liste les fichiers et dossiers contenus dans un répertoire.
         Retourne (items, cursor, has_more).
         """
-        params = {"limit": limit}
+        # Infomaniak impose un minimum de 5 pour le paramètre limit (HTTP 422 si limit < 5)
+        safe_limit = max(5, int(limit)) if limit is not None else 100
+        params = {"limit": safe_limit}
         if cursor:
             params["cursor"] = cursor
 

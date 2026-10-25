@@ -204,15 +204,30 @@ class MaintenanceMixin:
         """
         curr_id = parent_id
         steps = 0
-        while curr_id and curr_id != stop_at_id and steps < 10:
+        try:
+            target_stop_id = int(stop_at_id)
+        except (ValueError, TypeError):
+            target_stop_id = stop_at_id
+
+        while curr_id and steps < 10:
+            try:
+                if int(curr_id) == target_stop_id:
+                    logger.info(
+                        f"🛡️ Arrêt de la remontée kDrive : dossier racine atteint (ID={curr_id})."
+                    )
+                    break
+            except (ValueError, TypeError):
+                if curr_id == stop_at_id:
+                    break
+
             steps += 1
             try:
                 meta = self.client.get_file(curr_id)
                 parent_of_curr = meta.get("parent_id")
                 folder_name = meta.get("name", str(curr_id))
 
-                # Vérifier si ce dossier a encore des enfants (fichiers ou sous-dossiers)
-                items, _, _ = self.client.list_files(curr_id, limit=1)
+                # Vérifier si ce dossier a encore des enfants (fichiers ou sous-dossiers, min 5 requis par Infomaniak)
+                items, _, _ = self.client.list_files(curr_id, limit=5)
                 if len(items) == 0:
                     logger.info(
                         f"🗑️ Dossier parent vide sur kDrive, suppression : '{folder_name}' (ID={curr_id})..."
