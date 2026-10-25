@@ -312,3 +312,4 @@ static/css/admin/*.bundle.css
 
 # Runtime logs
 logs/
+.DS_Store
