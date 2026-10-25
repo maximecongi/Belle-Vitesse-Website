@@ -1,3 +1,4 @@
+{% from "public/macros.html" import country_select %}
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -158,9 +159,7 @@
 
                     <div class="form-group">
                         <label for="cgl_legal_country">Pays du siège social <span class="u-text-danger">*</span></label>
-                        <input class="form-input" type="text" id="cgl_legal_country" name="cgl_legal_country"
-                            value="{{ waiver.display_legal_country or 'France' }}" required
-                            placeholder="Ex: France, Espagne, Belgique...">
+                        {{ country_select(name="cgl_legal_country", id="cgl_legal_country", selected_value=waiver.display_legal_country or 'France') }}
                     </div>
 
                     <div class="form-group">

@@ -89,3 +89,25 @@ icons=[]
     </div>
 </div>
 {% endmacro %}
+
+{% macro country_select(
+    name="cgl_legal_country",
+    id="cgl_legal_country",
+    selected_value="France",
+    class="form-input form-select",
+    placeholder="— Choisir un pays —",
+    required=true,
+    autocomplete="country",
+    countries=none
+) %}
+{% set country_list = countries or (all_countries if all_countries is defined else []) %}
+<select class="{{ class }}" id="{{ id }}" name="{{ name }}"
+    {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
+    data-default-country="{{ selected_value or 'France' }}"
+    {% if required %}required{% endif %}>
+    <option value="">{{ placeholder }}</option>
+    {% for code, label in country_list %}
+    <option value="{{ code }}" {% if selected_value and (selected_value == code or selected_value|string|lower == label|string|lower) %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+</select>
+{% endmacro %}

@@ -211,7 +211,8 @@ class Waiver(db.Model):
     def display_legal_country(self):
         """Retourne le pays d'immatriculation / siège social (ex: France)."""
         if self.sign_data and self.sign_data.get("legal_country"):
-            return self.sign_data.get("legal_country")
+            from utils.countries import get_country_name
+            return get_country_name(self.sign_data.get("legal_country"))
         return "France"
 
     @property

@@ -235,9 +235,11 @@ class CglComprehensiveTest(unittest.TestCase):
                 "representative": "Directeur Juridique",
                 "siret": "98765432100019",
                 "address": "10 Boulevard Haussmann, Paris",
+                "legal_country": "ES",
                 "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
             }
             self.client.post(f"/sign/cgl/{token_val}", data=payload)
+            self.assertEqual(cgl.display_legal_country, "Espagne")
             waiver_id = cgl.waiver_id
 
         # Accès à la page de vérification publique

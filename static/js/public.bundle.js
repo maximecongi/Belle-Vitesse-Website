@@ -806,7 +806,15 @@ document.addEventListener('DOMContentLoaded', function () {
         const legalTextEl = document.getElementById('cgl_text_annexe2_legal_form');
         if (legalTextEl) {
             const formVal = legalFormEl ? legalFormEl.value.trim() : '';
-            const countryVal = legalCountryEl ? legalCountryEl.value.trim() : '';
+            let countryVal = '';
+            if (legalCountryEl) {
+                if (legalCountryEl.tagName === 'SELECT' && legalCountryEl.selectedIndex >= 0) {
+                    const opt = legalCountryEl.options[legalCountryEl.selectedIndex];
+                    countryVal = (opt && opt.value) ? opt.text.trim() : '';
+                } else {
+                    countryVal = legalCountryEl.value.trim();
+                }
+            }
             if (formVal && countryVal) {
                 legalTextEl.textContent = `${formVal} (${countryVal})`;
             } else if (formVal || countryVal) {
@@ -826,7 +834,21 @@ document.addEventListener('DOMContentLoaded', function () {
     const formInput = document.getElementById('cgl_legal_form');
     if (formInput) formInput.addEventListener('input', updateCglContractText);
     const countryInput = document.getElementById('cgl_legal_country');
-    if (countryInput) countryInput.addEventListener('input', updateCglContractText);
+    if (countryInput) {
+        countryInput.addEventListener('input', updateCglContractText);
+        countryInput.addEventListener('change', updateCglContractText);
+
+        const defaultCountry = (countryInput.getAttribute('data-default-country') || '').trim().toLowerCase();
+        if (defaultCountry) {
+            for (let i = 0; i < countryInput.options.length; i++) {
+                const opt = countryInput.options[i];
+                if (opt.value.toLowerCase() === defaultCountry || opt.text.toLowerCase() === defaultCountry) {
+                    countryInput.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+    }
 
     updateCglContractText();
 
@@ -961,7 +983,14 @@ document.addEventListener('DOMContentLoaded', function () {
         const legalFormEl = document.getElementById('cgl_legal_form');
         if (legalFormEl) formData.set('legal_form', legalFormEl.value.trim());
         const legalCountryEl = document.getElementById('cgl_legal_country');
-        if (legalCountryEl) formData.set('legal_country', legalCountryEl.value.trim());
+        if (legalCountryEl) {
+            let countryVal = legalCountryEl.value.trim();
+            if (legalCountryEl.tagName === 'SELECT' && legalCountryEl.selectedIndex >= 0) {
+                const opt = legalCountryEl.options[legalCountryEl.selectedIndex];
+                if (opt && opt.value) countryVal = opt.text.trim();
+            }
+            formData.set('legal_country', countryVal);
+        }
         const phoneEl = document.getElementById('cgl_phone');
         if (phoneEl) formData.set('phone', phoneEl.value.trim());
         const emailEl = document.getElementById('cgl_email');
