@@ -100,7 +100,7 @@ icons=[]
     autocomplete="country",
     countries=none
 ) %}
-{% set country_list = countries or (all_countries if all_countries is defined else []) %}
+{% set country_list = countries if countries is not none else (all_countries if all_countries is defined else (get_all_countries() if get_all_countries is defined else [])) %}
 <select class="{{ class }}" id="{{ id }}" name="{{ name }}"
     {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
     data-default-country="{{ selected_value or 'France' }}"

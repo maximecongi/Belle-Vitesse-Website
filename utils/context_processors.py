@@ -197,6 +197,10 @@ def get_company_context():
 
 def init_context_processors(app):
     """Enregistre les processeurs de contexte globaux pour les templates Jinja2."""
+    from utils.countries import COUNTRIES
+    app.jinja_env.globals["all_countries"] = COUNTRIES
+    app.jinja_env.globals["get_all_countries"] = lambda: COUNTRIES
+
     template_path = os.path.join(
         app.root_path, 'templates', 'public', 'privacy-policy.html')
 

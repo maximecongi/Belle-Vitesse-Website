@@ -86,6 +86,8 @@ def init_admin_routes(app):
         if bp.name not in app.blueprints:
             app.register_blueprint(bp)
 
+    init_waivers_routes(app)
+
     @app.errorhandler(CSRFError)
     def handle_csrf_error(e):
         app.logger.warning(f"⚠️ CSRF Error: {e.description}")

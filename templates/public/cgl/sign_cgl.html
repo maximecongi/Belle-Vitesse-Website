@@ -1,4 +1,4 @@
-{% from "public/macros.html" import country_select %}
+{% from "public/macros.html" import country_select with context %}
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -159,7 +159,7 @@
 
                     <div class="form-group">
                         <label for="cgl_legal_country">Pays du siège social <span class="u-text-danger">*</span></label>
-                        {{ country_select(name="cgl_legal_country", id="cgl_legal_country", selected_value=waiver.display_legal_country or 'France') }}
+                        {{ country_select(name="cgl_legal_country", id="cgl_legal_country", selected_value=waiver.display_legal_country or 'France', countries=all_countries) }}
                     </div>
 
                     <div class="form-group">

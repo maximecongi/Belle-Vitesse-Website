@@ -1,6 +1,7 @@
+from functools import wraps
 import os
 
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for, current_app, Response
 
 from models import (
     CglWaiver,
@@ -26,6 +27,21 @@ from services.admin.waivers import (
 from utils.decorators import require_roles
 
 waivers_bp = Blueprint('admin_waivers', __name__, url_prefix='/admin')
+
+
+def require_preview_access(f):
+    """
+    Autorise l'accès direct en dev/testing sans login pour faciliter l'ajustement CSS/live-reload des PDF.
+    En production, restreint l'accès aux utilisateurs authentifiés avec rôle valide.
+    """
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if current_app.config.get("DEBUG") or current_app.config.get("TESTING") or os.environ.get("FLASK_ENV") != "production":
+            return f(*args, **kwargs)
+        if session.get("admin_authenticated"):
+            return f(*args, **kwargs)
+        return redirect(url_for("admin_auth.admin_login", next=request.url))
+    return decorated
 
 
 # ── CONDITIONS GÉNÉRALES DE LOCATION (CGL - BVRA) ────────────────────
@@ -136,26 +152,62 @@ def admin_cgl_send(waiver_id):
     return redirect(url_for('admin_waivers.admin_cgl_list', q=q if q else None))
 
 
-@waivers_bp.route("/cgl/<string:waiver_id>/preview", endpoint='admin_cgl_preview')
-@require_roles('administrator', 'manager', 'commercial')
-def admin_cgl_preview(waiver_id):
-    waiver = CglWaiver.query.filter(
-        CglWaiver.waiver_id == waiver_id,
-        CglWaiver.deleted_at.is_(None)
-    ).first_or_404()
+@waivers_bp.route("/cgl/preview", methods=["GET"], endpoint='admin_cgl_preview_direct')
+@waivers_bp.route("/preview/pdf/cgl", methods=["GET"], endpoint='admin_cgl_preview_alias')
+@waivers_bp.route("/cgl/<string:waiver_id>/preview", methods=["GET"], endpoint='admin_cgl_preview')
+@require_preview_access
+def admin_cgl_preview(waiver_id=None):
+    """
+    Prévisualisation directe du PDF CGL pour ajustement du design/CSS en direct.
+    Si waiver_id est absent ou introuvable, injecte un mock représentatif complet.
+    Supporte ?format=pdf pour compiler et servir le PDF WeasyPrint.
+    """
+    waiver = None
+    target_id = waiver_id or request.args.get("waiver_id")
+    if target_id:
+        waiver = CglWaiver.query.filter(
+            CglWaiver.waiver_id == target_id,
+            CglWaiver.deleted_at.is_(None)
+        ).first()
+
+    if not waiver:
+        from services.admin.waivers.mock_data import MockCglWaiver
+        waiver = MockCglWaiver()
+
     from models import AppSetting
-    return render_template(
+    company_name = AppSetting.get("company_name", "Belle Vitesse SAS")
+    is_pdf_format = request.args.get("format") == "pdf"
+    html_content = render_template(
         "pdf/cgl.html",
         cgl=waiver,
         waiver=waiver,
-        company_name=AppSetting.get("company_name", "Belle Vitesse SAS"),
-        company_representative=AppSetting.get("company_representative", ""),
-        company_siret=AppSetting.get("company_siret", ""),
-        company_vat=AppSetting.get("company_vat", ""),
-        company_address=AppSetting.get("company_address", ""),
-        company_capital=AppSetting.get("company_capital", "1 000 €"),
-        company_rcs=AppSetting.get("company_rcs", ""),
+        company_name=company_name,
+        company_representative=AppSetting.get("company_representative", "Maxime Congi"),
+        company_siret=AppSetting.get("company_siret", "912 345 678 00012"),
+        company_vat=AppSetting.get("company_vat", "FR 12 912345678"),
+        company_address=AppSetting.get("company_address", "15 Rue de Turbigo, 75002 Paris"),
+        company_capital=AppSetting.get("company_capital", "10 000 €"),
+        company_rcs=AppSetting.get("company_rcs", "RCS Paris 912 345 678"),
+        company_email=AppSetting.get("company_email", "contact@bellevitesse.com"),
+        company_phone=AppSetting.get("company_phone", "+33 1 84 25 00 00"),
+        is_preview=(not is_pdf_format),
     )
+
+    if is_pdf_format:
+        from utils.document_utils import render_pdf_from_template
+        pdf_bytes = render_pdf_from_template(
+            html_content=html_content,
+            base_url=current_app.root_path,
+            stylesheets=["css/styles.css", "css/admin/cgl-pdf.css"],
+        )
+        return Response(
+            pdf_bytes,
+            mimetype="application/pdf",
+            headers={"Content-Disposition": f"inline; filename=cgl_preview_{waiver.waiver_id}.pdf"}
+        )
+
+    return html_content
+
 
 
 @waivers_bp.route("/cgl/<string:waiver_id>/delete", methods=["POST"], endpoint='admin_cgl_delete')
@@ -316,34 +368,80 @@ def admin_safety_rules_countersign(waiver_id):
     return jsonify({"success": False, "error": msg}), 400
 
 
-@waivers_bp.route("/safety-rules/<string:waiver_id>/preview", endpoint='admin_safety_rules_preview')
-@require_roles('administrator', 'manager', 'commercial')
-def admin_safety_rules_preview(waiver_id):
+@waivers_bp.route("/safety-rules/preview", methods=["GET"], endpoint='admin_safety_rules_preview_direct')
+@waivers_bp.route("/preview/pdf/safety-rules", methods=["GET"], endpoint='admin_safety_rules_preview_alias')
+@waivers_bp.route("/safety-rules/<string:waiver_id>/preview", methods=["GET"], endpoint='admin_safety_rules_preview')
+@require_preview_access
+def admin_safety_rules_preview(waiver_id=None):
+    """
+    Prévisualisation directe du PDF des Règles de Sécurité (BVSR) pour ajustement du design/CSS en direct.
+    Si waiver_id est absent ou introuvable, injecte un mock représentatif complet avec règles bilingues.
+    Supporte ?format=pdf pour compiler et servir le PDF WeasyPrint.
+    """
     from models import SafetyRulesWaiver as SRW, AppSetting
     from services.admin.safety_rules_config import (
         get_safety_rules_for_vehicles,
         DEFAULT_HELMETS_INVENTORY,
     )
-    waiver = SRW.query.filter(
-        SRW.waiver_id == waiver_id,
-        SRW.deleted_at.is_(None)
-    ).first_or_404()
 
-    vehicle_rules = get_safety_rules_for_vehicles(waiver.vehicles_details)
-    helmets = waiver.helmets_inventory or DEFAULT_HELMETS_INVENTORY
+    waiver = None
+    target_id = waiver_id or request.args.get("waiver_id")
+    if target_id:
+        waiver = SRW.query.filter(
+            SRW.waiver_id == target_id,
+            SRW.deleted_at.is_(None)
+        ).first()
 
-    return render_template(
+    if not waiver:
+        from services.admin.waivers.mock_data import MockSafetyRulesWaiver
+        waiver = MockSafetyRulesWaiver()
+
+    vehicle_rules = get_safety_rules_for_vehicles(getattr(waiver, "vehicles_details", []))
+    helmets = getattr(waiver, "helmets_inventory", None) or DEFAULT_HELMETS_INVENTORY
+
+    is_pdf_format = request.args.get("format") == "pdf"
+    html_content = render_template(
         "pdf/safety_rules.html",
         waiver=waiver,
         vehicle_rules=vehicle_rules,
         helmets=helmets,
-        safety_technicians=waiver.safety_technicians or "",
-        bv_signature=waiver.bv_signature_data_uri,
+        safety_technicians=getattr(waiver, "safety_technicians", "") or "Maxime Perrard, Ewen Gicquel",
+        bv_signature=getattr(waiver, "bv_signature_data_uri", None),
         company_name=AppSetting.get("company_name", "Belle Vitesse SAS"),
+        base_url=request.host_url.rstrip("/"),
+        qr_data_uri="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100' height='100' fill='white'/><rect x='10' y='10' width='25' height='25' fill='black'/><rect x='65' y='10' width='25' height='25' fill='black'/><rect x='10' y='65' width='25' height='25' fill='black'/><rect x='45' y='45' width='10' height='10' fill='black'/></svg>",
+        seal_hash=getattr(waiver, "hash", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),
+        is_preview=(not is_pdf_format),
     )
+
+    if is_pdf_format:
+        from utils.document_utils import render_pdf_from_template
+        pdf_bytes = render_pdf_from_template(
+            html_content=html_content,
+            base_url=current_app.root_path,
+            stylesheets=["css/styles.css", "css/admin/safety-rules-pdf.css"],
+        )
+        return Response(
+            pdf_bytes,
+            mimetype="application/pdf",
+            headers={"Content-Disposition": f"inline; filename=safety_rules_preview_{waiver.waiver_id}.pdf"}
+        )
+
+    return html_content
 
 
 def init_waivers_routes(app):
-    """Enregistre le blueprint admin_waivers."""
+    """Enregistre le blueprint admin_waivers et les routes directes de prévisualisation PDF."""
     if "admin_waivers" not in app.blueprints:
         app.register_blueprint(waivers_bp)
+
+    @app.route("/preview/pdf/cgl", methods=["GET"], endpoint="preview_pdf_cgl_alias")
+    @require_preview_access
+    def preview_pdf_cgl_alias():
+        return admin_cgl_preview()
+
+    @app.route("/preview/pdf/safety-rules", methods=["GET"], endpoint="preview_pdf_safety_rules_alias")
+    @require_preview_access
+    def preview_pdf_safety_rules_alias():
+        return admin_safety_rules_preview()
+

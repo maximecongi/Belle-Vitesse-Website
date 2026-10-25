@@ -181,7 +181,13 @@ class CglComprehensiveTest(unittest.TestCase):
         # 1. GET sur la page de signature
         resp_get = self.client.get(f"/sign/cgl/{token_val}")
         self.assertEqual(resp_get.status_code, 200)
-        self.assertIn("Conditions Générales de Location", resp_get.get_data(as_text=True))
+        html_sign = resp_get.get_data(as_text=True)
+        self.assertIn("Conditions Générales de Location", html_sign)
+        self.assertIn('id="cgl_legal_country"', html_sign)
+        self.assertIn('<option value="FR"', html_sign)
+        self.assertIn('France</option>', html_sign)
+        self.assertIn('<option value="ES"', html_sign)
+        self.assertIn('Espagne</option>', html_sign)
 
         # 2. POST avec signature et informations locataire
         payload = {
@@ -335,6 +341,41 @@ class CglComprehensiveTest(unittest.TestCase):
             self.assertEqual(signed_cgl.production_insurance_policy, "POL-ALLIANZ-88291")
             self.assertEqual(signed_cgl.location_of_use, "Studios de Bry-sur-Marne")
 
+    def test_10_pdf_preview_endpoints(self):
+        """Vérifie le bon fonctionnement des endpoints de prévisualisation directe HTML des templates PDF."""
+        # 1. Prévisualisation directe CGL (mock)
+        resp_cgl_admin = self.client.get("/admin/cgl/preview")
+        self.assertEqual(resp_cgl_admin.status_code, 200)
+        cgl_html = resp_cgl_admin.get_data(as_text=True)
+        self.assertIn("Conditions Générales de Location", cgl_html)
+        self.assertIn("Antiestático Barcelona SL", cgl_html)
+        self.assertIn("pdf-preview-toolbar", cgl_html)
+        self.assertIn("Format A4 (210 × 297 mm)", cgl_html)
+        self.assertIn("cgl-screen-footer", cgl_html)
+
+        resp_cgl_alias = self.client.get("/admin/preview/pdf/cgl")
+        self.assertEqual(resp_cgl_alias.status_code, 200)
+
+        resp_cgl_direct = self.client.get("/preview/pdf/cgl")
+        self.assertEqual(resp_cgl_direct.status_code, 200)
+
+        # 2. Prévisualisation directe Règles de Sécurité BVSR (mock)
+        resp_safety_admin = self.client.get("/admin/safety-rules/preview")
+        self.assertEqual(resp_safety_admin.status_code, 200)
+        safety_html = resp_safety_admin.get_data(as_text=True)
+        self.assertIn("Règles de Sécurité Universelles", safety_html)
+        self.assertIn("Alexandre Mercier", safety_html)
+        self.assertIn("pdf-preview-toolbar", safety_html)
+        self.assertIn("Format A4 (210 × 297 mm)", safety_html)
+        self.assertIn("bvsr-screen-footer", safety_html)
+
+        resp_safety_alias = self.client.get("/admin/preview/pdf/safety-rules")
+        self.assertEqual(resp_safety_alias.status_code, 200)
+
+        resp_safety_direct = self.client.get("/preview/pdf/safety-rules")
+        self.assertEqual(resp_safety_direct.status_code, 200)
+
 
 if __name__ == "__main__":
     unittest.main()
+
