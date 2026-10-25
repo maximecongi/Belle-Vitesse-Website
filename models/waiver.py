@@ -15,10 +15,14 @@ class TokenMixin:
 
 class SignedDocumentMixin:
     """Base pour tous les documents signés archivés."""
-    hash = db.Column(db.String(255), nullable=False)  # Empreinte de l'intégrité des données
-    pdf_file_hash = db.Column(db.String(64))  # Hash SHA-256 du fichier PDF binaire
-    data_snapshot = db.Column(db.JSON, nullable=False)  # Copie conforme des données au moment de la signature
-    signature = db.Column(db.String(255), nullable=True)  # Chemin relatif du fichier signature PNG
+    hash = db.Column(
+        db.String(255), nullable=False)  # Empreinte de l'intégrité des données
+    # Hash SHA-256 du fichier PDF binaire
+    pdf_file_hash = db.Column(db.String(64))
+    # Copie conforme des données au moment de la signature
+    data_snapshot = db.Column(db.JSON, nullable=False)
+    # Chemin relatif du fichier signature PNG
+    signature = db.Column(db.String(255), nullable=True)
     pdf_url = db.Column(db.Text)  # URL (ou chemin) vers le fichier PDF
     signed_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=_utcnow)
@@ -37,7 +41,6 @@ def _generate_default_waiver_id(context):
     w_type = params.get("waiver_type", "safety_rules")
     prefix = "BVRA" if w_type == "cgl" else "BVSR"
     return generate_inspection_number(prefix)
-
 
 
 def _extract_vehicle_thumbnail(fields):
@@ -107,9 +110,12 @@ class Waiver(db.Model):
     __tablename__ = "waivers"
 
     id = db.Column(db.Integer, primary_key=True)
-    project_id = db.Column(db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
-    waiver_type = db.Column(db.String(20), nullable=False, default="safety_rules", index=True)
-    waiver_id = db.Column(db.String(50), unique=True, default=_generate_default_waiver_id, nullable=False, index=True)
+    project_id = db.Column(db.Integer, db.ForeignKey(
+        "projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    waiver_type = db.Column(db.String(20), nullable=False,
+                            default="safety_rules", index=True)
+    waiver_id = db.Column(db.String(
+        50), unique=True, default=_generate_default_waiver_id, nullable=False, index=True)
 
     __mapper_args__ = {
         "polymorphic_on": waiver_type,
@@ -125,14 +131,16 @@ class Waiver(db.Model):
     signed_at = db.Column(db.DateTime, nullable=True)
 
     # Données signataire universel (BVSR)
-    signer_role = db.Column(db.String(50), nullable=True)  # 'pilot', 'first_ad', 'production', 'camera_operator', 'stunt', 'other'
+    # 'pilot', 'first_ad', 'production', 'camera_operator', 'stunt', 'other'
+    signer_role = db.Column(db.String(50), nullable=True)
     signer_role_custom = db.Column(db.String(100), nullable=True)
     signer_first_name = db.Column(db.String(100), nullable=True)
     signer_last_name = db.Column(db.String(100), nullable=True)
     signer_email = db.Column(db.String(120), nullable=True)
     signer_phone = db.Column(db.String(50), nullable=True)
     signer_company = db.Column(db.String(255), nullable=True)
-    safety_technicians = db.Column(db.Text, nullable=True)  # Noms des référents BV pour ce tournage (personnalisables)
+    # Noms des référents BV pour ce tournage (personnalisables)
+    safety_technicians = db.Column(db.Text, nullable=True)
     helmets_inventory = db.Column(db.JSON, default=dict, nullable=True)
     custom_rules_snapshot = db.Column(db.JSON, default=dict, nullable=True)
     bv_signature_data = db.Column(db.String(255), nullable=True)
@@ -162,7 +170,6 @@ class Waiver(db.Model):
     signature_data = db.Column(db.String(255), nullable=True)
     # Chemin relatif du PDF signé
     signed_pdf_path = db.Column(db.String(500), nullable=True)
-
 
     @property
     def signer_name(self):
@@ -194,18 +201,43 @@ class Waiver(db.Model):
         return self.signer_role_custom or "Représentant légal"
 
     @property
-    def display_legal_form(self):
-        """Retourne la forme juridique et pays du locataire."""
+    def display_legal_form_only(self):
+        """Retourne uniquement la forme juridique du locataire (ex: SAS)."""
         if self.sign_data and self.sign_data.get("legal_form"):
             return self.sign_data.get("legal_form")
         return ""
+
+    @property
+    def display_legal_country(self):
+        """Retourne le pays d'immatriculation / siège social (ex: France)."""
+        if self.sign_data and self.sign_data.get("legal_country"):
+            return self.sign_data.get("legal_country")
+        return "France"
+
+    @property
+    def display_legal_form(self):
+        """Retourne la combinaison forme juridique et pays du locataire."""
+        form = self.display_legal_form_only
+        country = self.display_legal_country
+        if form and country:
+            if country.lower() not in form.lower():
+                return f"{form} ({country})"
+            return form
+        return form or country or ""
 
     @property
     def display_signature_city(self):
         """Retourne la ville de signature (« Fait à »)."""
         if self.sign_data and self.sign_data.get("signature_city"):
             return self.sign_data.get("signature_city")
-        return self.location_of_use or "Paris"
+        return self.location_of_use or ""
+
+    @property
+    def display_order_ref(self):
+        """Retourne la référence du bon de commande (uniquement si renseignée dans sign_data)."""
+        if self.sign_data and self.sign_data.get("order_ref"):
+            return self.sign_data.get("order_ref")
+        return ""
 
     @property
     def bv_signature_data_uri(self):
@@ -267,13 +299,14 @@ class Waiver(db.Model):
 
     def __init__(self, **kwargs):
         if "waiver_type" not in kwargs:
-            poly_id = getattr(self, "__mapper_args__", {}).get("polymorphic_identity")
-            kwargs["waiver_type"] = poly_id if poly_id != "waiver" else kwargs.get("type", "safety_rules")
+            poly_id = getattr(self, "__mapper_args__", {}
+                              ).get("polymorphic_identity")
+            kwargs["waiver_type"] = poly_id if poly_id != "waiver" else kwargs.get(
+                "type", "safety_rules")
         if "waiver_id" not in kwargs:
             prefix = "BVRA" if kwargs.get("waiver_type") == "cgl" else "BVSR"
             kwargs["waiver_id"] = generate_inspection_number(prefix)
         super().__init__(**kwargs)
-
 
     def to_dict(self):
         """Convertit l'objet en dictionnaire pour les réponses API."""
@@ -293,8 +326,6 @@ class Waiver(db.Model):
             "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
         }
 
-
-
     @property
     def vehicles_details(self):
         """
@@ -308,7 +339,8 @@ class Waiver(db.Model):
         # 1. Récupération des IDs véhicules du projet
         veh_ids = []
         if p and p.vehicles_to_check:
-            veh_ids = [v.strip() for v in p.vehicles_to_check.split(",") if v.strip()]
+            veh_ids = [v.strip()
+                       for v in p.vehicles_to_check.split(",") if v.strip()]
         elif p and p.active_checkout_vehicles:
             for cv in p.active_checkout_vehicles:
                 if cv.vehicle_id and str(cv.vehicle_id) not in veh_ids:
@@ -318,7 +350,8 @@ class Waiver(db.Model):
             try:
                 from utils.database import get_vehicles
                 all_vehicles = get_vehicles() or []
-                vehicle_map = {str(v["id"]): v.get("fields", {}) for v in all_vehicles}
+                vehicle_map = {str(v["id"]): v.get("fields", {})
+                               for v in all_vehicles}
             except Exception:
                 vehicle_map = {}
 
@@ -369,9 +402,11 @@ class Waiver(db.Model):
                 clean = v_str.strip()
                 if not clean:
                     continue
-                match_id, match_fields = name_to_fields.get(clean.lower(), (None, {}))
+                match_id, match_fields = name_to_fields.get(
+                    clean.lower(), (None, {}))
                 u_id = match_fields.get("unique_id", "")
-                co_num = checkout_map.get(str(match_id), "") if match_id else ""
+                co_num = checkout_map.get(
+                    str(match_id), "") if match_id else ""
                 thumb = _extract_vehicle_thumbnail(match_fields)
                 v_slug = match_fields.get("slug") or ""
                 results.append({
@@ -421,8 +456,6 @@ class WaiverSignedDocument(db.Model, SignedDocumentMixin):
     """Archive d'une décharge unifiée signée."""
     __tablename__ = "waiver_signed_documents"
     waiver_id = db.Column(db.String(50), primary_key=True)
-
-
 
 
 # ── Modèles des Inspections (Préservés) ──────────────────────────

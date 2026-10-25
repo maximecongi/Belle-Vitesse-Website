@@ -160,7 +160,7 @@ class MaintenanceMixin:
 
         if project and project.kdrive_folder_id and entity_type in DOC_FOLDERS:
             try:
-                # ex: 4_SÉCURITÉ/2_DÉCHARGE_PILOTE
+                # ex: 4_SÉCURITÉ/2_RÈGLES_SÉCURITÉ ou 3_CGL
                 cat_rel = DOC_FOLDERS[entity_type]
                 cat_dir_id = self.ensure_directory_path(
                     project.kdrive_folder_id, cat_rel)

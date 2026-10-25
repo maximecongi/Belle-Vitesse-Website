@@ -368,8 +368,8 @@ def test_check_and_repair_project_structure(app_ctx):
     assert "3_LISTES" in missing
     assert "5_BTS" in missing
     assert "6_INCIDENTS" in missing
-    assert "4_SÉCURITÉ/2_DÉCHARGE_PILOTE" in missing
-    assert "4_SÉCURITÉ/3_DÉCHARGE_PRODUCTION" in missing
+    assert "4_SÉCURITÉ/2_RÈGLES_SÉCURITÉ" in missing
+    assert "4_SÉCURITÉ/3_CGL" in missing
     assert "4_SÉCURITÉ/4_CHECKIN" in missing
     assert mock_client.create_directory.call_count == 0
 

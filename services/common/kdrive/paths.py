@@ -12,10 +12,10 @@ PROJECT_SUBFOLDERS = [
 ]
 
 DOC_FOLDERS = {
-    "cgl": "4_SÉCURITÉ/0_CGL",
     "checkout": "4_SÉCURITÉ/1_CHECKOUT",
     "safety_rules": "4_SÉCURITÉ/2_RÈGLES_SÉCURITÉ",
-    "checkin": "4_SÉCURITÉ/3_CHECKIN",
+    "cgl": "4_SÉCURITÉ/3_CGL",
+    "checkin": "4_SÉCURITÉ/4_CHECKIN",
     "incident": "6_INCIDENTS",
 }
 

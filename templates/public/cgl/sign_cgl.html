@@ -150,10 +150,17 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="cgl_legal_form">Forme juridique et pays <span class="u-text-danger">*</span></label>
+                        <label for="cgl_legal_form">Forme juridique <span class="u-text-danger">*</span></label>
                         <input class="form-input" type="text" id="cgl_legal_form" name="cgl_legal_form"
-                            value="{{ waiver.display_legal_form or 'SAS, France' }}" required
-                            placeholder="Ex: SAS (France), SARL...">
+                            value="{{ waiver.display_legal_form_only or '' }}" required
+                            placeholder="Ex: SAS, SARL, SA, LLC...">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cgl_legal_country">Pays du siège social <span class="u-text-danger">*</span></label>
+                        <input class="form-input" type="text" id="cgl_legal_country" name="cgl_legal_country"
+                            value="{{ waiver.display_legal_country or 'France' }}" required
+                            placeholder="Ex: France, Espagne, Belgique...">
                     </div>
 
                     <div class="form-group">
@@ -203,11 +210,18 @@
                             autocomplete="email">
                     </div>
 
-                    <div class="form-group u-col-span-full">
+                    <div class="form-group">
                         <label for="cgl_city">Ville de signature (« Fait à ») <span
                                 class="u-text-danger">*</span></label>
                         <input class="form-input" type="text" id="cgl_city" name="cgl_city"
                             value="{{ waiver.display_signature_city }}" required placeholder="Ex: Paris, Lyon...">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cgl_order_ref">Référence du bon de commande <span
+                                class="u-text-danger">*</span></label>
+                        <input class="form-input" type="text" id="cgl_order_ref" name="cgl_order_ref"
+                            value="{{ waiver.display_order_ref }}" required placeholder="Ex: BVBC-XXXXXXXXXX">
                     </div>
                 </div>
 
@@ -983,8 +997,8 @@
                         </div>
                         <div class="public-doc-info-item">
                             <span class="public-doc-info-label">Référence du Bon de Commande :</span>
-                            <span class="public-doc-info-value">{{ waiver.project.quote_number or waiver.waiver_id
-                                }}</span>
+                            <span class="public-doc-info-value" id="cgl_text_annexe2_order_ref">{{
+                                waiver.display_order_ref or '—' }}</span>
                         </div>
                     </div>
 

@@ -37,8 +37,8 @@ class ProjectTreeMixin:
         ├── 3_LISTES/
         ├── 4_SÉCURITÉ/
         │   ├── 1_CHECKOUT/
-        │   ├── 2_DÉCHARGE_PILOTE/
-        │   ├── 3_DÉCHARGE_PRODUCTION/
+        │   ├── 2_RÈGLES_SÉCURITÉ/
+        │   ├── 3_CGL/
         │   └── 4_CHECKIN/
         ├── 5_BTS/
         └── 6_INCIDENTS/
@@ -93,7 +93,7 @@ class ProjectTreeMixin:
             # Pour 4_SÉCURITÉ, créer également ses 4 sous-catégories
             if sub == "4_SÉCURITÉ":
                 sec_id = sub_res["id"]
-                for sec_sub in ["1_CHECKOUT", "2_DÉCHARGE_PILOTE", "3_DÉCHARGE_PRODUCTION", "4_CHECKIN"]:
+                for sec_sub in ["1_CHECKOUT", "2_RÈGLES_SÉCURITÉ", "3_CGL", "4_CHECKIN"]:
                     self.client.create_directory(
                         parent_id=sec_id, name=sec_sub)
 
@@ -148,7 +148,7 @@ class ProjectTreeMixin:
                 sec_items, _, _ = self.client.list_files(sec_id, limit=50)
                 existing_sec = {item["name"]
                                 for item in sec_items if item.get("type") == "dir"}
-                for sec_sub in ["1_CHECKOUT", "2_DÉCHARGE_PILOTE", "3_DÉCHARGE_PRODUCTION", "4_CHECKIN"]:
+                for sec_sub in ["1_CHECKOUT", "2_RÈGLES_SÉCURITÉ", "3_CGL", "4_CHECKIN"]:
                     if sec_sub not in existing_sec:
                         if dry_run:
                             logger.info(

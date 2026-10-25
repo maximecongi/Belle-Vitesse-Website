@@ -173,6 +173,7 @@ class CglComprehensiveTest(unittest.TestCase):
             create_cgl(proj.id)
             cgl = CglWaiver.query.filter_by(project_id=proj.id).first()
             _, sign_url = get_or_create_waiver_signing_url(cgl.waiver_id, waiver_type="cgl")
+            self.assertEqual(cgl.display_order_ref, "")
             token_val = sign_url.split("/sign/cgl/")[-1]
             proj_id = proj.id
             waiver_id = cgl.waiver_id
@@ -189,6 +190,10 @@ class CglComprehensiveTest(unittest.TestCase):
             "siret": "12345678900012",
             "address": "15 Avenue des Champs-Élysées, 75008 Paris",
             "vat_number": "FR12345678900",
+            "legal_form": "SAS",
+            "legal_country": "France",
+            "order_ref": "BVPR-TEST-1234",
+            "city": "Paris",
             "location_of_use": "Studio Bry-sur-Marne",
             "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
         }
@@ -202,6 +207,11 @@ class CglComprehensiveTest(unittest.TestCase):
             self.assertEqual(cgl_signed.status, "signed")
             self.assertEqual(cgl_signed.production_name, "Société Production Réelle SAS")
             self.assertEqual(cgl_signed.production_representative, "Alice Martin, Gérante")
+            self.assertEqual(cgl_signed.display_order_ref, "BVPR-TEST-1234")
+            self.assertEqual(cgl_signed.display_legal_form_only, "SAS")
+            self.assertEqual(cgl_signed.display_legal_country, "France")
+            self.assertEqual(cgl_signed.display_legal_form, "SAS (France)")
+            self.assertEqual(cgl_signed.display_signature_city, "Paris")
             self.assertIsNotNone(cgl_signed.signed_at)
 
             # Vérifie l'archive signée WaiverSignedDocument
@@ -289,7 +299,8 @@ class CglComprehensiveTest(unittest.TestCase):
 
         payload = {
             "production_name": "Studio Lumière SAS",
-            "legal_form": "SAS au capital de 50 000 € (France)",
+            "legal_form": "SAS au capital de 50 000 €",
+            "legal_country": "France",
             "representative": "Claire Delon",
             "representative_role": "Directrice Générale",
             "phone": "0789101112",
@@ -311,6 +322,8 @@ class CglComprehensiveTest(unittest.TestCase):
         with self.app.app_context():
             signed_cgl = CglWaiver.query.filter_by(project_id=proj_id).first()
             self.assertEqual(signed_cgl.status, "signed")
+            self.assertEqual(signed_cgl.display_legal_form_only, "SAS au capital de 50 000 €")
+            self.assertEqual(signed_cgl.display_legal_country, "France")
             self.assertEqual(signed_cgl.display_legal_form, "SAS au capital de 50 000 € (France)")
             self.assertEqual(signed_cgl.display_representative_role, "Directrice Générale")
             self.assertEqual(signed_cgl.display_signature_city, "Paris")

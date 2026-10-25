@@ -131,12 +131,12 @@ def test_build_document_directory_path():
     assert build_document_directory_path(p, "checkout", "BVCO-1111", "photo") == "4_SÉCURITÉ/1_CHECKOUT/BVCO-1111/PHOTOS"
 
     # 2. Checkin
-    assert build_document_directory_path(p, "checkin", "BVCI-2222", "pdf") == "4_SÉCURITÉ/3_CHECKIN/BVCI-2222"
-    assert build_document_directory_path(p, "checkin", "BVCI-2222", "photo") == "4_SÉCURITÉ/3_CHECKIN/BVCI-2222/PHOTOS"
+    assert build_document_directory_path(p, "checkin", "BVCI-2222", "pdf") == "4_SÉCURITÉ/4_CHECKIN/BVCI-2222"
+    assert build_document_directory_path(p, "checkin", "BVCI-2222", "photo") == "4_SÉCURITÉ/4_CHECKIN/BVCI-2222/PHOTOS"
 
     # 3. CGL (Rental Agreement)
-    assert build_document_directory_path(p, "cgl", "BVRA-3333", "pdf") == "4_SÉCURITÉ/0_CGL/BVRA-3333/1_CGL"
-    assert build_document_directory_path(p, "cgl", "BVRA-3333", "insurance") == "4_SÉCURITÉ/0_CGL/BVRA-3333/2_ATTESTATION_ASSURANCE"
+    assert build_document_directory_path(p, "cgl", "BVRA-3333", "pdf") == "4_SÉCURITÉ/3_CGL/BVRA-3333/1_CGL"
+    assert build_document_directory_path(p, "cgl", "BVRA-3333", "insurance") == "4_SÉCURITÉ/3_CGL/BVRA-3333/2_ATTESTATION_ASSURANCE"
 
     # 4. Safety rules (BVSR)
     assert build_document_directory_path(p, "safety_rules", "BVSR-4444", "pdf") == "4_SÉCURITÉ/2_RÈGLES_SÉCURITÉ/BVSR-4444"

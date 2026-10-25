@@ -21,7 +21,6 @@ document.addEventListener('DOMContentLoaded', function () {
         { inputId: 'cgl_vat_number', textId: 'cgl_text_vat', defaultText: '…' },
         // Synchronisation Annexe 2
         { inputId: 'cgl_production_name', textId: 'cgl_text_annexe2_production_name', defaultText: '…' },
-        { inputId: 'cgl_legal_form', textId: 'cgl_text_annexe2_legal_form', defaultText: '—' },
         { inputId: 'cgl_siret', textId: 'cgl_text_annexe2_siret', defaultText: '—' },
         { inputId: 'cgl_vat_number', textId: 'cgl_text_annexe2_vat', defaultText: '—' },
         { inputId: 'cgl_representative', textId: 'cgl_text_annexe2_representative', defaultText: '—' },
@@ -31,7 +30,8 @@ document.addEventListener('DOMContentLoaded', function () {
         { inputId: 'cgl_address', textId: 'cgl_text_annexe2_address', defaultText: '—' },
         { inputId: 'cgl_phone', textId: 'cgl_text_annexe2_phone', defaultText: '—' },
         { inputId: 'cgl_email', textId: 'cgl_text_annexe2_email', defaultText: '—' },
-        { inputId: 'cgl_city', textId: 'cgl_text_annexe2_city', defaultText: 'Paris' },
+        { inputId: 'cgl_city', textId: 'cgl_text_annexe2_city', defaultText: '—' },
+        { inputId: 'cgl_order_ref', textId: 'cgl_text_annexe2_order_ref', defaultText: '—' },
     ];
 
     function updateCglContractText() {
@@ -43,6 +43,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 textEl.textContent = val || item.defaultText;
             }
         });
+
+        // Synchronisation combinée de la forme juridique et du pays (Annexe 2)
+        const legalFormEl = document.getElementById('cgl_legal_form');
+        const legalCountryEl = document.getElementById('cgl_legal_country');
+        const legalTextEl = document.getElementById('cgl_text_annexe2_legal_form');
+        if (legalTextEl) {
+            const formVal = legalFormEl ? legalFormEl.value.trim() : '';
+            const countryVal = legalCountryEl ? legalCountryEl.value.trim() : '';
+            if (formVal && countryVal) {
+                legalTextEl.textContent = `${formVal} (${countryVal})`;
+            } else if (formVal || countryVal) {
+                legalTextEl.textContent = formVal || countryVal;
+            } else {
+                legalTextEl.textContent = '—';
+            }
+        }
     }
 
     fieldsToSync.forEach(function (item) {
@@ -51,6 +67,11 @@ document.addEventListener('DOMContentLoaded', function () {
             inputEl.addEventListener('input', updateCglContractText);
         }
     });
+    const formInput = document.getElementById('cgl_legal_form');
+    if (formInput) formInput.addEventListener('input', updateCglContractText);
+    const countryInput = document.getElementById('cgl_legal_country');
+    if (countryInput) countryInput.addEventListener('input', updateCglContractText);
+
     updateCglContractText();
 
     // ── 2. Autocomplétion d'adresse ──────────────────────────────────────────
@@ -121,6 +142,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const requiredFieldIds = [
             'cgl_production_name',
             'cgl_legal_form',
+            'cgl_legal_country',
             'cgl_representative',
             'cgl_representative_role',
             'cgl_siret',
@@ -128,6 +150,7 @@ document.addEventListener('DOMContentLoaded', function () {
             'cgl_phone',
             'cgl_email',
             'cgl_city',
+            'cgl_order_ref',
             'cgl_insurance_company',
             'cgl_insurance_policy'
         ];
@@ -181,12 +204,16 @@ document.addEventListener('DOMContentLoaded', function () {
         if (roleEl) formData.set('representative_role', roleEl.value.trim());
         const legalFormEl = document.getElementById('cgl_legal_form');
         if (legalFormEl) formData.set('legal_form', legalFormEl.value.trim());
+        const legalCountryEl = document.getElementById('cgl_legal_country');
+        if (legalCountryEl) formData.set('legal_country', legalCountryEl.value.trim());
         const phoneEl = document.getElementById('cgl_phone');
         if (phoneEl) formData.set('phone', phoneEl.value.trim());
         const emailEl = document.getElementById('cgl_email');
         if (emailEl) formData.set('email', emailEl.value.trim());
         const cityEl = document.getElementById('cgl_city');
         if (cityEl) formData.set('city', cityEl.value.trim());
+        const orderRefEl = document.getElementById('cgl_order_ref');
+        if (orderRefEl) formData.set('order_ref', orderRefEl.value.trim());
         const insCoEl = document.getElementById('cgl_insurance_company');
         if (insCoEl) formData.set('insurance_company', insCoEl.value.trim());
         const insPolEl = document.getElementById('cgl_insurance_policy');

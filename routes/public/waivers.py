@@ -135,10 +135,14 @@ def init_waiver_routes(app):
                 s_data = dict(waiver.sign_data or {})
                 if data.get("legal_form"):
                     s_data["legal_form"] = data.get("legal_form").strip()
+                if data.get("legal_country"):
+                    s_data["legal_country"] = data.get("legal_country").strip()
                 if data.get("representative_role"):
                     s_data["representative_role"] = data.get("representative_role").strip()
                 if data.get("city"):
                     s_data["signature_city"] = data.get("city").strip()
+                if data.get("order_ref"):
+                    s_data["order_ref"] = data.get("order_ref").strip()
                 if data.get("insurance_company"):
                     s_data["insurance_company"] = data.get("insurance_company").strip()
                 if data.get("insurance_policy"):
