@@ -114,11 +114,7 @@ else 'checkout') %}
     </div>
 
     <script src="https://unpkg.com/lucide@1.48.0/dist/umd/lucide.min.js"></script>
-    <script>
-        if (window.lucide && typeof window.lucide.createIcons === 'function') {
-            window.lucide.createIcons();
-        }
-    </script>
+    <script src="{{ asset_url('js/src/ui-utils.js') }}"></script>
 </body>
 
 </html>

@@ -266,9 +266,9 @@
 
         <!-- ═══════════ SECTION 5 : PREUVE LÉGALE & INTÉGRITÉ ═══════════ -->
         <footer class="bvsr-evidence-seal">
-            {% if qr_data_uri %}
+            {% if qr_data_uri or qr %}
             <div class="bvsr-seal-qr">
-                <img src="{{ qr_data_uri }}" alt="QR Code Intégrité">
+                <img src="{{ qr_data_uri or qr }}" alt="QR Code Intégrité">
             </div>
             {% endif %}
             <div class="bvsr-seal-details">

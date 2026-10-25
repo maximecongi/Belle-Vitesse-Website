@@ -98,6 +98,8 @@ def init_web_routes(app):
                 and not request.path.startswith('/pilot-waiver/') \
                 and not request.path.startswith('/production-waiver/') \
                 and not request.path.startswith('/waiver/') \
+                and not request.path.startswith('/cgl/') \
+                and not request.path.startswith('/safety-rules/') \
                 and not request.path.startswith('/checkout/') \
                 and not request.path.startswith('/checkin/') \
                 and not request.path.startswith('/incidents/'):

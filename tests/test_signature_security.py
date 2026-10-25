@@ -343,6 +343,74 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
             verify_html = verify_res2.get_data(as_text=True)
             self.assertIn("sceau invalide", verify_html.lower())
 
+    def test_verify_page_pdf_upload_authenticity_check(self):
+        """Vérifie l'authentification physique d'un PDF téléversé sur la page /verify (valide vs falsifié)."""
+        from utils.document_utils import compute_pdf_hash
+
+        with self.app.app_context():
+            prod = Production(name="Upload Prod")
+            db.session.add(prod)
+            db.session.flush()
+            contact = Contact(first_name="Alice", last_name="Dupont", mail="alice@upload.com", production_id=prod.id)
+            project = Project(name="Film Upload Verify", production_id=prod.id, production_contact_id=contact.id)
+            db.session.add_all([contact, project])
+            db.session.flush()
+
+            success, msg = create_cgl(project.id)
+            self.assertTrue(success)
+            cgl = CglWaiver.query.filter_by(project_id=project.id).first()
+            generate_cgl(cgl.waiver_id)
+            waiver_id = str(cgl.waiver_id)
+            _, sign_url = get_or_create_waiver_signing_url(cgl.waiver_id, waiver_type="cgl")
+            token = sign_url.split("/")[-1]
+
+            valid_sig = _generate_valid_png_base64()
+            res = self.client.post(
+                f"/sign/cgl/{token}",
+                data={
+                    "signature": valid_sig,
+                    "representative": "Alice Dupont",
+                    "representative_role": "Directrice",
+                    "accepted_terms": "1",
+                    "has_signing_authority": "1",
+                },
+            )
+            self.assertEqual(res.status_code, 200)
+
+            signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=waiver_id).first()
+            self.assertIsNotNone(signed_doc)
+
+            # Attribution de l'empreinte d'un PDF de test authentique
+            authentic_pdf_content = b"%PDF-1.4 authentic pdf content for unit test"
+            signed_doc.pdf_file_hash = compute_pdf_hash(authentic_pdf_content)
+            db.session.commit()
+
+            # 1. Upload du PDF authentique -> Détection positive
+            data_authentic = {
+                "pdf": (io.BytesIO(authentic_pdf_content), "authentic_cgl.pdf")
+            }
+            res_post_auth = self.client.post(
+                f"/cgl/verify/{waiver_id}",
+                data=data_authentic,
+                content_type="multipart/form-data"
+            )
+            self.assertEqual(res_post_auth.status_code, 200)
+            html_auth = res_post_auth.get_data(as_text=True)
+            self.assertIn("Fichier PDF authentique", html_auth)
+
+            # 2. Upload d'un PDF altéré ou falsifié -> Détection négative
+            tampered_pdf_content = b"%PDF-1.4 TAMPERED corrupted and modified pdf content"
+            data_tampered = {
+                "pdf": (io.BytesIO(tampered_pdf_content), "tampered_cgl.pdf")
+            }
+            res_post_tamp = self.client.post(
+                f"/cgl/verify/{waiver_id}",
+                data=data_tampered,
+                content_type="multipart/form-data"
+            )
+            self.assertEqual(res_post_tamp.status_code, 200)
+            html_tamp = res_post_tamp.get_data(as_text=True)
+            self.assertIn("Fichier PDF non authentique", html_tamp)
 
 
 if __name__ == "__main__":
