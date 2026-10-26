@@ -264,7 +264,8 @@
                         <span>
                             {{ label }} <span class="u-text-error">*</span>
                             {% if item.has_protocol %}
-                            <span class="vehicle-modal-trigger u-cursor-pointer u-ml-1 u-text-info u-inline-flex u-align-center u-vertical-middle"
+                            <span
+                                class="vehicle-modal-trigger u-cursor-pointer u-ml-1 u-text-info u-inline-flex u-align-center u-vertical-middle"
                                 data-protocol-url="{{ item.protocol_url or url_for('admin_tools.admin_check_vehicles') }}"
                                 title="Voir le protocole technique pour {{ label }}">
                                 <i data-lucide="info" class="u-w-1rem u-h-1rem"></i>
@@ -281,13 +282,12 @@
                         {% if field in ['battery', 'battery_level'] %}
                         <input type="number" name="battery_level" class="form-input checkpoint-value-input"
                             value="{{ data.battery_level if (data and data.battery_level is not none) else (data[field] if (data and data[field] is defined and data[field] != '—') else '100') }}"
-                            min="{{ item.minimum }}" max="{{ item.maximum }}" step="any" required>
+                            min="{{ item.minimum }}" max="{{ item.maximum }}" step="0.1" required>
                         {% else %}
                         <input type="number" name="{{ field }}" class="form-input checkpoint-value-input"
                             value="{{ data[field] if (data and data[field] is defined and data[field] != '—') else '' }}"
-                            min="{{ item.minimum }}" max="{{ item.maximum }}" step="any" required>
+                            min="{{ item.minimum }}" max="{{ item.maximum }}" step="0.1" required>
                         {% endif %}
-                        <span class="u-text-xs u-text-muted">Plage {{ item.minimum }}–{{ item.maximum }}{% if item.goal is not none %} · objectif {{ item.goal }} ± {{ item.tolerance }}{% endif %}</span>
                         {% if item.unit %}<span class="u-text-semibold u-ml-1">{{ item.unit }}</span>{% endif %}
                     </div>
                     {% else %}

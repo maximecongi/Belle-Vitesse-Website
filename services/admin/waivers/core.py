@@ -48,16 +48,19 @@ def create_waiver(project_id, waiver_type: str = "cgl", **kwargs):
 
     # CGL : un seul contrat actif par projet
     if waiver_type == "cgl":
-        existing = model.query.filter_by(project_id=project_id).first()
-        if existing:
-            if existing.deleted_at is None:
-                return False, "Des Conditions Générales de Location (CGL) existent déjà pour ce projet."
+        existing_active = model.query.filter_by(project_id=project_id, deleted_at=None).first()
+        if existing_active:
+            return False, "Des Conditions Générales de Location (CGL) existent déjà pour ce projet."
+
+        # Nettoyage des anciens brouillons non signés supprimés s'il y en a
+        stale_drafts = model.query.filter_by(project_id=project_id).filter(model.deleted_at.isnot(None)).all()
+        for stale in stale_drafts:
             from models import WaiverSignedDocument
-            signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=existing.waiver_id).order_by(WaiverSignedDocument.version.desc()).first()
-            if not signed_doc and existing.status not in ["signed", "completed"]:
-                _cleanup_waiver_assets(waiver_type, existing)
-                db.session.delete(existing)
-                db.session.flush()
+            signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=stale.waiver_id).first()
+            if not signed_doc and stale.status not in ["signed", "completed"]:
+                _cleanup_waiver_assets(waiver_type, stale)
+                db.session.delete(stale)
+        db.session.flush()
 
     waiver = model(project_id=project_id)
     waiver.project_name = p.name
@@ -411,7 +414,7 @@ def delete_waiver_internal(project_id, waiver_type: str = None):
         return
 
     if waiver_type == "cgl":
-        waivers = [CglWaiver.query.filter_by(project_id=p.id).first()]
+        waivers = CglWaiver.query.filter_by(project_id=p.id).all()
     elif waiver_type == "safety_rules":
         waivers = SafetyRulesWaiver.query.filter_by(project_id=p.id).all()
     else:

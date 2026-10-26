@@ -131,6 +131,29 @@ class CglComprehensiveTest(unittest.TestCase):
             self.assertFalse(success2)
             self.assertIn("existent déjà", msg)
 
+    def test_02b_recreate_cgl_after_deletion_resolves_active_cgl(self):
+        """Vérifie que la recréation de CGL après suppression résout correctement la nouvelle CGL active sur le projet."""
+        with self.app.app_context():
+            proj, _, _ = self._create_mock_project()
+            proj_id = proj.id
+
+            success1, _ = create_cgl(proj_id)
+            self.assertTrue(success1)
+            cgl1 = CglWaiver.query.filter_by(project_id=proj_id, deleted_at=None).first()
+            delete_cgl(cgl1.waiver_id)
+
+            # Recréation via create_cgl (quick create)
+            success2, _ = create_cgl(proj_id)
+            self.assertTrue(success2)
+
+            db.session.expire_all()
+            reloaded_proj = db.session.get(Project, proj_id)
+            self.assertIsNotNone(reloaded_proj.cgl)
+            self.assertIsNotNone(reloaded_proj.active_cgl)
+            self.assertIsNone(reloaded_proj.active_cgl.deleted_at)
+            self.assertNotEqual(reloaded_proj.active_cgl.waiver_id, cgl1.waiver_id)
+            self.assertEqual(reloaded_proj.active_cgl.status, "to_send")
+
     def test_03_generate_cgl(self):
         """Vérifie que la génération des CGL capture les métadonnées du projet et passe en to_send."""
         with self.app.app_context():

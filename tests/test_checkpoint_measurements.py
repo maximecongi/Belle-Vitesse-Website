@@ -11,9 +11,11 @@ class CheckpointMeasurementRulesTests(unittest.TestCase):
 
     def test_checkout_tolerance_is_clamped_to_range(self):
         self.assertEqual(validate_measurement("95", self.rules, True), ("95", None))
+        self.assertEqual(validate_measurement("95.5", self.rules, True), ("95.5", None))
         self.assertEqual(validate_measurement("100", self.rules, True), ("100", None))
         self.assertIn("objectif", validate_measurement("94.9", self.rules, True)[1])
         self.assertIn("plage", validate_measurement("100.1", self.rules, True)[1])
+        self.assertIn("une décimale", validate_measurement("95.55", self.rules, True)[1])
 
     def test_checkin_only_requires_value_inside_range(self):
         self.assertEqual(validate_measurement("42", self.rules, False), ("42", None))
@@ -28,6 +30,8 @@ class CheckpointMeasurementRulesTests(unittest.TestCase):
             normalize_measurement_rules({"minimum": 0, "maximum": 100, "goal": 101, "tolerance": 5})
         with self.assertRaisesRegex(ValueError, "tolérance"):
             normalize_measurement_rules({"minimum": 0, "maximum": 100, "goal": 100, "tolerance": -1})
+        with self.assertRaisesRegex(ValueError, "une décimale"):
+            normalize_measurement_rules({"minimum": 0, "maximum": 100, "goal": 100, "tolerance": 0.25})
 
     @patch("services.admin.utils.is_known_vehicle", return_value=True)
     @patch("services.admin.utils.get_checkpoints_for_vehicle")

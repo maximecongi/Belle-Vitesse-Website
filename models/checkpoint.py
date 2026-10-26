@@ -15,10 +15,10 @@ class CheckpointDefinition(db.Model):
     category = db.Column(db.String(100), default="Sécurité", nullable=False)
     type = db.Column(db.String(50), default="status", nullable=False)  # 'status' ou 'value'
     unit = db.Column(db.String(20), nullable=True)                     # ex: '%'
-    minimum = db.Column(db.Numeric(18, 6), nullable=True)
-    maximum = db.Column(db.Numeric(18, 6), nullable=True)
-    goal = db.Column(db.Numeric(18, 6), nullable=True)
-    tolerance = db.Column(db.Numeric(18, 6), nullable=True)
+    minimum = db.Column(db.Numeric(18, 1), nullable=True)
+    maximum = db.Column(db.Numeric(18, 1), nullable=True)
+    goal = db.Column(db.Numeric(18, 1), nullable=True)
+    tolerance = db.Column(db.Numeric(18, 1), nullable=True)
     default_detail = db.Column(db.Text, nullable=True)                 # Indication globale de fallback
     order = db.Column(db.Integer, default=0, nullable=False)
 

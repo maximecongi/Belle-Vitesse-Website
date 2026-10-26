@@ -215,6 +215,16 @@ def compute_inspection_readiness(form_or_statuses, vehicle_id=None, is_checkout=
                 val_clean = str(val).lower().strip() if val is not None else ""
                 if val_clean not in ("ok", "non_applicable", "not_applicable"):
                     failures.append(label)
+
+        # Fallback pour le niveau de batterie au départ si non présent dans les checkpoints dynamiques
+        if is_checkout and battery_val is not None:
+            if not any(cp.get("key") in ("battery", "battery_level") for cp in checkpoints):
+                try:
+                    b_float = float(battery_val)
+                    if b_float < 100:
+                        failures.append("Charge batterie (< 100%)")
+                except (ValueError, TypeError):
+                    failures.append("Charge batterie (non numérique)")
     elif not is_checkout:
         if isinstance(form_or_statuses, dict) and form_or_statuses:
             # Fallback pour validation directe de statuts uniquement HORS check-out

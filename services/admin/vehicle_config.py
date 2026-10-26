@@ -712,7 +712,12 @@ def create_checkpoint(form_data: dict):
         unit = None
         rules = {"minimum": None, "maximum": None, "goal": None, "tolerance": None}
     else:
-        rules = normalize_measurement_rules(form_data)
+        has_any_rule = any(form_data.get(field) not in (None, "") for field in ("minimum", "maximum", "goal", "tolerance"))
+        if not has_any_rule:
+            from decimal import Decimal
+            rules = {"minimum": Decimal("0.0"), "maximum": Decimal("100.0"), "goal": Decimal("100.0"), "tolerance": Decimal("5.0")}
+        else:
+            rules = normalize_measurement_rules(form_data)
     has_protocol = bool(form_data.get("has_protocol"))
     protocol_url = form_data.get("protocol_url", "").strip() or None
 
@@ -764,7 +769,14 @@ def update_checkpoint(checkpoint_id: int, form_data: dict) -> bool:
         cp.unit = None
         cp.minimum = cp.maximum = cp.goal = cp.tolerance = None
     else:
-        rules = normalize_measurement_rules(form_data)
+        has_any_rule = any(form_data.get(field) not in (None, "") for field in ("minimum", "maximum", "goal", "tolerance"))
+        if not has_any_rule and cp.minimum is not None:
+            rules = {"minimum": cp.minimum, "maximum": cp.maximum, "goal": cp.goal, "tolerance": cp.tolerance}
+        elif not has_any_rule:
+            from decimal import Decimal
+            rules = {"minimum": Decimal("0.0"), "maximum": Decimal("100.0"), "goal": Decimal("100.0"), "tolerance": Decimal("5.0")}
+        else:
+            rules = normalize_measurement_rules(form_data)
         cp.minimum = rules["minimum"]
         cp.maximum = rules["maximum"]
         cp.goal = rules["goal"]

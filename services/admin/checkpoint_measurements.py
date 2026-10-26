@@ -12,18 +12,27 @@ def decimal_value(value):
     try:
         result = Decimal(str(value).strip().replace(",", "."))
     except (InvalidOperation, TypeError, ValueError):
-        raise ValueError("une borne numérique est invalide")
+        raise ValueError("une valeur numérique est invalide")
     if not result.is_finite():
-        raise ValueError("les bornes doivent être des nombres finis")
-    return result
+        raise ValueError("les nombres doivent être finis")
+    try:
+        rounded = result.quantize(Decimal("0.1"))
+    except InvalidOperation:
+        raise ValueError("la valeur numérique dépasse la précision autorisée")
+    if rounded != result:
+        raise ValueError(
+            "les mesures et leurs règles sont limitées à une décimale")
+    return rounded
 
 
 def normalize_measurement_rules(data):
     rules = {field: decimal_value(data.get(field)) for field in RULE_FIELDS}
     if rules["minimum"] > rules["maximum"]:
-        raise ValueError("la valeur minimale doit être inférieure ou égale à la valeur maximale")
+        raise ValueError(
+            "la valeur minimale doit être inférieure ou égale à la valeur maximale")
     if not rules["minimum"] <= rules["goal"] <= rules["maximum"]:
-        raise ValueError("l’objectif doit être compris dans la plage autorisée")
+        raise ValueError(
+            "l’objectif doit être compris dans la plage autorisée")
     if rules["tolerance"] < 0:
         raise ValueError("la tolérance doit être positive ou nulle")
     return rules

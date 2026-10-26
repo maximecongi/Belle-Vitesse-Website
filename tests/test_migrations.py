@@ -52,7 +52,7 @@ class MigrationsTestCase(unittest.TestCase):
                 # 3. Vérification de la version finale dans alembic_version
                 with db.engine.connect() as conn:
                     current_rev = conn.execute(sa.text("SELECT version_num FROM alembic_version")).scalar()
-                    self.assertEqual(current_rev, "r00d7fe3c478")
+                    self.assertEqual(current_rev, "t00d7fe3c480")
 
                 # Vérification de la clé primaire composite réelle (waiver_id, version) sur waiver_signed_documents
                 wsd_pk = inspector.get_pk_constraint("waiver_signed_documents")
@@ -132,7 +132,7 @@ class MigrationsTestCase(unittest.TestCase):
                 upgrade()
                 with db.engine.connect() as conn:
                     current_rev = conn.execute(sa.text("SELECT version_num FROM alembic_version")).scalar()
-                    self.assertEqual(current_rev, "r00d7fe3c478")
+                    self.assertEqual(current_rev, "t00d7fe3c480")
 
 
     def test_upgrade_from_previous_head_stamp(self):
@@ -175,7 +175,7 @@ class MigrationsTestCase(unittest.TestCase):
 
                 with db.engine.connect() as conn:
                     current_rev = conn.execute(sa.text("SELECT version_num FROM alembic_version")).scalar()
-                    self.assertEqual(current_rev, "r00d7fe3c478")
+                    self.assertEqual(current_rev, "t00d7fe3c480")
 
     def test_downgrade_safety_prevents_losing_version_2(self):
         """Vérifie qu'un downgrade refuse strictement de s'exécuter si des documents version > 1 existent."""

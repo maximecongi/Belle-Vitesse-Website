@@ -79,7 +79,7 @@ endblock %}
             {% for field, label in [('minimum', 'Minimum autorisé'), ('maximum', 'Maximum autorisé'), ('goal', 'Objectif au départ'), ('tolerance', 'Tolérance autour de l’objectif')] %}
             <div class="form-group">
                 <label for="checkpoint_{{ field }}" class="form-label">{{ label }} <span class="u-text-danger">*</span></label>
-                <input type="number" step="any" id="checkpoint_{{ field }}" name="{{ field }}" class="form-input checkpoint-measurement-rule"
+                <input type="number" step="0.1" id="checkpoint_{{ field }}" name="{{ field }}" class="form-input checkpoint-measurement-rule"
                     value="{{ checkpoint[field] if checkpoint[field] is defined and checkpoint[field] is not none else '' }}"
                     {% if checkpoint.type == 'value' %}required{% else %}disabled{% endif %}>
             </div>

@@ -133,9 +133,15 @@ class Project(db.Model):
     # Décharges associées au projet
     waivers = db.relationship(
         "Waiver", backref="project", cascade="all, delete-orphan", lazy=True)
-    # Contrat Cadre / CGL (Rental Agreement - BVRA) associé (unique pour le projet)
+    # Contrat Cadre / CGL (Rental Agreement - BVRA) associé (unique actif pour le projet)
     cgl = db.relationship(
-        "CglWaiver", uselist=False, lazy=True, overlaps="project,waivers")
+        "CglWaiver",
+        primaryjoin="and_(Project.id == foreign(CglWaiver.project_id), CglWaiver.deleted_at.is_(None))",
+        order_by="desc(CglWaiver.id)",
+        uselist=False,
+        lazy=True,
+        overlaps="project,waivers",
+    )
     # Règles de sécurité universelles associées (BVSR, multiples possibles pour le projet)
     safety_rules = db.relationship(
         "SafetyRulesWaiver", lazy=True, order_by="SafetyRulesWaiver.id", overlaps="project,waivers")
@@ -159,7 +165,14 @@ class Project(db.Model):
     @property
     def active_cgl(self):
         """Retourne le contrat CGL / Rental Agreement (BVRA) si il existe et n'a pas été supprimé."""
-        return self.cgl if (self.cgl and getattr(self.cgl, "deleted_at", None) is None) else None
+        if self.cgl and getattr(self.cgl, "deleted_at", None) is None:
+            return self.cgl
+        if "waivers" in self.__dict__:
+            active = [w for w in (self.waivers or []) if getattr(w, "waiver_type", None) == "cgl" and getattr(w, "deleted_at", None) is None]
+            if active:
+                return active[-1]
+        from models.waiver import CglWaiver
+        return CglWaiver.query.filter_by(project_id=self.id, deleted_at=None).order_by(CglWaiver.id.desc()).first()
 
 
 
