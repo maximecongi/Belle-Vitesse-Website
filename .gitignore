@@ -313,3 +313,5 @@ static/css/admin/*.bundle.css
 # Runtime logs
 logs/
 .DS_Store
+AUDIT_CORRECTIONS_SIGNATURES_CGL_ERP.md
+.DS_Store
