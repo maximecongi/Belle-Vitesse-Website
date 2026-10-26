@@ -261,27 +261,8 @@ def get_or_create_waiver_signing_url(waiver_id: str, waiver_type: str = "cgl", b
             }
         )
 
-    if base_url:
-        root_url = base_url.rstrip("/")
-    else:
-        canonical = (
-            current_app.config.get("APP_BASE_URL")
-            or current_app.config.get("BASE_URL")
-            or os.getenv("APP_BASE_URL")
-            or os.getenv("BASE_URL")
-        ) if current_app else None
-        if canonical:
-            root_url = canonical.rstrip("/")
-        elif has_request_context():
-            server_name = current_app.config.get("SERVER_NAME") if current_app else None
-            host = request.host
-            if server_name and host != server_name:
-                root_url = f"https://{server_name}"
-            else:
-                root_url = request.host_url.rstrip("/")
-        else:
-            server_name = current_app.config.get("SERVER_NAME") if current_app else None
-            root_url = f"https://{server_name}" if server_name else "https://bellevitesse.com"
+    from utils.request_utils import resolve_base_url
+    root_url = resolve_base_url(base_url)
 
     route_prefix = "safety-rules" if mode == "safety_rules" else "cgl"
     signing_url = f"{root_url}/sign/{route_prefix}/{active_token.token}"

@@ -49,6 +49,7 @@ from utils.document_utils import (
     render_pdf_from_template,
 )
 from utils.mailer import send_waiver_signed_email
+from utils.request_utils import resolve_base_url
 from utils.signature_storage import (
     save_signature_image,
     load_signature_data_uri,
@@ -296,14 +297,7 @@ def generate_inspection_token(record_id, mode):
         record.status = "pending"
     db.session.commit()
 
-    base_url = (
-        current_app.config.get("APP_BASE_URL")
-        or current_app.config.get("BASE_URL")
-        or os.getenv("APP_BASE_URL")
-        or os.getenv("BASE_URL", "https://bellevitesse.com")
-    ) if current_app else os.getenv("BASE_URL", "https://bellevitesse.com")
-    if not base_url.startswith("http"):
-        base_url = f"https://{base_url}"
+    base_url = resolve_base_url()
 
     return {
         "inspection_id": data["inspection_id"],
@@ -373,14 +367,7 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         raise ValueError(f"Record {record_id} not found for mode {mode}")
 
     signed_at = datetime.now(timezone.utc)
-    base_url = (
-        current_app.config.get("APP_BASE_URL")
-        or current_app.config.get("BASE_URL")
-        or os.getenv("APP_BASE_URL")
-        or os.getenv("BASE_URL", "https://bellevitesse.com")
-    ) if current_app else os.getenv("BASE_URL", "https://bellevitesse.com")
-    if not base_url.startswith("http"):
-        base_url = f"https://{base_url}"
+    base_url = resolve_base_url()
 
     try:
         # 1. Mise à jour de l'état (sans écraser la date ou l'IP originale du client si déjà présent)
@@ -509,6 +496,7 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
             "qr": qr_code_img,
             "hash": current_hash,
             "document_hash": current_hash,  # utilisé pour les décharges et CGL
+            "base_url": base_url,
             "verification_url": verification_url,
             "signed_at_str": signed_at.strftime("%d/%m/%Y %H:%M"),
             "signed_ip": signed_ip,
@@ -915,13 +903,9 @@ def seal_incident_contradictory_document(incident, incident_data, base_url=None)
     7. Déclenche l'upload kDrive asynchrone (bundle PDF + photos + documents).
     """
     if not base_url:
-        try:
-            from flask import request
-            if request:
-                base_url = request.host_url.rstrip("/")
-        except Exception:
-            base_url = current_app.config.get(
-                "APP_BASE_URL", "https://bellevitesse.com").rstrip("/")
+        base_url = resolve_base_url()
+    else:
+        base_url = resolve_base_url(base_url)
 
     # Calcul du sceau HMAC contradictoire
     bv_signed_iso = incident.bv_signed_at.isoformat() if incident.bv_signed_at else ""
@@ -971,6 +955,7 @@ def seal_incident_contradictory_document(incident, incident_data, base_url=None)
         "is_sealed": True,
         "hash": current_hash,
         "qr": qr_code_img,
+        "base_url": base_url,
         "verification_url": verification_url,
         "signed_at_str": (incident.prod_signed_at or _utcnow()).strftime("%d/%m/%Y %H:%M"),
     }

@@ -28,6 +28,7 @@ from utils.image_utils import optimize_and_save_image
 from services.admin.utils import handle_admin_service_error
 from utils.entity_resolvers import resolve_incident, resolve_project
 from utils.pagination import Pagination
+from utils.request_utils import resolve_base_url
 from utils.signature_storage import save_signature_image, load_signature_data_uri, delete_signature_file
 
 logger = logging.getLogger(__name__)
@@ -1366,15 +1367,7 @@ def generate_incident_token(incident_id, recipient_email=None):
 
     db.session.commit()
 
-    base_url = current_app.config.get(
-        "APP_BASE_URL", "https://bellevitesse.com").rstrip("/")
-    try:
-        from flask import request
-        if request:
-            base_url = request.host_url.rstrip("/")
-    except Exception:
-        pass
-
+    base_url = resolve_base_url()
     signing_url = f"{base_url}/incidents/sign/{token_str}"
 
     # Expédition de l'invitation par email si une adresse est renseignée
@@ -1475,14 +1468,7 @@ def generate_incident_pdf(record_id):
     qr_code_img = None
     verification_url = None
     if is_sealed and incident_data.get("hash"):
-        base_url = current_app.config.get(
-            "APP_BASE_URL", "https://bellevitesse.com").rstrip("/")
-        try:
-            from flask import request
-            if request:
-                base_url = request.host_url.rstrip("/")
-        except Exception:
-            pass
+        base_url = resolve_base_url()
         verification_url = f"{base_url}/incidents/verify/{incident_data['incident_number']}"
         qr_code_img = generate_qr_code(verification_url)
 

@@ -494,10 +494,8 @@ def sync_check_vehicles_static_pdf(app=None) -> bool:
             protocol_data=protocol_data,
             is_pdf=True
         )
-        base_url = target_app.config.get("SERVER_NAME") or "https://team.bellevitesse.com"
-        if not base_url.startswith("http"):
-            base_url = f"https://{base_url}"
-        base_url = base_url.rstrip("/") + "/"
+        from utils.request_utils import resolve_base_url
+        base_url = resolve_base_url(target_app.config.get("SERVER_NAME")) + "/"
 
         pdf_bytes = render_pdf_from_template(
             html_content=html_content,

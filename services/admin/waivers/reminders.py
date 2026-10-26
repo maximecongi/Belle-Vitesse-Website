@@ -42,8 +42,8 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
         "details": [],
     }
 
-    base_url_str = (base_url or os.getenv("APP_BASE_URL") or os.getenv(
-        "BASE_URL") or "https://bellevitesse.com").rstrip("/")
+    from utils.request_utils import resolve_base_url
+    base_url_str = resolve_base_url(base_url)
 
     # 1. Conditions Générales de Location (CGL)
     cgl_waivers = (

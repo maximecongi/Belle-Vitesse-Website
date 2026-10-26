@@ -225,13 +225,8 @@ def send_waiver(waiver_id, waiver_type: str = None, base_url: str = None):
     token_rec = WaiverToken(token=new_token, waiver_id=waiver.waiver_id)
     db.session.add(token_rec)
 
-    if base_url:
-        resolved_base_url = base_url.rstrip('/')
-    elif has_request_context():
-        resolved_base_url = request.host_url.rstrip('/')
-    else:
-        server_name = current_app.config.get("SERVER_NAME") if current_app else None
-        resolved_base_url = f"http://{server_name}" if server_name else "http://localhost:5000"
+    from utils.request_utils import resolve_base_url
+    resolved_base_url = resolve_base_url(base_url)
 
     signature_link = f"{resolved_base_url}/sign/{route_prefix}/{new_token}"
     is_reminder = (waiver.status == "to_sign") or bool(waiver.sent_at) or ((waiver.reminder_count or 0) > 0)

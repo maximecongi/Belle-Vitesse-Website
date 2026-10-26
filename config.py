@@ -8,6 +8,8 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY")
 
     # Flask settings
+    APP_BASE_URL = os.getenv("APP_BASE_URL")
+    BASE_URL = os.getenv("BASE_URL")
     PREFERRED_URL_SCHEME = "https"
     PERMANENT_SESSION_LIFETIME = timedelta(days=90)
     SESSION_COOKIE_NAME = "session"
@@ -47,6 +49,7 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
+    PREFERRED_URL_SCHEME = "http"
     CACHE_TYPE = "SimpleCache"
     SESSION_TYPE = os.getenv("SESSION_TYPE", None)
     REDIS_DB_SESSION = int(os.getenv("REDIS_DB_SESSION", 2))
@@ -67,6 +70,7 @@ class DevelopmentConfig(Config):
 
 class ProductionConfig(Config):
     DEBUG = False
+    PREFERRED_URL_SCHEME = "https"
     CACHE_TYPE = "RedisCache"
     SESSION_COOKIE_SECURE = True
     SEND_FILE_MAX_AGE_DEFAULT = timedelta(days=365)

@@ -27,19 +27,8 @@ def _get_public_feed_urls(token):
     Utilise APP_BASE_URL (ex: https://bellevitesse.com) pour garantir que les QR codes
     et emails soient accessibles depuis les smartphones en toute circonstance.
     """
-    base_url = (
-        current_app.config.get("APP_BASE_URL")
-        or os.getenv("APP_BASE_URL")
-        or os.getenv("BASE_URL")
-    )
-    if not base_url:
-        if request and "127.0.0.1" not in request.host and "localhost" not in request.host:
-            base_url = request.host_url.rstrip("/")
-        else:
-            base_url = "https://bellevitesse.com"
-    base_url = base_url.rstrip("/")
-    if not base_url.startswith("http"):
-        base_url = f"https://{base_url}"
+    from utils.request_utils import resolve_base_url
+    base_url = resolve_base_url()
 
     feed_url = f"{base_url}/cal/{token}.ics"
     if feed_url.startswith("https://"):
