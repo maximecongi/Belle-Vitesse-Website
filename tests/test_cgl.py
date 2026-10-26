@@ -256,7 +256,7 @@ class CglComprehensiveTest(unittest.TestCase):
                 "production_name": "Prod Authentique",
                 "representative": "Directeur Juridique",
                 "representative_role": "Directeur Juridique",
-                "siret": "98765432100019",
+                "siret": "B66123456",
                 "address": "10 Boulevard Haussmann, Paris",
                 "legal_country": "ES",
                 "accepted_terms": "1",
@@ -266,6 +266,8 @@ class CglComprehensiveTest(unittest.TestCase):
             resp_sign = self.client.post(f"/sign/cgl/{token_val}", data=payload)
             self.assertEqual(resp_sign.status_code, 200)
             self.assertEqual(cgl.display_legal_country, "Espagne")
+            self.assertEqual(cgl.production_siret, "B66123456")
+            self.assertEqual(cgl.display_legal_identifier_label, "N° d’immatriculation")
             waiver_id = cgl.waiver_id
             signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=waiver_id).first()
             from utils.document_utils import generate_document_verification_token
@@ -276,14 +278,40 @@ class CglComprehensiveTest(unittest.TestCase):
         pdf_html = mock_render_pdf.call_args[1]["html_content"]
         self.assertIn('class="cgl-qr-link"', pdf_html)
         self.assertIn(f"/cgl/verify/{waiver_id}?version=1&amp;t=", pdf_html)
-
-        # Accès à la page de vérification publique
         resp_verify = self.client.get(verify_url)
         self.assertEqual(resp_verify.status_code, 200)
         html = resp_verify.get_data(as_text=True)
         self.assertIn("Vérification CGL Locataire", html)
         self.assertIn("CGL Scellées &amp; Intactes", html)
         self.assertIn("Prod Authentique", html)
+
+    def test_foreign_company_can_sign_without_registration_number(self):
+        with self.app.app_context():
+            proj, _, _ = self._create_mock_project()
+            project_id = proj.id
+            create_cgl(proj.id)
+            cgl = CglWaiver.query.filter_by(project_id=proj.id).first()
+            generate_cgl(cgl.waiver_id)
+            _, sign_url = get_or_create_waiver_signing_url(cgl.waiver_id, waiver_type="cgl")
+            token_val = sign_url.split("/sign/cgl/")[-1]
+
+        response = self.client.post(f"/sign/cgl/{token_val}", data={
+            "production_name": "Production étrangère GmbH",
+            "representative": "Alice Martin",
+            "representative_role": "Directrice",
+            "legal_form": "GmbH",
+            "legal_country": "DE",
+            "siret": "",
+            "accepted_terms": "1",
+            "has_signing_authority": "1",
+            "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.get_json().get("success"))
+        with self.app.app_context():
+            signed = CglWaiver.query.filter_by(project_id=project_id).first()
+            self.assertEqual(signed.production_siret, "")
+            self.assertEqual(signed.display_legal_identifier_label, "N° d’immatriculation")
 
     def test_07_list_and_delete_cgl(self):
         """Vérifie le listing et la suppression d'un contrat CGL."""

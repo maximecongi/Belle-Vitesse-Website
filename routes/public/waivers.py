@@ -271,20 +271,25 @@ def init_waiver_routes(app):
                     if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email) or len(email) > 120:
                         return _fail("L'adresse e-mail renseignée est invalide.")
 
-                siret = (data.get("siret") or waiver.production_siret or "").strip()
-                legal_country = (data.get("legal_country") or (waiver.sign_data or {}).get("legal_country") or "").strip().upper()
-                if siret and legal_country in ("", "FR", "FRANCE"):
+                siret_value = data.get("siret") if "siret" in data else waiver.production_siret
+                siret = (siret_value or "").strip()
+                legal_country = (data.get("legal_country") or (waiver.sign_data or {}).get("legal_country") or "FR").strip().upper()
+                if legal_country in ("FR", "FRANCE"):
+                    if not siret:
+                        return _fail("Le numéro SIRET est obligatoire pour une société dont le siège est en France.")
                     import re
                     siret_clean = re.sub(r"\s+", "", siret)
                     if not siret_clean.isdigit() or len(siret_clean) != 14:
                         return _fail("Le numéro SIRET doit comporter exactement 14 chiffres pour une société française.")
+                    siret = siret_clean
+                elif len(siret) > 100:
+                    return _fail("Le numéro d’immatriculation ne peut dépasser 100 caractères.")
 
                 waiver.production_name = prod_name
                 waiver.production_representative = rep_name
                 if address:
                     waiver.production_address = address
-                if siret:
-                    waiver.production_siret = siret
+                waiver.production_siret = siret
                 if data.get("vat_number"):
                     vat = data.get("vat_number").strip()
                     if len(vat) > 100:

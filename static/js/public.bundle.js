@@ -850,6 +850,25 @@ document.addEventListener('DOMContentLoaded', function () {
     const formInput = document.getElementById('cgl_legal_form');
     if (formInput) formInput.addEventListener('input', updateCglContractText);
     const countryInput = document.getElementById('cgl_legal_country');
+    const identifierInput = document.getElementById('cgl_siret');
+    const identifierLabel = document.getElementById('cgl_siret_label');
+    const identifierRequired = document.getElementById('cgl_siret_required');
+    const annexIdentifierLabel = document.getElementById('cgl_text_annexe2_identifier_label');
+
+    function updateIdentifierRequirement() {
+        if (!countryInput || !identifierInput) return;
+        const isFrance = countryInput.value.trim().toUpperCase() === 'FR';
+        identifierInput.required = isFrance;
+        identifierInput.placeholder = isFrance ? '14 chiffres' : 'Facultatif';
+        if (!isFrance) identifierInput.classList.remove('is-invalid');
+        if (identifierLabel) identifierLabel.textContent = isFrance ? 'Numéro SIRET' : 'Numéro d’immatriculation';
+        if (identifierRequired) {
+            identifierRequired.textContent = isFrance ? '*' : '';
+            identifierRequired.classList.toggle('u-d-none', !isFrance);
+        }
+        if (annexIdentifierLabel) annexIdentifierLabel.textContent = isFrance ? 'SIRET' : 'N° d’immatriculation';
+    }
+
     if (countryInput) {
         countryInput.addEventListener('input', updateCglContractText);
         countryInput.addEventListener('change', updateCglContractText);
@@ -864,8 +883,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         }
+        countryInput.addEventListener('change', updateIdentifierRequirement);
     }
 
+    updateIdentifierRequirement();
     updateCglContractText();
 
     // ── 2. Autocomplétion d'adresse ──────────────────────────────────────────
@@ -939,7 +960,6 @@ document.addEventListener('DOMContentLoaded', function () {
             'cgl_legal_country',
             'cgl_representative',
             'cgl_representative_role',
-            'cgl_siret',
             'cgl_address',
             'cgl_phone',
             'cgl_email',
@@ -948,6 +968,9 @@ document.addEventListener('DOMContentLoaded', function () {
             'cgl_insurance_company',
             'cgl_insurance_policy'
         ];
+        const countryForIdentifier = document.getElementById('cgl_legal_country');
+        const isFrenchCompany = countryForIdentifier && countryForIdentifier.value.trim().toUpperCase() === 'FR';
+        if (isFrenchCompany) requiredFieldIds.push('cgl_siret');
         let hasMissing = false;
 
         requiredFieldIds.forEach(function (id) {

@@ -264,6 +264,7 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
                     "signature": valid_sig,
                     "representative": "Alice Dubois",
                     "representative_role": "Présidente Directrice Générale",
+                    "siret": "12345678900012",
                     "accepted_terms": "1",
                     "has_signing_authority": "1",
                     "authority_declaration_text": "Je certifie sur l'honneur être dûment habilitée.",
@@ -331,6 +332,7 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
                     "signature": valid_sig,
                     "representative": "Bob Martin",
                     "representative_role": "Gérant",
+                    "siret": "12345678900012",
                     "accepted_terms": "1",
                     "has_signing_authority": "1",
                 },
@@ -387,6 +389,7 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
                     "signature": valid_sig,
                     "representative": "Alice Dupont",
                     "representative_role": "Directrice",
+                    "siret": "12345678900012",
                     "accepted_terms": "1",
                     "has_signing_authority": "1",
                 },
@@ -567,6 +570,20 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
 
             valid_sig = _generate_valid_png_base64()
 
+            res_missing_fr_siret = self.client.post(
+                f"/sign/cgl/{token}",
+                data={
+                    "signature": valid_sig,
+                    "representative": "Eva Val",
+                    "representative_role": "Directrice",
+                    "legal_country": "FR",
+                    "accepted_terms": "1",
+                    "has_signing_authority": "1",
+                },
+            )
+            self.assertEqual(res_missing_fr_siret.status_code, 400)
+            self.assertIn("obligatoire", res_missing_fr_siret.get_json().get("error", "").lower())
+
             # SIRET invalide (< 14 chiffres)
             res_bad_siret = self.client.post(
                 f"/sign/cgl/{token}",
@@ -625,6 +642,7 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
                     "signature": valid_sig,
                     "representative": "Luc Assur",
                     "representative_role": "Directeur",
+                    "siret": "12345678900012",
                     "accepted_terms": "1",
                     "has_signing_authority": "1",
                     "production_insurance": fake_pdf,
@@ -642,6 +660,7 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
                     "signature": valid_sig,
                     "representative": "Luc Assur",
                     "representative_role": "Directeur",
+                    "siret": "12345678900012",
                     "accepted_terms": "1",
                     "has_signing_authority": "1",
                     "production_insurance": real_pdf,
@@ -796,6 +815,7 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
                         "signature": _generate_valid_png_base64(),
                         "representative": "Verrou Test",
                         "representative_role": "Directeur",
+                        "siret": "12345678900012",
                         "accepted_terms": "1",
                         "has_signing_authority": "1",
                     }
@@ -1460,31 +1480,31 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
             self.assertGreaterEqual(len(events), 1)
 
     def test_compute_inspection_readiness_strictness(self):
-        """Vérifie la robustesse mathématique et métier de compute_inspection_readiness."""
+        """Vérifie la validation de la mesure batterie via les règles de checkpoint."""
         from services.admin.utils import compute_inspection_readiness
+        rules = [{"key": "battery", "label": "Charge", "type": "value", "minimum": "0",
+                  "maximum": "100", "goal": "100", "tolerance": "0"}]
+        with patch("services.admin.utils.get_checkpoints_for_vehicle", return_value=rules), \
+                patch("services.admin.utils.is_known_vehicle", return_value=True):
+            def check(value, is_checkout):
+                return compute_inspection_readiness(
+                    {"vehicle_id": "vehicle-1", "battery_level": value},
+                    vehicle_id="vehicle-1", is_checkout=is_checkout,
+                )
 
-        # 1. NaN ou Infini
-        ready_nan, fails_nan = compute_inspection_readiness({}, is_checkout=True, battery_val=float("nan"))
-        self.assertFalse(ready_nan)
-        self.assertTrue(any("non numérique ou infini" in f for f in fails_nan))
+            for invalid in (float("nan"), float("inf")):
+                ready, failures = check(invalid, True)
+                self.assertFalse(ready)
+                self.assertTrue(failures)
 
-        ready_inf, fails_inf = compute_inspection_readiness({}, is_checkout=True, battery_val=float("inf"))
-        self.assertFalse(ready_inf)
-        self.assertTrue(any("non numérique ou infini" in f for f in fails_inf))
+            for invalid in (-10, 105):
+                ready, failures = check(invalid, False)
+                self.assertFalse(ready)
+                self.assertTrue(any("plage" in failure for failure in failures))
 
-        # 2. Hors bornes 0-100
-        ready_neg, fails_neg = compute_inspection_readiness({}, is_checkout=False, battery_val=-10)
-        self.assertFalse(ready_neg)
-        self.assertTrue(any("hors limites" in f for f in fails_neg))
-
-        ready_over, fails_over = compute_inspection_readiness({}, is_checkout=False, battery_val=105)
-        self.assertFalse(ready_over)
-        self.assertTrue(any("hors limites" in f for f in fails_over))
-
-        # 3. Checkout < 100%
-        ready_under, fails_under = compute_inspection_readiness({}, is_checkout=True, battery_val=99)
-        self.assertFalse(ready_under)
-        self.assertTrue(any("< 100%" in f for f in fails_under))
+            ready_under, failures_under = check(99, True)
+            self.assertFalse(ready_under)
+            self.assertTrue(any("objectif" in failure for failure in failures_under))
 
     def test_seal_secret_key_production_requirement(self):
         """Vérifie que _get_hmac_secret lève une RuntimeError en production si aucun secret dédié n'est fourni."""
@@ -1543,6 +1563,7 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
                     "production_name": "BV Production",
                     "representative": "Jean Dupont",
                     "representative_role": "Directeur",
+                    "siret": "12345678900012",
                     "phone": "0" * 60,
                 }
             )

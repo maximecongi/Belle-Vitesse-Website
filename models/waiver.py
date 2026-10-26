@@ -231,6 +231,11 @@ class Waiver(db.Model):
         return "France"
 
     @property
+    def display_legal_identifier_label(self):
+        """Libellé adapté à l'identifiant renseigné pour le pays du siège."""
+        return "SIRET" if self.display_legal_country.strip().lower() == "france" else "N° d’immatriculation"
+
+    @property
     def display_legal_form(self):
         """Retourne la combinaison forme juridique et pays du locataire."""
         form = self.display_legal_form_only

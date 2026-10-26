@@ -172,10 +172,14 @@
                         selected_value=waiver.display_legal_country or 'France', countries=all_countries) }}
                     </div>
 
+                    {% set is_french_company = waiver.display_legal_country|lower == 'france' %}
                     <div class="form-group">
-                        <label for="cgl_siret">Numéro SIRET <span class="u-text-danger">*</span></label>
+                        <label for="cgl_siret"><span id="cgl_siret_label">{% if is_french_company %}Numéro SIRET{% else %}Numéro d’immatriculation{% endif %}</span>
+                            <span id="cgl_siret_required" class="u-text-danger{% if not is_french_company %} u-d-none{% endif %}">{% if is_french_company %}*{% endif %}</span></label>
                         <input class="form-input" type="text" id="cgl_siret" name="cgl_siret"
-                            value="{{ waiver.production_siret or '' }}" required placeholder="14 chiffres">
+                            value="{{ waiver.production_siret or '' }}" maxlength="100"
+                            {% if is_french_company %}required{% endif %}
+                            placeholder="{% if is_french_company %}14 chiffres{% else %}Facultatif{% endif %}">
                     </div>
 
                     <div class="form-group">
@@ -404,7 +408,7 @@
                         <div class="public-doc-info-item">
                             <span class="public-doc-info-label">Forme, n° d’immatriculation et pays :</span>
                             <span class="public-doc-info-value"><span id="cgl_text_annexe2_legal_form">{{
-                                    waiver.display_legal_form or '—' }}</span>{% if waiver.production_siret %}, SIRET :
+                                    waiver.display_legal_form or '—' }}</span>{% if waiver.production_siret %}, <span id="cgl_text_annexe2_identifier_label">{{ waiver.display_legal_identifier_label }}</span> :
                                 <span id="cgl_text_annexe2_siret">{{ waiver.production_siret }}</span>{% endif %}{% if
                                 waiver.production_vat %} (TVA : <span id="cgl_text_annexe2_vat">{{ waiver.production_vat
                                     }}</span>){% endif %}</span>
