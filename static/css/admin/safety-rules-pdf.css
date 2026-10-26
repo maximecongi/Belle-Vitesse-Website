@@ -1,54 +1,59 @@
-/* ═══════════════════════════════════════════════════════════════════
-   BELLE VITESSE — SAFETY RULES PDF (BVSR) STYLESHEET
-   Format print-ready / WeasyPrint / wkhtmltopdf
-   Strictement sans styles inlines — Cohérence Design System BV
-   ═══════════════════════════════════════════════════════════════════ */
+/* ==========================================================================
+   BELLE VITESSE — RÈGLES DE SÉCURITÉ UNIVERSELLES (BVSR)
+   Feuille de style d'impression & export PDF continu (WeasyPrint / A4)
+   Harmonisation complète avec la mise en page des CGL
+   ========================================================================== */
 
+/* ── 1. Configuration des Pages (WeasyPrint) ────────────────────────────── */
 @page {
     size: A4 portrait;
-    margin: 14mm 12mm 14mm 12mm;
-    @bottom-center {
-        content: "Belle Vitesse — Règles de Sécurité Universelles (BVSR) — Page " counter(page) " sur " counter(pages);
-        font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        font-size: 7pt;
-        color: #94A3B8;
+    margin: 18mm 15mm 22mm 15mm;
+
+    @bottom-right {
+        content: "Page " counter(page) " / " counter(pages);
+        font-size: 7.5pt;
+        font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: #71717a;
+    }
+
+    @bottom-left {
+        content: "BELLE VITESSE — Règles de Sécurité Universelles (BVSR)";
+        font-size: 7.5pt;
+        font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: #a1a1aa;
     }
 }
 
-:root {
-    --bvsr-primary: #8B5CF6;
-    --bvsr-primary-dark: #6D28D9;
-    --bvsr-primary-light: #EDE9FE;
-    --bvsr-primary-text: #5B21B6;
-    --bvsr-success: #15803D;
-    --bvsr-success-light: #DCFCE7;
-    --bvsr-warning: #B45309;
-    --bvsr-warning-light: #FEF3C7;
-    --bvsr-danger: #EF4444;
-    --bvsr-dark: #0F172A;
-    --bvsr-text: #1E293B;
-    --bvsr-muted: #64748B;
-    --bvsr-border: #E2E8F0;
-    --bvsr-bg-subtle: #F8FAFC;
+@page :first {
+    margin-top: 15mm;
 }
 
-body.bvsr-container {
+/* ── 2. Conteneur Principal & Typographie ─────────────────────────────────── */
+.bvsr-container * {
+    box-sizing: border-box;
+}
+
+.bvsr-container {
     margin: 0;
     padding: 0;
-    background-color: #FFFFFF;
-    color: var(--bvsr-text);
-    font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #ffffff;
+    font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #18181b;
     font-size: 8.5pt;
-    line-height: 1.45;
+    line-height: 1.5;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
 }
 
 .bvsr-document {
     width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #ffffff;
 }
 
-/* ── Mode Prévisualisation Écran (Mise en page A4 fidèle) ────────────────── */
+/* ── 2.1 Mode Prévisualisation Écran (Mise en page A4 fidèle) ─────────────── */
 @media screen {
     body.bvsr-container {
         background-color: #475569;
@@ -71,7 +76,7 @@ body.bvsr-container {
         padding: 10px 18px;
         border-radius: 6px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-        font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         font-size: 13px;
         box-sizing: border-box;
     }
@@ -147,33 +152,11 @@ body.bvsr-container {
         min-height: 297mm;
         max-width: 100%;
         margin: 0 auto;
-        padding: 14mm 12mm 14mm 12mm;
-        background-color: #FFFFFF;
+        padding: 18mm 15mm 22mm 15mm;
+        background-color: #ffffff;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15), 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 0 1px rgba(0, 0, 0, 0.2);
         border-radius: 2px;
         box-sizing: border-box;
-    }
-
-    .bvsr-page-break {
-        margin-top: 32px;
-        padding-top: 32px;
-        border-top: 2px dashed #CBD5E1;
-        position: relative;
-    }
-
-    .bvsr-page-break::before {
-        content: "— Saut de page A4 —";
-        position: absolute;
-        top: -10px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #FFFFFF;
-        padding: 0 12px;
-        font-size: 7.5pt;
-        font-weight: 600;
-        color: #64748B;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
     }
 
     .bvsr-screen-footer {
@@ -182,9 +165,9 @@ body.bvsr-container {
         align-items: center;
         margin-top: 28pt;
         padding-top: 10pt;
-        border-top: 0.5pt solid #CBD5E1;
-        font-size: 7pt;
-        color: #94A3B8;
+        border-top: 0.5pt solid #cbd5e1;
+        font-size: 7.5pt;
+        color: #94a3b8;
     }
 }
 
@@ -206,7 +189,7 @@ body.bvsr-container {
 
     .bvsr-document {
         width: 100%;
-        padding: 12mm 8mm;
+        padding: 14mm 10mm;
     }
 }
 
@@ -236,183 +219,209 @@ body.bvsr-container {
     }
 }
 
-/* ═══════════ EN-TÊTE ═══════════ */
-.bvsr-header {
+/* ── 3. En-tête du Document ─────────────────────────────────────────────── */
+.bvsr-header,
+.public-doc-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding-bottom: 12px;
-    border-bottom: 2px solid var(--bvsr-primary);
-    margin-bottom: 14px;
+    padding-bottom: 14pt;
+    border-bottom: 1.5pt solid #e2e8f0;
+    margin-bottom: 18pt;
+    page-break-after: avoid;
 }
 
-.bvsr-header-logo img {
-    height: 38px;
+.bvsr-header-logo img,
+.public-doc-header-logo img {
+    height: 30pt;
     width: auto;
+    display: block;
 }
 
-.bvsr-header-meta {
+.bvsr-header-meta,
+.public-doc-header-meta {
     text-align: right;
-    font-size: 7.5pt;
-    color: var(--bvsr-muted);
-    line-height: 1.35;
+    font-size: 8.5pt;
+    color: #64748b;
+    line-height: 1.6;
 }
 
-.bvsr-confidential-tag {
-    display: inline-block;
-    background-color: var(--bvsr-primary-light);
-    color: var(--bvsr-primary-text);
-    padding: 2px 7px;
-    border-radius: 4px;
-    font-size: 6.5pt;
+.bvsr-header-meta strong,
+.public-doc-header-meta strong {
+    color: #0f172a;
+    font-size: 9pt;
     font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    margin-bottom: 3px;
 }
 
+/* ── Signature Carré Jaune Belle Vitesse (Dot Before) ── */
+.dot-before:before {
+    content: "■ ";
+    color: #ffc845;
+    font-size: 0.85em;
+    position: relative;
+    left: -0.2ch;
+    top: -0.1ch;
+    z-index: 3;
+}
+
+/* ── Badge Identifiant Document ── */
+.checkout-doc-id,
 .bvsr-header-doc-id {
-    font-size: 10pt;
+    white-space: nowrap;
+    font-family: monospace;
+    color: #374151;
+    font-size: 6pt;
+    background-color: #f4f4f5;
+    padding: 2pt 6pt;
+    border-radius: 2pt;
+    margin-top: 6pt;
+    width: fit-content;
+    vertical-align: middle;
+}
+
+.u-text-xxs {
+    font-size: 7.5pt;
+    color: #64748b;
+}
+
+/* ── Titres de Section ──────────────────────────────────────────────────── */
+.bvsr-section-title {
+    font-size: 8.5pt;
     font-weight: 800;
-    color: var(--bvsr-dark);
+    text-transform: uppercase;
     letter-spacing: 0.5px;
+    color: #18181b;
+    margin: 14pt 0 8pt 0;
+    display: flex;
+    align-items: center;
+    gap: 5pt;
+    page-break-after: avoid;
 }
 
-.bvsr-meta-project {
-    color: var(--bvsr-dark);
-    font-weight: 600;
+.bvsr-section-title::before {
+    content: "";
+    display: inline-block;
+    width: 6pt;
+    height: 6pt;
+    background-color: #ffc845;
+    flex-shrink: 0;
 }
 
-/* ═══════════ BANNIÈRE TITRE ═══════════ */
+/* ── 4. Bannière Titre ───────────────────────────────────────────────────── */
 .bvsr-title-banner {
-    background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
-    color: #FFFFFF;
-    padding: 12px 16px;
-    border-radius: 6px;
-    margin-bottom: 14px;
-    border-left: 4px solid var(--bvsr-primary);
+    text-align: center;
+    margin-bottom: 18pt;
+    page-break-after: avoid;
 }
 
 .bvsr-main-title {
-    margin: 0;
     font-size: 13pt;
     font-weight: 800;
-    letter-spacing: 0.3px;
-    text-transform: uppercase;
-}
-
-.bvsr-subtitle-en {
-    font-size: 9pt;
-    color: #CBD5E1;
-    font-weight: 500;
-    margin-top: 2px;
-}
-
-.bvsr-signer-badge-strip {
-    margin-top: 8px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    font-size: 7.5pt;
-}
-
-.bvsr-pill-signer {
-    background-color: rgba(139, 92, 246, 0.25);
-    border: 1px solid rgba(139, 92, 246, 0.6);
-    color: #EDE9FE;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-weight: 600;
-}
-
-.bvsr-pill-role {
-    background-color: rgba(255, 255, 255, 0.15);
-    color: #FFFFFF;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-weight: 600;
-}
-
-/* ═══════════ CARTES SYNTHÈSE INFOS ═══════════ */
-.bvsr-meta-grid {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 14px;
-}
-
-.bvsr-meta-card {
-    flex: 1;
-    background-color: var(--bvsr-bg-subtle);
-    border: 1px solid var(--bvsr-border);
-    border-radius: 6px;
-    padding: 8px 10px;
-}
-
-.bvsr-meta-card-title {
-    font-size: 7pt;
-    text-transform: uppercase;
-    font-weight: 700;
     letter-spacing: 0.5px;
-    color: var(--bvsr-muted);
-    margin-bottom: 5px;
-    border-bottom: 1px solid var(--bvsr-border);
-    padding-bottom: 3px;
-}
-
-.bvsr-meta-row {
-    font-size: 7.5pt;
-    margin-bottom: 2px;
-}
-
-.bvsr-meta-label {
-    color: var(--bvsr-muted);
-    font-weight: 600;
-}
-
-.bvsr-meta-value {
-    color: var(--bvsr-dark);
-    font-weight: 600;
-}
-
-/* ═══════════ SECTIONS DE RÈGLES ═══════════ */
-.bvsr-section {
-    margin-bottom: 14px;
-    page-break-inside: avoid;
-}
-
-.bvsr-section-title-wrap {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    border-bottom: 1.5px solid var(--bvsr-primary);
-    padding-bottom: 4px;
-    margin-bottom: 8px;
-}
-
-.bvsr-section-title-fr {
-    font-size: 10pt;
-    font-weight: 800;
-    color: var(--bvsr-dark);
     text-transform: uppercase;
-    margin: 0;
+    margin: 0 0 3pt 0;
+    color: #18181b;
 }
 
-.bvsr-section-title-en {
-    font-size: 8pt;
-    color: var(--bvsr-muted);
-    font-weight: 600;
+.bvsr-subtitle {
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: #18181b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 3pt 0;
+}
+
+.bvsr-version-info {
+    font-size: 7.5pt;
+    color: #71717a;
     font-style: italic;
     margin: 0;
 }
 
-.bvsr-rules-bilingual-grid {
-    display: flex;
-    gap: 12px;
+/* ── 5. Bloc Identification des Parties & Cadre ─────────────────────────── */
+.bvsr-parties-section {
+    margin-bottom: 14pt;
+    page-break-inside: avoid;
 }
 
-.bvsr-col-fr,
-.bvsr-col-en {
-    flex: 1;
+.bvsr-parties-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14pt;
+    margin-bottom: 8pt;
+}
+
+.bvsr-party-card {
+    background-color: #fafafa;
+    border: 1px solid #e4e4e7;
+    border-left: 3pt solid #ffc845;
+    padding: 8pt 10pt;
+    font-size: 7.5pt;
+    line-height: 1.45;
+}
+
+.bvsr-party-role {
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #18181b;
+    margin-bottom: 4pt;
+    border-bottom: 1px dashed #d4d4d8;
+    padding-bottom: 3pt;
+}
+
+.bvsr-party-field-label {
+    font-weight: 600;
+    color: #52525b;
+}
+
+/* ── 6. Droit et Devoir d'Interruption (Stop Work Authority) ─────────────── */
+.bvsr-callout {
+    background-color: #fafafa;
+    border: 1px solid #e4e4e7;
+    border-left: 3pt solid #ffc845;
+    border-radius: 2pt;
+    padding: 8pt 10pt;
+    margin-bottom: 14pt;
+    page-break-inside: avoid;
+}
+
+.bvsr-callout-title {
+    font-size: 8.5pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #18181b;
+    margin-bottom: 4pt;
+    letter-spacing: 0.3px;
+}
+
+.bvsr-callout-text {
+    font-size: 7.8pt;
+    line-height: 1.45;
+    color: #3f3f46;
+    margin: 0;
+}
+
+/* ── 7. Sections des Règles de Sécurité ──────────────────────────────────── */
+.bvsr-section {
+    margin-bottom: 14pt;
+    page-break-inside: avoid;
+}
+
+.bvsr-rules-bilingual-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12pt;
+}
+
+.bvsr-col-card {
+    background-color: #fafafa;
+    border: 1px solid #e4e4e7;
+    border-left: 3pt solid #ffc845;
+    padding: 8pt 10pt;
+    font-size: 7.5pt;
+    line-height: 1.45;
 }
 
 .bvsr-col-header {
@@ -420,233 +429,211 @@ body.bvsr-container {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: var(--bvsr-muted);
-    margin-bottom: 4px;
+    color: #71717a;
+    margin-bottom: 4pt;
+    border-bottom: 1px dashed #d4d4d8;
+    padding-bottom: 2pt;
 }
 
 .bvsr-rules-list {
     margin: 0;
-    padding-left: 14px;
+    padding-left: 14pt;
 }
 
 .bvsr-rules-list li {
-    font-size: 7.8pt;
+    margin-bottom: 4pt;
+    font-size: 7.5pt;
     line-height: 1.4;
-    margin-bottom: 4px;
-    color: var(--bvsr-text);
+    color: #27272a;
 }
 
 .bvsr-rules-list li strong {
-    color: var(--bvsr-dark);
+    color: #18181b;
 }
 
-/* ═══════════ CARTES RÈGLES VÉHICULE ═══════════ */
+/* ── Règles spécifiques par véhicule ── */
 .bvsr-vehicle-rule-card {
-    background-color: var(--bvsr-bg-subtle);
-    border: 1px solid var(--bvsr-border);
-    border-left: 3px solid var(--bvsr-primary);
-    border-radius: 5px;
-    padding: 7px 10px;
-    margin-bottom: 8px;
+    background-color: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-left: 3pt solid #ffc845;
+    border-radius: 2pt;
+    padding: 8pt 10pt;
+    margin-bottom: 10pt;
     page-break-inside: avoid;
 }
 
 .bvsr-vehicle-title {
     font-size: 8.5pt;
     font-weight: 700;
-    color: var(--bvsr-dark);
-    margin: 0 0 6px 0;
+    color: #18181b;
+    margin: 0 0 6pt 0;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
 
-/* ═══════════ SECTION CASQUES / MATÉRIEL ═══════════ */
-.bvsr-equipment-box {
-    background-color: var(--bvsr-bg-subtle);
-    border: 1px solid var(--bvsr-border);
-    border-radius: 5px;
-    padding: 8px 10px;
-    font-size: 7.8pt;
+/* ── Dotation équipements & casques ── */
+.bvsr-equipment-card {
+    background-color: #fafafa;
+    border: 1px solid #e4e4e7;
+    border-left: 3pt solid #ffc845;
+    padding: 8pt 10pt;
+    font-size: 7.5pt;
+    line-height: 1.45;
+}
+
+.bvsr-equipment-en {
+    font-style: italic;
+    color: #52525b;
+    margin-top: 2pt;
 }
 
 .bvsr-helmets-summary {
     display: flex;
-    gap: 8px;
-    margin-top: 5px;
+    flex-wrap: wrap;
+    gap: 6pt;
+    margin-top: 6pt;
 }
 
 .bvsr-size-pill {
-    background-color: #FFFFFF;
-    border: 1px solid var(--bvsr-border);
-    border-radius: 4px;
-    padding: 2px 7px;
+    background-color: #ffffff;
+    border: 1px solid #d4d4d8;
+    border-radius: 2pt;
+    padding: 2pt 6pt;
     font-weight: 600;
-    font-size: 7.5pt;
-}
-
-/* ═══════════ ENGAGEMENT ET DROIT D'INTERRUPTION ═══════════ */
-.bvsr-authority-callout {
-    background-color: var(--bvsr-primary-light);
-    border: 1px solid rgba(139, 92, 246, 0.4);
-    border-left: 4px solid var(--bvsr-primary);
-    border-radius: 5px;
-    padding: 8px 12px;
-    margin-bottom: 14px;
-    page-break-inside: avoid;
-}
-
-.bvsr-authority-title {
-    font-size: 8.5pt;
-    font-weight: 800;
-    color: var(--bvsr-primary-text);
-    margin: 0 0 4px 0;
-    text-transform: uppercase;
-}
-
-.bvsr-authority-text {
-    font-size: 7.8pt;
-    line-height: 1.4;
-    color: var(--bvsr-text);
-    margin: 0;
-}
-
-/* ═══════════ BLOC DE SIGNATURES CONTRADICTOIRES ═══════════ */
-.bvsr-signatures-section {
-    border: 1px solid var(--bvsr-border);
-    border-radius: 6px;
-    padding: 10px 12px;
-    margin-bottom: 12px;
-    page-break-inside: avoid;
-}
-
-.bvsr-signatures-grid {
-    display: flex;
-    gap: 16px;
-}
-
-.bvsr-signature-box {
-    flex: 1;
-    background-color: var(--bvsr-bg-subtle);
-    border: 1px dashed #CBD5E1;
-    border-radius: 5px;
-    padding: 8px 10px;
-    min-height: 110px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.bvsr-sig-header {
-    border-bottom: 1px solid var(--bvsr-border);
-    padding-bottom: 4px;
-    margin-bottom: 6px;
-}
-
-.bvsr-sig-title {
-    font-size: 7.5pt;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--bvsr-dark);
-}
-
-.bvsr-sig-name {
-    font-size: 8.5pt;
-    font-weight: 700;
-    color: var(--bvsr-primary-dark);
-}
-
-.bvsr-sig-role {
     font-size: 7pt;
-    color: var(--bvsr-muted);
+    color: #18181b;
 }
 
-.bvsr-sig-img-wrap {
-    text-align: center;
-    min-height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 4px 0;
-}
-
-.bvsr-sig-img {
-    max-height: 48px;
-    max-width: 170px;
-    object-fit: contain;
-}
-
-.bvsr-sig-status-pending {
-    font-size: 7.5pt;
-    font-style: italic;
-    color: var(--bvsr-muted);
-}
-
-.bvsr-sig-footer {
-    border-top: 1px solid var(--bvsr-border);
-    padding-top: 4px;
-    font-size: 6.8pt;
-    color: var(--bvsr-muted);
-    line-height: 1.3;
-}
-
-.bvsr-sig-mention {
-    font-weight: 600;
-    color: var(--bvsr-dark);
-    margin-bottom: 2px;
-}
-
-/* ═══════════ CARTOUCHE DE CONFORMITÉ & PREUVE ═══════════ */
-.bvsr-evidence-seal {
-    background-color: #0F172A;
-    color: #CBD5E1;
-    border-radius: 6px;
-    padding: 8px 12px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
+/* ── 8. Bloc de Scellement Légal & Signature ─────────────────────────────── */
+.bvsr-seal-container {
+    margin-top: 18pt;
+    border: 1.5pt solid #18181b;
+    border-radius: 4pt;
+    background-color: #fafafa;
+    padding: 10pt;
     page-break-inside: avoid;
 }
 
-.bvsr-seal-qr {
-    background-color: #FFFFFF;
-    padding: 4px;
-    border-radius: 4px;
-    line-height: 0;
-}
-
-.bvsr-qr-link {
-    display: inline-block;
-    text-decoration: none;
-    line-height: 0;
-}
-
-.bvsr-seal-qr img {
-    width: 58px;
-    height: 58px;
-}
-
-.bvsr-seal-details {
-    flex: 1;
-    font-size: 6.8pt;
-    line-height: 1.35;
+.bvsr-seal-header {
+    text-align: center;
+    border-bottom: 1px dashed #d4d4d8;
+    padding-bottom: 6pt;
+    margin-bottom: 8pt;
 }
 
 .bvsr-seal-title {
-    color: #FFFFFF;
-    font-weight: 700;
-    font-size: 7.5pt;
+    font-size: 9pt;
+    font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 2px;
+    margin: 0 0 2pt 0;
+    color: #18181b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5pt;
 }
 
-.bvsr-seal-hash {
-    font-family: 'Courier New', Courier, monospace;
-    color: #38BDF8;
+.bvsr-seal-title::before {
+    content: "";
+    display: inline-block;
+    width: 6pt;
+    height: 6pt;
+    background-color: #ffc845;
+    flex-shrink: 0;
+}
+
+.bvsr-legal-mention {
+    font-size: 7pt;
+    font-style: italic;
+    color: #52525b;
+    margin: 0;
+    line-height: 1.35;
+}
+
+.bvsr-seal-grid {
+    display: grid;
+    grid-template-columns: 80pt 1fr 130pt;
+    gap: 12pt;
+    align-items: center;
+}
+
+.bvsr-qr-box {
+    text-align: center;
+}
+
+.bvsr-qr-link {
+    text-decoration: none;
+    color: inherit;
+    display: inline-block;
+}
+
+.bvsr-qr-img {
+    width: 65pt;
+    height: 65pt;
+    display: block;
+    margin: 0 auto 3pt auto;
+}
+
+.bvsr-qr-caption {
+    font-size: 5.5pt;
+    color: #71717a;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.bvsr-integrity-info {
+    font-size: 7pt;
+    line-height: 1.4;
+    color: #3f3f46;
+}
+
+.bvsr-hash-code {
+    font-family: monospace;
+    font-size: 5.5pt;
+    background-color: #f4f4f5;
+    padding: 2pt 4pt;
+    border-radius: 2pt;
     word-break: break-all;
-    font-size: 6.5pt;
+    display: block;
+    margin-top: 2pt;
+    border: 0.5pt solid #e4e4e7;
 }
 
-.bvsr-seal-legal {
-    color: #94A3B8;
-    margin-top: 2px;
+.bvsr-signature-box {
+    text-align: center;
+    border-left: 1px solid #e4e4e7;
+    padding-left: 10pt;
+}
+
+.bvsr-signatory-name {
+    font-size: 7.5pt;
+    font-weight: 700;
+    color: #18181b;
+    margin-bottom: 2pt;
+}
+
+.bvsr-signatory-quality {
+    font-size: 6.5pt;
+    color: #71717a;
+    margin-bottom: 4pt;
+}
+
+.bvsr-sig-img {
+    max-height: 45pt;
+    max-width: 110pt;
+    display: block;
+    margin: 0 auto;
+}
+
+.bvsr-sig-signed {
+    font-size: 7pt;
+    color: #15803d;
+    font-weight: 600;
+}
+
+.bvsr-sig-pending {
+    font-size: 7pt;
+    color: #a1a1aa;
+    font-style: italic;
 }

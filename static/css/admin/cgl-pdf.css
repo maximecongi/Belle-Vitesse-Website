@@ -9,7 +9,7 @@
     margin: 18mm 15mm 22mm 15mm;
 
     @bottom-right {
-        content: "Page " counter(page) " / " counter(pages) " — Paraphes : ______ / ______";
+        content: "Page " counter(page) " / " counter(pages);
         font-size: 7.5pt;
         font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         color: #71717a;
