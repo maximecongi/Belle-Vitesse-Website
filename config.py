@@ -17,8 +17,8 @@ class Config:
     SESSION_USE_SIGNER = True
     SESSION_PERMANENT = True
     RATELIMIT_SWALLOW_ERRORS = True
-    MAX_CONTENT_LENGTH = 500 * 1024 * 1024  # 500 MB (permet les vidéos Arclight et photos haute résolution)
-
+    # 10 MB (permet les photos haute résolution et documents volumineux)
+    MAX_CONTENT_LENGTH = 10 * 1024 * 1024
 
     # Cache settings
     CACHE_KEY_PREFIX = "bv_cache_"
@@ -40,9 +40,6 @@ class Config:
         },
     }
 
-    # Arclight settings
-    ARCLIGHT_SECRET = os.getenv("ARCLIGHT_SECRET")
-
     @staticmethod
     def init_app(app):
         pass
@@ -61,7 +58,6 @@ class DevelopmentConfig(Config):
     OUTPUT_FOLDER = BASE_DIR / "output"
     BACKUPS_FOLDER = BASE_DIR / "backups"
     LOGS_FOLDER = BASE_DIR / "logs"
-    ARCLIGHT_UPLOAD_DIR = BASE_DIR / "arclight" / "videos"
 
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "SQLALCHEMY_DATABASE_URI",
@@ -107,8 +103,6 @@ class ProductionConfig(Config):
     OUTPUT_FOLDER = Path("/app/output")
     BACKUPS_FOLDER = Path("/app/backups")
     LOGS_FOLDER = Path("/app/logs")
-    ARCLIGHT_UPLOAD_DIR = Path(
-        os.getenv("ARCLIGHT_UPLOAD_DIR", "/srv/bellevitesse/arclight/videos"))
 
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "SQLALCHEMY_DATABASE_URI",

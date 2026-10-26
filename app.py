@@ -87,7 +87,7 @@ def create_app():
                 f"@127.0.0.1:{local_port}/{mysql_db}"
             )
     # S'assurer que les dossiers nécessaires existent sur le serveur
-    for folder in ["OUTPUT_FOLDER", "BACKUPS_FOLDER", "LOGS_FOLDER", "ARCLIGHT_UPLOAD_DIR"]:
+    for folder in ["OUTPUT_FOLDER", "BACKUPS_FOLDER", "LOGS_FOLDER"]:
         if folder in app.config:
             try:
                 Path(app.config[folder]).mkdir(parents=True, exist_ok=True)

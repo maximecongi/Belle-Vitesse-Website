@@ -1,5 +1,4 @@
 from extensions import csrf
-from routes.api.arclight import api_arclight_bp
 from routes.api.auth import api_auth_bp
 from routes.api.checkins import api_checkins_bp
 from routes.api.checkouts import api_checkouts_bp
@@ -21,7 +20,6 @@ def init_api_v1_routes(app):
         api_contacts_bp,
         api_dashboard_bp,
         api_waivers_bp,
-        api_arclight_bp,
     ]
     for bp in blueprints:
         csrf.exempt(bp)
