@@ -83,6 +83,7 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
         self.app.config["TESTING"] = True
         self.app.config["WTF_CSRF_ENABLED"] = False
         self.app.config["OUTPUT_FOLDER"] = self.temp_dir
+        self.app.config["SERVER_NAME"] = "localhost"
         self.client = self.app.test_client()
 
         with self.app.app_context():
@@ -930,19 +931,12 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
             self.assertEqual(res_no_token.status_code, 400)
             self.assertIn("jeton de validation", res_no_token.get_json()["error"])
 
-            # 2. Générer un token valide
-            tok_data = generate_inspection_token(co_id, "checkout")
-            token_str = tok_data["token"]
+            # 2. Tentative de génération d'un token sur un véhicule non prêt (batterie 50%) -> rejet précoce (ValueError)
+            with self.assertRaises(ValueError) as ctx_err:
+                generate_inspection_token(co_id, "checkout")
+            self.assertIn("le véhicule n'est pas prêt", str(ctx_err.exception))
 
-            # 3. Finalisation avec véhicule non prêt (batterie < 100) -> HTTP 400
-            res_not_ready = self.client.post(f"/api/v1/checkouts/{co_id}/finalize", json={
-                "signature_data": sig_png,
-                "token": token_str
-            }, headers=headers)
-            self.assertEqual(res_not_ready.status_code, 400)
-            self.assertIn("le véhicule n'est pas prêt", res_not_ready.get_json()["error"])
-
-            # 4. Rendre le véhicule prêt (batterie 100%, vehicle_ready True et checkpoints OK)
+            # 3. Rendre le véhicule prêt (batterie 100%, vehicle_ready True et checkpoints OK)
             co_record = db.session.get(CheckoutVehicle, co_id)
             co_record.battery_level = 100
             co_record.vehicle_ready = True
@@ -950,6 +944,10 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
             for cp in get_checkpoints_for_vehicle(co_record.vehicle_id):
                 co_record.set_checkpoint_status(cp["key"], "ok")
             db.session.commit()
+
+            # 4. Génération valide une fois le véhicule prêt
+            tok_data = generate_inspection_token(co_id, "checkout")
+            token_str = tok_data["token"]
 
             # 5. Tentative avec token appartenant à un autre enregistrement (mismatch)
             co2 = CheckoutVehicle(status="pending", vehicle_id="2", inspection_number="BVCO-TEST-FIN2")
@@ -1187,7 +1185,7 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
             # 1. Intact -> Sceau valide
             with self.app.test_request_context("/cgl/verify/BVRA-INS-TEST"):
                 resp = handle_document_verify(config, doc_id)
-                self.assertIn("CGL Scellées &amp; Intactes", resp)
+                self.assertIn("CGL Scellées &amp; Intactes", resp.get_data(as_text=True))
 
             # 2. Altération physique -> Sceau invalide
             with open(full_ins_path, "wb") as f:
@@ -1195,13 +1193,305 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
 
             with self.app.test_request_context("/cgl/verify/BVRA-INS-TEST"):
                 resp_tampered = handle_document_verify(config, doc_id)
-                self.assertIn("Sceau Invalide", resp_tampered)
+                self.assertIn("Sceau Invalide", resp_tampered.get_data(as_text=True))
 
             # 3. Disparition physique -> Sceau invalide
             os.remove(full_ins_path)
             with self.app.test_request_context("/cgl/verify/BVRA-INS-TEST"):
                 resp_missing = handle_document_verify(config, doc_id)
-                self.assertIn("Sceau Invalide", resp_missing)
+                self.assertIn("Sceau Invalide", resp_missing.get_data(as_text=True))
+
+    def test_generate_inspection_token_guards(self):
+        """Vérifie le durcissement de generate_inspection_token (refus sur statut signé, scellé existant ou non prêt)."""
+        with self.app.app_context():
+            from models import CheckoutVehicle, CheckoutSignedDocument
+            from services.common.signatures import generate_inspection_token
+
+            co = CheckoutVehicle(
+                status="signed",
+                vehicle_id="1",
+                inspection_number="BVCO-TEST-GUARD1",
+                battery_level=100,
+                vehicle_ready=True,
+            )
+            db.session.add(co)
+            db.session.commit()
+
+            # 1. Refus car déjà signé
+            with self.assertRaises(ValueError) as ctx:
+                generate_inspection_token(co.id, "checkout")
+            self.assertIn("déjà été signé", str(ctx.exception))
+
+            # 2. Refus si archive scellée existante
+            co2 = CheckoutVehicle(
+                status="pending",
+                vehicle_id="1",
+                inspection_number="BVCO-TEST-GUARD2",
+                battery_level=100,
+                vehicle_ready=True,
+            )
+            doc = CheckoutSignedDocument(
+                inspection_id=co2.inspection_number,
+                hash="fakehash",
+                pdf_file_hash="",
+                data_snapshot={},
+                signature="signatures/fake.png",
+                pdf_url="/fake.pdf",
+                signed_at=datetime.now(timezone.utc),
+            )
+            db.session.add_all([co2, doc])
+            db.session.commit()
+
+            with self.assertRaises(ValueError) as ctx:
+                generate_inspection_token(co2.id, "checkout")
+            self.assertIn("archive scellée immuable existe déjà", str(ctx.exception))
+
+            # 3. Refus car non prêt (batterie < 100 sur checkout)
+            co3 = CheckoutVehicle(
+                status="pending",
+                vehicle_id="1",
+                inspection_number="BVCO-TEST-GUARD3",
+                battery_level=80,
+                vehicle_ready=False,
+            )
+            db.session.add(co3)
+            db.session.commit()
+
+            with self.assertRaises(ValueError) as ctx:
+                generate_inspection_token(co3.id, "checkout")
+            self.assertIn("le véhicule n'est pas prêt", str(ctx.exception))
+
+    def test_waiver_reset_forbidden_when_signed(self):
+        """Vérifie le blocage absolu de réinitialisation (reset_waiver) sur document signé ou scellé."""
+        with self.app.app_context():
+            from services.admin.waivers.core import reset_waiver
+
+            prod = Production(name="Prod Signed Test")
+            db.session.add(prod)
+            db.session.commit()
+            proj = Project(name="Project Signed Test", production_id=prod.id)
+            db.session.add(proj)
+            db.session.commit()
+
+            cgl = CglWaiver(
+                waiver_id="BVRA-CGL-RESET-TEST",
+                project_id=proj.id,
+                status="signed",
+            )
+            signed_doc = WaiverSignedDocument(
+                waiver_id="BVRA-CGL-RESET-TEST",
+                hash="seal_reset_hash",
+                pdf_file_hash="",
+                data_snapshot={},
+                signature="signatures/cgl.png",
+                pdf_url="/cgl.pdf",
+                signed_at=datetime.now(timezone.utc),
+            )
+            db.session.add_all([cgl, signed_doc])
+            db.session.commit()
+
+            success, msg = reset_waiver("BVRA-CGL-RESET-TEST", waiver_type="cgl")
+            self.assertFalse(success)
+            self.assertIn("Impossible de réinitialiser un document déjà signé", msg)
+
+    def test_waiver_delete_preserves_signed_pdf_and_signed_doc(self):
+        """Vérifie que la suppression d'un waiver signé préserve le PDF et WaiverSignedDocument (soft delete + révocation token)."""
+        with self.app.app_context():
+            from services.admin.waivers.core import delete_waiver
+
+            prod = Production(name="Prod Del Test")
+            db.session.add(prod)
+            db.session.commit()
+            proj = Project(name="Project Del Test", production_id=prod.id)
+            db.session.add(proj)
+            db.session.commit()
+
+            cgl = CglWaiver(
+                waiver_id="BVRA-CGL-DEL-TEST",
+                project_id=proj.id,
+                status="signed",
+            )
+            signed_doc = WaiverSignedDocument(
+                waiver_id="BVRA-CGL-DEL-TEST",
+                hash="seal_del_hash",
+                pdf_file_hash="pdf_del_hash",
+                data_snapshot={},
+                signature="signatures/cgl_del.png",
+                pdf_url="/cgl_del.pdf",
+                signed_at=datetime.now(timezone.utc),
+            )
+            token = WaiverToken(
+                token="active-token-to-revoke",
+                waiver_id="BVRA-CGL-DEL-TEST",
+            )
+            db.session.add_all([cgl, signed_doc, token])
+            db.session.commit()
+
+            success, msg = delete_waiver("BVRA-CGL-DEL-TEST", waiver_type="cgl")
+            self.assertTrue(success)
+
+            # 1. Vérifier soft-delete
+            reloaded_cgl = CglWaiver.query.filter_by(waiver_id="BVRA-CGL-DEL-TEST").first()
+            self.assertIsNotNone(reloaded_cgl.deleted_at)
+
+            # 2. Vérifier préservation absolue de l'archive WaiverSignedDocument
+            reloaded_doc = WaiverSignedDocument.query.filter_by(waiver_id="BVRA-CGL-DEL-TEST").first()
+            self.assertIsNotNone(reloaded_doc)
+            self.assertEqual(reloaded_doc.hash, "seal_del_hash")
+
+            # 3. Vérifier révocation / suppression des jetons actifs
+            tokens_left = WaiverToken.query.filter_by(waiver_id="BVRA-CGL-DEL-TEST").all()
+            self.assertEqual(len(tokens_left), 0)
+
+            # 4. Vérifier journal d'audit
+            events = SignatureEvent.query.filter_by(
+                document_id="BVRA-CGL-DEL-TEST",
+                event_type="waiver_archived_or_retired"
+            ).all()
+            self.assertGreaterEqual(len(events), 1)
+
+    def test_bvsr_countersign_security(self):
+        """Vérifie la sécurité de la contre-signature BVSR (unicité, validation Base64, audit log)."""
+        with self.app.app_context():
+            from services.admin.waivers.safety_rules import countersign_safety_rules
+
+            prod = Production(name="Prod BVSR Test")
+            db.session.add(prod)
+            db.session.commit()
+            proj = Project(name="Project BVSR Test", production_id=prod.id)
+            db.session.add(proj)
+            db.session.commit()
+
+            waiver = SafetyRulesWaiver(
+                waiver_id="BVSR-TEST-CS",
+                project_id=proj.id,
+                status="signed",
+                signature_data=_generate_valid_png_base64(),
+            )
+            db.session.add(waiver)
+            db.session.commit()
+
+            # 1. Échec si signature invalide (pas une image valide)
+            invalid_sig = "data:image/png;base64,bm90YW5pbWFnZQ=="
+            ok_inv, err_inv = countersign_safety_rules("BVSR-TEST-CS", invalid_sig)
+            self.assertFalse(ok_inv)
+            self.assertIn("invalide", err_inv.lower())
+
+            # 2. Succès première contre-signature
+            valid_sig = _generate_valid_png_base64()
+            ok, msg = countersign_safety_rules(
+                "BVSR-TEST-CS",
+                valid_sig,
+                signer_name="Jean Dupont (Superviseur BV)",
+                signer_ip="10.0.0.1"
+            )
+            self.assertTrue(ok)
+
+            reloaded = SafetyRulesWaiver.query.filter_by(waiver_id="BVSR-TEST-CS").first()
+            self.assertIsNotNone(reloaded.bv_signed_at)
+            self.assertEqual(reloaded.bv_signer_name, "Jean Dupont (Superviseur BV)")
+
+            # 3. Refus deuxième contre-signature
+            ok_again, msg_again = countersign_safety_rules("BVSR-TEST-CS", valid_sig)
+            self.assertFalse(ok_again)
+            self.assertIn("déjà été contre-signé", msg_again)
+
+            # 4. Événement d'audit présent
+            events = SignatureEvent.query.filter_by(
+                document_id="BVSR-TEST-CS",
+                event_type="bvsr_countersigned"
+            ).all()
+            self.assertGreaterEqual(len(events), 1)
+
+    def test_compute_inspection_readiness_strictness(self):
+        """Vérifie la robustesse mathématique et métier de compute_inspection_readiness."""
+        from services.admin.utils import compute_inspection_readiness
+
+        # 1. NaN ou Infini
+        ready_nan, fails_nan = compute_inspection_readiness({}, is_checkout=True, battery_val=float("nan"))
+        self.assertFalse(ready_nan)
+        self.assertTrue(any("non numérique ou infini" in f for f in fails_nan))
+
+        ready_inf, fails_inf = compute_inspection_readiness({}, is_checkout=True, battery_val=float("inf"))
+        self.assertFalse(ready_inf)
+        self.assertTrue(any("non numérique ou infini" in f for f in fails_inf))
+
+        # 2. Hors bornes 0-100
+        ready_neg, fails_neg = compute_inspection_readiness({}, is_checkout=False, battery_val=-10)
+        self.assertFalse(ready_neg)
+        self.assertTrue(any("hors limites" in f for f in fails_neg))
+
+        ready_over, fails_over = compute_inspection_readiness({}, is_checkout=False, battery_val=105)
+        self.assertFalse(ready_over)
+        self.assertTrue(any("hors limites" in f for f in fails_over))
+
+        # 3. Checkout < 100%
+        ready_under, fails_under = compute_inspection_readiness({}, is_checkout=True, battery_val=99)
+        self.assertFalse(ready_under)
+        self.assertTrue(any("< 100%" in f for f in fails_under))
+
+    def test_seal_secret_key_production_requirement(self):
+        """Vérifie que _get_hmac_secret lève une RuntimeError en production si aucun secret dédié n'est fourni."""
+        from utils.document_utils import _get_hmac_secret
+
+        with patch.dict(os.environ, {"FLASK_ENV": "production", "SEAL_SECRET_KEY": "", "HASH_SECRET_KEY": ""}):
+            with self.assertRaises(RuntimeError) as ctx:
+                _get_hmac_secret()
+            self.assertIn("SEAL_SECRET_KEY ou HASH_SECRET_KEY doit impérativement être définie", str(ctx.exception))
+
+    def test_cgl_field_length_validation_rejection(self):
+        """Vérifie que la soumission de champs dépassant les limites est rejetée avec HTTP 400."""
+        with self.app.app_context():
+            prod = Production(name="Prod Field Test")
+            db.session.add(prod)
+            db.session.commit()
+            proj = Project(name="Project Field Test", production_id=prod.id)
+            db.session.add(proj)
+            db.session.commit()
+
+            cgl = CglWaiver(
+                waiver_id="BVRA-CGL-FIELD-TEST",
+                project_id=proj.id,
+                status="to_sign",
+            )
+            tok = WaiverToken(
+                token="tok-field-len-test",
+                waiver_id="BVRA-CGL-FIELD-TEST",
+            )
+            db.session.add_all([cgl, tok])
+            db.session.commit()
+
+            # Trop long nom de représentant (> 150 caractères)
+            long_name = "X" * 160
+            res = self.client.post(
+                "/sign/cgl/tok-field-len-test",
+                data={
+                    "signature": _generate_valid_png_base64(),
+                    "accepted_terms": "1",
+                    "has_signing_authority": "1",
+                    "production_name": "BV Production",
+                    "representative": long_name,
+                    "representative_role": "Directeur",
+                }
+            )
+            self.assertEqual(res.status_code, 400)
+            self.assertIn("ne peut dépasser 150 caractères", res.get_json()["error"])
+
+            # Trop long numéro de téléphone (> 50 caractères)
+            res_phone = self.client.post(
+                "/sign/cgl/tok-field-len-test",
+                data={
+                    "signature": _generate_valid_png_base64(),
+                    "accepted_terms": "1",
+                    "has_signing_authority": "1",
+                    "production_name": "BV Production",
+                    "representative": "Jean Dupont",
+                    "representative_role": "Directeur",
+                    "phone": "0" * 60,
+                }
+            )
+            self.assertEqual(res_phone.status_code, 400)
+            self.assertIn("téléphone ne peut dépasser 50 caractères", res_phone.get_json()["error"])
 
 
 if __name__ == "__main__":

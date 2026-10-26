@@ -33,20 +33,19 @@ def _get_hmac_secret(kid: str = "v1") -> bytes:
     kid_clean = str(kid).strip()
     secret = None
     if kid_clean:
-        secret = os.getenv(f"HASH_SECRET_KEY_{kid_clean.upper()}")
+        secret = os.getenv(f"SEAL_SECRET_KEY_{kid_clean.upper()}") or os.getenv(f"HASH_SECRET_KEY_{kid_clean.upper()}")
     if not secret:
-        secret = os.getenv("HASH_SECRET_KEY")
-    if not secret:
-        # Fallback to SECRET_KEY for dev
-        secret = os.getenv("SECRET_KEY")
+        secret = os.getenv("SEAL_SECRET_KEY") or os.getenv("HASH_SECRET_KEY")
 
     flask_env = os.getenv("FLASK_ENV", "production")
     if not secret or secret == "fallback_secret_for_dev_only":
         if flask_env == "production":
             raise RuntimeError(
-                "❌ HASH_SECRET_KEY ou SECRET_KEY doit être définie avec un secret robuste en production !"
+                "❌ SEAL_SECRET_KEY ou HASH_SECRET_KEY doit impérativement être définie avec un secret robuste en production ! "
+                "L'utilisation de la SECRET_KEY de session Flask est interdite pour le scellement cryptographique des documents juridiques."
             )
-        secret = "fallback_secret_for_dev_only"
+        # Fallback to SECRET_KEY pour les environnements de développement et de test
+        secret = os.getenv("SECRET_KEY") or "fallback_secret_for_dev_only"
 
     return secret.encode("utf-8")
 

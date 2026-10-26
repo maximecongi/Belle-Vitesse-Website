@@ -409,26 +409,22 @@ class InspectionsTest(unittest.TestCase):
             signed_doc1 = CheckoutSignedDocument.query.filter_by(inspection_id="BVCO-TESTUPSERT1").first()
             self.assertIsNotNone(signed_doc1)
 
-            # 2. Génération d'un token puis tentative d'abandon sur document déjà signé
-            token_res = generate_inspection_token(checkout.id, "checkout")
-            self.assertIsNotNone(token_res)
-            # Le statut doit rester signed
+            # 2. Tentative de génération d'un token sur document déjà signé -> doit échouer (immuabilité stricte)
+            with self.assertRaises(ValueError) as ctx_tok:
+                generate_inspection_token(checkout.id, "checkout")
+            self.assertIn("déjà été signé", str(ctx_tok.exception))
             self.assertEqual(CheckoutVehicle.query.get(checkout.id).status, "signed")
 
-            abandon_ok = abandon_inspection_signature(token_res["token"], "checkout")
-            self.assertTrue(abandon_ok)
-            # Le statut ne doit JAMAIS rétrograder à in_progress
-            self.assertEqual(CheckoutVehicle.query.get(checkout.id).status, "signed")
-
-            # 3. Re-signature (doit faire un upsert sans IntegrityError Duplicate entry)
+            # 3. Tentative de re-signature / écrasement direct -> doit être strictement interdit (ValueError)
             dummy_sig2 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
-            res2 = finalize_signed_document("checkout", checkout.id, dummy_sig2, "127.0.0.1")
-            self.assertEqual(res2["document_id"], "BVCO-TESTUPSERT1")
+            with self.assertRaises(ValueError) as ctx_sig:
+                finalize_signed_document("checkout", checkout.id, dummy_sig2, "127.0.0.1")
+            self.assertIn("déjà été signé et scellé de manière immuable", str(ctx_sig.exception))
 
-            # Vérifie qu'il n'y a toujours qu'une seule ligne d'archive et qu'elle est mise à jour
+            # Vérifie que l'archive originale reste inchangée et intacte
             signed_docs = CheckoutSignedDocument.query.filter_by(inspection_id="BVCO-TESTUPSERT1").all()
             self.assertEqual(len(signed_docs), 1)
-            self.assertEqual(signed_docs[0].hash, res2["hash"])
+            self.assertEqual(signed_docs[0].hash, res1["hash"])
 
     def test_checkpoint_deletion_cleans_in_progress_and_recomputes_readiness(self):
         """Vérifie que la suppression d'un checkpoint nettoie les inspections en cours et rétablit la conformité."""

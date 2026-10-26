@@ -52,9 +52,12 @@ def create_waiver(project_id, waiver_type: str = "cgl", **kwargs):
         if existing:
             if existing.deleted_at is None:
                 return False, "Des Conditions Générales de Location (CGL) existent déjà pour ce projet."
-            _cleanup_waiver_assets(waiver_type, existing)
-            db.session.delete(existing)
-            db.session.flush()
+            from models import WaiverSignedDocument
+            signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=existing.waiver_id).first()
+            if not signed_doc and existing.status not in ["signed", "completed"]:
+                _cleanup_waiver_assets(waiver_type, existing)
+                db.session.delete(existing)
+                db.session.flush()
 
     waiver = model(project_id=project_id)
     waiver.project_name = p.name
@@ -303,17 +306,54 @@ def delete_waiver(waiver_id, waiver_type: str = None):
     doc_type = f"{mode}_waiver"
 
     try:
-        _cleanup_waiver_assets(mode, waiver)
-        waiver.deleted_at = datetime.now(timezone.utc)
-        db.session.commit()
+        from models import WaiverSignedDocument
+        signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=waiver.waiver_id).first()
+        is_signed = bool(waiver.status in ["signed", "completed"] or signed_doc)
 
-        try:
-            from services.common.kdrive import dispatch_delete_document
-            dispatch_delete_document(doc_type, waiver.waiver_id)
-        except Exception as k_err:
-            logger.error(f"❌ Erreur dispatch suppression kDrive {doc_type} : {k_err}")
+        if is_signed:
+            # Document signé : Préservation absolue de la preuve juridique et du PDF.
+            # Révocation des jetons actifs et suppression logique (soft delete).
+            WaiverToken.query.filter_by(waiver_id=waiver.waiver_id).delete()
+            waiver.deleted_at = datetime.now(timezone.utc)
+            db.session.commit()
 
-        logger.info(f"🗑️ Document {mode} {waiver.waiver_id} supprimé avec succès.")
+            from services.common.signatures import log_signature_event
+            admin_user = "system"
+            try:
+                from flask import session
+                admin_user = (
+                    session.get("admin_user_mail")
+                    or session.get("user")
+                    or session.get("admin_user_firstname")
+                    or "system"
+                )
+            except Exception:
+                pass
+
+            log_signature_event(
+                waiver.waiver_id,
+                mode,
+                "waiver_archived_or_retired",
+                {
+                    "archive_hash": signed_doc.hash if signed_doc else "",
+                    "pdf_file_hash": signed_doc.pdf_file_hash if signed_doc else "",
+                    "admin_user": admin_user,
+                    "action": "soft_delete_preserve_proof",
+                }
+            )
+        else:
+            # Document non signé : nettoyage normal des assets de travail
+            _cleanup_waiver_assets(mode, waiver)
+            waiver.deleted_at = datetime.now(timezone.utc)
+            db.session.commit()
+
+            try:
+                from services.common.kdrive import dispatch_delete_document
+                dispatch_delete_document(doc_type, waiver.waiver_id)
+            except Exception as k_err:
+                logger.error(f"❌ Erreur dispatch suppression kDrive {doc_type} : {k_err}")
+
+        logger.info(f"🗑️ Document {mode} {waiver.waiver_id} supprimé avec succès (conservé={is_signed}).")
         return True, "Document supprimé avec succès."
     except Exception as e:
         db.session.rollback()
@@ -323,7 +363,7 @@ def delete_waiver(waiver_id, waiver_type: str = None):
 
 @handle_admin_service_error
 def reset_waiver(waiver_id, waiver_type: str = None):
-    """Réinitialise complètement un contrat ou engagement (supprime signatures et PDF)."""
+    """Réinitialise complètement un contrat ou engagement (autorisé UNIQUEMENT si non signé)."""
     if waiver_type == "safety_rules":
         waiver = resolve_safety_rules_waiver(waiver_id)
     elif waiver_type == "cgl":
@@ -333,6 +373,14 @@ def reset_waiver(waiver_id, waiver_type: str = None):
 
     if not waiver:
         return False, "Document non trouvé."
+
+    from models import WaiverSignedDocument
+    signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=waiver.waiver_id).first()
+    if waiver.status in ["signed", "completed"] or signed_doc:
+        return False, (
+            "Impossible de réinitialiser un document déjà signé et scellé juridiquement. "
+            "L'archive et la preuve d'origine sont protégées. Veuillez archiver ce document ou créer une nouvelle version."
+        )
 
     mode = waiver.waiver_type
     doc_type = f"{mode}_waiver"
@@ -375,15 +423,24 @@ def delete_waiver_internal(project_id, waiver_type: str = None):
         mode = waiver.waiver_type
         doc_type = f"{mode}_waiver"
         try:
-            _cleanup_waiver_assets(mode, waiver)
-            waiver.deleted_at = datetime.now(timezone.utc)
-            db.session.commit()
+            from models import WaiverSignedDocument
+            signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=waiver.waiver_id).first()
+            is_signed = bool(waiver.status in ["signed", "completed"] or signed_doc)
 
-            try:
-                from services.common.kdrive import dispatch_delete_document
-                dispatch_delete_document(doc_type, waiver.waiver_id)
-            except Exception as k_err:
-                logger.error(f"❌ Erreur dispatch suppression kDrive {doc_type} internal : {k_err}")
+            if is_signed:
+                WaiverToken.query.filter_by(waiver_id=waiver.waiver_id).delete()
+                waiver.deleted_at = datetime.now(timezone.utc)
+                db.session.commit()
+            else:
+                _cleanup_waiver_assets(mode, waiver)
+                waiver.deleted_at = datetime.now(timezone.utc)
+                db.session.commit()
+
+                try:
+                    from services.common.kdrive import dispatch_delete_document
+                    dispatch_delete_document(doc_type, waiver.waiver_id)
+                except Exception as k_err:
+                    logger.error(f"❌ Erreur dispatch suppression kDrive {doc_type} internal : {k_err}")
         except Exception as e:
             logger.error(f"❌ Erreur suppression {mode} pour projet {project_id} : {e}")
             db.session.rollback()

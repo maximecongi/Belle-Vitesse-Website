@@ -80,10 +80,16 @@ def task_render_pdf_to_file(
 
             waiver = Waiver.query.filter_by(waiver_id=str(entity_id)).first()
             if waiver:
-                waiver.signed_pdf_path = rel_pdf_path
                 signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=str(entity_id)).first()
                 if signed_doc:
+                    expected_hash = (extra_context or {}).get("current_hash")
+                    if expected_hash and signed_doc.hash != expected_hash:
+                        logger.warning(
+                            f"⚠️ [PDF Job] Tâche worker obsolète pour waiver {entity_id} : hash en base ({signed_doc.hash}) != attendu ({expected_hash}). Mise à jour ignorée."
+                        )
+                        return False
                     signed_doc.pdf_file_hash = file_hash
+                waiver.signed_pdf_path = rel_pdf_path
                 db.session.commit()
 
                 if post_action == "waiver_post_actions":
@@ -122,7 +128,6 @@ def task_render_pdf_to_file(
                 or CheckinVehicle.query.filter(or_(*checkin_cond)).first()
             )
             if record:
-                record.signed_pdf_path = rel_pdf_path
                 signed_doc = (
                     CheckoutSignedDocument.query.filter(
                         or_(
@@ -140,7 +145,14 @@ def task_render_pdf_to_file(
                     ).first()
                 )
                 if signed_doc:
+                    expected_hash = (extra_context or {}).get("current_hash")
+                    if expected_hash and signed_doc.hash != expected_hash:
+                        logger.warning(
+                            f"⚠️ [PDF Job] Tâche worker obsolète pour inspection {entity_id} : hash en base ({signed_doc.hash}) != attendu ({expected_hash}). Mise à jour ignorée."
+                        )
+                        return False
                     signed_doc.pdf_file_hash = file_hash
+                record.signed_pdf_path = rel_pdf_path
                 db.session.commit()
 
                 if post_action == "inspection_post_actions":
@@ -163,13 +175,19 @@ def task_render_pdf_to_file(
                 (Incident.id == entity_id) | (Incident.incident_number == str(entity_id))
             ).first()
             if inc:
-                inc.signed_pdf_path = rel_pdf_path
-                inc.pdf_file_hash = file_hash
                 signed_doc = IncidentSignedDocument.query.filter_by(
                     incident_number=inc.incident_number
                 ).first()
                 if signed_doc:
+                    expected_hash = (extra_context or {}).get("current_hash")
+                    if expected_hash and signed_doc.hash != expected_hash:
+                        logger.warning(
+                            f"⚠️ [PDF Job] Tâche worker obsolète pour incident {entity_id} : hash en base ({signed_doc.hash}) != attendu ({expected_hash}). Mise à jour ignorée."
+                        )
+                        return False
                     signed_doc.pdf_file_hash = file_hash
+                inc.signed_pdf_path = rel_pdf_path
+                inc.pdf_file_hash = file_hash
                 db.session.commit()
 
                 if post_action == "incident_post_actions":

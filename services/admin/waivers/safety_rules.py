@@ -68,7 +68,7 @@ delete_safety_rules_internal = delete_safety_rules_waiver_internal
 
 
 @handle_admin_service_error
-def countersign_safety_rules(waiver_id, signature_data, signer_name="Belle Vitesse"):
+def countersign_safety_rules(waiver_id, signature_data, signer_name="Belle Vitesse", signer_ip=None, user_agent=None):
     """
     Enregistre la contre-signature du superviseur technique Belle Vitesse pour le BVSR.
     Régénère le PDF scellé final avec les deux signatures si le signataire a déjà signé.
@@ -77,6 +77,14 @@ def countersign_safety_rules(waiver_id, signature_data, signer_name="Belle Vites
     if not waiver:
         return False, "Règles de sécurité BVSR introuvables."
 
+    if waiver.bv_signed_at:
+        return False, "Ce document a déjà été contre-signé par Belle Vitesse. Une nouvelle contre-signature est interdite."
+
+    from utils.signature_storage import validate_base64_png
+    valid_sig, sig_err = validate_base64_png(signature_data)
+    if not valid_sig:
+        return False, f"Signature invalide : {sig_err}"
+
     waiver.bv_signature_data = signature_data
     waiver.bv_signed_at = _utcnow()
     waiver.bv_signer_name = signer_name or "Belle Vitesse"
@@ -84,7 +92,26 @@ def countersign_safety_rules(waiver_id, signature_data, signer_name="Belle Vites
 
     if waiver.status == "signed" and waiver.signature_data:
         from services.common.signatures import finalize_signed_document
-        finalize_signed_document("safety_rules", waiver.id, waiver.signature_data, waiver.signer_ip)
+        finalize_signed_document(
+            "safety_rules",
+            waiver.id,
+            waiver.signature_data,
+            waiver.signer_ip or signer_ip,
+            user_agent=user_agent
+        )
+
+    from services.common.signatures import log_signature_event
+    log_signature_event(
+        waiver.waiver_id,
+        "safety_rules",
+        "bvsr_countersigned",
+        {
+            "bv_signer_name": waiver.bv_signer_name,
+            "bv_signed_at": waiver.bv_signed_at.isoformat() if waiver.bv_signed_at else "",
+        },
+        ip=signer_ip,
+        user_agent=user_agent
+    )
 
     return True, "Contre-signature Belle Vitesse enregistrée avec succès."
 

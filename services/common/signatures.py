@@ -244,13 +244,37 @@ def validate_inspection_token(token_str, mode):
 
 
 def generate_inspection_token(record_id, mode):
-    config = FLOW_CONFIG[mode]
+    config = FLOW_CONFIG.get(mode)
+    if not config:
+        return None
     model = config["model"]
     token_model = config["token_model"]
+    signed_model = config.get("signed_model")
 
     record = db.session.get(model, record_id)
-    if not record:
+    if not record or getattr(record, "deleted_at", None) is not None:
         return None
+
+    if getattr(record, "status", None) in ["signed", "completed"]:
+        raise ValueError(f"Cet enregistrement {mode} #{record_id} a déjà été signé et validé.")
+
+    doc_id = getattr(record, "inspection_number", getattr(record, "waiver_id", f"{mode}_{record_id}"))
+    if signed_model and db.session.get(signed_model, doc_id):
+        raise ValueError(f"Une archive scellée immuable existe déjà pour cette inspection ({doc_id}).")
+
+    if mode == "checkout":
+        from services.admin.utils import _is_ready
+        is_ready = bool(
+            getattr(record, "vehicle_ready", False)
+            and _is_ready(
+                record.checkpoint_statuses,
+                vehicle_id=record.vehicle_id,
+                is_checkout=True,
+                battery_val=record.battery_level,
+            )
+        )
+        if not is_ready:
+            raise ValueError("Impossible de générer le jeton de signature : le véhicule n'est pas prêt (points de contrôle non conformes ou batterie < 100%).")
 
     # Importation dynamique pour éviter les dépendances circulaires
     from services.admin.inspections import _format_base_inspection_admin
@@ -272,11 +296,19 @@ def generate_inspection_token(record_id, mode):
         record.status = "pending"
     db.session.commit()
 
-    base_url = os.getenv("BASE_URL", "https://bellevitesse.com")
+    base_url = (
+        current_app.config.get("APP_BASE_URL")
+        or current_app.config.get("BASE_URL")
+        or os.getenv("APP_BASE_URL")
+        or os.getenv("BASE_URL", "https://bellevitesse.com")
+    ) if current_app else os.getenv("BASE_URL", "https://bellevitesse.com")
+    if not base_url.startswith("http"):
+        base_url = f"https://{base_url}"
+
     return {
         "inspection_id": data["inspection_id"],
         "token": token,
-        "sign_url": f"{base_url}/{config['url_path']}/sign/{token}",
+        "sign_url": f"{base_url.rstrip('/')}/{config['url_path']}/sign/{token}",
     }
 
 
@@ -324,7 +356,7 @@ def resume_inspection_signature(token_str, mode):
 
 # ── Moteur de Traitement des Signatures ──────────────────────────
 
-def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_data=None, user_agent=None):
+def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_data=None, user_agent=None, token_entry=None):
     """
     Moteur unifié pour finaliser n'importe quel document signé (Inspection ou Décharge).
     Génère le PDF, enregistre l'archive et déclenche les webhooks/emails.
@@ -341,8 +373,12 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         raise ValueError(f"Record {record_id} not found for mode {mode}")
 
     signed_at = datetime.now(timezone.utc)
-    base_url = os.getenv("BASE_URL") or os.getenv(
-        "APP_BASE_URL", "https://bellevitesse.com")
+    base_url = (
+        current_app.config.get("APP_BASE_URL")
+        or current_app.config.get("BASE_URL")
+        or os.getenv("APP_BASE_URL")
+        or os.getenv("BASE_URL", "https://bellevitesse.com")
+    ) if current_app else os.getenv("BASE_URL", "https://bellevitesse.com")
     if not base_url.startswith("http"):
         base_url = f"https://{base_url}"
 
@@ -368,28 +404,17 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
 
         # Point 3: Contrôle d'immuabilité en mémoire AVANT toute écriture de PNG sur disque
         existing_doc = db.session.get(signed_model, document_id)
-        if existing_doc and mode in ["cgl", "safety_rules"]:
-            old_sig_sha = (existing_doc.data_snapshot or {}).get("signature_sha256")
-            is_bv_countersign = (mode == "safety_rules" and getattr(record, "bv_signature_data", None))
-            if old_sig_sha and not is_bv_countersign:
-                incoming_sig_sha = ""
-                sig_str = str(signature_data or "")
-                if sig_str.startswith("data:image"):
-                    import base64
-                    try:
-                        raw_bytes = base64.b64decode(sig_str.split(",", 1)[1])
-                        incoming_sig_sha = hashlib.sha256(raw_bytes).hexdigest()
-                    except Exception:
-                        pass
-                elif not sig_str.startswith("data:"):
-                    full_p = os.path.join(output_base, sig_str.lstrip("/"))
-                    incoming_sig_sha = compute_file_sha256(full_p)
-
-                if incoming_sig_sha and incoming_sig_sha != old_sig_sha:
-                    raise ValueError(
-                        "Ce document juridique a déjà été signé et scellé de manière immuable. "
-                        "L'écrasement de la signature d'origine est interdit."
-                    )
+        if existing_doc:
+            is_bv_countersign = (
+                mode == "safety_rules"
+                and getattr(record, "bv_signature_data", None)
+                and not (existing_doc.data_snapshot or {}).get("bv_signature_sha256")
+            )
+            if not is_bv_countersign:
+                raise ValueError(
+                    f"Ce document #{document_id} ({mode}) a déjà été signé et scellé de manière immuable. "
+                    "L'écrasement de la signature d'origine est interdit."
+                )
 
         if str(signature_data).startswith("signatures/") and str(signature_data).endswith(".png"):
             from utils.signature_storage import validate_stored_signature_file
@@ -521,15 +546,18 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
             "checkout", "checkin"] else "waiver_id"
         existing_doc = db.session.get(signed_model, document_id)
         if existing_doc:
-            old_hash = existing_doc.hash
-            old_sig_sha = (existing_doc.data_snapshot or {}).get("signature_sha256")
-            if old_sig_sha and old_sig_sha != sig_file_sha256 and mode in ["cgl", "safety_rules"]:
+            is_bv_countersign = (
+                mode == "safety_rules"
+                and getattr(record, "bv_signature_data", None)
+                and not (existing_doc.data_snapshot or {}).get("bv_signature_sha256")
+            )
+            if not is_bv_countersign:
                 raise ValueError(
-                    "Ce document juridique a déjà été signé et scellé de manière immuable. "
-                    "L'écrasement de la signature d'origine est interdit."
+                    f"Ce document #{document_id} ({mode}) a déjà été signé et scellé de manière immuable. "
+                    "L'écrasement de l'archive d'origine est interdit."
                 )
 
-
+            old_hash = existing_doc.hash
             existing_doc.hash = current_hash
             existing_doc.pdf_file_hash = ""
             existing_doc.data_snapshot = canonical_payload
@@ -537,10 +565,10 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
             existing_doc.pdf_url = pdf_public_url
             existing_doc.signed_at = signed_at.replace(tzinfo=None)
             signed_doc = existing_doc
-            log_signature_event(document_id, mode, "archive_overwritten", {
+            log_signature_event(document_id, mode, "archive_countersigned", {
                 "old_hash": old_hash,
                 "new_hash": current_hash,
-                "signature_sha256": sig_file_sha256,
+                "bv_signature_sha256": bv_sig_file_sha256,
             }, ip=signed_ip, user_agent=user_agent)
         else:
             signed_doc = signed_model(
@@ -558,23 +586,14 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
                 "signature_sha256": sig_file_sha256,
             }, ip=signed_ip, user_agent=user_agent, raise_on_failure=True)
 
+        if token_entry:
+            token_entry.signature = current_hash
+
         try:
             db.session.commit()
         except IntegrityError as commit_err:
             db.session.rollback()
-            logger.warning(
-                f"⚠️ Archive légale déjà présente pour {document_id} ({commit_err}), mise à jour de l'existant...")
-            existing_doc = db.session.get(signed_model, document_id)
-            if existing_doc:
-                existing_doc.hash = current_hash
-                existing_doc.pdf_file_hash = ""
-                existing_doc.data_snapshot = canonical_payload
-                existing_doc.signature = sig_file_rel_path
-                existing_doc.pdf_url = pdf_public_url
-                existing_doc.signed_at = signed_at.replace(tzinfo=None)
-                db.session.commit()
-            else:
-                raise commit_err
+            raise ValueError(f"Erreur d'intégrité : une archive scellée existe déjà pour {document_id} ({commit_err}).")
 
         # 6. Compilation PDF asynchrone via RQ & Post-traitements (kDrive, Emails)
         from services.common.pdf_tasks import dispatch_pdf_generation
@@ -749,6 +768,13 @@ def process_inspection_signature(token_str: str, mode: str, signature_data: str,
     if not record or record.deleted_at is not None:
         raise ValueError(f"Enregistrement {mode} #{record_id} introuvable ou supprimé.")
 
+    if getattr(record, "status", None) in ["signed", "completed"]:
+        raise ValueError(f"Cet enregistrement {mode} #{record_id} a déjà été signé et validé.")
+
+    doc_id = getattr(record, "inspection_number", getattr(record, "waiver_id", f"{mode}_{record_id}"))
+    if db.session.get(config["signed_model"], doc_id):
+        raise ValueError(f"Une archive scellée immuable existe déjà pour cette inspection ({doc_id}).")
+
     # 5. Vérification stricte de l'état de préparation du véhicule pour les départs (checkout)
     if mode == "checkout":
         from services.admin.utils import _is_ready
@@ -764,14 +790,10 @@ def process_inspection_signature(token_str: str, mode: str, signature_data: str,
         if not is_ready:
             raise ValueError("Impossible de sceller le check-out : le véhicule n'est pas prêt (points de contrôle non conformes ou batterie < 100%).")
 
-    # 6. Finalisation du document scellé
+    # 6. Finalisation du document scellé et consommation atomique du jeton
     res = finalize_signed_document(
-        mode, record_id, signature_data, signed_ip, user_agent=user_agent
+        mode, record_id, signature_data, signed_ip, user_agent=user_agent, token_entry=entry
     )
-
-    # 7. Marquer le jeton comme consommé (sans le supprimer pour éviter les faux 404 lors des redirections)
-    entry.signature = res.get("hash") or "signed"
-    db.session.commit()
 
     return res
 

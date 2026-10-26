@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from flask import abort, current_app, jsonify, render_template, request
 from werkzeug.utils import secure_filename
 
-from extensions import csrf
+from extensions import csrf, limiter
 from models import (
     CglWaiver,
     SafetyRulesWaiver,
@@ -66,10 +66,12 @@ def init_waiver_routes(app):
     # ── Routes de Signature ──────────────────────────────────────
 
     @app.route("/sign/cgl/<token>", methods=["GET", "POST"])
+    @limiter.limit("20 per minute")
     def sign_cgl(token):
         return _handle_sign_waiver("cgl", token)
 
     @app.route("/sign/safety-rules/<token>", methods=["GET", "POST"])
+    @limiter.limit("20 per minute")
     def sign_safety_rules(token):
         return _handle_sign_waiver("safety_rules", token)
 
@@ -194,20 +196,42 @@ def init_waiver_routes(app):
                     return _fail("La reconnaissance du droit et devoir d'interruption (Stop Work Authority) est obligatoire.")
 
                 if data.get("first_name"):
-                    waiver.signer_first_name = data.get("first_name").strip()
+                    fn = data.get("first_name").strip()
+                    if len(fn) > 100:
+                        return _fail("Le prénom ne peut dépasser 100 caractères.")
+                    waiver.signer_first_name = fn
                 if data.get("last_name"):
-                    waiver.signer_last_name = data.get("last_name").strip()
+                    ln = data.get("last_name").strip()
+                    if len(ln) > 100:
+                        return _fail("Le nom ne peut dépasser 100 caractères.")
+                    waiver.signer_last_name = ln
                 if data.get("email"):
-                    waiver.signer_email = data.get("email").strip()
+                    em = data.get("email").strip()
+                    import re
+                    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", em) or len(em) > 120:
+                        return _fail("L'adresse e-mail renseignée est invalide.")
+                    waiver.signer_email = em
                 if data.get("phone"):
-                    waiver.signer_phone = data.get("phone").strip()
+                    ph = data.get("phone").strip()
+                    if len(ph) > 50:
+                        return _fail("Le numéro de téléphone ne peut dépasser 50 caractères.")
+                    waiver.signer_phone = ph
                 if data.get("company"):
-                    waiver.signer_company = data.get("company").strip()
+                    co = data.get("company").strip()
+                    if len(co) > 150:
+                        return _fail("La société ne peut dépasser 150 caractères.")
+                    waiver.signer_company = co
                 if data.get("signer_role"):
-                    waiver.signer_role = data.get("signer_role").strip()
+                    ro = data.get("signer_role").strip()
+                    if len(ro) > 100:
+                        return _fail("La fonction ne peut dépasser 100 caractères.")
+                    waiver.signer_role = ro
                 if data.get("role_custom"):
-                    waiver.signer_role_custom = data.get("role_custom").strip()
-                rep_name = f"{waiver.signer_first_name} {waiver.signer_last_name}".strip()
+                    rc = data.get("role_custom").strip()
+                    if len(rc) > 100:
+                        return _fail("Le rôle personnalisé ne peut dépasser 100 caractères.")
+                    waiver.signer_role_custom = rc
+                rep_name = f"{waiver.signer_first_name or ''} {waiver.signer_last_name or ''}".strip()
 
                 bvsr_sign_data = dict(waiver.sign_data or {})
                 bvsr_sign_data["ack_rules"] = True
@@ -230,6 +254,10 @@ def init_waiver_routes(app):
                 rep_role = (data.get("representative_role") or waiver.signer_role_custom or "").strip()
                 if not rep_name or not rep_role:
                     return _fail("Le nom du signataire et sa fonction au sein de la société sont obligatoires.")
+                if len(rep_name) > 150:
+                    return _fail("Le nom du signataire ne peut dépasser 150 caractères.")
+                if len(rep_role) > 100:
+                    return _fail("La fonction du signataire ne peut dépasser 100 caractères.")
 
                 address = (data.get("address") or waiver.production_address or "").strip()
                 if address and len(address) > 255:
@@ -256,20 +284,38 @@ def init_waiver_routes(app):
                 if siret:
                     waiver.production_siret = siret
                 if data.get("vat_number"):
-                    waiver.production_vat = data.get("vat_number").strip()
+                    vat = data.get("vat_number").strip()
+                    if len(vat) > 100:
+                        return _fail("Le numéro de TVA intracommunautaire ne peut dépasser 100 caractères.")
+                    waiver.production_vat = vat
                 if data.get("phone"):
-                    waiver.signer_phone = data.get("phone").strip()
+                    ph = data.get("phone").strip()
+                    if len(ph) > 50:
+                        return _fail("Le numéro de téléphone ne peut dépasser 50 caractères.")
+                    waiver.signer_phone = ph
                 if email:
                     waiver.signer_email = email
                 waiver.signer_role_custom = rep_role
                 if data.get("insurance_company"):
-                    waiver.production_insurance_company = data.get("insurance_company").strip()
+                    ic = data.get("insurance_company").strip()
+                    if len(ic) > 255:
+                        return _fail("Le nom de la compagnie d'assurance ne peut dépasser 255 caractères.")
+                    waiver.production_insurance_company = ic
                 if data.get("insurance_policy"):
-                    waiver.production_insurance_policy = data.get("insurance_policy").strip()
+                    ip = data.get("insurance_policy").strip()
+                    if len(ip) > 255:
+                        return _fail("Le numéro de police d'assurance ne peut dépasser 255 caractères.")
+                    waiver.production_insurance_policy = ip
                 if data.get("location_of_use"):
-                    waiver.location_of_use = data.get("location_of_use").strip()
+                    loc = data.get("location_of_use").strip()
+                    if len(loc) > 255:
+                        return _fail("Le lieu d'utilisation ne peut dépasser 255 caractères.")
+                    waiver.location_of_use = loc
                 elif data.get("city") and not waiver.location_of_use:
-                    waiver.location_of_use = data.get("city").strip()
+                    city = data.get("city").strip()
+                    if len(city) > 255:
+                        return _fail("La ville ne peut dépasser 255 caractères.")
+                    waiver.location_of_use = city
 
                 # Calcul de l'empreinte du partial des articles CGL (termes acceptés immuables)
                 terms_fingerprint = ""
@@ -382,14 +428,14 @@ def init_waiver_routes(app):
                 raise_on_failure=True,
             )
 
-            result = finalize_signed_document(mode, waiver.id, signature_raw, signer_ip, user_agent=user_agent)
-
-            # Consommation du jeton à usage unique (marqué comme signé, conservé pour l'affichage de confirmation)
-            try:
-                token_rec.signature = result.get("hash") or "signed"
-                db.session.commit()
-            except Exception as token_err:
-                current_app.logger.warning(f"⚠️ Erreur lors de la mise à jour du jeton {token}: {token_err}")
+            result = finalize_signed_document(
+                mode,
+                waiver.id,
+                signature_raw,
+                signer_ip,
+                user_agent=user_agent,
+                token_entry=token_rec,
+            )
 
             return jsonify({
                 "success": True,
@@ -422,6 +468,7 @@ def init_waiver_routes(app):
 
     @app.route("/safety-rules/verify/<string:waiver_id>", methods=["GET", "POST"])
     @app.route("/verify/safety-rules/<string:waiver_id>", methods=["GET", "POST"])
+    @limiter.limit("20 per minute")
     @csrf.exempt
     def verify_safety_rules(waiver_id):
         config = _get_waiver_route_config("safety_rules")
@@ -438,6 +485,7 @@ def init_waiver_routes(app):
 
     @app.route("/cgl/verify/<string:waiver_id>", methods=["GET", "POST"])
     @app.route("/verify/cgl/<string:waiver_id>", methods=["GET", "POST"])
+    @limiter.limit("20 per minute")
     @csrf.exempt
     def verify_cgl(waiver_id):
         config = _get_waiver_route_config("cgl")

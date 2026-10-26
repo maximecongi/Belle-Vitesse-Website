@@ -59,6 +59,47 @@ def validate_stored_signature_file(rel_path: str) -> str:
     return clean_rel
 
 
+def validate_base64_png(base64_data: str, min_bytes: int = 50, min_width: int = 1, min_height: int = 1) -> tuple[bool, str]:
+    """
+    Valide rigoureusement une chaîne Base64 contenant une image PNG :
+    décodage, magic bytes PNG, limites de taille (min/max 500 Ko) et intégrité Pillow.
+    Retourne (True, "") si valide, ou (False, message_erreur) si invalide.
+    """
+    if not base64_data or not str(base64_data).strip():
+        return False, "Données de signature vides."
+
+    raw_str = str(base64_data).strip()
+    if "," in raw_str:
+        raw_str = raw_str.split(",", 1)[1]
+
+    try:
+        binary_data = base64.b64decode(raw_str)
+    except Exception as err:
+        return False, f"Échec du décodage Base64 de la signature : {err}"
+
+    if len(binary_data) > 500 * 1024:
+        return False, f"Signature trop volumineuse ({len(binary_data)} octets, max 500 Ko)."
+
+    PNG_MAGIC_BYTES = b"\x89PNG\r\n\x1a\n"
+    if not binary_data.startswith(PNG_MAGIC_BYTES):
+        return False, "Format de signature invalide : le fichier doit être une image PNG valide."
+
+    if len(binary_data) < min_bytes:
+        return False, f"Signature trop petite ({len(binary_data)} octets)."
+
+    try:
+        from io import BytesIO
+        from PIL import Image
+        with Image.open(BytesIO(binary_data)) as img:
+            img.verify()
+            if img.width < min_width or img.height < min_height:
+                return False, f"Dimensions de la signature trop petites ({img.width}x{img.height})."
+    except Exception as img_err:
+        return False, f"Fichier image PNG corrompu ou invalide : {img_err}"
+
+    return True, ""
+
+
 def save_signature_image(base64_data: str, entity_type: str, record_id: str, suffix: str = "") -> str:
     """
     Décode une signature Base64 (data:image/png;base64,...), l'enregistre en fichier PNG
@@ -70,37 +111,14 @@ def save_signature_image(base64_data: str, entity_type: str, record_id: str, suf
     :param suffix: Suffixe optionnel (ex: '_bv', '_prod')
     :return: Chemin relatif sous output (ex: 'signatures/waivers/BVPW-123.png')
     """
-    if not base64_data or not str(base64_data).strip():
-        raise ValueError("Données de signature vides ou invalides.")
+    valid, err_msg = validate_base64_png(base64_data)
+    if not valid:
+        raise ValueError(err_msg)
 
     raw_str = str(base64_data).strip()
-
-    # Extraction du Base64 pur
     if "," in raw_str:
         raw_str = raw_str.split(",", 1)[1]
-
-    try:
-        binary_data = base64.b64decode(raw_str)
-    except Exception as err:
-        raise ValueError(f"Échec du décodage Base64 de la signature : {err}")
-
-    # Contrôle strict de la taille (max 500 Ko)
-    if len(binary_data) > 500 * 1024:
-        raise ValueError(f"Signature trop volumineuse ({len(binary_data)} octets, max 500 Ko).")
-
-    # Contrôle strict des octets magiques PNG
-    PNG_MAGIC_BYTES = b"\x89PNG\r\n\x1a\n"
-    if not binary_data.startswith(PNG_MAGIC_BYTES):
-        raise ValueError("Format de signature invalide : le fichier doit être une image PNG valide.")
-
-    # Validation de l'intégrité de l'image via Pillow
-    try:
-        from io import BytesIO
-        from PIL import Image
-        with Image.open(BytesIO(binary_data)) as img:
-            img.verify()
-    except Exception as img_err:
-        raise ValueError(f"Fichier image PNG corrompu ou invalide : {img_err}")
+    binary_data = base64.b64decode(raw_str)
 
     clean_entity = sanitize_filename_part(entity_type)
     clean_id = sanitize_filename_part(record_id)

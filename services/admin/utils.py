@@ -1,6 +1,7 @@
 import functools
 import json
 import logging
+import math
 import os
 from pathlib import Path
 
@@ -124,38 +125,49 @@ def _delete_inspection_files(record):
                     f"❌ Échec de la suppression du PDF {pdf_path}: {e}")
 
 
-def _is_ready(form_or_statuses, vehicle_id=None, is_checkout=False, battery_val=None):
+def compute_inspection_readiness(form_or_statuses, vehicle_id=None, is_checkout=False, battery_val=None) -> tuple[bool, list[str]]:
     """
-    Calcule si le véhicule est 'prêt' basé sur les points de contrôle.
-    Retourne True si tous les points de contrôle configurés pour ce véhicule sont conformes ('ok' ou 'not_applicable').
-    Pour les départs (checkout), exige impérativement une batterie à >= 100%.
+    Source unique de vérité pour le calcul de conformité et préparation d'un véhicule.
+    Retourne un tuple (is_ready: bool, failures: list[str]).
+    
+    Règles strictes :
+    1. Un véhicule doit être spécifié et disposer de points de contrôle configurés.
+    2. La batterie doit être un nombre fini compris entre 0 et 100. Pour checkout, elle doit être égale à 100%.
+    3. Tous les points de contrôle configurés doivent être renseignés et conformes ('ok' ou 'not_applicable').
     """
-    # 1. Vérification stricte du niveau de batterie pour les départs (checkout)
-    if is_checkout:
-        b_val = battery_val
-        if b_val is None:
-            if hasattr(form_or_statuses, "get"):
-                b_val = form_or_statuses.get("battery_level")
-                if b_val is None:
-                    b_val = form_or_statuses.get("battery")
-            elif hasattr(form_or_statuses, "battery_level"):
-                b_val = getattr(form_or_statuses, "battery_level")
+    failures = []
 
-        if b_val is None:
-            return False
+    # 1. Validation rigoureuse de la batterie
+    b_val = battery_val
+    if b_val is None:
+        if hasattr(form_or_statuses, "get"):
+            b_val = form_or_statuses.get("battery_level")
+            if b_val is None:
+                b_val = form_or_statuses.get("battery")
+        elif hasattr(form_or_statuses, "battery_level"):
+            b_val = getattr(form_or_statuses, "battery_level")
 
+    if b_val is None or str(b_val).strip() in ("", "—", "None"):
+        if is_checkout:
+            failures.append("Charge batterie (non renseignée)")
+    else:
         try:
             val_float = float(b_val)
-            if val_float < 100:
-                return False
+            if not math.isfinite(val_float) or math.isnan(val_float):
+                failures.append("Niveau de batterie non numérique ou infini")
+            elif val_float < 0 or val_float > 100:
+                failures.append(f"Niveau de batterie hors limites ({val_float}%)")
+            elif is_checkout and val_float < 100:
+                failures.append("Charge batterie (< 100%)")
         except (ValueError, TypeError):
-            return False
+            failures.append("Niveau de batterie invalide")
 
-    # 2. Vérification des points de contrôle configurés pour ce véhicule
-    checkpoints = get_checkpoints_for_vehicle(vehicle_id)
+    # 2. Validation des points de contrôle du véhicule
+    checkpoints = get_checkpoints_for_vehicle(vehicle_id) if vehicle_id else []
     if checkpoints:
         for cp in checkpoints:
             key = cp['key']
+            label = cp.get('label') or key
             cp_type = cp.get('type', 'status')
             if hasattr(form_or_statuses, "get"):
                 val = form_or_statuses.get(key)
@@ -169,11 +181,11 @@ def _is_ready(form_or_statuses, vehicle_id=None, is_checkout=False, battery_val=
             if cp_type == 'value':
                 if key not in ("battery", "battery_level"):
                     if val is None or str(val).strip() in ("", "—", "None"):
-                        return False
+                        failures.append(f"{label} (non renseigné)")
             else:
                 val_clean = str(val).lower().strip() if val is not None else ""
                 if val_clean not in ("ok", "non_applicable", "not_applicable"):
-                    return False
+                    failures.append(label)
     elif isinstance(form_or_statuses, dict) and form_or_statuses:
         # Fallback pour validation directe de statuts (ou environnement sans profil véhicule)
         for key, val in form_or_statuses.items():
@@ -181,9 +193,29 @@ def _is_ready(form_or_statuses, vehicle_id=None, is_checkout=False, battery_val=
                 continue
             val_clean = str(val).lower().strip() if val is not None else ""
             if val_clean not in ("ok", "non_applicable", "not_applicable"):
-                return False
+                failures.append(key)
+    else:
+        if vehicle_id:
+            failures.append("Profil de points de contrôle introuvable")
+        else:
+            failures.append("Véhicule non sélectionné")
 
-    return True
+    is_ready = (len(failures) == 0)
+    return is_ready, failures
+
+
+def _is_ready(form_or_statuses, vehicle_id=None, is_checkout=False, battery_val=None) -> bool:
+    """
+    Calcule si le véhicule est 'prêt' basé sur les points de contrôle.
+    Délègue à la source unique de vérité compute_inspection_readiness.
+    """
+    is_ready, _ = compute_inspection_readiness(
+        form_or_statuses,
+        vehicle_id=vehicle_id,
+        is_checkout=is_checkout,
+        battery_val=battery_val
+    )
+    return is_ready
 
 
 # ── Aides CRUD Génériques ──────────────────────────────────────────

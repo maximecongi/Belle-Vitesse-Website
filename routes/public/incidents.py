@@ -9,7 +9,7 @@ from flask import (
     request,
 )
 
-from extensions import csrf
+from extensions import csrf, limiter
 from models import Incident, IncidentSignedDocument, db
 from routes.public.shared_docs import handle_document_download, handle_document_verify
 from services.admin.incidents import (
@@ -112,6 +112,7 @@ def init_incident_public_routes(app):
             return jsonify({"error": str(e)}), 500
 
     @app.route("/incidents/verify/<string:incident_number>", methods=["GET", "POST"])
+    @limiter.limit("20 per minute")
     @csrf.exempt
     def incident_verify_doc(incident_number):
         config = {

@@ -357,11 +357,29 @@ def admin_safety_rules_copy_link(waiver_id):
 def admin_safety_rules_countersign(waiver_id):
     """Enregistre la contre-signature du superviseur technique Belle Vitesse."""
     sig_data = request.form.get("signature_data")
-    signer_name = request.form.get("signer_name") or session.get("user_name", "Belle Vitesse")
     if not sig_data:
         return jsonify({"success": False, "error": "Signature manquante."}), 400
 
-    success, msg = countersign_safety_rules(waiver_id, sig_data, signer_name=signer_name)
+    from utils.signature_storage import validate_base64_png
+    valid_sig, sig_err = validate_base64_png(sig_data, min_bytes=100, min_width=50, min_height=20)
+    if not valid_sig:
+        return jsonify({"success": False, "error": f"Signature invalide : {sig_err}"}), 400
+
+    # L'identité du signataire provient strictement du compte authentifié en session
+    admin_fn = session.get("admin_user_firstname") or ""
+    admin_ln = session.get("admin_user_lastname") or ""
+    session_user_name = f"{admin_fn} {admin_ln}".strip() or session.get("user") or session.get("admin_user_mail") or "Belle Vitesse"
+
+    from utils.request_utils import get_client_ip
+    signer_ip = get_client_ip()
+
+    success, msg = countersign_safety_rules(
+        waiver_id,
+        sig_data,
+        signer_name=session_user_name,
+        signer_ip=signer_ip,
+        user_agent=request.headers.get("User-Agent")
+    )
     if success:
         flash(msg, "success")
         return jsonify({"success": True, "message": msg})

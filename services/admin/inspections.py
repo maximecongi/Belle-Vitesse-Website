@@ -30,6 +30,7 @@ from services.admin.utils import (
     _delete_inspection_files,
     _is_ready,
     _parse_photos_json,
+    compute_inspection_readiness,
     handle_admin_service_error,
 )
 from utils.checkpoints import get_checkpoints_for_vehicle
@@ -549,34 +550,21 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
         else:
             data[k] = statuses.get(k, "—")
 
-    # Calcul centralisé des anomalies et défaillances
-    failures = []
-    for item in data.get("check_items", []):
-        k = item.get("key")
-        if item.get("type") == "value":
-            if k in ("battery", "battery_level"):
-                pass  # Géré ci-dessous avec le seuil 100% au départ
-            else:
-                val = data.get(k)
-                if val is None or val == "—" or str(val).strip() == "":
-                    failures.append(f"{item.get('label') or k} (non renseigné)")
-        else:
-            val = data.get(k)
-            val_clean = str(val).lower().strip() if val is not None else ""
-            if val_clean not in ("ok", "not_applicable", "non_applicable"):
-                failures.append(item.get("label") or k)
-
+    # Calcul centralisé des anomalies et de la préparation
     is_checkout = isinstance(c, CheckoutVehicle) or getattr(c, "__tablename__", "") == "checkout_vehicles"
-    if is_checkout and battery_val is not None and battery_val < 100:
-        failures.append("Charge batterie (< 100%)")
+    is_ready_bool, failures = compute_inspection_readiness(
+        c,
+        vehicle_id=c.vehicle_id,
+        is_checkout=is_checkout,
+        battery_val=battery_val
+    )
 
     data["failures"] = failures
     data["failure_count"] = len(failures)
     data["has_failures"] = len(failures) > 0
-    data["ready"] = "false" if failures else "true"
+    data["ready"] = "true" if is_ready_bool else "false"
 
-    # Synchroniser l'état vehicle_ready en base s'il y a divergence (ex: checkpoint supprimé)
-    is_ready_bool = len(failures) == 0
+    # Synchroniser l'état vehicle_ready en base s'il y a divergence
     if hasattr(c, "vehicle_ready") and c.vehicle_ready != is_ready_bool:
         c.vehicle_ready = is_ready_bool
         try:

@@ -2,7 +2,7 @@ import os
 import secrets
 from datetime import datetime
 
-from flask import abort, current_app, render_template, request, send_from_directory, session
+from flask import abort, current_app, make_response, render_template, request, send_from_directory, session
 
 from utils.document_utils import (
     generate_pdf_access_token,
@@ -220,26 +220,56 @@ def handle_document_verify(mode_config, identifier):
                 pdf_valid = verify_pdf_hash(
                     uploaded_file.read(), signed_doc.pdf_file_hash)
 
-    # 2. URL de téléchargement PDF avec un nouveau jeton frais
-    pdf_download_url = None
-    if signed_doc.pdf_url:
-        # Extract relative path from stored URL
-        if "/document/" in signed_doc.pdf_url:
-            path_part = signed_doc.pdf_url.split("/document/")[-1].split("?")[0]
-        elif "/attachment/" in signed_doc.pdf_url:
-            path_part = signed_doc.pdf_url.split("/attachment/")[-1].split("?")[0]
-        else:
-            path_part = signed_doc.pdf_url
+    # 2. Vérification automatique du PDF physique réellement stocké sur disque
+    output_base = current_app.config.get(
+        "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
 
-        token = generate_pdf_access_token(path_part)
-        pdf_download_url = f"/{mode_config['route_base']}/document/{path_part}?t={token}"
+    pdf_storage_status = "pending"
+    stored_pdf_rel = getattr(source_record, "signed_pdf_path", None)
+    if not stored_pdf_rel and signed_doc.pdf_url:
+        if "/document/" in signed_doc.pdf_url:
+            stored_pdf_rel = signed_doc.pdf_url.split("/document/")[-1].split("?")[0]
+        elif "/attachment/" in signed_doc.pdf_url:
+            stored_pdf_rel = signed_doc.pdf_url.split("/attachment/")[-1].split("?")[0]
+
+    if stored_pdf_rel:
+        full_pdf_path = os.path.normpath(os.path.join(output_base, stored_pdf_rel.lstrip("/")))
+        resolved_out = os.path.abspath(output_base)
+        if not os.path.abspath(full_pdf_path).startswith(resolved_out):
+            current_app.logger.warning(f"⚠️ Tentative de path traversal sur PDF pour {identifier} : {full_pdf_path}")
+            pdf_storage_status = "corrupted"
+            seal_valid = False
+        elif os.path.exists(full_pdf_path):
+            actual_pdf_sha = compute_file_sha256(full_pdf_path)
+            if signed_doc.pdf_file_hash:
+                if actual_pdf_sha == signed_doc.pdf_file_hash:
+                    pdf_storage_status = "intact"
+                else:
+                    current_app.logger.warning(
+                        f"⚠️ Altération du PDF physique sur disque pour {identifier} : {actual_pdf_sha} != {signed_doc.pdf_file_hash}"
+                    )
+                    pdf_storage_status = "corrupted"
+                    seal_valid = False
+            else:
+                pdf_storage_status = "intact"
+        else:
+            pdf_storage_status = "pending"
 
     company_name = AppSetting.get("company_name", "Belle Vitesse SAS")
     company_address = AppSetting.get("company_address", "")
 
     display_data = dict(data.get("snapshot", {})) if isinstance(data.get("snapshot"), dict) else dict(data)
     display_data.setdefault("signed_at", data.get("signed_at"))
-    display_data.setdefault("signer_ip", data.get("signer_ip"))
+
+    # Minimisation RGPD : Masquer coordonnées personnelles, e-mails, téléphones et adresses IP du signataire sur la vue publique
+    for sensitive_key in [
+        "signer_email", "signer_phone", "signer_ip", "phone", "email",
+        "production_address", "address", "production_siret", "siret",
+        "production_vat", "vat_number", "production_insurance_policy",
+        "production_insurance_validity", "signature_data", "bv_signature_data"
+    ]:
+        display_data.pop(sensitive_key, None)
+
     if "signed_at" in display_data and isinstance(display_data["signed_at"], str):
         try:
             display_data["signed_at"] = datetime.fromisoformat(display_data["signed_at"])
@@ -256,7 +286,7 @@ def handle_document_verify(mode_config, identifier):
             f"⚠️ Altération détectée dans la chaîne d'audit signature_events pour {identifier}: {audit_chain.get('error')}")
         seal_valid = False
 
-    return render_template(
+    rendered_html = render_template(
         mode_config["template_verify"],
         config=mode_config,
         route_base=mode_config.get("route_base", "checkout"),
@@ -266,6 +296,7 @@ def handle_document_verify(mode_config, identifier):
         audit_chain=audit_chain,
         pdf_valid=pdf_valid,
         pdf_error=pdf_error,
+        pdf_storage_status=pdf_storage_status,
         signed_doc=signed_doc,
         source_record=source_record,
         waiver=source_record,
@@ -273,7 +304,15 @@ def handle_document_verify(mode_config, identifier):
         document_hash=signed_doc.hash,
         project_name=display_data.get('project_name', display_data.get('project', '—')),
         has_pdf_hash=bool(signed_doc.pdf_file_hash),
-        pdf_download_url=pdf_download_url,
+        pdf_download_url=None,
         company_name=company_name,
         company_address=company_address
     )
+
+    response = make_response(rendered_html)
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["X-Robots-Tag"] = "noindex, nofollow"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    return response

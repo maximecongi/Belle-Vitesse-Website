@@ -208,6 +208,7 @@ def register_inspection_routes(app, mode):
 
     # 7. Vérification de document scellé (GET/POST)
     @app.route(f"/{route_base}/verify/<string:inspection_id>", methods=["GET", "POST"], endpoint=f"{mode}_verify")
+    @limiter.limit("20 per minute")
     @csrf.exempt
     def inspection_verify(inspection_id):
         config = {
