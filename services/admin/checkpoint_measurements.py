@@ -1,0 +1,54 @@
+"""Validation commune des checkpoints de type mesure."""
+
+from decimal import Decimal, InvalidOperation
+
+
+RULE_FIELDS = ("minimum", "maximum", "goal", "tolerance")
+
+
+def decimal_value(value):
+    if value is None or str(value).strip() == "":
+        raise ValueError("toutes les bornes numériques sont obligatoires")
+    try:
+        result = Decimal(str(value).strip().replace(",", "."))
+    except (InvalidOperation, TypeError, ValueError):
+        raise ValueError("une borne numérique est invalide")
+    if not result.is_finite():
+        raise ValueError("les bornes doivent être des nombres finis")
+    return result
+
+
+def normalize_measurement_rules(data):
+    rules = {field: decimal_value(data.get(field)) for field in RULE_FIELDS}
+    if rules["minimum"] > rules["maximum"]:
+        raise ValueError("la valeur minimale doit être inférieure ou égale à la valeur maximale")
+    if not rules["minimum"] <= rules["goal"] <= rules["maximum"]:
+        raise ValueError("l’objectif doit être compris dans la plage autorisée")
+    if rules["tolerance"] < 0:
+        raise ValueError("la tolérance doit être positive ou nulle")
+    return rules
+
+
+def snapshot_rules(config):
+    """Retourne les paramètres numériques sérialisables d'une définition."""
+    return {field: str(config.get(field)) if config.get(field) is not None else None
+            for field in RULE_FIELDS} | {"unit": config.get("unit") or ""}
+
+
+def validate_measurement(value, config, is_checkout):
+    """Valide une valeur, puis la normalise pour le stockage. Retourne (value, erreur)."""
+    try:
+        measured = decimal_value(value)
+        rules = normalize_measurement_rules(config)
+    except ValueError as exc:
+        return None, str(exc)
+
+    if not rules["minimum"] <= measured <= rules["maximum"]:
+        return None, "valeur hors de la plage autorisée"
+    if is_checkout:
+        lower = max(rules["minimum"], rules["goal"] - rules["tolerance"])
+        upper = min(rules["maximum"], rules["goal"] + rules["tolerance"])
+        if not lower <= measured <= upper:
+            return None, "valeur hors de l’objectif et de sa tolérance"
+    normalized = format(measured.normalize(), "f")
+    return normalized, None

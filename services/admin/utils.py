@@ -1,7 +1,6 @@
 import functools
 import json
 import logging
-import math
 import os
 from pathlib import Path
 
@@ -9,6 +8,7 @@ from flask import current_app
 
 from models import CheckoutVehicle, db
 from utils.checkpoints import get_checkpoints_for_vehicle
+from services.admin.checkpoint_measurements import validate_measurement
 
 logger = logging.getLogger(__name__)
 
@@ -153,37 +153,10 @@ def compute_inspection_readiness(form_or_statuses, vehicle_id=None, is_checkout=
     Source unique de vérité pour le calcul de conformité et préparation d'un véhicule.
     Retourne un tuple (is_ready: bool, failures: list[str]).
     
-    Règles strictes :
-    1. Pour le check-out : un véhicule doit être obligatoirement sélectionné et reconnu dans le parc (get_vehicles).
-    2. La batterie doit être un nombre fini compris entre 0 et 100. Pour checkout, elle doit être égale à 100%.
-    3. Tous les points de contrôle configurés pour ce véhicule doivent être renseignés et conformes ('ok' ou 'not_applicable').
+    Règles strictes : le départ exige un véhicule connu; toutes les mesures suivent leur plage,
+    et au départ leur objectif avec tolérance; les points de statut doivent être conformes.
     """
     failures = []
-
-    # 1. Validation rigoureuse de la batterie
-    b_val = battery_val
-    if b_val is None:
-        if hasattr(form_or_statuses, "get"):
-            b_val = form_or_statuses.get("battery_level")
-            if b_val is None:
-                b_val = form_or_statuses.get("battery")
-        elif hasattr(form_or_statuses, "battery_level"):
-            b_val = getattr(form_or_statuses, "battery_level")
-
-    if b_val is None or str(b_val).strip() in ("", "—", "None"):
-        if is_checkout:
-            failures.append("Charge batterie (non renseignée)")
-    else:
-        try:
-            val_float = float(b_val)
-            if not math.isfinite(val_float) or math.isnan(val_float):
-                failures.append("Niveau de batterie non numérique ou infini")
-            elif val_float < 0 or val_float > 100:
-                failures.append(f"Niveau de batterie hors limites ({val_float}%)")
-            elif is_checkout and val_float < 100:
-                failures.append("Charge batterie (< 100%)")
-        except (ValueError, TypeError):
-            failures.append("Niveau de batterie invalide")
 
     # 2. Validation des points de contrôle du véhicule
     v_id = vehicle_id
@@ -212,12 +185,24 @@ def compute_inspection_readiness(form_or_statuses, vehicle_id=None, is_checkout=
         checkpoints = get_checkpoints_for_vehicle(v_id) if v_id else []
 
     if checkpoints:
+        is_record = hasattr(form_or_statuses, "checkpoints")
+        record_values = getattr(form_or_statuses, "checkpoint_values", {}) if is_record else {}
+        record_statuses = getattr(form_or_statuses, "checkpoint_statuses", {}) if is_record else {}
+        record_rules = {item.checkpoint_key: item.config_snapshot for item in getattr(form_or_statuses, "checkpoints", []) if item.config_snapshot} if is_record else {}
         for cp in checkpoints:
             key = cp['key']
             label = cp.get('label') or key
             cp_type = cp.get('type', 'status')
-            if hasattr(form_or_statuses, "get"):
+            if cp_type == 'value':
+                val = record_values.get(key) if is_record else (form_or_statuses.get("battery_level", form_or_statuses.get(key)) if key in ("battery", "battery_level") and hasattr(form_or_statuses, "get") else (form_or_statuses.get(key) if hasattr(form_or_statuses, "get") else None))
+                rule = (record_rules.get(key) if is_record else cp)
+                normalized, error = validate_measurement(val, rule, is_checkout)
+                if error:
+                    failures.append(f"{label} ({'non renseignée' if val is None or str(val).strip() == '' else error})")
+            elif hasattr(form_or_statuses, "get"):
                 val = form_or_statuses.get(key)
+            elif is_record:
+                val = record_statuses.get(key)
             elif hasattr(form_or_statuses, "get_checkpoint_status"):
                 val = form_or_statuses.get_checkpoint_status(key, default=None)
             elif hasattr(form_or_statuses, "checkpoint_statuses"):
@@ -226,11 +211,7 @@ def compute_inspection_readiness(form_or_statuses, vehicle_id=None, is_checkout=
             else:
                 val = None
 
-            if cp_type == 'value':
-                if key not in ("battery", "battery_level"):
-                    if val is None or str(val).strip() in ("", "—", "None"):
-                        failures.append(f"{label} (non renseigné)")
-            else:
+            if cp_type != 'value':
                 val_clean = str(val).lower().strip() if val is not None else ""
                 if val_clean not in ("ok", "non_applicable", "not_applicable"):
                     failures.append(label)

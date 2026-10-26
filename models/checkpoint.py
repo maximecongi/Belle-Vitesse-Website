@@ -15,6 +15,10 @@ class CheckpointDefinition(db.Model):
     category = db.Column(db.String(100), default="Sécurité", nullable=False)
     type = db.Column(db.String(50), default="status", nullable=False)  # 'status' ou 'value'
     unit = db.Column(db.String(20), nullable=True)                     # ex: '%'
+    minimum = db.Column(db.Numeric(18, 6), nullable=True)
+    maximum = db.Column(db.Numeric(18, 6), nullable=True)
+    goal = db.Column(db.Numeric(18, 6), nullable=True)
+    tolerance = db.Column(db.Numeric(18, 6), nullable=True)
     default_detail = db.Column(db.Text, nullable=True)                 # Indication globale de fallback
     order = db.Column(db.Integer, default=0, nullable=False)
 
@@ -65,6 +69,10 @@ class CheckpointDefinition(db.Model):
             "category": self.category,
             "type": self.type,
             "unit": self.unit,
+            "minimum": str(self.minimum) if self.minimum is not None else None,
+            "maximum": str(self.maximum) if self.maximum is not None else None,
+            "goal": str(self.goal) if self.goal is not None else None,
+            "tolerance": str(self.tolerance) if self.tolerance is not None else None,
             "has_protocol": self.has_protocol_available(),
             "protocol_url": self.protocol_url or ("/admin/tools/check-vehicles" if self.has_protocol_available() else ""),
             "default_detail": self.default_detail,

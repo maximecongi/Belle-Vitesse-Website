@@ -22,6 +22,7 @@
     white-space: nowrap;
     border: 1px solid transparent;
     transition: all 0.2s ease;
+    margin-bottom: 1.5rem;
 }
 
 .verify-badge .lucide,

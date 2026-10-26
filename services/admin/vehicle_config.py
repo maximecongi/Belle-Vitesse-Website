@@ -6,6 +6,7 @@ from sqlalchemy import case
 from sqlalchemy.orm.attributes import flag_modified
 from utils.database import get_vehicles
 from services.admin.utils import handle_admin_service_error
+from services.admin.checkpoint_measurements import normalize_measurement_rules
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,8 @@ DEFAULT_CHECKPOINT_SEEDS = [
 
     # ÉQUIPEMENTS
     {'key': 'battery', 'label': 'Charge', 'unit': '%',
-     'type': 'value', 'category': 'Équipements'},
+     'type': 'value', 'category': 'Équipements',
+     'minimum': 0, 'maximum': 100, 'goal': 100, 'tolerance': 5},
     {'key': 'casques_passagers', 'label': 'Casques passagers', 'category': 'Équipements', 'type': 'status',
      'detail': 'eTrike : casques passagers homologués (tailles S à XL)'},
     {'key': 'protections_pilote', 'label': 'Protections pilote', 'category': 'Équipements', 'type': 'status',
@@ -142,6 +144,8 @@ def ensure_default_checkpoints():
                 category=category,
                 type=cp_type,
                 unit=unit,
+                minimum=cp.get("minimum"), maximum=cp.get("maximum"),
+                goal=cp.get("goal"), tolerance=cp.get("tolerance"),
                 has_protocol=bool(cp.get("has_protocol", False)),
                 protocol_url=cp.get("protocol_url", None),
                 default_detail=default_detail,
@@ -211,6 +215,10 @@ def get_all_checkpoints():
             "category": cp.category,
             "type": cp.type,
             "unit": cp.unit,
+            "minimum": str(cp.minimum) if cp.minimum is not None else None,
+            "maximum": str(cp.maximum) if cp.maximum is not None else None,
+            "goal": str(cp.goal) if cp.goal is not None else None,
+            "tolerance": str(cp.tolerance) if cp.tolerance is not None else None,
             "has_protocol": has_protocol_val,
             "protocol_url": protocol_url_val,
             "default_detail": cp.default_detail,
@@ -585,6 +593,10 @@ def get_checkpoint_by_id(checkpoint_id: int):
         "category": cp.category,
         "type": cp.type,
         "unit": cp.unit,
+        "minimum": str(cp.minimum) if cp.minimum is not None else "",
+        "maximum": str(cp.maximum) if cp.maximum is not None else "",
+        "goal": str(cp.goal) if cp.goal is not None else "",
+        "tolerance": str(cp.tolerance) if cp.tolerance is not None else "",
         "has_protocol": cp.has_protocol_available() if hasattr(cp, "has_protocol_available") else bool(getattr(cp, "has_protocol", False) or cp.key in ("tires", "brakes")),
         "protocol_url": getattr(cp, "protocol_url", "") or "",
         "default_detail": cp.default_detail,
@@ -629,6 +641,7 @@ def get_empty_checkpoint_for_create():
         "category": "Sécurité",
         "type": "status",
         "unit": "",
+        "minimum": "", "maximum": "", "goal": "", "tolerance": "",
         "has_protocol": False,
         "protocol_url": "",
         "default_detail": "",
@@ -697,6 +710,9 @@ def create_checkpoint(form_data: dict):
     unit = form_data.get("unit", "").strip() or None
     if cp_type != "value":
         unit = None
+        rules = {"minimum": None, "maximum": None, "goal": None, "tolerance": None}
+    else:
+        rules = normalize_measurement_rules(form_data)
     has_protocol = bool(form_data.get("has_protocol"))
     protocol_url = form_data.get("protocol_url", "").strip() or None
 
@@ -706,6 +722,7 @@ def create_checkpoint(form_data: dict):
         category=category,
         type=cp_type,
         unit=unit,
+        **rules,
         has_protocol=has_protocol,
         protocol_url=protocol_url,
         default_detail=default_detail,
@@ -745,6 +762,13 @@ def update_checkpoint(checkpoint_id: int, form_data: dict) -> bool:
 
     if cp.type != "value":
         cp.unit = None
+        cp.minimum = cp.maximum = cp.goal = cp.tolerance = None
+    else:
+        rules = normalize_measurement_rules(form_data)
+        cp.minimum = rules["minimum"]
+        cp.maximum = rules["maximum"]
+        cp.goal = rules["goal"]
+        cp.tolerance = rules["tolerance"]
 
     cp.has_protocol = bool(form_data.get("has_protocol"))
 
@@ -849,15 +873,13 @@ def delete_checkpoint(checkpoint_id: int) -> tuple[bool, str]:
             for co in in_progress_checkouts:
                 InspectionCheckpoint.query.filter_by(checkout_id=co.id, checkpoint_key=cp_key).delete()
                 db.session.expire(co, ['checkpoints'])
-                statuses = co.checkpoint_statuses
-                co.vehicle_ready = _is_ready(statuses, co.vehicle_id, is_checkout=True, battery_val=co.battery_level)
+                co.vehicle_ready = _is_ready(co, co.vehicle_id, is_checkout=True, battery_val=co.battery_level)
 
             in_progress_checkins = CheckinVehicle.query.filter_by(status='in_progress').all()
             for ci in in_progress_checkins:
                 InspectionCheckpoint.query.filter_by(checkin_id=ci.id, checkpoint_key=cp_key).delete()
                 db.session.expire(ci, ['checkpoints'])
-                statuses = ci.checkpoint_statuses
-                ci.vehicle_ready = _is_ready(statuses, ci.vehicle_id, is_checkout=False, battery_val=ci.battery_level)
+                ci.vehicle_ready = _is_ready(ci, ci.vehicle_id, is_checkout=False, battery_val=ci.battery_level)
 
             db.session.commit()
         except Exception as e_clean:

@@ -79,10 +79,14 @@ Altérées", ok_hint=None, error_hint=None) %}
 {% endif %}
 {% endmacro %}
 
-{% macro crypto_fingerprints(document_hash, pdf_file_hash=None, title="Sécurité Numérique & Sceau", pdf_storage_status=None, parent_hash=None) %}
+{% macro crypto_fingerprints(document_hash, pdf_file_hash=None, title="Sécurité Numérique & Sceau",
+pdf_storage_status=None, parent_hash=None) %}
 <section class="checkout-section">
     <h2 class="checkout-section-title dot-before">{{ title }}</h2>
     <div class="verify-crypto-card">
+        {% if pdf_storage_status %}
+        {{ pdf_storage_badge(pdf_storage_status) }}
+        {% endif %}
         <p class="verify-crypto-label">
             Empreinte d'intégrité (HMAC-SHA256)
         </p>
@@ -104,9 +108,6 @@ Altérées", ok_hint=None, error_hint=None) %}
         <code class="verify-crypto-code">
             {{ pdf_file_hash }}
         </code>
-        {% endif %}
-        {% if pdf_storage_status %}
-        {{ pdf_storage_badge(pdf_storage_status) }}
         {% endif %}
     </div>
 </section>

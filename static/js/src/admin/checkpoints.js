@@ -19,11 +19,18 @@ function initCheckpointForm() {
     const unitInput = document.getElementById('checkpoint_unit');
     const unitLabel = document.getElementById('checkpoint_unit_label');
     const unitHint = document.getElementById('checkpoint_unit_hint');
+    const rulesGroup = document.getElementById('checkpoint_measurement_rules');
+    const ruleInputs = rulesGroup ? rulesGroup.querySelectorAll('.checkpoint-measurement-rule') : [];
 
     if (!typeSelect || !unitInput) return;
 
     function updateUnitState() {
         const isValue = typeSelect.value === 'value';
+        if (rulesGroup) rulesGroup.classList.toggle('u-d-none', !isValue);
+        ruleInputs.forEach(function (input) {
+            input.disabled = !isValue;
+            input.required = isValue;
+        });
         if (isValue) {
             unitInput.disabled = false;
             if (unitLabel) unitLabel.classList.remove('u-text-muted');

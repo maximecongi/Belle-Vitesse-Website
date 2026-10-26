@@ -24,12 +24,10 @@
 
 <body>
 
-    <div class="{{ type }}" id="inspection-sign-container"
-         data-type="{{ type }}"
-         data-token="{{ token }}"
-         data-abandon-url="{{ url_for(type + '_abandon', token=token) }}"
-         data-resume-url="{{ url_for(type + '_resume', token=token) }}"
-         data-already-signed="{{ 'true' if already_signed else 'false' }}">
+    <div class="{{ type }}" id="inspection-sign-container" data-type="{{ type }}" data-token="{{ token }}"
+        data-abandon-url="{{ url_for(type + '_abandon', token=token) }}"
+        data-resume-url="{{ url_for(type + '_resume', token=token) }}"
+        data-already-signed="{{ 'true' if already_signed else 'false' }}">
 
         <!-- ═══════════ HEADER ═══════════ -->
         <header class="{{ type }}-header">
@@ -51,7 +49,7 @@
             </div>
             <div class="u-mt-4 u-text-center">
                 <p class="u-text-sm u-text-muted">
-                    Redirection vers le site public dans <strong id="redirect-counter">3</strong> secondes…
+                    Redirection vers le site public dans <strong id="redirect-counter">10</strong> secondes…
                 </p>
                 <a href="/" class="{{ type }}-btn {{ type }}-btn--primary u-mt-2">
                     Accéder au site public

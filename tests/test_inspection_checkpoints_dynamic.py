@@ -1,6 +1,7 @@
 import os
 import sys
 import unittest
+from decimal import Decimal
 from datetime import date
 from unittest.mock import MagicMock
 
@@ -153,6 +154,33 @@ class DynamicInspectionCheckpointsTestCase(unittest.TestCase):
             self.assertEqual(statuses.get("brakes"), "critical")
             self.assertFalse(reloaded.vehicle_ready)
             self.assertEqual(reloaded.battery_level, 95)
+
+    def test_measurement_rules_are_snapshotted_on_inspection(self):
+        """Une inspection conserve la règle appliquée même après évolution du checkpoint."""
+        with self.app.app_context():
+            user, project = self._create_mock_data()
+            definition = CheckpointDefinition(
+                key="battery", label="Charge", category="Sécurité", type="value", unit="%",
+                minimum=0, maximum=100, goal=100, tolerance=5,
+            )
+            db.session.add(definition)
+            db.session.commit()
+            checkin = CheckinVehicle(
+                project_id=project.id, controller_id=user.id, inspection_date=date(2026, 10, 8),
+                vehicle_id="recVeh123", status="in_progress",
+            )
+            db.session.add(checkin)
+            db.session.commit()
+
+            apply_inspection_data(checkin, {"vehicle_id": "recVeh123", "battery_level": "40"}, is_checkout=False)
+            db.session.commit()
+
+            measurement = next(cp for cp in checkin.checkpoints if cp.checkpoint_key == "battery")
+            self.assertEqual(measurement.value, "40")
+            self.assertEqual(Decimal(measurement.config_snapshot["goal"]), Decimal("100"))
+            definition.goal = 80
+            db.session.commit()
+            self.assertEqual(Decimal(measurement.config_snapshot["goal"]), Decimal("100"))
 
     def test_anomaly_detection_with_dynamic_checkpoints(self):
         """Vérifie la détection d'anomalies flotte sur les checkpoints dynamiques."""

@@ -34,6 +34,7 @@ from services.admin.utils import (
     handle_admin_service_error,
 )
 from utils.checkpoints import get_checkpoints_for_vehicle
+from services.admin.checkpoint_measurements import snapshot_rules, validate_measurement
 from utils.database import get_vehicles
 from utils.document_utils import generate_pdf_access_token
 from utils.formatting import format_date_fr
@@ -435,42 +436,36 @@ def apply_inspection_data(record, form, is_checkout=True):
         cp_id = cp_def.id if cp_def else None
 
         if cp_type == 'value':
-            if key in ('battery', 'battery_level'):
-                battery_val = form.get("battery_level") or form.get("battery")
-                b_num = None
-                val_status = "ok"
-                if battery_val is not None and str(battery_val).strip() != "":
-                    try:
-                        b_num = float(battery_val)
-                        record.battery_level = b_num
-                        val_status = "ok" if (not is_checkout or b_num >= 100) else "warning"
-                    except (ValueError, TypeError):
-                        val_status = "warning"
-                else:
-                    val_status = "warning"
-                record.set_checkpoint_status(key, status=val_status, value=str(battery_val) if battery_val is not None else None, checkpoint_id=cp_id)
-            else:
-                val_text = form.get(key)
-                val_str = str(val_text).strip() if val_text is not None else ""
-                val_status = "ok" if val_str != "" else "pending"
-                record.set_checkpoint_status(key, status=val_status, value=val_str if val_str != "" else None, checkpoint_id=cp_id)
+            raw_value = (form.get("battery_level", form.get(key)) if key in ("battery", "battery_level") else form.get(key))
+            normalized, error = validate_measurement(raw_value, cp, is_checkout)
+            stored_value = normalized or (str(raw_value).strip() if raw_value is not None and str(raw_value).strip() else None)
+            row = record.set_checkpoint_status(key, status="ok" if not error else "warning", value=stored_value, checkpoint_id=cp_id)
+            row.config_snapshot = snapshot_rules(cp)
+            if key in ("battery", "battery_level") and normalized is not None:
+                try:
+                    from decimal import Decimal
+                    battery = Decimal(normalized)
+                    record.battery_level = int(battery) if battery == battery.to_integral_value() else None
+                except Exception:
+                    record.battery_level = None
         else:
             raw_val = form.get(key, "pending")
             val = get_checkpoint_key(raw_val)
             record.set_checkpoint_status(key, status=val, checkpoint_id=cp_id)
 
-    # 2. Gestion rétroactive de la batterie si absente des checkpoints mais présente dans le formulaire
-    battery_val = form.get("battery_level") or form.get("battery")
-    if battery_val is not None:
+    # Champ historique utilisé par les vues de flotte; il ne participe plus à la readiness.
+    battery_raw = form.get("battery_level", form.get("battery"))
+    if battery_raw is not None:
         try:
-            record.battery_level = float(battery_val)
-        except (ValueError, TypeError):
-            pass
+            from decimal import Decimal
+            battery_value = Decimal(str(battery_raw).strip())
+            record.battery_level = int(battery_value) if battery_value.is_finite() and battery_value == battery_value.to_integral_value() else None
+        except Exception:
+            record.battery_level = None
 
-    # 3. Calcul de l'état de préparation (si TOUS les points critiques sont conformes)
-    statuses = record.checkpoint_statuses
+    # Calcul de préparation à partir des mêmes règles que la signature.
     record.vehicle_ready = _is_ready(
-        statuses, vehicle_id, is_checkout=is_checkout, battery_val=record.battery_level)
+        record, vehicle_id, is_checkout=is_checkout, battery_val=record.battery_level)
 
     record.notes = form.get("notes")
 

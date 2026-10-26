@@ -36,6 +36,8 @@ class InspectionCheckpoint(db.Model):
 
     # Valeur textuelle ou mesure (ex: niveau batterie ou relevé de pression)
     value = db.Column(db.String(255), nullable=True)
+    # Règle de mesure appliquée à l'inspection, indépendante des futures modifications admin.
+    config_snapshot = db.Column(db.JSON, nullable=True)
 
     created_at = db.Column(db.DateTime, default=_utcnow, nullable=False)
     updated_at = db.Column(db.DateTime, default=_utcnow, onupdate=_utcnow, nullable=False)
@@ -57,6 +59,7 @@ class InspectionCheckpoint(db.Model):
             "checkpoint_id": self.checkpoint_id,
             "status": self.status,
             "value": self.value,
+            "config_snapshot": self.config_snapshot,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
