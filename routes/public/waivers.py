@@ -18,7 +18,7 @@ from services.admin.safety_rules_config import (
     get_safety_rules_for_vehicles,
     DEFAULT_HELMETS_INVENTORY,
 )
-from utils.document_utils import compute_file_sha256
+from utils.document_utils import compute_file_sha256, CGL_VERSION
 from utils.request_utils import get_client_ip
 from utils.storage import ensure_dir, get_cgl_attachments_path
 from utils.image_utils import optimize_and_save_image, IMAGE_EXTENSIONS
@@ -76,6 +76,11 @@ def init_waiver_routes(app):
     def _handle_sign_waiver(mode, token):
         config = _get_waiver_route_config(mode)
 
+        # Limitation de la taille de requête (16 Mo) pour prévenir les attaques DoS (Point 6)
+        if request.method == "POST":
+            if request.content_length and request.content_length > 16 * 1024 * 1024:
+                return jsonify({"success": False, "error": "Le volume des données soumises dépasse la limite autorisée (16 Mo)."}), 413
+
         # 1. Valider le jeton
         if request.method == "POST":
             token_rec = config["token_model"].query.filter_by(token=token).with_for_update().first()
@@ -97,10 +102,38 @@ def init_waiver_routes(app):
             abort(404)
 
         # 3. Si le document a déjà été signé ou le jeton déjà consommé, afficher la vue confirmée en GET et bloquer en POST
-        if waiver.status in ['signed', 'completed', 'signing'] or token_rec.signature:
+        if waiver.status in ['signed', 'completed'] or token_rec.signature:
             if request.method == "GET":
                 return render_template(config["template_sign"], waiver=waiver)
             return jsonify({"success": False, "error": "Ce document a déjà été signé."}), 400
+
+        # Vérification d'un verrou concurrent en cours de traitement ('signing') (Point 5)
+        if waiver.status == "signing":
+            signing_started_at = (waiver.sign_data or {}).get("signing_started_at")
+            is_stale = False
+            if signing_started_at:
+                try:
+                    started_dt = datetime.fromisoformat(signing_started_at)
+                    if started_dt.tzinfo is None:
+                        started_dt = started_dt.replace(tzinfo=timezone.utc)
+                    if (datetime.now(timezone.utc) - started_dt).total_seconds() > 600:
+                        is_stale = True
+                except Exception:
+                    is_stale = True
+            else:
+                is_stale = True
+
+            if is_stale:
+                waiver.status = "to_sign"
+                if request.method == "POST":
+                    db.session.commit()
+            else:
+                if request.method == "GET":
+                    return render_template(config["template_sign"], waiver=waiver)
+                return jsonify({
+                    "success": False,
+                    "error": "Une signature est déjà en cours de traitement. Veuillez patienter quelques instants."
+                }), 409
 
         # 4. Vérifier l'expiration (24h) uniquement si le document n'est pas encore signé
         if token_rec.expires_at:
@@ -129,8 +162,20 @@ def init_waiver_routes(app):
                 db.session.rollback()
             return render_template(config["template_sign"], waiver=waiver, **extra_ctx)
 
-        if waiver.status in ['signed', 'completed']:
-            return jsonify({"success": False, "error": "Ce document a déjà été signé."}), 400
+        # Pose du verrou pessimiste 'signing' avant finalisation
+        waiver.status = "signing"
+        s_data_lock = dict(waiver.sign_data or {})
+        s_data_lock["signing_started_at"] = datetime.now(timezone.utc).isoformat()
+        waiver.sign_data = s_data_lock
+        db.session.commit()
+
+        def _fail(msg, status_code=400):
+            try:
+                waiver.status = "to_sign"
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+            return jsonify({"success": False, "error": msg}), status_code
 
         try:
             data = request.form
@@ -139,20 +184,14 @@ def init_waiver_routes(app):
 
             signature_raw = data.get("signature_data") or data.get("signature")
             if not signature_raw or not str(signature_raw).strip():
-                return jsonify({"success": False, "error": "Le tracé manuscrit de la signature est obligatoire."}), 400
+                return _fail("Le tracé manuscrit de la signature est obligatoire.")
 
             if mode == "safety_rules":
                 if data.get("ack_rules") not in ("1", "on", "true"):
-                    return jsonify({
-                        "success": False,
-                        "error": "La prise de connaissance et le respect des Règles de Sécurité Universelles (BVSR) sont obligatoires."
-                    }), 400
+                    return _fail("La prise de connaissance et le respect des Règles de Sécurité Universelles (BVSR) sont obligatoires.")
 
                 if data.get("ack_authority") not in ("1", "on", "true"):
-                    return jsonify({
-                        "success": False,
-                        "error": "La reconnaissance du droit et devoir d'interruption (Stop Work Authority) est obligatoire."
-                    }), 400
+                    return _fail("La reconnaissance du droit et devoir d'interruption (Stop Work Authority) est obligatoire.")
 
                 if data.get("first_name"):
                     waiver.signer_first_name = data.get("first_name").strip()
@@ -178,47 +217,29 @@ def init_waiver_routes(app):
             else:
                 # Validation stricte du consentement et de la déclaration de pouvoir pour les CGL
                 if data.get("accepted_terms") != "1":
-                    return jsonify({
-                        "success": False,
-                        "error": "L'acceptation expresse des Conditions Générales de Location est obligatoire."
-                    }), 400
+                    return _fail("L'acceptation expresse des Conditions Générales de Location est obligatoire.")
 
                 if data.get("has_signing_authority") != "1":
-                    return jsonify({
-                        "success": False,
-                        "error": "La déclaration sur l'honneur de pouvoir d'engager la société est obligatoire."
-                    }), 400
+                    return _fail("La déclaration sur l'honneur de pouvoir d'engager la société est obligatoire.")
 
                 prod_name = (data.get("production_name") or waiver.production_name or "").strip()
                 if not prod_name or len(prod_name) > 150:
-                    return jsonify({
-                        "success": False,
-                        "error": "La raison sociale de la production est obligatoire (max 150 caractères)."
-                    }), 400
+                    return _fail("La raison sociale de la production est obligatoire (max 150 caractères).")
 
                 rep_name = (data.get("representative") or waiver.production_representative or "").strip()
                 rep_role = (data.get("representative_role") or waiver.signer_role_custom or "").strip()
                 if not rep_name or not rep_role:
-                    return jsonify({
-                        "success": False,
-                        "error": "Le nom du signataire et sa fonction au sein de la société sont obligatoires."
-                    }), 400
+                    return _fail("Le nom du signataire et sa fonction au sein de la société sont obligatoires.")
 
                 address = (data.get("address") or waiver.production_address or "").strip()
                 if address and len(address) > 255:
-                    return jsonify({
-                        "success": False,
-                        "error": "L'adresse du siège social ne peut dépasser 255 caractères."
-                    }), 400
+                    return _fail("L'adresse du siège social ne peut dépasser 255 caractères.")
 
                 email = (data.get("email") or waiver.signer_email or "").strip()
                 if email:
                     import re
                     if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email) or len(email) > 120:
-                        return jsonify({
-                            "success": False,
-                            "error": "L'adresse e-mail renseignée est invalide."
-                        }), 400
+                        return _fail("L'adresse e-mail renseignée est invalide.")
 
                 siret = (data.get("siret") or waiver.production_siret or "").strip()
                 legal_country = (data.get("legal_country") or (waiver.sign_data or {}).get("legal_country") or "").strip().upper()
@@ -226,10 +247,7 @@ def init_waiver_routes(app):
                     import re
                     siret_clean = re.sub(r"\s+", "", siret)
                     if not siret_clean.isdigit() or len(siret_clean) != 14:
-                        return jsonify({
-                            "success": False,
-                            "error": "Le numéro SIRET doit comporter exactement 14 chiffres pour une société française."
-                        }), 400
+                        return _fail("Le numéro SIRET doit comporter exactement 14 chiffres pour une société française.")
 
                 waiver.production_name = prod_name
                 waiver.production_representative = rep_name
@@ -264,7 +282,7 @@ def init_waiver_routes(app):
 
                 # Snapshot structuré JSON
                 s_data = dict(waiver.sign_data or {})
-                s_data["cgl_version"] = "2026.1"
+                s_data["cgl_version"] = CGL_VERSION
                 s_data["accepted_terms"] = True
                 s_data["accepted_at"] = datetime.now(timezone.utc).isoformat()
                 s_data["has_signing_authority"] = True
@@ -301,23 +319,14 @@ def init_waiver_routes(app):
                     ext = os.path.splitext(file.filename)[1].lower()
                     allowed_exts = {'.pdf', '.png', '.jpg', '.jpeg', '.heic', '.heif'}
                     if ext not in allowed_exts:
-                        return jsonify({
-                            "success": False,
-                            "error": "Format d'attestation d'assurance non autorisé (PDF ou image requis)."
-                        }), 400
+                        return _fail("Format d'attestation d'assurance non autorisé (PDF ou image requis).")
 
                     file_bytes = file.read()
                     if len(file_bytes) > 10 * 1024 * 1024:
-                        return jsonify({
-                            "success": False,
-                            "error": "L'attestation d'assurance dépasse la taille maximale autorisée (10 Mo)."
-                        }), 400
+                        return _fail("L'attestation d'assurance dépasse la taille maximale autorisée (10 Mo).")
 
                     if not _is_valid_magic_bytes(file_bytes, ext):
-                        return jsonify({
-                            "success": False,
-                            "error": "Le contenu du fichier téléversé ne correspond pas à une attestation valide (signature de fichier non reconnue)."
-                        }), 400
+                        return _fail("Le contenu du fichier téléversé ne correspond pas à une attestation valide (signature de fichier non reconnue).")
 
                     insurance_upload_sha256 = hashlib.sha256(file_bytes).hexdigest()
                     file.seek(0)
@@ -360,7 +369,7 @@ def init_waiver_routes(app):
                     "has_signing_authority": True,
                     "signer_name": rep_name,
                     "representative_role": rep_role,
-                    "cgl_version": "2026.1",
+                    "cgl_version": CGL_VERSION,
                 }
 
             log_signature_event(
@@ -369,7 +378,8 @@ def init_waiver_routes(app):
                 "consent_recorded",
                 consent_payload,
                 ip=signer_ip,
-                user_agent=user_agent
+                user_agent=user_agent,
+                raise_on_failure=True,
             )
 
             result = finalize_signed_document(mode, waiver.id, signature_raw, signer_ip, user_agent=user_agent)
@@ -388,9 +398,23 @@ def init_waiver_routes(app):
 
         except ValueError as val_err:
             db.session.rollback()
+            try:
+                waiver_to_reset = config["model"].query.filter_by(waiver_id=token_rec.waiver_id).first()
+                if waiver_to_reset and waiver_to_reset.status == "signing":
+                    waiver_to_reset.status = "to_sign"
+                    db.session.commit()
+            except Exception:
+                db.session.rollback()
             return jsonify({"success": False, "error": str(val_err)}), 400
         except Exception as e:
             db.session.rollback()
+            try:
+                waiver_to_reset = config["model"].query.filter_by(waiver_id=token_rec.waiver_id).first()
+                if waiver_to_reset and waiver_to_reset.status == "signing":
+                    waiver_to_reset.status = "to_sign"
+                    db.session.commit()
+            except Exception:
+                db.session.rollback()
             current_app.logger.error(f"Error processing {mode} waiver sign: {e}")
             return jsonify({"success": False, "error": "Une erreur serveur est survenue."}), 500
 

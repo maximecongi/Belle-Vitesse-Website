@@ -1,6 +1,7 @@
 """
 services/admin/waivers/core.py — Gestion du cycle de vie unifié des décharges (création, génération, envoi, suppression, reset).
 """
+import hashlib
 import logging
 import uuid
 from datetime import datetime, timezone
@@ -267,7 +268,8 @@ def send_waiver(waiver_id, waiver_type: str = None, base_url: str = None):
             "recipient_email": recipient_mail,
             "recipient_name": recipient_name,
             "is_reminder": is_reminder,
-            "token": new_token,
+            "token_preview": f"{new_token[:8]}..." if new_token else "",
+            "token_sha256": hashlib.sha256(new_token.encode("utf-8")).hexdigest() if new_token else "",
         }
     )
     db.session.commit()

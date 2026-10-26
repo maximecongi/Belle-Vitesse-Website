@@ -17,7 +17,7 @@ class Config:
     SESSION_USE_SIGNER = True
     SESSION_PERMANENT = True
     RATELIMIT_SWALLOW_ERRORS = True
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB
+    MAX_CONTENT_LENGTH = 500 * 1024 * 1024  # 500 MB (permet les vidéos Arclight et photos haute résolution)
 
 
     # Cache settings

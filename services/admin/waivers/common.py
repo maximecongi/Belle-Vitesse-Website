@@ -1,6 +1,7 @@
 """
 services/admin/waivers/common.py — Fonctions utilitaires partagées, formatage et gestion des tokens/URLs.
 """
+import hashlib
 import logging
 import os
 import uuid
@@ -255,7 +256,8 @@ def get_or_create_waiver_signing_url(waiver_id: str, waiver_type: str = "cgl", b
             mode,
             "link_generated",
             {
-                "token": new_token,
+                "token_preview": f"{new_token[:8]}..." if new_token else "",
+                "token_sha256": hashlib.sha256(new_token.encode("utf-8")).hexdigest() if new_token else "",
                 "admin_user": admin_user,
             }
         )

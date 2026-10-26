@@ -1,5 +1,3 @@
-from utils.cron_helper import monitor_cron_job
-from utils.ssh_helper import get_ssh_tunnel
 import argparse
 import gzip
 import os
@@ -15,6 +13,10 @@ from dotenv import load_dotenv
 _root = Path(__file__).parent.parent
 if str(_root) not in sys.path:
     sys.path.insert(0, str(_root))
+
+from utils.cron_helper import monitor_cron_job  # isort: skip # noqa: E402
+from utils.ssh_helper import get_ssh_tunnel  # isort: skip # noqa: E402
+
 
 
 try:

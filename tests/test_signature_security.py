@@ -8,14 +8,15 @@ Suite de tests de sécurité et de robustesse pour le système de signature éle
 """
 
 import base64
+import hashlib
 import io
 import os
 import shutil
 import sys
 import tempfile
 import unittest
-from datetime import date
-from unittest.mock import MagicMock
+from datetime import date, datetime, timedelta, timezone
+from unittest.mock import MagicMock, patch
 
 from PIL import Image
 
@@ -733,6 +734,137 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
                 os.environ["SECRET_KEY"] = orig_sec
             else:
                 os.environ.pop("SECRET_KEY", None)
+
+
+    def test_concurrent_signing_lock_and_stale_recovery(self):
+        """Vérifie le blocage 409 en cours de signature et la reprise automatique après expiration du verrou (>10 min)."""
+        with self.app.app_context():
+            prod = Production(name="Lock Prod")
+            db.session.add(prod)
+            db.session.flush()
+            contact = Contact(first_name="Verrou", last_name="Test", mail="verrou@test.com", production_id=prod.id)
+            project = Project(name="Projet Verrou", production_id=prod.id, production_contact_id=contact.id)
+            db.session.add_all([contact, project])
+            db.session.flush()
+
+            success, msg = create_cgl(project.id)
+            self.assertTrue(success)
+            cgl = CglWaiver.query.filter_by(project_id=project.id).first()
+            generate_cgl(cgl.waiver_id)
+            _, sign_url = get_or_create_waiver_signing_url(cgl.waiver_id, waiver_type="cgl")
+            token = sign_url.split("/")[-1]
+
+            # 1. Simuler un verrou actif 'signing' posé il y a 1 minute
+            cgl.status = "signing"
+            cgl.sign_data = {"signing_started_at": datetime.now(timezone.utc).isoformat()}
+            db.session.commit()
+
+            res_locked = self.client.post(
+                f"/sign/cgl/{token}",
+                data={
+                    "signature": _generate_valid_png_base64(),
+                    "representative": "Verrou Test",
+                    "representative_role": "Directeur",
+                    "accepted_terms": "1",
+                    "has_signing_authority": "1",
+                }
+            )
+            self.assertEqual(res_locked.status_code, 409)
+            self.assertIn("déjà en cours de traitement", res_locked.get_json().get("error", ""))
+
+            # 2. Simuler un verrou périmé (> 10 minutes)
+            old_dt = datetime.now(timezone.utc) - timedelta(minutes=15)
+            cgl.sign_data = {"signing_started_at": old_dt.isoformat()}
+            db.session.commit()
+
+            with patch("services.common.pdf_tasks.render_pdf_from_template", return_value=b"%PDF-1.4 mock"):
+                res_recovered = self.client.post(
+                    f"/sign/cgl/{token}",
+                    data={
+                        "signature": _generate_valid_png_base64(),
+                        "representative": "Verrou Test",
+                        "representative_role": "Directeur",
+                        "accepted_terms": "1",
+                        "has_signing_authority": "1",
+                    }
+                )
+            self.assertEqual(res_recovered.status_code, 200)
+            db.session.refresh(cgl)
+            self.assertEqual(cgl.status, "signed")
+
+    def test_key_rotation_kid_support(self):
+        """Vérifie le support de la rotation de clés cryptographiques via kid et HASH_SECRET_KEY_{KID}."""
+        from utils.document_utils import compute_canonical_seal, verify_canonical_seal
+        orig_v2 = os.environ.get("HASH_SECRET_KEY_V2")
+        try:
+            os.environ["HASH_SECRET_KEY_V2"] = "super-secret-rotation-key-v2-bellevitesse"
+            payload_v1 = {"doc_id": "TEST-1", "value": 42}
+            payload_v2 = {"_seal_kid": "v2", "doc_id": "TEST-1", "value": 42}
+
+            seal_v1 = compute_canonical_seal(payload_v1)
+            seal_v2 = compute_canonical_seal(payload_v2)
+
+            self.assertNotEqual(seal_v1, seal_v2)
+            self.assertTrue(verify_canonical_seal(seal_v1, payload_v1))
+            self.assertTrue(verify_canonical_seal(seal_v2, payload_v2))
+        finally:
+            if orig_v2:
+                os.environ["HASH_SECRET_KEY_V2"] = orig_v2
+            else:
+                os.environ.pop("HASH_SECRET_KEY_V2", None)
+
+    def test_token_redaction_in_audit_events(self):
+        """Vérifie que les jetons bruts sont masqués dans signature_events (token_preview + sha256)."""
+        from models.signature_event import SignatureEvent
+        with self.app.app_context():
+            prod = Production(name="Token Redaction Prod")
+            db.session.add(prod)
+            db.session.flush()
+            contact = Contact(first_name="Redact", last_name="Token", mail="redact@token.com", production_id=prod.id)
+            project = Project(name="Projet Redaction", production_id=prod.id, production_contact_id=contact.id)
+            db.session.add_all([contact, project])
+            db.session.flush()
+
+            success, msg = create_cgl(project.id)
+            cgl = CglWaiver.query.filter_by(project_id=project.id).first()
+            generate_cgl(cgl.waiver_id)
+            _, sign_url = get_or_create_waiver_signing_url(cgl.waiver_id, waiver_type="cgl")
+            raw_token = sign_url.split("/")[-1]
+
+            ev = SignatureEvent.query.filter_by(document_id=cgl.waiver_id, event_type="link_generated").first()
+            self.assertIsNotNone(ev)
+            self.assertNotIn("token", ev.details)
+            self.assertIn("token_preview", ev.details)
+            self.assertIn("token_sha256", ev.details)
+            self.assertEqual(ev.details["token_preview"], f"{raw_token[:8]}...")
+            self.assertEqual(ev.details["token_sha256"], hashlib.sha256(raw_token.encode("utf-8")).hexdigest())
+
+    def test_signature_events_chain_tamper_detection(self):
+        """Vérifie que la falsification d'un événement d'audit fait échouer verify_signature_events_chain."""
+        from services.common.signatures import verify_signature_events_chain, log_signature_event
+        from models.signature_event import SignatureEvent
+        with self.app.app_context():
+            doc_id = "BVRA-CHAIN-TEST-001"
+            log_signature_event(doc_id, "cgl", "link_generated", {"admin": "test"})
+            log_signature_event(doc_id, "cgl", "link_opened", {})
+            log_signature_event(doc_id, "cgl", "document_signed", {"hash": "abc"})
+            db.session.commit()
+
+            # La chaîne intacte est valide
+            res_ok = verify_signature_events_chain(doc_id)
+            self.assertTrue(res_ok["valid"])
+            self.assertEqual(res_ok["count"], 3)
+
+            # Altérer un événement directement en SQL (contourner l'event listener)
+            db.session.execute(
+                db.text("UPDATE signature_events SET ip = '1.2.3.4' WHERE document_id = :d AND event_type = 'link_opened'"),
+                {"d": doc_id}
+            )
+            db.session.commit()
+
+            res_tampered = verify_signature_events_chain(doc_id)
+            self.assertFalse(res_tampered["valid"])
+            self.assertIn("Empreinte falsifiée", res_tampered.get("error", ""))
 
 
 if __name__ == "__main__":

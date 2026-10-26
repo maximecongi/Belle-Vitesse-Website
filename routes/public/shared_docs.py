@@ -131,16 +131,22 @@ def handle_document_verify(mode_config, identifier):
             full_sig_path = os.path.join(output_base, sig_path.lstrip("/"))
             actual_sig_sha = compute_file_sha256(full_sig_path)
             if actual_sig_sha and actual_sig_sha == expected_sig_sha:
-                # Contrôle d'intégrité de la contre-signature BV si présente
+                # Contrôle d'intégrité de la contre-signature BV si présente (Point 10)
                 expected_bv_sha = data.get("bv_signature_sha256") or data.get("snapshot", {}).get("bv_signature_sha256")
                 bv_valid = True
-                if expected_bv_sha and source_record and getattr(source_record, "bv_signature_data", None):
-                    full_bv_path = os.path.join(output_base, source_record.bv_signature_data.lstrip("/"))
-                    actual_bv_sha = compute_file_sha256(full_bv_path)
-                    if actual_bv_sha != expected_bv_sha:
+                if expected_bv_sha:
+                    bv_sig_file = getattr(source_record, "bv_signature_data", None) if source_record else None
+                    if not bv_sig_file:
                         current_app.logger.warning(
-                            f"⚠️ Altération détectée du PNG de contre-signature BV pour {identifier} : {actual_bv_sha} != {expected_bv_sha}")
+                            f"⚠️ Fichier de contre-signature BV introuvable pour {identifier} alors qu'un hash est scellé ({expected_bv_sha})")
                         bv_valid = False
+                    else:
+                        full_bv_path = os.path.join(output_base, bv_sig_file.lstrip("/"))
+                        actual_bv_sha = compute_file_sha256(full_bv_path)
+                        if not actual_bv_sha or actual_bv_sha != expected_bv_sha:
+                            current_app.logger.warning(
+                                f"⚠️ Altération ou absence du PNG de contre-signature BV pour {identifier} : {actual_bv_sha} != {expected_bv_sha}")
+                            bv_valid = False
 
                 if bv_valid:
                     seal_valid = verify_canonical_seal(signed_doc.hash, data)
@@ -197,12 +203,23 @@ def handle_document_verify(mode_config, identifier):
         except (ValueError, TypeError):
             pass
 
+    # Contrôle d'intégrité cryptographique de la chaîne d'audit signature_events (Point 8)
+    from services.common.signatures import verify_signature_events_chain
+    audit_chain = verify_signature_events_chain(identifier)
+    audit_chain_valid = audit_chain.get("valid", True)
+    if not audit_chain_valid:
+        current_app.logger.warning(
+            f"⚠️ Altération détectée dans la chaîne d'audit signature_events pour {identifier}: {audit_chain.get('error')}")
+        seal_valid = False
+
     return render_template(
         mode_config["template_verify"],
         config=mode_config,
         route_base=mode_config.get("route_base", "checkout"),
         data=display_data,
         seal_valid=seal_valid,
+        audit_chain_valid=audit_chain_valid,
+        audit_chain=audit_chain,
         pdf_valid=pdf_valid,
         pdf_error=pdf_error,
         signed_doc=signed_doc,

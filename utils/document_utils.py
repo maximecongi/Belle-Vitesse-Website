@@ -22,12 +22,20 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
+# ── Constantes Métier & Versions ────────────────────────────────
+CGL_VERSION = "2026.1"
+
 # ── Scellement HMAC & Sceau Canonique ────────────────────────────
 
 
-def _get_hmac_secret() -> bytes:
-    """Récupère la clé secrète HMAC depuis l'environnement."""
-    secret = os.getenv("HASH_SECRET_KEY")
+def _get_hmac_secret(kid: str = "v1") -> bytes:
+    """Récupère la clé secrète HMAC depuis l'environnement, avec support de rotation via kid."""
+    kid_clean = str(kid).strip()
+    secret = None
+    if kid_clean:
+        secret = os.getenv(f"HASH_SECRET_KEY_{kid_clean.upper()}")
+    if not secret:
+        secret = os.getenv("HASH_SECRET_KEY")
     if not secret:
         # Fallback to SECRET_KEY for dev
         secret = os.getenv("SECRET_KEY")
@@ -47,6 +55,7 @@ def compute_canonical_seal(payload: dict) -> str:
     """
     Calcule un sceau cryptographique HMAC-SHA256 déterministe sur un dictionnaire JSON canonique.
     Les clés sont triées avec séparateurs stricts (sort_keys=True, separators=(',', ':')).
+    Supporte la rotation de clé via le champ '_seal_kid' optionnel dans le payload (par défaut 'v1').
     """
     def _default_serializer(obj):
         if isinstance(obj, (datetime, date)):
@@ -60,7 +69,8 @@ def compute_canonical_seal(payload: dict) -> str:
         ensure_ascii=False,
         default=_default_serializer,
     )
-    secret = _get_hmac_secret()
+    kid = payload.get("_seal_kid", "v1") if isinstance(payload, dict) else "v1"
+    secret = _get_hmac_secret(kid=kid)
     return hmac.new(secret, canonical_json.encode("utf-8"), hashlib.sha256).hexdigest()
 
 

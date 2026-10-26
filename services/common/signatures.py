@@ -37,6 +37,7 @@ from models.db import _utcnow
 from models.signature_event import SignatureEvent
 from utils.database import get_vehicles
 from utils.document_utils import (
+    CGL_VERSION,
     compute_canonical_seal,
     verify_canonical_seal,
     compute_file_sha256,
@@ -68,7 +69,7 @@ def log_signature_event(document_id: str, mode: str, event_type: str, details: d
                 .first()
             )
             prev_hash = last_event.event_hash if (last_event and last_event.event_hash) else ""
-            now_dt = _utcnow()
+            now_dt = _utcnow().replace(tzinfo=None, microsecond=0)
             details_payload = details or {}
             details_json = json.dumps(details_payload, sort_keys=True, ensure_ascii=False)
             ip_str = ip[:45] if ip else ""
@@ -95,6 +96,46 @@ def log_signature_event(document_id: str, mode: str, event_type: str, details: d
         if raise_on_failure:
             raise
         return None
+
+
+def verify_signature_events_chain(document_id: str) -> dict:
+    """
+    Vérifie l'intégrité cryptographique complète de la chaîne d'audit signature_events pour un document.
+    Retourne un dict {"valid": bool, "count": int, "error": str or None}.
+    """
+    events = (
+        SignatureEvent.query.filter_by(document_id=str(document_id))
+        .order_by(SignatureEvent.id.asc())
+        .all()
+    )
+    if not events:
+        return {"valid": True, "count": 0, "error": None}
+
+    expected_prev = ""
+    for ev in events:
+        actual_prev = ev.previous_event_hash or ""
+        if actual_prev != expected_prev:
+            return {
+                "valid": False,
+                "count": len(events),
+                "error": f"Rupture de chaînage à l'événement #{ev.id} ({ev.event_type})",
+            }
+        details_json = json.dumps(ev.details or {}, sort_keys=True, ensure_ascii=False)
+        ip_str = ev.ip or ""
+        ua_str = ev.user_agent or ""
+        dt_str = ev.created_at.replace(tzinfo=None, microsecond=0).isoformat() if ev.created_at else ""
+        raw_chain = f"{ev.document_id}|{ev.mode}|{ev.event_type}|{ip_str}|{ua_str}|{details_json}|{actual_prev}|{dt_str}"
+        recalculated_hash = hashlib.sha256(raw_chain.encode("utf-8")).hexdigest()
+        if recalculated_hash != ev.event_hash:
+            return {
+                "valid": False,
+                "count": len(events),
+                "error": f"Empreinte falsifiée à l'événement #{ev.id} ({ev.event_type})",
+            }
+        expected_prev = ev.event_hash
+
+    return {"valid": True, "count": len(events), "error": None}
+
 from utils.storage import (
     ensure_dir,
     get_cgl_path,
@@ -320,13 +361,39 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         entity_type = "waivers" if mode in ["cgl", "safety_rules"] else (
             "checkouts" if mode == "checkout" else "checkins"
         )
+        output_base = current_app.config.get(
+            "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
+
+        # Point 3: Contrôle d'immuabilité en mémoire AVANT toute écriture de PNG sur disque
+        existing_doc = db.session.get(signed_model, document_id)
+        if existing_doc and mode in ["cgl", "safety_rules"]:
+            old_sig_sha = (existing_doc.data_snapshot or {}).get("signature_sha256")
+            is_bv_countersign = (mode == "safety_rules" and getattr(record, "bv_signature_data", None))
+            if old_sig_sha and not is_bv_countersign:
+                incoming_sig_sha = ""
+                sig_str = str(signature_data or "")
+                if sig_str.startswith("data:image"):
+                    import base64
+                    try:
+                        raw_bytes = base64.b64decode(sig_str.split(",", 1)[1])
+                        incoming_sig_sha = hashlib.sha256(raw_bytes).hexdigest()
+                    except Exception:
+                        pass
+                elif not sig_str.startswith("data:"):
+                    full_p = os.path.join(output_base, sig_str.lstrip("/"))
+                    incoming_sig_sha = compute_file_sha256(full_p)
+
+                if incoming_sig_sha and incoming_sig_sha != old_sig_sha:
+                    raise ValueError(
+                        "Ce document juridique a déjà été signé et scellé de manière immuable. "
+                        "L'écrasement de la signature d'origine est interdit."
+                    )
+
         sig_file_rel_path = save_signature_image(
             signature_data, entity_type=entity_type, record_id=document_id)
         if hasattr(record, "signature_data"):
             record.signature_data = sig_file_rel_path
 
-        output_base = current_app.config.get(
-            "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
         sig_full_path = os.path.join(output_base, sig_file_rel_path)
         sig_file_sha256 = compute_file_sha256(sig_full_path)
 
@@ -346,18 +413,28 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         db.session.flush()
 
         # Construction du Snapshot des données et Scellé Canonique (Hash)
-        snapshot, seal_args = _build_flow_data(mode, record, extra_data)
-        if bv_sig_file_sha256:
-            snapshot["bv_signature_sha256"] = bv_sig_file_sha256
+        if existing_doc and mode == "safety_rules" and existing_doc.data_snapshot:
+            # Point 9: Réutiliser l'instantané figé du client pour ne pas altérer les miniatures Airtable ni les détails
+            frozen_client_snapshot = dict(existing_doc.data_snapshot.get("snapshot") or {})
+            frozen_client_snapshot["bv_signature"] = record.bv_signature_data or ""
+            frozen_client_snapshot["bv_signed_at"] = record.bv_signed_at.isoformat() if record.bv_signed_at else ""
+            frozen_client_snapshot["bv_signer_name"] = record.bv_signer_name or ""
+            if bv_sig_file_sha256:
+                frozen_client_snapshot["bv_signature_sha256"] = bv_sig_file_sha256
+            snapshot = frozen_client_snapshot
+        else:
+            snapshot, seal_args = _build_flow_data(mode, record, extra_data)
+            if bv_sig_file_sha256:
+                snapshot["bv_signature_sha256"] = bv_sig_file_sha256
 
-        client_signed_at_dt = record.signed_at or signed_at.replace(tzinfo=None)
+        client_signed_at_dt = getattr(record, "signed_at", None) or signed_at.replace(tzinfo=None)
         canonical_payload = {
             "version": "2.0",
             "_seal_kid": "v1",
             "mode": mode,
             "document_id": str(document_id),
             "signed_at": client_signed_at_dt.isoformat(),
-            "signer_ip": record.signer_ip or signed_ip,
+            "signer_ip": getattr(record, "signer_ip", None) or signed_ip,
             "signature_sha256": sig_file_sha256,
             "snapshot": snapshot,
         }
@@ -437,12 +514,12 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         if existing_doc:
             old_hash = existing_doc.hash
             old_sig_sha = (existing_doc.data_snapshot or {}).get("signature_sha256")
-            is_bv_countersign = (mode == "safety_rules" and bool(bv_sig_file_sha256))
-            if old_sig_sha and old_sig_sha != sig_file_sha256 and not is_bv_countersign:
+            if old_sig_sha and old_sig_sha != sig_file_sha256 and mode in ["cgl", "safety_rules"]:
                 raise ValueError(
                     "Ce document juridique a déjà été signé et scellé de manière immuable. "
                     "L'écrasement de la signature d'origine est interdit."
                 )
+
 
             existing_doc.hash = current_hash
             existing_doc.pdf_file_hash = ""
@@ -470,7 +547,7 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
             log_signature_event(document_id, mode, "document_signed", {
                 "hash": current_hash,
                 "signature_sha256": sig_file_sha256,
-            }, ip=signed_ip, user_agent=user_agent)
+            }, ip=signed_ip, user_agent=user_agent, raise_on_failure=True)
 
         try:
             db.session.commit()
@@ -584,7 +661,7 @@ def _build_flow_data(mode, record, extra_data):
             "accepted_terms": sign_data.get("accepted_terms", True),
             "accepted_at": sign_data.get("accepted_at", ""),
             "terms_fingerprint": sign_data.get("terms_fingerprint", ""),
-            "cgl_version": sign_data.get("cgl_version", "2026.1"),
+            "cgl_version": sign_data.get("cgl_version", CGL_VERSION),
             "signer_email": record.signer_email or "",
             "signer_phone": record.signer_phone or "",
             "siret": record.production_siret or "",
