@@ -212,6 +212,7 @@ def register_inspection_routes(app, mode):
     @csrf.exempt
     def inspection_verify(inspection_id):
         config = {
+            "mode": mode,
             "signed_model": signed_model,
             "seal_prefix": seal_prefix,
             "template_verify": "public/inspection_verify.html",

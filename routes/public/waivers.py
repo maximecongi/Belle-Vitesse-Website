@@ -42,6 +42,7 @@ def _is_valid_magic_bytes(file_bytes: bytes, ext: str) -> bool:
 def _get_waiver_route_config(mode):
     if mode == "safety_rules":
         return {
+            "mode": "safety_rules",
             "model": SafetyRulesWaiver,
             "signed_model": WaiverSignedDocument,
             "token_model": WaiverToken,
@@ -51,6 +52,7 @@ def _get_waiver_route_config(mode):
             "seal_prefix": "BVSR",
         }
     return {
+        "mode": "cgl",
         "model": CglWaiver,
         "signed_model": WaiverSignedDocument,
         "token_model": WaiverToken,

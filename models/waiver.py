@@ -435,6 +435,16 @@ class Waiver(db.Model):
 
         return results
 
+    @property
+    def signed_documents(self):
+        """Retourne toutes les versions scellées de cette décharge, ordonnées par version croissante."""
+        return WaiverSignedDocument.query.filter_by(waiver_id=self.waiver_id).order_by(WaiverSignedDocument.version.asc()).all()
+
+    @property
+    def latest_signed_document(self):
+        """Retourne la version scellée la plus récente."""
+        return WaiverSignedDocument.query.filter_by(waiver_id=self.waiver_id).order_by(WaiverSignedDocument.version.desc()).first()
+
     def __repr__(self):
         return f"<Waiver {self.waiver_id} ({self.waiver_type}) - {self.status}>"
 
@@ -469,9 +479,11 @@ class WaiverToken(db.Model, TokenMixin):
 
 
 class WaiverSignedDocument(db.Model, SignedDocumentMixin):
-    """Archive d'une décharge unifiée signée."""
+    """Archive d'une décharge unifiée signée (avec support du versionnement et traçabilité parent_hash)."""
     __tablename__ = "waiver_signed_documents"
     waiver_id = db.Column(db.String(50), primary_key=True)
+    version = db.Column(db.Integer, primary_key=True, default=1)
+    parent_hash = db.Column(db.String(255), nullable=True)
 
 
 # ── Modèles des Inspections (Préservés) ──────────────────────────

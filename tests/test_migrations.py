@@ -1,7 +1,7 @@
 import os
 import tempfile
 import unittest
-from flask_migrate import upgrade
+from flask_migrate import upgrade, downgrade
 import sqlalchemy as sa
 from app import create_app
 from models import db
@@ -52,7 +52,47 @@ class MigrationsTestCase(unittest.TestCase):
                 # 3. Vérification de la version finale dans alembic_version
                 with db.engine.connect() as conn:
                     current_rev = conn.execute(sa.text("SELECT version_num FROM alembic_version")).scalar()
-                    self.assertEqual(current_rev, "q00d7fe3c477")
+                    self.assertEqual(current_rev, "r00d7fe3c478")
+
+                # Vérification de la clé primaire composite réelle (waiver_id, version) sur waiver_signed_documents
+                wsd_pk = inspector.get_pk_constraint("waiver_signed_documents")
+                self.assertEqual(
+                    set(wsd_pk.get("constrained_columns") or []),
+                    {"waiver_id", "version"},
+                    f"La clé primaire doit être composite (waiver_id, version), actuel : {wsd_pk}"
+                )
+
+                # Test réel d'insertion des deux versions 1 et 2 pour le même document
+                with db.engine.connect() as conn:
+                    conn.execute(sa.text("""
+                        INSERT INTO waiver_signed_documents (
+                            waiver_id, version, parent_hash, hash, pdf_file_hash, data_snapshot, signature, pdf_url
+                        ) VALUES (
+                            'BVSR-MIGRATION-TEST', 1, NULL, 'hash_v1_test', 'pdf_h1', '{"version": 1}', 'sig1.png', '/url/1'
+                        )
+                    """))
+                    conn.execute(sa.text("""
+                        INSERT INTO waiver_signed_documents (
+                            waiver_id, version, parent_hash, hash, pdf_file_hash, data_snapshot, signature, pdf_url
+                        ) VALUES (
+                            'BVSR-MIGRATION-TEST', 2, 'hash_v1_test', 'hash_v2_test', 'pdf_h2', '{"version": 2}', 'sig2.png', '/url/2'
+                        )
+                    """))
+                    conn.commit()
+
+                    inserted_versions = conn.execute(sa.text("""
+                        SELECT version, parent_hash FROM waiver_signed_documents WHERE waiver_id = 'BVSR-MIGRATION-TEST' ORDER BY version ASC
+                    """)).fetchall()
+                    self.assertEqual(len(inserted_versions), 2)
+                    self.assertEqual(inserted_versions[0][0], 1)
+                    self.assertIsNone(inserted_versions[0][1])
+                    self.assertEqual(inserted_versions[1][0], 2)
+                    self.assertEqual(inserted_versions[1][1], 'hash_v1_test')
+
+                # Vérification des colonnes de versioning sur waiver_signed_documents
+                wsd_cols = [c["name"] for c in inspector.get_columns("waiver_signed_documents")]
+                self.assertIn("version", wsd_cols)
+                self.assertIn("parent_hash", wsd_cols)
 
                 # Vérification des colonnes de chaînage cryptographique sur signature_events
                 sig_cols = [c["name"] for c in inspector.get_columns("signature_events")]
@@ -92,7 +132,7 @@ class MigrationsTestCase(unittest.TestCase):
                 upgrade()
                 with db.engine.connect() as conn:
                     current_rev = conn.execute(sa.text("SELECT version_num FROM alembic_version")).scalar()
-                    self.assertEqual(current_rev, "q00d7fe3c477")
+                    self.assertEqual(current_rev, "r00d7fe3c478")
 
 
     def test_upgrade_from_previous_head_stamp(self):
@@ -135,7 +175,72 @@ class MigrationsTestCase(unittest.TestCase):
 
                 with db.engine.connect() as conn:
                     current_rev = conn.execute(sa.text("SELECT version_num FROM alembic_version")).scalar()
+                    self.assertEqual(current_rev, "r00d7fe3c478")
+
+    def test_downgrade_safety_prevents_losing_version_2(self):
+        """Vérifie qu'un downgrade refuse strictement de s'exécuter si des documents version > 1 existent."""
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            db_path = os.path.join(tmp_dir, "downgrade_test.db")
+            os.environ["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
+            os.environ["FLASK_ENV"] = "testing"
+            os.environ["TESTING"] = "True"
+            os.environ["RUN_MIGRATIONS"] = "true"
+
+            test_app = create_app()
+
+            with test_app.app_context():
+                upgrade()
+
+                # Insérer une version 1 et une version 2
+                with db.engine.connect() as conn:
+                    conn.execute(sa.text("""
+                        INSERT INTO waiver_signed_documents (
+                            waiver_id, version, parent_hash, hash, pdf_file_hash, data_snapshot, signature, pdf_url
+                        ) VALUES (
+                            'BVSR-DOWNGRADE-TEST', 1, NULL, 'hash_v1', 'pdf_h1', '{"v": 1}', 'sig1.png', '/url/1'
+                        )
+                    """))
+                    conn.execute(sa.text("""
+                        INSERT INTO waiver_signed_documents (
+                            waiver_id, version, parent_hash, hash, pdf_file_hash, data_snapshot, signature, pdf_url
+                        ) VALUES (
+                            'BVSR-DOWNGRADE-TEST', 2, 'hash_v1', 'hash_v2', 'pdf_h2', '{"v": 2}', 'sig2.png', '/url/2'
+                        )
+                    """))
+                    conn.commit()
+
+                # Tentative de downgrade vers q00d7fe3c477 : doit lever une RuntimeError explicite
+                from flask import current_app
+                from alembic import command
+                cfg = current_app.extensions['migrate'].migrate.get_config(None)
+
+                with self.assertRaises(RuntimeError) as ctx:
+                    command.downgrade(cfg, revision="q00d7fe3c477")
+                self.assertIn("perte de données irréversible", str(ctx.exception))
+                self.assertIn("version > 1", str(ctx.exception))
+
+                # Si on supprime la version 2 (ne reste que la version 1), le downgrade doit réussir proprement
+                with db.engine.connect() as conn:
+                    conn.execute(sa.text("DELETE FROM waiver_signed_documents WHERE version > 1"))
+                    conn.commit()
+
+                command.downgrade(cfg, revision="q00d7fe3c477")
+
+                inspector = sa.inspect(db.engine)
+                wsd_pk = inspector.get_pk_constraint("waiver_signed_documents")
+                self.assertEqual(
+                    set(wsd_pk.get("constrained_columns") or []),
+                    {"waiver_id"},
+                    "Après downgrade, la clé primaire doit redevenir waiver_id seul"
+                )
+
+                with db.engine.connect() as conn:
+                    current_rev = conn.execute(sa.text("SELECT version_num FROM alembic_version")).scalar()
                     self.assertEqual(current_rev, "q00d7fe3c477")
+                    rows = conn.execute(sa.text("SELECT waiver_id, hash FROM waiver_signed_documents")).fetchall()
+                    self.assertEqual(len(rows), 1)
+                    self.assertEqual(rows[0][0], "BVSR-DOWNGRADE-TEST")
+                    self.assertEqual(rows[0][1], "hash_v1")
 
 
 

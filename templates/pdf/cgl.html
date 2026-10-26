@@ -342,7 +342,7 @@
                 <!-- QR CODE DE VÉRIFICATION -->
                 <div class="cgl-qr-box">
                     {% if qr %}
-                    {% set target_url = verification_url or (base_url ~ '/cgl/verify/' ~ (cgl.waiver_id or waiver.waiver_id)) if base_url else ('/cgl/verify/' ~ (cgl.waiver_id or waiver.waiver_id)) %}
+                    {% set target_url = verification_url or ((base_url ~ '/cgl/verify/' ~ (cgl.waiver_id or waiver.waiver_id)) if base_url else ('/cgl/verify/' ~ (cgl.waiver_id or waiver.waiver_id))) %}
                     <a href="{{ target_url }}" target="_blank" rel="noopener noreferrer" class="cgl-qr-link">
                         <img src="{{ qr }}" alt="QR Code Vérification" class="cgl-qr-img">
                         <span class="cgl-qr-caption">Vérification en ligne</span>

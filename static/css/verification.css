@@ -53,6 +53,12 @@
     box-shadow: none;
 }
 
+.verify-pdf-status {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 .verify-hint-text {
     font-size: 0.75rem;
     color: var(--grey-2, #64748b);

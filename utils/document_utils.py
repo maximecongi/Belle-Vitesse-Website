@@ -191,6 +191,36 @@ def validate_pdf_access_token(filename: str, provided_token: str) -> bool:
     return False
 
 
+def _get_document_verification_secret() -> bytes:
+    """Dérive une clé dédiée aux liens publics de vérification des documents."""
+    master = _get_hmac_secret()
+    return hmac.new(
+        master,
+        b"belle-vitesse-document-verification-capability-v1",
+        hashlib.sha256,
+    ).digest()
+
+
+def generate_document_verification_token(mode: str, document_id: str, version: int, document_hash: str) -> str:
+    """Crée un jeton non devinable, lié à un document et à sa version précise."""
+    payload = f"{mode}\0{document_id}\0{int(version)}\0{document_hash}".encode("utf-8")
+    return hmac.new(_get_document_verification_secret(), payload, hashlib.sha256).hexdigest()
+
+
+def validate_document_verification_token(
+    mode: str,
+    document_id: str,
+    version: int,
+    document_hash: str,
+    provided_token: str,
+) -> bool:
+    """Vérifie en temps constant le jeton d'accès d'une version signée."""
+    if not provided_token or not document_hash:
+        return False
+    expected = generate_document_verification_token(mode, document_id, version, document_hash)
+    return hmac.compare_digest(expected, str(provided_token))
+
+
 # Compatibility aliases
 def generate_waiver_pdf_access_token(filename):
     return generate_pdf_access_token(filename)

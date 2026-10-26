@@ -257,7 +257,16 @@ class IncidentSignaturesTestCase(unittest.TestCase):
         self.assertTrue(data["success"])
 
         # GET /incidents/verify/<incident_number>
-        verify_res = self.client.get(f"/incidents/verify/{self.incident.incident_number}")
+        from utils.document_utils import generate_document_verification_token
+        signed_doc = IncidentSignedDocument.query.filter_by(
+            incident_number=self.incident.incident_number
+        ).first()
+        verification_token = generate_document_verification_token(
+            "incident", self.incident.incident_number, 1, signed_doc.hash
+        )
+        verify_res = self.client.get(
+            f"/incidents/verify/{self.incident.incident_number}?version=1&t={verification_token}"
+        )
         self.assertEqual(verify_res.status_code, 200)
         self.assertIn("Données Scellées".encode(), verify_res.data)
 

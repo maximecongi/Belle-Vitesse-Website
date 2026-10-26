@@ -133,8 +133,7 @@ def _cleanup_waiver_assets(mode: str, waiver: Waiver):
                 except Exception as e:
                     logger.error(f"❌ Erreur suppression fichier {full_path} : {e}")
 
-    # Journalisation de la suppression de l'archive si elle existait
-    signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=waiver.waiver_id).first()
+    signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=waiver.waiver_id).order_by(WaiverSignedDocument.version.desc()).first()
     if signed_doc:
         from services.common.signatures import log_signature_event
         admin_user = "system"

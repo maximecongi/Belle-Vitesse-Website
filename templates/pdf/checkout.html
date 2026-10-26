@@ -134,17 +134,17 @@
                             class="checkout-badge checkout-badge--neutral">{{ status }}{% if item.unit and status != '—' %} {{ item.unit }}{% endif %}</span>
                         {% elif status == 'ok' %}
                         <span
-                            class="{{ 'checkout' if 'checkout' in request.path else 'checkin' }}-badge {{ 'checkout' if 'checkout' in request.path else 'checkin' }}-badge--ok">OK</span>
+                            class="checkout-badge checkout-badge--ok">OK</span>
                         {% elif status == 'warning' %}
                         <span
-                            class="{{ 'checkout' if 'checkout' in request.path else 'checkin' }}-badge {{ 'checkout' if 'checkout' in request.path else 'checkin' }}-badge--warning">À
+                            class="checkout-badge checkout-badge--warning">À
                             vérifier</span>
                         {% elif status == 'critical' %}
                         <span
-                            class="{{ 'checkout' if 'checkout' in request.path else 'checkin' }}-badge {{ 'checkout' if 'checkout' in request.path else 'checkin' }}-badge--critical">Défaut</span>
+                            class="checkout-badge checkout-badge--critical">Défaut</span>
                         {% else %}
                         <span
-                            class="{{ 'checkout' if 'checkout' in request.path else 'checkin' }}-badge {{ 'checkout' if 'checkout' in request.path else 'checkin' }}-badge--neutral">{{
+                            class="checkout-badge checkout-badge--neutral">{{
                             status or '—' }}</span>
                         {% endif %}
                     </td>

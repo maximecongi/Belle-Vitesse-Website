@@ -267,14 +267,18 @@ class CglComprehensiveTest(unittest.TestCase):
             self.assertEqual(resp_sign.status_code, 200)
             self.assertEqual(cgl.display_legal_country, "Espagne")
             waiver_id = cgl.waiver_id
+            signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=waiver_id).first()
+            from utils.document_utils import generate_document_verification_token
+            verify_token = generate_document_verification_token("cgl", waiver_id, 1, signed_doc.hash)
+            verify_url = f"/cgl/verify/{waiver_id}?version=1&t={verify_token}"
 
         # Vérification du HTML du PDF : le QR code doit être cliquable vers la page de vérification
         pdf_html = mock_render_pdf.call_args[1]["html_content"]
         self.assertIn('class="cgl-qr-link"', pdf_html)
-        self.assertIn(f"/cgl/verify/{waiver_id}", pdf_html)
+        self.assertIn(f"/cgl/verify/{waiver_id}?version=1&amp;t=", pdf_html)
 
         # Accès à la page de vérification publique
-        resp_verify = self.client.get(f"/cgl/verify/{waiver_id}")
+        resp_verify = self.client.get(verify_url)
         self.assertEqual(resp_verify.status_code, 200)
         html = resp_verify.get_data(as_text=True)
         self.assertIn("Vérification CGL Locataire", html)

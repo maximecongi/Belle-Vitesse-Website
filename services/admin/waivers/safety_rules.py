@@ -85,33 +85,48 @@ def countersign_safety_rules(waiver_id, signature_data, signer_name="Belle Vites
     if not valid_sig:
         return False, f"Signature invalide : {sig_err}"
 
-    waiver.bv_signature_data = signature_data
-    waiver.bv_signed_at = _utcnow()
-    waiver.bv_signer_name = signer_name or "Belle Vitesse"
-    db.session.commit()
+    orig_bv_sig = waiver.bv_signature_data
+    orig_bv_signed_at = waiver.bv_signed_at
+    orig_bv_signer_name = waiver.bv_signer_name
 
-    if waiver.status == "signed" and waiver.signature_data:
-        from services.common.signatures import finalize_signed_document
-        finalize_signed_document(
+    try:
+        waiver.bv_signature_data = signature_data
+        waiver.bv_signed_at = _utcnow()
+        waiver.bv_signer_name = signer_name or "Belle Vitesse"
+        db.session.flush()
+
+        if waiver.status == "signed" and waiver.signature_data:
+            from services.common.signatures import finalize_signed_document
+            finalize_signed_document(
+                "safety_rules",
+                waiver.id,
+                waiver.signature_data,
+                waiver.signer_ip or signer_ip,
+                user_agent=user_agent
+            )
+
+        from services.common.signatures import log_signature_event
+        log_signature_event(
+            waiver.waiver_id,
             "safety_rules",
-            waiver.id,
-            waiver.signature_data,
-            waiver.signer_ip or signer_ip,
+            "bvsr_countersigned",
+            {
+                "bv_signer_name": waiver.bv_signer_name,
+                "bv_signed_at": waiver.bv_signed_at.isoformat() if waiver.bv_signed_at else "",
+            },
+            ip=signer_ip,
             user_agent=user_agent
         )
 
-    from services.common.signatures import log_signature_event
-    log_signature_event(
-        waiver.waiver_id,
-        "safety_rules",
-        "bvsr_countersigned",
-        {
-            "bv_signer_name": waiver.bv_signer_name,
-            "bv_signed_at": waiver.bv_signed_at.isoformat() if waiver.bv_signed_at else "",
-        },
-        ip=signer_ip,
-        user_agent=user_agent
-    )
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        # Restaurer l'état in-memory du modèle pour ne laisser aucun état partiel empêchant de réessayer
+        waiver.bv_signature_data = orig_bv_sig
+        waiver.bv_signed_at = orig_bv_signed_at
+        waiver.bv_signer_name = orig_bv_signer_name
+        logger.error(f"❌ Échec de la contre-signature BVSR pour {waiver_id} : {e}")
+        return False, f"Erreur lors de la contre-signature : {e}"
 
     return True, "Contre-signature Belle Vitesse enregistrée avec succès."
 

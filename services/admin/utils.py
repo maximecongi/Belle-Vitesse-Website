@@ -125,15 +125,38 @@ def _delete_inspection_files(record):
                     f"❌ Échec de la suppression du PDF {pdf_path}: {e}")
 
 
+def is_known_vehicle(v_id) -> bool:
+    """
+    Vérifie si le véhicule correspond exactement à un véhicule reconnu dans le parc (get_vehicles).
+    Respecte les formats ID (id en base ou Airtable) et nom de véhicule (fields.name) réellement utilisés.
+    """
+    if not v_id:
+        return False
+    from utils.database import get_vehicles
+    try:
+        vehicles = get_vehicles() or []
+        str_v_id = str(v_id).strip()
+        for v in vehicles:
+            v_real_id = str(v.get("id", "")).strip()
+            if v_real_id and v_real_id == str_v_id:
+                return True
+            v_name = str((v.get("fields") or {}).get("name", "")).strip()
+            if v_name and v_name == str_v_id:
+                return True
+        return False
+    except Exception:
+        return False
+
+
 def compute_inspection_readiness(form_or_statuses, vehicle_id=None, is_checkout=False, battery_val=None) -> tuple[bool, list[str]]:
     """
     Source unique de vérité pour le calcul de conformité et préparation d'un véhicule.
     Retourne un tuple (is_ready: bool, failures: list[str]).
     
     Règles strictes :
-    1. Un véhicule doit être spécifié et disposer de points de contrôle configurés.
+    1. Pour le check-out : un véhicule doit être obligatoirement sélectionné et reconnu dans le parc (get_vehicles).
     2. La batterie doit être un nombre fini compris entre 0 et 100. Pour checkout, elle doit être égale à 100%.
-    3. Tous les points de contrôle configurés doivent être renseignés et conformes ('ok' ou 'not_applicable').
+    3. Tous les points de contrôle configurés pour ce véhicule doivent être renseignés et conformes ('ok' ou 'not_applicable').
     """
     failures = []
 
@@ -163,7 +186,31 @@ def compute_inspection_readiness(form_or_statuses, vehicle_id=None, is_checkout=
             failures.append("Niveau de batterie invalide")
 
     # 2. Validation des points de contrôle du véhicule
-    checkpoints = get_checkpoints_for_vehicle(vehicle_id) if vehicle_id else []
+    v_id = vehicle_id
+    if not v_id:
+        if hasattr(form_or_statuses, "vehicle_id"):
+            v_id = getattr(form_or_statuses, "vehicle_id", None)
+        elif hasattr(form_or_statuses, "get"):
+            v_id = form_or_statuses.get("vehicle_id")
+
+    if is_checkout:
+        # Check-out est strictement fail-closed : il exige impérativement un véhicule identifié
+        # et reconnu dans le parc (get_vehicles), disposant d'un profil de points de contrôle.
+        # Le chemin utils/checkpoints.py pouvant renvoyer des checkpoints génériques même pour un
+        # véhicule inventé, nous vérifions expressément la présence du véhicule dans get_vehicles().
+        if not v_id:
+            failures.append("Véhicule non sélectionné")
+            checkpoints = []
+        elif not is_known_vehicle(v_id):
+            failures.append("Véhicule non reconnu")
+            checkpoints = []
+        else:
+            checkpoints = get_checkpoints_for_vehicle(v_id)
+            if not checkpoints:
+                failures.append("Profil de points de contrôle introuvable")
+    else:
+        checkpoints = get_checkpoints_for_vehicle(v_id) if v_id else []
+
     if checkpoints:
         for cp in checkpoints:
             key = cp['key']
@@ -174,7 +221,8 @@ def compute_inspection_readiness(form_or_statuses, vehicle_id=None, is_checkout=
             elif hasattr(form_or_statuses, "get_checkpoint_status"):
                 val = form_or_statuses.get_checkpoint_status(key, default=None)
             elif hasattr(form_or_statuses, "checkpoint_statuses"):
-                val = form_or_statuses.checkpoint_statuses.get(key)
+                val_statuses = getattr(form_or_statuses, "checkpoint_statuses", {})
+                val = val_statuses.get(key) if isinstance(val_statuses, dict) else None
             else:
                 val = None
 
@@ -186,19 +234,20 @@ def compute_inspection_readiness(form_or_statuses, vehicle_id=None, is_checkout=
                 val_clean = str(val).lower().strip() if val is not None else ""
                 if val_clean not in ("ok", "non_applicable", "not_applicable"):
                     failures.append(label)
-    elif isinstance(form_or_statuses, dict) and form_or_statuses:
-        # Fallback pour validation directe de statuts (ou environnement sans profil véhicule)
-        for key, val in form_or_statuses.items():
-            if key in ("battery", "battery_level"):
-                continue
-            val_clean = str(val).lower().strip() if val is not None else ""
-            if val_clean not in ("ok", "non_applicable", "not_applicable"):
-                failures.append(key)
-    else:
-        if vehicle_id:
-            failures.append("Profil de points de contrôle introuvable")
+    elif not is_checkout:
+        if isinstance(form_or_statuses, dict) and form_or_statuses:
+            # Fallback pour validation directe de statuts uniquement HORS check-out
+            for key, val in form_or_statuses.items():
+                if key in ("battery", "battery_level", "vehicle_id"):
+                    continue
+                val_clean = str(val).lower().strip() if val is not None else ""
+                if val_clean not in ("ok", "non_applicable", "not_applicable"):
+                    failures.append(key)
         else:
-            failures.append("Véhicule non sélectionné")
+            if v_id:
+                failures.append("Profil de points de contrôle introuvable")
+            else:
+                failures.append("Véhicule non sélectionné")
 
     is_ready = (len(failures) == 0)
     return is_ready, failures

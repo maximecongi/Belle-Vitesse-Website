@@ -95,7 +95,7 @@ else 'checkout') %}
 
         <!-- ── Empreinte numérique ── -->
         {% if data.hash %}
-        {{ vmacro.crypto_fingerprints(data.hash, title="Sécurité Numérique") }}
+        {{ vmacro.crypto_fingerprints(data.hash, signed_doc.pdf_file_hash if signed_doc else None, title="Sécurité Numérique", pdf_storage_status=pdf_storage_status) }}
         {% endif %}
 
         <!-- ═══════════ UPLOAD VÉRIFICATION PDF ═══════════ -->

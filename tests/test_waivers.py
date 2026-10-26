@@ -246,7 +246,10 @@ class WaiversCglAndSafetyRulesTest(unittest.TestCase):
             db.session.commit()
 
             # Route publique canonique : /cgl/verify/<waiver_id>
-            resp = self.client.get(f"/cgl/verify/{cgl.waiver_id}")
+            from utils.document_utils import generate_document_verification_token
+            token = generate_document_verification_token("cgl", cgl.waiver_id, 1, signed_doc.hash)
+            verify_url = f"/cgl/verify/{cgl.waiver_id}?version=1&t={token}"
+            resp = self.client.get(verify_url)
             self.assertEqual(resp.status_code, 200)
             self.assertIn("CGL Scellées".encode("utf-8"), resp.data)
             self.assertIn(cgl.waiver_id.encode("utf-8"), resp.data)
@@ -295,7 +298,10 @@ class WaiversCglAndSafetyRulesTest(unittest.TestCase):
             db.session.commit()
 
             # Route publique canonique : /safety-rules/verify/<waiver_id>
-            resp = self.client.get(f"/safety-rules/verify/{sr.waiver_id}")
+            from utils.document_utils import generate_document_verification_token
+            token = generate_document_verification_token("safety_rules", sr.waiver_id, 1, signed_doc.hash)
+            verify_url = f"/safety-rules/verify/{sr.waiver_id}?version=1&t={token}"
+            resp = self.client.get(verify_url)
             self.assertEqual(resp.status_code, 200)
             self.assertIn("Règles BVSR Scellées".encode("utf-8"), resp.data)
             self.assertIn(sr.waiver_id.encode("utf-8"), resp.data)

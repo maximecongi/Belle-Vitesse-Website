@@ -53,7 +53,7 @@ def create_waiver(project_id, waiver_type: str = "cgl", **kwargs):
             if existing.deleted_at is None:
                 return False, "Des Conditions Générales de Location (CGL) existent déjà pour ce projet."
             from models import WaiverSignedDocument
-            signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=existing.waiver_id).first()
+            signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=existing.waiver_id).order_by(WaiverSignedDocument.version.desc()).first()
             if not signed_doc and existing.status not in ["signed", "completed"]:
                 _cleanup_waiver_assets(waiver_type, existing)
                 db.session.delete(existing)
@@ -307,7 +307,7 @@ def delete_waiver(waiver_id, waiver_type: str = None):
 
     try:
         from models import WaiverSignedDocument
-        signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=waiver.waiver_id).first()
+        signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=waiver.waiver_id).order_by(WaiverSignedDocument.version.desc()).first()
         is_signed = bool(waiver.status in ["signed", "completed"] or signed_doc)
 
         if is_signed:
@@ -375,7 +375,7 @@ def reset_waiver(waiver_id, waiver_type: str = None):
         return False, "Document non trouvé."
 
     from models import WaiverSignedDocument
-    signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=waiver.waiver_id).first()
+    signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=waiver.waiver_id).order_by(WaiverSignedDocument.version.desc()).first()
     if waiver.status in ["signed", "completed"] or signed_doc:
         return False, (
             "Impossible de réinitialiser un document déjà signé et scellé juridiquement. "
@@ -424,7 +424,7 @@ def delete_waiver_internal(project_id, waiver_type: str = None):
         doc_type = f"{mode}_waiver"
         try:
             from models import WaiverSignedDocument
-            signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=waiver.waiver_id).first()
+            signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=waiver.waiver_id).order_by(WaiverSignedDocument.version.desc()).first()
             is_signed = bool(waiver.status in ["signed", "completed"] or signed_doc)
 
             if is_signed:

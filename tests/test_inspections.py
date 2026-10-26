@@ -32,10 +32,18 @@ class InspectionsTest(unittest.TestCase):
         self.app.config["WTF_CSRF_ENABLED"] = False
         self.client = self.app.test_client()
 
+        from unittest.mock import patch
+        self.get_vehicles_patcher = patch(
+            "utils.database.get_vehicles",
+            return_value=[{"id": "1", "fields": {"name": "Test Car 1"}}]
+        )
+        self.get_vehicles_patcher.start()
+
         with self.app.app_context():
             db.create_all()
 
     def tearDown(self):
+        self.get_vehicles_patcher.stop()
         with self.app.app_context():
             db.session.remove()
             db.drop_all()
@@ -278,14 +286,18 @@ class InspectionsTest(unittest.TestCase):
             db.session.add(doc_ci)
             db.session.commit()
 
+            from utils.document_utils import generate_document_verification_token
+            co_token = generate_document_verification_token("checkout", "BVCO-TEST1234", 1, doc_co.hash)
+            ci_token = generate_document_verification_token("checkin", "BVCI-TEST5678", 1, doc_ci.hash)
+
         # Test GET /checkout/verify/BVCO-TEST1234
-        res_co = self.client.get("/checkout/verify/BVCO-TEST1234")
+        res_co = self.client.get(f"/checkout/verify/BVCO-TEST1234?version=1&t={co_token}")
         self.assertEqual(res_co.status_code, 200)
         self.assertIn(b"BVCO-TEST1234", res_co.data)
         self.assertIn("Données Scellées".encode("utf-8"), res_co.data)
 
         # Test GET /checkin/verify/BVCI-TEST5678
-        res_ci = self.client.get("/checkin/verify/BVCI-TEST5678")
+        res_ci = self.client.get(f"/checkin/verify/BVCI-TEST5678?version=1&t={ci_token}")
         self.assertEqual(res_ci.status_code, 200)
         self.assertIn(b"BVCI-TEST5678", res_ci.data)
         self.assertIn("Données Scellées".encode("utf-8"), res_ci.data)

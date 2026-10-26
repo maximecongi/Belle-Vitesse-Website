@@ -116,6 +116,7 @@ def init_incident_public_routes(app):
     @csrf.exempt
     def incident_verify_doc(incident_number):
         config = {
+            "mode": "incident",
             "signed_model": IncidentSignedDocument,
             "seal_prefix": "INCIDENT",
             "template_verify": "public/incident_verify.html",

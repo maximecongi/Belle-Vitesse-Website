@@ -57,7 +57,29 @@ Altérées", ok_hint=None, error_hint=None) %}
 {% endif %}
 {% endmacro %}
 
-{% macro crypto_fingerprints(document_hash, pdf_file_hash=None, title="Sécurité Numérique & Sceau") %}
+{% macro pdf_storage_badge(pdf_storage_status) %}
+{% if pdf_storage_status == "intact" %}
+<div class="verify-pdf-status u-mt-3">
+    <span class="badge-pill verify-badge verify-badge--ok">
+        <i data-lucide="file-check"></i> Exemplaire PDF original certifié intact
+    </span>
+</div>
+{% elif pdf_storage_status == "corrupted" %}
+<div class="verify-pdf-status u-mt-3">
+    <span class="badge-pill verify-badge verify-badge--critical">
+        <i data-lucide="file-x"></i> Exemplaire PDF altéré ou manquant sur disque
+    </span>
+</div>
+{% elif pdf_storage_status == "pending" %}
+<div class="verify-pdf-status u-mt-3">
+    <span class="badge-pill verify-badge verify-badge--warning">
+        <i data-lucide="clock"></i> Exemplaire PDF en attente / non vérifiable
+    </span>
+</div>
+{% endif %}
+{% endmacro %}
+
+{% macro crypto_fingerprints(document_hash, pdf_file_hash=None, title="Sécurité Numérique & Sceau", pdf_storage_status=None, parent_hash=None) %}
 <section class="checkout-section">
     <h2 class="checkout-section-title dot-before">{{ title }}</h2>
     <div class="verify-crypto-card">
@@ -67,6 +89,14 @@ Altérées", ok_hint=None, error_hint=None) %}
         <code class="verify-crypto-code">
             {{ document_hash }}
         </code>
+        {% if parent_hash %}
+        <p class="verify-crypto-label u-mt-3">
+            Empreinte version précédente (Parent Hash)
+        </p>
+        <code class="verify-crypto-code">
+            {{ parent_hash }}
+        </code>
+        {% endif %}
         {% if pdf_file_hash %}
         <p class="verify-crypto-label u-mt-3">
             Empreinte PDF scellé (SHA-256)
@@ -74,6 +104,9 @@ Altérées", ok_hint=None, error_hint=None) %}
         <code class="verify-crypto-code">
             {{ pdf_file_hash }}
         </code>
+        {% endif %}
+        {% if pdf_storage_status %}
+        {{ pdf_storage_badge(pdf_storage_status) }}
         {% endif %}
     </div>
 </section>

@@ -79,34 +79,50 @@ def task_render_pdf_to_file(
             )
 
             waiver = Waiver.query.filter_by(waiver_id=str(entity_id)).first()
-            if waiver:
-                signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=str(entity_id)).first()
-                if signed_doc:
-                    expected_hash = (extra_context or {}).get("current_hash")
-                    if expected_hash and signed_doc.hash != expected_hash:
-                        logger.warning(
-                            f"⚠️ [PDF Job] Tâche worker obsolète pour waiver {entity_id} : hash en base ({signed_doc.hash}) != attendu ({expected_hash}). Mise à jour ignorée."
-                        )
-                        return False
-                    signed_doc.pdf_file_hash = file_hash
-                waiver.signed_pdf_path = rel_pdf_path
-                db.session.commit()
+            if not waiver:
+                logger.warning(f"⚠️ [PDF Job] Décharge introuvable pour {entity_id}.")
+                return False
 
-                if post_action == "waiver_post_actions":
-                    from services.common.signatures import (
-                        _dispatch_kdrive_document_bundle,
-                        _send_waiver_confirmation_email,
-                    )
-                    mode = (extra_context or {}).get("mode", "pilot")
-                    _dispatch_kdrive_document_bundle(
-                        mode,
-                        waiver,
-                        rel_pdf_path,
-                        resolved_base_url,
-                        (extra_context or {}).get("current_hash"),
-                        (extra_context or {}).get("snapshot", {}),
-                    )
-                    _send_waiver_confirmation_email(mode, waiver, output_file_path)
+            expected_hash = (extra_context or {}).get("current_hash")
+            if expected_hash:
+                signed_doc = WaiverSignedDocument.query.filter_by(
+                    waiver_id=str(entity_id), hash=expected_hash
+                ).first()
+            else:
+                signed_doc = WaiverSignedDocument.query.filter_by(
+                    waiver_id=str(entity_id)
+                ).order_by(WaiverSignedDocument.version.desc()).first()
+
+            if not signed_doc:
+                logger.warning(
+                    f"⚠️ [PDF Job] Document scellé introuvable pour waiver {entity_id} avec hash {expected_hash}."
+                )
+                return False
+
+            signed_doc.pdf_file_hash = file_hash
+            latest_doc = WaiverSignedDocument.query.filter_by(
+                waiver_id=str(entity_id)
+            ).order_by(WaiverSignedDocument.version.desc()).first()
+            is_latest_document = bool(latest_doc and latest_doc.hash == signed_doc.hash)
+            if is_latest_document:
+                waiver.signed_pdf_path = rel_pdf_path
+            db.session.commit()
+
+            if is_latest_document and post_action == "waiver_post_actions":
+                from services.common.signatures import (
+                    _dispatch_kdrive_document_bundle,
+                    _send_waiver_confirmation_email,
+                )
+                mode = (extra_context or {}).get("mode", "pilot")
+                _dispatch_kdrive_document_bundle(
+                    mode,
+                    waiver,
+                    rel_pdf_path,
+                    resolved_base_url,
+                    (extra_context or {}).get("current_hash"),
+                    (extra_context or {}).get("snapshot", {}),
+                )
+                _send_waiver_confirmation_email(mode, waiver, output_file_path)
 
         elif entity_type == "inspection" and entity_id:
             from sqlalchemy import or_

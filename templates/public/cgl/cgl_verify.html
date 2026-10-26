@@ -73,7 +73,7 @@
         </section>
 
         <!-- ── Empreinte Cryptographique ── -->
-        {{ vmacro.crypto_fingerprints(document_hash, signed_doc.pdf_file_hash, title="Sceau Cryptographique & Horodatage") }}
+        {{ vmacro.crypto_fingerprints(document_hash, signed_doc.pdf_file_hash, title="Sceau Cryptographique & Horodatage", pdf_storage_status=pdf_storage_status, parent_hash=parent_hash) }}
 
         <!-- ═══════════ UPLOAD VÉRIFICATION PDF ═══════════ -->
         {{ vmacro.pdf_upload_verifier(has_pdf_hash, old_notice="Ce document a été signé avant l'enregistrement de l'empreinte de fichier PDF. Seul le sceau de données est actif.") }}

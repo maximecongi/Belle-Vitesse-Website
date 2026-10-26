@@ -6,6 +6,8 @@ from flask import abort, current_app, make_response, render_template, request, s
 
 from utils.document_utils import (
     generate_pdf_access_token,
+    generate_document_verification_token,
+    validate_document_verification_token,
     validate_pdf_access_token,
     verify_canonical_seal,
     compute_file_sha256,
@@ -101,8 +103,36 @@ def handle_document_verify(mode_config, identifier):
     identifier : La clé primaire (inspection_id ou waiver_id).
     """
     from models import db, AppSetting
-    signed_doc = db.session.get(mode_config["signed_model"], identifier)
+    signed_model = mode_config["signed_model"]
+    req_version = request.args.get("version", type=int)
+    provided_token = request.args.get("t", "")
+    if req_version is None or req_version < 1 or not provided_token:
+        abort(404)
+
+    all_versions = []
+    if hasattr(signed_model, "version"):
+        query = signed_model.query.filter_by(waiver_id=identifier)
+        all_versions = query.order_by(signed_model.version.asc()).all()
+        signed_doc = query.filter_by(version=req_version).first()
+    elif hasattr(signed_model, "inspection_id"):
+        if req_version != 1:
+            abort(404)
+        signed_doc = signed_model.query.filter_by(inspection_id=identifier).first()
+    else:
+        if req_version != 1:
+            abort(404)
+        signed_doc = db.session.get(signed_model, identifier)
+
     if not signed_doc:
+        abort(404)
+
+    if not validate_document_verification_token(
+        mode_config["mode"],
+        str(identifier),
+        req_version,
+        signed_doc.hash,
+        provided_token,
+    ):
         abort(404)
 
     raw_data = signed_doc.data_snapshot or {}
@@ -207,6 +237,29 @@ def handle_document_verify(mode_config, identifier):
         seal_valid = verify_hmac_seal(
             signed_doc.hash, mode_config["seal_prefix"], *seal_args)
 
+    # Chaque archive versionnée doit authentifier son lien vers la version précédente.
+    if hasattr(signed_doc, "version"):
+        if signed_doc.version == 1:
+            version_chain_valid = not signed_doc.parent_hash and not (
+                isinstance(data, dict) and data.get("parent_hash")
+            )
+        else:
+            parent_doc = signed_model.query.filter_by(
+                waiver_id=identifier, version=signed_doc.version - 1
+            ).first()
+            version_chain_valid = bool(
+                parent_doc
+                and signed_doc.parent_hash
+                and signed_doc.parent_hash == parent_doc.hash
+                and isinstance(data, dict)
+                and data.get("parent_hash") == parent_doc.hash
+            )
+        if not version_chain_valid:
+            current_app.logger.warning(
+                f"⚠️ Filiation de version invalide pour {identifier}, version {signed_doc.version}."
+            )
+            seal_valid = False
+
     pdf_valid = None
     pdf_error = None
     if request.method == "POST":
@@ -225,12 +278,17 @@ def handle_document_verify(mode_config, identifier):
         "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
 
     pdf_storage_status = "pending"
-    stored_pdf_rel = getattr(source_record, "signed_pdf_path", None)
-    if not stored_pdf_rel and signed_doc.pdf_url:
+    stored_pdf_rel = None
+    if signed_doc.pdf_url:
         if "/document/" in signed_doc.pdf_url:
             stored_pdf_rel = signed_doc.pdf_url.split("/document/")[-1].split("?")[0]
         elif "/attachment/" in signed_doc.pdf_url:
             stored_pdf_rel = signed_doc.pdf_url.split("/attachment/")[-1].split("?")[0]
+
+    if not stored_pdf_rel and source_record:
+        stored_pdf_rel = getattr(source_record, "signed_pdf_path", None)
+
+    has_expected_hash = bool(signed_doc.pdf_file_hash and str(signed_doc.pdf_file_hash).strip())
 
     if stored_pdf_rel:
         full_pdf_path = os.path.normpath(os.path.join(output_base, stored_pdf_rel.lstrip("/")))
@@ -240,8 +298,8 @@ def handle_document_verify(mode_config, identifier):
             pdf_storage_status = "corrupted"
             seal_valid = False
         elif os.path.exists(full_pdf_path):
-            actual_pdf_sha = compute_file_sha256(full_pdf_path)
-            if signed_doc.pdf_file_hash:
+            if has_expected_hash:
+                actual_pdf_sha = compute_file_sha256(full_pdf_path)
                 if actual_pdf_sha == signed_doc.pdf_file_hash:
                     pdf_storage_status = "intact"
                 else:
@@ -251,7 +309,19 @@ def handle_document_verify(mode_config, identifier):
                     pdf_storage_status = "corrupted"
                     seal_valid = False
             else:
-                pdf_storage_status = "intact"
+                # PDF présent mais empreinte absente : NE JAMAIS marquer intact, état en attente sans invalider le sceau
+                pdf_storage_status = "pending"
+        else:
+            if has_expected_hash:
+                current_app.logger.warning(
+                    f"⚠️ Fichier PDF scellé manquant sur disque pour {identifier} : {full_pdf_path}"
+                )
+                pdf_storage_status = "corrupted"
+            else:
+                pdf_storage_status = "pending"
+    else:
+        if has_expected_hash:
+            pdf_storage_status = "corrupted"
         else:
             pdf_storage_status = "pending"
 
@@ -286,6 +356,21 @@ def handle_document_verify(mode_config, identifier):
             f"⚠️ Altération détectée dans la chaîne d'audit signature_events pour {identifier}: {audit_chain.get('error')}")
         seal_valid = False
 
+    version_links = []
+    if all_versions:
+        for version_doc in all_versions:
+            version_number = int(version_doc.version)
+            token = generate_document_verification_token(
+                mode_config["mode"], str(identifier), version_number, version_doc.hash
+            )
+            version_links.append({
+                "version": version_number,
+                "url": (
+                    f"/{mode_config.get('route_base', 'verify')}/verify/{identifier}"
+                    f"?version={version_number}&t={token}"
+                ),
+            })
+
     rendered_html = render_template(
         mode_config["template_verify"],
         config=mode_config,
@@ -305,6 +390,10 @@ def handle_document_verify(mode_config, identifier):
         project_name=display_data.get('project_name', display_data.get('project', '—')),
         has_pdf_hash=bool(signed_doc.pdf_file_hash),
         pdf_download_url=None,
+        all_versions=all_versions,
+        version_links=version_links,
+        version=getattr(signed_doc, "version", 1),
+        parent_hash=getattr(signed_doc, "parent_hash", None),
         company_name=company_name,
         company_address=company_address
     )
