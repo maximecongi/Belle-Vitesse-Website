@@ -15,10 +15,10 @@ KDRIVE_SQL_BACKUP_FOLDER_ID = int(
 
 # Racine logique pour affichage et diagnostic
 KDRIVE_BASE_PATH = os.getenv(
-    "KDRIVE_BASE_PATH", "Common documents/BELLE VITESSE/10_TOURNAGES"
+    "KDRIVE_BASE_PATH", "Common documents/1_COMMERCIAUX/10_TOURNAGES"
 )
 KDRIVE_SQL_BACKUP_PATH = os.getenv(
-    "KDRIVE_SQL_BACKUP_PATH", "Common documents/BELLE VITESSE/40_TECH/BACKUPS_SQL"
+    "KDRIVE_SQL_BACKUP_PATH", "Common documents/4_SUPER_ADMINISTRATEURS/40_TECH/BACKUPS_SQL"
 )
 
 # Paramètres réseau

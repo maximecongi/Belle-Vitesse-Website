@@ -304,6 +304,41 @@ a.public-doc-vehicle-card:hover {
     margin-bottom: 0.4rem;
 }
 
+.cgl-reader-container .cgl-article {
+    margin-bottom: 1.5rem;
+}
+
+.cgl-reader-container .cgl-article-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--grey-1, #111827);
+    margin: 1.25rem 0 0.5rem 0;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid var(--border-color, #E2E8F0);
+}
+
+.cgl-reader-container .cgl-article-content {
+    font-size: 0.9rem;
+    color: var(--grey-2, #374151);
+    line-height: 1.6;
+}
+
+.cgl-reader-container .cgl-article-content p {
+    margin-bottom: 0.5rem;
+}
+
+.cgl-reader-container .cgl-def-term {
+    font-weight: 700;
+    color: var(--grey-1, #111827);
+}
+
+.cgl-reader-container .cgl-list {
+    margin-left: 1.5rem;
+    margin-bottom: 0.75rem;
+    list-style-type: disc;
+}
+
+
 .cgl-table-wrapper {
     width: 100%;
     overflow-x: auto;

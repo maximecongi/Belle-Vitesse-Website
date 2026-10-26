@@ -17,6 +17,8 @@ class Config:
     SESSION_USE_SIGNER = True
     SESSION_PERMANENT = True
     RATELIMIT_SWALLOW_ERRORS = True
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB
+
 
     # Cache settings
     CACHE_KEY_PREFIX = "bv_cache_"

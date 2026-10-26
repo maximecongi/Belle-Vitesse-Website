@@ -257,6 +257,19 @@ def send_waiver(waiver_id, waiver_type: str = None, base_url: str = None):
     if is_reminder:
         waiver.reminder_count = (waiver.reminder_count or 0) + 1
         waiver.last_reminded_at = now_utc
+
+    from services.common.signatures import log_signature_event
+    log_signature_event(
+        waiver.waiver_id,
+        mode,
+        "link_sent",
+        {
+            "recipient_email": recipient_mail,
+            "recipient_name": recipient_name,
+            "is_reminder": is_reminder,
+            "token": new_token,
+        }
+    )
     db.session.commit()
 
     if is_reminder:

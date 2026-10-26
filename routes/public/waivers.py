@@ -18,9 +18,25 @@ from services.admin.safety_rules_config import (
     get_safety_rules_for_vehicles,
     DEFAULT_HELMETS_INVENTORY,
 )
+from utils.document_utils import compute_file_sha256
 from utils.request_utils import get_client_ip
 from utils.storage import ensure_dir, get_cgl_attachments_path
 from utils.image_utils import optimize_and_save_image, IMAGE_EXTENSIONS
+
+
+def _is_valid_magic_bytes(file_bytes: bytes, ext: str) -> bool:
+    """Valide les premiers octets (magic bytes) des pièces jointes téléversées."""
+    if len(file_bytes) < 4:
+        return False
+    if ext == ".pdf":
+        return file_bytes.startswith(b"%PDF")
+    if ext == ".png":
+        return file_bytes.startswith(b"\x89PNG\r\n\x1a\n")
+    if ext in (".jpg", ".jpeg"):
+        return file_bytes.startswith(b"\xff\xd8\xff")
+    if ext in (".heic", ".heif"):
+        return b"ftyp" in file_bytes[:12]
+    return False
 
 
 def _get_waiver_route_config(mode):
@@ -61,19 +77,27 @@ def init_waiver_routes(app):
         config = _get_waiver_route_config(mode)
 
         # 1. Valider le jeton
-        token_rec = config["token_model"].query.filter_by(token=token).first()
+        if request.method == "POST":
+            token_rec = config["token_model"].query.filter_by(token=token).with_for_update().first()
+        else:
+            token_rec = config["token_model"].query.filter_by(token=token).first()
+
         if not token_rec:
             if request.method == "GET":
                 return render_template(config["template_sign"], waiver={"status": "invalid"})
             return jsonify({"success": False, "error": "Jeton invalide."}), 404
 
         # 2. Récupérer le contrat ou la décharge
-        waiver = config["model"].query.filter_by(waiver_id=token_rec.waiver_id).first()
+        if request.method == "POST":
+            waiver = config["model"].query.filter_by(waiver_id=token_rec.waiver_id).with_for_update().first()
+        else:
+            waiver = config["model"].query.filter_by(waiver_id=token_rec.waiver_id).first()
+
         if not waiver:
             abort(404)
 
         # 3. Si le document a déjà été signé ou le jeton déjà consommé, afficher la vue confirmée en GET et bloquer en POST
-        if waiver.status in ['signed', 'completed'] or token_rec.signature:
+        if waiver.status in ['signed', 'completed', 'signing'] or token_rec.signature:
             if request.method == "GET":
                 return render_template(config["template_sign"], waiver=waiver)
             return jsonify({"success": False, "error": "Ce document a déjà été signé."}), 400
@@ -98,6 +122,11 @@ def init_waiver_routes(app):
                 extra_ctx["helmets"] = waiver.helmets_inventory or DEFAULT_HELMETS_INVENTORY
             from services.common.signatures import log_signature_event
             log_signature_event(waiver.waiver_id, mode, "link_opened", ip=signer_ip, user_agent=user_agent)
+            try:
+                db.session.commit()
+            except Exception as commit_err:
+                current_app.logger.warning(f"⚠️ Erreur lors de l'enregistrement de link_opened pour {waiver.waiver_id}: {commit_err}")
+                db.session.rollback()
             return render_template(config["template_sign"], waiver=waiver, **extra_ctx)
 
         if waiver.status in ['signed', 'completed']:
@@ -113,6 +142,18 @@ def init_waiver_routes(app):
                 return jsonify({"success": False, "error": "Le tracé manuscrit de la signature est obligatoire."}), 400
 
             if mode == "safety_rules":
+                if data.get("ack_rules") not in ("1", "on", "true"):
+                    return jsonify({
+                        "success": False,
+                        "error": "La prise de connaissance et le respect des Règles de Sécurité Universelles (BVSR) sont obligatoires."
+                    }), 400
+
+                if data.get("ack_authority") not in ("1", "on", "true"):
+                    return jsonify({
+                        "success": False,
+                        "error": "La reconnaissance du droit et devoir d'interruption (Stop Work Authority) est obligatoire."
+                    }), 400
+
                 if data.get("first_name"):
                     waiver.signer_first_name = data.get("first_name").strip()
                 if data.get("last_name"):
@@ -128,6 +169,12 @@ def init_waiver_routes(app):
                 if data.get("role_custom"):
                     waiver.signer_role_custom = data.get("role_custom").strip()
                 rep_name = f"{waiver.signer_first_name} {waiver.signer_last_name}".strip()
+
+                bvsr_sign_data = dict(waiver.sign_data or {})
+                bvsr_sign_data["ack_rules"] = True
+                bvsr_sign_data["ack_authority"] = True
+                bvsr_sign_data["accepted_at"] = datetime.now(timezone.utc).isoformat()
+                waiver.sign_data = bvsr_sign_data
             else:
                 # Validation stricte du consentement et de la déclaration de pouvoir pour les CGL
                 if data.get("accepted_terms") != "1":
@@ -142,23 +189,60 @@ def init_waiver_routes(app):
                         "error": "La déclaration sur l'honneur de pouvoir d'engager la société est obligatoire."
                     }), 400
 
-                rep_name = (data.get("representative") or "").strip()
-                rep_role = (data.get("representative_role") or "").strip()
+                prod_name = (data.get("production_name") or waiver.production_name or "").strip()
+                if not prod_name or len(prod_name) > 150:
+                    return jsonify({
+                        "success": False,
+                        "error": "La raison sociale de la production est obligatoire (max 150 caractères)."
+                    }), 400
+
+                rep_name = (data.get("representative") or waiver.production_representative or "").strip()
+                rep_role = (data.get("representative_role") or waiver.signer_role_custom or "").strip()
                 if not rep_name or not rep_role:
                     return jsonify({
                         "success": False,
                         "error": "Le nom du signataire et sa fonction au sein de la société sont obligatoires."
                     }), 400
 
-                waiver.production_name = data.get("production_name")
+                address = (data.get("address") or waiver.production_address or "").strip()
+                if address and len(address) > 255:
+                    return jsonify({
+                        "success": False,
+                        "error": "L'adresse du siège social ne peut dépasser 255 caractères."
+                    }), 400
+
+                email = (data.get("email") or waiver.signer_email or "").strip()
+                if email:
+                    import re
+                    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email) or len(email) > 120:
+                        return jsonify({
+                            "success": False,
+                            "error": "L'adresse e-mail renseignée est invalide."
+                        }), 400
+
+                siret = (data.get("siret") or waiver.production_siret or "").strip()
+                legal_country = (data.get("legal_country") or (waiver.sign_data or {}).get("legal_country") or "").strip().upper()
+                if siret and legal_country in ("", "FR", "FRANCE"):
+                    import re
+                    siret_clean = re.sub(r"\s+", "", siret)
+                    if not siret_clean.isdigit() or len(siret_clean) != 14:
+                        return jsonify({
+                            "success": False,
+                            "error": "Le numéro SIRET doit comporter exactement 14 chiffres pour une société française."
+                        }), 400
+
+                waiver.production_name = prod_name
                 waiver.production_representative = rep_name
-                waiver.production_address = data.get("address")
-                waiver.production_siret = data.get("siret")
-                waiver.production_vat = data.get("vat_number")
+                if address:
+                    waiver.production_address = address
+                if siret:
+                    waiver.production_siret = siret
+                if data.get("vat_number"):
+                    waiver.production_vat = data.get("vat_number").strip()
                 if data.get("phone"):
                     waiver.signer_phone = data.get("phone").strip()
-                if data.get("email"):
-                    waiver.signer_email = data.get("email").strip()
+                if email:
+                    waiver.signer_email = email
                 waiver.signer_role_custom = rep_role
                 if data.get("insurance_company"):
                     waiver.production_insurance_company = data.get("insurance_company").strip()
@@ -169,17 +253,18 @@ def init_waiver_routes(app):
                 elif data.get("city") and not waiver.location_of_use:
                     waiver.location_of_use = data.get("city").strip()
 
-                # Calcul de l'empreinte du template des CGL (termes acceptés)
+                # Calcul de l'empreinte du partial des articles CGL (termes acceptés immuables)
                 terms_fingerprint = ""
                 try:
                     template_source, _, _ = current_app.jinja_env.loader.get_source(
-                        current_app.jinja_env, config["template_sign"])
+                        current_app.jinja_env, "public/cgl/_cgl_articles.html")
                     terms_fingerprint = hashlib.sha256(template_source.encode("utf-8")).hexdigest()
                 except Exception:
                     pass
 
                 # Snapshot structuré JSON
                 s_data = dict(waiver.sign_data or {})
+                s_data["cgl_version"] = "2026.1"
                 s_data["accepted_terms"] = True
                 s_data["accepted_at"] = datetime.now(timezone.utc).isoformat()
                 s_data["has_signing_authority"] = True
@@ -210,6 +295,7 @@ def init_waiver_routes(app):
 
                 # Pièce jointe assurance production (CGL) avec validation stricte
                 insurance_file_sha256 = ""
+                insurance_upload_sha256 = ""
                 file = request.files.get('production_insurance')
                 if file and file.filename:
                     ext = os.path.splitext(file.filename)[1].lower()
@@ -227,7 +313,13 @@ def init_waiver_routes(app):
                             "error": "L'attestation d'assurance dépasse la taille maximale autorisée (10 Mo)."
                         }), 400
 
-                    insurance_file_sha256 = hashlib.sha256(file_bytes).hexdigest()
+                    if not _is_valid_magic_bytes(file_bytes, ext):
+                        return jsonify({
+                            "success": False,
+                            "error": "Le contenu du fichier téléversé ne correspond pas à une attestation valide (signature de fichier non reconnue)."
+                        }), 400
+
+                    insurance_upload_sha256 = hashlib.sha256(file_bytes).hexdigest()
                     file.seek(0)
 
                     upload_dir = ensure_dir(
@@ -244,27 +336,43 @@ def init_waiver_routes(app):
                     waiver.production_insurance_path = os.path.relpath(
                         file_path, output_base)
 
+                    # Point 10: Calcul du SHA-256 physique du fichier stocké post-optimisation
+                    insurance_file_sha256 = compute_file_sha256(file_path)
+
                 s_data["insurance_file_sha256"] = insurance_file_sha256
+                s_data["insurance_upload_sha256"] = insurance_upload_sha256
                 waiver.sign_data = s_data
 
             waiver.signer_ip = signer_ip
             db.session.commit()
 
             from services.common.signatures import finalize_signed_document, log_signature_event
+            if mode == "safety_rules":
+                consent_payload = {
+                    "ack_rules": True,
+                    "ack_authority": True,
+                    "signer_name": rep_name,
+                    "signer_role": waiver.signer_role,
+                }
+            else:
+                consent_payload = {
+                    "accepted_terms": True,
+                    "has_signing_authority": True,
+                    "signer_name": rep_name,
+                    "representative_role": rep_role,
+                    "cgl_version": "2026.1",
+                }
+
             log_signature_event(
                 waiver.waiver_id,
                 mode,
                 "consent_recorded",
-                {
-                    "accepted_terms": True,
-                    "has_signing_authority": True if mode == "cgl" else None,
-                    "signer_name": rep_name,
-                },
+                consent_payload,
                 ip=signer_ip,
                 user_agent=user_agent
             )
 
-            result = finalize_signed_document(mode, waiver.id, signature_raw, signer_ip)
+            result = finalize_signed_document(mode, waiver.id, signature_raw, signer_ip, user_agent=user_agent)
 
             # Consommation du jeton à usage unique (marqué comme signé, conservé pour l'affichage de confirmation)
             try:
@@ -327,4 +435,6 @@ def init_waiver_routes(app):
     @app.route("/cgl/attachment/<path:filepath>")
     @csrf.exempt
     def download_waiver_secured_file(filepath):
-        return handle_document_download(filepath)
+        is_attachment = request.path.startswith("/cgl/attachment/")
+        return handle_document_download(filepath, as_attachment=True if is_attachment else None)
+

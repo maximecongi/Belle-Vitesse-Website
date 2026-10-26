@@ -14,7 +14,7 @@ from utils.document_utils import (
 )
 
 
-def handle_document_download(filepath):
+def handle_document_download(filepath, as_attachment=None):
     """
     Gestionnaire générique pour les téléchargements de documents sécurisés.
     Valide soit la session admin connectée, soit l'en-tête administratif 'X-Check-Token',
@@ -62,10 +62,31 @@ def handle_document_download(filepath):
             if os.path.exists(full_path):
                 break
 
+    filename = os.path.basename(filepath)
+    if as_attachment is None:
+        # Forcer le mode pièce jointe pour les attestations, uploads tiers ou requêtes explicites
+        if (
+            "attachment" in request.path
+            or "insurance" in filepath.lower()
+            or not filepath.lower().endswith(".pdf")
+            or request.args.get("download") == "1"
+        ):
+            as_attachment = True
+        else:
+            as_attachment = False
+
     try:
-        return send_from_directory(output_base, filepath)
+        response = send_from_directory(
+            output_base,
+            filepath,
+            as_attachment=as_attachment,
+            download_name=filename,
+        )
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        return response
     except Exception:
         abort(404)
+
 
 def handle_document_verify(mode_config, identifier):
     """
@@ -110,7 +131,21 @@ def handle_document_verify(mode_config, identifier):
             full_sig_path = os.path.join(output_base, sig_path.lstrip("/"))
             actual_sig_sha = compute_file_sha256(full_sig_path)
             if actual_sig_sha and actual_sig_sha == expected_sig_sha:
-                seal_valid = verify_canonical_seal(signed_doc.hash, data)
+                # Contrôle d'intégrité de la contre-signature BV si présente
+                expected_bv_sha = data.get("bv_signature_sha256") or data.get("snapshot", {}).get("bv_signature_sha256")
+                bv_valid = True
+                if expected_bv_sha and source_record and getattr(source_record, "bv_signature_data", None):
+                    full_bv_path = os.path.join(output_base, source_record.bv_signature_data.lstrip("/"))
+                    actual_bv_sha = compute_file_sha256(full_bv_path)
+                    if actual_bv_sha != expected_bv_sha:
+                        current_app.logger.warning(
+                            f"⚠️ Altération détectée du PNG de contre-signature BV pour {identifier} : {actual_bv_sha} != {expected_bv_sha}")
+                        bv_valid = False
+
+                if bv_valid:
+                    seal_valid = verify_canonical_seal(signed_doc.hash, data)
+                else:
+                    seal_valid = False
             else:
                 current_app.logger.warning(
                     f"⚠️ Altération détectée du PNG de signature pour {identifier} : {actual_sig_sha} != {expected_sig_sha}")

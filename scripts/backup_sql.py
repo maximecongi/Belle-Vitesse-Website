@@ -1,3 +1,5 @@
+from utils.cron_helper import monitor_cron_job
+from utils.ssh_helper import get_ssh_tunnel
 import argparse
 import gzip
 import os
@@ -14,9 +16,6 @@ _root = Path(__file__).parent.parent
 if str(_root) not in sys.path:
     sys.path.insert(0, str(_root))
 
-from utils.ssh_helper import get_ssh_tunnel
-from utils.cron_helper import monitor_cron_job
-
 
 try:
     from services.common.kdrive.client import KDriveClient
@@ -29,7 +28,7 @@ except ImportError:
     KDriveClient = None
     KDRIVE_ROOT_FOLDER_ID = 48
     KDRIVE_SQL_BACKUP_FOLDER_ID = 133270
-    KDRIVE_SQL_BACKUP_PATH = "Common documents/BELLE VITESSE/40_TECH/BACKUPS_SQL"
+    KDRIVE_SQL_BACKUP_PATH = "Common documents/4_SUPER_ADMINISTRATEURS/40_TECH/BACKUPS_SQL"
 
 # Load environment variables
 load_dotenv(_root / '.env')
@@ -98,7 +97,7 @@ def run_backup(host, port):
 def sync_backup_to_kdrive(local_file: Path):
     """
     Téléverse l'archive compressée sur Infomaniak kDrive dans :
-    Common documents/BELLE VITESSE/40_TECH/BACKUPS_SQL / YYYY-MM / dump_YYYY-MM-DD_HH-MM-SS.sql.gz
+    Common documents/4_SUPER_ADMINISTRATEURS/40_TECH/BACKUPS_SQL / YYYY-MM / dump_YYYY-MM-DD_HH-MM-SS.sql.gz
     """
     if not KDriveClient:
         print("ℹ️ Module KDriveClient non disponible, saut du transfert distant.")

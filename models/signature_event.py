@@ -27,6 +27,8 @@ class SignatureEvent(db.Model):
     ip = db.Column(db.String(45), nullable=True)
     user_agent = db.Column(db.String(255), nullable=True)
     details = db.Column(db.JSON, nullable=True)
+    previous_event_hash = db.Column(db.String(64), nullable=True)
+    event_hash = db.Column(db.String(64), nullable=True)
     created_at = db.Column(db.DateTime, default=_utcnow, nullable=False)
 
     def to_dict(self):
@@ -38,6 +40,8 @@ class SignatureEvent(db.Model):
             "ip": self.ip,
             "user_agent": self.user_agent,
             "details": self.details,
+            "previous_event_hash": self.previous_event_hash,
+            "event_hash": self.event_hash,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 

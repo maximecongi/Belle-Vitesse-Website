@@ -234,8 +234,11 @@ class BvsrComprehensiveTest(unittest.TestCase):
                 "email": "romain@racer.com",
                 "phone": "+33611223344",
                 "company": "Cascade Prod",
+                "ack_rules": "1",
+                "ack_authority": "1",
                 "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
             }
+
 
             res_post = self.client.post(
                 f"/sign/safety-rules/{token.token}",

@@ -2,6 +2,8 @@
 Service partagé de signature et de jetons pour les Retours et Départs (flux technicien) ainsi que les décharges.
 """
 
+import hashlib
+import json
 import logging
 import os
 import secrets
@@ -51,25 +53,47 @@ from utils.signature_storage import (
 )
 
 
-def log_signature_event(document_id: str, mode: str, event_type: str, details: dict = None, ip: str = None, user_agent: str = None):
+def log_signature_event(document_id: str, mode: str, event_type: str, details: dict = None, ip: str = None, user_agent: str = None, raise_on_failure: bool = False):
     """
-    Enregistre un événement d'audit immuable dans la table signature_events.
+    Enregistre un événement d'audit immuable dans la table signature_events avec chaînage SHA-256.
+    Utilise un point de sauvegarde (savepoint) pour isoler l'insertion et éviter
+    d'invalider la session globale SQLAlchemy si la table est manquante ou indisponible.
     """
     try:
-        event_record = SignatureEvent(
-            document_id=str(document_id),
-            mode=str(mode),
-            event_type=str(event_type),
-            ip=ip[:45] if ip else None,
-            user_agent=user_agent[:255] if user_agent else None,
-            details=details or {},
-            created_at=_utcnow()
-        )
-        db.session.add(event_record)
-        db.session.flush()
+        with db.session.begin_nested():
+            # Chaînage cryptographique des événements pour ce document
+            last_event = (
+                SignatureEvent.query.filter_by(document_id=str(document_id))
+                .order_by(SignatureEvent.id.desc())
+                .first()
+            )
+            prev_hash = last_event.event_hash if (last_event and last_event.event_hash) else ""
+            now_dt = _utcnow()
+            details_payload = details or {}
+            details_json = json.dumps(details_payload, sort_keys=True, ensure_ascii=False)
+            ip_str = ip[:45] if ip else ""
+            ua_str = user_agent[:255] if user_agent else ""
+            raw_chain = f"{document_id}|{mode}|{event_type}|{ip_str}|{ua_str}|{details_json}|{prev_hash}|{now_dt.isoformat()}"
+            curr_hash = hashlib.sha256(raw_chain.encode("utf-8")).hexdigest()
+
+            event_record = SignatureEvent(
+                document_id=str(document_id),
+                mode=str(mode),
+                event_type=str(event_type),
+                ip=ip[:45] if ip else None,
+                user_agent=user_agent[:255] if user_agent else None,
+                details=details_payload,
+                previous_event_hash=prev_hash or None,
+                event_hash=curr_hash,
+                created_at=now_dt
+            )
+            db.session.add(event_record)
+            db.session.flush()
         return event_record
     except Exception as e:
         logger.error(f"⚠️ Échec de l'enregistrement de signature_event ({event_type} pour {document_id}): {e}")
+        if raise_on_failure:
+            raise
         return None
 from utils.storage import (
     ensure_dir,
@@ -257,7 +281,7 @@ def resume_inspection_signature(token_str, mode):
 
 # ── Moteur de Traitement des Signatures ──────────────────────────
 
-def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_data=None):
+def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_data=None, user_agent=None):
     """
     Moteur unifié pour finaliser n'importe quel document signé (Inspection ou Décharge).
     Génère le PDF, enregistre l'archive et déclenche les webhooks/emails.
@@ -280,13 +304,15 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         base_url = f"https://{base_url}"
 
     try:
-        # 1. Mise à jour de l'état
+        # 1. Mise à jour de l'état (sans écraser la date ou l'IP originale du client si déjà présent)
         if hasattr(record, "status"):
             record.status = "signed"
         if hasattr(record, "signed_at"):
-            record.signed_at = signed_at.replace(tzinfo=None)
+            if not record.signed_at:
+                record.signed_at = signed_at.replace(tzinfo=None)
         if hasattr(record, "signer_ip"):
-            record.signer_ip = signed_ip
+            if not record.signer_ip:
+                record.signer_ip = signed_ip
 
         # 2. Déport de la signature binaire sur disque en fichier PNG
         document_id = getattr(
@@ -299,25 +325,44 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         if hasattr(record, "signature_data"):
             record.signature_data = sig_file_rel_path
 
-        db.session.flush()
-
         output_base = current_app.config.get(
             "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
         sig_full_path = os.path.join(output_base, sig_file_rel_path)
         sig_file_sha256 = compute_file_sha256(sig_full_path)
 
+        # Déport et hachage du PNG de contre-signature BV si présent
+        bv_sig_file_sha256 = ""
+        if mode == "safety_rules" and getattr(record, "bv_signature_data", None):
+            bv_raw = record.bv_signature_data
+            if str(bv_raw).startswith("data:image"):
+                bv_file_rel = save_signature_image(
+                    bv_raw, entity_type="waivers", record_id=f"{document_id}_bv")
+                record.bv_signature_data = bv_file_rel
+            else:
+                bv_file_rel = bv_raw
+            full_bv_path = os.path.join(output_base, bv_file_rel.lstrip("/"))
+            bv_sig_file_sha256 = compute_file_sha256(full_bv_path)
+
+        db.session.flush()
+
         # Construction du Snapshot des données et Scellé Canonique (Hash)
         snapshot, seal_args = _build_flow_data(mode, record, extra_data)
+        if bv_sig_file_sha256:
+            snapshot["bv_signature_sha256"] = bv_sig_file_sha256
 
+        client_signed_at_dt = record.signed_at or signed_at.replace(tzinfo=None)
         canonical_payload = {
             "version": "2.0",
+            "_seal_kid": "v1",
             "mode": mode,
             "document_id": str(document_id),
-            "signed_at": signed_at.isoformat(),
-            "signer_ip": signed_ip,
+            "signed_at": client_signed_at_dt.isoformat(),
+            "signer_ip": record.signer_ip or signed_ip,
             "signature_sha256": sig_file_sha256,
             "snapshot": snapshot,
         }
+        if bv_sig_file_sha256:
+            canonical_payload["bv_signature_sha256"] = bv_sig_file_sha256
 
         current_hash = compute_canonical_seal(canonical_payload)
 
@@ -391,6 +436,14 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         existing_doc = db.session.get(signed_model, document_id)
         if existing_doc:
             old_hash = existing_doc.hash
+            old_sig_sha = (existing_doc.data_snapshot or {}).get("signature_sha256")
+            is_bv_countersign = (mode == "safety_rules" and bool(bv_sig_file_sha256))
+            if old_sig_sha and old_sig_sha != sig_file_sha256 and not is_bv_countersign:
+                raise ValueError(
+                    "Ce document juridique a déjà été signé et scellé de manière immuable. "
+                    "L'écrasement de la signature d'origine est interdit."
+                )
+
             existing_doc.hash = current_hash
             existing_doc.pdf_file_hash = ""
             existing_doc.data_snapshot = canonical_payload
@@ -402,7 +455,7 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
                 "old_hash": old_hash,
                 "new_hash": current_hash,
                 "signature_sha256": sig_file_sha256,
-            }, ip=signed_ip)
+            }, ip=signed_ip, user_agent=user_agent)
         else:
             signed_doc = signed_model(
                 **{pk_name: document_id},
@@ -417,7 +470,7 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
             log_signature_event(document_id, mode, "document_signed", {
                 "hash": current_hash,
                 "signature_sha256": sig_file_sha256,
-            }, ip=signed_ip)
+            }, ip=signed_ip, user_agent=user_agent)
 
         try:
             db.session.commit()
@@ -486,6 +539,7 @@ def _build_flow_data(mode, record, extra_data):
     elif mode == "safety_rules":
         signer_name = record.signer_name if hasattr(record, "signer_name") else "Intervenant"
         role_label = record.signer_role_label if hasattr(record, "signer_role_label") else "Intervenant"
+        sign_data = getattr(record, "sign_data", None) or {}
         seal_args = [signer_name, role_label]
         snapshot = {
             "mode": "safety_rules",
@@ -499,6 +553,11 @@ def _build_flow_data(mode, record, extra_data):
             "signer_email": getattr(record, "signer_email", "") or "",
             "signer_phone": getattr(record, "signer_phone", "") or "",
             "signer_company": getattr(record, "signer_company", "") or "",
+            "vehicles_details": getattr(record, "vehicles_details", None) or [],
+            "helmets_inventory": getattr(record, "helmets_inventory", None) or DEFAULT_HELMETS_INVENTORY,
+            "safety_technicians": getattr(record, "safety_technicians", "") or "",
+            "ack_rules": sign_data.get("ack_rules", True),
+            "ack_authority": sign_data.get("ack_authority", True),
             "bv_signature": record.bv_signature_data or "",
             "bv_signed_at": record.bv_signed_at.isoformat() if record.bv_signed_at else "",
             "bv_signer_name": record.bv_signer_name or "",
@@ -525,6 +584,7 @@ def _build_flow_data(mode, record, extra_data):
             "accepted_terms": sign_data.get("accepted_terms", True),
             "accepted_at": sign_data.get("accepted_at", ""),
             "terms_fingerprint": sign_data.get("terms_fingerprint", ""),
+            "cgl_version": sign_data.get("cgl_version", "2026.1"),
             "signer_email": record.signer_email or "",
             "signer_phone": record.signer_phone or "",
             "siret": record.production_siret or "",
@@ -536,6 +596,10 @@ def _build_flow_data(mode, record, extra_data):
             "insurance_policy": record.production_insurance_policy or "",
             "insurance_file_sha256": sign_data.get("insurance_file_sha256", ""),
             "location_of_use": record.location_of_use or "",
+            "vehicles": getattr(record, "vehicles_details", None) or [],
+            "shooting_dates": record.shooting_dates or "",
+            "order_ref": getattr(record, "display_order_ref", None) or getattr(record, "order_ref", None) or sign_data.get("order_ref", "") or "",
+            "signature_city": sign_data.get("signature_city", "") or getattr(record, "display_signature_city", ""),
             "_seal_production_name": record.production_name or "",
             "_seal_representative": record.production_representative or "",
         }

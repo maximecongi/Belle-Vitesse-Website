@@ -59,6 +59,16 @@ def create_app():
         app.config["SECRET_KEY"] = "dev-only-insecure-key-change-in-production"
         app.logger.warning("⚠️ SECRET_KEY non définie — clé par défaut utilisée (dev uniquement)")
 
+    if env == "production":
+        hmac_key = os.getenv("HASH_SECRET_KEY") or app.config.get("SECRET_KEY")
+        if not hmac_key or hmac_key in (
+            "dev-only-insecure-key-change-in-production",
+            "fallback_secret_for_dev_only",
+            "fallback-secret-for-dev-only-change-in-prod",
+        ):
+            raise RuntimeError("❌ HASH_SECRET_KEY (ou SECRET_KEY robuste) doit être définie en production !")
+
+
     # Correction de Proxy pour SSL derrière Traefik (nécessaire pour url_for HTTPS et détection d'IP)
     from werkzeug.middleware.proxy_fix import ProxyFix
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)

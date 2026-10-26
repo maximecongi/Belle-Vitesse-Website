@@ -132,6 +132,34 @@ def _cleanup_waiver_assets(mode: str, waiver: Waiver):
                 except Exception as e:
                     logger.error(f"❌ Erreur suppression fichier {full_path} : {e}")
 
+    # Journalisation de la suppression de l'archive si elle existait
+    signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=waiver.waiver_id).first()
+    if signed_doc:
+        from services.common.signatures import log_signature_event
+        admin_user = "system"
+        try:
+            from flask import session
+            admin_user = (
+                session.get("admin_user_mail")
+                or session.get("user")
+                or session.get("admin_user_firstname")
+                or "system"
+            )
+        except Exception:
+            pass
+
+        log_signature_event(
+            waiver.waiver_id,
+            mode,
+            "archive_deleted",
+            {
+                "deleted_hash": signed_doc.hash,
+                "deleted_pdf_hash": signed_doc.pdf_file_hash or "",
+                "admin_user": admin_user,
+                "reason": "waiver_reset_or_deletion",
+            }
+        )
+
     # Suppression de l'archive légale et des jetons
     WaiverSignedDocument.query.filter_by(waiver_id=waiver.waiver_id).delete()
     WaiverToken.query.filter_by(waiver_id=waiver.waiver_id).delete()
@@ -208,6 +236,29 @@ def get_or_create_waiver_signing_url(waiver_id: str, waiver_type: str = "cgl", b
         active_token = WaiverToken(token=new_token, waiver_id=waiver.waiver_id)
         db.session.add(active_token)
         db.session.commit()
+
+        from services.common.signatures import log_signature_event
+        admin_user = "system"
+        try:
+            from flask import session
+            admin_user = (
+                session.get("admin_user_mail")
+                or session.get("user")
+                or session.get("admin_user_firstname")
+                or "system"
+            )
+        except Exception:
+            pass
+
+        log_signature_event(
+            waiver.waiver_id,
+            mode,
+            "link_generated",
+            {
+                "token": new_token,
+                "admin_user": admin_user,
+            }
+        )
 
     if base_url:
         root_url = base_url.rstrip("/")
