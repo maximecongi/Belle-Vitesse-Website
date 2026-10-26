@@ -70,15 +70,17 @@ def get_checkpoints_for_vehicle(vehicle_id: str, batch_configs=None, vehicle_nam
                         elif cp.get('default_detail'):
                             indication = cp['default_detail'].strip()
 
+                        from services.admin.checkpoint_measurements import format_rule_decimal
+
                         item = {
                             'key': cp['key'],
                             'label': cp['label'],
                             'category': cp.get('category', 'Sécurité'),
                             'type': cp.get('type', 'status'),
-                            'minimum': cp.get('minimum'),
-                            'maximum': cp.get('maximum'),
-                            'goal': cp.get('goal'),
-                            'tolerance': cp.get('tolerance'),
+                            'minimum': format_rule_decimal(cp.get('minimum')),
+                            'maximum': format_rule_decimal(cp.get('maximum')),
+                            'goal': format_rule_decimal(cp.get('goal')),
+                            'tolerance': format_rule_decimal(cp.get('tolerance')),
                             'detail': indication,
                             'has_protocol': bool(cp.get('has_protocol') or cp['key'] in ('tires', 'brakes')),
                             'protocol_url': cp.get('protocol_url') or ('/admin/tools/check-vehicles' if (cp.get('has_protocol') or cp['key'] in ('tires', 'brakes')) else ''),

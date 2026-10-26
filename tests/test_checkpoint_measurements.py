@@ -1,7 +1,12 @@
 import unittest
 from unittest.mock import patch
 
-from services.admin.checkpoint_measurements import normalize_measurement_rules, validate_measurement
+from services.admin.checkpoint_measurements import (
+    normalize_measurement_rules,
+    validate_measurement,
+    format_rule_decimal,
+    snapshot_rules,
+)
 from services.admin.utils import compute_inspection_readiness
 
 
@@ -32,6 +37,30 @@ class CheckpointMeasurementRulesTests(unittest.TestCase):
             normalize_measurement_rules({"minimum": 0, "maximum": 100, "goal": 100, "tolerance": -1})
         with self.assertRaisesRegex(ValueError, "une décimale"):
             normalize_measurement_rules({"minimum": 0, "maximum": 100, "goal": 100, "tolerance": 0.25})
+
+    def test_format_rule_decimal_limits_to_one_decimal(self):
+        self.assertEqual(format_rule_decimal("100.000000"), "100.0")
+        self.assertEqual(format_rule_decimal("0.000000"), "0.0")
+        self.assertEqual(format_rule_decimal("5.000000"), "5.0")
+        self.assertEqual(format_rule_decimal("95.5"), "95.5")
+        self.assertEqual(format_rule_decimal(100), "100.0")
+        self.assertIsNone(format_rule_decimal(None))
+        self.assertIsNone(format_rule_decimal(""))
+
+    def test_snapshot_rules_enforces_one_decimal(self):
+        raw_config = {
+            "minimum": "0.000000",
+            "maximum": "100.000000",
+            "goal": "100.000000",
+            "tolerance": "5.000000",
+            "unit": "%",
+        }
+        snap = snapshot_rules(raw_config)
+        self.assertEqual(snap["minimum"], "0.0")
+        self.assertEqual(snap["maximum"], "100.0")
+        self.assertEqual(snap["goal"], "100.0")
+        self.assertEqual(snap["tolerance"], "5.0")
+        self.assertEqual(snap["unit"], "%")
 
     @patch("services.admin.utils.is_known_vehicle", return_value=True)
     @patch("services.admin.utils.get_checkpoints_for_vehicle")

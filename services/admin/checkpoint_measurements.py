@@ -40,9 +40,19 @@ def normalize_measurement_rules(data):
     return rules
 
 
+def format_rule_decimal(value):
+    if value is None or str(value).strip() in ("", "None"):
+        return None
+    try:
+        d = Decimal(str(value).strip().replace(",", "."))
+        return format(d.quantize(Decimal("0.1")), "f")
+    except Exception:
+        return str(value)
+
+
 def snapshot_rules(config):
-    """Retourne les paramètres numériques sérialisables d'une définition."""
-    return {field: str(config.get(field)) if config.get(field) is not None else None
+    """Retourne les paramètres numériques sérialisables d'une définition avec une seule décimale."""
+    return {field: format_rule_decimal(config.get(field)) if config.get(field) is not None else None
             for field in RULE_FIELDS} | {"unit": config.get("unit") or ""}
 
 

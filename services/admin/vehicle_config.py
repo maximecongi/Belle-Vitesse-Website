@@ -6,7 +6,7 @@ from sqlalchemy import case
 from sqlalchemy.orm.attributes import flag_modified
 from utils.database import get_vehicles
 from services.admin.utils import handle_admin_service_error
-from services.admin.checkpoint_measurements import normalize_measurement_rules
+from services.admin.checkpoint_measurements import normalize_measurement_rules, format_rule_decimal
 
 logger = logging.getLogger(__name__)
 
@@ -215,10 +215,10 @@ def get_all_checkpoints():
             "category": cp.category,
             "type": cp.type,
             "unit": cp.unit,
-            "minimum": str(cp.minimum) if cp.minimum is not None else None,
-            "maximum": str(cp.maximum) if cp.maximum is not None else None,
-            "goal": str(cp.goal) if cp.goal is not None else None,
-            "tolerance": str(cp.tolerance) if cp.tolerance is not None else None,
+            "minimum": format_rule_decimal(cp.minimum),
+            "maximum": format_rule_decimal(cp.maximum),
+            "goal": format_rule_decimal(cp.goal),
+            "tolerance": format_rule_decimal(cp.tolerance),
             "has_protocol": has_protocol_val,
             "protocol_url": protocol_url_val,
             "default_detail": cp.default_detail,
@@ -593,10 +593,10 @@ def get_checkpoint_by_id(checkpoint_id: int):
         "category": cp.category,
         "type": cp.type,
         "unit": cp.unit,
-        "minimum": str(cp.minimum) if cp.minimum is not None else "",
-        "maximum": str(cp.maximum) if cp.maximum is not None else "",
-        "goal": str(cp.goal) if cp.goal is not None else "",
-        "tolerance": str(cp.tolerance) if cp.tolerance is not None else "",
+        "minimum": format_rule_decimal(cp.minimum) or "",
+        "maximum": format_rule_decimal(cp.maximum) or "",
+        "goal": format_rule_decimal(cp.goal) or "",
+        "tolerance": format_rule_decimal(cp.tolerance) or "",
         "has_protocol": cp.has_protocol_available() if hasattr(cp, "has_protocol_available") else bool(getattr(cp, "has_protocol", False) or cp.key in ("tires", "brakes")),
         "protocol_url": getattr(cp, "protocol_url", "") or "",
         "default_detail": cp.default_detail,

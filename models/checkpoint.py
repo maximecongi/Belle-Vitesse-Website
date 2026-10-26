@@ -62,6 +62,8 @@ class CheckpointDefinition(db.Model):
 
     def to_dict(self) -> dict:
         """Sérialise le point de contrôle."""
+        from services.admin.checkpoint_measurements import format_rule_decimal
+
         return {
             "id": self.id,
             "key": self.key,
@@ -69,10 +71,10 @@ class CheckpointDefinition(db.Model):
             "category": self.category,
             "type": self.type,
             "unit": self.unit,
-            "minimum": str(self.minimum) if self.minimum is not None else None,
-            "maximum": str(self.maximum) if self.maximum is not None else None,
-            "goal": str(self.goal) if self.goal is not None else None,
-            "tolerance": str(self.tolerance) if self.tolerance is not None else None,
+            "minimum": format_rule_decimal(self.minimum),
+            "maximum": format_rule_decimal(self.maximum),
+            "goal": format_rule_decimal(self.goal),
+            "tolerance": format_rule_decimal(self.tolerance),
             "has_protocol": self.has_protocol_available(),
             "protocol_url": self.protocol_url or ("/admin/tools/check-vehicles" if self.has_protocol_available() else ""),
             "default_detail": self.default_detail,

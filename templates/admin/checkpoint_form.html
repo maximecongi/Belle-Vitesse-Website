@@ -75,16 +75,21 @@ endblock %}
             </div>
         </div>
 
-        <div class="u-grid u-grid-2 u-gap-3 u-mb-3{% if checkpoint.type != 'value' %} u-d-none{% endif %}" id="checkpoint_measurement_rules">
-            {% for field, label in [('minimum', 'Minimum autorisé'), ('maximum', 'Maximum autorisé'), ('goal', 'Objectif au départ'), ('tolerance', 'Tolérance autour de l’objectif')] %}
+        <div class="u-grid u-grid-2 u-gap-3 u-mb-3{% if checkpoint.type != 'value' %} u-d-none{% endif %}"
+            id="checkpoint_measurement_rules">
+            {% for field, label in [('minimum', 'Minimum autorisé'), ('maximum', 'Maximum autorisé'), ('goal', 'Objectif
+            au départ'), ('tolerance', 'Tolérance autour de l’objectif')] %}
             <div class="form-group">
-                <label for="checkpoint_{{ field }}" class="form-label">{{ label }} <span class="u-text-danger">*</span></label>
-                <input type="number" step="0.1" id="checkpoint_{{ field }}" name="{{ field }}" class="form-input checkpoint-measurement-rule"
+                <label for="checkpoint_{{ field }}" class="form-label">{{ label }} <span
+                        class="u-text-danger">*</span></label>
+                <input type="number" step="0.1" id="checkpoint_{{ field }}" name="{{ field }}"
+                    class="form-input checkpoint-measurement-rule"
                     value="{{ checkpoint[field] if checkpoint[field] is defined and checkpoint[field] is not none else '' }}"
-                    {% if checkpoint.type == 'value' %}required{% else %}disabled{% endif %}>
+                    {% if checkpoint.type=='value' %}required{% else %}disabled{% endif %}>
             </div>
             {% endfor %}
-            <div class="u-text-xs u-text-muted">Au départ, l’objectif ± tolérance est limité par les bornes minimale et maximale. Au retour, seule la plage est appliquée.</div>
+            <div class="u-text-xs u-text-muted">Au départ, l’objectif ± tolérance est limité par les bornes minimale et
+                maximale. Au retour, seule la plage est appliquée.</div>
         </div>
 
         <div class="u-bg-neutral-light u-p-3 u-rounded u-mb-4">

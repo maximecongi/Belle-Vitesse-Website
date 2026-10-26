@@ -542,12 +542,12 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
     is_checkout = isinstance(c, CheckoutVehicle) or getattr(c, "__tablename__", "") == "checkout_vehicles"
 
     def _clean_num_str(v):
-        if v is None or str(v).strip() == "":
+        if v is None or str(v).strip() in ("", "None", "—"):
             return None
         try:
             from decimal import Decimal
-            d = Decimal(str(v).strip())
-            return format(d.normalize(), "f")
+            d = Decimal(str(v).strip().replace(",", "."))
+            return format(d.quantize(Decimal("0.1")), "f")
         except Exception:
             return str(v)
 
@@ -563,7 +563,7 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
                     if rule.get(rf) is not None:
                         item[rf] = rule.get(rf)
 
-            # Normalisation visuelle des bornes numériques pour le template (ex: '100.000000' -> '100')
+            # Normalisation visuelle des bornes numériques pour le template (ex: '100.000000' -> '100.0')
             for rf in ("minimum", "maximum", "goal", "tolerance"):
                 if item.get(rf) is not None:
                     item[rf] = _clean_num_str(item[rf])
@@ -574,8 +574,6 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
             else:
                 raw_val = values.get(k) or "—"
 
-            data[k] = raw_val
-
             if raw_val not in (None, "", "—"):
                 norm, err = validate_measurement(raw_val, rule, is_checkout=is_checkout)
                 item["value"] = norm or raw_val
@@ -583,7 +581,9 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
                 item["validation_error"] = err
                 data[f"{k}_valid"] = (err is None)
                 data[f"{k}_status"] = "ok" if err is None else "warning"
+                data[k] = norm or raw_val
             else:
+                data[k] = raw_val
                 item["value"] = None
                 item["is_valid"] = False
                 item["validation_error"] = "non renseignée"
