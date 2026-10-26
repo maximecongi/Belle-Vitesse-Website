@@ -268,7 +268,10 @@
         <footer class="bvsr-evidence-seal">
             {% if qr_data_uri or qr %}
             <div class="bvsr-seal-qr">
-                <img src="{{ qr_data_uri or qr }}" alt="QR Code Intégrité">
+                {% set target_url = verification_url or (base_url ~ '/safety-rules/verify/' ~ waiver.waiver_id) if base_url else ('/safety-rules/verify/' ~ waiver.waiver_id) %}
+                <a href="{{ target_url }}" target="_blank" rel="noopener noreferrer" class="bvsr-qr-link">
+                    <img src="{{ qr_data_uri or qr }}" alt="QR Code Intégrité">
+                </a>
             </div>
             {% endif %}
             <div class="bvsr-seal-details">

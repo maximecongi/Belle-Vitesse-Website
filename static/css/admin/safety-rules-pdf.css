@@ -613,6 +613,12 @@ body.bvsr-container {
     line-height: 0;
 }
 
+.bvsr-qr-link {
+    display: inline-block;
+    text-decoration: none;
+    line-height: 0;
+}
+
 .bvsr-seal-qr img {
     width: 58px;
     height: 58px;

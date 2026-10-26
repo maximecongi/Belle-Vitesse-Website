@@ -627,6 +627,12 @@
     text-align: center;
 }
 
+.cgl-qr-link {
+    text-decoration: none;
+    color: inherit;
+    display: inline-block;
+}
+
 .cgl-qr-img {
     width: 65pt;
     height: 65pt;
