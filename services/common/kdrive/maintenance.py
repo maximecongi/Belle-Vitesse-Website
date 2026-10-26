@@ -90,11 +90,17 @@ class MaintenanceMixin:
         """
         Supprime le dossier complet d'un document ou d'un incident (<document_id>) sur kDrive.
         Supprime également toutes les entrées associées dans kdrive_objects.
-        Garantit que le dossier du document (ex: BVPW-XXXX) est lui-même supprimé et ne reste pas vide.
+        Garantit que le dossier du document (ex: BVRA-XXXX, BVSR-XXXX, BVCO-XXXX, BVCI-XXXX, BVIC-XXXX) est lui-même supprimé et ne reste pas vide.
         """
-        objects = KDriveObject.query.filter_by(
-            entity_type=entity_type,
-            entity_id=entity_id,
+        canonical_type = entity_type
+        if entity_type in ("cgl", "cgl_waiver"):
+            canonical_type = "cgl"
+        elif entity_type in ("safety_rules", "safety_rules_waiver"):
+            canonical_type = "safety_rules"
+
+        objects = KDriveObject.query.filter(
+            KDriveObject.entity_type.in_([canonical_type, f"{canonical_type}_waiver"]),
+            KDriveObject.entity_id == entity_id,
         ).all()
 
         entity_folder_ids = set()
@@ -106,11 +112,11 @@ class MaintenanceMixin:
             try:
                 meta = self.client.get_file(obj.kdrive_dir_id)
                 folder_name = meta.get("name")
-                # Si le dossier est déjà le dossier de l'entité (ex: BVPW-XXX, BVCO-XXX, BVIC-XXX)
+                # Si le dossier est déjà le dossier de l'entité (ex: BVRA-XXX, BVSR-XXX, BVCO-XXX, BVIC-XXX)
                 if folder_name == entity_id:
                     entity_folder_ids.add(obj.kdrive_dir_id)
                 else:
-                    # Sinon, il s'agit d'un sous-dossier (ex: 1_DÉCHARGE, PHOTOS), le parent est le dossier de l'entité
+                    # Sinon, il s'agit d'un sous-dossier (ex: 1_CGL, PHOTOS), le parent est le dossier de l'entité
                     parent_id = meta.get("parent_id")
                     if parent_id:
                         try:
@@ -133,35 +139,30 @@ class MaintenanceMixin:
         if objects:
             project = objects[0].project
         if not project:
-            if entity_type in ("cgl", "cgl_waiver"):
-                from models import CglWaiver
-                rec = CglWaiver.query.filter_by(waiver_id=entity_id).first()
+            if canonical_type in ("cgl", "safety_rules"):
+                from models import Waiver
+                rec = Waiver.query.filter_by(waiver_id=entity_id).first()
                 project = rec.project if rec else None
-            elif entity_type in ("safety_rules", "safety_rules_waiver"):
-                from models import SafetyRulesWaiver
-                rec = SafetyRulesWaiver.query.filter_by(
-                    waiver_id=entity_id).first()
-                project = rec.project if rec else None
-            elif entity_type == "checkout":
+            elif canonical_type == "checkout":
                 from models import CheckoutVehicle
                 rec = CheckoutVehicle.query.filter_by(
                     inspection_number=entity_id).first()
                 project = rec.project if rec else None
-            elif entity_type == "checkin":
+            elif canonical_type == "checkin":
                 from models import CheckinVehicle
                 rec = CheckinVehicle.query.filter_by(
                     inspection_number=entity_id).first()
                 project = rec.project if rec else None
-            elif entity_type == "incident":
+            elif canonical_type == "incident":
                 from models import Incident
                 rec = Incident.query.filter_by(
                     incident_number=entity_id).first()
                 project = rec.project if rec else None
 
-        if project and project.kdrive_folder_id and entity_type in DOC_FOLDERS:
+        if project and project.kdrive_folder_id and canonical_type in DOC_FOLDERS:
             try:
-                # ex: 4_SÉCURITÉ/2_RÈGLES_SÉCURITÉ ou 3_CGL
-                cat_rel = DOC_FOLDERS[entity_type]
+                # ex: 4_SÉCURITÉ/3_CGL ou 4_SÉCURITÉ/2_RÈGLES_SÉCURITÉ
+                cat_rel = DOC_FOLDERS[canonical_type]
                 cat_dir_id = self.ensure_directory_path(
                     project.kdrive_folder_id, cat_rel)
                 child = self.client.get_child_by_name(cat_dir_id, entity_id)
@@ -169,11 +170,11 @@ class MaintenanceMixin:
                     entity_folder_ids.add(child["id"])
             except Exception as e_find:
                 logger.warning(
-                    f"⚠️ Recherche du dossier {entity_id} dans {entity_type} : {e_find}")
+                    f"⚠️ Recherche du dossier {entity_id} dans {canonical_type} : {e_find}")
 
         if not entity_folder_ids and not objects:
             logger.warning(
-                f"⚠️ Aucun dossier kDrive ni objet trouvé en base pour {entity_type} {entity_id}.")
+                f"⚠️ Aucun dossier kDrive ni objet trouvé en base pour {canonical_type} {entity_id}.")
             return False
 
         # 3. Suppression du/des dossier(s) racine(s) de l'entité sur kDrive
@@ -192,7 +193,7 @@ class MaintenanceMixin:
 
         db.session.commit()
         logger.info(
-            f"✅ Dossier entité kDrive et objets supprimés avec succès pour {entity_type} {entity_id}")
+            f"✅ Dossier entité kDrive et objets supprimés avec succès pour {canonical_type} {entity_id}")
         return True
 
     def _prune_empty_parents_upwards(

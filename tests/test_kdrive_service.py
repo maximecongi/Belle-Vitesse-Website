@@ -207,6 +207,165 @@ def test_delete_entity(app_ctx):
     assert KDriveObject.query.filter_by(entity_id="BVIC-999").count() == 0
 
 
+def test_delete_entity_cgl_polymorphic(app_ctx):
+    """Vérifie que delete_entity normalise 'cgl_waiver' -> 'cgl', retrouve le parent BVRA et purge la DB."""
+    from models.waiver import CglWaiver
+
+    prod = Production(name="Production CGL")
+    db.session.add(prod)
+    db.session.flush()
+
+    project = Project(
+        name="Tournage Pub",
+        project_id="BVPR-PUB",
+        production_id=prod.id,
+        departure_date=date(2026, 6, 1),
+        kdrive_folder_id=5000,
+    )
+    db.session.add(project)
+    db.session.flush()
+
+    cgl = CglWaiver(
+        waiver_id="BVRA-POLY-123",
+        project_id=project.id,
+        project_name="Tournage Pub",
+        production_name="Production CGL",
+    )
+    db.session.add(cgl)
+    db.session.flush()
+
+    # KDriveObject stocké comme cgl (ex: pdf dans 1_CGL)
+    k_obj1 = KDriveObject(
+        project_id=project.id,
+        entity_type="cgl",
+        entity_id="BVRA-POLY-123",
+        role="pdf",
+        source_key="cgl.pdf",
+        kdrive_file_id=1111,
+        kdrive_dir_id=2222,  # sous-dossier 1_CGL
+        status="synced"
+    )
+    # KDriveObject avec alias cgl_waiver (compatibilité historique)
+    k_obj2 = KDriveObject(
+        project_id=project.id,
+        entity_type="cgl_waiver",
+        entity_id="BVRA-POLY-123",
+        role="insurance",
+        source_key="attestation.pdf",
+        kdrive_file_id=3333,
+        kdrive_dir_id=4444,  # sous-dossier 2_ATTESTATION_ASSURANCE
+        status="synced"
+    )
+    db.session.add_all([k_obj1, k_obj2])
+    db.session.commit()
+
+    mock_client = MagicMock()
+    # Le sous-dossier 2222 a pour parent 9999 nommé 'BVRA-POLY-123'
+    # Le sous-dossier 4444 a pour parent 9999 nommé 'BVRA-POLY-123'
+    mock_client.get_file.side_effect = lambda file_id: {
+        2222: {"id": 2222, "name": "1_CGL", "parent_id": 9999},
+        4444: {"id": 4444, "name": "2_ATTESTATION_ASSURANCE", "parent_id": 9999},
+        9999: {"id": 9999, "name": "BVRA-POLY-123", "parent_id": 5000},
+    }.get(file_id, {})
+
+    service = KDriveService(client=mock_client)
+
+    # Appel avec le type cgl_waiver
+    success = service.delete_entity("cgl_waiver", "BVRA-POLY-123")
+
+    assert success is True
+    # Le dossier racine 9999 du CGL doit avoir été supprimé
+    assert 9999 in [call.args[0] for call in mock_client.delete.call_args_list]
+    # Les deux KDriveObjects doivent avoir été supprimés
+    assert KDriveObject.query.filter_by(entity_id="BVRA-POLY-123").count() == 0
+
+
+def test_delete_entity_safety_rules_tree_fallback(app_ctx):
+    """Vérifie que delete_entity retrouve le dossier sur kDrive même en l'absence de KDriveObject en base."""
+    from models.waiver import SafetyRulesWaiver
+
+    prod = Production(name="Prod Action")
+    db.session.add(prod)
+    db.session.flush()
+
+    project = Project(
+        name="Projet Cascade",
+        project_id="BVPR-CASCADE",
+        production_id=prod.id,
+        departure_date=date(2026, 7, 10),
+        kdrive_folder_id=7000,
+    )
+    db.session.add(project)
+    db.session.flush()
+
+    sr = SafetyRulesWaiver(
+        waiver_id="BVSR-FALLBACK-789",
+        project_id=project.id,
+        project_name="Projet Cascade",
+        production_name="Prod Action",
+    )
+    db.session.add(sr)
+    db.session.commit()
+
+    mock_client = MagicMock()
+    # ensure_directory_path pour 4_SÉCURITÉ/2_RÈGLES_SÉCURITÉ retourne 7200
+    mock_client.create_directory.return_value = {"id": 7200, "name": "2_RÈGLES_SÉCURITÉ"}
+    # get_child_by_name dans 7200 pour 'BVSR-FALLBACK-789' retourne le dossier 7250
+    mock_client.get_child_by_name.side_effect = lambda parent_id, name: {
+        (7200, "BVSR-FALLBACK-789"): {"id": 7250, "name": "BVSR-FALLBACK-789", "type": "dir"},
+    }.get((parent_id, name), None)
+
+    service = KDriveService(client=mock_client)
+
+    success = service.delete_entity("safety_rules", "BVSR-FALLBACK-789")
+
+    assert success is True
+    mock_client.delete.assert_called_once_with(7250)
+
+
+def test_clean_orphaned_documents_script(app_ctx):
+    """Vérifie que la fonction du script CLI détecte et nettoie les documents supprimés."""
+    from datetime import datetime, timezone
+    from models.waiver import CglWaiver
+    from scripts.clean_orphaned_kdrive_docs import clean_orphaned_documents
+
+    prod = Production(name="Prod Script Test")
+    db.session.add(prod)
+    db.session.flush()
+
+    project = Project(
+        name="Projet Test Cleanup",
+        project_id="BVPR-CLEANUP",
+        production_id=prod.id,
+        departure_date=date(2026, 8, 1),
+        kdrive_folder_id=8000,
+    )
+    db.session.add(project)
+    db.session.flush()
+
+    # CGL marqué comme supprimé (deleted_at != None)
+    cgl_deleted = CglWaiver(
+        waiver_id="BVRA-ORPHAN-1",
+        project_id=project.id,
+        project_name="Projet Test Cleanup",
+        production_name="Prod Script Test",
+        deleted_at=datetime.now(timezone.utc),
+    )
+    db.session.add(cgl_deleted)
+    db.session.commit()
+
+    with patch("services.common.kdrive.service.KDriveService.delete_entity") as mock_delete:
+        mock_delete.return_value = True
+
+        # Mode simulation (dry-run) : ne doit PAS appeler delete_entity
+        clean_orphaned_documents(filter_type="cgl", dry_run=True)
+        mock_delete.assert_not_called()
+
+        # Mode réel (--force) : doit appeler delete_entity avec ('cgl', 'BVRA-ORPHAN-1')
+        clean_orphaned_documents(filter_type="cgl", dry_run=False)
+        mock_delete.assert_called_once_with("cgl", "BVRA-ORPHAN-1")
+
+
 def test_delete_project_folder(app_ctx):
     prod = Production(name="UGC")
     db.session.add(prod)

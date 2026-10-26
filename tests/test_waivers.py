@@ -447,6 +447,50 @@ class WaiversCglAndSafetyRulesTest(unittest.TestCase):
             for w in Waiver.query.filter_by(project_id=proj.id).all():
                 self.assertIsNotNone(w.deleted_at)
 
+    def test_waiver_deletion_dispatches_kdrive_cleanups(self):
+        """Vérifie que la suppression d'un CGL signé ou non signé et le reset déclenchent dispatch_delete_document."""
+        with self.app.app_context():
+            user, proj = self._create_mock_data()
+
+            s1, _ = create_cgl(proj.id)
+            self.assertTrue(s1)
+            cgl = CglWaiver.query.filter_by(project_id=proj.id).first()
+
+            with patch("services.common.kdrive.dispatch_delete_document") as mock_dispatch:
+                # 1. Reset d'un CGL non signé
+                r_ok, _ = reset_waiver(cgl.waiver_id)
+                self.assertTrue(r_ok)
+                mock_dispatch.assert_called_with("cgl", cgl.waiver_id)
+
+                # 2. Suppression d'un CGL non signé
+                mock_dispatch.reset_mock()
+                d_ok, _ = delete_waiver(cgl.waiver_id)
+                self.assertTrue(d_ok)
+                mock_dispatch.assert_called_with("cgl", cgl.waiver_id)
+
+            # 3. Suppression d'un CGL signé (soft-delete avec preuve)
+            s2, _ = create_cgl(proj.id)
+            self.assertTrue(s2)
+            cgl2 = CglWaiver.query.filter_by(project_id=proj.id, deleted_at=None).first()
+            cgl2.status = "signed"
+            signed_doc = WaiverSignedDocument(
+                waiver_id=cgl2.waiver_id,
+                version=1,
+                hash="mock-hash-123",
+                pdf_file_hash="mock-pdf-hash-123",
+                data_snapshot={"signer_name": "Jean Dupont"},
+            )
+            db.session.add(signed_doc)
+            db.session.commit()
+
+            with patch("services.common.kdrive.dispatch_delete_document") as mock_dispatch_signed:
+                d_ok2, _ = delete_waiver(cgl2.waiver_id)
+                self.assertTrue(d_ok2)
+                # Même pour un document signé juridiquement scellé en base, son dossier kDrive est bien supprimé
+                mock_dispatch_signed.assert_called_once_with("cgl", cgl2.waiver_id)
+                db.session.refresh(cgl2)
+                self.assertIsNotNone(cgl2.deleted_at)
+
     def test_shooting_dates_formatting_and_properties(self):
         """Vérifie que les dates de tournage sont correctement synthétisées et exposées."""
         with self.app.app_context():
