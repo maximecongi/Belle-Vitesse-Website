@@ -50,7 +50,8 @@
             <div class="public-doc-header-meta bvsr-header-meta">
                 <strong class="dot-before">Règles de Sécurité Universelles (BVSR)</strong><br>
                 <span class="checkout-doc-id">{{ waiver.waiver_id }}</span><br>
-                <span class="u-text-xxs">Émis le {{ (waiver.signed_at or waiver.generated_at or waiver.created_at or now).strftime('%d/%m/%Y') }}</span>
+                <span class="u-text-xxs">Émis le {{ (waiver.signed_at or waiver.generated_at or waiver.created_at or
+                    now).strftime('%d/%m/%Y') }}</span>
             </div>
         </header>
 
@@ -58,7 +59,8 @@
         <div class="bvsr-title-banner">
             <h1 class="bvsr-main-title">Règles de Sécurité Universelles</h1>
             <div class="bvsr-subtitle">Universal Safety Rules &amp; Operational Guidelines</div>
-            <p class="bvsr-version-info">Projet : {{ waiver.display_project_name }} — Production : {{ waiver.display_production_name }}</p>
+            <p class="bvsr-version-info">Projet : {{ waiver.display_project_name }} — Production : {{
+                waiver.display_production_name }}</p>
         </div>
 
         <!-- ═══════════ CADRE OPÉRATIONNEL & INTERVENANT ═══════════ -->
@@ -69,12 +71,15 @@
                 <div class="bvsr-party-card">
                     <div class="bvsr-party-role">Intervenant / Signataire</div>
                     <div><span class="bvsr-party-field-label">Nom complet :</span> {{ waiver.signer_name }}</div>
-                    <div><span class="bvsr-party-field-label">Qualité / Fonction :</span> {{ waiver.signer_role_label }}</div>
+                    <div><span class="bvsr-party-field-label">Qualité / Fonction :</span> {{ waiver.signer_role_label }}
+                    </div>
                     {% if waiver.signer_company %}
-                    <div><span class="bvsr-party-field-label">Société / Entité :</span> {{ waiver.signer_company }}</div>
+                    <div><span class="bvsr-party-field-label">Société / Entité :</span> {{ waiver.signer_company }}
+                    </div>
                     {% endif %}
                     {% if waiver.signer_email or waiver.signer_phone %}
-                    <div><span class="bvsr-party-field-label">Contact :</span> {{ waiver.signer_email or '—' }}{% if waiver.signer_phone %} — {{ waiver.signer_phone }}{% endif %}</div>
+                    <div><span class="bvsr-party-field-label">Contact :</span> {{ waiver.signer_email or '—' }}{% if
+                        waiver.signer_phone %} — {{ waiver.signer_phone }}{% endif %}</div>
                     {% endif %}
                 </div>
 
@@ -82,9 +87,11 @@
                 <div class="bvsr-party-card">
                     <div class="bvsr-party-role">Cadre du Tournage</div>
                     <div><span class="bvsr-party-field-label">Projet :</span> {{ waiver.display_project_name }}</div>
-                    <div><span class="bvsr-party-field-label">Production :</span> {{ waiver.display_production_name }}</div>
+                    <div><span class="bvsr-party-field-label">Production :</span> {{ waiver.display_production_name }}
+                    </div>
                     <div><span class="bvsr-party-field-label">Période :</span> {{ waiver.display_shooting_dates }}</div>
-                    <div><span class="bvsr-party-field-label">Véhicules mobilisés :</span> {{ waiver.vehicles or 'Parc Belle Vitesse' }}</div>
+                    <div><span class="bvsr-party-field-label">Véhicules mobilisés :</span> {{ waiver.vehicles or 'Parc
+                        Belle Vitesse' }}</div>
                     {% if safety_technicians %}
                     <div><span class="bvsr-party-field-label">Supervision BV :</span> {{ safety_technicians }}</div>
                     {% endif %}
@@ -110,24 +117,36 @@
                 <div class="bvsr-col-card">
                     <div class="bvsr-col-header">Français</div>
                     <ol class="bvsr-rules-list">
-                        <li><strong>Respect des consignes :</strong> Respecter scrupuleusement les instructions opérationnelles du pilote désigné et des techniciens Belle Vitesse.</li>
-                        <li><strong>Sobriété absolue :</strong> Tolérance zéro alcool, stupéfiants ou substances psychotropes altérant la vigilance sur le plateau.</li>
-                        <li><strong>Périmètre et montée :</strong> Interdiction formelle de monter ou descendre d'un véhicule en mouvement. Attendre l'arrêt complet et l'accord du pilote.</li>
-                        <li><strong>Équipements de protection (EPI) :</strong> Port du casque obligatoire pour toute personne sur plateforme extérieure ou véhicule non carrossé.</li>
-                        <li><strong>Ceintures et harnais :</strong> Bouclage obligatoire dès la prise en place et pendant toute la durée du déplacement.</li>
-                        <li><strong>Arrêt d'urgence :</strong> En cas de doute ou d'anomalie perçue, signaler immédiatement l'arrêt par commande vocale ou gestuelle claire.</li>
+                        <li><strong>Respect des consignes :</strong> Respecter scrupuleusement les instructions
+                            opérationnelles du pilote désigné et des techniciens Belle Vitesse.</li>
+                        <li><strong>Sobriété absolue :</strong> Tolérance zéro alcool, stupéfiants ou substances
+                            psychotropes altérant la vigilance sur le plateau.</li>
+                        <li><strong>Périmètre et montée :</strong> Interdiction formelle de monter ou descendre d'un
+                            véhicule en mouvement. Attendre l'arrêt complet et l'accord du pilote.</li>
+                        <li><strong>Équipements de protection (EPI) :</strong> Port du casque obligatoire pour toute
+                            personne sur plateforme extérieure ou véhicule non carrossé.</li>
+                        <li><strong>Ceintures et harnais :</strong> Bouclage obligatoire dès la prise en place et
+                            pendant toute la durée du déplacement.</li>
+                        <li><strong>Arrêt d'urgence :</strong> En cas de doute ou d'anomalie perçue, signaler
+                            immédiatement l'arrêt par commande vocale ou gestuelle claire.</li>
                     </ol>
                 </div>
 
                 <div class="bvsr-col-card">
                     <div class="bvsr-col-header">English</div>
                     <ol class="bvsr-rules-list">
-                        <li><strong>Instruction compliance :</strong> Strictly comply with operational directions from the designated driver and Belle Vitesse technicians.</li>
-                        <li><strong>Absolute sobriety :</strong> Zero-tolerance policy for alcohol, narcotics, or any alertness-altering substances on set.</li>
-                        <li><strong>Perimeter and boarding :</strong> Strictly prohibited to board or dismount moving vehicles. Await complete standstill and driver clearance.</li>
-                        <li><strong>Personal Protective Equipment (PPE) :</strong> Mandatory certified helmet for anyone on exterior rigs, beds, or unclosed platforms.</li>
-                        <li><strong>Seatbelts and harnesses :</strong> Mandatory buckle-up prior to any vehicle movement and throughout the entire take.</li>
-                        <li><strong>Emergency halt :</strong> In case of doubt or perceived hazard, immediately call for a full stop via clear voice or hand signal.</li>
+                        <li><strong>Instruction compliance :</strong> Strictly comply with operational directions from
+                            the designated driver and Belle Vitesse technicians.</li>
+                        <li><strong>Absolute sobriety :</strong> Zero-tolerance policy for alcohol, narcotics, or any
+                            alertness-altering substances on set.</li>
+                        <li><strong>Perimeter and boarding :</strong> Strictly prohibited to board or dismount moving
+                            vehicles. Await complete standstill and driver clearance.</li>
+                        <li><strong>Personal Protective Equipment (PPE) :</strong> Mandatory certified helmet for anyone
+                            on exterior rigs, beds, or unclosed platforms.</li>
+                        <li><strong>Seatbelts and harnesses :</strong> Mandatory buckle-up prior to any vehicle movement
+                            and throughout the entire take.</li>
+                        <li><strong>Emergency halt :</strong> In case of doubt or perceived hazard, immediately call for
+                            a full stop via clear voice or hand signal.</li>
                     </ol>
                 </div>
             </div>
@@ -135,39 +154,41 @@
 
         <!-- ═══════════ SECTION 2 : RÈGLES SPÉCIFIQUES VÉHICULES MOBILISÉS ═══════════ -->
         <section class="bvsr-section">
-            <h2 class="bvsr-section-title">2. Règles Spécifiques aux Véhicules Mobilisés — Vehicle-Specific Guidelines</h2>
+            <h2 class="bvsr-section-title">2. Règles Spécifiques aux Véhicules Mobilisés — Vehicle-Specific Guidelines
+            </h2>
             {% if vehicle_rules %}
-                {% for vr in vehicle_rules %}
-                <div class="bvsr-vehicle-rule-card">
-                    <div class="bvsr-vehicle-title dot-before">{{ vr.label }}</div>
-                    <div class="bvsr-rules-bilingual-grid">
-                        <div class="bvsr-col-card">
-                            <div class="bvsr-col-header">Français</div>
-                            <ul class="bvsr-rules-list">
-                                {% for rfr in vr.rules_fr %}
-                                <li>{{ rfr }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                        <div class="bvsr-col-card">
-                            <div class="bvsr-col-header">English</div>
-                            <ul class="bvsr-rules-list">
-                                {% for ren in vr.rules_en %}
-                                <li>{{ ren }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
+            {% for vr in vehicle_rules %}
+            <div class="bvsr-vehicle-rule-card">
+                <div class="bvsr-vehicle-title dot-before">{{ vr.label }}</div>
+                <div class="bvsr-rules-bilingual-grid">
+                    <div class="bvsr-col-card">
+                        <div class="bvsr-col-header">Français</div>
+                        <ul class="bvsr-rules-list">
+                            {% for rfr in vr.rules_fr %}
+                            <li>{{ rfr }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="bvsr-col-card">
+                        <div class="bvsr-col-header">English</div>
+                        <ul class="bvsr-rules-list">
+                            {% for ren in vr.rules_en %}
+                            <li>{{ ren }}</li>
+                            {% endfor %}
+                        </ul>
                     </div>
                 </div>
                 {% endfor %}
-            {% else %}
+                {% else %}
                 <div class="bvsr-vehicle-rule-card">
-                    <div class="bvsr-vehicle-title dot-before">Véhicules Techniques Polyvalents / Tracking Vehicles</div>
+                    <div class="bvsr-vehicle-title dot-before">Véhicules Techniques Polyvalents / Tracking Vehicles
+                    </div>
                     <div class="bvsr-rules-bilingual-grid">
                         <div class="bvsr-col-card">
                             <div class="bvsr-col-header">Français</div>
                             <ul class="bvsr-rules-list">
-                                <li>Casque obligatoire pour toute personne sur plateforme extérieure ou en roulage dynamique.</li>
+                                <li>Casque obligatoire pour toute personne sur plateforme extérieure ou en roulage
+                                    dynamique.</li>
                                 <li>Double élingage de sécurité obligatoire pour toute tête caméra embarquée.</li>
                                 <li>Respect scrupuleux de la charge utile maximale et équilibrage des masses.</li>
                             </ul>
@@ -182,22 +203,17 @@
                         </div>
                     </div>
                 </div>
-            {% endif %}
+                {% endif %}
         </section>
 
         <!-- ═══════════ SECTION 3 : CASQUES & ÉQUIPEMENTS DE PROTECTION ═══════════ -->
         <section class="bvsr-section">
             <h2 class="bvsr-section-title">3. Équipements de Sécurité Mis à Disposition — Safety Equipment</h2>
             <div class="bvsr-equipment-card">
-                <div><span class="bvsr-party-field-label">Dotation casques :</span> {{ helmets.description_fr if helmets else '6 casques jet ouverts homologués' }}</div>
-                <div class="bvsr-equipment-en"><span class="bvsr-party-field-label">Helmet inventory :</span> {{ helmets.description_en if helmets else '6 certified open face jet helmets' }}</div>
-                {% if helmets and helmets.sizes %}
-                <div class="bvsr-helmets-summary">
-                    {% for size_name, count in helmets.sizes.items() %}
-                    <span class="bvsr-size-pill">Taille {{ size_name }} : {{ count }}</span>
-                    {% endfor %}
-                </div>
-                {% endif %}
+                <div><span class="bvsr-party-field-label">Dotation casques :</span> {{ helmets.description_fr if helmets
+                    else '6 casques jet ouverts homologués' }}</div>
+                <div class="bvsr-equipment-en"><span class="bvsr-party-field-label">Helmet inventory :</span> {{
+                    helmets.description_en if helmets else '6 certified open face jet helmets' }}</div>
             </div>
         </section>
 
@@ -206,7 +222,11 @@
             <div class="bvsr-seal-header">
                 <div class="bvsr-seal-title">Engagement, Acceptation &amp; Scellement Électronique</div>
                 <p class="bvsr-legal-mention">
-                    « Le signataire ({{ waiver.signer_name }}{% if waiver.signer_role_label %}, agissant en qualité de {{ waiver.signer_role_label }}{% endif %}{% if waiver.signer_company %} pour le compte de {{ waiver.signer_company }}{% endif %}) atteste expressément sur l'honneur avoir pris connaissance de l'ensemble des Règles de Sécurité Universelles (BVSR) et du droit d'interruption (Stop Work Authority), et s'engage à les appliquer et les faire respecter sans réserve. »
+                    « Le signataire ({{ waiver.signer_name }}{% if waiver.signer_role_label %}, agissant en qualité de
+                    {{ waiver.signer_role_label }}{% endif %}{% if waiver.signer_company %} pour le compte de {{
+                    waiver.signer_company }}{% endif %}) atteste expressément sur l'honneur avoir pris connaissance de
+                    l'ensemble des Règles de Sécurité Universelles (BVSR) et du droit d'interruption (Stop Work
+                    Authority), et s'engage à les appliquer et les faire respecter sans réserve. »
                 </p>
             </div>
 
@@ -214,7 +234,8 @@
                 <!-- QR CODE DE VÉRIFICATION -->
                 <div class="bvsr-qr-box">
                     {% if qr_data_uri or qr %}
-                    {% set target_url = verification_url or ((base_url ~ '/safety-rules/verify/' ~ waiver.waiver_id) if base_url else ('/safety-rules/verify/' ~ waiver.waiver_id)) %}
+                    {% set target_url = verification_url or ((base_url ~ '/safety-rules/verify/' ~ waiver.waiver_id) if
+                    base_url else ('/safety-rules/verify/' ~ waiver.waiver_id)) %}
                     <a href="{{ target_url }}" target="_blank" rel="noopener noreferrer" class="bvsr-qr-link">
                         <img src="{{ qr_data_uri or qr }}" alt="QR Code Vérification" class="bvsr-qr-img">
                         <span class="bvsr-qr-caption">Vérification en ligne</span>
@@ -225,9 +246,11 @@
                 <!-- EMPREINTE D'INTÉGRITÉ & HORODATAGE -->
                 <div class="bvsr-integrity-info">
                     <div><strong>Document :</strong> {{ waiver.waiver_id }}</div>
-                    <div><strong>Intervenant :</strong> {{ waiver.signer_name }}{% if waiver.signer_company %} ({{ waiver.signer_company }}){% endif %}</div>
+                    <div><strong>Intervenant :</strong> {{ waiver.signer_name }}{% if waiver.signer_company %} ({{
+                        waiver.signer_company }}){% endif %}</div>
                     <div><strong>Projet :</strong> {{ waiver.display_project_name }}</div>
-                    <div><strong>Signé le :</strong> {{ signed_at_str or (waiver.signed_at.strftime('%d/%m/%Y à %H:%M') if waiver.signed_at else 'En attente') }} UTC</div>
+                    <div><strong>Signé le :</strong> {{ signed_at_str or (waiver.signed_at.strftime('%d/%m/%Y à %H:%M')
+                        if waiver.signed_at else 'En attente') }} UTC</div>
                     {% if signed_ip or waiver.signer_ip %}
                     <div><strong>Adresse IP :</strong> {{ signed_ip or waiver.signer_ip }}</div>
                     {% endif %}
@@ -241,7 +264,8 @@
                 <!-- SIGNATURE MANUSCRITE VECTORISÉE -->
                 <div class="bvsr-signature-box">
                     <div class="bvsr-signatory-name">{{ waiver.signer_name or 'Intervenant Plateau' }}</div>
-                    <div class="bvsr-signatory-quality">{{ waiver.signer_role_label or 'Signataire' }} (Lu et approuvé)</div>
+                    <div class="bvsr-signatory-quality">{{ waiver.signer_role_label or 'Signataire' }} (Lu et approuvé)
+                    </div>
                     {% if signature %}
                     <img src="{{ signature }}" alt="Signature Électronique" class="bvsr-sig-img">
                     {% elif waiver.signature_data_uri %}

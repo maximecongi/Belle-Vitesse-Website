@@ -453,11 +453,7 @@
 
 /* ── Règles spécifiques par véhicule ── */
 .bvsr-vehicle-rule-card {
-    background-color: #ffffff;
-    border: 1px solid #e4e4e7;
-    border-left: 3pt solid #ffc845;
-    border-radius: 2pt;
-    padding: 8pt 10pt;
+    padding-left: 16pt;
     margin-bottom: 10pt;
     page-break-inside: avoid;
 }
@@ -485,13 +481,6 @@
     font-style: italic;
     color: #52525b;
     margin-top: 2pt;
-}
-
-.bvsr-helmets-summary {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6pt;
-    margin-top: 6pt;
 }
 
 .bvsr-size-pill {
