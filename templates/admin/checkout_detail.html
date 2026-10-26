@@ -127,9 +127,6 @@
                             {{ val }}{% if item.unit %} {{ item.unit }}{% endif %}
                         </span>
                         {% endif %}
-                        {% if not is_val_ok and item.validation_error %}
-                        <div class="u-text-xs u-text-danger u-mt-1">{{ item.validation_error }}</div>
-                        {% endif %}
                         {% else %}
                         <span class="badge-pill" data-val="warning">
                             <i data-lucide="alert-triangle"></i>
