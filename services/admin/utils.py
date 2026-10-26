@@ -128,34 +128,61 @@ def _is_ready(form_or_statuses, vehicle_id=None, is_checkout=False, battery_val=
     """
     Calcule si le véhicule est 'prêt' basé sur les points de contrôle.
     Retourne True si tous les points de contrôle configurés pour ce véhicule sont conformes ('ok' ou 'not_applicable').
-    Pour les départs (checkout), exige également une batterie à 100%.
+    Pour les départs (checkout), exige impérativement une batterie à >= 100%.
     """
-    # 1. Vérification du niveau de batterie pour les départs
+    # 1. Vérification stricte du niveau de batterie pour les départs (checkout)
     if is_checkout:
         b_val = battery_val
-        if b_val is None and hasattr(form_or_statuses, "get"):
-            b_val = form_or_statuses.get("battery_level") or form_or_statuses.get("battery")
+        if b_val is None:
+            if hasattr(form_or_statuses, "get"):
+                b_val = form_or_statuses.get("battery_level")
+                if b_val is None:
+                    b_val = form_or_statuses.get("battery")
+            elif hasattr(form_or_statuses, "battery_level"):
+                b_val = getattr(form_or_statuses, "battery_level")
+
+        if b_val is None:
+            return False
+
         try:
-            if b_val is not None and float(b_val) < 100:
+            val_float = float(b_val)
+            if val_float < 100:
                 return False
         except (ValueError, TypeError):
-            pass
+            return False
 
     # 2. Vérification des points de contrôle configurés pour ce véhicule
     checkpoints = get_checkpoints_for_vehicle(vehicle_id)
-    for cp in checkpoints:
-        key = cp['key']
-        cp_type = cp.get('type', 'status')
-        if cp_type == 'value':
-            if key not in ("battery", "battery_level"):
-                val = form_or_statuses.get(key) if hasattr(form_or_statuses, "get") else None
-                if val is None or str(val).strip() in ("", "—", "None"):
+    if checkpoints:
+        for cp in checkpoints:
+            key = cp['key']
+            cp_type = cp.get('type', 'status')
+            if hasattr(form_or_statuses, "get"):
+                val = form_or_statuses.get(key)
+            elif hasattr(form_or_statuses, "get_checkpoint_status"):
+                val = form_or_statuses.get_checkpoint_status(key, default=None)
+            elif hasattr(form_or_statuses, "checkpoint_statuses"):
+                val = form_or_statuses.checkpoint_statuses.get(key)
+            else:
+                val = None
+
+            if cp_type == 'value':
+                if key not in ("battery", "battery_level"):
+                    if val is None or str(val).strip() in ("", "—", "None"):
+                        return False
+            else:
+                val_clean = str(val).lower().strip() if val is not None else ""
+                if val_clean not in ("ok", "non_applicable", "not_applicable"):
                     return False
-        else:
-            val = form_or_statuses.get(key) if hasattr(form_or_statuses, "get") else None
+    elif isinstance(form_or_statuses, dict) and form_or_statuses:
+        # Fallback pour validation directe de statuts (ou environnement sans profil véhicule)
+        for key, val in form_or_statuses.items():
+            if key in ("battery", "battery_level"):
+                continue
             val_clean = str(val).lower().strip() if val is not None else ""
             if val_clean not in ("ok", "non_applicable", "not_applicable"):
                 return False
+
     return True
 
 

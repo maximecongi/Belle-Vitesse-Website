@@ -148,7 +148,50 @@ def handle_document_verify(mode_config, identifier):
                                 f"⚠️ Altération ou absence du PNG de contre-signature BV pour {identifier} : {actual_bv_sha} != {expected_bv_sha}")
                             bv_valid = False
 
-                if bv_valid:
+                # Contrôle d'intégrité de l'attestation d'assurance CGL si présente
+                expected_ins_sha = (
+                    data.get("insurance_file_sha256")
+                    or (data.get("snapshot") or {}).get("insurance_file_sha256")
+                )
+                ins_valid = True
+                if expected_ins_sha:
+                    ins_file_rel = (
+                        getattr(source_record, "production_insurance_path", None)
+                        if source_record
+                        else None
+                    )
+                    if not ins_file_rel and isinstance(data.get("snapshot"), dict):
+                        ins_file_rel = data.get("snapshot", {}).get("production_insurance_path")
+
+                    if not ins_file_rel:
+                        current_app.logger.warning(
+                            f"⚠️ Fichier d'assurance introuvable pour {identifier} alors qu'un hash est scellé ({expected_ins_sha})"
+                        )
+                        ins_valid = False
+                    else:
+                        full_ins_path = os.path.normpath(
+                            os.path.join(output_base, ins_file_rel.lstrip("/"))
+                        )
+                        resolved_out = os.path.abspath(output_base)
+                        if not os.path.abspath(full_ins_path).startswith(resolved_out):
+                            current_app.logger.warning(
+                                f"⚠️ Tentative de path traversal détectée pour l'assurance : {full_ins_path}"
+                            )
+                            ins_valid = False
+                        elif not os.path.exists(full_ins_path):
+                            current_app.logger.warning(
+                                f"⚠️ Fichier physique d'assurance manquant sur disque : {full_ins_path}"
+                            )
+                            ins_valid = False
+                        else:
+                            actual_ins_sha = compute_file_sha256(full_ins_path)
+                            if not actual_ins_sha or actual_ins_sha != expected_ins_sha:
+                                current_app.logger.warning(
+                                    f"⚠️ Altération ou disparité du hash de l'assurance pour {identifier} : {actual_ins_sha} != {expected_ins_sha}"
+                                )
+                                ins_valid = False
+
+                if bv_valid and ins_valid:
                     seal_valid = verify_canonical_seal(signed_doc.hash, data)
                 else:
                     seal_valid = False
@@ -205,7 +248,8 @@ def handle_document_verify(mode_config, identifier):
 
     # Contrôle d'intégrité cryptographique de la chaîne d'audit signature_events (Point 8)
     from services.common.signatures import verify_signature_events_chain
-    audit_chain = verify_signature_events_chain(identifier)
+    require_events = bool(isinstance(data, dict) and data.get("version") == "2.0")
+    audit_chain = verify_signature_events_chain(identifier, require_events=require_events)
     audit_chain_valid = audit_chain.get("valid", True)
     if not audit_chain_valid:
         current_app.logger.warning(

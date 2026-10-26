@@ -179,10 +179,9 @@ def create_app():
 
     @app.after_request
     def add_security_headers(response):
-        """Ajoute des en-têtes de sécurité, particulièrement pour les routes admin."""
-        if request.path.startswith('/admin/'):
-            response.headers['X-Frame-Options'] = 'SAMEORIGIN'
-            response.headers['X-Content-Type-Options'] = 'nosniff'
+        """Ajoute des en-têtes de sécurité standard sur l'ensemble des réponses HTTP."""
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
 
         if os.getenv("FLASK_ENV") == "production":
             response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'

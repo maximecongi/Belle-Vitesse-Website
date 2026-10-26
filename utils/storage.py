@@ -32,6 +32,9 @@ def get_project_base_path(project):
     output_base = current_app.config.get(
         "OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
 
+    if not project:
+        return Path(output_base) / "SANS_PROJET"
+
     # Utiliser la date de départ du projet si disponible, sinon la date actuelle
     # project est une instance de models.Project
     date = project.departure_date if (

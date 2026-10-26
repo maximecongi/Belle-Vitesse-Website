@@ -866,6 +866,343 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
             self.assertFalse(res_tampered["valid"])
             self.assertIn("Empreinte falsifiée", res_tampered.get("error", ""))
 
+    def test_manual_status_change_forbidden_on_inspections(self):
+        """Vérifie que le passage manuel au statut 'signed' est rejeté avec HTTP 400."""
+        from models import CheckoutVehicle, CheckinVehicle, User
+        from utils.jwt_auth import generate_token
+        with self.app.app_context():
+            user = User(firstname="Admin", lastname="User", mail="admin@bv.com", role="administrator")
+            db.session.add(user)
+            db.session.commit()
+
+            co = CheckoutVehicle(status="in_progress", vehicle_id="1", inspection_number="BVCO-TEST-STAT1")
+            ci = CheckinVehicle(status="in_progress", vehicle_id="1", inspection_number="BVCI-TEST-STAT1")
+            db.session.add_all([co, ci])
+            db.session.commit()
+            co_id = co.id
+            ci_id = ci.id
+
+            auth_token = generate_token(user)
+            headers = {"Authorization": f"Bearer {auth_token}"}
+
+            # 1. Tentative PATCH checkout status = 'signed'
+            res_co = self.client.patch(f"/api/v1/checkouts/{co_id}/status", json={"status": "signed"}, headers=headers)
+            self.assertEqual(res_co.status_code, 400)
+            self.assertIn("ne peut être obtenu que par scellement cryptographique", res_co.get_json()["error"])
+
+            # 2. Tentative PATCH checkin status = 'signé'
+            res_ci = self.client.patch(f"/api/v1/checkins/{ci_id}/status", json={"status": "signé"}, headers=headers)
+            self.assertEqual(res_ci.status_code, 400)
+            self.assertIn("ne peut être obtenu que par scellement cryptographique", res_ci.get_json()["error"])
+
+            # 3. Statut normal permis
+            res_valid = self.client.patch(f"/api/v1/checkouts/{co_id}/status", json={"status": "pending"}, headers=headers)
+            self.assertEqual(res_valid.status_code, 200)
+
+    def test_api_finalize_inspection_token_required_and_checks(self):
+        """Vérifie que l'API de finalisation exige un token, bloque les bypass et contrôle la préparation."""
+        from models import CheckoutVehicle, User
+        from services.common.signatures import generate_inspection_token
+        from utils.jwt_auth import generate_token
+        with self.app.app_context():
+            user = User(firstname="Admin", lastname="User", mail="admin@bv.com", role="administrator")
+            db.session.add(user)
+            db.session.commit()
+
+            co = CheckoutVehicle(
+                status="pending",
+                vehicle_id="1",
+                inspection_number="BVCO-TEST-FIN1",
+                battery_level=50,
+                vehicle_ready=False
+            )
+            db.session.add(co)
+            db.session.commit()
+            co_id = co.id
+
+            auth_token = generate_token(user)
+            headers = {"Authorization": f"Bearer {auth_token}"}
+
+            sig_png = _generate_valid_png_base64()
+
+            # 1. Finalisation sans token -> HTTP 400
+            res_no_token = self.client.post(f"/api/v1/checkouts/{co_id}/finalize", json={"signature_data": sig_png}, headers=headers)
+            self.assertEqual(res_no_token.status_code, 400)
+            self.assertIn("jeton de validation", res_no_token.get_json()["error"])
+
+            # 2. Générer un token valide
+            tok_data = generate_inspection_token(co_id, "checkout")
+            token_str = tok_data["token"]
+
+            # 3. Finalisation avec véhicule non prêt (batterie < 100) -> HTTP 400
+            res_not_ready = self.client.post(f"/api/v1/checkouts/{co_id}/finalize", json={
+                "signature_data": sig_png,
+                "token": token_str
+            }, headers=headers)
+            self.assertEqual(res_not_ready.status_code, 400)
+            self.assertIn("le véhicule n'est pas prêt", res_not_ready.get_json()["error"])
+
+            # 4. Rendre le véhicule prêt (batterie 100%, vehicle_ready True et checkpoints OK)
+            co_record = db.session.get(CheckoutVehicle, co_id)
+            co_record.battery_level = 100
+            co_record.vehicle_ready = True
+            from utils.checkpoints import get_checkpoints_for_vehicle
+            for cp in get_checkpoints_for_vehicle(co_record.vehicle_id):
+                co_record.set_checkpoint_status(cp["key"], "ok")
+            db.session.commit()
+
+            # 5. Tentative avec token appartenant à un autre enregistrement (mismatch)
+            co2 = CheckoutVehicle(status="pending", vehicle_id="2", inspection_number="BVCO-TEST-FIN2")
+            db.session.add(co2)
+            db.session.commit()
+            res_mismatch = self.client.post(f"/api/v1/checkouts/{co2.id}/finalize", json={
+                "signature_data": sig_png,
+                "token": token_str
+            }, headers=headers)
+            self.assertEqual(res_mismatch.status_code, 400)
+            self.assertIn("ne correspond pas à l'enregistrement", res_mismatch.get_json()["error"])
+
+            # 6. Finalisation réussie avec les bons paramètres
+            res_ok = self.client.post(f"/api/v1/checkouts/{co_id}/finalize", json={
+                "signature_data": sig_png,
+                "token": token_str
+            }, headers=headers)
+            self.assertEqual(res_ok.status_code, 200)
+
+            # 7. Réutilisation du même token (anti-rejeu) -> HTTP 400
+            res_reused = self.client.post(f"/api/v1/checkouts/{co_id}/finalize", json={
+                "signature_data": sig_png,
+                "token": token_str
+            }, headers=headers)
+            self.assertEqual(res_reused.status_code, 400)
+            self.assertIn("déjà été utilisé", res_reused.get_json()["error"])
+
+    def test_is_ready_strict_battery_and_checkpoint_rules(self):
+        """Vérifie la rigueur de _is_ready sur la batterie (>= 100) et les points de contrôle."""
+        from services.admin.utils import _is_ready
+
+        # Pour un départ (is_checkout=True)
+        # Batterie manquante (None) -> False
+        self.assertFalse(_is_ready({}, is_checkout=True, battery_val=None))
+        # Batterie invalide non convertible -> False
+        self.assertFalse(_is_ready({}, is_checkout=True, battery_val="invalid"))
+        # Batterie < 100 -> False
+        self.assertFalse(_is_ready({}, is_checkout=True, battery_val=99))
+        self.assertFalse(_is_ready({"battery_level": "99.5"}, is_checkout=True))
+        # Batterie >= 100 avec points OK -> True
+        valid_statuses = {
+            "tires": "ok", "brakes": "ok", "fluid_levels": "ok",
+            "bodywork": "ok", "lights": "ok", "cleanliness": "ok"
+        }
+        self.assertTrue(_is_ready(valid_statuses, is_checkout=True, battery_val=100))
+        # Point de contrôle non conforme -> False
+        invalid_statuses = dict(valid_statuses)
+        invalid_statuses["brakes"] = "action_requise"
+        self.assertFalse(_is_ready(invalid_statuses, is_checkout=True, battery_val=100))
+
+    def test_save_signature_image_strict_base64_and_path_validation(self):
+        """Vérifie la suppression du bypass par chemin de fichier et la fonction validate_stored_signature_file."""
+        from utils.signature_storage import save_signature_image, validate_stored_signature_file
+
+        with self.app.app_context():
+            # 1. Tenter de passer un chemin pour contourner le Base64 doit échouer
+            with self.assertRaises(ValueError):
+                save_signature_image("signatures/waivers/malicious.png", "waivers", "BVRA-BYPASS")
+
+            # 2. validate_stored_signature_file sur fichier inexistant
+            with self.assertRaises(ValueError) as ctx_missing:
+                validate_stored_signature_file("signatures/waivers/non_existent.png")
+            self.assertIn("introuvable", str(ctx_missing.exception))
+
+            # 3. validate_stored_signature_file sur tentative de traversée de répertoire
+            with self.assertRaises(ValueError) as ctx_traversal:
+                validate_stored_signature_file("signatures/../../etc/passwd.png")
+            self.assertTrue("interdite" in str(ctx_traversal.exception) or "non conforme" in str(ctx_traversal.exception))
+
+    def test_verify_signature_events_chain_require_events_for_signed_doc(self):
+        """Vérifie que verify_signature_events_chain échoue si require_events=True et qu'aucun événement n'existe."""
+        from services.common.signatures import verify_signature_events_chain
+
+        with self.app.app_context():
+            # Sans require_events: valide par défaut
+            res_default = verify_signature_events_chain("BVRA-EMPTY-CHAIN", require_events=False)
+            self.assertTrue(res_default["valid"])
+            self.assertEqual(res_default["count"], 0)
+
+            # Avec require_events=True: invalide car aucun audit pour document scellé
+            res_strict = verify_signature_events_chain("BVRA-EMPTY-CHAIN", require_events=True)
+            self.assertFalse(res_strict["valid"])
+            self.assertIn("Aucun événement d'audit", res_strict["error"])
+
+    def test_create_checkin_requires_signed_checkout_document_or_force(self):
+        """Vérifie que la création d'un checkin exige CheckoutSignedDocument avec hash valide."""
+        from models import CheckoutVehicle, CheckoutSignedDocument, CheckinVehicle, User, Project, Production
+        from services.admin.checkins import create_checkin
+
+        with self.app.app_context():
+            user = User(firstname="Admin", lastname="User", mail="admin@bv.com", role="administrator")
+            prod = Production(name="Prod Test")
+            db.session.add_all([user, prod])
+            db.session.commit()
+
+            proj = Project(name="Project Test", production_id=prod.id, departure_date=date.today(), return_date=date.today())
+            db.session.add(proj)
+            db.session.commit()
+
+            # Checkout avec status = 'signed' mais AUCUN CheckoutSignedDocument
+            co = CheckoutVehicle(
+                status="signed",
+                vehicle_id="VEH-TEST-99",
+                project_id=proj.id,
+                controller_id=user.id,
+                inspection_number="BVCO-TEST-ARCHIVE-99"
+            )
+            db.session.add(co)
+            db.session.commit()
+
+            # 1. create_checkin sans force_checkin échoue
+            form_data = {
+                "project_id": str(proj.id),
+                "vehicle_id": "VEH-TEST-99",
+                "controller_id": str(user.id),
+                "notes": "Test without force",
+            }
+            with self.assertRaises(ValueError) as ctx_fail:
+                create_checkin(form_data)
+            self.assertIn("Le départ de ce véhicule n'a pas été validé par une signature", str(ctx_fail.exception))
+
+            # 2. create_checkin avec force_checkin réussit
+            form_force = dict(form_data)
+            form_force["force_checkin"] = "1"
+            res_force = create_checkin(form_force)
+            self.assertTrue(res_force)
+
+            ci_record = CheckinVehicle.query.filter_by(vehicle_id="VEH-TEST-99").first()
+            self.assertIsNotNone(ci_record)
+            self.assertIn("Retour exceptionnel", ci_record.notes)
+
+            # Nettoyage
+            db.session.delete(ci_record)
+            db.session.commit()
+
+            # 3. Créer le CheckoutSignedDocument avec hash
+            signed_archive = CheckoutSignedDocument(
+                inspection_id="BVCO-TEST-ARCHIVE-99",
+                hash="canonical_seal_hash_12345",
+                data_snapshot={"version": "2.0"},
+                signed_at=datetime.now(timezone.utc)
+            )
+            db.session.add(signed_archive)
+            db.session.commit()
+
+            # 4. Maintenant create_checkin sans force_checkin réussit !
+            res_success = create_checkin(form_data)
+            self.assertTrue(res_success)
+
+    def test_global_security_headers_present_on_all_responses(self):
+        """Vérifie que X-Content-Type-Options et X-Frame-Options sont présents sur toutes les routes (admin et public)."""
+        res_public = self.client.get("/")
+        self.assertEqual(res_public.headers.get("X-Content-Type-Options"), "nosniff")
+        self.assertEqual(res_public.headers.get("X-Frame-Options"), "SAMEORIGIN")
+
+        res_sign = self.client.get("/checkout/sign/nonexistent-token-xyz")
+        self.assertEqual(res_sign.headers.get("X-Content-Type-Options"), "nosniff")
+        self.assertEqual(res_sign.headers.get("X-Frame-Options"), "SAMEORIGIN")
+
+    def test_cgl_verify_fails_when_insurance_file_is_tampered_or_missing(self):
+        """Vérifie que handle_document_verify invalide le sceau si le fichier d'assurance est manquant ou altéré sur disque."""
+        from models import CglWaiver, WaiverSignedDocument, Production, Project
+        from routes.public.shared_docs import handle_document_verify
+
+        with self.app.app_context():
+            prod = Production(name="Prod Insurance Test")
+            db.session.add(prod)
+            db.session.commit()
+            proj = Project(name="Project Insurance Test", production_id=prod.id, departure_date=date.today(), return_date=date.today())
+            db.session.add(proj)
+            db.session.commit()
+
+            output_dir = self.temp_dir
+            ins_rel_path = "attachments/cgl/test_insurance.pdf"
+            full_ins_path = os.path.join(output_dir, ins_rel_path)
+            os.makedirs(os.path.dirname(full_ins_path), exist_ok=True)
+            with open(full_ins_path, "wb") as f:
+                f.write(b"%PDF-1.4 original insurance content")
+
+            expected_sha = compute_file_sha256(full_ins_path)
+            sig_png = _generate_valid_png_base64()
+            sig_rel_path = save_signature_image(sig_png, "waivers", "BVRA-INS-TEST")
+            sig_full = os.path.join(output_dir, sig_rel_path)
+            sig_sha = compute_file_sha256(sig_full)
+
+            doc_id = "BVRA-INS-TEST"
+            snapshot = {
+                "insurance_file_sha256": expected_sha,
+                "production_insurance_path": ins_rel_path,
+                "project_name": "Test Insurance Project",
+            }
+            canonical_payload = {
+                "version": "2.0",
+                "_seal_kid": "v1",
+                "mode": "cgl",
+                "document_id": doc_id,
+                "signed_at": datetime.now(timezone.utc).isoformat(),
+                "signer_ip": "127.0.0.1",
+                "signature_sha256": sig_sha,
+                "insurance_file_sha256": expected_sha,
+                "snapshot": snapshot,
+            }
+            seal_hash = compute_canonical_seal(canonical_payload)
+
+            waiver = CglWaiver(
+                waiver_id=doc_id,
+                project_id=proj.id,
+                status="signed",
+                production_insurance_path=ins_rel_path,
+                sign_data={"insurance_file_sha256": expected_sha}
+            )
+            signed_doc = WaiverSignedDocument(
+                waiver_id=doc_id,
+                hash=seal_hash,
+                data_snapshot=canonical_payload,
+                signature=sig_rel_path,
+                signed_at=datetime.now(timezone.utc)
+            )
+            db.session.add_all([waiver, signed_doc])
+            db.session.commit()
+
+            from services.common.signatures import log_signature_event
+            log_signature_event(doc_id, "cgl", "document_signed", {"hash": seal_hash})
+            db.session.commit()
+
+            config = {
+                "model": CglWaiver,
+                "signed_model": WaiverSignedDocument,
+                "template_verify": "public/cgl/cgl_verify.html",
+                "route_base": "cgl",
+                "seal_prefix": "BVRA",
+                "get_seal_args": lambda data, doc: []
+            }
+
+            # 1. Intact -> Sceau valide
+            with self.app.test_request_context("/cgl/verify/BVRA-INS-TEST"):
+                resp = handle_document_verify(config, doc_id)
+                self.assertIn("CGL Scellées &amp; Intactes", resp)
+
+            # 2. Altération physique -> Sceau invalide
+            with open(full_ins_path, "wb") as f:
+                f.write(b"%PDF-1.4 tampered insurance content")
+
+            with self.app.test_request_context("/cgl/verify/BVRA-INS-TEST"):
+                resp_tampered = handle_document_verify(config, doc_id)
+                self.assertIn("Sceau Invalide", resp_tampered)
+
+            # 3. Disparition physique -> Sceau invalide
+            os.remove(full_ins_path)
+            with self.app.test_request_context("/cgl/verify/BVRA-INS-TEST"):
+                resp_missing = handle_document_verify(config, doc_id)
+                self.assertIn("Sceau Invalide", resp_missing)
+
 
 if __name__ == "__main__":
     unittest.main()

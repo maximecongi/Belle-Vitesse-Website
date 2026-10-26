@@ -207,8 +207,15 @@ class InspectionsTest(unittest.TestCase):
             self.assertIsNotNone(checkout)
             self.assertEqual(checkout.battery_level, 100)
 
-            # Mark checkout as signed so checkin is permitted by business rule
+            # Mark checkout as signed with sealed document so checkin is permitted by business rule
             checkout.status = 'signed'
+            from models import CheckoutSignedDocument
+            signed_co_doc = CheckoutSignedDocument(
+                inspection_id=checkout.inspection_number,
+                hash="mock_signed_co_hash_abc123",
+                data_snapshot={"status": "signed"}
+            )
+            db.session.add(signed_co_doc)
             db.session.commit()
 
             # POST /admin/checkins/new without photos

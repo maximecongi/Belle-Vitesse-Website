@@ -1,9 +1,9 @@
 import logging
-from datetime import date
+from datetime import date, datetime, timezone
 
 from flask import current_app
 
-from models import CheckinVehicle, CheckoutVehicle, db
+from models import CheckinVehicle, CheckoutVehicle, CheckoutSignedDocument, db
 from services.admin.inspections import (
     apply_inspection_data,
     delete_inspection_unified,
@@ -69,7 +69,7 @@ def create_checkin(form, files=None):
 
     apply_inspection_data(record, form, is_checkout=False)
 
-    # Sécurité : s'assurer que le dernier départ (checkout) est bien signé
+    # Sécurité : s'assurer que le dernier départ (checkout) est bien scellé par une archive signée
     if record.vehicle_id:
         query = CheckoutVehicle.query.filter(
             CheckoutVehicle.vehicle_id == record.vehicle_id,
@@ -82,20 +82,49 @@ def create_checkin(form, files=None):
         else:
             latest_checkout = query.order_by(CheckoutVehicle.id.desc()).first()
 
+        has_signed_archive = False
+        if latest_checkout and latest_checkout.inspection_number:
+            signed_doc = db.session.get(CheckoutSignedDocument, latest_checkout.inspection_number)
+            if signed_doc and signed_doc.hash and str(signed_doc.hash).strip():
+                has_signed_archive = True
+
         signed_statuses = {"signed", "validated", "completed", "approved", "ok", "signé", "validé"}
-        is_signed = bool(latest_checkout and str(latest_checkout.status or "").strip().lower() in signed_statuses)
+        status_is_signed = bool(latest_checkout and str(latest_checkout.status or "").strip().lower() in signed_statuses)
+
+        is_signed = status_is_signed and has_signed_archive
         if not is_signed:
             force_checkin = str(form.get("force_checkin", "")).strip().lower() in ["true", "1", "on"]
             if not force_checkin:
                 raise ValueError("Le départ de ce véhicule n'a pas été validé par une signature. Veuillez cocher la case de confirmation pour enregistrer ce retour exceptionnel.")
 
-            logger.warning(f"⚠️ Création d'un retour exceptionnel sans départ validé pour véhicule {record.vehicle_id} (projet {record.project_id})")
-            mention = "⚠️ [Retour exceptionnel sans départ préalable validé]"
+            logger.warning(
+                f"⚠️ Création d'un retour exceptionnel sans départ scellé pour véhicule {record.vehicle_id} "
+                f"(projet {record.project_id}) par contrôleur #{controller_id}"
+            )
+            now_utc_str = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+            mention = f"⚠️ [Retour exceptionnel sans départ préalable validé - Contrôleur #{controller_id} le {now_utc_str}]"
             if record.notes:
-                if mention not in record.notes:
+                if "Retour exceptionnel" not in record.notes:
                     record.notes = f"{mention}\n{record.notes}"
             else:
                 record.notes = mention
+
+            try:
+                from services.common.signatures import log_signature_event
+                log_signature_event(
+                    document_id=record.inspection_number or f"checkin_draft_{record.vehicle_id}",
+                    mode="checkin",
+                    event_type="forced_checkin_without_signed_checkout",
+                    details={
+                        "controller_id": controller_id,
+                        "vehicle_id": record.vehicle_id,
+                        "project_id": record.project_id,
+                        "latest_checkout_id": latest_checkout.id if latest_checkout else None,
+                        "latest_checkout_number": latest_checkout.inspection_number if latest_checkout else None,
+                    }
+                )
+            except Exception as ev_err:
+                logger.warning(f"⚠️ Impossible d'enregistrer l'événement de signature pour le retour forcé : {ev_err}")
 
     db.session.add(record)
     db.session.commit()

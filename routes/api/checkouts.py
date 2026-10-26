@@ -86,6 +86,13 @@ def api_update_checkout_status(record_id):
         if not new_status:
             return jsonify({"error": "Missing status"}), 400
 
+        # Sécurité : interdire le passage manuel aux statuts scellés/signés sans signature cryptographique
+        forbidden_manual_statuses = {"signed", "completed", "signé", "validé", "approved"}
+        if str(new_status).strip().lower() in forbidden_manual_statuses:
+            return jsonify({
+                "error": "Le statut 'signed' ne peut être obtenu que par scellement cryptographique avec un jeton valide."
+            }), 400
+
         record.status = new_status
         db.session.commit()
 
@@ -104,28 +111,30 @@ def api_update_checkout_status(record_id):
 @require_api_auth("administrator", "manager", "user")
 def api_finalize_checkout(record_id):
     """
-    Finalize a checkout by submitting signature data.
+    Finalize a checkout by submitting signature data with a valid token.
     Triggers PDF generation, emails, and webhooks.
     """
     from services.common.signatures import process_inspection_signature
     try:
         data = request.get_json(silent=True) or {}
         signature_data = data.get("signature_data")
-        token = data.get("token")  # Optional if we want to bypass token check in some cases, but process_inspection_signature needs it
+        token = data.get("token")
 
         if not signature_data:
             return jsonify({"error": "signature_data requis"}), 400
 
+        if not token:
+            return jsonify({"error": "Le jeton de validation (token) est obligatoire pour sceller ce document."}), 400
+
         from utils.request_utils import get_client_ip
         signer_ip = get_client_ip()
 
-        # If we have a token (sent by the app), we use the standard process
-        if token:
-            result = process_inspection_signature(token, "checkout", signature_data, signer_ip)
-        else:
-            # Direct finalization using the record_id (skipping token validation)
-            from services.common.signatures import finalize_signed_document
-            result = finalize_signed_document("checkout", record_id, signature_data, signer_ip)
+        try:
+            result = process_inspection_signature(
+                token, "checkout", signature_data, signer_ip, expected_record_id=record_id
+            )
+        except ValueError as val_err:
+            return jsonify({"error": str(val_err)}), 400
 
         return jsonify({
             "message": "Checkout finalisé avec succès",

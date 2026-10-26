@@ -34,12 +34,37 @@ def sanitize_filename_part(text: str) -> str:
     return re.sub(r"[^a-zA-Z0-9_\-]", "_", str(text).strip())
 
 
+def validate_stored_signature_file(rel_path: str) -> str:
+    """
+    Vérifie qu'un chemin relatif de signature existant pointe vers un fichier PNG
+    réellement présent dans le sous-dossier sécurisé output/signatures/, sans risque
+    de traversée de répertoire (path traversal).
+    """
+    if not rel_path or not isinstance(rel_path, str):
+        raise ValueError("Chemin de signature invalide.")
+
+    clean_rel = rel_path.strip().lstrip("/")
+    if not (clean_rel.startswith("signatures/") and clean_rel.endswith(".png")):
+        raise ValueError("Chemin de signature non conforme.")
+
+    output_base = _get_output_folder().resolve()
+    target = (output_base / clean_rel).resolve()
+
+    if not str(target).startswith(str((output_base / "signatures").resolve())):
+        raise ValueError("Tentative de traversée de répertoire interdite.")
+
+    if not target.is_file():
+        raise ValueError(f"Fichier de signature introuvable sur le disque : {clean_rel}")
+
+    return clean_rel
+
+
 def save_signature_image(base64_data: str, entity_type: str, record_id: str, suffix: str = "") -> str:
     """
     Décode une signature Base64 (data:image/png;base64,...), l'enregistre en fichier PNG
     dans output/signatures/<entity_type>/ et retourne son chemin relatif.
 
-    :param base64_data: Chaîne Base64 complète ou brute
+    :param base64_data: Chaîne Base64 complète ou brute (PNG obligatoire)
     :param entity_type: Type d'entité ('waivers', 'incidents', 'checkouts', 'checkins')
     :param record_id: Identifiant métier (ex: BVPW-123, INC-2026-001)
     :param suffix: Suffixe optionnel (ex: '_bv', '_prod')
@@ -49,10 +74,6 @@ def save_signature_image(base64_data: str, entity_type: str, record_id: str, suf
         raise ValueError("Données de signature vides ou invalides.")
 
     raw_str = str(base64_data).strip()
-
-    # Si c'est déjà un chemin de fichier, ne rien faire
-    if raw_str.startswith("signatures/") and raw_str.endswith(".png"):
-        return raw_str
 
     # Extraction du Base64 pur
     if "," in raw_str:

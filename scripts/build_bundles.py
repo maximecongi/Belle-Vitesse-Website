@@ -89,6 +89,7 @@ PUBLIC_JS_FILES: List[str] = [
     "js/src/filtersliders.js",
     "js/src/public/sign-cgl.js",
     "js/src/public/sign-safety-rules.js",
+    "js/src/public/sign-inspection.js",
 ]
 
 

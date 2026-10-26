@@ -98,7 +98,7 @@ def log_signature_event(document_id: str, mode: str, event_type: str, details: d
         return None
 
 
-def verify_signature_events_chain(document_id: str) -> dict:
+def verify_signature_events_chain(document_id: str, require_events: bool = False) -> dict:
     """
     Vérifie l'intégrité cryptographique complète de la chaîne d'audit signature_events pour un document.
     Retourne un dict {"valid": bool, "count": int, "error": str or None}.
@@ -109,6 +109,12 @@ def verify_signature_events_chain(document_id: str) -> dict:
         .all()
     )
     if not events:
+        if require_events:
+            return {
+                "valid": False,
+                "count": 0,
+                "error": "Aucun événement d'audit enregistré pour ce document scellé.",
+            }
         return {"valid": True, "count": 0, "error": None}
 
     expected_prev = ""
@@ -219,24 +225,20 @@ FLOW_CONFIG = {
 
 
 def validate_inspection_token(token_str, mode):
-    config = FLOW_CONFIG[mode]
-    token_model = config["token_model"]
+    config = FLOW_CONFIG.get(mode)
+    if not config:
+        return None, 404
 
+    token_model = config["token_model"]
     entry = db.session.get(token_model, token_str)
     if not entry:
         return None, 404
 
-    created_at = entry.created_at
-    if created_at.tzinfo is None:
-        created_at = created_at.replace(tzinfo=timezone.utc)
-
-    if datetime.now(timezone.utc) - created_at > timedelta(hours=24):
-        db.session.delete(entry)
-        db.session.commit()
+    if hasattr(entry, "is_expired") and entry.is_expired():
         return None, 410
 
     if entry.signature:
-        return None, 400
+        return None, 409
 
     return entry, None
 
@@ -389,8 +391,12 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
                         "L'écrasement de la signature d'origine est interdit."
                     )
 
-        sig_file_rel_path = save_signature_image(
-            signature_data, entity_type=entity_type, record_id=document_id)
+        if str(signature_data).startswith("signatures/") and str(signature_data).endswith(".png"):
+            from utils.signature_storage import validate_stored_signature_file
+            sig_file_rel_path = validate_stored_signature_file(signature_data)
+        else:
+            sig_file_rel_path = save_signature_image(
+                signature_data, entity_type=entity_type, record_id=document_id)
         if hasattr(record, "signature_data"):
             record.signature_data = sig_file_rel_path
 
@@ -405,6 +411,9 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
                 bv_file_rel = save_signature_image(
                     bv_raw, entity_type="waivers", record_id=f"{document_id}_bv")
                 record.bv_signature_data = bv_file_rel
+            elif str(bv_raw).startswith("signatures/") and str(bv_raw).endswith(".png"):
+                from utils.signature_storage import validate_stored_signature_file
+                bv_file_rel = validate_stored_signature_file(bv_raw)
             else:
                 bv_file_rel = bv_raw
             full_bv_path = os.path.join(output_base, bv_file_rel.lstrip("/"))
@@ -607,10 +616,12 @@ def _build_flow_data(mode, record, extra_data):
         vehicles = get_vehicles()
         vehicle_map = {v["id"]: v.get("fields", {}) for v in vehicles}
         data = _format_base_inspection_admin(record, vehicle_map)
-        seal_args = [data["vehicle_id"]]
+        vehicle_id = str(getattr(record, "vehicle_id", "") or data.get("vehicle_id", "") or "")
+        data["vehicle_id"] = vehicle_id
+        seal_args = [vehicle_id]
         snapshot = dict(data)
         snapshot["mode"] = mode
-        snapshot["_seal_vehicle_id"] = data["vehicle_id"]
+        snapshot["_seal_vehicle_id"] = vehicle_id
         return snapshot, seal_args
 
     elif mode == "safety_rules":
@@ -693,18 +704,75 @@ def process_waiver_signature(mode, record_id):
         mode, record_id, record.signature_data, record.signer_ip)
 
 
-# Alias de compatibilité descendante pour les inspections
-def process_inspection_signature(token_str, mode, signature_data, signed_ip):
+def process_inspection_signature(token_str: str, mode: str, signature_data: str, signed_ip: str, expected_record_id: int = None, user_agent: str = None) -> dict:
+    """
+    Traite et scelle cryptographiquement une signature d'inspection (checkout ou checkin)
+    associée à un jeton à durée de validité limitée (24h).
+    Effectue un verrouillage pessimiste, prévient toute réutilisation (single-use),
+    vérifie la concordance d'entité et l'état de préparation du véhicule avant finalisation.
+    """
+    if mode not in FLOW_CONFIG or mode not in ("checkout", "checkin"):
+        raise ValueError(f"Mode d'inspection non reconnu : {mode}")
+
     config = FLOW_CONFIG[mode]
     token_model = config["token_model"]
-    entry = db.session.get(token_model, token_str)
-    if not entry:
-        raise ValueError("Token invalide ou introuvable.")
 
+    if not token_str or not str(token_str).strip():
+        raise ValueError("Le jeton de validation de signature est requis.")
+
+    # 1. Verrouillage pessimiste de la ligne du jeton pour prévenir les race conditions
+    entry = token_model.query.filter_by(token=token_str).with_for_update().first()
+    if not entry:
+        raise ValueError("Jeton de signature introuvable ou invalide.")
+
+    # 2. Vérification de l'expiration du jeton (24h)
+    if hasattr(entry, "is_expired") and entry.is_expired():
+        raise ValueError("Le lien de signature a expiré (durée de validité de 24h dépassée).")
+
+    # 3. Vérification de l'usage unique (anti-rejeu)
+    if entry.signature:
+        raise ValueError("Ce lien de signature a déjà été utilisé pour sceller le document.")
+
+    # 4. Vérification de la correspondance de l'enregistrement cible
+    if expected_record_id is not None:
+        try:
+            target_rec_id = int(entry.record_id)
+            exp_rec_id = int(expected_record_id)
+        except (ValueError, TypeError):
+            raise ValueError("Identifiant d'enregistrement invalide dans le jeton.")
+
+        if target_rec_id != exp_rec_id:
+            raise ValueError("Le jeton fourni ne correspond pas à l'enregistrement d'inspection ciblé.")
+
+    record_id = int(entry.record_id)
+    record = db.session.get(config["model"], record_id)
+    if not record or record.deleted_at is not None:
+        raise ValueError(f"Enregistrement {mode} #{record_id} introuvable ou supprimé.")
+
+    # 5. Vérification stricte de l'état de préparation du véhicule pour les départs (checkout)
+    if mode == "checkout":
+        from services.admin.utils import _is_ready
+        is_ready = bool(
+            getattr(record, "vehicle_ready", False)
+            and _is_ready(
+                record.checkpoint_statuses,
+                vehicle_id=record.vehicle_id,
+                is_checkout=True,
+                battery_val=record.battery_level,
+            )
+        )
+        if not is_ready:
+            raise ValueError("Impossible de sceller le check-out : le véhicule n'est pas prêt (points de contrôle non conformes ou batterie < 100%).")
+
+    # 6. Finalisation du document scellé
     res = finalize_signed_document(
-        mode, int(entry.record_id), signature_data, signed_ip)
-    db.session.delete(entry)
+        mode, record_id, signature_data, signed_ip, user_agent=user_agent
+    )
+
+    # 7. Marquer le jeton comme consommé (sans le supprimer pour éviter les faux 404 lors des redirections)
+    entry.signature = res.get("hash") or "signed"
     db.session.commit()
+
     return res
 
 

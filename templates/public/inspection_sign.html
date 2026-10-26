@@ -24,7 +24,13 @@
 
 <body>
 
-    <div class="{{ type }}">
+    <div class="{{ type }}" id="inspection-sign-container"
+         data-type="{{ type }}"
+         data-token="{{ token }}"
+         data-abandon-url="{{ url_for(type + '_abandon', token=token) }}"
+         data-resume-url="{{ url_for(type + '_resume', token=token) }}"
+         data-already-signed="{{ 'true' if already_signed else 'false' }}">
+
         <!-- ═══════════ HEADER ═══════════ -->
         <header class="{{ type }}-header">
             <div class="{{ type }}-header-logo">
@@ -37,6 +43,22 @@
             </div>
         </header>
 
+        {% if already_signed %}
+        <!-- ── État : Document déjà signé et validé ─────────────────── -->
+        <section class="{{ type }}-section">
+            <div class="feedback-box feedback-box--success u-block">
+                <i data-lucide="circle-check-big"></i> Ce document d'inspection a été validé et scellé électroniquement.
+            </div>
+            <div class="u-mt-4 u-text-center">
+                <p class="u-text-sm u-text-muted">
+                    Redirection vers le site public dans <strong id="redirect-counter">3</strong> secondes…
+                </p>
+                <a href="/" class="{{ type }}-btn {{ type }}-btn--primary u-mt-2">
+                    Accéder au site public
+                </a>
+            </div>
+        </section>
+        {% else %}
         <!-- Recap -->
         <section class="{{ type }}-section">
             <h2 class="{{ type }}-section-title dot-before">Récapitulatif de l'inspection</h2>
@@ -65,7 +87,7 @@
 
         <!-- Terms -->
         <section class="{{ type }}-section">
-            <p style="text-align: left; font-size: 0.9rem; color: var(--grey-2);">
+            <p class="u-text-left u-text-sm u-text-muted">
                 En signant ci-dessous, je certifie avoir effectué le contrôle technique
                 du véhicule et que les informations renseignées sont exactes.
             </p>
@@ -90,6 +112,7 @@
 
         <!-- Feedback -->
         <div id="feedback" class="feedback-box"></div>
+        {% endif %}
 
         <footer class="{{ type }}-footer u-mt-5">
             <p>
@@ -99,73 +122,8 @@
         </footer>
     </div>
 
-    <script>
-        (function () {
-            let isSigned = false;
-
-            // ── Abandon Logic ───────────────────────────────────────────
-            window.addEventListener('pagehide', function (event) {
-                if (!isSigned) {
-                    navigator.sendBeacon("{{ url_for(type + '_abandon', token=token) }}");
-                }
-            });
-
-            window.addEventListener('pageshow', function (event) {
-                if (event.persisted && !isSigned) {
-                    fetch("{{ url_for(type + '_resume', token=token) }}", { method: 'POST' })
-                        .catch(err => console.log('Resume failed', err));
-                }
-            });
-
-            const signaturePad = new BelleVitesseSignaturePad('signature-canvas');
-
-            document.getElementById('btn-sign').addEventListener('click', function () {
-                hideFeedback();
-                if (signaturePad.isEmpty()) {
-                    showFeedback('Veuillez signer avant de valider.', 'error');
-                    return;
-                }
-
-                const btn = this;
-                btn.disabled = true;
-                btn.textContent = 'Envoi en cours…';
-
-                const signatureData = signaturePad.toDataURL('image/png');
-
-                fetch('', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ signature: signatureData }),
-                })
-                    .then(function (res) { return res.json(); })
-                    .then(function (result) {
-                        if (result.status === 'signed') {
-                            isSigned = true;
-                            showFeedback('<i data-lucide="circle-check-big"></i> Document signé avec succès.', 'success');
-                            btn.textContent = 'Signé ✓';
-                            if (signaturePad && signaturePad.canvas) {
-                                signaturePad.canvas.style.pointerEvents = 'none';
-                            }
-                        } else {
-                            showFeedback(result.error || 'Erreur inconnue.', 'error');
-                            btn.disabled = false;
-                            btn.textContent = 'Signer le document';
-                        }
-                    })
-                    .catch(function () {
-                        showFeedback('Erreur réseau. Réessayez.', 'error');
-                        btn.disabled = false;
-                        btn.textContent = 'Signer le document';
-                    });
-            });
-
-            if (window.lucide && typeof window.lucide.createIcons === 'function') {
-                window.lucide.createIcons();
-            }
-
-        })();
-    </script>
-
+    <!-- Scripts externes modulaires (sans aucun JS inline) -->
+    <script src="{{ asset_url('js/src/public/sign-inspection.js') }}"></script>
 </body>
 
 </html>

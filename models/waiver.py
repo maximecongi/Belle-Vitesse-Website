@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from models.db import db, generate_inspection_number, _utcnow
 
 
@@ -11,6 +11,21 @@ class TokenMixin:
     expires_at = db.Column(db.DateTime, nullable=False,
                            default=lambda: _utcnow() + timedelta(hours=24),
                            server_default=db.FetchedValue())
+
+    def is_expired(self) -> bool:
+        """Indique si le jeton a dépassé sa durée de validité (24h)."""
+        now = datetime.now(timezone.utc)
+        if self.expires_at:
+            exp = self.expires_at
+            if exp.tzinfo is None:
+                exp = exp.replace(tzinfo=timezone.utc)
+            return now > exp
+        if self.created_at:
+            created = self.created_at
+            if created.tzinfo is None:
+                created = created.replace(tzinfo=timezone.utc)
+            return (now - created) > timedelta(hours=24)
+        return False
 
 
 class SignedDocumentMixin:

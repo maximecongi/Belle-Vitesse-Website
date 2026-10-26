@@ -519,6 +519,7 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
         "created_at": c.created_at.isoformat() if c.created_at else "",
         "ready": ready,
         "controller_id": c.controller_id,
+        "vehicle_id": c.vehicle_id,
     }
 
     # Texte de recherche pour le filtrage côté client

@@ -16,7 +16,7 @@ from flask import (
     request,
 )
 
-from extensions import csrf
+from extensions import csrf, limiter
 from models import (
     CheckinSignedDocument,
     CheckinVehicle,
@@ -111,11 +111,30 @@ def register_inspection_routes(app, mode):
     def inspection_sign_page(token):
         entry, error_code = validate_inspection_token(token, mode)
         if not entry:
-            abort(error_code)
+            if error_code in (400, 409):
+                from services.common.signatures import FLOW_CONFIG
+                token_model = FLOW_CONFIG[mode]["token_model"]
+                token_rec = db.session.get(token_model, token)
+                if token_rec:
+                    record = db.session.get(model, int(token_rec.record_id))
+                    if record:
+                        from services.admin.inspections import _format_base_inspection_admin
+                        from utils.database import get_vehicles
+                        vehicle_map = {v["id"]: v.get("fields", {}) for v in get_vehicles()}
+                        data = _format_base_inspection_admin(record, vehicle_map)
+                        return render_template("public/inspection_sign.html", data=data, token=token, type=mode, already_signed=True)
+            abort(error_code if isinstance(error_code, int) else 404)
 
         record = db.session.get(model, int(entry.record_id))
-        if not record:
+        if not record or record.deleted_at is not None:
             abort(404)
+
+        if record.status in ["signed", "completed"]:
+            from services.admin.inspections import _format_base_inspection_admin
+            from utils.database import get_vehicles
+            vehicle_map = {v["id"]: v.get("fields", {}) for v in get_vehicles()}
+            data = _format_base_inspection_admin(record, vehicle_map)
+            return render_template("public/inspection_sign.html", data=data, token=token, type=mode, already_signed=True)
 
         if record.status == "in_progress":
             try:
@@ -129,7 +148,7 @@ def register_inspection_routes(app, mode):
         vehicle_map = {v["id"]: v.get("fields", {}) for v in get_vehicles()}
         data = _format_base_inspection_admin(record, vehicle_map)
 
-        return render_template("public/inspection_sign.html", data=data, token=token, type=mode)
+        return render_template("public/inspection_sign.html", data=data, token=token, type=mode, already_signed=False)
 
     # 4. Abandon de signature (POST)
     @app.route(f"/{route_base}/sign/<token>/abandon", methods=["POST"], endpoint=f"{mode}_abandon")
@@ -148,15 +167,17 @@ def register_inspection_routes(app, mode):
     # 6. Soumission de signature (POST)
     @app.route(f"/{route_base}/sign/<token>", methods=["POST"], endpoint=f"{mode}_submit_signature")
     @csrf.exempt
+    @limiter.limit("30 per minute")
     def inspection_submit_signature(token):
         entry, error_code = validate_inspection_token(token, mode)
         if not entry:
             error_messages = {
-                404: "Jeton invalide ou expiré",
+                404: "Jeton invalide ou introuvable",
                 410: "Jeton expiré",
+                409: "Ce document a déjà été signé",
                 400: "Déjà signé",
             }
-            return jsonify({"error": error_messages.get(error_code, "Error")}), error_code
+            return jsonify({"error": error_messages.get(error_code, "Error")}), error_code or 400
 
         payload = request.get_json(silent=True)
         if not payload or "signature" not in payload:
@@ -164,12 +185,22 @@ def register_inspection_routes(app, mode):
 
         from utils.request_utils import get_client_ip
         signed_ip = get_client_ip()
+        user_agent = request.headers.get("User-Agent")
 
         try:
-            record = process_inspection_signature(token, mode, payload["signature"], signed_ip)
+            record = process_inspection_signature(
+                token, mode, payload["signature"], signed_ip, expected_record_id=int(entry.record_id), user_agent=user_agent
+            )
             return jsonify({"status": "signed", **record}), 200
         except ValueError as e:
-            return jsonify({"error": str(e)}), 404
+            err_msg = str(e)
+            if "expiré" in err_msg.lower():
+                return jsonify({"error": err_msg}), 410
+            if "déjà été utilisé" in err_msg.lower() or "déjà signé" in err_msg.lower():
+                return jsonify({"error": err_msg}), 409
+            if "introuvable" in err_msg.lower():
+                return jsonify({"error": err_msg}), 404
+            return jsonify({"error": err_msg}), 400
         except Exception as e:
             current_app.logger.error(
                 f"❌ Critical error during {mode} signature submission: {e}", exc_info=True)
