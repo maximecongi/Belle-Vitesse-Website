@@ -74,13 +74,6 @@ def _detect_inspection_anomalies(record: Any) -> List[str]:
         if val and str(val).lower() not in ("ok", "not_applicable", "none", "", "—"):
             failures.append(labels_map.get(key) or key)
 
-    # Vérification batterie au départ (< 100%)
-    is_checkout = isinstance(record, CheckoutVehicle) or getattr(
-        record, "__tablename__", "") == "checkout_vehicles"
-    battery = getattr(record, "battery_level", None)
-    if is_checkout and battery is not None and battery < 100:
-        failures.append(f"Batterie incomplète ({battery}%)")
-
     return failures
 
 

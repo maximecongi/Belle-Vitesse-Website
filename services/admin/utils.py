@@ -194,8 +194,19 @@ def compute_inspection_readiness(form_or_statuses, vehicle_id=None, is_checkout=
             label = cp.get('label') or key
             cp_type = cp.get('type', 'status')
             if cp_type == 'value':
-                val = record_values.get(key) if is_record else (form_or_statuses.get("battery_level", form_or_statuses.get(key)) if key in ("battery", "battery_level") and hasattr(form_or_statuses, "get") else (form_or_statuses.get(key) if hasattr(form_or_statuses, "get") else None))
-                rule = (record_rules.get(key) if is_record else cp)
+                if is_record:
+                    val = record_values.get(key)
+                    if val is None and key in ("battery", "battery_level"):
+                        b_val = getattr(form_or_statuses, "battery_level", None) or battery_val
+                        if b_val is not None:
+                            val = str(b_val)
+                elif hasattr(form_or_statuses, "get"):
+                    val = form_or_statuses.get(key)
+                    if val is None and key in ("battery", "battery_level"):
+                        val = form_or_statuses.get("battery_level")
+                else:
+                    val = None
+                rule = (record_rules.get(key) or cp) if is_record else cp
                 normalized, error = validate_measurement(val, rule, is_checkout)
                 if error:
                     failures.append(f"{label} ({'non renseignée' if val is None or str(val).strip() == '' else error})")

@@ -113,9 +113,15 @@ class InspectionsTest(unittest.TestCase):
 
             detail_failed = get_inspection_detail_unified("checkout", checkout.id)
             self.assertTrue(detail_failed["has_failures"])
-            self.assertIn("Charge batterie (< 100%)", detail_failed["failures"])
+            self.assertTrue(any("Charge" in f for f in detail_failed["failures"]))
             self.assertEqual(detail_failed["failure_count"], 2)
             self.assertEqual(detail_failed["ready"], "false")
+
+            # Vérifie que la batterie dans les check_items porte son état de validité et ses bornes
+            battery_item = next((i for i in detail_failed["check_items"] if i["key"] in ("battery", "battery_level")), None)
+            self.assertIsNotNone(battery_item)
+            self.assertFalse(battery_item["is_valid"])
+            self.assertIsNotNone(battery_item.get("goal"))
 
     def test_unfilled_checkpoints_appear_in_failures(self):
         """Vérifie que les points non renseignés ('—', '--', None) apparaissent bien dans failures."""

@@ -64,15 +64,6 @@
                         {{ status_badge(data.status, data.status_id, **{'data-conform': 'true' if data.ready=='true'
                         else 'false' if data.ready=='false' else None}) }}
                     </div>
-
-                </div>
-                <div>
-                    <div class="u-text-sm u-text-muted">Charge batterie</div>
-                    <div class="u-text-medium">
-                        <span class="badge-pill" data-val="neutral">
-                            {{ data.battery_level if data.battery_level is not none else '—' }}%
-                        </span>
-                    </div>
                 </div>
             </div>
         </div>
@@ -124,12 +115,33 @@
                     <div class="u-text-semibold">
                         {% set val = data[item.key] %}
                         {% if item.type == 'value' %}
-                        {% if val is defined and val != '—' and val != '' %}
-                        <span class="badge-pill" data-val="neutral">{{ val }}{% if item.unit %} {{ item.unit }}{% endif
-                            %}</span>
-                        {% else %}
-                        <span class="badge-pill" data-val="warning">Non renseigné</span>
-                        {% endif %}
+                            {% if val is defined and val != '—' and val != '' %}
+                                {% set is_val_ok = item.is_valid if item.is_valid is defined else (data[item.key ~ '_valid'] if data[item.key ~ '_valid'] is defined else (data[item.key ~ '_status'] == 'ok')) %}
+                                {% if is_val_ok %}
+                                <span class="badge-pill" data-val="ok">
+                                    <i data-lucide="circle-check"></i>
+                                    {{ val }}{% if item.unit %} {{ item.unit }}{% endif %}
+                                </span>
+                                {% else %}
+                                <span class="badge-pill" data-val="critical">
+                                    <i data-lucide="circle-alert"></i>
+                                    {{ val }}{% if item.unit %} {{ item.unit }}{% endif %}
+                                </span>
+                                {% endif %}
+                                {% if item.minimum is not none and item.maximum is not none %}
+                                <div class="u-text-xs u-text-muted u-mt-1">
+                                    Plage : {{ item.minimum }} à {{ item.maximum }}{% if item.unit %}{{ item.unit }}{% endif %}
+                                </div>
+                                {% endif %}
+                                {% if not is_val_ok and item.validation_error %}
+                                <div class="u-text-xs u-text-danger u-mt-1">{{ item.validation_error }}</div>
+                                {% endif %}
+                            {% else %}
+                            <span class="badge-pill" data-val="warning">
+                                <i data-lucide="alert-triangle"></i>
+                                Non renseigné
+                            </span>
+                            {% endif %}
                         {% else %}
                         {{ status_badge(format_checkpoint_status(val), val) }}
                         {% endif %}

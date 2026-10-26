@@ -279,17 +279,21 @@
 
                     {% if item.type == 'value' %}
                     <div class="checkpoint-value-container">
-                        {% if field in ['battery', 'battery_level'] %}
-                        <input type="number" name="battery_level" class="form-input checkpoint-value-input"
-                            value="{{ data.battery_level if (data and data.battery_level is not none) else (data[field] if (data and data[field] is defined and data[field] != '—') else '100') }}"
-                            min="{{ item.minimum }}" max="{{ item.maximum }}" step="0.1" required>
-                        {% else %}
+                        {% set current_val = data[field] if (data and data[field] is defined and data[field] != '—') else (data.battery_level if (field in ['battery', 'battery_level'] and data and data.battery_level is not none) else '') %}
                         <input type="number" name="{{ field }}" class="form-input checkpoint-value-input"
-                            value="{{ data[field] if (data and data[field] is defined and data[field] != '—') else '' }}"
-                            min="{{ item.minimum }}" max="{{ item.maximum }}" step="0.1" required>
-                        {% endif %}
+                            value="{{ current_val }}"
+                            {% if item.minimum is not none %}min="{{ item.minimum }}"{% endif %}
+                            {% if item.maximum is not none %}max="{{ item.maximum }}"{% endif %}
+                            step="0.1"
+                            {% if item.minimum is not none and item.maximum is not none %}placeholder="Entre {{ item.minimum }} et {{ item.maximum }}"{% endif %}
+                            required>
                         {% if item.unit %}<span class="u-text-semibold u-ml-1">{{ item.unit }}</span>{% endif %}
                     </div>
+                    {% if item.minimum is not none and item.maximum is not none %}
+                    <div class="u-text-xs u-text-muted u-mt-1">
+                        Plage autorisée : {{ item.minimum }} à {{ item.maximum }}{% if item.unit %}{{ item.unit }}{% endif %}
+                    </div>
+                    {% endif %}
                     {% else %}
                     {% set current = get_checkpoint_key(data[field]) if data and data[field] and data[field] != '—' else
                     'warning' %}

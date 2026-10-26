@@ -45,7 +45,7 @@ class CheckpointDefinition(db.Model):
             return bool(overrides[vehicle_id].get("enabled", False))
         if vehicle_name and vehicle_name in overrides:
             return bool(overrides[vehicle_name].get("enabled", False))
-        return self.category == "Sécurité"
+        return self.category == "Sécurité" or self.key in ("battery", "battery_level")
 
     def get_indication_for_vehicle(self, vehicle_id: str, vehicle_name: str = None) -> str:
         """Retourne l'indication spécifique pour le véhicule ou l'indication par défaut."""

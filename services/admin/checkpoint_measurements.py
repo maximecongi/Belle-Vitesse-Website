@@ -26,6 +26,8 @@ def decimal_value(value):
 
 
 def normalize_measurement_rules(data):
+    if not data or not isinstance(data, dict):
+        raise ValueError("règles de mesure manquantes")
     rules = {field: decimal_value(data.get(field)) for field in RULE_FIELDS}
     if rules["minimum"] > rules["maximum"]:
         raise ValueError(

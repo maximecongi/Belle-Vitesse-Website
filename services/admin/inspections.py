@@ -436,7 +436,7 @@ def apply_inspection_data(record, form, is_checkout=True):
         cp_id = cp_def.id if cp_def else None
 
         if cp_type == 'value':
-            raw_value = (form.get("battery_level", form.get(key)) if key in ("battery", "battery_level") else form.get(key))
+            raw_value = (form.get(key) if form.get(key) not in (None, "") else (form.get("battery_level") if key in ("battery", "battery_level") else None))
             normalized, error = validate_measurement(raw_value, cp, is_checkout)
             stored_value = normalized or (str(raw_value).strip() if raw_value is not None and str(raw_value).strip() else None)
             row = record.set_checkpoint_status(key, status="ok" if not error else "warning", value=stored_value, checkpoint_id=cp_id)
@@ -533,20 +533,66 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
     # Mappe dynamiquement tous les points de contrôle depuis la relation
     statuses = getattr(c, "checkpoint_statuses", {})
     values = getattr(c, "checkpoint_values", {})
+    record_rules = {
+        cp.checkpoint_key: cp.config_snapshot
+        for cp in getattr(c, "checkpoints", [])
+        if getattr(cp, "config_snapshot", None)
+    }
+
+    is_checkout = isinstance(c, CheckoutVehicle) or getattr(c, "__tablename__", "") == "checkout_vehicles"
+
+    def _clean_num_str(v):
+        if v is None or str(v).strip() == "":
+            return None
+        try:
+            from decimal import Decimal
+            d = Decimal(str(v).strip())
+            return format(d.normalize(), "f")
+        except Exception:
+            return str(v)
+
+    from services.admin.checkpoint_measurements import validate_measurement
+
     for item in data.get("check_items", []):
         k = item["key"]
-        if item.get("type") == "value":
+        cp_type = item.get("type", "status")
+        if cp_type == "value":
+            rule = record_rules.get(k) or item
+            if k in record_rules and isinstance(rule, dict):
+                for rf in ("minimum", "maximum", "goal", "tolerance", "unit"):
+                    if rule.get(rf) is not None:
+                        item[rf] = rule.get(rf)
+
+            # Normalisation visuelle des bornes numériques pour le template (ex: '100.000000' -> '100')
+            for rf in ("minimum", "maximum", "goal", "tolerance"):
+                if item.get(rf) is not None:
+                    item[rf] = _clean_num_str(item[rf])
+
             if k in ("battery", "battery_level"):
                 val = values.get(k)
-                data[k] = val if val is not None else (str(battery_val) if battery_val is not None else "—")
+                raw_val = val if val is not None else (str(battery_val) if battery_val is not None else "—")
             else:
-                data[k] = values.get(k) or "—"
-            data[f"{k}_status"] = statuses.get(k, "—")
+                raw_val = values.get(k) or "—"
+
+            data[k] = raw_val
+
+            if raw_val not in (None, "", "—"):
+                norm, err = validate_measurement(raw_val, rule, is_checkout=is_checkout)
+                item["value"] = norm or raw_val
+                item["is_valid"] = (err is None)
+                item["validation_error"] = err
+                data[f"{k}_valid"] = (err is None)
+                data[f"{k}_status"] = "ok" if err is None else "warning"
+            else:
+                item["value"] = None
+                item["is_valid"] = False
+                item["validation_error"] = "non renseignée"
+                data[f"{k}_valid"] = False
+                data[f"{k}_status"] = "warning"
         else:
             data[k] = statuses.get(k, "—")
 
     # Calcul centralisé des anomalies et de la préparation
-    is_checkout = isinstance(c, CheckoutVehicle) or getattr(c, "__tablename__", "") == "checkout_vehicles"
     is_ready_bool, failures = compute_inspection_readiness(
         c,
         vehicle_id=c.vehicle_id,

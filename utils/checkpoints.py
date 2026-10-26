@@ -59,7 +59,7 @@ def get_checkpoints_for_vehicle(vehicle_id: str, batch_configs=None, vehicle_nam
                             v_ov = overrides.get(v_id) or overrides.get(v_name) or {}
                             is_enabled = bool(v_ov.get('enabled', False))
                         else:
-                            is_enabled = (cp.get('category') == 'Sécurité')
+                            is_enabled = (cp.get('category') == 'Sécurité' or cp.get('key') in ('battery', 'battery_level'))
 
                     if is_enabled:
                         # Déterminer l'indication spécifique au véhicule ou le détail par défaut

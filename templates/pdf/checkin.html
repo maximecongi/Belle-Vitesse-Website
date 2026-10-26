@@ -75,27 +75,23 @@
         <section class="checkin-section">
             <h2 class="checkin-section-title dot-before">Véhicule</h2>
             <div class="checkin-info-grid">
-                <div class="checkin-info-item">
-                    <span class="checkin-info-label">Véhicule contrôlé</span>
-                    <span class="checkin-info-value">{{ data.vehicle.fields.name }}
-                        <span class="checkin-doc-id">{{ data.vehicle.fields.unique_id }}</span>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Véhicule contrôlé</span>
+                    <span class="checkout-info-value">{{ data.vehicle.fields.name }}
+                        <span class="checkout-doc-id">{{ data.vehicle.fields.unique_id }}</span>
                     </span>
                 </div>
-                <div class="checkin-info-item">
-                    <span class="checkin-info-label">Charge batterie retour</span>
-                    <span class="checkin-info-value">{{ data.battery_level or '—' }} %</span>
-                </div>
-                <div class="checkin-info-item">
-                    <span class="checkin-info-label">État du contrôle</span>
-                    <span class="checkin-info-value">
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">État du contrôle</span>
+                    <span class="checkout-info-value">
                         {% if data.status_id == 'pending' %}
-                        <span class="checkin-badge checkin-badge--tobesigned">{{ data.control_status }}</span>
+                        <span class="checkout-badge checkout-badge--tobesigned">{{ data.control_status }}</span>
                         {% elif data.status_id == 'in_progress' %}
-                        <span class="checkin-badge checkin-badge--inprogress">{{ data.control_status }}</span>
+                        <span class="checkout-badge checkout-badge--inprogress">{{ data.control_status }}</span>
                         {% elif data.status_id == 'signed' %}
-                        <span class="checkin-badge checkin-badge--signed">{{ data.control_status }}</span>
+                        <span class="checkout-badge checkout-badge--signed">{{ data.control_status }}</span>
                         {% else %}
-                        <span class="checkin-badge checkin-badge--neutral">{{ data.control_status }}</span>
+                        <span class="checkout-badge checkout-badge--neutral">{{ data.control_status }}</span>
                         {% endif %}
                     </span>
                 </div>
@@ -130,8 +126,9 @@
                     <td>{{ item.label }}</td>
                     <td>
                         {% if item.type == 'value' %}
+                        {% set is_val_ok = item.is_valid if item.is_valid is defined else (data[item.key ~ '_valid'] if data[item.key ~ '_valid'] is defined else (data[item.key ~ '_status'] == 'ok')) %}
                         <span
-                            class="checkin-badge checkin-badge--neutral">{{ status }}{% if item.unit and status != '—' %} {{ item.unit }}{% endif %}</span>
+                            class="checkin-badge {% if is_val_ok %}checkin-badge--ok{% else %}checkin-badge--critical{% endif %}">{{ status }}{% if item.unit and status != '—' %} {{ item.unit }}{% endif %}</span>
                         {% elif status == 'ok' %}
                         <span class="checkin-badge checkin-badge--ok">OK</span>
                         {% elif status == 'warning' %}

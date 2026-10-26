@@ -82,10 +82,6 @@
                     </span>
                 </div>
                 <div class="checkout-info-item">
-                    <span class="checkout-info-label">Charge batterie départ</span>
-                    <span class="checkout-info-value">{{ data.battery_level or '—' }} %</span>
-                </div>
-                <div class="checkout-info-item">
                     <span class="checkout-info-label">État du contrôle</span>
                     <span class="checkout-info-value">
                         {% if data.status_id == 'pending' %}
@@ -130,8 +126,9 @@
                     <td>{{ item.label }}</td>
                     <td>
                         {% if item.type == 'value' %}
+                        {% set is_val_ok = item.is_valid if item.is_valid is defined else (data[item.key ~ '_valid'] if data[item.key ~ '_valid'] is defined else (data[item.key ~ '_status'] == 'ok')) %}
                         <span
-                            class="checkout-badge checkout-badge--neutral">{{ status }}{% if item.unit and status != '—' %} {{ item.unit }}{% endif %}</span>
+                            class="checkout-badge {% if is_val_ok %}checkout-badge--ok{% else %}checkout-badge--critical{% endif %}">{{ status }}{% if item.unit and status != '—' %} {{ item.unit }}{% endif %}</span>
                         {% elif status == 'ok' %}
                         <span
                             class="checkout-badge checkout-badge--ok">OK</span>

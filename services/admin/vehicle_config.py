@@ -115,7 +115,7 @@ def ensure_default_checkpoints():
                         enabled = "car" in v_lower or "bike" in v_lower or "rider" in v_lower
                     elif key in ("cric", "cle_roue", "extincteur"):
                         enabled = "car" in v_lower
-                    elif key == "mallette_accessoires":
+                    elif key in ("mallette_accessoires", "battery", "battery_level"):
                         enabled = True
                     else:
                         enabled = True if category == "Sécurité" else False
