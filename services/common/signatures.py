@@ -526,7 +526,7 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
             render_ctx["general_rules"] = get_general_safety_rules()
             render_ctx["vehicle_rules"] = get_safety_rules_for_vehicles(record.vehicles_details)
             render_ctx["helmets"] = record.helmets_inventory or DEFAULT_HELMETS_INVENTORY
-            render_ctx["safety_technicians"] = record.safety_technicians or ""
+            render_ctx["safety_technicians"] = getattr(record, "display_safety_technicians", getattr(record, "safety_technicians", "")) or ""
             render_ctx["bv_signature"] = record.bv_signature_data_uri
         else:
             render_ctx["waiver"] = record
@@ -686,7 +686,7 @@ def _build_flow_data(mode, record, extra_data):
             "signer_company": getattr(record, "signer_company", "") or "",
             "vehicles_details": getattr(record, "vehicles_details", None) or [],
             "helmets_inventory": getattr(record, "helmets_inventory", None) or DEFAULT_HELMETS_INVENTORY,
-            "safety_technicians": getattr(record, "safety_technicians", "") or "",
+            "safety_technicians": getattr(record, "display_safety_technicians", None) or getattr(record, "safety_technicians", "") or "",
             "ack_rules": sign_data.get("ack_rules", True),
             "ack_authority": sign_data.get("ack_authority", True),
             "bv_signature": record.bv_signature_data or "",

@@ -92,8 +92,9 @@
                     <div><span class="bvsr-party-field-label">Période :</span> {{ waiver.display_shooting_dates }}</div>
                     <div><span class="bvsr-party-field-label">Véhicules mobilisés :</span> {{ waiver.vehicles or 'Parc
                         Belle Vitesse' }}</div>
-                    {% if safety_technicians %}
-                    <div><span class="bvsr-party-field-label">Supervision BV :</span> {{ safety_technicians }}</div>
+                    {% set supervision = safety_technicians or (waiver.display_safety_technicians if waiver else None) %}
+                    {% if supervision %}
+                    <div><span class="bvsr-party-field-label">Supervision BV :</span> {{ supervision }}</div>
                     {% endif %}
                 </div>
             </div>

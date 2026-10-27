@@ -60,6 +60,13 @@ class Contact(db.Model):
         return f"<Contact {self.first_name} {self.last_name}>"
 
 
+project_bv_referents = db.Table(
+    "project_bv_referents",
+    db.Column("project_id", db.Integer, db.ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True),
+    db.Column("user_id", db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
+)
+
+
 class Project(db.Model):
     """Modèle central représentant un projet (tournage)."""
     __tablename__ = "projects"
@@ -151,6 +158,20 @@ class Project(db.Model):
     # Objets kDrive synchronisés pour ce projet
     kdrive_objects = db.relationship(
         "KDriveObject", backref="project", cascade="all, delete-orphan", lazy=True)
+    # Référents Belle Vitesse rattachés au projet
+    bv_referents = db.relationship(
+        "User",
+        secondary=project_bv_referents,
+        backref=db.backref("referred_projects", lazy="dynamic"),
+        lazy="joined",
+    )
+
+    @property
+    def bv_referents_names(self):
+        """Retourne la liste des noms complets des référents BV séparés par une virgule."""
+        if not self.bv_referents:
+            return ""
+        return ", ".join(f"{u.firstname} {u.lastname}".strip() for u in self.bv_referents if (u.firstname or u.lastname))
 
     @property
     def active_checkout_vehicles(self):

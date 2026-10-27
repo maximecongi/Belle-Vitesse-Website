@@ -1,7 +1,7 @@
 import os
 import sys
 import unittest
-from datetime import date
+from datetime import date, timedelta
 from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -30,6 +30,7 @@ from models import (
     WaiverToken,
     db,
 )
+from models.db import _utcnow
 from services.admin.safety_rules_config import (
     DEFAULT_VEHICLE_SAFETY_RULES,
     get_all_vehicle_safety_rules_catalog,
@@ -429,6 +430,124 @@ class BvsrComprehensiveTest(unittest.TestCase):
             empty_saved = get_general_safety_rules()
             self.assertEqual(empty_saved["rules_fr"], [])
             self.assertEqual(empty_saved["rules_en"], [])
+
+    def test_09_project_bv_referents_and_bvsr_propagation(self):
+        """Vérifie l'association de plusieurs référents BV à un projet et leur répercussion dans le BVSR."""
+        with self.app.app_context():
+            # 1. Création de 2 techniciens BV
+            tech1 = User(
+                firstname="Maxime",
+                lastname="Perrard",
+                mail="maxime.perrard@bellevitesse.com",
+                role="technicien"
+            )
+            tech2 = User(
+                firstname="Ewen",
+                lastname="Gicquel",
+                mail="ewen.gicquel@bellevitesse.com",
+                role="technicien"
+            )
+            comm = User(
+                firstname="Heni",
+                lastname="Commercial",
+                mail="heni.comm@bellevitesse.com",
+                role="commercial"
+            )
+            db.session.add_all([tech1, tech2, comm])
+            db.session.commit()
+
+            # Vérification de l'exclusion des commerciaux dans get_project_form_context
+            from services.admin.projects import get_project_form_context
+            ctx = get_project_form_context()
+            bv_user_ids = [u["id"] for u in ctx["bv_users"]]
+            self.assertIn(tech1.id, bv_user_ids)
+            self.assertIn(tech2.id, bv_user_ids)
+            self.assertNotIn(comm.id, bv_user_ids)
+
+            # 2. Création d'un projet associé à ces deux référents
+            proj, _, _, _ = self._create_mock_project()
+            proj.bv_referents = [tech1, tech2]
+            db.session.commit()
+
+            # Vérification de la propriété project.bv_referents_names
+            self.assertIn("Maxime Perrard", proj.bv_referents_names)
+            self.assertIn("Ewen Gicquel", proj.bv_referents_names)
+
+            # 3. Création d'un engagement BVSR sans renseigner manuellement safety_technicians
+            success, msg = create_safety_rules_waiver(
+                project_id=proj.id,
+                signer_role="pilot",
+                signer_first_name="Romain",
+                signer_last_name="Coureur",
+                signer_email="romain.coureur@test.com"
+            )
+            self.assertTrue(success)
+
+            waiver = SafetyRulesWaiver.query.filter_by(project_id=proj.id, signer_last_name="Coureur").first()
+            self.assertIsNotNone(waiver)
+            # Vérification de l'initialisation automatique
+            self.assertEqual(waiver.safety_technicians, proj.bv_referents_names)
+            self.assertEqual(waiver.display_safety_technicians, proj.bv_referents_names)
+
+            # 4. Vérification sur le portail public de signature
+            ok_send, _ = send_safety_rules_waiver(waiver.waiver_id)
+            self.assertTrue(ok_send)
+            token_obj = WaiverToken.query.filter_by(waiver_id=waiver.waiver_id).first()
+            self.assertIsNotNone(token_obj)
+
+            resp = self.client.get(f"/sign/safety-rules/{token_obj.token}")
+            self.assertEqual(resp.status_code, 200)
+            html = resp.data.decode("utf-8")
+            self.assertIn("Supervision technique BV", html)
+            self.assertIn("Maxime Perrard", html)
+            self.assertIn("Ewen Gicquel", html)
+
+            # 5. Cas d'un projet SANS référent BV (location de véhicule sans pilote / accompagnement)
+            proj_no_ref = Project(
+                name="Projet Sans Référent BV",
+                production_id=proj.production_id,
+                shoot_start_date=date.today(),
+                shoot_end_date=date.today() + timedelta(days=2),
+                vehicles_to_check="1",
+            )
+            proj_no_ref.bv_referents = []
+            db.session.add(proj_no_ref)
+            db.session.commit()
+
+            self.assertEqual(proj_no_ref.bv_referents_names, "")
+
+            success_nr, _ = create_safety_rules_waiver(
+                project_id=proj_no_ref.id,
+                signer_role="pilot",
+                signer_first_name="Jean",
+                signer_last_name="Solo",
+                signer_email="jean.solo@test.com"
+            )
+            self.assertTrue(success_nr)
+
+            waiver_nr = SafetyRulesWaiver.query.filter_by(project_id=proj_no_ref.id, signer_last_name="Solo").first()
+            self.assertIsNotNone(waiver_nr)
+            self.assertIsNone(waiver_nr.safety_technicians)
+            self.assertIsNone(waiver_nr.display_safety_technicians)
+
+            # Vérification sur le portail public : la mention de supervision doit être masquée
+            ok_send_nr, _ = send_safety_rules_waiver(waiver_nr.waiver_id)
+            self.assertTrue(ok_send_nr)
+            token_obj_nr = WaiverToken.query.filter_by(waiver_id=waiver_nr.waiver_id).first()
+            resp_nr = self.client.get(f"/sign/safety-rules/{token_obj_nr.token}")
+            self.assertEqual(resp_nr.status_code, 200)
+            html_nr = resp_nr.data.decode("utf-8")
+            self.assertNotIn("Supervision technique BV", html_nr)
+
+            # Vérification sur la prévisualisation admin : la mention de supervision doit être masquée
+            with self.client.session_transaction() as sess:
+                sess["admin_authenticated"] = True
+                sess["admin_user_id"] = 1
+                sess["admin_user_role"] = "administrator"
+            resp_preview = self.client.get(f"/admin/safety-rules/{waiver_nr.waiver_id}/preview")
+            self.assertEqual(resp_preview.status_code, 200)
+            html_preview = resp_preview.data.decode("utf-8")
+            self.assertNotIn("Supervision BV :", html_preview)
 
 
 if __name__ == '__main__':

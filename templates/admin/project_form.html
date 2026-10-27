@@ -5,7 +5,8 @@
 {% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/admin/project_datepicker.css') }}?v={{ asset_version('css/admin/project_datepicker.css') }}">
+<link rel="stylesheet"
+    href="{{ url_for('static', filename='css/admin/project_datepicker.css') }}?v={{ asset_version('css/admin/project_datepicker.css') }}">
 {% endblock %}
 
 {% block page_title %}
@@ -14,7 +15,8 @@
 
 {% block content %}
 <div class="admin-card">
-    <form method="POST" id="projectMainForm" data-project-id="{{ (data.id if data and data.id else (data.project_id if data and data.project_id else (record_id if record_id else ''))) }}">
+    <form method="POST" id="projectMainForm"
+        data-project-id="{{ (data.id if data and data.id else (data.project_id if data and data.project_id else (record_id if record_id else ''))) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <input type="hidden" id="current_project_id"
             value="{{ (data.id if data and data.id else (data.project_id if data and data.project_id else (record_id if record_id else ''))) }}" />
@@ -133,6 +135,30 @@
                     </option>
                     {% endfor %}
                 </select>
+            </div>
+        </div>
+
+        <!-- Référents Belle Vitesse -->
+        <div class="form-group u-mb-3 bv-referents-card">
+            <label class="form-label u-mb-1">
+                Référents Plateau BV
+            </label>
+            <div class="u-flex u-flex-wrap u-gap-2">
+                {% for u in bv_users %}
+                {% set is_selected = data and data.bv_referent_ids and (u.id in data.bv_referent_ids or (u.id|string) in
+                data.bv_referent_ids) %}
+                <label class="project-checkbox-card {% if is_selected %}selected{% endif %}">
+                    <input type="checkbox" name="bv_referent_ids" value="{{ u.id }}" {% if is_selected %}checked{% endif
+                        %} class="u-d-none">
+                    <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-xs">
+                        <i data-lucide="user-check" class="u-w-14 u-h-14"></i>
+                    </span>
+                    <div class="u-flex u-flex-column u-gap-0">
+                        <span class="u-text-medium u-font-semibold">{{ u.name }}</span>
+                        <span class="u-text-xs u-text-muted">{{ u.role_display }}</span>
+                    </div>
+                </label>
+                {% endfor %}
             </div>
         </div>
 

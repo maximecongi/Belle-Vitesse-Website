@@ -87,7 +87,7 @@ def create_waiver(project_id, waiver_type: str = "cgl", **kwargs):
         waiver.signer_email = kwargs.get("signer_email")
         waiver.signer_phone = kwargs.get("signer_phone")
         waiver.signer_company = kwargs.get("signer_company")
-        waiver.safety_technicians = (kwargs.get("safety_technicians") or "").strip() or None
+        waiver.safety_technicians = (kwargs.get("safety_technicians") or "").strip() or getattr(p, "bv_referents_names", None) or None
         waiver.helmets_inventory = kwargs.get("helmets_inventory")
 
         # Auto-complétion si coordonnées non fournies

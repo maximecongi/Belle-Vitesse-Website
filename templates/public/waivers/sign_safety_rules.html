@@ -90,10 +90,10 @@
                         <span class="public-doc-info-label">Période de tournage</span>
                         <span class="public-doc-info-value u-text-sm">{{ waiver.display_shooting_dates }}</span>
                     </div>
-                    {% if waiver.safety_technicians %}
+                    {% if waiver.display_safety_technicians %}
                     <div class="public-doc-info-item">
                         <span class="public-doc-info-label">Supervision technique BV</span>
-                        <span class="public-doc-info-value u-text-sm">{{ waiver.safety_technicians }}</span>
+                        <span class="public-doc-info-value u-text-sm">{{ waiver.display_safety_technicians }}</span>
                     </div>
                     {% endif %}
                 </div>

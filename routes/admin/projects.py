@@ -100,9 +100,10 @@ def admin_project_new():
                 return render_template(
                     "admin/project_form.html", data=request.form, is_edit=False, **context
                 )
-            create_project(request.form, user_id=session.get("admin_user_id"))
+            created = create_project(request.form, user_id=session.get("admin_user_id"))
             flash("Projet créé avec succès !", "success")
-            return redirect(url_for("admin_projects.admin_projects_list"))
+            new_id = created.id if hasattr(created, "id") else created
+            return redirect(url_for("admin_projects.admin_project_detail", record_id=new_id))
         except Exception as e:
             from services.admin.utils import format_user_friendly_error
             current_app.logger.error(f"❌ Erreur lors de la création du projet : {e}")
@@ -122,7 +123,7 @@ def admin_project_edit(record_id):
         if request.method == "POST":
             update_project(record_id, request.form, user_id=session.get("admin_user_id"))
             flash("Projet modifié avec succès !", "success")
-            return redirect(url_for("admin_projects.admin_projects_list"))
+            return redirect(url_for("admin_projects.admin_project_detail", record_id=record_id))
 
         data = get_project_for_edit(record_id)
         if not data:

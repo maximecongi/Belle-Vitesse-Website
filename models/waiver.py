@@ -470,6 +470,16 @@ class SafetyRulesWaiver(Waiver):
         "polymorphic_identity": "safety_rules",
     }
 
+    @property
+    def display_safety_technicians(self):
+        """Retourne les référents techniques BV enregistrés ou à défaut ceux du projet."""
+        if self.safety_technicians and self.safety_technicians.strip():
+            return self.safety_technicians.strip()
+        if self.project and getattr(self.project, "bv_referents_names", None):
+            val = self.project.bv_referents_names
+            return val.strip() if val and val.strip() else None
+        return None
+
     def __repr__(self):
         return f"<SafetyRulesWaiver {self.waiver_id} - {self.signer_role} - {self.status}>"
 

@@ -204,6 +204,50 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
             {% endif %}
         </div>
 
+        <!-- Référents Belle Vitesse -->
+        <div class="admin-card">
+            <div class="u-flex u-justify-between u-align-center u-mb-2">
+                <div class="u-flex u-align-center u-gap-2">
+                    <h2 class="admin-card-title u-m-0">Référents Plateau BV</h2>
+                </div>
+                {% if project.bv_referents and project.bv_referents|length > 0 %}
+                <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-xs">
+                    {{ project.bv_referents|length }} référent{{ 's' if project.bv_referents|length > 1 else '' }}
+                </span>
+                {% endif %}
+            </div>
+
+            {% if project.bv_referents and project.bv_referents|length > 0 %}
+            <div class="project-contacts-list">
+                {% for u in project.bv_referents %}
+                <div class="project-contact-row">
+                    <div class="project-contact-main">
+                        <span class="project-contact-name">{{ u.firstname }} {{ u.lastname }}</span>
+                        <span class="project-contact-role">{{ u.role_display }}</span>
+                    </div>
+                    {% if u.phone or u.mail %}
+                    <div class="project-contact-actions">
+                        {% if u.phone %}
+                        <a href="tel:{{ u.phone }}" class="project-contact-icon-btn" title="Appeler {{ u.phone }}">
+                            <i data-lucide="phone"></i>
+                        </a>
+                        {% endif %}
+                        {% if u.mail %}
+                        <a href="mailto:{{ u.mail }}" class="project-contact-icon-btn"
+                            title="Envoyer un e-mail à {{ u.mail }}">
+                            <i data-lucide="mail"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="u-text-xs u-text-muted u-italic u-m-0">Aucun référent BV désigné sur ce tournage.</p>
+            {% endif %}
+        </div>
+
         <!-- Consignes & Notes Spécifiques -->
         <div class="admin-card u-h-100" id="projectNotesCard">
             <div class="u-flex u-justify-between u-align-center u-mb-2">
@@ -934,16 +978,20 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                     placeholder="Ex: Société de production ou Freelance">
             </div>
 
-            <div class="form-group u-mb-4">
-                <label for="new_safety_technicians" class="form-label u-font-semibold">
-                    Référent(s) technique(s) Belle Vitesse sur le tournage
-                </label>
-                <input type="text" id="new_safety_technicians" name="safety_technicians" class="form-input"
-                    placeholder="Ex: Maxime Perrard, Ewen Gicquel">
-                <small class="u-text-muted u-text-xs">
-                    Nom(s) des interlocuteurs Belle Vitesse autorisés à donner les consignes de sécurité sur ce plateau.
-                    Laisser vide si non renseigné.
-                </small>
+            <div class="admin-card u-p-3 u-mb-4 u-bg-waiver-light u-border-left-waiver">
+                <div class="u-flex u-align-center u-gap-2">
+                    <i data-lucide="shield-check" class="u-text-waiver u-w-16 u-h-16"></i>
+                    <span class="u-text-xs u-font-semibold u-text-waiver">Supervision technique Belle Vitesse</span>
+                </div>
+                <p class="u-text-xs u-mt-1 u-mb-0 u-text-muted">
+                    {% if project.bv_referents_names %}
+                    Référent(s) BV associés à ce tournage : <strong>{{ project.bv_referents_names }}</strong>. Ils
+                    seront automatiquement appliqués à ce protocole.
+                    {% else %}
+                    Aucun référent BV n'a été rattaché au projet pour l'instant. Vous pouvez les configurer dans
+                    l'édition du projet.
+                    {% endif %}
+                </p>
             </div>
 
             <div class="u-flex u-justify-end u-align-center u-gap-2 u-pt-3 u-border-t">

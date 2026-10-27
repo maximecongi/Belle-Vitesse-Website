@@ -10,6 +10,58 @@
 {% endblock %}
 
 {% block content %}
+<!-- ═══════════ RÈGLES GÉNÉRALES DE SÉCURITÉ UNIVERSELLES ═══════════ -->
+<div class="admin-card u-p-4 u-mb-4 u-border-left-waiver">
+    <div class="u-flex u-justify-between u-align-start u-mb-3">
+        <div class="u-flex u-align-center u-gap-3">
+            <div class="badge-pill u-bg-waiver-light u-text-waiver">
+                <i data-lucide="book-open-check" class="u-w-20 u-h-20 u-m-0"></i>
+            </div>
+            <div>
+                <h3 class="u-text-lg u-font-bold u-m-0">1. Règles Générales de Sécurité (Universelles)</h3>
+                <span class="u-text-xs u-text-muted u-d-block u-mt-1">
+                    Consignes impératives communes appliquées systématiquement à l'ensemble des protocoles BVSR de
+                    tournage.
+                </span>
+            </div>
+        </div>
+        <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary btn-edit-general-rule"
+            data-rules='{{ general_rules|tojson }}'>
+            <i data-lucide="edit-3"></i> Modifier les règles générales
+        </button>
+    </div>
+
+    <div class="u-grid u-gap-3 u-grid-cols-2 u-mt-3">
+        <!-- Règles Générales Français -->
+        <div class="bvsr-preview-box">
+            <div class="u-flex u-justify-between u-align-center u-mb-2">
+                <span class="bvsr-lang-pill">FR</span>
+                <span class="u-text-xs u-text-muted">{{ (general_rules.rules_fr or [])|length }} consigne{% if
+                    (general_rules.rules_fr or [])|length > 1 %}s{% endif %}</span>
+            </div>
+            <ul class="bvsr-preview-list">
+                {% for rfr in (general_rules.rules_fr or []) %}
+                <li class="bvsr-preview-item">{{ rfr }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Règles Générales Anglais -->
+        <div class="bvsr-preview-box">
+            <div class="u-flex u-justify-between u-align-center u-mb-2">
+                <span class="bvsr-lang-pill bvsr-lang-pill--en">EN</span>
+                <span class="u-text-xs u-text-muted">{{ (general_rules.rules_en or [])|length }} rule{% if
+                    (general_rules.rules_en or [])|length > 1 %}s{% endif %}</span>
+            </div>
+            <ul class="bvsr-preview-list">
+                {% for ren in (general_rules.rules_en or []) %}
+                <li class="bvsr-preview-item">{{ ren }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
 <!-- ═══════════ PRÉSENTATION & NOTICE BVSR ═══════════ -->
 <div class="admin-card u-p-4 u-mb-4 u-border-left-waiver">
     <div class="u-flex u-align-start u-gap-3">
@@ -31,63 +83,6 @@
             </p>
         </div>
     </div>
-</div>
-
-<!-- ═══════════ RÈGLES GÉNÉRALES DE SÉCURITÉ UNIVERSELLES ═══════════ -->
-<div class="admin-card u-p-4 u-mb-4 u-border-left-waiver">
-    <div class="u-flex u-justify-between u-align-start u-mb-3">
-        <div class="u-flex u-align-center u-gap-3">
-            <div class="badge-pill u-bg-waiver-light u-text-waiver">
-                <i data-lucide="book-open-check" class="u-w-20 u-h-20 u-m-0"></i>
-            </div>
-            <div>
-                <h3 class="u-text-lg u-font-bold u-m-0">1. Règles Générales de Sécurité (Universelles)</h3>
-                <span class="u-text-xs u-text-muted u-d-block u-mt-1">
-                    Consignes impératives communes appliquées systématiquement à l'ensemble des protocoles BVSR de tournage.
-                </span>
-            </div>
-        </div>
-        <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary btn-edit-general-rule"
-            data-rules='{{ general_rules|tojson }}'>
-            <i data-lucide="edit-3"></i> Modifier les règles générales
-        </button>
-    </div>
-
-    <div class="u-grid u-gap-3 u-grid-cols-2 u-mt-3">
-        <!-- Règles Générales Français -->
-        <div class="bvsr-preview-box">
-            <div class="u-flex u-justify-between u-align-center u-mb-2">
-                <span class="bvsr-lang-pill">FR</span>
-                <span class="u-text-xs u-text-muted">{{ (general_rules.rules_fr or [])|length }} consigne{% if (general_rules.rules_fr or [])|length > 1 %}s{% endif %}</span>
-            </div>
-            <ul class="bvsr-preview-list">
-                {% for rfr in (general_rules.rules_fr or []) %}
-                <li class="bvsr-preview-item">{{ rfr }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-
-        <!-- Règles Générales Anglais -->
-        <div class="bvsr-preview-box">
-            <div class="u-flex u-justify-between u-align-center u-mb-2">
-                <span class="bvsr-lang-pill bvsr-lang-pill--en">EN</span>
-                <span class="u-text-xs u-text-muted">{{ (general_rules.rules_en or [])|length }} rule{% if (general_rules.rules_en or [])|length > 1 %}s{% endif %}</span>
-            </div>
-            <ul class="bvsr-preview-list">
-                {% for ren in (general_rules.rules_en or []) %}
-                <li class="bvsr-preview-item">{{ ren }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
-</div>
-
-<!-- ═══════════ SÉPARATEUR & TITRE DES VÉHICULES DE FLOTTE ═══════════ -->
-<div class="u-flex u-justify-between u-align-center u-mb-3">
-    <h3 class="u-text-md u-font-bold u-m-0">2. Règles Spécifiques par Véhicule</h3>
-    <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-xs u-font-bold">
-        {{ catalog|length }} véhicule{% if catalog|length > 1 %}s{% endif %} configuré{% if catalog|length > 1 %}s{% endif %}
-    </span>
 </div>
 
 <!-- ═══════════ GRILLE DES VÉHICULES DE FLOTTE ═══════════ -->

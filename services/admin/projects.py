@@ -7,7 +7,7 @@ from typing import Optional
 
 from sqlalchemy.orm import joinedload, selectinload
 
-from models import Contact, Production, Project, db
+from models import Contact, Production, Project, User, db
 from services.admin.status_mapping import format_waiver_status
 from utils.database import get_vehicles, get_heads
 from utils.formatting import format_date_fr, get_today_paris
@@ -526,11 +526,24 @@ def get_project_form_context():
     except Exception as e:
         logger.warning(f"Erreur réconciliation têtes formulaire projet : {e}")
 
+    bv_users = User.query.order_by(User.firstname.asc(), User.lastname.asc()).all()
+    bv_users_formatted = [
+        {
+            "id": u.id,
+            "name": f"{u.firstname} {u.lastname}".strip(),
+            "mail": u.mail,
+            "role_display": u.role_display,
+        }
+        for u in bv_users
+        if getattr(u, "role_lower", (u.role or "").lower().strip()) != "commercial"
+    ]
+
     return {
         "productions": productions_formatted,
         "contacts": contacts_formatted,
         "vehicles": vehicles_list,
         "heads": heads_list,
+        "bv_users": bv_users_formatted,
     }
 
 
@@ -668,6 +681,17 @@ def create_project(form, user_id=None):
         heads_to_check=",".join(head_ids),
         last_action_by_id=user_id
     )
+    bv_referent_ids = [
+        _parse_int(uid) for uid in (form.getlist("bv_referent_ids") if hasattr(form, 'getlist') else [])
+    ]
+    bv_referent_ids = [uid for uid in bv_referent_ids if uid is not None]
+    if bv_referent_ids:
+        eligible_users = User.query.filter(User.id.in_(bv_referent_ids)).all()
+        project.bv_referents = [
+            u for u in eligible_users
+            if getattr(u, "role_lower", (u.role or "").lower().strip()) != "commercial"
+        ]
+
     db.session.add(project)
     db.session.flush()  # Permet d'obtenir l'ID du projet avant le commit final
 
@@ -687,7 +711,7 @@ def create_project(form, user_id=None):
         logger.warning(
             f"⚠️ Erreur lors de l'auto-création du contrat CGL pour le projet {project.id}: {e_w}")
 
-    return True
+    return project
 
 
 @handle_admin_service_error
@@ -759,6 +783,20 @@ def update_project(record_id, form, user_id=None):
     project.heads_to_check = ",".join(head_ids)
     project.last_action_by_id = user_id
 
+    # Mise à jour des référents BV du projet
+    bv_referent_ids = [
+        _parse_int(uid) for uid in (form.getlist("bv_referent_ids") if hasattr(form, 'getlist') else [])
+    ]
+    bv_referent_ids = [uid for uid in bv_referent_ids if uid is not None]
+    if bv_referent_ids:
+        eligible_users = User.query.filter(User.id.in_(bv_referent_ids)).all()
+        project.bv_referents = [
+            u for u in eligible_users
+            if getattr(u, "role_lower", (u.role or "").lower().strip()) != "commercial"
+        ]
+    else:
+        project.bv_referents = []
+
     # Synchronisation des documents non signés avec les nouvelles dates et métadonnées du projet
     from services.admin.waivers import _format_project_shooting_dates
     formatted_dates = _format_project_shooting_dates(project, default_sep=" au ")
@@ -769,6 +807,8 @@ def update_project(record_id, form, user_id=None):
             w.shooting_dates = formatted_dates
             if project.production:
                 w.production_name = project.production.name
+            if getattr(w, "waiver_type", None) == "safety_rules":
+                w.safety_technicians = project.bv_referents_names or None
 
     db.session.commit()
 
@@ -859,6 +899,7 @@ def get_project_for_edit(record_id):
         "notes": p.notes or "",
         "vehicle_ids": veh_ids,
         "head_ids": head_ids,
+        "bv_referent_ids": [u.id for u in (p.bv_referents or [])],
     }
 
 

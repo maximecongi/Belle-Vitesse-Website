@@ -823,6 +823,10 @@
     opacity: 1;
 }
 
+.bv-referents-card .lucide {
+    margin: 0 !important;
+}
+
 /* Notion Slash Command Dropdown */
 .notion-slash-container {
     position: relative;

@@ -463,7 +463,7 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
                 "signer_email": sr.signer_email,
                 "signer_phone": sr.signer_phone,
                 "signer_company": sr.signer_company,
-                "safety_technicians": sr.safety_technicians,
+                "safety_technicians": sr.display_safety_technicians,
                 "status": format_waiver_status(sr.status),
                 "raw_status": sr.status,
                 "signed_at": sr.signed_at,

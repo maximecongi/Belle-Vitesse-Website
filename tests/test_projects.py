@@ -665,6 +665,52 @@ class ProjectsTest(unittest.TestCase):
             self.assertIn("BVSR :", html)
             self.assertIn("1/1 signé", html)
 
+    def test_project_create_and_edit_redirect_to_detail(self):
+        """Vérifie que la création et l'édition d'un projet redirigent vers sa page de détail."""
+        with self.app.app_context():
+            user = User(firstname="Admin", lastname="Manager", mail="admin_redirect@example.com", role="administrator")
+            prod = Production(name="Production Redir Test")
+            db.session.add_all([user, prod])
+            db.session.commit()
+
+            with self.client.session_transaction() as sess:
+                sess["admin_authenticated"] = True
+                sess["admin_user_id"] = user.id
+                sess["admin_user_role"] = user.role
+                sess["admin_user_email"] = user.mail
+
+            # 1. Test POST création -> doit rediriger vers /admin/projects/<id>
+            form_create = {
+                "name": "Nouveau Projet Redir",
+                "production_id": str(prod.id),
+                "shoot_start": "2026-11-01",
+                "shoot_end": "2026-11-03",
+            }
+            res_create = self.client.post("/admin/projects/new", data=form_create)
+            self.assertEqual(res_create.status_code, 302)
+
+            created_project = Project.query.filter_by(name="Nouveau Projet Redir").first()
+            self.assertIsNotNone(created_project)
+            expected_url = f"/admin/projects/{created_project.id}"
+            self.assertTrue(res_create.location.endswith(expected_url), f"Attendu: {expected_url}, Obtenu: {res_create.location}")
+
+            # 2. Test POST modification -> doit rediriger vers /admin/projects/<id>
+            form_edit = {
+                "name": "Projet Redir Renommé",
+                "production_id": str(prod.id),
+                "shoot_start": "2026-11-01",
+                "shoot_end": "2026-11-03",
+            }
+            res_edit = self.client.post(f"/admin/projects/{created_project.id}/edit", data=form_edit)
+            self.assertEqual(res_edit.status_code, 302)
+            self.assertTrue(res_edit.location.endswith(expected_url), f"Attendu: {expected_url}, Obtenu: {res_edit.location}")
+
+            # Nettoyage
+            db.session.delete(created_project)
+            db.session.delete(prod)
+            db.session.delete(user)
+            db.session.commit()
+
 
 if __name__ == "__main__":
     unittest.main()
