@@ -399,6 +399,7 @@ def admin_safety_rules_preview(waiver_id=None):
     from models import SafetyRulesWaiver as SRW, AppSetting
     from services.admin.safety_rules_config import (
         get_safety_rules_for_vehicles,
+        get_general_safety_rules,
         DEFAULT_HELMETS_INVENTORY,
     )
 
@@ -414,6 +415,7 @@ def admin_safety_rules_preview(waiver_id=None):
         from services.admin.waivers.mock_data import MockSafetyRulesWaiver
         waiver = MockSafetyRulesWaiver()
 
+    general_rules = get_general_safety_rules()
     vehicle_rules = get_safety_rules_for_vehicles(getattr(waiver, "vehicles_details", []))
     helmets = getattr(waiver, "helmets_inventory", None) or DEFAULT_HELMETS_INVENTORY
 
@@ -421,6 +423,7 @@ def admin_safety_rules_preview(waiver_id=None):
     html_content = render_template(
         "pdf/safety_rules.html",
         waiver=waiver,
+        general_rules=general_rules,
         vehicle_rules=vehicle_rules,
         helmets=helmets,
         safety_technicians=getattr(waiver, "safety_technicians", "") or "Maxime Perrard, Ewen Gicquel",

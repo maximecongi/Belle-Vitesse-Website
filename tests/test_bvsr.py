@@ -35,6 +35,8 @@ from services.admin.safety_rules_config import (
     get_all_vehicle_safety_rules_catalog,
     get_safety_rules_for_vehicles,
     save_vehicle_safety_rules,
+    get_general_safety_rules,
+    save_general_safety_rules,
 )
 from services.admin.waivers import (
     countersign_safety_rules,
@@ -375,6 +377,58 @@ class BvsrComprehensiveTest(unittest.TestCase):
             self.assertIn("test_buggy", catalog)
             self.assertEqual(len(catalog["test_buggy"]["rules_fr"]), 2)
             self.assertEqual(catalog["test_buggy"]["rules_fr"][0], "Casque homologué obligatoire en roulage")
+
+    def test_08_general_safety_rules_edition_and_no_fallback(self):
+        """Vérifie l'édition des règles générales et l'absence totale de fallback par défaut."""
+        with self.app.app_context():
+            user = User(
+                firstname="Admin",
+                lastname="BV",
+                mail="admin3@bellevitesse.com",
+                role="administrator"
+            )
+            db.session.add(user)
+            db.session.commit()
+
+            with self.client.session_transaction() as sess:
+                sess["admin_authenticated"] = True
+                sess["admin_user_id"] = user.id
+                sess["admin_user_role"] = "administrator"
+
+            # 1. Vérification que la section règles générales est présente dans le catalogue
+            res_get = self.client.get("/admin/fleet/safety-rules")
+            self.assertEqual(res_get.status_code, 200)
+            html = res_get.data.decode("utf-8")
+            self.assertIn("1. Règles Générales de Sécurité (Universelles)", html)
+            self.assertIn("btn-edit-general-rule", html)
+
+            # 2. Enregistrement de règles générales spécifiques
+            custom_fr = ["Consigne personnalisée alpha", "Consigne personnalisée beta"]
+            custom_en = ["Custom guideline alpha", "Custom guideline beta"]
+            post_data = {
+                "is_general": "1",
+                "rules_fr": custom_fr,
+                "rules_en": custom_en,
+            }
+            res_post = self.client.post("/admin/fleet/safety-rules", data=post_data, follow_redirects=True)
+            self.assertEqual(res_post.status_code, 200)
+
+            # Vérification via get_general_safety_rules
+            saved = get_general_safety_rules()
+            self.assertEqual(saved["rules_fr"], custom_fr)
+            self.assertEqual(saved["rules_en"], custom_en)
+
+            # 3. Vérification de l'absence de fallback si une liste vide est explicitement enregistrée
+            empty_post_data = {
+                "is_general": "1",
+                "rules_fr": [],
+                "rules_en": [],
+            }
+            res_empty = self.client.post("/admin/fleet/safety-rules", data=empty_post_data, follow_redirects=True)
+            self.assertEqual(res_empty.status_code, 200)
+            empty_saved = get_general_safety_rules()
+            self.assertEqual(empty_saved["rules_fr"], [])
+            self.assertEqual(empty_saved["rules_en"], [])
 
 
 if __name__ == '__main__':

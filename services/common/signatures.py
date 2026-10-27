@@ -155,6 +155,7 @@ from utils.storage import (
 )
 from services.admin.safety_rules_config import (
     get_safety_rules_for_vehicles,
+    get_general_safety_rules,
     DEFAULT_HELMETS_INVENTORY,
 )
 
@@ -522,6 +523,7 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         elif mode == "safety_rules":
             render_ctx["safety_rules"] = record
             render_ctx["waiver"] = record
+            render_ctx["general_rules"] = get_general_safety_rules()
             render_ctx["vehicle_rules"] = get_safety_rules_for_vehicles(record.vehicles_details)
             render_ctx["helmets"] = record.helmets_inventory or DEFAULT_HELMETS_INVENTORY
             render_ctx["safety_technicians"] = record.safety_technicians or ""

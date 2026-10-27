@@ -60,14 +60,15 @@ def admin_vehicle_timeline(vehicle_id):
 @fleet_bp.route("/fleet/safety-rules", methods=["GET", "POST"], endpoint="admin_safety_rules_config")
 @require_roles("administrator", "manager")
 def admin_safety_rules_config():
-    """Gestion et personnalisation des règles de sécurité par véhicule dans la configuration de flotte."""
+    """Gestion et personnalisation des règles de sécurité (générales et par véhicule) dans la configuration de flotte."""
     from services.admin.safety_rules_config import (
         get_all_vehicle_safety_rules_catalog,
         save_vehicle_safety_rules,
+        get_general_safety_rules,
+        save_general_safety_rules,
     )
     if request.method == "POST":
-        vehicle_id = request.form.get("vehicle_id", "").strip() or request.form.get("vehicle_key", "").strip()
-        label = request.form.get("label", "").strip()
+        is_general = request.form.get("is_general") in ("1", "true", "True")
         # Support de la liste à puces dynamique (rules_fr[] ou rules_fr) ou textarea brut
         rules_fr_list = request.form.getlist("rules_fr[]") or request.form.getlist("rules_fr")
         rules_en_list = request.form.getlist("rules_en[]") or request.form.getlist("rules_en")
@@ -88,23 +89,33 @@ def admin_safety_rules_config():
         else:
             rules_en = request.form.get("rules_en", "")
 
-        if not vehicle_id:
-            flash("Identifiant de véhicule manquant.", "error")
-        else:
-            ok = save_vehicle_safety_rules(
-                vehicle_id=vehicle_id,
-                rules_fr=rules_fr,
-                rules_en=rules_en,
-                label=label,
-            )
+        if is_general:
+            ok = save_general_safety_rules(rules_fr=rules_fr, rules_en=rules_en)
             if ok:
-                flash(f"Règles de sécurité pour « {label or vehicle_id} » enregistrées avec succès.", "success")
+                flash("Règles générales de sécurité enregistrées avec succès.", "success")
             else:
-                flash("Erreur lors de l'enregistrement des règles de sécurité.", "error")
+                flash("Erreur lors de l'enregistrement des règles générales de sécurité.", "error")
+        else:
+            vehicle_id = request.form.get("vehicle_id", "").strip() or request.form.get("vehicle_key", "").strip()
+            label = request.form.get("label", "").strip()
+            if not vehicle_id:
+                flash("Identifiant de véhicule manquant.", "error")
+            else:
+                ok = save_vehicle_safety_rules(
+                    vehicle_id=vehicle_id,
+                    rules_fr=rules_fr,
+                    rules_en=rules_en,
+                    label=label,
+                )
+                if ok:
+                    flash(f"Règles de sécurité pour « {label or vehicle_id} » enregistrées avec succès.", "success")
+                else:
+                    flash("Erreur lors de l'enregistrement des règles de sécurité.", "error")
         return redirect(url_for("admin_fleet.admin_safety_rules_config"))
 
     catalog = get_all_vehicle_safety_rules_catalog()
-    return render_template("admin/safety_rules_catalog.html", catalog=catalog)
+    general_rules = get_general_safety_rules()
+    return render_template("admin/safety_rules_catalog.html", catalog=catalog, general_rules=general_rules)
 
 
 def init_fleet_routes(app):

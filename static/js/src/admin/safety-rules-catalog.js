@@ -239,6 +239,62 @@ document.addEventListener('DOMContentLoaded', function () {
         document.body.classList.remove('u-overflow-hidden');
     }
 
+    const modalVehicleAvatarWrap = document.getElementById('modalVehicleAvatarWrap');
+    const modalGeneralIconWrap = document.getElementById('modalGeneralIconWrap');
+    const inputIsGeneral = document.getElementById('modal_is_general');
+    const vehicleLabelGroup = document.getElementById('modal_vehicle_label_group');
+
+    // ── Bouton "Modifier les règles générales" ──
+    const editGeneralButton = document.querySelector('.btn-edit-general-rule');
+    if (editGeneralButton) {
+        editGeneralButton.addEventListener('click', function () {
+            try {
+                const dataRaw = editGeneralButton.getAttribute('data-rules') || "{}";
+                const rulesObj = JSON.parse(dataRaw);
+
+                if (modalTitle) modalTitle.textContent = "Modifier les Règles Générales de Sécurité";
+                if (modalSubtitle) modalSubtitle.textContent = "Consignes universelles applicables à l'ensemble des tournages";
+
+                if (modalVehicleAvatarWrap) modalVehicleAvatarWrap.classList.add('u-d-none');
+                if (modalGeneralIconWrap) modalGeneralIconWrap.classList.remove('u-d-none');
+                if (vehicleLabelGroup) vehicleLabelGroup.classList.add('u-d-none');
+
+                if (inputIsGeneral) inputIsGeneral.value = "1";
+                if (inputVehicleId) inputVehicleId.value = "";
+                if (inputLabel) {
+                    inputLabel.value = "Règles Générales";
+                    inputLabel.removeAttribute('required');
+                }
+
+                if (rulesContainer) {
+                    rulesContainer.innerHTML = "";
+                }
+
+                const rulesFr = rulesObj.rules_fr || [];
+                const rulesEn = rulesObj.rules_en || [];
+                const maxLen = Math.max(rulesFr.length, rulesEn.length);
+
+                if (maxLen === 0) {
+                    addRuleItem('', '');
+                } else {
+                    for (let i = 0; i < maxLen; i++) {
+                        addRuleItem(rulesFr[i] || '', rulesEn[i] || '');
+                    }
+                }
+
+                openModal();
+
+                setTimeout(function () {
+                    const firstInput = rulesContainer.querySelector('.bvsr-input-fr');
+                    if (firstInput) firstInput.focus();
+                }, 60);
+
+            } catch (err) {
+                console.error("Erreur chargement règles générales:", err);
+            }
+        });
+    }
+
     // Boutons "Modifier" sur chaque carte du catalogue de véhicules
     const editButtons = document.querySelectorAll('.btn-edit-vehicle-rule');
     editButtons.forEach(function (btn) {
@@ -256,8 +312,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (modalSubtitle) modalSubtitle.textContent = "Véhicule Flotte — Protocole BVSR dynamique";
                 if (modalVehicleImg) modalVehicleImg.src = vehImg;
 
+                if (modalVehicleAvatarWrap) modalVehicleAvatarWrap.classList.remove('u-d-none');
+                if (modalGeneralIconWrap) modalGeneralIconWrap.classList.add('u-d-none');
+                if (vehicleLabelGroup) vehicleLabelGroup.classList.remove('u-d-none');
+
+                if (inputIsGeneral) inputIsGeneral.value = "0";
                 if (inputVehicleId) inputVehicleId.value = vId;
-                if (inputLabel) inputLabel.value = vehLabel;
+                if (inputLabel) {
+                    inputLabel.value = vehLabel;
+                    inputLabel.setAttribute('required', 'required');
+                }
 
                 if (rulesContainer) {
                     rulesContainer.innerHTML = "";

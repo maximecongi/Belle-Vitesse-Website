@@ -243,19 +243,17 @@
 
                     <h2>CONSIGNES GÉNÉRALES IMPÉRATIVES (BILINGUE FR / EN)</h2>
                     <ul>
-                        <li><strong>Instructions :</strong> Respect strict des consignes du pilote et de la supervision
-                            Belle Vitesse. <em>(Strict compliance with instructions from the pilot and Belle Vitesse
-                                crew.)</em></li>
-                        <li><strong>Sobriété :</strong> Tolérance zéro alcool et stupéfiants. Vigilance maximale
-                            requise. <em>(Zero tolerance for alcohol and drugs. Maximum alertness required.)</em></li>
-                        <li><strong>Périmètre :</strong> Interdiction formelle de monter ou descendre d'un véhicule en
-                            mouvement. <em>(Strictly forbidden to board or disembark from a moving vehicle.)</em></li>
-                        <li><strong>Équipements de protection :</strong> Port du casque obligatoire selon la
-                            configuration et la position sur le véhicule. <em>(Helmet mandatory depending on vehicle
-                                configuration and rider position.)</em></li>
-                        <li><strong>Ceintures et harnais :</strong> Attache obligatoire dès l'embarquement et pendant
-                            tout le roulage. <em>(Seatbelts and safety harnesses must be fastened at all times.)</em>
-                        </li>
+                        {% for rfr in (general_rules.rules_fr if general_rules and general_rules.rules_fr else []) %}
+                            {% set ren = general_rules.rules_en[loop.index0] if (general_rules.rules_en and loop.index0 < general_rules.rules_en|length) else '' %}
+                            {% set parts_fr = rfr.split(':', 1) %}
+                            <li>
+                                {% if parts_fr|length > 1 %}<strong>{{ parts_fr[0]|trim }} :</strong> {{ parts_fr[1]|trim }}{% else %}{{ rfr }}{% endif %}
+                                {% if ren %}
+                                {% set parts_en = ren.split(':', 1) %}
+                                <em>({% if parts_en|length > 1 %}<strong>{{ parts_en[0]|trim }} :</strong> {{ parts_en[1]|trim }}{% else %}{{ ren }}{% endif %})</em>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
                     </ul>
 
                     {% if vehicle_rules %}

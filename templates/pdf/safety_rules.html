@@ -57,8 +57,8 @@
 
         <!-- ═══════════ TITRE PRINCIPAL ═══════════ -->
         <div class="bvsr-title-banner">
-            <h1 class="bvsr-main-title">Règles de Sécurité Universelles</h1>
-            <div class="bvsr-subtitle">Universal Safety Rules &amp; Operational Guidelines</div>
+            <h1 class="bvsr-main-title">Règles de Sécurité</h1>
+            <div class="bvsr-subtitle">Safety Rules &amp; Operational Guidelines</div>
             <p class="bvsr-version-info">Projet : {{ waiver.display_project_name }} — Production : {{
                 waiver.display_production_name }}</p>
         </div>
@@ -117,36 +117,20 @@
                 <div class="bvsr-col-card">
                     <div class="bvsr-col-header">Français</div>
                     <ol class="bvsr-rules-list">
-                        <li><strong>Respect des consignes :</strong> Respecter scrupuleusement les instructions
-                            opérationnelles du pilote désigné et des techniciens Belle Vitesse.</li>
-                        <li><strong>Sobriété absolue :</strong> Tolérance zéro alcool, stupéfiants ou substances
-                            psychotropes altérant la vigilance sur le plateau.</li>
-                        <li><strong>Périmètre et montée :</strong> Interdiction formelle de monter ou descendre d'un
-                            véhicule en mouvement. Attendre l'arrêt complet et l'accord du pilote.</li>
-                        <li><strong>Équipements de protection (EPI) :</strong> Port du casque obligatoire pour toute
-                            personne sur plateforme extérieure ou véhicule non carrossé.</li>
-                        <li><strong>Ceintures et harnais :</strong> Bouclage obligatoire dès la prise en place et
-                            pendant toute la durée du déplacement.</li>
-                        <li><strong>Arrêt d'urgence :</strong> En cas de doute ou d'anomalie perçue, signaler
-                            immédiatement l'arrêt par commande vocale ou gestuelle claire.</li>
+                        {% for rfr in (general_rules.rules_fr if general_rules and general_rules.rules_fr else []) %}
+                        {% set parts = rfr.split(':', 1) %}
+                        <li>{% if parts|length > 1 %}<strong>{{ parts[0]|trim }} :</strong> {{ parts[1]|trim }}{% else %}{{ rfr }}{% endif %}</li>
+                        {% endfor %}
                     </ol>
                 </div>
 
                 <div class="bvsr-col-card">
                     <div class="bvsr-col-header">English</div>
                     <ol class="bvsr-rules-list">
-                        <li><strong>Instruction compliance :</strong> Strictly comply with operational directions from
-                            the designated driver and Belle Vitesse technicians.</li>
-                        <li><strong>Absolute sobriety :</strong> Zero-tolerance policy for alcohol, narcotics, or any
-                            alertness-altering substances on set.</li>
-                        <li><strong>Perimeter and boarding :</strong> Strictly prohibited to board or dismount moving
-                            vehicles. Await complete standstill and driver clearance.</li>
-                        <li><strong>Personal Protective Equipment (PPE) :</strong> Mandatory certified helmet for anyone
-                            on exterior rigs, beds, or unclosed platforms.</li>
-                        <li><strong>Seatbelts and harnesses :</strong> Mandatory buckle-up prior to any vehicle movement
-                            and throughout the entire take.</li>
-                        <li><strong>Emergency halt :</strong> In case of doubt or perceived hazard, immediately call for
-                            a full stop via clear voice or hand signal.</li>
+                        {% for ren in (general_rules.rules_en if general_rules and general_rules.rules_en else []) %}
+                        {% set parts = ren.split(':', 1) %}
+                        <li>{% if parts|length > 1 %}<strong>{{ parts[0]|trim }} :</strong> {{ parts[1]|trim }}{% else %}{{ ren }}{% endif %}</li>
+                        {% endfor %}
                     </ol>
                 </div>
             </div>

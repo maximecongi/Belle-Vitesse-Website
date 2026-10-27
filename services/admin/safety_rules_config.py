@@ -4,6 +4,30 @@ from models import AppSetting
 
 logger = logging.getLogger(__name__)
 
+# ── Règles Générales de Sécurité par défaut (FR / EN) ──
+DEFAULT_GENERAL_SAFETY_RULES = {
+    "rules_fr": [
+        "Le pilote ainsi que Maxime Perrard et Ewen Gicquel, techniciens véhicule, peuvent refuser ou interrompre un mouvement s'ils estiment que la sécurité n'est pas assurée.",
+        "Seul le pilote désigné d'un commun accord avec le coordonnateur cascade conduit le véhicule.",
+        "Interdiction de monter ou descendre du véhicule en mouvement.",
+        "Zone de roulage définie et sécurisée par la production avant chaque séquence (périmètre, circulation, public).",
+        "Les véhicules sont seulement autorisés à rouler sur routes fermées.",
+        "Chaque nouvelle installation doit être validée au niveau sécurité par Maxime Perrard ou Ewen Gicquel.",
+        "Au moins un des deux techniciens référents (Maxime Perrard ou Ewen Gicquel) doit avoir accès au véhicule en permanence, depuis un véhicule suiveur.",
+        "Tout élément technique doit être élingué et sécurisé.",
+    ],
+    "rules_en": [
+        "The driver, as well as Maxime Perrard and Ewen Gicquel, vehicle technicians, may refuse or stop any move if they consider that safety is not ensured.",
+        "Only the driver designated by mutual agreement with the stunt coordinator may drive the vehicle.",
+        "No getting on or off the vehicle while it is moving.",
+        "The driving area must be defined and secured by the production before each sequence (perimeter, traffic, public).",
+        "Vehicles may only be driven on closed roads.",
+        "Every new setup must be safety-approved by Maxime Perrard or Ewen Gicquel.",
+        "At least one of the two vehicle technicians (Maxime Perrard or Ewen Gicquel) must have constant access to the vehicle, from a follow vehicle.",
+        "Every technical element must be rigged and secured.",
+    ],
+}
+
 # ── Règles de sécurité par défaut par famille de véhicule (FR / EN) ──
 DEFAULT_VEHICLE_SAFETY_RULES = {
     "erover": {
@@ -378,3 +402,67 @@ def get_safety_rules_for_vehicles(vehicles_details, catalog=None):
                 }
 
     return list(matched_categories.values())
+
+
+def get_general_safety_rules():
+    """
+    Retourne les règles générales de sécurité (FR / EN).
+    Lit la configuration personnalisée dans AppSetting ("general_safety_rules") ou la dotation initiale.
+    Aucun fallback forcé si la configuration enregistrée contient des listes vides ou modifiées.
+    """
+    try:
+        custom_raw = AppSetting.get("general_safety_rules", None)
+        if custom_raw is not None and str(custom_raw).strip() != "":
+            if isinstance(custom_raw, str):
+                custom_dict = json.loads(custom_raw)
+            elif isinstance(custom_raw, dict):
+                custom_dict = custom_raw
+            else:
+                custom_dict = {}
+
+            if isinstance(custom_dict, dict) and ("rules_fr" in custom_dict or "rules_en" in custom_dict):
+                rules_fr = custom_dict.get("rules_fr") or []
+                rules_en = custom_dict.get("rules_en") or []
+                return {
+                    "rules_fr": [str(r).strip() for r in rules_fr if str(r).strip()] if isinstance(rules_fr, list) else [r.strip() for r in str(rules_fr).split("\n") if r.strip()],
+                    "rules_en": [str(r).strip() for r in rules_en if str(r).strip()] if isinstance(rules_en, list) else [r.strip() for r in str(rules_en).split("\n") if r.strip()],
+                }
+    except Exception as e:
+        logger.warning(f"Erreur lors de la lecture des règles générales de sécurité : {e}")
+
+    return {
+        "rules_fr": list(DEFAULT_GENERAL_SAFETY_RULES["rules_fr"]),
+        "rules_en": list(DEFAULT_GENERAL_SAFETY_RULES["rules_en"]),
+    }
+
+
+def save_general_safety_rules(rules_fr=None, rules_en=None):
+    """
+    Enregistre les règles générales de sécurité (FR / EN) dans AppSetting.
+    Accepte des listes ou des chaînes multilignes.
+    """
+    try:
+        if isinstance(rules_fr, str):
+            clean_fr = [r.strip() for r in rules_fr.split("\n") if r.strip()]
+        elif isinstance(rules_fr, list):
+            clean_fr = [str(r).strip() for r in rules_fr if str(r).strip()]
+        else:
+            clean_fr = []
+
+        if isinstance(rules_en, str):
+            clean_en = [r.strip() for r in rules_en.split("\n") if r.strip()]
+        elif isinstance(rules_en, list):
+            clean_en = [str(r).strip() for r in rules_en if str(r).strip()]
+        else:
+            clean_en = []
+
+        payload = {
+            "rules_fr": clean_fr,
+            "rules_en": clean_en,
+        }
+        AppSetting.set("general_safety_rules", json.dumps(payload, ensure_ascii=False))
+        return True
+    except Exception as e:
+        logger.error(f"Erreur lors de la sauvegarde des règles générales de sécurité : {e}")
+        return False
+
