@@ -200,10 +200,15 @@ class Waiver(db.Model):
         """Libellé en français du rôle du signataire."""
         roles = {
             "pilot": "Pilote",
-            "first_ad": "1er Assistant Réalisateur (1st AD)",
-            "production": "Production / Régie",
-            "camera_operator": "Opérateur Caméra",
-            "stunt": "Coordonnateur Cascades / Stunt",
+            "operator": "Cadreur",
+            "camera_operator": "Cadreur",
+            "stunt_coordinator": "Coordinateur Cascades",
+            "stunt_performer": "Cascadeur",
+            "stunt": "Coordinateur Cascades",
+            "production": "Directeur de production",
+            "director": "Réalisateur",
+            "first_ad": "1er Assistant Réalisateur",
+            "technician": "Technicien Plateau",
             "other": self.signer_role_custom or "Intervenant Plateau",
         }
         return roles.get(self.signer_role, self.signer_role_custom or self.signer_role or "Intervenant")

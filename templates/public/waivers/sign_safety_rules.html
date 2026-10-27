@@ -172,20 +172,14 @@
                         <label for="safety_signer_role">Votre rôle sur le tournage <span
                                 class="u-text-danger">*</span></label>
                         <select id="safety_signer_role" name="signer_role" class="form-select">
-                            <option value="pilot" {% if waiver.signer_role=='pilot' %}selected{% endif %}>Pilote /
-                                Concepteur de trajectoire</option>
-                            <option value="first_ad" {% if waiver.signer_role=='first_ad' %}selected{% endif %}>1er
-                                Assistant Réalisateur (1st AD)</option>
-                            <option value="production" {% if waiver.signer_role=='production' %}selected{% endif %}>
-                                Régie / Direction de Production</option>
-                            <option value="camera_operator" {% if waiver.signer_role=='camera_operator' %}selected{%
-                                endif %}>Cadreur / Opérateur Caméra</option>
-                            <option value="stunt" {% if waiver.signer_role=='stunt' %}selected{% endif %}>Cascadeur /
-                                Pilote Précision</option>
-                            <option value="technician" {% if waiver.signer_role=='technician' %}selected{% endif %}>
-                                Technicien / Grip / Machiniste</option>
-                            <option value="other" {% if waiver.signer_role=='other' %}selected{% endif %}>Autre
-                                intervenant</option>
+                            <option value="pilot" {% if waiver.signer_role=='pilot' %}selected{% endif %}>Pilote</option>
+                            <option value="operator" {% if waiver.signer_role in ['operator', 'camera_operator'] %}selected{% endif %}>Cadreur</option>
+                            <option value="stunt_coordinator" {% if waiver.signer_role in ['stunt_coordinator', 'stunt'] %}selected{% endif %}>Coordinateur Cascades</option>
+                            <option value="stunt_performer" {% if waiver.signer_role=='stunt_performer' %}selected{% endif %}>Cascadeur</option>
+                            <option value="production" {% if waiver.signer_role=='production' %}selected{% endif %}>Directeur de production</option>
+                            <option value="director" {% if waiver.signer_role=='director' %}selected{% endif %}>Réalisateur</option>
+                            <option value="first_ad" {% if waiver.signer_role=='first_ad' %}selected{% endif %}>1er Assistant Réalisateur</option>
+                            <option value="other" {% if waiver.signer_role=='other' %}selected{% endif %}>Autre fonction...</option>
                         </select>
                     </div>
 
