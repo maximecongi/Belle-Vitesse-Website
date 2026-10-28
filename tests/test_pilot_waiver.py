@@ -330,6 +330,108 @@ class PilotWaiverComprehensiveTest(unittest.TestCase):
             self.assertIn('<input type="hidden" name="signer_role" value="pilot">', html)
             self.assertNotIn('id="new_pilot_signer_role"', html)
 
+    @patch("utils.mailer.EmailService.send_templated_email")
+    def test_07_confirmation_email_sent_to_signer_with_bcc_admin(self, mock_send_email):
+        """Vérifie que l'e-mail de confirmation est bien adressé au signataire et l'admin en CCI (BCC)."""
+        from services.common.signatures import _send_waiver_confirmation_email
+        from utils.mailer import send_waiver_signed_email
+        from models import CglWaiver, SafetyRulesWaiver
+
+        with self.app.app_context():
+            proj, prod, prod_contact, pilot_contact, _ = self._create_mock_project()
+
+            # 1. Pilot Waiver : doit être adressé au pilote (signer_email) et non au contact de production
+            pw = PilotWaiver(
+                project_id=proj.id,
+                signer_first_name="Max",
+                signer_last_name="Verstappen",
+                signer_email="max@redbull.com",
+                signer_role="pilot",
+                status="signed"
+            )
+            db.session.add(pw)
+            db.session.flush()
+
+            with patch("services.common.signatures.send_waiver_signed_email") as mock_send_signed:
+                _send_waiver_confirmation_email("pilot_waiver", pw, "/dummy/path.pdf")
+                mock_send_signed.assert_called_once()
+                args, kwargs = mock_send_signed.call_args
+                self.assertEqual(args[0], "max@redbull.com")
+                self.assertEqual(args[1], "Max Verstappen")
+                self.assertEqual(kwargs.get("waiver_type"), "pilot_waiver")
+
+            # 2. CGL : doit être adressé au signataire (signer_email) et non au contact de production
+            cgl = CglWaiver(
+                project_id=proj.id,
+                signer_first_name="Christian",
+                signer_last_name="Horner",
+                signer_email="christian@redbull.com",
+                production_representative="Christian Horner",
+                status="signed"
+            )
+            db.session.add(cgl)
+            db.session.flush()
+
+            with patch("services.common.signatures.send_waiver_signed_email") as mock_send_signed_cgl:
+                _send_waiver_confirmation_email("cgl", cgl, "/dummy/cgl.pdf")
+                mock_send_signed_cgl.assert_called_once()
+                args, kwargs = mock_send_signed_cgl.call_args
+                self.assertEqual(args[0], "christian@redbull.com")
+                self.assertEqual(args[1], "Christian Horner")
+                self.assertEqual(kwargs.get("waiver_type"), "cgl")
+
+            # 3. BVSR (Safety Rules) : doit être adressé au signataire
+            bvsr = SafetyRulesWaiver(
+                project_id=proj.id,
+                signer_first_name="Adrian",
+                signer_last_name="Newey",
+                signer_email="adrian@redbull.com",
+                signer_role="technician",
+                status="signed"
+            )
+            db.session.add(bvsr)
+            db.session.flush()
+
+            with patch("services.common.signatures.send_waiver_signed_email") as mock_send_signed_bvsr:
+                _send_waiver_confirmation_email("safety_rules", bvsr, "/dummy/bvsr.pdf")
+                mock_send_signed_bvsr.assert_called_once()
+                args, kwargs = mock_send_signed_bvsr.call_args
+                self.assertEqual(args[0], "adrian@redbull.com")
+                self.assertEqual(args[1], "Adrian Newey")
+                self.assertEqual(kwargs.get("waiver_type"), "safety_rules")
+
+            # 4. Vérification de send_waiver_signed_email : CC=None et BCC=[admin_mail] (CCI)
+            with patch.dict(os.environ, {"SUPER_ADMIN_MAIL": "maxime@bellevitesse.com"}):
+                send_waiver_signed_email(
+                    to_email="max@redbull.com",
+                    recipient_name="Max Verstappen",
+                    project_name=proj.name,
+                    pdf_path="/dummy/path.pdf",
+                    waiver_type="pilot_waiver"
+                )
+                mock_send_email.assert_called_once()
+                _, mail_kwargs = mock_send_email.call_args
+                self.assertEqual(mail_kwargs.get("to_email"), "max@redbull.com")
+                self.assertIsNone(mail_kwargs.get("cc"))
+                self.assertEqual(mail_kwargs.get("bcc"), ["maxime@bellevitesse.com"])
+
+            mock_send_email.reset_mock()
+
+            # 5. Dédoublonnage si le signataire est lui-même l'administrateur
+            with patch.dict(os.environ, {"SUPER_ADMIN_MAIL": "maxime@bellevitesse.com"}):
+                send_waiver_signed_email(
+                    to_email="maxime@bellevitesse.com",
+                    recipient_name="Maxime Congi",
+                    project_name=proj.name,
+                    pdf_path="/dummy/path.pdf",
+                    waiver_type="pilot_waiver"
+                )
+                mock_send_email.assert_called_once()
+                _, mail_kwargs = mock_send_email.call_args
+                self.assertEqual(mail_kwargs.get("to_email"), "maxime@bellevitesse.com")
+                self.assertIsNone(mail_kwargs.get("cc"))
+                self.assertIsNone(mail_kwargs.get("bcc"))
+
 
 if __name__ == "__main__":
     unittest.main()

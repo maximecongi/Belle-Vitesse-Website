@@ -119,7 +119,8 @@ class EmailService:
                     msg.attach(part)
                 else:
                     if current_app:
-                        current_app.logger.error(f"❌ Attachment not found at {att_path}")
+                        current_app.logger.error(
+                            f"❌ Attachment not found at {att_path}")
         else:
             msg = MIMEMultipart("alternative")
             if text_content:
@@ -153,6 +154,7 @@ class EmailService:
         text_content=None,
         sender_type="contact",
         cc=None,
+        bcc=None,
         attachments=None,
         extra_headers=None,
         timeout=10,
@@ -189,6 +191,7 @@ class EmailService:
                 text_content=text_content,
                 sender_type=sender_type,
                 cc=cc,
+                bcc=bcc,
                 attachments=attachments,
                 extra_headers=extra_headers,
                 timeout=timeout,
@@ -548,10 +551,10 @@ def send_pilot_waiver_invitation_email(to_email, recipient_name, project_name, s
 
 
 def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path, production_name=None, waiver_type=None):
-    """Envoie un email avec le PDF des CGL, BVSR ou Attestation Pilote signé en pièce jointe."""
+    """Envoie un email avec le PDF des CGL, BVSR ou Attestation Pilote signé en pièce jointe (CCI admin)."""
     admin_mail = os.getenv("SUPER_ADMIN_MAIL", "contact@bellevitesse.com")
     current_app.logger.info(
-        f"🚀 Sending signed document PDF to {to_email} and {admin_mail}")
+        f"🚀 Sending signed document PDF to {to_email} (BCC/CCI admin: {admin_mail})")
     if waiver_type == "cgl":
         doc_desc = "les Conditions Générales de Location (CGL) signées"
         subject_desc = "Conditions Générales de Location (CGL) signées"
@@ -578,6 +581,10 @@ def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path, p
     context["doc_title"] = doc_title
     context["subject_desc"] = subject_desc
 
+    bcc_recipients = []
+    if admin_mail and admin_mail.strip().lower() != (to_email or "").strip().lower():
+        bcc_recipients.append(admin_mail.strip())
+
     return EmailService.send_templated_email(
         to_email=to_email,
         subject=f"{subject_desc} - {project_name}",
@@ -585,7 +592,8 @@ def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path, p
         context=context,
         text_content=text_content,
         sender_type="contact",
-        cc=admin_mail,
+        cc=None,
+        bcc=bcc_recipients if bcc_recipients else None,
         attachments=[pdf_path] if pdf_path else None,
         timeout=15,
     )
@@ -720,10 +728,10 @@ def send_incident_signature_request_email(incident, to_email, signing_url):
 
 
 def send_incident_signed_confirmation_email(incident, to_email, pdf_path):
-    """Envoie l'exemplaire certifié scellé du rapport d'incident avec le PDF en pièce jointe."""
+    """Envoie l'exemplaire certifié scellé du rapport d'incident avec le PDF en pièce jointe (CCI admin)."""
     admin_mail = os.getenv("SUPER_ADMIN_MAIL", "contact@bellevitesse.com")
     current_app.logger.info(
-        f"🚀 Envoi de la confirmation d'incident scellé {incident.incident_number} à {to_email}"
+        f"🚀 Envoi de la confirmation d'incident scellé {incident.incident_number} à {to_email} (BCC/CCI admin: {admin_mail})"
     )
 
     context = _build_incident_email_context(incident)
@@ -739,6 +747,10 @@ def send_incident_signed_confirmation_email(incident, to_email, pdf_path):
         f"L'équipe Belle Vitesse"
     )
 
+    bcc_recipients = []
+    if admin_mail and admin_mail.strip().lower() != (to_email or "").strip().lower():
+        bcc_recipients.append(admin_mail.strip())
+
     return EmailService.send_templated_email(
         to_email=to_email,
         subject=f"Constat scellé et signé - {incident_num} ({project_name})",
@@ -746,7 +758,8 @@ def send_incident_signed_confirmation_email(incident, to_email, pdf_path):
         context=context,
         text_content=text_content,
         sender_type="contact",
-        cc=admin_mail,
+        cc=None,
+        bcc=bcc_recipients if bcc_recipients else None,
         attachments=[pdf_path] if pdf_path else None,
         timeout=15,
     )

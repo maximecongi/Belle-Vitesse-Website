@@ -32,6 +32,7 @@ def task_send_email(
     text_content: Optional[str] = None,
     sender_type: str = "contact",
     cc: Optional[Union[str, List[str]]] = None,
+    bcc: Optional[Union[str, List[str]]] = None,
     attachments: Optional[List[Union[str, Dict[str, str]]]] = None,
     extra_headers: Optional[Dict[str, str]] = None,
     timeout: int = 15,
@@ -56,13 +57,28 @@ def task_send_email(
         recipients = [to_email]
         if cc:
             if isinstance(cc, list):
-                recipients.extend(cc)
-            else:
-                recipients.append(cc)
+                recipients.extend([c.strip() for c in cc if c and c.strip()])
+            elif cc.strip():
+                recipients.append(cc.strip())
+
+        if bcc:
+            if isinstance(bcc, list):
+                recipients.extend([b.strip() for b in bcc if b and b.strip()])
+            elif bcc.strip():
+                recipients.append(bcc.strip())
+
+        # Dé-dupliquer les adresses de l'enveloppe SMTP tout en préservant l'ordre
+        seen_recipients = set()
+        unique_recipients = []
+        for r in recipients:
+            r_lower = r.lower()
+            if r_lower not in seen_recipients:
+                seen_recipients.add(r_lower)
+                unique_recipients.append(r)
 
         success = EmailService._send_smtp_message(
             msg,
-            recipients,
+            unique_recipients,
             sender_type=sender_type,
             timeout=timeout,
         )
@@ -89,6 +105,7 @@ def dispatch_email(
     text_content: Optional[str] = None,
     sender_type: str = "contact",
     cc: Optional[Union[str, List[str]]] = None,
+    bcc: Optional[Union[str, List[str]]] = None,
     attachments: Optional[List[Union[str, Dict[str, str]]]] = None,
     extra_headers: Optional[Dict[str, str]] = None,
     timeout: int = 15,
@@ -116,6 +133,7 @@ def dispatch_email(
             text_content=text_content,
             sender_type=sender_type,
             cc=cc,
+            bcc=bcc,
             attachments=attachments,
             extra_headers=extra_headers,
             timeout=timeout,
@@ -133,6 +151,7 @@ def dispatch_email(
                 text_content=text_content,
                 sender_type=sender_type,
                 cc=cc,
+                bcc=bcc,
                 attachments=attachments,
                 extra_headers=extra_headers,
                 timeout=timeout,
@@ -161,6 +180,7 @@ def dispatch_email(
                         text_content=text_content,
                         sender_type=sender_type,
                         cc=cc,
+                        bcc=bcc,
                         attachments=attachments,
                         extra_headers=extra_headers,
                         timeout=timeout,
@@ -176,6 +196,7 @@ def dispatch_email(
                     text_content=text_content,
                     sender_type=sender_type,
                     cc=cc,
+                    bcc=bcc,
                     attachments=attachments,
                     extra_headers=extra_headers,
                     timeout=timeout,

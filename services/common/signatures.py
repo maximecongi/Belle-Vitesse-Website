@@ -902,27 +902,33 @@ def _dispatch_kdrive_document_bundle(mode, record, rel_pdf_path, base_url, curre
 
 
 def _send_waiver_confirmation_email(mode, waiver, pdf_path):
-    """Envoie une confirmation par e-mail avec le PDF en pièce jointe."""
+    """Envoie une confirmation par e-mail avec le PDF en pièce jointe au signataire."""
     try:
-        recipient_email = None
-        recipient_name = None
+        recipient_email = getattr(waiver, "signer_email", None)
+        recipient_name = getattr(waiver, "signer_name", None)
 
-        if mode == "safety_rules":
-            recipient_email = getattr(waiver, "signer_email", None)
-            recipient_name = waiver.signer_name
-            if not recipient_email and waiver.project:
-                if waiver.project.pilot_contact and getattr(waiver, "signer_role", None) == "pilot":
-                    recipient_email = waiver.project.pilot_contact.mail
-                elif waiver.project.production_contact:
-                    recipient_email = waiver.project.production_contact.mail
-        else:
-            if waiver.project and waiver.project.production_contact:
-                recipient_email = waiver.project.production_contact.mail
-            recipient_name = waiver.production_representative
+        p = getattr(waiver, "project", None)
+        # Replis si l'e-mail n'a pas été renseigné directement
+        if not recipient_email and p:
+            if mode == "pilot_waiver" or (mode == "safety_rules" and getattr(waiver, "signer_role", None) == "pilot"):
+                if p.pilot_contact and p.pilot_contact.mail:
+                    recipient_email = p.pilot_contact.mail
+                    if not recipient_name or recipient_name == "—":
+                        recipient_name = f"{p.pilot_contact.first_name} {p.pilot_contact.last_name}".strip()
+            elif p.production_contact and p.production_contact.mail:
+                recipient_email = p.production_contact.mail
+                if not recipient_name or recipient_name == "—":
+                    recipient_name = f"{p.production_contact.first_name} {p.production_contact.last_name}".strip()
+
+        if not recipient_name or recipient_name == "—":
+            if mode == "cgl" and getattr(waiver, "production_representative", None):
+                recipient_name = waiver.production_representative
+            else:
+                recipient_name = "Signataire"
 
         prod_name = None
-        if waiver.project and waiver.project.production:
-            prod_name = waiver.project.production.name
+        if p and p.production:
+            prod_name = p.production.name
         elif getattr(waiver, "production_name", None):
             prod_name = waiver.production_name
 
@@ -930,14 +936,17 @@ def _send_waiver_confirmation_email(mode, waiver, pdf_path):
             send_waiver_signed_email(
                 recipient_email,
                 recipient_name,
-                waiver.project_name or (
-                    waiver.project.name if waiver.project else "—"),
+                waiver.project_name or (p.name if p else "—"),
                 pdf_path,
                 production_name=prod_name,
                 waiver_type=mode,
             )
+        else:
+            logger.warning(
+                f"⚠️ Aucun e-mail destinataire trouvé pour la confirmation {mode} #{getattr(waiver, 'id', '')}"
+            )
     except Exception as e:
-        logger.error(f"❌ Erreur e-mail ({mode} {waiver.id}) : {e}")
+        logger.error(f"❌ Erreur e-mail ({mode} {getattr(waiver, 'id', '')}) : {e}")
 
 
 def seal_incident_contradictory_document(incident, incident_data, base_url=None):
