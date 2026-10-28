@@ -18,6 +18,9 @@ function init() {
     if (typeof window.initIncidentDetail === 'function') window.initIncidentDetail();
     if (typeof window.initProjectForm === 'function') window.initProjectForm();
     if (typeof window.initInspectionDetail === 'function') window.initInspectionDetail();
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
+    }
     if (document.querySelector('[data-auto-print="true"]')) {
         window.print();
     }

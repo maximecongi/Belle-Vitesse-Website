@@ -61,59 +61,8 @@
         </div>
     </div>
 
-    <!-- JS -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const forms = document.querySelectorAll('.newsletter-form');
-
-            forms.forEach(form => {
-                const container = form.closest('.newsletter');
-                const messageDiv = container ? container.querySelector('.newsletter-message') : null;
-                const input = form.querySelector('input[name="email"]');
-
-                if (!input || !messageDiv) return;
-
-                form.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-
-                    const email = input.value;
-                    messageDiv.className = 'newsletter-message';
-                    messageDiv.textContent = 'Subscribing...';
-                    messageDiv.classList.add('show');
-
-                    try {
-                        const formData = new FormData(form);
-                        formData.set('email', email);
-                        formData.set('lang', 'en');
-
-                        const response = await fetch('/subscribe', {
-                            method: 'POST',
-                            body: formData
-                        });
-
-                        const data = await response.json();
-
-                        messageDiv.textContent = data.message;
-                        if (response.ok) {
-                            messageDiv.className = 'newsletter-message success show';
-                            form.reset();
-                        } else {
-                            messageDiv.className = 'newsletter-message error show';
-                        }
-
-                        setTimeout(() => {
-                            messageDiv.classList.remove('show');
-                        }, 5000);
-
-                    } catch (error) {
-                        console.error('Error:', error);
-                        messageDiv.textContent = 'An error occurred. Please try again.';
-                        messageDiv.className = 'newsletter-message error show';
-                    }
-                });
-            });
-        });
-    </script>
+    <!-- JS modulaire -->
+    <script src="{{ asset_url('js/src/public/newsletter.js') }}"></script>
 </body>
 
 </html>

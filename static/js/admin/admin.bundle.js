@@ -3313,6 +3313,27 @@ function initInspectionDetail() {
     }
 }
 window.initInspectionDetail = initInspectionDetail;
+
+function autoInitInspectionForm() {
+    const configEl = document.getElementById('checkpointsConfigData');
+    if (configEl && typeof window.initInspectionForm === 'function') {
+        let config = {};
+        try {
+            config = JSON.parse(configEl.textContent || '{}');
+        } catch (e) {
+            console.error("Erreur parsing checkpointsConfigData:", e);
+        }
+        window.initInspectionForm(config);
+    }
+}
+window.autoInitInspectionForm = autoInitInspectionForm;
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', autoInitInspectionForm);
+} else {
+    autoInitInspectionForm();
+}
+document.addEventListener('swup:contentReplaced', autoInitInspectionForm);
 ;
 
 /* ── js/src/admin/photo-annotator.js ── */
@@ -7585,6 +7606,723 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 ;
 
+/* ── js/src/admin/mcp-modal.js ── */
+/**
+ * mcp-modal.js — Contrôleur modulaire unifié pour la modale MCP et les connecteurs API.
+ * Utilisé dans settings.html et mcp_connector.html.
+ */
+
+function initMcpModal() {
+    const modal = document.getElementById('mcpTokenModal');
+    if (!modal && !document.getElementById('mcpStatusBadge') && !document.querySelector('.tab-btn')) {
+        return;
+    }
+
+    // 1. Boutons d'ouverture de la modale
+    const openBtns = [
+        document.getElementById('openCreateTokenModal'),
+        ...document.querySelectorAll('.openCreateTokenModalBtn')
+    ].filter(Boolean);
+
+    const closeBtn = document.getElementById('closeMcpModal');
+    const confirmCloseBtn = document.getElementById('confirmMcpModalClose');
+    const refreshBtn = document.getElementById('modalCloseAndRefresh');
+    const modalResultBlock = document.getElementById('modalResultBlock');
+
+    // 2. Formulaire de génération de jeton (support des deux IDs : settings et mcp_connector)
+    const form = document.getElementById('generateMcpTokenForm') || document.getElementById('generateMcpTokenFormModal');
+    const rawTokenInput = document.getElementById('mcpRawTokenInput') || document.getElementById('modalRawTokenInput');
+    const claudeUrlInput = document.getElementById('mcpClaudeUrlInput') || document.getElementById('modalClaudeUrlInput');
+    const configPreview = document.getElementById('mcpConfigPreview');
+
+    openBtns.forEach(btn => {
+        btn.addEventListener('click', function () {
+            if (modal) modal.style.display = 'flex';
+            if (modalResultBlock) modalResultBlock.style.display = 'none';
+            if (form) form.style.display = 'block';
+        });
+    });
+
+    function closeModalAndReload() {
+        if (modal) modal.style.display = 'none';
+        window.location.reload();
+    }
+
+    if (closeBtn) closeBtn.addEventListener('click', () => {
+        if (refreshBtn || confirmCloseBtn) closeModalAndReload();
+        else if (modal) modal.style.display = 'none';
+    });
+    if (confirmCloseBtn) confirmCloseBtn.addEventListener('click', closeModalAndReload);
+    if (refreshBtn) refreshBtn.addEventListener('click', closeModalAndReload);
+
+    if (modal) {
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) closeModalAndReload();
+        });
+    }
+
+    if (form) {
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const formData = new FormData(form);
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body: formData
+                });
+                const data = await response.json();
+                if (response.ok && data.raw_token) {
+                    if (modalResultBlock) {
+                        form.style.display = 'none';
+                        modalResultBlock.style.display = 'block';
+                    }
+                    if (rawTokenInput) rawTokenInput.value = data.raw_token;
+
+                    const isLocal = window.location.origin.includes('127.0.0.1') || window.location.origin.includes('localhost');
+                    const mcpUrl = isLocal ? "http://127.0.0.1:8080/mcp" : "https://team.bellevitesse.com/mcp";
+                    const directClaudeUrl = `${mcpUrl}?token=${data.raw_token}`;
+
+                    if (claudeUrlInput) claudeUrlInput.value = directClaudeUrl;
+
+                    if (configPreview) {
+                        configPreview.textContent = JSON.stringify({
+                            "mcpServers": {
+                                "BV-MCP": {
+                                    "url": mcpUrl,
+                                    "headers": {
+                                        "Authorization": `Bearer ${data.raw_token}`
+                                    }
+                                }
+                            }
+                        }, null, 2);
+                    }
+
+                    if (modal && !modalResultBlock) {
+                        modal.style.display = 'flex';
+                    }
+                } else {
+                    alert(data.message || 'Erreur lors de la génération du token.');
+                }
+            } catch (err) {
+                console.error("Erreur génération MCP token:", err);
+                alert("Erreur lors de la communication avec le serveur.");
+            }
+        });
+    }
+
+    // 3. Gestion de la copie dans le presse-papier
+    function setupCopyButton(btnId, inputEl, copiedLabel) {
+        const btn = document.getElementById(btnId);
+        if (!btn || !inputEl) return;
+        btn.addEventListener('click', function () {
+            const val = inputEl.value !== undefined ? inputEl.value : inputEl;
+            if (inputEl.select) inputEl.select();
+            navigator.clipboard.writeText(val).then(() => {
+                const orig = btn.innerHTML;
+                btn.innerHTML = copiedLabel || '✅ Copié !';
+                setTimeout(() => btn.innerHTML = orig, 2500);
+            }).catch(err => console.error("Erreur copie:", err));
+        });
+    }
+
+    setupCopyButton('copyMcpTokenBtn', rawTokenInput, '✅ Copié !');
+    setupCopyButton('modalCopyRawTokenBtn', rawTokenInput, '✅ Copié !');
+    setupCopyButton('copyClaudeUrlBtn', claudeUrlInput, '✅ URL Copiée !');
+    setupCopyButton('modalCopyClaudeUrlBtn', claudeUrlInput, '✅ Copié !');
+
+    const copyEndpointBtn = document.getElementById('copyEndpointBtn');
+    if (copyEndpointBtn) {
+        copyEndpointBtn.addEventListener('click', function () {
+            navigator.clipboard.writeText('https://team.bellevitesse.com/mcp').then(() => {
+                copyEndpointBtn.textContent = '✅ Copié !';
+                setTimeout(() => copyEndpointBtn.textContent = 'Copier', 2000);
+            });
+        });
+    }
+
+    // 4. Vérification dynamique du statut du serveur MCP
+    const statusBadge = document.getElementById('mcpStatusBadge');
+    if (statusBadge) {
+        const isLocal = window.location.origin.includes('127.0.0.1') || window.location.origin.includes('localhost');
+        const healthUrl = isLocal ? 'http://127.0.0.1:8080/health' : 'https://team.bellevitesse.com/mcp/health';
+        fetch(healthUrl, { method: 'GET' })
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.status === 'healthy') {
+                    statusBadge.className = 'badge-pill u-bg-success u-text-white';
+                    statusBadge.textContent = 'EN LIGNE (Streamable HTTP)';
+                } else {
+                    statusBadge.className = 'badge-pill u-bg-danger u-text-white';
+                    statusBadge.textContent = 'SERVEUR NON DISPONIBLE';
+                }
+            })
+            .catch(() => {
+                statusBadge.className = 'badge-pill u-bg-danger u-text-white';
+                statusBadge.textContent = 'HORS LIGNE';
+            });
+    }
+
+    // 5. Gestion des Onglets
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', function () {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('u-d-none'));
+            btn.classList.add('active');
+            const targetId = btn.getAttribute('data-tab');
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) targetEl.classList.remove('u-d-none');
+        });
+    });
+}
+
+window.initMcpModal = initMcpModal;
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMcpModal);
+} else {
+    initMcpModal();
+}
+document.addEventListener('swup:contentReplaced', initMcpModal);
+;
+
+/* ── js/src/admin/vehicle-configs.js ── */
+/**
+ * vehicle-configs.js — Gestion Ajax de la configuration des points de contrôle par véhicule.
+ */
+
+function initVehicleConfigs() {
+    const saveButtons = document.querySelectorAll('.save-vehicle-btn');
+    if (!saveButtons.length) return;
+
+    saveButtons.forEach(btn => {
+        if (btn._hasVehicleConfigListener) return;
+        btn._hasVehicleConfigListener = true;
+
+        btn.addEventListener('click', function () {
+            const vehicleId = this.dataset.vehicle;
+            const checkboxes = document.querySelectorAll(`.checkpoint-toggle[data-vehicle="${vehicleId}"]`);
+
+            const enabledKeys = [];
+            checkboxes.forEach(cb => {
+                if (cb.checked) enabledKeys.push(cb.dataset.key);
+            });
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                || document.querySelector('input[name="csrf_token"]')?.value
+                || '';
+
+            btn.disabled = true;
+            btn.innerText = '...';
+
+            fetch('/admin/api/vehicle-configs', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    vehicle_id: vehicleId,
+                    enabled_keys: enabledKeys
+                })
+            })
+                .then(r => r.json())
+                .then(res => {
+                    if (res.success) {
+                        btn.innerText = "C'est fait !";
+                        btn.classList.add('admin-btn-success-state');
+                        setTimeout(() => {
+                            btn.disabled = false;
+                            btn.innerText = 'Enregistrer';
+                            btn.classList.remove('admin-btn-success-state');
+                        }, 2000);
+                    } else {
+                        alert('Erreur: ' + (res.error || 'Impossible d\'enregistrer'));
+                        btn.disabled = false;
+                        btn.innerText = 'Enregistrer';
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Erreur de connexion');
+                    btn.disabled = false;
+                    btn.innerText = 'Enregistrer';
+                });
+        });
+    });
+}
+
+window.initVehicleConfigs = initVehicleConfigs;
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initVehicleConfigs);
+} else {
+    initVehicleConfigs();
+}
+document.addEventListener('swup:contentReplaced', initVehicleConfigs);
+;
+
+/* ── js/src/admin/fleet-filters.js ── */
+/**
+ * fleet-filters.js — Filtrage par statut et recherche instantanée sur la flotte de véhicules.
+ */
+
+function initFleetFilters() {
+    const filterPills = document.querySelectorAll('#fleet-filter-pills .filter-pill');
+    const cards = document.querySelectorAll('.vehicle-card');
+    const visibleCount = document.getElementById('fleet-visible-count') || document.getElementById('visible-count');
+    const emptyFilterState = document.getElementById('fleet-empty-filter');
+    const searchInput = document.getElementById('searchInput');
+
+    if (!cards.length) return;
+
+    let currentFilter = 'all';
+
+    function applyFilters() {
+        const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+        let count = 0;
+        cards.forEach(card => {
+            const status = card.getAttribute('data-status');
+            const name = card.getAttribute('data-name') || '';
+            const uniqueId = card.getAttribute('data-unique-id') || '';
+
+            const statusMatches = (currentFilter === 'all' || status === currentFilter);
+            const searchMatches = !query || name.includes(query) || uniqueId.includes(query);
+
+            if (statusMatches && searchMatches) {
+                card.classList.remove('is-hidden', 'u-d-none');
+                count++;
+            } else {
+                card.classList.add('is-hidden', 'u-d-none');
+            }
+        });
+
+        if (visibleCount) {
+            visibleCount.textContent = count;
+        }
+
+        if (emptyFilterState) {
+            if (count === 0) {
+                emptyFilterState.classList.remove('is-hidden', 'u-d-none');
+            } else {
+                emptyFilterState.classList.add('is-hidden', 'u-d-none');
+            }
+        }
+    }
+
+    if (searchInput && !searchInput._hasFleetListener) {
+        searchInput._hasFleetListener = true;
+        const urlParams = new URLSearchParams(window.location.search);
+        const initialQ = urlParams.get('q');
+        if (initialQ) {
+            searchInput.value = initialQ;
+        }
+        searchInput.addEventListener('input', applyFilters);
+    }
+
+    filterPills.forEach(pill => {
+        if (pill._hasFleetPillListener) return;
+        pill._hasFleetPillListener = true;
+
+        pill.addEventListener('click', function () {
+            filterPills.forEach(p => {
+                p.classList.remove('active', 'admin-btn-primary');
+                p.classList.add('admin-btn-quaternary');
+            });
+            this.classList.add('active', 'admin-btn-primary');
+            this.classList.remove('admin-btn-quaternary');
+            currentFilter = this.getAttribute('data-status') || this.getAttribute('data-filter') || 'all';
+            applyFilters();
+        });
+    });
+
+    // Application initiale
+    applyFilters();
+}
+
+window.initFleetFilters = initFleetFilters;
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initFleetFilters);
+} else {
+    initFleetFilters();
+}
+document.addEventListener('swup:contentReplaced', initFleetFilters);
+;
+
+/* ── js/src/admin/contacts-qr.js ── */
+/**
+ * contacts-qr.js — Gestion du QR code vCard et du téléchargement des fiches contacts.
+ */
+
+function initContactsQr() {
+    const modal = document.getElementById('qrModal');
+    const modalName = document.getElementById('qrModalName');
+    const modalCode = document.getElementById('qrModalCode');
+    const modalDownload = document.getElementById('qrModalDownload');
+
+    if (!modal || !modalName || !modalCode || !modalDownload) return;
+
+    let currentVcfB64 = '';
+    let currentFilename = '';
+
+    function renderQR(container, text, size) {
+        if (typeof qrcode === 'undefined') return;
+        const qr = qrcode(0, 'L');
+        qr.addData(text);
+        qr.make();
+        const cellSize = Math.floor(size / qr.getModuleCount());
+        const img = document.createElement('img');
+        img.src = qr.createDataURL(cellSize, 0);
+        img.style.width = size + 'px';
+        img.style.height = size + 'px';
+        container.appendChild(img);
+    }
+
+    document.querySelectorAll('.qr-trigger').forEach(trigger => {
+        if (trigger._hasQrListener) return;
+        trigger._hasQrListener = true;
+
+        trigger.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            modalName.textContent = trigger.dataset.name || '';
+            modalCode.innerHTML = '';
+            currentVcfB64 = trigger.dataset.vcf || '';
+            currentFilename = trigger.dataset.filename || 'contact.vcf';
+            try {
+                const vcfText = decodeURIComponent(escape(atob(currentVcfB64)));
+                renderQR(modalCode, vcfText, 260);
+                modal.style.display = 'flex';
+            } catch (err) {
+                console.error("Erreur décodage vCard:", err);
+            }
+        });
+    });
+
+    if (!modalDownload._hasDownloadListener) {
+        modalDownload._hasDownloadListener = true;
+        modalDownload.addEventListener('click', function () {
+            if (!currentVcfB64) return;
+            try {
+                const raw = atob(currentVcfB64);
+                const blob = new Blob([raw], { type: 'text/vcard' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = currentFilename;
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                console.error("Erreur téléchargement vCard:", err);
+            }
+        });
+    }
+
+    if (!modal._hasCloseListener) {
+        modal._hasCloseListener = true;
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && modal.style.display === 'flex') {
+                modal.style.display = 'none';
+            }
+        });
+    }
+}
+
+window.initContactsQr = initContactsQr;
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initContactsQr);
+} else {
+    initContactsQr();
+}
+document.addEventListener('swup:contentReplaced', initContactsQr);
+;
+
+/* ── js/src/admin/vehicle-timeline.js ── */
+/**
+ * vehicle-timeline.js — Contrôleur de la vue chronologique et par mission des véhicules.
+ */
+
+function initVehicleTimeline() {
+    const viewToggle = document.getElementById('timeline-view-toggle');
+    const viewToggleBtns = document.querySelectorAll('#timeline-view-toggle .view-toggle-btn');
+    const missionsView = document.getElementById('timeline-missions-view');
+    const linearView = document.getElementById('timeline-linear-view');
+    const linearFilters = document.getElementById('linear-filters-container');
+    const viewCountSpan = document.getElementById('view-indicator-count');
+
+    if (!viewToggleBtns.length) return;
+
+    const missionsCount = viewToggle ? viewToggle.dataset.missionsCount || '0' : '0';
+    const eventsCount = viewToggle ? viewToggle.dataset.eventsCount || '0' : '0';
+
+    viewToggleBtns.forEach(btn => {
+        if (btn._hasTimelineToggleListener) return;
+        btn._hasTimelineToggleListener = true;
+
+        btn.addEventListener('click', function () {
+            viewToggleBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            const view = this.getAttribute('data-view');
+            if (view === 'missions') {
+                if (missionsView) missionsView.classList.remove('is-hidden');
+                if (linearView) linearView.classList.add('is-hidden');
+                if (linearFilters) linearFilters.classList.add('is-hidden');
+                if (viewCountSpan) viewCountSpan.textContent = `${missionsCount} mission(s) répertoriée(s)`;
+            } else {
+                if (missionsView) missionsView.classList.add('is-hidden');
+                if (linearView) linearView.classList.remove('is-hidden');
+                if (linearFilters) linearFilters.classList.remove('is-hidden');
+                if (viewCountSpan) viewCountSpan.textContent = `${eventsCount} événement(s) au total`;
+            }
+        });
+    });
+
+    // Filtres pour le flux linéaire
+    const filterButtons = document.querySelectorAll('#timeline-filters .timeline-filter-btn');
+    const items = document.querySelectorAll('#timeline-linear-view .timeline-linear-item');
+    const emptyFilterState = document.getElementById('timeline-empty-filter');
+
+    if (!filterButtons.length) return;
+
+    filterButtons.forEach(btn => {
+        if (btn._hasTimelineFilterListener) return;
+        btn._hasTimelineFilterListener = true;
+
+        btn.addEventListener('click', function () {
+            filterButtons.forEach(b => {
+                b.classList.remove('active', 'admin-btn-primary');
+                b.classList.add('admin-btn-quaternary');
+            });
+            this.classList.add('active', 'admin-btn-primary');
+            this.classList.remove('admin-btn-quaternary');
+
+            const targetType = this.getAttribute('data-type');
+            let count = 0;
+
+            items.forEach(item => {
+                const itemType = item.getAttribute('data-type');
+                const matches = (targetType === 'all' || itemType === targetType);
+                if (matches) {
+                    item.classList.remove('is-hidden');
+                    count++;
+                } else {
+                    item.classList.add('is-hidden');
+                }
+            });
+
+            if (viewCountSpan && linearView && !linearView.classList.contains('is-hidden')) {
+                viewCountSpan.textContent = count + ' événement(s) affiché(s)';
+            }
+
+            if (emptyFilterState) {
+                if (count === 0) {
+                    emptyFilterState.classList.remove('is-hidden');
+                } else {
+                    emptyFilterState.classList.add('is-hidden');
+                }
+            }
+        });
+    });
+}
+
+window.initVehicleTimeline = initVehicleTimeline;
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initVehicleTimeline);
+} else {
+    initVehicleTimeline();
+}
+document.addEventListener('swup:contentReplaced', initVehicleTimeline);
+;
+
+/* ── js/src/admin/signature-generator.js ── */
+/**
+ * signature-generator.js — Générateur d'aperçu dynamique et de code HTML pour signatures email Belle Vitesse.
+ */
+
+function initSignatureGenerator() {
+    const nameInput = document.getElementById('f-name');
+    const jobInput = document.getElementById('f-job');
+    const emailInput = document.getElementById('f-email');
+    const phoneInput = document.getElementById('f-phone');
+    const codeOutput = document.getElementById('code-output');
+    const sigPreview = document.getElementById('sig-preview');
+    const copyBtn = document.getElementById('copy-btn');
+
+    if (!nameInput || !jobInput || !emailInput || !phoneInput || !codeOutput || !sigPreview || !copyBtn) {
+        return;
+    }
+
+    function esc(s) {
+        if (!s) return "";
+        return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function buildHtml(name, job, emailLocal, phone) {
+        const email = emailLocal.trim() + '@bellevitesse.com';
+        const tel = phone.replace(/\s/g, '');
+        return [
+            '<html>',
+            '<body style="margin:0;padding:0;font-family:Helvetica Neue,Helvetica,Arial,sans-serif;">',
+            '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;">',
+            '  <tr>',
+            '    <td style="padding-bottom:12px;">',
+            '      <div style="width:100%;height:2px;background:#ffc845;"></div>',
+            '    </td>',
+            '  </tr>',
+            '  <tr>',
+            '    <td>',
+            '      <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;">',
+            '        <tr>',
+            '          <td style="padding-right:20px;vertical-align:middle;border-right:1px solid #e8e8e8;">',
+            '            <img src="https://bellevitesse.com/static/CDN/noir-fond-transparent.png" width="90" style="display:block;" />',
+            '          </td>',
+            '          <td style="padding-left:20px;vertical-align:middle;">',
+            '            <p style="margin:0 0 1px;font-size:15px;font-weight:700;color:#0f0f0f;">' + name + '</p>',
+            '            <p style="margin:0 0 10px;font-size:9px;color:#ffc845;text-transform:uppercase;letter-spacing:0.14em;font-weight:600;">' + job + '</p>',
+            '            <table cellpadding="0" cellspacing="0">',
+            '              <tr><td style="padding-bottom:4px;">',
+            '                <span style="display:inline-block;width:3px;height:3px;background:#ffc845;vertical-align:middle;margin-right:6px;"></span>',
+            '                <a href="mailto:' + email + '" style="font-size:11px;color:#333;text-decoration:none;">' + email + '</a>',
+            '              </td></tr>',
+            '              <tr><td style="padding-bottom:4px;">',
+            '                <span style="display:inline-block;width:3px;height:3px;background:#ffc845;vertical-align:middle;margin-right:6px;"></span>',
+            '                <a href="tel:' + tel + '" style="font-size:11px;color:#333;text-decoration:none;">' + phone + '</a>',
+            '              </td></tr>',
+            '              <tr><td style="padding-bottom:4px;">',
+            '                <span style="display:inline-block;width:3px;height:3px;background:#ffc845;vertical-align:middle;margin-right:6px;"></span>',
+            '                <a href="https://bellevitesse.com" style="font-size:11px;color:#333;text-decoration:none;">bellevitesse.com</a>',
+            '              </td></tr>',
+            '              <tr><td>',
+            '                <span style="display:inline-block;width:3px;height:3px;background:#e0e0e0;vertical-align:middle;margin-right:6px;"></span>',
+            '                <span style="font-size:11px;color:#999;">Belle Vitesse SAS</span>',
+            '              </td></tr>',
+            '            </table>',
+            '          </td>',
+            '        </tr>',
+            '      </table>',
+            '    </td>',
+            '  </tr>',
+            '</table>',
+            '</body>',
+            '</html>'
+        ].join('\n');
+    }
+
+    function syntaxColor(raw) {
+        let code = esc(raw);
+        code = code.replace(/(&lt;\/?)([\w]+)/g, '<span class="t-punct">$1</span><span class="t-tag">$2</span>');
+        code = code.replace(/ ([\w-]+)=(&quot;)(.*?)(&quot;)/g, ' <span class="t-attr">$1</span><span class="t-punct">=</span><span class="t-punct">&quot;</span><span class="t-val">$3</span><span class="t-punct">&quot;</span>');
+        code = code.replace(/(&gt;)/g, '<span class="t-punct">$1</span>');
+        return code;
+    }
+
+    function update() {
+        const name = nameInput.value || '';
+        const job = jobInput.value || '';
+        const emailLocal = emailInput.value || '';
+        const phone = phoneInput.value || '';
+        const email = emailLocal.trim() + '@bellevitesse.com';
+        const tel = phone.replace(/\s/g, '');
+
+        const raw = buildHtml(name, job, emailLocal, phone);
+        codeOutput.innerHTML = syntaxColor(raw);
+        copyBtn.dataset.raw = raw;
+
+        const previewHtml = [
+            '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse; font-family:Helvetica Neue,Helvetica,Arial,sans-serif;">',
+            '  <tr>',
+            '    <td style="padding-bottom:12px;">',
+            '      <div style="width:100%;height:2px;background:#ffc845;"></div>',
+            '    </td>',
+            '  </tr>',
+            '  <tr>',
+            '    <td>',
+            '      <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;">',
+            '        <tr>',
+            '          <td style="padding-right:20px;vertical-align:middle;border-right:1px solid #e8e8e8;">',
+            '            <img src="https://bellevitesse.com/static/CDN/noir-fond-transparent.png" width="90" style="display:block;" />',
+            '          </td>',
+            '          <td style="padding-left:20px;vertical-align:middle;">',
+            '            <p style="margin:0 0 1px;font-size:15px;font-weight:700;color:#0f0f0f;">' + name + '</p>',
+            '            <p style="margin:0 0 10px;font-size:9px;color:#ffc845;text-transform:uppercase;letter-spacing:0.14em;font-weight:600;">' + job + '</p>',
+            '            <table cellpadding="0" cellspacing="0">',
+            '              <tr><td style="padding-bottom:4px;">',
+            '                <span class="sig-dot"></span>',
+            '                <a href="mailto:' + email + '" style="font-size:11px;color:#333;text-decoration:none;">' + email + '</a>',
+            '              </td></tr>',
+            '              <tr><td style="padding-bottom:4px;">',
+            '                <span class="sig-dot"></span>',
+            '                <a href="tel:' + tel + '" style="font-size:11px;color:#333;text-decoration:none;">' + phone + '</a>',
+            '              </td></tr>',
+            '              <tr><td style="padding-bottom:4px;">',
+            '                <span class="sig-dot"></span>',
+            '                <a href="https://bellevitesse.com" style="font-size:11px;color:#333;text-decoration:none;">bellevitesse.com</a>',
+            '              </td></tr>',
+            '              <tr><td>',
+            '                <span class="sig-dot muted"></span>',
+            '                <span style="font-size:11px;color:#999;">Belle Vitesse SAS</span>',
+            '              </td></tr>',
+            '            </table>',
+            '          </td>',
+            '        </tr>',
+            '      </table>',
+            '    </td>',
+            '  </tr>',
+            '</table>'
+        ].join('\n');
+
+        sigPreview.innerHTML = previewHtml;
+    }
+
+    [nameInput, jobInput, emailInput, phoneInput].forEach(inp => {
+        if (!inp._hasSigListener) {
+            inp._hasSigListener = true;
+            inp.addEventListener('input', update);
+        }
+    });
+
+    if (!copyBtn._hasCopyListener) {
+        copyBtn._hasCopyListener = true;
+        copyBtn.addEventListener('click', function () {
+            const raw = copyBtn.dataset.raw || '';
+            navigator.clipboard.writeText(raw).then(function () {
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'Copié ✓';
+                copyBtn.classList.remove('admin-btn-secondary');
+                copyBtn.classList.add('admin-btn-primary');
+                setTimeout(function () {
+                    copyBtn.textContent = originalText;
+                    copyBtn.classList.remove('admin-btn-primary');
+                    copyBtn.classList.add('admin-btn-secondary');
+                }, 2000);
+            });
+        });
+    }
+
+    update();
+}
+
+window.initSignatureGenerator = initSignatureGenerator;
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSignatureGenerator);
+} else {
+    initSignatureGenerator();
+}
+document.addEventListener('swup:contentReplaced', initSignatureGenerator);
+;
+
 /* ── js/src/admin.js ── */
 /**
  * admin.js — Orchestrateur central JavaScript pour l'administration Belle Vitesse.
@@ -7606,6 +8344,9 @@ function init() {
     if (typeof window.initIncidentDetail === 'function') window.initIncidentDetail();
     if (typeof window.initProjectForm === 'function') window.initProjectForm();
     if (typeof window.initInspectionDetail === 'function') window.initInspectionDetail();
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
+    }
     if (document.querySelector('[data-auto-print="true"]')) {
         window.print();
     }

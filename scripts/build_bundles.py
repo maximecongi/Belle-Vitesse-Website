@@ -76,6 +76,12 @@ ADMIN_JS_FILES: List[str] = [
     "js/src/admin/project-form.js",
     "js/src/admin/checkpoints.js",
     "js/src/admin/safety-rules-catalog.js",
+    "js/src/admin/mcp-modal.js",
+    "js/src/admin/vehicle-configs.js",
+    "js/src/admin/fleet-filters.js",
+    "js/src/admin/contacts-qr.js",
+    "js/src/admin/vehicle-timeline.js",
+    "js/src/admin/signature-generator.js",
     "js/src/admin.js",
 ]
 
@@ -92,6 +98,8 @@ PUBLIC_JS_FILES: List[str] = [
     "js/src/public/sign-pilot-waiver.js",
     "js/src/public/sign-inspection.js",
     "js/src/public/sign-incident.js",
+    "js/src/public/document-verifier.js",
+    "js/src/public/newsletter.js",
 ]
 
 

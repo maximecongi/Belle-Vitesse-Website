@@ -18,6 +18,7 @@ from models import (
 )
 from models.db import _utcnow
 from services.admin.utils import handle_admin_service_error
+from utils.document_utils import generate_pdf_access_token
 from utils.entity_resolvers import (
     resolve_cgl,
     resolve_safety_rules_waiver,
@@ -282,3 +283,23 @@ def get_or_create_waiver_signing_url(waiver_id: str, waiver_type: str = "cgl", b
         route_prefix = "cgl"
     signing_url = f"{root_url}/sign/{route_prefix}/{active_token.token}"
     return True, signing_url
+
+
+def get_secured_waiver_pdf_url(path, doc_type):
+    """
+    Génère une URL sécurisée avec jeton HMAC temporaire pour un document PDF scellé.
+    doc_type: 'cgl', 'safety-rules' / 'safety_rules' ou 'pilot-attestation' / 'pilot_waiver'.
+    """
+    if not path:
+        return None
+    route_prefix = (
+        "pilot-attestation"
+        if doc_type in ("pilot_waiver", "pilot-attestation", "pilot-waiver", "pilot")
+        else "cgl"
+        if doc_type in ("cgl", "production-waiver")
+        else "safety-rules"
+    )
+    clean_path = path.split("?")[0].split(f"/{route_prefix}/document/")[-1].lstrip("/")
+    token = generate_pdf_access_token(clean_path)
+    return f"/{route_prefix}/document/{clean_path}?t={token}"
+

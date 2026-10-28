@@ -10,9 +10,6 @@ from models import PilotWaiver, Project, WaiverToken, db
 from models.db import _utcnow
 from services.admin.status_mapping import format_waiver_status
 from services.admin.utils import handle_admin_service_error
-from utils.document_utils import (
-    generate_pdf_access_token as generate_waiver_pdf_access_token,
-)
 from utils.entity_resolvers import (
     resolve_pilot_waiver,
     resolve_project,
@@ -21,6 +18,7 @@ from utils.entity_resolvers import (
 from .common import (
     _format_project_shooting_dates,
     format_waiver_shooting_dates,
+    get_secured_waiver_pdf_url,
 )
 from .core import (
     create_waiver,
@@ -85,13 +83,6 @@ def list_pilot_waivers(project_id=None):
     for w in waivers:
         p = w.project
 
-        def get_secured_url(path):
-            if not path:
-                return None
-            clean_path = path.split('?')[0].split('/pilot-attestation/document/')[-1]
-            token = generate_waiver_pdf_access_token(clean_path)
-            return f"/pilot-attestation/document/{clean_path}?t={token}"
-
         raw_shooting_dates = w.shooting_dates or (_format_project_shooting_dates(p, default_sep=" → ") if p else "—")
         shooting_dates = format_waiver_shooting_dates(raw_shooting_dates, default_sep=" → ")
 
@@ -122,7 +113,7 @@ def list_pilot_waivers(project_id=None):
             "sent_at": w.sent_at,
             "signed_at": w.signed_at,
             "signature_token": active_token.token if active_token else None,
-            "signed_pdf_path": get_secured_url(w.signed_pdf_path),
+            "signed_pdf_path": get_secured_waiver_pdf_url(w.signed_pdf_path, "pilot-attestation"),
             "reminder_count": w.reminder_count or 0,
             "last_reminded_at": w.last_reminded_at
         })

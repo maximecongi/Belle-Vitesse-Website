@@ -240,14 +240,12 @@
     </div>
 </div>
 
-<script src="{{ asset_url('js/admin/admin-pricing.js') }}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        initPricing({
-            csrfToken: '{{ csrf_token() }}',
-            isAdmin: {{ 'true' if current_user.is_admin else 'false' }},
-        invoiceFactor: {{ invoice_factor }}
-        });
-    });
+<script id="pricingConfigData" type="application/json">
+{
+    "csrfToken": "{{ csrf_token() }}",
+    "isAdmin": {{ 'true' if current_user.is_admin else 'false' }},
+    "invoiceFactor": {{ invoice_factor }}
+}
 </script>
+<script src="{{ asset_url('js/admin/admin-pricing.js') }}"></script>
 {% endblock %}

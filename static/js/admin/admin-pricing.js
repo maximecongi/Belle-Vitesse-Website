@@ -650,3 +650,23 @@ class PricingAdmin {
 window.initPricing = (config) => {
     window.pricingAdmin = new PricingAdmin(config);
 };
+
+function autoInitPricing() {
+    const configEl = document.getElementById('pricingConfigData');
+    if (configEl) {
+        try {
+            const config = JSON.parse(configEl.textContent || '{}');
+            window.initPricing(config);
+        } catch (e) {
+            console.error("Erreur parsing pricingConfigData:", e);
+        }
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', autoInitPricing);
+} else {
+    autoInitPricing();
+}
+document.addEventListener('swup:contentReplaced', autoInitPricing);
+

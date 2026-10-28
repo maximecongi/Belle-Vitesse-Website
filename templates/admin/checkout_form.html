@@ -350,13 +350,4 @@
 </div>
 
 <script id="checkpointsConfigData" type="application/json">{{ checkpoints_config_json|safe }}</script>
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        if (typeof window.initInspectionForm === 'function') {
-            const configEl = document.getElementById('checkpointsConfigData');
-            const config = configEl ? JSON.parse(configEl.textContent) : {};
-            window.initInspectionForm(config);
-        }
-    });
-</script>
 {% endblock %}

@@ -696,6 +696,6 @@ test_script_remind_waivers_dry_run (test_waivers_reminders.WaiversRemindersTest.
 Vérifie le fonctionnement du script scripts/remind_waivers.py en mode dry-run. ... ok
 
 ----------------------------------------------------------------------
-Ran 395 tests in 44.745s
+Ran 395 tests in 46.094s
 
 OK

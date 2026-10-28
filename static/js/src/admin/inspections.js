@@ -356,3 +356,25 @@ function initInspectionDetail() {
     }
 }
 window.initInspectionDetail = initInspectionDetail;
+
+function autoInitInspectionForm() {
+    const configEl = document.getElementById('checkpointsConfigData');
+    if (configEl && typeof window.initInspectionForm === 'function') {
+        let config = {};
+        try {
+            config = JSON.parse(configEl.textContent || '{}');
+        } catch (e) {
+            console.error("Erreur parsing checkpointsConfigData:", e);
+        }
+        window.initInspectionForm(config);
+    }
+}
+window.autoInitInspectionForm = autoInitInspectionForm;
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', autoInitInspectionForm);
+} else {
+    autoInitInspectionForm();
+}
+document.addEventListener('swup:contentReplaced', autoInitInspectionForm);
+

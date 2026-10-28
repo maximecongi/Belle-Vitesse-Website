@@ -22,21 +22,10 @@ logger = logging.getLogger(__name__)
 def _get_secured_document_url(path, doc_type):
     """
     Génère une URL sécurisée et tokenisée pour un document PDF.
-    Le token est limité dans le temps pour garantir la sécurité des accès.
+    Délègue au helper centralisé des décharges.
     """
-    if not path:
-        return None
-    # Nettoie le chemin des éventuels paramètres de requête existants
-    clean_path = path.split('?')[0]
-    segment = f"/{doc_type}/document/"
-    # Extrait uniquement le nom du fichier du chemin complet
-    if segment in clean_path:
-        clean_path = clean_path.split(segment)[-1]
-    elif "/document/" in clean_path:
-        clean_path = clean_path.split("/document/")[-1]
-    # Génère le token HMAC-SHA256 pour ce fichier
-    token = generate_pdf_access_token(clean_path)
-    return f"/{doc_type}/document/{clean_path}?t={token}"
+    from services.admin.waivers.common import get_secured_waiver_pdf_url
+    return get_secured_waiver_pdf_url(path, doc_type)
 
 
 # ── Projets (Gestion métier) ─────────────────────────────────────

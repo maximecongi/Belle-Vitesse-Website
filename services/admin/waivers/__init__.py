@@ -20,6 +20,7 @@ from .common import (
     _format_project_shooting_dates,
     format_waiver_shooting_dates,
     get_or_create_waiver_signing_url,
+    get_secured_waiver_pdf_url,
 )
 from .core import (
     create_waiver,
@@ -57,6 +58,7 @@ __all__ = [
     # Common
     "format_waiver_shooting_dates",
     "get_or_create_waiver_signing_url",
+    "get_secured_waiver_pdf_url",
     # Core
     "create_waiver",
     "generate_waiver",
