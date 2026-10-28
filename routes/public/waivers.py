@@ -17,6 +17,7 @@ from routes.public.shared_docs import handle_document_download, handle_document_
 from services.admin.safety_rules_config import (
     get_safety_rules_for_vehicles,
     get_general_safety_rules,
+    get_merged_general_safety_rules,
     DEFAULT_HELMETS_INVENTORY,
 )
 from utils.document_utils import compute_file_sha256, CGL_VERSION
@@ -156,7 +157,8 @@ def init_waiver_routes(app):
         if request.method == "GET":
             extra_ctx = {}
             if mode == "safety_rules":
-                extra_ctx["general_rules"] = get_general_safety_rules()
+                tech_names = getattr(waiver, "display_safety_technicians", getattr(waiver, "safety_technicians", "")) or ""
+                extra_ctx["general_rules"] = get_merged_general_safety_rules(tech_names)
                 extra_ctx["vehicle_rules"] = get_safety_rules_for_vehicles(waiver.vehicles_details)
                 extra_ctx["helmets"] = waiver.helmets_inventory or DEFAULT_HELMETS_INVENTORY
             from services.common.signatures import log_signature_event

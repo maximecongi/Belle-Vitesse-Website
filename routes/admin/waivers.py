@@ -400,6 +400,7 @@ def admin_safety_rules_preview(waiver_id=None):
     from services.admin.safety_rules_config import (
         get_safety_rules_for_vehicles,
         get_general_safety_rules,
+        get_merged_general_safety_rules,
         DEFAULT_HELMETS_INVENTORY,
     )
 
@@ -415,7 +416,8 @@ def admin_safety_rules_preview(waiver_id=None):
         from services.admin.waivers.mock_data import MockSafetyRulesWaiver
         waiver = MockSafetyRulesWaiver()
 
-    general_rules = get_general_safety_rules()
+    safety_techs = getattr(waiver, "display_safety_technicians", None) or getattr(waiver, "safety_technicians", "") or None
+    general_rules = get_merged_general_safety_rules(safety_techs)
     vehicle_rules = get_safety_rules_for_vehicles(getattr(waiver, "vehicles_details", []))
     helmets = getattr(waiver, "helmets_inventory", None) or DEFAULT_HELMETS_INVENTORY
 
@@ -426,7 +428,7 @@ def admin_safety_rules_preview(waiver_id=None):
         general_rules=general_rules,
         vehicle_rules=vehicle_rules,
         helmets=helmets,
-        safety_technicians=getattr(waiver, "display_safety_technicians", None) or getattr(waiver, "safety_technicians", "") or None,
+        safety_technicians=safety_techs,
         bv_signature=getattr(waiver, "bv_signature_data_uri", None),
         company_name=AppSetting.get("company_name", "Belle Vitesse SAS"),
         base_url=request.host_url.rstrip("/"),

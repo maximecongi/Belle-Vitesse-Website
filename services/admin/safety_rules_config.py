@@ -4,27 +4,38 @@ from models import AppSetting
 
 logger = logging.getLogger(__name__)
 
-# ── Règles Générales de Sécurité par défaut (FR / EN) ──
+# ── Règles Générales de Sécurité Universelles par défaut (FR / EN) ──
+# Applicables à tous les tournages (y compris en location sèche sans pilote BV)
 DEFAULT_GENERAL_SAFETY_RULES = {
     "rules_fr": [
-        "Le pilote ainsi que Maxime Perrard et Ewen Gicquel, techniciens véhicule, peuvent refuser ou interrompre un mouvement s'ils estiment que la sécurité n'est pas assurée.",
         "Seul le pilote désigné d'un commun accord avec le coordonnateur cascade conduit le véhicule.",
         "Interdiction de monter ou descendre du véhicule en mouvement.",
         "Zone de roulage définie et sécurisée par la production avant chaque séquence (périmètre, circulation, public).",
         "Les véhicules sont seulement autorisés à rouler sur routes fermées.",
-        "Chaque nouvelle installation doit être validée au niveau sécurité par Maxime Perrard ou Ewen Gicquel.",
-        "Au moins un des deux techniciens référents (Maxime Perrard ou Ewen Gicquel) doit avoir accès au véhicule en permanence, depuis un véhicule suiveur.",
         "Tout élément technique doit être élingué et sécurisé.",
     ],
     "rules_en": [
-        "The driver, as well as Maxime Perrard and Ewen Gicquel, vehicle technicians, may refuse or stop any move if they consider that safety is not ensured.",
         "Only the driver designated by mutual agreement with the stunt coordinator may drive the vehicle.",
         "No getting on or off the vehicle while it is moving.",
         "The driving area must be defined and secured by the production before each sequence (perimeter, traffic, public).",
         "Vehicles may only be driven on closed roads.",
-        "Every new setup must be safety-approved by Maxime Perrard or Ewen Gicquel.",
-        "At least one of the two vehicle technicians (Maxime Perrard or Ewen Gicquel) must have constant access to the vehicle, from a follow vehicle.",
         "Every technical element must be rigged and secured.",
+    ],
+}
+
+# ── Règles Spécifiques en Présence de Référents Plateau BV (FR / EN) ──
+# Prolonge automatiquement la Section 1 si des référents BV sont affectés au projet.
+# Supporte les placeholders {technicians} (conjonction 'et'/'and') et {technicians_or} (disjonction 'ou'/'or')
+DEFAULT_BV_REFERENTS_SAFETY_RULES = {
+    "rules_fr": [
+        "Le pilote ainsi que {technicians}, technicien(s) véhicule, peuvent refuser ou interrompre un mouvement s'ils estiment que la sécurité n'est pas assurée.",
+        "Chaque nouvelle installation doit être validée au niveau sécurité par {technicians_or}.",
+        "Au moins un des techniciens référents ({technicians_or}) doit avoir accès au véhicule en permanence, depuis un véhicule suiveur.",
+    ],
+    "rules_en": [
+        "The driver, as well as {technicians}, vehicle technician(s), may refuse or stop any move if they consider that safety is not ensured.",
+        "Every new setup must be safety-approved by {technicians_or}.",
+        "At least one of the vehicle technicians ({technicians_or}) must have constant access to the vehicle, from a follow vehicle.",
     ],
 }
 
@@ -465,4 +476,153 @@ def save_general_safety_rules(rules_fr=None, rules_en=None):
     except Exception as e:
         logger.error(f"Erreur lors de la sauvegarde des règles générales de sécurité : {e}")
         return False
+
+
+def get_bv_referents_safety_rules():
+    """
+    Retourne les règles de sécurité spécifiques liées à la présence de référents BV (FR / EN).
+    Lit la configuration personnalisée dans AppSetting ("bv_referents_safety_rules") ou la dotation initiale.
+    """
+    try:
+        custom_raw = AppSetting.get("bv_referents_safety_rules", None)
+        if custom_raw is not None and str(custom_raw).strip() != "":
+            if isinstance(custom_raw, str):
+                custom_dict = json.loads(custom_raw)
+            elif isinstance(custom_raw, dict):
+                custom_dict = custom_raw
+            else:
+                custom_dict = {}
+
+            if isinstance(custom_dict, dict) and ("rules_fr" in custom_dict or "rules_en" in custom_dict):
+                rules_fr = custom_dict.get("rules_fr") or []
+                rules_en = custom_dict.get("rules_en") or []
+                return {
+                    "rules_fr": [str(r).strip() for r in rules_fr if str(r).strip()] if isinstance(rules_fr, list) else [r.strip() for r in str(rules_fr).split("\n") if r.strip()],
+                    "rules_en": [str(r).strip() for r in rules_en if str(r).strip()] if isinstance(rules_en, list) else [r.strip() for r in str(rules_en).split("\n") if r.strip()],
+                }
+    except Exception as e:
+        logger.warning(f"Erreur lors de la lecture des règles de sécurité référents BV : {e}")
+
+    return {
+        "rules_fr": list(DEFAULT_BV_REFERENTS_SAFETY_RULES["rules_fr"]),
+        "rules_en": list(DEFAULT_BV_REFERENTS_SAFETY_RULES["rules_en"]),
+    }
+
+
+def save_bv_referents_safety_rules(rules_fr=None, rules_en=None):
+    """
+    Enregistre les règles de sécurité spécifiques aux référents BV (FR / EN) dans AppSetting.
+    """
+    try:
+        if isinstance(rules_fr, str):
+            clean_fr = [r.strip() for r in rules_fr.split("\n") if r.strip()]
+        elif isinstance(rules_fr, list):
+            clean_fr = [str(r).strip() for r in rules_fr if str(r).strip()]
+        else:
+            clean_fr = []
+
+        if isinstance(rules_en, str):
+            clean_en = [r.strip() for r in rules_en.split("\n") if r.strip()]
+        elif isinstance(rules_en, list):
+            clean_en = [str(r).strip() for r in rules_en if str(r).strip()]
+        else:
+            clean_en = []
+
+        payload = {
+            "rules_fr": clean_fr,
+            "rules_en": clean_en,
+        }
+        AppSetting.set("bv_referents_safety_rules", json.dumps(payload, ensure_ascii=False))
+        return True
+    except Exception as e:
+        logger.error(f"Erreur lors de la sauvegarde des règles de sécurité référents BV : {e}")
+        return False
+
+
+def format_technicians_list(tech_input, conjunction="et", lang="fr"):
+    """
+    Formate élégamment une liste de techniciens avec virgules et conjonction finale.
+    Exemples :
+      - 1 nom  -> "Maxime Perrard"
+      - 2 noms -> "Maxime Perrard et Ewen Gicquel"
+      - 3 noms -> "Maxime Perrard, Ewen Gicquel et Simon Maignan"
+    """
+    if not tech_input:
+        return ""
+    if isinstance(tech_input, str):
+        items = [name.strip() for name in tech_input.split(",") if name.strip()]
+    elif isinstance(tech_input, (list, tuple)):
+        items = [str(name).strip() for name in tech_input if str(name).strip()]
+    else:
+        items = [str(tech_input).strip()]
+
+    if not items:
+        return ""
+    if len(items) == 1:
+        return items[0]
+    if len(items) == 2:
+        conj = f" {conjunction} "
+        return conj.join(items)
+
+    head = ", ".join(items[:-1])
+    return f"{head} {conjunction} {items[-1]}"
+
+
+def format_bv_referents_rules(safety_technicians, rules_dict=None):
+    """
+    Injecte dynamiquement les noms des techniciens référents dans les règles spécifiques BV.
+    Gère les remplacements :
+      - {technicians}    : conjonction "et" (FR) / "and" (EN) avec gestion des virgules > 2
+      - {technicians_or} : disjonction "ou" (FR) / "or" (EN) avec gestion des virgules > 2
+    """
+    if not safety_technicians:
+        return {"rules_fr": [], "rules_en": []}
+
+    rules = rules_dict or get_bv_referents_safety_rules()
+    names_fr_and = format_technicians_list(safety_technicians, conjunction="et", lang="fr")
+    names_fr_or = format_technicians_list(safety_technicians, conjunction="ou", lang="fr")
+    names_en_and = format_technicians_list(safety_technicians, conjunction="and", lang="en")
+    names_en_or = format_technicians_list(safety_technicians, conjunction="or", lang="en")
+
+    formatted_fr = []
+    for r in (rules.get("rules_fr") or []):
+        r_str = str(r)
+        if "{technicians}" in r_str or "{technicians_or}" in r_str:
+            r_str = r_str.replace("{technicians}", names_fr_and).replace("{technicians_or}", names_fr_or)
+        formatted_fr.append(r_str)
+
+    formatted_en = []
+    for r in (rules.get("rules_en") or []):
+        r_str = str(r)
+        if "{technicians}" in r_str or "{technicians_or}" in r_str:
+            r_str = r_str.replace("{technicians}", names_en_and).replace("{technicians_or}", names_en_or)
+        formatted_en.append(r_str)
+
+    return {
+        "rules_fr": formatted_fr,
+        "rules_en": formatted_en,
+    }
+
+
+def get_merged_general_safety_rules(safety_technicians=None):
+    """
+    Retourne l'ensemble des règles de la Section 1 (Règles Générales).
+    Si safety_technicians est non vide, concatène automatiquement les règles référents BV
+    formatées à la suite des règles générales universelles.
+    """
+    general = get_general_safety_rules()
+    rules_fr = list(general.get("rules_fr") or [])
+    rules_en = list(general.get("rules_en") or [])
+
+    tech_names = safety_technicians.strip() if safety_technicians and str(safety_technicians).strip() else None
+    if tech_names:
+        bv_rules = format_bv_referents_rules(tech_names)
+        rules_fr.extend(bv_rules.get("rules_fr") or [])
+        rules_en.extend(bv_rules.get("rules_en") or [])
+
+    return {
+        "rules_fr": rules_fr,
+        "rules_en": rules_en,
+    }
+
 

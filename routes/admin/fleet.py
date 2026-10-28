@@ -66,9 +66,13 @@ def admin_safety_rules_config():
         save_vehicle_safety_rules,
         get_general_safety_rules,
         save_general_safety_rules,
+        get_bv_referents_safety_rules,
+        save_bv_referents_safety_rules,
     )
     if request.method == "POST":
-        is_general = request.form.get("is_general") in ("1", "true", "True")
+        rule_scope = request.form.get("rule_scope", "").strip()
+        is_general = request.form.get("is_general") in ("1", "true", "True") or rule_scope == "general"
+        is_bv_referents = request.form.get("is_bv_referents") in ("1", "true", "True") or rule_scope == "bv_referents"
         # Support de la liste à puces dynamique (rules_fr[] ou rules_fr) ou textarea brut
         rules_fr_list = request.form.getlist("rules_fr[]") or request.form.getlist("rules_fr")
         rules_en_list = request.form.getlist("rules_en[]") or request.form.getlist("rules_en")
@@ -89,7 +93,13 @@ def admin_safety_rules_config():
         else:
             rules_en = request.form.get("rules_en", "")
 
-        if is_general:
+        if is_bv_referents:
+            ok = save_bv_referents_safety_rules(rules_fr=rules_fr, rules_en=rules_en)
+            if ok:
+                flash("Règles spécifiques aux Référents Plateau BV enregistrées avec succès.", "success")
+            else:
+                flash("Erreur lors de l'enregistrement des règles Référents Plateau BV.", "error")
+        elif is_general:
             ok = save_general_safety_rules(rules_fr=rules_fr, rules_en=rules_en)
             if ok:
                 flash("Règles générales de sécurité enregistrées avec succès.", "success")
@@ -115,7 +125,13 @@ def admin_safety_rules_config():
 
     catalog = get_all_vehicle_safety_rules_catalog()
     general_rules = get_general_safety_rules()
-    return render_template("admin/safety_rules_catalog.html", catalog=catalog, general_rules=general_rules)
+    bv_referents_rules = get_bv_referents_safety_rules()
+    return render_template(
+        "admin/safety_rules_catalog.html",
+        catalog=catalog,
+        general_rules=general_rules,
+        bv_referents_rules=bv_referents_rules,
+    )
 
 
 def init_fleet_routes(app):

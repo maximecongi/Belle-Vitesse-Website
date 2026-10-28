@@ -38,6 +38,11 @@ from services.admin.safety_rules_config import (
     save_vehicle_safety_rules,
     get_general_safety_rules,
     save_general_safety_rules,
+    get_bv_referents_safety_rules,
+    save_bv_referents_safety_rules,
+    format_technicians_list,
+    format_bv_referents_rules,
+    get_merged_general_safety_rules,
 )
 from services.admin.waivers import (
     countersign_safety_rules,
@@ -548,6 +553,69 @@ class BvsrComprehensiveTest(unittest.TestCase):
             self.assertEqual(resp_preview.status_code, 200)
             html_preview = resp_preview.data.decode("utf-8")
             self.assertNotIn("Supervision BV :", html_preview)
+
+    def test_10_bv_referents_safety_rules_formatting_and_merging(self):
+        """Vérifie le formatage grammatical (1, 2, 3+ techniciens), l'édition admin et la fusion dans les règles générales."""
+        with self.app.app_context():
+            # 1. Test unitaire du formatage grammatical des listes de techniciens
+            self.assertEqual(format_technicians_list("Maxime Perrard", conjunction="et"), "Maxime Perrard")
+            self.assertEqual(format_technicians_list(["Maxime Perrard", "Ewen Gicquel"], conjunction="et"), "Maxime Perrard et Ewen Gicquel")
+            self.assertEqual(format_technicians_list("Maxime Perrard, Ewen Gicquel, Simon Maignan", conjunction="et"), "Maxime Perrard, Ewen Gicquel et Simon Maignan")
+            self.assertEqual(format_technicians_list("Maxime Perrard, Ewen Gicquel, Simon Maignan", conjunction="ou"), "Maxime Perrard, Ewen Gicquel ou Simon Maignan")
+            self.assertEqual(format_technicians_list("Maxime Perrard, Ewen Gicquel, Simon Maignan", conjunction="and"), "Maxime Perrard, Ewen Gicquel and Simon Maignan")
+            self.assertEqual(format_technicians_list("Maxime Perrard, Ewen Gicquel, Simon Maignan", conjunction="or"), "Maxime Perrard, Ewen Gicquel or Simon Maignan")
+
+            # 2. Test d'injection dynamique dans les règles
+            formatted = format_bv_referents_rules("Maxime Perrard, Ewen Gicquel, Simon Maignan")
+            self.assertTrue(any("Maxime Perrard, Ewen Gicquel et Simon Maignan" in r for r in formatted["rules_fr"]))
+            self.assertTrue(any("Maxime Perrard, Ewen Gicquel ou Simon Maignan" in r for r in formatted["rules_fr"]))
+            self.assertTrue(any("Maxime Perrard, Ewen Gicquel and Simon Maignan" in r for r in formatted["rules_en"]))
+
+            # 3. Test de fusion (get_merged_general_safety_rules)
+            merged_with_techs = get_merged_general_safety_rules("Maxime Perrard, Ewen Gicquel")
+            merged_without_techs = get_merged_general_safety_rules(None)
+            self.assertGreater(len(merged_with_techs["rules_fr"]), len(merged_without_techs["rules_fr"]))
+            self.assertTrue(any("Maxime Perrard et Ewen Gicquel" in r for r in merged_with_techs["rules_fr"]))
+
+            # 4. Test d'édition dans le catalogue via POST /admin/fleet/safety-rules
+            user = User(
+                firstname="Admin",
+                lastname="BV",
+                mail="admin_bvrules@bellevitesse.com",
+                role="administrator"
+            )
+            db.session.add(user)
+            db.session.commit()
+
+            with self.client.session_transaction() as sess:
+                sess["admin_authenticated"] = True
+                sess["admin_user_id"] = user.id
+                sess["admin_user_role"] = "administrator"
+
+            # Vérification de la présence de la section 2 dans le catalogue
+            res_get = self.client.get("/admin/fleet/safety-rules")
+            self.assertEqual(res_get.status_code, 200)
+            html = res_get.data.decode("utf-8")
+            self.assertIn("2. Règles Spécifiques en Présence de Référents Plateau BV", html)
+            self.assertIn("btn-edit-bv-referents-rule", html)
+
+            # Enregistrement de règles spécifiques référents personnalisées
+            custom_bv_fr = ["Consigne BV avec {technicians}", "Arrêt d'urgence validé par {technicians_or}"]
+            custom_bv_en = ["BV rule with {technicians}", "Emergency stop approved by {technicians_or}"]
+            res_post = self.client.post("/admin/fleet/safety-rules", data={
+                "rule_scope": "bv_referents",
+                "rules_fr": custom_bv_fr,
+                "rules_en": custom_bv_en,
+            }, follow_redirects=True)
+            self.assertEqual(res_post.status_code, 200)
+
+            saved_bvr = get_bv_referents_safety_rules()
+            self.assertEqual(saved_bvr["rules_fr"], custom_bv_fr)
+            self.assertEqual(saved_bvr["rules_en"], custom_bv_en)
+
+            # Nettoyage
+            db.session.delete(user)
+            db.session.commit()
 
 
 if __name__ == '__main__':

@@ -8,14 +8,9 @@
 {% block header_actions %}
 <div class="u-flex u-align-center u-gap-2">
     <form method="GET" action="" class="u-m-0">
-        <input type="text" name="q" id="searchInput" class="form-input u-w-250" placeholder="Rechercher un signataire..."
-            value="{{ request.args.get('q', '') }}" autocomplete="off">
+        <input type="text" name="q" id="searchInput" class="form-input u-w-250"
+            placeholder="Rechercher un signataire..." value="{{ request.args.get('q', '') }}" autocomplete="off">
     </form>
-    {% if has_item('safety_rules_config') %}
-    <a href="{{ url_for('admin_fleet.admin_safety_rules_config') }}" class="admin-btn admin-btn-secondary">
-        <i class="admin-header__icon" data-lucide="settings"></i> Config Flotte Règles
-    </a>
-    {% endif %}
 </div>
 {% endblock %}
 
@@ -41,7 +36,8 @@
                 <tr class="searchable-row">
                     <td class="u-text-semibold u-nowrap">{{ w.id or '—' }}</td>
                     <td>
-                        <a href="{{ url_for('admin_projects.admin_project_detail', record_id=w.project_id) }}" class="u-text-link">
+                        <a href="{{ url_for('admin_projects.admin_project_detail', record_id=w.project_id) }}"
+                            class="u-text-link">
                             {{ w.project_name }}
                         </a>
                     </td>
@@ -92,7 +88,8 @@
                                 data-copy-url="{{ url_for('admin_waivers.admin_safety_rules_copy_link', waiver_id=w.id) }}"
                                 title="Copier le lien de signature dans le presse-papier">Lien</button>
                             {% elif w.raw_status == 'signed' %}
-                            <a href="{{ w.signed_pdf_path }}" class="admin-btn admin-btn-secondary" target="_blank" rel="noopener noreferrer">
+                            <a href="{{ w.signed_pdf_path }}" class="admin-btn admin-btn-secondary" target="_blank"
+                                rel="noopener noreferrer">
                                 <i data-lucide="file-text"></i> PDF
                             </a>
                             {% endif %}

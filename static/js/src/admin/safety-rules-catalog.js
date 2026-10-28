@@ -241,7 +241,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const modalVehicleAvatarWrap = document.getElementById('modalVehicleAvatarWrap');
     const modalGeneralIconWrap = document.getElementById('modalGeneralIconWrap');
+    const inputRuleScope = document.getElementById('modal_rule_scope');
     const inputIsGeneral = document.getElementById('modal_is_general');
+    const inputIsBvReferents = document.getElementById('modal_is_bv_referents');
     const vehicleLabelGroup = document.getElementById('modal_vehicle_label_group');
 
     // ── Bouton "Modifier les règles générales" ──
@@ -259,7 +261,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (modalGeneralIconWrap) modalGeneralIconWrap.classList.remove('u-d-none');
                 if (vehicleLabelGroup) vehicleLabelGroup.classList.add('u-d-none');
 
+                if (inputRuleScope) inputRuleScope.value = "general";
                 if (inputIsGeneral) inputIsGeneral.value = "1";
+                if (inputIsBvReferents) inputIsBvReferents.value = "0";
                 if (inputVehicleId) inputVehicleId.value = "";
                 if (inputLabel) {
                     inputLabel.value = "Règles Générales";
@@ -295,10 +299,71 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // ── Bouton "Modifier les règles référents BV" ──
+    const editBvReferentsButton = document.querySelector('.btn-edit-bv-referents-rule');
+    if (editBvReferentsButton) {
+        editBvReferentsButton.addEventListener('click', function () {
+            try {
+                const dataRaw = editBvReferentsButton.getAttribute('data-rules') || "{}";
+                const rulesObj = JSON.parse(dataRaw);
+
+                if (modalTitle) modalTitle.textContent = "Modifier les Règles Référents Plateau BV";
+                if (modalSubtitle) modalSubtitle.textContent = "Consignes spécifiques intégrées lorsque des techniciens BV sont sur le tournage";
+
+                if (modalVehicleAvatarWrap) modalVehicleAvatarWrap.classList.add('u-d-none');
+                if (modalGeneralIconWrap) modalGeneralIconWrap.classList.remove('u-d-none');
+                if (vehicleLabelGroup) vehicleLabelGroup.classList.add('u-d-none');
+
+                if (inputRuleScope) inputRuleScope.value = "bv_referents";
+                if (inputIsGeneral) inputIsGeneral.value = "0";
+                if (inputIsBvReferents) inputIsBvReferents.value = "1";
+                if (inputVehicleId) inputVehicleId.value = "";
+                if (inputLabel) {
+                    inputLabel.value = "Règles Référents BV";
+                    inputLabel.removeAttribute('required');
+                }
+
+                if (rulesContainer) {
+                    rulesContainer.innerHTML = "";
+                }
+
+                const rulesFr = rulesObj.rules_fr || [];
+                const rulesEn = rulesObj.rules_en || [];
+                const maxLen = Math.max(rulesFr.length, rulesEn.length);
+
+                if (maxLen === 0) {
+                    addRuleItem('', '');
+                } else {
+                    for (let i = 0; i < maxLen; i++) {
+                        addRuleItem(rulesFr[i] || '', rulesEn[i] || '');
+                    }
+                }
+
+                openModal();
+
+                setTimeout(function () {
+                    const firstInput = rulesContainer.querySelector('.bvsr-input-fr');
+                    if (firstInput) firstInput.focus();
+                }, 60);
+
+            } catch (err) {
+                console.error("Erreur chargement règles référents BV:", err);
+            }
+        });
+    }
+
     // Boutons "Modifier" sur chaque carte du catalogue de véhicules
     const editButtons = document.querySelectorAll('.btn-edit-vehicle-rule');
     editButtons.forEach(function (btn) {
         btn.addEventListener('click', function () {
+            if (inputRuleScope) inputRuleScope.value = "vehicle";
+            if (inputIsGeneral) inputIsGeneral.value = "0";
+            if (inputIsBvReferents) inputIsBvReferents.value = "0";
+            if (modalGeneralIconWrap) modalGeneralIconWrap.classList.add('u-d-none');
+            if (modalVehicleAvatarWrap) modalVehicleAvatarWrap.classList.remove('u-d-none');
+            if (vehicleLabelGroup) vehicleLabelGroup.classList.remove('u-d-none');
+            if (inputLabel) inputLabel.setAttribute('required', 'required');
+
             try {
                 const vId = btn.getAttribute('data-id') || btn.getAttribute('data-key') || "";
                 const dataRaw = btn.getAttribute('data-cat') || "{}";

@@ -150,8 +150,6 @@
                 {% call nav_group('🏎️ Flotte', 'flotte', 'flotte', false) %}
                 {{ nav_item(url_for('admin_fleet.admin_fleet_list'), 'Flotte Véhicules', 'fleet') }}
                 {{ nav_item(url_for('admin_checkpoints.admin_checkpoints_list'), 'Points de Contrôle', 'checkpoints') }}
-                {{ nav_item(url_for('admin_fleet.admin_safety_rules_config'), 'Règles de Sécurité (Catalogue)',
-                'safety_rules_config') }}
                 {% endcall %}
 
                 {% call nav_group('🧰 Administration', 'admin', 'admin', false) %}
