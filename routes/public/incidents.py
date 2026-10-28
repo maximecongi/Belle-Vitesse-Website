@@ -86,20 +86,6 @@ def init_incident_public_routes(app):
                 token_str=token,
             )
 
-            # Envoi de l'email de confirmation UNIQUEMENT si le document est scellé (2 signatures)
-            if token_entry.recipient_email and sign_res.get("is_fully_signed"):
-                try:
-                    import os
-                    from flask import current_app
-                    from utils.mailer import send_incident_signed_confirmation_email
-                    pdf_full_path = sign_res.get("file_path")
-                    if not pdf_full_path and incident.signed_pdf_path:
-                        output_base = current_app.config.get("OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
-                        pdf_full_path = os.path.join(output_base, incident.signed_pdf_path)
-                    send_incident_signed_confirmation_email(incident, token_entry.recipient_email, pdf_full_path)
-                except Exception as mail_err:
-                    app.logger.warning(f"⚠️ Échec email confirmation signature incident: {mail_err}")
-
             return jsonify({
                 "status": "signed",
                 "success": True,

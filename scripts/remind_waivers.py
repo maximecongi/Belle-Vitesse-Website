@@ -45,7 +45,7 @@ def run_reminders(days_before: int = 2, dry_run: bool = False):
             if dry_run:
                 # En mode dry-run, on affiche les documents éligibles sans générer de tokens ni envoyer d'emails
                 from datetime import date, timedelta
-                from models import CglWaiver, SafetyRulesWaiver, Project
+                from models import CglWaiver, PilotWaiver, SafetyRulesWaiver, Project
                 from sqlalchemy.orm import joinedload
 
                 today = date.today()
@@ -107,20 +107,49 @@ def run_reminders(days_before: int = 2, dry_run: bool = False):
                         print(f"   [BVSR] Projet: {p.name} | Doc: {sr.waiver_id} | Signataire: {sr.signer_name} ({sr.signer_role}) -> {mail} | Départ: {p_start} (Fin: {p_end}){already}")
                         safety_count += 1
 
-                print(f"[{datetime.now()}] ℹ️ Total éligible : {cgl_count} CGL, {safety_count} engagement(s) BVSR.")
+                # 3. Attestation Pilote - Annexe 3 aux CGL (BVPA)
+                pilot_waivers = (
+                    PilotWaiver.query.filter(
+                        PilotWaiver.deleted_at.is_(None),
+                        PilotWaiver.status.in_(["to_send", "to_sign"]),
+                    )
+                    .options(joinedload(PilotWaiver.project))
+                    .all()
+                )
+                pilot_count = 0
+                for pw in pilot_waivers:
+                    p = pw.project
+                    if not p or p.deleted_at is not None:
+                        continue
+                    start_dates = [d for d in (p.departure_date, p.shoot_start_date) if d]
+                    if not start_dates:
+                        continue
+                    p_start = min(start_dates)
+                    end_dates = [d for d in (p.return_date, p.shoot_end_date) if d]
+                    p_end = max(end_dates) if end_dates else p_start
+
+                    if p_start <= target_limit and today <= p_end:
+                        mail = pw.signer_email or (p.pilot_contact.mail if p.pilot_contact else "AUCUN EMAIL")
+                        already = " (déjà relancée aujourd'hui)" if (pw.last_reminded_at and pw.last_reminded_at.date() == today) else ""
+                        print(f"   [BVPA] Projet: {p.name} | Doc: {pw.waiver_id} | Pilote: {pw.signer_name} -> {mail} | Départ: {p_start} (Fin: {p_end}){already}")
+                        pilot_count += 1
+
+                print(f"[{datetime.now()}] ℹ️ Total éligible : {cgl_count} CGL, {safety_count} engagement(s) BVSR, {pilot_count} attestation(s) pilote.")
                 return {
                     "cgl_reminders_sent": cgl_count,
                     "safety_rules_reminders_sent": safety_count,
-                    "total_reminders_sent": cgl_count + safety_count,
+                    "pilot_waivers_reminders_sent": pilot_count,
+                    "total_reminders_sent": cgl_count + safety_count + pilot_count,
                 }
 
             # Mode envoi normal
             results = auto_remind_pending_waivers(days_before=days_before, base_url=base_url)
             cgl_sent = results.get("cgl_reminders_sent", 0)
             safety_sent = results.get("safety_rules_reminders_sent", 0)
+            pilot_sent = results.get("pilot_waivers_reminders_sent", 0)
             print(
                 f"[{datetime.now()}] ✅ Relances terminées avec succès : "
-                f"{cgl_sent} CGL, {safety_sent} engagement(s) BVSR."
+                f"{cgl_sent} CGL, {safety_sent} engagement(s) BVSR, {pilot_sent} attestation(s) pilote."
             )
             for d in results.get("details", []):
                 print(

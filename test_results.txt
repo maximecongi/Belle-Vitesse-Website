@@ -35,15 +35,45 @@ Vérifie que les archives locales antérieures au seuil de rétention sont suppr
 test_run_backup_creates_valid_gzip (test_backup_sql.BackupSQLTestCase.test_run_backup_creates_valid_gzip)
 Vérifie que run_backup produit bien un fichier .sql.gz lisible et valide. ... ok
 test_sync_backup_to_kdrive (test_backup_sql.BackupSQLTestCase.test_sync_backup_to_kdrive)
-Vérifie l'arborescence kDrive et le téléversement de l'archive SQL. ... ok
+Vérifie l'arborescence kDrive et le téléversement de l'archive SQL sous 40_TECH/BACKUPS_SQL. ... ok
+test_local_hosts_force_http_scheme (test_base_url_resolution.BaseUrlResolutionTest.test_local_hosts_force_http_scheme)
+Vérifie que pour 127.0.0.1 et localhost, https:// est automatiquement converti en http://. ... ok
+test_production_hosts_preserve_or_add_https (test_base_url_resolution.BaseUrlResolutionTest.test_production_hosts_preserve_or_add_https)
+Vérifie que pour les domaines externes/production, https:// est préservé ou ajouté. ... ok
+test_resolve_from_request_context_in_dev (test_base_url_resolution.BaseUrlResolutionTest.test_resolve_from_request_context_in_dev)
+Vérifie la résolution dynamique depuis le contexte de requête en développement. ... ok
+test_verification_url_in_pdf_rendering_in_dev (test_base_url_resolution.BaseUrlResolutionTest.test_verification_url_in_pdf_rendering_in_dev)
+Vérifie que le QR code et l'URL de vérification scellés dans le PDF utilisent http:// en dev. ... ok
+test_01_catalog_and_fleet_rules (test_bvsr.BvsrComprehensiveTest.test_01_catalog_and_fleet_rules)
+Vérifie le chargement et la mise à jour dynamique des règles véhicules dans la configuration flotte. ... ok
+test_02_create_multiple_bvsr_waivers_per_project (test_bvsr.BvsrComprehensiveTest.test_02_create_multiple_bvsr_waivers_per_project)
+Vérifie la création de multiples engagements BVSR individuels pour différents rôles sur le même projet. ... ok
+test_03_public_signing_flow_no_friction (test_bvsr.BvsrComprehensiveTest.test_03_public_signing_flow_no_friction)
+Vérifie le portail public de signature BVSR : AUCUN numéro de permis ni upload requis. ... ok
+test_04_admin_countersign_safety_rules (test_bvsr.BvsrComprehensiveTest.test_04_admin_countersign_safety_rules)
+Vérifie la contresignature Belle Vitesse d'un engagement BVSR signé. ... ok
+test_05_reset_and_delete_safety_rules (test_bvsr.BvsrComprehensiveTest.test_05_reset_and_delete_safety_rules)
+Vérifie la réinitialisation et la suppression sécurisée d'un engagement BVSR. ... ok
+test_06_admin_safety_rules_list_and_route (test_bvsr.BvsrComprehensiveTest.test_06_admin_safety_rules_list_and_route)
+Vérifie le listing des règles de sécurité et la route GET /admin/safety-rules. ... ok
+test_07_admin_safety_rules_catalog_ui_and_save (test_bvsr.BvsrComprehensiveTest.test_07_admin_safety_rules_catalog_ui_and_save)
+Vérifie l'affichage du catalogue BVSR avec véhicules réels, l'absence du bouton ajouter et l'enregistrement par vehicle_id. ... ok
+test_08_general_safety_rules_edition_and_no_fallback (test_bvsr.BvsrComprehensiveTest.test_08_general_safety_rules_edition_and_no_fallback)
+Vérifie l'édition des règles générales et l'absence totale de fallback par défaut. ... ok
+test_09_project_bv_referents_and_bvsr_propagation (test_bvsr.BvsrComprehensiveTest.test_09_project_bv_referents_and_bvsr_propagation)
+Vérifie l'association de plusieurs référents BV à un projet et leur répercussion dans le BVSR. ... ok
+test_10_bv_referents_safety_rules_formatting_and_merging (test_bvsr.BvsrComprehensiveTest.test_10_bv_referents_safety_rules_formatting_and_merging)
+Vérifie le formatage grammatical (1, 2, 3+ techniciens), l'édition admin et la fusion dans les règles générales. ... ok
 test_calendar_feed_alias_route (test_calendar_feed.CalendarFeedTestCase.test_calendar_feed_alias_route)
 Vérifie que la route alias /calendar/feed.ics?token=... fonctionne. ... ok
 test_calendar_feed_continuous_project (test_calendar_feed.CalendarFeedTestCase.test_calendar_feed_continuous_project)
-Vérifie la génération d'un projet continu (départ, tournage continu, retour). ... ok
+Vérifie la génération d'un projet continu (un seul événement continu du début à la fin du tournage, sans départs ni retours). ... ok
+test_calendar_feed_excludes_projects_without_shoot_dates (test_calendar_feed.CalendarFeedTestCase.test_calendar_feed_excludes_projects_without_shoot_dates)
+Vérifie qu'un projet ayant seulement une date de départ ou retour (sans tournage) ne crée pas d'événement. ... ok
 test_calendar_feed_invalid_token (test_calendar_feed.CalendarFeedTestCase.test_calendar_feed_invalid_token)
 Vérifie qu'un token inexistant retourne 404. ... ok
 test_calendar_feed_punctual_project_with_immobilization (test_calendar_feed.CalendarFeedTestCase.test_calendar_feed_punctual_project_with_immobilization)
-Vérifie la génération d'un projet ponctuel : ... ok
+Vérifie la génération d'un projet ponctuel simplifié : ... ok
 test_calendar_feed_vehicles_and_heads_resolution (test_calendar_feed.CalendarFeedTestCase.test_calendar_feed_vehicles_and_heads_resolution)
 Vérifie que les noms de véhicules et têtes sont correctement injectés dans les descriptions. ... ok
 test_administrator_sees_only_own_calendar (test_calendar_permissions.CalendarPermissionsTestCase.test_administrator_sees_only_own_calendar)
@@ -62,14 +92,60 @@ test_unauthenticated_access_redirects_to_login (test_calendar_permissions.Calend
 Unauthenticated user should be redirected to login page. ... ok
 test_user_role_cannot_access_calendar (test_calendar_permissions.CalendarPermissionsTestCase.test_user_role_cannot_access_calendar)
 User with role 'user' should be forbidden / redirected to dashboard. ... ok
+test_01_create_cgl_success (test_cgl.CglComprehensiveTest.test_01_create_cgl_success)
+Vérifie la création d'un enregistrement CGL avec préfixe BVCGL et liaison projet. ... ok
+test_02_create_cgl_duplicate_rejected (test_cgl.CglComprehensiveTest.test_02_create_cgl_duplicate_rejected)
+Vérifie qu'il est impossible de créer deux CGL actives pour le même projet. ... ok
+test_02b_recreate_cgl_after_deletion_resolves_active_cgl (test_cgl.CglComprehensiveTest.test_02b_recreate_cgl_after_deletion_resolves_active_cgl)
+Vérifie que la recréation de CGL après suppression résout correctement la nouvelle CGL active sur le projet. ... ok
+test_03_generate_cgl (test_cgl.CglComprehensiveTest.test_03_generate_cgl)
+Vérifie que la génération des CGL capture les métadonnées du projet et passe en to_send. ... ok
+test_04_get_or_create_signing_url (test_cgl.CglComprehensiveTest.test_04_get_or_create_signing_url)
+Vérifie la création d'un jeton de signature 24h et de l'URL publique /sign/cgl/<token>. ... ok
+test_05_public_signing_flow (test_cgl.CglComprehensiveTest.test_05_public_signing_flow)
+Vérifie le cycle complet de signature publique par le locataire et le scellement HMAC. ... ok
+test_06_verification_flow (test_cgl.CglComprehensiveTest.test_06_verification_flow)
+Vérifie la page de vérification publique et la validation du sceau cryptographique. ... ok
+test_07_list_and_delete_cgl (test_cgl.CglComprehensiveTest.test_07_list_and_delete_cgl)
+Vérifie le listing et la suppression d'un contrat CGL. ... ok
+test_08_delete_cgl_internal_cascade (test_cgl.CglComprehensiveTest.test_08_delete_cgl_internal_cascade)
+Vérifie la suppression interne des CGL lors de la suppression d'un projet. ... ok
+test_09_cgl_additional_fields_signing_and_properties (test_cgl.CglComprehensiveTest.test_09_cgl_additional_fields_signing_and_properties)
+Vérifie l'enregistrement et les propriétés des champs complémentaires CGL (forme juridique, rôle, assurance, ville). ... ok
+test_10_pdf_preview_endpoints (test_cgl.CglComprehensiveTest.test_10_pdf_preview_endpoints)
+Vérifie le bon fonctionnement des endpoints de prévisualisation directe HTML des templates PDF. ... ok
+test_foreign_company_can_sign_without_registration_number (test_cgl.CglComprehensiveTest.test_foreign_company_can_sign_without_registration_number) ... ok
+test_checkin_only_requires_value_inside_range (test_checkpoint_measurements.CheckpointMeasurementRulesTests.test_checkin_only_requires_value_inside_range) ... ok
+test_checkout_tolerance_is_clamped_to_range (test_checkpoint_measurements.CheckpointMeasurementRulesTests.test_checkout_tolerance_is_clamped_to_range) ... ok
+test_configuration_requires_ordered_bounds_and_nonnegative_tolerance (test_checkpoint_measurements.CheckpointMeasurementRulesTests.test_configuration_requires_ordered_bounds_and_nonnegative_tolerance) ... ok
+test_format_rule_decimal_limits_to_one_decimal (test_checkpoint_measurements.CheckpointMeasurementRulesTests.test_format_rule_decimal_limits_to_one_decimal) ... ok
+test_readiness_uses_goal_for_checkout_and_range_for_checkin (test_checkpoint_measurements.CheckpointMeasurementRulesTests.test_readiness_uses_goal_for_checkout_and_range_for_checkin) ... ok
+test_rejects_non_finite_measurements (test_checkpoint_measurements.CheckpointMeasurementRulesTests.test_rejects_non_finite_measurements) ... ok
+test_snapshot_rules_enforces_one_decimal (test_checkpoint_measurements.CheckpointMeasurementRulesTests.test_snapshot_rules_enforces_one_decimal) ... ok
+test_admin_check_vehicles_and_pdf_generation (test_checkpoints_management.CheckpointsManagementTest.test_admin_check_vehicles_and_pdf_generation) ... ok
 test_admin_checkpoint_edit_get_and_post (test_checkpoints_management.CheckpointsManagementTest.test_admin_checkpoint_edit_get_and_post) ... ok
 test_admin_checkpoints_list_view (test_checkpoints_management.CheckpointsManagementTest.test_admin_checkpoints_list_view) ... ok
 test_auto_seeding_checkpoints (test_checkpoints_management.CheckpointsManagementTest.test_auto_seeding_checkpoints) ... ok
 test_category_grouping_order (test_checkpoints_management.CheckpointsManagementTest.test_category_grouping_order) ... ok
 test_delete_checkpoint_route (test_checkpoints_management.CheckpointsManagementTest.test_delete_checkpoint_route) ... ok
+test_dynamic_clustering_by_checkpoints_signature (test_checkpoints_management.CheckpointsManagementTest.test_dynamic_clustering_by_checkpoints_signature)
+Vérifie le regroupement automatique des véhicules par signature identique (Option D). ... ok
+test_get_protocol_data_matrix (test_checkpoints_management.CheckpointsManagementTest.test_get_protocol_data_matrix) ... ok
 test_matrix_config_sync (test_checkpoints_management.CheckpointsManagementTest.test_matrix_config_sync) ... ok
 test_reorder_checkpoints_api (test_checkpoints_management.CheckpointsManagementTest.test_reorder_checkpoints_api) ... ok
 test_utils_get_checkpoints_for_vehicle_with_custom_definition (test_checkpoints_management.CheckpointsManagementTest.test_utils_get_checkpoints_for_vehicle_with_custom_definition) ... ok
+test_commercial_api_v1_cgl_access (test_commercial_waivers_access.CommercialWaiversAccessTest.test_commercial_api_v1_cgl_access)
+Vérifie que le rôle commercial a accès à l'API v1 des CGL avec un JWT. ... ok
+test_commercial_can_access_cgl_list (test_commercial_waivers_access.CommercialWaiversAccessTest.test_commercial_can_access_cgl_list)
+Vérifie que le rôle commercial peut afficher la liste des CGL sans redirection 403. ... ok
+test_commercial_can_access_cgl_new (test_commercial_waivers_access.CommercialWaiversAccessTest.test_commercial_can_access_cgl_new)
+Vérifie que le rôle commercial peut afficher le formulaire de création des CGL. ... ok
+test_commercial_can_access_safety_rules_list (test_commercial_waivers_access.CommercialWaiversAccessTest.test_commercial_can_access_safety_rules_list)
+Vérifie que le rôle commercial peut afficher la liste des règles de sécurité (BVSR). ... ok
+test_commercial_can_quick_create_cgl (test_commercial_waivers_access.CommercialWaiversAccessTest.test_commercial_can_quick_create_cgl)
+Vérifie que le rôle commercial peut créer des CGL en un clic. ... ok
+test_permissions_dictionary_for_commercial (test_commercial_waivers_access.CommercialWaiversAccessTest.test_permissions_dictionary_for_commercial)
+Vérifie que la matrice des permissions inclut cgl et safety_rules pour Commercial. ... ok
 test_api_check_conflicts_endpoint_with_exclusion (test_conflicts.ConflictsTest.test_api_check_conflicts_endpoint_with_exclusion)
 Vérifie que l'API HTTP exclut bien le projet en cours d'édition pour éviter l'auto-conflit. ... ok
 test_exclude_project_id_for_self_edit (test_conflicts.ConflictsTest.test_exclude_project_id_for_self_edit)
@@ -127,8 +203,8 @@ test_magic_link_rendering (test_email_templates.EmailTemplatesTest.test_magic_li
 test_newsletter_campaign_rendering (test_email_templates.EmailTemplatesTest.test_newsletter_campaign_rendering) ... ok
 test_newsletter_welcome_rendering (test_email_templates.EmailTemplatesTest.test_newsletter_welcome_rendering) ... ok
 test_sql_alert_rendering (test_email_templates.EmailTemplatesTest.test_sql_alert_rendering) ... ok
-test_waiver_invitation_rendering_pilot_reminder (test_email_templates.EmailTemplatesTest.test_waiver_invitation_rendering_pilot_reminder) ... ok
 test_waiver_invitation_rendering_reminder (test_email_templates.EmailTemplatesTest.test_waiver_invitation_rendering_reminder) ... ok
+test_waiver_invitation_rendering_safety_rules_reminder (test_email_templates.EmailTemplatesTest.test_waiver_invitation_rendering_safety_rules_reminder) ... ok
 test_waiver_invitation_rendering_standard (test_email_templates.EmailTemplatesTest.test_waiver_invitation_rendering_standard) ... ok
 test_waiver_signed_confirmation_rendering (test_email_templates.EmailTemplatesTest.test_waiver_signed_confirmation_rendering) ... ok
 test_resolve_incident (test_entity_resolvers.EntityResolversTestCase.test_resolve_incident)
@@ -138,9 +214,27 @@ Vérifie la résolution d'inspections checkout et checkin. ... ok
 test_resolve_project (test_entity_resolvers.EntityResolversTestCase.test_resolve_project)
 Vérifie la résolution de projet par entier, chaîne numérique ou code BVPR-*. ... ok
 test_resolve_waivers (test_entity_resolvers.EntityResolversTestCase.test_resolve_waivers)
-Vérifie la résolution des décharges pilote et production. ... ok
+Vérifie la résolution des CGL et règles de sécurité. ... ok
 test_routes_code_redirects (test_entity_resolvers.EntityResolversTestCase.test_routes_code_redirects)
 Vérifie que les routes admin redirigent correctement les codes métier vers l'ID canonique. ... ok
+test_airtable_sync_clears_cache (test_erp_cache_sync.ERPCacheSyncTest.test_airtable_sync_clears_cache)
+Vérifie que la synchronisation Airtable flashe le cache applicatif. ... ok
+test_equipment_reorder_cache_invalidation (test_erp_cache_sync.ERPCacheSyncTest.test_equipment_reorder_cache_invalidation)
+Vérifie que le réordonnancement d'équipements purge les caches généraux. ... ok
+test_pricing_cache_invalidation_grip (test_erp_cache_sync.ERPCacheSyncTest.test_pricing_cache_invalidation_grip)
+Vérifie que la mise à jour de Grip products/catégories invalide le cache. ... ok
+test_pricing_cache_invalidation_head (test_erp_cache_sync.ERPCacheSyncTest.test_pricing_cache_invalidation_head)
+Vérifie que la modification de prix d'une tête de caméra invalide ses caches. ... ok
+test_pricing_cache_invalidation_vehicle (test_erp_cache_sync.ERPCacheSyncTest.test_pricing_cache_invalidation_vehicle)
+Vérifie que la modification de prix d'un véhicule invalide les caches appropriés. ... ok
+test_project_form_context_includes_local_vehicles_and_heads (test_erp_cache_sync.ERPCacheSyncTest.test_project_form_context_includes_local_vehicles_and_heads)
+Vérifie que le formulaire projet intègre les véhicules et têtes créés localement. ... ok
+test_safety_rules_catalog_includes_local_vehicles (test_erp_cache_sync.ERPCacheSyncTest.test_safety_rules_catalog_includes_local_vehicles)
+Vérifie que le catalogue de consignes de sécurité inclut les véhicules SQL locaux. ... ok
+test_system_cache_purge (test_erp_cache_sync.ERPCacheSyncTest.test_system_cache_purge)
+Vérifie que purge_system_cache vide Flask-Caching, Jinja2 et le micro-cache MCP. ... ok
+test_user_cache_invalidation_v3_and_roles (test_erp_cache_sync.ERPCacheSyncTest.test_user_cache_invalidation_v3_and_roles)
+Vérifie que invalidate_user_cache supprime user_v3:{id} et toutes les variantes de rôles. ... ok
 test_logout_clears_session_from_redis (test_flask_session.FlaskSessionTestCase.test_logout_clears_session_from_redis)
 La déconnexion doit purger la session de Redis et supprimer le cookie. ... ok
 test_session_fallback_when_redis_fails (test_flask_session.FlaskSessionTestCase.test_session_fallback_when_redis_fails)
@@ -163,6 +257,10 @@ test_fleet_sidebar_visibility_for_all_roles (test_fleet.FleetTest.test_fleet_sid
 Vérifie que 'Flotte Véhicules' est visible pour tous les rôles, et que 'Points de Contrôle' n'est exposé qu'aux administrateurs. ... ok
 test_incident_moderate_severity_badge_accent (test_fleet.FleetTest.test_incident_moderate_severity_badge_accent)
 Vérifie qu'un incident modéré affiche bien 'Modéré' avec accent (et non 'Modere') sur la timeline. ... ok
+test_placeholders_and_avatar_macros (test_fleet.FleetTest.test_placeholders_and_avatar_macros)
+Vérifie la présence des placeholders unifiés et le rendu sécurisé des macros d'avatar. ... ok
+test_pricing_update_reflected_in_fleet (test_fleet.FleetTest.test_pricing_update_reflected_in_fleet)
+Vérifie que la modification d'un tarif véhicule dans tarification est immédiatement répercutée dans la flotte. ... ok
 test_vehicle_timeline (test_fleet.FleetTest.test_vehicle_timeline) ... ok
 test_vehicle_timeline_with_critical_incident (test_fleet.FleetTest.test_vehicle_timeline_with_critical_incident) ... ok
 test_convert_rgba_to_jpeg (test_image_utils.ImageUtilsTest.test_convert_rgba_to_jpeg)
@@ -235,6 +333,8 @@ test_dynamic_checkpoint_creation_and_association (test_inspection_checkpoints_dy
 Vérifie la persistance d'un point de contrôle personnalisé sans colonne SQL statique. ... ok
 test_dynamic_checkpoint_in_form_context_and_in_progress_check (test_inspection_checkpoints_dynamic.DynamicInspectionCheckpointsTestCase.test_dynamic_checkpoint_in_form_context_and_in_progress_check)
 Vérifie qu'un point de contrôle ajouté pendant un check en cours apparaît bien dans le contexte du formulaire checkin/checkout. ... ok
+test_measurement_rules_are_snapshotted_on_inspection (test_inspection_checkpoints_dynamic.DynamicInspectionCheckpointsTestCase.test_measurement_rules_are_snapshotted_on_inspection)
+Une inspection conserve la règle appliquée même après évolution du checkpoint. ... ok
 test_checkpoint_deletion_cleans_in_progress_and_recomputes_readiness (test_inspections.InspectionsTest.test_checkpoint_deletion_cleans_in_progress_and_recomputes_readiness)
 Vérifie que la suppression d'un checkpoint nettoie les inspections en cours et rétablit la conformité. ... ok
 test_create_checkin_blocked_when_already_exists (test_inspections.InspectionsTest.test_create_checkin_blocked_when_already_exists) ... ok
@@ -317,6 +417,8 @@ test_users_lifecycle (test_mcp_server.MCPServerFullTestSuite.test_users_lifecycl
 test_vehicle_availability (test_mcp_server.MCPServerFullTestSuite.test_vehicle_availability) ... ok
 test_clean_database_upgrade_from_zero_to_head (test_migrations.MigrationsTestCase.test_clean_database_upgrade_from_zero_to_head)
 Vérifie qu'une base vierge s'initialise de 0 à HEAD via flask_migrate.upgrade(). ... ok
+test_downgrade_safety_prevents_losing_version_2 (test_migrations.MigrationsTestCase.test_downgrade_safety_prevents_losing_version_2)
+Vérifie qu'un downgrade refuse strictement de s'exécuter si des documents version > 1 existent. ... ok
 test_idempotent_upgrade (test_migrations.MigrationsTestCase.test_idempotent_upgrade)
 Vérifie que l'exécution répétée de upgrade() ne provoque aucune erreur. ... ok
 test_upgrade_from_previous_head_stamp (test_migrations.MigrationsTestCase.test_upgrade_from_previous_head_stamp)
@@ -363,6 +465,20 @@ test_task_render_pdf_updates_inspection_entity (test_pdf_tasks_rq.PDFTasksRQTest
 Vérifie que la tâche worker met à jour les chemins et hashes de l'entité inspection. ... ok
 test_task_render_pdf_updates_waiver_entity (test_pdf_tasks_rq.PDFTasksRQTestCase.test_task_render_pdf_updates_waiver_entity)
 Vérifie que la tâche worker met à jour les chemins et hashes de l'entité décharge. ... ok
+test_01_pilot_waiver_model_and_id_generation (test_pilot_waiver.PilotWaiverComprehensiveTest.test_01_pilot_waiver_model_and_id_generation)
+Vérifie le modèle PilotWaiver, le préfixe BVPA, le polymorphisme et les labels. ... ok
+test_02_create_pilot_waiver_service_and_vehicle_selection (test_pilot_waiver.PilotWaiverComprehensiveTest.test_02_create_pilot_waiver_service_and_vehicle_selection)
+Vérifie la création d'une attestation pilote avec sélection restreinte de véhicules. ... ok
+test_03_url_generation_and_token (test_pilot_waiver.PilotWaiverComprehensiveTest.test_03_url_generation_and_token)
+Vérifie la génération du jeton de session et de l'URL sécurisée de signature. ... ok
+test_04_public_signing_flow (test_pilot_waiver.PilotWaiverComprehensiveTest.test_04_public_signing_flow)
+Vérifie le parcours complet de signature publique (GET puis POST avec scellement eIDAS). ... ok
+test_05_public_verification_and_listing (test_pilot_waiver.PilotWaiverComprehensiveTest.test_05_public_verification_and_listing)
+Vérifie la route de vérification publique et les fonctions de listing/suppression. ... ok
+test_06_project_detail_modal_rendering (test_pilot_waiver.PilotWaiverComprehensiveTest.test_06_project_detail_modal_rendering)
+Vérifie que la fiche projet admin rend correctement le modal d'invitation avec les classes d'overlay et les véhicules. ... ok
+test_07_confirmation_email_sent_to_signer_with_bcc_admin (test_pilot_waiver.PilotWaiverComprehensiveTest.test_07_confirmation_email_sent_to_signer_with_bcc_admin)
+Vérifie que l'e-mail de confirmation est bien adressé au signataire et l'admin en CCI (BCC). ... ok
 test_add_and_list_reports (test_project_reports.ProjectReportsTest.test_add_and_list_reports) ... ok
 test_author_job_display (test_project_reports.ProjectReportsTest.test_author_job_display) ... ok
 test_cascade_delete_with_project (test_project_reports.ProjectReportsTest.test_cascade_delete_with_project) ... ok
@@ -378,6 +494,12 @@ test_update_project_report_after_3h_blocked_for_author_allowed_for_admin (test_p
 test_update_project_report_unauthorized_user (test_project_reports.ProjectReportsTest.test_update_project_report_unauthorized_user) ... ok
 test_update_project_report_within_3h (test_project_reports.ProjectReportsTest.test_update_project_report_within_3h) ... ok
 test_admin_project_kdrive_resync (test_projects.ProjectsTest.test_admin_project_kdrive_resync) ... ok
+test_admin_projects_list_render_with_bvsr_and_cgl (test_projects.ProjectsTest.test_admin_projects_list_render_with_bvsr_and_cgl)
+Vérifie que la page /admin/projects se rend sans aucune erreur Jinja avec BVSR et BVRA. ... ok
+test_delete_project_cascading_cleanup (test_projects.ProjectsTest.test_delete_project_cascading_cleanup)
+Vérifie le nettoyage complet lors de delete_project (inspections, tokens, rapports, dossier local) et la préservation des incidents. ... ok
+test_project_create_and_edit_redirect_to_detail (test_projects.ProjectsTest.test_project_create_and_edit_redirect_to_detail)
+Vérifie que la création et l'édition d'un projet redirigent vers sa page de détail. ... ok
 test_project_crud_tracking (test_projects.ProjectsTest.test_project_crud_tracking) ... ok
 test_project_inter_shoot_statuses_crud (test_projects.ProjectsTest.test_project_inter_shoot_statuses_crud)
 Vérifie la persistance et le calcul des intervalles inter-dates personnalisés. ... ok
@@ -414,6 +536,8 @@ test_public_waiver_sign_page_404 (test_routes.RouteSmokeTest.test_public_waiver_
 Test that public waiver sign page returns 404 for invalid token. ... ok
 test_quick_contact_creation (test_routes.RouteSmokeTest.test_quick_contact_creation)
 Test the /admin/api/contacts/quick endpoint. ... ok
+test_quick_production_creation (test_routes.RouteSmokeTest.test_quick_production_creation)
+Test the /admin/api/productions/quick endpoint. ... ok
 test_serve_private_file_unauthenticated_forbidden (test_routes.RouteSmokeTest.test_serve_private_file_unauthenticated_forbidden)
 Test that accessing /files/<path> without authentication or token returns 403. ... ok
 test_serve_private_file_with_admin_session (test_routes.RouteSmokeTest.test_serve_private_file_with_admin_session)
@@ -438,6 +562,84 @@ test_list_projects_pagination_instance (test_server_pagination.TestServerPaginat
 Vérifie que list_projects avec page retourne un objet Pagination. ... ok
 test_list_projects_search_filter (test_server_pagination.TestServerPagination.test_list_projects_search_filter)
 Vérifie que le filtre de recherche q fonctionne avec la pagination. ... ok
+test_api_finalize_inspection_token_required_and_checks (test_signature_security.SignatureSecurityHardeningTest.test_api_finalize_inspection_token_required_and_checks)
+Vérifie que l'API de finalisation exige un token, bloque les bypass et contrôle la préparation. ... ok
+test_b2b_signing_authority_and_consent_enforcement (test_signature_security.SignatureSecurityHardeningTest.test_b2b_signing_authority_and_consent_enforcement)
+Vérifie que la signature CGL exige le mandat légal B2B et les cases de consentement. ... ok
+test_bvsr_consent_validation (test_signature_security.SignatureSecurityHardeningTest.test_bvsr_consent_validation)
+Vérifie que la signature BVSR exige obligatoirement ack_rules et ack_authority. ... ok
+test_bvsr_countersign_security (test_signature_security.SignatureSecurityHardeningTest.test_bvsr_countersign_security)
+Vérifie la sécurité de la contre-signature BVSR (unicité, validation Base64, audit log). ... ok
+test_bvsr_countersignature_post_commit_pdf_queue_failure_preserves_proof (test_signature_security.SignatureSecurityHardeningTest.test_bvsr_countersignature_post_commit_pdf_queue_failure_preserves_proof)
+Vérifie qu'un échec de mise en file du PDF après commit préserve la preuve DB et ne déclare pas d'échec de contre-signature. ... ok
+test_bvsr_countersignature_transaction_sql_failure_is_atomic (test_signature_security.SignatureSecurityHardeningTest.test_bvsr_countersignature_transaction_sql_failure_is_atomic)
+Vérifie qu'une vraie erreur SQL/commit lors du scellement de la contre-signature BVSR annule tout et permet de réessayer. ... ok
+test_bvsr_versioned_countersignature_preserves_initial_proof (test_signature_security.SignatureSecurityHardeningTest.test_bvsr_versioned_countersignature_preserves_initial_proof)
+Vérifie la conservation de la version 1 client (archive + PDF) lors de la contre-signature BVSR (version 2). ... ok
+test_canonical_seal_determinism_and_tampering (test_signature_security.SignatureSecurityHardeningTest.test_canonical_seal_determinism_and_tampering)
+Vérifie le caractère déterministe du sceau canonique et la sensibilité aux modifications. ... ok
+test_cgl_field_length_validation_rejection (test_signature_security.SignatureSecurityHardeningTest.test_cgl_field_length_validation_rejection)
+Vérifie que la soumission de champs dépassant les limites est rejetée avec HTTP 400. ... ok
+test_cgl_field_validations_siret_and_email (test_signature_security.SignatureSecurityHardeningTest.test_cgl_field_validations_siret_and_email)
+Vérifie la validation stricte côté serveur du SIRET et du format d'email pour les CGL. ... ok
+test_cgl_verify_fails_when_insurance_file_is_tampered_or_missing (test_signature_security.SignatureSecurityHardeningTest.test_cgl_verify_fails_when_insurance_file_is_tampered_or_missing)
+Vérifie que handle_document_verify invalide le sceau si le fichier d'assurance est manquant ou altéré sur disque. ... ok
+test_checkout_token_and_signature_fail_closed_validation (test_signature_security.SignatureSecurityHardeningTest.test_checkout_token_and_signature_fail_closed_validation)
+Vérifie que la génération de jeton et la signature check-out refusent strictement : ... ok
+test_compute_inspection_readiness_strictness (test_signature_security.SignatureSecurityHardeningTest.test_compute_inspection_readiness_strictness)
+Vérifie la validation de la mesure batterie via les règles de checkpoint. ... ok
+test_concurrent_signing_lock_and_stale_recovery (test_signature_security.SignatureSecurityHardeningTest.test_concurrent_signing_lock_and_stale_recovery)
+Vérifie le blocage 409 en cours de signature et la reprise automatique après expiration du verrou (>10 min). ... ok
+test_create_checkin_requires_signed_checkout_document_or_force (test_signature_security.SignatureSecurityHardeningTest.test_create_checkin_requires_signed_checkout_document_or_force)
+Vérifie que la création d'un checkin exige CheckoutSignedDocument avec hash valide. ... ok
+test_document_verification_png_tampering (test_signature_security.SignatureSecurityHardeningTest.test_document_verification_png_tampering)
+Vérifie que l'altération physique du PNG de signature sur disque invalide la vérification. ... ok
+test_download_security_headers_and_attachment (test_signature_security.SignatureSecurityHardeningTest.test_download_security_headers_and_attachment)
+Vérifie que le téléchargement de pièces jointes applique nosniff et Content-Disposition attachment. ... ok
+test_generate_inspection_token_guards (test_signature_security.SignatureSecurityHardeningTest.test_generate_inspection_token_guards)
+Vérifie le durcissement de generate_inspection_token (refus sur statut signé, scellé existant ou non prêt). ... ok
+test_global_security_headers_present_on_all_responses (test_signature_security.SignatureSecurityHardeningTest.test_global_security_headers_present_on_all_responses)
+Vérifie que X-Content-Type-Options et X-Frame-Options sont présents sur toutes les routes (admin et public). ... ok
+test_insurance_upload_magic_bytes_check (test_signature_security.SignatureSecurityHardeningTest.test_insurance_upload_magic_bytes_check)
+Vérifie le filtrage strict des magic bytes lors du téléversement de l'attestation d'assurance. ... ok
+test_is_ready_strict_battery_and_checkpoint_rules (test_signature_security.SignatureSecurityHardeningTest.test_is_ready_strict_battery_and_checkpoint_rules)
+Vérifie la rigueur fail-closed de _is_ready sur la batterie (>= 100) et les points de contrôle. ... ok
+test_key_rotation_kid_support (test_signature_security.SignatureSecurityHardeningTest.test_key_rotation_kid_support)
+Vérifie le support de la rotation de clés cryptographiques via kid et HASH_SECRET_KEY_{KID}. ... ok
+test_link_opened_event_persisted_in_independent_session (test_signature_security.SignatureSecurityHardeningTest.test_link_opened_event_persisted_in_independent_session)
+Vérifie que la consultation GET d'un lien de signature enregistre et persiste l'événement link_opened. ... ok
+test_manual_status_change_forbidden_on_inspections (test_signature_security.SignatureSecurityHardeningTest.test_manual_status_change_forbidden_on_inspections)
+Vérifie que le passage manuel au statut 'signed' est rejeté avec HTTP 400. ... ok
+test_pdf_storage_status_corrupted_on_missing_or_altered_file (test_signature_security.SignatureSecurityHardeningTest.test_pdf_storage_status_corrupted_on_missing_or_altered_file)
+Vérifie qu'un PDF avec hash attendu passe à 'altéré' si manquant ou corrompu. ... ok
+test_pdf_storage_status_without_hash_is_pending_not_intact (test_signature_security.SignatureSecurityHardeningTest.test_pdf_storage_status_without_hash_is_pending_not_intact)
+Vérifie qu'un PDF sans hash n'est jamais marqué 'intact', mais 'en attente' sans invalider le sceau. ... ok
+test_production_hmac_secret_startup_check (test_signature_security.SignatureSecurityHardeningTest.test_production_hmac_secret_startup_check)
+Vérifie que create_app lève une exception fatale en production si la clé HMAC est manquante. ... ok
+test_save_signature_image_strict_base64_and_path_validation (test_signature_security.SignatureSecurityHardeningTest.test_save_signature_image_strict_base64_and_path_validation)
+Vérifie la suppression du bypass par chemin de fichier et la fonction validate_stored_signature_file. ... ok
+test_save_signature_image_strict_validation (test_signature_security.SignatureSecurityHardeningTest.test_save_signature_image_strict_validation)
+Vérifie la validation stricte des signatures (format PNG, magic bytes, Pillow, taille). ... ok
+test_seal_secret_key_production_requirement (test_signature_security.SignatureSecurityHardeningTest.test_seal_secret_key_production_requirement)
+Vérifie que _get_hmac_secret lève une RuntimeError en production si aucun secret dédié n'est fourni. ... ok
+test_sealed_document_overwrite_protection (test_signature_security.SignatureSecurityHardeningTest.test_sealed_document_overwrite_protection)
+Vérifie que finalize_signed_document refuse d'écraser un document déjà scellé. ... ok
+test_signature_events_chain_tamper_detection (test_signature_security.SignatureSecurityHardeningTest.test_signature_events_chain_tamper_detection)
+Vérifie que la falsification d'un événement d'audit fait échouer verify_signature_events_chain. ... ok
+test_signature_events_cryptographic_chaining (test_signature_security.SignatureSecurityHardeningTest.test_signature_events_cryptographic_chaining)
+Vérifie le chaînage cryptographique SHA-256 entre événements d'audit successifs. ... ok
+test_signature_events_immutability (test_signature_security.SignatureSecurityHardeningTest.test_signature_events_immutability)
+Vérifie que la table d'audit signature_events est en append-only strict. ... ok
+test_token_redaction_in_audit_events (test_signature_security.SignatureSecurityHardeningTest.test_token_redaction_in_audit_events)
+Vérifie que les jetons bruts sont masqués dans signature_events (token_preview + sha256). ... ok
+test_verify_page_pdf_upload_authenticity_check (test_signature_security.SignatureSecurityHardeningTest.test_verify_page_pdf_upload_authenticity_check)
+Vérifie l'authentification physique d'un PDF téléversé sur la page /verify (valide vs falsifié). ... ok
+test_verify_signature_events_chain_require_events_for_signed_doc (test_signature_security.SignatureSecurityHardeningTest.test_verify_signature_events_chain_require_events_for_signed_doc)
+Vérifie que verify_signature_events_chain échoue si require_events=True et qu'aucun événement n'existe. ... ok
+test_waiver_delete_preserves_signed_pdf_and_signed_doc (test_signature_security.SignatureSecurityHardeningTest.test_waiver_delete_preserves_signed_pdf_and_signed_doc)
+Vérifie que la suppression d'un waiver signé préserve le PDF et WaiverSignedDocument (soft delete + révocation token). ... ok
+test_waiver_reset_forbidden_when_signed (test_signature_security.SignatureSecurityHardeningTest.test_waiver_reset_forbidden_when_signed)
+Vérifie le blocage absolu de réinitialisation (reset_waiver) sur document signé ou scellé. ... ok
 test_finalize_waiver_stores_relative_path (test_signature_storage.TestSignatureStorage.test_finalize_waiver_stores_relative_path)
 Vérifie qu'une décharge finalisée persiste le chemin relatif PNG et non le Base64 brut. ... ok
 test_incident_double_signatures_storage (test_signature_storage.TestSignatureStorage.test_incident_double_signatures_storage)
@@ -460,44 +662,40 @@ test_handle_admin_service_error_decorator_rolls_back (test_transactions_rollback
 Vérifie que le décorateur handle_admin_service_error rollback la session sur exception. ... ok
 test_teardown_request_rolls_back_on_unhandled_exception (test_transactions_rollback.TransactionRollbackTest.test_teardown_request_rolls_back_on_unhandled_exception)
 Vérifie que le teardown_request global rollback une session dirty si une exception non gérée survient. ... ok
-test_automatic_waivers_on_project_create (test_waivers.WaiversTest.test_automatic_waivers_on_project_create)
-Vérifie que les décharges sont créées automatiquement si production_id ou pilot_contact_id sont renseignés. ... ok
-test_create_and_list_waivers (test_waivers.WaiversTest.test_create_and_list_waivers) ... ok
-test_explicit_delete_and_recreate (test_waivers.WaiversTest.test_explicit_delete_and_recreate)
-Vérifie la suppression unitaire par ID et la capacité de recréer une décharge pour le même projet. ... ok
-test_finalize_signed_document_production_waiver (test_waivers.WaiversTest.test_finalize_signed_document_production_waiver)
-Vérifie le cycle complet de signature et génération PDF d'une décharge production. ... ok
-test_generic_unified_waiver_functions (test_waivers.WaiversTest.test_generic_unified_waiver_functions)
-Vérifie le fonctionnement des fonctions factorisées génériques sur le modèle unifié Waiver. ... ok
-test_quick_create_waiver_routes (test_waivers.WaiversTest.test_quick_create_waiver_routes)
-Vérifie les routes quick-create en 1 clic pour pilote et production. ... ok
-test_send_waivers_1_click_routes (test_waivers.WaiversTest.test_send_waivers_1_click_routes)
-Vérifie l'envoi en 1 clic des décharges avec retour à la page d'origine (return_to). ... ok
-test_soft_delete_waivers (test_waivers.WaiversTest.test_soft_delete_waivers) ... ok
-test_verify_pilot_waiver_route (test_waivers.WaiversTest.test_verify_pilot_waiver_route)
-Vérifie l'accès à la route de vérification pour une décharge pilote scellée. ... ok
-test_verify_production_waiver_route (test_waivers.WaiversTest.test_verify_production_waiver_route)
-Vérifie l'accès à la route de vérification pour une décharge production scellée. ... ok
-test_waiver_vehicles_details_with_checkout_doc_id (test_waivers.WaiversTest.test_waiver_vehicles_details_with_checkout_doc_id)
-Vérifie que la propriété vehicles_details expose bien unique_id et checkout_doc_id et s'affiche dans les templates PDF. ... ok
-test_waivers_created_directly_in_to_send_status (test_waivers.WaiversTest.test_waivers_created_directly_in_to_send_status)
-Vérifie que la création d'une décharge la place directement au statut 'to_send' avec snapshot. ... ok
-test_waivers_search_and_project_links (test_waivers.WaiversTest.test_waivers_search_and_project_links)
-Vérifie le formatage des décharges dans list_projects et le filtre ?q=. ... ok
+test_admin_cgl_delete_route_with_return_to (test_waivers.WaiversCglAndSafetyRulesTest.test_admin_cgl_delete_route_with_return_to)
+Vérifie la suppression d'une CGL par route admin POST avec redirection return_to. ... ok
+test_automatic_cgl_creation_on_project_create (test_waivers.WaiversCglAndSafetyRulesTest.test_automatic_cgl_creation_on_project_create)
+Vérifie que le CGL est créé automatiquement si une production est associée, mais PAS les règles de sécurité. ... ok
+test_create_and_list_cgl_and_safety_rules (test_waivers.WaiversCglAndSafetyRulesTest.test_create_and_list_cgl_and_safety_rules)
+Vérifie la création et le listage respectif des contrats CGL et engagements BVSR. ... ok
+test_finalize_signed_document_cgl_and_safety_rules (test_waivers.WaiversCglAndSafetyRulesTest.test_finalize_signed_document_cgl_and_safety_rules)
+Vérifie le cycle complet de signature électronique et scellement HMAC pour CGL et BVSR. ... ok
+test_one_click_send_routes (test_waivers.WaiversCglAndSafetyRulesTest.test_one_click_send_routes)
+Vérifie l'envoi en 1 clic par POST avec redirection return_to pour CGL et Règles de Sécurité. ... ok
+test_polymorphism_and_unified_waiver_model (test_waivers.WaiversCglAndSafetyRulesTest.test_polymorphism_and_unified_waiver_model)
+Vérifie le Single Table Inheritance sur le modèle Waiver unifié. ... ok
+test_shooting_dates_formatting_and_properties (test_waivers.WaiversCglAndSafetyRulesTest.test_shooting_dates_formatting_and_properties)
+Vérifie que les dates de tournage sont correctement synthétisées et exposées. ... ok
+test_soft_delete_and_recreate_cgl_and_bvsr (test_waivers.WaiversCglAndSafetyRulesTest.test_soft_delete_and_recreate_cgl_and_bvsr)
+Vérifie le soft-delete et la recréation sans conflit d'unicité. ... ok
+test_verify_cgl_route (test_waivers.WaiversCglAndSafetyRulesTest.test_verify_cgl_route)
+Vérifie l'accès à la route publique de vérification scellée pour un contrat CGL. ... ok
+test_verify_safety_rules_route (test_waivers.WaiversCglAndSafetyRulesTest.test_verify_safety_rules_route)
+Vérifie l'accès à la route publique de vérification scellée pour les règles de sécurité (BVSR). ... ok
+test_waiver_deletion_dispatches_kdrive_cleanups (test_waivers.WaiversCglAndSafetyRulesTest.test_waiver_deletion_dispatches_kdrive_cleanups)
+Vérifie que la suppression d'un CGL signé ou non signé et le reset déclenchent dispatch_delete_document. ... ok
 test_auto_remind_ongoing_shoot_after_departure (test_waivers_reminders.WaiversRemindersTest.test_auto_remind_ongoing_shoot_after_departure)
-Vérifie que les décharges non signées sont toujours relancées si le départ a eu lieu mais le tournage est en cours. ... ok
+Vérifie que les CGL et BVSR non signés sont relancés si départ passé mais tournage en cours. ... ok
 test_auto_remind_pending_waivers_service (test_waivers_reminders.WaiversRemindersTest.test_auto_remind_pending_waivers_service)
-Vérifie que le service de relance détecte les décharges J-1 et incrémente le compteur. ... ok
+Vérifie que le service de relance détecte les CGL, BVSR et Attestation Pilote J-1 et incrémente le compteur. ... ok
 test_mailer_invitation_reminder_content (test_waivers_reminders.WaiversRemindersTest.test_mailer_invitation_reminder_content)
-Vérifie que les emails d'invitation avec is_reminder=True portent l'objet et le bandeau de relance. ... ok
+Vérifie que les emails d'invitation avec is_reminder=True portent l'objet et le bandeau de relance adaptés. ... ok
 test_manual_send_waiver_reminder (test_waivers_reminders.WaiversRemindersTest.test_manual_send_waiver_reminder)
 Vérifie que l'envoi manuel depuis l'admin détecte la relance si déjà envoyé/to_sign. ... ok
 test_script_remind_waivers_dry_run (test_waivers_reminders.WaiversRemindersTest.test_script_remind_waivers_dry_run)
 Vérifie le fonctionnement du script scripts/remind_waivers.py en mode dry-run. ... ok
-test_send_templated_email_with_attachments_and_headers (test_waivers_reminders.WaiversRemindersTest.test_send_templated_email_with_attachments_and_headers)
-Vérifie le bon fonctionnement du helper générique EmailService.send_templated_email. ... ok
 
 ----------------------------------------------------------------------
-Ran 292 tests in 29.833s
+Ran 395 tests in 44.745s
 
 OK

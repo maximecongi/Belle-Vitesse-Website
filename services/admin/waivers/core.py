@@ -337,6 +337,8 @@ def delete_waiver(waiver_id, waiver_type: str = None):
         waiver = resolve_safety_rules_waiver(waiver_id)
     elif waiver_type == "cgl":
         waiver = resolve_cgl(waiver_id)
+    elif waiver_type == "pilot_waiver":
+        waiver = resolve_pilot_waiver(waiver_id)
     else:
         waiver = resolve_waiver(waiver_id)
 
@@ -410,6 +412,8 @@ def reset_waiver(waiver_id, waiver_type: str = None):
         waiver = resolve_safety_rules_waiver(waiver_id)
     elif waiver_type == "cgl":
         waiver = resolve_cgl(waiver_id)
+    elif waiver_type == "pilot_waiver":
+        waiver = resolve_pilot_waiver(waiver_id)
     else:
         waiver = resolve_waiver(waiver_id)
 
@@ -455,6 +459,8 @@ def delete_waiver_internal(project_id, waiver_type: str = None):
         waivers = CglWaiver.query.filter_by(project_id=p.id).all()
     elif waiver_type == "safety_rules":
         waivers = SafetyRulesWaiver.query.filter_by(project_id=p.id).all()
+    elif waiver_type == "pilot_waiver":
+        waivers = PilotWaiver.query.filter_by(project_id=p.id).all()
     else:
         waivers = Waiver.query.filter_by(project_id=p.id).all()
 

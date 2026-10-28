@@ -1245,17 +1245,6 @@ def sign_incident_bv(incident_id, signer_name, signer_role, signature_data, ip_a
     if inc.is_signed_prod:
         res = finalize_incident_document(inc)
         message = "Visa Belle Vitesse enregistré et constat scellé contradictoirement avec succès."
-        # Si un jeton avait été transmis par email, envoyer automatiquement l'exemplaire scellé au destinataire
-        try:
-            tokens = IncidentToken.query.filter_by(incident_id=inc.id).all()
-            for tok in tokens:
-                if tok.recipient_email:
-                    from utils.mailer import send_incident_signed_confirmation_email
-                    send_incident_signed_confirmation_email(
-                        inc, tok.recipient_email, res.get("file_path"))
-        except Exception as mail_err:
-            logger.warning(
-                f"⚠️ Échec notification email post-visa BV : {mail_err}")
     else:
         inc.signature_status = "signed_bv"
         db.session.commit()

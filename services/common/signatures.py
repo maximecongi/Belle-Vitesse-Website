@@ -1082,7 +1082,19 @@ def seal_incident_contradictory_document(incident, incident_data, base_url=None)
         else:
             raise commit_err
 
-    # Délégation asynchrone de la compilation WeasyPrint
+    # Collecte des destinataires d'e-mails pour notification post-génération WeasyPrint
+    recipient_emails = []
+    if hasattr(incident, "project") and incident.project and incident.project.production_contact and incident.project.production_contact.mail:
+        recipient_emails.append(incident.project.production_contact.mail.strip())
+    try:
+        from models.incident import IncidentToken
+        for tok in IncidentToken.query.filter_by(incident_id=incident.id).all():
+            if tok.recipient_email and tok.recipient_email.strip():
+                recipient_emails.append(tok.recipient_email.strip())
+    except Exception:
+        pass
+
+    # Délégation asynchrone de la compilation WeasyPrint avec post-actions (kDrive, Emails)
     from services.common.pdf_tasks import dispatch_pdf_generation
     dispatch_pdf_generation(
         html_content=html,
@@ -1094,6 +1106,15 @@ def seal_incident_contradictory_document(incident, incident_data, base_url=None)
         filename=filename,
         entity_type="incident",
         entity_id=incident.id,
+        post_action="incident_post_actions",
+        extra_context={
+            "mode": "incident",
+            "rel_pdf_path": rel_pdf_path,
+            "current_hash": current_hash,
+            "snapshot": incident.to_dict(),
+            "resolved_base_url": base_url,
+            "recipient_emails": list(dict.fromkeys(recipient_emails)),
+        },
     )
 
     try:
@@ -1102,11 +1123,6 @@ def seal_incident_contradictory_document(incident, incident_data, base_url=None)
         db.session.refresh(incident)
     except Exception:
         pass
-
-    # Synchronisation kDrive native (bundle PDF + photos + documents)
-    _dispatch_kdrive_document_bundle(
-        "incident", incident, rel_pdf_path, base_url, current_hash, incident.to_dict()
-    )
 
     return {
         "document_id": incident.incident_number,

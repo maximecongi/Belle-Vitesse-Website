@@ -112,14 +112,25 @@ class EmailService:
                     if isinstance(att, dict)
                     else os.path.basename(att_path)
                 )
-                if att_path and os.path.exists(att_path):
-                    with open(att_path, "rb") as f:
-                        part = MIMEApplication(f.read(), Name=att_name)
-                    part["Content-Disposition"] = f'attachment; filename="{att_name}"'
-                    msg.attach(part)
+                if att_path:
+                    if not os.path.exists(att_path):
+                        import time
+                        for _ in range(3):
+                            time.sleep(0.5)
+                            if os.path.exists(att_path):
+                                break
+
+                    if os.path.exists(att_path):
+                        with open(att_path, "rb") as f:
+                            part = MIMEApplication(f.read(), Name=att_name)
+                        part["Content-Disposition"] = f'attachment; filename="{att_name}"'
+                        msg.attach(part)
+                    else:
+                        if current_app:
+                            current_app.logger.error(f"❌ Attachment not found at {att_path}")
                 else:
                     if current_app:
-                        current_app.logger.error(f"❌ Attachment not found at {att_path}")
+                        current_app.logger.error(f"❌ Attachment path is empty or invalid: {att}")
         else:
             msg = MIMEMultipart("alternative")
             if text_content:
@@ -669,6 +680,8 @@ def _build_incident_email_context(incident, signing_url: str = None) -> dict:
         if contact_prod
         else None
     )
+    if not recipient_name and getattr(incident, "prod_signer_name", None):
+        recipient_name = incident.prod_signer_name.strip()
     incident_num = incident.incident_number
     incident_title = incident.title
     inc_date = (

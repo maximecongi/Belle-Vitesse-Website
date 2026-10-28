@@ -10,6 +10,7 @@ from sqlalchemy.orm import joinedload
 
 from models import (
     CglWaiver,
+    PilotWaiver,
     Project,
     SafetyRulesWaiver,
     WaiverToken,
@@ -28,6 +29,7 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
     """
     from utils.mailer import (
         send_cgl_invitation_email,
+        send_pilot_waiver_invitation_email,
         send_safety_rules_invitation_email,
     )
 
@@ -38,6 +40,7 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
     results = {
         "cgl_reminders_sent": 0,
         "safety_rules_reminders_sent": 0,
+        "pilot_waivers_reminders_sent": 0,
         "total_reminders_sent": 0,
         "details": [],
     }
@@ -186,5 +189,82 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
             db.session.rollback()
             logger.error(f"❌ Erreur relance BVSR {sr.waiver_id} : {e}")
 
-    results["total_reminders_sent"] = results["cgl_reminders_sent"] + results["safety_rules_reminders_sent"]
+    # 3. Attestation Pilote - Annexe 3 aux CGL (BVPA)
+    pilot_waivers = (
+        PilotWaiver.query.filter(
+            PilotWaiver.deleted_at.is_(None),
+            PilotWaiver.status.in_(["to_send", "to_sign"]),
+        )
+        .options(joinedload(PilotWaiver.project))
+        .all()
+    )
+
+    for pw in pilot_waivers:
+        p = pw.project
+        if not p or p.deleted_at is not None:
+            continue
+
+        start_dates = [d for d in (p.departure_date, p.shoot_start_date) if d]
+        if not start_dates:
+            continue
+        p_start = min(start_dates)
+        end_dates = [d for d in (p.return_date, p.shoot_end_date) if d]
+        p_end = max(end_dates) if end_dates else p_start
+
+        if not (p_start <= target_limit and today <= p_end):
+            continue
+
+        if pw.last_reminded_at and pw.last_reminded_at.date() == today:
+            continue
+
+        recipient_mail = pw.signer_email
+        recipient_name = pw.signer_name
+        if not recipient_mail and p and p.pilot_contact:
+            recipient_mail = p.pilot_contact.mail
+            recipient_name = f"{p.pilot_contact.first_name} {p.pilot_contact.last_name}"
+
+        if not recipient_mail:
+            continue
+
+        try:
+            new_token = str(uuid.uuid4())
+            token_rec = WaiverToken(token=new_token, waiver_id=pw.waiver_id)
+            db.session.add(token_rec)
+
+            sig_url = f"{base_url_str}/sign/pilot-attestation/{new_token}"
+
+            sent = send_pilot_waiver_invitation_email(
+                to_email=recipient_mail,
+                recipient_name=recipient_name,
+                project_name=p.name,
+                signature_link=sig_url,
+                is_reminder=True,
+                production_name=(p.production.name if p and p.production else getattr(pw, "production_name", None)),
+            )
+
+            if sent:
+                pw.last_reminded_at = now_utc.replace(tzinfo=None)
+                pw.reminder_count = (pw.reminder_count or 0) + 1
+                pw.status = "to_sign"
+                pw.sent_at = pw.sent_at or now_utc.replace(tzinfo=None)
+                db.session.commit()
+
+                results["pilot_waivers_reminders_sent"] += 1
+                results["details"].append({
+                    "type": "pilot_waiver",
+                    "waiver_id": pw.waiver_id,
+                    "project_name": p.name,
+                    "recipient": recipient_mail,
+                    "departure_date": p_start.isoformat(),
+                    "reminder_count": pw.reminder_count,
+                })
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"❌ Erreur relance Attestation Pilote {pw.waiver_id} : {e}")
+
+    results["total_reminders_sent"] = (
+        results["cgl_reminders_sent"]
+        + results["safety_rules_reminders_sent"]
+        + results["pilot_waivers_reminders_sent"]
+    )
     return results

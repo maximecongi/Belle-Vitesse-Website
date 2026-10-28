@@ -90,11 +90,8 @@
 
 <body id="home">
   {% if launch_mode %}
-  <div class="launch-back-bar"
-    style="padding: 20px 5vw; border-bottom: 1px solid rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: flex-start; z-index: 1000; position: relative;">
-    <a href="{{ url_for('launch') }}"
-      style="text-decoration: none; font-size: clamp(0.8rem, 0.9vw, 1.2rem); font-family: 'Poppins', sans-serif; font-weight: 500; display: flex; align-items: center; gap: 8px; transition: opacity 0.3s;"
-      onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+  <div class="launch-back-bar">
+    <a href="{{ url_for('launch') }}" class="launch-back-bar-link">
       {% if g.lang == 'fr' %}
       ← Retour à l'écran de lancement
       {% else %}

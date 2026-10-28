@@ -10,6 +10,12 @@ from models import db
 class MigrationsTestCase(unittest.TestCase):
     """Tests automatisés pour la baseline et la chaîne de migrations Alembic."""
 
+    def _get_head_revision(self, app):
+        """Détermine dynamiquement la révision HEAD Alembic courante."""
+        cfg = app.extensions["migrate"].migrate.get_config()
+        from alembic.script import ScriptDirectory
+        return ScriptDirectory.from_config(cfg).get_current_head()
+
     def test_clean_database_upgrade_from_zero_to_head(self):
         """Vérifie qu'une base vierge s'initialise de 0 à HEAD via flask_migrate.upgrade()."""
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -52,7 +58,7 @@ class MigrationsTestCase(unittest.TestCase):
                 # 3. Vérification de la version finale dans alembic_version
                 with db.engine.connect() as conn:
                     current_rev = conn.execute(sa.text("SELECT version_num FROM alembic_version")).scalar()
-                    self.assertEqual(current_rev, "t00d7fe3c480")
+                    self.assertEqual(current_rev, self._get_head_revision(test_app))
 
                 # Vérification de la clé primaire composite réelle (waiver_id, version) sur waiver_signed_documents
                 wsd_pk = inspector.get_pk_constraint("waiver_signed_documents")
@@ -132,7 +138,7 @@ class MigrationsTestCase(unittest.TestCase):
                 upgrade()
                 with db.engine.connect() as conn:
                     current_rev = conn.execute(sa.text("SELECT version_num FROM alembic_version")).scalar()
-                    self.assertEqual(current_rev, "t00d7fe3c480")
+                    self.assertEqual(current_rev, self._get_head_revision(test_app))
 
 
     def test_upgrade_from_previous_head_stamp(self):
@@ -175,7 +181,7 @@ class MigrationsTestCase(unittest.TestCase):
 
                 with db.engine.connect() as conn:
                     current_rev = conn.execute(sa.text("SELECT version_num FROM alembic_version")).scalar()
-                    self.assertEqual(current_rev, "t00d7fe3c480")
+                    self.assertEqual(current_rev, self._get_head_revision(test_app))
 
     def test_downgrade_safety_prevents_losing_version_2(self):
         """Vérifie qu'un downgrade refuse strictement de s'exécuter si des documents version > 1 existent."""

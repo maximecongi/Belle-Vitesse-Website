@@ -508,10 +508,16 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                     </a>
                     {% endif %}
 
-                    <a href="{{ url_for('admin_waivers.admin_cgl_list', q=cgl_waiver.waiver_num) }}"
-                        class="admin-btn admin-btn-xs admin-btn-secondary" title="Consulter dans la liste des CGL">
-                        <i data-lucide="external-link"></i>
-                    </a>
+                    <form
+                        action="{{ url_for('admin_waivers.admin_cgl_delete', waiver_id=cgl_waiver.waiver_num or cgl_waiver.id) }}"
+                        method="POST" class="u-m-0"
+                        onsubmit="return confirm('Supprimer ces Conditions Générales de Location (CGL) pour {{ cgl_waiver.production_name or project.title }} ?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                        <button type="submit" class="admin-btn admin-btn-xs admin-btn-danger" title="Supprimer">
+                            <i data-lucide="trash-2"></i>
+                        </button>
+                    </form>
                 </div>
             </div>
             {% else %}

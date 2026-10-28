@@ -12,7 +12,7 @@ os.environ["WTF_CSRF_ENABLED"] = "False"
 os.environ["USE_SSH_TUNNEL"] = "false"
 
 from app import create_app
-from models import Contact, CglWaiver, SafetyRulesWaiver, Production, Project, db
+from models import Contact, CglWaiver, PilotWaiver, SafetyRulesWaiver, Production, Project, db
 from services.admin.waivers import auto_remind_pending_waivers
 
 
@@ -73,7 +73,14 @@ class WaiversRemindersTest(unittest.TestCase):
                 signer_email="luc.pilote@example.com",
                 status="to_send",
             )
-            db.session.add_all([self.cgl, self.bvsr])
+            self.pilot_waiver = PilotWaiver(
+                project_id=self.project.id,
+                signer_first_name="Luc",
+                signer_last_name="Pilote",
+                signer_email="luc.pilote@example.com",
+                status="to_sign",
+            )
+            db.session.add_all([self.cgl, self.bvsr, self.pilot_waiver])
             db.session.commit()
 
             self.prod_id = self.prod.id
@@ -82,6 +89,7 @@ class WaiversRemindersTest(unittest.TestCase):
             self.project_id = self.project.id
             self.cgl_id = self.cgl.id
             self.bvsr_id = self.bvsr.id
+            self.pilot_waiver_id = self.pilot_waiver.id
 
     def tearDown(self):
         with self.app.app_context():
@@ -90,12 +98,15 @@ class WaiversRemindersTest(unittest.TestCase):
 
     @patch("utils.mailer.send_cgl_invitation_email", return_value=True)
     @patch("utils.mailer.send_safety_rules_invitation_email", return_value=True)
-    def test_auto_remind_pending_waivers_service(self, mock_bvsr_mail, mock_cgl_mail):
-        """Vérifie que le service de relance détecte les CGL et BVSR J-1 et incrémente le compteur."""
+    @patch("utils.mailer.send_pilot_waiver_invitation_email", return_value=True)
+    def test_auto_remind_pending_waivers_service(self, mock_pilot_mail, mock_bvsr_mail, mock_cgl_mail):
+        """Vérifie que le service de relance détecte les CGL, BVSR et Attestation Pilote J-1 et incrémente le compteur."""
         with self.app.app_context():
             res = auto_remind_pending_waivers(days_before=2, base_url="http://testserver")
             self.assertEqual(res["cgl_reminders_sent"], 1)
             self.assertEqual(res["safety_rules_reminders_sent"], 1)
+            self.assertEqual(res["pilot_waivers_reminders_sent"], 1)
+            self.assertEqual(res["total_reminders_sent"], 3)
 
             # Vérification des arguments d'appel mail avec is_reminder=True
             mock_cgl_mail.assert_called_once()
@@ -106,22 +117,31 @@ class WaiversRemindersTest(unittest.TestCase):
             _, bvsr_kwargs = mock_bvsr_mail.call_args
             self.assertTrue(bvsr_kwargs.get("is_reminder"))
 
+            mock_pilot_mail.assert_called_once()
+            _, pilot_kwargs = mock_pilot_mail.call_args
+            self.assertTrue(pilot_kwargs.get("is_reminder"))
+
             # Vérification de l'état en base
             cw = db.session.get(CglWaiver, self.cgl_id)
             sr = db.session.get(SafetyRulesWaiver, self.bvsr_id)
+            pw = db.session.get(PilotWaiver, self.pilot_waiver_id)
             self.assertEqual(cw.reminder_count, 1)
             self.assertIsNotNone(cw.last_reminded_at)
             self.assertEqual(sr.reminder_count, 1)
             self.assertEqual(sr.status, "to_sign")
+            self.assertEqual(pw.reminder_count, 1)
+            self.assertEqual(pw.status, "to_sign")
 
             # Une seconde exécution immédiate le même jour ne doit pas renvoyer
             res2 = auto_remind_pending_waivers(days_before=2, base_url="http://testserver")
             self.assertEqual(res2["cgl_reminders_sent"], 0)
             self.assertEqual(res2["safety_rules_reminders_sent"], 0)
+            self.assertEqual(res2["pilot_waivers_reminders_sent"], 0)
 
     @patch("utils.mailer.send_cgl_invitation_email", return_value=True)
     @patch("utils.mailer.send_safety_rules_invitation_email", return_value=True)
-    def test_auto_remind_ongoing_shoot_after_departure(self, mock_bvsr_mail, mock_cgl_mail):
+    @patch("utils.mailer.send_pilot_waiver_invitation_email", return_value=True)
+    def test_auto_remind_ongoing_shoot_after_departure(self, mock_pilot_mail, mock_bvsr_mail, mock_cgl_mail):
         """Vérifie que les CGL et BVSR non signés sont relancés si départ passé mais tournage en cours."""
         with self.app.app_context():
             yesterday = datetime.now(timezone.utc).date() - timedelta(days=1)
@@ -223,7 +243,8 @@ class WaiversRemindersTest(unittest.TestCase):
 
     @patch("utils.mailer.send_cgl_invitation_email", return_value=True)
     @patch("utils.mailer.send_safety_rules_invitation_email", return_value=True)
-    def test_script_remind_waivers_dry_run(self, mock_bvsr_mail, mock_cgl_mail):
+    @patch("utils.mailer.send_pilot_waiver_invitation_email", return_value=True)
+    def test_script_remind_waivers_dry_run(self, mock_pilot_mail, mock_bvsr_mail, mock_cgl_mail):
         """Vérifie le fonctionnement du script scripts/remind_waivers.py en mode dry-run."""
         from scripts.remind_waivers import run_reminders
 
@@ -231,8 +252,11 @@ class WaiversRemindersTest(unittest.TestCase):
             res = run_reminders(days_before=2, dry_run=True)
             self.assertEqual(res["cgl_reminders_sent"], 1)
             self.assertEqual(res["safety_rules_reminders_sent"], 1)
+            self.assertEqual(res["pilot_waivers_reminders_sent"], 1)
+            self.assertEqual(res["total_reminders_sent"], 3)
             mock_bvsr_mail.assert_not_called()
             mock_cgl_mail.assert_not_called()
+            mock_pilot_mail.assert_not_called()
 
     @patch("utils.mailer.EmailService._send_smtp_message", return_value=True)
     def test_mailer_invitation_reminder_content(self, mock_send_smtp):

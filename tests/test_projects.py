@@ -581,6 +581,19 @@ class ProjectsTest(unittest.TestCase):
             )
             db.session.add(rep)
 
+            # Créer une attestation pilote liée au projet
+            from models import PilotWaiver
+            pw = PilotWaiver(
+                project_id=proj.id,
+                signer_first_name="Luc",
+                signer_last_name="Pilote",
+                signer_email="luc.pilote@example.com",
+                status="to_sign",
+            )
+            db.session.add(pw)
+            db.session.commit()
+            pw_id = pw.id
+
             # Créer un incident lié au projet (doit être conservé pour la flotte)
             inc = Incident(
                 project_id=proj.id,
@@ -623,6 +636,10 @@ class ProjectsTest(unittest.TestCase):
             # 4. Vérifier que le rapport d'équipe a été supprimé
             rep_reloaded = ProjectReport.query.filter_by(project_id=proj.id).first()
             self.assertIsNone(rep_reloaded)
+
+            # 4bis. Vérifier que l'attestation pilote a été nettoyée et soft-deletée
+            pw_reloaded = db.session.get(PilotWaiver, pw_id)
+            self.assertIsNotNone(pw_reloaded.deleted_at)
 
             # 5. Vérifier que l'incident est CONSERVÉ (traçabilité de la flotte)
             inc_reloaded = db.session.get(Incident, inc.id)

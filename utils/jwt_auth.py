@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from functools import wraps
+import hashlib
 
 import jwt
 from flask import current_app, g, jsonify, request
@@ -11,7 +12,12 @@ JWT_EXPIRATION_HOURS = 12
 
 
 def _get_secret():
-    return current_app.config["SECRET_KEY"]
+    secret = (
+        current_app.config.get("JWT_SECRET_KEY")
+        or current_app.config.get("SECRET_KEY", "fallback_secret_bellevitesse_256bit")
+    )
+    # RFC 7518 Section 3.2 : Garantir au moins 256 bits (32 octets) pour l'algorithme HS256
+    return hashlib.sha256(str(secret).encode("utf-8")).digest()
 
 
 def generate_token(user):

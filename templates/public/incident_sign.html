@@ -29,10 +29,6 @@
     {% endif %}
     <link rel="stylesheet"
         href="{{ url_for('static', filename='css/public/public-doc.css') }}?v={{ asset_version('css/public/public-doc.css') }}">
-    <script src="https://unpkg.com/lucide@1.48.0/dist/umd/lucide.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
-    <script src="{{ asset_url('js/src/common/signature-pad-controller.js') }}"></script>
-    <script src="{{ asset_url('js/src/ui-utils.js') }}"></script>
 </head>
 
 <body class="public-doc-container">
@@ -283,111 +279,12 @@
         {% include 'public/signature_footer.html' %}
     </div>
 
-    {% if not is_already_signed %}
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const signaturePad = new BelleVitesseSignaturePad('signature-canvas');
-            const clearBtn = document.getElementById('btn-clear');
-            if (clearBtn) {
-                clearBtn.addEventListener('click', hideFeedback);
-            }
-
-            document.getElementById('btn-sign').addEventListener('click', async function () {
-                hideFeedback();
-                const btnSign = this;
-
-                const nameInput = document.getElementById('signer_name');
-                const roleInput = document.getElementById('signer_role');
-                const acceptTerms = document.getElementById('accept_terms');
-
-                const nameVal = (nameInput.value || '').trim();
-                const roleVal = (roleInput.value || '').trim();
-
-                if (!nameVal) {
-                    showFeedback('Veuillez renseigner votre nom et prénom.', 'error');
-                    nameInput.focus();
-                    return;
-                }
-
-                if (!roleVal) {
-                    showFeedback('Veuillez renseigner votre qualité / fonction sur le tournage.', 'error');
-                    roleInput.focus();
-                    return;
-                }
-
-                if (!acceptTerms.checked) {
-                    showFeedback('Vous devez attester avoir pris connaissance du constat d\'incident.', 'error');
-                    return;
-                }
-
-                if (signaturePad.isEmpty()) {
-                    showFeedback('Veuillez apposer votre signature manuscrite dans le cadre prévu avant de valider.', 'error');
-                    return;
-                }
-
-                btnSign.disabled = true;
-                const originalHtml = btnSign.innerHTML;
-                btnSign.innerHTML = '<i data-lucide="loader-2" class="u-spin"></i> <span>Envoi en cours…</span>';
-                if (window.lucide && typeof window.lucide.createIcons === 'function') {
-                    window.lucide.createIcons();
-                }
-
-                const signatureData = signaturePad.toDataURL('image/png');
-
-                try {
-                    const response = await fetch(window.location.href, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            signer_name: nameVal,
-                            signer_role: roleVal,
-                            signature: signatureData,
-                        }),
-                    });
-
-                    const result = await response.json();
-
-                    if (result.success || result.status === 'signed') {
-                        showFeedback('<i data-lucide="circle-check-big"></i> Constat d\'incident signé avec succès.', 'success');
-                        btnSign.innerHTML = '<i data-lucide="circle-check-big"></i> <span>Signé ✓</span>';
-                        if (window.lucide && typeof window.lucide.createIcons === 'function') {
-                            window.lucide.createIcons();
-                        }
-                        if (signaturePad && signaturePad.canvas) {
-                            signaturePad.canvas.style.pointerEvents = 'none';
-                        }
-                        setTimeout(function () {
-                            window.location.reload();
-                        }, 2000);
-                    } else {
-                        showFeedback(result.error || result.message || 'Erreur lors de la signature.', 'error');
-                        btnSign.disabled = false;
-                        btnSign.innerHTML = originalHtml;
-                        if (window.lucide && typeof window.lucide.createIcons === 'function') {
-                            window.lucide.createIcons();
-                        }
-                    }
-                } catch (err) {
-                    console.error(err);
-                    showFeedback('Erreur réseau. Vérifiez votre connexion et réessayez.', 'error');
-                    btnSign.disabled = false;
-                    btnSign.innerHTML = originalHtml;
-                    if (window.lucide && typeof window.lucide.createIcons === 'function') {
-                        window.lucide.createIcons();
-                    }
-                }
-            });
-        });
-    </script>
-    {% endif %}
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            if (window.lucide && typeof window.lucide.createIcons === 'function') {
-                window.lucide.createIcons();
-            }
-        });
-    </script>
+    <!-- Scripts externes modulaires (sans aucun JS inline) -->
+    <script src="https://unpkg.com/lucide@1.48.0/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="{{ asset_url('js/src/common/signature-pad-controller.js') }}"></script>
+    <script src="{{ asset_url('js/src/ui-utils.js') }}"></script>
+    <script src="{{ asset_url('js/src/public/sign-incident.js') }}"></script>
 </body>
 
 </html>

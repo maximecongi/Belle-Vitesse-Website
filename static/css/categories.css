@@ -42,6 +42,10 @@
     width: 80vw;
 }
 
+.categories-solutions-filters-dropdown--hidden {
+    visibility: hidden;
+}
+
 .categories-solutions-filters-dropdown-button {
     display: inline-flex;
     flex-direction: row;

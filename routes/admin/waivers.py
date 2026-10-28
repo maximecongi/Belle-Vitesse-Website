@@ -225,6 +225,9 @@ def admin_cgl_delete(waiver_id):
         flash(msg, "success")
     else:
         flash(msg, "error")
+    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    if return_to:
+        return redirect(return_to)
     q = request.args.get('q', '')
     return redirect(url_for('admin_waivers.admin_cgl_list', q=q if q else None))
 
@@ -237,6 +240,9 @@ def admin_cgl_reset(waiver_id):
         flash(msg, "success")
     else:
         flash(msg, "error")
+    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    if return_to:
+        return redirect(return_to)
     q = request.args.get('q', '')
     return redirect(url_for('admin_waivers.admin_cgl_list', q=q if q else None))
 

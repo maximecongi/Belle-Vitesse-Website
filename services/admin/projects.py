@@ -207,17 +207,17 @@ def get_project_shoot_status(p, today_date=None):
                 shoot_status = "upcoming"
                 shoot_status_label = "À venir"
                 shoot_status_id = "upcoming"
-                shoot_status_color = "var(--status-info, #0284C7)"
+                shoot_status_color = "var(--status-info, #3B82F6)"
         elif ret_d and today_date > ret_d:
             shoot_status = "completed"
             shoot_status_label = "Clôturé"
             shoot_status_id = "completed"
-            shoot_status_color = "var(--status-neutral, #64748B)"
+            shoot_status_color = "var(--status-neutral, #6B7280)"
         else:
             shoot_status = "upcoming"
             shoot_status_label = "À venir"
             shoot_status_id = "upcoming"
-            shoot_status_color = "var(--status-info, #0284C7)"
+            shoot_status_color = "var(--status-info, #3B82F6)"
 
         if len(shoot_dates) == 1:
             shoot_dates_label = f"Le {format_date_fr(shoot_dates[0])}"
@@ -235,12 +235,12 @@ def get_project_shoot_status(p, today_date=None):
             shoot_status = "completed"
             shoot_status_label = "Clôturé"
             shoot_status_id = "completed"
-            shoot_status_color = "var(--status-neutral, #64748B)"
+            shoot_status_color = "var(--status-neutral, #6B7280)"
         else:
             shoot_status = "upcoming"
             shoot_status_label = "À venir"
             shoot_status_id = "upcoming"
-            shoot_status_color = "var(--status-info, #0284C7)"
+            shoot_status_color = "var(--status-info, #3B82F6)"
         shoot_dates_label = f"Du {format_date_fr(str(p.shoot_start_date))} au {format_date_fr(str(p.shoot_end_date))}"
     elif p.departure_date and p.return_date:
         if p.departure_date <= today_date <= p.return_date:
@@ -252,18 +252,18 @@ def get_project_shoot_status(p, today_date=None):
             shoot_status = "completed"
             shoot_status_label = "Clôturé"
             shoot_status_id = "completed"
-            shoot_status_color = "var(--status-neutral, #64748B)"
+            shoot_status_color = "var(--status-neutral, #6B7280)"
         else:
             shoot_status = "upcoming"
             shoot_status_label = "À venir"
             shoot_status_id = "upcoming"
-            shoot_status_color = "var(--status-info, #0284C7)"
+            shoot_status_color = "var(--status-info, #3B82F6)"
         shoot_dates_label = f"Du {format_date_fr(str(p.departure_date))} au {format_date_fr(str(p.return_date))}"
     else:
         shoot_status = "upcoming"
         shoot_status_label = "À venir"
         shoot_status_id = "upcoming"
-        shoot_status_color = "var(--status-info, #0284C7)"
+        shoot_status_color = "var(--status-info, #3B82F6)"
         shoot_dates_label = "Dates à confirmer"
 
     return {
@@ -439,6 +439,7 @@ def list_projects(
         joinedload(Project.key_grip_contact),
         joinedload(Project.cgl),
         selectinload(Project.safety_rules),
+        selectinload(Project.pilot_waivers),
         selectinload(Project.incidents),
         selectinload(Project.reports),
     )
@@ -944,6 +945,8 @@ def delete_project(record_id, user_id=None):
         try:
             delete_cgl_internal(p.id)
             delete_safety_rules_internal(p.id)
+            from services.admin.waivers.pilot import delete_pilot_waiver_internal
+            delete_pilot_waiver_internal(p.id)
         except Exception as waiver_err:
             logger.error(
                 f"❌ Erreur suppression décharges pour projet {p.id} : {waiver_err}")
@@ -964,6 +967,7 @@ def delete_project(record_id, user_id=None):
         try:
             ProjectReport.query.filter_by(project_id=p.id).delete()
         except Exception as rep_err:
+            db.session.rollback()
             logger.warning(
                 f"⚠️ Erreur suppression rapports d'équipe projet {p.id} : {rep_err}")
 

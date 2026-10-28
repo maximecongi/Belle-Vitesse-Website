@@ -7,7 +7,7 @@
 <h1 class="dot-before">Constat d'Incident Scellé.</h1>
 
 <p>
-    Bonjour {{ recipient_name or '' }}{% if not recipient_name %},{% endif %}<br><br>
+    Bonjour{% if recipient_name %} {{ recipient_name }}{% endif %},<br><br>
     Le constat d'incident contradictoire a été visé par l'ensemble des parties et scellé électroniquement pour le projet
     ci-dessous :
 </p>

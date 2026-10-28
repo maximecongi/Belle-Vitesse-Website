@@ -366,3 +366,29 @@ body:has(#active:checked~.wrapper) {
 .dropdown-image-preview.show {
     opacity: 1;
 }
+
+/* ── Launch Screen Back Bar ── */
+.launch-back-bar {
+    padding: 20px 5vw;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    z-index: 1000;
+    position: relative;
+}
+
+.launch-back-bar-link {
+    text-decoration: none;
+    font-size: clamp(0.8rem, 0.9vw, 1.2rem);
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: opacity 0.3s;
+}
+
+.launch-back-bar-link:hover {
+    opacity: 0.8;
+}

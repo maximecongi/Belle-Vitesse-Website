@@ -515,6 +515,31 @@ class WaiversCglAndSafetyRulesTest(unittest.TestCase):
             self.assertEqual(cgl.display_project_name, "Projet Test Dates")
             self.assertEqual(cgl.display_production_name, "Studio Test")
 
+    def test_admin_cgl_delete_route_with_return_to(self):
+        """Vérifie la suppression d'une CGL par route admin POST avec redirection return_to."""
+        with self.app.app_context():
+            user, proj = self._create_mock_data()
+            create_cgl(proj.id)
+            cgl = CglWaiver.query.filter_by(project_id=proj.id).first()
+            self.assertIsNotNone(cgl)
+
+            with self.client.session_transaction() as sess:
+                sess["admin_authenticated"] = True
+                sess["admin_user_id"] = user.id
+                sess["admin_user_role"] = "administrator"
+
+            target_url = f"/admin/projects/{proj.id}"
+            resp = self.client.post(
+                f"/admin/cgl/{cgl.waiver_id}/delete",
+                data={"return_to": target_url},
+                follow_redirects=False,
+            )
+            self.assertEqual(resp.status_code, 302)
+            self.assertEqual(resp.headers["Location"], target_url)
+
+            db.session.refresh(cgl)
+            self.assertIsNotNone(cgl.deleted_at)
+
 
 if __name__ == "__main__":
     unittest.main()

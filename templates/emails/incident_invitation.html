@@ -7,7 +7,7 @@
 <h1 class="dot-before">Signature Constat d'Incident.</h1>
 
 <p>
-    Bonjour {{ recipient_name or '' }}{% if not recipient_name %},{% endif %}<br><br>
+    Bonjour{% if recipient_name %} {{ recipient_name }}{% endif %},<br><br>
     Vous êtes invité à viser et signer électroniquement le <strong>constat d'incident contradictoire</strong> pour le
     projet ci-dessous :
 </p>

@@ -207,10 +207,41 @@ def task_render_pdf_to_file(
                 db.session.commit()
 
                 if post_action == "incident_post_actions":
-                    to_email = (extra_context or {}).get("to_email")
-                    if to_email:
+                    # 1. Synchronisation kDrive native (PDF garanti présent sur disque)
+                    try:
+                        from services.common.signatures import _dispatch_kdrive_document_bundle
+                        _dispatch_kdrive_document_bundle(
+                            "incident",
+                            inc,
+                            rel_pdf_path,
+                            resolved_base_url,
+                            (extra_context or {}).get("current_hash"),
+                            (extra_context or {}).get("snapshot", {}),
+                        )
+                    except Exception as k_err:
+                        logger.error(
+                            f"❌ [PDF Job] Erreur dispatch kDrive pour incident {inc.incident_number} : {k_err}",
+                            exc_info=True,
+                        )
+
+                    # 2. Expédition sécurisée des e-mails certifiés avec le PDF scellé attaché
+                    try:
                         from utils.mailer import send_incident_signed_confirmation_email
-                        send_incident_signed_confirmation_email(inc, to_email, output_file_path)
+                        recipient_emails = set()
+                        to_email = (extra_context or {}).get("to_email")
+                        if to_email and str(to_email).strip():
+                            recipient_emails.add(str(to_email).strip())
+                        for t_email in (extra_context or {}).get("recipient_emails", []):
+                            if t_email and str(t_email).strip():
+                                recipient_emails.add(str(t_email).strip())
+
+                        for recipient in recipient_emails:
+                            send_incident_signed_confirmation_email(inc, recipient, output_file_path)
+                    except Exception as mail_err:
+                        logger.error(
+                            f"❌ [PDF Job] Erreur envoi confirmation email incident {inc.incident_number} : {mail_err}",
+                            exc_info=True,
+                        )
 
         return True
 
