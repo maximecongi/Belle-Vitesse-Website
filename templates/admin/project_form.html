@@ -208,6 +208,8 @@
             <div class="u-flex u-flex-wrap u-gap-1">
                 {% for v in vehicles %}
                 {% set vf = v.fields %}
+                {% set v_uid = (vf.get('unique_id') if vf else None) or (v.get('unique_id') if v is mapping else None)
+                %}
                 <label class="project-checkbox-card {% if data and v.id in data.vehicle_ids %}selected{% endif %}"
                     data-item-id="{{ v.id }}" data-item-type="vehicle">
                     <input type="checkbox" name="vehicle_ids" value="{{ v.id }}" {% if data and v.id in data.vehicle_ids
@@ -215,7 +217,12 @@
                     {% if vf.get('thumbnail') %}
                     <img src="{{ vf.thumbnail[0].thumbnails.small.url }}" class="project-checkbox-card-img">
                     {% endif %}
-                    <span class="u-text-medium">{{ vf.get('name', '—') }}</span>
+                    <div>
+                        <span class="u-text-medium">{{ vf.get('name', '—') }}</span>
+                        {% if v_uid %}
+                        <span class="checkout-doc-id u-text-4xs u-mt-0">{{ v_uid }}</span>
+                        {% endif %}
+                    </div>
                     <div class="conflict-placeholder" data-conflict-id="{{ v.id }}"></div>
                 </label>
                 {% endfor %}

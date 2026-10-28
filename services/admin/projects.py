@@ -501,6 +501,7 @@ def get_project_form_context():
                         "slug": lfields.get("slug") or "",
                         "order": getattr(lv, "display_order", 999),
                         "daily_rate": float(lv.daily_rate) if getattr(lv, "daily_rate", None) is not None else None,
+                        "unique_id": lfields.get("unique_id") or getattr(lv, "unique_id", None),
                     }
                 })
     except Exception as e:

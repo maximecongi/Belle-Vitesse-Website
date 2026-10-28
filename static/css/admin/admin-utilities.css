@@ -1356,6 +1356,14 @@ select.form-input.form-input-sm {
 }
 
 /* Tailles de texte fines & micro-typographie */
+.u-text-4xs {
+    font-size: 6px !important;
+}
+
+.u-text-3xs {
+    font-size: 9px !important;
+}
+
 .u-text-2xs {
     font-size: 11px !important;
 }

@@ -1198,10 +1198,12 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                             <i data-lucide="car" class="u-text-muted"></i>
                         </div>
                         {% endif %}
-                        <span class="u-text-medium u-text-xs">{{ v_name }}</span>
-                        {% if vf.get('unique_id') %}
-                        <span class="checkout-doc-id u-text-2xs u-mt-0">{{ vf.get('unique_id') }}</span>
-                        {% endif %}
+                        <div>
+                            <span class="u-text-medium u-text-xs">{{ v_name }}</span>
+                            {% if vf.get('unique_id') %}
+                            <span class="checkout-doc-id u-text-4xs u-mt-0">{{ vf.get('unique_id') }}</span>
+                            {% endif %}
+                        </div>
                     </label>
                     {% endfor %}
                 </div>

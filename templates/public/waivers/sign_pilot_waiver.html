@@ -107,12 +107,15 @@
                             <div class="public-doc-vehicle-card">
                                 <div class="public-doc-vehicle-thumb-wrapper">
                                     {% if v.thumbnail %}
-                                    <img src="{{ v.thumbnail }}" alt="{{ v.name }}" class="public-doc-vehicle-thumb" loading="lazy">
+                                    <img src="{{ v.thumbnail }}" alt="{{ v.name }}" class="public-doc-vehicle-thumb"
+                                        loading="lazy">
                                     {% else %}
                                     <div class="public-doc-vehicle-thumb-placeholder" aria-hidden="true">
                                         <svg class="public-doc-vehicle-placeholder-icon" viewBox="0 0 24 24" fill="none"
-                                            stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
+                                            stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+                                            stroke-linejoin="round">
+                                            <path
+                                                d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
                                             <circle cx="7" cy="17" r="2" />
                                             <path d="M9 17h6" />
                                             <circle cx="17" cy="17" r="2" />
@@ -168,25 +171,32 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="pilot_signer_role">Fonction sur le tournage <span class="u-text-danger">*</span></label>
+                        <label for="pilot_signer_role">Fonction sur le tournage <span
+                                class="u-text-danger">*</span></label>
                         <select id="pilot_signer_role" name="signer_role" class="form-select">
-                            <option value="pilot" {% if waiver.signer_role=='pilot' %}selected{% endif %}>Pilote de précision / Travelling</option>
-                            <option value="operator" {% if waiver.signer_role in ['operator', 'camera_operator'] %}selected{% endif %}>Opérateur gyropode / Cadreur</option>
-                            <option value="stunt_performer" {% if waiver.signer_role in ['stunt_performer', 'stunt_coordinator'] %}selected{% endif %}>Cascadeur / Pilote cascade</option>
-                            <option value="other" {% if waiver.signer_role=='other' %}selected{% endif %}>Autre fonction...</option>
+                            <option value="pilot" {% if waiver.signer_role=='pilot' %}selected{% endif %}>Pilote
+                            </option>
+                            <option value="operator" {% if waiver.signer_role in ['operator', 'camera_operator' ]
+                                %}selected{% endif %}>Opérateur gyropode</option>
+                            <option value="other" {% if waiver.signer_role=='other' %}selected{% endif %}>Autre
+                                fonction...</option>
                         </select>
                     </div>
 
-                    <div class="form-group {% if waiver.signer_role != 'other' %}u-d-none{% endif %}" id="pilot_role_custom_group">
-                        <label for="pilot_role_custom">Précisez votre fonction <span class="u-text-danger">*</span></label>
+                    <div class="form-group {% if waiver.signer_role != 'other' %}u-d-none{% endif %}"
+                        id="pilot_role_custom_group">
+                        <label for="pilot_role_custom">Précisez votre fonction <span
+                                class="u-text-danger">*</span></label>
                         <input class="form-input" type="text" id="pilot_role_custom" name="role_custom"
-                            value="{{ waiver.signer_role_custom or '' }}" placeholder="Ex: Opérateur Steadicam, Conducteur spécialisé...">
+                            value="{{ waiver.signer_role_custom or '' }}"
+                            placeholder="Ex: Opérateur Steadicam, Conducteur spécialisé...">
                     </div>
 
                     <div class="form-group">
                         <label for="pilot_email">Adresse e-mail <span class="u-text-danger">*</span></label>
                         <input class="form-input" type="email" id="pilot_email" name="email"
-                            value="{{ waiver.signer_email or '' }}" placeholder="pilote@exemple.com" required autocomplete="email">
+                            value="{{ waiver.signer_email or '' }}" placeholder="pilote@exemple.com" required
+                            autocomplete="email">
                     </div>
 
                     <div class="form-group">
@@ -215,29 +225,60 @@
 
                     <h2>1. DÉCLARATION DU PILOTE SUR L'HONNEUR</h2>
                     <ul>
-                        <li><strong>Autorité exclusive de l'Employeur &amp; Absence de lien de subordination :</strong> Je déclare être engagé(e) ou missionné(e) par la société de production (l'Employeur) pour la conduite ou l'opération des véhicules techniques ci-dessus désignés, et agir sous son autorité exclusive. Je reconnais n'avoir aucun lien de subordination juridique, hiérarchique ou contractuel avec la société Belle Vitesse.</li>
-                        <li><strong>Compétences et qualifications :</strong> Je déclare disposer de l'expérience, des permis de conduire requis en cours de validité et des compétences techniques nécessaires au pilotage et à l'évolution sécurisée des véhicules mobilisés.</li>
-                        <li><strong>Aptitude physique &amp; Sobriété absolue :</strong> J'atteste sur l'honneur être en pleine possession de mes moyens physiques et psychiques, et n'être sous l'emprise d'aucun état alcoolique, substance stupéfiante, ni traitement médicamenteux incompatible avec la conduite sécurisée d'un véhicule motorisé.</li>
+                        <li><strong>Autorité exclusive de l'Employeur &amp; Absence de lien de subordination :</strong>
+                            Je déclare être engagé(e) ou missionné(e) par la société de production (l'Employeur) pour la
+                            conduite ou l'opération des véhicules techniques ci-dessus désignés, et agir sous son
+                            autorité exclusive. Je reconnais n'avoir aucun lien de subordination juridique, hiérarchique
+                            ou contractuel avec la société Belle Vitesse.</li>
+                        <li><strong>Compétences et qualifications :</strong> Je déclare disposer de l'expérience, des
+                            permis de conduire requis en cours de validité et des compétences techniques nécessaires au
+                            pilotage et à l'évolution sécurisée des véhicules mobilisés.</li>
+                        <li><strong>Aptitude physique &amp; Sobriété absolue :</strong> J'atteste sur l'honneur être en
+                            pleine possession de mes moyens physiques et psychiques, et n'être sous l'emprise d'aucun
+                            état alcoolique, substance stupéfiante, ni traitement médicamenteux incompatible avec la
+                            conduite sécurisée d'un véhicule motorisé.</li>
                     </ul>
 
                     <h2>2. RECONNAISSANCE DES CONDITIONS D'EXPLOITATION &amp; SÉCURITÉ</h2>
                     <ul>
-                        <li><strong>Évolution sur voies fermées :</strong> Je reconnais que les véhicules techniques de prise de vue ne doivent évoluer que sur des voies rigoureusement fermées à la circulation publique ou sur des terrains privés sécurisés et balisés sous le contrôle de la production.</li>
-                        <li><strong>Port systématique des Équipements de Protection Individuelle (EPI) :</strong> Je m'engage à porter systématiquement les EPI adaptés (notamment casque homologué correctement attaché pour les véhicules ouverts, gyropodes, plateformes et deux/trois-roues, chaussures montantes fermées et gants de protection).</li>
-                        <li><strong>Maîtrise de la vitesse &amp; Vigilance plateau :</strong> Je conserve en toutes circonstances la maîtrise de ma vitesse et adapte ma conduite à la configuration du terrain, aux conditions météorologiques et à la proximité immédiate des équipes techniques et des comédiens.</li>
-                        <li><strong>Charge utile &amp; Équilibre des masses :</strong> Je respecte scrupuleusement la charge utile maximale autorisée du véhicule ainsi que les consignes d'équilibrage des têtes caméras et machineries embarquées. Aucun passager n'est admis sur le véhicule en dehors des membres d'équipe indispensables à la prise de vue et dûment briefés.</li>
-                        <li><strong>Droit et Devoir d'Interruption :</strong> Je reconnais disposer du droit et du devoir impératif de refuser ou d'interrompre immédiatement toute manoeuvre ou prise de vue que j'estimerais dangereuse pour ma propre sécurité, celle des équipes de tournage ou des tiers, sans qu'aucune sanction ni pénalité ne puisse m'être opposée.</li>
+                        <li><strong>Évolution sur voies fermées :</strong> Je reconnais que les véhicules techniques de
+                            prise de vue ne doivent évoluer que sur des voies rigoureusement fermées à la circulation
+                            publique ou sur des terrains privés sécurisés et balisés sous le contrôle de la production.
+                        </li>
+                        <li><strong>Port systématique des Équipements de Protection Individuelle (EPI) :</strong> Je
+                            m'engage à porter systématiquement les EPI adaptés (notamment casque homologué correctement
+                            attaché pour les véhicules ouverts, gyropodes, plateformes et deux/trois-roues, chaussures
+                            montantes fermées et gants de protection).</li>
+                        <li><strong>Maîtrise de la vitesse &amp; Vigilance plateau :</strong> Je conserve en toutes
+                            circonstances la maîtrise de ma vitesse et adapte ma conduite à la configuration du terrain,
+                            aux conditions météorologiques et à la proximité immédiate des équipes techniques et des
+                            comédiens.</li>
+                        <li><strong>Charge utile &amp; Équilibre des masses :</strong> Je respecte scrupuleusement la
+                            charge utile maximale autorisée du véhicule ainsi que les consignes d'équilibrage des têtes
+                            caméras et machineries embarquées. Aucun passager n'est admis sur le véhicule en dehors des
+                            membres d'équipe indispensables à la prise de vue et dûment briefés.</li>
+                        <li><strong>Droit et Devoir d'Interruption :</strong> Je reconnais disposer du droit et du
+                            devoir impératif de refuser ou d'interrompre immédiatement toute manoeuvre ou prise de vue
+                            que j'estimerais dangereuse pour ma propre sécurité, celle des équipes de tournage ou des
+                            tiers, sans qu'aucune sanction ni pénalité ne puisse m'être opposée.</li>
                     </ul>
 
                     <h2>3. CONTRÔLE PRÉ-ROULAGE &amp; SIGNALEMENT</h2>
                     <ul>
-                        <li><strong>Vérification préalable :</strong> Je m'engage à effectuer une vérification visuelle et fonctionnelle préalable du véhicule avant toute mise en mouvement (pneumatiques, freins, direction, fixations et élingages de sécurité).</li>
-                        <li><strong>Signalement immédiat des anomalies :</strong> Tout dysfonctionnement technique, comportement anormal ou dommage constaté en cours de mission doit être signalé immédiatement au référent technique Belle Vitesse et à la régie de production.</li>
+                        <li><strong>Vérification préalable :</strong> Je m'engage à effectuer une vérification visuelle
+                            et fonctionnelle préalable du véhicule avant toute mise en mouvement (pneumatiques, freins,
+                            direction, fixations et élingages de sécurité).</li>
+                        <li><strong>Signalement immédiat des anomalies :</strong> Tout dysfonctionnement technique,
+                            comportement anormal ou dommage constaté en cours de mission doit être signalé immédiatement
+                            au référent technique Belle Vitesse et à la régie de production.</li>
                     </ul>
 
                     <hr>
                     <p class="u-text-xs u-text-muted">
-                        <strong>Protection des Données Personnelles (RGPD) :</strong> Les données recueillies dans la présente attestation sont traitées par Belle Vitesse aux fins exclusives de gestion de la sécurité, de prévention des risques, de justification assurantielle et de scellement de la conformité légale des opérations.
+                        <strong>Protection des Données Personnelles (RGPD) :</strong> Les données recueillies dans la
+                        présente attestation sont traitées par Belle Vitesse aux fins exclusives de gestion de la
+                        sécurité, de prévention des risques, de justification assurantielle et de scellement de la
+                        conformité légale des opérations.
                     </p>
                 </div>
             </section>
@@ -247,7 +288,10 @@
                 <div class="checkbox-container u-text-xs u-mb-3">
                     <input type="checkbox" id="ack_pilot_engagement" name="ack_pilot_engagement" required>
                     <label for="ack_pilot_engagement">
-                        <strong>Je certifie sur l'honneur l'exactitude des informations fournies, atteste de ma pleine aptitude et compétence à la conduite des véhicules confiés, confirme agir sous l'autorité exclusive de la production sans lien de subordination avec Belle Vitesse, et m'engage à respecter scrupuleusement l'ensemble des règles de sécurité de l'Annexe 3.</strong>
+                        <strong>Je certifie sur l'honneur l'exactitude des informations fournies, atteste de ma pleine
+                            aptitude et compétence à la conduite des véhicules confiés, confirme agir sous l'autorité
+                            exclusive de la production sans lien de subordination avec Belle Vitesse, et m'engage à
+                            respecter scrupuleusement l'ensemble des règles de sécurité de l'Annexe 3.</strong>
                     </label>
                 </div>
 
