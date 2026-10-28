@@ -99,7 +99,7 @@ else 'checkout') %}
         {% endif %}
 
         <!-- ═══════════ UPLOAD VÉRIFICATION PDF ═══════════ -->
-        {{ vmacro.pdf_upload_verifier(has_pdf_hash, action_url=url_for(rb + '_verify', inspection_id=inspection_id),
+        {{ vmacro.pdf_upload_verifier(has_pdf_hash,
         old_notice="Ce document a été signé avant l'introduction de la vérification par empreinte PDF. Seul le sceau de
         données est disponible.") }}
 
@@ -115,6 +115,7 @@ else 'checkout') %}
 
     <script src="https://unpkg.com/lucide@1.48.0/dist/umd/lucide.min.js"></script>
     <script src="{{ asset_url('js/src/ui-utils.js') }}"></script>
+    <script src="{{ asset_url('js/src/public/document-verifier.js') }}"></script>
 </body>
 
 </html>

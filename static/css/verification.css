@@ -166,6 +166,10 @@
     font-weight: 600;
 }
 
+.verify-upload-filename.is-error {
+    color: var(--status-danger-text, #991B1B);
+}
+
 #pdf-input {
     display: none;
 }

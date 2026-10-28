@@ -13,16 +13,37 @@ function initDocumentVerifier() {
     if (uploadArea._hasVerifierListener) return;
     uploadArea._hasVerifierListener = true;
 
-    pdfInput.addEventListener('change', (e) => {
-        if (e.target.files && e.target.files.length > 0) {
-            fileNameDisp.textContent = "Fichier sélectionné : " + e.target.files[0].name;
-            fileNameDisp.style.display = 'block';
-            submitBtn.disabled = false;
-            uploadArea.classList.add('is-active');
-        } else {
+    function handleFile(file) {
+        if (!file) {
+            fileNameDisp.textContent = "";
             fileNameDisp.style.display = 'none';
+            fileNameDisp.classList.remove('is-error');
             submitBtn.disabled = true;
             uploadArea.classList.remove('is-active');
+            return;
+        }
+
+        if (!file.name.toLowerCase().endsWith('.pdf')) {
+            fileNameDisp.textContent = "Erreur : Seuls les fichiers PDF sont acceptés (" + file.name + ").";
+            fileNameDisp.style.display = 'block';
+            fileNameDisp.classList.add('is-error');
+            submitBtn.disabled = true;
+            uploadArea.classList.remove('is-active');
+            return;
+        }
+
+        fileNameDisp.textContent = "Fichier sélectionné : " + file.name;
+        fileNameDisp.style.display = 'block';
+        fileNameDisp.classList.remove('is-error');
+        submitBtn.disabled = false;
+        uploadArea.classList.add('is-active');
+    }
+
+    pdfInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+            handleFile(e.target.files[0]);
+        } else {
+            handleFile(null);
         }
     });
 
@@ -34,20 +55,29 @@ function initDocumentVerifier() {
         });
     });
 
-    ['dragleave', 'drop'].forEach(eventName => {
-        uploadArea.addEventListener(eventName, (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (eventName === 'dragleave') uploadArea.classList.remove('is-active');
-        });
+    uploadArea.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!pdfInput.files || pdfInput.files.length === 0) {
+            uploadArea.classList.remove('is-active');
+        }
     });
 
     uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         const dt = e.dataTransfer;
         const files = dt ? dt.files : null;
         if (files && files.length > 0) {
-            pdfInput.files = files;
-            pdfInput.dispatchEvent(new Event('change'));
+            const file = files[0];
+            try {
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                pdfInput.files = dataTransfer.files;
+            } catch (_) {
+                pdfInput.files = files;
+            }
+            handleFile(file);
         }
     });
 }
@@ -60,4 +90,3 @@ if (document.readyState === 'loading') {
     initDocumentVerifier();
 }
 document.addEventListener('swup:contentReplaced', initDocumentVerifier);
-
