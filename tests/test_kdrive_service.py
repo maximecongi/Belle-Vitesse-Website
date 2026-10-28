@@ -309,7 +309,8 @@ def test_delete_entity_safety_rules_tree_fallback(app_ctx):
 
     mock_client = MagicMock()
     # ensure_directory_path pour 4_SÉCURITÉ/2_RÈGLES_SÉCURITÉ retourne 7200
-    mock_client.create_directory.return_value = {"id": 7200, "name": "2_RÈGLES_SÉCURITÉ"}
+    mock_client.create_directory.return_value = {
+        "id": 7200, "name": "2_RÈGLES_SÉCURITÉ"}
     # get_child_by_name dans 7200 pour 'BVSR-FALLBACK-789' retourne le dossier 7250
     mock_client.get_child_by_name.side_effect = lambda parent_id, name: {
         (7200, "BVSR-FALLBACK-789"): {"id": 7250, "name": "BVSR-FALLBACK-789", "type": "dir"},
@@ -480,7 +481,8 @@ def test_delete_project_folder_pruning_all_the_way_to_root(app_ctx):
     }.get(file_id, {})
 
     # Tous les dossiers parents sont vides
-    mock_client.list_files.side_effect = lambda file_id, limit=5, **kwargs: ([], None, False)
+    mock_client.list_files.side_effect = lambda file_id, limit=5, **kwargs: (
+        [], None, False)
 
     service = KDriveService(client=mock_client)
     success = service.delete_project_folder(project.id)
@@ -513,7 +515,7 @@ def test_check_and_repair_project_structure(app_ctx):
     mock_client.list_files.side_effect = lambda folder_id, limit=100: {
         5000: ([{"id": 5001, "name": "1_DEVIS", "type": "dir"},
                 {"id": 5002, "name": "4_SÉCURITÉ", "type": "dir"}], None, False),
-        5002: ([{"id": 5021, "name": "1_CHECKOUT", "type": "dir"}], None, False),
+        5002: ([{"id": 5021, "name": "1_CHECKOUTS", "type": "dir"}], None, False),
     }.get(folder_id, ([], None, False))
 
     mock_client.create_directory.side_effect = lambda parent_id, name: {
@@ -529,14 +531,15 @@ def test_check_and_repair_project_structure(app_ctx):
     assert "6_INCIDENTS" in missing
     assert "4_SÉCURITÉ/2_RÈGLES_SÉCURITÉ" in missing
     assert "4_SÉCURITÉ/3_CGL" in missing
-    assert "4_SÉCURITÉ/4_CHECKIN" in missing
+    assert "4_SÉCURITÉ/4_ATTESTATIONS_PILOTES" in missing
+    assert "4_SÉCURITÉ/5_CHECKINS" in missing
     assert mock_client.create_directory.call_count == 0
 
     # En mode réel : doit créer les manquants
     repaired = service.check_and_repair_project_structure(
         project, dry_run=False)
-    assert len(repaired) == 7
-    assert mock_client.create_directory.call_count == 7
+    assert len(repaired) == 8
+    assert mock_client.create_directory.call_count == 8
 
 
 def test_upload_bundle_sync(app_ctx, tmp_path):

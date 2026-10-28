@@ -49,7 +49,7 @@ class UploadMixin:
     def ensure_directory_path(self, parent_id: int, relative_path: str) -> int:
         """
         Assure l'existence d'une chaîne de répertoires sous parent_id et retourne l'ID du dernier dossier.
-        ex: ensure_directory_path(proj_id, "4_SÉCURITÉ/1_CHECKOUT/BVCO-1234/PHOTOS")
+        ex: ensure_directory_path(proj_id, "4_SÉCURITÉ/1_CHECKOUTS/BVCO-1234/PHOTOS")
         """
         segments = [clean_segment(s, "dir_part") for s in relative_path.strip("/").split("/") if s]
         curr_id = parent_id

@@ -60,12 +60,12 @@ def get_security_path(project):
 
 
 def get_checkout_path(project):
-    """output / ... / 1_SÉCURITÉ / 1_CHECKOUT"""
-    return get_security_path(project) / "1_CHECKOUT"
+    """output / ... / 1_SÉCURITÉ / 1_CHECKOUTS"""
+    return get_security_path(project) / "1_CHECKOUTS"
 
 
 def get_checkout_photos_path(project, inspection_number):
-    """output / ... / 1_SÉCURITÉ / 1_CHECKOUT / PHOTOS / {inspection_number}"""
+    """output / ... / 1_SÉCURITÉ / 1_CHECKOUTS / PHOTOS / {inspection_number}"""
     return get_checkout_path(project) / "PHOTOS" / inspection_number
 
 
@@ -85,17 +85,17 @@ def get_safety_rules_path(project):
 
 
 def get_pilot_waiver_path(project):
-    """output / ... / 1_SÉCURITÉ / 3_ATTESTATIONS_PILOTES"""
-    return get_security_path(project) / "3_ATTESTATIONS_PILOTES"
+    """output / ... / 1_SÉCURITÉ / 4_ATTESTATIONS_PILOTES"""
+    return get_security_path(project) / "4_ATTESTATIONS_PILOTES"
 
 
 def get_checkin_path(project):
-    """output / ... / 1_SÉCURITÉ / 4_CHECKIN"""
-    return get_security_path(project) / "4_CHECKIN"
+    """output / ... / 1_SÉCURITÉ / 5_CHECKINS"""
+    return get_security_path(project) / "5_CHECKINS"
 
 
 def get_checkin_photos_path(project, inspection_number):
-    """output / ... / 1_SÉCURITÉ / 4_CHECKIN / PHOTOS / {inspection_number}"""
+    """output / ... / 1_SÉCURITÉ / 5_CHECKINS / PHOTOS / {inspection_number}"""
     return get_checkin_path(project) / "PHOTOS" / inspection_number
 
 

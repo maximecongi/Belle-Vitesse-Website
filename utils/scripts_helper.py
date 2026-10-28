@@ -6,7 +6,13 @@ _root = Path(__file__).resolve().parent.parent
 
 # Détection et bascule automatique vers le venv du projet si exécuté hors venv
 _venv_python = _root / ".venv" / "bin" / "python"
-if _venv_python.exists() and os.environ.get("_BV_AUTO_VENV_SWITCH") != "1":
+if (
+    _venv_python.exists()
+    and os.environ.get("_BV_AUTO_VENV_SWITCH") != "1"
+    and "pytest" not in sys.modules
+    and not any("pytest" in arg for arg in sys.argv)
+    and os.environ.get("FLASK_ENV") != "testing"
+):
     try:
         current_prefix = Path(sys.prefix).resolve()
         venv_prefix = (_root / ".venv").resolve()

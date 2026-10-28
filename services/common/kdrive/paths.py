@@ -12,11 +12,11 @@ PROJECT_SUBFOLDERS = [
 ]
 
 DOC_FOLDERS = {
-    "checkout": "4_SÉCURITÉ/1_CHECKOUT",
+    "checkout": "4_SÉCURITÉ/1_CHECKOUTS",
     "safety_rules": "4_SÉCURITÉ/2_RÈGLES_SÉCURITÉ",
-    "pilot_waiver": "4_SÉCURITÉ/3_ATTESTATIONS_PILOTES",
     "cgl": "4_SÉCURITÉ/3_CGL",
-    "checkin": "4_SÉCURITÉ/4_CHECKIN",
+    "pilot_waiver": "4_SÉCURITÉ/4_ATTESTATIONS_PILOTES",
+    "checkin": "4_SÉCURITÉ/5_CHECKINS",
     "incident": "6_INCIDENTS",
 }
 
@@ -43,7 +43,8 @@ def clean_segment(value, label: str = "segment") -> str:
     - Refuse les segments vides ou dangereux (., ..)
     """
     if value is None:
-        raise ValueError(f"Le segment '{label}' ne peut pas être vide ou None.")
+        raise ValueError(
+            f"Le segment '{label}' ne peut pas être vide ou None.")
 
     raw = str(value)
     # Remplacement des slashes par des espaces
@@ -128,9 +129,11 @@ def build_project_path(project) -> str:
     {KDRIVE_BASE_PATH}/<YEAR>/<MONTH>/<PRODUCTION>/<PROJET>/<PROJECT_ID>
     """
     date_ref = get_project_date_reference(project)
-    prod_name = project.production.name if (project and getattr(project, "production", None)) else "SANS_PRODUCTION"
+    prod_name = project.production.name if (project and getattr(
+        project, "production", None)) else "SANS_PRODUCTION"
     proj_name = project.name if project else "PROJET"
-    proj_id = clean_segment(project.project_id if project else "BVPR", "project_id")
+    proj_id = clean_segment(
+        project.project_id if project else "BVPR", "project_id")
 
     rel = build_project_rel_path(date_ref, date_ref, prod_name, proj_name)
     return f"{KDRIVE_BASE_PATH}/{rel}/{proj_id}"

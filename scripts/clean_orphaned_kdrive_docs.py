@@ -23,8 +23,6 @@ _root = Path(__file__).resolve().parent.parent
 sys.path.append(str(_root))
 
 from dotenv import load_dotenv
-from utils.scripts_helper import build_minimal_app
-
 load_dotenv(_root / ".env")
 
 logging.basicConfig(
@@ -153,6 +151,7 @@ def main():
 
     dry_run = not args.force or args.dry_run
 
+    from utils.scripts_helper import build_minimal_app
     app, tunnel = build_minimal_app()
     try:
         with app.app_context():

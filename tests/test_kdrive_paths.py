@@ -25,7 +25,8 @@ class MockProject:
     def __init__(self, name, project_id, production_name, departure_date=None, shoot_start_date=None):
         self.name = name
         self.project_id = project_id
-        self.production = MockProduction(production_name) if production_name else None
+        self.production = MockProduction(
+            production_name) if production_name else None
         self.departure_date = departure_date
         self.shoot_start_date = shoot_start_date
 
@@ -89,16 +90,23 @@ def test_format_name():
 
 def test_build_project_rel_path_10_cases():
     test_cases = [
-        (2026, 9, "ACADEMY FILMS", "PROJETS TEST", "2026/09/ACADEMY FILMS/PROJETS TEST"),
+        (2026, 9, "ACADEMY FILMS", "PROJETS TEST",
+         "2026/09/ACADEMY FILMS/PROJETS TEST"),
         (2026, 7, "RVZ", "PUB MATMUT", "2026/07/RVZ/PUB MATMUT"),
-        (2026, "06", "Pyramide", "Anatole Latuile", "2026/06/PYRAMIDE/ANATOLE LATUILE"),
+        (2026, "06", "Pyramide", "Anatole Latuile",
+         "2026/06/PYRAMIDE/ANATOLE LATUILE"),
         (2026, 8, "ORSOIE", "CLEM BLOCK", "2026/08/ORSOIE/CLEM BLOCK"),
-        (2026, 10, "Ami Productions", "Défilé Ami", "2026/10/AMI PRODUCTIONS/DÉFILÉ AMI"),
-        (2026, "5", "PELOTON PRODUCTION", "Cannes / Festival", "2026/05/PELOTON PRODUCTION/CANNES FESTIVAL"),
+        (2026, 10, "Ami Productions", "Défilé Ami",
+         "2026/10/AMI PRODUCTIONS/DÉFILÉ AMI"),
+        (2026, "5", "PELOTON PRODUCTION", "Cannes / Festival",
+         "2026/05/PELOTON PRODUCTION/CANNES FESTIVAL"),
         (2026, 4, "TCO", "Huck x Nike", "2026/04/TCO/HUCK X NIKE"),
-        (2026, 3, "Academy films", "Interstellar\\3", "2026/03/ACADEMY FILMS/INTERSTELLAR 3"),
-        (2026, 9, "Biscuit Filmworks", "Test Projet 3", "2026/09/BISCUIT FILMWORKS/TEST PROJET 3"),
-        (2026, 1, "Studio Cinema", "Tournage Pub Sport", "2026/01/STUDIO CINEMA/TOURNAGE PUB SPORT"),
+        (2026, 3, "Academy films", "Interstellar\\3",
+         "2026/03/ACADEMY FILMS/INTERSTELLAR 3"),
+        (2026, 9, "Biscuit Filmworks", "Test Projet 3",
+         "2026/09/BISCUIT FILMWORKS/TEST PROJET 3"),
+        (2026, 1, "Studio Cinema", "Tournage Pub Sport",
+         "2026/01/STUDIO CINEMA/TOURNAGE PUB SPORT"),
     ]
 
     for y, m, prod, proj, expected in test_cases:
@@ -127,21 +135,35 @@ def test_build_document_directory_path():
     )
 
     # 1. Checkout (root PDF & photos)
-    assert build_document_directory_path(p, "checkout", "BVCO-1111", "pdf") == "4_SÉCURITÉ/1_CHECKOUT/BVCO-1111"
-    assert build_document_directory_path(p, "checkout", "BVCO-1111", "photo") == "4_SÉCURITÉ/1_CHECKOUT/BVCO-1111/PHOTOS"
+    assert build_document_directory_path(
+        p, "checkout", "BVCO-1111", "pdf") == "4_SÉCURITÉ/1_CHECKOUTS/BVCO-1111"
+    assert build_document_directory_path(
+        p, "checkout", "BVCO-1111", "photo") == "4_SÉCURITÉ/1_CHECKOUTS/BVCO-1111/PHOTOS"
 
     # 2. Checkin
-    assert build_document_directory_path(p, "checkin", "BVCI-2222", "pdf") == "4_SÉCURITÉ/4_CHECKIN/BVCI-2222"
-    assert build_document_directory_path(p, "checkin", "BVCI-2222", "photo") == "4_SÉCURITÉ/4_CHECKIN/BVCI-2222/PHOTOS"
+    assert build_document_directory_path(
+        p, "checkin", "BVCI-2222", "pdf") == "4_SÉCURITÉ/5_CHECKINS/BVCI-2222"
+    assert build_document_directory_path(
+        p, "checkin", "BVCI-2222", "photo") == "4_SÉCURITÉ/5_CHECKINS/BVCI-2222/PHOTOS"
 
     # 3. CGL (Rental Agreement)
-    assert build_document_directory_path(p, "cgl", "BVRA-3333", "pdf") == "4_SÉCURITÉ/3_CGL/BVRA-3333/1_CGL"
-    assert build_document_directory_path(p, "cgl", "BVRA-3333", "insurance") == "4_SÉCURITÉ/3_CGL/BVRA-3333/2_ATTESTATION_ASSURANCE"
+    assert build_document_directory_path(
+        p, "cgl", "BVRA-3333", "pdf") == "4_SÉCURITÉ/3_CGL/BVRA-3333/1_CGL"
+    assert build_document_directory_path(
+        p, "cgl", "BVRA-3333", "insurance") == "4_SÉCURITÉ/3_CGL/BVRA-3333/2_ATTESTATION_ASSURANCE"
 
     # 4. Safety rules (BVSR)
-    assert build_document_directory_path(p, "safety_rules", "BVSR-4444", "pdf") == "4_SÉCURITÉ/2_RÈGLES_SÉCURITÉ/BVSR-4444"
+    assert build_document_directory_path(
+        p, "safety_rules", "BVSR-4444", "pdf") == "4_SÉCURITÉ/2_RÈGLES_SÉCURITÉ/BVSR-4444"
 
-    # 5. Incident (top-level subfolder 6_INCIDENTS)
-    assert build_document_directory_path(p, "incident", "BVIC-5555", "pdf") == "6_INCIDENTS/BVIC-5555"
-    assert build_document_directory_path(p, "incident", "BVIC-5555", "photo") == "6_INCIDENTS/BVIC-5555/PHOTOS"
-    assert build_document_directory_path(p, "incident", "BVIC-5555", "document") == "6_INCIDENTS/BVIC-5555/DOCUMENTS"
+    # 5. Pilot waiver (BVPA)
+    assert build_document_directory_path(
+        p, "pilot_waiver", "BVPA-6666", "pdf") == "4_SÉCURITÉ/4_ATTESTATIONS_PILOTES/BVPA-6666"
+
+    # 6. Incident (top-level subfolder 6_INCIDENTS)
+    assert build_document_directory_path(
+        p, "incident", "BVIC-5555", "pdf") == "6_INCIDENTS/BVIC-5555"
+    assert build_document_directory_path(
+        p, "incident", "BVIC-5555", "photo") == "6_INCIDENTS/BVIC-5555/PHOTOS"
+    assert build_document_directory_path(
+        p, "incident", "BVIC-5555", "document") == "6_INCIDENTS/BVIC-5555/DOCUMENTS"

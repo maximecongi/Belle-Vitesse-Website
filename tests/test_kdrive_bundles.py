@@ -27,7 +27,7 @@ class DummyInspection:
     def __init__(self, prefix="BVCO"):
         self.inspection_number = f"{prefix}-INSP99999999"
         self.project_id = 15
-        self.signed_pdf_path = "2026/09/PROD/PROJ/4_SÉCURITÉ/1_CHECKOUT/BVCO-INSP99999999/doc.pdf"
+        self.signed_pdf_path = "2026/09/PROD/PROJ/4_SÉCURITÉ/1_CHECKOUTS/BVCO-INSP99999999/doc.pdf"
         self.interior_photos = json.dumps(["photos/in1.jpg", "photos/in2.jpg"])
         self.exterior_photos = json.dumps(["photos/ex1.jpg"])
 
