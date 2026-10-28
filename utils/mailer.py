@@ -119,8 +119,7 @@ class EmailService:
                     msg.attach(part)
                 else:
                     if current_app:
-                        current_app.logger.error(
-                            f"❌ Attachment not found at {att_path}")
+                        current_app.logger.error(f"❌ Attachment not found at {att_path}")
         else:
             msg = MIMEMultipart("alternative")
             if text_content:
