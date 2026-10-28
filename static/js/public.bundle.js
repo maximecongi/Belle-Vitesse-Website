@@ -1233,21 +1233,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // B. Validation des engagements obligatoires
         const ackRules = document.getElementById('ack_rules');
-        const ackAuthority = document.getElementById('ack_authority');
 
         if (ackRules && !ackRules.checked) {
             if (typeof showFeedback === 'function') {
                 showFeedback('Veuillez confirmer avoir pris connaissance des règles de sécurité en cochant la case requise.', 'error');
             }
             ackRules.focus();
-            return;
-        }
-
-        if (ackAuthority && !ackAuthority.checked) {
-            if (typeof showFeedback === 'function') {
-                showFeedback('Veuillez confirmer votre droit et devoir d’interruption (Stop Work Authority) en cochant la case requise.', 'error');
-            }
-            ackAuthority.focus();
             return;
         }
 

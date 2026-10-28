@@ -509,13 +509,12 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
                     "signature": valid_sig,
                     "first_name": "Paul",
                     "last_name": "Secu",
-                    "ack_authority": "1",
                 },
             )
             self.assertEqual(res1.status_code, 400)
             self.assertIn("règles de sécurité", res1.get_json().get("error", "").lower())
 
-            # 2. Échec : manque ack_authority
+            # 2. Succès avec consentement ack_rules
             res2 = self.client.post(
                 f"/sign/safety-rules/{token}",
                 data={
@@ -525,21 +524,7 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
                     "ack_rules": "1",
                 },
             )
-            self.assertEqual(res2.status_code, 400)
-            self.assertIn("interruption", res2.get_json().get("error", "").lower())
-
-            # 3. Succès avec les deux consentements
-            res3 = self.client.post(
-                f"/sign/safety-rules/{token}",
-                data={
-                    "signature": valid_sig,
-                    "first_name": "Paul",
-                    "last_name": "Secu",
-                    "ack_rules": "1",
-                    "ack_authority": "1",
-                },
-            )
-            self.assertEqual(res3.status_code, 200)
+            self.assertEqual(res2.status_code, 200)
 
             # Vérification de l'événement consent_recorded pour BVSR
             consent_ev = SignatureEvent.query.filter_by(
@@ -548,7 +533,6 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
             ).first()
             self.assertIsNotNone(consent_ev)
             self.assertTrue(consent_ev.details.get("ack_rules"))
-            self.assertTrue(consent_ev.details.get("ack_authority"))
 
     def test_cgl_field_validations_siret_and_email(self):
         """Vérifie la validation stricte côté serveur du SIRET et du format d'email pour les CGL."""

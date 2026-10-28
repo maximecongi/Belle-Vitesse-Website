@@ -690,7 +690,6 @@ def _build_flow_data(mode, record, extra_data):
             "helmets_inventory": getattr(record, "helmets_inventory", None) or DEFAULT_HELMETS_INVENTORY,
             "safety_technicians": getattr(record, "display_safety_technicians", None) or getattr(record, "safety_technicians", "") or "",
             "ack_rules": sign_data.get("ack_rules", True),
-            "ack_authority": sign_data.get("ack_authority", True),
             "bv_signature": record.bv_signature_data or "",
             "bv_signed_at": record.bv_signed_at.isoformat() if record.bv_signed_at else "",
             "bv_signer_name": record.bv_signer_name or "",

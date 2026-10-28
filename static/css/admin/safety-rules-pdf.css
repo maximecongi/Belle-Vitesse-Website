@@ -376,34 +376,7 @@
     color: #52525b;
 }
 
-/* ── 6. Droit et Devoir d'Interruption (Stop Work Authority) ─────────────── */
-.bvsr-callout {
-    background-color: #fafafa;
-    border: 1px solid #e4e4e7;
-    border-left: 3pt solid #ffc845;
-    border-radius: 2pt;
-    padding: 8pt 10pt;
-    margin-bottom: 14pt;
-    page-break-inside: avoid;
-}
-
-.bvsr-callout-title {
-    font-size: 8.5pt;
-    font-weight: 800;
-    text-transform: uppercase;
-    color: #18181b;
-    margin-bottom: 4pt;
-    letter-spacing: 0.3px;
-}
-
-.bvsr-callout-text {
-    font-size: 7.8pt;
-    line-height: 1.45;
-    color: #3f3f46;
-    margin: 0;
-}
-
-/* ── 7. Sections des Règles de Sécurité ──────────────────────────────────── */
+/* ── 6. Sections des Règles de Sécurité ──────────────────────────────────── */
 .bvsr-section {
     margin-bottom: 14pt;
     page-break-inside: avoid;

@@ -503,7 +503,7 @@ class BvsrComprehensiveTest(unittest.TestCase):
             resp = self.client.get(f"/sign/safety-rules/{token_obj.token}")
             self.assertEqual(resp.status_code, 200)
             html = resp.data.decode("utf-8")
-            self.assertIn("Supervision technique BV", html)
+            self.assertIn("Référent(s) Plateau BelleVitesse", html)
             self.assertIn("Maxime Perrard", html)
             self.assertIn("Ewen Gicquel", html)
 
@@ -542,7 +542,7 @@ class BvsrComprehensiveTest(unittest.TestCase):
             resp_nr = self.client.get(f"/sign/safety-rules/{token_obj_nr.token}")
             self.assertEqual(resp_nr.status_code, 200)
             html_nr = resp_nr.data.decode("utf-8")
-            self.assertNotIn("Supervision technique BV", html_nr)
+            self.assertNotIn("Référent(s) Plateau BelleVitesse", html_nr)
 
             # Vérification sur la prévisualisation admin : la mention de supervision doit être masquée
             with self.client.session_transaction() as sess:

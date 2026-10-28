@@ -198,9 +198,6 @@ def init_waiver_routes(app):
                 if data.get("ack_rules") not in ("1", "on", "true"):
                     return _fail("La prise de connaissance et le respect des Règles de Sécurité Universelles (BVSR) sont obligatoires.")
 
-                if data.get("ack_authority") not in ("1", "on", "true"):
-                    return _fail("La reconnaissance du droit et devoir d'interruption (Stop Work Authority) est obligatoire.")
-
                 if data.get("first_name"):
                     fn = data.get("first_name").strip()
                     if len(fn) > 100:
@@ -241,7 +238,6 @@ def init_waiver_routes(app):
 
                 bvsr_sign_data = dict(waiver.sign_data or {})
                 bvsr_sign_data["ack_rules"] = True
-                bvsr_sign_data["ack_authority"] = True
                 bvsr_sign_data["accepted_at"] = datetime.now(timezone.utc).isoformat()
                 waiver.sign_data = bvsr_sign_data
             else:
@@ -416,7 +412,6 @@ def init_waiver_routes(app):
             if mode == "safety_rules":
                 consent_payload = {
                     "ack_rules": True,
-                    "ack_authority": True,
                     "signer_name": rep_name,
                     "signer_role": waiver.signer_role,
                 }
