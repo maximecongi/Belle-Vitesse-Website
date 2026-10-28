@@ -395,7 +395,7 @@ a.public-doc-vehicle-card:hover {
     padding-left: 1.5rem;
 }
 
-.cgl-annexe2-list > li {
+.cgl-annexe2-list>li {
     margin-bottom: 0.75rem;
 }
 
@@ -405,7 +405,7 @@ a.public-doc-vehicle-card:hover {
     list-style-type: disc;
 }
 
-.cgl-annexe2-sublist > li {
+.cgl-annexe2-sublist>li {
     margin-bottom: 0.35rem;
 }
 
@@ -854,6 +854,34 @@ a.public-doc-vehicle-card:hover {
     .public-doc-footer-separator {
         display: none;
     }
+}
+
+/* ── Badges des Référents / Superviseurs BV (Portail Public) ── */
+.public-doc-technicians-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 2px;
+}
+
+.public-doc-technician-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 9999px;
+    background-color: var(--entity-waiver-bg, #EDE9FE);
+    color: var(--entity-waiver-text, #8B5CF6);
+    font-size: 12px;
+    line-height: 1.25;
+}
+
+.public-doc-technician-pill svg,
+.public-doc-technician-pill .lucide {
+    width: 12px;
+    height: 12px;
+    color: currentColor;
+    flex-shrink: 0;
 }
 
 @media (max-width: 480px) {

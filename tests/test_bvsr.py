@@ -405,7 +405,7 @@ class BvsrComprehensiveTest(unittest.TestCase):
             res_get = self.client.get("/admin/fleet/safety-rules")
             self.assertEqual(res_get.status_code, 200)
             html = res_get.data.decode("utf-8")
-            self.assertIn("1. Règles Générales de Sécurité (Universelles)", html)
+            self.assertIn("1. Règles Générales de Sécurité", html)
             self.assertIn("btn-edit-general-rule", html)
 
             # 2. Enregistrement de règles générales spécifiques

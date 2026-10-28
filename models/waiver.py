@@ -485,6 +485,35 @@ class SafetyRulesWaiver(Waiver):
             return val.strip() if val and val.strip() else None
         return None
 
+    @property
+    def display_safety_technicians_count(self):
+        """Retourne le nombre de référents BV associés (int)."""
+        if self.project and getattr(self.project, "bv_referents", None):
+            return len(self.project.bv_referents)
+        techs_str = self.display_safety_technicians
+        if not techs_str:
+            return 0
+        return len([name for name in techs_str.split(",") if name.strip()])
+
+    @property
+    def display_safety_technicians_list(self):
+        """Retourne la liste des référents BV (objets User du projet si disponibles, ou liste d'objets avec name)."""
+        if self.project and getattr(self.project, "bv_referents", None):
+            referents = []
+            for u in self.project.bv_referents:
+                full_name = f"{u.firstname or ''} {u.lastname or ''}".strip()
+                referents.append({
+                    "name": full_name or u.mail or "Référent BV",
+                    "role": getattr(u, "role_display", u.role or "Technicien"),
+                })
+            if referents:
+                return referents
+
+        techs_str = self.display_safety_technicians
+        if not techs_str:
+            return []
+        return [{"name": name.strip(), "role": "Technicien"} for name in techs_str.split(",") if name.strip()]
+
     def __repr__(self):
         return f"<SafetyRulesWaiver {self.waiver_id} - {self.signer_role} - {self.status}>"
 

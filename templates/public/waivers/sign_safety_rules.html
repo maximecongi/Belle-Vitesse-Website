@@ -91,9 +91,18 @@
                         <span class="public-doc-info-value u-text-sm">{{ waiver.display_shooting_dates }}</span>
                     </div>
                     {% if waiver.display_safety_technicians %}
-                    <div class="public-doc-info-item">
-                        <span class="public-doc-info-label">Supervision technique BV</span>
-                        <span class="public-doc-info-value u-text-sm">{{ waiver.display_safety_technicians }}</span>
+                    <div class="public-doc-info-item u-grid-colspan-2">
+                        <div class="u-flex u-align-center u-gap-1 u-mb-1">
+                            <span class="public-doc-info-label u-mb-0">Référent(s) Plateau BelleVitesse </span>
+                        </div>
+                        <div class="public-doc-technicians-list">
+                            {% for tech in waiver.display_safety_technicians_list %}
+                            <span class="public-doc-technician-pill">
+                                <i data-lucide="user" aria-hidden="true"></i>
+                                <span>{{ tech.name }}</span>
+                            </span>
+                            {% endfor %}
+                        </div>
                     </div>
                     {% endif %}
                 </div>
@@ -172,14 +181,22 @@
                         <label for="safety_signer_role">Votre rôle sur le tournage <span
                                 class="u-text-danger">*</span></label>
                         <select id="safety_signer_role" name="signer_role" class="form-select">
-                            <option value="pilot" {% if waiver.signer_role=='pilot' %}selected{% endif %}>Pilote</option>
-                            <option value="operator" {% if waiver.signer_role in ['operator', 'camera_operator'] %}selected{% endif %}>Cadreur</option>
-                            <option value="stunt_coordinator" {% if waiver.signer_role in ['stunt_coordinator', 'stunt'] %}selected{% endif %}>Coordinateur Cascades</option>
-                            <option value="stunt_performer" {% if waiver.signer_role=='stunt_performer' %}selected{% endif %}>Cascadeur</option>
-                            <option value="production" {% if waiver.signer_role=='production' %}selected{% endif %}>Directeur de production</option>
-                            <option value="director" {% if waiver.signer_role=='director' %}selected{% endif %}>Réalisateur</option>
-                            <option value="first_ad" {% if waiver.signer_role=='first_ad' %}selected{% endif %}>1er Assistant Réalisateur</option>
-                            <option value="other" {% if waiver.signer_role=='other' %}selected{% endif %}>Autre fonction...</option>
+                            <option value="pilot" {% if waiver.signer_role=='pilot' %}selected{% endif %}>Pilote
+                            </option>
+                            <option value="operator" {% if waiver.signer_role in ['operator', 'camera_operator' ]
+                                %}selected{% endif %}>Cadreur</option>
+                            <option value="stunt_coordinator" {% if waiver.signer_role in ['stunt_coordinator', 'stunt'
+                                ] %}selected{% endif %}>Coordinateur Cascades</option>
+                            <option value="stunt_performer" {% if waiver.signer_role=='stunt_performer' %}selected{%
+                                endif %}>Cascadeur</option>
+                            <option value="production" {% if waiver.signer_role=='production' %}selected{% endif %}>
+                                Directeur de production</option>
+                            <option value="director" {% if waiver.signer_role=='director' %}selected{% endif %}>
+                                Réalisateur</option>
+                            <option value="first_ad" {% if waiver.signer_role=='first_ad' %}selected{% endif %}>1er
+                                Assistant Réalisateur</option>
+                            <option value="other" {% if waiver.signer_role=='other' %}selected{% endif %}>Autre
+                                fonction...</option>
                         </select>
                     </div>
 
@@ -238,16 +255,17 @@
                     <h2>CONSIGNES GÉNÉRALES IMPÉRATIVES (BILINGUE FR / EN)</h2>
                     <ul>
                         {% for rfr in (general_rules.rules_fr if general_rules and general_rules.rules_fr else []) %}
-                            {% set ren = general_rules.rules_en[loop.index0] if (general_rules.rules_en and loop.index0 < general_rules.rules_en|length) else '' %}
-                            {% set parts_fr = rfr.split(':', 1) %}
-                            <li>
-                                {% if parts_fr|length > 1 %}<strong>{{ parts_fr[0]|trim }} :</strong> {{ parts_fr[1]|trim }}{% else %}{{ rfr }}{% endif %}
-                                {% if ren %}
-                                {% set parts_en = ren.split(':', 1) %}
-                                <em>({% if parts_en|length > 1 %}<strong>{{ parts_en[0]|trim }} :</strong> {{ parts_en[1]|trim }}{% else %}{{ ren }}{% endif %})</em>
-                                {% endif %}
+                        {% set ren = general_rules.rules_en[loop.index0] if (general_rules.rules_en and loop.index0 <
+                            general_rules.rules_en|length) else '' %} {% set parts_fr=rfr.split(':', 1) %} <li>
+                            {% if parts_fr|length > 1 %}<strong>{{ parts_fr[0]|trim }} :</strong> {{ parts_fr[1]|trim
+                            }}{% else %}{{ rfr }}{% endif %}
+                            {% if ren %}
+                            {% set parts_en = ren.split(':', 1) %}
+                            <em>({% if parts_en|length > 1 %}<strong>{{ parts_en[0]|trim }} :</strong> {{
+                                parts_en[1]|trim }}{% else %}{{ ren }}{% endif %})</em>
+                            {% endif %}
                             </li>
-                        {% endfor %}
+                            {% endfor %}
                     </ul>
 
                     {% if vehicle_rules %}
