@@ -618,6 +618,109 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
             {% endif %}
         </div>
 
+        <!-- 3. ATTESTATIONS PILOTES (ANNEXE 3 AUX CGL) -->
+        <div class="project-doc-item u-p-3 u-mb-3 u-border-left-waiver">
+            <div class="u-flex u-justify-between u-align-center u-mb-2">
+                <div class="u-flex u-align-center u-gap-2">
+                    <span class="project-doc-title u-font-semibold u-text-xs">
+                        <i data-lucide="file-signature" class="u-text-waiver"></i> Attestations Pilotes (Annexe 3)
+                    </span>
+                    <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-2xs">
+                        {{ pilot_waivers|length }} pilote{{ 's' if pilot_waivers|length > 1 else '' }}
+                    </span>
+                </div>
+                <button type="button" class="admin-btn admin-btn-xs admin-btn-primary js-open-add-pilot-signer-modal"
+                    title="Inviter un pilote ou cascadeur à signer l'attestation Annexe 3">
+                    <i data-lucide="user-plus"></i> Inviter
+                </button>
+            </div>
+
+            {% if pilot_waivers and pilot_waivers|length > 0 %}
+            <div class="u-flex u-flex-column u-gap-2 u-mt-2">
+                {% for pw in pilot_waivers %}
+                <div
+                    class="admin-card u-p-2 u-bg-neutral-light u-flex u-justify-between u-align-center u-flex-wrap u-gap-2">
+                    <div>
+                        <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
+                            <strong class="u-text-xs">{{ pw.signer_name }}</strong>
+                            <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-2xs">
+                                {{ pw.signer_role_label }}
+                            </span>
+                        </div>
+                        <div class="u-text-2xs u-text-muted">
+                            {{ pw.signer_email or 'Sans e-mail' }}
+                            {% if pw.signer_company %} — {{ pw.signer_company }}{% endif %}
+                        </div>
+                        {% if pw.vehicles %}
+                        <div class="u-text-2xs u-text-muted u-mt-1">
+                            <span class="u-font-semibold">Véhicules confiés :</span> {{ pw.vehicles }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="u-flex u-align-center u-gap-1">
+                        {{ status_badge(pw.status, pw.raw_status) }}
+
+                        {% if pw.raw_status in ['to_send', 'to_generate'] %}
+                        <form action="{{ url_for('admin_waivers.admin_pilot_waivers_send', waiver_id=pw.waiver_id) }}"
+                            method="POST" class="u-m-0">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                            <button type="submit" class="admin-btn admin-btn-xs admin-btn-primary"
+                                title="Envoyer le lien par e-mail">
+                                <i data-lucide="send"></i>
+                            </button>
+                        </form>
+                        <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
+                            data-copy-url="{{ url_for('admin_waivers.admin_pilot_waivers_copy_link', waiver_id=pw.waiver_id) }}"
+                            title="Copier le lien de signature">
+                            <i data-lucide="copy"></i>
+                        </button>
+                        {% elif pw.raw_status == 'to_sign' %}
+                        <form action="{{ url_for('admin_waivers.admin_pilot_waivers_send', waiver_id=pw.waiver_id) }}"
+                            method="POST" class="u-m-0">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                            <button type="submit" class="admin-btn admin-btn-xs admin-btn-secondary"
+                                title="Relancer par e-mail">
+                                <i data-lucide="bell"></i>
+                            </button>
+                        </form>
+                        <button type="button" class="admin-btn admin-btn-xs admin-btn-secondary js-copy-waiver-link"
+                            data-copy-url="{{ url_for('admin_waivers.admin_pilot_waivers_copy_link', waiver_id=pw.waiver_id) }}"
+                            title="Copier le lien de signature">
+                            <i data-lucide="copy"></i>
+                        </button>
+                        {% elif pw.raw_status == 'signed' %}
+                        <a href="{{ pw.pdf_path }}" class="admin-btn admin-btn-xs admin-btn-secondary" target="_blank"
+                            rel="noopener noreferrer" title="Consulter le PDF signé et scellé">
+                            <i data-lucide="file-text"></i> PDF
+                        </a>
+                        {% endif %}
+
+                        <form action="{{ url_for('admin_waivers.admin_pilot_waivers_delete', waiver_id=pw.waiver_id) }}"
+                            method="POST" class="u-m-0"
+                            onsubmit="return confirm('Supprimer cette attestation pilote pour {{ pw.signer_name }} ?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="return_to" value="{{ request.full_path }}">
+                            <button type="submit" class="admin-btn admin-btn-xs admin-btn-danger" title="Supprimer">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="u-flex u-justify-between u-align-center u-mt-2">
+                <p class="u-text-2xs u-text-muted u-mb-0">
+                    Aucun pilote invité pour ce tournage. Cliquez sur <strong>Inviter</strong> pour faire signer
+                    l'attestation de non-subordination et de sécurité (Annexe 3).
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
 
         <!-- Incidents éventuels -->
         {% if incidents and incidents|length > 0 %}
@@ -1003,6 +1106,117 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                 <button type="submit" class="admin-btn admin-btn-primary">
                     <i data-lucide="send" class="u-mr-1"></i>
                     Créer l'invitation BVSR
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal d'invitation d'un pilote / cascadeur (Annexe 3 aux CGL - BVPA) -->
+<div id="addPilotSignerModal" class="admin-modal-overlay js-pilot-signer-modal u-d-none" role="dialog" aria-modal="true"
+    aria-labelledby="pilotSignerModalTitle">
+    <div class="admin-modal-container admin-modal-container--md">
+        <div class="admin-modal-header u-flex u-justify-between u-align-center u-p-4 u-border-b">
+            <div class="u-flex u-align-center u-gap-2">
+                <i data-lucide="file-signature" class="u-text-waiver"></i>
+                <h3 id="pilotSignerModalTitle" class="admin-modal-title u-m-0 u-text-lg u-font-bold">
+                    Inviter (Attestation Annexe 3 aux CGL)
+                </h3>
+            </div>
+            <button type="button" class="admin-modal-close js-close-pilot-signer-modal"
+                aria-label="Fermer">&times;</button>
+        </div>
+
+        <form method="POST" action="{{ url_for('admin_waivers.admin_pilot_waivers_create', project_id=project.id) }}"
+            class="admin-modal-content u-p-4 u-overflow-y-auto">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="return_to" value="{{ request.full_path }}">
+
+            <p class="u-text-sm u-text-muted u-mb-4">
+                Générez une attestation d'information et d'engagement du pilote (Annexe 3 aux CGL).
+                Ce document atteste de l'autorité exclusive de la production, prévient le risque de salariat déguisé
+                et scelle les règles de sécurité avant le roulage.
+            </p>
+
+            <input type="hidden" name="signer_role" value="pilot">
+
+            <div class="u-grid u-grid-cols-2 u-gap-3 u-mb-3">
+                <div class="form-group">
+                    <label for="new_pilot_first_name" class="form-label u-font-semibold">Prénom</label>
+                    <input type="text" id="new_pilot_first_name" name="signer_first_name" class="form-input"
+                        placeholder="Ex: Lucas">
+                </div>
+
+                <div class="form-group">
+                    <label for="new_pilot_last_name" class="form-label u-font-semibold">Nom</label>
+                    <input type="text" id="new_pilot_last_name" name="signer_last_name" class="form-input"
+                        placeholder="Ex: Moreau">
+                </div>
+            </div>
+
+            <div class="u-grid u-grid-cols-2 u-gap-3 u-mb-3">
+                <div class="form-group">
+                    <label for="new_pilot_email" class="form-label u-font-semibold">E-mail <span
+                            class="u-text-xs u-text-muted">(envoi du lien de signature)</span></label>
+                    <input type="email" id="new_pilot_email" name="signer_email" class="form-input"
+                        placeholder="lucas.moreau@email.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="new_pilot_phone" class="form-label u-font-semibold">Téléphone mobile</label>
+                    <input type="tel" id="new_pilot_phone" name="signer_phone" class="form-input"
+                        placeholder="+33 6 12 34 56 78">
+                </div>
+            </div>
+
+            <div class="form-group u-mb-3">
+                <label for="new_pilot_company" class="form-label u-font-semibold">Employeur déclaré (Production)</label>
+                <input type="text" id="new_pilot_company" name="signer_company" class="form-input"
+                    value="{{ project.production.name if project.production else '' }}"
+                    placeholder="Ex: Société de production employeur">
+            </div>
+
+            <div class="form-group u-mb-4">
+                <label class="form-label u-font-semibold u-mb-1">Véhicules confiés au pilote</label>
+                <p class="u-text-2xs u-text-muted u-mb-2">
+                    Tous les véhicules du tournage sont pré-cochés par défaut. Décochez ceux que ce pilote ne conduira
+                    pas.
+                </p>
+                {% if vehicles and vehicles|length > 0 %}
+                <div class="u-flex u-flex-wrap u-gap-1">
+                    {% for v in vehicles %}
+                    {% set vf = v.fields %}
+                    {% set v_name = vf.get('name') or vf.get('Nom') or 'Véhicule' %}
+                    {% set v_img = v.image or (vf.thumbnail[0].thumbnails.small.url if vf.get('thumbnail') else '') %}
+                    <label class="project-checkbox-card selected" data-item-id="{{ v.id }}" data-item-type="vehicle">
+                        <input type="checkbox" name="selected_vehicles" value="{{ v_name }}" checked class="u-d-none">
+                        {% if v_img %}
+                        <img src="{{ v_img }}" alt="{{ v_name }}" class="project-checkbox-card-img">
+                        {% else %}
+                        <div
+                            class="project-checkbox-card-img u-bg-neutral-light u-flex u-align-center u-justify-center">
+                            <i data-lucide="car" class="u-text-muted"></i>
+                        </div>
+                        {% endif %}
+                        <span class="u-text-medium u-text-xs">{{ v_name }}</span>
+                        {% if vf.get('unique_id') %}
+                        <span class="checkout-doc-id u-text-2xs u-mt-0">{{ vf.get('unique_id') }}</span>
+                        {% endif %}
+                    </label>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="u-text-2xs u-text-muted">Aucun véhicule assigné au projet.</p>
+                {% endif %}
+            </div>
+
+            <div class="u-flex u-justify-end u-align-center u-gap-2 u-pt-3 u-border-t">
+                <button type="button" class="admin-btn admin-btn-secondary js-close-pilot-signer-modal">
+                    Annuler
+                </button>
+                <button type="submit" class="admin-btn admin-btn-primary">
+                    <i data-lucide="send" class="u-mr-1"></i>
+                    Créer l'invitation Annexe 3
                 </button>
             </div>
         </form>

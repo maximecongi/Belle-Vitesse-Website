@@ -1,0 +1,99 @@
+{% import "public/verification_macros.html" as vmacro %}
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/static/imgs/favicons/favicon.svg" />
+    <link rel="shortcut icon" href="/static/imgs/favicons/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/imgs/favicons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="Belle Vitesse" />
+    <link rel="manifest" href="/static/imgs/favicons/site.webmanifest" />
+
+    <title>Vérification Attestation Pilote (BVPA) — Belle Vitesse</title>
+    <link rel="stylesheet" href="{{ asset_url('css/styles.css') }}">
+    <link rel="stylesheet" href="{{ asset_url('css/checkout.css') }}">
+    <link rel="stylesheet" href="{{ asset_url('css/verification.css') }}">
+</head>
+
+<body>
+
+    <div class="checkout">
+
+        <!-- ═══════════ HEADER ═══════════ -->
+        <header class="checkout-header">
+            <div class="checkout-header-logo">
+                <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
+                    alt="Belle Vitesse">
+            </div>
+            <div class="checkout-header-meta">
+                <strong class="dot-before">Vérification Attestation Pilote (Annexe 3)</strong><br>
+                <span class="checkout-doc-id">{{ inspection_id }}</span>
+                {% if signed_doc and signed_doc.version %}
+                <div class="u-mt-1">
+                    <span class="badge-pill u-bg-neutral-light u-text-neutral u-text-xs">
+                        Version {{ signed_doc.version }} (Signée par le pilote)
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+        </header>
+
+        <!-- ── Badge sceau de données ── -->
+        {{ vmacro.seal_banner(seal_valid, ok_label="Attestation Pilote Scellée & Intacte", error_label="Sceau Invalide — Données Altérées", ok_hint="Le sceau cryptographique correspond. L'attestation d'engagement du pilote n'a pas été modifiée depuis sa signature.", error_hint="Le sceau ne correspond pas à l'enregistrement original. Le document ou ses données ont pu être altérés.") }}
+
+        <!-- ── Badge résultat vérification PDF (après upload) ── -->
+        {{ vmacro.pdf_verification_result(pdf_valid, pdf_error) }}
+
+        <!-- ── Données scellées ── -->
+        <section class="checkout-section">
+            <h2 class="checkout-section-title dot-before">Données de l'Attestation Scellée</h2>
+            <div class="checkout-info-grid">
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Pilote Déclarant</span>
+                    <span class="checkout-info-value">{{ data.signer_name or data._seal_signer_name or data._seal_pilot_name or (waiver.signer_name if waiver else '—') }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Fonction</span>
+                    <span class="checkout-info-value">{{ data.signer_role_label or data._seal_signer_role or (waiver.pilot_function_label if waiver else '—') }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Projet</span>
+                    <span class="checkout-info-value">{{ data.project_name or data.project or project_name or (waiver.display_project_name if waiver else '—') }}</span>
+                </div>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Date &amp; Heure de Signature</span>
+                    <span class="checkout-info-value">
+                        {% if data.signed_at and data.signed_at.strftime %}
+                        {{ data.signed_at.strftime('%d/%m/%Y %H:%M') }}
+                        {% elif waiver and waiver.signed_at %}
+                        {{ waiver.signed_at.strftime('%d/%m/%Y %H:%M') }}
+                        {% else %}
+                        {{ data.signed_at or '—' }}
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Empreinte Cryptographique ── -->
+        {{ vmacro.crypto_fingerprints(document_hash, signed_doc.pdf_file_hash, title="Sceau Cryptographique & Horodatage", pdf_storage_status=pdf_storage_status, parent_hash=parent_hash) }}
+
+        <!-- ═══════════ UPLOAD VÉRIFICATION PDF ═══════════ -->
+        {{ vmacro.pdf_upload_verifier(has_pdf_hash, old_notice="Ce document a été signé avant l'enregistrement de l'empreinte de fichier PDF. Seul le sceau de données est actif.") }}
+
+        <!-- ═══════════ FOOTER ═══════════ -->
+        <footer class="checkout-footer verify-footer">
+            <p><strong>{{ company_name or 'Belle Vitesse SAS' }}</strong> — {{ company_address or '39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine' }}</p>
+        </footer>
+
+    </div>
+
+    <script src="https://unpkg.com/lucide@1.48.0/dist/umd/lucide.min.js"></script>
+    <script src="{{ asset_url('js/src/ui-utils.js') }}"></script>
+</body>
+
+</html>

@@ -81,7 +81,7 @@
                             if (typeof window.showFlash === 'function') {
                                 window.showFlash('Le lien a été copié dans le presse-papier.', 'info');
                             }
-                            btn.innerHTML = '<i data-lucide="check"></i> Copié !';
+                            btn.innerHTML = '<i data-lucide="check"></i>';
                             if (window.lucide && typeof window.lucide.createIcons === 'function') {
                                 window.lucide.createIcons();
                             }

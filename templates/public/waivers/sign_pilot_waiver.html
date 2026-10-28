@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/static/imgs/favicons/favicon.svg" />
+    <link rel="shortcut icon" href="/static/imgs/favicons/favicon.ico" />
+    <title>Attestation Pilote (Annexe 3) — Belle Vitesse</title>
+
+    {% if config.FLASK_ENV == 'production' %}
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/styles.bundle.css') }}?v={{ asset_version('css/styles.bundle.css') }}">
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/admin/admin.bundle.css') }}?v={{ asset_version('css/admin/admin.bundle.css') }}">
+    {% else %}
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/styles.css') }}?v={{ asset_version('css/styles.css') }}">
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/admin/admin.css') }}?v={{ asset_version('css/admin/admin.css') }}">
+    {% endif %}
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/public/public-doc.css') }}?v={{ asset_version('css/public/public-doc.css') }}">
+</head>
+
+<body class="public-doc-container">
+
+    <div class="public-doc">
+        <header class="public-doc-header">
+            <div class="public-doc-header-logo">
+                <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
+                    alt="Belle Vitesse">
+            </div>
+            <div class="public-doc-header-meta">
+                <strong class="dot-before">Annexe 3 aux CGL — Attestation Pilote</strong><br>
+                <span class="checkout-doc-id">{{ waiver.waiver_id }}</span>
+            </div>
+        </header>
+
+        {% if waiver.status == 'signed' %}
+        <!-- ── État : déjà signé ────────────────────────────────────── -->
+        <section class="public-doc-section public-doc-state-banner">
+            <div class="public-doc-status-icon u-text-success">✓</div>
+            <h2 class="public-doc-section-title">Attestation Pilote Signée &amp; Scellée</h2>
+            <p class="u-text-muted u-mt-2 u-text-center">
+                Votre attestation d'information et d'engagement du pilote a été signée et scellée
+                électroniquement.<br><br>
+                Une copie certifiée a été transmise à votre adresse e-mail ainsi qu'à la production.
+            </p>
+            <div class="u-mt-4 u-text-center">
+                <p class="u-text-sm u-text-muted">
+                    Redirection vers le site public dans <strong id="redirect-counter">10</strong> secondes…
+                </p>
+                <a href="/" class="public-doc-btn public-doc-btn--primary u-mt-2">
+                    Accéder au site public
+                </a>
+            </div>
+        </section>
+
+        {% elif waiver.status not in ['to_sign', 'to_send'] %}
+        <!-- ── État : lien invalide ou expiré ───────────────────────── -->
+        <section class="public-doc-section public-doc-state-banner">
+            <div class="public-doc-status-icon u-text-danger">✕</div>
+            <h2 class="public-doc-section-title">Lien expiré ou invalide</h2>
+            <p class="u-text-muted u-mt-2">
+                Ce lien sécurisé de signature n'est plus actif ou a dépassé sa durée de validité.
+            </p>
+        </section>
+
+        {% else %}
+        <!-- ── Formulaire de signature BVPA ─────────────────────────── -->
+        <form id="pilot-waiver-form" novalidate>
+            <input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token() }}">
+
+            <!-- 1. Récapitulatif projet & véhicules confiés -->
+            <section class="public-doc-section">
+                <h2 class="public-doc-section-title dot-before">Cadre du Tournage &amp; Véhicules Confiés</h2>
+                <div class="public-doc-info-grid">
+                    <div class="public-doc-info-item">
+                        <span class="public-doc-info-label">Projet</span>
+                        <span class="public-doc-info-value u-text-sm">{{ waiver.display_project_name }}</span>
+                    </div>
+                    <div class="public-doc-info-item">
+                        <span class="public-doc-info-label">Production (Employeur)</span>
+                        <span class="public-doc-info-value u-text-sm">{{ waiver.display_production_name }}</span>
+                    </div>
+                    <div class="public-doc-info-item">
+                        <span class="public-doc-info-label">Période de tournage</span>
+                        <span class="public-doc-info-value u-text-sm">{{ waiver.display_shooting_dates }}</span>
+                    </div>
+                    {% if waiver.project and waiver.project.location %}
+                    <div class="public-doc-info-item">
+                        <span class="public-doc-info-label">Lieux du tournage</span>
+                        <span class="public-doc-info-value u-text-sm">{{ waiver.project.location }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="public-doc-info-grid u-mt-3">
+                    <span class="public-doc-info-label u-grid-colspan-2">Véhicule(s) confié(s) pour la mission</span>
+                    <div class="public-doc-info-item public-doc-info-vehicles u-col-span-full">
+                        {% if waiver.vehicles_details %}
+                        <div class="public-doc-vehicles-list">
+                            {% for v in waiver.vehicles_details %}
+                            <div class="public-doc-vehicle-card">
+                                <div class="public-doc-vehicle-thumb-wrapper">
+                                    {% if v.thumbnail %}
+                                    <img src="{{ v.thumbnail }}" alt="{{ v.name }}" class="public-doc-vehicle-thumb" loading="lazy">
+                                    {% else %}
+                                    <div class="public-doc-vehicle-thumb-placeholder" aria-hidden="true">
+                                        <svg class="public-doc-vehicle-placeholder-icon" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
+                                            <circle cx="7" cy="17" r="2" />
+                                            <path d="M9 17h6" />
+                                            <circle cx="17" cy="17" r="2" />
+                                        </svg>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="public-doc-vehicle-info">
+                                    <span class="public-doc-vehicle-title">{{ v.name }}</span>
+                                    {% if v.unique_id %}
+                                    <div class="public-doc-vehicle-ids">
+                                        <span class="checkout-doc-id">{{ v.unique_id }}</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% elif waiver.vehicles %}
+                        <div class="public-doc-vehicles-list">
+                            {% for v in waiver.vehicles.split(',') %}
+                            <div class="public-doc-vehicle-card">
+                                <div class="public-doc-vehicle-info">
+                                    <span class="public-doc-vehicle-title">{{ v.strip() }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <span class="u-text-muted">Parc Belle Vitesse</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. Informations du Pilote Déclarant -->
+            <section class="public-doc-section">
+                <h2 class="public-doc-section-title dot-before">Identité &amp; Qualité du Pilote Déclarant</h2>
+                <p class="u-text-sm u-text-muted u-mb-3">
+                    Veuillez vérifier ou compléter vos coordonnées et votre fonction pour le tournage.
+                </p>
+                <div class="public-doc-form-grid">
+                    <div class="form-group">
+                        <label for="pilot_first_name">Prénom <span class="u-text-danger">*</span></label>
+                        <input class="form-input" type="text" id="pilot_first_name" name="first_name"
+                            value="{{ waiver.signer_first_name or '' }}" required autocomplete="given-name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pilot_last_name">Nom <span class="u-text-danger">*</span></label>
+                        <input class="form-input" type="text" id="pilot_last_name" name="last_name"
+                            value="{{ waiver.signer_last_name or '' }}" required autocomplete="family-name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pilot_signer_role">Fonction sur le tournage <span class="u-text-danger">*</span></label>
+                        <select id="pilot_signer_role" name="signer_role" class="form-select">
+                            <option value="pilot" {% if waiver.signer_role=='pilot' %}selected{% endif %}>Pilote de précision / Travelling</option>
+                            <option value="operator" {% if waiver.signer_role in ['operator', 'camera_operator'] %}selected{% endif %}>Opérateur gyropode / Cadreur</option>
+                            <option value="stunt_performer" {% if waiver.signer_role in ['stunt_performer', 'stunt_coordinator'] %}selected{% endif %}>Cascadeur / Pilote cascade</option>
+                            <option value="other" {% if waiver.signer_role=='other' %}selected{% endif %}>Autre fonction...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group {% if waiver.signer_role != 'other' %}u-d-none{% endif %}" id="pilot_role_custom_group">
+                        <label for="pilot_role_custom">Précisez votre fonction <span class="u-text-danger">*</span></label>
+                        <input class="form-input" type="text" id="pilot_role_custom" name="role_custom"
+                            value="{{ waiver.signer_role_custom or '' }}" placeholder="Ex: Opérateur Steadicam, Conducteur spécialisé...">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pilot_email">Adresse e-mail <span class="u-text-danger">*</span></label>
+                        <input class="form-input" type="email" id="pilot_email" name="email"
+                            value="{{ waiver.signer_email or '' }}" placeholder="pilote@exemple.com" required autocomplete="email">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pilot_phone">Téléphone portable</label>
+                        <input class="form-input" type="tel" id="pilot_phone" name="phone"
+                            value="{{ waiver.signer_phone or '' }}" placeholder="+33 6 ..." autocomplete="tel">
+                    </div>
+
+                    <div class="form-group u-col-span-full">
+                        <label for="pilot_company">Société / Employeur déclaré</label>
+                        <input class="form-input" type="text" id="pilot_company" name="company"
+                            value="{{ waiver.signer_company or waiver.display_production_name }}"
+                            placeholder="Ex: Société de Production ou Agence" autocomplete="organization">
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. Liseuse du texte officiel de l'Annexe 3 -->
+            <section class="public-doc-section">
+                <h2 class="public-doc-section-title dot-before">Texte Officiel de l'Attestation (Annexe 3 aux CGL)</h2>
+
+                <div class="cgl-reader-container">
+                    <h1>ANNEXE 3 AUX CONDITIONS GÉNÉRALES DE LOCATION</h1>
+                    <p class="u-text-semibold">ATTESTATION D'INFORMATION ET D'ENGAGEMENT DU PILOTE / OPÉRATEUR</p>
+                    <hr>
+
+                    <h2>1. DÉCLARATION DU PILOTE SUR L'HONNEUR</h2>
+                    <ul>
+                        <li><strong>Autorité exclusive de l'Employeur &amp; Absence de lien de subordination :</strong> Je déclare être engagé(e) ou missionné(e) par la société de production (l'Employeur) pour la conduite ou l'opération des véhicules techniques ci-dessus désignés, et agir sous son autorité exclusive. Je reconnais n'avoir aucun lien de subordination juridique, hiérarchique ou contractuel avec la société Belle Vitesse.</li>
+                        <li><strong>Compétences et qualifications :</strong> Je déclare disposer de l'expérience, des permis de conduire requis en cours de validité et des compétences techniques nécessaires au pilotage et à l'évolution sécurisée des véhicules mobilisés.</li>
+                        <li><strong>Aptitude physique &amp; Sobriété absolue :</strong> J'atteste sur l'honneur être en pleine possession de mes moyens physiques et psychiques, et n'être sous l'emprise d'aucun état alcoolique, substance stupéfiante, ni traitement médicamenteux incompatible avec la conduite sécurisée d'un véhicule motorisé.</li>
+                    </ul>
+
+                    <h2>2. RECONNAISSANCE DES CONDITIONS D'EXPLOITATION &amp; SÉCURITÉ</h2>
+                    <ul>
+                        <li><strong>Évolution sur voies fermées :</strong> Je reconnais que les véhicules techniques de prise de vue ne doivent évoluer que sur des voies rigoureusement fermées à la circulation publique ou sur des terrains privés sécurisés et balisés sous le contrôle de la production.</li>
+                        <li><strong>Port systématique des Équipements de Protection Individuelle (EPI) :</strong> Je m'engage à porter systématiquement les EPI adaptés (notamment casque homologué correctement attaché pour les véhicules ouverts, gyropodes, plateformes et deux/trois-roues, chaussures montantes fermées et gants de protection).</li>
+                        <li><strong>Maîtrise de la vitesse &amp; Vigilance plateau :</strong> Je conserve en toutes circonstances la maîtrise de ma vitesse et adapte ma conduite à la configuration du terrain, aux conditions météorologiques et à la proximité immédiate des équipes techniques et des comédiens.</li>
+                        <li><strong>Charge utile &amp; Équilibre des masses :</strong> Je respecte scrupuleusement la charge utile maximale autorisée du véhicule ainsi que les consignes d'équilibrage des têtes caméras et machineries embarquées. Aucun passager n'est admis sur le véhicule en dehors des membres d'équipe indispensables à la prise de vue et dûment briefés.</li>
+                        <li><strong>Droit et Devoir d'Interruption :</strong> Je reconnais disposer du droit et du devoir impératif de refuser ou d'interrompre immédiatement toute manoeuvre ou prise de vue que j'estimerais dangereuse pour ma propre sécurité, celle des équipes de tournage ou des tiers, sans qu'aucune sanction ni pénalité ne puisse m'être opposée.</li>
+                    </ul>
+
+                    <h2>3. CONTRÔLE PRÉ-ROULAGE &amp; SIGNALEMENT</h2>
+                    <ul>
+                        <li><strong>Vérification préalable :</strong> Je m'engage à effectuer une vérification visuelle et fonctionnelle préalable du véhicule avant toute mise en mouvement (pneumatiques, freins, direction, fixations et élingages de sécurité).</li>
+                        <li><strong>Signalement immédiat des anomalies :</strong> Tout dysfonctionnement technique, comportement anormal ou dommage constaté en cours de mission doit être signalé immédiatement au référent technique Belle Vitesse et à la régie de production.</li>
+                    </ul>
+
+                    <hr>
+                    <p class="u-text-xs u-text-muted">
+                        <strong>Protection des Données Personnelles (RGPD) :</strong> Les données recueillies dans la présente attestation sont traitées par Belle Vitesse aux fins exclusives de gestion de la sécurité, de prévention des risques, de justification assurantielle et de scellement de la conformité légale des opérations.
+                    </p>
+                </div>
+            </section>
+
+            <!-- 4. Engagements & Signature Manuscrite -->
+            <section class="public-doc-section">
+                <div class="checkbox-container u-text-xs u-mb-3">
+                    <input type="checkbox" id="ack_pilot_engagement" name="ack_pilot_engagement" required>
+                    <label for="ack_pilot_engagement">
+                        <strong>Je certifie sur l'honneur l'exactitude des informations fournies, atteste de ma pleine aptitude et compétence à la conduite des véhicules confiés, confirme agir sous l'autorité exclusive de la production sans lien de subordination avec Belle Vitesse, et m'engage à respecter scrupuleusement l'ensemble des règles de sécurité de l'Annexe 3.</strong>
+                    </label>
+                </div>
+
+                <div class="public-doc-sign-canvas-wrapper u-mt-3">
+                    <canvas id="pilot-signature-canvas"></canvas>
+                </div>
+
+                <div class="public-doc-sign-actions">
+                    <button type="button" class="public-doc-btn public-doc-btn--secondary" id="pilot-btn-clear">
+                        Effacer
+                    </button>
+                    <button type="button" class="public-doc-btn public-doc-btn--primary" id="pilot-btn-sign">
+                        Signer l'attestation
+                    </button>
+                </div>
+            </section>
+
+            <div id="feedback" class="feedback-box"></div>
+
+        </form>
+        {% endif %}
+
+        {% include 'public/signature_footer.html' %}
+    </div>
+
+    <!-- Scripts externes modulaires (sans aucun JS inline) -->
+    <script src="https://unpkg.com/lucide@1.48.0/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="{{ asset_url('js/src/common/signature-pad-controller.js') }}"></script>
+    <script src="{{ asset_url('js/src/ui-utils.js') }}"></script>
+    <script src="{{ asset_url('js/src/public/sign-pilot-waiver.js') }}"></script>
+</body>
+
+</html>

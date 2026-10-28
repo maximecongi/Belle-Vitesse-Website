@@ -22,9 +22,10 @@ from models import (
     CheckoutToken,
     # Inspections
     CheckoutVehicle,
-    # Waivers & CGL
+    # Waivers & CGL & Pilot
     CglWaiver,
     SafetyRulesWaiver,
+    PilotWaiver,
     WaiverToken,
     WaiverSignedDocument,
     # Incidents
@@ -149,6 +150,7 @@ from utils.storage import (
     ensure_dir,
     get_cgl_path,
     get_safety_rules_path,
+    get_pilot_waiver_path,
     get_checkin_path,
     get_checkout_path,
     get_incident_path,
@@ -207,6 +209,17 @@ FLOW_CONFIG = {
         "storage_func": get_safety_rules_path,
         "stylesheets": ["css/styles.css", "css/admin/safety-rules-pdf.css"],
         "template": "pdf/safety_rules.html",
+        "pk_name": "waiver_id",
+    },
+    "pilot_waiver": {
+        "model": PilotWaiver,
+        "token_model": WaiverToken,
+        "signed_model": WaiverSignedDocument,
+        "prefix": "BVPA",
+        "url_path": "pilot-attestation",
+        "storage_func": get_pilot_waiver_path,
+        "stylesheets": ["css/styles.css", "css/admin/pilot-waiver-pdf.css"],
+        "template": "pdf/pilot_waiver.html",
         "pk_name": "waiver_id",
     },
 
@@ -385,7 +398,7 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
         # 2. Déport de la signature binaire sur disque en fichier PNG
         document_id = getattr(
             record, "inspection_number", getattr(record, "waiver_id", f"{mode}_{record.id}"))
-        entity_type = "waivers" if mode in ["cgl", "safety_rules"] else (
+        entity_type = "waivers" if mode in ["cgl", "safety_rules", "pilot_waiver"] else (
             "checkouts" if mode == "checkout" else "checkins"
         )
         output_base = current_app.config.get(
@@ -530,6 +543,11 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
             render_ctx["helmets"] = record.helmets_inventory or DEFAULT_HELMETS_INVENTORY
             render_ctx["safety_technicians"] = tech_names
             render_ctx["bv_signature"] = record.bv_signature_data_uri
+        elif mode == "pilot_waiver":
+            render_ctx["pilot_waiver"] = record
+            render_ctx["waiver"] = record
+            render_ctx["vehicles_details"] = getattr(record, "vehicles_details", [])
+            render_ctx["pilot_signature"] = record.signature_data_uri
         else:
             render_ctx["waiver"] = record
 
@@ -624,9 +642,9 @@ def finalize_signed_document(mode, record_id, signature_data, signed_ip, extra_d
                 stylesheets=config["stylesheets"],
                 compress=True,
                 filename=filename,
-                entity_type="waiver" if mode in ["cgl", "safety_rules"] else "inspection",
+                entity_type="waiver" if mode in ["cgl", "safety_rules", "pilot_waiver"] else "inspection",
                 entity_id=document_id,
-                post_action="waiver_post_actions" if mode in ["cgl", "safety_rules"] else "inspection_post_actions",
+                post_action="waiver_post_actions" if mode in ["cgl", "safety_rules", "pilot_waiver"] else "inspection_post_actions",
                 extra_context={
                     "mode": mode,
                     "rel_pdf_path": rel_pdf_path,
@@ -734,6 +752,34 @@ def _build_flow_data(mode, record, extra_data):
             "signature_city": sign_data.get("signature_city", "") or getattr(record, "display_signature_city", ""),
             "_seal_production_name": record.production_name or "",
             "_seal_representative": record.production_representative or "",
+        }
+        return snapshot, seal_args
+
+    elif mode == "pilot_waiver":
+        signer_name = record.signer_name if hasattr(record, "signer_name") else "Pilote"
+        role_label = getattr(record, "pilot_function_label", getattr(record, "signer_role_label", "Pilote"))
+        sign_data = getattr(record, "sign_data", None) or {}
+        seal_args = [signer_name, role_label]
+        snapshot = {
+            "mode": "pilot_waiver",
+            "waiver_id": record.waiver_id,
+            "project_name": record.project_name or (record.project.name if record.project else "—"),
+            "production_name": record.display_production_name if hasattr(record, "display_production_name") else "—",
+            "project": record.project_name or (record.project.name if record.project else "—"),
+            "production": record.display_production_name if hasattr(record, "display_production_name") else "—",
+            "signer_name": signer_name,
+            "signer_role": role_label,
+            "signer_email": getattr(record, "signer_email", "") or "",
+            "signer_phone": getattr(record, "signer_phone", "") or "",
+            "signer_company": getattr(record, "signer_company", "") or "",
+            "vehicles_details": getattr(record, "vehicles_details", None) or [],
+            "vehicles": record.vehicles or "",
+            "shooting_dates": record.shooting_dates or "",
+            "location_of_use": record.location_of_use or "",
+            "ack_pilot_engagement": sign_data.get("ack_pilot_engagement", True),
+            "signature_city": sign_data.get("signature_city", "") or getattr(record, "display_signature_city", ""),
+            "_seal_signer_name": signer_name,
+            "_seal_signer_role": role_label,
         }
         return snapshot, seal_args
 

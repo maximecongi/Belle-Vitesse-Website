@@ -38,12 +38,14 @@ def resolve_entity_info(
     entity_type = mode_or_type
     class_name = record.__class__.__name__
 
-    if entity_type in ("checkout", "checkin", "incident", "cgl", "safety_rules"):
+    if entity_type in ("checkout", "checkin", "incident", "cgl", "safety_rules", "pilot_waiver"):
         pass
     elif entity_type in ("cgl", "cgl_waiver") or class_name == "CglWaiver" or (class_name == "Waiver" and getattr(record, "waiver_type", None) == "cgl"):
         entity_type = "cgl"
     elif entity_type in ("safety_rules", "safety_rules_waiver") or class_name == "SafetyRulesWaiver" or (class_name == "Waiver" and getattr(record, "waiver_type", None) == "safety_rules"):
         entity_type = "safety_rules"
+    elif entity_type in ("pilot_waiver", "pilot_attestation") or class_name == "PilotWaiver" or (class_name == "Waiver" and getattr(record, "waiver_type", None) == "pilot_waiver"):
+        entity_type = "pilot_waiver"
     elif class_name == "CheckoutVehicle":
         entity_type = "checkout"
     elif class_name == "CheckinVehicle":

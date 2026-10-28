@@ -14,6 +14,7 @@ from models.waiver import (
     Waiver,
     CglWaiver,
     SafetyRulesWaiver,
+    PilotWaiver,
     WaiverToken,
     WaiverSignedDocument,
     CheckoutSignedDocument,

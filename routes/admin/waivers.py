@@ -6,22 +6,29 @@ from flask import Blueprint, flash, jsonify, redirect, render_template, request,
 from models import (
     CglWaiver,
     SafetyRulesWaiver,
+    PilotWaiver,
     Project,
 )
 from services.admin.waivers import (
     create_cgl,
     create_safety_rules_waiver,
+    create_pilot_waiver,
     delete_cgl,
     delete_safety_rules_waiver,
+    delete_pilot_waiver,
     generate_cgl,
     generate_safety_rules_waiver,
+    generate_pilot_waiver,
     get_or_create_waiver_signing_url,
     list_cgl,
     list_safety_rules_waivers,
+    list_pilot_waivers,
     reset_cgl,
     reset_safety_rules_waiver,
+    reset_pilot_waiver,
     send_cgl,
     send_safety_rules_waiver,
+    send_pilot_waiver,
     countersign_safety_rules,
 )
 from utils.decorators import require_roles
@@ -453,6 +460,166 @@ def admin_safety_rules_preview(waiver_id=None):
     return html_content
 
 
+# ── ATTESTATIONS PILOTES (ANNEXE 3 AUX CGL - BVPA) ───────────────────
+
+@waivers_bp.route("/pilot-waivers", endpoint='admin_pilot_waivers_list')
+@require_roles('administrator', 'manager', 'commercial')
+def admin_pilot_waivers_list():
+    """Liste globale de toutes les attestations pilotes signées ou en attente."""
+    items = list_pilot_waivers()
+    q = request.args.get('q', '').strip().lower()
+    if q:
+        items = [
+            w for w in items
+            if q in (w.get('waiver_id') or '').lower()
+            or q in (w.get('project_name') or '').lower()
+            or q in (w.get('signer_name') or '').lower()
+            or q in (w.get('signer_email') or '').lower()
+            or q in (w.get('signer_role_label') or '').lower()
+            or q in str(w.get('db_id') or '')
+        ]
+    return render_template("admin/pilot_waivers_list.html", pilot_waivers_items=items)
+
+
+@waivers_bp.route("/projects/<int:project_id>/pilot-waivers/create", methods=["POST"], endpoint='admin_pilot_waivers_create')
+@require_roles('administrator', 'manager', 'commercial')
+def admin_pilot_waivers_create(project_id):
+    """Création d'une nouvelle attestation d'information et d'engagement du pilote."""
+    signer_role = request.form.get("signer_role", "pilot").strip()
+    signer_role_custom = request.form.get("signer_role_custom", "").strip()
+    signer_first_name = request.form.get("signer_first_name", "").strip()
+    signer_last_name = request.form.get("signer_last_name", "").strip()
+    signer_email = request.form.get("signer_email", "").strip()
+    signer_phone = request.form.get("signer_phone", "").strip()
+    signer_company = request.form.get("signer_company", "").strip()
+    selected_vehicles = request.form.getlist("selected_vehicles")
+
+    success, msg = create_pilot_waiver(
+        project_id=project_id,
+        signer_role=signer_role,
+        signer_role_custom=signer_role_custom,
+        signer_first_name=signer_first_name,
+        signer_last_name=signer_last_name,
+        signer_email=signer_email,
+        signer_phone=signer_phone,
+        signer_company=signer_company,
+        selected_vehicles=selected_vehicles,
+    )
+    if success:
+        flash(msg, "success")
+    else:
+        flash(msg, "error")
+
+    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    if return_to:
+        return redirect(return_to)
+    return redirect(url_for('admin_projects.admin_project_detail', record_id=project_id))
+
+
+@waivers_bp.route("/pilot-waivers/<string:waiver_id>/send", methods=["GET", "POST"], endpoint='admin_pilot_waivers_send')
+@require_roles('administrator', 'manager', 'commercial')
+def admin_pilot_waivers_send(waiver_id):
+    success, msg = send_pilot_waiver(waiver_id)
+    if success:
+        flash(msg, "success")
+    else:
+        flash(msg, "error")
+    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    if return_to:
+        return redirect(return_to)
+    return redirect(url_for('admin_waivers.admin_pilot_waivers_list'))
+
+
+@waivers_bp.route("/pilot-waivers/<string:waiver_id>/delete", methods=["POST"], endpoint='admin_pilot_waivers_delete')
+@require_roles('administrator', 'manager', 'commercial')
+def admin_pilot_waivers_delete(waiver_id):
+    success, msg = delete_pilot_waiver(waiver_id)
+    if success:
+        flash(msg, "success")
+    else:
+        flash(msg, "error")
+    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    if return_to:
+        return redirect(return_to)
+    return redirect(url_for('admin_waivers.admin_pilot_waivers_list'))
+
+
+@waivers_bp.route("/pilot-waivers/<string:waiver_id>/reset", methods=["POST"], endpoint='admin_pilot_waivers_reset')
+@require_roles('administrator', 'manager', 'commercial')
+def admin_pilot_waivers_reset(waiver_id):
+    success, msg = reset_pilot_waiver(waiver_id)
+    if success:
+        flash(msg, "success")
+    else:
+        flash(msg, "error")
+    return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+    if return_to:
+        return redirect(return_to)
+    return redirect(url_for('admin_waivers.admin_pilot_waivers_list'))
+
+
+@waivers_bp.route("/pilot-waivers/<string:waiver_id>/copy-link", methods=["POST"], endpoint='admin_pilot_waivers_copy_link')
+@require_roles('administrator', 'manager', 'commercial')
+def admin_pilot_waivers_copy_link(waiver_id):
+    success, result = get_or_create_waiver_signing_url(waiver_id, waiver_type="pilot_waiver")
+    if not success:
+        return jsonify({"success": False, "error": result}), 400
+    return jsonify({"success": True, "url": result})
+
+
+@waivers_bp.route("/pilot-waivers/preview", methods=["GET"], endpoint='admin_pilot_waivers_preview_direct')
+@waivers_bp.route("/preview/pdf/pilot-waiver", methods=["GET"], endpoint='admin_pilot_waivers_preview_alias')
+@waivers_bp.route("/pilot-waivers/<string:waiver_id>/preview", methods=["GET"], endpoint='admin_pilot_waivers_preview')
+@require_preview_access
+def admin_pilot_waivers_preview(waiver_id=None):
+    """
+    Prévisualisation directe du PDF de l'Attestation Pilote (BVPA / Annexe 3).
+    Supporte ?format=pdf pour compiler et servir le PDF WeasyPrint.
+    """
+    from models import PilotWaiver as PW, AppSetting
+    waiver = None
+    target_id = waiver_id or request.args.get("waiver_id")
+    if target_id:
+        waiver = PW.query.filter(
+            PW.waiver_id == target_id,
+            PW.deleted_at.is_(None)
+        ).first()
+
+    if not waiver:
+        from services.admin.waivers.mock_data import MockSafetyRulesWaiver
+        waiver = MockSafetyRulesWaiver()
+        waiver.waiver_id = "BVPA-PREVIEW"
+        waiver.signer_role = "pilot"
+
+    is_pdf_format = request.args.get("format") == "pdf"
+    html_content = render_template(
+        "pdf/pilot_waiver.html",
+        waiver=waiver,
+        vehicles_details=getattr(waiver, "vehicles_details", []),
+        signature=getattr(waiver, "signature_data_uri", None),
+        company_name=AppSetting.get("company_name", "Belle Vitesse SAS"),
+        base_url=request.host_url.rstrip("/"),
+        qr_data_uri="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100' height='100' fill='white'/><rect x='10' y='10' width='25' height='25' fill='black'/><rect x='65' y='10' width='25' height='25' fill='black'/><rect x='10' y='65' width='25' height='25' fill='black'/><rect x='45' y='45' width='10' height='10' fill='black'/></svg>",
+        seal_hash=getattr(waiver, "hash", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),
+        is_preview=(not is_pdf_format),
+    )
+
+    if is_pdf_format:
+        from utils.document_utils import render_pdf_from_template
+        pdf_bytes = render_pdf_from_template(
+            html_content=html_content,
+            base_url=current_app.root_path,
+            stylesheets=["css/styles.css", "css/admin/pilot-waiver-pdf.css"],
+        )
+        return Response(
+            pdf_bytes,
+            mimetype="application/pdf",
+            headers={"Content-Disposition": f"inline; filename=pilot_waiver_preview_{waiver.waiver_id}.pdf"}
+        )
+
+    return html_content
+
+
 def init_waivers_routes(app):
     """Enregistre le blueprint admin_waivers et les routes directes de prévisualisation PDF."""
     if "admin_waivers" not in app.blueprints:
@@ -467,4 +634,9 @@ def init_waivers_routes(app):
     @require_preview_access
     def preview_pdf_safety_rules_alias():
         return admin_safety_rules_preview()
+
+    @app.route("/preview/pdf/pilot-waiver", methods=["GET"], endpoint="preview_pdf_pilot_waiver_alias")
+    @require_preview_access
+    def preview_pdf_pilot_waiver_alias():
+        return admin_pilot_waivers_preview()
 

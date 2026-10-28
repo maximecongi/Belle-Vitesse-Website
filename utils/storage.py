@@ -84,6 +84,11 @@ def get_safety_rules_path(project):
     return get_security_path(project) / "2_RÈGLES_SÉCURITÉ"
 
 
+def get_pilot_waiver_path(project):
+    """output / ... / 1_SÉCURITÉ / 3_ATTESTATIONS_PILOTES"""
+    return get_security_path(project) / "3_ATTESTATIONS_PILOTES"
+
+
 def get_checkin_path(project):
     """output / ... / 1_SÉCURITÉ / 4_CHECKIN"""
     return get_security_path(project) / "4_CHECKIN"

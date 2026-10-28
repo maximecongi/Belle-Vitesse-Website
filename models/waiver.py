@@ -54,7 +54,12 @@ class SignedDocumentMixin:
 def _generate_default_waiver_id(context):
     params = context.get_current_parameters()
     w_type = params.get("waiver_type", "safety_rules")
-    prefix = "BVRA" if w_type == "cgl" else "BVSR"
+    if w_type == "cgl":
+        prefix = "BVRA"
+    elif w_type == "pilot_waiver":
+        prefix = "BVPA"
+    else:
+        prefix = "BVSR"
     return generate_inspection_number(prefix)
 
 
@@ -330,9 +335,30 @@ class Waiver(db.Model):
             kwargs["waiver_type"] = poly_id if poly_id != "waiver" else kwargs.get(
                 "type", "safety_rules")
         if "waiver_id" not in kwargs:
-            prefix = "BVRA" if kwargs.get("waiver_type") == "cgl" else "BVSR"
+            wt = kwargs.get("waiver_type")
+            if wt == "cgl":
+                prefix = "BVRA"
+            elif wt == "pilot_waiver":
+                prefix = "BVPA"
+            else:
+                prefix = "BVSR"
             kwargs["waiver_id"] = generate_inspection_number(prefix)
         super().__init__(**kwargs)
+
+    @property
+    def hash(self):
+        """Retourne l'empreinte cryptographique du document scellé s'il existe."""
+        if self.sign_data and self.sign_data.get("hash"):
+            return self.sign_data.get("hash")
+        from models.waiver import WaiverSignedDocument
+        signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=self.waiver_id).order_by(WaiverSignedDocument.version.desc()).first()
+        return signed_doc.hash if signed_doc else None
+
+    @hash.setter
+    def hash(self, value):
+        data = dict(self.sign_data or {})
+        data["hash"] = value
+        self.sign_data = data
 
     def to_dict(self):
         """Convertit l'objet en dictionnaire pour les réponses API."""
@@ -516,6 +542,46 @@ class SafetyRulesWaiver(Waiver):
 
     def __repr__(self):
         return f"<SafetyRulesWaiver {self.waiver_id} - {self.signer_role} - {self.status}>"
+
+
+class PilotWaiver(Waiver):
+    """Attestation d'information et d'engagement du pilote (Annexe 3 aux CGL - BVPA)."""
+    __mapper_args__ = {
+        "polymorphic_identity": "pilot_waiver",
+    }
+
+    @property
+    def pilot_function_label(self):
+        """Retourne la fonction du signataire adaptée à l'Annexe 3."""
+        roles = {
+            "pilot": "Pilote",
+            "operator": "Opérateur gyropode",
+            "stunt_performer": "Cascadeur",
+            "other": self.signer_role_custom or "Autre",
+        }
+        return roles.get(self.signer_role, self.signer_role_custom or self.signer_role or "Pilote")
+
+    @property
+    def vehicles_details(self):
+        """
+        Retourne la liste détaillée des véhicules confiés spécifiquement à ce pilote.
+        Si self.vehicles est défini, ne filtre que les véhicules assignés.
+        """
+        if not self.vehicles:
+            return super().vehicles_details
+
+        selected_tokens = {v.strip().lower() for v in self.vehicles.split(",") if v.strip()}
+        all_details = super().vehicles_details
+        filtered = [
+            v for v in all_details
+            if v.get("name", "").strip().lower() in selected_tokens
+            or v.get("unique_id", "").strip().lower() in selected_tokens
+            or v.get("slug", "").strip().lower() in selected_tokens
+        ]
+        return filtered if filtered else all_details
+
+    def __repr__(self):
+        return f"<PilotWaiver {self.waiver_id} - {self.signer_name} - {self.status}>"
 
 
 # ── Tokens et Documents Signés Unifiés ───────────────────────────

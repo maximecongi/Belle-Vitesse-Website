@@ -14,6 +14,7 @@ PROJECT_SUBFOLDERS = [
 DOC_FOLDERS = {
     "checkout": "4_SÉCURITÉ/1_CHECKOUT",
     "safety_rules": "4_SÉCURITÉ/2_RÈGLES_SÉCURITÉ",
+    "pilot_waiver": "4_SÉCURITÉ/3_ATTESTATIONS_PILOTES",
     "cgl": "4_SÉCURITÉ/3_CGL",
     "checkin": "4_SÉCURITÉ/4_CHECKIN",
     "incident": "6_INCIDENTS",
@@ -23,6 +24,7 @@ ROLE_SUBFOLDERS = {
     ("cgl", "pdf"): "1_CGL",
     ("cgl", "insurance"): "2_ATTESTATION_ASSURANCE",
     ("safety_rules", "pdf"): "",
+    ("pilot_waiver", "pdf"): "",
     ("checkout", "photo"): "PHOTOS",
     ("checkout", "pdf"): "",
     ("checkin", "photo"): "PHOTOS",

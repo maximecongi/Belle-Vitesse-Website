@@ -9,6 +9,7 @@ from extensions import csrf, limiter
 from models import (
     CglWaiver,
     SafetyRulesWaiver,
+    PilotWaiver,
     WaiverToken,
     WaiverSignedDocument,
     db,
@@ -53,6 +54,17 @@ def _get_waiver_route_config(mode):
             "route_base": "safety-rules",
             "seal_prefix": "BVSR",
         }
+    elif mode == "pilot_waiver":
+        return {
+            "mode": "pilot_waiver",
+            "model": PilotWaiver,
+            "signed_model": WaiverSignedDocument,
+            "token_model": WaiverToken,
+            "template_sign": "public/waivers/sign_pilot_waiver.html",
+            "template_verify": "public/waivers/pilot_waiver_verify.html",
+            "route_base": "pilot-attestation",
+            "seal_prefix": "BVPA",
+        }
     return {
         "mode": "cgl",
         "model": CglWaiver,
@@ -78,6 +90,11 @@ def init_waiver_routes(app):
     @limiter.limit("20 per minute")
     def sign_safety_rules(token):
         return _handle_sign_waiver("safety_rules", token)
+
+    @app.route("/sign/pilot-attestation/<token>", methods=["GET", "POST"])
+    @limiter.limit("20 per minute")
+    def sign_pilot_waiver(token):
+        return _handle_sign_waiver("pilot_waiver", token)
 
     def _handle_sign_waiver(mode, token):
         config = _get_waiver_route_config(mode)
@@ -240,6 +257,57 @@ def init_waiver_routes(app):
                 bvsr_sign_data["ack_rules"] = True
                 bvsr_sign_data["accepted_at"] = datetime.now(timezone.utc).isoformat()
                 waiver.sign_data = bvsr_sign_data
+            elif mode == "pilot_waiver":
+                if data.get("ack_pilot_engagement") not in ("1", "on", "true"):
+                    return _fail("La déclaration sur l'honneur et le respect des consignes de sécurité de l'Annexe 3 sont obligatoires.")
+
+                if data.get("first_name"):
+                    fn = data.get("first_name").strip()
+                    if len(fn) > 100:
+                        return _fail("Le prénom ne peut dépasser 100 caractères.")
+                    waiver.signer_first_name = fn
+                if data.get("last_name"):
+                    ln = data.get("last_name").strip()
+                    if len(ln) > 100:
+                        return _fail("Le nom ne peut dépasser 100 caractères.")
+                    waiver.signer_last_name = ln
+                if data.get("email"):
+                    em = data.get("email").strip()
+                    import re
+                    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", em) or len(em) > 120:
+                        return _fail("L'adresse e-mail renseignée est invalide.")
+                    waiver.signer_email = em
+                if data.get("phone"):
+                    ph = data.get("phone").strip()
+                    if len(ph) > 50:
+                        return _fail("Le numéro de téléphone ne peut dépasser 50 caractères.")
+                    waiver.signer_phone = ph
+                if data.get("company"):
+                    co = data.get("company").strip()
+                    if len(co) > 150:
+                        return _fail("La société ne peut dépasser 150 caractères.")
+                    waiver.signer_company = co
+                if data.get("signer_role"):
+                    ro = data.get("signer_role").strip()
+                    if len(ro) > 100:
+                        return _fail("La fonction ne peut dépasser 100 caractères.")
+                    waiver.signer_role = ro
+                if data.get("role_custom"):
+                    rc = data.get("role_custom").strip()
+                    if len(rc) > 100:
+                        return _fail("Le rôle personnalisé ne peut dépasser 100 caractères.")
+                    waiver.signer_role_custom = rc
+                rep_name = f"{waiver.signer_first_name or ''} {waiver.signer_last_name or ''}".strip()
+
+                pilot_sign_data = dict(waiver.sign_data or {})
+                pilot_sign_data["ack_pilot_engagement"] = True
+                pilot_sign_data["accepted_at"] = datetime.now(timezone.utc).isoformat()
+                pilot_sign_data["authority_declaration_text"] = (
+                    "Je déclare être sous l'autorité exclusive de la production (l'Employeur), "
+                    "sans aucun lien de subordination juridique avec Belle Vitesse, et m'engage à appliquer "
+                    "rigoureusement l'ensemble des règles opérationnelles et de sécurité de l'Annexe 3."
+                )
+                waiver.sign_data = pilot_sign_data
             else:
                 # Validation stricte du consentement et de la déclaration de pouvoir pour les CGL
                 if data.get("accepted_terms") != "1":
@@ -415,6 +483,12 @@ def init_waiver_routes(app):
                     "signer_name": rep_name,
                     "signer_role": waiver.signer_role,
                 }
+            elif mode == "pilot_waiver":
+                consent_payload = {
+                    "ack_pilot_engagement": True,
+                    "signer_name": rep_name,
+                    "signer_role": waiver.signer_role,
+                }
             else:
                 consent_payload = {
                     "accepted_terms": True,
@@ -489,6 +563,23 @@ def init_waiver_routes(app):
         config["get_seal_args"] = get_seal_args
         return handle_document_verify(config, waiver_id)
 
+    @app.route("/pilot-attestation/verify/<string:waiver_id>", methods=["GET", "POST"])
+    @app.route("/verify/pilot-attestation/<string:waiver_id>", methods=["GET", "POST"])
+    @limiter.limit("20 per minute")
+    @csrf.exempt
+    def verify_pilot_waiver(waiver_id):
+        config = _get_waiver_route_config("pilot_waiver")
+
+        def get_seal_args(data, signed_doc):
+            return [waiver_id,
+                    data.get("_seal_signer_name", ""),
+                    data.get("_seal_signer_role", ""),
+                    signed_doc.signature,
+                    data.get("_seal_signed_at", "")]
+
+        config["get_seal_args"] = get_seal_args
+        return handle_document_verify(config, waiver_id)
+
     @app.route("/cgl/verify/<string:waiver_id>", methods=["GET", "POST"])
     @app.route("/verify/cgl/<string:waiver_id>", methods=["GET", "POST"])
     @limiter.limit("20 per minute")
@@ -510,6 +601,7 @@ def init_waiver_routes(app):
 
     @app.route("/cgl/document/<path:filepath>")
     @app.route("/safety-rules/document/<path:filepath>")
+    @app.route("/pilot-attestation/document/<path:filepath>")
     @app.route("/cgl/attachment/<path:filepath>")
     @csrf.exempt
     def download_waiver_secured_file(filepath):

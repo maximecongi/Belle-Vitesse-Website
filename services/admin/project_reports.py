@@ -200,6 +200,7 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
         joinedload(Project.first_ac_contact),
         joinedload(Project.cgl),
         selectinload(Project.safety_rules),
+        selectinload(Project.pilot_waivers),
         selectinload(Project.incidents),
         selectinload(Project.reports).joinedload(ProjectReport.user)
     ).first()
@@ -472,5 +473,24 @@ def get_project_detail_context(project_id, current_user_id=None, is_admin=False)
             }
             for sr in (project.safety_rules or [])
             if getattr(sr, "deleted_at", None) is None
-        ]
+        ],
+        "pilot_waivers": [
+            {
+                "id": pw.id,
+                "waiver_id": pw.waiver_id,
+                "signer_name": pw.signer_name,
+                "signer_role": pw.signer_role,
+                "signer_role_label": pw.pilot_function_label,
+                "signer_email": pw.signer_email,
+                "signer_phone": pw.signer_phone,
+                "signer_company": pw.signer_company,
+                "vehicles": pw.vehicles,
+                "status": format_waiver_status(pw.status),
+                "raw_status": pw.status,
+                "signed_at": pw.signed_at,
+                "pdf_path": _get_secured_document_url(pw.signed_pdf_path, "pilot-attestation"),
+            }
+            for pw in (project.pilot_waivers or [])
+            if getattr(pw, "deleted_at", None) is None
+        ],
     }

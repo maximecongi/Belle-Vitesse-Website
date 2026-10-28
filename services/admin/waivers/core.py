@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from models import (
     CglWaiver,
     SafetyRulesWaiver,
+    PilotWaiver,
     Waiver,
     WaiverToken,
     db,
@@ -20,6 +21,7 @@ from utils.entity_resolvers import (
     resolve_cgl,
     resolve_project,
     resolve_safety_rules_waiver,
+    resolve_pilot_waiver,
     resolve_waiver,
 )
 
@@ -102,9 +104,29 @@ def create_waiver(project_id, waiver_type: str = "cgl", **kwargs):
             waiver.signer_email = p.production_contact.mail
             waiver.signer_company = p.production.name if p.production else ""
 
+    elif waiver_type == "pilot_waiver":
+        waiver.signer_role = kwargs.get("signer_role", "pilot")
+        waiver.signer_role_custom = kwargs.get("signer_role_custom")
+        waiver.signer_first_name = kwargs.get("signer_first_name")
+        waiver.signer_last_name = kwargs.get("signer_last_name")
+        waiver.signer_email = kwargs.get("signer_email")
+        waiver.signer_phone = kwargs.get("signer_phone")
+        waiver.signer_company = kwargs.get("signer_company") or (p.production.name if p.production else "")
+        if not waiver.signer_first_name and p.pilot_contact:
+            waiver.signer_first_name = p.pilot_contact.first_name
+            waiver.signer_last_name = p.pilot_contact.last_name
+            waiver.signer_email = p.pilot_contact.mail
+            waiver.signer_phone = getattr(p.pilot_contact, "tel", "")
+
     waiver.shooting_dates = _format_project_shooting_dates(p, default_sep=" au ")
 
-    if p.vehicles_to_check:
+    selected_v = kwargs.get("selected_vehicles")
+    if selected_v:
+        if isinstance(selected_v, list):
+            waiver.vehicles = ", ".join([str(v).strip() for v in selected_v if str(v).strip()])
+        else:
+            waiver.vehicles = str(selected_v).strip()
+    elif p.vehicles_to_check:
         veh_ids = [v.strip() for v in p.vehicles_to_check.split(",") if v.strip()]
         all_vehicles = get_vehicles()
         vehicle_map = {str(v["id"]): v.get("fields", {}).get("name", f"ID {v['id']}") for v in all_vehicles}
@@ -120,6 +142,8 @@ def create_waiver(project_id, waiver_type: str = "cgl", **kwargs):
 
     if waiver_type == "cgl":
         msg = "Conditions Générales de Location (CGL) créées avec succès."
+    elif waiver_type == "pilot_waiver":
+        msg = f"Attestation Pilote (Annexe 3) créée avec succès pour {waiver.signer_name}."
     else:
         msg = f"Règles de sécurité BVSR créées avec succès pour {waiver.signer_name} ({waiver.signer_role_label})."
     return True, msg
@@ -128,11 +152,13 @@ def create_waiver(project_id, waiver_type: str = "cgl", **kwargs):
 @handle_admin_service_error
 def generate_waiver(waiver_id, waiver_type: str = None):
     """
-    Génère (fige les données de snapshot) un contrat CGL ou engagement BVSR.
+    Génère (fige les données de snapshot) un contrat CGL, engagement BVSR ou attestation pilote.
     Passe le statut de 'to_generate' à 'to_send'.
     """
     if waiver_type == "safety_rules":
         waiver = resolve_safety_rules_waiver(waiver_id)
+    elif waiver_type == "pilot_waiver":
+        waiver = resolve_pilot_waiver(waiver_id)
     elif waiver_type == "cgl":
         waiver = resolve_cgl(waiver_id)
     else:
@@ -151,42 +177,51 @@ def generate_waiver(waiver_id, waiver_type: str = None):
         if p and p.production:
             waiver.production_name = p.production.name
             waiver.production_address = p.production.address
-    elif mode == "safety_rules":
+    elif mode in ("safety_rules", "pilot_waiver"):
         if p and p.production:
             waiver.production_name = p.production.name
 
     if p:
         waiver.project_name = p.name
         waiver.shooting_dates = _format_project_shooting_dates(p, default_sep=" au ")
-        if p.vehicles_to_check:
-            veh_ids = [v.strip() for v in p.vehicles_to_check.split(",") if v.strip()]
-            all_vehicles = get_vehicles()
-            vehicle_map = {str(v["id"]): v.get("fields", {}).get("name", f"ID {v['id']}") for v in all_vehicles}
-            waiver.vehicles = ", ".join([vehicle_map.get(vid, vid) for vid in veh_ids])
-        elif p.active_checkout_vehicles:
-            waiver.vehicles = ", ".join([cv.vehicle_name for cv in p.active_checkout_vehicles if cv.vehicle_name])
+        if not waiver.vehicles:
+            if p.vehicles_to_check:
+                veh_ids = [v.strip() for v in p.vehicles_to_check.split(",") if v.strip()]
+                all_vehicles = get_vehicles()
+                vehicle_map = {str(v["id"]): v.get("fields", {}).get("name", f"ID {v['id']}") for v in all_vehicles}
+                waiver.vehicles = ", ".join([vehicle_map.get(vid, vid) for vid in veh_ids])
+            elif p.active_checkout_vehicles:
+                waiver.vehicles = ", ".join([cv.vehicle_name for cv in p.active_checkout_vehicles if cv.vehicle_name])
 
     waiver.status = "to_send"
     waiver.generated_at = _utcnow()
     db.session.commit()
 
-    msg = "Conditions Générales de Location (CGL) générées avec succès." if mode == "cgl" else "Règles de sécurité BVSR générées avec succès."
+    if mode == "cgl":
+        msg = "Conditions Générales de Location (CGL) générées avec succès."
+    elif mode == "pilot_waiver":
+        msg = "Attestation Pilote (Annexe 3) générée avec succès."
+    else:
+        msg = "Règles de sécurité BVSR générées avec succès."
     return True, msg
 
 
 @handle_admin_service_error
 def send_waiver(waiver_id, waiver_type: str = None, base_url: str = None):
     """
-    Envoie l'invitation de signature par e-mail au signataire (CGL ou BVSR).
+    Envoie l'invitation de signature par e-mail au signataire (CGL, BVSR ou Pilote).
     """
     from flask import current_app, has_request_context, request
     from utils.mailer import (
         send_cgl_invitation_email,
         send_safety_rules_invitation_email,
+        send_pilot_waiver_invitation_email,
     )
 
     if waiver_type == "safety_rules":
         waiver = resolve_safety_rules_waiver(waiver_id)
+    elif waiver_type == "pilot_waiver":
+        waiver = resolve_pilot_waiver(waiver_id)
     elif waiver_type == "cgl":
         waiver = resolve_cgl(waiver_id)
     else:
@@ -204,7 +239,7 @@ def send_waiver(waiver_id, waiver_type: str = None, base_url: str = None):
         return False, "Statut invalide pour l'envoi."
 
     p = waiver.project
-    if mode == "safety_rules":
+    if mode in ("safety_rules", "pilot_waiver"):
         recipient_mail = waiver.signer_email
         recipient_name = waiver.signer_name
         if not recipient_mail and waiver.signer_role == "pilot" and p and p.pilot_contact:
@@ -212,7 +247,7 @@ def send_waiver(waiver_id, waiver_type: str = None, base_url: str = None):
             recipient_name = f"{p.pilot_contact.first_name} {p.pilot_contact.last_name}"
         if not recipient_mail:
             return False, "Le signataire n'a pas d'adresse e-mail renseignée pour l'envoi."
-        route_prefix = "safety-rules"
+        route_prefix = "safety-rules" if mode == "safety_rules" else "pilot-attestation"
     else:
         contact = p.production_contact if p else None
         if not contact or not contact.mail:
@@ -233,6 +268,15 @@ def send_waiver(waiver_id, waiver_type: str = None, base_url: str = None):
 
     if mode == "safety_rules":
         success = send_safety_rules_invitation_email(
+            to_email=recipient_mail,
+            recipient_name=recipient_name,
+            project_name=p.name if p else "",
+            signature_link=signature_link,
+            is_reminder=is_reminder,
+            production_name=(p.production.name if p and p.production else getattr(waiver, "production_name", None)),
+        )
+    elif mode == "pilot_waiver":
+        success = send_pilot_waiver_invitation_email(
             to_email=recipient_mail,
             recipient_name=recipient_name,
             project_name=p.name if p else "",

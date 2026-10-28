@@ -152,6 +152,9 @@ class Project(db.Model):
     # Règles de sécurité universelles associées (BVSR, multiples possibles pour le projet)
     safety_rules = db.relationship(
         "SafetyRulesWaiver", lazy=True, order_by="SafetyRulesWaiver.id", overlaps="project,waivers")
+    # Attestations d'information et d'engagement du pilote (Annexe 3 aux CGL - BVPA)
+    pilot_waivers = db.relationship(
+        "PilotWaiver", lazy=True, order_by="PilotWaiver.id", overlaps="project,waivers")
     # Utilisateur ayant effectué la dernière action
     last_action_by = db.relationship(
         "User", foreign_keys=[last_action_by_id], lazy=True)
@@ -201,6 +204,11 @@ class Project(db.Model):
     def active_safety_rules(self):
         """Retourne la liste des règles de sécurité universelles (BVSR) actives pour ce projet."""
         return [sr for sr in (self.safety_rules or []) if getattr(sr, "deleted_at", None) is None]
+
+    @property
+    def active_pilot_waivers(self):
+        """Retourne la liste des attestations pilotes (BVPA) actives pour ce projet."""
+        return [pw for pw in (self.pilot_waivers or []) if getattr(pw, "deleted_at", None) is None]
 
 
     @property

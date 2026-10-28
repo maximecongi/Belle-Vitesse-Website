@@ -937,56 +937,153 @@ function initProjectNotesEdit() {
 }
 
 function initSafetyRulesSignerModal() {
-    const modal = document.getElementById('addSafetyRulesSignerModal');
-    if (!modal) return;
+    if (document._safetyRulesSignerModalBound) return;
+    document._safetyRulesSignerModalBound = true;
 
-    const openBtns = document.querySelectorAll('.js-open-add-safety-signer-modal');
-    openBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
+    // Ouverture déléguée
+    document.addEventListener('click', (e) => {
+        const openBtn = e.target.closest('.js-open-add-safety-signer-modal');
+        if (openBtn) {
             e.preventDefault();
-            modal.classList.remove('u-d-none');
-            modal.classList.add('is-active');
-        });
-    });
+            const modal = document.getElementById('addSafetyRulesSignerModal');
+            if (modal) {
+                modal.classList.remove('u-d-none');
+                modal.classList.add('is-active');
+                if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                    window.lucide.createIcons();
+                }
+            }
+            return;
+        }
 
-    const closeBtns = modal.querySelectorAll('.js-close-safety-signer-modal');
-    closeBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            modal.classList.add('u-d-none');
-            modal.classList.remove('is-active');
-        });
-    });
+        // Fermeture via bouton fermer ou annuler
+        const closeBtn = e.target.closest('.js-close-safety-signer-modal');
+        if (closeBtn) {
+            e.preventDefault();
+            const modal = document.getElementById('addSafetyRulesSignerModal');
+            if (modal) {
+                modal.classList.add('u-d-none');
+                modal.classList.remove('is-active');
+            }
+            return;
+        }
 
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
+        // Fermeture au clic sur le fond (overlay)
+        const modal = document.getElementById('addSafetyRulesSignerModal');
+        if (modal && e.target === modal) {
             modal.classList.add('u-d-none');
             modal.classList.remove('is-active');
         }
     });
 
-    const roleSelect = modal.querySelector('#new_signer_role');
-    const customRoleGroup = modal.querySelector('#new_signer_role_custom_group');
-    if (roleSelect && customRoleGroup) {
-        roleSelect.addEventListener('change', () => {
-            if (roleSelect.value === 'other') {
-                customRoleGroup.classList.remove('u-d-none');
-            } else {
-                customRoleGroup.classList.add('u-d-none');
+    // Fermeture avec la touche Échap
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' || e.key === 'Esc') {
+            const modal = document.getElementById('addSafetyRulesSignerModal');
+            if (modal && modal.classList.contains('is-active')) {
+                modal.classList.add('u-d-none');
+                modal.classList.remove('is-active');
             }
-        });
-    }
+        }
+    });
+
+    // Bascule du champ personnalisé "Autre"
+    document.addEventListener('change', (e) => {
+        if (e.target && e.target.id === 'new_signer_role') {
+            const customRoleGroup = document.getElementById('new_signer_role_custom_group');
+            if (customRoleGroup) {
+                if (e.target.value === 'other') {
+                    customRoleGroup.classList.remove('u-d-none');
+                    const customInput = customRoleGroup.querySelector('input');
+                    if (customInput) customInput.focus();
+                } else {
+                    customRoleGroup.classList.add('u-d-none');
+                }
+            }
+        }
+    });
+}
+
+function initPilotSignerModal() {
+    if (document._pilotSignerModalBound) return;
+    document._pilotSignerModalBound = true;
+
+    // Ouverture déléguée
+    document.addEventListener('click', (e) => {
+        const openBtn = e.target.closest('.js-open-add-pilot-signer-modal');
+        if (openBtn) {
+            e.preventDefault();
+            const modal = document.getElementById('addPilotSignerModal');
+            if (modal) {
+                modal.classList.remove('u-d-none');
+                modal.classList.add('is-active');
+                if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                    window.lucide.createIcons();
+                }
+            }
+            return;
+        }
+
+        // Fermeture via bouton fermer ou annuler
+        const closeBtn = e.target.closest('.js-close-pilot-signer-modal');
+        if (closeBtn) {
+            e.preventDefault();
+            const modal = document.getElementById('addPilotSignerModal');
+            if (modal) {
+                modal.classList.add('u-d-none');
+                modal.classList.remove('is-active');
+            }
+            return;
+        }
+
+        // Fermeture au clic sur le fond (overlay)
+        const modal = document.getElementById('addPilotSignerModal');
+        if (modal && e.target === modal) {
+            modal.classList.add('u-d-none');
+            modal.classList.remove('is-active');
+        }
+    });
+
+    // Fermeture avec la touche Échap
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' || e.key === 'Esc') {
+            const modal = document.getElementById('addPilotSignerModal');
+            if (modal && modal.classList.contains('is-active')) {
+                modal.classList.add('u-d-none');
+                modal.classList.remove('is-active');
+            }
+        }
+    });
+
+    // Bascule dynamique visuelle sur les cartes à cocher .project-checkbox-card
+    document.addEventListener('change', (e) => {
+        const cb = e.target;
+        if (cb && cb.matches('.project-checkbox-card input[type="checkbox"]')) {
+            const card = cb.closest('.project-checkbox-card');
+            if (card) {
+                card.classList.toggle('selected', cb.checked);
+            }
+        }
+    });
 }
 
 function initProjectInteractions() {
-    initProjectFormHighlight();
-    initProjectDateValidation();
-    initVehiclesModal();
-    initProjectNotionSlashEditor();
-    initProjectReportsCollapsible();
-    initProjectReportsEdit();
-    initProjectNotesEdit();
-    initSafetyRulesSignerModal();
+    try { initProjectFormHighlight(); } catch (e) { console.error('Error in initProjectFormHighlight', e); }
+    try { initProjectDateValidation(); } catch (e) { console.error('Error in initProjectDateValidation', e); }
+    try { initVehiclesModal(); } catch (e) { console.error('Error in initVehiclesModal', e); }
+    try { initProjectNotionSlashEditor(); } catch (e) { console.error('Error in initProjectNotionSlashEditor', e); }
+    try { initProjectReportsCollapsible(); } catch (e) { console.error('Error in initProjectReportsCollapsible', e); }
+    try { initProjectReportsEdit(); } catch (e) { console.error('Error in initProjectReportsEdit', e); }
+    try { initProjectNotesEdit(); } catch (e) { console.error('Error in initProjectNotesEdit', e); }
+    try { initSafetyRulesSignerModal(); } catch (e) { console.error('Error in initSafetyRulesSignerModal', e); }
+    try { initPilotSignerModal(); } catch (e) { console.error('Error in initPilotSignerModal', e); }
 }
 
+window.initSafetyRulesSignerModal = initSafetyRulesSignerModal;
+window.initPilotSignerModal = initPilotSignerModal;
 window.initProjectInteractions = initProjectInteractions;
+
+// Initialisation immédiate des écouteurs de modals dès l'évaluation du script
+initSafetyRulesSignerModal();
+initPilotSignerModal();
 

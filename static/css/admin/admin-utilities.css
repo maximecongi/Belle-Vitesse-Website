@@ -923,12 +923,18 @@ select.form-input.form-input-sm {
     border: 1px solid #e5e7eb !important;
     border-radius: 8px !important;
     cursor: pointer !important;
-    transition: background 0.15s, border-color 0.15s !important;
+    user-select: none !important;
+    transition: background 0.15s, border-color 0.15s, opacity 0.15s !important;
+}
+
+.project-checkbox-card:not(.selected) {
+    opacity: 0.5 !important;
 }
 
 .project-checkbox-card.selected {
     background: #f8f9fa !important;
     border-color: #858585 !important;
+    opacity: 1 !important;
 }
 
 .project-checkbox-card-img {

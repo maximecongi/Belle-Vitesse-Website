@@ -404,12 +404,16 @@ def _build_waiver_email_context(
     signature_link: str = None,
     is_reminder: bool = False,
 ) -> dict:
-    """Construit un contexte Jinja standardisé pour les invitations et confirmations de contrat (BVRA / CGL) et règles de sécurité (BVSR)."""
     if waiver_type == "cgl":
         type_title = "Conditions Générales de Location (CGL)"
         type_label = "des Conditions Générales de Location (CGL)"
         doc_title = "Conditions Générales de Location (CGL)"
         is_prod = True
+    elif waiver_type == "pilot_waiver":
+        type_title = "Attestation Pilote (Annexe 3)"
+        type_label = "de votre Attestation d'information et d'engagement du pilote (Annexe 3)"
+        doc_title = "Attestation d'information et d'engagement du pilote (Annexe 3)"
+        is_prod = False
     else:
         type_title = "Règles de Sécurité (BVSR)"
         type_label = "de votre engagement aux Règles de Sécurité Universelles (BVSR)"
@@ -445,12 +449,16 @@ def _send_waiver_invitation_email(
 ):
     """
     Fonction unifiée interne pour l'envoi d'une invitation ou d'une relance
-    de Conditions Générales de Location (CGL) ou de règles de sécurité (BVSR).
+    de CGL, de règles de sécurité (BVSR) ou d'attestation pilote (Annexe 3).
     """
     if waiver_type == "cgl":
         type_label = "CGL"
         subject_type = "des Conditions Générales de Location (CGL)"
         doc_desc = "les Conditions Générales de Location (CGL)"
+    elif waiver_type == "pilot_waiver":
+        type_label = "Attestation Pilote (Annexe 3)"
+        subject_type = "de l'Attestation Pilote (Annexe 3)"
+        doc_desc = "votre Attestation d'information et d'engagement du pilote (Annexe 3)"
     else:
         type_label = "Règles de Sécurité BVSR"
         subject_type = "des Règles de Sécurité Universelles (BVSR)"
@@ -526,8 +534,21 @@ def send_safety_rules_invitation_email(to_email, recipient_name, project_name, s
     )
 
 
+def send_pilot_waiver_invitation_email(to_email, recipient_name, project_name, signature_link, is_reminder=False, production_name=None):
+    """Envoie une invitation (ou un rappel) à un pilote pour signer son Attestation d'information et d'engagement (Annexe 3)."""
+    return _send_waiver_invitation_email(
+        waiver_type="pilot_waiver",
+        to_email=to_email,
+        recipient_name=recipient_name,
+        project_name=project_name,
+        signature_link=signature_link,
+        is_reminder=is_reminder,
+        production_name=production_name,
+    )
+
+
 def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path, production_name=None, waiver_type=None):
-    """Envoie un email avec le PDF des CGL ou des règles de sécurité (BVSR) signé en pièce jointe."""
+    """Envoie un email avec le PDF des CGL, BVSR ou Attestation Pilote signé en pièce jointe."""
     admin_mail = os.getenv("SUPER_ADMIN_MAIL", "contact@bellevitesse.com")
     current_app.logger.info(
         f"🚀 Sending signed document PDF to {to_email} and {admin_mail}")
@@ -535,6 +556,10 @@ def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path, p
         doc_desc = "les Conditions Générales de Location (CGL) signées"
         subject_desc = "Conditions Générales de Location (CGL) signées"
         doc_title = "Conditions Générales de Location (CGL)"
+    elif waiver_type == "pilot_waiver":
+        doc_desc = "l'Attestation d'information et d'engagement du pilote (Annexe 3) signée"
+        subject_desc = "Attestation Pilote (Annexe 3) signée"
+        doc_title = "Attestation d'information et d'engagement du pilote (Annexe 3)"
     else:
         doc_desc = "les Règles de Sécurité Universelles (BVSR) signées"
         subject_desc = "Règles de Sécurité (BVSR) signées"

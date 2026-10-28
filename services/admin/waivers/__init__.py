@@ -29,6 +29,15 @@ from .core import (
     reset_waiver,
     send_waiver,
 )
+from .pilot import (
+    create_pilot_waiver,
+    delete_pilot_waiver,
+    delete_pilot_waiver_internal,
+    generate_pilot_waiver,
+    list_pilot_waivers,
+    reset_pilot_waiver,
+    send_pilot_waiver,
+)
 from .reminders import (
     auto_remind_pending_waivers,
 )
@@ -73,6 +82,14 @@ __all__ = [
     "delete_safety_rules_internal",
     "countersign_safety_rules",
     "list_safety_rules_waivers",
+    # Pilot Waivers (Annexe 3)
+    "create_pilot_waiver",
+    "delete_pilot_waiver",
+    "delete_pilot_waiver_internal",
+    "generate_pilot_waiver",
+    "list_pilot_waivers",
+    "reset_pilot_waiver",
+    "send_pilot_waiver",
     # Reminders
     "auto_remind_pending_waivers",
 ]
