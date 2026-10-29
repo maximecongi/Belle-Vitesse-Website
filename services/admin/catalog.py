@@ -200,6 +200,8 @@ def get_catalog_data(with_prices=True):
         "now": datetime.now(),
         "estimated_height": estimated_height,
         "with_prices": with_prices,
+        "pdf_export": False,
+        "pdf_placeholder_images": {},
     }
 
 
@@ -207,13 +209,25 @@ def generate_catalog_pdf(with_prices=True, filename: str = None):
     """Génère le PDF du catalogue de prix en page continue fluide."""
     target_filename = filename or f"Belle_Vitesse_CATALOGUE_{'P' if with_prices else 'WP'}.pdf"
     from flask import has_request_context
+
+    def get_pdf_context():
+        data = get_catalog_data(with_prices=with_prices)
+        data["pdf_export"] = True
+        data["pdf_placeholder_images"] = {
+            name: os.path.isfile(
+                os.path.join(current_app.static_folder, "imgs", "placeholders", f"{name}-pdf.png")
+            )
+            for name in ("vehicle", "head")
+        }
+        return data
+
     if not has_request_context():
         with current_app.test_request_context(base_url="https://team.bellevitesse.com"):
-            data = get_catalog_data(with_prices=with_prices)
+            data = get_pdf_context()
             html = render_template("pdf/catalog.html", **data)
             return render_pdf_from_template(html, base_url=current_app.root_path, filename=target_filename, continuous=True)
 
-    data = get_catalog_data(with_prices=with_prices)
+    data = get_pdf_context()
     html = render_template("pdf/catalog.html", **data)
     pdf_bytes = render_pdf_from_template(html, base_url=current_app.root_path, filename=target_filename, continuous=True)
     return pdf_bytes

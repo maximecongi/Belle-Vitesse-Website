@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <title>{% if with_prices %}CATALOGUE DE PRIX{% else %}CATALOGUE FLOTTE{% endif %} - BELLE VITESSE</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/catalog.css') }}?v={{ asset_version('css/admin/catalog.css') }}">
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='css/admin/catalog.css') }}?v={{ asset_version('css/admin/catalog.css') }}">
 </head>
 
 <body class="catalog-body">
@@ -24,20 +25,20 @@
             </div>
             <span class="preview-controls-hint">
                 {% if catalog_updated_at %}
-                    Dernière génération : <strong>{{ catalog_updated_at }}</strong>
+                Dernière génération : <strong>{{ catalog_updated_at }}</strong>
                 {% else %}
-                    Le PDF ne sera mis à jour que si vous cliquez sur « Mettre à jour le PDF »
+                Le PDF ne sera mis à jour que si vous cliquez sur « Mettre à jour le PDF »
                 {% endif %}
             </span>
         </div>
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="preview-controls-alerts">
-                    {% for category, message in messages %}
-                        <span class="preview-alert preview-alert--{{ category }}">{{ message }}</span>
-                    {% endfor %}
-                </div>
-            {% endif %}
+        {% if messages %}
+        <div class="preview-controls-alerts">
+            {% for category, message in messages %}
+            <span class="preview-alert preview-alert--{{ category }}">{{ message }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
         {% endwith %}
         <div class="preview-controls-actions">
             <a href="{{ url_for('admin_catalog.admin_catalog_pdf', prices='1' if with_prices else '0', t=catalog_timestamp) }}"
@@ -77,7 +78,11 @@
                         {% if vehicle.thumbnail %}
                         <img src="{{ vehicle.thumbnail }}" class="catalog-card-img" alt="{{ vehicle.name }}">
                         {% else %}
-                        <img src="{{ url_for('static', filename='imgs/placeholders/vehicle.svg') }}"
+                        {% set vehicle_placeholder = 'imgs/placeholders/vehicle.svg' %}
+                        {% if pdf_export and pdf_placeholder_images.get('vehicle') %}
+                        {% set vehicle_placeholder = 'imgs/placeholders/vehicle.png' %}
+                        {% endif %}
+                        <img src="{{ url_for('static', filename=vehicle_placeholder) }}"
                             class="catalog-card-img catalog-card-img--placeholder" alt="{{ vehicle.name }}">
                         {% endif %}
                     </div>
@@ -159,7 +164,11 @@
                         {% if head.thumbnail %}
                         <img src="{{ head.thumbnail }}" class="catalog-head-img" alt="{{ head.name }}">
                         {% else %}
-                        <img src="{{ url_for('static', filename='imgs/placeholders/head.svg') }}"
+                        {% set head_placeholder = 'imgs/placeholders/head.svg' %}
+                        {% if pdf_export and pdf_placeholder_images.get('head') %}
+                        {% set head_placeholder = 'imgs/placeholders/head.png' %}
+                        {% endif %}
+                        <img src="{{ url_for('static', filename=head_placeholder) }}"
                             class="catalog-head-img catalog-head-img--placeholder" alt="{{ head.name }}">
                         {% endif %}
                     </div>
@@ -190,7 +199,9 @@
             </div>
         </footer>
     </div>
-    <script src="{{ url_for('static', filename='js/admin/admin.bundle.js') }}?v={{ asset_version('js/admin/admin.bundle.js') }}" defer></script>
+    <script
+        src="{{ url_for('static', filename='js/admin/admin.bundle.js') }}?v={{ asset_version('js/admin/admin.bundle.js') }}"
+        defer></script>
 </body>
 
 </html>
