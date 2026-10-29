@@ -13,9 +13,9 @@
     <link rel="manifest" href="/static/imgs/favicons/site.webmanifest" />
 
     <title>CONSTAT D'INCIDENT — {{ incident.incident_number }}</title>
-    <link rel="stylesheet" href="/static/css/styles.css">
-    <link rel="stylesheet" href="/static/css/checkout.css">
-    <link rel="stylesheet" href="/static/css/incident_pdf.css">
+    <link rel="stylesheet" href="{{ asset_url('css/styles.css') }}">
+    <link rel="stylesheet" href="{{ asset_url('css/checkout.css') }}">
+    <link rel="stylesheet" href="{{ asset_url('css/incident_pdf.css') }}">
 </head>
 
 <body>
