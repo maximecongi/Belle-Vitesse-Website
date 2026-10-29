@@ -1,0 +1,318 @@
+/* ==========================================================================
+   BELLE VITESSE — GRILLE DES SALAIRES
+   Feuille de style d'impression & export PDF (WeasyPrint / A4)
+   Harmonisation avec la DA et les gabarits des documents officiels (CGL, Checkout, Waivers)
+   ========================================================================== */
+
+/* ── 1. Variables & Design System ────────────────────────────────────────── */
+:root {
+    --yellow-1: #FFC845;
+    --grey-1: #151515;
+    --grey-2: #515151;
+    --grey-3: #1A1A1A;
+    --white-1: #FFFFFF;
+    --white-2: #FAFAFA;
+    --white-3: #F4F4F4;
+    --white-4: #A1A1A1;
+    --border-color: #E2E8F0;
+}
+
+/* ── 2. Configuration des Pages (WeasyPrint) ────────────────────────────── */
+@page {
+    size: A4 portrait;
+    margin: 15mm 15mm 18mm 15mm;
+
+    @bottom-right {
+        content: "Page " counter(page) " / " counter(pages);
+        font-size: 7.5pt;
+        font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: #71717a;
+    }
+
+    @bottom-left {
+        content: "BELLE VITESSE — Document officiel de tarification";
+        font-size: 7.5pt;
+        font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: #a1a1aa;
+    }
+}
+
+@page :first {
+    margin-top: 15mm;
+}
+
+/* ── 3. Reset Global & Conteneur Principal ───────────────────────────────── */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body.salary-pdf-container {
+    margin: 0;
+    padding: 0;
+    background-color: #ffffff;
+    font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--grey-1, #151515);
+    font-size: 8.5pt;
+    line-height: 1.5;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.salary-pdf-document {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #ffffff;
+}
+
+/* ── 3.1 Mode Prévisualisation Écran (Mise en page A4 fidèle) ─────────────── */
+@media screen {
+    body.salary-pdf-container {
+        background-color: #475569;
+        min-height: 100vh;
+        padding: 24px 16px 48px 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .salary-pdf-document {
+        width: 210mm;
+        min-height: 297mm;
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 15mm;
+        background-color: #ffffff;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15), 0 20px 25px -5px rgba(0, 0, 0, 0.25);
+        border-radius: 2px;
+        box-sizing: border-box;
+    }
+}
+
+/* ── 4. Signature Carré Jaune Belle Vitesse ──────────────────────────────── */
+.dot-before:before {
+    content: "■ ";
+    color: var(--yellow-1, #FFC845);
+    font-size: 0.85em;
+    position: relative;
+    left: -0.15ch;
+    top: -0.15ch;
+}
+
+/* ── 5. En-tête du Document ──────────────────────────────────────────────── */
+.salary-pdf-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 12pt;
+    border-bottom: 2px solid var(--grey-1, #151515);
+    margin-bottom: 14pt;
+    page-break-after: avoid;
+}
+
+.salary-pdf-header-logo img {
+    height: 32pt;
+    max-height: 32pt;
+    width: auto;
+    display: block;
+}
+
+.salary-pdf-header-meta {
+    text-align: right;
+    font-size: 7.5pt;
+    line-height: 1.5;
+    color: var(--grey-2, #515151);
+}
+
+.salary-pdf-header-meta strong {
+    font-size: 8.5pt;
+    color: var(--grey-1, #151515);
+    font-weight: 700;
+}
+
+.checkout-doc-id {
+    font-family: monospace;
+    font-size: 6.5pt;
+    background-color: var(--white-3, #F4F4F4);
+    color: var(--grey-1, #151515);
+    padding: 2pt 6pt;
+    border-radius: 2pt;
+    display: inline-block;
+    margin: 2pt 0;
+    font-weight: 600;
+    border: 0.5pt solid #E2E8F0;
+}
+
+.salary-pdf-header-date {
+    font-size: 7pt;
+    color: var(--grey-2, #515151);
+}
+
+/* ── 6. Titre Principal ──────────────────────────────────────────────────── */
+.salary-pdf-title-banner {
+    margin-bottom: 14pt;
+    page-break-after: avoid;
+}
+
+.salary-pdf-title {
+    font-size: 16pt;
+    font-weight: 700;
+    color: var(--grey-1, #151515);
+    margin: 0 0 3pt 0;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+}
+
+.salary-pdf-subtitle {
+    font-size: 8.5pt;
+    color: var(--grey-2, #515151);
+    margin: 0;
+    font-weight: 400;
+}
+
+.salary-pdf-subtitle strong {
+    color: var(--grey-1, #151515);
+}
+
+/* ── 7. Encadré d'Information Coefficient (Facture) ──────────────────────── */
+.salary-coef-box {
+    background-color: #FEFCE8;
+    border: 0.5pt solid #FEF08A;
+    border-left: 3pt solid var(--yellow-1, #FFC845);
+    padding: 8pt 12pt;
+    margin-bottom: 14pt;
+    border-radius: 3pt;
+    page-break-inside: avoid;
+}
+
+.salary-coef-header {
+    font-size: 8pt;
+    font-weight: 700;
+    color: #854D0E;
+    margin-bottom: 2pt;
+}
+
+.salary-coef-text {
+    margin: 0;
+    font-size: 7.5pt;
+    line-height: 1.4;
+    color: #A16207;
+}
+
+/* ── 8. Groupes de Salaires & Tableaux ────────────────────────────────────── */
+.salary-group-section {
+    margin-bottom: 12pt;
+    page-break-inside: avoid;
+}
+
+.salary-group-title {
+    font-size: 9pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--grey-1, #151515);
+    padding-bottom: 3pt;
+    border-bottom: 1.5pt solid var(--grey-1, #151515);
+    margin-bottom: 6pt;
+    letter-spacing: 0.05em;
+    page-break-after: avoid;
+}
+
+.salary-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt;
+    line-height: 1.4;
+    page-break-inside: auto;
+}
+
+.salary-table thead {
+    display: table-header-group;
+    background-color: var(--grey-1, #151515);
+    color: #FFFFFF;
+}
+
+.salary-table th {
+    background-color: var(--grey-1, #151515);
+    color: #FFFFFF;
+    text-align: left;
+    padding: 5.5pt 8pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 7pt;
+    letter-spacing: 0.05em;
+    border: none;
+}
+
+.salary-table tbody tr {
+    page-break-inside: avoid;
+}
+
+.salary-table td {
+    padding: 5.5pt 8pt;
+    border-bottom: 0.5pt solid var(--white-3, #E4E4E7);
+    vertical-align: middle;
+}
+
+.salary-table tbody tr:nth-child(even) td {
+    background-color: #FAFAFA;
+}
+
+.salary-table tbody tr:last-child td {
+    border-bottom: 1pt solid var(--grey-1, #151515);
+}
+
+.cell-position {
+    font-weight: 600;
+    color: var(--grey-1, #151515);
+}
+
+.cell-rate {
+    font-variant-numeric: tabular-nums;
+    color: var(--grey-1, #151515);
+}
+
+.w-position {
+    width: 52%;
+}
+
+.w-rate {
+    width: 16%;
+}
+
+.text-right {
+    text-align: right !important;
+}
+
+/* ── 9. Pied de Page Institutionnel ──────────────────────────────────────── */
+.salary-pdf-footer {
+    margin-top: 14pt;
+    padding: 8pt 10pt;
+    background-color: var(--grey-1, #151515);
+    color: #FFFFFF;
+    text-align: center;
+    border-radius: 2pt;
+    page-break-inside: avoid;
+}
+
+.salary-pdf-footer p {
+    font-size: 6.5pt;
+    font-weight: 300;
+    color: #A1A1AA;
+    line-height: 1.5;
+    margin: 0;
+    text-align: center;
+}
+
+.salary-pdf-footer strong {
+    color: #FFFFFF;
+    font-weight: 600;
+}
+
+.salary-pdf-footer-note {
+    font-size: 5.8pt;
+    color: #71717A;
+}
+
