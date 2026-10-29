@@ -82,6 +82,7 @@ ADMIN_JS_FILES: List[str] = [
     "js/src/admin/contacts-qr.js",
     "js/src/admin/vehicle-timeline.js",
     "js/src/admin/signature-generator.js",
+    "js/src/admin/catalog-preview.js",
     "js/src/admin.js",
 ]
 

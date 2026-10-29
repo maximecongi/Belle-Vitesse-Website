@@ -6,6 +6,63 @@ from utils.database import get_configs_for_vehicle
 from utils.document_utils import render_pdf_from_template
 
 
+def get_catalog_directory():
+    """Retourne le répertoire de stockage des catalogues PDF."""
+    output_base = str(
+        current_app.config.get("OUTPUT_FOLDER")
+        or os.getenv("OUTPUT_FOLDER", os.path.join(current_app.root_path, "output"))
+    )
+    directory = os.path.join(output_base, "catalog")
+    os.makedirs(directory, exist_ok=True)
+    return directory
+
+
+def get_latest_catalog_info(with_prices=True):
+    """Retourne les métadonnées (horodatage, nom de fichier) du dernier catalogue généré."""
+    import glob
+    directory = get_catalog_directory()
+    prefix = "Belle_Vitesse_CATALOGUE_P_" if with_prices else "Belle_Vitesse_CATALOGUE_WP_"
+    pattern = os.path.join(directory, f"{prefix}*.pdf")
+    matching_files = glob.glob(pattern)
+
+    if not matching_files:
+        return {
+            "timestamp": int(datetime.now().timestamp()),
+            "filename": None,
+            "updated_at": None,
+        }
+
+    matching_files.sort(key=os.path.getmtime, reverse=True)
+    latest_file = matching_files[0]
+    mtime = os.path.getmtime(latest_file)
+    return {
+        "timestamp": int(mtime),
+        "filename": os.path.basename(latest_file),
+        "updated_at": datetime.fromtimestamp(mtime).strftime("%d/%m/%Y à %H:%M"),
+    }
+
+
+def invalidate_catalog_cache():
+    """Invalide les caches Flask-Caching associés aux équipements et configurations."""
+    try:
+        from extensions import cache
+        if cache:
+            cache.delete("vehicles")
+            cache.delete("heads")
+            cache.delete("static_all")
+            vehicles_objs = Vehicle.query.all()
+            for v in vehicles_objs:
+                cache.delete(f"configs_vehicle_{v.id}")
+                if v.fields and v.fields.get("slug"):
+                    cache.delete(f"vehicle_{v.fields.get('slug')}")
+            heads_objs = Head.query.all()
+            for h in heads_objs:
+                if h.fields and h.fields.get("slug"):
+                    cache.delete(f"head_{h.fields.get('slug')}")
+    except Exception as e:
+        current_app.logger.warning(f"⚠️ Erreur lors de l'invalidation du cache catalogue : {e}")
+
+
 def get_catalog_data(with_prices=True):
     """Récupère et formate les données pour le catalogue de prix."""
     from flask import request, has_request_context
@@ -163,40 +220,44 @@ def generate_catalog_pdf(with_prices=True, filename: str = None):
 
 
 def update_stored_catalog(with_prices=True):
-    """Génère et sauvegarde le PDF du catalogue sur le disque."""
+    """Génère et sauvegarde le PDF du catalogue sur le disque avec écriture atomique."""
     try:
-        # Chemin de stockage via variable d'environnement
-        output_base = os.getenv('OUTPUT_FOLDER', os.path.join(current_app.root_path, 'output'))
-        upload_dir = os.path.join(output_base, 'catalog')
-        
-        prefix = "Belle_Vitesse_CATALOGUE_P_" if with_prices else "Belle_Vitesse_CATALOGUE_WP_"
-        
-        if not os.path.exists(upload_dir):
-            os.makedirs(upload_dir)
-        else:
-            # Nettoyer l'ancien catalogue pour ne pas accumuler les fichiers avec lettres aléatoires
-            prefixes_to_clean = [prefix, "Belle_Vitesse_CATALOGUE_PRIX_", "Belle_Vitesse_CATALOGUE_SANS_PRIX_"]
-            for f in os.listdir(upload_dir):
-                if any(f.startswith(p) for p in prefixes_to_clean) and f.endswith(".pdf"):
-                    try:
-                        os.remove(os.path.join(upload_dir, f))
-                    except Exception as err:
-                        current_app.logger.warning(f"Impossible de supprimer l'ancien catalogue {f}: {err}")
+        # 1. Invalider les caches applicatifs pour s'assurer de lire les données fraîches de la base
+        invalidate_catalog_cache()
 
-        import datetime
+        upload_dir = get_catalog_directory()
+        prefix = "Belle_Vitesse_CATALOGUE_P_" if with_prices else "Belle_Vitesse_CATALOGUE_WP_"
+
         import random
         import string
-        
-        rand_str = "".join(random.choices(string.ascii_uppercase, k=4))
-        filename = f'{prefix}{datetime.datetime.now().strftime("%Y%m")}_{rand_str}.pdf'
-        file_path = os.path.join(upload_dir, filename)
 
-        # Génération (inclut la compression PDF optimisée via render_pdf_from_template)
+        rand_str = "".join(random.choices(string.ascii_uppercase, k=4))
+        filename = f'{prefix}{datetime.now().strftime("%Y%m")}_{rand_str}.pdf'
+        file_path = os.path.join(upload_dir, filename)
+        tmp_file_path = f"{file_path}.tmp"
+
+        # 2. Génération atomique dans un fichier temporaire
         pdf_bytes = generate_catalog_pdf(with_prices=with_prices, filename=filename)
 
-        # Écriture
-        with open(file_path, "wb") as f:
+        with open(tmp_file_path, "wb") as f:
             f.write(pdf_bytes)
+
+        os.replace(tmp_file_path, file_path)
+
+        # 3. Nettoyer les anciens catalogues SEULEMENT après confirmation de l'écriture réussie
+        prefixes_to_clean = [prefix, "Belle_Vitesse_CATALOGUE_PRIX_", "Belle_Vitesse_CATALOGUE_SANS_PRIX_"]
+        for f in os.listdir(upload_dir):
+            if f == filename:
+                continue
+            is_match = any(f.startswith(p) for p in prefixes_to_clean)
+            if not is_match and f.startswith("Belle_Vitesse_CATALOGUE_") and not f.startswith("Belle_Vitesse_CATALOGUE_P_") and not f.startswith("Belle_Vitesse_CATALOGUE_WP_"):
+                is_match = True
+
+            if is_match and f.endswith(".pdf"):
+                try:
+                    os.remove(os.path.join(upload_dir, f))
+                except Exception as err:
+                    current_app.logger.warning(f"Impossible de supprimer l'ancien catalogue {f}: {err}")
 
         return True, "Catalogue mis à jour avec succès."
     except Exception as e:

@@ -22,14 +22,28 @@
                     Sans prix
                 </a>
             </div>
-            <span class="preview-controls-hint">Le PDF ne sera mis à jour que si vous cliquez sur « Mettre à jour le PDF
-                »</span>
+            <span class="preview-controls-hint">
+                {% if catalog_updated_at %}
+                    Dernière génération : <strong>{{ catalog_updated_at }}</strong>
+                {% else %}
+                    Le PDF ne sera mis à jour que si vous cliquez sur « Mettre à jour le PDF »
+                {% endif %}
+            </span>
         </div>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="preview-controls-alerts">
+                    {% for category, message in messages %}
+                        <span class="preview-alert preview-alert--{{ category }}">{{ message }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
         <div class="preview-controls-actions">
-            <a href="{{ url_for('admin_catalog.admin_catalog_pdf', prices='1' if with_prices else '0') }}"
-                class="preview-btn preview-btn--secondary" target="_blank">Télécharger le PDF</a>
+            <a href="{{ url_for('admin_catalog.admin_catalog_pdf', prices='1' if with_prices else '0', t=catalog_timestamp) }}"
+                class="preview-btn preview-btn--secondary" target="_blank" download>Télécharger le PDF</a>
             <a href="{{ url_for('admin_catalog.admin_catalog_update', prices='1' if with_prices else '0') }}"
-                class="preview-btn">Mettre à jour le PDF</a>
+                class="preview-btn" id="btn-update-catalog" data-action="update-catalog">Mettre à jour le PDF</a>
         </div>
     </div>
 
@@ -176,6 +190,7 @@
             </div>
         </footer>
     </div>
+    <script src="{{ url_for('static', filename='js/admin/admin.bundle.js') }}" defer></script>
 </body>
 
 </html>

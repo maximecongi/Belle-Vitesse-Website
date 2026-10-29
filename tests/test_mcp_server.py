@@ -39,12 +39,17 @@ class MCPServerFullTestSuite(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        import tempfile
+        cls.temp_dir = tempfile.mkdtemp()
         cls.app = flask_app
+        cls.orig_output_folder = cls.app.config.get("OUTPUT_FOLDER")
+        cls.app.config["OUTPUT_FOLDER"] = cls.temp_dir
         cls.app_context = cls.app.app_context()
         cls.app_context.push()
 
     @classmethod
     def tearDownClass(cls):
+        import shutil
         try:
             from models.catalog import Vehicle
             from models.inspection import VehicleCheckpointConfig
@@ -55,7 +60,9 @@ class MCPServerFullTestSuite(unittest.TestCase):
             db.session.commit()
         except Exception:
             db.session.rollback()
+        cls.app.config["OUTPUT_FOLDER"] = cls.orig_output_folder
         cls.app_context.pop()
+        shutil.rmtree(cls.temp_dir, ignore_errors=True)
 
     def setUp(self):
         try:
