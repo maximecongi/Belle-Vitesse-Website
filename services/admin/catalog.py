@@ -215,7 +215,7 @@ def generate_catalog_pdf(with_prices=True, filename: str = None):
         data["pdf_export"] = True
         data["pdf_placeholder_images"] = {
             name: os.path.isfile(
-                os.path.join(current_app.static_folder, "imgs", "placeholders", f"{name}-pdf.png")
+                os.path.join(current_app.static_folder, "imgs", "placeholders", f"{name}.png")
             )
             for name in ("vehicle", "head")
         }
