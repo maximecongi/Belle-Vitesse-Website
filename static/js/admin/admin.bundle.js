@@ -3922,7 +3922,7 @@ document.addEventListener('swup:contentReplaced', autoInitInspectionForm);
             return dist <= tolerance;
         } else if (shape.type === 'text') {
             return (coords.x >= bounds.minX - tolerance && coords.x <= bounds.maxX + tolerance &&
-                coords.y >= bounds.minY - tolerance && coords.y <= bounds.maxY + tolerance);
+                    coords.y >= bounds.minY - tolerance && coords.y <= bounds.maxY + tolerance);
         } else if (shape.type === 'freehand') {
             if (!shape.points || shape.points.length === 0) return false;
             for (let i = 0; i < shape.points.length - 1; i++) {
@@ -4237,14 +4237,14 @@ document.addEventListener('swup:contentReplaced', autoInitInspectionForm);
             activeResizeHandle = null;
             dragStartCoords = null;
             shapeSnapshot = null;
-            try { canvas.releasePointerCapture(e.pointerId); } catch (_) { }
+            try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
             redrawCanvas();
             return;
         }
 
         if (!isDrawing || currentTool === 'text' || currentTool === 'select') return;
         isDrawing = false;
-        try { canvas.releasePointerCapture(e.pointerId); } catch (_) { }
+        try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
 
         const coords = getCanvasCoordinates(e);
 
@@ -5053,14 +5053,14 @@ document.addEventListener('swup:contentReplaced', autoInitInspectionForm);
 
                     itemEl.innerHTML =
                         '<div class="waiver-item-top">' +
-                        '<span class="waiver-item-name">' + escapeHtml(proj.name) + '</span>' +
-                        '<span class="badge-pill u-text-xs" data-val="neutral">' + escapeHtml(proj.production) + '</span>' +
+                            '<span class="waiver-item-name">' + escapeHtml(proj.name) + '</span>' +
+                            '<span class="badge-pill u-text-xs" data-val="neutral">' + escapeHtml(proj.production) + '</span>' +
                         '</div>' +
                         '<div class="waiver-item-meta">' +
-                        '<span class="waiver-item-meta-entry">' +
-                        '<i data-lucide="calendar"></i> ' + escapeHtml(proj.dates) +
-                        '</span>' +
-                        personHtml +
+                            '<span class="waiver-item-meta-entry">' +
+                                '<i data-lucide="calendar"></i> ' + escapeHtml(proj.dates) +
+                            '</span>' +
+                            personHtml +
                         '</div>';
 
                     itemEl.addEventListener('click', function () {
@@ -6858,7 +6858,7 @@ document.addEventListener('swup:contentReplaced', autoInitInspectionForm);
                 if (interStatusesVal) {
                     try {
                         interShootStatuses = JSON.parse(interStatusesVal);
-                    } catch (e) { }
+                    } catch (e) {}
                 }
 
                 const csrfToken = $('input[name="csrf_token"]').val();

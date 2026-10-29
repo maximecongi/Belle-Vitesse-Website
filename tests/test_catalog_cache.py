@@ -110,6 +110,9 @@ class TestCatalogCacheAndDownload(unittest.TestCase):
         self.assertIn(expected_query, html)
         # Le bouton doit avoir data-action="update-catalog"
         self.assertIn('data-action="update-catalog"', html)
+        # La feuille de style catalog.css et le script admin.bundle.js doivent être versionnés avec ?v=
+        self.assertIn('catalog.css?v=', html)
+        self.assertIn('admin.bundle.js?v=', html)
 
     def test_invalidate_catalog_cache_safe(self):
         """Vérifie que l'invalidation du cache ne lève aucune exception."""

@@ -222,6 +222,9 @@ def init_context_processors(app):
         v = asset_version(filename)
         return f"{url_for('static', filename=filename)}?v={v}"
 
+    app.jinja_env.globals["asset_version"] = asset_version
+    app.jinja_env.globals["asset_url"] = asset_url
+
     @app.context_processor
     def inject_globals():
         launch_mode = os.getenv("LAUNCH_MODE") == "true"
