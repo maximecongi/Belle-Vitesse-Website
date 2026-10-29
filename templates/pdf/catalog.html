@@ -77,8 +77,8 @@
                         {% if vehicle.thumbnail %}
                         <img src="{{ vehicle.thumbnail }}" class="catalog-card-img" alt="{{ vehicle.name }}">
                         {% else %}
-                        <img src="{{ url_for('static', filename='imgs/icons/car.svg') }}"
-                            class="catalog-card-placeholder-icon" alt="{{ vehicle.name }}">
+                        <img src="{{ url_for('static', filename='imgs/placeholders/vehicle.svg') }}"
+                            class="catalog-card-img catalog-card-img--placeholder" alt="{{ vehicle.name }}">
                         {% endif %}
                     </div>
                     <div class="catalog-card-header">
@@ -159,8 +159,8 @@
                         {% if head.thumbnail %}
                         <img src="{{ head.thumbnail }}" class="catalog-head-img" alt="{{ head.name }}">
                         {% else %}
-                        <img src="{{ url_for('static', filename='imgs/icons/gimbal.svg') }}"
-                            class="catalog-head-placeholder-icon" alt="{{ head.name }}">
+                        <img src="{{ url_for('static', filename='imgs/placeholders/head.svg') }}"
+                            class="catalog-head-img catalog-head-img--placeholder" alt="{{ head.name }}">
                         {% endif %}
                     </div>
                     <div class="catalog-head-info">
