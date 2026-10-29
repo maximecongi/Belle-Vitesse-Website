@@ -41,8 +41,9 @@
                         <td class="drag-handle" title="Glisser pour réordonner">⠿</td>
                         {% endif %}
                         <td class="u-text-semibold">{{ item.name }}</td>
-                        <td class="{% if current_user.is_admin %}editable-cell{% endif %} u-text-right" data-id="{{ item.id }}"
-                            data-table="{{ cat_data.table }}" data-type="equipment" data-field="daily_rate">
+                        <td class="{% if current_user.is_admin %}editable-cell{% endif %} u-text-right"
+                            data-id="{{ item.id }}" data-table="{{ cat_data.table }}" data-type="equipment"
+                            data-field="daily_rate">
                             <span class="cell-value">{{ "%.2f"|format(item.daily_rate | default(0) | float) }} €</span>
                         </td>
                     </tr>
@@ -106,8 +107,10 @@
                 </div>
                 {% if current_user.is_admin %}
                 <div class="u-flex u-align-center u-gap-1">
-                    <button class="admin-btn admin-btn-primary admin-btn-sm btn-add-salary-line" data-group="{{ group_name }}">+ Nouvelle position</button>
-                    <button class="admin-btn admin-btn-danger admin-btn-sm btn-delete-group" data-group="{{ group_name }}">Supprimer</button>
+                    <button class="admin-btn admin-btn-primary admin-btn-sm btn-add-salary-line"
+                        data-group="{{ group_name }}">+ Nouvelle position</button>
+                    <button class="admin-btn admin-btn-danger admin-btn-sm btn-delete-group"
+                        data-group="{{ group_name }}">Supprimer</button>
                 </div>
                 {% endif %}
             </div>
@@ -142,31 +145,31 @@
                                     €</span>
                             </td>
                             {% else %}
-                            <td class="{% if current_user.is_admin %}editable-cell{% endif %} u-text-right" data-id="{{ rate.id }}"
-                                data-field="base_hourly" data-type="salary">
+                            <td class="{% if current_user.is_admin %}editable-cell{% endif %} u-text-right"
+                                data-id="{{ rate.id }}" data-field="base_hourly" data-type="salary">
                                 <span class="cell-value">{{ "%.2f"|format(rate.base_hourly | default(0) | float) }}
                                     €</span>
                             </td>
                             {% endif %}
 
                             <!-- 8H -->
-                            <td class="computed-cell u-text-right" data-computed-from="base_hourly" data-field="inter_8h"
-                                data-row-id="{{ rate.id }}">
+                            <td class="computed-cell u-text-right" data-computed-from="base_hourly"
+                                data-field="inter_8h" data-row-id="{{ rate.id }}">
                                 <span class="cell-value">{{ "%.2f"|format(rate.inter_8h | default(0) | float) }}
                                     €</span>
                             </td>
 
                             <!-- 10H -->
-                            <td class="computed-cell u-text-right" data-computed-from="base_hourly" data-field="inter_10h"
-                                data-row-id="{{ rate.id }}">
+                            <td class="computed-cell u-text-right" data-computed-from="base_hourly"
+                                data-field="inter_10h" data-row-id="{{ rate.id }}">
                                 <span class="cell-value">{{ "%.2f"|format(rate.inter_10h | default(0) | float) }}
                                     €</span>
                             </td>
 
                             <td class="u-text-center">
                                 {% if current_user.is_admin %}
-                                <button class="admin-btn admin-btn-danger admin-btn-sm btn-delete-line" data-id="{{ rate.id }}"
-                                    data-type="salary">Supprimer</button>
+                                <button class="admin-btn admin-btn-danger admin-btn-sm btn-delete-line"
+                                    data-id="{{ rate.id }}" data-type="salary">Supprimer</button>
                                 {% endif %}
                             </td>
                         </tr>
@@ -194,7 +197,8 @@
                 <span class="salary-group-count">{{ logistics | length }}</span>
             </div>
             {% if current_user.is_admin %}
-            <button class="admin-btn admin-btn-primary admin-btn-sm btn-add-line" data-type="logistics">+ Nouvelle ligne</button>
+            <button class="admin-btn admin-btn-primary admin-btn-sm btn-add-line" data-type="logistics">+ Nouvelle
+                ligne</button>
             {% endif %}
         </div>
         <div class="admin-table-container">
@@ -218,8 +222,8 @@
                             data-field="item_name" data-type="logistics">
                             <span class="cell-value u-text-semibold">{{ item.item_name }}</span>
                         </td>
-                        <td class="{% if current_user.is_admin %}editable-cell{% endif %} u-text-right" data-id="{{ item.id }}"
-                            data-field="daily_rate" data-type="logistics">
+                        <td class="{% if current_user.is_admin %}editable-cell{% endif %} u-text-right"
+                            data-id="{{ item.id }}" data-field="daily_rate" data-type="logistics">
                             <span class="cell-value">{{ "%.2f"|format(item.daily_rate | default(0) | float) }}</span>
                         </td>
                         <td class="{% if current_user.is_admin %}editable-cell{% endif %}" data-id="{{ item.id }}"
@@ -228,8 +232,8 @@
                         </td>
                         <td class="u-text-center">
                             {% if current_user.is_admin %}
-                            <button class="admin-btn admin-btn-danger admin-btn-sm btn-delete-line" data-id="{{ item.id }}"
-                                data-type="logistics">Supprimer</button>
+                            <button class="admin-btn admin-btn-danger admin-btn-sm btn-delete-line"
+                                data-id="{{ item.id }}" data-type="logistics">Supprimer</button>
                             {% endif %}
                         </td>
                     </tr>

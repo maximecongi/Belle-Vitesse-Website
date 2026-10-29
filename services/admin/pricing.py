@@ -323,7 +323,10 @@ def list_salary_rates_grouped():
     from collections import OrderedDict
     try:
         rates = SalaryRate.query.join(SalaryPosition).order_by(
-            SalaryPosition.display_order, SalaryRate.id).all()
+            SalaryPosition.display_order.asc(),
+            SalaryPosition.id.asc(),
+            SalaryRate.id.asc()
+        ).all()
 
         has_renfort = {r.position_id for r in rates if r.annexe == "Annexe 1 renfort"}
         grouped = OrderedDict()
@@ -407,23 +410,56 @@ def delete_salary_rate(rate_id):
 
 @handle_admin_service_error
 def reorder_salary_rates(groups_order):
-    """Réordonne toutes les lignes de salaire.
-    Synchronise display_order pour toutes les annexes de chaque position.
+    """Réordonne toutes les positions de salaire au niveau de SalaryPosition.
+    Accepte aussi bien des position_id uniques que des rate_id (rétrocompatibilité).
+    Assigne un display_order séquentiel continu (0, 1, 2, 3...) et synchronise group_name.
     """
     order_counter = 0
-    for group_name, rate_ids in groups_order.items():
-        for rate_id in rate_ids:
-            clean_id = rate_id
+    seen_position_ids = set()
+
+    for group_name, item_ids in groups_order.items():
+        for raw_id in item_ids:
+            clean_id = raw_id
             if str(clean_id).startswith("renfort_"):
                 clean_id = str(clean_id).replace("renfort_", "")
-            rate = db.session.get(SalaryRate, int(clean_id))
-            if rate and rate.position_ref:
-                rate.position_ref.group_name = group_name
-                rate.position_ref.display_order = order_counter
+            try:
+                int_id = int(clean_id)
+            except (ValueError, TypeError):
+                continue
+
+            # 1. Vérifier si l'ID est directement un SalaryPosition.id
+            pos = db.session.get(SalaryPosition, int_id)
+            if not pos:
+                # 2. Rétrocompatibilité : vérifier s'il s'agit d'un SalaryRate.id
+                rate = db.session.get(SalaryRate, int_id)
+                if rate and rate.position_ref:
+                    pos = rate.position_ref
+
+            if pos and pos.id not in seen_position_ids:
+                pos.group_name = group_name
+                pos.display_order = order_counter
+                seen_position_ids.add(pos.id)
                 order_counter += 1
+
     db.session.commit()
-    logger.info(f"Réordonnement salaires: {order_counter} positions synchronisées")
+    logger.info(f"Réordonnement salaires: {order_counter} positions synchronisées de 0 à {order_counter - 1}")
     return True
+
+
+@handle_admin_service_error
+def normalize_salary_positions_order():
+    """Réindexe tous les enregistrements SalaryPosition existants avec des display_order séquentiels (0..N)."""
+    positions = SalaryPosition.query.order_by(
+        SalaryPosition.display_order.asc(),
+        SalaryPosition.id.asc()
+    ).all()
+
+    for idx, pos in enumerate(positions):
+        pos.display_order = idx
+
+    db.session.commit()
+    logger.info(f"Normalisation salaires: {len(positions)} positions réindexées avec succès")
+    return len(positions)
 
 
 @handle_admin_service_error

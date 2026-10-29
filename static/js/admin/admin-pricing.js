@@ -209,6 +209,9 @@ class PricingAdmin {
         });
     }
     handleInlineEdit(cell) {
+        const row = cell.closest('tr');
+        if (row) row.setAttribute('draggable', 'false');
+
         const valueSpan = cell.querySelector('.cell-value');
         const originalValue = valueSpan.textContent.trim();
         cell.classList.add('editing');
@@ -253,6 +256,7 @@ class PricingAdmin {
             input.remove();
             valueSpan.style.display = '';
             cell.classList.remove('editing');
+            if (row) row.setAttribute('draggable', 'true');
 
             if (newValue === originalValue.replace(/\s*€$/, '')) {
                 valueSpan.textContent = originalValue;
@@ -557,6 +561,16 @@ class PricingAdmin {
 
     initDragOnRow(row) {
         row.addEventListener('dragstart', (e) => {
+            // Empêcher le drag si on clique sur un champ de saisie ou si la cellule/ligne est en cours d'édition
+            if (
+                row.getAttribute('draggable') === 'false' ||
+                row.querySelector('.editing') ||
+                e.target.closest('.editing') ||
+                ['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)
+            ) {
+                e.preventDefault();
+                return false;
+            }
             this.draggedRow = row;
             row.classList.add('dragging');
             e.dataTransfer.effectAllowed = 'move';
@@ -613,12 +627,24 @@ class PricingAdmin {
 
     placeDraggedRow(zone, y) {
         const afterRow = this.getDragAfterElement(zone, y);
-        if (afterRow) zone.insertBefore(this.draggedRow, afterRow);
-        else zone.appendChild(this.draggedRow);
+        const positionId = this.draggedRow?.dataset?.positionId;
+
+        // Pour les salaires, déplacer ensemble toutes les déclinaisons d'annexes de la même position
+        if (positionId && this.draggedRow.closest('.salary-drop-zone')) {
+            const allPositionRows = [...document.querySelectorAll(`tr[data-position-id="${positionId}"]`)];
+            allPositionRows.forEach(r => {
+                if (afterRow) zone.insertBefore(r, afterRow);
+                else zone.appendChild(r);
+            });
+        } else {
+            if (afterRow) zone.insertBefore(this.draggedRow, afterRow);
+            else zone.appendChild(this.draggedRow);
+        }
     }
 
     getDragAfterElement(zone, y) {
-        const draggableElements = [...zone.querySelectorAll('tr[data-row-id]:not(.dragging)')];
+        const draggableElements = [...zone.querySelectorAll('tr[data-row-id]:not(.dragging)')]
+            .filter(el => el.style.display !== 'none');
         return draggableElements.reduce((closest, child) => {
             const box = child.getBoundingClientRect();
             const offset = y - box.top - box.height / 2;
@@ -631,8 +657,28 @@ class PricingAdmin {
         if (zone.classList.contains('salary-drop-zone')) {
             const groups = {};
             document.querySelectorAll('.salary-drop-zone').forEach(z => {
-                const ids = [...z.querySelectorAll('tr[data-row-id]')].map(r => parseInt(r.dataset.rowId));
-                if (ids.length) groups[z.dataset.group] = ids;
+                const groupName = z.dataset.group;
+                const positionIds = [];
+                // Collecte des position_id uniques dans l'ordre visuel (lignes visibles)
+                const rows = [...z.querySelectorAll('tr[data-position-id]')].filter(el => el.style.display !== 'none');
+                rows.forEach(r => {
+                    const posId = parseInt(r.dataset.positionId);
+                    if (!isNaN(posId) && !positionIds.includes(posId)) {
+                        positionIds.push(posId);
+                    }
+                });
+                // Fallback sécurité si aucune ligne visible n'est active
+                if (!positionIds.length) {
+                    z.querySelectorAll('tr[data-position-id]').forEach(r => {
+                        const posId = parseInt(r.dataset.positionId);
+                        if (!isNaN(posId) && !positionIds.includes(posId)) {
+                            positionIds.push(posId);
+                        }
+                    });
+                }
+                if (positionIds.length) {
+                    groups[groupName] = positionIds;
+                }
             });
             const res = await this.fetchAPI('/admin/api/pricing/salary/reorder', 'PATCH', { groups });
             if (res.success) this.flash('Ordre sauvegardé', 'success');
