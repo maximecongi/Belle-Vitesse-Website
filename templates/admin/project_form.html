@@ -185,6 +185,32 @@
 
             <div id="projectDatePickerContainer"></div>
         </div>
+
+        <!-- Lieux de Tournage (Source unique pour CGL, BVSR, BVPA) -->
+        <div class="form-group u-mb-3" id="projectLocationsWrapper">
+            <div class="u-flex u-justify-between u-align-center u-mb-2">
+                <div>
+                    <label class="form-label u-mb-0">Lieux de Tournage</label>
+                    <span class="u-text-xs u-text-muted u-d-block">Source unique reprise automatiquement dans les CGL, BVSR et attestations pilote.</span>
+                </div>
+                <button type="button" class="admin-btn admin-btn-secondary admin-btn-sm" id="addLocationBtn">
+                    <i data-lucide="plus"></i>
+                    <span>Ajouter un lieu</span>
+                </button>
+            </div>
+
+            <input type="hidden" name="shooting_locations" id="shooting_locations_input"
+                value="{{ data.shooting_locations_json if data and data.shooting_locations_json else '[]' }}">
+
+            <div class="project-locations-container">
+                <div id="projectLocationsList" class="project-locations-list"></div>
+                <div id="projectLocationsEmpty" class="project-locations-empty u-d-none">
+                    <i data-lucide="map-pin" class="u-w-16 u-h-16 u-mb-1 u-text-muted"></i>
+                    <p class="u-m-0">Aucun lieu de tournage renseigné. Cliquez sur « Ajouter un lieu » pour commencer.</p>
+                </div>
+            </div>
+        </div>
+
         <div class="form-group u-mt-3">
             <label class="form-label">Notes - Demandes spécifiques</label>
             <textarea name="notes" class="form-input u-resize-y u-min-h-100" rows="4"
@@ -251,10 +277,8 @@
         <div class="u-mt-4 u-flex u-justify-between u-align-center">
             <div>
                 {% if is_edit %}
-                <button type="submit"
-                    formaction="{{ url_for('admin_projects.admin_project_delete', record_id=record_id or (data.id if data else '')) }}"
-                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce projet ?');"
-                    class="admin-btn admin-btn-danger" formnovalidate>
+                <button type="button" id="deleteProjectBtn"
+                    class="admin-btn admin-btn-danger">
                     Supprimer
                 </button>
                 {% endif %}
@@ -268,6 +292,13 @@
             </div>
         </div>
     </form>
+    {% if is_edit %}
+    <form id="deleteProjectForm" method="POST"
+        action="{{ url_for('admin_projects.admin_project_delete', record_id=record_id or (data.id if data else '')) }}"
+        class="u-d-none">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    </form>
+    {% endif %}
 </div>
 
 <!-- Modal Nouvelle Production -->

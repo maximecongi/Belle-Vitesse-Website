@@ -74,6 +74,7 @@ ADMIN_JS_FILES: List[str] = [
     "js/src/admin/incident-detail.js",
     "js/src/admin/project-detail-calendar.js",
     "js/src/admin/project-form.js",
+    "js/src/admin/project-locations.js",
     "js/src/admin/checkpoints.js",
     "js/src/admin/safety-rules-catalog.js",
     "js/src/admin/mcp-modal.js",

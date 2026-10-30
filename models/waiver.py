@@ -302,6 +302,54 @@ class Waiver(db.Model):
             return self.project.production.name
         return self.production_name or "—"
 
+    @property
+    def display_shooting_locations_list(self):
+        """
+        Retourne la liste ordonnée des lieux de tournage [{"name": ..., "address": ...}].
+        Source prioritaire :
+        1. Snapshot signé (sign_data["shooting_locations"] ou latest_signed_document.snapshot_data)
+        2. Projet associé (locations_list)
+        3. Repli sur location_of_use
+        """
+        if self.sign_data and isinstance(self.sign_data.get("shooting_locations"), list):
+            return self.sign_data["shooting_locations"]
+
+        doc = self.latest_signed_document
+        if doc and doc.snapshot_data and isinstance(doc.snapshot_data.get("shooting_locations"), list):
+            return doc.snapshot_data["shooting_locations"]
+
+        if self.project and getattr(self.project, "locations_list", None):
+            return self.project.locations_list
+
+        if self.location_of_use and self.location_of_use.strip():
+            return [{"name": self.location_of_use.strip(), "address": ""}]
+
+        return []
+
+    @property
+    def has_shooting_locations(self):
+        """Indique si la décharge dispose d'au moins un lieu de tournage."""
+        return len(self.display_shooting_locations_list) > 0
+
+    @property
+    def display_shooting_locations(self):
+        """Retourne une chaîne formatée et lisible des lieux de tournage."""
+        locs = self.display_shooting_locations_list
+        if not locs:
+            return self.location_of_use or ""
+        parts = []
+        for loc in locs:
+            if isinstance(loc, dict):
+                name = loc.get("name", "").strip()
+                addr = loc.get("address", "").strip()
+                if addr:
+                    parts.append(f"{name} ({addr})")
+                elif name:
+                    parts.append(name)
+            elif isinstance(loc, str) and loc.strip():
+                parts.append(loc.strip())
+        return " ; ".join(parts) if parts else (self.location_of_use or "")
+
     # Traçabilité de la signature
     signer_ip = db.Column(db.String(45), nullable=True)
 

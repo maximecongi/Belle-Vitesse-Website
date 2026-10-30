@@ -90,6 +90,7 @@
                     <div><span class="bvsr-party-field-label">Production :</span> {{ waiver.display_production_name }}
                     </div>
                     <div><span class="bvsr-party-field-label">Période :</span> {{ waiver.display_shooting_dates }}</div>
+                    <div><span class="bvsr-party-field-label">Lieu(x) de tournage :</span> {{ waiver.display_shooting_locations or '—' }}</div>
                     <div><span class="bvsr-party-field-label">Véhicules mobilisés :</span> {{ waiver.vehicles or 'Parc
                         Belle Vitesse' }}</div>
                     {% set supervision = safety_technicians or (waiver.display_safety_technicians if waiver else None) %}

@@ -89,9 +89,7 @@
                     <div><span class="bvpa-party-field-label">Production :</span> {{ waiver.display_production_name }}
                     </div>
                     <div><span class="bvpa-party-field-label">Période :</span> {{ waiver.display_shooting_dates }}</div>
-                    {% if waiver.project and waiver.project.location %}
-                    <div><span class="bvpa-party-field-label">Lieux :</span> {{ waiver.project.location }}</div>
-                    {% endif %}
+                    <div><span class="bvpa-party-field-label">Lieu(x) de tournage :</span> {{ waiver.display_shooting_locations or '—' }}</div>
                 </div>
             </div>
         </section>

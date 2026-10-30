@@ -1659,3 +1659,156 @@
         display: block !important;
     }
 }
+
+/* ── Lieux de Tournage (Formulaire & Détail Projet) ────────────────────────── */
+.project-locations-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.project-locations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.project-location-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.85rem 1rem;
+    background-color: var(--color-bg-card, #ffffff);
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--border-radius-md, 8px);
+    transition: box-shadow 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.project-location-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.project-location-card.is-dragging {
+    opacity: 0.4;
+    background-color: #f1f5f9;
+    border-style: dashed;
+    border-color: var(--color-primary, #15803d);
+}
+
+.project-location-handle {
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem;
+    color: var(--color-text-muted, #94a3b8);
+    border-radius: 4px;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+}
+
+.project-location-handle:hover {
+    color: var(--color-text-main, #1e293b);
+    background-color: #f8fafc;
+}
+
+.project-location-handle:active {
+    cursor: grabbing;
+}
+
+.project-location-handle-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.project-location-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 1rem;
+    flex: 1;
+}
+
+@media (max-width: 768px) {
+    .project-location-inputs {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+}
+
+.project-location-actions {
+    display: flex;
+    align-items: center;
+}
+
+.project-location-delete-btn {
+    background: transparent;
+    border: none;
+    color: var(--status-danger, #ef4444);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s ease;
+}
+
+.project-location-delete-btn:hover {
+    background-color: #fee2e2;
+}
+
+.project-location-delete-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.project-locations-empty {
+    padding: 1.5rem;
+    text-align: center;
+    background-color: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: var(--border-radius-md, 8px);
+    color: var(--color-text-muted, #64748b);
+    font-size: 0.875rem;
+}
+
+.project-detail-locations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.project-detail-location-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.85rem;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+}
+
+.project-detail-location-icon {
+    color: var(--entity-project, #f59e0b);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.project-detail-location-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.project-detail-location-name {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #1e293b;
+}
+
+.project-detail-location-address {
+    font-size: 0.65rem;
+    color: #64748b;
+}

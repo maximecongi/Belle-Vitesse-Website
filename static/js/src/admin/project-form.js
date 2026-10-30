@@ -47,6 +47,17 @@
             $(this).closest('.project-checkbox-card').toggleClass('selected', this.checked);
         });
 
+        // 3b. Gestion sécurisée du bouton de suppression de projet
+        $('#deleteProjectBtn').off('click.deleteProject').on('click.deleteProject', function (e) {
+            e.preventDefault();
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce projet ? Cette action supprimera également son dossier sur kDrive.')) {
+                const delForm = document.getElementById('deleteProjectForm');
+                if (delForm) {
+                    delForm.submit();
+                }
+            }
+        });
+
         // Utilitaire générique pour insérer ou sélectionner une option dans un <select> / Select2 avec tri alphabétique
         function upsertSelectOption($select, id, text, selectIt) {
             if (!$select || !$select.length) return;

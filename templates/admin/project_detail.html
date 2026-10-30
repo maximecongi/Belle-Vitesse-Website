@@ -248,6 +248,38 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
             {% endif %}
         </div>
 
+        <!-- Lieux de Tournage -->
+        <div class="admin-card">
+            <div class="u-flex u-justify-between u-align-center u-mb-2">
+                <div class="u-flex u-align-center u-gap-2">
+                    <h2 class="admin-card-title u-m-0">Lieux de Tournage</h2>
+                </div>
+                {% if project.locations_list and project.locations_list|length > 0 %}
+                <span class="badge-pill u-bg-project-light u-text-project u-text-xs">
+                    {{ project.locations_list|length }} lieu{{ 'x' if project.locations_list|length > 1 else '' }}
+                </span>
+                {% endif %}
+            </div>
+
+            {% if project.locations_list and project.locations_list|length > 0 %}
+            <div class="project-detail-locations-list">
+                {% for loc in project.locations_list %}
+                <div class="project-detail-location-item">
+                    <i data-lucide="map-pin" class="project-detail-location-icon u-w-16 u-h-16"></i>
+                    <div class="project-detail-location-info">
+                        <span class="project-detail-location-name">{{ loc.name }}</span>
+                        {% if loc.address %}
+                        <span class="project-detail-location-address">{{ loc.address }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="u-text-xs u-text-muted u-italic u-m-0">Aucun lieu de tournage renseigné.</p>
+            {% endif %}
+        </div>
+
         <!-- Consignes & Notes Spécifiques -->
         <div class="admin-card u-h-100" id="projectNotesCard">
             <div class="u-flex u-justify-between u-align-center u-mb-2">

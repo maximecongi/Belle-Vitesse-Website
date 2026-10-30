@@ -607,6 +607,30 @@ def _parse_inter_shoot_statuses(form):
     return valid
 
 
+def _parse_shooting_locations(form):
+    """Parse et valide la liste des lieux de tournage transmise par le formulaire [{"name": ..., "address": ...}]."""
+    val = form.get("shooting_locations") if hasattr(form, "get") else None
+    if isinstance(val, str) and val.strip():
+        try:
+            parsed = json.loads(val)
+        except Exception:
+            parsed = []
+    elif isinstance(val, list):
+        parsed = val
+    else:
+        parsed = []
+
+    cleaned = []
+    if isinstance(parsed, list):
+        for item in parsed:
+            if isinstance(item, dict):
+                name = str(item.get("name") or "").strip()
+                address = str(item.get("address") or "").strip()
+                if name:  # Nom obligatoire, adresse facultative
+                    cleaned.append({"name": name, "address": address})
+    return cleaned
+
+
 @handle_admin_service_error
 def create_project(form, user_id=None):
     """Crée un nouvel enregistrement de projet en base de données."""
@@ -668,6 +692,7 @@ def create_project(form, user_id=None):
         is_immobilized_between=is_immobilized,
         shoot_dates=shoot_dates,
         inter_shoot_statuses=inter_shoot_statuses,
+        shooting_locations=_parse_shooting_locations(form),
         vehicles_to_check=",".join(veh_ids),
         heads_to_check=",".join(head_ids),
         last_action_by_id=user_id
@@ -770,6 +795,8 @@ def update_project(record_id, form, user_id=None):
     project.shoot_dates = shoot_dates
     project.inter_shoot_statuses = _parse_inter_shoot_statuses(
         form) if date_mode == "punctual" else None
+    if "shooting_locations" in form:
+        project.shooting_locations = _parse_shooting_locations(form)
     project.vehicles_to_check = ",".join(veh_ids)
     project.heads_to_check = ",".join(head_ids)
     project.last_action_by_id = user_id
@@ -881,6 +908,8 @@ def get_project_for_edit(record_id):
         "inter_shoot_statuses": p.inter_shoot_statuses or [],
         "inter_shoot_statuses_json": json.dumps(p.inter_shoot_statuses or []),
         "inter_shoot_intervals": p.get_inter_shoot_intervals() if p.is_punctual else [],
+        "shooting_locations": p.locations_list,
+        "shooting_locations_json": json.dumps(p.locations_list),
         "production_id": str(p.production_id) if p.production_id else "",
         "pilot_contact_id": str(p.pilot_contact_id) if p.pilot_contact_id else "",
         "production_contact_id": str(p.production_contact_id) if p.production_contact_id else "",

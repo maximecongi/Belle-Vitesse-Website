@@ -211,6 +211,10 @@ def init_waiver_routes(app):
             if not signature_raw or not str(signature_raw).strip():
                 return _fail("Le tracé manuscrit de la signature est obligatoire.")
 
+            # Contrôle de la présence des lieux de tournage sur la fiche projet
+            if not getattr(waiver, "has_shooting_locations", False):
+                return _fail("Impossible de signer ce document : aucun lieu de tournage n'a été renseigné sur la fiche projet. Veuillez contacter l'administrateur afin qu'il complète les lieux sur le projet.")
+
             if mode == "safety_rules":
                 if data.get("ack_rules") not in ("1", "on", "true"):
                     return _fail("La prise de connaissance et le respect des Règles de Sécurité Universelles (BVSR) sont obligatoires.")
@@ -256,6 +260,7 @@ def init_waiver_routes(app):
                 bvsr_sign_data = dict(waiver.sign_data or {})
                 bvsr_sign_data["ack_rules"] = True
                 bvsr_sign_data["accepted_at"] = datetime.now(timezone.utc).isoformat()
+                bvsr_sign_data["shooting_locations"] = waiver.display_shooting_locations_list
                 waiver.sign_data = bvsr_sign_data
             elif mode == "pilot_waiver":
                 if data.get("ack_pilot_engagement") not in ("1", "on", "true"):
@@ -307,6 +312,7 @@ def init_waiver_routes(app):
                     "sans aucun lien de subordination juridique avec Belle Vitesse, et m'engage à appliquer "
                     "rigoureusement l'ensemble des règles opérationnelles et de sécurité de l'Annexe 3."
                 )
+                pilot_sign_data["shooting_locations"] = waiver.display_shooting_locations_list
                 waiver.sign_data = pilot_sign_data
             else:
                 # Validation stricte du consentement et de la déclaration de pouvoir pour les CGL
@@ -427,6 +433,8 @@ def init_waiver_routes(app):
                     s_data["signature_city"] = data.get("city").strip()
                 if data.get("order_ref"):
                     s_data["order_ref"] = data.get("order_ref").strip()
+                # Stocker la liste des lieux au moment de la signature
+                s_data["shooting_locations"] = waiver.display_shooting_locations_list
                 if data.get("insurance_company"):
                     s_data["insurance_company"] = data.get("insurance_company").strip()
                 if data.get("insurance_policy"):

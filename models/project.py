@@ -95,6 +95,7 @@ class Project(db.Model):
     is_immobilized_between = db.Column(db.Boolean, default=True, nullable=False)  # Valeur par défaut d'immobilisation
     shoot_dates = db.Column(db.JSON, nullable=True)  # Liste ordonnée des dates de tournage pour le mode ponctuel ex: ["2026-10-14", "2026-10-16"]
     inter_shoot_statuses = db.Column(db.JSON, nullable=True)  # Statuts d'immobilisation spécifiques par intervalle ex: [{"start": "2026-10-12", "end": "2026-10-14", "is_immobilized": true}]
+    shooting_locations = db.Column(db.JSON, nullable=True)  # Liste ordonnée des lieux ex: [{"name": "Circuit Paul Ricard", "address": "Le Castellet"}]
     # Liste des identifiants de véhicules séparés par virgules ex: "3,5"
     vehicles_to_check = db.Column(db.String(500))
     # Liste des identifiants de têtes séparés par virgules ex: "recXX,recYY"
@@ -351,6 +352,40 @@ class Project(db.Model):
 
         return blocked
 
+    @property
+    def locations_list(self):
+        """Retourne la liste ordonnée et nettoyée des lieux de tournage [{"name": ..., "address": ...}]."""
+        raw = self.shooting_locations
+        if not raw or not isinstance(raw, list):
+            return []
+        cleaned = []
+        for item in raw:
+            if isinstance(item, dict):
+                name = str(item.get("name") or "").strip()
+                address = str(item.get("address") or "").strip()
+                if name:  # Le nom est obligatoire, l'adresse est facultative
+                    cleaned.append({"name": name, "address": address})
+        return cleaned
+
+    @property
+    def has_shooting_locations(self):
+        """Indique si le projet dispose d'au moins un lieu de tournage valide."""
+        return len(self.locations_list) > 0
+
+    @property
+    def display_shooting_locations(self):
+        """Retourne une chaîne formatée et lisible des lieux de tournage."""
+        locs = self.locations_list
+        if not locs:
+            return ""
+        parts = []
+        for loc in locs:
+            if loc["address"]:
+                parts.append(f"{loc['name']} ({loc['address']})")
+            else:
+                parts.append(loc["name"])
+        return " ; ".join(parts)
+
     def to_dict(self):
         """Convertit l'objet en dictionnaire pour les réponses API."""
         return {
@@ -371,6 +406,7 @@ class Project(db.Model):
             "is_immobilized_between": bool(self.is_immobilized_between),
             "shoot_dates": self.shoot_dates or [],
             "inter_shoot_statuses": self.inter_shoot_statuses or [],
+            "shooting_locations": self.locations_list,
             "vehicles_to_check": self.vehicles_to_check,
             "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
             "kdrive_folder_id": self.kdrive_folder_id,

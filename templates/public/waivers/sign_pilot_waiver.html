@@ -90,12 +90,10 @@
                         <span class="public-doc-info-label">Période de tournage</span>
                         <span class="public-doc-info-value u-text-sm">{{ waiver.display_shooting_dates }}</span>
                     </div>
-                    {% if waiver.project and waiver.project.location %}
                     <div class="public-doc-info-item">
-                        <span class="public-doc-info-label">Lieux du tournage</span>
-                        <span class="public-doc-info-value u-text-sm">{{ waiver.project.location }}</span>
+                        <span class="public-doc-info-label">Lieu(x) de tournage</span>
+                        <span class="public-doc-info-value u-text-sm">{{ waiver.display_shooting_locations or '—' }}</span>
                     </div>
-                    {% endif %}
                 </div>
 
                 <div class="public-doc-info-grid u-mt-3">
