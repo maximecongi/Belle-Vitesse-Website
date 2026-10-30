@@ -1765,7 +1765,10 @@
 
 .project-locations-empty {
     padding: 1.5rem;
+    display: flex;
+    gap: 0.35rem;
     text-align: center;
+    align-items: center;
     background-color: #f8fafc;
     border: 1px dashed #cbd5e1;
     border-radius: var(--border-radius-md, 8px);

@@ -13,7 +13,7 @@
         const listEl = document.getElementById('projectLocationsList');
         const hiddenInput = document.getElementById('shooting_locations_input');
         const addBtn = document.getElementById('addLocationBtn');
-        const emptyState = document.getElementById('projectLocationsEmpty');
+        const emptyState = document.getElementById('projectLocationsEmpty') || container.querySelector('.empty-state, .project-locations-empty');
 
         if (!container || !listEl || !hiddenInput || !addBtn) {
             return;
@@ -188,6 +188,10 @@
         }
 
         syncToHiddenInput();
+
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons({ root: container });
+        }
 
         // Bouton d'ajout
         addBtn.addEventListener('click', (e) => {
