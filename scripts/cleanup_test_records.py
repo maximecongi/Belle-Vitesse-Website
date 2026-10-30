@@ -156,8 +156,7 @@ def _model_rows(session: Session, model):
 def _primary_key_records(model, records):
     columns = tuple(model.__table__.primary_key.columns)
     return _sort_records([
-        {column.name: _json_value(getattr(record, column.name))
-         for column in columns}
+        {column.name: _json_value(getattr(record, column.name)) for column in columns}
         for record in records
     ])
 
@@ -251,13 +250,10 @@ def discover_cleanup(
     mcp_logs = _model_rows(session, McpAuditLog)
     calendar_subscriptions = _model_rows(session, CalendarSubscription)
 
-    test_productions, test10_productions = _name_matches(
-        productions, lambda row: row.name)
-    test_projects, test10_projects = _name_matches(
-        projects, lambda row: row.name)
+    test_productions, test10_productions = _name_matches(productions, lambda row: row.name)
+    test_projects, test10_projects = _name_matches(projects, lambda row: row.name)
     test_contacts, test10_contacts = _name_matches(contacts, _contact_name)
-    test_incidents, test10_incidents = _name_matches(
-        incidents, lambda row: row.title)
+    test_incidents, test10_incidents = _name_matches(incidents, lambda row: row.title)
 
     test_users = []
     test10_users = []
@@ -268,8 +264,7 @@ def discover_cleanup(
         elif is_test_user(row):
             test_users.append(row)
 
-    catalog_rows = {model.__tablename__: _model_rows(
-        session, model) for model in CATALOG_MODELS}
+    catalog_rows = {model.__tablename__: _model_rows(session, model) for model in CATALOG_MODELS}
     test_catalog = {}
     test10_catalog = {}
     for table_name, rows in catalog_rows.items():
@@ -348,10 +343,8 @@ def discover_cleanup(
     candidate_productions = set()
     mixed_productions = []
     for production_id in candidate_production_ids:
-        attached_projects = [
-            row for row in projects if row.production_id == production_id]
-        noncandidate_projects = [
-            row for row in attached_projects if row.id not in candidate_project_ids]
+        attached_projects = [row for row in projects if row.production_id == production_id]
+        noncandidate_projects = [row for row in attached_projects if row.id not in candidate_project_ids]
         shared_contacts = [
             row for row in contacts
             if row.production_id == production_id and row.id in retained_contact_ids
@@ -408,13 +401,10 @@ def discover_cleanup(
     production_ids = candidate_productions
     contact_ids = candidate_contact_ids
 
-    checkout_ids = {
-        row.id for row in checkouts if row.project_id in project_ids}
+    checkout_ids = {row.id for row in checkouts if row.project_id in project_ids}
     checkin_ids = {row.id for row in checkins if row.project_id in project_ids}
-    checkout_numbers = {
-        row.inspection_number for row in checkouts if row.id in checkout_ids}
-    checkin_numbers = {
-        row.inspection_number for row in checkins if row.id in checkin_ids}
+    checkout_numbers = {row.inspection_number for row in checkouts if row.id in checkout_ids}
+    checkin_numbers = {row.inspection_number for row in checkins if row.id in checkin_ids}
 
     selected_incidents = {
         row.id for row in incidents
@@ -429,12 +419,9 @@ def discover_cleanup(
     incident_rows = [row for row in incidents if row.id in selected_incidents]
     incident_numbers = {row.incident_number for row in incident_rows}
 
-    waiver_ids = {
-        row.waiver_id for row in waivers if row.project_id in project_ids}
-    waiver_token_rows = [row for row in _model_rows(
-        session, WaiverToken) if row.waiver_id in waiver_ids]
-    waiver_document_rows = [row for row in _model_rows(
-        session, WaiverSignedDocument) if row.waiver_id in waiver_ids]
+    waiver_ids = {row.waiver_id for row in waivers if row.project_id in project_ids}
+    waiver_token_rows = [row for row in _model_rows(session, WaiverToken) if row.waiver_id in waiver_ids]
+    waiver_document_rows = [row for row in _model_rows(session, WaiverSignedDocument) if row.waiver_id in waiver_ids]
     checkout_token_rows = [
         row for row in _model_rows(session, CheckoutToken)
         if row.inspection_id in checkout_numbers or row.record_id in {str(i) for i in checkout_ids}
@@ -461,8 +448,7 @@ def discover_cleanup(
     ]
 
     report_rows = [row for row in reports if row.project_id in project_ids]
-    kdrive_rows = [
-        row for row in kdrive_objects if row.project_id in project_ids]
+    kdrive_rows = [row for row in kdrive_objects if row.project_id in project_ids]
     checkpoint_rows = [
         row for row in _model_rows(session, InspectionCheckpoint)
         if row.checkout_id in checkout_ids or row.checkin_id in checkin_ids
@@ -475,8 +461,7 @@ def discover_cleanup(
     referent_table = db.metadata.tables["project_bv_referents"]
     retained_referent_user_ids = {
         row["user_id"] for row in session.execute(
-            select(referent_table.c.user_id).where(
-                referent_table.c.project_id.in_(retained_project_ids))
+            select(referent_table.c.user_id).where(referent_table.c.project_id.in_(retained_project_ids))
         ).mappings().all()
         if row["user_id"] is not None
     } if retained_project_ids else set()
@@ -561,39 +546,28 @@ def discover_cleanup(
 
     referent_conditions = []
     if project_ids:
-        referent_conditions.append(
-            referent_table.c.project_id.in_(project_ids))
+        referent_conditions.append(referent_table.c.project_id.in_(project_ids))
     if candidate_user_ids:
-        referent_conditions.append(
-            referent_table.c.user_id.in_(candidate_user_ids))
+        referent_conditions.append(referent_table.c.user_id.in_(candidate_user_ids))
     referent_rows = session.execute(
         select(referent_table).where(or_(*referent_conditions))
     ).mappings().all() if referent_conditions else []
-    delete_keys["project_bv_referents"] = _table_key_records(
-        referent_table, referent_rows)
+    delete_keys["project_bv_referents"] = _table_key_records(referent_table, referent_rows)
 
     for table_name, rows in test_catalog.items():
-        model = next(
-            model for model in CATALOG_MODELS if model.__tablename__ == table_name)
-        delete_keys[table_name] = _primary_key_records(
-            model, [row for row in rows if (table_name, row.id) not in protected_catalog_keys])
+        model = next(model for model in CATALOG_MODELS if model.__tablename__ == table_name)
+        delete_keys[table_name] = _primary_key_records(model, [row for row in rows if (table_name, row.id) not in protected_catalog_keys])
 
     for table_name in DELETE_ORDER:
         delete_keys.setdefault(table_name, [])
 
     selected_roots = []
-    selected_roots.extend(_root_entry("productions", row.id, row.name)
-                          for row in productions if row.id in production_ids)
-    selected_roots.extend(_root_entry("projects", row.id, row.name)
-                          for row in projects if row.id in project_ids)
-    selected_roots.extend(_root_entry("contacts", row.id, _contact_name(
-        row)) for row in contacts if row.id in contact_ids)
-    selected_roots.extend(_root_entry("users", row.id, _user_name(row))
-                          for row in users if row.id in candidate_user_ids)
-    selected_roots.extend(_root_entry("mcp_api_tokens", row.id, row.name)
-                          for row in mcp_tokens if row.id in candidate_token_ids)
-    selected_roots.extend(_root_entry("incidents", row.id, row.title)
-                          for row in incident_rows if is_test_name(row.title))
+    selected_roots.extend(_root_entry("productions", row.id, row.name) for row in productions if row.id in production_ids)
+    selected_roots.extend(_root_entry("projects", row.id, row.name) for row in projects if row.id in project_ids)
+    selected_roots.extend(_root_entry("contacts", row.id, _contact_name(row)) for row in contacts if row.id in contact_ids)
+    selected_roots.extend(_root_entry("users", row.id, _user_name(row)) for row in users if row.id in candidate_user_ids)
+    selected_roots.extend(_root_entry("mcp_api_tokens", row.id, row.name) for row in mcp_tokens if row.id in candidate_token_ids)
+    selected_roots.extend(_root_entry("incidents", row.id, row.title) for row in incident_rows if is_test_name(row.title))
     for table_name, rows in test_catalog.items():
         selected_roots.extend(
             _root_entry(table_name, row.id, _catalog_name(row))
@@ -602,19 +576,13 @@ def discover_cleanup(
     selected_roots = _sort_records(selected_roots)
 
     protected_entities = []
-    protected_entities.extend(_root_entry("productions", row.id, row.name)
-                              for row in productions if row.id in protected_production_ids)
-    protected_entities.extend(_root_entry("projects", row.id, row.name)
-                              for row in projects if row.id in protected_project_ids)
-    protected_entities.extend(_root_entry("contacts", row.id, _contact_name(
-        row)) for row in contacts if row.id in protected_contact_ids)
-    protected_entities.extend(_root_entry("users", row.id, _user_name(
-        row)) for row in users if row.id in protected_user_ids)
-    protected_entities.extend(_root_entry("incidents", row.id, row.title)
-                              for row in incidents if row.id in protected_incident_ids)
+    protected_entities.extend(_root_entry("productions", row.id, row.name) for row in productions if row.id in protected_production_ids)
+    protected_entities.extend(_root_entry("projects", row.id, row.name) for row in projects if row.id in protected_project_ids)
+    protected_entities.extend(_root_entry("contacts", row.id, _contact_name(row)) for row in contacts if row.id in protected_contact_ids)
+    protected_entities.extend(_root_entry("users", row.id, _user_name(row)) for row in users if row.id in protected_user_ids)
+    protected_entities.extend(_root_entry("incidents", row.id, row.title) for row in incidents if row.id in protected_incident_ids)
     for table_name, rows in test10_catalog.items():
-        protected_entities.extend(_root_entry(
-            table_name, row.id, _catalog_name(row)) for row in rows)
+        protected_entities.extend(_root_entry(table_name, row.id, _catalog_name(row)) for row in rows)
     protected_entities = _sort_records(protected_entities)
 
     signature_document_ids = (
@@ -623,14 +591,11 @@ def discover_cleanup(
     signature_event_count = 0
     if signature_document_ids:
         signature_event_count = len(session.execute(
-            select(SignatureEvent.id).where(
-                SignatureEvent.document_id.in_(signature_document_ids))
+            select(SignatureEvent.id).where(SignatureEvent.document_id.in_(signature_document_ids))
         ).all())
 
-    target_host = database_host if os.getenv(
-        "FLASK_ENV") == "production" else "127.0.0.1"
-    target_port = database_port if os.getenv(
-        "FLASK_ENV") == "production" else None
+    target_host = database_host if os.getenv("FLASK_ENV") == "production" else "127.0.0.1"
+    target_port = database_port if os.getenv("FLASK_ENV") == "production" else None
     selection = {
         "database": database_name,
         "database_host": target_host,
@@ -640,8 +605,7 @@ def discover_cleanup(
         "delete_keys": delete_keys,
     }
     selection_sha256 = hashlib.sha256(
-        json.dumps(selection, sort_keys=True, ensure_ascii=False,
-                   separators=(",", ":")).encode("utf-8")
+        json.dumps(selection, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     ).hexdigest()
 
     counts = {table: len(delete_keys[table]) for table in DELETE_ORDER}
@@ -665,8 +629,7 @@ def discover_cleanup(
 
 def _write_manifest(manifest: dict, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(manifest, indent=2,
-                    ensure_ascii=False) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     os.chmod(path, 0o600)
 
 
@@ -674,8 +637,7 @@ def _read_manifest(path: Path) -> dict:
     try:
         manifest = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        raise RuntimeError(
-            f"Impossible de lire le manifeste {path}: {exc}") from exc
+        raise RuntimeError(f"Impossible de lire le manifeste {path}: {exc}") from exc
     if manifest.get("format_version") != 1:
         raise RuntimeError("Version de manifeste inconnue.")
     return manifest
@@ -690,17 +652,14 @@ def create_verified_backup(engine, backup_dir: Path) -> tuple[Path, str]:
     if engine.dialect.name != "mysql":
         raise RuntimeError("La sauvegarde d’application exige une base MySQL.")
     if not shutil_which("mysqldump"):
-        raise RuntimeError(
-            "mysqldump est introuvable ; aucune donnée n’a été modifiée.")
+        raise RuntimeError("mysqldump est introuvable ; aucune donnée n’a été modifiée.")
 
     url = engine.url
     database_name = url.database
     backup_dir.mkdir(parents=True, exist_ok=True)
-    safe_db_name = re.sub(r"[^A-Za-z0-9_.-]+", "_",
-                          database_name or "database")
+    safe_db_name = re.sub(r"[^A-Za-z0-9_.-]+", "_", database_name or "database")
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    backup_path = backup_dir / \
-        f"cleanup_test_records_{safe_db_name}_{timestamp}.sql.gz"
+    backup_path = backup_dir / f"cleanup_test_records_{safe_db_name}_{timestamp}.sql.gz"
 
     credential_path = None
     try:
@@ -733,8 +692,7 @@ def create_verified_backup(engine, backup_dir: Path) -> tuple[Path, str]:
         ]
         with tempfile.TemporaryFile() as stderr_file:
             with gzip.open(backup_path, "wb", compresslevel=6) as compressed:
-                process = subprocess.Popen(
-                    command, stdout=subprocess.PIPE, stderr=stderr_file)
+                process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=stderr_file)
                 assert process.stdout is not None
                 for chunk in iter(lambda: process.stdout.read(1024 * 1024), b""):
                     compressed.write(chunk)
@@ -743,8 +701,7 @@ def create_verified_backup(engine, backup_dir: Path) -> tuple[Path, str]:
             stderr_text = stderr_file.read().decode("utf-8", errors="replace").strip()
         if return_code != 0:
             backup_path.unlink(missing_ok=True)
-            raise RuntimeError(
-                f"mysqldump a échoué ({return_code}): {stderr_text}")
+            raise RuntimeError(f"mysqldump a échoué ({return_code}): {stderr_text}")
 
         has_sql_header = False
         with gzip.open(backup_path, "rb") as compressed:
@@ -756,8 +713,7 @@ def create_verified_backup(engine, backup_dir: Path) -> tuple[Path, str]:
                     has_sql_header = True
         if not has_sql_header or backup_path.stat().st_size == 0:
             backup_path.unlink(missing_ok=True)
-            raise RuntimeError(
-                "La sauvegarde n’a pas passé la vérification gzip/SQL.")
+            raise RuntimeError("La sauvegarde n’a pas passé la vérification gzip/SQL.")
 
         hasher = hashlib.sha256()
         with backup_path.open("rb") as backup_file:
@@ -812,8 +768,7 @@ def _keys_condition(table, key_columns, rows):
 def _selection_hash(manifest: dict) -> str:
     selection = manifest.get("selection")
     return hashlib.sha256(
-        json.dumps(selection, sort_keys=True, ensure_ascii=False,
-                   separators=(",", ":")).encode("utf-8")
+        json.dumps(selection, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     ).hexdigest()
 
 
@@ -827,18 +782,15 @@ def _apply_manifest(
 ) -> dict:
     env = os.getenv("FLASK_ENV", "development").lower()
     if env != "production" and not allow_dev:
-        raise RuntimeError(
-            "--apply est autorisé uniquement avec FLASK_ENV=production (ou --allow-dev).")
+        raise RuntimeError("--apply est autorisé uniquement avec FLASK_ENV=production (ou --allow-dev).")
     if no_backup and not allow_dev:
-        raise RuntimeError(
-            "--no-backup est strictement interdit en production.")
+        raise RuntimeError("--no-backup est strictement interdit en production.")
 
     manifest = _read_manifest(manifest_path)
     if _selection_hash(manifest) != manifest.get("selection_sha256"):
         raise RuntimeError("Le manifeste a été modifié depuis sa création.")
     if confirmed_hash != manifest.get("selection_sha256"):
-        raise RuntimeError(
-            "--confirm-selection ne correspond pas au hash du manifeste.")
+        raise RuntimeError("--confirm-selection ne correspond pas au hash du manifeste.")
 
     with app.app_context():
         engine = db.engine
@@ -853,29 +805,23 @@ def _apply_manifest(
         # Recompute before the backup. Any new/deleted dependency invalidates
         # the approval and prevents deletion.
         with Session(engine) as session:
-            current = discover_cleanup(
-                session, database_name, engine.url.host, engine.url.port)
+            current = discover_cleanup(session, database_name, engine.url.host, engine.url.port)
         if current["selection_sha256"] != manifest["selection_sha256"]:
-            raise RuntimeError(
-                "La base a changé depuis l’aperçu ; relance une prévisualisation.")
+            raise RuntimeError("La base a changé depuis l’aperçu ; relance une prévisualisation.")
 
         if no_backup:
             backup_path = "SKIPPED_DEV"
             backup_sha256 = "SKIPPED_DEV"
         else:
-            backup_dir = Path(app.config.get(
-                "BACKUPS_FOLDER") or ROOT / "backups")
-            backup_path, backup_sha256 = create_verified_backup(
-                engine, backup_dir)
+            backup_dir = Path(app.config.get("BACKUPS_FOLDER") or ROOT / "backups")
+            backup_path, backup_sha256 = create_verified_backup(engine, backup_dir)
 
         # Recheck in the mutation transaction to close the preview/backup race.
         with engine.begin() as connection:
             with Session(bind=connection) as session:
-                current = discover_cleanup(
-                    session, database_name, engine.url.host, engine.url.port)
+                current = discover_cleanup(session, database_name, engine.url.host, engine.url.port)
             if current["selection_sha256"] != manifest["selection_sha256"]:
-                raise RuntimeError(
-                    "La base a changé pendant la sauvegarde ; aucune ligne n’a été supprimée.")
+                raise RuntimeError("La base a changé pendant la sauvegarde ; aucune ligne n’a été supprimée.")
             deleted = _delete_records(connection, manifest)
             for table_name, rows in manifest["selection"]["delete_keys"].items():
                 table = db.metadata.tables[table_name]
@@ -883,12 +829,10 @@ def _apply_manifest(
                     continue
                 key_columns = tuple(table.primary_key.columns)
                 remaining = connection.execute(
-                    select(table).where(
-                        _keys_condition(table, key_columns, rows))
+                    select(table).where(_keys_condition(table, key_columns, rows))
                 ).all()
                 if remaining:
-                    raise RuntimeError(
-                        f"Vérification post-suppression échouée pour {table_name}.")
+                    raise RuntimeError(f"Vérification post-suppression échouée pour {table_name}.")
 
         return {
             "database": database_name,
@@ -919,30 +863,21 @@ def _build_app() -> tuple[Flask, object | None]:
 
 
 def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(
-        description="Inventorie puis nettoie les données nommées TEST dans MySQL.")
-    parser.add_argument("--apply", action="store_true",
-                        help="Appliquer un manifeste après confirmation explicite.")
-    parser.add_argument("--manifest", type=Path,
-                        help="Manifeste approuvé à appliquer.")
-    parser.add_argument("--manifest-out", type=Path,
-                        help="Chemin de sortie du manifeste de prévisualisation.")
-    parser.add_argument("--confirm-database",
-                        help="Nom exact de base requis avec --apply.")
-    parser.add_argument("--confirm-selection",
-                        help="SHA-256 affiché par l’aperçu, requis avec --apply.")
-    parser.add_argument("--allow-dev", action="store_true",
-                        help="Autoriser l'exécution en environnement de développement local.")
-    parser.add_argument("--no-backup", action="store_true",
-                        help="Désactive la sauvegarde SQL (autorisé UNIQUEMENT avec --allow-dev en local).")
+    parser = argparse.ArgumentParser(description="Inventorie puis nettoie les données nommées TEST dans MySQL.")
+    parser.add_argument("--apply", action="store_true", help="Appliquer un manifeste après confirmation explicite.")
+    parser.add_argument("--manifest", type=Path, help="Manifeste approuvé à appliquer.")
+    parser.add_argument("--manifest-out", type=Path, help="Chemin de sortie du manifeste de prévisualisation.")
+    parser.add_argument("--confirm-database", help="Nom exact de base requis avec --apply.")
+    parser.add_argument("--confirm-selection", help="SHA-256 affiché par l’aperçu, requis avec --apply.")
+    parser.add_argument("--allow-dev", action="store_true", help="Autoriser l'exécution en environnement de développement local.")
+    parser.add_argument("--no-backup", action="store_true", help="Désactive la sauvegarde SQL (autorisé UNIQUEMENT avec --allow-dev en local).")
     args = parser.parse_args(argv)
 
     app, tunnel = _build_app()
     try:
         if args.apply:
             if not all((args.manifest, args.confirm_database, args.confirm_selection)):
-                parser.error(
-                    "--apply exige --manifest, --confirm-database et --confirm-selection.")
+                parser.error("--apply exige --manifest, --confirm-database et --confirm-selection.")
             result = _apply_manifest(
                 app,
                 args.manifest,
@@ -956,17 +891,13 @@ def main(argv=None) -> int:
 
         with app.app_context():
             if os.getenv("FLASK_ENV", "development").lower() != "production" and not args.allow_dev:
-                raise RuntimeError(
-                    "L’aperçu doit être lancé dans le conteneur VPS avec FLASK_ENV=production (ou utiliser --allow-dev).")
+                raise RuntimeError("L’aperçu doit être lancé dans le conteneur VPS avec FLASK_ENV=production (ou utiliser --allow-dev).")
             database_name = db.engine.url.database or ""
             if db.engine.dialect.name != "mysql":
-                raise RuntimeError(
-                    "La prévisualisation exige MySQL afin de cibler la base VPS prévue.")
+                raise RuntimeError("La prévisualisation exige MySQL afin de cibler la base VPS prévue.")
             with Session(db.engine) as session:
-                manifest = discover_cleanup(
-                    session, database_name, db.engine.url.host, db.engine.url.port)
-            manifest_path = args.manifest_out or Path(
-                tempfile.gettempdir()) / f"test-cleanup-{database_name or 'db'}.json"
+                manifest = discover_cleanup(session, database_name, db.engine.url.host, db.engine.url.port)
+            manifest_path = args.manifest_out or Path(tempfile.gettempdir()) / f"test-cleanup-{database_name or 'db'}.json"
             _write_manifest(manifest, manifest_path)
         print(json.dumps({
             "database": manifest["database"],
