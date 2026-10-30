@@ -498,7 +498,14 @@ def admin_pilot_waivers_create(project_id):
     signer_email = request.form.get("signer_email", "").strip()
     signer_phone = request.form.get("signer_phone", "").strip()
     signer_company = request.form.get("signer_company", "").strip()
-    selected_vehicles = request.form.getlist("selected_vehicles")
+    selected_vehicles = [v.strip() for v in request.form.getlist("selected_vehicles") if v and v.strip()]
+
+    if not selected_vehicles:
+        flash("Veuillez sélectionner au moins 1 véhicule pour l'attestation pilote.", "error")
+        return_to = request.form.get("return_to") or request.args.get("return_to") or request.referrer
+        if return_to:
+            return redirect(return_to)
+        return redirect(url_for('admin_projects.admin_project_detail', record_id=project_id))
 
     success, msg = create_pilot_waiver(
         project_id=project_id,

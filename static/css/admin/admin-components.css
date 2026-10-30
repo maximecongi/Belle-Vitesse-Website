@@ -1735,8 +1735,9 @@ input[type="checkbox"]:checked {
 /* ── Boutons compacts & Boutons-liens ── */
 .admin-btn-xs {
     font-size: 11px !important;
-    padding: 2px 6px !important;
     line-height: 1.2 !important;
+    padding: 4px 8px;
+    gap: 0.35rem !important;
 }
 
 .admin-btn-link {

@@ -1015,6 +1015,8 @@ function initPilotSignerModal() {
             e.preventDefault();
             const modal = document.getElementById('addPilotSignerModal');
             if (modal) {
+                const err = modal.querySelector('#pilotVehiclesError');
+                if (err) err.classList.add('u-d-none');
                 modal.classList.remove('u-d-none');
                 modal.classList.add('is-active');
                 if (window.lucide && typeof window.lucide.createIcons === 'function') {
@@ -1063,6 +1065,43 @@ function initPilotSignerModal() {
             if (card) {
                 card.classList.toggle('selected', cb.checked);
             }
+            if (cb.matches('#addPilotSignerModal input[name="selected_vehicles"]')) {
+                const modal = document.getElementById('addPilotSignerModal');
+                if (modal) {
+                    const checked = modal.querySelectorAll('input[name="selected_vehicles"]:checked');
+                    const err = modal.querySelector('#pilotVehiclesError');
+                    if (err && checked.length > 0) {
+                        err.classList.add('u-d-none');
+                    }
+                }
+            }
+        }
+    });
+
+    // Validation à la soumission du formulaire d'attestation pilote : empêche la création si aucun véhicule sélectionné
+    document.addEventListener('submit', (e) => {
+        const form = e.target.closest('#addPilotSignerForm, #addPilotSignerModal form');
+        if (!form) return;
+
+        const checkedVehicles = form.querySelectorAll('input[name="selected_vehicles"]:checked');
+        if (checkedVehicles.length === 0) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+
+            const err = form.querySelector('#pilotVehiclesError') || document.getElementById('pilotVehiclesError');
+            if (err) {
+                err.classList.remove('u-d-none');
+                if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                    window.lucide.createIcons();
+                }
+                err.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            if (typeof window.showFlash === 'function') {
+                window.showFlash("Veuillez sélectionner au moins 1 véhicule.", "error");
+            }
+            alert("Veuillez sélectionner au moins 1 véhicule pour créer l'attestation pilote.");
+            return false;
         }
     });
 }

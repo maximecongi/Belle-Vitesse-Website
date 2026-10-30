@@ -1165,7 +1165,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                 aria-label="Fermer">&times;</button>
         </div>
 
-        <form method="POST" action="{{ url_for('admin_waivers.admin_pilot_waivers_create', project_id=project.id) }}"
+        <form id="addPilotSignerForm" method="POST" action="{{ url_for('admin_waivers.admin_pilot_waivers_create', project_id=project.id) }}"
             class="admin-modal-content u-p-4 u-overflow-y-auto">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="return_to" value="{{ request.full_path }}">
@@ -1220,6 +1220,15 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                     Tous les véhicules du tournage sont pré-cochés par défaut. Décochez ceux que ce pilote ne conduira
                     pas.
                 </p>
+
+                <div id="pilotVehiclesError" class="alert-banner-danger u-mb-3 u-d-none" role="alert">
+                    <i data-lucide="alert-triangle"></i>
+                    <div class="alert-banner-danger-content">
+                        <span class="alert-banner-title-danger">Sélection requise</span>
+                        <div class="alert-banner-desc-danger">Veuillez sélectionner au moins 1 véhicule pour créer l'attestation pilote.</div>
+                    </div>
+                </div>
+
                 {% if vehicles and vehicles|length > 0 %}
                 <div class="u-flex u-flex-wrap u-gap-1">
                     {% for v in vehicles %}

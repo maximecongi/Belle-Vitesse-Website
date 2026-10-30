@@ -112,7 +112,8 @@ class PilotWaiverComprehensiveTest(unittest.TestCase):
             shoot_start_date=date(2026, 9, 2),
             shoot_end_date=date(2026, 9, 5),
             return_date=date(2026, 9, 6),
-            vehicles_to_check=f"{v1.id}, {v2.id}"
+            vehicles_to_check=f"{v1.id}, {v2.id}",
+            shooting_locations=[{"name": "Circuit Paul Ricard", "address": "Le Castellet"}]
         )
         db.session.add(proj)
         db.session.commit()
@@ -431,6 +432,70 @@ class PilotWaiverComprehensiveTest(unittest.TestCase):
                 self.assertEqual(mail_kwargs.get("to_email"), "maxime@bellevitesse.com")
                 self.assertIsNone(mail_kwargs.get("cc"))
                 self.assertIsNone(mail_kwargs.get("bcc"))
+
+    def test_08_pilot_waiver_requires_at_least_one_vehicle(self):
+        """Vérifie qu'il est impossible de créer une attestation pilote sans sélectionner au moins 1 véhicule."""
+        with self.app.app_context():
+            proj, _, _, pilot_contact, vehicles = self._create_mock_project()
+
+            # 1. Échec via le service si la liste de véhicules est vide
+            success_empty_list, msg_empty = create_pilot_waiver(
+                project_id=proj.id,
+                signer_role="pilot",
+                selected_vehicles=[],
+            )
+            self.assertFalse(success_empty_list)
+            self.assertIn("au moins 1 véhicule", msg_empty)
+
+            # 2. Échec via le service si chaîne vide
+            success_empty_str, msg_str = create_pilot_waiver(
+                project_id=proj.id,
+                signer_role="pilot",
+                selected_vehicles="",
+            )
+            self.assertFalse(success_empty_str)
+            self.assertIn("au moins 1 véhicule", msg_str)
+
+            # Vérifie qu'aucun waiver n'a été créé
+            self.assertEqual(PilotWaiver.query.filter_by(project_id=proj.id).count(), 0)
+
+            # 3. Échec via la route Flask d'administration (POST sans sélection de véhicule)
+            with self.client.session_transaction() as sess:
+                sess["admin_authenticated"] = True
+                sess["admin_user_id"] = 1
+                sess["admin_user_role"] = "administrator"
+
+            res_empty_post = self.client.post(
+                f"/admin/projects/{proj.id}/pilot-waivers/create",
+                data={
+                    "signer_role": "pilot",
+                    "signer_first_name": "Lucas",
+                    "signer_last_name": "Moreau",
+                    "signer_email": "lucas@stuntpro.fr",
+                    # Aucun selected_vehicles transmis (tous décochés)
+                },
+                follow_redirects=True
+            )
+            self.assertEqual(res_empty_post.status_code, 200)
+            self.assertIn("au moins 1 véhicule", res_empty_post.data.decode("utf-8"))
+            self.assertEqual(PilotWaiver.query.filter_by(project_id=proj.id).count(), 0)
+
+            # 4. Succès dès qu'au moins 1 véhicule est sélectionné
+            res_success_post = self.client.post(
+                f"/admin/projects/{proj.id}/pilot-waivers/create",
+                data={
+                    "signer_role": "pilot",
+                    "signer_first_name": "Lucas",
+                    "signer_last_name": "Moreau",
+                    "signer_email": "lucas@stuntpro.fr",
+                    "selected_vehicles": ["e-Car High Speed"],
+                },
+                follow_redirects=True
+            )
+            self.assertEqual(res_success_post.status_code, 200)
+            pw = PilotWaiver.query.filter_by(project_id=proj.id).first()
+            self.assertIsNotNone(pw)
+            self.assertEqual(pw.vehicles, "e-Car High Speed")
 
 
 if __name__ == "__main__":

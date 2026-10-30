@@ -121,9 +121,17 @@ def create_waiver(project_id, waiver_type: str = "cgl", **kwargs):
     waiver.shooting_dates = _format_project_shooting_dates(p, default_sep=" au ")
 
     selected_v = kwargs.get("selected_vehicles")
-    if selected_v:
+    if "selected_vehicles" in kwargs and selected_v is not None:
         if isinstance(selected_v, list):
-            waiver.vehicles = ", ".join([str(v).strip() for v in selected_v if str(v).strip()])
+            cleaned_v = [str(v).strip() for v in selected_v if str(v).strip()]
+            if waiver_type == "pilot_waiver" and not cleaned_v:
+                return False, "Veuillez sélectionner au moins 1 véhicule pour l'attestation pilote."
+            waiver.vehicles = ", ".join(cleaned_v)
+        elif isinstance(selected_v, str):
+            cleaned_str = selected_v.strip()
+            if waiver_type == "pilot_waiver" and not cleaned_str:
+                return False, "Veuillez sélectionner au moins 1 véhicule pour l'attestation pilote."
+            waiver.vehicles = cleaned_str
         else:
             waiver.vehicles = str(selected_v).strip()
     elif p.vehicles_to_check:
@@ -133,6 +141,9 @@ def create_waiver(project_id, waiver_type: str = "cgl", **kwargs):
         waiver.vehicles = ", ".join([vehicle_map.get(vid, vid) for vid in veh_ids])
     elif p.active_checkout_vehicles:
         waiver.vehicles = ", ".join([cv.vehicle_name for cv in p.active_checkout_vehicles if cv.vehicle_name])
+
+    if waiver_type == "pilot_waiver" and not waiver.vehicles:
+        return False, "Veuillez sélectionner au moins 1 véhicule pour l'attestation pilote."
 
     waiver.status = "to_send"
     waiver.generated_at = _utcnow()

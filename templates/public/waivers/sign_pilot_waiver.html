@@ -90,9 +90,24 @@
                         <span class="public-doc-info-label">Période de tournage</span>
                         <span class="public-doc-info-value u-text-sm">{{ waiver.display_shooting_dates }}</span>
                     </div>
-                    <div class="public-doc-info-item">
+                    <div class="public-doc-info-item u-grid-colspan-2">
                         <span class="public-doc-info-label">Lieu(x) de tournage</span>
-                        <span class="public-doc-info-value u-text-sm">{{ waiver.display_shooting_locations or '—' }}</span>
+                        {% if waiver.display_shooting_locations_list and waiver.display_shooting_locations_list|length >
+                        0 %}
+                        <div class="public-doc-locations-list">
+                            {% for loc in waiver.display_shooting_locations_list %}
+                            <span class="public-doc-location-pill" {% if loc.address %}title="{{ loc.address }}" {%
+                                endif %}>
+                                <i data-lucide="map-pin" aria-hidden="true"></i>
+                                <span>{{ loc.name }}</span>
+                            </span>
+                            {% endfor %}
+                        </div>
+                        {% elif waiver.display_shooting_locations %}
+                        <span class="public-doc-info-value u-text-sm">{{ waiver.display_shooting_locations }}</span>
+                        {% else %}
+                        <span class="public-doc-info-value u-text-sm">—</span>
+                        {% endif %}
                     </div>
                 </div>
 
