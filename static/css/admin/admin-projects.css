@@ -1814,3 +1814,31 @@
     font-size: 0.65rem;
     color: #64748b;
 }
+
+/* ── Bannière de Duplication de Projet ────────────────────────── */
+.duplicate-project-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    background-color: var(--entity-project-bg, #fef3c7);
+    color: var(--entity-project-text, #b45309);
+    border: 1px solid var(--entity-project, #f59e0b);
+    border-radius: 8px;
+    margin-bottom: 1.25rem;
+    font-size: 0.875rem;
+}
+
+/* ── Bannière de Duplication de Projet ────────────────────────── */
+.duplicate-project-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    background-color: var(--entity-project-bg, #fef3c7);
+    color: var(--entity-project-text, #b45309);
+    border: 1px solid var(--entity-project, #f59e0b);
+    border-radius: 8px;
+    margin-bottom: 1.25rem;
+    font-size: 0.875rem;
+}

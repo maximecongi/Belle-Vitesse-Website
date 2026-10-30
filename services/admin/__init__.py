@@ -35,6 +35,7 @@ from .conflicts import check_booking_conflicts
 from .projects import (
     create_project,
     delete_project,
+    get_project_for_duplicate,
     get_project_for_edit,
     get_project_form_context,
     list_projects,

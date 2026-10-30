@@ -3,7 +3,7 @@
 {% from "admin/macros.html" import empty_state %}
 
 {% block title %}
-{% if is_edit %}Modifier le Projet{% else %}Nouveau Projet{% endif %}
+{% if is_duplicate %}Dupliquer le Projet{% elif is_edit %}Modifier le Projet{% else %}Nouveau Projet{% endif %}
 {% endblock %}
 
 {% block extra_css %}
@@ -12,16 +12,25 @@
 {% endblock %}
 
 {% block page_title %}
-{% if is_edit %}Modifier le Projet{% else %}Nouveau Projet{% endif %}
+{% if is_duplicate %}Dupliquer le Projet{% elif is_edit %}Modifier le Projet{% else %}Nouveau Projet{% endif %}
 {% endblock %}
 
 {% block content %}
 <div class="admin-card">
+    {% if is_duplicate and source_project_name %}
+    <div class="duplicate-project-banner">
+        <i data-lucide="copy" class="u-w-18 u-h-18 u-flex-shrink-0"></i>
+        <div>
+            <strong>Duplication de tournage :</strong> Ce formulaire a été pré-rempli à partir de « {{ source_project_name }} ». Modifiez les dates ou équipements si nécessaire avant de valider la création.
+        </div>
+    </div>
+    {% endif %}
     <form method="POST" id="projectMainForm"
-        data-project-id="{{ (data.id if data and data.id else (data.project_id if data and data.project_id else (record_id if record_id else ''))) }}">
+        {% if not is_edit %}action="{{ url_for('admin_projects.admin_project_new') }}"{% endif %}
+        data-project-id="{{ (data.id if data and data.id else (data.project_id if data and data.project_id else (record_id if record_id else ''))) if is_edit else '' }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <input type="hidden" id="current_project_id"
-            value="{{ (data.id if data and data.id else (data.project_id if data and data.project_id else (record_id if record_id else ''))) }}" />
+            value="{{ (data.id if data and data.id else (data.project_id if data and data.project_id else (record_id if record_id else ''))) if is_edit else '' }}" />
         <div class="form-group">
             <label class="form-label">Nom du projet</label>
             <input type="text" name="name" class="form-input" value="{{ data.name if data else '' }}" required>
@@ -38,7 +47,7 @@
                 <select name="production_id" id="productionSelect" class="form-input searchable-select" required>
                     <option value="">— Sélectionner une production —</option>
                     {% for p in productions %}
-                    <option value="{{ p.id }}" {% if data and data.production_id==p.id %}selected{% endif %}>
+                    <option value="{{ p.id }}" {% if data and (data.production_id|string == p.id|string or data.production_id==p.id) %}selected{% endif %}>
                         {{ p.fields.get('Nom', '—') }}
                     </option>
                     {% endfor %}
@@ -56,7 +65,7 @@
                 <select name="production_contact_id" class="form-input searchable-select">
                     <option value="">— Sélectionner un contact de production —</option>
                     {% for c in contacts %}
-                    <option value="{{ c.id }}" {% if data and data.production_contact_id==c.id %}selected{% endif %}>
+                    <option value="{{ c.id }}" {% if data and (data.production_contact_id|string == c.id|string or data.production_contact_id==c.id) %}selected{% endif %}>
                         {{ c.name }}
                     </option>
                     {% endfor %}
@@ -76,7 +85,7 @@
                 <select name="dop_contact_id" class="form-input searchable-select">
                     <option value="">— Sélectionner un DOP —</option>
                     {% for c in contacts %}
-                    <option value="{{ c.id }}" {% if data and data.dop_contact_id==c.id %}selected{% endif %}>
+                    <option value="{{ c.id }}" {% if data and (data.dop_contact_id|string == c.id|string or data.dop_contact_id==c.id) %}selected{% endif %}>
                         {{ c.name }}
                     </option>
                     {% endfor %}
@@ -94,7 +103,7 @@
                 <select name="pilot_contact_id" class="form-input searchable-select">
                     <option value="">— Sélectionner un pilote —</option>
                     {% for c in contacts %}
-                    <option value="{{ c.id }}" {% if data and data.pilot_contact_id==c.id %}selected{% endif %}>
+                    <option value="{{ c.id }}" {% if data and (data.pilot_contact_id|string == c.id|string or data.pilot_contact_id==c.id) %}selected{% endif %}>
                         {{ c.name }}
                     </option>
                     {% endfor %}
@@ -114,7 +123,7 @@
                 <select name="first_ac_contact_id" class="form-input searchable-select">
                     <option value="">— Sélectionner un 1er assistant caméra —</option>
                     {% for c in contacts %}
-                    <option value="{{ c.id }}" {% if data and data.first_ac_contact_id==c.id %}selected{% endif %}>
+                    <option value="{{ c.id }}" {% if data and (data.first_ac_contact_id|string == c.id|string or data.first_ac_contact_id==c.id) %}selected{% endif %}>
                         {{ c.name }}
                     </option>
                     {% endfor %}
@@ -132,7 +141,7 @@
                 <select name="key_grip_contact_id" class="form-input searchable-select">
                     <option value="">— Sélectionner un chef machiniste —</option>
                     {% for c in contacts %}
-                    <option value="{{ c.id }}" {% if data and data.key_grip_contact_id==c.id %}selected{% endif %}>
+                    <option value="{{ c.id }}" {% if data and (data.key_grip_contact_id|string == c.id|string or data.key_grip_contact_id==c.id) %}selected{% endif %}>
                         {{ c.name }}
                     </option>
                     {% endfor %}
@@ -207,7 +216,7 @@
 
             <div class="project-locations-container">
                 <div id="projectLocationsList" class="project-locations-list"></div>
-                {{ empty_state('map-pin', "Aucun lieu de tournage renseigné", "Cliquez sur « Ajouter un lieu » pour commencer.", class_name='empty-state-sm' ~ (' u-d-none' if (data and data.locations_list and data.locations_list|length > 0) else '')) }}
+                {{ empty_state('map-pin', "Aucun lieu de tournage renseigné", "Cliquez sur « Ajouter un lieu » pour commencer.", class_name='empty-state-sm' ~ (' u-d-none' if (data and ((data.locations_list and data.locations_list|length > 0) or (data.shooting_locations and data.shooting_locations|length > 0))) else '')) }}
             </div>
         </div>
 
@@ -236,10 +245,10 @@
                 {% set vf = v.fields %}
                 {% set v_uid = (vf.get('unique_id') if vf else None) or (v.get('unique_id') if v is mapping else None)
                 %}
-                <label class="project-checkbox-card {% if data and v.id in data.vehicle_ids %}selected{% endif %}"
+                {% set v_is_selected = data and data.vehicle_ids and (v.id in data.vehicle_ids or (v.id|string) in data.vehicle_ids) %}
+                <label class="project-checkbox-card {% if v_is_selected %}selected{% endif %}"
                     data-item-id="{{ v.id }}" data-item-type="vehicle">
-                    <input type="checkbox" name="vehicle_ids" value="{{ v.id }}" {% if data and v.id in data.vehicle_ids
-                        %}checked{% endif %} class="u-d-none">
+                    <input type="checkbox" name="vehicle_ids" value="{{ v.id }}" {% if v_is_selected %}checked{% endif %} class="u-d-none">
                     {% if vf.get('thumbnail') %}
                     <img src="{{ vf.thumbnail[0].thumbnails.small.url }}" class="project-checkbox-card-img">
                     {% endif %}
@@ -260,10 +269,10 @@
             <div class="u-flex u-flex-wrap u-gap-1">
                 {% for h in heads %}
                 {% set hf = h.fields %}
-                <label class="project-checkbox-card {% if data and h.id in data.head_ids %}selected{% endif %}"
+                {% set h_is_selected = data and data.head_ids and (h.id in data.head_ids or (h.id|string) in data.head_ids) %}
+                <label class="project-checkbox-card {% if h_is_selected %}selected{% endif %}"
                     data-item-id="{{ h.id }}" data-item-type="head">
-                    <input type="checkbox" name="head_ids" value="{{ h.id }}" {% if data and h.id in data.head_ids
-                        %}checked{% endif %} class="u-d-none">
+                    <input type="checkbox" name="head_ids" value="{{ h.id }}" {% if h_is_selected %}checked{% endif %} class="u-d-none">
                     {% if hf.get('thumbnail') %}
                     <img src="{{ hf.thumbnail[0].thumbnails.small.url }}" class="project-checkbox-card-img">
                     {% endif %}
@@ -283,10 +292,10 @@
                 {% endif %}
             </div>
             <div>
-                <a href="{{ url_for('admin_projects.admin_project_detail', record_id=record_id) if (is_edit and record_id) else url_for('admin_projects.admin_projects_list') }}"
+                <a href="{{ url_for('admin_projects.admin_project_detail', record_id=record_id) if (is_edit and record_id) else (url_for('admin_projects.admin_project_detail', record_id=source_project_id) if source_project_id else url_for('admin_projects.admin_projects_list')) }}"
                     class="admin-btn admin-btn-secondary u-mr-2">Annuler</a>
                 <button type="submit" class="admin-btn admin-btn-primary">
-                    {% if is_edit %}Enregistrer{% else %}Créer le Projet{% endif %}
+                    {% if is_duplicate %}<i data-lucide="copy" class="u-mr-1"></i> Créer le Projet{% elif is_edit %}Enregistrer{% else %}Créer le Projet{% endif %}
                 </button>
             </div>
         </div>

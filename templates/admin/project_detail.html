@@ -31,6 +31,12 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
     </button>
 </form>
 {% endif %}
+{% if is_admin or session.get('admin_user_role') in ['administrator', 'manager', 'commercial'] %}
+<a href="{{ url_for('admin_projects.admin_project_duplicate', record_id=project.id) }}" class="admin-btn admin-btn-secondary" title="Dupliquer ce tournage">
+    <i data-lucide="copy"></i>
+    <span>Dupliquer</span>
+</a>
+{% endif %}
 <a href="{{ url_for('admin_projects.admin_project_edit', record_id=project.id) }}" class="admin-btn admin-btn-primary">
     <i data-lucide="edit-3"></i>
     <span>Modifier</span>

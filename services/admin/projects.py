@@ -909,6 +909,7 @@ def get_project_for_edit(record_id):
         "inter_shoot_statuses_json": json.dumps(p.inter_shoot_statuses or []),
         "inter_shoot_intervals": p.get_inter_shoot_intervals() if p.is_punctual else [],
         "shooting_locations": p.locations_list,
+        "locations_list": p.locations_list,
         "shooting_locations_json": json.dumps(p.locations_list),
         "production_id": str(p.production_id) if p.production_id else "",
         "pilot_contact_id": str(p.pilot_contact_id) if p.pilot_contact_id else "",
@@ -920,6 +921,56 @@ def get_project_for_edit(record_id):
         "vehicle_ids": veh_ids,
         "head_ids": head_ids,
         "bv_referent_ids": [u.id for u in (p.bv_referents or [])],
+    }
+
+
+def get_project_for_duplicate(record_id):
+    """
+    Récupère un projet existant et le formate pour la duplication dans le formulaire de création.
+    Les identifiants propres au projet original (id, record_id, project_id) sont omis pour garantir
+    la création d'un nouveau projet indépendant, tout en pré-remplissant le nom (suffixé par '(Copie)'),
+    la production, les contacts de l'équipe, les véhicules, les têtes, les dates, les lieux de tournage et les notes.
+    """
+    p = resolve_project(record_id)
+    if not p or p.deleted_at is not None:
+        return None
+
+    veh_ids = [v.strip() for v in (p.vehicles_to_check or "").split(",") if v.strip()] if p.vehicles_to_check else []
+    head_ids = [h.strip() for h in (p.heads_to_check or "").split(",") if h.strip()] if p.heads_to_check else []
+    locations = p.locations_list or []
+
+    return {
+        "id": None,
+        "record_id": None,
+        "project_id": None,
+        "name": f"{p.name} (Copie)",
+        "departure_date_raw": str(p.departure_date) if p.departure_date else "",
+        "shoot_start_raw": str(p.shoot_start_date) if p.shoot_start_date else "",
+        "shoot_end_raw": str(p.shoot_end_date) if p.shoot_end_date else "",
+        "return_date_raw": str(p.return_date) if p.return_date else "",
+        "date_mode": p.date_mode or "continuous",
+        "is_punctual": p.is_punctual,
+        "is_immobilized_between": p.is_immobilized_between if p.is_immobilized_between is not None else True,
+        "shoot_dates": p.shoot_dates or [],
+        "shoot_dates_json": json.dumps(p.shoot_dates or []),
+        "inter_shoot_statuses": p.inter_shoot_statuses or [],
+        "inter_shoot_statuses_json": json.dumps(p.inter_shoot_statuses or []),
+        "inter_shoot_intervals": p.get_inter_shoot_intervals() if p.is_punctual else [],
+        "shooting_locations": locations,
+        "locations_list": locations,
+        "shooting_locations_json": json.dumps(locations),
+        "production_id": str(p.production_id) if p.production_id else "",
+        "pilot_contact_id": str(p.pilot_contact_id) if p.pilot_contact_id else "",
+        "production_contact_id": str(p.production_contact_id) if p.production_contact_id else "",
+        "dop_contact_id": str(p.dop_contact_id) if p.dop_contact_id else "",
+        "first_ac_contact_id": str(p.first_ac_contact_id) if p.first_ac_contact_id else "",
+        "key_grip_contact_id": str(p.key_grip_contact_id) if p.key_grip_contact_id else "",
+        "notes": p.notes or "",
+        "vehicle_ids": veh_ids,
+        "head_ids": head_ids,
+        "bv_referent_ids": [u.id for u in (p.bv_referents or [])],
+        "source_project_id": p.id,
+        "source_project_name": p.name,
     }
 
 

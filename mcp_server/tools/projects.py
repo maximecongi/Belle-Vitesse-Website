@@ -598,6 +598,21 @@ def get_project_form_context(
 @mcp.tool()
 @run_in_flask_context
 @require_mcp_scope("read_only")
+def get_project_for_duplicate(project_id: int) -> Dict[str, Any]:
+    """
+    Récupère un projet existant et pré-remplit les données nécessaires à sa duplication
+    (nom suffixé par '(Copie)', production, contacts, équipements, dates, lieux, notes).
+    """
+    from services.admin.projects import get_project_for_duplicate as _duplicate
+    data = _duplicate(project_id)
+    if not data:
+        return {"success": False, "message": f"Projet #{project_id} introuvable."}
+    return {"success": True, "project": data}
+
+
+@mcp.tool()
+@run_in_flask_context
+@require_mcp_scope("read_only")
 def get_dashboard_summary() -> Dict[str, Any]:
     """
     Fournit une vue synthétique de l'activité pour l'agent IA :

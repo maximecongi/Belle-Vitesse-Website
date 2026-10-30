@@ -220,7 +220,12 @@ is_archive) }}
                     <div class="u-flex u-flex-column u-gap-1">
                         <a href="{{ url_for('admin_projects.admin_project_detail', record_id=project.id) }}"
                             class="admin-btn admin-btn-secondary admin-btn-sm u-text-center">Détails →</a>
-
+                        {% if session.get('admin_user_role') in ['administrator', 'manager', 'commercial'] %}
+                        <a href="{{ url_for('admin_projects.admin_project_duplicate', record_id=project.id) }}"
+                            class="admin-btn admin-btn-secondary admin-btn-xs u-text-center" title="Dupliquer ce tournage">
+                            <i data-lucide="copy"></i> Dupliquer
+                        </a>
+                        {% endif %}
                     </div>
                 </td>
             </tr>

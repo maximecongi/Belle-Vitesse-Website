@@ -448,8 +448,8 @@
             });
         }
 
-        // Vérification initiale si on est en mode édition
-        if (currentProjectId) {
+        // Vérification initiale si on est en mode édition ou duplication (équipements pré-sélectionnés)
+        if (currentProjectId || $('input[name="vehicle_ids"]:checked').length > 0 || $('input[name="head_ids"]:checked').length > 0) {
             setTimeout(checkBookingConflicts, 400);
         }
     }

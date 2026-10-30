@@ -2,6 +2,7 @@ from services.admin.projects import (
     create_project,
     update_project,
     delete_project,
+    get_project_for_duplicate,
     get_project_for_edit,
     list_projects,
     update_project_notes,
@@ -724,6 +725,129 @@ class ProjectsTest(unittest.TestCase):
 
             # Nettoyage
             db.session.delete(created_project)
+            db.session.delete(prod)
+            db.session.delete(user)
+            db.session.commit()
+
+    def test_get_project_for_duplicate(self):
+        """Vérifie le formatage et le pré-remplissage des données lors de la duplication d'un projet."""
+        with self.app.app_context():
+            prod = Production(name="Production Duplication")
+            contact = Contact(first_name="Marc", last_name="Dupont", mail="marc.dupont@example.com", job_title="Directeur.rice de la photographie")
+            db.session.add_all([prod, contact])
+            db.session.commit()
+
+            proj = Project(
+                name="Tournage Original",
+                production_id=prod.id,
+                dop_contact_id=contact.id,
+                departure_date=date(2026, 11, 10),
+                shoot_start_date=date(2026, 11, 11),
+                shoot_end_date=date(2026, 11, 12),
+                return_date=date(2026, 11, 13),
+                date_mode="continuous",
+                notes="Besoins spécifiques : grue et traveling",
+                shooting_locations=[{"name": "Circuit Paul Ricard", "address": "Le Castellet"}],
+                vehicles_to_check="1,2",
+                heads_to_check="head1",
+            )
+            db.session.add(proj)
+            db.session.commit()
+
+            dup_data = get_project_for_duplicate(proj.id)
+            self.assertIsNotNone(dup_data)
+            # Les identifiants propres au projet doivent être None
+            self.assertIsNone(dup_data["id"])
+            self.assertIsNone(dup_data["record_id"])
+            self.assertIsNone(dup_data["project_id"])
+            # Le nom doit être suffixé par (Copie)
+            self.assertEqual(dup_data["name"], "Tournage Original (Copie)")
+            self.assertEqual(dup_data["source_project_id"], proj.id)
+            self.assertEqual(dup_data["source_project_name"], "Tournage Original")
+            self.assertEqual(dup_data["production_id"], str(prod.id))
+            self.assertEqual(dup_data["dop_contact_id"], str(contact.id))
+            self.assertEqual(dup_data["departure_date_raw"], "2026-11-10")
+            self.assertEqual(dup_data["shoot_start_raw"], "2026-11-11")
+            self.assertEqual(dup_data["shoot_end_raw"], "2026-11-12")
+            self.assertEqual(dup_data["return_date_raw"], "2026-11-13")
+            self.assertEqual(dup_data["notes"], "Besoins spécifiques : grue et traveling")
+            self.assertEqual(dup_data["vehicle_ids"], ["1", "2"])
+            self.assertEqual(dup_data["head_ids"], ["head1"])
+            self.assertEqual(len(dup_data["shooting_locations"]), 1)
+            self.assertEqual(dup_data["shooting_locations"][0]["name"], "Circuit Paul Ricard")
+
+            # Projet introuvable
+            self.assertIsNone(get_project_for_duplicate(999999))
+
+            # Nettoyage
+            db.session.delete(proj)
+            db.session.delete(contact)
+            db.session.delete(prod)
+            db.session.commit()
+
+    def test_admin_project_duplicate_view_and_creation(self):
+        """Vérifie l'affichage du formulaire de duplication et la création effective du nouveau projet."""
+        with self.app.app_context():
+            user = User(firstname="Admin", lastname="Manager", mail="admin_dup@example.com", role="administrator")
+            prod = Production(name="Prod Alpha")
+            db.session.add_all([user, prod])
+            db.session.commit()
+
+            proj = Project(
+                name="Projet Source",
+                production_id=prod.id,
+                departure_date=date(2026, 12, 1),
+                shoot_start_date=date(2026, 12, 2),
+                shoot_end_date=date(2026, 12, 3),
+                return_date=date(2026, 12, 4),
+                notes="Notes pour la duplication",
+                shooting_locations=[{"name": "Studio 24", "address": "Paris"}],
+            )
+            db.session.add(proj)
+            db.session.commit()
+
+            with self.client.session_transaction() as sess:
+                sess["admin_authenticated"] = True
+                sess["admin_user_id"] = user.id
+                sess["admin_user_role"] = user.role
+                sess["admin_user_email"] = user.mail
+
+            # 1. Accès via GET /admin/projects/<id>/duplicate
+            res = self.client.get(f"/admin/projects/{proj.id}/duplicate")
+            self.assertEqual(res.status_code, 200)
+            html = res.data.decode("utf-8")
+            self.assertIn("Dupliquer le Projet", html)
+            self.assertIn("Projet Source (Copie)", html)
+            self.assertIn("Duplication de tournage", html)
+            self.assertIn("Projet Source", html)
+
+            # 2. Accès via GET /admin/projects/new?duplicate_from=<id>
+            res_redir = self.client.get(f"/admin/projects/new?duplicate_from={proj.id}")
+            self.assertEqual(res_redir.status_code, 302)
+            self.assertTrue(res_redir.location.endswith(f"/admin/projects/{proj.id}/duplicate"))
+
+            # 3. Soumission du formulaire pour créer le projet dupliqué
+            form_dup = {
+                "name": "Projet Source (Copie)",
+                "production_id": str(prod.id),
+                "departure_date": "2026-12-01",
+                "shoot_start": "2026-12-02",
+                "shoot_end": "2026-12-03",
+                "return_date": "2026-12-04",
+                "notes": "Notes pour la duplication modifiées",
+                "shooting_locations": '[{"name": "Studio 24", "address": "Paris"}]',
+            }
+            res_post = self.client.post("/admin/projects/new", data=form_dup)
+            self.assertEqual(res_post.status_code, 302)
+
+            duplicated_project = Project.query.filter_by(name="Projet Source (Copie)").first()
+            self.assertIsNotNone(duplicated_project)
+            self.assertNotEqual(duplicated_project.id, proj.id)
+            self.assertEqual(duplicated_project.notes, "Notes pour la duplication modifiées")
+
+            # Nettoyage
+            db.session.delete(duplicated_project)
+            db.session.delete(proj)
             db.session.delete(prod)
             db.session.delete(user)
             db.session.commit()
