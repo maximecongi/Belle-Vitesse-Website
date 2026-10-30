@@ -1227,7 +1227,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                     pas.
                 </p>
 
-                <div id="pilotVehiclesError" class="alert-banner-danger u-mb-3 u-d-none" role="alert">
+                <div id="pilotVehiclesError" class="alert-banner-danger u-mb-3 {% if vehicles and vehicles|length > 0 %}u-d-none{% endif %}" role="alert">
                     <i data-lucide="alert-triangle"></i>
                     <div class="alert-banner-danger-content">
                         <span class="alert-banner-title-danger">Sélection requise</span>
@@ -1269,7 +1269,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                 <button type="button" class="admin-btn admin-btn-secondary js-close-pilot-signer-modal">
                     Annuler
                 </button>
-                <button type="submit" class="admin-btn admin-btn-primary">
+                <button type="submit" class="admin-btn admin-btn-primary {% if not vehicles or vehicles|length == 0 %}is-disabled{% endif %}" {% if not vehicles or vehicles|length == 0 %}disabled{% endif %}>
                     <i data-lucide="send" class="u-mr-1"></i>
                     Créer l'invitation Annexe 3
                 </button>

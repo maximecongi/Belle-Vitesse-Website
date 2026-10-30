@@ -1015,7 +1015,7 @@ select.form-input.form-input-sm {
 /* Inspection details pages styling */
 
 .alert-banner-success {
-    display: flex !important;
+    display: flex;
     align-items: center !important;
     gap: 0.75rem !important;
     padding: 1rem 1.25rem !important;
@@ -1043,7 +1043,7 @@ select.form-input.form-input-sm {
 }
 
 .alert-banner-danger {
-    display: flex !important;
+    display: flex;
     align-items: flex-start !important;
     gap: 0.75rem !important;
     padding: 1rem 1.25rem !important;
@@ -1075,7 +1075,7 @@ select.form-input.form-input-sm {
 }
 
 .alert-banner-warning {
-    display: flex !important;
+    display: flex;
     align-items: flex-start !important;
     gap: 0.75rem !important;
     padding: 1rem 1.25rem !important;
@@ -1095,13 +1095,20 @@ select.form-input.form-input-sm {
 }
 
 .alert-banner-info {
-    display: flex !important;
+    display: flex;
     align-items: flex-start !important;
     gap: 0.75rem !important;
     padding: 1rem 1.25rem !important;
     border-radius: 8px !important;
     background: var(--status-info-bg, #DBEAFE) !important;
     border: 1px solid var(--status-info-border, rgba(59, 130, 246, 0.3)) !important;
+}
+
+.alert-banner-success.u-d-none,
+.alert-banner-danger.u-d-none,
+.alert-banner-warning.u-d-none,
+.alert-banner-info.u-d-none {
+    display: none !important;
 }
 
 .alert-banner-title-info {

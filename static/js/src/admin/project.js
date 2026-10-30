@@ -1008,6 +1008,30 @@ function initPilotSignerModal() {
     if (document._pilotSignerModalBound) return;
     document._pilotSignerModalBound = true;
 
+    function updatePilotVehicleValidation(modal) {
+        if (!modal) return;
+        const checked = modal.querySelectorAll('input[name="selected_vehicles"]:checked');
+        const err = modal.querySelector('#pilotVehiclesError');
+        const submitBtn = modal.querySelector('button[type="submit"]');
+        const hasVehicles = checked.length > 0;
+
+        if (err) {
+            if (hasVehicles) {
+                err.classList.add('u-d-none');
+            } else {
+                err.classList.remove('u-d-none');
+                if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                    window.lucide.createIcons();
+                }
+            }
+        }
+
+        if (submitBtn) {
+            submitBtn.disabled = !hasVehicles;
+            submitBtn.classList.toggle('is-disabled', !hasVehicles);
+        }
+    }
+
     // Ouverture déléguée
     document.addEventListener('click', (e) => {
         const openBtn = e.target.closest('.js-open-add-pilot-signer-modal');
@@ -1015,8 +1039,7 @@ function initPilotSignerModal() {
             e.preventDefault();
             const modal = document.getElementById('addPilotSignerModal');
             if (modal) {
-                const err = modal.querySelector('#pilotVehiclesError');
-                if (err) err.classList.add('u-d-none');
+                updatePilotVehicleValidation(modal);
                 modal.classList.remove('u-d-none');
                 modal.classList.add('is-active');
                 if (window.lucide && typeof window.lucide.createIcons === 'function') {
@@ -1068,11 +1091,7 @@ function initPilotSignerModal() {
             if (cb.matches('#addPilotSignerModal input[name="selected_vehicles"]')) {
                 const modal = document.getElementById('addPilotSignerModal');
                 if (modal) {
-                    const checked = modal.querySelectorAll('input[name="selected_vehicles"]:checked');
-                    const err = modal.querySelector('#pilotVehiclesError');
-                    if (err && checked.length > 0) {
-                        err.classList.add('u-d-none');
-                    }
+                    updatePilotVehicleValidation(modal);
                 }
             }
         }
@@ -1088,19 +1107,18 @@ function initPilotSignerModal() {
             e.preventDefault();
             e.stopImmediatePropagation();
 
-            const err = form.querySelector('#pilotVehiclesError') || document.getElementById('pilotVehiclesError');
-            if (err) {
-                err.classList.remove('u-d-none');
-                if (window.lucide && typeof window.lucide.createIcons === 'function') {
-                    window.lucide.createIcons();
+            const modal = form.closest('#addPilotSignerModal') || document.getElementById('addPilotSignerModal');
+            if (modal) {
+                updatePilotVehicleValidation(modal);
+                const err = modal.querySelector('#pilotVehiclesError');
+                if (err) {
+                    err.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }
-                err.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
 
             if (typeof window.showFlash === 'function') {
                 window.showFlash("Veuillez sélectionner au moins 1 véhicule.", "error");
             }
-            alert("Veuillez sélectionner au moins 1 véhicule pour créer l'attestation pilote.");
             return false;
         }
     });
