@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const hintEl = document.querySelector(".preview-controls-hint");
         if (hintEl) {
-            hintEl.textContent = "Génération du catalogue (environ 10 secondes)...";
+            hintEl.textContent = "Génération du catalogue (environ 30 secondes)...";
         }
     });
 });
