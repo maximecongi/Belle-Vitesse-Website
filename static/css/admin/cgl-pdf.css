@@ -735,6 +735,30 @@
     font-size: 7.5pt;
 }
 
+.cgl-annexe2-locations-list,
+.cgl-annexe2-vehicles-list {
+    margin: 3pt 0 4pt 12pt;
+    padding-left: 0;
+    list-style-type: disc;
+}
+
+.cgl-annexe2-locations-list>li,
+.cgl-annexe2-vehicles-list>li {
+    margin-bottom: 2pt;
+    font-size: 7.5pt;
+    line-height: 1.35;
+}
+
+.cgl-annexe2-location-name,
+.cgl-annexe2-vehicle-name {
+    font-weight: bold;
+}
+
+.cgl-annexe2-location-address,
+.cgl-annexe2-vehicle-id {
+    color: #475569;
+}
+
 .cgl-annexe2-subtext {
     margin-top: 4pt;
     font-style: italic;

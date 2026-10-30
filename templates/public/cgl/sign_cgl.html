@@ -477,13 +477,46 @@
                             <span class="public-doc-info-label">Date(s) de tournage :</span>
                             <span class="public-doc-info-value">{{ waiver.display_shooting_dates }}</span>
                         </div>
-                        <div class="public-doc-info-item">
+                        <div class="public-doc-info-item u-col-span-full">
                             <span class="public-doc-info-label">Lieu(x) de tournage :</span>
-                            <span class="public-doc-info-value">{{ waiver.display_shooting_locations or '—' }}</span>
+                            {% if waiver.display_shooting_locations_list and
+                            waiver.display_shooting_locations_list|length > 0 %}
+                            <ul class="cgl-annexe2-locations-list">
+                                {% for loc in waiver.display_shooting_locations_list %}
+                                <li>
+                                    <span class="cgl-annexe2-location-name">{{ loc.name }}</span>{% if loc.address %} —
+                                    <span class="cgl-annexe2-location-address">{{ loc.address }}</span>{% endif %}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% elif waiver.display_shooting_locations %}
+                            <span class="public-doc-info-value">{{ waiver.display_shooting_locations }}</span>
+                            {% else %}
+                            <span class="public-doc-info-value">—</span>
+                            {% endif %}
                         </div>
-                        <div class="public-doc-info-item">
+                        <div class="public-doc-info-item u-col-span-full">
                             <span class="public-doc-info-label">Véhicule(s) loué(s) :</span>
-                            <span class="public-doc-info-value">{{ waiver.vehicles or '—' }}</span>
+                            {% if waiver.vehicles_details and waiver.vehicles_details|length > 0 %}
+                            <ul class="cgl-annexe2-vehicles-list">
+                                {% for v in waiver.vehicles_details %}
+                                <li>
+                                    <span class="cgl-annexe2-vehicle-name">{{ v.name }}</span>{% if v.unique_id %} <span
+                                        class="cgl-annexe2-vehicle-id">({{ v.unique_id }})</span>{% endif %}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% elif waiver.vehicles %}
+                            <ul class="cgl-annexe2-vehicles-list">
+                                {% for v in waiver.vehicles.split(',') %}
+                                <li>
+                                    <span class="cgl-annexe2-vehicle-name">{{ v.strip() }}</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            <span class="public-doc-info-value">—</span>
+                            {% endif %}
                         </div>
                         <div class="public-doc-info-item">
                             <span class="public-doc-info-label">Référence du Bon de Commande :</span>

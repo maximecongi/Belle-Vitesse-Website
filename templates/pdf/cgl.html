@@ -248,9 +248,41 @@
                             cgl.display_project_name }}</div>
                         <div><span class="cgl-party-field-label">Date(s) de tournage :</span> {{
                             cgl.display_shooting_dates }}</div>
-                        <div><span class="cgl-party-field-label">Lieu(x) de tournage :</span> {{
-                            cgl.display_shooting_locations or '—' }}</div>
-                        <div><span class="cgl-party-field-label">Véhicule(s) loué(s) :</span> {{ cgl.vehicles or '—' }}
+                        <div>
+                            <span class="cgl-party-field-label">Lieu(x) de tournage :</span>
+                            {% if cgl.display_shooting_locations_list and cgl.display_shooting_locations_list|length > 0 %}
+                            <ul class="cgl-annexe2-locations-list">
+                                {% for loc in cgl.display_shooting_locations_list %}
+                                <li>
+                                    <span class="cgl-annexe2-location-name">{{ loc.name }}</span>{% if loc.address %} — <span class="cgl-annexe2-location-address">{{ loc.address }}</span>{% endif %}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            {{ cgl.display_shooting_locations or '—' }}
+                            {% endif %}
+                        </div>
+                        <div>
+                            <span class="cgl-party-field-label">Véhicule(s) loué(s) :</span>
+                            {% if cgl.vehicles_details and cgl.vehicles_details|length > 0 %}
+                            <ul class="cgl-annexe2-vehicles-list">
+                                {% for v in cgl.vehicles_details %}
+                                <li>
+                                    <span class="cgl-annexe2-vehicle-name">{{ v.name }}</span>{% if v.unique_id %} <span class="cgl-annexe2-vehicle-id">({{ v.unique_id }})</span>{% endif %}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% elif cgl.vehicles %}
+                            <ul class="cgl-annexe2-vehicles-list">
+                                {% for v in cgl.vehicles.split(',') %}
+                                <li>
+                                    <span class="cgl-annexe2-vehicle-name">{{ v.strip() }}</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {% else %}
+                            —
+                            {% endif %}
                         </div>
                         <div><span class="cgl-party-field-label">Référence du Bon de Commande :</span> {{
                             cgl.display_order_ref or '—' }}</div>

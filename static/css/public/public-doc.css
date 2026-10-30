@@ -409,6 +409,31 @@ a.public-doc-vehicle-card:hover {
     margin-bottom: 0.35rem;
 }
 
+.cgl-annexe2-locations-list,
+.cgl-annexe2-vehicles-list {
+    margin: 0.35rem 0 0.5rem 1.25rem;
+    padding-left: 0;
+    list-style-type: disc;
+}
+
+.cgl-annexe2-locations-list>li,
+.cgl-annexe2-vehicles-list>li {
+    margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    color: var(--text-color, #1e293b);
+}
+
+.cgl-annexe2-location-name,
+.cgl-annexe2-vehicle-name {
+    font-weight: 600;
+}
+
+.cgl-annexe2-location-address,
+.cgl-annexe2-vehicle-id {
+    color: var(--grey-2, #64748b);
+}
+
 .cgl-annexe2-subtext {
     margin-top: 0.35rem;
     font-style: italic;
