@@ -1,5 +1,14 @@
+import os
 import unittest
 from datetime import date, timedelta
+
+# Isolation de l'environnement de test (SQLite in-memory, aucun tunnel SSH/MySQL)
+os.environ.setdefault("FLASK_ENV", "testing")
+os.environ.setdefault("TESTING", "True")
+os.environ.setdefault("SQLALCHEMY_DATABASE_URI", "sqlite:///:memory:")
+os.environ.setdefault("USE_SSH_TUNNEL", "false")
+os.environ.setdefault("WTF_CSRF_ENABLED", "False")
+
 from app import create_app
 from models import Project, Production, Incident, CheckoutVehicle, CheckinVehicle, db
 from services.admin.projects import list_projects
@@ -14,6 +23,15 @@ class TestServerPagination(unittest.TestCase):
         self.app = create_app()
         self.app.config["TESTING"] = True
         self.client = self.app.test_client()
+        self.ctx = self.app.app_context()
+        self.ctx.push()
+        db.create_all()
+
+    def tearDown(self):
+        db.session.rollback()
+        db.session.remove()
+        db.drop_all()
+        self.ctx.pop()
 
     def test_list_projects_backward_compatibility(self):
         """Vérifie que list_projects sans page retourne toujours une liste standard."""

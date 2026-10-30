@@ -29,6 +29,13 @@ class APIRouteSmokeTest(unittest.TestCase):
         with self.app.app_context():
             db.create_all()
 
+    def tearDown(self):
+        from models import db
+        with self.app.app_context():
+            db.session.rollback()
+            db.session.remove()
+            db.drop_all()
+
     def test_api_login_no_email(self):
         """POST /api/v1/auth/login without email returns 400."""
         resp = self.client.post("/api/v1/auth/login",

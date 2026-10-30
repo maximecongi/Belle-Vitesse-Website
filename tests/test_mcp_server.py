@@ -2,9 +2,17 @@
 Suite de tests unitaires et d'intégration PyTest pour le serveur MCP (BV-MCP).
 Vérifie la conformité de tous les outils MCP, la sécurité par scopes et les garde-fous.
 """
+import os
 import sys
 import unittest
 from unittest.mock import MagicMock
+
+# Isolation de l'environnement de test (SQLite in-memory, aucun tunnel SSH/MySQL)
+os.environ.setdefault("FLASK_ENV", "testing")
+os.environ.setdefault("TESTING", "True")
+os.environ.setdefault("SQLALCHEMY_DATABASE_URI", "sqlite:///:memory:")
+os.environ.setdefault("USE_SSH_TUNNEL", "false")
+os.environ.setdefault("WTF_CSRF_ENABLED", "False")
 
 # Mock Weasyprint
 mock_weasyprint = MagicMock()
@@ -57,6 +65,17 @@ class MCPServerFullTestSuite(unittest.TestCase):
             if v:
                 db.session.delete(v)
             VehicleCheckpointConfig.query.filter_by(vehicle_id="test-veh-01").delete()
+
+            # Nettoyage résiduel exhaustif de sécurité (utilisateurs et jetons de test)
+            for t_name in ["Com ReadOnly", "Mgr Write", "Adm Full", "Expiring Agent", "Permanent Agent", "Test Token"]:
+                t = McpApiToken.query.filter_by(name=t_name).first()
+                if t:
+                    db.session.delete(t)
+            for uid in [901, 902, 903, 904, 999]:
+                u = db.session.get(User, uid)
+                if u:
+                    db.session.delete(u)
+
             db.session.commit()
         except Exception:
             db.session.rollback()
@@ -732,6 +751,19 @@ class MCPServerFullTestSuite(unittest.TestCase):
             self.assertIn(b"Adm Full", res_page.data)
         finally:
             self.app.config["WTF_CSRF_ENABLED"] = prev_csrf
+            try:
+                # Nettoyage rigoureux des tokens et des comptes utilisateurs de test
+                for t_name in ["Com ReadOnly", "Mgr Write", "Adm Full"]:
+                    t = McpApiToken.query.filter_by(name=t_name).first()
+                    if t:
+                        db.session.delete(t)
+                for uid in [901, 902, 903, 904]:
+                    u = db.session.get(User, uid)
+                    if u:
+                        db.session.delete(u)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
 
     def test_mcp_token_is_expired_and_naive_aware_compatibility(self):
         """Vérifie la robustesse de McpApiToken.is_expired face aux datetimes naïves et conscientes."""

@@ -7,8 +7,17 @@ Vérifie :
 4. L'idempotence des fonctions de compatibilité init_*_routes.
 """
 
+import os
 import unittest
 from flask import Blueprint, url_for
+
+# Isolation de l'environnement de test (SQLite in-memory, aucun tunnel SSH/MySQL)
+os.environ.setdefault("FLASK_ENV", "testing")
+os.environ.setdefault("TESTING", "True")
+os.environ.setdefault("SQLALCHEMY_DATABASE_URI", "sqlite:///:memory:")
+os.environ.setdefault("USE_SSH_TUNNEL", "false")
+os.environ.setdefault("WTF_CSRF_ENABLED", "False")
+
 from app import create_app
 from routes.admin import (
     ADMIN_BLUEPRINTS,

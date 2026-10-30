@@ -632,6 +632,26 @@ class PilotWaiver(Waiver):
         return f"<PilotWaiver {self.waiver_id} - {self.signer_name} - {self.status}>"
 
 
+class ProductionWaiver(Waiver):
+    """Décharge de production (Legacy BVPW)."""
+    __mapper_args__ = {
+        "polymorphic_identity": "production",
+    }
+
+    def __repr__(self):
+        return f"<ProductionWaiver {self.waiver_id} - {self.status}>"
+
+
+class LegacyPilotWaiver(PilotWaiver):
+    """Décharge pilote historique avec identifiant polymorphe 'pilot' (Legacy BVPA/BVDW)."""
+    __mapper_args__ = {
+        "polymorphic_identity": "pilot",
+    }
+
+    def __repr__(self):
+        return f"<LegacyPilotWaiver {self.waiver_id} - {self.status}>"
+
+
 # ── Tokens et Documents Signés Unifiés ───────────────────────────
 
 class WaiverToken(db.Model, TokenMixin):

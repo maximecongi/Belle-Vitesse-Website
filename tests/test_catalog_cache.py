@@ -7,6 +7,14 @@ import shutil
 import tempfile
 import unittest
 from unittest.mock import patch
+
+# Isolation de l'environnement de test (SQLite in-memory, aucun tunnel SSH/MySQL)
+os.environ.setdefault("FLASK_ENV", "testing")
+os.environ.setdefault("TESTING", "True")
+os.environ.setdefault("SQLALCHEMY_DATABASE_URI", "sqlite:///:memory:")
+os.environ.setdefault("USE_SSH_TUNNEL", "false")
+os.environ.setdefault("WTF_CSRF_ENABLED", "False")
+
 from app import create_app
 from models import db, User
 from services.admin.catalog import (
@@ -38,6 +46,8 @@ class TestCatalogCacheAndDownload(unittest.TestCase):
 
     def tearDown(self):
         db.session.rollback()
+        db.session.remove()
+        db.drop_all()
         self.ctx.pop()
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
