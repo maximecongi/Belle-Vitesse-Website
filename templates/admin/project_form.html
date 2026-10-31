@@ -18,10 +18,11 @@
 {% block content %}
 <div class="admin-card">
     {% if is_duplicate and source_project_name %}
-    <div class="duplicate-project-banner">
-        <i data-lucide="copy" class="u-w-18 u-h-18 u-flex-shrink-0"></i>
+    <div class="duplicate-project-banner u-mb-3" role="status">
+        <span class="u-text-xl u-flex-shrink-0"><i data-lucide="copy"></i></span>
         <div>
-            <strong>Duplication de tournage :</strong> Ce formulaire a été pré-rempli à partir de « {{ source_project_name }} ». Modifiez les dates ou équipements si nécessaire avant de valider la création.
+            <div class="u-font-semibold u-mb-1">Duplication de tournage</div>
+            <div class="u-text-xs">Ce formulaire a été pré-rempli à partir de « {{ source_project_name }} ». Modifiez les dates ou équipements si nécessaire avant de valider la création.</div>
         </div>
     </div>
     {% endif %}
@@ -227,13 +228,13 @@
         </div>
 
         <!-- Bandeau d'alerte Conflits de Réservation -->
-        <div id="bookingConflictsAlert" class="booking-conflicts-banner is-hidden u-mt-3">
-            <span class="booking-conflicts-icon">⚠️</span>
-            <div class="booking-conflicts-body">
-                <strong class="u-d-block u-mb-1 booking-conflicts-title">Conflit de réservation détecté</strong>
-                <span id="bookingConflictsSummary">Des équipements sélectionnés sont déjà engagés sur un autre tournage
-                    aux mêmes dates.</span>
-                <ul id="bookingConflictsDetailsList" class="u-mt-2 u-mb-0 u-pl-3 booking-conflicts-list"></ul>
+        <div id="bookingConflictsAlert" class="alert-banner-warning is-hidden u-mt-3" role="alert">
+            <span class="u-text-xl u-flex-shrink-0"><i data-lucide="triangle-alert"></i></span>
+            <div class="u-flex-1">
+                <div class="alert-banner-title-warning u-mb-1">Conflit de réservation détecté</div>
+                <div id="bookingConflictsSummary" class="alert-banner-desc-warning">Des équipements sélectionnés sont déjà engagés sur un autre tournage
+                    aux mêmes dates.</div>
+                <ul id="bookingConflictsDetailsList" class="alert-banner-list u-mt-2 u-mb-0"></ul>
             </div>
         </div>
 

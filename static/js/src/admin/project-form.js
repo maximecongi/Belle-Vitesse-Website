@@ -399,19 +399,24 @@
 
                             const $list = $('#bookingConflictsDetailsList').empty();
                             data.conflicts_list.forEach(function (c) {
-                                const itemLabel = (c.item_type === 'vehicle' ? '🏎️ ' : '🎥 ') + c.item_name;
+                                const iconName = c.item_type === 'vehicle' ? 'truck' : 'bot';
+                                const itemHtml = '<i data-lucide="' + iconName + '" class="u-w-14 u-h-14 u-mr-1"></i> ' + c.item_name;
                                 $list.append(
                                     $('<li>').html(
-                                        '<strong>' + itemLabel + '</strong> déjà réservé sur <em>' + c.project_name + '</em> (' + c.production + '), ' + c.period_label
+                                        '<strong>' + itemHtml + '</strong> déjà réservé sur <em>' + c.project_name + '</em> (' + c.production + '), ' + c.period_label
                                     )
                                 );
 
                                 const $card = $('.project-checkbox-card[data-item-id="' + c.item_id + '"]');
                                 $card.addClass('has-conflict');
                                 $card.find('.conflict-placeholder').html(
-                                    '<span class="conflict-badge" title="Déjà réservé par ' + c.production + ' (' + c.period_label + ')">⚠️ ' + c.project_name + '</span>'
+                                    '<span class="conflict-badge" title="Déjà réservé par ' + c.production + ' (' + c.period_label + ')"><i data-lucide="triangle-alert"></i> ' + c.project_name + '</span>'
                                 );
                             });
+
+                            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                                window.lucide.createIcons();
+                            }
 
                             $('#bookingConflictsAlert').slideDown(250);
                         } else {
