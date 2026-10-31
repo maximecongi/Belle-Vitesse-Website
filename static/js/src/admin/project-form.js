@@ -334,8 +334,8 @@
         function checkBookingConflicts() {
             clearTimeout(conflictCheckTimer);
             conflictCheckTimer = setTimeout(function () {
-                const startDate = $('#departure_date_input').val() || $('#shoot_start_input').val();
-                const endDate = $('#return_date_input').val() || $('#shoot_end_input').val() || startDate;
+                const startDate = $('#shoot_start_input').val() || $('#departure_date_input').val();
+                const endDate = $('#shoot_end_input').val() || $('#return_date_input').val() || startDate;
                 const dateMode = $('#date_mode_input').val() || 'continuous';
                 const isImmobilized = $('#is_immobilized_between_input').val() !== 'false';
                 const shootDates = $('#shoot_dates_input').val() || '[]';

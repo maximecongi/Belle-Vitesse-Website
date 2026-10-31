@@ -41,33 +41,56 @@ def _expand_date_range(d_start: date, d_end: date) -> set:
 
 
 def _get_project_active_dates(p: Project) -> set:
-    """Retourne l'ensemble des dates où le matériel est effectivement réservé pour le projet p."""
-    if hasattr(p, "effective_blocked_dates"):
-        try:
-            return p.effective_blocked_dates
-        except Exception as e:
-            logger.warning(f"Fallback effective_blocked_dates: {e}")
-
-    p_start = p.departure_date or p.shoot_start_date
-    p_end = p.return_date or p.shoot_end_date or p_start
-
-    # Si le projet est en mode ponctuel et explicitement NON immobilisé entre les dates
-    if getattr(p, "date_mode", None) == "punctual" and not getattr(p, "is_immobilized_between", True):
+    """Retourne l'ensemble des dates où le matériel est effectivement en tournage pour le projet p (exclusion départ/retour)."""
+    # 1. Mode ponctuel : considérer uniquement les dates de tournage (shoot_dates) et les jours d'intervalles immobilisés
+    if getattr(p, "date_mode", None) == "punctual":
         dates = set()
         raw_shoot_dates = getattr(p, "shoot_dates", None) or []
+        parsed_shoots = []
         for d_str in raw_shoot_dates:
             parsed = _parse_date(d_str)
             if parsed:
                 dates.add(parsed)
-        if p.departure_date:
-            dates.add(p.departure_date)
-        if p.return_date:
-            dates.add(p.return_date)
-        if not dates and p_start:
-            dates.add(p_start)
+                parsed_shoots.append(parsed)
+
+        parsed_shoots.sort()
+
+        # Gestion des intervalles d'immobilisation entre dates de tournage
+        if hasattr(p, "get_inter_shoot_intervals"):
+            try:
+                intervals = p.get_inter_shoot_intervals()
+                for inter in intervals:
+                    if inter.get("is_immobilized"):
+                        for day_str in inter.get("days", []):
+                            p_day = _parse_date(day_str)
+                            if p_day:
+                                dates.add(p_day)
+            except Exception:
+                if getattr(p, "is_immobilized_between", True):
+                    for i in range(len(parsed_shoots) - 1):
+                        d1 = parsed_shoots[i]
+                        d2 = parsed_shoots[i + 1]
+                        if (d2 - d1).days > 1:
+                            dates.update(_expand_date_range(d1 + timedelta(days=1), d2 - timedelta(days=1)))
+        elif getattr(p, "is_immobilized_between", True):
+            for i in range(len(parsed_shoots) - 1):
+                d1 = parsed_shoots[i]
+                d2 = parsed_shoots[i + 1]
+                if (d2 - d1).days > 1:
+                    dates.update(_expand_date_range(d1 + timedelta(days=1), d2 - timedelta(days=1)))
+
+        if not dates:
+            p_shoot_start = p.shoot_start_date or p.departure_date
+            p_shoot_end = p.shoot_end_date or p.return_date or p_shoot_start
+            if p_shoot_start and p_shoot_end:
+                return _expand_date_range(p_shoot_start, p_shoot_end)
+
         return dates
 
-    # Mode continu classique ou ponctuel immobilisé en continu
+    # 2. Mode continu classique : uniquement shoot_start_date à shoot_end_date (ou fallback departure/return si non renseigné)
+    p_start = p.shoot_start_date or p.departure_date
+    p_end = p.shoot_end_date or p.return_date or p_start
+
     if p_start and p_end:
         return _expand_date_range(p_start, p_end)
     elif p_start:
@@ -130,18 +153,18 @@ def check_booking_conflicts(
                 interval_immob = custom_statuses.get(key, is_immob)
                 if interval_immob:
                     req_active_dates.update(_expand_date_range(d1 + timedelta(days=1), d2 - timedelta(days=1)))
-
-        if start_date:
-            req_active_dates.add(start_date)
-        if end_date:
-            req_active_dates.add(end_date)
     elif clean_date_mode == "punctual" and not is_immob:
-        if start_date:
+        if shoot_dates:
+            for s in shoot_dates:
+                p_s = _parse_date(s)
+                if p_s:
+                    req_active_dates.add(p_s)
+        elif start_date:
             req_active_dates.add(start_date)
-        if end_date:
-            req_active_dates.add(end_date)
+            if end_date:
+                req_active_dates.add(end_date)
     else:
-        # Plage continue
+        # Plage continue (tournage)
         effective_start = start_date
         effective_end = end_date
         if not effective_start and shoot_dates:
@@ -235,8 +258,8 @@ def check_booking_conflicts(
         p_heads = set(h.strip() for h in raw_h.split(",") if h.strip())
 
         prod_name = p.production.name if p.production else "—"
-        p_start = p.departure_date or p.shoot_start_date or min(p_active_dates)
-        p_end = p.return_date or p.shoot_end_date or max(p_active_dates)
+        p_start = p.shoot_start_date or (min(p_active_dates) if p_active_dates else None)
+        p_end = p.shoot_end_date or (max(p_active_dates) if p_active_dates else p_start)
 
         sorted_overlaps = sorted(list(overlap_dates))
         if len(sorted_overlaps) == 1:
@@ -247,14 +270,14 @@ def check_booking_conflicts(
             overlap_str = f"du {sorted_overlaps[0].strftime('%d/%m/%Y')} au {sorted_overlaps[-1].strftime('%d/%m/%Y')} ({len(sorted_overlaps)} jours)"
 
         if getattr(p, "date_mode", None) == "punctual" and not getattr(p, "is_immobilized_between", True):
-            period_label = f"Conflit {overlap_str} (dates ponctuelles, non immobilisé)"
+            period_label = f"Tournage {overlap_str}"
         elif getattr(p, "date_mode", None) == "punctual":
-            period_label = f"Conflit {overlap_str} (dates ponctuelles, immobilisé sur place)"
+            period_label = f"Tournage {overlap_str} (immobilisé)"
         else:
             period_label = (
                 f"du {p_start.strftime('%d/%m/%Y')} au {p_end.strftime('%d/%m/%Y')}"
-                if p_start != p_end
-                else f"le {p_start.strftime('%d/%m/%Y')}"
+                if p_start and p_end and p_start != p_end
+                else (f"le {p_start.strftime('%d/%m/%Y')}" if p_start else f"Tournage {overlap_str}")
             )
 
         # Vérifier conflits véhicules
