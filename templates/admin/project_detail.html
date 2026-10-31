@@ -32,7 +32,8 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
 </form>
 {% endif %}
 {% if is_admin or session.get('admin_user_role') in ['administrator', 'manager', 'commercial'] %}
-<a href="{{ url_for('admin_projects.admin_project_duplicate', record_id=project.id) }}" class="admin-btn admin-btn-secondary" title="Dupliquer ce tournage">
+<a href="{{ url_for('admin_projects.admin_project_duplicate', record_id=project.id) }}"
+    class="admin-btn admin-btn-secondary" title="Dupliquer ce tournage">
     <i data-lucide="copy"></i>
     <span>Dupliquer</span>
 </a>
@@ -229,7 +230,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                 <div class="project-contact-row">
                     <div class="project-contact-main">
                         <span class="project-contact-name">{{ u.firstname }} {{ u.lastname }}</span>
-                        <span class="project-contact-role">{{ u.role_display }}</span>
+                        <span class="project-contact-role">{{ u.job }}</span>
                     </div>
                     {% if u.phone or u.mail %}
                     <div class="project-contact-actions">
@@ -1171,7 +1172,8 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                 aria-label="Fermer">&times;</button>
         </div>
 
-        <form id="addPilotSignerForm" method="POST" action="{{ url_for('admin_waivers.admin_pilot_waivers_create', project_id=project.id) }}"
+        <form id="addPilotSignerForm" method="POST"
+            action="{{ url_for('admin_waivers.admin_pilot_waivers_create', project_id=project.id) }}"
             class="admin-modal-content u-p-4 u-overflow-y-auto">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="return_to" value="{{ request.full_path }}">
@@ -1227,11 +1229,14 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                     pas.
                 </p>
 
-                <div id="pilotVehiclesError" class="alert-banner-danger u-mb-3 {% if vehicles and vehicles|length > 0 %}u-d-none{% endif %}" role="alert">
+                <div id="pilotVehiclesError"
+                    class="alert-banner-danger u-mb-3 {% if vehicles and vehicles|length > 0 %}u-d-none{% endif %}"
+                    role="alert">
                     <i data-lucide="alert-triangle"></i>
                     <div class="alert-banner-danger-content">
                         <span class="alert-banner-title-danger">Sélection requise</span>
-                        <div class="alert-banner-desc-danger">Veuillez sélectionner au moins 1 véhicule pour créer l'attestation pilote.</div>
+                        <div class="alert-banner-desc-danger">Veuillez sélectionner au moins 1 véhicule pour créer
+                            l'attestation pilote.</div>
                     </div>
                 </div>
 
@@ -1269,7 +1274,9 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                 <button type="button" class="admin-btn admin-btn-secondary js-close-pilot-signer-modal">
                     Annuler
                 </button>
-                <button type="submit" class="admin-btn admin-btn-primary {% if not vehicles or vehicles|length == 0 %}is-disabled{% endif %}" {% if not vehicles or vehicles|length == 0 %}disabled{% endif %}>
+                <button type="submit"
+                    class="admin-btn admin-btn-primary {% if not vehicles or vehicles|length == 0 %}is-disabled{% endif %}"
+                    {% if not vehicles or vehicles|length==0 %}disabled{% endif %}>
                     <i data-lucide="send" class="u-mr-1"></i>
                     Créer l'invitation Annexe 3
                 </button>

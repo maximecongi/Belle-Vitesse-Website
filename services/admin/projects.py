@@ -523,6 +523,7 @@ def get_project_form_context():
             "id": u.id,
             "name": f"{u.firstname} {u.lastname}".strip(),
             "mail": u.mail,
+            "job": u.job,
             "role_display": u.role_display,
         }
         for u in bv_users
