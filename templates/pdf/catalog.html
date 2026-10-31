@@ -4,8 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>{% if with_prices %}CATALOGUE DE PRIX{% else %}CATALOGUE FLOTTE{% endif %} - BELLE VITESSE</title>
-    <link rel="stylesheet"
-        href="{{ url_for('static', filename='css/admin/catalog.css') }}?v={{ asset_version('css/admin/catalog.css') }}">
+    <link rel="stylesheet" href="{{ asset_url('css/admin/catalog.css') }}">
 </head>
 
 <body class="catalog-body">
@@ -199,9 +198,7 @@
             </div>
         </footer>
     </div>
-    <script
-        src="{{ url_for('static', filename='js/admin/admin.bundle.js') }}?v={{ asset_version('js/admin/admin.bundle.js') }}"
-        defer></script>
+    <script src="{{ asset_url('js/admin/admin.bundle.js') }}" defer></script>
 </body>
 
 </html>
