@@ -121,8 +121,9 @@
                         </div>
                         <div class="rich-select-options" id="vehicleOptions">
                             <div id="selectProjectNotice"
-                                class="u-p-3 u-text-sm u-text-muted u-text-center{% if data and data.project_id %} is-hidden{% endif %}">
-                                ⚠️ Veuillez d'abord sélectionner un projet ci-dessus
+                                class="u-p-3 u-text-sm u-text-muted u-text-center u-flex u-items-center u-justify-center u-gap-1{% if data and data.project_id %} is-hidden{% endif %}">
+                                <i data-lucide="triangle-alert" class="u-w-16 u-h-16 u-text-warning"></i>
+                                <span>Veuillez d'abord sélectionner un projet ci-dessus</span>
                             </div>
                             <div id="noVehicleNotice" class="u-p-3 u-text-sm u-text-muted u-text-center is-hidden">
                                 Aucun véhicule n'est rattaché à ce projet
