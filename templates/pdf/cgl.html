@@ -1,426 +1,371 @@
-<!DOCTYPE html>
-<html lang="fr">
+{% extends "pdf/base_pdf.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CGL — {{ cgl.waiver_id }} — {{ cgl.display_project_name }}</title>
-    <link rel="stylesheet" href="{{ asset_url('css/styles.css') }}">
-    <link rel="stylesheet" href="{{ asset_url('css/admin/cgl-pdf.css') }}">
-</head>
+{% block title %}CGL — {{ cgl.waiver_id }} — {{ cgl.display_project_name }}{% endblock %}
 
-<body class="cgl-container">
-    {% if is_preview %}
-    <div class="pdf-preview-toolbar">
-        <div class="pdf-preview-toolbar-left">
-            <span class="pdf-preview-badge">📄 Format A4 (210 × 297 mm)</span>
-            <span class="pdf-preview-title">{{ cgl.waiver_id }} — Conditions Générales de Location</span>
+{% block extra_css %}
+<link rel="stylesheet" href="{{ asset_url('css/admin/cgl-pdf.css') }}">
+{% endblock %}
+
+{% block preview_toolbar %}
+{% if is_preview %}
+{{ pdf_preview_toolbar(
+doc_title="Conditions Générales de Location",
+doc_id=cgl.waiver_id,
+format_pdf_url="?format=pdf",
+show_print=True
+) }}
+{% endif %}
+{% endblock %}
+
+{% block pdf_header %}
+{{ pdf_header(
+doc_type_title="Conditions Générales de Location",
+doc_id=(cgl or waiver).waiver_id,
+date_str=(((cgl or waiver).signed_at or (cgl or waiver).generated_at or (cgl or waiver).created_at or
+now).strftime('%d/%m/%Y')),
+company_name=company_name
+) }}
+{% endblock %}
+
+{% block pdf_title %}
+{{ pdf_title_banner(
+title="Conditions Générales de Location",
+subtitle="Véhicules Techniques de Tournage",
+context_info="Version en vigueur au " ~ (cgl.signed_at.strftime('%d/%m/%Y') if cgl.signed_at else
+(cgl.generated_at.strftime('%d/%m/%Y') if cgl.generated_at else cgl.created_at.strftime('%d/%m/%Y') if cgl.created_at
+else ''))
+) }}
+{% endblock %}
+
+{% block content %}
+<!-- ═══════════ IDENTIFICATION DES PARTIES ═══════════ -->
+<section class="cgl-parties-section">
+    <h2 class="cgl-section-title">Identification des Parties</h2>
+    <div class="cgl-parties-grid">
+        <!-- LE PRESTATAIRE -->
+        <div class="cgl-party-card">
+            <div class="cgl-party-role">Prestataire</div>
+            <div><span class="cgl-party-field-label">Société :</span> {{ company_name }}</div>
+            <div><span class="cgl-party-field-label">SIRET :</span> {{ company_siret or '—' }}{% if company_rcs %} ({{
+                company_rcs }}){% endif %}</div>
+            <div><span class="cgl-party-field-label">Représentant :</span> {{ company_representative }}, Président</div>
+            <div><span class="cgl-party-field-label">Adresse :</span> {{ company_address }}</div>
+            {% if company_email or company_phone %}
+            <div><span class="cgl-party-field-label">Contact :</span> {{ company_email }} — {{ company_phone }}</div>
+            {% endif %}
         </div>
-        <div class="pdf-preview-toolbar-actions">
-            <button type="button" class="pdf-preview-btn" onclick="window.print()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                    <rect x="6" y="14" width="12" height="8"></rect>
-                </svg>
-                Imprimer
-            </button>
-            <a href="?format=pdf" target="_blank" class="pdf-preview-btn pdf-preview-btn-primary">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-                Compiler PDF
-            </a>
+
+        <!-- LA PRODUCTION -->
+        <div class="cgl-party-card">
+            <div class="cgl-party-role">Production</div>
+            <div><span class="cgl-party-field-label">Nom :</span> {{ cgl.display_production_name }}{% if
+                cgl.display_legal_form %} ({{ cgl.display_legal_form }}){% endif %}</div>
+            <div><span class="cgl-party-field-label">Représentant :</span> {{ cgl.production_representative or '—' }}{%
+                if cgl.display_representative_role %} — {{ cgl.display_representative_role }}{% endif %}</div>
+            {% if cgl.display_legal_country|lower == 'france' or cgl.production_siret %}
+            <div><span class="cgl-party-field-label">{{ cgl.display_legal_identifier_label }} :</span> {{
+                cgl.production_siret or '—' }}{% if cgl.production_vat %} — TVA : {{ cgl.production_vat }}{% endif %}
+            </div>
+            {% endif %}
+            <div><span class="cgl-party-field-label">Adresse :</span> {{ cgl.production_address or '—' }}</div>
+            {% if cgl.signer_email or cgl.signer_phone %}
+            <div><span class="cgl-party-field-label">Contact :</span> {{ cgl.signer_email or '—' }}{% if
+                cgl.signer_phone %} — {{ cgl.signer_phone }}{% endif %}</div>
+            {% endif %}
+            {% if cgl.production_insurance_company %}
+            <div><span class="cgl-party-field-label">Assurance :</span> {{ cgl.production_insurance_company }}{% if
+                cgl.production_insurance_policy %} (Police : {{ cgl.production_insurance_policy }}){% endif %}</div>
+            {% endif %}
         </div>
     </div>
-    {% endif %}
+</section>
 
-    <div class="cgl-document">
+<!-- ═══════════ CORPS CONTRACTUEL (ARTICLES 1 À 22) ═══════════ -->
+<h2 class="cgl-section-title">Dispositions Contractuelles</h2>
+<div class="cgl-articles-container">
+    {% include "public/cgl/_cgl_articles.html" %}
+</div>
 
-        <!-- ═══════════ EN-TÊTE ═══════════ -->
-        <header class="public-doc-header cgl-header">
-            <div class="public-doc-header-logo cgl-header-logo">
-                <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
-                    alt="{{ company_name or 'Belle Vitesse' }}">
-            </div>
-            <div class="public-doc-header-meta cgl-header-meta">
-                <strong class="dot-before">Conditions Générales de Location</strong><br>
-                <span class="checkout-doc-id">{{ (cgl or waiver).waiver_id }}</span><br>
-                <span class="u-text-xxs">Émis le {{ ((cgl or waiver).signed_at or (cgl or waiver).generated_at or (cgl
-                    or waiver).created_at or now).strftime('%d/%m/%Y') }}</span>
-            </div>
-        </header>
+<!-- ═══════════ ANNEXE 1 : TABLEAU DE LA FLOTTE ═══════════ -->
+<section class="cgl-annexe-section">
+    <h2 class="cgl-annexe-title">Annexe 1 – Véhicules, statut réglementaire, charges maximales et Valeurs de Référence
+    </h2>
+    <p class="cgl-annexe-desc">
+        Les valeurs et tarifs ci-dessous sont exprimés hors taxes, à la date de version des CGL. Ils sont
+        revalorisés annuellement par le Loueur. Le prix applicable est celui du Bon de Commande. [Note de
+        travail : à compléter et valider par le client avant diffusion.]
+    </p>
 
-        <!-- ═══════════ TITRE PRINCIPAL ═══════════ -->
-        <div class="cgl-title-banner">
-            <h1 class="cgl-main-title">Conditions Générales de Location</h1>
-            <div class="cgl-subtitle">Véhicules Techniques de Tournage</div>
-            <p class="cgl-version-info">Version en vigueur au {{ cgl.signed_at.strftime('%d/%m/%Y') if cgl.signed_at
-                else (cgl.generated_at.strftime('%d/%m/%Y') if cgl.generated_at else cgl.created_at.strftime('%d/%m/%Y')
-                if cgl.created_at else '') }}</p>
+    <table class="cgl-table">
+        <thead>
+            <tr>
+                <th class="cgl-col-vehicule">Véhicule</th>
+                <th class="cgl-col-desc">Description / statut réglementaire</th>
+                <th class="cgl-col-voie">Voie publique ouverte</th>
+                <th class="cgl-col-pilotage">Pilotage</th>
+                <th class="cgl-col-charge">Charge max.</th>
+                <th class="cgl-col-valeur">Valeur de Référence HT</th>
+                <th class="cgl-col-tarif">Tarif indicatif HT / jour</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>ECAR</strong></td>
+                <td>Renault Twizy 80 modifiée (quadricycle lourd L7e d’origine) : châssis renforcé, débridée,
+                    plateformes et cadre de grue. Véhicule terrestre à moteur non conforme à sa réception.</td>
+                <td>Non</td>
+                <td>Pilote assigné par le Loueur</td>
+                <td>PTAC d’origine 690 kg – [configuration à préciser]</td>
+                <td class="cgl-num-cell">17 303 €</td>
+                <td class="cgl-num-cell">1 000 € (+ options)</td>
+            </tr>
+            <tr>
+                <td><strong>ERIDER</strong></td>
+                <td>Moto électrique Stark Varg EX 80 ch tout-terrain modifiée (châssis renforcé, départs de tubes).
+                    Véhicule terrestre à moteur non homologué route.</td>
+                <td>Non</td>
+                <td>Pilote assigné par le Loueur</td>
+                <td>[à préciser]</td>
+                <td class="cgl-num-cell">14 281 €</td>
+                <td class="cgl-num-cell">1 000 € (+ options)</td>
+            </tr>
+            <tr>
+                <td><strong>ETRIKE 360</strong></td>
+                <td>Tricycle à pédalage assisté (250 W, 25 km/h), plaques taraudées, option rickshaw.</td>
+                <td>Non (sauf Conditions Particulières)</td>
+                <td>Pilote assigné par le Loueur</td>
+                <td>300 kg</td>
+                <td class="cgl-num-cell">16 750 €</td>
+                <td class="cgl-num-cell">500 €</td>
+            </tr>
+            <tr>
+                <td><strong>ETRIKE</strong></td>
+                <td>Tricycle à pédalage assisté (250 W, 25 km/h), siège arrière, fixation tube 50 mm, option rickshaw.
+                </td>
+                <td>Non (sauf Conditions Particulières)</td>
+                <td>Pilote assigné ou Pilote du Locataire agréé + Règles de Sécurité</td>
+                <td>160 kg</td>
+                <td class="cgl-num-cell">4 373 €</td>
+                <td class="cgl-num-cell">400 €</td>
+            </tr>
+            <tr>
+                <td><strong>SEGWAY I2</strong></td>
+                <td>Gyropode modifié « mains libres » (contrôle genoux), roues route. Engin de déplacement personnel
+                    motorisé.</td>
+                <td>Non</td>
+                <td>Opérateur qualifié agréé + Règles de Sécurité</td>
+                <td>117 kg</td>
+                <td class="cgl-num-cell">4 758 €</td>
+                <td class="cgl-num-cell">300 €</td>
+            </tr>
+            <tr>
+                <td><strong>SEGWAY X2</strong></td>
+                <td>Gyropode modifié « mains libres » (contrôle genoux), roues turf, fixation Steadicam hardmount.</td>
+                <td>Non</td>
+                <td>Opérateur qualifié agréé + Règles de Sécurité</td>
+                <td>117 kg</td>
+                <td class="cgl-num-cell">7 690 €</td>
+                <td class="cgl-num-cell">350 €</td>
+            </tr>
+            <tr>
+                <td><strong>JACKAL RICKSHAW</strong></td>
+                <td>Remorque / rickshaw porte-opérateur (Accessoire).</td>
+                <td>Non</td>
+                <td>—</td>
+                <td>[à préciser]</td>
+                <td class="cgl-num-cell">[●] €</td>
+                <td class="cgl-num-cell">[●] €</td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- ═══════════ ANNEXE 2 : ENGAGEMENT DE SÉCURITÉ DU LOCATAIRE ═══════════ -->
+<section class="cgl-annexe-section cgl-annexe2-section">
+    <h2 class="cgl-annexe-title">Annexe 2 aux Conditions Générales de Location de Belle Vitesse<br>Engagement de
+        Sécurité du Locataire</h2>
+
+    <div class="cgl-annexe2-intro">
+        <p>Je soussigné(e), dûment habilité(e) à représenter la société de production désignée ci-dessous (le «
+            Locataire ») :</p>
+    </div>
+
+    <div class="cgl-parties-grid">
+        <div class="cgl-party-card">
+            <div><span class="cgl-party-field-label">Nom (dénomination sociale) de la société :</span> {{
+                cgl.display_production_name }}</div>
+            <div><span class="cgl-party-field-label">Forme :</span> {{
+                cgl.display_legal_form or '—' }}</div>
+            <div><span class="cgl-party-field-label">{% if cgl.production_siret %}{{ cgl.display_legal_identifier_label
+                    }} :</span> {{ cgl.production_siret }}{% endif %}</div>
+            <div><span class="cgl-party-field-label">{% if cgl.production_vat %}TVA :</span> {{ cgl.production_vat }}{%
+                endif %}</div>
+            <div><span class="cgl-party-field-label">Nom du représentant :</span> {{ cgl.production_representative or
+                '—' }}</div>
+            <div><span class="cgl-party-field-label">Fonction :</span> {{ cgl.display_representative_role }}</div>
+            <div><span class="cgl-party-field-label">Siège social :</span> {{ cgl.production_address or '—' }}</div>
+            <div><span class="cgl-party-field-label">Téléphone :</span> {{ cgl.signer_phone or '—' }}</div>
+            <div><span class="cgl-party-field-label">E-mail :</span> {{ cgl.signer_email or '—' }}</div>
         </div>
+    </div>
 
-        <!-- ═══════════ IDENTIFICATION DES PARTIES ═══════════ -->
-        <section class="cgl-parties-section">
-            <h2 class="cgl-section-title">Identification des Parties</h2>
-            <div class="cgl-parties-grid">
-                <!-- LE PRESTATAIRE -->
-                <div class="cgl-party-card">
-                    <div class="cgl-party-role">Prestataire</div>
-                    <div><span class="cgl-party-field-label">Société :</span> {{ company_name }}</div>
-                    <div><span class="cgl-party-field-label">SIRET :</span> {{ company_siret or '—' }}{% if company_rcs
-                        %} ({{ company_rcs }}){% endif %}</div>
-                    <div><span class="cgl-party-field-label">Représentant :</span> {{ company_representative }},
-                        Président</div>
-                    <div><span class="cgl-party-field-label">Adresse :</span> {{ company_address }}</div>
-                    {% if company_email or company_phone %}
-                    <div><span class="cgl-party-field-label">Contact :</span> {{ company_email }} — {{ company_phone }}
-                    </div>
-                    {% endif %}
+    <div class="cgl-annexe2-context">
+        <p>Atteste avoir pris connaissance des Conditions Générales de Location de la société Belle Vitesse (le « Loueur
+            »), ainsi que des conditions d’utilisation, consignes de sécurité et restrictions liées aux véhicules
+            modifiés loués par le Loueur dans le cadre du tournage suivant :</p>
+        <div class="cgl-parties-grid">
+            <div class="cgl-party-card">
+                <div><span class="cgl-party-field-label">Nom de la production :</span> {{ cgl.display_project_name }}
                 </div>
-
-                <!-- LA PRODUCTION -->
-                <div class="cgl-party-card">
-                    <div class="cgl-party-role">Production</div>
-                    <div><span class="cgl-party-field-label">Nom :</span> {{ cgl.display_production_name }}{% if
-                        cgl.display_legal_form %} ({{ cgl.display_legal_form }}){% endif %}</div>
-                    <div><span class="cgl-party-field-label">Représentant :</span> {{ cgl.production_representative or
-                        '—' }}{% if cgl.display_representative_role %} — {{ cgl.display_representative_role }}{% endif
-                        %}</div>
-                    {% if cgl.display_legal_country|lower == 'france' or cgl.production_siret %}
-                    <div><span class="cgl-party-field-label">{{ cgl.display_legal_identifier_label }} :</span> {{ cgl.production_siret or '—' }} {% if
-                        cgl.production_vat %}— TVA : {{ cgl.production_vat }}{% endif %}</div>
-                    {% endif %}
-                    <div><span class="cgl-party-field-label">Adresse :</span> {{ cgl.production_address or '—' }}</div>
-                    {% if cgl.signer_email or cgl.signer_phone %}
-                    <div><span class="cgl-party-field-label">Contact :</span> {{ cgl.signer_email or '—' }}{% if
-                        cgl.signer_phone %} — {{ cgl.signer_phone }}{% endif %}</div>
-                    {% endif %}
-                    {% if cgl.production_insurance_company %}
-                    <div><span class="cgl-party-field-label">Assurance :</span> {{ cgl.production_insurance_company }}
-                        {% if cgl.production_insurance_policy %}(Police : {{ cgl.production_insurance_policy }}){% endif
-                        %}</div>
-                    {% endif %}
+                <div><span class="cgl-party-field-label">Date(s) de tournage :</span> {{ cgl.display_shooting_dates }}
                 </div>
-            </div>
-        </section>
-
-        <!-- ═══════════ CORPS CONTRACTUEL (ARTICLES 1 À 22) ═══════════ -->
-        <h2 class="cgl-section-title">Dispositions Contractuelles</h2>
-        <div class="cgl-articles-container">
-            {% include "public/cgl/_cgl_articles.html" %}
-        </div>
-
-        <!-- ═══════════ ANNEXE 1 : TABLEAU DE LA FLOTTE ═══════════ -->
-        <section class="cgl-annexe-section">
-            <h2 class="cgl-annexe-title">Annexe 1 – Véhicules, statut réglementaire, charges maximales et Valeurs de
-                Référence</h2>
-            <p class="cgl-annexe-desc">
-                Les valeurs et tarifs ci-dessous sont exprimés hors taxes, à la date de version des CGL. Ils sont
-                revalorisés annuellement par le Loueur. Le prix applicable est celui du Bon de Commande. [Note de
-                travail : à compléter et valider par le client avant diffusion.]
-            </p>
-
-            <table class="cgl-table">
-                <thead>
-                    <tr>
-                        <th class="cgl-col-vehicule">Véhicule</th>
-                        <th class="cgl-col-desc">Description / statut réglementaire</th>
-                        <th class="cgl-col-voie">Voie publique ouverte</th>
-                        <th class="cgl-col-pilotage">Pilotage</th>
-                        <th class="cgl-col-charge">Charge max.</th>
-                        <th class="cgl-col-valeur">Valeur de Référence HT</th>
-                        <th class="cgl-col-tarif">Tarif indicatif HT / jour</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>ECAR</strong></td>
-                        <td>Renault Twizy 80 modifiée (quadricycle lourd L7e d’origine) : châssis renforcé, débridée,
-                            plateformes et cadre de grue. Véhicule terrestre à moteur non conforme à sa réception.</td>
-                        <td>Non</td>
-                        <td>Pilote assigné par le Loueur</td>
-                        <td>PTAC d’origine 690 kg – [configuration à préciser]</td>
-                        <td class="cgl-num-cell">17 303 €</td>
-                        <td class="cgl-num-cell">1 000 € (+ options)</td>
-                    </tr>
-                    <tr>
-                        <td><strong>ERIDER</strong></td>
-                        <td>Moto électrique Stark Varg EX 80 ch tout-terrain modifiée (châssis renforcé, départs de
-                            tubes). Véhicule terrestre à moteur non homologué route.</td>
-                        <td>Non</td>
-                        <td>Pilote assigné par le Loueur</td>
-                        <td>[à préciser]</td>
-                        <td class="cgl-num-cell">14 281 €</td>
-                        <td class="cgl-num-cell">1 000 € (+ options)</td>
-                    </tr>
-                    <tr>
-                        <td><strong>ETRIKE 360</strong></td>
-                        <td>Tricycle à pédalage assisté (250 W, 25 km/h), plaques taraudées, option rickshaw.</td>
-                        <td>Non (sauf Conditions Particulières)</td>
-                        <td>Pilote assigné par le Loueur</td>
-                        <td>300 kg</td>
-                        <td class="cgl-num-cell">16 750 €</td>
-                        <td class="cgl-num-cell">500 €</td>
-                    </tr>
-                    <tr>
-                        <td><strong>ETRIKE</strong></td>
-                        <td>Tricycle à pédalage assisté (250 W, 25 km/h), siège arrière, fixation tube 50 mm, option
-                            rickshaw.</td>
-                        <td>Non (sauf Conditions Particulières)</td>
-                        <td>Pilote assigné ou Pilote du Locataire agréé + Règles de Sécurité</td>
-                        <td>160 kg</td>
-                        <td class="cgl-num-cell">4 373 €</td>
-                        <td class="cgl-num-cell">400 €</td>
-                    </tr>
-                    <tr>
-                        <td><strong>SEGWAY I2</strong></td>
-                        <td>Gyropode modifié « mains libres » (contrôle genoux), roues route. Engin de déplacement
-                            personnel motorisé.</td>
-                        <td>Non</td>
-                        <td>Opérateur qualifié agréé + Règles de Sécurité</td>
-                        <td>117 kg</td>
-                        <td class="cgl-num-cell">4 758 €</td>
-                        <td class="cgl-num-cell">300 €</td>
-                    </tr>
-                    <tr>
-                        <td><strong>SEGWAY X2</strong></td>
-                        <td>Gyropode modifié « mains libres » (contrôle genoux), roues turf, fixation Steadicam
-                            hardmount.</td>
-                        <td>Non</td>
-                        <td>Opérateur qualifié agréé + Règles de Sécurité</td>
-                        <td>117 kg</td>
-                        <td class="cgl-num-cell">7 690 €</td>
-                        <td class="cgl-num-cell">350 €</td>
-                    </tr>
-                    <tr>
-                        <td><strong>JACKAL RICKSHAW</strong></td>
-                        <td>Remorque / rickshaw porte-opérateur (Accessoire).</td>
-                        <td>Non</td>
-                        <td>—</td>
-                        <td>[à préciser]</td>
-                        <td class="cgl-num-cell">[●] €</td>
-                        <td class="cgl-num-cell">[●] €</td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
-
-        <!-- ═══════════ ANNEXE 2 : ENGAGEMENT DE SÉCURITÉ DU LOCATAIRE ═══════════ -->
-        <section class="cgl-annexe-section cgl-annexe2-section">
-            <h2 class="cgl-annexe-title">Annexe 2 aux Conditions Générales de Location de Belle Vitesse<br>Engagement de
-                Sécurité du Locataire</h2>
-
-            <div class="cgl-annexe2-intro">
-                <p>Je soussigné(e), dûment habilité(e) à représenter la société de production désignée ci-dessous (le «
-                    Locataire ») :</p>
-            </div>
-
-            <div class="cgl-parties-grid">
-                <div class="cgl-party-card">
-                    <div><span class="cgl-party-field-label">Nom (dénomination sociale) de la société :</span> {{
-                        cgl.display_production_name }}</div>
-                    <div><span class="cgl-party-field-label">Forme, n° d’immatriculation et pays :</span> {{
-                        cgl.display_legal_form or '—' }}{% if cgl.production_siret %}, {{ cgl.display_legal_identifier_label }} : {{ cgl.production_siret
-                        }}{% endif %}{% if cgl.production_vat %} (TVA : {{ cgl.production_vat }}){% endif %}</div>
-                    <div><span class="cgl-party-field-label">Nom du représentant :</span> {{
-                        cgl.production_representative or '—' }}</div>
-                    <div><span class="cgl-party-field-label">Fonction :</span> {{ cgl.display_representative_role }}
-                    </div>
-                    <div><span class="cgl-party-field-label">Siège social :</span> {{ cgl.production_address or '—' }}
-                    </div>
-                    <div><span class="cgl-party-field-label">Téléphone :</span> {{ cgl.signer_phone or '—' }}</div>
-                    <div><span class="cgl-party-field-label">E-mail :</span> {{ cgl.signer_email or '—' }}</div>
-                </div>
-            </div>
-
-            <div class="cgl-annexe2-context">
-                <p>Atteste avoir pris connaissance des Conditions Générales de Location de la société Belle Vitesse (le
-                    « Loueur »), ainsi que des conditions d’utilisation, consignes de sécurité et restrictions liées aux
-                    véhicules modifiés loués par le Loueur dans le cadre du tournage suivant :</p>
-                <div class="cgl-parties-grid">
-                    <div class="cgl-party-card">
-                        <div><span class="cgl-party-field-label">Nom de la production :</span> {{
-                            cgl.display_project_name }}</div>
-                        <div><span class="cgl-party-field-label">Date(s) de tournage :</span> {{
-                            cgl.display_shooting_dates }}</div>
-                        <div>
-                            <span class="cgl-party-field-label">Lieu(x) de tournage :</span>
-                            {% if cgl.display_shooting_locations_list and cgl.display_shooting_locations_list|length > 0 %}
-                            <ul class="cgl-annexe2-locations-list">
-                                {% for loc in cgl.display_shooting_locations_list %}
-                                <li>
-                                    <span class="cgl-annexe2-location-name">{{ loc.name }}</span>{% if loc.address %} — <span class="cgl-annexe2-location-address">{{ loc.address }}</span>{% endif %}
-                                </li>
-                                {% endfor %}
-                            </ul>
-                            {% else %}
-                            {{ cgl.display_shooting_locations or '—' }}
-                            {% endif %}
-                        </div>
-                        <div>
-                            <span class="cgl-party-field-label">Véhicule(s) loué(s) :</span>
-                            {% if cgl.vehicles_details and cgl.vehicles_details|length > 0 %}
-                            <ul class="cgl-annexe2-vehicles-list">
-                                {% for v in cgl.vehicles_details %}
-                                <li>
-                                    <span class="cgl-annexe2-vehicle-name">{{ v.name }}</span>{% if v.unique_id %} <span class="cgl-annexe2-vehicle-id">({{ v.unique_id }})</span>{% endif %}
-                                </li>
-                                {% endfor %}
-                            </ul>
-                            {% elif cgl.vehicles %}
-                            <ul class="cgl-annexe2-vehicles-list">
-                                {% for v in cgl.vehicles.split(',') %}
-                                <li>
-                                    <span class="cgl-annexe2-vehicle-name">{{ v.strip() }}</span>
-                                </li>
-                                {% endfor %}
-                            </ul>
-                            {% else %}
-                            —
-                            {% endif %}
-                        </div>
-                        <div><span class="cgl-party-field-label">Référence du Bon de Commande :</span> {{
-                            cgl.display_order_ref or '—' }}</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="cgl-annexe2-obligations">
-                <p>Le Locataire reconnaît, accepte et s’engage à respecter ce qui suit, en complément des Conditions
-                    Générales de Location :</p>
-                <ul class="cgl-annexe2-list">
-                    <li>Les véhicules sont exclusivement destinés à un usage sur voie fermée à la circulation publique
-                        par décision de l’autorité compétente, terrain sécurisé ou espace privatisé ; aucune circulation
-                        sur une voie ouverte à la circulation publique n’est autorisée, sauf stipulation expresse des
-                        Conditions Particulières.</li>
-                    <li>La conduite est réservée à un pilote qualifié, agréé par le Loueur, engagé et rémunéré par le
-                        Locataire, qui en est le seul employeur et sous l’autorité duquel il exerce ses fonctions.
-                        Chaque pilote signe, avant toute utilisation, l’engagement aux Règles de Sécurité.</li>
-                    <li>Lorsque les Conditions Particulières le prévoient, le Locataire engage un ou plusieurs
-                        techniciens référents formés par le Loueur ; ils sont ses salariés et placés sous sa seule
-                        autorité.</li>
-                    <li>Le Locataire est seul responsable de l’obtention des autorisations administratives et de la
-                        sécurisation des lieux de tournage, et notamment :
-                        <ul class="cgl-annexe2-sublist">
-                            <li>Obtention et transmission au Loueur, au moins soixante-douze (72) heures avant la date
-                                de départ, de l’arrêté ou de l’autorisation de fermeture de voie, du plan de circulation
-                                et du plan de sécurité ;</li>
-                            <li>Désignation d’un responsable sécurité et, le cas échéant, d’un coordinateur des
-                                cascades, et mise en place des moyens de secours adaptés ;</li>
-                            <li>Balisage clair de la trajectoire (barrières, signalétique, agents de sécurité) ;</li>
-                            <li>Présence interdite de figurants ou techniciens non indispensables à la prise de vues
-                                dans la zone de roulage pendant l’utilisation ;</li>
-                            <li>Validation du terrain de roulage par le Locataire (propre, sec, adapté au véhicule)
-                                avant chaque prise.</li>
-                        </ul>
-                    </li>
-                    <li>Le pilote, le technicien référent et le Loueur peuvent suspendre ou refuser tout roulage en cas
-                        de doute sur la sécurité, notamment en cas de :
-                        <ul class="cgl-annexe2-sublist">
-                            <li>Conditions météo défavorables (pluie, vent, boue, mauvaise visibilité) ;</li>
-                            <li>Configuration instable, surcharge ou terrain dégradé ;</li>
-                            <li>Défaut de communication radio ou personnel non évacué.</li>
-                        </ul>
-                        <p class="cgl-annexe2-subtext">Une telle suspension n’engage pas la responsabilité du Loueur et
-                            ne donne lieu à aucune réduction du prix.</p>
-                    </li>
-                    <li>Toute utilisation non conforme aux Conditions Générales de Location ou aux consignes transmises
-                        (configuration non validée, surpoids, terrain non sécurisé) est placée sous la responsabilité
-                        exclusive du Locataire, qui garantit le Loueur de toutes ses conséquences.</li>
-                    <li>Toute détérioration, perte ou vol d’un véhicule ou de ses accessoires survenu pendant la période
-                        de location, hors usure normale, est à la charge du Locataire dans les conditions de l’article
-                        11 des Conditions Générales de Location ; toute modification d’un véhicule est interdite.</li>
-                    <li>Les caméras, optiques, têtes, grues, matériels son et tous équipements installés sur les
-                        véhicules, quelle qu’en soit la provenance, sont placés sous la seule garde et responsabilité du
-                        Locataire ; leur installation et leur fixation sont réalisées sous son autorité. Le Loueur n’est
-                        pas responsable des dommages qu’ils subissent (article 8 des Conditions Générales de Location).
-                    </li>
-                    <li>Le Locataire a souscrit et maintient en vigueur les assurances prévues à l’article 12 des
-                        Conditions Générales de Location et en a remis les attestations au Loueur avant la date de
-                        départ.</li>
-                    <li>Une check-list « bon pour roulage » est remise par le Loueur et doit être validée et signée par
-                        le Locataire avant chaque journée de tournage.</li>
-                </ul>
-
-                <p class="cgl-annexe2-closing">Le Locataire s’engage à faire respecter ces conditions par l’ensemble de
-                    ses préposés, prestataires et intervenants, et à collaborer avec le Loueur pour garantir un
-                    environnement de travail sécurisé. Le présent engagement fait partie intégrante du contrat de
-                    location.</p>
-
-                <div class="cgl-annexe2-sign-info">
-                    <p><strong>Fait à :</strong> {{ cgl.display_signature_city }}</p>
-                    <p><strong>Le :</strong> {{ signed_at_str or (cgl.signed_at.strftime('%d/%m/%Y') if cgl.signed_at
-                        else cgl.generated_at.strftime('%d/%m/%Y') if cgl.generated_at else '') }}</p>
-                    <p><strong>Signature du représentant de la production (nom, qualité et cachet) :</strong></p>
-                    <p><strong>Nom :</strong> {{ cgl.production_representative or '—' }} ({{
-                        cgl.display_representative_role }})</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- ═══════════ BLOC DE SCELLEMENT & SIGNATURE ÉLECTRONIQUE ═══════════ -->
-        <section class="cgl-seal-container">
-            <div class="cgl-seal-header">
-                <div class="cgl-seal-title">Acceptation sans réserve & Scellement Électronique</div>
-                <p class="cgl-legal-mention">
-                    « Le signataire ({% if cgl.production_representative %}{{ cgl.production_representative }}{% else %}le représentant désigné{% endif %}, agissant en qualité de {% if cgl.display_representative_role %}{{ cgl.display_representative_role }}{% else %}représentant habilité{% endif %}) atteste expressément sur l'honneur avoir la capacité juridique et le pouvoir d'engager la société Locataire ({{ cgl.display_production_name }}), confirme avoir pris connaissance de l'intégralité des 22 articles des Conditions Générales de Location et de leurs Annexes, et déclare les accepter expressément et sans réserve. »
-                </p>
-            </div>
-
-            <div class="cgl-seal-grid">
-                <!-- QR CODE DE VÉRIFICATION -->
-                <div class="cgl-qr-box">
-                    {% if qr %}
-                    {% set target_url = verification_url or ((base_url ~ '/cgl/verify/' ~ (cgl.waiver_id or waiver.waiver_id)) if base_url else ('/cgl/verify/' ~ (cgl.waiver_id or waiver.waiver_id))) %}
-                    <a href="{{ target_url }}" target="_blank" rel="noopener noreferrer" class="cgl-qr-link">
-                        <img src="{{ qr }}" alt="QR Code Vérification" class="cgl-qr-img">
-                        <span class="cgl-qr-caption">Vérification en ligne</span>
-                    </a>
-                    {% endif %}
-                </div>
-
-                <!-- EMPREINTE D'INTÉGRITÉ & HORODATAGE -->
-                <div class="cgl-integrity-info">
-                    <div><strong>Document :</strong> {{ cgl.waiver_id }}</div>
-                    <div><strong>Locataire :</strong> {{ cgl.display_production_name }}</div>
-                    <div><strong>Signé le :</strong> {{ signed_at_str or (cgl.signed_at.strftime('%d/%m/%Y à %H:%M') if
-                        cgl.signed_at else 'En attente') }} UTC</div>
-                    {% if signed_ip or cgl.signer_ip %}
-                    <div><strong>Adresse IP :</strong> {{ signed_ip or cgl.signer_ip }}</div>
-                    {% endif %}
-                    {% if hash or cgl.hash %}
-                    <div><strong>Empreinte numérique HMAC-SHA256 :</strong>
-                        <code class="cgl-hash-code">{{ hash or cgl.hash }}</code>
-                    </div>
-                    {% endif %}
-                </div>
-
-                <!-- SIGNATURE MANUSCRITE VECTORISÉE -->
-                <div class="cgl-signature-box">
-                    <div class="cgl-signatory-name">{{ cgl.production_representative or 'Représentant Légal' }}</div>
-                    <div class="cgl-signatory-quality">Pour le Locataire (Bon pour accord)</div>
-                    {% if signature %}
-                    <img src="{{ signature }}" alt="Signature Électronique" class="cgl-sig-img">
-                    {% elif cgl.signature_data_uri %}
-                    <img src="{{ cgl.signature_data_uri }}" alt="Signature Électronique" class="cgl-sig-img">
+                <div>
+                    <span class="cgl-party-field-label">Lieu(x) de tournage :</span>
+                    {% if cgl.display_shooting_locations_list and cgl.display_shooting_locations_list|length > 0 %}
+                    <ul class="cgl-annexe2-locations-list">
+                        {% for loc in cgl.display_shooting_locations_list %}
+                        <li>
+                            <span class="cgl-annexe2-location-name">{{ loc.name }}</span>{% if loc.address %} — <span
+                                class="cgl-annexe2-location-address">{{ loc.address }}</span>{% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
                     {% else %}
-                    <span class="cgl-sig-pending">[Signature en attente]</span>
+                    {{ cgl.display_shooting_locations or '—' }}
                     {% endif %}
                 </div>
+                <div>
+                    <span class="cgl-party-field-label">Véhicule(s) loué(s) :</span>
+                    {% if cgl.vehicles_details and cgl.vehicles_details|length > 0 %}
+                    <ul class="cgl-annexe2-vehicles-list">
+                        {% for v in cgl.vehicles_details %}
+                        <li>
+                            <span class="cgl-annexe2-vehicle-name">{{ v.name }}</span>{% if v.unique_id %} <span
+                                class="cgl-annexe2-vehicle-id">({{ v.unique_id }})</span>{% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% elif cgl.vehicles %}
+                    <ul class="cgl-annexe2-vehicles-list">
+                        {% for v in cgl.vehicles.split(',') %}
+                        <li>
+                            <span class="cgl-annexe2-vehicle-name">{{ v.strip() }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    —
+                    {% endif %}
+                </div>
+                <div><span class="cgl-party-field-label">Référence du Bon de Commande :</span> {{ cgl.display_order_ref
+                    or '—' }}</div>
             </div>
-        </section>
-
-        <div class="cgl-screen-footer">
-            <span>{{ company_name }} — Conditions Générales de Location</span>
-            <span>Document A4 officiel</span>
         </div>
-
     </div>
-</body>
 
-</html>
+    <div class="cgl-annexe2-obligations">
+        <p>Le Locataire reconnaît, accepte et s’engage à respecter ce qui suit :</p>
+        <ul class="cgl-annexe2-list">
+            <li>Les véhicules mentionnés ci-dessus sont des engins techniques dédiés à la prise de vue, pour la plupart
+                modifiés ou non conformes à leur réception d’origine, et qu’à ce titre :
+                <ul class="cgl-annexe2-sublist">
+                    <li>Ils ne sont pas autorisés à circuler sur les voies ouvertes à la circulation publique, sauf
+                        dérogation expresse et respect strict des conditions légales applicables (fermeture de voie,
+                        arrêté, etc.) ;</li>
+                    <li>Ils ne peuvent être pilotés que par un pilote assigné par le Loueur ou par une personne
+                        expressément autorisée par lui conformément aux Règles de Sécurité ;</li>
+                    <li>Leur utilisation requiert un périmètre de sécurité rigoureusement étanche, fermé et sécurisé.
+                    </li>
+                </ul>
+            </li>
+            <li>Le Locataire est seul responsable de l’organisation générale de la sécurité sur le lieu de tournage,
+                notamment de :
+                <ul class="cgl-annexe2-sublist">
+                    <li>La sécurisation, du balisage et de l’interdiction d’accès au périmètre d’évolution des véhicules
+                        à toute personne non indispensable aux prises de vue ;</li>
+                    <li>La réalisation conjointe d’un repérage et d’un briefing de sécurité avant tout roulage dynamique
+                        ;</li>
+                    <li>La désignation d’un coordinateur des cascades ou d’un régisseur responsable de la sécurité ;
+                    </li>
+                    <li>La mise à disposition d’un moyen de communication direct et immédiat (radio dédiée) entre le
+                        régisseur, le coordinateur de sécurité et le pilote ;</li>
+                    <li>La vérification de l’état et de la propreté du sol sur l’itinéraire (propre, sec, adapté au
+                        véhicule) avant chaque prise.</li>
+                </ul>
+            </li>
+            <li>Le pilote, le technicien référent et le Loueur peuvent suspendre ou refuser tout roulage en cas de doute
+                sur la sécurité, notamment en cas de :
+                <ul class="cgl-annexe2-sublist">
+                    <li>Conditions météo défavorables (pluie, vent, boue, mauvaise visibilité) ;</li>
+                    <li>Configuration instable, surcharge ou terrain dégradé ;</li>
+                    <li>Défaut de communication radio ou personnel non évacué.</li>
+                </ul>
+                <p class="cgl-annexe2-subtext">Une telle suspension n’engage pas la responsabilité du Loueur et ne donne
+                    lieu à aucune réduction du prix.</p>
+            </li>
+            <li>Toute utilisation non conforme aux Conditions Générales de Location ou aux consignes transmises
+                (configuration non validée, surpoids, terrain non sécurisé) est placée sous la responsabilité exclusive
+                du Locataire, qui garantit le Loueur de toutes ses conséquences.</li>
+            <li>Toute détérioration, perte ou vol d’un véhicule ou de ses accessoires survenu pendant la période de
+                location, hors usure normale, est à la charge du Locataire dans les conditions de l’article 11 des
+                Conditions Générales de Location ; toute modification d’un véhicule est interdite.</li>
+            <li>Les caméras, optiques, têtes, grues, matériels son et tous équipements installés sur les véhicules,
+                quelle qu’en soit la provenance, sont placés sous la seule garde et responsabilité du Locataire ; leur
+                installation et leur fixation sont réalisées sous son autorité. Le Loueur n’est pas responsable des
+                dommages qu’ils subissent (article 8 des Conditions Générales de Location).</li>
+            <li>Le Locataire a souscrit et maintient en vigueur les assurances prévues à l’article 12 des Conditions
+                Générales de Location et en a remis les attestations au Loueur avant la date de départ.</li>
+            <li>Une check-list « bon pour roulage » est remise par le Loueur et doit être validée et signée par le
+                Locataire avant chaque journée de tournage.</li>
+        </ul>
+
+        <p class="cgl-annexe2-closing">Le Locataire s’engage à faire respecter ces conditions par l’ensemble de ses
+            préposés, prestataires et intervenants, et à collaborer avec le Loueur pour garantir un environnement de
+            travail sécurisé. Le présent engagement fait partie intégrante du contrat de location.</p>
+
+        <div class="cgl-annexe2-sign-info">
+            <p><strong>Fait à :</strong> {{ cgl.display_signature_city }}</p>
+            <p><strong>Le :</strong> {{ signed_at_str or (cgl.signed_at.strftime('%d/%m/%Y') if cgl.signed_at else
+                cgl.generated_at.strftime('%d/%m/%Y') if cgl.generated_at else '') }}</p>
+            <p><strong>Signature du représentant de la production (nom, qualité et cachet) :</strong></p>
+            <p><strong>Nom :</strong> {{ cgl.production_representative or '—' }} ({{ cgl.display_representative_role }})
+            </p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block pdf_signatures %}
+{% set target_url = verification_url or ((base_url ~ '/cgl/verify/' ~ (cgl.waiver_id or waiver.waiver_id)) if base_url
+else ('/cgl/verify/' ~ (cgl.waiver_id or waiver.waiver_id))) %}
+{% set legal_mention = "« Le signataire (" ~ (cgl.production_representative if cgl.production_representative else "le
+représentant désigné") ~ ", agissant en qualité de " ~ (cgl.display_representative_role if
+cgl.display_representative_role else "représentant habilité") ~ ") atteste expressément sur l'honneur avoir la capacité
+juridique et le pouvoir d'engager la société Locataire (" ~ cgl.display_production_name ~ "), confirme avoir pris
+connaissance de l'intégralité des 22 articles des Conditions Générales de Location et de leurs Annexes, et déclare les
+accepter expressément et sans réserve. »" %}
+{{ pdf_signature_and_seal(
+doc_id=cgl.waiver_id,
+signer_name=cgl.production_representative or 'Représentant Légal',
+signer_role="Pour le Locataire (Bon pour accord)",
+signed_at=signed_at_str or (cgl.signed_at.strftime('%d/%m/%Y à %H:%M') if cgl.signed_at else None),
+ip=signed_ip or cgl.signer_ip,
+signature_img=signature or cgl.signature_data_uri,
+is_signed=(cgl.status == 'signed'),
+hash_code=hash or cgl.hash,
+qr_code_uri=qr,
+verification_url=target_url,
+seal_title="Acceptation sans réserve & Scellement Électronique",
+legal_mention=legal_mention,
+custom_meta_lines=[
+("Locataire", cgl.display_production_name)
+]
+) }}
+{% endblock %}
+
+{% block pdf_footer %}
+{{ pdf_footer(
+left_text=(company_name or 'Belle Vitesse') ~ ' — Conditions Générales de Location',
+right_text="Document A4 officiel"
+) }}
+{% endblock %}

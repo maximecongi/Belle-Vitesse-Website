@@ -1,0 +1,311 @@
+{#
+    templates/pdf/macros.html
+    Bibliothèque de macros Jinja pour l'ensemble des documents PDF et aperçus écran de Belle Vitesse.
+    Conformité intégrale et stricte avec le style CGL originel Belle Vitesse.
+#}
+
+{# ── 1. Barre de Prévisualisation Écran (Toolbar A4 CGL) ─────────────────── #}
+{% macro pdf_preview_toolbar(doc_title, doc_id=None, format_pdf_url="?format=pdf", show_print=True) %}
+<div class="pdf-preview-toolbar">
+    <div class="pdf-preview-toolbar-left">
+        <span class="pdf-preview-badge">📄 Format A4 (210 × 297 mm)</span>
+        <span class="pdf-preview-title">{{ doc_id ~ ' — ' if doc_id else '' }}{{ doc_title }}</span>
+    </div>
+    <div class="pdf-preview-toolbar-actions">
+        {% if show_print %}
+        <button type="button" class="pdf-preview-btn" onclick="window.print()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                <rect x="6" y="14" width="12" height="8"></rect>
+            </svg>
+            Imprimer
+        </button>
+        {% endif %}
+        {% if format_pdf_url %}
+        <a href="{{ format_pdf_url }}" target="_blank" class="pdf-preview-btn pdf-preview-btn-primary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Compiler PDF
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+
+{# ── 2. En-tête Officiel (Header CGL) ────────────────────────────────────── #}
+{% macro pdf_header(doc_type_title, doc_id=None, date_str=None, company_name=None, logo_url=None) %}
+<header class="public-doc-header cgl-header pdf-header">
+    <div class="public-doc-header-logo cgl-header-logo pdf-header-logo">
+        <img src="{{ logo_url or '/static/imgs/logos_and_name/noir-fond-transparent.png' }}"
+            alt="{{ company_name or 'Belle Vitesse' }}">
+    </div>
+    <div class="public-doc-header-meta cgl-header-meta pdf-header-meta">
+        <strong class="dot-before">{{ doc_type_title }}</strong><br>
+        {% if doc_id %}
+        <span class="checkout-doc-id cgl-header-doc-id pdf-doc-id">{{ doc_id }}</span><br>
+        {% endif %}
+        {% if date_str %}
+        <span class="u-text-xxs pdf-header-date">Émis le {{ date_str }}</span>
+        {% endif %}
+    </div>
+</header>
+{% endmacro %}
+
+
+{# ── 3. Bannière de Titre Principal (CGL Centré) ─────────────────────────── #}
+{% macro pdf_title_banner(title, subtitle=None, badge=None, context_info=None) %}
+<div class="cgl-title-banner pdf-title-banner">
+    {% if badge %}
+    <span class="pdf-banner-badge">{{ badge }}</span>
+    {% endif %}
+    <h1 class="cgl-main-title pdf-main-title">{{ title }}</h1>
+    {% if subtitle %}
+    <div class="cgl-subtitle pdf-subtitle">{{ subtitle }}</div>
+    {% endif %}
+    {% if context_info %}
+    <p class="cgl-version-info pdf-version-info">{{ context_info }}</p>
+    {% endif %}
+</div>
+{% endmacro %}
+
+
+{# ── 4. Titre de Section CGL (avec carré or) ──────────────────────────────── #}
+{% macro pdf_section_title(title, id=None) %}
+<h2 class="cgl-section-title pdf-section-title"{% if id %} id="{{ id }}"{% endif %}>{{ title }}</h2>
+{% endmacro %}
+
+
+{# ── 5. Cartes des Parties Contractuelles (CGL) ──────────────────────────── #}
+{% macro pdf_party_card(role, fields) %}
+<div class="cgl-party-card pdf-party-card">
+    <div class="cgl-party-role pdf-party-role">{{ role }}</div>
+    {% for label, val in fields %}
+    {% if val is not none and val != '' %}
+    <div><span class="cgl-party-field-label pdf-party-field-label">{{ label }} :</span> {{ val }}</div>
+    {% endif %}
+    {% endfor %}
+</div>
+{% endmacro %}
+
+
+{# ── 6. Grille d'Informations Clé / Valeur ───────────────────────────────── #}
+{% macro pdf_info_grid(items, columns=2) %}
+<div class="pdf-info-grid{% if columns == 3 %} pdf-info-grid--3cols{% endif %}">
+    {% for label, val in items %}
+    {% if val is not none and val != '' %}
+    <div class="pdf-info-item">
+        <span class="pdf-info-label">{{ label }}</span>
+        <span class="pdf-info-value">{{ val }}</span>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+{% endmacro %}
+
+
+{# ── 7. Bloc de Scellement & Signature Électronique (Exact CGL) ───────────── #}
+{% macro pdf_signature_and_seal(
+    doc_id,
+    signer_name=None,
+    signer_role=None,
+    signed_at=None,
+    ip=None,
+    signature_img=None,
+    is_signed=False,
+    hash_code=None,
+    qr_code_uri=None,
+    verification_url=None,
+    seal_title='Acceptation sans réserve & Scellement Électronique',
+    legal_mention=None,
+    project_name=None,
+    custom_meta_lines=None
+) %}
+{% set effective_qr = qr_code_uri or qr or qr_data_uri %}
+{% set effective_url = verification_url or target_url %}
+<section class="cgl-seal-container pdf-seal-container">
+    <div class="cgl-seal-header pdf-seal-header">
+        <div class="cgl-seal-title pdf-seal-title">{{ seal_title }}</div>
+        {% if legal_mention %}
+        <p class="cgl-legal-mention pdf-legal-mention">{{ legal_mention }}</p>
+        {% endif %}
+    </div>
+
+    <div class="cgl-seal-grid pdf-seal-grid">
+        <!-- QR CODE DE VÉRIFICATION -->
+        <div class="cgl-qr-box pdf-qr-box">
+            {% if effective_qr %}
+            {% if effective_url %}
+            <a href="{{ effective_url }}" target="_blank" rel="noopener noreferrer" class="cgl-qr-link">
+                <img src="{{ effective_qr }}" alt="QR Code Vérification" class="cgl-qr-img pdf-qr-img">
+                <span class="cgl-qr-caption pdf-qr-caption">Vérification en ligne</span>
+            </a>
+            {% else %}
+            <img src="{{ effective_qr }}" alt="QR Code Vérification" class="cgl-qr-img pdf-qr-img">
+            <span class="cgl-qr-caption pdf-qr-caption">Vérification en ligne</span>
+            {% endif %}
+            {% endif %}
+        </div>
+
+        <!-- EMPREINTE D'INTÉGRITÉ & HORODATAGE -->
+        <div class="cgl-integrity-info pdf-integrity-info">
+            {% if doc_id %}<div><strong>Document :</strong> {{ doc_id }}</div>{% endif %}
+            {% if project_name %}<div><strong>Projet :</strong> {{ project_name }}</div>{% endif %}
+            {% if custom_meta_lines %}
+            {% for k, v in custom_meta_lines %}
+            {% if v is not none and v != '' %}
+            <div><strong>{{ k }} :</strong> {{ v }}</div>
+            {% endif %}
+            {% endfor %}
+            {% endif %}
+            <div><strong>Signé le :</strong> {{ signed_at or 'En attente' }}{% if signed_at and not ('UTC' in (signed_at|string)) %} UTC{% endif %}</div>
+            {% if ip %}<div><strong>Adresse IP :</strong> {{ ip }}</div>{% endif %}
+            {% if hash_code %}
+            <div><strong>Empreinte numérique HMAC-SHA256 :</strong>
+                <code class="cgl-hash-code pdf-hash-code">{{ hash_code }}</code>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- SIGNATURE MANUSCRITE VECTORISÉE -->
+        <div class="cgl-signature-box pdf-signature-box">
+            <div class="cgl-signatory-name pdf-signatory-name">{{ signer_name or 'Représentant Légal' }}</div>
+            <div class="cgl-signatory-quality pdf-signatory-quality">{{ signer_role or 'Pour accord' }}</div>
+            {% if signature_img %}
+            <img src="{{ signature_img }}" alt="Signature Électronique" class="cgl-sig-img pdf-sig-img">
+            {% else %}
+            <span class="cgl-sig-pending pdf-sig-pending">[Signature en attente]</span>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endmacro %}
+
+
+{# ── 8. Bloc de Signature Contradictoire & Scellement (2 Signatures) ──────── #}
+{% macro pdf_contradictory_signatures_and_seal(
+    doc_id,
+    signer1_name=None,
+    signer1_role=None,
+    signer1_img=None,
+    signer2_name=None,
+    signer2_role=None,
+    signer2_img=None,
+    bv_name=None,
+    bv_role=None,
+    bv_signed_at=None,
+    bv_signature_img=None,
+    bv_is_signed=None,
+    prod_name=None,
+    prod_role=None,
+    prod_signed_at=None,
+    prod_signature_img=None,
+    prod_is_signed=None,
+    signed_at=None,
+    ip=None,
+    hash_code=None,
+    qr_code_uri=None,
+    verification_url=None,
+    seal_title='Scellement Électronique & Signature Contradictoire',
+    legal_mention=None,
+    project_name=None,
+    custom_meta_lines=None
+) %}
+{% set s1_name = bv_name or signer1_name or 'Prestataire' %}
+{% set s1_role = bv_role or signer1_role or 'Belle Vitesse' %}
+{% set s1_img = bv_signature_img or signer1_img %}
+{% set s2_name = prod_name or signer2_name or 'Locataire' %}
+{% set s2_role = prod_role or signer2_role or 'Production / Client' %}
+{% set s2_img = prod_signature_img or signer2_img %}
+{% set eff_signed_at = signed_at or (prod_signed_at.strftime('%d/%m/%Y à %H:%M') if (prod_signed_at and prod_signed_at.strftime is defined) else prod_signed_at) or (bv_signed_at.strftime('%d/%m/%Y à %H:%M') if (bv_signed_at and bv_signed_at.strftime is defined) else bv_signed_at) %}
+{% set effective_qr = qr_code_uri or qr or qr_data_uri %}
+{% set effective_url = verification_url or target_url %}
+<section class="cgl-seal-container pdf-seal-container">
+    <div class="cgl-seal-header pdf-seal-header">
+        <div class="cgl-seal-title pdf-seal-title">{{ seal_title }}</div>
+        {% if legal_mention %}
+        <p class="cgl-legal-mention pdf-legal-mention">{{ legal_mention }}</p>
+        {% endif %}
+    </div>
+
+    <div class="cgl-seal-grid--contradictory pdf-seal-grid--contradictory">
+        <!-- QR CODE DE VÉRIFICATION -->
+        <div class="cgl-qr-box pdf-qr-box">
+            {% if effective_qr %}
+            {% if effective_url %}
+            <a href="{{ effective_url }}" target="_blank" rel="noopener noreferrer" class="cgl-qr-link">
+                <img src="{{ effective_qr }}" alt="QR Code Vérification" class="cgl-qr-img pdf-qr-img">
+                <span class="cgl-qr-caption pdf-qr-caption">Vérification en ligne</span>
+            </a>
+            {% else %}
+            <img src="{{ effective_qr }}" alt="QR Code Vérification" class="cgl-qr-img pdf-qr-img">
+            <span class="cgl-qr-caption pdf-qr-caption">Vérification en ligne</span>
+            {% endif %}
+            {% endif %}
+        </div>
+
+        <!-- EMPREINTE D'INTÉGRITÉ & HORODATAGE -->
+        <div class="cgl-integrity-info pdf-integrity-info">
+            {% if doc_id %}<div><strong>Document :</strong> {{ doc_id }}</div>{% endif %}
+            {% if project_name %}<div><strong>Projet :</strong> {{ project_name }}</div>{% endif %}
+            {% if custom_meta_lines %}
+            {% for k, v in custom_meta_lines %}
+            {% if v is not none and v != '' %}
+            <div><strong>{{ k }} :</strong> {{ v }}</div>
+            {% endif %}
+            {% endfor %}
+            {% endif %}
+            <div><strong>Horodatage :</strong> {{ eff_signed_at or 'En attente' }}{% if eff_signed_at and not ('UTC' in (eff_signed_at|string)) %} UTC{% endif %}</div>
+            {% if ip %}<div><strong>Adresse IP :</strong> {{ ip }}</div>{% endif %}
+            {% if hash_code %}
+            <div><strong>Empreinte SHA256 :</strong>
+                <code class="cgl-hash-code pdf-hash-code">{{ hash_code }}</code>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- SIGNATURE 1 -->
+        <div class="cgl-signature-box pdf-signature-box">
+            <div class="cgl-signatory-name pdf-signatory-name">{{ s1_name }}</div>
+            <div class="cgl-signatory-quality pdf-signatory-quality">{{ s1_role }}</div>
+            {% if s1_img %}
+            <img src="{{ s1_img }}" alt="Signature Prestataire" class="cgl-sig-img pdf-sig-img">
+            {% else %}
+            <span class="cgl-sig-pending pdf-sig-pending">[En attente]</span>
+            {% endif %}
+        </div>
+
+        <!-- SIGNATURE 2 -->
+        <div class="cgl-signature-box pdf-signature-box">
+            <div class="cgl-signatory-name pdf-signatory-name">{{ s2_name }}</div>
+            <div class="cgl-signatory-quality pdf-signatory-quality">{{ s2_role }}</div>
+            {% if s2_img %}
+            <img src="{{ s2_img }}" alt="Signature Locataire" class="cgl-sig-img pdf-sig-img">
+            {% else %}
+            <span class="cgl-sig-pending pdf-sig-pending">[En attente]</span>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endmacro %}
+
+
+{# ── 9. Pied de Page Écran CGL (Masqué à l'impression) ───────────────────── #}
+{% macro pdf_footer(left_text=None, right_text="Document A4 officiel", company_name=None, note=None, company_address=None, siret=None, email=None, phone=None, extra_class="") %}
+<div class="cgl-screen-footer pdf-screen-footer{% if extra_class %} {{ extra_class }}{% endif %}">
+    <span>{{ left_text or note or ((company_name or 'Belle Vitesse') ~ ' — Document officiel') }}</span>
+    <span>{{ right_text }}</span>
+</div>
+{% endmacro %}
+
+
+{# ── 10. Badges & Pastilles ──────────────────────────────────────────────── #}
+{% macro pdf_badge(text, variant='neutral') %}
+<span class="pdf-badge pdf-badge--{{ variant }}">{{ text }}</span>
+{% endmacro %}

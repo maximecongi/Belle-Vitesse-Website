@@ -10,12 +10,16 @@
 
     function initProjectLocations() {
         const container = document.getElementById('projectLocationsWrapper');
+        if (!container) {
+            return;
+        }
+
         const listEl = document.getElementById('projectLocationsList');
         const hiddenInput = document.getElementById('shooting_locations_input');
         const addBtn = document.getElementById('addLocationBtn');
         const emptyState = document.getElementById('projectLocationsEmpty') || container.querySelector('.empty-state, .project-locations-empty');
 
-        if (!container || !listEl || !hiddenInput || !addBtn) {
+        if (!listEl || !hiddenInput || !addBtn) {
             return;
         }
 

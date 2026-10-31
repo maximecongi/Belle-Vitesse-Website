@@ -1,87 +1,79 @@
-<!DOCTYPE html>
-<html lang="fr">
+{% extends "pdf/base_pdf.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grille des Salaires — {{ annexe }}</title>
-    <link rel="stylesheet" href="{{ asset_url('css/styles.css') }}">
-    <link rel="stylesheet" href="{{ asset_url('css/admin/salaries-pdf.css') }}">
-</head>
+{% block title %}Grille des Salaires — {{ annexe }} — {{ settings.company_name or 'Belle Vitesse' }}{% endblock %}
 
-<body class="salary-pdf-container">
-    <div class="salary-pdf-document">
-        <!-- ═══════════ EN-TÊTE DU DOCUMENT ═══════════ -->
-        <header class="salary-pdf-header">
-            <div class="salary-pdf-header-logo">
-                <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
-                    alt="{{ settings.company_name or 'Belle Vitesse' }}">
-            </div>
-            <div class="salary-pdf-header-meta">
-                <strong class="dot-before">Grille des Salaires</strong><br>
-                <span class="checkout-doc-id">{{ annexe }}</span><br>
-                <span class="salary-pdf-header-date">Édition : {{ now.strftime('%d/%m/%Y') }}</span>
-            </div>
-        </header>
+{% block extra_css %}
+<link rel="stylesheet" href="{{ asset_url('css/admin/salaries-pdf.css') }}">
+{% endblock %}
 
-        <!-- ═══════════ BANNIÈRE TITRE ═══════════ -->
-        <div class="salary-pdf-title-banner">
-            <h1 class="salary-pdf-title">Grille des Salaires</h1>
-            <p class="salary-pdf-subtitle">Tarifs applicables pour le statut : <strong>{{ annexe }}</strong></p>
-        </div>
+{% block pdf_header %}
+{{ pdf_header(
+    doc_type_title="Grille des Salaires",
+    doc_id=annexe,
+    date_str=now.strftime('%d/%m/%Y'),
+    company_name=settings.company_name or 'Belle Vitesse'
+) }}
+{% endblock %}
 
-        <!-- ═══════════ COEFFICIENT FACTURE ═══════════ -->
-        {% if annexe == 'Facture' %}
-        <div class="salary-coef-box">
-            <div class="salary-coef-header">Coefficient de Facturation appliqué : ×{{ invoice_factor }}</div>
-            <p class="salary-coef-text">
-                Les tarifs facturés ci-dessous sont calculés automatiquement à partir des tarifs de l'annexe Publicité
-                en appliquant ce coefficient.
-            </p>
-        </div>
-        {% endif %}
+{% block pdf_title %}
+{{ pdf_title_banner(
+    title="Grille des Salaires",
+    subtitle="Tarifs applicables pour le statut : " ~ annexe,
+    context_info="Belle Vitesse SAS — Document officiel de tarification"
+) }}
+{% endblock %}
 
-        <!-- ═══════════ GROUPES DE SALAIRES ═══════════ -->
-        {% for group_name, rates in grouped_salaries.items() %}
-        {% if rates %}
-        <section class="salary-group-section">
-            <h2 class="salary-group-title dot-before">{{ group_name }}</h2>
-            <table class="salary-table">
-                <thead>
-                    <tr>
-                        <th class="w-position">Position / Poste</th>
-                        <th class="w-rate text-right">Base / H</th>
-                        <th class="w-rate text-right">Tarif 8h</th>
-                        <th class="w-rate text-right">Tarif 10h</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for rate in rates %}
-                    <tr>
-                        <td class="cell-position">{{ rate.position }}</td>
-                        <td class="cell-rate text-right">{{ "%.2f"|format(rate.base_hourly | float) }} €</td>
-                        <td class="cell-rate text-right">{{ "%.2f"|format(rate.inter_8h | float) }} €</td>
-                        <td class="cell-rate text-right">{{ "%.2f"|format(rate.inter_10h | float) }} €</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </section>
-        {% endif %}
-        {% endfor %}
+{% block content %}
+<!-- ═══════════ COEFFICIENT FACTURE ═══════════ -->
+{% if annexe == 'Facture' %}
+<div class="salary-coef-box">
+    <div class="salary-coef-header">Coefficient de Facturation appliqué : ×{{ invoice_factor }}</div>
+    <p class="salary-coef-text">
+        Les tarifs facturés ci-dessous sont calculés automatiquement à partir des tarifs de l'annexe Publicité
+        en appliquant ce coefficient.
+    </p>
+</div>
+{% endif %}
 
-        <!-- ═══════════ PIED DE PAGE ═══════════ -->
-        <footer class="salary-pdf-footer">
-            <p>
-                <strong>{{ settings.company_name or 'Belle Vitesse SAS' }}</strong><br>
-                {{ settings.company_address or '39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine' }}
-                {% if settings.company_siret %} — SIRET : {{ settings.company_siret }}{% endif %}
-                {% if settings.company_email %} — {{ settings.company_email }}{% endif %}
-                {% if settings.company_phone %} — {{ settings.company_phone }}{% endif %}<br>
-                <span class="salary-pdf-footer-note">Document officiel de tarification — Usage interne et contractuel confidentiel</span>
-            </p>
-        </footer>
-    </div>
-</body>
+<!-- ═══════════ GROUPES DE SALAIRES ═══════════ -->
+{% for group_name, rates in grouped_salaries.items() %}
+{% if rates %}
+<section class="pdf-section salary-group-section">
+    <h2 class="pdf-section-title dot-before">{{ group_name }}</h2>
+    <table class="pdf-table salary-table">
+        <thead>
+            <tr>
+                <th class="w-position">Position / Poste</th>
+                <th class="w-rate text-right">Base / H</th>
+                <th class="w-rate text-right">Tarif 8h</th>
+                <th class="w-rate text-right">Tarif 10h</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rate in rates %}
+            <tr>
+                <td class="cell-position">{{ rate.position }}</td>
+                <td class="cell-rate text-right">{{ "%.2f"|format(rate.base_hourly | float) }} €</td>
+                <td class="cell-rate text-right">{{ "%.2f"|format(rate.inter_8h | float) }} €</td>
+                <td class="cell-rate text-right">{{ "%.2f"|format(rate.inter_10h | float) }} €</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endif %}
+{% endfor %}
+{% endblock %}
 
-</html>
+{% block pdf_signatures %}{% endblock %}
+
+{% block pdf_footer %}
+{{ pdf_footer(
+    company_name=settings.company_name or 'Belle Vitesse SAS',
+    company_address=settings.company_address or '39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine',
+    siret=settings.company_siret,
+    email=settings.company_email,
+    phone=settings.company_phone,
+    note="Document officiel de tarification — Usage interne et contractuel confidentiel"
+) }}
+{% endblock %}

@@ -115,7 +115,8 @@ class BvsrComprehensiveTest(unittest.TestCase):
             shoot_start_date=date(2026, 8, 2),
             shoot_end_date=date(2026, 8, 4),
             return_date=date(2026, 8, 5),
-            vehicles_to_check=f"{v1.id}, {v2.id}"
+            vehicles_to_check=f"{v1.id}, {v2.id}",
+            shooting_locations=[{"name": "Circuit Paul Ricard", "address": "Le Castellet"}]
         )
         db.session.add(proj)
         db.session.commit()

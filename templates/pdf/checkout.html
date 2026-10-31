@@ -1,271 +1,193 @@
-<!DOCTYPE html>
-<html lang="fr">
+{% extends "pdf/base_pdf.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% block title %}Check-Out Véhicule — {{ data.inspection_id }} — {{ company_name }}{% endblock %}
 
-    <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="/static/imgs/favicons/favicon.svg" />
-    <link rel="shortcut icon" href="/static/imgs/favicons/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/static/imgs/favicons/apple-touch-icon.png" />
-    <meta name="apple-mobile-web-app-title" content="{{ company_name }}" />
-    <link rel="manifest" href="/static/imgs/favicons/site.webmanifest" />
+{% block extra_css %}
+<link rel="stylesheet" href="{{ asset_url('css/checkout.css') }}">
+{% endblock %}
 
-    <title>Checkout Véhicule — {{ company_name }}</title>
-    <link rel="stylesheet" href="{{ asset_url('css/styles.css') }}">
-    <link rel="stylesheet" href="{{ asset_url('css/checkout.css') }}">
-</head>
+{% block pdf_header %}
+{{ pdf_header(
+    doc_type_title="Check-Out Véhicule",
+    doc_id=data.inspection_id,
+    date_str=data.control_date or '—',
+    company_name=company_name
+) }}
+{% endblock %}
 
-<body>
+{% block pdf_title %}
+{{ pdf_title_banner(
+    title="Fiche de Contrôle au Départ (Check-Out)",
+    subtitle="Contrôle technique et conformité opérationnelle avant mise à disposition",
+    context_info="Projet : " ~ (data.project or '—') ~ " — Production : " ~ (data.production or '—')
+) }}
+{% endblock %}
 
-    <div class="checkout">
+{% block content %}
+<!-- ═══════════ PRODUCTION INFO ═══════════ -->
+<section class="pdf-section">
+    <h2 class="pdf-section-title dot-before">Production &amp; Tournage</h2>
+    {% set controller_name = data.controller.get('name', '—') if (data.controller is mapping) else (data.controller or '—') %}
+    {{ pdf_info_grid(
+        items=[
+            ("Production", data.production or '—'),
+            ("Projet", data.project or '—'),
+            ("Date de départ", data.departure_date or '—'),
+            ("Début de tournage", data.shoot_start or '—'),
+            ("Fin de tournage", data.shoot_end or '—'),
+            ("Responsable du contrôle", controller_name)
+        ],
+        columns=3
+    ) }}
+</section>
 
-        <!-- ═══════════ HEADER ═══════════ -->
-        <header class="checkout-header">
-            <div class="checkout-header-logo">
-                <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
-                    alt="{{ company_name }}">
-            </div>
-            <div class="checkout-header-meta">
-                <strong class="dot-before">Check-Out Véhicule</strong><br>
-                <span class="checkout-doc-id">{{ data.inspection_id }}</span><br>
-                {{ data.control_date or '—' }}
-            </div>
-        </header>
-
-        <!-- ═══════════ PRODUCTION INFO ═══════════ -->
-        <section class="checkout-section">
-            <h2 class="checkout-section-title dot-before">Production</h2>
-            <div class="checkout-info-grid">
-                <div class="checkout-info-item">
-                    <span class="checkout-info-label">Production</span>
-                    <span class="checkout-info-value">{{ data.production }}</span>
-                </div>
-                <div class="checkout-info-item">
-                    <span class="checkout-info-label">Projet</span>
-                    <span class="checkout-info-value">{{ data.project }}</span>
-                </div>
-                <div class="checkout-info-item">
-                    <span class="checkout-info-label">Date de départ</span>
-                    <span class="checkout-info-value">{{ data.departure_date }}</span>
-                </div>
-                <div class="checkout-info-item">
-                    <span class="checkout-info-label">Début de tournage</span>
-                    <span class="checkout-info-value">{{ data.shoot_start }}</span>
-                </div>
-                <div class="checkout-info-item">
-                    <span class="checkout-info-label">Fin de tournage</span>
-                    <span class="checkout-info-value">{{ data.shoot_end }}</span>
-                </div>
-                <div class="checkout-info-item">
-                    <span class="checkout-info-label">Responsable du contrôle</span>
-                    <span class="checkout-info-value">
-                        {% if data.controller is mapping %}
-                        {{ data.controller.get('name', '—') }}
-                        {% else %}
-                        {{ data.controller or '—' }}
-                        {% endif %}
-                    </span>
-                </div>
-            </div>
-        </section>
-
-        <!-- ═══════════ VEHICLE INFO ═══════════ -->
-        <section class="checkout-section">
-            <h2 class="checkout-section-title dot-before">Véhicule</h2>
-            <div class="checkout-info-grid">
-                <div class="checkout-info-item">
-                    <span class="checkout-info-label">Véhicule contrôlé</span>
-                    <span class="checkout-info-value">{{ data.vehicle.fields.name }}
-                        <span class="checkout-doc-id">{{ data.vehicle.fields.unique_id }}</span>
-                    </span>
-                </div>
-                <div class="checkout-info-item">
-                    <span class="checkout-info-label">État du contrôle</span>
-                    <span class="checkout-info-value">
-                        {% if data.status_id == 'pending' %}
-                        <span class="checkout-badge checkout-badge--tobesigned">{{ data.control_status }}</span>
-                        {% elif data.status_id == 'in_progress' %}
-                        <span class="checkout-badge checkout-badge--inprogress">{{ data.control_status }}</span>
-                        {% elif data.status_id == 'signed' %}
-                        <span class="checkout-badge checkout-badge--signed">{{ data.control_status }}</span>
-                        {% else %}
-                        <span class="checkout-badge checkout-badge--neutral">{{ data.control_status }}</span>
-                        {% endif %}
-                    </span>
-                </div>
-            </div>
-        </section>
-
-        {% set grouped_check_items = {} %}
-        {% for item in data.check_items %}
-        {% set cat = item.category or 'Autre' %}
-        {% if cat not in grouped_check_items %}
-        {% set _ = grouped_check_items.update({cat: []}) %}
+<!-- ═══════════ VEHICLE INFO ═══════════ -->
+<section class="pdf-section">
+    <h2 class="pdf-section-title dot-before">Véhicule Contrôlé</h2>
+    {% set vehicle_label = (data.vehicle.fields.name or '—') ~ (' (' ~ data.vehicle.fields.unique_id ~ ')' if (data.vehicle and data.vehicle.fields and data.vehicle.fields.unique_id) else '') %}
+    {% set status_badge_html %}
+        {% if data.status_id == 'pending' %}
+        {{ pdf_badge(data.control_status or 'À signer', 'warning') }}
+        {% elif data.status_id == 'in_progress' %}
+        {{ pdf_badge(data.control_status or 'En cours', 'neutral') }}
+        {% elif data.status_id == 'signed' %}
+        {{ pdf_badge(data.control_status or 'Signé', 'success') }}
+        {% else %}
+        {{ pdf_badge(data.control_status or '—', 'neutral') }}
         {% endif %}
-        {% set _ = grouped_check_items[cat].append(item) %}
-        {% endfor %}
+    {% endset %}
+    {{ pdf_info_grid(
+        items=[
+            ("Véhicule", vehicle_label),
+            ("État du contrôle", status_badge_html|safe)
+        ],
+        columns=2
+    ) }}
+</section>
 
-        {% for cat, items in grouped_check_items.items() %}
-        <h3
-            style="font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; border-bottom: 1px solid #eee; padding-bottom: 5px; color: #333;">
-            {{ cat }}</h3>
-        <table class="checkout-table">
-            <thead>
-                <tr>
-                    <th>Élément</th>
-                    <th>État</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in items %}
-                {% set status = data[item.key] %}
-                {% if status %}
-                <tr>
-                    <td>{{ item.label }}</td>
-                    <td>
-                        {% if item.type == 'value' %}
-                        {% set is_val_ok = item.is_valid if item.is_valid is defined else (data[item.key ~ '_valid'] if data[item.key ~ '_valid'] is defined else (data[item.key ~ '_status'] == 'ok')) %}
-                        <span
-                            class="checkout-badge {% if is_val_ok %}checkout-badge--ok{% else %}checkout-badge--critical{% endif %}">{{ status }}{% if item.unit and status != '—' %} {{ item.unit }}{% endif %}</span>
-                        {% elif status == 'ok' %}
-                        <span
-                            class="checkout-badge checkout-badge--ok">OK</span>
-                        {% elif status == 'warning' %}
-                        <span
-                            class="checkout-badge checkout-badge--warning">À
-                            vérifier</span>
-                        {% elif status == 'critical' %}
-                        <span
-                            class="checkout-badge checkout-badge--critical">Défaut</span>
-                        {% else %}
-                        <span
-                            class="checkout-badge checkout-badge--neutral">{{
-                            status or '—' }}</span>
-                        {% endif %}
-                    </td>
-                </tr>
+<!-- ═══════════ CHECK ITEMS ═══════════ -->
+{% set grouped_check_items = {} %}
+{% for item in data.check_items %}
+{% set cat = item.category or 'Autre' %}
+{% if cat not in grouped_check_items %}
+{% set _ = grouped_check_items.update({cat: []}) %}
+{% endif %}
+{% set _ = grouped_check_items[cat].append(item) %}
+{% endfor %}
+
+{% for cat, items in grouped_check_items.items() %}
+<div class="pdf-category-subtitle dot-before">{{ cat }}</div>
+<table class="pdf-table">
+    <thead>
+        <tr>
+            <th>Élément de contrôle</th>
+            <th class="text-right">État / Mesure</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in items %}
+        {% set status = data[item.key] %}
+        {% if status %}
+        <tr>
+            <td>{{ item.label }}</td>
+            <td class="text-right">
+                {% if item.type == 'value' %}
+                {% set is_val_ok = item.is_valid if item.is_valid is defined else (data[item.key ~ '_valid'] if data[item.key ~ '_valid'] is defined else (data[item.key ~ '_status'] == 'ok')) %}
+                <span class="pdf-badge {% if is_val_ok %}pdf-badge--success{% else %}pdf-badge--danger{% endif %}">{{ status }}{% if item.unit and status != '—' %} {{ item.unit }}{% endif %}</span>
+                {% elif status == 'ok' %}
+                <span class="pdf-badge pdf-badge--success">OK</span>
+                {% elif status == 'warning' %}
+                <span class="pdf-badge pdf-badge--warning">À vérifier</span>
+                {% elif status == 'critical' %}
+                <span class="pdf-badge pdf-badge--danger">Défaut</span>
+                {% else %}
+                <span class="pdf-badge pdf-badge--neutral">{{ status or '—' }}</span>
                 {% endif %}
-                {% endfor %}
-            </tbody>
-        </table>
+            </td>
+        </tr>
+        {% endif %}
         {% endfor %}
+    </tbody>
+</table>
+{% endfor %}
 
-        <!-- ═══════════ PHOTOS INTÉRIEURES ═══════════ -->
-        {% if data.interior_photos %}
-        <section class="checkout-section">
-            <h2 class="checkout-section-title dot-before">Photos intérieur véhicule</h2>
-            <div class="checkout-photos">
-                {% for photo in data.interior_photos %}
-                <div class="checkout-photo-item">
-                    <img src="{{ photo.url }}" alt="Intérieur {{ loop.index }}">
-                </div>
-                {% endfor %}
-            </div>
-        </section>
-        {% endif %}
-
-        <!-- ═══════════ PHOTOS EXTÉRIEURES ═══════════ -->
-        {% if data.exterior_photos %}
-        <section class="checkout-section">
-            <h2 class="checkout-section-title dot-before">Photos extérieur véhicule</h2>
-            <div class="checkout-photos">
-                {% for photo in data.exterior_photos %}
-                <div class="checkout-photo-item">
-                    <img src="{{ photo.url }}" alt="Extérieur {{ loop.index }}">
-                </div>
-                {% endfor %}
-            </div>
-        </section>
-        {% endif %}
-
-        <!-- ═══════════ OBSERVATIONS ═══════════ -->
-        <section class="checkout-section">
-            <h2 class="checkout-section-title dot-before">Observations générales</h2>
-            <div class="checkout-notes">
-                {{ data.notes or 'Aucune observation.' }}
-            </div>
-        </section>
-
-        <!-- ═══════════ VERDICT ═══════════ -->
-        <section class="checkout-section checkout-text-center">
-            <h2 class="checkout-section-title dot-before">Véhicule prêt au départ</h2>
-            {% if data.ready == 'true' %}
-            <span class="checkout-badge checkout-badge--ok" style="font-size: 1rem; padding: 8px 24px;">
-                OUI — Véhicule conforme
-            </span>
-            {% elif data.ready == 'false' %}
-            <span class="checkout-badge checkout-badge--critical" style="font-size: 1rem; padding: 8px 24px;">
-                NON — Véhicule non conforme
-            </span>
-            {% else %}
-            <span class="checkout-badge checkout-badge--neutral" style="font-size: 1rem; padding: 8px 24px;">
-                {{ data.ready or 'En attente' }}
-            </span>
-            {% endif %}
-        </section>
-
-        <hr class="checkout-divider">
-
-        <!-- ═══════════ SIGNATURE ═══════════ -->
-        <section class="checkout-section">
-            <h2 class="checkout-section-title dot-before">Signature électronique</h2>
-            <div class="checkout-signature">
-                <div class="checkout-signature-block">
-                    <p class="checkout-signature-label">Signature du responsable</p>
-                    <div class="checkout-signature-pad">
-                        {% if signature %}
-                        <img src="{{ signature }}" alt="Signature">
-                        {% else %}
-                        <span class="checkout-text-muted">En attente de signature</span>
-                        {% endif %}
-                    </div>
-                    <div class="checkout-signature-info">
-                        <strong>{{ data.controller.name if data.controller else '—' }}</strong><br>
-                        {% if data.signed_at %}
-                        Signé le {{ data.signed_at }} — IP : {{ data.signed_ip }}
-                        {% endif %}
-                    </div>
-                </div>
-
-                {% if qr %}
-                <div class="checkout-signature-block" style="max-width: 160px;">
-                    <p class="checkout-signature-label">Vérification</p>
-                    <div class="checkout-qr">
-                        <a href="{{ verification_url }}" target="_blank">
-                            <img src="{{ qr }}" alt="QR Code de vérification">
-                        </a>
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-        </section>
-
-        <!-- ═══════════ VERIFICATION HASH ═══════════ -->
-        {% if hash %}
-        <div class="checkout-verification">
-            <div>
-                <p class="checkout-verification-text">
-                    <strong>Document scellé électroniquement.</strong><br>
-                    Son intégrité peut être vérifiée via le QR code ci-dessus.
-                </p>
-                <p class="checkout-hash">SHA-256 : {{ hash }}</p>
-            </div>
+<!-- ═══════════ PHOTOS INTÉRIEURES ═══════════ -->
+{% if data.interior_photos %}
+<section class="pdf-section">
+    <h2 class="pdf-section-title dot-before">Photos intérieur véhicule</h2>
+    <div class="pdf-photos-grid">
+        {% for photo in data.interior_photos %}
+        <div class="pdf-photo-item">
+            <img src="{{ photo.url }}" alt="Intérieur {{ loop.index }}">
         </div>
-        {% endif %}
-
-        <!-- ═══════════ FOOTER ═══════════ -->
-        <footer class="checkout-footer">
-            <p>
-                <strong>{{company_name}}</strong><br>
-                {{company_address}}<br>
-                Ce document est confidentiel et destiné uniquement à un usage interne.
-            </p>
-        </footer>
-
+        {% endfor %}
     </div>
+</section>
+{% endif %}
 
-</body>
+<!-- ═══════════ PHOTOS EXTÉRIEURES ═══════════ -->
+{% if data.exterior_photos %}
+<section class="pdf-section">
+    <h2 class="pdf-section-title dot-before">Photos extérieur véhicule</h2>
+    <div class="pdf-photos-grid">
+        {% for photo in data.exterior_photos %}
+        <div class="pdf-photo-item">
+            <img src="{{ photo.url }}" alt="Extérieur {{ loop.index }}">
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
 
-</html>
+<!-- ═══════════ OBSERVATIONS ═══════════ -->
+<section class="pdf-section">
+    <h2 class="pdf-section-title dot-before">Observations générales</h2>
+    <div class="pdf-notes-box">
+        {{ data.notes or 'Aucune observation particulière.' }}
+    </div>
+</section>
+
+<!-- ═══════════ VERDICT ═══════════ -->
+<section class="pdf-section pdf-verdict-box">
+    <h2 class="pdf-section-title dot-before">Verdict du Contrôle — Véhicule Prêt au Départ</h2>
+    {% if data.ready == 'true' %}
+    <span class="pdf-verdict-badge pdf-badge--success">
+        OUI — Véhicule conforme pour le tournage
+    </span>
+    {% elif data.ready == 'false' %}
+    <span class="pdf-verdict-badge pdf-badge--danger">
+        NON — Véhicule non conforme
+    </span>
+    {% else %}
+    <span class="pdf-verdict-badge pdf-badge--neutral">
+        {{ data.ready or 'Contrôle en attente de validation' }}
+    </span>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block pdf_signatures %}
+{% set controller_display_name = data.controller.name if (data.controller and data.controller.name) else (data.controller if (data.controller is string) else 'Responsable Contrôle') %}
+{{ pdf_signature_and_seal(
+    doc_id=data.inspection_id,
+    signer_name=controller_display_name,
+    signer_role="Responsable du contrôle (Belle Vitesse)",
+    signed_at=data.signed_at,
+    ip=data.signed_ip,
+    signature_img=signature,
+    is_signed=(data.status_id == 'signed'),
+    hash_code=hash,
+    qr_code_uri=qr,
+    verification_url=verification_url,
+    seal_title="Scellement Électronique de l'État des Lieux Départ",
+    project_name=data.project
+) }}
+{% endblock %}
+
+{% block pdf_footer %}
+{{ pdf_footer(
+    company_name=company_name or 'Belle Vitesse',
+    company_address=company_address,
+    note="Ce document est confidentiel et destiné uniquement à un usage contractuel et d'assurance."
+) }}
+{% endblock %}

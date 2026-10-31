@@ -1,0 +1,73 @@
+{% from "pdf/macros.html" import pdf_preview_toolbar, pdf_header, pdf_title_banner, pdf_section_title, pdf_party_card, pdf_info_grid, pdf_signature_and_seal, pdf_contradictory_signatures_and_seal, pdf_footer, pdf_badge with context %}
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/static/imgs/favicons/favicon.svg" />
+    <link rel="shortcut icon" href="/static/imgs/favicons/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/imgs/favicons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="{{ company_name or 'Belle Vitesse' }}" />
+
+    <title>{% block title %}{{ company_name or 'Belle Vitesse' }}{% endblock %}</title>
+
+    <link rel="stylesheet" href="{{ asset_url('css/styles.css') }}">
+    <link rel="stylesheet" href="{{ asset_url('css/pdf/base-pdf.css') }}">
+    {% block extra_css %}{% endblock %}
+    {% block head_extra %}{% endblock %}
+</head>
+
+<body class="cgl-container pdf-body {% block body_class %}{% endblock %}">
+
+    {# ── Barre d'outils d'aperçu d'impression (visible à l'écran uniquement) ── #}
+    {% block preview_toolbar %}
+    {% if is_preview %}
+    {{ pdf_preview_toolbar(
+        doc_title=doc_preview_title or 'Document Officiel',
+        doc_id=doc_preview_id,
+        format_pdf_url=doc_preview_pdf_url or '?format=pdf',
+        show_print=True
+    ) }}
+    {% endif %}
+    {% endblock %}
+
+    <div class="cgl-document pdf-document {% block document_class %}{% endblock %}">
+
+        {# ── En-tête officiel ── #}
+        {% block pdf_header %}
+        {% if doc_header_title %}
+        {{ pdf_header(
+            doc_type_title=doc_header_title,
+            doc_id=doc_id,
+            date_str=doc_date_str,
+            company_name=company_name
+        ) }}
+        {% endif %}
+        {% endblock %}
+
+        {# ── Bannière de titre ── #}
+        {% block pdf_title %}{% endblock %}
+
+        {# ── Contenu principal du document ── #}
+        {% block content %}{% endblock %}
+
+        {# ── Bloc de signatures et intégrité ── #}
+        {% block pdf_signatures %}{% endblock %}
+
+        {# ── Pied de page écran (masqué à l'impression) ── #}
+        {% block pdf_footer %}
+        {{ pdf_footer(
+            left_text=doc_footer_left or ((company_name or 'Belle Vitesse') ~ ' — Document officiel'),
+            right_text=doc_footer_right or "Document A4 officiel"
+        ) }}
+        {% endblock %}
+
+    </div>
+
+    {% block body_extra %}{% endblock %}
+</body>
+
+</html>

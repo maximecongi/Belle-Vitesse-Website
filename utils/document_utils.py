@@ -320,13 +320,16 @@ def render_pdf_from_template(
         html = HTML(string=html_content, base_url=base_url, url_fetcher=fetcher)
 
         css_list = []
-        if stylesheets:
-            static_path = Path(current_app.static_folder)
-            for ss in stylesheets:
-                css_file = static_path / ss.lstrip("/")
-                if css_file.exists():
-                    css_list.append(
-                        CSS(filename=str(css_file), url_fetcher=fetcher))
+        effective_stylesheets = list(stylesheets) if stylesheets else []
+        if not continuous and "css/pdf/base-pdf.css" not in effective_stylesheets:
+            effective_stylesheets.insert(0, "css/pdf/base-pdf.css")
+
+        static_path = Path(current_app.static_folder)
+        for ss in effective_stylesheets:
+            css_file = static_path / ss.lstrip("/")
+            if css_file.exists():
+                css_list.append(
+                    CSS(filename=str(css_file), url_fetcher=fetcher))
 
         if continuous:
             doc = html.render(stylesheets=css_list)

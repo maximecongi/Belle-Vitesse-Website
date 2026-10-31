@@ -220,7 +220,11 @@ def init_context_processors(app):
         """Génère l'URL d'un asset statique avec le paramètre ?v=<mtime> automatique."""
         from flask import url_for
         v = asset_version(filename)
-        return f"{url_for('static', filename=filename)}?v={v}"
+        try:
+            base = url_for('static', filename=filename)
+        except Exception:
+            base = f"/static/{filename.lstrip('/')}"
+        return f"{base}?v={v}"
 
     app.jinja_env.globals["asset_version"] = asset_version
     app.jinja_env.globals["asset_url"] = asset_url

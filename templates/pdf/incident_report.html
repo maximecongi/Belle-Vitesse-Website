@@ -1,315 +1,197 @@
-<!DOCTYPE html>
-<html lang="fr">
+{% extends "pdf/base_pdf.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% block title %}CONSTAT D'INCIDENT — {{ incident.incident_number }} — {{ company_name }}{% endblock %}
 
-    <link rel="icon" type="image/png" href="/static/imgs/favicons/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="/static/imgs/favicons/favicon.svg" />
-    <link rel="shortcut icon" href="/static/imgs/favicons/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/static/imgs/favicons/apple-touch-icon.png" />
-    <meta name="apple-mobile-web-app-title" content="{{ company_name }}" />
-    <link rel="manifest" href="/static/imgs/favicons/site.webmanifest" />
+{% block extra_css %}
+<link rel="stylesheet" href="{{ asset_url('css/checkout.css') }}">
+<link rel="stylesheet" href="{{ asset_url('css/incident_pdf.css') }}">
+{% endblock %}
 
-    <title>CONSTAT D'INCIDENT — {{ incident.incident_number }}</title>
-    <link rel="stylesheet" href="{{ asset_url('css/styles.css') }}">
-    <link rel="stylesheet" href="{{ asset_url('css/checkout.css') }}">
-    <link rel="stylesheet" href="{{ asset_url('css/incident_pdf.css') }}">
-</head>
+{% block pdf_header %}
+{{ pdf_header(
+    doc_type_title="Constat & Déclaration d'Incident",
+    doc_id=incident.incident_number,
+    date_str=today,
+    company_name=company_name
+) }}
+{% endblock %}
 
-<body>
+{% block pdf_title %}
+{{ pdf_title_banner(
+    title=incident.title,
+    subtitle="Fiche officielle de constatation d'anomalie, dommage ou sinistre survenu en opération de tournage",
+    badge=incident.category_label,
+    context_info="Projet : " ~ (incident.project.name if incident.project else '—') ~ " — Production : " ~ (incident.project.production_name if incident.project else '—')
+) }}
+{% endblock %}
 
-    <div class="checkout">
-
-        <!-- ═══════════ HEADER ═══════════ -->
-        <header class="checkout-header">
-            <div class="checkout-header-logo">
-                <img src="/static/imgs/logos_and_name/noir-fond-transparent.png"
-                    alt="{{ company_name }}">
-            </div>
-            <div class="checkout-header-meta">
-                <strong class="dot-before">Constat & Déclaration d'Incident</strong><br>
-                <span class="checkout-doc-id">{{ incident.incident_number }}</span><br>
-                {{ today }}
-            </div>
-        </header>
-
-        <!-- ═══════════ DOCUMENT TITLE ═══════════ -->
-        <h1 class="checkout-title">{{ incident.title }}</h1>
-        <p class="checkout-subtitle">
-            Fiche officielle de constatation d'anomalie, dommage ou sinistre survenu en opération de tournage.
-        </p>
-
-        <!-- ═══════════ 1. CONTEXTE TOURNAGE & PRODUCTION ═══════════ -->
-        <section class="checkout-section">
-            <h2 class="checkout-section-title dot-before">Production & Tournage</h2>
-            <div class="checkout-info-grid">
-                <div class="checkout-info-item">
-                    <span class="checkout-info-label">Projet (Tournage)</span>
-                    <span class="checkout-info-value">{{ incident.project.name if incident.project else '—' }}</span>
-                </div>
-                <div class="checkout-info-item">
-                    <span class="checkout-info-label">Société de Production</span>
-                    <span class="checkout-info-value">{{ incident.project.production_name if incident.project else '—' }}</span>
-                </div>
-                <div class="checkout-info-item">
-                    <span class="checkout-info-label">Déclarant</span>
-                    <span class="checkout-info-value">{{ incident.reporter.name if incident.reporter else '—' }}</span>
-                </div>
-                <div class="checkout-info-item">
-                    <span class="checkout-info-label">Date & Heure de survenance</span>
-                    <span class="checkout-info-value">{{ incident.incident_date }} à {{ incident.incident_time }}</span>
-                </div>
-                <div class="checkout-info-item">
-                    <span class="checkout-info-label">Lieu du sinistre / Plateau</span>
-                    <span class="checkout-info-value">{{ incident.location }}</span>
-                </div>
-                <div class="checkout-info-item">
-                    <span class="checkout-info-label">Contrôle rattaché</span>
-                    <span class="checkout-info-value">
-                        {% if incident.checkout %}
-                        Check-out {{ incident.checkout.inspection_number }}
-                        {% elif incident.checkin %}
-                        Check-in {{ incident.checkin.inspection_number }}
-                        {% else %}
-                        En cours d'opération
-                        {% endif %}
-                    </span>
-                </div>
-            </div>
-        </section>
-
-        <!-- ═══════════ 2. MATÉRIEL & VÉHICULE CONCERNÉ ═══════════ -->
-        <section class="checkout-section">
-            <h2 class="checkout-section-title dot-before">Véhicule & Matériel</h2>
-            <div class="checkout-info-grid">
-                <div class="checkout-info-item">
-                    <span class="checkout-info-label">Véhicule Belle Vitesse</span>
-                    <span class="checkout-info-value">
-                        {% if incident.vehicle %}
-                            {{ incident.vehicle.name }}
-                            {% if incident.vehicle.unique_id %}
-                                <span class="checkout-doc-id" style="margin-left: 3pt;">{{ incident.vehicle.unique_id }}</span>
-                            {% endif %}
-                        {% else %}
-                            —
-                        {% endif %}
-                    </span>
-                </div>
-                <div class="checkout-info-item">
-                    <span class="checkout-info-label">Équipement / Tête / Bras</span>
-                    <span class="checkout-info-value">{{ incident.equipment_name or '—' }}</span>
-                </div>
-                <div class="checkout-info-item">
-                    <span class="checkout-info-label">Catégorie de l'incident</span>
-                    <span class="checkout-info-value">
-                        <span class="checkout-badge checkout-badge--status">{{ incident.category_label }}</span>
-                    </span>
-                </div>
-            </div>
-        </section>
-
-        <!-- ═══════════ 3. QUALIFICATION & IMPACT OPÉRATIONNEL ═══════════ -->
-        <section class="checkout-section">
-            <h2 class="checkout-section-title dot-before">Qualification & Impact</h2>
-            <div class="checkout-info-grid">
-                <div class="checkout-info-item">
-                    <span class="checkout-info-label">Niveau de Gravité</span>
-                    <span class="checkout-info-value">
-                        {% if incident.severity == 'critique' %}
-                        <span class="checkout-badge checkout-badge--critique">Critique</span>
-                        {% elif incident.severity == 'modere' %}
-                        <span class="checkout-badge checkout-badge--modere">Modéré</span>
-                        {% else %}
-                        <span class="checkout-badge checkout-badge--mineur">Mineur</span>
-                        {% endif %}
-                    </span>
-                </div>
-                <div class="checkout-info-item">
-                    <span class="checkout-info-label">Statut du dossier</span>
-                    <span class="checkout-info-value">
-                        {% if incident.status in ('resolu', 'cloture') %}
-                        <span class="checkout-badge checkout-badge--resolu">{{ incident.status_label }}</span>
-                        {% else %}
-                        <span class="checkout-badge checkout-badge--in_progress">{{ incident.status_label }}</span>
-                        {% endif %}
-                    </span>
-                </div>
-                <div class="checkout-info-item">
-                    <span class="checkout-info-label">Impact sur le Tournage</span>
-                    <span class="checkout-info-value">
-                        <span class="checkout-badge {% if incident.shooting_impact in ('arret', 'interruption') %}checkout-badge--critique{% elif incident.shooting_impact == 'retard' %}checkout-badge--modere{% else %}checkout-badge--mineur{% endif %}">
-                            {{ incident.shooting_impact_label }}
-                        </span>
-                    </span>
-                </div>
-            </div>
-        </section>
-
-        <!-- ═══════════ 4. CIRCONSTANCES & ACTIONS ═══════════ -->
-        <section class="checkout-section">
-            <h2 class="checkout-section-title dot-before">Circonstances & Dommages Constatés</h2>
-            <div class="checkout-notes">
-                {{ incident.description or "Aucune description circonstanciée renseignée." }}
-            </div>
-
-            {% if incident.immediate_actions %}
-            <div class="checkout-info-label" style="margin-top: 6pt; margin-bottom: 2pt;">Mesures d'urgence et actions immédiates :</div>
-            <div class="checkout-notes checkout-notes--urgent">
-                {{ incident.immediate_actions }}
-            </div>
-            {% endif %}
-        </section>
-
-        <!-- ═══════════ 5. ÉVALUATION FINANCIÈRE & ASSURANCE ═══════════ -->
-        <section class="checkout-section">
-            <h2 class="checkout-section-title dot-before">Évaluation Financière & Assurance</h2>
-            <div class="checkout-info-grid">
-                <div class="checkout-info-item">
-                    <span class="checkout-info-label">Coût estimé réparations</span>
-                    <span class="checkout-info-value">
-                        {% if incident.estimated_cost is not none %}
-                            {{ "%.2f" | format(incident.estimated_cost) }} € HT
-                        {% else %}
-                            En attente de chiffrage
-                        {% endif %}
-                    </span>
-                </div>
-                <div class="checkout-info-item">
-                    <span class="checkout-info-label">Coût réel facturé</span>
-                    <span class="checkout-info-value">
-                        {% if incident.actual_cost is not none %}
-                            {{ "%.2f" | format(incident.actual_cost) }} € HT
-                        {% else %}
-                            —
-                        {% endif %}
-                    </span>
-                </div>
-                <div class="checkout-info-item">
-                    <span class="checkout-info-label">Déclaration Sinistre Assurance</span>
-                    <span class="checkout-info-value">
-                        {% if incident.insurance_declared %}
-                            <span class="checkout-badge checkout-badge--resolu">Déclaré</span>
-                            {% if incident.insurance_reference %}
-                            <span class="checkout-doc-id" style="margin-left: 3pt;">{{ incident.insurance_reference }}</span>
-                            {% endif %}
-                        {% else %}
-                            <span class="checkout-badge checkout-badge--mineur">Non requis</span>
-                        {% endif %}
-                    </span>
-                </div>
-            </div>
-            {% if incident.insurance_notes %}
-            <div class="checkout-info-label" style="margin-top: 6pt; margin-bottom: 2pt;">Notes de suivi assurance / franchise :</div>
-            <p style="font-size: 8pt; color: var(--grey-2); line-height: 1.4;">{{ incident.insurance_notes }}</p>
-            {% endif %}
-        </section>
-
-        <!-- ═══════════ 6. CONSTAT PHOTOGRAPHIQUE ═══════════ -->
-        {% if incident.photos %}
-        <section class="checkout-section">
-            <h2 class="checkout-section-title dot-before">Constat Photographique des Dégâts</h2>
-            <div class="checkout-photos">
-                {% for p in incident.photos[:6] %}
-                <div class="checkout-photo-item">
-                    <img src="{{ p.url }}" alt="Photo dégât">
-                    <div class="checkout-photo-caption">Pièce jointe #{{ loop.index }}</div>
-                </div>
-                {% endfor %}
-            </div>
-        </section>
+{% block content %}
+<!-- ═══════════ 1. CONTEXTE TOURNAGE & PRODUCTION ═══════════ -->
+<section class="pdf-section">
+    <h2 class="pdf-section-title dot-before">Production &amp; Tournage</h2>
+    {% set linked_ctrl %}
+        {% if incident.checkout %}
+        Check-out {{ incident.checkout.inspection_number }}
+        {% elif incident.checkin %}
+        Check-in {{ incident.checkin.inspection_number }}
+        {% else %}
+        En cours d'opération
         {% endif %}
+    {% endset %}
+    {{ pdf_info_grid(
+        items=[
+            ("Projet (Tournage)", incident.project.name if incident.project else '—'),
+            ("Société de Production", incident.project.production_name if incident.project else '—'),
+            ("Déclarant", incident.reporter.name if incident.reporter else '—'),
+            ("Date & Heure", (incident.incident_date ~ ' à ' ~ incident.incident_time) if (incident.incident_date and incident.incident_time) else '—'),
+            ("Lieu du sinistre", incident.location or '—'),
+            ("Contrôle rattaché", linked_ctrl|trim)
+        ],
+        columns=3
+    ) }}
+</section>
 
-        <!-- ═══════════ SIGNATURES & VISAS CONTRADICTOIRES ═══════════ -->
-        <section class="checkout-section">
-            <h2 class="checkout-section-title dot-before">Signatures & Visas Contradictoires</h2>
-            <div class="checkout-signature">
-                <!-- Signature Belle Vitesse -->
-                <div class="checkout-signature-block">
-                    <div class="checkout-signature-label">Pour Belle Vitesse</div>
-                    <div class="checkout-signature-pad">
-                        {% if incident.bv_signature_data_uri or incident.bv_signature_data %}
-                        <img src="{{ incident.bv_signature_data_uri or incident.bv_signature_data }}" alt="Signature Belle Vitesse" style="max-height: 50pt; max-width: 140pt; display: block; margin: 0 auto;">
-                        {% else %}
-                        <span style="font-size: 7.5pt; color: var(--grey-2); line-height: 40pt; display: block; text-align: center;">Visa Responsable Technique</span>
-                        {% endif %}
-                    </div>
-                    <div class="checkout-signature-info">
-                        <strong>{{ incident.bv_signer_name or (incident.reporter.name if incident.reporter else company_name) }}</strong><br>
-                        <span style="font-size: 7pt; color: var(--grey-2);">{{ incident.bv_signer_role or "Responsable Technique" }}</span><br>
-                        {% if incident.bv_signed_at %}
-                        <span style="font-size: 6.5pt; color: var(--green);">Signé le {{ incident.bv_signed_at }}</span>
-                        {% else %}
-                        <span style="font-size: 6.5pt; color: var(--grey-2);">Document certifié conforme aux constatations du plateau.</span>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- Signature Production -->
-                <div class="checkout-signature-block">
-                    <div class="checkout-signature-label">Pour la Production</div>
-                    <div class="checkout-signature-pad">
-                        {% if incident.prod_signature_data_uri or incident.prod_signature_data %}
-                        <img src="{{ incident.prod_signature_data_uri or incident.prod_signature_data }}" alt="Signature Production" style="max-height: 50pt; max-width: 140pt; display: block; margin: 0 auto;">
-                        {% else %}
-                        <span style="font-size: 7.5pt; color: var(--grey-2); line-height: 40pt; display: block; text-align: center;">Visa Chargé de Production / Régie</span>
-                        {% endif %}
-                    </div>
-                    <div class="checkout-signature-info">
-                        <strong>{{ incident.prod_signer_name or (incident.project.production_name if incident.project else "Représentant Production") }}</strong><br>
-                        <span style="font-size: 7pt; color: var(--grey-2);">{{ incident.prod_signer_role or "Production / Régie" }}</span><br>
-                        {% if incident.prod_signed_at %}
-                        <span style="font-size: 6.5pt; color: var(--green);">Signé le {{ incident.prod_signed_at }}</span>
-                        {% else %}
-                        <span style="font-size: 6.5pt; color: var(--grey-2);">Pris acte de la déclaration et des dommages constatés.</span>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- QR Code de Vérification (si scellé) -->
-                {% if qr %}
-                <div class="checkout-signature-block" style="max-width: 110pt; text-align: center;">
-                    <div class="checkout-signature-label">Authenticité</div>
-                    <div class="checkout-qr" style="margin-top: 4pt;">
-                        <a href="{{ verification_url }}" target="_blank">
-                            <img src="{{ qr }}" alt="QR Code de vérification" style="width: 55pt; height: 55pt;">
-                        </a>
-                    </div>
-                    <div style="font-size: 6pt; color: var(--grey-2); margin-top: 2pt;">Scanner pour vérifier</div>
-                </div>
-                {% endif %}
-            </div>
-        </section>
-
-        <!-- ═══════════ SCELLÉ HMAC & CONFORMITÉ ═══════════ -->
-        {% if hash or is_sealed %}
-        <div class="checkout-verification" style="margin-top: 10pt; margin-bottom: 12pt; padding: 6pt 10pt; background: #f8fafc; border: 1px solid var(--grey-3); border-radius: 4px;">
-            <div>
-                <p class="checkout-verification-text" style="font-size: 7.5pt; margin: 0; line-height: 1.3;">
-                    <strong style="color: var(--green);">✔ Constat contradictoire scellé électroniquement.</strong><br>
-                    L'intégrité et la conformité légale de ce document peuvent être vérifiées en scannant le QR code.
-                </p>
-                {% if hash %}
-                <p class="checkout-hash" style="font-size: 6pt; font-family: monospace; color: var(--grey-2); margin: 3pt 0 0 0; word-break: break-all;">
-                    Sceau d'intégrité HMAC-SHA256 : {{ hash }}
-                </p>
-                {% endif %}
-            </div>
-        </div>
+<!-- ═══════════ 2. MATÉRIEL & VÉHICULE CONCERNÉ ═══════════ -->
+<section class="pdf-section">
+    <h2 class="pdf-section-title dot-before">Véhicule &amp; Matériel Mobilisé</h2>
+    {% set vehicle_info %}
+        {% if incident.vehicle %}
+            {{ incident.vehicle.name }}{% if incident.vehicle.unique_id %} ({{ incident.vehicle.unique_id }}){% endif %}
+        {% else %}
+            —
         {% endif %}
+    {% endset %}
+    {{ pdf_info_grid(
+        items=[
+            ("Véhicule Belle Vitesse", vehicle_info|trim),
+            ("Équipement / Tête / Bras", incident.equipment_name or '—'),
+            ("Catégorie d'incident", incident.category_label or '—')
+        ],
+        columns=3
+    ) }}
+</section>
 
-        <!-- ═══════════ FOOTER ═══════════ -->
-        <footer class="checkout-footer">
-            <p>
-                <strong>{{ company_name }}</strong><br>
-                {{ company_address }}<br>
-                Ce document est confidentiel et destiné uniquement à un usage interne.
-            </p>
-        </footer>
+<!-- ═══════════ 3. QUALIFICATION & IMPACT OPÉRATIONNEL ═══════════ -->
+<section class="pdf-section">
+    <h2 class="pdf-section-title dot-before">Qualification &amp; Impact Opérationnel</h2>
+    {% set severity_badge %}
+        {% if incident.severity == 'critique' %}
+        {{ pdf_badge('Critique', 'danger') }}
+        {% elif incident.severity == 'modere' %}
+        {{ pdf_badge('Modéré', 'warning') }}
+        {% else %}
+        {{ pdf_badge('Mineur', 'neutral') }}
+        {% endif %}
+    {% endset %}
+    {% set status_badge %}
+        {% if incident.status in ('resolu', 'cloture') %}
+        {{ pdf_badge(incident.status_label, 'success') }}
+        {% else %}
+        {{ pdf_badge(incident.status_label, 'warning') }}
+        {% endif %}
+    {% endset %}
+    {% set impact_badge %}
+        {% if incident.shooting_impact in ('arret', 'interruption') %}
+        {{ pdf_badge(incident.shooting_impact_label, 'danger') }}
+        {% elif incident.shooting_impact == 'retard' %}
+        {{ pdf_badge(incident.shooting_impact_label, 'warning') }}
+        {% else %}
+        {{ pdf_badge(incident.shooting_impact_label, 'neutral') }}
+        {% endif %}
+    {% endset %}
+    {{ pdf_info_grid(
+        items=[
+            ("Niveau de gravité", severity_badge|safe),
+            ("Statut du dossier", status_badge|safe),
+            ("Impact sur le tournage", impact_badge|safe)
+        ],
+        columns=3
+    ) }}
+</section>
 
+<!-- ═══════════ 4. CIRCONSTANCES & DOMMAGES ═══════════ -->
+<section class="pdf-section">
+    <h2 class="pdf-section-title dot-before">Circonstances &amp; Dommages Constatés</h2>
+    <div class="pdf-notes-box">
+        {{ incident.description or "Aucune description circonstanciée renseignée." }}
     </div>
 
-</body>
+    {% if incident.immediate_actions %}
+    <div class="pdf-category-subtitle dot-before u-mt-2">Mesures d'urgence et actions immédiates</div>
+    <div class="pdf-notes-box">
+        {{ incident.immediate_actions }}
+    </div>
+    {% endif %}
+</section>
 
-</html>
+<!-- ═══════════ 5. ÉVALUATION FINANCIÈRE & ASSURANCE ═══════════ -->
+<section class="pdf-section">
+    <h2 class="pdf-section-title dot-before">Évaluation Financière &amp; Assurance</h2>
+    {% set cost_est = ("%.2f"|format(incident.estimated_cost) ~ ' € HT') if (incident.estimated_cost is not none) else 'En attente de chiffrage' %}
+    {% set cost_act = ("%.2f"|format(incident.actual_cost) ~ ' € HT') if (incident.actual_cost is not none) else '—' %}
+    {% set insurance_val %}
+        {% if incident.insurance_declared %}
+            Déclaré{% if incident.insurance_reference %} (Réf : {{ incident.insurance_reference }}){% endif %}
+        {% else %}
+            Non requis
+        {% endif %}
+    {% endset %}
+    {{ pdf_info_grid(
+        items=[
+            ("Coût estimé réparations", cost_est),
+            ("Coût réel facturé", cost_act),
+            ("Déclaration assurance", insurance_val|trim)
+        ],
+        columns=3
+    ) }}
+
+    {% if incident.insurance_notes %}
+    <div class="pdf-category-subtitle dot-before u-mt-2">Notes de suivi assurance / franchise</div>
+    <div class="pdf-notes-box">
+        {{ incident.insurance_notes }}
+    </div>
+    {% endif %}
+</section>
+
+<!-- ═══════════ 6. CONSTAT PHOTOGRAPHIQUE ═══════════ -->
+{% if incident.photos %}
+<section class="pdf-section">
+    <h2 class="pdf-section-title dot-before">Constat Photographique des Dégâts</h2>
+    <div class="pdf-photos-grid">
+        {% for p in incident.photos[:6] %}
+        <div class="pdf-photo-item">
+            <img src="{{ p.url }}" alt="Photo dégât #{{ loop.index }}">
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block pdf_signatures %}
+{{ pdf_contradictory_signatures_and_seal(
+    doc_id=incident.incident_number,
+    bv_name=incident.bv_signer_name or (incident.reporter.name if incident.reporter else company_name),
+    bv_role=incident.bv_signer_role or "Responsable Technique Belle Vitesse",
+    bv_signed_at=incident.bv_signed_at,
+    bv_signature_img=incident.bv_signature_data_uri or incident.bv_signature_data,
+    bv_is_signed=(incident.bv_signed_at is not none),
+    prod_name=incident.prod_signer_name or (incident.project.production_name if incident.project else "Représentant Production"),
+    prod_role=incident.prod_signer_role or "Production / Régie",
+    prod_signed_at=incident.prod_signed_at,
+    prod_signature_img=incident.prod_signature_data_uri or incident.prod_signature_data,
+    prod_is_signed=(incident.prod_signed_at is not none),
+    hash_code=hash,
+    qr_code_uri=qr,
+    verification_url=verification_url,
+    seal_title="Constat contradictoire scellé électroniquement"
+) }}
+{% endblock %}
+
+{% block pdf_footer %}
+{{ pdf_footer(
+    company_name=company_name or 'Belle Vitesse',
+    company_address=company_address,
+    note="Ce document est confidentiel et destiné uniquement à un usage interne, d'expertise et d'assurance."
+) }}
+{% endblock %}

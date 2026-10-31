@@ -1,0 +1,807 @@
+/* ==========================================================================
+   BELLE VITESSE — FEUILLE DE STYLE SOCLE POUR DOCUMENTS PDF (WeasyPrint / A4)
+   Standardisation typographique, mise en page et charte CGL Belle Vitesse
+   ========================================================================== */
+
+/* ── 1. Configuration des Pages (WeasyPrint A4) ─────────────────────────── */
+@page {
+    size: A4 portrait;
+    margin: 18mm 15mm 22mm 15mm;
+
+    @bottom-right {
+        content: "Page " counter(page) " / " counter(pages);
+        font-size: 7.5pt;
+        font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: #71717a;
+    }
+
+    @bottom-left {
+        content: "BELLE VITESSE — Document Officiel";
+        font-size: 7.5pt;
+        font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: #a1a1aa;
+    }
+}
+
+@page :first {
+    margin-top: 15mm;
+}
+
+/* ── 2. Conteneur Principal & Typographie ─────────────────────────────────── */
+.cgl-container *,
+.pdf-container *,
+.pdf-body * {
+    box-sizing: border-box;
+}
+
+.cgl-container,
+.pdf-container,
+body.pdf-body {
+    margin: 0;
+    padding: 0;
+    background-color: #ffffff;
+    font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #18181b;
+    font-size: 8.5pt;
+    line-height: 1.5;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+.cgl-document,
+.pdf-document {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #ffffff;
+}
+
+/* ── 2.1 Mode Prévisualisation Écran (Mise en page A4 fidèle CGL) ─────────── */
+@media screen {
+    body.cgl-container,
+    body.pdf-body {
+        background-color: #475569;
+        min-height: 100vh;
+        padding: 24px 16px 48px 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .pdf-preview-toolbar {
+        width: 210mm;
+        max-width: 100%;
+        margin: 0 auto 18px auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #1e293b;
+        color: #f8fafc;
+        padding: 10px 18px;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 13px;
+        box-sizing: border-box;
+    }
+
+    .pdf-preview-toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .pdf-preview-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background-color: #334155;
+        color: #e2e8f0;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: 4px;
+        letter-spacing: 0.3px;
+    }
+
+    .pdf-preview-title {
+        font-weight: 600;
+        color: #ffffff;
+        font-size: 13px;
+    }
+
+    .pdf-preview-toolbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .pdf-preview-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        border: 1px solid #475569;
+        background-color: #334155;
+        color: #f8fafc;
+        transition: all 0.15s ease;
+        font-family: inherit;
+    }
+
+    .pdf-preview-btn:hover {
+        background-color: #475569;
+        border-color: #64748b;
+        color: #ffffff;
+    }
+
+    .pdf-preview-btn-primary {
+        background-color: #ffc845;
+        border-color: #f59e0b;
+        color: #18181b;
+    }
+
+    .pdf-preview-btn-primary:hover {
+        background-color: #fbbf24;
+        border-color: #d97706;
+        color: #000000;
+    }
+
+    .cgl-document,
+    .pdf-document {
+        width: 210mm;
+        min-height: 297mm;
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 18mm 15mm 22mm 15mm;
+        background-color: #ffffff;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.15), 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 0 1px rgba(0, 0, 0, 0.2);
+        border-radius: 2px;
+        box-sizing: border-box;
+    }
+
+    .cgl-screen-footer,
+    .pdf-screen-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 28pt;
+        padding-top: 10pt;
+        border-top: 0.5pt solid #cbd5e1;
+        font-size: 7.5pt;
+        color: #94a3b8;
+    }
+}
+
+@media screen and (max-width: 220mm) {
+    body.cgl-container,
+    body.pdf-body {
+        padding: 12px 8px;
+    }
+
+    .pdf-preview-toolbar {
+        width: 100%;
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+
+    .pdf-preview-toolbar-actions {
+        justify-content: flex-end;
+    }
+
+    .cgl-document,
+    .pdf-document {
+        width: 100%;
+        padding: 14mm 10mm;
+    }
+}
+
+@media print {
+    body.cgl-container,
+    body.pdf-body {
+        background-color: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        display: block !important;
+    }
+
+    .cgl-document,
+    .pdf-document {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        background-color: transparent !important;
+        border-radius: 0 !important;
+    }
+
+    .pdf-preview-toolbar,
+    .cgl-screen-footer,
+    .pdf-screen-footer,
+    .no-print {
+        display: none !important;
+    }
+}
+
+/* ── 3. En-tête du Document (Harmonisé CGL) ─────────────────────────────────── */
+.cgl-header,
+.public-doc-header,
+.pdf-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 14pt;
+    border-bottom: 1.5pt solid #e2e8f0;
+    margin-bottom: 18pt;
+    page-break-after: avoid;
+}
+
+.cgl-header-logo img,
+.public-doc-header-logo img,
+.pdf-header-logo img {
+    height: 30pt;
+    width: auto;
+    display: block;
+}
+
+.cgl-header-meta,
+.public-doc-header-meta,
+.pdf-header-meta {
+    text-align: right;
+    font-size: 8.5pt;
+    color: #64748b;
+    line-height: 1.6;
+}
+
+.cgl-header-meta strong,
+.public-doc-header-meta strong,
+.pdf-header-meta strong {
+    color: #0f172a;
+    font-size: 9pt;
+    font-weight: 700;
+}
+
+/* ── Signature Carré Jaune Belle Vitesse (Dot Before) ── */
+.dot-before:before {
+    content: "■ ";
+    color: #ffc845;
+    font-size: 0.85em;
+    position: relative;
+    left: -0.2ch;
+    top: -0.1ch;
+    z-index: 3;
+}
+
+/* ── Badge Identifiant Document ── */
+.checkout-doc-id,
+.cgl-header-doc-id,
+.public-doc-doc-id,
+.pdf-doc-id {
+    white-space: nowrap;
+    font-family: monospace;
+    color: var(--grey-1, #64748b);
+    font-size: 6pt;
+    background-color: var(--white-3, #f1f5f9);
+    padding: 2pt 6pt;
+    border-radius: 2pt;
+    margin-top: 6pt;
+    width: fit-content;
+    vertical-align: middle;
+}
+
+.u-text-xxs,
+.cgl-header-date,
+.pdf-header-date {
+    font-size: 7.5pt;
+    color: #64748b;
+}
+
+/* ── 4. Bannière Titre (Typographie Centrée CGL) ─────────────────────────── */
+.cgl-title-banner,
+.pdf-title-banner {
+    text-align: center;
+    margin-bottom: 18pt;
+    page-break-after: avoid;
+}
+
+.cgl-main-title,
+.pdf-main-title {
+    font-size: 13pt;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin: 0 0 3pt 0;
+    color: #18181b;
+}
+
+.cgl-subtitle,
+.pdf-subtitle {
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: #18181b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 3pt 0;
+}
+
+.cgl-version-info,
+.pdf-version-info {
+    font-size: 7.5pt;
+    color: #71717a;
+    font-style: italic;
+    margin: 0;
+}
+
+.pdf-banner-badge {
+    display: inline-block;
+    font-size: 7pt;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #18181b;
+    background-color: #f4f4f5;
+    padding: 2pt 6pt;
+    border-radius: 2pt;
+    border: 0.5pt solid #d4d4d8;
+    margin-bottom: 4pt;
+}
+
+/* ── 5. Titres de Section (Inspiration Décharge BV) ────────────────────────── */
+.cgl-section-title,
+.pdf-section-title {
+    font-size: 8.5pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #18181b;
+    margin: 14pt 0 8pt 0;
+    display: flex;
+    align-items: center;
+    gap: 5pt;
+    page-break-after: avoid;
+}
+
+.cgl-section-title::before,
+.pdf-section-title::before {
+    content: "";
+    display: inline-block;
+    width: 6pt;
+    height: 6pt;
+    background-color: #ffc845;
+    flex-shrink: 0;
+}
+
+.pdf-divider {
+    border: 0;
+    height: 0.5pt;
+    background-color: #e4e4e7;
+    margin: 12pt 0;
+}
+
+.pdf-category-subtitle {
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-top: 10pt;
+    margin-bottom: 5pt;
+    border-bottom: 0.5pt solid #e4e4e7;
+    padding-bottom: 3pt;
+    color: #27272a;
+}
+
+/* ── 6. Bloc Identification des Parties ─────────────────────────────────── */
+.cgl-parties-section,
+.pdf-parties-section {
+    margin-bottom: 16pt;
+    page-break-inside: avoid;
+}
+
+.cgl-parties-grid,
+.pdf-parties-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16pt;
+    margin-bottom: 10pt;
+}
+
+.cgl-party-card,
+.pdf-party-card {
+    background-color: #fafafa;
+    border: 1px solid #e4e4e7;
+    border-left: 3pt solid #ffc845;
+    padding: 8pt 10pt;
+    font-size: 7.5pt;
+    line-height: 1.45;
+}
+
+.cgl-party-role,
+.pdf-party-role {
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #18181b;
+    margin-bottom: 4pt;
+    border-bottom: 1px dashed #d4d4d8;
+    padding-bottom: 3pt;
+}
+
+.cgl-party-field-label,
+.pdf-party-field-label {
+    font-weight: 600;
+    color: #52525b;
+}
+
+/* ── 7. Grilles Clé / Valeur & Informations ───────────────────────────────── */
+.pdf-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8pt 12pt;
+    margin-bottom: 10pt;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.pdf-info-grid--3cols {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.pdf-info-item {
+    background-color: #fafafa;
+    border: 1px solid #e4e4e7;
+    border-radius: 3pt;
+    padding: 6pt 8pt;
+    font-size: 7.5pt;
+    display: flex;
+    flex-direction: column;
+    gap: 2pt;
+}
+
+.pdf-info-label {
+    font-size: 6.5pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: #71717a;
+}
+
+.pdf-info-value {
+    font-weight: 600;
+    color: #18181b;
+    word-break: break-word;
+}
+
+/* ── 8. Tableaux PDF (Harmonisés CGL) ────────────────────────────────────── */
+.cgl-table,
+.pdf-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 7pt;
+    line-height: 1.35;
+    margin-bottom: 12pt;
+    page-break-inside: auto;
+    break-inside: auto;
+}
+
+.cgl-table th,
+.pdf-table th {
+    background-color: #f4f4f5;
+    color: #18181b;
+    font-weight: 700;
+    text-align: left;
+    padding: 5pt 6pt;
+    border: 0.5pt solid #d4d4d8;
+    text-transform: uppercase;
+    font-size: 6.5pt;
+    letter-spacing: 0.3px;
+}
+
+.cgl-table td,
+.pdf-table td {
+    padding: 5pt 6pt;
+    border: 0.5pt solid #e4e4e7;
+    vertical-align: top;
+    color: #27272a;
+}
+
+.cgl-table tr:nth-child(even) td,
+.pdf-table tr:nth-child(even) td {
+    background-color: #fafafa;
+}
+
+.cgl-num-cell,
+.pdf-table .text-right {
+    text-align: right;
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+.pdf-table .text-center {
+    text-align: center;
+}
+
+/* ── 9. Notes, Verdicts & Photos ─────────────────────────────────────────── */
+.pdf-notes-box {
+    background-color: #fafafa;
+    border: 1px solid #e4e4e7;
+    border-radius: 3pt;
+    padding: 8pt 10pt;
+    font-size: 7.5pt;
+    color: #3f3f46;
+    line-height: 1.45;
+    white-space: pre-line;
+}
+
+.pdf-verdict-box {
+    text-align: center;
+    margin: 12pt 0;
+}
+
+.pdf-verdict-badge {
+    display: inline-block;
+    font-size: 8.5pt;
+    font-weight: 700;
+    padding: 6pt 18pt;
+    border-radius: 3pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pdf-photos-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6pt;
+    margin-top: 6pt;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.pdf-photo-item {
+    flex: 1 1 calc(33.333% - 6pt);
+    max-width: calc(33.333% - 6pt);
+    background-color: #fafafa;
+    border: 1px solid #e4e4e7;
+    border-radius: 3pt;
+    overflow: hidden;
+    height: 100pt;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pdf-photo-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* ── 10. Badges & Pastilles ───────────────────────────────────────────────── */
+.pdf-badge {
+    display: inline-block;
+    padding: 2pt 6pt;
+    border-radius: 2pt;
+    font-size: 6.5pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    line-height: 1.35;
+}
+
+.pdf-badge--neutral {
+    background-color: #f4f4f5;
+    color: #27272a;
+    border: 0.5pt solid #d4d4d8;
+}
+
+.pdf-badge--dark {
+    background-color: #18181b;
+    color: #ffffff;
+    border: 0.5pt solid #18181b;
+}
+
+.pdf-badge--accent {
+    background-color: #fffbeb;
+    color: #92400e;
+    border: 0.5pt solid #fde68a;
+}
+
+.pdf-badge--success {
+    background-color: #f0fdf4;
+    color: #166534;
+    border: 0.5pt solid #bbf7d0;
+}
+
+.pdf-badge--warning {
+    background-color: #fffbeb;
+    color: #9a3412;
+    border: 0.5pt solid #fed7aa;
+}
+
+.pdf-badge--danger {
+    background-color: #fef2f2;
+    color: #991b1b;
+    border: 0.5pt solid #fecaca;
+}
+
+/* ── 11. Bloc de Scellement Légal & Signature (Exact CGL) ─────────────────── */
+.cgl-seal-container,
+.pdf-seal-container {
+    margin-top: 18pt;
+    border: 1.5pt solid #18181b;
+    border-radius: 4pt;
+    background-color: #fafafa;
+    padding: 10pt;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.cgl-seal-header,
+.pdf-seal-header {
+    text-align: center;
+    border-bottom: 1px dashed #d4d4d8;
+    padding-bottom: 6pt;
+    margin-bottom: 8pt;
+}
+
+.cgl-seal-title,
+.pdf-seal-title {
+    font-size: 9pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 2pt 0;
+    color: #18181b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5pt;
+}
+
+.cgl-seal-title::before,
+.pdf-seal-title::before {
+    content: "";
+    display: inline-block;
+    width: 6pt;
+    height: 6pt;
+    background-color: #ffc845;
+    flex-shrink: 0;
+}
+
+.cgl-legal-mention,
+.pdf-legal-mention {
+    font-size: 7pt;
+    font-style: italic;
+    color: #52525b;
+    margin: 0;
+}
+
+.cgl-seal-grid,
+.pdf-seal-grid {
+    display: grid;
+    grid-template-columns: 80pt 1fr 130pt;
+    gap: 12pt;
+    align-items: center;
+}
+
+.cgl-seal-grid--contradictory,
+.pdf-seal-grid--contradictory {
+    display: grid;
+    grid-template-columns: 75pt 1fr 110pt 110pt;
+    gap: 10pt;
+    align-items: center;
+}
+
+.cgl-qr-box,
+.pdf-qr-box {
+    text-align: center;
+}
+
+.cgl-qr-link,
+.pdf-qr-link {
+    text-decoration: none;
+    color: inherit;
+    display: inline-block;
+}
+
+.cgl-qr-img,
+.pdf-qr-img {
+    width: 65pt;
+    height: 65pt;
+    display: block;
+    margin: 0 auto 3pt auto;
+}
+
+.cgl-qr-caption,
+.pdf-qr-caption {
+    font-size: 5.5pt;
+    color: #71717a;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.cgl-integrity-info,
+.pdf-integrity-info {
+    font-size: 7pt;
+    line-height: 1.4;
+    color: #3f3f46;
+}
+
+.cgl-hash-code,
+.pdf-hash-code {
+    font-family: monospace;
+    font-size: 5.5pt;
+    background-color: #f4f4f5;
+    padding: 2pt 4pt;
+    border-radius: 2pt;
+    word-break: break-all;
+    display: block;
+    margin-top: 2pt;
+    border: 0.5pt solid #e4e4e7;
+}
+
+.cgl-signature-box,
+.pdf-signature-box {
+    text-align: center;
+    border-left: 1px solid #e4e4e7;
+    padding-left: 10pt;
+}
+
+.cgl-signatory-name,
+.pdf-signatory-name {
+    font-size: 7.5pt;
+    font-weight: 700;
+    color: #18181b;
+    margin-bottom: 2pt;
+}
+
+.cgl-signatory-quality,
+.pdf-signatory-quality {
+    font-size: 6.5pt;
+    color: #71717a;
+    margin-bottom: 4pt;
+}
+
+.cgl-sig-img,
+.pdf-sig-img {
+    max-height: 45pt;
+    max-width: 110pt;
+    display: block;
+    margin: 0 auto;
+}
+
+.cgl-sig-pending,
+.pdf-sig-pending {
+    font-size: 7pt;
+    color: #a1a1aa;
+    font-style: italic;
+}
+
+/* ── 12. Utilitaires de Gestion des Sauts de Page ─────────────────────────── */
+.avoid-break,
+.pdf-avoid-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+}
+
+.page-break-before,
+.pdf-page-break-before {
+    page-break-before: always !important;
+    break-before: page !important;
+}
+
+.page-break-after,
+.pdf-page-break-after {
+    page-break-after: always !important;
+    break-after: page !important;
+}

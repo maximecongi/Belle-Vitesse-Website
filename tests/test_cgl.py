@@ -97,7 +97,8 @@ class CglComprehensiveTest(unittest.TestCase):
             shoot_start_date=date(2026, 7, 11),
             shoot_end_date=date(2026, 7, 15),
             return_date=date(2026, 7, 16),
-            vehicles_to_check="1, 2"
+            vehicles_to_check="1, 2",
+            shooting_locations=[{"name": "Circuit Paul Ricard", "address": "Le Castellet"}]
         )
         db.session.add(proj)
         db.session.commit()
