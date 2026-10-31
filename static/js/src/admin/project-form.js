@@ -362,7 +362,7 @@
                 if (interStatusesVal) {
                     try {
                         interShootStatuses = JSON.parse(interStatusesVal);
-                    } catch (e) {}
+                    } catch (e) { }
                 }
 
                 const csrfToken = $('input[name="csrf_token"]').val();
@@ -439,30 +439,30 @@
 
                                 const itemsHtml = group.items.map(function (item) {
                                     const isVehicle = item.item_type === 'vehicle';
-                                    const iconName = isVehicle ? 'truck' : 'bot';
+                                    const iconName = isVehicle ? 'car' : 'bot';
                                     const pillClass = isVehicle ? 'booking-conflict-pill--vehicle' : 'booking-conflict-pill--head';
                                     return (
                                         '<span class="booking-conflict-pill ' + pillClass + '">' +
-                                            '<i data-lucide="' + iconName + '" class="u-w-14 u-h-14"></i>' +
-                                            '<span>' + item.item_name + '</span>' +
+                                        '<i data-lucide="' + iconName + '" class="u-w-14 u-h-14"></i>' +
+                                        '<span>' + item.item_name + '</span>' +
                                         '</span>'
                                     );
                                 }).join('');
 
                                 const $item = $('<div>').addClass('booking-conflict-row').html(
                                     '<div class="booking-conflict-row-equipment">' +
-                                        itemsHtml +
+                                    itemsHtml +
                                     '</div>' +
                                     '<div class="booking-conflict-row-details">' +
-                                        '<span class="booking-conflict-row-project">' +
-                                            '<i data-lucide="clapperboard" class="u-w-12 u-h-12 u-text-project"></i> ' +
-                                            '<strong>' + group.project_name + '</strong>' +
-                                            (group.production ? ' <span class="booking-conflict-production">(' + group.production + ')</span>' : '') +
-                                        '</span>' +
-                                        '<span class="booking-conflict-row-period">' +
-                                            '<i data-lucide="calendar" class="u-w-12 u-h-12"></i> ' +
-                                            group.period_label +
-                                        '</span>' +
+                                    '<span class="booking-conflict-row-project">' +
+                                    '<i data-lucide="clapperboard" class="u-w-12 u-h-12 u-text-project"></i> ' +
+                                    '<strong>' + group.project_name + '</strong>' +
+                                    (group.production ? ' <span class="booking-conflict-production">(' + group.production + ')</span>' : '') +
+                                    '</span>' +
+                                    '<span class="booking-conflict-row-period">' +
+                                    '<i data-lucide="calendar" class="u-w-12 u-h-12"></i> ' +
+                                    group.period_label +
+                                    '</span>' +
                                     '</div>'
                                 );
                                 $list.append($item);
