@@ -1782,7 +1782,9 @@ input[type="checkbox"]:checked {
 
 .booking-conflict-row-equipment {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
+    gap: 0.35rem;
 }
 
 .booking-conflict-row .lucide {

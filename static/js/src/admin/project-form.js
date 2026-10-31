@@ -398,38 +398,74 @@
                             );
 
                             const $list = $('#bookingConflictsDetailsList').empty();
+
+                            // 1. Marquer individuellement les cartes des équipements en conflit
                             data.conflicts_list.forEach(function (c) {
-                                const isVehicle = c.item_type === 'vehicle';
-                                const iconName = isVehicle ? 'truck' : 'bot';
-                                const itemPillClass = isVehicle ? 'booking-conflict-pill--vehicle' : 'booking-conflict-pill--head';
-                                const itemCategoryLabel = isVehicle ? 'Véhicule' : 'Tête gyrostabilisée';
-
-                                const $item = $('<div>').addClass('booking-conflict-row').html(
-                                    '<div class="booking-conflict-row-equipment">' +
-                                        '<span class="booking-conflict-pill ' + itemPillClass + '">' +
-                                            '<i data-lucide="' + iconName + '" class="u-w-14 u-h-14"></i>' +
-                                            '<span>' + c.item_name + '</span>' +
-                                        '</span>' +
-                                    '</div>' +
-                                    '<div class="booking-conflict-row-details">' +
-                                        '<span class="booking-conflict-row-project">' +
-                                            '<i data-lucide="clapperboard" class="u-w-12 u-h-12 u-text-project"></i> ' +
-                                            '<strong>' + c.project_name + '</strong>' +
-                                            (c.production ? ' <span class="booking-conflict-production">(' + c.production + ')</span>' : '') +
-                                        '</span>' +
-                                        '<span class="booking-conflict-row-period">' +
-                                            '<i data-lucide="calendar" class="u-w-12 u-h-12"></i> ' +
-                                            c.period_label +
-                                        '</span>' +
-                                    '</div>'
-                                );
-                                $list.append($item);
-
                                 const $card = $('.project-checkbox-card[data-item-id="' + c.item_id + '"]');
                                 $card.addClass('has-conflict');
                                 $card.find('.conflict-placeholder').html(
                                     '<span class="conflict-badge" title="Déjà réservé par ' + c.production + ' (' + c.period_label + ')"><i data-lucide="triangle-alert"></i> ' + c.project_name + '</span>'
                                 );
+                            });
+
+                            // 2. Regrouper les équipements en conflit par tournage
+                            const conflictsByProject = {};
+                            data.conflicts_list.forEach(function (c) {
+                                const projectKey = String(c.project_id || c.project_name);
+                                if (!conflictsByProject[projectKey]) {
+                                    conflictsByProject[projectKey] = {
+                                        project_id: c.project_id,
+                                        project_name: c.project_name,
+                                        production: c.production,
+                                        period_label: c.period_label,
+                                        items: []
+                                    };
+                                }
+                                const exists = conflictsByProject[projectKey].items.some(function (it) {
+                                    return String(it.item_id) === String(c.item_id) && it.item_type === c.item_type;
+                                });
+                                if (!exists) {
+                                    conflictsByProject[projectKey].items.push({
+                                        item_id: c.item_id,
+                                        item_name: c.item_name,
+                                        item_type: c.item_type
+                                    });
+                                }
+                            });
+
+                            // 3. Générer un unique .booking-conflict-row par tournage
+                            Object.keys(conflictsByProject).forEach(function (key) {
+                                const group = conflictsByProject[key];
+
+                                const itemsHtml = group.items.map(function (item) {
+                                    const isVehicle = item.item_type === 'vehicle';
+                                    const iconName = isVehicle ? 'truck' : 'bot';
+                                    const pillClass = isVehicle ? 'booking-conflict-pill--vehicle' : 'booking-conflict-pill--head';
+                                    return (
+                                        '<span class="booking-conflict-pill ' + pillClass + '">' +
+                                            '<i data-lucide="' + iconName + '" class="u-w-14 u-h-14"></i>' +
+                                            '<span>' + item.item_name + '</span>' +
+                                        '</span>'
+                                    );
+                                }).join('');
+
+                                const $item = $('<div>').addClass('booking-conflict-row').html(
+                                    '<div class="booking-conflict-row-equipment">' +
+                                        itemsHtml +
+                                    '</div>' +
+                                    '<div class="booking-conflict-row-details">' +
+                                        '<span class="booking-conflict-row-project">' +
+                                            '<i data-lucide="clapperboard" class="u-w-12 u-h-12 u-text-project"></i> ' +
+                                            '<strong>' + group.project_name + '</strong>' +
+                                            (group.production ? ' <span class="booking-conflict-production">(' + group.production + ')</span>' : '') +
+                                        '</span>' +
+                                        '<span class="booking-conflict-row-period">' +
+                                            '<i data-lucide="calendar" class="u-w-12 u-h-12"></i> ' +
+                                            group.period_label +
+                                        '</span>' +
+                                    '</div>'
+                                );
+                                $list.append($item);
                             });
 
                             if (window.lucide && typeof window.lucide.createIcons === 'function') {
