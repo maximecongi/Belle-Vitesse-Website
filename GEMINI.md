@@ -1,7 +1,7 @@
 # Règles personnalisées pour Gemini / Antigravity
 
-- **Interdiction formelle de `git push` sans accord explicite** : Ne JAMAIS exécuter de commande `git push` (ni vers `origin` ni vers aucune branche distante) sans que l'utilisateur ne l'ait expressément et explicitement demandé ou validé au préalable.
-- **Génération systématique des messages de commit Git** : À la fin de chaque tâche, générer systématiquement un message de commit Git clair, structuré (au format Conventional Commits), détaillé et rédigé en français, résumant l'ensemble des modifications apportées au projet.
+- **Interdiction formelle de `git commit` et `git push` sans accord explicite** : Ne JAMAIS exécuter de commande `git commit` ou `git push` (ni vers `origin` ni vers aucune branche distante) sans que l'utilisateur ne l'ait expressément et explicitement demandé ou validé au préalable. Les modifications doivent toujours rester dans la copie de travail (working tree).
+- **Génération systématique des messages de commit Git (texte seul)** : À la fin de chaque tâche, proposer systématiquement dans la réponse finale un message de commit Git clair, structuré (au format Conventional Commits), détaillé et rédigé en français, résumant l'ensemble des modifications apportées au projet, SANS l'exécuter.
 - **Proscription des styles inlines (CSS externe obligatoire)** : Ne jamais utiliser d'attributs `style="..."` dans les templates HTML (sauf contrainte technique absolue telle que les corps d'e-mails HTML). Toujours déporter le CSS dans des fichiers `.css` dédiés (ou exploiter les classes utilitaires existantes) afin de garantir un code propre, modulaire et maintenable.
 - **Système de Couleurs & Cohérence des Entités Métier (Design System Belle Vitesse)** :
   - Respecter scrupuleusement la nomenclature et la palette sémantique du Design System sur l'ensemble du site (admin ERP et portails publics de signature) :

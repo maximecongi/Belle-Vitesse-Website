@@ -399,13 +399,31 @@
 
                             const $list = $('#bookingConflictsDetailsList').empty();
                             data.conflicts_list.forEach(function (c) {
-                                const iconName = c.item_type === 'vehicle' ? 'truck' : 'bot';
-                                const itemHtml = '<i data-lucide="' + iconName + '" class="u-w-14 u-h-14 u-mr-1"></i> ' + c.item_name;
-                                $list.append(
-                                    $('<li>').html(
-                                        '<strong>' + itemHtml + '</strong> déjà réservé sur <em>' + c.project_name + '</em> (' + c.production + '), ' + c.period_label
-                                    )
+                                const isVehicle = c.item_type === 'vehicle';
+                                const iconName = isVehicle ? 'truck' : 'bot';
+                                const itemPillClass = isVehicle ? 'booking-conflict-pill--vehicle' : 'booking-conflict-pill--head';
+                                const itemCategoryLabel = isVehicle ? 'Véhicule' : 'Tête gyrostabilisée';
+
+                                const $item = $('<div>').addClass('booking-conflict-row').html(
+                                    '<div class="booking-conflict-row-equipment">' +
+                                        '<span class="booking-conflict-pill ' + itemPillClass + '">' +
+                                            '<i data-lucide="' + iconName + '" class="u-w-14 u-h-14"></i>' +
+                                            '<span>' + c.item_name + '</span>' +
+                                        '</span>' +
+                                    '</div>' +
+                                    '<div class="booking-conflict-row-details">' +
+                                        '<span class="booking-conflict-row-project">' +
+                                            '<i data-lucide="clapperboard" class="u-w-12 u-h-12 u-text-project"></i> ' +
+                                            '<strong>' + c.project_name + '</strong>' +
+                                            (c.production ? ' <span class="booking-conflict-production">(' + c.production + ')</span>' : '') +
+                                        '</span>' +
+                                        '<span class="booking-conflict-row-period">' +
+                                            '<i data-lucide="calendar" class="u-w-12 u-h-12"></i> ' +
+                                            c.period_label +
+                                        '</span>' +
+                                    '</div>'
                                 );
+                                $list.append($item);
 
                                 const $card = $('.project-checkbox-card[data-item-id="' + c.item_id + '"]');
                                 $card.addClass('has-conflict');

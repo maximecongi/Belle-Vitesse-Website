@@ -1707,38 +1707,159 @@ input[type="checkbox"]:checked {
     color: var(--status-warning-text, #B45309);
 }
 
-.booking-conflicts-banner {
+/* ── Carte Stylisée des Conflits de Réservation (Design System BV) ── */
+.booking-conflicts-card {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 0.75rem;
-    padding: 1rem 1.25rem;
-    background: var(--status-warning-bg, #FEF3C7);
-    border: 1px solid var(--status-warning-border, rgba(245, 158, 11, 0.35));
+    padding: 0.85rem 1rem;
+    background-color: var(--entity-project-bg, #fef3c7);
+    color: var(--entity-project-text, #b45309);
+    border: 1px solid var(--entity-project, #f59e0b);
     border-radius: 8px;
-    margin-bottom: 1rem;
-    color: var(--status-warning-text, #B45309);
-    font-size: 0.85rem;
+    margin-bottom: 1.25rem;
+    font-size: 0.875rem;
 }
 
-.booking-conflicts-icon {
-    font-size: 1.25rem;
-    line-height: 1;
+.booking-conflicts-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background-color: var(--status-warning-bg, #fef3c7);
 }
 
-.booking-conflicts-body {
-    flex: 1;
+.booking-conflicts-card-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.875rem;
+    color: var(--status-warning-text, #b45309);
 }
 
-.booking-conflicts-title {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--status-warning-text, #B45309);
+.booking-conflicts-badge {
+    display: inline-flex;
+    align-items: center;
 }
 
-.booking-conflicts-list {
-    font-size: 0.82rem;
+.booking-conflicts-card-body {
+    padding: 0.85rem 13.6px 1rem;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid var(--white-3, #e2e8f0);
+}
+
+.booking-conflicts-summary {
+    font-size: 0.83rem;
+    color: var(--grey-2, #515151);
     line-height: 1.4;
+}
+
+.booking-conflicts-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.booking-conflict-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.6rem 0.85rem;
+    background: var(--admin-bg, #f8fafc);
+    border: 1px solid #d1d1d1;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.booking-conflict-row:hover {
+    background: #ffffff;
+    border-color: var(--bv-gray-300, #cbd5e1);
+}
+
+.booking-conflict-row-equipment {
+    display: flex;
+    align-items: center;
+}
+
+.booking-conflict-row .lucide {
+    height: 16px;
+    width: 16px;
+}
+
+.booking-conflict-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 600;
+    font-size: 0.6rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+}
+
+.booking-conflict-pill--vehicle {
+    background-color: var(--entity-checkout-bg, #dcfce7);
+    color: var(--entity-checkout-text, #14532d);
+    border: 1px solid var(--entity-checkout, #15803d);
+}
+
+.booking-conflict-pill--head {
+    background-color: var(--entity-project-bg, #fef3c7);
+    color: var(--entity-project-text, #b45309);
+    border: 1px solid var(--entity-project, #f59e0b);
+}
+
+.booking-conflict-pill .lucide {
+    width: 16px;
+    height: 16px;
+}
+
+.booking-conflict-row-details {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    color: var(--bv-gray-700, #334155);
+}
+
+.booking-conflict-row-project {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.booking-conflict-production {
+    color: var(--grey-2, #64748b);
+    font-weight: normal;
+    font-size: 0.70rem;
+}
+
+.booking-conflict-row-period {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.70rem;
+    color: var(--grey-2, #64748b);
+    background: #ffffff;
+    padding: 2px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--admin-border, #e2e8f0);
+}
+
+.booking-conflicts-summary {
+    font-size: 0.84rem;
     color: var(--status-warning-text, #B45309);
+    margin: 0;
+}
+
+.booking-conflicts-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.65rem;
 }
 
 /* ── Boutons compacts & Boutons-liens ── */

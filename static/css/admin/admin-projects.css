@@ -1818,12 +1818,12 @@
 /* ── Bannière de Duplication de Projet ────────────────────────── */
 .duplicate-project-banner {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 0.75rem;
-    padding: 1rem 1.25rem;
-    background-color: var(--entity-project-bg, #FEF3C7);
-    color: var(--entity-project-text, #B45309);
-    border: 1px solid var(--entity-project, #F59E0B);
+    padding: 0.85rem 1rem;
+    background-color: var(--entity-project-bg, #fef3c7);
+    color: var(--entity-project-text, #b45309);
+    border: 1px solid var(--entity-project, #f59e0b);
     border-radius: 8px;
     margin-bottom: 1.25rem;
     font-size: 0.875rem;
