@@ -910,7 +910,7 @@ function initProjectNotesEdit() {
                             <div class="empty-state-icon">
                                 <i data-lucide="clipboard-pen"></i>
                             </div>
-                            <div class="empty-state-title">Aucune consigne enregistrée</div>
+                            <div class="empty-state-title">Aucune note enregistrée</div>
                         </div>
                     `;
                     if (editBtnLabel) editBtnLabel.textContent = 'Ajouter une note';

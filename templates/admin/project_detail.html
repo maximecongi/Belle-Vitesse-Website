@@ -74,6 +74,7 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
                     <i data-lucide="alert-triangle"></i> Erreur synchronisation Cloud
                 </span>
                 {% endif %}
+
             </div>
             <!-- Ligne méta : Identifiant, Statut du tournage, Société de Production -->
             <div class="project-hub-meta">
@@ -167,6 +168,53 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
 
     <!-- COLONNE LATÉRALE (1/3 : CONTACTS & CONSIGNES) -->
     <div class="u-flex u-flex-column u-gap-3">
+        <!-- Consignes & Notes Spécifiques -->
+        <div class="admin-card u-h-100" id="projectNotesCard">
+            <div class="u-flex u-justify-between u-align-center u-mb-2">
+                <div class="u-flex u-align-center u-gap-2">
+                    <h2 class="admin-card-title u-m-0">Notes</h2>
+                </div>
+                <div>
+                    <button type="button" class="admin-btn admin-btn-xs admin-btn-quaternary" id="projectNotesEditBtn"
+                        data-action="edit-notes" title="Modifier la note du projet">
+                        <i data-lucide="pencil" class="project-notes-btn-icon"></i>
+                        <span id="projectNotesEditBtnLabel">{% if project.notes %}Modifier{% else %}Ajouter une note{%
+                            endif %}</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mode Affichage -->
+            <div id="projectNotesDisplay" class="project-notes-display">
+                {% if project.notes %}
+                <div class="project-notes-content" id="projectNotesText">{{ project.notes | trim }}</div>
+                {% else %}
+                {{ empty_state('clipboard-pen', "Aucune note enregistrée", "", class_name='empty-state-sm') }}
+                {% endif %}
+            </div>
+
+            <!-- Mode Édition -->
+            <form method="POST" action="{{ url_for('admin_projects.admin_project_notes_edit', record_id=project.id) }}"
+                class="project-notes-form is-hidden" id="projectNotesForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="u-mb-2">
+                    <textarea name="notes" id="projectNotesInput" class="form-input project-notes-textarea" rows="3"
+                        placeholder="Renseignez les spécificités du tournage, contraintes de production ou consignes particulières...">{{ project.notes or '' }}</textarea>
+                </div>
+                <div class="u-flex u-justify-between u-align-center u-flex-wrap u-gap-2">
+                    <div class="u-flex u-align-center u-gap-2 u-ml-auto">
+                        <button type="button" class="admin-btn admin-btn-xs admin-btn-quaternary"
+                            id="projectNotesCancelBtn" data-action="cancel-notes">
+                            Annuler
+                        </button>
+                        <button type="submit" class="admin-btn admin-btn-xs admin-btn-primary"
+                            id="projectNotesSubmitBtn">
+                            <i data-lucide="check" class="project-notes-btn-icon"></i> Enregistrer
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
         <!-- Contacts Clés -->
         <div class="admin-card">
             <div class="u-flex u-justify-between u-align-center u-mb-2">
@@ -285,54 +333,6 @@ initials, empty_state, waiver_card, doc_download_badge, vehicle_avatar, head_ava
             {% else %}
             <p class="u-text-xs u-text-muted u-italic u-m-0">Aucun lieu de tournage renseigné.</p>
             {% endif %}
-        </div>
-
-        <!-- Consignes & Notes Spécifiques -->
-        <div class="admin-card u-h-100" id="projectNotesCard">
-            <div class="u-flex u-justify-between u-align-center u-mb-2">
-                <div class="u-flex u-align-center u-gap-2">
-                    <h2 class="admin-card-title u-m-0">Notes</h2>
-                </div>
-                <div>
-                    <button type="button" class="admin-btn admin-btn-xs admin-btn-quaternary" id="projectNotesEditBtn"
-                        data-action="edit-notes" title="Modifier la note du projet">
-                        <i data-lucide="pencil" class="project-notes-btn-icon"></i>
-                        <span id="projectNotesEditBtnLabel">{% if project.notes %}Modifier{% else %}Ajouter une note{%
-                            endif %}</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Mode Affichage -->
-            <div id="projectNotesDisplay" class="project-notes-display">
-                {% if project.notes %}
-                <div class="project-notes-content" id="projectNotesText">{{ project.notes | trim }}</div>
-                {% else %}
-                {{ empty_state('clipboard-pen', "Aucune note enregistrée", "", class_name='empty-state-sm') }}
-                {% endif %}
-            </div>
-
-            <!-- Mode Édition -->
-            <form method="POST" action="{{ url_for('admin_projects.admin_project_notes_edit', record_id=project.id) }}"
-                class="project-notes-form is-hidden" id="projectNotesForm">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div class="u-mb-2">
-                    <textarea name="notes" id="projectNotesInput" class="form-input project-notes-textarea" rows="3"
-                        placeholder="Renseignez les spécificités du tournage, contraintes de production ou consignes particulières...">{{ project.notes or '' }}</textarea>
-                </div>
-                <div class="u-flex u-justify-between u-align-center u-flex-wrap u-gap-2">
-                    <div class="u-flex u-align-center u-gap-2 u-ml-auto">
-                        <button type="button" class="admin-btn admin-btn-xs admin-btn-quaternary"
-                            id="projectNotesCancelBtn" data-action="cancel-notes">
-                            Annuler
-                        </button>
-                        <button type="submit" class="admin-btn admin-btn-xs admin-btn-primary"
-                            id="projectNotesSubmitBtn">
-                            <i data-lucide="check" class="project-notes-btn-icon"></i> Enregistrer
-                        </button>
-                    </div>
-                </div>
-            </form>
         </div>
     </div>
 </div>
