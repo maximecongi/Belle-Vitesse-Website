@@ -130,8 +130,9 @@
 .admin-header-user {
     padding-top: 1rem;
     display: flex;
+    gap: 0.35rem;
     text-align: center;
-    flex-direction: row;
+    flex-direction: column;
     justify-content: space-between;
     align-items: center;
 }
