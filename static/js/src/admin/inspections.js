@@ -6,6 +6,172 @@
 const inspectionPhotoRegistry = window.inspectionPhotoRegistry || {};
 window.inspectionPhotoRegistry = inspectionPhotoRegistry;
 
+/**
+ * Supprime une photo sélectionnée dans le champ input file via DataTransfer et met à jour l'aperçu.
+ */
+function removePhotoFromFileInput(input, index) {
+    if (!input || !input.files) return;
+
+    try {
+        const dt = new DataTransfer();
+        const files = Array.from(input.files);
+        files.forEach((file, idx) => {
+            if (idx !== index) {
+                dt.items.add(file);
+            }
+        });
+        input.files = dt.files;
+    } catch (err) {
+        console.warn("removePhotoFromFileInput: DataTransfer non supporté", err);
+    }
+
+    if (inspectionPhotoRegistry[input.name]) {
+        inspectionPhotoRegistry[input.name].splice(index, 1);
+    }
+
+    renderPhotoPreviews(input);
+
+    const form = input.closest('form');
+    if (form) {
+        form.dispatchEvent(new Event('input', { bubbles: true }));
+        form.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+}
+window.removePhotoFromFileInput = removePhotoFromFileInput;
+
+/**
+ * Rend l'ensemble des vignettes d'aperçu pour un champ file d'inspection.
+ */
+function renderPhotoPreviews(input) {
+    const preview = document.querySelector(`.photo-preview[data-for="${input.name}"]`);
+    if (!preview) return;
+    preview.innerHTML = '';
+
+    const currentFiles = input.files ? Array.from(input.files) : [];
+    if (currentFiles.length === 0) {
+        inspectionPhotoRegistry[input.name] = [];
+        return;
+    }
+
+    if (!inspectionPhotoRegistry[input.name]) {
+        inspectionPhotoRegistry[input.name] = [];
+    }
+
+    currentFiles.forEach((file, index) => {
+        let photoState = inspectionPhotoRegistry[input.name][index];
+        if (!photoState || photoState.originalFile !== file) {
+            photoState = {
+                originalFile: file,
+                currentFile: file,
+                baseImage: file,
+                dataUrl: null,
+                annotations: [],
+                isAnnotated: false
+            };
+            inspectionPhotoRegistry[input.name][index] = photoState;
+        }
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'photo-preview-item';
+        wrapper.title = "Cliquer pour visualiser ou annoter cette photo";
+
+        const img = document.createElement('img');
+        img.className = 'photo-preview-img';
+        wrapper.appendChild(img);
+
+        // Champ caché pour transmettre les données annotées fiables en base64 au backend
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = `${input.name}_annotated_${index}`;
+        hiddenInput.value = (photoState.isAnnotated && photoState.dataUrl) ? photoState.dataUrl : '';
+        wrapper.appendChild(hiddenInput);
+
+        // Bouton de suppression de la vignette prévisualisée
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'photo-preview-delete-btn';
+        deleteBtn.title = "Supprimer cette photo";
+        deleteBtn.setAttribute('aria-label', "Supprimer cette photo");
+        deleteBtn.innerHTML = '<i data-lucide="trash-2"></i>';
+        deleteBtn.onclick = function (ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            removePhotoFromFileInput(input, index);
+        };
+        wrapper.appendChild(deleteBtn);
+
+        let btn = null;
+        if (typeof window.openPhotoAnnotator === 'function') {
+            btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'annotator-edit-badge' + (photoState.isAnnotated ? ' is-annotated' : '');
+            btn.title = "Annoter cette photo (cercle, flèche, texte)";
+            btn.innerHTML = photoState.isAnnotated ? '<i data-lucide="check"></i> Annotée' : '<i data-lucide="pencil"></i> Annoter';
+            wrapper.appendChild(btn);
+        }
+
+        function openAnnotatorForThisPhoto(ev) {
+            if (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+            }
+            if (typeof window.openPhotoAnnotator !== 'function') return;
+
+            window.openPhotoAnnotator(
+                photoState.currentFile,
+                function (annotatedFile, dataUrl, annotations) {
+                    photoState.currentFile = annotatedFile;
+                    photoState.dataUrl = dataUrl;
+                    photoState.annotations = annotations || [];
+                    photoState.isAnnotated = true;
+
+                    img.src = dataUrl;
+                    hiddenInput.value = dataUrl;
+
+                    if (btn) {
+                        btn.classList.add('is-annotated');
+                        btn.innerHTML = '<i data-lucide="check"></i> Annotée';
+                        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                            window.lucide.createIcons();
+                        }
+                    }
+
+                    if (typeof window.replaceFileInInput === 'function') {
+                        window.replaceFileInInput(input, index, annotatedFile);
+                    }
+                },
+                {
+                    annotations: photoState.annotations,
+                    baseImage: photoState.baseImage
+                }
+            );
+        }
+
+        if (btn) {
+            btn.onclick = openAnnotatorForThisPhoto;
+        }
+        wrapper.onclick = openAnnotatorForThisPhoto;
+
+        if (photoState.dataUrl) {
+            img.src = photoState.dataUrl;
+        } else {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                photoState.dataUrl = e.target.result;
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        preview.appendChild(wrapper);
+    });
+
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
+    }
+}
+window.renderPhotoPreviews = renderPhotoPreviews;
+
 async function updatePhotoLabel(input) {
     const preview = document.querySelector(`.photo-preview[data-for="${input.name}"]`);
     if (!preview) return;
@@ -15,108 +181,58 @@ async function updatePhotoLabel(input) {
         preview.innerHTML = '<div class="u-text-xs u-text-muted u-p-1 u-flex u-items-center u-gap-1"><span class="image-compress-spinner"></span> Optimisation des photos en cours…</div>';
         await window.compressFileInput(input);
     }
-    preview.innerHTML = '';
 
-    // Initialise le registre pour ce champ
-    inspectionPhotoRegistry[input.name] = [];
-
-    if (input.files && input.files.length > 0) {
-        Array.from(input.files).forEach((file, index) => {
-            const photoState = {
-                originalFile: file,
-                currentFile: file,
-                baseImage: file,
-                dataUrl: null,
-                annotations: [],
-                isAnnotated: false
-            };
-            inspectionPhotoRegistry[input.name][index] = photoState;
-
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                photoState.dataUrl = e.target.result;
-
-                const wrapper = document.createElement('div');
-                wrapper.className = 'photo-preview-item';
-                wrapper.title = "Cliquer pour visualiser ou annoter cette photo";
-
-                const img = document.createElement('img');
-                img.src = e.target.result;
-                img.className = 'photo-preview-img';
-                wrapper.appendChild(img);
-
-                // Champ caché pour transmettre les données annotées fiables en base64 au backend
-                const hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.name = `${input.name}_annotated_${index}`;
-                hiddenInput.value = '';
-                wrapper.appendChild(hiddenInput);
-
-                let btn = null;
-                if (typeof window.openPhotoAnnotator === 'function') {
-                    btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.className = 'annotator-edit-badge';
-                    btn.title = "Annoter cette photo (cercle, flèche, texte)";
-                    btn.innerHTML = '<i data-lucide="pencil"></i> Annoter';
-                    wrapper.appendChild(btn);
-                }
-
-                function openAnnotatorForThisPhoto(ev) {
-                    if (ev) {
-                        ev.preventDefault();
-                        ev.stopPropagation();
-                    }
-                    if (typeof window.openPhotoAnnotator !== 'function') return;
-
-                    window.openPhotoAnnotator(
-                        photoState.currentFile,
-                        function (annotatedFile, dataUrl, annotations) {
-                            photoState.currentFile = annotatedFile;
-                            photoState.dataUrl = dataUrl;
-                            photoState.annotations = annotations || [];
-                            photoState.isAnnotated = true;
-
-                            img.src = dataUrl;
-                            hiddenInput.value = dataUrl;
-
-                            if (btn) {
-                                btn.classList.add('is-annotated');
-                                btn.innerHTML = '<i data-lucide="check"></i> Annotée';
-                                if (window.lucide && typeof window.lucide.createIcons === 'function') {
-                                    window.lucide.createIcons();
-                                }
-                            }
-
-                            if (typeof window.replaceFileInInput === 'function') {
-                                window.replaceFileInInput(input, index, annotatedFile);
-                            }
-                        },
-                        {
-                            annotations: photoState.annotations,
-                            baseImage: photoState.baseImage
-                        }
-                    );
-                }
-
-                if (btn) {
-                    btn.onclick = openAnnotatorForThisPhoto;
-                }
-                wrapper.onclick = openAnnotatorForThisPhoto;
-
-                preview.appendChild(wrapper);
-
-                if (window.lucide && typeof window.lucide.createIcons === 'function') {
-                    window.lucide.createIcons();
-                }
-            };
-            reader.readAsDataURL(file);
-        });
-    }
+    renderPhotoPreviews(input);
 }
 window.updatePhotoLabel = updatePhotoLabel;
 
+/**
+ * Initialise les boutons de suppression pour les photos existantes (mode édition).
+ */
+function initExistingPhotosDeletion() {
+    document.querySelectorAll('.existing-photo-card').forEach(card => {
+        if (card.dataset.deletionBound === 'true') return;
+        card.dataset.deletionBound = 'true';
+
+        const deleteBtn = card.querySelector('.existing-photo-delete-btn');
+        const checkbox = card.querySelector('.delete-photo-checkbox');
+        if (!deleteBtn || !checkbox) return;
+
+        function toggleDeletion(ev) {
+            if (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+            }
+            const willDelete = !card.classList.contains('is-deleted');
+            card.classList.toggle('is-deleted', willDelete);
+            checkbox.checked = willDelete;
+
+            deleteBtn.title = willDelete ? "Annuler la suppression" : "Supprimer cette photo";
+            deleteBtn.setAttribute('aria-label', deleteBtn.title);
+            deleteBtn.innerHTML = willDelete ? '<i data-lucide="undo-2"></i>' : '<i data-lucide="trash-2"></i>';
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
+
+            const form = card.closest('form');
+            if (form) {
+                form.dispatchEvent(new Event('input', { bubbles: true }));
+                form.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+
+        deleteBtn.onclick = toggleDeletion;
+        card.onclick = function (ev) {
+            if (card.classList.contains('is-deleted')) {
+                toggleDeletion(ev);
+            }
+        };
+    });
+}
+window.initExistingPhotosDeletion = initExistingPhotosDeletion;
+
 function initInspectionForm(checkpointsConfig) {
+    initExistingPhotosDeletion();
     const vehicleInput = document.querySelector('input[name="vehicle_id"]');
     const form = document.getElementById('inspectionForm');
     const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
@@ -358,6 +474,9 @@ function initInspectionDetail() {
 window.initInspectionDetail = initInspectionDetail;
 
 function autoInitInspectionForm() {
+    if (typeof window.initExistingPhotosDeletion === 'function') {
+        window.initExistingPhotosDeletion();
+    }
     const configEl = document.getElementById('checkpointsConfigData');
     if (configEl && typeof window.initInspectionForm === 'function') {
         let config = {};

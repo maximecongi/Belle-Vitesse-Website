@@ -541,6 +541,112 @@ class InspectionsTest(unittest.TestCase):
             if os.path.exists(saved_file):
                 os.remove(saved_file)
 
+    def test_parse_photos_json_includes_rel_path(self):
+        """Vérifie que _parse_photos_json inclut la clé rel_path pour permettre la suppression ciblée."""
+        from services.admin.utils import _parse_photos_json
+        sample_json = '["2026/PROJ_1/BVCO-01/exterior/photo1.jpg", "2026/PROJ_1/BVCO-01/exterior/photo2.jpg"]'
+        parsed = _parse_photos_json(sample_json)
+        self.assertEqual(len(parsed), 2)
+        self.assertEqual(parsed[0]["rel_path"], "2026/PROJ_1/BVCO-01/exterior/photo1.jpg")
+        self.assertEqual(parsed[0]["label"], "photo1.jpg")
+        self.assertEqual(parsed[0]["url"], "/files/2026/PROJ_1/BVCO-01/exterior/photo1.jpg")
+
+    def test_delete_existing_inspection_photos_in_edit_route(self):
+        """Vérifie la suppression d'une photo existante lors de la modification d'un checkout et d'un checkin."""
+        import json
+        from pathlib import Path
+        output_base = Path(self.app.config.get("OUTPUT_FOLDER", os.path.join(self.app.root_path, "output")))
+
+        with self.app.app_context():
+            user, proj = self._create_mock_data()
+
+            with self.client.session_transaction() as sess:
+                sess['admin_authenticated'] = True
+                sess['admin_user_id'] = user.id
+                sess['admin_user_firstname'] = user.firstname
+                sess['admin_user_lastname'] = user.lastname
+                sess['admin_user_role'] = 'administrator'
+                sess['admin_logged_in'] = True
+
+            # 1. Préparer deux fichiers physiques de test pour le checkout
+            rel_photo1 = f"test_del_co_{proj.id}_1.jpg"
+            rel_photo2 = f"test_del_co_{proj.id}_2.jpg"
+            file1_path = output_base / rel_photo1
+            file2_path = output_base / rel_photo2
+            file1_path.parent.mkdir(parents=True, exist_ok=True)
+            file1_path.write_bytes(b"dummy photo 1")
+            file2_path.write_bytes(b"dummy photo 2")
+
+            co = CheckoutVehicle(
+                inspection_number="BVCO-TEST-DEL",
+                status="in_progress",
+                inspection_date=date(2026, 10, 5),
+                project_id=proj.id,
+                controller_id=user.id,
+                vehicle_id="1",
+                exterior_photos=json.dumps([rel_photo1, rel_photo2])
+            )
+            db.session.add(co)
+            db.session.commit()
+
+            # 2. POST /admin/checkouts/<id>/edit en demandant la suppression de photo1
+            res = self.client.post(f"/admin/checkouts/{co.id}/edit", data={
+                "project_id": str(proj.id),
+                "vehicle_id": "1",
+                "controller_id": user.id,
+                "notes": "Updated checkout notes",
+                "delete_photos_exterior_photos": rel_photo1
+            }, follow_redirects=False)
+
+            self.assertEqual(res.status_code, 302)
+            self.assertEqual(res.headers.get("Location"), f"/admin/checkouts/{co.id}")
+
+            # Vérifier que le fichier photo1 a été supprimé du disque et que photo2 existe toujours
+            self.assertFalse(file1_path.exists())
+            self.assertTrue(file2_path.exists())
+
+            # Vérifier la BDD
+            db.session.refresh(co)
+            ext_photos = json.loads(co.exterior_photos)
+            self.assertEqual(len(ext_photos), 1)
+            self.assertIn(rel_photo2, ext_photos)
+            self.assertNotIn(rel_photo1, ext_photos)
+
+            # Nettoyer photo2
+            if file2_path.exists():
+                file2_path.unlink()
+
+            # 3. Test similaire pour Checkin
+            rel_ci_photo = f"test_del_ci_{proj.id}.jpg"
+            ci_file_path = output_base / rel_ci_photo
+            ci_file_path.write_bytes(b"dummy ci photo")
+
+            ci = CheckinVehicle(
+                inspection_number="BVCI-TEST-DEL",
+                status="in_progress",
+                inspection_date=date(2026, 10, 6),
+                project_id=proj.id,
+                controller_id=user.id,
+                vehicle_id="1",
+                interior_photos=json.dumps([rel_ci_photo])
+            )
+            db.session.add(ci)
+            db.session.commit()
+
+            res_ci = self.client.post(f"/admin/checkins/{ci.id}/edit", data={
+                "project_id": str(proj.id),
+                "vehicle_id": "1",
+                "controller_id": user.id,
+                "delete_photos_interior_photos": rel_ci_photo
+            }, follow_redirects=False)
+
+            self.assertEqual(res_ci.status_code, 302)
+            self.assertEqual(res_ci.headers.get("Location"), f"/admin/checkins/{ci.id}")
+
+            self.assertFalse(ci_file_path.exists())
+            db.session.refresh(ci)
+            self.assertIsNone(ci.interior_photos)
+
 
 if __name__ == "__main__":
     unittest.main()

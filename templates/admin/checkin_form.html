@@ -332,11 +332,18 @@
 
             {% set photos = data.get(data_key, []) if data else [] %}
             {% if is_edit and photos %}
-            <div class="u-flex u-flex-wrap u-gap-1 u-mb-1">
+            <div class="existing-photos-grid u-flex u-flex-wrap u-gap-2 u-mb-2">
                 {% for photo in photos %}
-                <a href="{{ photo.url }}" target="_blank" class="form-photo-thumbnail-link">
-                    <img src="{{ photo.url }}" alt="{{ photo.label }}" class="form-photo-thumbnail-img">
-                </a>
+                <div class="existing-photo-card" data-rel-path="{{ photo.rel_path or photo.label }}">
+                    <a href="{{ photo.url }}" target="_blank" class="existing-photo-thumbnail-link" title="Visualiser la photo">
+                        <img src="{{ photo.url }}" alt="{{ photo.label }}" class="existing-photo-thumbnail-img">
+                    </a>
+                    <button type="button" class="existing-photo-delete-btn" title="Supprimer cette photo" aria-label="Supprimer cette photo">
+                        <i data-lucide="trash-2"></i>
+                    </button>
+                    <span class="existing-photo-badge-deleted">À supprimer</span>
+                    <input type="checkbox" name="delete_photos_{{ field_name }}" value="{{ photo.rel_path or photo.label }}" class="u-hidden-input delete-photo-checkbox">
+                </div>
                 {% endfor %}
             </div>
             {% endif %}

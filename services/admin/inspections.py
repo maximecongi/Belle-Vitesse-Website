@@ -394,17 +394,61 @@ def upload_inspection_photos_shared(mode, record, files=None, form=None):
                 # Enregistre le chemin relatif par rapport à OUTPUT_FOLDER
                 paths.append(os.path.relpath(target_file_path, output_base))
 
-        if paths:
-            # Conserver les photos existantes lors d'une mise à jour (ne pas les écraser)
-            existing_paths = []
-            current_val = getattr(record, model_attr, None)
-            if current_val:
+        # 3. Traitement des suppressions de photos existantes
+        existing_paths = []
+        current_val = getattr(record, model_attr, None)
+        if current_val:
+            try:
+                existing_paths = json.loads(current_val) if isinstance(current_val, str) else list(current_val)
+            except Exception:
+                existing_paths = []
+
+        to_delete_for_field = set()
+        if form:
+            def _get_form_list(f, key):
+                if hasattr(f, "getlist"):
+                    return f.getlist(key)
+                val = f.get(key)
+                if val is None:
+                    return []
+                return val if isinstance(val, (list, tuple, set)) else [val]
+
+            to_delete_for_field.update(_get_form_list(form, f"delete_photos_{form_field}"))
+            to_delete_for_field.update(_get_form_list(form, f"remove_photos_{form_field}"))
+            to_delete_for_field.update(_get_form_list(form, "delete_photos"))
+            to_delete_for_field.update(_get_form_list(form, "remove_photos"))
+
+        deleted_count = 0
+        remaining_paths = []
+        for p in existing_paths:
+            p_str = str(p).strip()
+            # Correspondance exacte ou relative
+            is_deleted = False
+            for del_candidate in to_delete_for_field:
+                cand = str(del_candidate).strip()
+                if not cand:
+                    continue
+                if p_str == cand or p_str.endswith(cand) or cand.endswith(p_str):
+                    is_deleted = True
+                    break
+
+            if is_deleted:
+                deleted_count += 1
                 try:
-                    existing_paths = json.loads(current_val) if isinstance(current_val, str) else list(current_val)
-                except Exception:
-                    existing_paths = []
-            combined = existing_paths + [p for p in paths if p not in existing_paths]
-            setattr(record, model_attr, json.dumps(combined))
+                    full_p = (Path(output_base) / p_str).resolve()
+                    # Sécurité anti-path traversal : s'assurer que le fichier est sous output_base
+                    if str(full_p).startswith(str(Path(output_base).resolve())) and full_p.is_file():
+                        full_p.unlink()
+                        logger.info(f"🗑️ Photo supprimée du disque : {p_str}")
+                except Exception as del_err:
+                    logger.warning(f"⚠️ Erreur suppression physique photo {p_str} : {del_err}")
+            else:
+                remaining_paths.append(p)
+
+        # 4. Enregistrement des modifications en base de données
+        if paths or deleted_count > 0:
+            combined = remaining_paths + [p for p in paths if p not in remaining_paths]
+            setattr(record, model_attr, json.dumps(combined) if combined else None)
 
     db.session.commit()
 

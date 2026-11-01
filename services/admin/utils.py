@@ -69,14 +69,14 @@ def handle_admin_service_error(func):
 
 
 def _parse_photos_json(text):
-    """Analyse une chaîne JSON de chemins de photos et retourne une liste de dictionnaires (URL, label)."""
+    """Analyse une chaîne JSON de chemins de photos et retourne une liste de dictionnaires (URL, label, rel_path)."""
     if not text:
         return []
     try:
-        paths = json.loads(text)
-        return [{"url": f"/files/{p}", "label": p.split("/")[-1]} for p in paths]
+        paths = json.loads(text) if isinstance(text, str) else list(text)
+        return [{"url": f"/files/{p}", "label": str(p).split("/")[-1], "rel_path": str(p)} for p in paths]
     except Exception:
-        return [{"url": f"/files/{text}", "label": "File"}]
+        return [{"url": f"/files/{text}", "label": "File", "rel_path": str(text)}]
 
 
 def _delete_inspection_files(record):
