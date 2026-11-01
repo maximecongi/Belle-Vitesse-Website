@@ -167,6 +167,30 @@ function updateVehicleContextAlert() {
     }
 }
 
+function syncBadgeSelectUI(sel, val) {
+    if (!sel) return;
+    const trigger = sel.querySelector('.badge-select-trigger');
+    const pill = trigger ? trigger.querySelector('.badge-pill') : null;
+    const opt = sel.querySelector(`.badge-select-option[data-value="${val}"]`);
+    if (pill) {
+        if (opt) {
+            const optPill = opt.querySelector('.badge-pill');
+            if (optPill) {
+                pill.innerHTML = optPill.innerHTML;
+            } else {
+                pill.textContent = opt.textContent.trim();
+            }
+        } else {
+            pill.textContent = val;
+        }
+        pill.dataset.val = val;
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
+    }
+}
+window.syncBadgeSelectUI = syncBadgeSelectUI;
+
 function initBadgeSelects() {
     document.querySelectorAll('.badge-select').forEach(sel => {
         const trigger = sel.querySelector('.badge-select-trigger');
@@ -174,6 +198,11 @@ function initBadgeSelects() {
         const pill = trigger ? trigger.querySelector('.badge-pill') : null;
 
         if (!trigger || !input) return;
+
+        // Écouter les modifications programmatiques (ex: restauration de brouillon)
+        input.addEventListener('change', () => {
+            syncBadgeSelectUI(sel, input.value);
+        });
 
         trigger.addEventListener('click', () => {
             document.querySelectorAll('.badge-select.open').forEach(s => {
@@ -186,19 +215,10 @@ function initBadgeSelects() {
         sel.querySelectorAll('.badge-select-option').forEach(opt => {
             opt.addEventListener('click', () => {
                 const val = opt.dataset.value;
-                const optPill = opt.querySelector('.badge-pill');
                 input.value = val;
-                if (pill) {
-                    if (optPill) {
-                        pill.innerHTML = optPill.innerHTML;
-                    } else {
-                        pill.textContent = val;
-                    }
-                    pill.dataset.val = val;
-                    if (window.lucide && typeof window.lucide.createIcons === 'function') {
-                        window.lucide.createIcons();
-                    }
-                }
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+                syncBadgeSelectUI(sel, val);
                 sel.classList.remove('open');
             });
         });

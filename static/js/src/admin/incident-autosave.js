@@ -140,9 +140,13 @@
         });
 
         // 2. Mettre à jour les pilules visuelles de statut, gravité et impact
-        if (typeof window.updateIncidentStatusPill === 'function') window.updateIncidentStatusPill();
-        if (typeof window.updateIncidentSeverityPill === 'function') window.updateIncidentSeverityPill();
-        if (typeof window.updateIncidentImpactPill === 'function') window.updateIncidentImpactPill();
+        const statusSel = form.querySelector('select[name="status"]');
+        const sevSel = form.querySelector('select[name="severity"]');
+        const impSel = form.querySelector('select[name="shooting_impact"]');
+
+        if (statusSel && typeof window.updateIncidentStatusPill === 'function') window.updateIncidentStatusPill(statusSel);
+        if (sevSel && typeof window.updateIncidentSeverityPill === 'function') window.updateIncidentSeverityPill(sevSel);
+        if (impSel && typeof window.updateIncidentImpactPill === 'function') window.updateIncidentImpactPill(impSel);
 
         // 3. Recharger les équipements du projet sélectionné
         const projectId = fields.project_id || (form.querySelector('[name="project_id"]') ? form.querySelector('[name="project_id"]').value : '');

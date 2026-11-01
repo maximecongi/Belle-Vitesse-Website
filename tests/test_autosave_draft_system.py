@@ -81,3 +81,17 @@ def test_create_admin_banner_js_helper():
     bundle_js = Path("static/js/admin/admin.bundle.js").read_text(encoding="utf-8")
     assert "createAdminBanner" in bundle_js
 
+
+def test_badge_select_sync_restoration():
+    """Vérifie que les fonctions de synchronisation des sélecteurs badge-select sont présentes."""
+    selects_src = Path("static/js/src/admin/selects.js").read_text(encoding="utf-8")
+    assert "syncBadgeSelectUI" in selects_src
+    assert "window.syncBadgeSelectUI" in selects_src
+
+    autosave_src = Path("static/js/src/admin/inspection-autosave.js").read_text(encoding="utf-8")
+    assert "syncBadgeSelectUI" in autosave_src
+    assert "badge-select-trigger" in autosave_src
+
+    bundle_js = Path("static/js/admin/admin.bundle.js").read_text(encoding="utf-8")
+    assert "syncBadgeSelectUI" in bundle_js
+
