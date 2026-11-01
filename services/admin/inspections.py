@@ -38,6 +38,7 @@ from services.admin.checkpoint_measurements import snapshot_rules, validate_meas
 from utils.database import get_vehicles
 from utils.document_utils import generate_pdf_access_token
 from utils.formatting import format_date_fr
+from services.admin.projects import get_project_shoot_status
 from utils.image_utils import optimize_and_save_image
 from utils.entity_resolvers import resolve_inspection
 from utils.pagination import Pagination
@@ -716,10 +717,13 @@ def get_unified_form_context(mode="checkout"):
                     v_name = v.get("fields", {}).get("name", "—")
                     break
 
+        status_info = get_project_shoot_status(p)
         projects_formatted.append({
             "id": str(p.id),
             "fields": {
                 "Nom": p.name,
+                "shoot_status": status_info.get("status"),
+                "shoot_status_label": status_info.get("label"),
                 "_production_name": p.production.name if p.production else "—",
                 "Date de départ": format_date_fr(str(p.departure_date)) if p.departure_date else "—",
                 "Date de début de tournage": format_date_fr(str(p.shoot_start_date)) if p.shoot_start_date else "—",

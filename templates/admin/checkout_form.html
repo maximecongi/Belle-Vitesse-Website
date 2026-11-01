@@ -51,6 +51,7 @@
                             </button>
                             {% for p in projects %}
                             {% set pf = p.fields %}
+                            {% if pf.get('shoot_status') != 'completed' %}
                             <button type="button" class="rich-select-option" data-id="{{ p.id }}"
                                 data-name="{{ pf.get('Nom', '—') }}"
                                 data-vehicles="{{ pf.get('Véhicules à contrôler', [])|join(',') }}"
@@ -71,6 +72,7 @@
                                     {% endif %}
                                 </div>
                             </button>
+                            {% endif %}
                             {% endfor %}
                         </div>
                     </div>
