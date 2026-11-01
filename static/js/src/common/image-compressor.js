@@ -210,7 +210,7 @@
         } else if (state === 'success') {
             badge.className = 'image-compress-status is-success';
             const gain = origSize > compSize ? ' (' + formatBytes(compSize) + ' au lieu de ' + formatBytes(origSize) + ')' : '';
-            badge.innerHTML = '<i data-lucide="sparkles"></i> ' + count + ' photo(s) optimisée(s)' + gain;
+            badge.innerHTML = count + ' photo(s) optimisée(s)' + gain;
             if (window.lucide && typeof window.lucide.createIcons === 'function') {
                 window.lucide.createIcons();
             }

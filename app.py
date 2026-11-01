@@ -191,7 +191,7 @@ def create_app():
             "default-src 'self'; "
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net https://code.jquery.com https://cdnjs.cloudflare.com; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; "
-            "img-src 'self' data: https: http:; "
+            "img-src 'self' data: blob: https: http:; "
             "font-src 'self' data: https://fonts.gstatic.com; "
             "connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; "
             "frame-src 'self'; "

@@ -316,3 +316,4 @@ logs/
 AUDIT_CORRECTIONS_SIGNATURES_CGL_ERP.md
 .DS_Store
 static/js/admin/admin.bundle.js
+static/js/public.bundle.js

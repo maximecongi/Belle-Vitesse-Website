@@ -140,7 +140,8 @@
                 {{ nav_item(url_for('admin_checkouts.admin_checkouts_list'), 'Checkouts', 'checkouts') }}
                 {{ nav_item(url_for('admin_waivers.admin_cgl_list'), 'Conditions Générales (CGL)', 'cgl') }}
                 {{ nav_item(url_for('admin_waivers.admin_safety_rules_list'), 'Règles de Sécurité', 'safety_rules') }}
-                {{ nav_item(url_for('admin_waivers.admin_pilot_waivers_list'), 'Attestations Pilotes', 'pilot_waivers') }}
+                {{ nav_item(url_for('admin_waivers.admin_pilot_waivers_list'), 'Attestations Pilotes', 'pilot_waivers')
+                }}
                 {% endcall %}
 
                 {% call nav_group('📦 Retours', 'retours', 'retours', false) %}
@@ -290,7 +291,8 @@
             <div class="admin-cmdk-results" id="cmdkResults"></div>
             <div class="admin-cmdk-footer">
                 <div class="admin-cmdk-shortcuts">
-                    <span class="admin-cmdk-shortcut-item"><kbd class="admin-cmdk-kbd">↑</kbd><kbd class="admin-cmdk-kbd">↓</kbd> Naviguer</span>
+                    <span class="admin-cmdk-shortcut-item"><kbd class="admin-cmdk-kbd">↑</kbd><kbd
+                            class="admin-cmdk-kbd">↓</kbd> Naviguer</span>
                     <span class="admin-cmdk-shortcut-item"><kbd class="admin-cmdk-kbd">↵</kbd> Ouvrir</span>
                     <span class="admin-cmdk-shortcut-item"><kbd class="admin-cmdk-kbd">⌘↵</kbd> Nouvel onglet</span>
                     <span class="admin-cmdk-shortcut-item"><kbd class="admin-cmdk-kbd">Tab</kbd> Compléter</span>
