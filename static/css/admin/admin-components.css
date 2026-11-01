@@ -2365,7 +2365,6 @@ button.badge-pill:hover {
     padding: 0.85rem 1.15rem;
     background-color: var(--status-warning-bg, #FEF3C7);
     border: 1px solid rgba(245, 158, 11, 0.35);
-    border-left: 4px solid var(--status-warning, #F59E0B);
     border-radius: var(--radius-md, 8px);
     color: var(--status-warning-text, #B45309);
     transition: all 0.25s ease;
@@ -2374,7 +2373,6 @@ button.badge-pill:hover {
 .inspection-autosave-banner.is-restored {
     background-color: var(--status-success-bg, #DCFCE7);
     border-color: rgba(21, 128, 61, 0.35);
-    border-left-color: var(--status-success, #15803D);
     color: var(--status-success-text, #14532D);
 }
 
@@ -2406,6 +2404,23 @@ button.badge-pill:hover {
 .inspection-autosave-desc {
     font-size: 0.75rem;
     opacity: 0.9;
+}
+
+.draft-photos-badge,
+.draft-docs-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-weight: 600;
+    padding: 0.1rem 0.4rem;
+    border-radius: var(--radius-sm, 4px);
+    background-color: rgba(0, 0, 0, 0.06);
+}
+
+.inspection-autosave-banner.draft-offline-alert {
+    background-color: var(--status-danger-bg, #FEE2E2);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: var(--status-danger-text, #991B1B);
 }
 
 .inspection-autosave-actions {

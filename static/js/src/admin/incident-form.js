@@ -83,6 +83,8 @@
         renderCustomEquipmentList();
         syncSelectedEquipment();
     }
+    window.addCustomEquipment = addCustomEquipment;
+    window.getCustomEquipment = function () { return [...customEquipmentItems]; };
 
     function updateProjectEquipment(projectId) {
         if (isSealed) return;
