@@ -164,8 +164,11 @@ def register_admin_inspection_routes(app_or_bp, mode):
 
         if request.method == "POST":
             try:
-                create_func(request.form, request.files)
+                record = create_func(request.form, request.files)
                 flash(f"{label_title} créé avec succès !", "success")
+                record_id = getattr(record, "id", None) or (record.get("id") if isinstance(record, dict) else None)
+                if record_id:
+                    return redirect(url_for(endpoint_detail, record_id=record_id))
                 return redirect(url_for(endpoint_list))
             except Exception as e:
                 current_app.logger.error(f"❌ Erreur lors de la création du {label_fr} : {e}")

@@ -132,7 +132,7 @@ def create_checkin(form, files=None):
     if files or form:
         upload_inspection_photos_shared("checkin", record, files=files, form=form)
 
-    return True
+    return record
 
 
 @handle_admin_service_error
@@ -148,7 +148,7 @@ def update_checkin(record_id, form, files=None):
     if files or form:
         upload_inspection_photos_shared("checkin", record, files=files, form=form)
 
-    return True
+    return record
 
 
 @handle_admin_service_error

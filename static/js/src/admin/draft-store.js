@@ -349,11 +349,23 @@
     window.BvDraftStore = BvDraftStore;
     window.createAdminBanner = createAdminBanner;
 
-    // Nettoyage automatique des enregistrements périmés au chargement
+    // Nettoyage automatique des enregistrements périmés et des soumissions réussies au chargement
     if (typeof window !== 'undefined') {
         setTimeout(() => {
             BvDraftStore.cleanStaleDrafts();
         }, 2000);
+
+        try {
+            const cleanPendingDraft = (storageKey, formId) => {
+                const pendingKey = sessionStorage.getItem(storageKey);
+                if (pendingKey && !document.getElementById(formId)) {
+                    BvDraftStore.deleteDraft(pendingKey).catch(() => {});
+                    sessionStorage.removeItem(storageKey);
+                }
+            };
+            cleanPendingDraft('bv_pending_inspection_key', 'inspectionForm');
+            cleanPendingDraft('bv_pending_incident_key', 'incidentForm');
+        } catch (e) {}
     }
 })();
 

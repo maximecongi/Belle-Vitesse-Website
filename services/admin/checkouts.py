@@ -61,7 +61,7 @@ def create_checkout(form, files=None):
     if files or form:
         upload_inspection_photos_shared("checkout", record, files=files, form=form)
 
-    return True
+    return record
 
 
 @handle_admin_service_error
@@ -77,7 +77,7 @@ def update_checkout(record_id, form, files=None):
     if files or form:
         upload_inspection_photos_shared("checkout", record, files=files, form=form)
 
-    return True
+    return record
 
 
 @handle_admin_service_error

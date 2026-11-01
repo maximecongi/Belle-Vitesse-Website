@@ -214,12 +214,11 @@ class InspectionsTest(unittest.TestCase):
                 "brakes": "ok"
             }, follow_redirects=False)
 
-            self.assertEqual(res.status_code, 302)
-            self.assertIn("/admin/checkouts", res.headers.get("Location", ""))
-
             checkout = CheckoutVehicle.query.filter_by(project_id=proj.id).first()
             self.assertIsNotNone(checkout)
             self.assertEqual(checkout.battery_level, 100)
+            self.assertEqual(res.status_code, 302)
+            self.assertEqual(res.headers.get("Location"), f"/admin/checkouts/{checkout.id}")
 
             # Mark checkout as signed with sealed document so checkin is permitted by business rule
             checkout.status = 'signed'
@@ -243,12 +242,11 @@ class InspectionsTest(unittest.TestCase):
                 "brakes": "ok"
             }, follow_redirects=False)
 
-            self.assertEqual(res_in.status_code, 302)
-            self.assertIn("/admin/checkins", res_in.headers.get("Location", ""))
-
             checkin = CheckinVehicle.query.filter_by(project_id=proj.id).first()
             self.assertIsNotNone(checkin)
             self.assertEqual(checkin.battery_level, 90)
+            self.assertEqual(res_in.status_code, 302)
+            self.assertEqual(res_in.headers.get("Location"), f"/admin/checkins/{checkin.id}")
 
     def test_verify_public_routes(self):
         from models import CheckoutSignedDocument, CheckinSignedDocument
@@ -350,12 +348,10 @@ class InspectionsTest(unittest.TestCase):
                 "notes": "Attempt with force",
                 "force_checkin": "1"
             }, follow_redirects=False)
-            self.assertEqual(res_ok.status_code, 302)
-            self.assertIn("/admin/checkins", res_ok.headers.get("Location", ""))
-
-            # Check that record notes include the exceptional mention
             saved_ci = CheckinVehicle.query.filter_by(project_id=proj.id).first()
             self.assertIsNotNone(saved_ci)
+            self.assertEqual(res_ok.status_code, 302)
+            self.assertEqual(res_ok.headers.get("Location"), f"/admin/checkins/{saved_ci.id}")
             self.assertIn("Retour exceptionnel", saved_ci.notes)
 
     def test_create_checkin_blocked_when_already_exists(self):
