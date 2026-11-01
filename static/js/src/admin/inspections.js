@@ -12,7 +12,7 @@ async function updatePhotoLabel(input) {
 
     // Compression et optimisation préalable si des fichiers sont sélectionnés
     if (input.files && input.files.length > 0 && typeof window.compressFileInput === 'function' && input.dataset.compressed !== 'true') {
-        preview.innerHTML = '<div class="u-text-xs u-text-muted u-p-1"><span class="image-compress-spinner"></span> Optimisation des photos en cours…</div>';
+        preview.innerHTML = '<div class="u-text-xs u-text-muted u-p-1 u-flex u-items-center u-gap-1"><span class="image-compress-spinner"></span> Optimisation des photos en cours…</div>';
         await window.compressFileInput(input);
     }
     preview.innerHTML = '';

@@ -181,16 +181,24 @@
      */
     function renderStatusBadge(input, state, count, origSize, compSize) {
         // Trouver ou créer l'élément de feedback
-        let container = input.closest('.form-group') || input.parentElement;
+        // Si input est à l'intérieur d'un label ou wrapper, on ancre le badge au conteneur principal
+        const container = input.closest('.form-group') || input.parentElement;
         if (!container) return;
 
         let badge = container.querySelector('.image-compress-status');
         if (!badge) {
             badge = document.createElement('div');
             badge.className = 'image-compress-status';
-            // Insérer après l'input ou son label
-            if (input.nextSibling) {
-                container.insertBefore(badge, input.nextSibling);
+
+            // Si input est contenu dans un label / wrapper qui se trouve dans container,
+            // on insère le badge juste après ce wrapper, sinon après l'input.
+            let referenceNode = input;
+            while (referenceNode && referenceNode.parentElement !== container) {
+                referenceNode = referenceNode.parentElement;
+            }
+
+            if (referenceNode && referenceNode.nextSibling) {
+                container.insertBefore(badge, referenceNode.nextSibling);
             } else {
                 container.appendChild(badge);
             }
