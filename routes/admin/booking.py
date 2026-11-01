@@ -21,15 +21,16 @@ BOOKING_COLORS = [
 ]
 
 
-
 booking_bp = Blueprint('admin_booking', __name__, url_prefix='/admin')
 """Initialise les routes du calendrier de booking matériel."""
+
 
 @booking_bp.route("/booking", endpoint="admin_booking")
 @require_roles("administrator", "manager", "commercial")
 def admin_booking():
     """Page du calendrier de booking matériel (Gantt)."""
     return render_template("admin/booking_calendar.html")
+
 
 @booking_bp.route("/api/booking-data", endpoint="admin_booking_data")
 @require_roles("administrator", "manager", "commercial")
@@ -92,9 +93,11 @@ def admin_booking_data():
         if not end:
             end = start
 
+        is_punctual = (getattr(project, "date_mode", None) == "punctual")
+
         # Déterminer les plages de réservation effectives (regroupement de jours bloqués continus)
         active_spans = []
-        if getattr(project, "date_mode", None) == "punctual" and hasattr(project, "effective_blocked_dates"):
+        if is_punctual and hasattr(project, "effective_blocked_dates"):
             blocked_sorted = sorted(list(project.effective_blocked_dates))
             if blocked_sorted:
                 cur_start = blocked_sorted[0]
@@ -114,29 +117,46 @@ def admin_booking_data():
 
         # Récupérer les items assignés à ce projet et les dédupliquer
         raw_value = getattr(project, field_name, "") or ""
-        assigned_ids = list(set([v.strip() for v in raw_value.split(",") if v.strip()]))
+        assigned_ids = list(set([v.strip()
+                            for v in raw_value.split(",") if v.strip()]))
 
         color = BOOKING_COLORS[i % len(BOOKING_COLORS)]
+        intervals = []
+        if is_punctual and hasattr(project, "get_inter_shoot_intervals"):
+            try:
+                intervals = project.get_inter_shoot_intervals() or []
+            except Exception as e:
+                logger.warning(
+                    f"Erreur lors du calcul des intervalles pour le projet {project.id}: {e}")
+                intervals = []
+
+        shoot_dates = [str(d).strip() for d in (
+            project.shoot_dates or []) if str(d).strip()] if is_punctual else []
 
         for assigned_id in assigned_ids:
             if assigned_id in filtered_items:
-                for span_start, span_end in active_spans:
-                    bookings.append({
-                        "item_id": assigned_id,
-                        "project_id": project.id,
-                        "project_code": project.project_id,
-                        "project_name": project.name or "Sans nom",
-                        "production": project.production.name if project.production else "—",
-                        "start": span_start.isoformat(),
-                        "end": span_end.isoformat(),
-                        "departure_date": project.departure_date.isoformat() if project.departure_date else None,
-                        "shoot_start": project.shoot_start_date.isoformat() if project.shoot_start_date else None,
-                        "shoot_end": project.shoot_end_date.isoformat() if project.shoot_end_date else None,
-                        "return_date": project.return_date.isoformat() if project.return_date else None,
-                        "date_mode": getattr(project, "date_mode", "continuous"),
-                        "is_immobilized_between": getattr(project, "is_immobilized_between", True),
-                        "color": color,
-                    })
+                bookings.append({
+                    "item_id": assigned_id,
+                    "project_id": project.id,
+                    "project_code": project.project_id,
+                    "project_name": project.name or "Sans nom",
+                    "production": project.production.name if project.production else "—",
+                    "start": (active_spans[0][0] if active_spans else start).isoformat(),
+                    "end": (active_spans[-1][1] if active_spans else end).isoformat(),
+                    "active_spans": [
+                        {"start": s.isoformat(), "end": e.isoformat()}
+                        for s, e in active_spans
+                    ],
+                    "departure_date": project.departure_date.isoformat() if project.departure_date else None,
+                    "shoot_start": project.shoot_start_date.isoformat() if project.shoot_start_date else None,
+                    "shoot_end": project.shoot_end_date.isoformat() if project.shoot_end_date else None,
+                    "return_date": project.return_date.isoformat() if project.return_date else None,
+                    "date_mode": "punctual" if is_punctual else "continuous",
+                    "shoot_dates": shoot_dates,
+                    "intervals": intervals,
+                    "is_immobilized_between": getattr(project, "is_immobilized_between", True),
+                    "color": color,
+                })
 
     # Liste des items pour le dropdown
     items_list = [
@@ -148,6 +168,7 @@ def admin_booking_data():
         "items": items_list,
         "bookings": bookings,
     })
+
 
 def init_booking_routes(app):
     """Enregistre le blueprint admin_booking (compatibilité ascendante)."""

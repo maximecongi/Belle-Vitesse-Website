@@ -35,6 +35,10 @@ $(document).ready(function () {
             // Lucide 'alert-triangle'
             return '<svg class="gantt-bar__icon" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
         }
+        if (type === 'standby' || type === 'immob') {
+            // Lucide 'pause-circle' (Immobilisé - Standby)
+            return '<svg class="gantt-bar__icon" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="10" x2="10" y1="15" y2="9"/><line x1="14" x2="14" y1="15" y2="9"/></svg>';
+        }
         return '';
     }
 
@@ -298,7 +302,46 @@ $(document).ready(function () {
                             </div>
                         `;
                     }
-                    if (sStart) {
+
+                    if (booking.date_mode === 'punctual' && Array.isArray(booking.shoot_dates) && booking.shoot_dates.length > 0) {
+                        const shootDatesFormatted = booking.shoot_dates.map(function (dStr) {
+                            const d = parseLocalDate(String(dStr).split('T')[0]);
+                            return d ? formatDateString(d) : dStr;
+                        });
+                        const count = shootDatesFormatted.length;
+                        phases += `
+                            <div class="gantt-tooltip__phase">
+                                <span class="gantt-tooltip__phase-badge gantt-tooltip__phase-badge--project">${getLucideSvg('project')}</span>
+                                <span><strong>Tournage (${count}j) :</strong> ${shootDatesFormatted.join(', ')}</span>
+                            </div>
+                        `;
+
+                        // Afficher les détails des intervalles (immobilisés / non-immobilisés)
+                        if (Array.isArray(booking.intervals) && booking.intervals.length > 0) {
+                            booking.intervals.forEach(function (inter) {
+                                const iStart = parseLocalDate(inter.start);
+                                const iEnd = parseLocalDate(inter.end);
+                                const daysCount = inter.days_count || (inter.days ? inter.days.length : 0);
+                                if (iStart && iEnd && daysCount > 0) {
+                                    if (inter.is_immobilized) {
+                                        phases += `
+                                            <div class="gantt-tooltip__phase gantt-tooltip__phase--immob">
+                                                <span class="gantt-tooltip__phase-badge gantt-tooltip__phase-badge--standby">${getLucideSvg('standby')}</span>
+                                                <span><strong>Immobilisé sur place (${daysCount}j) :</strong> entre le ${formatDateString(iStart)} et le ${formatDateString(iEnd)}</span>
+                                            </div>
+                                        `;
+                                    } else {
+                                        phases += `
+                                            <div class="gantt-tooltip__phase gantt-tooltip__phase--free">
+                                                <span class="gantt-tooltip__phase-badge gantt-tooltip__phase-badge--checkout">${getLucideSvg('checkout')}</span>
+                                                <span class="u-text-muted"><strong>Libéré / Atelier (${daysCount}j) :</strong> entre le ${formatDateString(iStart)} et le ${formatDateString(iEnd)}</span>
+                                            </div>
+                                        `;
+                                    }
+                                }
+                            });
+                        }
+                    } else if (sStart) {
                         const shootLabel = sEnd && sEnd.getTime() !== sStart.getTime()
                             ? `${formatDateString(sStart)} → ${formatDateString(sEnd)}`
                             : formatDateString(sStart);
@@ -309,6 +352,7 @@ $(document).ready(function () {
                             </div>
                         `;
                     }
+
                     if (retD) {
                         phases += `
                             <div class="gantt-tooltip__phase">
@@ -356,71 +400,212 @@ $(document).ready(function () {
                     return $bar;
                 }
 
-                const hasAnyPhaseDate = depD || sStart || retD;
-                const drawDepBlock = depD && (!sStart || depD.getTime() < sStart.getTime());
-                const drawRetBlock = retD && (!sEnd || retD.getTime() > sEnd.getTime());
-                const drawShootBlock = !!sStart;
+                // 1. Lignes de connexion (périodes de réservation effectives / spans continus)
+                const spans = (Array.isArray(booking.active_spans) && booking.active_spans.length > 0)
+                    ? booking.active_spans
+                    : [{ start: booking.start, end: booking.end }];
 
-                // Fallback si aucune phase spécifique
-                if (!hasAnyPhaseDate) {
-                    const fallbackContent = `
-                        <span class="gantt-bar-badge">${getLucideSvg('project')}</span>
-                        <span class="gantt-bar-title">${escapeHtml(booking.project_name)}</span>
-                    `;
-                    const $fallback = createBarElement(bookStart, bookEnd, fallbackContent, 'gantt-shoot-bar', `Tournage : ${booking.project_name}`);
-                    if ($fallback) $row.append($fallback);
-                    return;
-                }
+                spans.forEach(function (span) {
+                    const spanS = parseLocalDate(span.start.split('T')[0]);
+                    const spanE = parseLocalDate(span.end.split('T')[0]);
+                    const spanPos = getPosAndWidth(spanS, spanE);
+                    if (spanPos) {
+                        const $connLine = $(`
+                            <div class="gantt-booking-connection"
+                                 style="left: ${spanPos.left}px; width: ${spanPos.width}px;">
+                            </div>
+                        `);
+                        $row.append($connLine);
+                    }
+                });
 
-                // 1. Ligne de connexion reliant départ à retour
-                const globalPos = getPosAndWidth(bookStart, bookEnd);
-                if (globalPos) {
-                    const $connLine = $(`
-                        <div class="gantt-booking-connection"
-                             style="left: ${globalPos.left}px; width: ${globalPos.width}px;">
-                        </div>
-                    `);
-                    $row.append($connLine);
-                }
+                if (booking.date_mode === 'punctual' && Array.isArray(booking.shoot_dates) && booking.shoot_dates.length > 0) {
+                    // ── Mode Ponctuel ──
+                    // 1. Trier et regrouper les dates de tournage consécutives en blocs
+                    const sortedShootDates = booking.shoot_dates
+                        .map(function (dStr) { return String(dStr).trim(); })
+                        .filter(Boolean)
+                        .sort();
 
-                // 2. Bloc Départ (Check-out) — Vert Émeraude
-                if (drawDepBlock) {
-                    const depPos = getPosAndWidth(depD, depD);
-                    const showText = depPos && depPos.width >= 65;
-                    const depContent = `
-                        <span class="gantt-bar-badge">${getLucideSvg('checkout')}</span>
-                        ${showText ? '<span class="gantt-bar-title">Départ</span>' : ''}
-                    `;
-                    const $depBar = createBarElement(depD, depD, depContent, 'gantt-dep-bar', `Départ : ${booking.project_name}`);
-                    if ($depBar) $row.append($depBar);
-                }
+                    const shootChunks = [];
+                    let curChunk = [];
 
-                // 3. Bloc Tournage (Projet) — Ambre Chaud
-                if (drawShootBlock) {
-                    let shootBadgeSvg = getLucideSvg('project');
-                    let depIconIfCoincides = (depD && depD.getTime() === sStart.getTime()) ? getLucideSvg('checkout') + ' ' : '';
-                    let retIconIfCoincides = (retD && sEnd && retD.getTime() === sEnd.getTime()) ? ' ' + getLucideSvg('checkin') : '';
+                    sortedShootDates.forEach(function (dStr) {
+                        const dObj = parseLocalDate(dStr.split('T')[0]);
+                        if (!dObj) return;
 
-                    const shootContent = `
-                        <span class="gantt-bar-badge">${depIconIfCoincides}${shootBadgeSvg}</span>
-                        <span class="gantt-bar-title">${escapeHtml(booking.project_name)}</span>
-                        ${booking.production && booking.production !== '—' ? `<span class="gantt-bar-prod">${escapeHtml(booking.production)}</span>` : ''}
-                        ${retIconIfCoincides}
-                    `;
-                    const $shootBar = createBarElement(sStart, sEnd, shootContent, 'gantt-shoot-bar', `Tournage : ${booking.project_name}`);
-                    if ($shootBar) $row.append($shootBar);
-                }
+                        if (curChunk.length === 0) {
+                            curChunk.push(dObj);
+                        } else {
+                            const lastD = curChunk[curChunk.length - 1];
+                            const diff = Math.round((dObj.getTime() - lastD.getTime()) / (1000 * 60 * 60 * 24));
+                            if (diff === 1) {
+                                curChunk.push(dObj);
+                            } else {
+                                shootChunks.push([...curChunk]);
+                                curChunk = [dObj];
+                            }
+                        }
+                    });
+                    if (curChunk.length > 0) {
+                        shootChunks.push(curChunk);
+                    }
 
-                // 4. Bloc Retour (Check-in) — Bleu Océan
-                if (drawRetBlock) {
-                    const retPos = getPosAndWidth(retD, retD);
-                    const showText = retPos && retPos.width >= 65;
-                    const retContent = `
-                        <span class="gantt-bar-badge">${getLucideSvg('checkin')}</span>
-                        ${showText ? '<span class="gantt-bar-title">Retour</span>' : ''}
-                    `;
-                    const $retBar = createBarElement(retD, retD, retContent, 'gantt-ret-bar', `Retour : ${booking.project_name}`);
-                    if ($retBar) $row.append($retBar);
+                    const firstShootDateObj = sortedShootDates.length > 0 ? parseLocalDate(sortedShootDates[0].split('T')[0]) : null;
+                    const lastShootDateObj = sortedShootDates.length > 0 ? parseLocalDate(sortedShootDates[sortedShootDates.length - 1].split('T')[0]) : null;
+
+                    // 2. Dessiner chaque bloc de tournage
+                    shootChunks.forEach(function (chunk) {
+                        const cStart = chunk[0];
+                        const cEnd = chunk[chunk.length - 1];
+
+                        let depIconIfCoincides = (depD && depD.getTime() === cStart.getTime()) ? getLucideSvg('checkout') + ' ' : '';
+                        let retIconIfCoincides = (retD && retD.getTime() === cEnd.getTime()) ? ' ' + getLucideSvg('checkin') : '';
+
+                        const shootContent = `
+                            <span class="gantt-bar-badge">${depIconIfCoincides}${getLucideSvg('project')}</span>
+                            <span class="gantt-bar-title">${escapeHtml(booking.project_name)}</span>
+                            ${booking.production && booking.production !== '—' ? `<span class="gantt-bar-prod">${escapeHtml(booking.production)}</span>` : ''}
+                            ${retIconIfCoincides}
+                        `;
+                        const rangeStr = chunk.length > 1 ? `du ${formatDateString(cStart)} au ${formatDateString(cEnd)}` : formatDateString(cStart);
+                        const $shootBar = createBarElement(cStart, cEnd, shootContent, 'gantt-shoot-bar', `Tournage : ${booking.project_name} (${rangeStr})`);
+                        if ($shootBar) $row.append($shootBar);
+                    });
+
+                    // 3. Dessiner les intervalles immobilisés (🔒  Immobilisé sur place)
+                    if (Array.isArray(booking.intervals) && booking.intervals.length > 0) {
+                        booking.intervals.forEach(function (inter) {
+                            // On n'affiche QUE les intervalles immobilisés.
+                            // Les intervalles non-immobilisés (libérés / retour atelier) NE SONT PAS DESSINÉS,
+                            // laissant les cellules totalement libres sur le calendrier matériel.
+                            if (!inter.is_immobilized || !Array.isArray(inter.days) || inter.days.length === 0) {
+                                return;
+                            }
+
+                            const interSorted = inter.days
+                                .map(function (dStr) { return parseLocalDate(String(dStr).split('T')[0]); })
+                                .filter(Boolean)
+                                .sort(function (a, b) { return a.getTime() - b.getTime(); });
+                            if (interSorted.length === 0) return;
+
+                            // Regrouper les jours consécutifs de l'intervalle au cas où
+                            const immobChunks = [];
+                            let curImmobChunk = [];
+                            interSorted.forEach(function (dObj) {
+                                if (curImmobChunk.length === 0) {
+                                    curImmobChunk.push(dObj);
+                                } else {
+                                    const lastD = curImmobChunk[curImmobChunk.length - 1];
+                                    const diff = Math.round((dObj.getTime() - lastD.getTime()) / (1000 * 60 * 60 * 24));
+                                    if (diff === 1) {
+                                        curImmobChunk.push(dObj);
+                                    } else {
+                                        immobChunks.push([...curImmobChunk]);
+                                        curImmobChunk = [dObj];
+                                    }
+                                }
+                            });
+                            if (curImmobChunk.length > 0) immobChunks.push(curImmobChunk);
+
+                            immobChunks.forEach(function (chunk) {
+                                const iStart = chunk[0];
+                                const iEnd = chunk[chunk.length - 1];
+                                const count = chunk.length;
+
+                                const immobContent = `
+                                    <span class="gantt-bar-badge">${getLucideSvg('standby')}</span>
+                                    <span class="gantt-bar-title">${escapeHtml(booking.project_name)}</span>
+                                    <span class="gantt-bar-label">Immobilisé${count > 1 ? ` (${count}j)` : ''}</span>
+                                `;
+                                const rangeStr = count > 1 ? `du ${formatDateString(iStart)} au ${formatDateString(iEnd)}` : formatDateString(iStart);
+                                const $immobBar = createBarElement(iStart, iEnd, immobContent, 'gantt-immob-bar', `Immobilisé sur place (${count}j) : ${booking.project_name} (${rangeStr})`);
+                                if ($immobBar) $row.append($immobBar);
+                            });
+                        });
+                    }
+
+                    // 4. Jalon Départ (Vert Émeraude - si strictement avant le 1er tournage)
+                    if (depD && firstShootDateObj && depD.getTime() < firstShootDateObj.getTime()) {
+                        const depPos = getPosAndWidth(depD, depD);
+                        const showText = depPos && depPos.width >= 65;
+                        const depContent = `
+                            <span class="gantt-bar-badge">${getLucideSvg('checkout')}</span>
+                            ${showText ? '<span class="gantt-bar-title">Départ</span>' : ''}
+                        `;
+                        const $depBar = createBarElement(depD, depD, depContent, 'gantt-dep-bar', `Départ : ${booking.project_name}`);
+                        if ($depBar) $row.append($depBar);
+                    }
+
+                    // 5. Jalon Retour (Bleu Océan - si strictement après le dernier tournage)
+                    if (retD && lastShootDateObj && retD.getTime() > lastShootDateObj.getTime()) {
+                        const retPos = getPosAndWidth(retD, retD);
+                        const showText = retPos && retPos.width >= 65;
+                        const retContent = `
+                            <span class="gantt-bar-badge">${getLucideSvg('checkin')}</span>
+                            ${showText ? '<span class="gantt-bar-title">Retour</span>' : ''}
+                        `;
+                        const $retBar = createBarElement(retD, retD, retContent, 'gantt-ret-bar', `Retour : ${booking.project_name}`);
+                        if ($retBar) $row.append($retBar);
+                    }
+
+                } else {
+                    // ── Mode Continu Classique ──
+                    const hasAnyPhaseDate = depD || sStart || retD;
+                    const drawDepBlock = depD && (!sStart || depD.getTime() < sStart.getTime());
+                    const drawRetBlock = retD && (!sEnd || retD.getTime() > sEnd.getTime());
+                    const drawShootBlock = !!sStart;
+
+                    // Fallback si aucune phase spécifique
+                    if (!hasAnyPhaseDate) {
+                        const fallbackContent = `
+                            <span class="gantt-bar-badge">${getLucideSvg('project')}</span>
+                            <span class="gantt-bar-title">${escapeHtml(booking.project_name)}</span>
+                        `;
+                        const $fallback = createBarElement(bookStart, bookEnd, fallbackContent, 'gantt-shoot-bar', `Tournage : ${booking.project_name}`);
+                        if ($fallback) $row.append($fallback);
+                        return;
+                    }
+
+                    // 2. Bloc Départ (Check-out) — Vert Émeraude
+                    if (drawDepBlock) {
+                        const depPos = getPosAndWidth(depD, depD);
+                        const showText = depPos && depPos.width >= 65;
+                        const depContent = `
+                            <span class="gantt-bar-badge">${getLucideSvg('checkout')}</span>
+                            ${showText ? '<span class="gantt-bar-title">Départ</span>' : ''}
+                        `;
+                        const $depBar = createBarElement(depD, depD, depContent, 'gantt-dep-bar', `Départ : ${booking.project_name}`);
+                        if ($depBar) $row.append($depBar);
+                    }
+
+                    // 3. Bloc Tournage (Projet) — Ambre Chaud
+                    if (drawShootBlock) {
+                        let shootBadgeSvg = getLucideSvg('project');
+                        let depIconIfCoincides = (depD && depD.getTime() === sStart.getTime()) ? getLucideSvg('checkout') + ' ' : '';
+                        let retIconIfCoincides = (retD && sEnd && retD.getTime() === sEnd.getTime()) ? ' ' + getLucideSvg('checkin') : '';
+
+                        const shootContent = `
+                            <span class="gantt-bar-badge">${depIconIfCoincides}${shootBadgeSvg}</span>
+                            <span class="gantt-bar-title">${escapeHtml(booking.project_name)}</span>
+                            ${booking.production && booking.production !== '—' ? `<span class="gantt-bar-prod">${escapeHtml(booking.production)}</span>` : ''}
+                            ${retIconIfCoincides}
+                        `;
+                        const $shootBar = createBarElement(sStart, sEnd, shootContent, 'gantt-shoot-bar', `Tournage : ${booking.project_name}`);
+                        if ($shootBar) $row.append($shootBar);
+                    }
+
+                    // 4. Bloc Retour (Check-in) — Bleu Océan
+                    if (drawRetBlock) {
+                        const retPos = getPosAndWidth(retD, retD);
+                        const showText = retPos && retPos.width >= 65;
+                        const retContent = `
+                            <span class="gantt-bar-badge">${getLucideSvg('checkin')}</span>
+                            ${showText ? '<span class="gantt-bar-title">Retour</span>' : ''}
+                        `;
+                        const $retBar = createBarElement(retD, retD, retContent, 'gantt-ret-bar', `Retour : ${booking.project_name}`);
+                        if ($retBar) $row.append($retBar);
+                    }
                 }
             });
 
@@ -435,7 +620,7 @@ $(document).ready(function () {
         return `${date.getDate()} ${MONTH_NAMES[date.getMonth()]} ${date.getFullYear()}`;
     }
 
-    // Détection des conflits temporels (Overlaps)
+    // Détection des conflits temporels (Overlaps sur les spans actifs)
     function detectAndMarkConflicts(bookings) {
         if (!bookings) return;
         const bookingsByItem = {};
@@ -452,13 +637,37 @@ $(document).ready(function () {
                 for (let j = i + 1; j < list.length; j++) {
                     const b1 = list[i];
                     const b2 = list[j];
+                    if (b1.project_id === b2.project_id) continue;
 
-                    const s1 = parseLocalDate(b1.start.split('T')[0]);
-                    const e1 = parseLocalDate(b1.end.split('T')[0]);
-                    const s2 = parseLocalDate(b2.start.split('T')[0]);
-                    const e2 = parseLocalDate(b2.end.split('T')[0]);
+                    const b1Spans = (Array.isArray(b1.active_spans) && b1.active_spans.length > 0)
+                        ? b1.active_spans
+                        : [{ start: b1.start, end: b1.end }];
+                    const b2Spans = (Array.isArray(b2.active_spans) && b2.active_spans.length > 0)
+                        ? b2.active_spans
+                        : [{ start: b2.start, end: b2.end }];
 
-                    if (s1 <= e2 && s2 <= e1) {
+                    let conflictFound = false;
+                    for (let s1Idx = 0; s1Idx < b1Spans.length; s1Idx++) {
+                        const s1 = b1Spans[s1Idx];
+                        const s1Start = parseLocalDate(s1.start.split('T')[0]);
+                        const s1End = parseLocalDate(s1.end.split('T')[0]);
+                        if (!s1Start || !s1End) continue;
+
+                        for (let s2Idx = 0; s2Idx < b2Spans.length; s2Idx++) {
+                            const s2 = b2Spans[s2Idx];
+                            const s2Start = parseLocalDate(s2.start.split('T')[0]);
+                            const s2End = parseLocalDate(s2.end.split('T')[0]);
+                            if (!s2Start || !s2End) continue;
+
+                            if (s1Start <= s2End && s2Start <= s1End) {
+                                conflictFound = true;
+                                break;
+                            }
+                        }
+                        if (conflictFound) break;
+                    }
+
+                    if (conflictFound) {
                         b1.hasConflict = true;
                         b2.hasConflict = true;
                     }

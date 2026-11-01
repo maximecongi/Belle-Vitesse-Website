@@ -322,6 +322,36 @@
     stroke: var(--entity-project);
 }
 
+/* ── Immobilisé (Standby) : Ambre Hachuré / Warning ── */
+.gantt-immob-bar {
+    background: repeating-linear-gradient(45deg,
+            var(--status-warning-bg),
+            var(--status-warning-bg) 6px,
+            #FDE68A 6px,
+            #FDE68A 12px) !important;
+    border: 1px solid var(--status-warning-border) !important;
+    border-left: 3.5px solid var(--status-warning) !important;
+    color: var(--status-warning-text) !important;
+    font-size: 0.75rem;
+}
+
+.gantt-immob-bar:hover {
+    border-color: var(--status-warning) !important;
+    box-shadow: 0 2px 8px var(--status-warning-glow) !important;
+}
+
+.gantt-immob-bar .gantt-bar__icon {
+    color: var(--status-warning);
+    stroke: var(--status-warning);
+}
+
+.gantt-immob-bar .gantt-bar-label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    opacity: 0.9;
+    margin-left: 2px;
+}
+
 /* ── Retours (Check-in) : Bleu Océan ── */
 .gantt-ret-bar {
     background-color: var(--entity-checkin-bg) !important;
@@ -526,6 +556,11 @@
 .gantt-tooltip__phase-badge--checkin {
     background-color: var(--entity-checkin-bg);
     color: var(--entity-checkin);
+}
+
+.gantt-tooltip__phase-badge--standby {
+    background-color: var(--status-warning-bg);
+    color: var(--status-warning);
 }
 
 .gantt-tooltip__footer {
