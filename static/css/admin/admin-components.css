@@ -2357,31 +2357,30 @@ button.badge-pill:hover {
 }
 
 /* --- Autosave & Résilience Hors-Ligne des Inspections --- */
-.inspection-autosave-banner {
+/* ── Bannières Administrateur Unifiées (admin_banner) ───────── */
+.admin-banner,
+.inspection-autosave-banner,
+.duplicate-project-banner {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
     padding: 0.85rem 1.15rem;
-    background-color: var(--status-warning-bg, #FEF3C7);
-    border: 1px solid rgba(245, 158, 11, 0.35);
-    border-radius: var(--radius-md, 8px);
-    color: var(--status-warning-text, #B45309);
+    font-size: 0.875rem;
+    line-height: 1.45;
     transition: all 0.25s ease;
+    margin-bottom: 1.25rem;
 }
 
-.inspection-autosave-banner.is-restored {
-    background-color: var(--status-success-bg, #DCFCE7);
-    border-color: rgba(21, 128, 61, 0.35);
-    color: var(--status-success-text, #14532D);
-}
-
+.admin-banner-content,
 .inspection-autosave-content {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    flex: 1;
 }
 
+.admin-banner-icon,
 .inspection-autosave-icon {
     display: flex;
     align-items: center;
@@ -2390,20 +2389,96 @@ button.badge-pill:hover {
     flex-shrink: 0;
 }
 
+.admin-banner-icon i[data-lucide],
+.admin-banner-icon svg,
+.inspection-autosave-icon i[data-lucide],
+.inspection-autosave-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.admin-banner-text,
 .inspection-autosave-text {
     display: flex;
     flex-direction: column;
     gap: 0.15rem;
 }
 
+.admin-banner-title,
 .inspection-autosave-title {
-    font-size: 0.85rem;
+    font-size: 0.875rem;
     font-weight: 600;
 }
 
+.admin-banner-desc,
 .inspection-autosave-desc {
-    font-size: 0.75rem;
-    opacity: 0.9;
+    font-size: 0.8125rem;
+    opacity: 0.95;
+}
+
+.admin-banner-actions,
+.inspection-autosave-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.admin-banner-close {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    line-height: 1;
+    color: inherit;
+    opacity: 0.6;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: var(--radius-sm, 4px);
+    transition: opacity 0.2s ease;
+}
+
+.admin-banner-close:hover {
+    opacity: 1;
+}
+
+/* Variantes sémantiques transversales */
+.admin-banner--warning,
+.inspection-autosave-banner,
+.duplicate-project-banner {
+    background-color: var(--status-warning-bg, #FEF3C7);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    border-left: 4px solid var(--status-warning, #F59E0B);
+    color: var(--status-warning-text, #B45309);
+}
+
+.admin-banner--info {
+    background-color: var(--status-info-bg, #DBEAFE);
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    border-left: 4px solid var(--status-info, #3B82F6);
+    color: var(--status-info-text, #1E40AF);
+}
+
+.admin-banner--success,
+.inspection-autosave-banner.is-restored {
+    background-color: var(--status-success-bg, #DCFCE7);
+    border: 1px solid rgba(21, 128, 61, 0.35);
+    border-left: 4px solid var(--status-success, #15803D);
+    color: var(--status-success-text, #14532D);
+}
+
+.admin-banner--danger,
+.inspection-autosave-banner.draft-offline-alert {
+    background-color: var(--status-danger-bg, #FEE2E2);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-left: 4px solid var(--status-danger, #EF4444);
+    color: var(--status-danger-text, #991B1B);
+}
+
+.admin-banner--neutral {
+    background-color: var(--status-neutral-bg, #F3F4F6);
+    border: 1px solid rgba(107, 114, 128, 0.35);
+    border-left: 4px solid var(--status-neutral, #6B7280);
+    color: var(--status-neutral-text, #374151);
 }
 
 .draft-photos-badge,
@@ -2417,26 +2492,17 @@ button.badge-pill:hover {
     background-color: rgba(0, 0, 0, 0.06);
 }
 
-.inspection-autosave-banner.draft-offline-alert {
-    background-color: var(--status-danger-bg, #FEE2E2);
-    border-color: rgba(239, 68, 68, 0.4);
-    color: var(--status-danger-text, #991B1B);
-}
-
-.inspection-autosave-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-shrink: 0;
-}
-
 @media (max-width: 640px) {
-    .inspection-autosave-banner {
+
+    .admin-banner,
+    .inspection-autosave-banner,
+    .duplicate-project-banner {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.75rem;
     }
 
+    .admin-banner-actions,
     .inspection-autosave-actions {
         width: 100%;
         justify-content: flex-end;

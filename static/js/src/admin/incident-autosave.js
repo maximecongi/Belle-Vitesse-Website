@@ -2,8 +2,7 @@
  * incident-autosave.js — Sauvegarde automatique locale (IndexedDB + DataTransfer)
  * et résilience hors-ligne pour le formulaire de déclaration et d'édition d'incident.
  *
- * Évite la perte des données de saisie (circonstances, mesures, équipements, photos et devis)
- * en cas de coupure 4G sur le tournage ou rechargement involontaire de la page.
+ * Utilise la macro et le composant unifié .admin-banner du Design System Belle Vitesse.
  */
 
 (function () {
@@ -241,15 +240,11 @@
     }
 
     /**
-     * Affiche la bannière d'autosave enrichie pour le formulaire d'incident.
+     * Affiche la bannière d'autosave enrichie via createAdminBanner pour le formulaire d'incident.
      */
     function showIncidentAutosaveBanner(form, draft, storageKey) {
-        const existing = form.querySelector('.inspection-autosave-banner');
+        const existing = form.querySelector('.admin-banner, .inspection-autosave-banner');
         if (existing) existing.remove();
-
-        const banner = document.createElement('div');
-        banner.className = 'inspection-autosave-banner u-mb-4';
-        banner.id = 'incidentAutosaveBanner';
 
         const store = window.BvDraftStore;
         const formattedDate = store ? store.formatTimeAgo(draft.timestamp) : 'récemment';
@@ -270,25 +265,40 @@
             detailsMeta += ` • <span class="draft-docs-badge">📄 ${docCount} document${docCount > 1 ? 's' : ''}</span>`;
         }
 
-        banner.innerHTML = `
-            <div class="inspection-autosave-content">
-                <span class="inspection-autosave-icon"><i data-lucide="history"></i></span>
-                <div class="inspection-autosave-text">
-                    <strong class="inspection-autosave-title">Brouillon de constat d'incident détecté</strong>
-                    <div class="inspection-autosave-desc">
-                        Saisie conservée (${formattedDate}) — ${detailsMeta}. Souhaitez-vous la restaurer ?
+        const actionsHtml = `
+            <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" id="btnRestoreIncidentAutosave">
+                <i data-lucide="rotate-ccw"></i> Restaurer la saisie
+            </button>
+            <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary" id="btnDiscardIncidentAutosave">
+                Ignorer
+            </button>
+        `;
+
+        let banner;
+        if (typeof window.createAdminBanner === 'function') {
+            banner = window.createAdminBanner({
+                variant: 'warning',
+                icon: 'history',
+                id: 'incidentAutosaveBanner',
+                title: 'Brouillon de constat d\'incident détecté',
+                desc: `Saisie conservée (${formattedDate}) — ${detailsMeta}. Souhaitez-vous la restaurer ?`,
+                actionsHtml: actionsHtml
+            });
+        } else {
+            banner = document.createElement('div');
+            banner.className = 'admin-banner admin-banner--warning inspection-autosave-banner u-mb-4';
+            banner.id = 'incidentAutosaveBanner';
+            banner.innerHTML = `
+                <div class="admin-banner-content">
+                    <span class="admin-banner-icon"><i data-lucide="history"></i></span>
+                    <div class="admin-banner-text">
+                        <strong class="admin-banner-title">Brouillon de constat d'incident détecté</strong>
+                        <div class="admin-banner-desc">Saisie conservée (${formattedDate}) — ${detailsMeta}. Souhaitez-vous la restaurer ?</div>
                     </div>
                 </div>
-            </div>
-            <div class="inspection-autosave-actions">
-                <button type="button" class="admin-btn admin-btn-sm admin-btn-primary" id="btnRestoreIncidentAutosave">
-                    <i data-lucide="rotate-ccw"></i> Restaurer la saisie
-                </button>
-                <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary" id="btnDiscardIncidentAutosave">
-                    Ignorer
-                </button>
-            </div>
-        `;
+                <div class="admin-banner-actions">${actionsHtml}</div>
+            `;
+        }
 
         form.insertBefore(banner, form.firstChild);
 
@@ -305,20 +315,35 @@
                 btnRestore.innerHTML = '<span class="image-compress-spinner"></span> Restauration…';
                 await restoreIncidentDraft(form, draft);
 
-                banner.className = 'inspection-autosave-banner is-restored u-mb-4';
-                banner.innerHTML = `
-                    <div class="inspection-autosave-content">
-                        <span class="inspection-autosave-icon"><i data-lucide="circle-check"></i></span>
-                        <div class="inspection-autosave-text">
-                            <strong class="inspection-autosave-title">Données, photos et pièces jointes du constat restaurées avec succès</strong>
+                let restoredBanner;
+                if (typeof window.createAdminBanner === 'function') {
+                    restoredBanner = window.createAdminBanner({
+                        variant: 'success',
+                        icon: 'circle-check',
+                        id: 'incidentAutosaveBanner',
+                        title: 'Données, photos et pièces jointes du constat restaurées avec succès'
+                    });
+                } else {
+                    restoredBanner = document.createElement('div');
+                    restoredBanner.className = 'admin-banner admin-banner--success inspection-autosave-banner is-restored u-mb-4';
+                    restoredBanner.id = 'incidentAutosaveBanner';
+                    restoredBanner.innerHTML = `
+                        <div class="admin-banner-content">
+                            <span class="admin-banner-icon"><i data-lucide="circle-check"></i></span>
+                            <div class="admin-banner-text">
+                                <strong class="admin-banner-title">Données, photos et pièces jointes du constat restaurées avec succès</strong>
+                            </div>
                         </div>
-                    </div>
-                `;
+                    `;
+                }
+
+                banner.replaceWith(restoredBanner);
+
                 if (window.lucide && typeof window.lucide.createIcons === 'function') {
                     window.lucide.createIcons();
                 }
                 setTimeout(() => {
-                    banner.remove();
+                    restoredBanner.remove();
                 }, 3500);
             });
         }
@@ -393,22 +418,32 @@
                 e.preventDefault();
                 let alertBox = form.querySelector('#offlineIncidentSubmitAlert');
                 if (!alertBox) {
-                    alertBox = document.createElement('div');
-                    alertBox.id = 'offlineIncidentSubmitAlert';
-                    alertBox.className = 'inspection-autosave-banner draft-offline-alert u-mb-4';
+                    if (typeof window.createAdminBanner === 'function') {
+                        alertBox = window.createAdminBanner({
+                            variant: 'danger',
+                            icon: 'wifi-off',
+                            id: 'offlineIncidentSubmitAlert',
+                            title: '📡 Connexion Internet indisponible sur le plateau',
+                            desc: 'L\'envoi est mis en attente. Toutes les informations, photos des dégâts et pièces jointes restent sauvegardées en sécurité dans ce navigateur. Vous pourrez valider le constat dès le retour du réseau.'
+                        });
+                    } else {
+                        alertBox = document.createElement('div');
+                        alertBox.id = 'offlineIncidentSubmitAlert';
+                        alertBox.className = 'admin-banner admin-banner--danger draft-offline-alert u-mb-4';
+                        alertBox.innerHTML = `
+                            <div class="admin-banner-content">
+                                <span class="admin-banner-icon"><i data-lucide="wifi-off"></i></span>
+                                <div class="admin-banner-text">
+                                    <strong class="admin-banner-title">📡 Connexion Internet indisponible sur le plateau</strong>
+                                    <div class="admin-banner-desc">
+                                        L'envoi est mis en attente. Toutes les informations, photos des dégâts et pièces jointes restent sauvegardées en sécurité dans ce navigateur. Vous pourrez valider le constat dès le retour du réseau.
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
                     form.insertBefore(alertBox, form.firstChild);
                 }
-                alertBox.innerHTML = `
-                    <div class="inspection-autosave-content">
-                        <span class="inspection-autosave-icon"><i data-lucide="wifi-off"></i></span>
-                        <div class="inspection-autosave-text">
-                            <strong class="inspection-autosave-title">📡 Connexion Internet indisponible sur le plateau</strong>
-                            <div class="inspection-autosave-desc">
-                                L'envoi est mis en attente. Toutes les informations, photos des dégâts et pièces jointes restent sauvegardées en sécurité dans ce navigateur. Vous pourrez valider le constat dès le retour du réseau.
-                            </div>
-                        </div>
-                    </div>
-                `;
                 if (window.lucide && typeof window.lucide.createIcons === 'function') {
                     window.lucide.createIcons();
                 }
@@ -428,4 +463,3 @@
         initIncidentAutosave();
     }
 })();
-

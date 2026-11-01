@@ -503,3 +503,34 @@ admin-multiselect-tag--custom
 </div>
 {% endif %}
 {% endmacro %}
+
+{% macro admin_banner(variant='info', title=None, desc=None, icon=None, actions=None, dismissible=false, id=None, class_name='') %}
+{% set default_icons = {
+    'warning': 'alert-triangle',
+    'info': 'info',
+    'success': 'circle-check',
+    'danger': 'alert-circle',
+    'neutral': 'minus-circle'
+} %}
+{% set effective_icon = icon or default_icons.get(variant, 'info') %}
+<div class="admin-banner admin-banner--{{ variant }}{% if class_name %} {{ class_name }}{% endif %}"{% if id %} id="{{ id }}"{% endif %} role="alert">
+    <div class="admin-banner-content">
+        {% if effective_icon %}
+        <span class="admin-banner-icon"><i data-lucide="{{ effective_icon }}"></i></span>
+        {% endif %}
+        <div class="admin-banner-text">
+            {% if title %}<strong class="admin-banner-title">{{ title }}</strong>{% endif %}
+            {% if desc %}<div class="admin-banner-desc">{{ desc }}</div>{% endif %}
+            {% if caller %}{{ caller() }}{% endif %}
+        </div>
+    </div>
+    {% if actions or dismissible %}
+    <div class="admin-banner-actions">
+        {% if actions %}{{ actions }}{% endif %}
+        {% if dismissible %}
+        <button type="button" class="admin-banner-close" aria-label="Fermer" onclick="this.closest('.admin-banner').remove()">&times;</button>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}

@@ -59,4 +59,25 @@ def test_css_draft_badges_in_bundle():
     assert ".inspection-autosave-banner" in bundle_css
     assert ".draft-photos-badge" in bundle_css
     assert ".draft-offline-alert" in bundle_css
+    assert ".admin-banner" in bundle_css
+    assert ".admin-banner--warning" in bundle_css
+    assert ".admin-banner--success" in bundle_css
+    assert ".admin-banner--danger" in bundle_css
+
+
+def test_admin_banner_macro_and_project_migration():
+    """Vérifie la macro admin_banner et son utilisation dans project_form.html."""
+    macros_src = Path("templates/admin/macros.html").read_text(encoding="utf-8")
+    assert "{% macro admin_banner(" in macros_src
+    assert "admin-banner--" in macros_src
+
+    project_src = Path("templates/admin/project_form.html").read_text(encoding="utf-8")
+    assert "admin_banner" in project_src
+    assert "Duplication de tournage" in project_src
+
+
+def test_create_admin_banner_js_helper():
+    """Vérifie que window.createAdminBanner est exporté et compilé."""
+    bundle_js = Path("static/js/admin/admin.bundle.js").read_text(encoding="utf-8")
+    assert "createAdminBanner" in bundle_js
 

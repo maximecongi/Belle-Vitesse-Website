@@ -1,6 +1,6 @@
 {% extends "admin/admin_base.html" %}
 
-{% from "admin/macros.html" import empty_state %}
+{% from "admin/macros.html" import empty_state, admin_banner %}
 
 {% block title %}
 {% if is_duplicate %}Dupliquer le Projet{% elif is_edit %}Modifier le Projet{% else %}Nouveau Projet{% endif %}
@@ -18,13 +18,12 @@
 {% block content %}
 <div class="admin-card">
     {% if is_duplicate and source_project_name %}
-    <div class="duplicate-project-banner">
-        <i data-lucide="copy" class="u-w-18 u-h-18 u-flex-shrink-0"></i>
-        <div>
-            <strong>Duplication de tournage :</strong> Ce formulaire a été pré-rempli à partir de « {{
-            source_project_name }} ». Modifiez les dates ou équipements si nécessaire avant de valider la création.
-        </div>
-    </div>
+    {{ admin_banner(
+        variant='warning',
+        icon='copy',
+        title="Duplication de tournage :",
+        desc="Ce formulaire a été pré-rempli à partir de « " ~ source_project_name ~ " ». Modifiez les dates ou équipements si nécessaire avant de valider la création."
+    ) }}
     {% endif %}
     <form method="POST" id="projectMainForm" {% if not is_edit
         %}action="{{ url_for('admin_projects.admin_project_new') }}" {% endif %}

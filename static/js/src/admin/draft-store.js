@@ -303,7 +303,51 @@
         }
     };
 
+    /**
+     * Crée dynamiquement un élément DOM de bannière standardisé (.admin-banner)
+     * conforme à la macro Jinja2 admin_banner() du Design System Belle Vitesse.
+     * @param {Object} options
+     * @param {string} [options.variant='info'] 'warning'|'info'|'success'|'danger'|'neutral'
+     * @param {string} [options.icon] Clé d'icône Lucide (ex: 'alert-triangle', 'history', etc.)
+     * @param {string} [options.title] Titre en gras
+     * @param {string} [options.desc] Description ou texte d'explication
+     * @param {string} [options.actionsHtml] HTML des boutons d'actions
+     * @param {string} [options.id] ID de l'élément DOM
+     * @param {string} [options.className] Classes CSS additionnelles
+     * @returns {HTMLElement}
+     */
+    function createAdminBanner(options) {
+        options = options || {};
+        const variant = options.variant || 'info';
+        const defaultIcons = {
+            'warning': 'alert-triangle',
+            'info': 'info',
+            'success': 'circle-check',
+            'danger': 'alert-circle',
+            'neutral': 'minus-circle'
+        };
+        const icon = options.icon || defaultIcons[variant] || 'info';
+
+        const banner = document.createElement('div');
+        banner.className = `admin-banner admin-banner--${variant} ${options.className || ''}`.trim();
+        if (options.id) banner.id = options.id;
+        banner.setAttribute('role', 'alert');
+
+        banner.innerHTML = `
+            <div class="admin-banner-content">
+                <span class="admin-banner-icon"><i data-lucide="${icon}"></i></span>
+                <div class="admin-banner-text">
+                    ${options.title ? `<strong class="admin-banner-title">${options.title}</strong>` : ''}
+                    ${options.desc ? `<div class="admin-banner-desc">${options.desc}</div>` : ''}
+                </div>
+            </div>
+            ${options.actionsHtml ? `<div class="admin-banner-actions">${options.actionsHtml}</div>` : ''}
+        `;
+        return banner;
+    }
+
     window.BvDraftStore = BvDraftStore;
+    window.createAdminBanner = createAdminBanner;
 
     // Nettoyage automatique des enregistrements périmés au chargement
     if (typeof window !== 'undefined') {
