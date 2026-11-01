@@ -122,6 +122,106 @@
     flex-shrink: 0;
 }
 
+.admin-cmdk-input-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.admin-cmdk-badges-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.admin-cmdk-active-scope {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(245, 158, 11, 0.2);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: #fbbf24;
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    white-space: nowrap;
+    animation: cmdkFadeIn 0.15s ease;
+}
+
+.admin-cmdk-active-scope[data-scope="project"] {
+    background: rgba(245, 158, 11, 0.2);
+    border-color: rgba(245, 158, 11, 0.4);
+    color: #fbbf24;
+}
+
+.admin-cmdk-active-scope[data-scope="inspection"] {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #60a5fa;
+}
+
+.admin-cmdk-active-scope[data-scope="checkout"] {
+    background: rgba(21, 128, 61, 0.25);
+    border-color: rgba(21, 128, 61, 0.5);
+    color: #4ade80;
+}
+
+.admin-cmdk-active-scope[data-scope="checkin"] {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #60a5fa;
+}
+
+.admin-cmdk-active-scope[data-scope="waiver"] {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: rgba(139, 92, 246, 0.4);
+    color: #c084fc;
+}
+
+.admin-cmdk-active-scope[data-scope="vehicle"] {
+    background: rgba(148, 163, 184, 0.2);
+    border-color: rgba(148, 163, 184, 0.4);
+    color: #cbd5e1;
+}
+
+.admin-cmdk-active-scope[data-scope="contact"] {
+    background: rgba(45, 212, 191, 0.2);
+    border-color: rgba(45, 212, 191, 0.4);
+    color: #2dd4bf;
+}
+
+.admin-cmdk-active-scope[data-scope="production"] {
+    background: rgba(251, 146, 60, 0.2);
+    border-color: rgba(251, 146, 60, 0.4);
+    color: #fb923c;
+}
+
+.admin-cmdk-active-scope[data-scope="incident"] {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #f87171;
+}
+
+.admin-cmdk-scope-remove {
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-size: 0.95rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 2px;
+    opacity: 0.7;
+    transition: opacity 0.15s ease;
+}
+
+.admin-cmdk-scope-remove:hover {
+    opacity: 1;
+}
+
 .admin-cmdk-input {
     flex: 1;
     background: transparent;
@@ -130,6 +230,7 @@
     font-size: 1.05rem;
     color: #fafafa;
     font-family: inherit;
+    min-width: 0;
 }
 
 .admin-cmdk-input::placeholder {
@@ -146,9 +247,98 @@
     cursor: pointer;
 }
 
+/* Scope Filter Bar (Chips sous l'input) */
+.admin-cmdk-scope-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.admin-cmdk-scope-bar::-webkit-scrollbar {
+    display: none;
+}
+
+.admin-cmdk-scope-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 0.74rem;
+    color: #a1a1aa;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+    font-family: inherit;
+}
+
+.admin-cmdk-scope-chip:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fafafa;
+}
+
+.admin-cmdk-scope-chip.is-active {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.4);
+    color: #fbbf24;
+    font-weight: 600;
+}
+
+.admin-cmdk-chip-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.admin-cmdk-chip-dot--project {
+    background: #f59e0b;
+}
+
+.admin-cmdk-chip-dot--inspection {
+    background: #3b82f6;
+}
+
+.admin-cmdk-chip-dot--waiver {
+    background: #8b5cf6;
+}
+
+.admin-cmdk-chip-dot--vehicle {
+    background: #94a3b8;
+}
+
+.admin-cmdk-chip-dot--contact {
+    background: #2dd4bf;
+}
+
+.admin-cmdk-chip-dot--incident {
+    background: #ef4444;
+}
+
+.admin-cmdk-chip-kbd {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    padding: 0 4px;
+    font-size: 0.68rem;
+    color: #71717a;
+}
+
+.admin-cmdk-scope-chip.is-active .admin-cmdk-chip-kbd {
+    border-color: rgba(245, 158, 11, 0.3);
+    color: #f59e0b;
+}
+
 /* Results List */
 .admin-cmdk-results {
-    max-height: 380px;
+    max-height: 420px;
     overflow-y: auto;
     padding: 8px;
 }
@@ -158,10 +348,59 @@
 }
 
 .admin-cmdk-empty {
-    padding: 32px 16px;
+    padding: 36px 16px;
     text-align: center;
     color: #71717a;
     font-size: 0.9rem;
+}
+
+/* En-tête de Section Groupée (Raycast / Spotlight style) */
+.admin-cmdk-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px 4px 12px;
+    margin-top: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #71717a;
+    user-select: none;
+}
+
+.admin-cmdk-section-header:first-child {
+    margin-top: 0;
+}
+
+.admin-cmdk-section-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.admin-cmdk-section-count {
+    font-size: 0.66rem;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 1px 6px;
+    color: #a1a1aa;
+}
+
+.admin-cmdk-clear-history {
+    background: transparent;
+    border: none;
+    color: #71717a;
+    font-size: 0.68rem;
+    cursor: pointer;
+    padding: 1px 4px;
+    border-radius: 3px;
+    transition: all 0.15s ease;
+}
+
+.admin-cmdk-clear-history:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
 }
 
 /* Result Item */
@@ -169,13 +408,14 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 14px;
+    padding: 9px 12px;
     border-radius: 8px;
     cursor: pointer;
     text-decoration: none;
     color: inherit;
-    transition: background 0.15s ease;
+    transition: background 0.12s ease, transform 0.1s ease;
     gap: 12px;
+    margin-bottom: 2px;
 }
 
 .admin-cmdk-item:hover,
@@ -188,6 +428,7 @@
     align-items: center;
     gap: 12px;
     min-width: 0;
+    flex: 1;
 }
 
 .admin-cmdk-item-icon {
@@ -200,17 +441,69 @@
     justify-content: center;
     flex-shrink: 0;
     color: #d4d4d8;
+    transition: all 0.15s ease;
 }
 
+/* Icônes sémantiques par type d'entité au survol / sélection */
 .admin-cmdk-item.selected .admin-cmdk-item-icon {
-    background: rgba(229, 120, 39, 0.2);
+    transform: scale(1.05);
+}
+
+.admin-cmdk-item.selected .admin-cmdk-item-icon[data-entity="project"] {
+    background: rgba(245, 158, 11, 0.2);
     color: #f59e0b;
+}
+
+.admin-cmdk-item.selected .admin-cmdk-item-icon[data-entity="checkout"] {
+    background: rgba(21, 128, 61, 0.2);
+    color: #4ade80;
+}
+
+.admin-cmdk-item.selected .admin-cmdk-item-icon[data-entity="checkin"] {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+}
+
+.admin-cmdk-item.selected .admin-cmdk-item-icon[data-entity="waiver"] {
+    background: rgba(139, 92, 246, 0.2);
+    color: #c084fc;
+}
+
+.admin-cmdk-item.selected .admin-cmdk-item-icon[data-entity="incident"] {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+}
+
+.admin-cmdk-item.selected .admin-cmdk-item-icon[data-entity="vehicle"] {
+    background: rgba(148, 163, 184, 0.2);
+    color: #cbd5e1;
+}
+
+.admin-cmdk-item.selected .admin-cmdk-item-icon[data-entity="contact"] {
+    background: rgba(45, 212, 191, 0.2);
+    color: #2dd4bf;
+}
+
+.admin-cmdk-item.selected .admin-cmdk-item-icon[data-entity="production"] {
+    background: rgba(251, 146, 60, 0.2);
+    color: #fb923c;
+}
+
+.admin-cmdk-item.selected .admin-cmdk-item-icon[data-entity="action"] {
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+}
+
+.admin-cmdk-item.selected .admin-cmdk-item-icon[data-entity="page"] {
+    background: rgba(168, 85, 247, 0.2);
+    color: #c084fc;
 }
 
 .admin-cmdk-item-text {
     display: flex;
     flex-direction: column;
     min-width: 0;
+    gap: 2px;
 }
 
 .admin-cmdk-item-title {
@@ -223,15 +516,16 @@
 }
 
 .admin-cmdk-item-sub {
-    font-size: 0.78rem;
+    font-size: 0.77rem;
     color: #71717a;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
+/* Badges Sémantiques Design System */
 .admin-cmdk-badge {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -240,46 +534,71 @@
     flex-shrink: 0;
 }
 
-.admin-cmdk-badge-projet {
-    background: rgba(59, 130, 246, 0.18);
-    color: #60a5fa;
-    border: 1px solid rgba(59, 130, 246, 0.3);
-}
-
-.admin-cmdk-badge-véhicule {
-    background: rgba(245, 158, 11, 0.18);
+.admin-cmdk-badge-project {
+    background: rgba(245, 158, 11, 0.16);
     color: #fbbf24;
     border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
+.admin-cmdk-badge-checkout {
+    background: rgba(21, 128, 61, 0.16);
+    color: #4ade80;
+    border: 1px solid rgba(21, 128, 61, 0.3);
+}
+
+.admin-cmdk-badge-checkin {
+    background: rgba(59, 130, 246, 0.16);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.admin-cmdk-badge-waiver {
+    background: rgba(139, 92, 246, 0.16);
+    color: #c084fc;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.admin-cmdk-badge-incident {
+    background: rgba(239, 68, 68, 0.16);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.admin-cmdk-badge-vehicle {
+    background: rgba(148, 163, 184, 0.16);
+    color: #cbd5e1;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.admin-cmdk-badge-contact {
+    background: rgba(45, 212, 191, 0.16);
+    color: #2dd4bf;
+    border: 1px solid rgba(45, 212, 191, 0.3);
+}
+
+.admin-cmdk-badge-production {
+    background: rgba(251, 146, 60, 0.16);
+    color: #fb923c;
+    border: 1px solid rgba(251, 146, 60, 0.3);
+}
+
 .admin-cmdk-badge-action {
-    background: rgba(16, 185, 129, 0.18);
+    background: rgba(16, 185, 129, 0.16);
     color: #34d399;
     border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
-.admin-cmdk-badge-page {
-    background: rgba(168, 85, 247, 0.18);
+.admin-cmdk-badge-page,
+.admin-cmdk-badge-navigation {
+    background: rgba(168, 85, 247, 0.16);
     color: #c084fc;
     border: 1px solid rgba(168, 85, 247, 0.3);
 }
 
-.admin-cmdk-badge-outil {
-    background: rgba(236, 72, 153, 0.18);
-    color: #f472b6;
-    border: 1px solid rgba(236, 72, 153, 0.3);
-}
-
-.admin-cmdk-badge-contact {
-    background: rgba(20, 184, 166, 0.18);
-    color: #2dd4bf;
-    border: 1px solid rgba(20, 184, 166, 0.3);
-}
-
-.admin-cmdk-badge-production {
-    background: rgba(249, 115, 22, 0.18);
-    color: #fb923c;
-    border: 1px solid rgba(249, 115, 22, 0.3);
+.admin-cmdk-badge-recent {
+    background: rgba(255, 255, 255, 0.08);
+    color: #d4d4d8;
+    border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 /* Bannière d'indication de filtre actif sur les tableaux */
@@ -336,10 +655,22 @@
     display: flex;
     align-items: center;
     gap: 12px;
+    flex-wrap: wrap;
 }
 
 .admin-cmdk-shortcut-item {
     display: flex;
     align-items: center;
     gap: 4px;
+}
+
+@keyframes cmdkFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }

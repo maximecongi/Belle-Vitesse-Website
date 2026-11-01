@@ -240,21 +240,60 @@
             <div class="admin-cmdk-header">
                 <svg class="admin-cmdk-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-
                     <circle cx="11" cy="11" r="8"></circle>
                     <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
-                <input type="text" class="admin-cmdk-input" id="cmdkInput"
-                    placeholder="Rechercher un projet, production, contact, véhicule... (ex: prod:..., contact:...)"
-                    autocomplete="off" spellcheck="false">
+                <div class="admin-cmdk-input-wrapper" id="cmdkInputWrapper">
+                    <div class="admin-cmdk-badges-container" id="cmdkBadgesContainer"></div>
+                    <input type="text" class="admin-cmdk-input" id="cmdkInput"
+                        placeholder="Rechercher un projet, contrôle, décharge, véhicule, contact... (ex: p:, c:, w:)"
+                        autocomplete="off" spellcheck="false">
+                </div>
                 <span class="admin-cmdk-close-hint" id="cmdkCloseBtn">ESC</span>
+            </div>
+            <!-- Scope Filter Chips -->
+            <div class="admin-cmdk-scope-bar" id="cmdkScopeBar">
+                <button type="button" class="admin-cmdk-scope-chip is-active" data-scope="all">
+                    <span>Tous</span>
+                </button>
+                <button type="button" class="admin-cmdk-scope-chip" data-scope="project" data-prefix="p:">
+                    <span class="admin-cmdk-chip-dot admin-cmdk-chip-dot--project"></span>
+                    <span>Projets</span>
+                    <kbd class="admin-cmdk-chip-kbd">p:</kbd>
+                </button>
+                <button type="button" class="admin-cmdk-scope-chip" data-scope="inspection" data-prefix="c:">
+                    <span class="admin-cmdk-chip-dot admin-cmdk-chip-dot--inspection"></span>
+                    <span>Contrôles</span>
+                    <kbd class="admin-cmdk-chip-kbd">c:</kbd>
+                </button>
+                <button type="button" class="admin-cmdk-scope-chip" data-scope="waiver" data-prefix="w:">
+                    <span class="admin-cmdk-chip-dot admin-cmdk-chip-dot--waiver"></span>
+                    <span>Décharges</span>
+                    <kbd class="admin-cmdk-chip-kbd">w:</kbd>
+                </button>
+                <button type="button" class="admin-cmdk-scope-chip" data-scope="vehicle" data-prefix="v:">
+                    <span class="admin-cmdk-chip-dot admin-cmdk-chip-dot--vehicle"></span>
+                    <span>Véhicules</span>
+                    <kbd class="admin-cmdk-chip-kbd">v:</kbd>
+                </button>
+                <button type="button" class="admin-cmdk-scope-chip" data-scope="contact" data-prefix="ct:">
+                    <span class="admin-cmdk-chip-dot admin-cmdk-chip-dot--contact"></span>
+                    <span>Contacts</span>
+                    <kbd class="admin-cmdk-chip-kbd">ct:</kbd>
+                </button>
+                <button type="button" class="admin-cmdk-scope-chip" data-scope="incident" data-prefix="i:">
+                    <span class="admin-cmdk-chip-dot admin-cmdk-chip-dot--incident"></span>
+                    <span>Incidents</span>
+                    <kbd class="admin-cmdk-chip-kbd">i:</kbd>
+                </button>
             </div>
             <div class="admin-cmdk-results" id="cmdkResults"></div>
             <div class="admin-cmdk-footer">
                 <div class="admin-cmdk-shortcuts">
-                    <span class="admin-cmdk-shortcut-item"><kbd class="admin-cmdk-kbd">↑</kbd><kbd
-                            class="admin-cmdk-kbd">↓</kbd> Naviguer</span>
+                    <span class="admin-cmdk-shortcut-item"><kbd class="admin-cmdk-kbd">↑</kbd><kbd class="admin-cmdk-kbd">↓</kbd> Naviguer</span>
                     <span class="admin-cmdk-shortcut-item"><kbd class="admin-cmdk-kbd">↵</kbd> Ouvrir</span>
+                    <span class="admin-cmdk-shortcut-item"><kbd class="admin-cmdk-kbd">⌘↵</kbd> Nouvel onglet</span>
+                    <span class="admin-cmdk-shortcut-item"><kbd class="admin-cmdk-kbd">Tab</kbd> Compléter</span>
                     <span class="admin-cmdk-shortcut-item"><kbd class="admin-cmdk-kbd">esc</kbd> Fermer</span>
                 </div>
                 <span>Belle Vitesse</span>
