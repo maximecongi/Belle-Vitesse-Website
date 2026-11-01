@@ -339,7 +339,7 @@ function initNewsletterForm() {
 
             const email = input.value;
             const isFr = window.location.pathname.startsWith('/fr/');
-            
+
             // 🚀 Add loading state
             messageDiv.className = 'newsletter-message';
             messageDiv.textContent = isFr ? 'Inscription en cours...' : 'Subscribing...';
@@ -450,38 +450,38 @@ window.initSplide = function () {
 document.documentElement.classList.add('js')
 
 window.initCountUp = function () {
-  const ease = t => 1 - Math.pow(1 - t, 7)
+    const ease = t => 1 - Math.pow(1 - t, 7)
 
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(({ isIntersecting, target }) => {
-      if (!isIntersecting || target.dataset.done) return
-      target.dataset.done = true
-      target.classList.add('is-visible')
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(({ isIntersecting, target }) => {
+            if (!isIntersecting || target.dataset.done) return
+            target.dataset.done = true
+            target.classList.add('is-visible')
 
-      const end = Number(target.dataset.target)
-      const decimals = (target.dataset.target.split('.')[1] || '').length
-      const startValue = end * 0.5
-      const startTime = performance.now()
-      const duration = 1500
+            const end = Number(target.dataset.target)
+            const decimals = (target.dataset.target.split('.')[1] || '').length
+            const startValue = end * 0.5
+            const startTime = performance.now()
+            const duration = 1500
 
-      const tick = now => {
-        const t = Math.min((now - startTime) / duration, 1)
-        const value = startValue + ease(t) * (end - startValue)
+            const tick = now => {
+                const t = Math.min((now - startTime) / duration, 1)
+                const value = startValue + ease(t) * (end - startValue)
 
-        target.textContent = value.toFixed(decimals)
+                target.textContent = value.toFixed(decimals)
 
-        if (t < 1) requestAnimationFrame(tick)
-        else target.textContent = end.toFixed(decimals)
-      }
+                if (t < 1) requestAnimationFrame(tick)
+                else target.textContent = end.toFixed(decimals)
+            }
 
-      requestAnimationFrame(tick)
-      observer.unobserve(target)
-    })
-  }, { threshold: 0.6 })
+            requestAnimationFrame(tick)
+            observer.unobserve(target)
+        })
+    }, { threshold: 0.6 })
 
-  document.querySelectorAll('.count-up').forEach(el => observer.observe(el))
+    document.querySelectorAll('.count-up').forEach(el => observer.observe(el))
 }
-;
+    ;
 
 /* ── js/src/configurator.js ── */
 window.initConfigurator = function () {
@@ -528,52 +528,52 @@ document.addEventListener("DOMContentLoaded", function () {
 window.infiniteScrollId = null; // Store requestAnimationFrame ID globally to cancel it
 
 window.initInfiniteScroll = function () {
-  const wrapper = document.querySelector('.home-references-wrapper');
-  const group = document.querySelector('.home-references-group');
+    const wrapper = document.querySelector('.home-references-wrapper');
+    const group = document.querySelector('.home-references-group');
 
-  if (!wrapper || !group) return;
+    if (!wrapper || !group) return;
 
-  // Clean up existing loop if restarting
-  if (window.infiniteScrollId) {
-    cancelAnimationFrame(window.infiniteScrollId);
-  }
-
-  // Check if we already duplicated the group to avoid infinite duplication on re-init
-  if (!wrapper.querySelector('.duplicated-group')) {
-    const clone = group.cloneNode(true);
-    clone.classList.add('duplicated-group');
-    wrapper.appendChild(clone);
-  }
-
-  let x = 0;
-  const speed = 1.5;
-  let running = true;
-
-  function loop() {
-    const ratio = window.innerWidth / window.innerHeight;
-
-    if (ratio <= 1) {
-      // Portrait → animation active
-      if (!running) running = true;
-      x -= speed;
-      // Use offsetWidth for layout-bound width, which includes padding/borders if box-sizing is border-box
-      // effectively matching the visual cycle.
-      if (Math.abs(x) >= group.offsetWidth) {
-        x = 0;
-      }
-      wrapper.style.transform = `translate3d(${x}px, 0, 0)`;
-    } else {
-      // Paysage → stop
-      if (running) {
-        wrapper.style.transform = 'translate3d(0,0,0)';
-        running = false;
-      }
+    // Clean up existing loop if restarting
+    if (window.infiniteScrollId) {
+        cancelAnimationFrame(window.infiniteScrollId);
     }
 
-    window.infiniteScrollId = requestAnimationFrame(loop);
-  }
+    // Check if we already duplicated the group to avoid infinite duplication on re-init
+    if (!wrapper.querySelector('.duplicated-group')) {
+        const clone = group.cloneNode(true);
+        clone.classList.add('duplicated-group');
+        wrapper.appendChild(clone);
+    }
 
-  loop();
+    let x = 0;
+    const speed = 1.5;
+    let running = true;
+
+    function loop() {
+        const ratio = window.innerWidth / window.innerHeight;
+
+        if (ratio <= 1) {
+            // Portrait → animation active
+            if (!running) running = true;
+            x -= speed;
+            // Use offsetWidth for layout-bound width, which includes padding/borders if box-sizing is border-box
+            // effectively matching the visual cycle.
+            if (Math.abs(x) >= group.offsetWidth) {
+                x = 0;
+            }
+            wrapper.style.transform = `translate3d(${x}px, 0, 0)`;
+        } else {
+            // Paysage → stop
+            if (running) {
+                wrapper.style.transform = 'translate3d(0,0,0)';
+                running = false;
+            }
+        }
+
+        window.infiniteScrollId = requestAnimationFrame(loop);
+    }
+
+    loop();
 };
 ;
 
@@ -1134,7 +1134,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 /* ── js/src/public/sign-safety-rules.js ── */
 /**
- * sign-safety-rules.js — Contrôleur public pour la signature des Règles de Sécurité Universelles (BVSR).
+ * sign-safety-rules.js — Contrôleur public pour la signature des Règles de Sécurité.
  * 
  * Fonctionnalités harmonisées avec sign-cgl.js :
  * - Capture et scellement de la signature électronique via SignaturePad

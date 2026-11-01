@@ -93,7 +93,8 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
                 project_name=p.name,
                 signature_link=sig_url,
                 is_reminder=True,
-                production_name=(p.production.name if p and p.production else getattr(cw, "production_name", None)),
+                production_name=(p.production.name if p and p.production else getattr(
+                    cw, "production_name", None)),
             )
 
             if sent:
@@ -116,7 +117,7 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
             db.session.rollback()
             logger.error(f"❌ Erreur relance CGL {cw.waiver_id} : {e}")
 
-    # 2. Règles de Sécurité Universelles (BVSR)
+    # 2. Règles de Sécurité
     safety_waivers = (
         SafetyRulesWaiver.query.filter(
             SafetyRulesWaiver.deleted_at.is_(None),
@@ -166,7 +167,8 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
                 project_name=p.name,
                 signature_link=sig_url,
                 is_reminder=True,
-                production_name=(p.production.name if p and p.production else getattr(sr, "production_name", None)),
+                production_name=(p.production.name if p and p.production else getattr(
+                    sr, "production_name", None)),
             )
 
             if sent:
@@ -239,7 +241,8 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
                 project_name=p.name,
                 signature_link=sig_url,
                 is_reminder=True,
-                production_name=(p.production.name if p and p.production else getattr(pw, "production_name", None)),
+                production_name=(p.production.name if p and p.production else getattr(
+                    pw, "production_name", None)),
             )
 
             if sent:
@@ -260,7 +263,8 @@ def auto_remind_pending_waivers(days_before: int = 2, base_url: str = None) -> d
                 })
         except Exception as e:
             db.session.rollback()
-            logger.error(f"❌ Erreur relance Attestation Pilote {pw.waiver_id} : {e}")
+            logger.error(
+                f"❌ Erreur relance Attestation Pilote {pw.waiver_id} : {e}")
 
     results["total_reminders_sent"] = (
         results["cgl_reminders_sent"]

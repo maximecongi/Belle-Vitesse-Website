@@ -69,14 +69,13 @@ def resolve_cgl(identifier: Union[int, str, None]) -> Optional[CglWaiver]:
 
 
 def resolve_safety_rules_waiver(identifier: Union[int, str, None]) -> Optional[SafetyRulesWaiver]:
-    """Résout des Règles de Sécurité Universelles (BVSR) par leur ID ou code BVSR-*."""
+    """Résout des Règles de Sécurité par leur ID ou code BVSR-*."""
     return resolve_waiver(SafetyRulesWaiver, identifier)
 
 
 def resolve_pilot_waiver(identifier: Union[int, str, None]) -> Optional[PilotWaiver]:
     """Résout une Attestation Pilote Annexe 3 (BVPA) par son ID ou code BVPA-*."""
     return resolve_waiver(PilotWaiver, identifier)
-
 
 
 def resolve_incident(identifier: Union[int, str, None]) -> Optional[Incident]:

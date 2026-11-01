@@ -103,7 +103,7 @@ def api_reset_cgl(waiver_id):
         return jsonify({"error": str(e)}), 500
 
 
-# ── Règles de Sécurité Universelles (BVSR) ───────────────────────────
+# ── Règles de Sécurité ───────────────────────────
 
 @api_waivers_bp.route("/safety-rules", methods=["GET"])
 @require_api_auth("administrator", "manager", "commercial", "user")

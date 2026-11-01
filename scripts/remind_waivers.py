@@ -8,6 +8,9 @@ Usage :
     python scripts/remind_waivers.py --dry-run    # Simule sans envoyer d'e-mails
 """
 
+from utils.scripts_helper import build_minimal_app
+from utils.cron_helper import monitor_cron_job
+from dotenv import load_dotenv
 import argparse
 import os
 import sys
@@ -18,9 +21,6 @@ from pathlib import Path
 _root = Path(__file__).parent.parent
 sys.path.append(str(_root))
 
-from dotenv import load_dotenv
-from utils.cron_helper import monitor_cron_job
-from utils.scripts_helper import build_minimal_app
 
 load_dotenv(_root / ".env")
 
@@ -50,7 +50,8 @@ def run_reminders(days_before: int = 2, dry_run: bool = False):
 
                 today = date.today()
                 target_limit = today + timedelta(days=days_before)
-                print(f"   Fenêtre d'échéance : du {today.strftime('%d/%m/%Y')} au {target_limit.strftime('%d/%m/%Y')}")
+                print(
+                    f"   Fenêtre d'échéance : du {today.strftime('%d/%m/%Y')} au {target_limit.strftime('%d/%m/%Y')}")
 
                 # 1. Conditions Générales de Location (CGL)
                 cgls = (
@@ -66,21 +67,25 @@ def run_reminders(days_before: int = 2, dry_run: bool = False):
                     p = cw.project
                     if not p or p.deleted_at is not None:
                         continue
-                    start_dates = [d for d in (p.departure_date, p.shoot_start_date) if d]
+                    start_dates = [d for d in (
+                        p.departure_date, p.shoot_start_date) if d]
                     if not start_dates:
                         continue
                     p_start = min(start_dates)
-                    end_dates = [d for d in (p.return_date, p.shoot_end_date) if d]
+                    end_dates = [d for d in (
+                        p.return_date, p.shoot_end_date) if d]
                     p_end = max(end_dates) if end_dates else p_start
 
                     if p_start <= target_limit and today <= p_end:
                         contact = p.production_contact
                         mail = contact.mail if contact else "AUCUN EMAIL"
-                        already = " (déjà relancée aujourd'hui)" if (cw.last_reminded_at and cw.last_reminded_at.date() == today) else ""
-                        print(f"   [CGL] Projet: {p.name} | N°: {cw.waiver_id} | Production: {mail} | Départ: {p_start} (Fin: {p_end}){already}")
+                        already = " (déjà relancée aujourd'hui)" if (
+                            cw.last_reminded_at and cw.last_reminded_at.date() == today) else ""
+                        print(
+                            f"   [CGL] Projet: {p.name} | N°: {cw.waiver_id} | Production: {mail} | Départ: {p_start} (Fin: {p_end}){already}")
                         cgl_count += 1
 
-                # 2. Règles de Sécurité Universelles (BVSR)
+                # 2. Règles de Sécurité
                 safety_rules = (
                     SafetyRulesWaiver.query.filter(
                         SafetyRulesWaiver.deleted_at.is_(None),
@@ -94,17 +99,22 @@ def run_reminders(days_before: int = 2, dry_run: bool = False):
                     p = sr.project
                     if not p or p.deleted_at is not None:
                         continue
-                    start_dates = [d for d in (p.departure_date, p.shoot_start_date) if d]
+                    start_dates = [d for d in (
+                        p.departure_date, p.shoot_start_date) if d]
                     if not start_dates:
                         continue
                     p_start = min(start_dates)
-                    end_dates = [d for d in (p.return_date, p.shoot_end_date) if d]
+                    end_dates = [d for d in (
+                        p.return_date, p.shoot_end_date) if d]
                     p_end = max(end_dates) if end_dates else p_start
 
                     if p_start <= target_limit and today <= p_end:
-                        mail = sr.signer_email or (p.pilot_contact.mail if sr.signer_role == "pilot" and p.pilot_contact else "AUCUN EMAIL")
-                        already = " (déjà relancé aujourd'hui)" if (sr.last_reminded_at and sr.last_reminded_at.date() == today) else ""
-                        print(f"   [BVSR] Projet: {p.name} | Doc: {sr.waiver_id} | Signataire: {sr.signer_name} ({sr.signer_role}) -> {mail} | Départ: {p_start} (Fin: {p_end}){already}")
+                        mail = sr.signer_email or (
+                            p.pilot_contact.mail if sr.signer_role == "pilot" and p.pilot_contact else "AUCUN EMAIL")
+                        already = " (déjà relancé aujourd'hui)" if (
+                            sr.last_reminded_at and sr.last_reminded_at.date() == today) else ""
+                        print(
+                            f"   [BVSR] Projet: {p.name} | Doc: {sr.waiver_id} | Signataire: {sr.signer_name} ({sr.signer_role}) -> {mail} | Départ: {p_start} (Fin: {p_end}){already}")
                         safety_count += 1
 
                 # 3. Attestation Pilote - Annexe 3 aux CGL (BVPA)
@@ -121,17 +131,22 @@ def run_reminders(days_before: int = 2, dry_run: bool = False):
                     p = pw.project
                     if not p or p.deleted_at is not None:
                         continue
-                    start_dates = [d for d in (p.departure_date, p.shoot_start_date) if d]
+                    start_dates = [d for d in (
+                        p.departure_date, p.shoot_start_date) if d]
                     if not start_dates:
                         continue
                     p_start = min(start_dates)
-                    end_dates = [d for d in (p.return_date, p.shoot_end_date) if d]
+                    end_dates = [d for d in (
+                        p.return_date, p.shoot_end_date) if d]
                     p_end = max(end_dates) if end_dates else p_start
 
                     if p_start <= target_limit and today <= p_end:
-                        mail = pw.signer_email or (p.pilot_contact.mail if p.pilot_contact else "AUCUN EMAIL")
-                        already = " (déjà relancée aujourd'hui)" if (pw.last_reminded_at and pw.last_reminded_at.date() == today) else ""
-                        print(f"   [BVPA] Projet: {p.name} | Doc: {pw.waiver_id} | Pilote: {pw.signer_name} -> {mail} | Départ: {p_start} (Fin: {p_end}){already}")
+                        mail = pw.signer_email or (
+                            p.pilot_contact.mail if p.pilot_contact else "AUCUN EMAIL")
+                        already = " (déjà relancée aujourd'hui)" if (
+                            pw.last_reminded_at and pw.last_reminded_at.date() == today) else ""
+                        print(
+                            f"   [BVPA] Projet: {p.name} | Doc: {pw.waiver_id} | Pilote: {pw.signer_name} -> {mail} | Départ: {p_start} (Fin: {p_end}){already}")
                         pilot_count += 1
 
                 print(f"[{datetime.now()}] ℹ️ Total éligible : {cgl_count} CGL, {safety_count} engagement(s) BVSR, {pilot_count} attestation(s) pilote.")
@@ -143,7 +158,8 @@ def run_reminders(days_before: int = 2, dry_run: bool = False):
                 }
 
             # Mode envoi normal
-            results = auto_remind_pending_waivers(days_before=days_before, base_url=base_url)
+            results = auto_remind_pending_waivers(
+                days_before=days_before, base_url=base_url)
             cgl_sent = results.get("cgl_reminders_sent", 0)
             safety_sent = results.get("safety_rules_reminders_sent", 0)
             pilot_sent = results.get("pilot_waivers_reminders_sent", 0)
@@ -164,9 +180,12 @@ def run_reminders(days_before: int = 2, dry_run: bool = False):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Relance automatique des décharges J-2 (48h avant)")
-    parser.add_argument("--days", type=int, default=2, help="Nombre de jours avant le tournage (défaut : 2)")
-    parser.add_argument("--dry-run", action="store_true", help="Simuler sans envoyer d'e-mails réels")
+    parser = argparse.ArgumentParser(
+        description="Relance automatique des décharges J-2 (48h avant)")
+    parser.add_argument("--days", type=int, default=2,
+                        help="Nombre de jours avant le tournage (défaut : 2)")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Simuler sans envoyer d'e-mails réels")
     args = parser.parse_args()
 
     if args.dry_run:

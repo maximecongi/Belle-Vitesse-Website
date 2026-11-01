@@ -1,4 +1,4 @@
-"""Outils MCP : Domaine Contrats de Location (CGL) & Règles de Sécurité Universelles (BVSR)."""
+"""Outils MCP : Domaine Contrats de Location (CGL) & Règles de Sécurité."""
 from datetime import date, datetime
 from typing import Any, Dict, List, Optional
 
@@ -130,7 +130,8 @@ def get_waiver_detail(mode: Optional[str] = None, waiver_id: Optional[str] = Non
         items.extend(list_safety_rules_waivers())
 
     match = next(
-        (w for w in items if str(w.get("waiver_id")) == wid_str or str(w.get("db_id")) == wid_str or str(w.get("id")) == wid_str),
+        (w for w in items if str(w.get("waiver_id")) == wid_str or str(
+            w.get("db_id")) == wid_str or str(w.get("id")) == wid_str),
         None,
     )
     if match:
@@ -217,7 +218,8 @@ def auto_remind_waivers(
     """
     from services.admin.waivers import auto_remind_pending_waivers
 
-    results = auto_remind_pending_waivers(days_before=days_before, base_url=base_url)
+    results = auto_remind_pending_waivers(
+        days_before=days_before, base_url=base_url)
     return {
         "success": True,
         "days_before": days_before,

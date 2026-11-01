@@ -9,28 +9,28 @@
 {% block preview_toolbar %}
 {% if is_preview %}
 {{ pdf_preview_toolbar(
-    doc_title="Règles de Sécurité Universelles (BVSR)",
-    doc_id=waiver.waiver_id,
-    format_pdf_url="?format=pdf",
-    show_print=True
+doc_title="Règles de Sécurité",
+doc_id=waiver.waiver_id,
+format_pdf_url="?format=pdf",
+show_print=True
 ) }}
 {% endif %}
 {% endblock %}
 
 {% block pdf_header %}
 {{ pdf_header(
-    doc_type_title="Règles de Sécurité Universelles (BVSR)",
-    doc_id=waiver.waiver_id,
-    date_str=(waiver.signed_at or waiver.generated_at or waiver.created_at or now).strftime('%d/%m/%Y'),
-    company_name=company_name
+doc_type_title="Règles de Sécurité",
+doc_id=waiver.waiver_id,
+date_str=(waiver.signed_at or waiver.generated_at or waiver.created_at or now).strftime('%d/%m/%Y'),
+company_name=company_name
 ) }}
 {% endblock %}
 
 {% block pdf_title %}
 {{ pdf_title_banner(
-    title="Règles de Sécurité",
-    subtitle="Safety Rules & Operational Guidelines",
-    context_info="Projet : " ~ waiver.display_project_name ~ " — Production : " ~ waiver.display_production_name
+title="Règles de Sécurité",
+subtitle="Safety Rules & Operational Guidelines",
+context_info="Projet : " ~ waiver.display_project_name ~ " — Production : " ~ waiver.display_production_name
 ) }}
 {% endblock %}
 
@@ -40,26 +40,26 @@
     <h2 class="pdf-section-title dot-before">Cadre Opérationnel &amp; Intervenant</h2>
     <div class="pdf-parties-grid">
         {{ pdf_party_card(
-            role="Intervenant / Signataire",
-            fields=[
-                ("Nom complet", waiver.signer_name),
-                ("Qualité / Fonction", waiver.signer_role_label),
-                ("Société / Entité", waiver.signer_company),
-                ("Contact", (waiver.signer_email or '—') ~ ((' — ' ~ waiver.signer_phone) if waiver.signer_phone else ''))
-            ]
+        role="Intervenant / Signataire",
+        fields=[
+        ("Nom complet", waiver.signer_name),
+        ("Qualité / Fonction", waiver.signer_role_label),
+        ("Société / Entité", waiver.signer_company),
+        ("Contact", (waiver.signer_email or '—') ~ ((' — ' ~ waiver.signer_phone) if waiver.signer_phone else ''))
+        ]
         ) }}
 
         {% set supervision = safety_technicians or (waiver.display_safety_technicians if waiver else None) %}
         {{ pdf_party_card(
-            role="Cadre du Tournage",
-            fields=[
-                ("Projet", waiver.display_project_name),
-                ("Production", waiver.display_production_name),
-                ("Période", waiver.display_shooting_dates),
-                ("Lieu(x) de tournage", waiver.display_shooting_locations or '—'),
-                ("Véhicules mobilisés", waiver.vehicles or 'Parc Belle Vitesse'),
-                ("Supervision BV", supervision)
-            ]
+        role="Cadre du Tournage",
+        fields=[
+        ("Projet", waiver.display_project_name),
+        ("Production", waiver.display_production_name),
+        ("Période", waiver.display_shooting_dates),
+        ("Lieu(x) de tournage", waiver.display_shooting_locations or '—'),
+        ("Véhicules mobilisés", waiver.vehicles or 'Parc Belle Vitesse'),
+        ("Supervision BV", supervision)
+        ]
         ) }}
     </div>
 </section>
@@ -73,7 +73,8 @@
             <ol class="bvsr-rules-list">
                 {% for rfr in (general_rules.rules_fr if general_rules and general_rules.rules_fr else []) %}
                 {% set parts = rfr.split(':', 1) %}
-                <li>{% if parts|length > 1 %}<strong>{{ parts[0]|trim }} :</strong> {{ parts[1]|trim }}{% else %}{{ rfr }}{% endif %}</li>
+                <li>{% if parts|length > 1 %}<strong>{{ parts[0]|trim }} :</strong> {{ parts[1]|trim }}{% else %}{{ rfr
+                    }}{% endif %}</li>
                 {% endfor %}
             </ol>
         </div>
@@ -83,7 +84,8 @@
             <ol class="bvsr-rules-list">
                 {% for ren in (general_rules.rules_en if general_rules and general_rules.rules_en else []) %}
                 {% set parts = ren.split(':', 1) %}
-                <li>{% if parts|length > 1 %}<strong>{{ parts[0]|trim }} :</strong> {{ parts[1]|trim }}{% else %}{{ ren }}{% endif %}</li>
+                <li>{% if parts|length > 1 %}<strong>{{ parts[0]|trim }} :</strong> {{ parts[1]|trim }}{% else %}{{ ren
+                    }}{% endif %}</li>
                 {% endfor %}
             </ol>
         </div>
@@ -92,7 +94,8 @@
 
 <!-- ═══════════ SECTION 2 : RÈGLES SPÉCIFIQUES VÉHICULES MOBILISÉS ═══════════ -->
 <section class="pdf-section bvsr-section">
-    <h2 class="pdf-section-title dot-before">2. Règles Spécifiques aux Véhicules Mobilisés — Vehicle-Specific Guidelines</h2>
+    <h2 class="pdf-section-title dot-before">2. Règles Spécifiques aux Véhicules Mobilisés — Vehicle-Specific Guidelines
+    </h2>
     {% if vehicle_rules %}
     {% for vr in vehicle_rules %}
     <div class="bvsr-vehicle-rule-card">
@@ -146,37 +149,40 @@
 <section class="pdf-section bvsr-section">
     <h2 class="pdf-section-title dot-before">3. Équipements de Sécurité Mis à Disposition — Safety Equipment</h2>
     <div class="bvsr-equipment-card">
-        <div><span class="bvsr-party-field-label">Dotation casques :</span> {{ helmets.description_fr if helmets else '6 casques jet ouverts homologués' }}</div>
-        <div class="bvsr-equipment-en"><span class="bvsr-party-field-label">Helmet inventory :</span> {{ helmets.description_en if helmets else '6 certified open face jet helmets' }}</div>
+        <div><span class="bvsr-party-field-label">Dotation casques :</span> {{ helmets.description_fr if helmets else '6
+            casques jet ouverts homologués' }}</div>
+        <div class="bvsr-equipment-en"><span class="bvsr-party-field-label">Helmet inventory :</span> {{
+            helmets.description_en if helmets else '6 certified open face jet helmets' }}</div>
     </div>
 </section>
 {% endblock %}
 
 {% block pdf_signatures %}
-{% set target_url = verification_url or ((base_url ~ '/safety-rules/verify/' ~ waiver.waiver_id) if base_url else ('/safety-rules/verify/' ~ waiver.waiver_id)) %}
+{% set target_url = verification_url or ((base_url ~ '/safety-rules/verify/' ~ waiver.waiver_id) if base_url else
+('/safety-rules/verify/' ~ waiver.waiver_id)) %}
 {{ pdf_signature_and_seal(
-    doc_id=waiver.waiver_id,
-    signer_name=waiver.signer_name,
-    signer_role=(waiver.signer_role_label or 'Signataire') ~ ' (Lu et approuvé)',
-    signed_at=signed_at_str or (waiver.signed_at.strftime('%d/%m/%Y à %H:%M') if waiver.signed_at else None),
-    ip=signed_ip or waiver.signer_ip,
-    signature_img=signature or waiver.signature_data_uri,
-    is_signed=(waiver.status == 'signed'),
-    hash_code=waiver.hash or seal_hash or hash,
-    qr_code_uri=qr_data_uri or qr,
-    verification_url=target_url,
-    seal_title="Engagement, Acceptation & Scellement Électronique",
-    project_name=waiver.display_project_name,
-    custom_meta_lines=[
-        ("Intervenant", waiver.signer_name ~ ((' (' ~ waiver.signer_company ~ ')') if waiver.signer_company else ''))
-    ]
+doc_id=waiver.waiver_id,
+signer_name=waiver.signer_name,
+signer_role=(waiver.signer_role_label or 'Signataire') ~ ' (Lu et approuvé)',
+signed_at=signed_at_str or (waiver.signed_at.strftime('%d/%m/%Y à %H:%M') if waiver.signed_at else None),
+ip=signed_ip or waiver.signer_ip,
+signature_img=signature or waiver.signature_data_uri,
+is_signed=(waiver.status == 'signed'),
+hash_code=waiver.hash or seal_hash or hash,
+qr_code_uri=qr_data_uri or qr,
+verification_url=target_url,
+seal_title="Engagement, Acceptation & Scellement Électronique",
+project_name=waiver.display_project_name,
+custom_meta_lines=[
+("Intervenant", waiver.signer_name ~ ((' (' ~ waiver.signer_company ~ ')') if waiver.signer_company else ''))
+]
 ) }}
 {% endblock %}
 
 {% block pdf_footer %}
 {{ pdf_footer(
-    company_name=company_name or 'Belle Vitesse',
-    note="Belle Vitesse — Règles de Sécurité Universelles (BVSR) — Document A4 officiel",
-    extra_class="bvsr-screen-footer"
+company_name=company_name or 'Belle Vitesse',
+note="Belle Vitesse — Règles de Sécurité — Document A4 officiel",
+extra_class="bvsr-screen-footer"
 ) }}
 {% endblock %}

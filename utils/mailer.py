@@ -127,10 +127,12 @@ class EmailService:
                         msg.attach(part)
                     else:
                         if current_app:
-                            current_app.logger.error(f"❌ Attachment not found at {att_path}")
+                            current_app.logger.error(
+                                f"❌ Attachment not found at {att_path}")
                 else:
                     if current_app:
-                        current_app.logger.error(f"❌ Attachment path is empty or invalid: {att}")
+                        current_app.logger.error(
+                            f"❌ Attachment path is empty or invalid: {att}")
         else:
             msg = MIMEMultipart("alternative")
             if text_content:
@@ -429,8 +431,8 @@ def _build_waiver_email_context(
         is_prod = False
     else:
         type_title = "Règles de Sécurité (BVSR)"
-        type_label = "de votre engagement aux Règles de Sécurité Universelles (BVSR)"
-        doc_title = "Règles de Sécurité Universelles (BVSR)"
+        type_label = "de votre engagement aux Règles de Sécurité"
+        doc_title = "Règles de Sécurité"
         is_prod = False
 
     context = {
@@ -474,8 +476,8 @@ def _send_waiver_invitation_email(
         doc_desc = "votre Attestation d'information et d'engagement du pilote (Annexe 3)"
     else:
         type_label = "Règles de Sécurité BVSR"
-        subject_type = "des Règles de Sécurité Universelles (BVSR)"
-        doc_desc = "votre engagement aux Règles de Sécurité Universelles (BVSR)"
+        subject_type = "des Règles de Sécurité"
+        doc_desc = "votre engagement aux Règles de Sécurité"
 
     current_app.logger.info(
         f"🚀 Sending {type_label} {'reminder' if is_reminder else 'invitation'} email to {to_email}"
@@ -535,7 +537,7 @@ def send_cgl_invitation_email(to_email, prod_contact_name, project_name, signatu
 
 
 def send_safety_rules_invitation_email(to_email, recipient_name, project_name, signature_link, is_reminder=False, production_name=None):
-    """Envoie une invitation (ou un rappel) à un intervenant pour signer son engagement aux Règles de Sécurité Universelles (BVSR)."""
+    """Envoie une invitation (ou un rappel) à un intervenant pour signer son engagement aux Règles de Sécurité."""
     return _send_waiver_invitation_email(
         waiver_type="safety_rules",
         to_email=to_email,
@@ -574,7 +576,7 @@ def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path, p
         subject_desc = "Attestation Pilote (Annexe 3) signée"
         doc_title = "Attestation d'information et d'engagement du pilote (Annexe 3)"
     else:
-        doc_desc = "les Règles de Sécurité Universelles (BVSR) signées"
+        doc_desc = "les Règles de Sécurité signées"
         subject_desc = "Règles de Sécurité (BVSR) signées"
         doc_title = "Règles de Sécurité (BVSR)"
 

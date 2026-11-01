@@ -4,7 +4,7 @@ Architecture modulaire :
 - common.py : Utilitaires partagés (dates, URLs de signature, tokens, suppression d'actifs)
 - core.py : Gestion du cycle de vie unifié (création, génération, envoi, reset, suppression)
 - cgl.py : Spécificités des Conditions Générales de Location (CGL - BVRA)
-- safety_rules.py : Spécificités des Règles de Sécurité Universelles (BVSR) et contreseing
+- safety_rules.py : Spécificités des Règles de Sécurité et contreseing
 - reminders.py : Relances automatiques par e-mail
 """
 from .cgl import (

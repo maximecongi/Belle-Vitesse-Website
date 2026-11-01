@@ -39,7 +39,8 @@ def _extract_vehicle_image(fields: dict) -> str:
     if isinstance(thumb, list) and len(thumb) > 0 and isinstance(thumb[0], dict):
         thumbnails = thumb[0].get("thumbnails", {})
         if isinstance(thumbnails, dict):
-            large = thumbnails.get("large", {}).get("url") or thumbnails.get("full", {}).get("url")
+            large = thumbnails.get("large", {}).get(
+                "url") or thumbnails.get("full", {}).get("url")
             if large:
                 return large
         url = thumb[0].get("url")
@@ -61,7 +62,8 @@ def _extract_head_image(fields: dict) -> str:
     if isinstance(thumb, list) and len(thumb) > 0 and isinstance(thumb[0], dict):
         thumbnails = thumb[0].get("thumbnails", {})
         if isinstance(thumbnails, dict):
-            large = thumbnails.get("large", {}).get("url") or thumbnails.get("full", {}).get("url")
+            large = thumbnails.get("large", {}).get(
+                "url") or thumbnails.get("full", {}).get("url")
             if large:
                 return large
         url = thumb[0].get("url")
@@ -495,7 +497,8 @@ def get_project_form_context():
                     }
                 })
     except Exception as e:
-        logger.warning(f"Erreur réconciliation véhicules formulaire projet : {e}")
+        logger.warning(
+            f"Erreur réconciliation véhicules formulaire projet : {e}")
 
     heads_list = list(get_heads() or [])
     heads_map = {str(h.get("id")): h for h in heads_list}
@@ -517,7 +520,8 @@ def get_project_form_context():
     except Exception as e:
         logger.warning(f"Erreur réconciliation têtes formulaire projet : {e}")
 
-    bv_users = User.query.order_by(User.firstname.asc(), User.lastname.asc()).all()
+    bv_users = User.query.order_by(
+        User.firstname.asc(), User.lastname.asc()).all()
     bv_users_formatted = [
         {
             "id": u.id,
@@ -718,16 +722,6 @@ def create_project(form, user_id=None):
     from services.common.kdrive import dispatch_create_project_tree
     dispatch_create_project_tree(project.id)
 
-    # Création automatique des Conditions Générales de Location (CGL) si une production est assignée
-    try:
-        from services.admin.waivers import create_cgl
-        from models import CglWaiver
-        if project.production_id and not CglWaiver.query.filter_by(project_id=project.id, deleted_at=None).first():
-            create_cgl(project.id)
-    except Exception as e_w:
-        logger.warning(
-            f"⚠️ Erreur lors de l'auto-création du contrat CGL pour le projet {project.id}: {e_w}")
-
     return project
 
 
@@ -818,8 +812,13 @@ def update_project(record_id, form, user_id=None):
 
     # Synchronisation des documents non signés avec les nouvelles dates et métadonnées du projet
     from services.admin.waivers import _format_project_shooting_dates
-    formatted_dates = _format_project_shooting_dates(project, default_sep=" au ")
-    waivers_to_sync = ([project.active_cgl] if project.active_cgl else []) + list(project.active_safety_rules or [])
+    formatted_dates = _format_project_shooting_dates(
+        project, default_sep=" au ")
+    waivers_to_sync = (
+        ([project.active_cgl] if project.active_cgl else [])
+        + list(project.active_safety_rules or [])
+        + list(project.active_pilot_waivers or [])
+    )
     for w in waivers_to_sync:
         if w and w.status in ("to_generate", "to_send"):
             w.project_name = project.name
@@ -847,16 +846,6 @@ def update_project(record_id, form, user_id=None):
             old_prod_name=old_prod,
             old_proj_name=old_name,
         )
-
-    # Auto-création des Conditions Générales de Location (CGL) si non encore existantes et production assignée
-    try:
-        from services.admin.waivers import create_cgl
-        from models import CglWaiver
-        if project.production_id and not CglWaiver.query.filter_by(project_id=project.id, deleted_at=None).first():
-            create_cgl(project.id)
-    except Exception as e_w:
-        logger.warning(
-            f"⚠️ Erreur lors de l'auto-création du contrat CGL à la mise à jour du projet {project.id}: {e_w}")
 
     return True
 
@@ -936,8 +925,10 @@ def get_project_for_duplicate(record_id):
     if not p or p.deleted_at is not None:
         return None
 
-    veh_ids = [v.strip() for v in (p.vehicles_to_check or "").split(",") if v.strip()] if p.vehicles_to_check else []
-    head_ids = [h.strip() for h in (p.heads_to_check or "").split(",") if h.strip()] if p.heads_to_check else []
+    veh_ids = [v.strip() for v in (p.vehicles_to_check or "").split(
+        ",") if v.strip()] if p.vehicles_to_check else []
+    head_ids = [h.strip() for h in (p.heads_to_check or "").split(
+        ",") if h.strip()] if p.heads_to_check else []
     locations = p.locations_list or []
 
     return {
@@ -1045,7 +1036,8 @@ def delete_project(record_id, user_id=None):
         if local_proj_path and local_proj_path.exists():
             try:
                 shutil.rmtree(local_proj_path, ignore_errors=True)
-                logger.info(f"🗑️ Dossier physique local supprimé : {local_proj_path}")
+                logger.info(
+                    f"🗑️ Dossier physique local supprimé : {local_proj_path}")
 
                 # Élagage des dossiers parents vides éventuels dans output/ (prod, mois, année)
                 output_base = Path(current_app.config.get(

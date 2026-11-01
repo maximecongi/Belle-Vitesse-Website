@@ -78,7 +78,7 @@ def get_demo_email_data(mail_type: str) -> dict:
                 "project_name": "Tournage Porsche 911 GT3 RS",
                 "production_name": "Studio Transatlantique",
                 "waiver_type": "safety_rules",
-                "type_title": "Règles de Sécurité Universelles (BVSR)",
+                "type_title": "Règles de Sécurité",
                 "now_year": now_year,
             },
         }

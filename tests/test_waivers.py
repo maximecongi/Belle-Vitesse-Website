@@ -1,35 +1,10 @@
 """
-Tests unitaires pour le nouveau système unifié de Contrats CGL (BVRA) et Règles de Sécurité Universelles (BVSR).
+Tests unitaires pour le nouveau système unifié de Contrats CGL (BVRA) et Règles de Sécurité.
 Remplace intégralement les anciens tests de double décharge pilote/production.
 """
 
-from datetime import date, datetime, timezone
-import json
-import os
-import sys
-import unittest
-from unittest.mock import MagicMock, patch
-
-# Mock weasyprint si non disponible dans l'environnement de test
-mock_weasyprint = MagicMock()
-mock_weasyprint.HTML = MagicMock()
-mock_weasyprint.CSS = MagicMock()
-sys.modules["weasyprint"] = mock_weasyprint
-
-from app import create_app
-from models import (
-    CglWaiver,
-    Contact,
-    Production,
-    Project,
-    SafetyRulesWaiver,
-    User,
-    Vehicle,
-    Waiver,
-    WaiverSignedDocument,
-    WaiverToken,
-    db,
-)
+from utils.document_utils import compute_hmac_seal
+from services.common.signatures import finalize_signed_document
 from services.admin.waivers import (
     _format_project_shooting_dates,
     create_cgl,
@@ -53,8 +28,32 @@ from services.admin.waivers import (
     send_safety_rules_waiver,
     send_waiver,
 )
-from services.common.signatures import finalize_signed_document
-from utils.document_utils import compute_hmac_seal
+from models import (
+    CglWaiver,
+    Contact,
+    Production,
+    Project,
+    SafetyRulesWaiver,
+    User,
+    Vehicle,
+    Waiver,
+    WaiverSignedDocument,
+    WaiverToken,
+    db,
+)
+from app import create_app
+from datetime import date, datetime, timezone
+import json
+import os
+import sys
+import unittest
+from unittest.mock import MagicMock, patch
+
+# Mock weasyprint si non disponible dans l'environnement de test
+mock_weasyprint = MagicMock()
+mock_weasyprint.HTML = MagicMock()
+mock_weasyprint.CSS = MagicMock()
+sys.modules["weasyprint"] = mock_weasyprint
 
 
 class WaiversCglAndSafetyRulesTest(unittest.TestCase):
@@ -78,10 +77,12 @@ class WaiversCglAndSafetyRulesTest(unittest.TestCase):
             db.drop_all()
 
     def _create_mock_data(self):
-        user = User(firstname="Admin", lastname="BV", mail="admin@bellevitesse.com", role="administrator")
+        user = User(firstname="Admin", lastname="BV",
+                    mail="admin@bellevitesse.com", role="administrator")
         db.session.add(user)
 
-        prod = Production(name="Studio Horizon", mail="contact@studiohorizon.com")
+        prod = Production(name="Studio Horizon",
+                          mail="contact@studiohorizon.com")
         db.session.add(prod)
         db.session.flush()
 
@@ -122,7 +123,8 @@ class WaiversCglAndSafetyRulesTest(unittest.TestCase):
             # Vérification list_cgl
             cgl_items = list_cgl()
             self.assertEqual(len(cgl_items), 1)
-            self.assertEqual(cgl_items[0]["project_name"], "Tournage Pub Alpes")
+            self.assertEqual(
+                cgl_items[0]["project_name"], "Tournage Pub Alpes")
             self.assertTrue(cgl_items[0]["waiver_id"].startswith("BVRA"))
             self.assertEqual(cgl_items[0]["raw_status"], "to_send")
 
@@ -176,8 +178,8 @@ class WaiversCglAndSafetyRulesTest(unittest.TestCase):
             self.assertEqual(len(list_cgl()), 1)
             self.assertEqual(len(list_safety_rules_waivers()), 1)
 
-    def test_automatic_cgl_creation_on_project_create(self):
-        """Vérifie que le CGL est créé automatiquement si une production est associée, mais PAS les règles de sécurité."""
+    def test_no_automatic_waiver_creation_on_project_create(self):
+        """Vérifie qu'aucun document (CGL, BVSR, BVPA) n'est créé automatiquement lors de la création d'un projet."""
         from services.admin.projects import create_project
 
         with self.app.app_context():
@@ -200,17 +202,14 @@ class WaiversCglAndSafetyRulesTest(unittest.TestCase):
             ok = create_project(form)
             self.assertTrue(ok)
 
-            new_proj = Project.query.filter_by(name="Tournage Automatique CGL").first()
+            new_proj = Project.query.filter_by(
+                name="Tournage Automatique CGL").first()
             self.assertIsNotNone(new_proj)
 
-            # CGL automatique présent
-            self.assertIsNotNone(new_proj.active_cgl)
-            self.assertEqual(new_proj.active_cgl.waiver_type, "cgl")
-            self.assertTrue(new_proj.active_cgl.waiver_id.startswith("BVRA"))
-            self.assertEqual(new_proj.active_cgl.status, "to_send")
-
-            # Aucune règle de sécurité créée automatiquement (invitation manuelle uniquement)
+            # Aucun CGL, BVSR ou BVPA créé automatiquement
+            self.assertIsNone(new_proj.active_cgl)
             self.assertEqual(len(new_proj.active_safety_rules), 0)
+            self.assertEqual(len(new_proj.active_pilot_waivers), 0)
 
     def test_verify_cgl_route(self):
         """Vérifie l'accès à la route publique de vérification scellée pour un contrat CGL."""
@@ -225,7 +224,8 @@ class WaiversCglAndSafetyRulesTest(unittest.TestCase):
             seal_args = ["Studio Horizon", "Claire Directrice"]
             sig_data = "signatures/waivers/mock_cgl.png"
             iso_signed = "2026-06-02T10:00:00"
-            h = compute_hmac_seal("BVRA", cgl.waiver_id, *seal_args, sig_data, iso_signed)
+            h = compute_hmac_seal("BVRA", cgl.waiver_id,
+                                  *seal_args, sig_data, iso_signed)
 
             signed_doc = WaiverSignedDocument(
                 waiver_id=cgl.waiver_id,
@@ -247,7 +247,8 @@ class WaiversCglAndSafetyRulesTest(unittest.TestCase):
 
             # Route publique canonique : /cgl/verify/<waiver_id>
             from utils.document_utils import generate_document_verification_token
-            token = generate_document_verification_token("cgl", cgl.waiver_id, 1, signed_doc.hash)
+            token = generate_document_verification_token(
+                "cgl", cgl.waiver_id, 1, signed_doc.hash)
             verify_url = f"/cgl/verify/{cgl.waiver_id}?version=1&t={token}"
             resp = self.client.get(verify_url)
             self.assertEqual(resp.status_code, 200)
@@ -277,7 +278,8 @@ class WaiversCglAndSafetyRulesTest(unittest.TestCase):
             seal_args = [full_name, role_label]
             sig_data = "signatures/waivers/mock_sr.png"
             iso_signed = "2026-06-02T11:00:00"
-            h = compute_hmac_seal("BVSR", sr.waiver_id, *seal_args, sig_data, iso_signed)
+            h = compute_hmac_seal("BVSR", sr.waiver_id,
+                                  *seal_args, sig_data, iso_signed)
 
             signed_doc = WaiverSignedDocument(
                 waiver_id=sr.waiver_id,
@@ -299,7 +301,8 @@ class WaiversCglAndSafetyRulesTest(unittest.TestCase):
 
             # Route publique canonique : /safety-rules/verify/<waiver_id>
             from utils.document_utils import generate_document_verification_token
-            token = generate_document_verification_token("safety_rules", sr.waiver_id, 1, signed_doc.hash)
+            token = generate_document_verification_token(
+                "safety_rules", sr.waiver_id, 1, signed_doc.hash)
             verify_url = f"/safety-rules/verify/{sr.waiver_id}?version=1&t={token}"
             resp = self.client.get(verify_url)
             self.assertEqual(resp.status_code, 200)
@@ -359,7 +362,8 @@ class WaiversCglAndSafetyRulesTest(unittest.TestCase):
         with self.app.app_context():
             user, proj = self._create_mock_data()
 
-            prod_c = Contact(first_name="Marie", last_name="Prod", mail="prod@example.com")
+            prod_c = Contact(first_name="Marie",
+                             last_name="Prod", mail="prod@example.com")
             db.session.add(prod_c)
             db.session.flush()
             proj.production_contact_id = prod_c.id
@@ -383,7 +387,7 @@ class WaiversCglAndSafetyRulesTest(unittest.TestCase):
                 sess["admin_user_role"] = "administrator"
 
             with patch("utils.mailer.send_cgl_invitation_email", return_value=True), \
-                 patch("utils.mailer.send_safety_rules_invitation_email", return_value=True):
+                    patch("utils.mailer.send_safety_rules_invitation_email", return_value=True):
 
                 target_url = f"/admin/projects/{proj.id}"
 
@@ -425,7 +429,8 @@ class WaiversCglAndSafetyRulesTest(unittest.TestCase):
             cgl_w = next(w for w in all_waivers if w.waiver_type == "cgl")
             self.assertIsInstance(cgl_w, CglWaiver)
 
-            sr_w = next(w for w in all_waivers if w.waiver_type == "safety_rules")
+            sr_w = next(w for w in all_waivers if w.waiver_type ==
+                        "safety_rules")
             self.assertIsInstance(sr_w, SafetyRulesWaiver)
 
             # Reset générique
@@ -471,7 +476,8 @@ class WaiversCglAndSafetyRulesTest(unittest.TestCase):
             # 3. Suppression d'un CGL signé (soft-delete avec preuve)
             s2, _ = create_cgl(proj.id)
             self.assertTrue(s2)
-            cgl2 = CglWaiver.query.filter_by(project_id=proj.id, deleted_at=None).first()
+            cgl2 = CglWaiver.query.filter_by(
+                project_id=proj.id, deleted_at=None).first()
             cgl2.status = "signed"
             signed_doc = WaiverSignedDocument(
                 waiver_id=cgl2.waiver_id,
@@ -487,7 +493,8 @@ class WaiversCglAndSafetyRulesTest(unittest.TestCase):
                 d_ok2, _ = delete_waiver(cgl2.waiver_id)
                 self.assertTrue(d_ok2)
                 # Même pour un document signé juridiquement scellé en base, son dossier kDrive est bien supprimé
-                mock_dispatch_signed.assert_called_once_with("cgl", cgl2.waiver_id)
+                mock_dispatch_signed.assert_called_once_with(
+                    "cgl", cgl2.waiver_id)
                 db.session.refresh(cgl2)
                 self.assertIsNotNone(cgl2.deleted_at)
 
@@ -500,10 +507,12 @@ class WaiversCglAndSafetyRulesTest(unittest.TestCase):
                 shoot_start_date=date(2026, 10, 1),
                 shoot_end_date=date(2026, 10, 5),
             )
-            self.assertEqual(_format_project_shooting_dates(proj_continuous, default_sep=" au "), "01/10/2026 au 05/10/2026")
+            self.assertEqual(_format_project_shooting_dates(
+                proj_continuous, default_sep=" au "), "01/10/2026 au 05/10/2026")
 
             raw_dates = "12/10/2026, 13/10/2026, 14/10/2026, 17/11/2026"
-            self.assertEqual(format_waiver_shooting_dates(raw_dates, default_sep=" au "), "12/10/2026 au 17/11/2026")
+            self.assertEqual(format_waiver_shooting_dates(
+                raw_dates, default_sep=" au "), "12/10/2026 au 17/11/2026")
 
             cgl = CglWaiver(
                 project_name="Projet Test Dates",
@@ -511,7 +520,8 @@ class WaiversCglAndSafetyRulesTest(unittest.TestCase):
                 shooting_dates=raw_dates,
                 project_id=1,
             )
-            self.assertEqual(cgl.display_shooting_dates, "12/10/2026 au 17/11/2026")
+            self.assertEqual(cgl.display_shooting_dates,
+                             "12/10/2026 au 17/11/2026")
             self.assertEqual(cgl.display_project_name, "Projet Test Dates")
             self.assertEqual(cgl.display_production_name, "Studio Test")
 

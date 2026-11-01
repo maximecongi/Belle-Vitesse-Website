@@ -399,7 +399,8 @@ class Waiver(db.Model):
         if self.sign_data and self.sign_data.get("hash"):
             return self.sign_data.get("hash")
         from models.waiver import WaiverSignedDocument
-        signed_doc = WaiverSignedDocument.query.filter_by(waiver_id=self.waiver_id).order_by(WaiverSignedDocument.version.desc()).first()
+        signed_doc = WaiverSignedDocument.query.filter_by(
+            waiver_id=self.waiver_id).order_by(WaiverSignedDocument.version.desc()).first()
         return signed_doc.hash if signed_doc else None
 
     @hash.setter
@@ -544,7 +545,7 @@ class CglWaiver(Waiver):
 
 
 class SafetyRulesWaiver(Waiver):
-    """Règles de Sécurité Universelles (BVSR)."""
+    """Règles de Sécurité."""
     __mapper_args__ = {
         "polymorphic_identity": "safety_rules",
     }
@@ -618,7 +619,8 @@ class PilotWaiver(Waiver):
         if not self.vehicles:
             return super().vehicles_details
 
-        selected_tokens = {v.strip().lower() for v in self.vehicles.split(",") if v.strip()}
+        selected_tokens = {v.strip().lower()
+                           for v in self.vehicles.split(",") if v.strip()}
         all_details = super().vehicles_details
         filtered = [
             v for v in all_details

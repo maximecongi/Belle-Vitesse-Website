@@ -45,7 +45,8 @@ class EmailTemplatesTest(unittest.TestCase):
                 is_reminder=False,
                 now_year=2026,
             )
-            self.assertIn("Signature Conditions Générales de Location (CGL)", html)
+            self.assertIn(
+                "Signature Conditions Générales de Location (CGL)", html)
             self.assertIn("des Conditions Générales de Location (CGL)", html)
             self.assertIn("Tournage Pub Vitesse", html)
             self.assertIn("Studio Test Prod", html)
@@ -70,7 +71,8 @@ class EmailTemplatesTest(unittest.TestCase):
                 is_reminder=True,
                 now_year=2026,
             )
-            self.assertIn("Rappel : Signature Conditions Générales de Location (CGL)", html)
+            self.assertIn(
+                "Rappel : Signature Conditions Générales de Location (CGL)", html)
             self.assertIn("des Conditions Générales de Location (CGL)", html)
             self.assertIn("Jean Prod", html)
             self.assertIn("alert-box alert-box-warning", html)
@@ -92,7 +94,7 @@ class EmailTemplatesTest(unittest.TestCase):
                 now_year=2026,
             )
             self.assertIn("Rappel : Signature Règles de Sécurité (BVSR)", html)
-            self.assertIn("Règles de Sécurité Universelles (BVSR)", html)
+            self.assertIn("Règles de Sécurité", html)
             self.assertIn("Luc Pilote", html)
             self.assertIn("Document :", html)
             self.assertIn("Règles de Sécurité (BVSR)", html)
@@ -113,7 +115,8 @@ class EmailTemplatesTest(unittest.TestCase):
                 waiver_type="cgl",
                 now_year=2026,
             )
-            self.assertIn("Conditions Générales de Location (CGL) Signé.", html)
+            self.assertIn(
+                "Conditions Générales de Location (CGL) Signé.", html)
             self.assertIn("info-card info-card-waiver", html)
             self.assertIn("Spot Commercial", html)
             self.assertIn("Studio Test Prod", html)
@@ -222,7 +225,8 @@ class EmailTemplatesTest(unittest.TestCase):
         with self.app.app_context():
             from models import db, AppSetting
             try:
-                AppSetting.set("company_address", "39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine")
+                AppSetting.set("company_address",
+                               "39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine")
                 AppSetting.set("company_email", "contact@bellevitesse.com")
                 html = render_template(
                     "emails/magic_link.html",
@@ -234,7 +238,8 @@ class EmailTemplatesTest(unittest.TestCase):
                 self.assertIn("94200 Ivry-sur-Seine", html)
                 self.assertIn("contact@bellevitesse.com", html)
             finally:
-                AppSetting.query.filter(AppSetting.key.in_(["company_address", "company_email"])).delete()
+                AppSetting.query.filter(AppSetting.key.in_(
+                    ["company_address", "company_email"])).delete()
                 db.session.commit()
 
     def test_newsletter_campaign_rendering(self):

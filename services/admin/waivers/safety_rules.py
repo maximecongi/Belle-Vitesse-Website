@@ -1,5 +1,5 @@
 """
-services/admin/waivers/safety_rules.py — Logique métier et administration des Règles de Sécurité Universelles (BVSR).
+services/admin/waivers/safety_rules.py — Logique métier et administration des Règles de Sécurité.
 """
 import logging
 from datetime import datetime
@@ -123,7 +123,8 @@ def countersign_safety_rules(waiver_id, signature_data, signer_name="Belle Vites
         waiver.bv_signature_data = orig_bv_sig
         waiver.bv_signed_at = orig_bv_signed_at
         waiver.bv_signer_name = orig_bv_signer_name
-        logger.error(f"❌ Échec de la contre-signature BVSR pour {waiver_id} : {e}")
+        logger.error(
+            f"❌ Échec de la contre-signature BVSR pour {waiver_id} : {e}")
         return False, f"Erreur lors de la contre-signature : {e}"
 
     return True, "Contre-signature Belle Vitesse enregistrée avec succès."
@@ -142,7 +143,8 @@ def list_safety_rules_waivers(project_id=None):
 
     waivers = query.all()
     waivers.sort(key=lambda w: (
-        (w.project.departure_date or datetime.min.date()) if (w.project and w.project.departure_date) else datetime.min.date(),
+        (w.project.departure_date or datetime.min.date()) if (
+            w.project and w.project.departure_date) else datetime.min.date(),
         w.generated_at or datetime.min
     ), reverse=True)
 
@@ -150,8 +152,10 @@ def list_safety_rules_waivers(project_id=None):
     for w in waivers:
         p = w.project
 
-        raw_shooting_dates = w.shooting_dates or (_format_project_shooting_dates(p, default_sep=" → ") if p else "—")
-        shooting_dates = format_waiver_shooting_dates(raw_shooting_dates, default_sep=" → ")
+        raw_shooting_dates = w.shooting_dates or (
+            _format_project_shooting_dates(p, default_sep=" → ") if p else "—")
+        shooting_dates = format_waiver_shooting_dates(
+            raw_shooting_dates, default_sep=" → ")
 
         now_dt = _utcnow()
         active_token = WaiverToken.query.filter(

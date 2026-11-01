@@ -106,9 +106,11 @@ def init_waiver_routes(app):
 
         # 1. Valider le jeton
         if request.method == "POST":
-            token_rec = config["token_model"].query.filter_by(token=token).with_for_update().first()
+            token_rec = config["token_model"].query.filter_by(
+                token=token).with_for_update().first()
         else:
-            token_rec = config["token_model"].query.filter_by(token=token).first()
+            token_rec = config["token_model"].query.filter_by(
+                token=token).first()
 
         if not token_rec:
             if request.method == "GET":
@@ -117,9 +119,11 @@ def init_waiver_routes(app):
 
         # 2. Récupérer le contrat ou la décharge
         if request.method == "POST":
-            waiver = config["model"].query.filter_by(waiver_id=token_rec.waiver_id).with_for_update().first()
+            waiver = config["model"].query.filter_by(
+                waiver_id=token_rec.waiver_id).with_for_update().first()
         else:
-            waiver = config["model"].query.filter_by(waiver_id=token_rec.waiver_id).first()
+            waiver = config["model"].query.filter_by(
+                waiver_id=token_rec.waiver_id).first()
 
         if not waiver:
             abort(404)
@@ -132,7 +136,8 @@ def init_waiver_routes(app):
 
         # Vérification d'un verrou concurrent en cours de traitement ('signing') (Point 5)
         if waiver.status == "signing":
-            signing_started_at = (waiver.sign_data or {}).get("signing_started_at")
+            signing_started_at = (waiver.sign_data or {}
+                                  ).get("signing_started_at")
             is_stale = False
             if signing_started_at:
                 try:
@@ -162,7 +167,8 @@ def init_waiver_routes(app):
         if token_rec.expires_at:
             exp = token_rec.expires_at
             now_utc = datetime.now(timezone.utc)
-            is_expired = exp < (now_utc if exp.tzinfo is not None else now_utc.replace(tzinfo=None))
+            is_expired = exp < (
+                now_utc if exp.tzinfo is not None else now_utc.replace(tzinfo=None))
             if is_expired:
                 if request.method == "GET":
                     return render_template(config["template_sign"], waiver={"status": "expired"})
@@ -174,23 +180,29 @@ def init_waiver_routes(app):
         if request.method == "GET":
             extra_ctx = {}
             if mode == "safety_rules":
-                tech_names = getattr(waiver, "display_safety_technicians", getattr(waiver, "safety_technicians", "")) or ""
-                extra_ctx["general_rules"] = get_merged_general_safety_rules(tech_names)
-                extra_ctx["vehicle_rules"] = get_safety_rules_for_vehicles(waiver.vehicles_details)
+                tech_names = getattr(waiver, "display_safety_technicians", getattr(
+                    waiver, "safety_technicians", "")) or ""
+                extra_ctx["general_rules"] = get_merged_general_safety_rules(
+                    tech_names)
+                extra_ctx["vehicle_rules"] = get_safety_rules_for_vehicles(
+                    waiver.vehicles_details)
                 extra_ctx["helmets"] = waiver.helmets_inventory or DEFAULT_HELMETS_INVENTORY
             from services.common.signatures import log_signature_event
-            log_signature_event(waiver.waiver_id, mode, "link_opened", ip=signer_ip, user_agent=user_agent)
+            log_signature_event(
+                waiver.waiver_id, mode, "link_opened", ip=signer_ip, user_agent=user_agent)
             try:
                 db.session.commit()
             except Exception as commit_err:
-                current_app.logger.warning(f"⚠️ Erreur lors de l'enregistrement de link_opened pour {waiver.waiver_id}: {commit_err}")
+                current_app.logger.warning(
+                    f"⚠️ Erreur lors de l'enregistrement de link_opened pour {waiver.waiver_id}: {commit_err}")
                 db.session.rollback()
             return render_template(config["template_sign"], waiver=waiver, **extra_ctx)
 
         # Pose du verrou pessimiste 'signing' avant finalisation
         waiver.status = "signing"
         s_data_lock = dict(waiver.sign_data or {})
-        s_data_lock["signing_started_at"] = datetime.now(timezone.utc).isoformat()
+        s_data_lock["signing_started_at"] = datetime.now(
+            timezone.utc).isoformat()
         waiver.sign_data = s_data_lock
         db.session.commit()
 
@@ -217,7 +229,7 @@ def init_waiver_routes(app):
 
             if mode == "safety_rules":
                 if data.get("ack_rules") not in ("1", "on", "true"):
-                    return _fail("La prise de connaissance et le respect des Règles de Sécurité Universelles (BVSR) sont obligatoires.")
+                    return _fail("La prise de connaissance et le respect des Règles de Sécurité sont obligatoires.")
 
                 if data.get("first_name"):
                     fn = data.get("first_name").strip()
@@ -255,11 +267,13 @@ def init_waiver_routes(app):
                     if len(rc) > 100:
                         return _fail("Le rôle personnalisé ne peut dépasser 100 caractères.")
                     waiver.signer_role_custom = rc
-                rep_name = f"{waiver.signer_first_name or ''} {waiver.signer_last_name or ''}".strip()
+                rep_name = f"{waiver.signer_first_name or ''} {waiver.signer_last_name or ''}".strip(
+                )
 
                 bvsr_sign_data = dict(waiver.sign_data or {})
                 bvsr_sign_data["ack_rules"] = True
-                bvsr_sign_data["accepted_at"] = datetime.now(timezone.utc).isoformat()
+                bvsr_sign_data["accepted_at"] = datetime.now(
+                    timezone.utc).isoformat()
                 bvsr_sign_data["shooting_locations"] = waiver.display_shooting_locations_list
                 waiver.sign_data = bvsr_sign_data
             elif mode == "pilot_waiver":
@@ -302,11 +316,13 @@ def init_waiver_routes(app):
                     if len(rc) > 100:
                         return _fail("Le rôle personnalisé ne peut dépasser 100 caractères.")
                     waiver.signer_role_custom = rc
-                rep_name = f"{waiver.signer_first_name or ''} {waiver.signer_last_name or ''}".strip()
+                rep_name = f"{waiver.signer_first_name or ''} {waiver.signer_last_name or ''}".strip(
+                )
 
                 pilot_sign_data = dict(waiver.sign_data or {})
                 pilot_sign_data["ack_pilot_engagement"] = True
-                pilot_sign_data["accepted_at"] = datetime.now(timezone.utc).isoformat()
+                pilot_sign_data["accepted_at"] = datetime.now(
+                    timezone.utc).isoformat()
                 pilot_sign_data["authority_declaration_text"] = (
                     "Je déclare être sous l'autorité exclusive de la production (l'Employeur), "
                     "sans aucun lien de subordination juridique avec Belle Vitesse, et m'engage à appliquer "
@@ -322,12 +338,15 @@ def init_waiver_routes(app):
                 if data.get("has_signing_authority") != "1":
                     return _fail("La déclaration sur l'honneur de pouvoir d'engager la société est obligatoire.")
 
-                prod_name = (data.get("production_name") or waiver.production_name or "").strip()
+                prod_name = (data.get("production_name")
+                             or waiver.production_name or "").strip()
                 if not prod_name or len(prod_name) > 150:
                     return _fail("La raison sociale de la production est obligatoire (max 150 caractères).")
 
-                rep_name = (data.get("representative") or waiver.production_representative or "").strip()
-                rep_role = (data.get("representative_role") or waiver.signer_role_custom or "").strip()
+                rep_name = (data.get("representative")
+                            or waiver.production_representative or "").strip()
+                rep_role = (data.get("representative_role")
+                            or waiver.signer_role_custom or "").strip()
                 if not rep_name or not rep_role:
                     return _fail("Le nom du signataire et sa fonction au sein de la société sont obligatoires.")
                 if len(rep_name) > 150:
@@ -335,7 +354,8 @@ def init_waiver_routes(app):
                 if len(rep_role) > 100:
                     return _fail("La fonction du signataire ne peut dépasser 100 caractères.")
 
-                address = (data.get("address") or waiver.production_address or "").strip()
+                address = (data.get("address")
+                           or waiver.production_address or "").strip()
                 if address and len(address) > 255:
                     return _fail("L'adresse du siège social ne peut dépasser 255 caractères.")
 
@@ -345,9 +365,11 @@ def init_waiver_routes(app):
                     if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email) or len(email) > 120:
                         return _fail("L'adresse e-mail renseignée est invalide.")
 
-                siret_value = data.get("siret") if "siret" in data else waiver.production_siret
+                siret_value = data.get(
+                    "siret") if "siret" in data else waiver.production_siret
                 siret = (siret_value or "").strip()
-                legal_country = (data.get("legal_country") or (waiver.sign_data or {}).get("legal_country") or "FR").strip().upper()
+                legal_country = (data.get("legal_country") or (
+                    waiver.sign_data or {}).get("legal_country") or "FR").strip().upper()
                 if legal_country in ("FR", "FRANCE"):
                     if not siret:
                         return _fail("Le numéro SIRET est obligatoire pour une société dont le siège est en France.")
@@ -403,7 +425,8 @@ def init_waiver_routes(app):
                 try:
                     template_source, _, _ = current_app.jinja_env.loader.get_source(
                         current_app.jinja_env, "public/cgl/_cgl_articles.html")
-                    terms_fingerprint = hashlib.sha256(template_source.encode("utf-8")).hexdigest()
+                    terms_fingerprint = hashlib.sha256(
+                        template_source.encode("utf-8")).hexdigest()
                 except Exception:
                     pass
 
@@ -436,9 +459,11 @@ def init_waiver_routes(app):
                 # Stocker la liste des lieux au moment de la signature
                 s_data["shooting_locations"] = waiver.display_shooting_locations_list
                 if data.get("insurance_company"):
-                    s_data["insurance_company"] = data.get("insurance_company").strip()
+                    s_data["insurance_company"] = data.get(
+                        "insurance_company").strip()
                 if data.get("insurance_policy"):
-                    s_data["insurance_policy"] = data.get("insurance_policy").strip()
+                    s_data["insurance_policy"] = data.get(
+                        "insurance_policy").strip()
 
                 # Pièce jointe assurance production (CGL) avec validation stricte
                 insurance_file_sha256 = ""
@@ -446,7 +471,8 @@ def init_waiver_routes(app):
                 file = request.files.get('production_insurance')
                 if file and file.filename:
                     ext = os.path.splitext(file.filename)[1].lower()
-                    allowed_exts = {'.pdf', '.png', '.jpg', '.jpeg', '.heic', '.heif'}
+                    allowed_exts = {'.pdf', '.png',
+                                    '.jpg', '.jpeg', '.heic', '.heif'}
                     if ext not in allowed_exts:
                         return _fail("Format d'attestation d'assurance non autorisé (PDF ou image requis).")
 
@@ -457,7 +483,8 @@ def init_waiver_routes(app):
                     if not _is_valid_magic_bytes(file_bytes, ext):
                         return _fail("Le contenu du fichier téléversé ne correspond pas à une attestation valide (signature de fichier non reconnue).")
 
-                    insurance_upload_sha256 = hashlib.sha256(file_bytes).hexdigest()
+                    insurance_upload_sha256 = hashlib.sha256(
+                        file_bytes).hexdigest()
                     file.seek(0)
 
                     upload_dir = ensure_dir(
@@ -533,7 +560,8 @@ def init_waiver_routes(app):
         except ValueError as val_err:
             db.session.rollback()
             try:
-                waiver_to_reset = config["model"].query.filter_by(waiver_id=token_rec.waiver_id).first()
+                waiver_to_reset = config["model"].query.filter_by(
+                    waiver_id=token_rec.waiver_id).first()
                 if waiver_to_reset and waiver_to_reset.status == "signing":
                     waiver_to_reset.status = "to_sign"
                     db.session.commit()
@@ -543,13 +571,15 @@ def init_waiver_routes(app):
         except Exception as e:
             db.session.rollback()
             try:
-                waiver_to_reset = config["model"].query.filter_by(waiver_id=token_rec.waiver_id).first()
+                waiver_to_reset = config["model"].query.filter_by(
+                    waiver_id=token_rec.waiver_id).first()
                 if waiver_to_reset and waiver_to_reset.status == "signing":
                     waiver_to_reset.status = "to_sign"
                     db.session.commit()
             except Exception:
                 db.session.rollback()
-            current_app.logger.error(f"Error processing {mode} waiver sign: {e}")
+            current_app.logger.error(
+                f"Error processing {mode} waiver sign: {e}")
             return jsonify({"success": False, "error": "Une erreur serveur est survenue."}), 500
 
     # ── Routes de Vérification ───────────────────────────────────
@@ -615,4 +645,3 @@ def init_waiver_routes(app):
     def download_waiver_secured_file(filepath):
         is_attachment = request.path.startswith("/cgl/attachment/")
         return handle_document_download(filepath, as_attachment=True if is_attachment else None)
-

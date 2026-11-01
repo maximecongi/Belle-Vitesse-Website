@@ -1,5 +1,5 @@
 /**
- * sign-safety-rules.js — Contrôleur public pour la signature des Règles de Sécurité Universelles (BVSR).
+ * sign-safety-rules.js — Contrôleur public pour la signature des Règles de Sécurité.
  * 
  * Fonctionnalités harmonisées avec sign-cgl.js :
  * - Capture et scellement de la signature électronique via SignaturePad

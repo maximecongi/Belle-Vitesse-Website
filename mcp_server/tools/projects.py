@@ -25,19 +25,22 @@ def _resolve_project(project_id_or_code: Any) -> Optional[Any]:
 
     code = str(project_id_or_code).strip()
     # Recherche exacte sur project_id
-    p = Project.query.filter(Project.project_id == code, Project.deleted_at.is_(None)).first()
+    p = Project.query.filter(Project.project_id == code,
+                             Project.deleted_at.is_(None)).first()
     if p:
         return p
 
     # Recherche tolérante partielle
-    p = Project.query.filter(Project.project_id.ilike(f"%{code}%"), Project.deleted_at.is_(None)).first()
+    p = Project.query.filter(Project.project_id.ilike(
+        f"%{code}%"), Project.deleted_at.is_(None)).first()
     return p
 
 
 def _format_project_summary(p: Dict[str, Any]) -> Dict[str, Any]:
     """Produit une synthèse légère et optimisée pour le listage de projets."""
     raw_prod_id = p.get("production_id")
-    clean_prod_id = int(raw_prod_id) if (raw_prod_id and str(raw_prod_id).isdigit()) else None
+    clean_prod_id = int(raw_prod_id) if (
+        raw_prod_id and str(raw_prod_id).isdigit()) else None
     return {
         "id": p.get("id"),
         "project_id": p.get("project_id"),
@@ -168,8 +171,10 @@ def get_project(project_id: Any) -> Optional[Dict[str, Any]]:
     all_veh_map = {v.get("id"): v for v in get_vehicles()}
     all_head_map = {h.get("id"): h for h in get_heads()}
 
-    veh_ids = [v.strip() for v in (project.vehicles_to_check or "").split(",") if v.strip()]
-    head_ids = [h.strip() for h in (project.heads_to_check or "").split(",") if h.strip()]
+    veh_ids = [v.strip()
+               for v in (project.vehicles_to_check or "").split(",") if v.strip()]
+    head_ids = [h.strip()
+                for h in (project.heads_to_check or "").split(",") if h.strip()]
 
     resolved_vehicles = []
     for vid in veh_ids:
@@ -392,7 +397,7 @@ def create_project(
     head_ids: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """
-    Crée un nouveau projet et génère automatiquement ses décharges pilote/production.
+    Crée un nouveau projet en base de données.
     Les dates peuvent être passées aux formats 'YYYY-MM-DD', 'DD/MM/YYYY', etc.
     """
     from services.admin.projects import create_project as _create_project
@@ -462,8 +467,10 @@ def update_project(
         return {"success": False, "message": f"Projet #{project_id} introuvable."}
 
     # Récupérer les identifiants existants pour les véhicules et têtes
-    existing_veh_ids = [v.strip() for v in (project.vehicles_to_check or "").split(",") if v.strip()]
-    existing_head_ids = [h.strip() for h in (project.heads_to_check or "").split(",") if h.strip()]
+    existing_veh_ids = [v.strip() for v in (
+        project.vehicles_to_check or "").split(",") if v.strip()]
+    existing_head_ids = [h.strip() for h in (
+        project.heads_to_check or "").split(",") if h.strip()]
 
     final_veh_ids = vehicle_ids if vehicle_ids is not None else existing_veh_ids
     final_head_ids = head_ids if head_ids is not None else existing_head_ids
@@ -477,15 +484,23 @@ def update_project(
             return []
 
     # Dates existantes
-    existing_dep = project.departure_date.strftime("%Y-%m-%d") if project.departure_date else ""
-    existing_start = project.shoot_start_date.strftime("%Y-%m-%d") if project.shoot_start_date else ""
-    existing_end = project.shoot_end_date.strftime("%Y-%m-%d") if project.shoot_end_date else ""
-    existing_ret = project.return_date.strftime("%Y-%m-%d") if project.return_date else ""
+    existing_dep = project.departure_date.strftime(
+        "%Y-%m-%d") if project.departure_date else ""
+    existing_start = project.shoot_start_date.strftime(
+        "%Y-%m-%d") if project.shoot_start_date else ""
+    existing_end = project.shoot_end_date.strftime(
+        "%Y-%m-%d") if project.shoot_end_date else ""
+    existing_ret = project.return_date.strftime(
+        "%Y-%m-%d") if project.return_date else ""
 
-    parsed_dep = parse_flexible_date(departure_date) if departure_date is not None else existing_dep
-    parsed_start = parse_flexible_date(shoot_start) if shoot_start is not None else existing_start
-    parsed_end = parse_flexible_date(shoot_end) if shoot_end is not None else existing_end
-    parsed_ret = parse_flexible_date(return_date) if return_date is not None else existing_ret
+    parsed_dep = parse_flexible_date(
+        departure_date) if departure_date is not None else existing_dep
+    parsed_start = parse_flexible_date(
+        shoot_start) if shoot_start is not None else existing_start
+    parsed_end = parse_flexible_date(
+        shoot_end) if shoot_end is not None else existing_end
+    parsed_ret = parse_flexible_date(
+        return_date) if return_date is not None else existing_ret
 
     form_data = MultiDictMock({
         "name": name if name is not None else (project.name or ""),
@@ -558,11 +573,13 @@ def get_project_form_context(
         return raw
 
     compact_prods = [
-        {"id": int(p["id"]) if str(p.get("id", "")).isdigit() else p.get("id"), "name": p.get("fields", {}).get("Nom") or p.get("name", "")}
+        {"id": int(p["id"]) if str(p.get("id", "")).isdigit() else p.get(
+            "id"), "name": p.get("fields", {}).get("Nom") or p.get("name", "")}
         for p in raw.get("productions", [])
     ]
     compact_contacts = [
-        {"id": int(c["id"]) if str(c.get("id", "")).isdigit() else c.get("id"), "name": c.get("name", "")}
+        {"id": int(c["id"]) if str(c.get("id", "")).isdigit()
+         else c.get("id"), "name": c.get("name", "")}
         for c in raw.get("contacts", [])
     ]
     compact_vehicles = [
@@ -745,7 +762,8 @@ def add_project_report(
 
     from services.admin.project_reports import add_project_report as _add_report
     try:
-        report = _add_report(p.id, user_id=user_id, content=content, title=title)
+        report = _add_report(p.id, user_id=user_id,
+                             content=content, title=title)
         if author_name and not user_id:
             report.author_name = author_name
             report.author_role = author_job or "Assistant MCP"
@@ -796,10 +814,12 @@ def delete_project_report(
     from mcp_server.context import CURRENT_MCP_USER
 
     mcp_user = CURRENT_MCP_USER.get()
-    current_user_id = getattr(mcp_user, 'id', None) or getattr(mcp_user, 'user_id', None)
+    current_user_id = getattr(mcp_user, 'id', None) or getattr(
+        mcp_user, 'user_id', None)
 
     try:
-        success = _delete_report(report_id, current_user_id=current_user_id, is_admin=True)
+        success = _delete_report(
+            report_id, current_user_id=current_user_id, is_admin=True)
         return {
             "status": "success" if success else "error",
             "message": f"Rapport #{report_id} supprimé avec succès." if success else "Échec de la suppression."
@@ -824,7 +844,8 @@ def search_project_reports(
     """
     from models import ProjectReport, Project
 
-    query_filter = ProjectReport.query.join(Project).filter(Project.deleted_at.is_(None))
+    query_filter = ProjectReport.query.join(
+        Project).filter(Project.deleted_at.is_(None))
 
     if project_id is not None:
         p = _resolve_project(project_id)
@@ -841,11 +862,13 @@ def search_project_reports(
             (ProjectReport.author_role.ilike(search_term))
         )
 
-    results = query_filter.order_by(ProjectReport.created_at.desc()).limit(limit or 20).all()
+    results = query_filter.order_by(
+        ProjectReport.created_at.desc()).limit(limit or 20).all()
 
     formatted_results = []
     for r in results:
-        job = r.user.job if (r.user and r.user.job) else (r.author_role or "Équipe")
+        job = r.user.job if (r.user and r.user.job) else (
+            r.author_role or "Équipe")
         formatted_results.append({
             "report_id": r.id,
             "project_id": r.project_id,
@@ -863,4 +886,3 @@ def search_project_reports(
         "total": len(formatted_results),
         "results": formatted_results,
     }
-

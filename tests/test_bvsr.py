@@ -1,10 +1,45 @@
+from services.admin.waivers import (
+    countersign_safety_rules,
+    create_safety_rules_waiver,
+    delete_safety_rules_waiver,
+    generate_safety_rules_waiver,
+    list_safety_rules_waivers,
+    reset_safety_rules_waiver,
+    send_safety_rules_waiver,
+)
+from services.admin.safety_rules_config import (
+    DEFAULT_VEHICLE_SAFETY_RULES,
+    get_all_vehicle_safety_rules_catalog,
+    get_safety_rules_for_vehicles,
+    save_vehicle_safety_rules,
+    get_general_safety_rules,
+    save_general_safety_rules,
+    get_bv_referents_safety_rules,
+    save_bv_referents_safety_rules,
+    format_technicians_list,
+    format_bv_referents_rules,
+    get_merged_general_safety_rules,
+)
+from models.db import _utcnow
+from models import (
+    Contact,
+    Production,
+    Project,
+    SafetyRulesWaiver,
+    User,
+    Vehicle,
+    WaiverToken,
+    db,
+)
+from app import create_app
 import os
 import sys
 import unittest
 from datetime import date, timedelta
 from unittest.mock import MagicMock, patch
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..')))
 
 # Isolation stricte en mémoire
 os.environ["FLASK_ENV"] = "testing"
@@ -19,44 +54,9 @@ mock_weasyprint.HTML = MagicMock()
 mock_weasyprint.CSS = MagicMock()
 sys.modules["weasyprint"] = mock_weasyprint
 
-from app import create_app
-from models import (
-    Contact,
-    Production,
-    Project,
-    SafetyRulesWaiver,
-    User,
-    Vehicle,
-    WaiverToken,
-    db,
-)
-from models.db import _utcnow
-from services.admin.safety_rules_config import (
-    DEFAULT_VEHICLE_SAFETY_RULES,
-    get_all_vehicle_safety_rules_catalog,
-    get_safety_rules_for_vehicles,
-    save_vehicle_safety_rules,
-    get_general_safety_rules,
-    save_general_safety_rules,
-    get_bv_referents_safety_rules,
-    save_bv_referents_safety_rules,
-    format_technicians_list,
-    format_bv_referents_rules,
-    get_merged_general_safety_rules,
-)
-from services.admin.waivers import (
-    countersign_safety_rules,
-    create_safety_rules_waiver,
-    delete_safety_rules_waiver,
-    generate_safety_rules_waiver,
-    list_safety_rules_waivers,
-    reset_safety_rules_waiver,
-    send_safety_rules_waiver,
-)
-
 
 class BvsrComprehensiveTest(unittest.TestCase):
-    """Suite de tests unitaires et d'intégration pour les Règles de Sécurité Universelles (BVSR)."""
+    """Suite de tests unitaires et d'intégration pour les Règles de Sécurité."""
 
     def setUp(self):
         os.environ["FLASK_ENV"] = "testing"
@@ -102,8 +102,10 @@ class BvsrComprehensiveTest(unittest.TestCase):
         db.session.add(contact)
         db.session.flush()
 
-        v1 = Vehicle(id="rec_v1", fields={"Nom": "eRover 01", "Type": "erover"})
-        v2 = Vehicle(id="rec_v2", fields={"Nom": "eRider Dual", "Type": "erider"})
+        v1 = Vehicle(id="rec_v1", fields={
+                     "Nom": "eRover 01", "Type": "erover"})
+        v2 = Vehicle(id="rec_v2", fields={
+                     "Nom": "eRider Dual", "Type": "erider"})
         db.session.add_all([v1, v2])
         db.session.flush()
 
@@ -116,7 +118,8 @@ class BvsrComprehensiveTest(unittest.TestCase):
             shoot_end_date=date(2026, 8, 4),
             return_date=date(2026, 8, 5),
             vehicles_to_check=f"{v1.id}, {v2.id}",
-            shooting_locations=[{"name": "Circuit Paul Ricard", "address": "Le Castellet"}]
+            shooting_locations=[
+                {"name": "Circuit Paul Ricard", "address": "Le Castellet"}]
         )
         db.session.add(proj)
         db.session.commit()
@@ -131,7 +134,8 @@ class BvsrComprehensiveTest(unittest.TestCase):
             self.assertIn("ecar", catalog)
 
             # Test de correspondance avec les véhicules d'un projet
-            vehicle_list = [{"name": "eRover 01", "slug": "erover"}, {"name": "eRider Dual", "slug": "erider"}]
+            vehicle_list = [{"name": "eRover 01", "slug": "erover"}, {
+                "name": "eRider Dual", "slug": "erider"}]
             rules = get_safety_rules_for_vehicles(vehicle_list)
             self.assertEqual(len(rules), 2)
             rule_labels = [r["label"] for r in rules]
@@ -148,7 +152,8 @@ class BvsrComprehensiveTest(unittest.TestCase):
             )
             updated_cat = get_all_vehicle_safety_rules_catalog()
             self.assertIn("buggy_electrique", updated_cat)
-            self.assertEqual(updated_cat["buggy_electrique"]["label"], "Buggy Électrique Cascades")
+            self.assertEqual(
+                updated_cat["buggy_electrique"]["label"], "Buggy Électrique Cascades")
 
     def test_02_create_multiple_bvsr_waivers_per_project(self):
         """Vérifie la création de multiples engagements BVSR individuels pour différents rôles sur le même projet."""
@@ -193,7 +198,8 @@ class BvsrComprehensiveTest(unittest.TestCase):
             self.assertTrue(ok3, f"Échec création BVSR 3: {msg3}")
 
             # Vérification des waivers en base
-            waivers = SafetyRulesWaiver.query.filter_by(project_id=proj.id).all()
+            waivers = SafetyRulesWaiver.query.filter_by(
+                project_id=proj.id).all()
             self.assertEqual(len(waivers), 3)
 
             for w in waivers:
@@ -207,7 +213,8 @@ class BvsrComprehensiveTest(unittest.TestCase):
 
             # Vérification du waiver avec référents explicites
             w_ad = [w for w in waivers if w.signer_role == "first_ad"][0]
-            self.assertEqual(w_ad.safety_technicians, "Maxime Perrard, Ewen Gicquel")
+            self.assertEqual(w_ad.safety_technicians,
+                             "Maxime Perrard, Ewen Gicquel")
 
     def test_03_public_signing_flow_no_friction(self):
         """Vérifie le portail public de signature BVSR : AUCUN numéro de permis ni upload requis."""
@@ -221,14 +228,16 @@ class BvsrComprehensiveTest(unittest.TestCase):
                 signer_last_name="Racer",
                 signer_email="romain@racer.com"
             )
-            waiver = SafetyRulesWaiver.query.filter_by(project_id=proj.id).first()
+            waiver = SafetyRulesWaiver.query.filter_by(
+                project_id=proj.id).first()
 
             # Envoi du waiver pour générer le token public
             ok_send, _ = send_safety_rules_waiver(waiver.waiver_id)
             self.assertTrue(ok_send)
 
             self.assertEqual(waiver.status, "to_sign")
-            token = WaiverToken.query.filter_by(waiver_id=waiver.waiver_id).first()
+            token = WaiverToken.query.filter_by(
+                waiver_id=waiver.waiver_id).first()
             self.assertIsNotNone(token)
 
             # GET portail de signature
@@ -247,7 +256,6 @@ class BvsrComprehensiveTest(unittest.TestCase):
                 "ack_authority": "1",
                 "signature_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
             }
-
 
             res_post = self.client.post(
                 f"/sign/safety-rules/{token.token}",
@@ -268,8 +276,10 @@ class BvsrComprehensiveTest(unittest.TestCase):
         """Vérifie la contresignature Belle Vitesse d'un engagement BVSR signé."""
         with self.app.app_context():
             proj, _, _, _ = self._create_mock_project()
-            create_safety_rules_waiver(project_id=proj.id, signer_role="pilot", signer_first_name="Test")
-            waiver = SafetyRulesWaiver.query.filter_by(project_id=proj.id).first()
+            create_safety_rules_waiver(
+                project_id=proj.id, signer_role="pilot", signer_first_name="Test")
+            waiver = SafetyRulesWaiver.query.filter_by(
+                project_id=proj.id).first()
             waiver.status = "signed"
             db.session.commit()
 
@@ -289,8 +299,10 @@ class BvsrComprehensiveTest(unittest.TestCase):
         """Vérifie la réinitialisation et la suppression sécurisée d'un engagement BVSR."""
         with self.app.app_context():
             proj, _, _, _ = self._create_mock_project()
-            create_safety_rules_waiver(project_id=proj.id, signer_role="operator")
-            waiver = SafetyRulesWaiver.query.filter_by(project_id=proj.id).first()
+            create_safety_rules_waiver(
+                project_id=proj.id, signer_role="operator")
+            waiver = SafetyRulesWaiver.query.filter_by(
+                project_id=proj.id).first()
             waiver_id = waiver.waiver_id
 
             # Reset
@@ -311,8 +323,10 @@ class BvsrComprehensiveTest(unittest.TestCase):
         """Vérifie le listing des règles de sécurité et la route GET /admin/safety-rules."""
         with self.app.app_context():
             proj, _, _, _ = self._create_mock_project()
-            create_safety_rules_waiver(project_id=proj.id, signer_role="pilot", signer_first_name="Jean", signer_last_name="Pilote")
-            create_safety_rules_waiver(project_id=proj.id, signer_role="first_ad", signer_first_name="Claire", signer_last_name="Ad")
+            create_safety_rules_waiver(
+                project_id=proj.id, signer_role="pilot", signer_first_name="Jean", signer_last_name="Pilote")
+            create_safety_rules_waiver(
+                project_id=proj.id, signer_role="first_ad", signer_first_name="Claire", signer_last_name="Ad")
 
             # Vérifie le listing de service
             items = list_safety_rules_waivers()
@@ -330,7 +344,8 @@ class BvsrComprehensiveTest(unittest.TestCase):
 
             response = self.client.get("/admin/safety-rules")
             self.assertEqual(response.status_code, 200)
-            self.assertIn(b"R\xc3\xa8gles de S\xc3\xa9curit\xc3\xa9", response.data)
+            self.assertIn(
+                b"R\xc3\xa8gles de S\xc3\xa9curit\xc3\xa9", response.data)
             self.assertIn(b"Jean Pilote", response.data)
 
     def test_07_admin_safety_rules_catalog_ui_and_save(self):
@@ -372,7 +387,8 @@ class BvsrComprehensiveTest(unittest.TestCase):
                 "rules_fr": ["Casque homologué obligatoire en roulage", "Harnais 4 points bouclé"],
                 "rules_en": ["Approved helmet mandatory while driving", "4-point harness fastened"]
             }
-            res_post = self.client.post("/admin/fleet/safety-rules", data=post_data, follow_redirects=True)
+            res_post = self.client.post(
+                "/admin/fleet/safety-rules", data=post_data, follow_redirects=True)
             self.assertEqual(res_post.status_code, 200)
             post_html = res_post.data.decode("utf-8")
             self.assertIn("Buggy Tout-Terrain 4x4", post_html)
@@ -383,7 +399,8 @@ class BvsrComprehensiveTest(unittest.TestCase):
             catalog = get_all_vehicle_safety_rules_catalog()
             self.assertIn("test_buggy", catalog)
             self.assertEqual(len(catalog["test_buggy"]["rules_fr"]), 2)
-            self.assertEqual(catalog["test_buggy"]["rules_fr"][0], "Casque homologué obligatoire en roulage")
+            self.assertEqual(catalog["test_buggy"]["rules_fr"]
+                             [0], "Casque homologué obligatoire en roulage")
 
     def test_08_general_safety_rules_edition_and_no_fallback(self):
         """Vérifie l'édition des règles générales et l'absence totale de fallback par défaut."""
@@ -410,14 +427,16 @@ class BvsrComprehensiveTest(unittest.TestCase):
             self.assertIn("btn-edit-general-rule", html)
 
             # 2. Enregistrement de règles générales spécifiques
-            custom_fr = ["Consigne personnalisée alpha", "Consigne personnalisée beta"]
+            custom_fr = ["Consigne personnalisée alpha",
+                         "Consigne personnalisée beta"]
             custom_en = ["Custom guideline alpha", "Custom guideline beta"]
             post_data = {
                 "is_general": "1",
                 "rules_fr": custom_fr,
                 "rules_en": custom_en,
             }
-            res_post = self.client.post("/admin/fleet/safety-rules", data=post_data, follow_redirects=True)
+            res_post = self.client.post(
+                "/admin/fleet/safety-rules", data=post_data, follow_redirects=True)
             self.assertEqual(res_post.status_code, 200)
 
             # Vérification via get_general_safety_rules
@@ -431,7 +450,8 @@ class BvsrComprehensiveTest(unittest.TestCase):
                 "rules_fr": [],
                 "rules_en": [],
             }
-            res_empty = self.client.post("/admin/fleet/safety-rules", data=empty_post_data, follow_redirects=True)
+            res_empty = self.client.post(
+                "/admin/fleet/safety-rules", data=empty_post_data, follow_redirects=True)
             self.assertEqual(res_empty.status_code, 200)
             empty_saved = get_general_safety_rules()
             self.assertEqual(empty_saved["rules_fr"], [])
@@ -489,16 +509,20 @@ class BvsrComprehensiveTest(unittest.TestCase):
             )
             self.assertTrue(success)
 
-            waiver = SafetyRulesWaiver.query.filter_by(project_id=proj.id, signer_last_name="Coureur").first()
+            waiver = SafetyRulesWaiver.query.filter_by(
+                project_id=proj.id, signer_last_name="Coureur").first()
             self.assertIsNotNone(waiver)
             # Vérification de l'initialisation automatique
-            self.assertEqual(waiver.safety_technicians, proj.bv_referents_names)
-            self.assertEqual(waiver.display_safety_technicians, proj.bv_referents_names)
+            self.assertEqual(waiver.safety_technicians,
+                             proj.bv_referents_names)
+            self.assertEqual(waiver.display_safety_technicians,
+                             proj.bv_referents_names)
 
             # 4. Vérification sur le portail public de signature
             ok_send, _ = send_safety_rules_waiver(waiver.waiver_id)
             self.assertTrue(ok_send)
-            token_obj = WaiverToken.query.filter_by(waiver_id=waiver.waiver_id).first()
+            token_obj = WaiverToken.query.filter_by(
+                waiver_id=waiver.waiver_id).first()
             self.assertIsNotNone(token_obj)
 
             resp = self.client.get(f"/sign/safety-rules/{token_obj.token}")
@@ -531,7 +555,8 @@ class BvsrComprehensiveTest(unittest.TestCase):
             )
             self.assertTrue(success_nr)
 
-            waiver_nr = SafetyRulesWaiver.query.filter_by(project_id=proj_no_ref.id, signer_last_name="Solo").first()
+            waiver_nr = SafetyRulesWaiver.query.filter_by(
+                project_id=proj_no_ref.id, signer_last_name="Solo").first()
             self.assertIsNotNone(waiver_nr)
             self.assertIsNone(waiver_nr.safety_technicians)
             self.assertIsNone(waiver_nr.display_safety_technicians)
@@ -539,8 +564,10 @@ class BvsrComprehensiveTest(unittest.TestCase):
             # Vérification sur le portail public : la mention de supervision doit être masquée
             ok_send_nr, _ = send_safety_rules_waiver(waiver_nr.waiver_id)
             self.assertTrue(ok_send_nr)
-            token_obj_nr = WaiverToken.query.filter_by(waiver_id=waiver_nr.waiver_id).first()
-            resp_nr = self.client.get(f"/sign/safety-rules/{token_obj_nr.token}")
+            token_obj_nr = WaiverToken.query.filter_by(
+                waiver_id=waiver_nr.waiver_id).first()
+            resp_nr = self.client.get(
+                f"/sign/safety-rules/{token_obj_nr.token}")
             self.assertEqual(resp_nr.status_code, 200)
             html_nr = resp_nr.data.decode("utf-8")
             self.assertNotIn("Référent(s) Plateau BelleVitesse", html_nr)
@@ -550,7 +577,8 @@ class BvsrComprehensiveTest(unittest.TestCase):
                 sess["admin_authenticated"] = True
                 sess["admin_user_id"] = 1
                 sess["admin_user_role"] = "administrator"
-            resp_preview = self.client.get(f"/admin/safety-rules/{waiver_nr.waiver_id}/preview")
+            resp_preview = self.client.get(
+                f"/admin/safety-rules/{waiver_nr.waiver_id}/preview")
             self.assertEqual(resp_preview.status_code, 200)
             html_preview = resp_preview.data.decode("utf-8")
             self.assertNotIn("Supervision BV :", html_preview)
@@ -559,24 +587,37 @@ class BvsrComprehensiveTest(unittest.TestCase):
         """Vérifie le formatage grammatical (1, 2, 3+ techniciens), l'édition admin et la fusion dans les règles générales."""
         with self.app.app_context():
             # 1. Test unitaire du formatage grammatical des listes de techniciens
-            self.assertEqual(format_technicians_list("Maxime Perrard", conjunction="et"), "Maxime Perrard")
-            self.assertEqual(format_technicians_list(["Maxime Perrard", "Ewen Gicquel"], conjunction="et"), "Maxime Perrard et Ewen Gicquel")
-            self.assertEqual(format_technicians_list("Maxime Perrard, Ewen Gicquel, Simon Maignan", conjunction="et"), "Maxime Perrard, Ewen Gicquel et Simon Maignan")
-            self.assertEqual(format_technicians_list("Maxime Perrard, Ewen Gicquel, Simon Maignan", conjunction="ou"), "Maxime Perrard, Ewen Gicquel ou Simon Maignan")
-            self.assertEqual(format_technicians_list("Maxime Perrard, Ewen Gicquel, Simon Maignan", conjunction="and"), "Maxime Perrard, Ewen Gicquel and Simon Maignan")
-            self.assertEqual(format_technicians_list("Maxime Perrard, Ewen Gicquel, Simon Maignan", conjunction="or"), "Maxime Perrard, Ewen Gicquel or Simon Maignan")
+            self.assertEqual(format_technicians_list(
+                "Maxime Perrard", conjunction="et"), "Maxime Perrard")
+            self.assertEqual(format_technicians_list(
+                ["Maxime Perrard", "Ewen Gicquel"], conjunction="et"), "Maxime Perrard et Ewen Gicquel")
+            self.assertEqual(format_technicians_list("Maxime Perrard, Ewen Gicquel, Simon Maignan",
+                             conjunction="et"), "Maxime Perrard, Ewen Gicquel et Simon Maignan")
+            self.assertEqual(format_technicians_list("Maxime Perrard, Ewen Gicquel, Simon Maignan",
+                             conjunction="ou"), "Maxime Perrard, Ewen Gicquel ou Simon Maignan")
+            self.assertEqual(format_technicians_list("Maxime Perrard, Ewen Gicquel, Simon Maignan",
+                             conjunction="and"), "Maxime Perrard, Ewen Gicquel and Simon Maignan")
+            self.assertEqual(format_technicians_list("Maxime Perrard, Ewen Gicquel, Simon Maignan",
+                             conjunction="or"), "Maxime Perrard, Ewen Gicquel or Simon Maignan")
 
             # 2. Test d'injection dynamique dans les règles
-            formatted = format_bv_referents_rules("Maxime Perrard, Ewen Gicquel, Simon Maignan")
-            self.assertTrue(any("Maxime Perrard, Ewen Gicquel et Simon Maignan" in r for r in formatted["rules_fr"]))
-            self.assertTrue(any("Maxime Perrard, Ewen Gicquel ou Simon Maignan" in r for r in formatted["rules_fr"]))
-            self.assertTrue(any("Maxime Perrard, Ewen Gicquel and Simon Maignan" in r for r in formatted["rules_en"]))
+            formatted = format_bv_referents_rules(
+                "Maxime Perrard, Ewen Gicquel, Simon Maignan")
+            self.assertTrue(any(
+                "Maxime Perrard, Ewen Gicquel et Simon Maignan" in r for r in formatted["rules_fr"]))
+            self.assertTrue(any(
+                "Maxime Perrard, Ewen Gicquel ou Simon Maignan" in r for r in formatted["rules_fr"]))
+            self.assertTrue(any(
+                "Maxime Perrard, Ewen Gicquel and Simon Maignan" in r for r in formatted["rules_en"]))
 
             # 3. Test de fusion (get_merged_general_safety_rules)
-            merged_with_techs = get_merged_general_safety_rules("Maxime Perrard, Ewen Gicquel")
+            merged_with_techs = get_merged_general_safety_rules(
+                "Maxime Perrard, Ewen Gicquel")
             merged_without_techs = get_merged_general_safety_rules(None)
-            self.assertGreater(len(merged_with_techs["rules_fr"]), len(merged_without_techs["rules_fr"]))
-            self.assertTrue(any("Maxime Perrard et Ewen Gicquel" in r for r in merged_with_techs["rules_fr"]))
+            self.assertGreater(len(merged_with_techs["rules_fr"]), len(
+                merged_without_techs["rules_fr"]))
+            self.assertTrue(
+                any("Maxime Perrard et Ewen Gicquel" in r for r in merged_with_techs["rules_fr"]))
 
             # 4. Test d'édition dans le catalogue via POST /admin/fleet/safety-rules
             user = User(
@@ -597,12 +638,15 @@ class BvsrComprehensiveTest(unittest.TestCase):
             res_get = self.client.get("/admin/fleet/safety-rules")
             self.assertEqual(res_get.status_code, 200)
             html = res_get.data.decode("utf-8")
-            self.assertIn("2. Règles Spécifiques en Présence de Référents Plateau BV", html)
+            self.assertIn(
+                "2. Règles Spécifiques en Présence de Référents Plateau BV", html)
             self.assertIn("btn-edit-bv-referents-rule", html)
 
             # Enregistrement de règles spécifiques référents personnalisées
-            custom_bv_fr = ["Consigne BV avec {technicians}", "Arrêt d'urgence validé par {technicians_or}"]
-            custom_bv_en = ["BV rule with {technicians}", "Emergency stop approved by {technicians_or}"]
+            custom_bv_fr = [
+                "Consigne BV avec {technicians}", "Arrêt d'urgence validé par {technicians_or}"]
+            custom_bv_en = [
+                "BV rule with {technicians}", "Emergency stop approved by {technicians_or}"]
             res_post = self.client.post("/admin/fleet/safety-rules", data={
                 "rule_scope": "bv_referents",
                 "rules_fr": custom_bv_fr,
@@ -621,4 +665,3 @@ class BvsrComprehensiveTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

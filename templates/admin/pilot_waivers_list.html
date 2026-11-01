@@ -2,8 +2,8 @@
 
 {% from "admin/macros.html" import status_badge, filter_header, reminder_badge, table_empty_row %}
 
-{% block title %}Attestations Pilotes (Annexe 3 aux CGL){% endblock %}
-{% block page_title %}Attestations Pilotes (Annexe 3 aux CGL){% endblock %}
+{% block title %}Attestations Pilotes{% endblock %}
+{% block page_title %}Attestations Pilotes{% endblock %}
 
 {% block header_actions %}
 <div class="u-flex u-align-center u-gap-2">
@@ -23,10 +23,9 @@
                 <tr>
                     <th>N° Document</th>
                     <th>Projet</th>
-                    <th>Pilote / Signataire</th>
+                    <th>Pilote</th>
                     <th>Fonction</th>
                     <th>Véhicules confiés</th>
-                    <th>Contact</th>
                     <th>Dates</th>
                     <th>Statut</th>
                     <th>Actions</th>
@@ -43,9 +42,13 @@
                         </a>
                     </td>
                     <td>
-                        <strong>{{ w.signer_name }}</strong>
-                        {% if w.signer_company %}
-                        <div class="u-text-xs u-text-muted">{{ w.signer_company }}</div>
+                        {% if w.signer_name %}
+                        <a href="{{ url_for('admin_contacts.admin_contacts_list', q=w.signer_name) }}"
+                            class="u-text-link">
+                            {{ w.signer_name }}
+                        </a>
+                        {% else %}
+                        —
                         {% endif %}
                     </td>
                     <td>
@@ -58,12 +61,6 @@
                             title="{{ w.vehicles or 'Parc complet' }}">
                             {{ w.vehicles or 'Parc complet' }}
                         </div>
-                    </td>
-                    <td>
-                        <div>{{ w.signer_email or '—' }}</div>
-                        {% if w.signer_phone %}
-                        <div class="u-text-xs u-text-muted">{{ w.signer_phone }}</div>
-                        {% endif %}
                     </td>
                     <td>{{ w.shooting_dates }}</td>
                     <td>

@@ -20,7 +20,7 @@ new_url=url_for('admin_waivers.admin_cgl_new'), new_label="+ Nouvelles CGL") }}
                 <tr>
                     <th>N° CGL</th>
                     <th>Projet</th>
-                    <th>Locataire / Production</th>
+                    <th>Production</th>
                     <th>Contact</th>
                     <th>Dates</th>
                     <th>Statut</th>
@@ -32,12 +32,31 @@ new_url=url_for('admin_waivers.admin_cgl_new'), new_label="+ Nouvelles CGL") }}
                 <tr class="searchable-row">
                     <td class="u-text-semibold u-nowrap">{{ w.id or '—' }}</td>
                     <td>
-                        <a href="{{ url_for('admin_projects.admin_project_detail', record_id=w.project_id) }}" class="u-text-link">
+                        <a href="{{ url_for('admin_projects.admin_project_detail', record_id=w.project_id) }}"
+                            class="u-text-link">
                             {{ w.project_name }}
                         </a>
                     </td>
-                    <td>{{ w.production_name }}</td>
-                    <td>{{ w.production_contact_name }}</td>
+                    <td>
+                        {% if w.production_name %}
+                        <a href="{{ url_for('admin_productions.admin_productions_list', q=w.production_name) }}"
+                            class="u-text-link">
+                            {{ w.production_name }}
+                        </a>
+                        {% else %}
+                        —
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if w.production_contact_name %}
+                        <a href="{{ url_for('admin_contacts.admin_contacts_list', q=w.production_contact_name) }}"
+                            class="u-text-link">
+                            {{ w.production_contact_name }}
+                        </a>
+                        {% else %}
+                        —
+                        {% endif %}
+                    </td>
                     <td>{{ w.shooting_dates }}</td>
                     <td>
                         <div class="u-flex u-align-center u-gap-1 u-flex-wrap">
@@ -68,7 +87,8 @@ new_url=url_for('admin_waivers.admin_cgl_new'), new_label="+ Nouvelles CGL") }}
                                 data-copy-url="{{ url_for('admin_waivers.admin_cgl_copy_link', waiver_id=w.id) }}"
                                 title="Copier le lien de signature dans le presse-papier">Lien</button>
                             {% elif w.raw_status == 'signed' %}
-                            <a href="{{ w.signed_pdf_path }}" class="admin-btn admin-btn-secondary" target="_blank" rel="noopener noreferrer">
+                            <a href="{{ w.signed_pdf_path }}" class="admin-btn admin-btn-secondary" target="_blank"
+                                rel="noopener noreferrer">
                                 <i data-lucide="file-text"></i> PDF
                             </a>
                             {% endif %}
