@@ -1215,6 +1215,10 @@ select.form-input.form-input-sm {
     transition: all 0.2s !important;
 }
 
+.admin-btn-sign-blue:hover {
+    background: #0e629240 !important;
+}
+
 .danger-card-top {
     border-top: 4px solid #ff4b2b !important;
 }

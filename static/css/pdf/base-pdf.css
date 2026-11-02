@@ -59,6 +59,7 @@ body.pdf-body {
 
 /* ── 2.1 Mode Prévisualisation Écran (Mise en page A4 fidèle CGL) ─────────── */
 @media screen {
+
     body.cgl-container,
     body.pdf-body {
         background-color: #475569;
@@ -179,6 +180,7 @@ body.pdf-body {
 }
 
 @media screen and (max-width: 220mm) {
+
     body.cgl-container,
     body.pdf-body {
         padding: 12px 8px;
@@ -203,6 +205,7 @@ body.pdf-body {
 }
 
 @media print {
+
     body.cgl-container,
     body.pdf-body {
         background-color: transparent !important;
@@ -562,13 +565,9 @@ body.pdf-body {
 }
 
 .public-doc-vehicle-ids .checkout-doc-id {
-    font-family: monospace;
-    font-size: 6.5pt;
-    font-weight: 600;
     background-color: #e2e8f0;
     color: #334155;
     padding: 1.5pt 4pt;
-    border-radius: 2pt;
     text-transform: uppercase;
     letter-spacing: 0.3px;
     margin-top: 0;

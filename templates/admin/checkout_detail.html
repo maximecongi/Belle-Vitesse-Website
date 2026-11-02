@@ -8,8 +8,13 @@
     liste</a>
 <a href="{{ url_for('admin_checkouts.admin_checkout_preview', record_id=record_id) }}" target="_blank"
     class="admin-btn admin-btn-secondary">Aperçu PDF ↗</a>
-<a href="{{ url_for('checkout_verify', inspection_id=data.inspection_id) }}" target="_blank"
+{% if data.verification_url %}
+<a href="{{ data.verification_url }}" target="_blank"
     class="admin-btn admin-btn-secondary">Page de vérification ↗</a>
+{% elif data.hash %}
+<a href="{{ url_for('checkout_verify', inspection_id=data.inspection_id, version=1, t=data.verification_token) }}" target="_blank"
+    class="admin-btn admin-btn-secondary">Page de vérification ↗</a>
+{% endif %}
 {% if data.status_id == 'in_progress' %}
 <a href="{{ url_for('admin_checkouts.admin_checkout_edit', record_id=record_id) }}"
     class="admin-btn admin-btn-primary">Éditer</a>

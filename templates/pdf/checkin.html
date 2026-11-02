@@ -9,28 +9,28 @@
 {% block preview_toolbar %}
 {% if is_preview %}
 {{ pdf_preview_toolbar(
-    doc_title=doc_preview_title or "Fiche de Contrôle au Retour (Check-In)",
-    doc_id=data.inspection_id,
-    format_pdf_url=doc_preview_pdf_url or "?format=pdf",
-    show_print=True
+doc_title=doc_preview_title or "Fiche de Contrôle au Retour (Check-In)",
+doc_id=data.inspection_id,
+format_pdf_url=doc_preview_pdf_url or "?format=pdf",
+show_print=True
 ) }}
 {% endif %}
 {% endblock %}
 
 {% block pdf_header %}
 {{ pdf_header(
-    doc_type_title="Check-In Véhicule",
-    doc_id=data.inspection_id,
-    date_str=data.control_date or '—',
-    company_name=company_name
+doc_type_title="Check-In Véhicule",
+doc_id=data.inspection_id,
+date_str=data.control_date or '—',
+company_name=company_name
 ) }}
 {% endblock %}
 
 {% block pdf_title %}
 {{ pdf_title_banner(
-    title="Fiche de Restitution &amp; Constat de Retour (Check-In)",
-    subtitle="Contrôle technique et constat d'état lors du retour de tournage",
-    context_info="Projet : " ~ (data.project or '—') ~ " — Production : " ~ (data.production or '—')
+title="Fiche de Restitution &amp; Constat de Retour (Check-In)",
+subtitle="Contrôle technique et constat d'état lors du retour de tournage",
+context_info="Projet : " ~ (data.project or '—') ~ " — Production : " ~ (data.production or '—')
 ) }}
 {% endblock %}
 
@@ -38,55 +38,55 @@
 <!-- ═══════════ PRODUCTION INFO ═══════════ -->
 <section class="pdf-section">
     <h2 class="pdf-section-title dot-before">Production &amp; Tournage</h2>
-    {% set controller_name = data.controller.get('name', '—') if (data.controller is mapping) else (data.controller or '—') %}
+    {% set controller_name = data.controller.get('name', '—') if (data.controller is mapping) else (data.controller or
+    '—') %}
     {{ pdf_info_grid(
-        items=[
-            ("Production", data.production or '—'),
-            ("Projet", data.project or '—'),
-            ("Date de retour", data.return_date or '—'),
-            ("Début de tournage", data.shoot_start or '—'),
-            ("Fin de tournage", data.shoot_end or '—'),
-            ("Responsable du contrôle", controller_name)
-        ],
-        columns=3
+    items=[
+    ("Production", data.production or '—'),
+    ("Projet", data.project or '—'),
+    ("Date de retour", data.return_date or '—'),
+    ("Début de tournage", data.shoot_start or '—'),
+    ("Fin de tournage", data.shoot_end or '—'),
+    ("Responsable du contrôle", controller_name)
+    ],
+    columns=3
     ) }}
 </section>
 
 <!-- ═══════════ VEHICLE INFO ═══════════ -->
 <section class="pdf-section">
     <h2 class="pdf-section-title dot-before">Véhicule Restitué</h2>
-    {% set vehicles = data.vehicles_details if data.vehicles_details else ([data.vehicle.fields if (data.vehicle and data.vehicle.fields) else (data.vehicle or {})] if (data.vehicle or data.vehicle_name) else []) %}
-    <div class="public-doc-vehicles-list">
-        {% for v in vehicles %}
-        <div class="public-doc-vehicle-card">
-            <div class="public-doc-vehicle-thumb-wrapper">
-                {% if v.thumbnail %}
-                <img src="{{ v.thumbnail }}" alt="{{ v.name or 'Véhicule' }}" class="public-doc-vehicle-thumb" loading="lazy">
-                {% else %}
-                <div class="public-doc-vehicle-thumb-placeholder" aria-hidden="true">
-                    <svg class="public-doc-vehicle-placeholder-icon" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <path
-                            d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
-                        <circle cx="7" cy="17" r="2" />
-                        <path d="M9 17h6" />
-                        <circle cx="17" cy="17" r="2" />
-                    </svg>
-                </div>
-                {% endif %}
+    {% set vehicles = data.vehicles_details if data.vehicles_details else ([data.vehicle.fields if (data.vehicle and
+    data.vehicle.fields) else (data.vehicle or {})] if (data.vehicle or data.vehicle_name) else []) %}
+    {% for v in vehicles %}
+    <div class="public-doc-vehicle-card">
+        <div class="public-doc-vehicle-thumb-wrapper">
+            {% if v.thumbnail %}
+            <img src="{{ v.thumbnail }}" alt="{{ v.name or 'Véhicule' }}" class="public-doc-vehicle-thumb"
+                loading="lazy">
+            {% else %}
+            <div class="public-doc-vehicle-thumb-placeholder" aria-hidden="true">
+                <svg class="public-doc-vehicle-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                        d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
+                    <circle cx="7" cy="17" r="2" />
+                    <path d="M9 17h6" />
+                    <circle cx="17" cy="17" r="2" />
+                </svg>
             </div>
-            <div class="public-doc-vehicle-info">
-                <span class="public-doc-vehicle-title">{{ v.name or '—' }}</span>
-                {% if v.unique_id and v.unique_id != '—' %}
-                <div class="public-doc-vehicle-ids">
-                    <span class="checkout-doc-id">{{ v.unique_id }}</span>
-                </div>
-                {% endif %}
-            </div>
+            {% endif %}
         </div>
-        {% endfor %}
+        <div class="public-doc-vehicle-info">
+            <span class="public-doc-vehicle-title">{{ v.name or '—' }}</span>
+            {% if v.unique_id and v.unique_id != '—' %}
+            <div class="public-doc-vehicle-ids">
+                <span class="checkout-doc-id">{{ v.unique_id }}</span>
+            </div>
+            {% endif %}
+        </div>
     </div>
+    {% endfor %}
 </section>
 
 <!-- ═══════════ CHECK ITEMS ═══════════ -->
@@ -116,8 +116,10 @@
             <td>{{ item.label }}</td>
             <td class="text-right">
                 {% if item.type == 'value' %}
-                {% set is_val_ok = item.is_valid if item.is_valid is defined else (data[item.key ~ '_valid'] if data[item.key ~ '_valid'] is defined else (data[item.key ~ '_status'] == 'ok')) %}
-                <span class="pdf-badge {% if is_val_ok %}pdf-badge--success{% else %}pdf-badge--danger{% endif %}">{{ status }}{% if item.unit and status != '—' %} {{ item.unit }}{% endif %}</span>
+                {% set is_val_ok = item.is_valid if item.is_valid is defined else (data[item.key ~ '_valid'] if
+                data[item.key ~ '_valid'] is defined else (data[item.key ~ '_status'] == 'ok')) %}
+                <span class="pdf-badge {% if is_val_ok %}pdf-badge--success{% else %}pdf-badge--danger{% endif %}">{{
+                    status }}{% if item.unit and status != '—' %} {{ item.unit }}{% endif %}</span>
                 {% elif status == 'ok' %}
                 <span class="pdf-badge pdf-badge--success">OK</span>
                 {% elif status == 'warning' %}
@@ -191,27 +193,28 @@
 {% endblock %}
 
 {% block pdf_signatures %}
-{% set controller_display_name = data.controller.name if (data.controller and data.controller.name) else (data.controller if (data.controller is string) else 'Responsable Contrôle') %}
+{% set controller_display_name = data.controller.name if (data.controller and data.controller.name) else
+(data.controller if (data.controller is string) else 'Responsable Contrôle') %}
 {{ pdf_signature_and_seal(
-    doc_id=data.inspection_id,
-    signer_name=controller_display_name,
-    signer_role="Responsable du contrôle de restitution (Belle Vitesse)",
-    signed_at=data.signed_at,
-    ip=data.signed_ip,
-    signature_img=signature,
-    is_signed=(data.status_id == 'signed'),
-    hash_code=hash,
-    qr_code_uri=qr,
-    verification_url=verification_url,
-    seal_title="Scellement Électronique du Constat de Restitution",
-    project_name=data.project
+doc_id=data.inspection_id,
+signer_name=controller_display_name,
+signer_role="Responsable du contrôle de restitution (Belle Vitesse)",
+signed_at=data.signed_at,
+ip=data.signed_ip,
+signature_img=signature,
+is_signed=(data.status_id == 'signed'),
+hash_code=hash,
+qr_code_uri=qr,
+verification_url=verification_url,
+seal_title="Scellement Électronique du Constat de Restitution",
+project_name=data.project
 ) }}
 {% endblock %}
 
 {% block pdf_footer %}
 {{ pdf_footer(
-    company_name=company_name or 'Belle Vitesse',
-    company_address=company_address,
-    note="Ce document est confidentiel et destiné uniquement à un usage contractuel et d'assurance."
+company_name=company_name or 'Belle Vitesse',
+company_address=company_address,
+note="Ce document est confidentiel et destiné uniquement à un usage contractuel et d'assurance."
 ) }}
 {% endblock %}

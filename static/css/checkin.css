@@ -708,7 +708,7 @@ body {
     border: 1px solid #e2e8f0;
     border-radius: 4pt;
     padding: 6pt 10pt;
-    min-width: 180pt;
+    width: 180pt;
     text-decoration: none;
     color: #111827;
     page-break-inside: avoid;
@@ -773,13 +773,9 @@ body {
 }
 
 .public-doc-vehicle-ids .checkout-doc-id {
-    font-family: monospace;
-    font-size: 6.5pt;
-    font-weight: 600;
     background-color: #e2e8f0;
     color: #334155;
     padding: 1.5pt 4pt;
-    border-radius: 2pt;
     text-transform: uppercase;
     letter-spacing: 0.3px;
     margin-top: 0;

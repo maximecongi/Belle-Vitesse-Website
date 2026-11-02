@@ -781,6 +781,94 @@ class InspectionsTest(unittest.TestCase):
             res_ci_alias = self.client.get("/preview/pdf/checkin")
             self.assertEqual(res_ci_alias.status_code, 200)
 
+    def test_signed_document_verification_url_and_detail_button(self):
+        """Vérifie que get_signed_document_info génère l'URL de vérification complète avec token et version."""
+        from models import CheckoutSignedDocument
+        with self.app.app_context():
+            user, proj = self._create_mock_data()
+
+            co = CheckoutVehicle(
+                inspection_number="BVCO-TESTVERIF1",
+                status="signed",
+                project_id=proj.id,
+                vehicle_id="1",
+                controller_id=user.id,
+                inspection_date=date.today(),
+            )
+            db.session.add(co)
+            db.session.commit()
+
+            doc_co = CheckoutSignedDocument(
+                inspection_id="BVCO-TESTVERIF1",
+                hash="a" * 64,
+                data_snapshot={"inspection_id": "BVCO-TESTVERIF1"},
+                signature="data:image/png;base64,mock",
+                pdf_url="/checkout/document/test.pdf"
+            )
+            db.session.add(doc_co)
+            db.session.commit()
+
+            with self.client.session_transaction() as sess:
+                sess['admin_authenticated'] = True
+                sess['admin_user_id'] = user.id
+                sess['admin_user_role'] = 'administrator'
+                sess['admin_logged_in'] = True
+
+            res = self.client.get(f"/admin/checkouts/{co.id}")
+            self.assertEqual(res.status_code, 200)
+            html = res.get_data(as_text=True)
+
+            self.assertIn("Page de vérification ↗", html)
+            self.assertIn("version=1", html)
+            self.assertIn("&amp;t=", html)
+
+            # Vérifie l'accès effectif à l'URL de vérification générée
+            from services.admin.inspections import get_signed_document_info
+            info = get_signed_document_info("BVCO-TESTVERIF1", is_checkout=True)
+            self.assertIsNotNone(info)
+            self.assertIn("version=1", info["verification_url"])
+            self.assertIn("t=", info["verification_url"])
+
+            res_verify = self.client.get(info["verification_url"])
+            self.assertEqual(res_verify.status_code, 200)
+
+    def test_inspection_sign_page_public_doc_structure_and_vehicle_card(self):
+        """Vérifie que la page de signature publique adopte le design system public-doc et les cartes de véhicules."""
+        with self.app.app_context(), self.app.test_request_context("/"):
+            user, proj = self._create_mock_data()
+            co = CheckoutVehicle(
+                inspection_number="BVCO-TESTSIGNPAGE1",
+                status="pending",
+                project_id=proj.id,
+                vehicle_id="1",
+                controller_id=user.id,
+                battery_level=100,
+                vehicle_ready=True,
+            )
+            from utils.checkpoints import get_checkpoints_for_vehicle
+            for cp in get_checkpoints_for_vehicle("1"):
+                co.set_checkpoint_status(cp["key"], "ok")
+            db.session.add(co)
+            db.session.commit()
+
+            from services.common.signatures import generate_inspection_token
+            token_entry = generate_inspection_token(co.id, "checkout")
+            token = token_entry["token"]
+
+            res = self.client.get(f"/checkout/sign/{token}")
+            self.assertEqual(res.status_code, 200)
+            html = res.get_data(as_text=True)
+
+            # Vérification de l'architecture public-doc
+            self.assertIn("public-doc-container", html)
+            self.assertIn("public-doc-header", html)
+            self.assertIn("public-doc-vehicle-card", html)
+            self.assertIn("public-doc-vehicle-thumb-wrapper", html)
+            self.assertIn("public-doc-vehicle-info", html)
+            self.assertIn("public-doc-info-grid", html)
+            self.assertIn("public-doc-footer", html)
+            self.assertIn("BVCO-TESTSIGNPAGE1", html)
+
 
 if __name__ == "__main__":
     unittest.main()

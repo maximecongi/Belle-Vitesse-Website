@@ -8,21 +8,17 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!container) return;
 
     const isAlreadySigned = container.getAttribute('data-already-signed') === 'true';
-    const redirectCounter = document.getElementById('redirect-counter');
+    const btnCloseTab = document.getElementById('btn-close-tab');
 
-    // ── Gestion de la redirection automatique si déjà signé ────────
-    if (isAlreadySigned && redirectCounter) {
-        let count = 3;
-        const countdownTimer = setInterval(function () {
-            count--;
-            if (redirectCounter) {
-                redirectCounter.textContent = count;
-            }
-            if (count <= 0) {
-                clearInterval(countdownTimer);
-                window.location.href = '/';
-            }
-        }, 1000);
+    if (btnCloseTab) {
+        btnCloseTab.addEventListener('click', function () {
+            window.close();
+        });
+    }
+
+    // ── Gestion si déjà signé : tentative de fermeture de l'onglet ──
+    if (isAlreadySigned) {
+        window.close();
         return;
     }
 
@@ -98,7 +94,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (resObj.ok && (result.status === 'signed' || resObj.status === 200)) {
                         isSigned = true;
                         if (typeof showFeedback === 'function') {
-                            showFeedback('<i data-lucide="circle-check-big"></i> Document signé avec succès. Redirection en cours…', 'success');
+                            showFeedback('<i data-lucide="circle-check-big"></i> Document signé et scellé avec succès.', 'success');
                         }
                         btn.textContent = 'Signé ✓';
                         if (signaturePad && signaturePad.canvas) {
@@ -108,8 +104,9 @@ document.addEventListener('DOMContentLoaded', function () {
                             window.lucide.createIcons();
                         }
                         setTimeout(function () {
+                            window.close();
                             window.location.reload();
-                        }, 1200);
+                        }, 1000);
                     } else {
                         const errMsg = result.error || 'Une erreur est survenue lors de la validation.';
                         if (typeof showFeedback === 'function') {

@@ -226,7 +226,7 @@ def get_inspection_detail_unified(mode, record_id):
 
 def get_signed_document_info(inspection_id, is_checkout=True):
     """
-    Récupère les infos d'un document signé (URL PDF, Hash) et génère un jeton d'accès temporaire.
+    Récupère les infos d'un document signé (URL PDF, Hash) et génère les jetons d'accès et de vérification.
     """
     model = CheckoutSignedDocument if is_checkout else CheckinSignedDocument
     signed_doc = db.session.get(model, inspection_id)
@@ -256,9 +256,29 @@ def get_signed_document_info(inspection_id, is_checkout=True):
     if not pdf_url_str:
         pdf_url_str = f"/{route_base}/document/{path_part}?t={token}"
 
+    doc_hash = getattr(signed_doc, 'hash', None)
+    verify_url_str = None
+    verification_token = None
+    if doc_hash:
+        from utils.document_utils import generate_document_verification_token
+        mode_str = "checkout" if is_checkout else "checkin"
+        verification_token = generate_document_verification_token(
+            mode_str, str(inspection_id), 1, doc_hash
+        )
+        verify_endpoint = f"{mode_str}_verify"
+        if has_request_context():
+            try:
+                verify_url_str = url_for(verify_endpoint, inspection_id=inspection_id, version=1, t=verification_token)
+            except Exception:
+                verify_url_str = None
+        if not verify_url_str:
+            verify_url_str = f"/{route_base}/verify/{inspection_id}?version=1&t={verification_token}"
+
     return {
-        "hash": getattr(signed_doc, 'hash', None),
+        "hash": doc_hash,
         "pdf_url": pdf_url_str,
+        "verification_token": verification_token,
+        "verification_url": verify_url_str,
     }
 
 
@@ -521,6 +541,7 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
     vers un dictionnaire prêt pour le frontend.
     """
     project_name = c.project.name if c.project else "—"
+    production_name = c.project.production.name if c.project and getattr(c.project, 'production', None) else "—"
     v_data = vehicle_map.get(c.vehicle_id) or vehicle_map.get(str(c.vehicle_id)) or (vehicle_map.get(int(c.vehicle_id)) if str(c.vehicle_id).isdigit() else {}) or {}
     vehicle_name = v_data.get("name", "—")
     unique_id = v_data.get("unique_id", "—")
@@ -548,6 +569,7 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
         "id": c.id,
         "inspection_id": c.inspection_number or "—",
         "project": project_name,
+        "production": production_name,
         "departure_date": d_date,
         "return_date": r_date,
         "vehicle": {

@@ -12,115 +12,181 @@
     <meta name="apple-mobile-web-app-title" content="Belle Vitesse" />
     <link rel="manifest" href="/static/imgs/favicons/site.webmanifest" />
 
-    <title>Signature — {{ data.inspection_id }} - Belle Vitesse </title>
+    <title>Signature — {{ data.inspection_id }} - Belle Vitesse</title>
+
     <link rel="stylesheet" href="{{ asset_url('css/styles.css') }}">
+    <link rel="stylesheet" href="{{ asset_url('css/admin/admin.css') }}">
     <link rel="stylesheet" href="{{ asset_url('css/' + type + '.css') }}">
-    <link rel="stylesheet" href="{{ asset_url('css/admin/admin-components.css') }}">
-    <script src="https://unpkg.com/lucide@1.48.0/dist/umd/lucide.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
-    <script src="{{ asset_url('js/src/common/signature-pad-controller.js') }}"></script>
-    <script src="{{ asset_url('js/src/ui-utils.js') }}"></script>
+    <link rel="stylesheet" href="{{ asset_url('css/public/public-doc.css') }}">
 </head>
 
-<body>
+<body class="public-doc-container">
 
-    <div class="{{ type }}" id="inspection-sign-container" data-type="{{ type }}" data-token="{{ token }}"
+    <div class="public-doc" id="inspection-sign-container" data-type="{{ type }}" data-token="{{ token }}"
         data-abandon-url="{{ url_for(type + '_abandon', token=token) }}"
         data-resume-url="{{ url_for(type + '_resume', token=token) }}"
         data-already-signed="{{ 'true' if already_signed else 'false' }}">
 
         <!-- ═══════════ HEADER ═══════════ -->
-        <header class="{{ type }}-header">
-            <div class="{{ type }}-header-logo">
+        <header class="public-doc-header">
+            <div class="public-doc-header-logo">
                 <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
                     alt="Belle Vitesse">
             </div>
-            <div class="{{ type }}-header-meta">
-                <strong class="dot-before">Signature du Responsable</strong><br>
-                <span class="{{ type }}-doc-id">{{ data.inspection_id }}</span>
+            <div class="public-doc-header-meta">
+                <strong class="dot-before">Signature du Contrôle Technique</strong><br>
+                <span class="checkout-doc-id">{{ data.inspection_id }}</span><br>
+                <span class="u-text-xxs">Type : {{ 'Check-out (Départ)' if type == 'checkout' else 'Check-in (Retour)'
+                    }}</span>
             </div>
         </header>
 
         {% if already_signed %}
         <!-- ── État : Document déjà signé et validé ─────────────────── -->
-        <section class="{{ type }}-section">
-            <div class="feedback-box feedback-box--success u-block">
-                <i data-lucide="circle-check-big"></i> Ce document d'inspection a été validé et scellé électroniquement.
-            </div>
+        <section class="public-doc-section public-doc-state-banner">
+            <div class="public-doc-status-icon u-text-success">✓</div>
+            <h2 class="public-doc-section-title">Inspection Validée &amp; Scellée</h2>
+            <p class="u-text-muted u-mt-2 u-text-center">
+                Ce document de contrôle technique a été validé et scellé électroniquement.<br>
+                Une copie certifiée conforme a été générée et archivée.
+            </p>
             <div class="u-mt-4 u-text-center">
-                <p class="u-text-sm u-text-muted">
-                    Redirection vers le site public dans <strong id="redirect-counter">10</strong> secondes…
+                <p class="u-text-sm u-text-muted u-mb-3">
+                    Vous pouvez fermer cet onglet ou retourner à la fiche correspondante dans l'ERP.
                 </p>
-                <a href="/" class="{{ type }}-btn {{ type }}-btn--primary u-mt-2">
-                    Accéder au site public
-                </a>
+                <div class="public-doc-sign-actions u-justify-center">
+                    <button type="button" class="public-doc-btn public-doc-btn--primary" id="btn-close-tab">
+                        Fermer cet onglet
+                    </button>
+                    {% if data.id %}
+                    <a href="/admin/{{ 'checkouts' if type == 'checkout' else 'checkins' }}/{{ data.id }}"
+                        class="public-doc-btn public-doc-btn--secondary">
+                        Retourner à la fiche dans l'ERP
+                    </a>
+                    {% endif %}
+                </div>
             </div>
         </section>
         {% else %}
-        <!-- Recap -->
-        <section class="{{ type }}-section">
-            <h2 class="{{ type }}-section-title dot-before">Récapitulatif de l'inspection</h2>
-            <div class="{{ type }}-info-grid">
-                <div class="{{ type }}-info-item">
-                    <span class="{{ type }}-info-label">Véhicule contrôlé</span>
-                    <span class="{{ type }}-info-value">
-                        {{ data.vehicle.fields.name }}
-                        <span class="{{ type }}-doc-id">{{ data.vehicle.fields.unique_id }}</span>
+        <!-- ── Récapitulatif Projet & Période ───────────────────────── -->
+        <section class="public-doc-section">
+            <h2 class="public-doc-section-title dot-before">Projet &amp; Période</h2>
+            <div class="public-doc-info-grid">
+                <div class="public-doc-info-item">
+                    <span class="public-doc-info-label">Projet</span>
+                    <span class="public-doc-info-value u-text-sm">{{ data.project or '—' }}</span>
+                </div>
+                <div class="public-doc-info-item">
+                    <span class="public-doc-info-label">Production</span>
+                    <span class="public-doc-info-value u-text-sm">{{ data.production or '—' }}</span>
+                </div>
+                <div class="public-doc-info-item">
+                    <span class="public-doc-info-label">Période de tournage</span>
+                    <span class="public-doc-info-value u-text-sm">
+                        {% if data.departure_date and data.return_date and data.departure_date != '—' and
+                        data.return_date != '—' %}
+                        Du {{ data.departure_date }} au {{ data.return_date }}
+                        {% elif data.departure_date and data.departure_date != '—' %}
+                        À partir du {{ data.departure_date }}
+                        {% else %}
+                        —
+                        {% endif %}
                     </span>
                 </div>
-                <div class="{{ type }}-info-item">
-                    <span class="{{ type }}-info-label">Production</span>
-                    <span class="{{ type }}-info-value">{{ data.production }}</span>
+                <div class="public-doc-info-item">
+                    <span class="public-doc-info-label">Date du contrôle</span>
+                    <span class="public-doc-info-value u-text-sm">{{ data.control_date or '—' }}</span>
                 </div>
-                <div class="{{ type }}-info-item">
-                    <span class="{{ type }}-info-label">Projet</span>
-                    <span class="{{ type }}-info-value">{{ data.project }}</span>
+                {% if data.controller and data.controller.name and data.controller.name != '—' %}
+                <div class="public-doc-info-item">
+                    <span class="public-doc-info-label">Responsable du contrôle</span>
+                    <span class="public-doc-info-value u-text-sm">{{ data.controller.name }}</span>
                 </div>
-                <div class="{{ type }}-info-item">
-                    <span class="{{ type }}-info-label">Date du contrôle</span>
-                    <span class="{{ type }}-info-value">{{ data.control_date or '—' }}</span>
+                {% endif %}
+            </div>
+
+            <!-- Véhicule contrôlé avec miniature standardisée -->
+            <div class="public-doc-info-grid u-mt-3">
+                <span class="public-doc-info-label u-grid-colspan-2">Véhicule contrôlé</span>
+                <div class="public-doc-info-item public-doc-info-vehicles u-col-span-full">
+                    <div class="public-doc-vehicles-list">
+                        <div class="public-doc-vehicle-card">
+                            <div class="public-doc-vehicle-thumb-wrapper">
+                                {% set thumb = data.vehicle.thumbnail if data.vehicle and data.vehicle.thumbnail else
+                                (data.vehicle.fields.thumbnail if data.vehicle and data.vehicle.fields and
+                                data.vehicle.fields.thumbnail else '') %}
+                                {% if thumb %}
+                                <img src="{{ thumb }}"
+                                    alt="{{ data.vehicle.name or (data.vehicle.fields.name if data.vehicle and data.vehicle.fields else '') }}"
+                                    class="public-doc-vehicle-thumb" loading="lazy">
+                                {% else %}
+                                <div class="public-doc-vehicle-thumb-placeholder" aria-hidden="true">
+                                    <svg class="public-doc-vehicle-placeholder-icon" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+                                        stroke-linejoin="round">
+                                        <path
+                                            d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
+                                        <circle cx="7" cy="17" r="2" />
+                                        <path d="M9 17h6" />
+                                        <circle cx="17" cy="17" r="2" />
+                                    </svg>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="public-doc-vehicle-info">
+                                <span class="public-doc-vehicle-title">{{ data.vehicle.name or (data.vehicle.fields.name
+                                    if data.vehicle and data.vehicle.fields else 'Véhicule') }}</span>
+                                <div class="public-doc-vehicle-ids">
+                                    {% set u_id = data.vehicle.unique_id if data.vehicle and data.vehicle.unique_id else
+                                    (data.vehicle.fields.unique_id if data.vehicle and data.vehicle.fields and
+                                    data.vehicle.fields.unique_id else '') %}
+                                    {% if u_id %}
+                                    <span class="checkout-doc-id">{{ u_id }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- Terms -->
-        <section class="{{ type }}-section">
-            <p class="u-text-left u-text-sm u-text-muted">
-                En signant ci-dessous, je certifie avoir effectué le contrôle technique
-                du véhicule et que les informations renseignées sont exactes.
+        <!-- ── Zone d'engagement & Signature ────────────────────────── -->
+        <section class="public-doc-section">
+            <h2 class="public-doc-section-title dot-before">Certification &amp; Signature</h2>
+            <p class="u-text-left u-text-sm u-text-muted u-mb-3">
+                En apposant votre signature ci-dessous, vous certifiez sur l'honneur l'exactitude des vérifications
+                effectuées
+                sur le matériel, l'intégrité du véhicule inspecté ainsi que la conformité des informations consignées.
             </p>
-        </section>
 
-        <!-- Signature Canvas -->
-        <section class="{{ type }}-section">
-            <div class="{{ type }}-sign-canvas-wrapper">
+            <div class="public-doc-sign-canvas-wrapper u-mt-3">
                 <canvas id="signature-canvas"></canvas>
             </div>
 
             <!-- Actions -->
-            <div class="{{ type }}-sign-actions">
-                <button type="button" class="{{ type }}-btn {{ type }}-btn--secondary" id="btn-clear">
+            <div class="public-doc-sign-actions">
+                <button type="button" class="public-doc-btn public-doc-btn--secondary" id="btn-clear">
                     Effacer
                 </button>
-                <button type="button" class="{{ type }}-btn {{ type }}-btn--primary" id="btn-sign">
+                <button type="button" class="public-doc-btn public-doc-btn--primary" id="btn-sign">
                     Signer le document
                 </button>
             </div>
         </section>
 
-        <!-- Feedback -->
+        <!-- Feedback Box -->
         <div id="feedback" class="feedback-box"></div>
         {% endif %}
 
-        <footer class="{{ type }}-footer u-mt-5">
-            <p>
-                <strong>{{company_name}}</strong><br>
-                Ce document sera scellé électroniquement après validation.
-            </p>
-        </footer>
+        {% include 'public/signature_footer.html' %}
     </div>
 
     <!-- Scripts externes modulaires (sans aucun JS inline) -->
+    <script src="https://unpkg.com/lucide@1.48.0/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="{{ asset_url('js/src/common/signature-pad-controller.js') }}"></script>
+    <script src="{{ asset_url('js/src/ui-utils.js') }}"></script>
     <script src="{{ asset_url('js/src/public/sign-inspection.js') }}"></script>
 </body>
 
