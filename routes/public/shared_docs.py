@@ -65,12 +65,14 @@ def handle_document_download(filepath, as_attachment=None):
                 break
 
     filename = os.path.basename(filepath)
+    ext = os.path.splitext(filepath)[1].lower()
+    is_inline_viewable = ext in {".pdf", ".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg"}
     if as_attachment is None:
-        # Forcer le mode pièce jointe pour les attestations, uploads tiers ou requêtes explicites
+        # Forcer le mode pièce jointe pour les attestations, uploads tiers ou requêtes explicites de téléchargement
         if (
             "attachment" in request.path
             or "insurance" in filepath.lower()
-            or not filepath.lower().endswith(".pdf")
+            or not is_inline_viewable
             or request.args.get("download") == "1"
         ):
             as_attachment = True

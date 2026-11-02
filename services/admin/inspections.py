@@ -521,9 +521,11 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
     vers un dictionnaire prêt pour le frontend.
     """
     project_name = c.project.name if c.project else "—"
-    v_data = vehicle_map.get(c.vehicle_id, {})
+    v_data = vehicle_map.get(c.vehicle_id) or vehicle_map.get(str(c.vehicle_id)) or (vehicle_map.get(int(c.vehicle_id)) if str(c.vehicle_id).isdigit() else {}) or {}
     vehicle_name = v_data.get("name", "—")
     unique_id = v_data.get("unique_id", "—")
+    from models.waiver import _extract_vehicle_thumbnail
+    v_thumb = _extract_vehicle_thumbnail(v_data)
 
     # Utilise la relation standardisée 'controller'
     controller_obj = getattr(c, 'controller', None)
@@ -548,7 +550,16 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
         "project": project_name,
         "departure_date": d_date,
         "return_date": r_date,
-        "vehicle": {"fields": {"name": vehicle_name, "unique_id": unique_id}},
+        "vehicle": {
+            "fields": {
+                "name": vehicle_name,
+                "unique_id": unique_id,
+                "thumbnail": v_thumb,
+            },
+            "name": vehicle_name,
+            "unique_id": unique_id,
+            "thumbnail": v_thumb,
+        },
         "control_date": c_date,
         "status": status_label,
         "raw_status": status_id,
@@ -571,6 +582,14 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
         c.vehicle_id, batch_configs=batch_configs)
 
     data["control_status"] = status_label
+    data["vehicle_thumbnail"] = v_thumb
+    data["vehicles_details"] = [
+        {
+            "name": vehicle_name,
+            "unique_id": unique_id,
+            "thumbnail": v_thumb,
+        }
+    ] if vehicle_name != "—" else []
 
     battery_val = getattr(c, 'battery_level', None)
     data["battery_level"] = battery_val if battery_val is not None else None
@@ -797,3 +816,88 @@ def get_unified_form_context(mode="checkout"):
         "checkpoints": form_checkpoints,
         "checkpoints_config_json": json.dumps(checkpoints_mapping),
     }
+
+
+def get_mock_inspection_preview_data(mode="checkout"):
+    """
+    Génère un jeu de données mock représentatif et réaliste pour la prévisualisation
+    directe des fiches d'inspection (checkout ou checkin) en format HTML/PDF.
+    """
+    is_checkout = (mode == "checkout")
+    doc_id = "BVCO-2026-0042" if is_checkout else "BVCI-2026-0042"
+    thumb_url = "/static/images/airtable/vehicles/recFyGTcZSNKWuOMY/thumbnails/large/ecar-thumbnail.png"
+
+    return {
+        "id": 999999,
+        "inspection_id": doc_id,
+        "project": "Campagne Publicitaire Alpine A110",
+        "production": "Iconoclast Films",
+        "departure_date": "02/11/2026",
+        "return_date": "06/11/2026",
+        "shoot_start": "03/11/2026",
+        "shoot_end": "05/11/2026",
+        "control_date": "02/11/2026",
+        "controller": {
+            "id": 1,
+            "name": "Maxime Congi"
+        },
+        "vehicle": {
+            "fields": {
+                "name": "eCar",
+                "unique_id": "ECAR-FYGT",
+                "thumbnail": thumb_url,
+            },
+            "name": "eCar",
+            "unique_id": "ECAR-FYGT",
+            "thumbnail": thumb_url,
+        },
+        "vehicles_details": [
+            {
+                "name": "eCar",
+                "unique_id": "ECAR-FYGT",
+                "thumbnail": thumb_url,
+            }
+        ],
+        "vehicle_thumbnail": thumb_url,
+        "status": "Signé",
+        "raw_status": "signed",
+        "status_id": "signed",
+        "control_status": "Signé",
+        "ready": "true",
+        "battery_level": 98,
+        "check_items": [
+            {"category": "Sécurité", "label": "Contrôle des freins", "key": "brakes", "type": "status"},
+            {"category": "Sécurité", "label": "Fonctionnement des vitesses", "key": "fonctionnement_vitesses", "type": "status"},
+            {"category": "Sécurité", "label": "Moteur / Assistance électrique", "key": "moteur_assistance", "type": "status"},
+            {"category": "Sécurité", "label": "Test roulage (D / R / N)", "key": "test_roulage", "type": "status"},
+            {"category": "Sécurité", "label": "Serrage des roues", "key": "serrage_roues", "type": "status"},
+            {"category": "Sécurité", "label": "Serrage barres / arceau", "key": "serrage_arceau", "type": "status"},
+            {"category": "Sécurité", "label": "Ceinture de sécurité", "key": "ceinture_securite", "type": "status"},
+            {"category": "Sécurité", "label": "Phares & clignotants", "key": "lights", "type": "status"},
+            {"category": "Équipements", "label": "Niveau de charge batterie", "key": "battery", "type": "value", "unit": "%"},
+            {"category": "Équipements", "label": "Serrage plaques & sièges", "key": "serrage_plaques_sieges", "type": "status"},
+        ],
+        "brakes": "ok",
+        "fonctionnement_vitesses": "ok",
+        "moteur_assistance": "ok",
+        "test_roulage": "ok",
+        "serrage_roues": "ok",
+        "serrage_arceau": "ok",
+        "ceinture_securite": "ok",
+        "lights": "ok",
+        "battery": "98",
+        "battery_valid": True,
+        "serrage_plaques_sieges": "ok",
+        "notes": "Véhicule préparé et vérifié avec soin. Batteries rechargées à 100%. Accessoires de fixation caméra installés conformément aux spécifications.",
+        "exterior_photos": [
+            {"url": "/static/imgs/photos_check_default.png"}
+        ],
+        "interior_photos": [
+            {"url": "/static/imgs/photos_check_default.png"}
+        ],
+        "signed_at": "02/11/2026 à 14:15",
+        "signed_ip": "82.65.120.44",
+        "signer_name": "Laurent Martin",
+        "signer_role": "Directeur de Production",
+    }
+

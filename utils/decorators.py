@@ -74,3 +74,22 @@ def require_roles(*allowed_roles):
             return f(*args, **kwargs)
         return decorated_function
     return decorator
+
+
+def require_preview_access(f):
+    """
+    Autorise l'accès direct en dev/testing sans login pour faciliter l'ajustement CSS/live-reload des PDF.
+    En production, restreint l'accès aux utilisateurs authentifiés avec rôle valide.
+    """
+    import os
+
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if current_app.config.get("DEBUG") or current_app.config.get("TESTING") or os.environ.get("FLASK_ENV") != "production":
+            return f(*args, **kwargs)
+        if session.get("admin_authenticated"):
+            return f(*args, **kwargs)
+        flash("Accès réservé aux administrateurs.", "warning")
+        return redirect(url_for('admin_auth.admin_login', next=request.url))
+    return decorated
+

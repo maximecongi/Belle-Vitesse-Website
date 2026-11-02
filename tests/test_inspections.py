@@ -647,6 +647,140 @@ class InspectionsTest(unittest.TestCase):
             db.session.refresh(ci)
             self.assertIsNone(ci.interior_photos)
 
+    def test_serve_private_file_image_inline_display(self):
+        """Vérifie que les images servies sous /files/ s'affichent inline (dans l'onglet) et non en téléchargement forcé."""
+        from pathlib import Path
+        output_base = Path(self.app.config.get("OUTPUT_FOLDER", os.path.join(self.app.root_path, "output")))
+
+        with self.app.app_context():
+            user, proj = self._create_mock_data()
+
+            with self.client.session_transaction() as sess:
+                sess['admin_authenticated'] = True
+                sess['admin_user_id'] = user.id
+                sess['admin_user_role'] = 'administrator'
+                sess['admin_logged_in'] = True
+
+            test_img_rel = f"test_inline_img_{proj.id}.jpg"
+            test_img_path = output_base / test_img_rel
+            test_img_path.write_bytes(b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x01\x00`\x00`\x00\x00\xff\xdb\x00C\x00")
+
+            try:
+                # 1. Requête standard pour affichage dans un onglet : doit être inline
+                res = self.client.get(f"/files/{test_img_rel}")
+                self.assertEqual(res.status_code, 200)
+                self.assertIn("image/jpeg", res.headers.get("Content-Type", ""))
+                disposition = res.headers.get("Content-Disposition", "")
+                self.assertIn("inline", disposition)
+                self.assertNotIn("attachment", disposition)
+
+                # 2. Requête explicite avec ?download=1 : doit forcer le téléchargement
+                res_download = self.client.get(f"/files/{test_img_rel}?download=1")
+                self.assertEqual(res_download.status_code, 200)
+                disposition_dl = res_download.headers.get("Content-Disposition", "")
+                self.assertIn("attachment", disposition_dl)
+            finally:
+                if test_img_path.exists():
+                    test_img_path.unlink()
+
+    def test_pdf_vehicle_card_rendering_and_no_status_box(self):
+        """Vérifie que le template PDF affiche la carte de véhicule harmonisée CGL et ne contient plus la case État du contrôle."""
+        from flask import render_template
+
+        with self.app.app_context():
+            mock_data = {
+                "inspection_id": "BVCO-TEST-CARD",
+                "control_date": "02/11/2026",
+                "project": "Projet Alpha",
+                "production": "Prod Beta",
+                "departure_date": "02/11/2026",
+                "shoot_start": "03/11/2026",
+                "shoot_end": "05/11/2026",
+                "controller": {"name": "Alex Tech"},
+                "vehicle": {
+                    "fields": {
+                        "name": "eCar",
+                        "unique_id": "ECAR-FYGT",
+                        "thumbnail": "https://example.com/ecar.png"
+                    }
+                },
+                "status_id": "in_progress",
+                "check_items": [],
+                "exterior_photos": [],
+                "interior_photos": [],
+            }
+
+            rendered_co = render_template("pdf/checkout.html", data=mock_data, company_name="Belle Vitesse")
+            # 1. Vérifier la présence de la carte véhicule de type CGL
+            self.assertIn("public-doc-vehicle-card", rendered_co)
+            self.assertIn("public-doc-vehicle-thumb-wrapper", rendered_co)
+            self.assertIn("eCar", rendered_co)
+            self.assertIn("ECAR-FYGT", rendered_co)
+            self.assertIn("checkout-doc-id", rendered_co)
+
+            # 2. Vérifier que la case État du contrôle a bien été supprimée
+            self.assertNotIn("État du contrôle", rendered_co)
+            self.assertNotIn("Etat du contrôle", rendered_co)
+
+            # 3. Vérifier également pour checkin.html
+            rendered_ci = render_template("pdf/checkin.html", data=mock_data, company_name="Belle Vitesse")
+            self.assertIn("public-doc-vehicle-card", rendered_ci)
+            self.assertIn("public-doc-vehicle-thumb-wrapper", rendered_ci)
+            self.assertIn("eCar", rendered_ci)
+            self.assertIn("ECAR-FYGT", rendered_ci)
+            self.assertNotIn("État du contrôle", rendered_ci)
+            self.assertNotIn("Etat du contrôle", rendered_ci)
+
+    def test_checkout_and_checkin_preview_routes(self):
+        """Vérifie le bon fonctionnement des pages de prévisualisation PDF (écran et compilation)."""
+        with self.app.app_context():
+            user, proj = self._create_mock_data()
+
+            # 1. Prévisualisation générale Checkout (mock)
+            res_co_mock = self.client.get("/admin/checkouts/preview")
+            self.assertEqual(res_co_mock.status_code, 200)
+            html_co = res_co_mock.get_data(as_text=True)
+            self.assertIn("pdf-preview-toolbar", html_co)
+            self.assertIn("Fiche de Contrôle au Départ (Check-Out)", html_co)
+            self.assertIn("public-doc-vehicle-card", html_co)
+            self.assertIn("ECAR-FYGT", html_co)
+
+            # 2. Alias direct /preview/pdf/checkout
+            res_alias = self.client.get("/preview/pdf/checkout")
+            self.assertEqual(res_alias.status_code, 200)
+
+            # 3. Prévisualisation avec ID d'un checkout réel
+            co = CheckoutVehicle(
+                project_id=proj.id,
+                controller_id=user.id,
+                vehicle_id="recFyGTcZSNKWuOMY",
+                status="in_progress",
+                inspection_date=date.today(),
+            )
+            db.session.add(co)
+            db.session.commit()
+
+            res_co_real = self.client.get(f"/admin/checkouts/{co.id}/preview")
+            self.assertEqual(res_co_real.status_code, 200)
+            html_real = res_co_real.get_data(as_text=True)
+            self.assertIn(co.inspection_number, html_real)
+            self.assertIn("pdf-preview-toolbar", html_real)
+
+            # 4. Compilation directe en PDF WeasyPrint via ?format=pdf
+            res_pdf = self.client.get(f"/admin/checkouts/{co.id}/preview?format=pdf")
+            self.assertEqual(res_pdf.status_code, 200)
+            self.assertEqual(res_pdf.headers.get("Content-Type"), "application/pdf")
+            self.assertTrue(res_pdf.data.startswith(b"%PDF"))
+
+            # 5. Prévisualisation Checkin (mock et alias)
+            res_ci_mock = self.client.get("/admin/checkins/preview")
+            self.assertEqual(res_ci_mock.status_code, 200)
+            html_ci = res_ci_mock.get_data(as_text=True)
+            self.assertIn("Fiche de Contrôle au Retour (Check-In)", html_ci)
+
+            res_ci_alias = self.client.get("/preview/pdf/checkin")
+            self.assertEqual(res_ci_alias.status_code, 200)
+
 
 if __name__ == "__main__":
     unittest.main()

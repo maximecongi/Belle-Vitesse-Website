@@ -5,6 +5,7 @@ Définit un gestionnaire générique d'enregistrement des routes CRUD d'administ
 """
 
 from flask import (
+    Response,
     abort,
     current_app,
     flash,
@@ -28,7 +29,7 @@ from services.admin import (
     update_checkin,
     update_checkout,
 )
-from utils.decorators import require_roles
+from utils.decorators import require_preview_access, require_roles
 
 
 def _get_admin_inspection_config(mode):
@@ -241,4 +242,94 @@ def register_admin_inspection_routes(app_or_bp, mode):
             flash(
                 f"Erreur technique lors de la création du lien de signature : {str(e)}", "error")
             return redirect(url_for(endpoint_detail, record_id=record_id))
+
+    # 7. Prévisualisation écran et PDF de l'inspection
+    endpoint_preview = f"admin_{mode}_preview"
+
+    @app_or_bp.route(f"{base_path}/preview", methods=["GET"], endpoint=f"{endpoint_preview}_default")
+    @app_or_bp.route(f"{base_path}/<int:record_id>/preview", methods=["GET"], endpoint=endpoint_preview)
+    @app_or_bp.route(f"{base_path}/<string:inspection_code>/preview", methods=["GET"], endpoint=f"{endpoint_preview}_by_code")
+    @require_preview_access
+    def admin_inspection_preview(record_id=None, inspection_code=None):
+        return handle_inspection_preview_route(mode, record_id=record_id, inspection_code=inspection_code)
+
+
+def handle_inspection_preview_route(mode, record_id=None, inspection_code=None):
+    """
+    Gestionnaire unifié pour la prévisualisation écran et PDF des fiches d'inspection (checkout ou checkin).
+    Prend en charge :
+    - Mode interactif HTML A4 avec barre d'outils
+    - Mode compilation PDF direct via ?format=pdf
+    - Résolution par ID entier, code textuel ou repli dynamique vers le dernier enregistrement / mock représentatif.
+    """
+    from models import AppSetting
+    from services.admin.inspections import get_mock_inspection_preview_data
+    from utils.entity_resolvers import resolve_inspection
+
+    cfg = _get_admin_inspection_config(mode)
+    template_pdf = f"pdf/{mode}.html"
+    is_pdf_format = (request.args.get("format") == "pdf")
+
+    # 1. Résolution de l'enregistrement cible
+    target_cand = None
+    target_query = record_id or inspection_code or request.args.get("id") or request.args.get("code") or request.args.get("inspection_id")
+
+    if target_query:
+        target_cand = resolve_inspection(mode, target_query)
+
+    data = None
+    if target_cand and target_cand.deleted_at is None:
+        data = cfg["get_detail_func"](target_cand.id)
+
+    # Si aucun ID ciblé, tenter de charger le dernier enregistrement existant
+    if not data and not target_query:
+        from models import CheckoutVehicle, CheckinVehicle
+        model = CheckoutVehicle if mode == "checkout" else CheckinVehicle
+        last_rec = model.query.filter(model.deleted_at.is_(None)).order_by(model.id.desc()).first()
+        if last_rec:
+            data = cfg["get_detail_func"](last_rec.id)
+
+    # Si toujours aucune donnée, injecter le mock représentatif
+    if not data:
+        data = get_mock_inspection_preview_data(mode=mode)
+
+    company_name = AppSetting.get("company_name", "Belle Vitesse SAS")
+    company_address = AppSetting.get("company_address", "15 Rue de Turbigo, 75002 Paris")
+    doc_id = data.get("inspection_id") or f"BV{'CO' if mode == 'checkout' else 'CI'}-PREVIEW"
+    doc_title = f"Fiche de Contrôle au {'Départ (Check-Out)' if mode == 'checkout' else 'Retour (Check-In)'}"
+
+    hash_val = data.get("hash") or "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    qr_uri = data.get("qr") or "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100' height='100' fill='white'/><rect x='10' y='10' width='25' height='25' fill='black'/><rect x='65' y='10' width='25' height='25' fill='black'/><rect x='10' y='65' width='25' height='25' fill='black'/><rect x='45' y='45' width='10' height='10' fill='black'/></svg>"
+    sig_img = data.get("signature")
+
+    html_content = render_template(
+        template_pdf,
+        data=data,
+        company_name=company_name,
+        company_address=company_address,
+        signature=sig_img,
+        hash=hash_val,
+        qr=qr_uri,
+        verification_url=data.get("verification_url", f"/{mode}/verify/{doc_id}"),
+        is_preview=(not is_pdf_format),
+        doc_preview_title=doc_title,
+        doc_preview_id=doc_id,
+        doc_preview_pdf_url="?format=pdf",
+    )
+
+    if is_pdf_format:
+        from utils.document_utils import render_pdf_from_template
+        pdf_bytes = render_pdf_from_template(
+            html_content=html_content,
+            base_url=current_app.root_path,
+            stylesheets=["css/styles.css", f"css/{mode}.css"],
+        )
+        return Response(
+            pdf_bytes,
+            mimetype="application/pdf",
+            headers={"Content-Disposition": f"inline; filename={mode}_{doc_id}.pdf"}
+        )
+
+    return html_content
+
 

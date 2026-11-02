@@ -1198,9 +1198,13 @@ select.form-input.form-input-sm {
 .admin-btn-seal-yellow {
     width: 100% !important;
     background: #ffc84526 !important;
-    color: #ffc845 !important;
+    color: #ffbf29 !important;
     border-color: #ffc8453d !important;
     transition: all 0.2s !important;
+}
+
+.admin-btn-seal-yellow:hover {
+    background: #ffc8454f !important;
 }
 
 .admin-btn-sign-blue {

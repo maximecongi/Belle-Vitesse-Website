@@ -31,24 +31,9 @@ from services.admin.waivers import (
     send_pilot_waiver,
     countersign_safety_rules,
 )
-from utils.decorators import require_roles
+from utils.decorators import require_roles, require_preview_access
 
 waivers_bp = Blueprint('admin_waivers', __name__, url_prefix='/admin')
-
-
-def require_preview_access(f):
-    """
-    Autorise l'accès direct en dev/testing sans login pour faciliter l'ajustement CSS/live-reload des PDF.
-    En production, restreint l'accès aux utilisateurs authentifiés avec rôle valide.
-    """
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if current_app.config.get("DEBUG") or current_app.config.get("TESTING") or os.environ.get("FLASK_ENV") != "production":
-            return f(*args, **kwargs)
-        if session.get("admin_authenticated"):
-            return f(*args, **kwargs)
-        return redirect(url_for("admin_auth.admin_login", next=request.url))
-    return decorated
 
 
 # ── CONDITIONS GÉNÉRALES DE LOCATION (CGL - BVRA) ────────────────────

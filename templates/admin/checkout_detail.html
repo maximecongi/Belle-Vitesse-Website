@@ -6,6 +6,8 @@
 {% block header_actions %}
 <a href="{{ url_for('admin_checkouts.admin_checkouts_list') }}" class="admin-btn admin-btn-secondary">← Retour à la
     liste</a>
+<a href="{{ url_for('admin_checkouts.admin_checkout_preview', record_id=record_id) }}" target="_blank"
+    class="admin-btn admin-btn-secondary">Aperçu PDF ↗</a>
 <a href="{{ url_for('checkout_verify', inspection_id=data.inspection_id) }}" target="_blank"
     class="admin-btn admin-btn-secondary">Page de vérification ↗</a>
 {% if data.status_id == 'in_progress' %}
@@ -154,7 +156,7 @@
                 <div class="admin-card-title">Photos extérieur</div>
                 <div class="photos-grid">
                     {% for photo in data.exterior_photos %}
-                    <a href="{{ photo.url }}" target="_blank" class="photo-thumbnail-link">
+                    <a href="{{ photo.url }}" target="_blank" rel="noopener noreferrer" class="photo-thumbnail-link" title="Ouvrir la photo dans un nouvel onglet">
                         <img src="{{ photo.url }}" alt="{{ photo.label }}" class="photo-thumbnail-img">
                     </a>
                     {% endfor %}
@@ -167,7 +169,7 @@
                 <div class="admin-card-title">Photos intérieur</div>
                 <div class="photos-grid">
                     {% for photo in data.interior_photos %}
-                    <a href="{{ photo.url }}" target="_blank" class="photo-thumbnail-link">
+                    <a href="{{ photo.url }}" target="_blank" rel="noopener noreferrer" class="photo-thumbnail-link" title="Ouvrir la photo dans un nouvel onglet">
                         <img src="{{ photo.url }}" alt="{{ photo.label }}" class="photo-thumbnail-img">
                     </a>
                     {% endfor %}

@@ -86,6 +86,8 @@ def init_admin_routes(app):
         if bp.name not in app.blueprints:
             app.register_blueprint(bp)
 
+    init_checkouts_routes(app)
+    init_checkins_routes(app)
     init_waivers_routes(app)
 
     @app.errorhandler(CSRFError)
