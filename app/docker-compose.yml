@@ -85,12 +85,31 @@ services:
       - REDIS_DB_KDRIVE=1
       - REDIS_DB_EMAILS=1
       - REDIS_DB_PDF=1
+      - RUN_MIGRATIONS=0
     command: rq worker -u redis://bv_redis:6379/1 sql_logs kdrive emails pdf
     volumes:
       - /srv/bellevitesse/logs:/app/logs
       - /srv/bellevitesse/output:/app/output
     networks:
       - bv_network
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import os, sys, redis
+          from rq import Worker
+          r = redis.Redis(
+              host=os.environ["REDIS_HOST"],
+              port=int(os.environ.get("REDIS_PORT", 6379)),
+              db=int(os.environ.get("REDIS_DB_EMAILS", 1)),
+          )
+          sys.exit(0 if Worker.count(connection=r) else 1)
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
 
   # ───── Serveur MCP Admin (BV-MCP) ─────
   mcp_server:
