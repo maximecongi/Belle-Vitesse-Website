@@ -1,8 +1,8 @@
 {% import "public/verification_macros.html" as vmacro %}
 <!DOCTYPE html>
 <html lang="fr">
-{% set rb = route_base or (config.route_base if (config is defined and config is mapping and 'route_base' in config)
-else 'checkout') %}
+{% set is_checkout = (route_base == 'checkout' or (config is defined and config is mapping and config.get('route_base') == 'checkout') or (data.inspection_id and data.inspection_id.startswith('BVCO'))) %}
+{% set doc_type_label = "Fiche Check-Out" if is_checkout else "Fiche Check-In" %}
 
 <head>
     <meta charset="UTF-8">
@@ -15,68 +15,80 @@ else 'checkout') %}
     <meta name="apple-mobile-web-app-title" content="Belle Vitesse" />
     <link rel="manifest" href="/static/imgs/favicons/site.webmanifest" />
 
-    <title>Vérification — Belle Vitesse</title>
+    <title>Vérification {{ doc_type_label }} — Belle Vitesse</title>
     <link rel="stylesheet" href="{{ asset_url('css/styles.css') }}">
-    <link rel="stylesheet" href="{{ asset_url('css/' + rb + '.css') }}">
+    <link rel="stylesheet" href="{{ asset_url('css/checkout.css') }}">
     <link rel="stylesheet" href="{{ asset_url('css/verification.css') }}">
 </head>
 
 <body>
 
-    <div class="{{ rb }}">
+    <div class="checkout">
 
         <!-- ═══════════ HEADER ═══════════ -->
-        <header class="{{ rb }}-header">
-            <div class="{{ rb }}-header-logo">
+        <header class="checkout-header">
+            <div class="checkout-header-logo">
                 <img src="{{ url_for('static', filename='imgs/logos_and_name/noir-fond-transparent.png') }}"
                     alt="Belle Vitesse">
             </div>
-            <div class="{{ rb }}-header-meta">
-                <strong class="dot-before">Vérification de Document</strong><br>
-                <span class="{{ rb }}-doc-id">{{ data.inspection_id or '—' }}</span>
+            <div class="checkout-header-meta">
+                <strong class="dot-before">Vérification {{ doc_type_label }}</strong><br>
+                <span class="checkout-doc-id">{{ inspection_id or data.inspection_id or '—' }}</span>
+                {% if signed_doc and signed_doc.version %}
+                <div class="u-mt-1">
+                    <span class="badge-pill u-bg-neutral-light u-text-neutral u-text-xs">
+                        Version {{ signed_doc.version }}
+                    </span>
+                </div>
+                {% endif %}
             </div>
         </header>
 
-
         <!-- ── Badge sceau de données ── -->
-        {{ vmacro.seal_banner(seal_valid, ok_label="Données certifiées & intactes", error_label="Sceau invalide —
-        données altérées", ok_hint="Le sceau cryptographique correspond. Les données n'ont pas été modifiées depuis la
-        signature.", error_hint="Le sceau ne correspond pas à l'enregistrement. Les données peuvent avoir été modifiées
-        après signature.") }}
+        {{ vmacro.seal_banner(seal_valid, ok_label="Données Scellées & Intactes", error_label="Sceau Invalide — Données Altérées", ok_hint="Le sceau cryptographique correspond. Les données du contrôle n'ont pas été modifiées depuis la signature.", error_hint="Le sceau ne correspond pas à l'enregistrement original. Le document ou ses données ont pu être altérés.") }}
 
         <!-- ── Badge résultat vérification PDF (après upload) ── -->
         {{ vmacro.pdf_verification_result(pdf_valid, pdf_error) }}
 
         <!-- ── Données scellées ── -->
-        <section class="{{ rb }}-section">
-            <h2 class="{{ rb }}-section-title dot-before">Données Scellées</h2>
-            <div class="{{ rb }}-info-grid">
-                <div class="{{ rb }}-info-item">
-                    <span class="{{ rb }}-info-label">Véhicule contrôlé</span>
-                    <span class="{{ rb }}-info-value">
-                        {% if data.vehicle %}
-                        {{ data.vehicle.fields.name }}
-                        {% if data.vehicle.fields.unique_id %}
-                        <span class="{{ rb }}-doc-id">{{ data.vehicle.fields.unique_id }}</span>
+        <section class="checkout-section">
+            <h2 class="checkout-section-title dot-before">Données Scellées</h2>
+            <div class="checkout-info-grid">
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Véhicule contrôlé</span>
+                    <span class="checkout-info-value">
+                        {% if data.vehicle and data.vehicle.fields is defined %}
+                            {{ data.vehicle.fields.name or data.vehicle_name or '—' }}
+                            {% if data.vehicle.fields.unique_id %}
+                            <span class="checkout-doc-id">{{ data.vehicle.fields.unique_id }}</span>
+                            {% endif %}
+                        {% elif data.vehicle_name %}
+                            {{ data.vehicle_name }}
+                            {% if data.vehicle_id %}
+                            <span class="checkout-doc-id">{{ data.vehicle_id }}</span>
+                            {% endif %}
+                        {% elif data.vehicle is string %}
+                            {{ data.vehicle }}
+                        {% else %}
+                            —
                         {% endif %}
-                        {% else %}—{% endif %}
                     </span>
                 </div>
-                <div class="{{ rb }}-info-item">
-                    <span class="{{ rb }}-info-label">Production</span>
-                    <span class="{{ rb }}-info-value">{{ data.production }}</span>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Production</span>
+                    <span class="checkout-info-value">{{ data.production_name or data.production or '—' }}</span>
                 </div>
-                <div class="{{ rb }}-info-item">
-                    <span class="{{ rb }}-info-label">Projet</span>
-                    <span class="{{ rb }}-info-value">{{ data.project }}</span>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Projet</span>
+                    <span class="checkout-info-value">{{ data.project_name or data.project or project_name or '—' }}</span>
                 </div>
-                <div class="{{ rb }}-info-item">
-                    <span class="{{ rb }}-info-label">Date de contrôle</span>
-                    <span class="{{ rb }}-info-value">{{ data.control_date }}</span>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Date du contrôle</span>
+                    <span class="checkout-info-value">{{ (data.control_date or '—')|date_numeric }}</span>
                 </div>
-                <div class="{{ rb }}-info-item">
-                    <span class="{{ rb }}-info-label">Responsable</span>
-                    <span class="{{ rb }}-info-value">
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Responsable du contrôle</span>
+                    <span class="checkout-info-value">
                         {% if data.controller and data.controller.name is defined %}
                         {{ data.controller.name }}
                         {% else %}
@@ -84,31 +96,32 @@ else 'checkout') %}
                         {% endif %}
                     </span>
                 </div>
-                {% if data.signed_at %}
-                <div class="{{ rb }}-info-item">
-                    <span class="{{ rb }}-info-label">Signé le</span>
-                    <span class="{{ rb }}-info-value">{{ data.signed_at }}</span>
+                <div class="checkout-info-item">
+                    <span class="checkout-info-label">Date &amp; Heure de Signature</span>
+                    <span class="checkout-info-value">
+                        {% if data.signed_at and data.signed_at.strftime is defined %}
+                        {{ data.signed_at.strftime('%d/%m/%Y %H:%M') }}
+                        {% elif signed_doc and signed_doc.signed_at %}
+                        {{ signed_doc.signed_at.strftime('%d/%m/%Y %H:%M') }}
+                        {% elif data.signed_at %}
+                        {{ data.signed_at }}
+                        {% else %}
+                        —
+                        {% endif %}
+                    </span>
                 </div>
-                {% endif %}
             </div>
         </section>
 
-        <!-- ── Empreinte numérique ── -->
-        {% if data.hash %}
-        {{ vmacro.crypto_fingerprints(data.hash, signed_doc.pdf_file_hash if signed_doc else None, title="Sécurité Numérique", pdf_storage_status=pdf_storage_status) }}
-        {% endif %}
+        <!-- ── Empreinte Cryptographique ── -->
+        {{ vmacro.crypto_fingerprints(document_hash or data.hash, signed_doc.pdf_file_hash if signed_doc else None, title="Sceau Cryptographique & Horodatage", pdf_storage_status=pdf_storage_status, parent_hash=parent_hash) }}
 
         <!-- ═══════════ UPLOAD VÉRIFICATION PDF ═══════════ -->
-        {{ vmacro.pdf_upload_verifier(has_pdf_hash,
-        old_notice="Ce document a été signé avant l'introduction de la vérification par empreinte PDF. Seul le sceau de
-        données est disponible.") }}
+        {{ vmacro.pdf_upload_verifier(has_pdf_hash, old_notice="Ce document a été signé avant l'enregistrement de l'empreinte de fichier PDF. Seul le sceau de données est actif.") }}
 
         <!-- ═══════════ FOOTER ═══════════ -->
-        <footer class="{{ rb }}-footer verify-footer">
-            <p>
-                <strong>{{company_name}}</strong><br>
-                {{company_address}}
-            </p>
+        <footer class="checkout-footer verify-footer">
+            <p><strong>{{ company_name or 'Belle Vitesse SAS' }}</strong> — {{ company_address or '39 rue Maurice Gunsbourg, 94200 Ivry-sur-Seine' }}</p>
         </footer>
 
     </div>
