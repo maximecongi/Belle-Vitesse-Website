@@ -781,6 +781,39 @@ class InspectionsTest(unittest.TestCase):
             res_ci_alias = self.client.get("/preview/pdf/checkin")
             self.assertEqual(res_ci_alias.status_code, 200)
 
+            # 6. Vérification du bouton Aperçu PDF dans la vue de détail (présent hors production)
+            with self.client.session_transaction() as sess:
+                sess["admin_authenticated"] = True
+                sess["admin_user_id"] = user.id
+                sess["admin_user_role"] = "super administrateur"
+            detail_res = self.client.get(f"/admin/checkouts/{co.id}")
+            self.assertEqual(detail_res.status_code, 200)
+            self.assertIn("Aperçu PDF ↗", detail_res.get_data(as_text=True))
+
+            # 7. En production, toutes les routes preview retournent 404 et le bouton d'aperçu est masqué
+            prev_env = os.environ.get("FLASK_ENV")
+            prev_config = self.app.config.get("FLASK_ENV")
+            try:
+                os.environ["FLASK_ENV"] = "production"
+                self.app.config["FLASK_ENV"] = "production"
+
+                self.assertEqual(self.client.get("/admin/checkouts/preview").status_code, 404)
+                self.assertEqual(self.client.get("/preview/pdf/checkout").status_code, 404)
+                self.assertEqual(self.client.get(f"/admin/checkouts/{co.id}/preview").status_code, 404)
+                self.assertEqual(self.client.get(f"/admin/checkouts/{co.id}/preview?format=pdf").status_code, 404)
+                self.assertEqual(self.client.get("/admin/checkins/preview").status_code, 404)
+                self.assertEqual(self.client.get("/preview/pdf/checkin").status_code, 404)
+
+                detail_res_prod = self.client.get(f"/admin/checkouts/{co.id}")
+                self.assertEqual(detail_res_prod.status_code, 200)
+                self.assertNotIn("Aperçu PDF ↗", detail_res_prod.get_data(as_text=True))
+            finally:
+                if prev_env is not None:
+                    os.environ["FLASK_ENV"] = prev_env
+                else:
+                    os.environ.pop("FLASK_ENV", None)
+                self.app.config["FLASK_ENV"] = prev_config
+
     def test_signed_document_verification_url_and_detail_button(self):
         """Vérifie que get_signed_document_info génère l'URL de vérification complète avec token et version."""
         from models import CheckoutSignedDocument

@@ -6,8 +6,10 @@
 {% block header_actions %}
 <a href="{{ url_for('admin_checkouts.admin_checkouts_list') }}" class="admin-btn admin-btn-secondary">← Retour à la
     liste</a>
+{% if config.FLASK_ENV != 'production' %}
 <a href="{{ url_for('admin_checkouts.admin_checkout_preview', record_id=record_id) }}" target="_blank"
     class="admin-btn admin-btn-secondary">Aperçu PDF ↗</a>
+{% endif %}
 {% if data.verification_url %}
 <a href="{{ data.verification_url }}" target="_blank"
     class="admin-btn admin-btn-secondary">Page de vérification ↗</a>

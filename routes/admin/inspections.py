@@ -262,6 +262,9 @@ def handle_inspection_preview_route(mode, record_id=None, inspection_code=None):
     - Mode compilation PDF direct via ?format=pdf
     - Résolution par ID entier, code textuel ou repli dynamique vers le dernier enregistrement / mock représentatif.
     """
+    import os
+    if os.getenv("FLASK_ENV") == "production" or current_app.config.get("FLASK_ENV") == "production":
+        abort(404)
     from models import AppSetting
     from services.admin.inspections import get_mock_inspection_preview_data
     from utils.entity_resolvers import resolve_inspection

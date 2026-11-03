@@ -79,17 +79,16 @@ def require_roles(*allowed_roles):
 def require_preview_access(f):
     """
     Autorise l'accès direct en dev/testing sans login pour faciliter l'ajustement CSS/live-reload des PDF.
-    En production, restreint l'accès aux utilisateurs authentifiés avec rôle valide.
+    En production, les routes de prévisualisation PDF sont strictement indisponibles (erreur 404).
     """
     import os
+    from flask import abort
 
     @wraps(f)
     def decorated(*args, **kwargs):
-        if current_app.config.get("DEBUG") or current_app.config.get("TESTING") or os.environ.get("FLASK_ENV") != "production":
-            return f(*args, **kwargs)
-        if session.get("admin_authenticated"):
-            return f(*args, **kwargs)
-        flash("Accès réservé aux administrateurs.", "warning")
-        return redirect(url_for('admin_auth.admin_login', next=request.url))
+        # Sécurité : strictement indisponible en production (erreur 404)
+        if os.getenv("FLASK_ENV") == "production" or current_app.config.get("FLASK_ENV") == "production":
+            abort(404)
+        return f(*args, **kwargs)
     return decorated
 

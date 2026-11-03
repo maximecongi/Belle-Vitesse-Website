@@ -446,7 +446,7 @@ class CglComprehensiveTest(unittest.TestCase):
         resp_safety_admin = self.client.get("/admin/safety-rules/preview")
         self.assertEqual(resp_safety_admin.status_code, 200)
         safety_html = resp_safety_admin.get_data(as_text=True)
-        self.assertIn("Règles de Sécurité Universelles", safety_html)
+        self.assertIn("Règles de Sécurité", safety_html)
         self.assertIn("Alexandre Mercier", safety_html)
         self.assertIn("pdf-preview-toolbar", safety_html)
         self.assertIn("Format A4 (210 × 297 mm)", safety_html)
@@ -457,6 +457,34 @@ class CglComprehensiveTest(unittest.TestCase):
 
         resp_safety_direct = self.client.get("/preview/pdf/safety-rules")
         self.assertEqual(resp_safety_direct.status_code, 200)
+
+        # 3. Prévisualisation directe Attestation Pilote BVPA (mock)
+        resp_pilot_admin = self.client.get("/admin/pilot-waivers/preview")
+        self.assertEqual(resp_pilot_admin.status_code, 200)
+        self.assertIn("pdf-preview-toolbar", resp_pilot_admin.get_data(as_text=True))
+
+        resp_pilot_direct = self.client.get("/preview/pdf/pilot-waiver")
+        self.assertEqual(resp_pilot_direct.status_code, 200)
+
+        # 4. En production, toutes les routes de prévisualisation PDF doivent retourner 404
+        prev_env = os.environ.get("FLASK_ENV")
+        prev_config = self.app.config.get("FLASK_ENV")
+        try:
+            os.environ["FLASK_ENV"] = "production"
+            self.app.config["FLASK_ENV"] = "production"
+
+            self.assertEqual(self.client.get("/admin/cgl/preview").status_code, 404)
+            self.assertEqual(self.client.get("/preview/pdf/cgl").status_code, 404)
+            self.assertEqual(self.client.get("/admin/safety-rules/preview").status_code, 404)
+            self.assertEqual(self.client.get("/preview/pdf/safety-rules").status_code, 404)
+            self.assertEqual(self.client.get("/admin/pilot-waivers/preview").status_code, 404)
+            self.assertEqual(self.client.get("/preview/pdf/pilot-waiver").status_code, 404)
+        finally:
+            if prev_env is not None:
+                os.environ["FLASK_ENV"] = prev_env
+            else:
+                os.environ.pop("FLASK_ENV", None)
+            self.app.config["FLASK_ENV"] = prev_config
 
 
 if __name__ == "__main__":
