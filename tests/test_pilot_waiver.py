@@ -498,6 +498,46 @@ class PilotWaiverComprehensiveTest(unittest.TestCase):
             self.assertIsNotNone(pw)
             self.assertEqual(pw.vehicles, "e-Car High Speed")
 
+    def test_09_pilot_waiver_pdf_render_vehicle_card_public_doc(self):
+        """Vérifie que pilot_waiver.html exploite la macro public-doc-vehicle-card et non les anciennes classes bvpa."""
+        from flask import render_template
+        with self.app.app_context(), self.app.test_request_context("/"):
+            proj, _, _, _, _ = self._create_mock_project()
+            create_pilot_waiver(
+                project_id=proj.id,
+                signer_first_name="Max",
+                signer_last_name="Verstappen",
+                signer_email="max@redbull.com",
+                vehicles="eCar Twizy"
+            )
+            pw = PilotWaiver.query.filter_by(project_id=proj.id).first()
+            vehicles_details = [
+                {
+                    "name": "eCar Twizy",
+                    "unique_id": "ECAR-01",
+                    "thumbnail": "/static/uploads/vehicles/ecar.jpg"
+                }
+            ]
+            html = render_template(
+                "pdf/pilot_waiver.html",
+                waiver=pw,
+                vehicles_details=vehicles_details,
+                company_name="Belle Vitesse"
+            )
+
+            # Vérification de l'adoption du Design System .public-doc
+            self.assertIn("public-doc-vehicles-list", html)
+            self.assertIn("public-doc-vehicle-card", html)
+            self.assertIn("public-doc-vehicle-thumb-wrapper", html)
+            self.assertIn("eCar Twizy", html)
+            self.assertIn("ECAR-01", html)
+            self.assertIn("checkout-doc-id", html)
+
+            # Vérification de l'absence des anciennes classes spécifiques .bvpa-vehicle-*
+            self.assertNotIn("bvpa-vehicles-grid", html)
+            self.assertNotIn("bvpa-vehicle-card", html)
+            self.assertNotIn("bvpa-vehicle-thumb", html)
+
 
 if __name__ == "__main__":
     unittest.main()

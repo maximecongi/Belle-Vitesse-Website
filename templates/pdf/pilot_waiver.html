@@ -65,27 +65,8 @@ context_info="Projet : " ~ waiver.display_project_name ~ " — Production : " ~ 
 <!-- ═══════════ VÉHICULES CONFIÉS AU PILOTE ═══════════ -->
 <section class="pdf-section bvpa-vehicles-section">
     <h2 class="pdf-section-title dot-before">Véhicules Techniques Mobilisés &amp; Confiés</h2>
-    {% if vehicles_details %}
-    <div class="bvpa-vehicles-grid">
-        {% for v in vehicles_details %}
-        <div class="bvpa-vehicle-card">
-            {% if v.thumbnail %}
-            <img src="{{ v.thumbnail }}" alt="{{ v.name }}" class="bvpa-vehicle-thumb">
-            {% else %}
-            <div class="bvpa-vehicle-thumb-placeholder">BV</div>
-            {% endif %}
-            <div class="bvpa-vehicle-info">
-                <div class="bvpa-vehicle-name">{{ v.name }}</div>
-                {% if v.unique_id %}
-                <div class="checkout-doc-id">{{ v.unique_id }}</div>
-                {% endif %}
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <p class="u-text-sm u-text-muted">Parc de véhicules techniques Belle Vitesse mobilisé sur le tournage.</p>
-    {% endif %}
+    {% set target_vehicles = vehicles_details if (vehicles_details is defined and vehicles_details) else (waiver.vehicles_details if waiver else []) %}
+    {{ pdf_vehicles_list(target_vehicles, empty_text="Parc de véhicules techniques Belle Vitesse mobilisé sur le tournage.") }}
 </section>
 
 <!-- ═══════════ CLAUSES & ENGAGEMENTS DU PILOTE ═══════════ -->

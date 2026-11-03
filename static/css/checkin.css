@@ -700,7 +700,7 @@ body {
 }
 
 .public-doc-vehicle-card {
-    display: inline-flex;
+    display: flex;
     flex-direction: row;
     align-items: center;
     gap: 10pt;

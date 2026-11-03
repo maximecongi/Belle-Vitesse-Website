@@ -1,7 +1,7 @@
 {#
-    templates/pdf/macros.html
-    Bibliothèque de macros Jinja pour l'ensemble des documents PDF et aperçus écran de Belle Vitesse.
-    Conformité intégrale et stricte avec le style CGL originel Belle Vitesse.
+templates/pdf/macros.html
+Bibliothèque de macros Jinja pour l'ensemble des documents PDF et aperçus écran de Belle Vitesse.
+Conformité intégrale et stricte avec le style CGL originel Belle Vitesse.
 #}
 
 {# ── 1. Barre de Prévisualisation Écran (Toolbar A4 CGL) ─────────────────── #}
@@ -78,7 +78,7 @@
 
 {# ── 4. Titre de Section CGL (avec carré or) ──────────────────────────────── #}
 {% macro pdf_section_title(title, id=None) %}
-<h2 class="cgl-section-title pdf-section-title"{% if id %} id="{{ id }}"{% endif %}>{{ title }}</h2>
+<h2 class="cgl-section-title pdf-section-title" {% if id %} id="{{ id }}" {% endif %}>{{ title }}</h2>
 {% endmacro %}
 
 
@@ -112,20 +112,20 @@
 
 {# ── 7. Bloc de Scellement & Signature Électronique (Exact CGL) ───────────── #}
 {% macro pdf_signature_and_seal(
-    doc_id,
-    signer_name=None,
-    signer_role=None,
-    signed_at=None,
-    ip=None,
-    signature_img=None,
-    is_signed=False,
-    hash_code=None,
-    qr_code_uri=None,
-    verification_url=None,
-    seal_title='Acceptation sans réserve & Scellement Électronique',
-    legal_mention=None,
-    project_name=None,
-    custom_meta_lines=None
+doc_id,
+signer_name=None,
+signer_role=None,
+signed_at=None,
+ip=None,
+signature_img=None,
+is_signed=False,
+hash_code=None,
+qr_code_uri=None,
+verification_url=None,
+seal_title='Acceptation sans réserve & Scellement Électronique',
+legal_mention=None,
+project_name=None,
+custom_meta_lines=None
 ) %}
 {% set effective_qr = qr_code_uri or qr or qr_data_uri %}
 {% set effective_url = verification_url or target_url %}
@@ -164,7 +164,8 @@
             {% endif %}
             {% endfor %}
             {% endif %}
-            <div><strong>Signé le :</strong> {{ signed_at or 'En attente' }}{% if signed_at and not ('UTC' in (signed_at|string)) %} UTC{% endif %}</div>
+            <div><strong>Signé le :</strong> {{ signed_at or 'En attente' }}{% if signed_at and not ('UTC' in
+                (signed_at|string)) %} UTC{% endif %}</div>
             {% if ip %}<div><strong>Adresse IP :</strong> {{ ip }}</div>{% endif %}
             {% if hash_code %}
             <div><strong>Empreinte numérique HMAC-SHA256 :</strong>
@@ -190,32 +191,32 @@
 
 {# ── 8. Bloc de Signature Contradictoire & Scellement (2 Signatures) ──────── #}
 {% macro pdf_contradictory_signatures_and_seal(
-    doc_id,
-    signer1_name=None,
-    signer1_role=None,
-    signer1_img=None,
-    signer2_name=None,
-    signer2_role=None,
-    signer2_img=None,
-    bv_name=None,
-    bv_role=None,
-    bv_signed_at=None,
-    bv_signature_img=None,
-    bv_is_signed=None,
-    prod_name=None,
-    prod_role=None,
-    prod_signed_at=None,
-    prod_signature_img=None,
-    prod_is_signed=None,
-    signed_at=None,
-    ip=None,
-    hash_code=None,
-    qr_code_uri=None,
-    verification_url=None,
-    seal_title='Scellement Électronique & Signature Contradictoire',
-    legal_mention=None,
-    project_name=None,
-    custom_meta_lines=None
+doc_id,
+signer1_name=None,
+signer1_role=None,
+signer1_img=None,
+signer2_name=None,
+signer2_role=None,
+signer2_img=None,
+bv_name=None,
+bv_role=None,
+bv_signed_at=None,
+bv_signature_img=None,
+bv_is_signed=None,
+prod_name=None,
+prod_role=None,
+prod_signed_at=None,
+prod_signature_img=None,
+prod_is_signed=None,
+signed_at=None,
+ip=None,
+hash_code=None,
+qr_code_uri=None,
+verification_url=None,
+seal_title='Scellement Électronique & Signature Contradictoire',
+legal_mention=None,
+project_name=None,
+custom_meta_lines=None
 ) %}
 {% set s1_name = bv_name or signer1_name or 'Prestataire' %}
 {% set s1_role = bv_role or signer1_role or 'Belle Vitesse' %}
@@ -223,7 +224,9 @@
 {% set s2_name = prod_name or signer2_name or 'Locataire' %}
 {% set s2_role = prod_role or signer2_role or 'Production / Client' %}
 {% set s2_img = prod_signature_img or signer2_img %}
-{% set eff_signed_at = signed_at or (prod_signed_at.strftime('%d/%m/%Y à %H:%M') if (prod_signed_at and prod_signed_at.strftime is defined) else prod_signed_at) or (bv_signed_at.strftime('%d/%m/%Y à %H:%M') if (bv_signed_at and bv_signed_at.strftime is defined) else bv_signed_at) %}
+{% set eff_signed_at = signed_at or (prod_signed_at.strftime('%d/%m/%Y à %H:%M') if (prod_signed_at and
+prod_signed_at.strftime is defined) else prod_signed_at) or (bv_signed_at.strftime('%d/%m/%Y à %H:%M') if (bv_signed_at
+and bv_signed_at.strftime is defined) else bv_signed_at) %}
 {% set effective_qr = qr_code_uri or qr or qr_data_uri %}
 {% set effective_url = verification_url or target_url %}
 <section class="cgl-seal-container pdf-seal-container">
@@ -261,7 +264,8 @@
             {% endif %}
             {% endfor %}
             {% endif %}
-            <div><strong>Horodatage :</strong> {{ eff_signed_at or 'En attente' }}{% if eff_signed_at and not ('UTC' in (eff_signed_at|string)) %} UTC{% endif %}</div>
+            <div><strong>Horodatage :</strong> {{ eff_signed_at or 'En attente' }}{% if eff_signed_at and not ('UTC' in
+                (eff_signed_at|string)) %} UTC{% endif %}</div>
             {% if ip %}<div><strong>Adresse IP :</strong> {{ ip }}</div>{% endif %}
             {% if hash_code %}
             <div><strong>Empreinte SHA256 :</strong>
@@ -297,7 +301,8 @@
 
 
 {# ── 9. Pied de Page Écran CGL (Masqué à l'impression) ───────────────────── #}
-{% macro pdf_footer(left_text=None, right_text="Document A4 officiel", company_name=None, note=None, company_address=None, siret=None, email=None, phone=None, extra_class="") %}
+{% macro pdf_footer(left_text=None, right_text="Document A4 officiel", company_name=None, note=None,
+company_address=None, siret=None, email=None, phone=None, extra_class="") %}
 <div class="cgl-screen-footer pdf-screen-footer{% if extra_class %} {{ extra_class }}{% endif %}">
     <span>{{ left_text or note or ((company_name or 'Belle Vitesse') ~ ' — Document officiel') }}</span>
     <span>{{ right_text }}</span>
@@ -308,4 +313,82 @@
 {# ── 10. Badges & Pastilles ──────────────────────────────────────────────── #}
 {% macro pdf_badge(text, variant='neutral') %}
 <span class="pdf-badge pdf-badge--{{ variant }}">{{ text }}</span>
+{% endmacro %}
+
+
+{# ── 11. Liste des Véhicules Contrôlés / Mobilisés (Design System .public-doc) ── #}
+{% macro pdf_vehicles_list(vehicles, empty_text=None) %}
+{% if vehicles and vehicles|length > 0 %}
+<div class="public-doc-vehicles-list">
+    {% for v in vehicles %}
+    <div class="public-doc-vehicle-card">
+        <div class="public-doc-vehicle-thumb-wrapper">
+            {% if v.thumbnail %}
+            <img src="{{ v.thumbnail }}" alt="{{ v.name or 'Véhicule' }}" class="public-doc-vehicle-thumb"
+                loading="lazy">
+            {% else %}
+            <div class="public-doc-vehicle-thumb-placeholder" aria-hidden="true">
+                <svg class="public-doc-vehicle-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                        d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
+                    <circle cx="7" cy="17" r="2" />
+                    <path d="M9 17h6" />
+                    <circle cx="17" cy="17" r="2" />
+                </svg>
+            </div>
+            {% endif %}
+        </div>
+        <div class="public-doc-vehicle-info">
+            <span class="public-doc-vehicle-title">{{ v.name or '—' }}</span>
+            {% if v.unique_id and v.unique_id != '—' %}
+            <div class="public-doc-vehicle-ids">
+                <span class="checkout-doc-id">{{ v.unique_id }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% elif empty_text %}
+<p class="u-text-sm u-text-muted">{{ empty_text }}</p>
+{% endif %}
+{% endmacro %}
+
+
+{# ── 11. Liste des Véhicules Contrôlés / Mobilisés (Design System .public-doc) ── #}
+{% macro pdf_vehicles_list(vehicles, empty_text=None) %}
+{% if vehicles and vehicles|length > 0 %}
+<div class="public-doc-vehicles-list">
+    {% for v in vehicles %}
+    <div class="public-doc-vehicle-card">
+        <div class="public-doc-vehicle-thumb-wrapper">
+            {% if v.thumbnail %}
+            <img src="{{ v.thumbnail }}" alt="{{ v.name or 'Véhicule' }}" class="public-doc-vehicle-thumb" loading="lazy">
+            {% else %}
+            <div class="public-doc-vehicle-thumb-placeholder" aria-hidden="true">
+                <svg class="public-doc-vehicle-placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
+                    <circle cx="7" cy="17" r="2" />
+                    <path d="M9 17h6" />
+                    <circle cx="17" cy="17" r="2" />
+                </svg>
+            </div>
+            {% endif %}
+        </div>
+        <div class="public-doc-vehicle-info">
+            <span class="public-doc-vehicle-title">{{ v.name or '—' }}</span>
+            {% if v.unique_id and v.unique_id != '—' %}
+            <div class="public-doc-vehicle-ids">
+                <span class="checkout-doc-id">{{ v.unique_id }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% elif empty_text %}
+<p class="u-text-sm u-text-muted">{{ empty_text }}</p>
+{% endif %}
 {% endmacro %}
