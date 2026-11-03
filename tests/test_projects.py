@@ -652,8 +652,8 @@ class ProjectsTest(unittest.TestCase):
             self.assertFalse(local_path.exists())
 
     def test_admin_projects_list_render_with_bvsr_and_cgl(self):
-        """Vérifie que la page /admin/projects se rend sans aucune erreur Jinja avec BVSR et BVRA."""
-        from models import CglWaiver, SafetyRulesWaiver
+        """Vérifie que la page /admin/projects se rend sans aucune erreur Jinja avec BVSR, BVPA et BVRA."""
+        from models import CglWaiver, SafetyRulesWaiver, PilotWaiver
         with self.app.app_context():
             user = User(firstname="Admin", lastname="User", mail="admin_render@example.com", role="administrator")
             prod = Production(name="Production Test Render")
@@ -666,22 +666,33 @@ class ProjectsTest(unittest.TestCase):
 
             cgl = CglWaiver(project_id=proj.id, waiver_id="BVRA-TEST01", status="to_send")
             sr1 = SafetyRulesWaiver(project_id=proj.id, waiver_id="BVSR-TEST01", signer_role="pilot", signer_first_name="Romain", status="signed", signed_pdf_path="waivers/safety_rules/BVSR-TEST01.pdf")
-            db.session.add_all([cgl, sr1])
+            pw1 = PilotWaiver(project_id=proj.id, waiver_id="BVPA-TEST01", signer_role="pilot", signer_first_name="Romain", status="signed", signed_pdf_path="waivers/pilot_waiver/BVPA-TEST01.pdf")
+            db.session.add_all([cgl, sr1, pw1])
             db.session.commit()
 
-            with self.client.session_transaction() as sess:
-                sess["admin_authenticated"] = True
-                sess["admin_user_id"] = user.id
-                sess["admin_user_role"] = user.role
-                sess["admin_user_email"] = user.mail
+            try:
+                with self.client.session_transaction() as sess:
+                    sess["admin_authenticated"] = True
+                    sess["admin_user_id"] = user.id
+                    sess["admin_user_role"] = user.role
+                    sess["admin_user_email"] = user.mail
 
-            res = self.client.get("/admin/projects")
-            self.assertEqual(res.status_code, 200)
-            html = res.data.decode("utf-8")
-            self.assertIn("CGL & Sécurité", html)
-            self.assertIn("CGL :", html)
-            self.assertIn("BVSR :", html)
-            self.assertIn("1/1 signé", html)
+                res = self.client.get(f"/admin/projects?q={proj.name}")
+                self.assertEqual(res.status_code, 200)
+                html = res.data.decode("utf-8")
+                self.assertIn("CGL & Sécurité", html)
+                self.assertIn("CGL :", html)
+                self.assertIn("BVSR", html)
+                self.assertIn("BVPA :", html)
+                self.assertIn("1/1 signé", html)
+            finally:
+                db.session.delete(pw1)
+                db.session.delete(sr1)
+                db.session.delete(cgl)
+                db.session.delete(proj)
+                db.session.delete(prod)
+                db.session.delete(user)
+                db.session.commit()
 
     def test_project_create_and_edit_redirect_to_detail(self):
         """Vérifie que la création et l'édition d'un projet redirigent vers sa page de détail."""

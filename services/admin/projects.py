@@ -347,6 +347,27 @@ def _format_project_admin(p, vehicle_map, heads_map):
                 for sr in p.active_safety_rules
             ],
         },
+        "pilot_waivers": {
+            "count": len(p.active_pilot_waivers),
+            "signed_count": sum(1 for pw in p.active_pilot_waivers if pw.status == "signed"),
+            "has_pending": any(pw.status in ("to_send", "to_sign") for pw in p.active_pilot_waivers),
+            "single_pdf_path": _get_secured_document_url(
+                p.active_pilot_waivers[0].signed_pdf_path, "pilot-attestation"
+            ) if (len(p.active_pilot_waivers) == 1 and p.active_pilot_waivers[0].status == "signed") else None,
+            "waivers_list": [
+                {
+                    "id": pw.id,
+                    "waiver_num": pw.waiver_id,
+                    "signer_name": pw.signer_name or "—",
+                    "signer_role": pw.signer_role or "pilot",
+                    "signer_role_label": getattr(pw, "signer_role_label", pw.signer_role),
+                    "status": format_waiver_status(pw.status),
+                    "raw_status": pw.status,
+                    "pdf_path": _get_secured_document_url(pw.signed_pdf_path, "pilot-attestation"),
+                }
+                for pw in p.active_pilot_waivers
+            ],
+        },
         "reports_count": len(p.reports) if hasattr(p, 'reports') and p.reports else 0,
         "incidents": [
             {
