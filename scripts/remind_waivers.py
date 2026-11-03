@@ -8,9 +8,6 @@ Usage :
     python scripts/remind_waivers.py --dry-run    # Simule sans envoyer d'e-mails
 """
 
-from utils.scripts_helper import build_minimal_app
-from utils.cron_helper import monitor_cron_job
-from dotenv import load_dotenv
 import argparse
 import os
 import sys
@@ -18,9 +15,13 @@ from datetime import datetime
 from pathlib import Path
 
 # Configuration du chemin pour les imports du projet
-_root = Path(__file__).parent.parent
-sys.path.append(str(_root))
+_root = Path(__file__).resolve().parent.parent
+if str(_root) not in sys.path:
+    sys.path.insert(0, str(_root))
 
+from dotenv import load_dotenv  # isort: skip # noqa: E402
+from utils.cron_helper import monitor_cron_job  # isort: skip # noqa: E402
+from utils.scripts_helper import build_minimal_app  # isort: skip # noqa: E402
 
 load_dotenv(_root / ".env")
 
