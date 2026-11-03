@@ -25,6 +25,7 @@
     <div class="public-doc" id="inspection-sign-container" data-type="{{ type }}" data-token="{{ token }}"
         data-abandon-url="{{ url_for(type + '_abandon', token=token) }}"
         data-resume-url="{{ url_for(type + '_resume', token=token) }}"
+        data-erp-url="/admin/{{ 'checkouts' if type == 'checkout' else 'checkins' }}/{{ data.id }}"
         data-already-signed="{{ 'true' if already_signed else 'false' }}">
 
         <!-- ═══════════ HEADER ═══════════ -->
@@ -55,15 +56,15 @@
                     Vous pouvez fermer cet onglet ou retourner à la fiche correspondante dans l'ERP.
                 </p>
                 <div class="public-doc-sign-actions u-justify-center">
-                    <button type="button" class="public-doc-btn public-doc-btn--primary" id="btn-close-tab">
-                        Fermer cet onglet
-                    </button>
                     {% if data.id %}
                     <a href="/admin/{{ 'checkouts' if type == 'checkout' else 'checkins' }}/{{ data.id }}"
-                        class="public-doc-btn public-doc-btn--secondary">
+                        class="public-doc-btn public-doc-btn--primary">
                         Retourner à la fiche dans l'ERP
                     </a>
                     {% endif %}
+                    <button type="button" class="public-doc-btn public-doc-btn--secondary" id="btn-close-tab">
+                        Fermer cet onglet
+                    </button>
                 </div>
             </div>
         </section>

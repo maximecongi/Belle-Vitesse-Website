@@ -120,8 +120,10 @@ def register_inspection_routes(app, mode):
                     if record:
                         from services.admin.inspections import _format_base_inspection_admin
                         from utils.database import get_vehicles
-                        vehicle_map = {v["id"]: v.get("fields", {}) for v in get_vehicles()}
-                        data = _format_base_inspection_admin(record, vehicle_map)
+                        vehicle_map = {v["id"]: v.get(
+                            "fields", {}) for v in get_vehicles()}
+                        data = _format_base_inspection_admin(
+                            record, vehicle_map)
                         return render_template("public/inspection_sign.html", data=data, token=token, type=mode, already_signed=True)
             abort(error_code if isinstance(error_code, int) else 404)
 
@@ -132,7 +134,8 @@ def register_inspection_routes(app, mode):
         if record.status in ["signed", "completed"]:
             from services.admin.inspections import _format_base_inspection_admin
             from utils.database import get_vehicles
-            vehicle_map = {v["id"]: v.get("fields", {}) for v in get_vehicles()}
+            vehicle_map = {v["id"]: v.get("fields", {})
+                           for v in get_vehicles()}
             data = _format_base_inspection_admin(record, vehicle_map)
             return render_template("public/inspection_sign.html", data=data, token=token, type=mode, already_signed=True)
 
@@ -191,7 +194,9 @@ def register_inspection_routes(app, mode):
             record = process_inspection_signature(
                 token, mode, payload["signature"], signed_ip, expected_record_id=int(entry.record_id), user_agent=user_agent
             )
-            return jsonify({"status": "signed", **record}), 200
+            plural = "checkouts" if mode == "checkout" else "checkins"
+            erp_url = f"/admin/{plural}/{entry.record_id}"
+            return jsonify({"status": "signed", "erp_url": erp_url, **record}), 200
         except ValueError as e:
             err_msg = str(e)
             if "expiré" in err_msg.lower():

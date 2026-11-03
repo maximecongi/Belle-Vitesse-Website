@@ -8,17 +8,25 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!container) return;
 
     const isAlreadySigned = container.getAttribute('data-already-signed') === 'true';
+    const erpUrl = container.getAttribute('data-erp-url');
     const btnCloseTab = document.getElementById('btn-close-tab');
 
     if (btnCloseTab) {
         btnCloseTab.addEventListener('click', function () {
             window.close();
+            // Si le navigateur bloque la fermeture de l'onglet
+            setTimeout(function () {
+                if (erpUrl) {
+                    window.location.href = erpUrl;
+                }
+            }, 300);
         });
     }
 
-    // ── Gestion si déjà signé : tentative de fermeture de l'onglet ──
     if (isAlreadySigned) {
-        window.close();
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            window.lucide.createIcons();
+        }
         return;
     }
 
@@ -103,10 +111,12 @@ document.addEventListener('DOMContentLoaded', function () {
                         if (window.lucide && typeof window.lucide.createIcons === 'function') {
                             window.lucide.createIcons();
                         }
-                        setTimeout(function () {
-                            window.close();
-                            window.location.reload();
-                        }, 1000);
+                        const targetUrl = result.erp_url || erpUrl;
+                        if (targetUrl) {
+                            setTimeout(function () {
+                                window.location.href = targetUrl;
+                            }, 1500);
+                        }
                     } else {
                         const errMsg = result.error || 'Une erreur est survenue lors de la validation.';
                         if (typeof showFeedback === 'function') {
