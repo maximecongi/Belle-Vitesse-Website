@@ -129,9 +129,10 @@ def send_alerts_batch(alerts: list[dict], app):
 
     smtp_host = os.getenv("MAIL_SERVER")
     smtp_port = int(os.getenv("MAIL_PORT", 587))
-    smtp_user = os.getenv("MAIL_ADMIN_USERNAME")
-    smtp_password = os.getenv("MAIL_ADMIN_PASSWORD")
-    alert_to = os.getenv("SUPER_ADMIN_MAIL")
+    smtp_user = os.getenv("MAIL_NOREPLY_USERNAME") or os.getenv("MAIL_ADMIN_USERNAME")
+    smtp_password = os.getenv("MAIL_NOREPLY_PASSWORD") or os.getenv("MAIL_ADMIN_PASSWORD")
+    alert_to = os.getenv("MONITORING_ALERT_EMAIL") or os.getenv("SUPER_ADMIN_MAIL")
+    from_address = os.getenv("MAIL_NOREPLY_USERNAME", "noreply@bellevitesse.com")
 
     if not all([smtp_host, smtp_user, smtp_password, alert_to]):
         print(
@@ -158,7 +159,7 @@ def send_alerts_batch(alerts: list[dict], app):
 
     msg = EmailMessage()
     msg['Subject'] = subject
-    msg['From'] = smtp_user
+    msg['From'] = f"Belle Vitesse <{from_address}>"
     msg['To'] = alert_to
     msg.add_alternative(html_content, subtype='html')
 

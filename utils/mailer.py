@@ -19,10 +19,17 @@ class EmailService:
 
     @staticmethod
     def _get_credentials(sender_type="contact"):
-        """Récupère la configuration et les identifiants SMTP selon le type d'expéditeur."""
+        """Récupère la configuration et les identifiants SMTP selon le type d'expéditeur.
+        
+        Priorise le compte 'noreply' pour l'authentification et l'expédition sortante,
+        avec repli transparent sur 'admin' ou 'contact' si le mot de passe noreply n'est pas configuré.
+        """
         mail_server = os.getenv("MAIL_SERVER")
         mail_port = int(os.getenv("MAIL_PORT", 587))
         mail_use_tls = os.getenv("MAIL_USE_TLS", "true").lower() == "true"
+
+        noreply_user = os.getenv("MAIL_NOREPLY_USERNAME", "noreply@bellevitesse.com")
+        noreply_password = os.getenv("MAIL_NOREPLY_PASSWORD")
 
         if sender_type == "admin":
             mail_user = os.getenv("MAIL_ADMIN_USERNAME")
@@ -30,6 +37,11 @@ class EmailService:
         else:
             mail_user = os.getenv("MAIL_CONTACT_USERNAME")
             mail_password = os.getenv("MAIL_CONTACT_PASSWORD")
+
+        # Si le compte noreply est configuré avec un mot de passe, l'utiliser en priorité
+        if noreply_user and noreply_password:
+            mail_user = noreply_user
+            mail_password = noreply_password
 
         return mail_server, mail_port, mail_user, mail_password, mail_use_tls
 
@@ -60,10 +72,13 @@ class EmailService:
             return False
 
         try:
+            default_from = os.getenv("MAIL_NOREPLY_USERNAME", "noreply@bellevitesse.com")
+            default_reply_to = os.getenv("MAIL_CONTACT_USERNAME", "contact@bellevitesse.com")
+
             if "From" not in msg:
-                msg["From"] = f"Belle Vitesse <{mail_user}>"
+                msg["From"] = f"Belle Vitesse <{default_from}>"
             if "Reply-To" not in msg:
-                msg["Reply-To"] = mail_user
+                msg["Reply-To"] = default_reply_to
 
             server = smtplib.SMTP(mail_server, mail_port, timeout=timeout)
 
@@ -372,9 +387,13 @@ def send_newsletter_campaign(subject, body, subscribers, base_url=None):
                     now_year=datetime.now(timezone.utc).year,
                 )
 
+                default_from = os.getenv("MAIL_NOREPLY_USERNAME", "noreply@bellevitesse.com")
+                default_reply_to = os.getenv("MAIL_CONTACT_USERNAME", "contact@bellevitesse.com")
+
                 msg = MIMEMultipart("alternative")
                 msg["Subject"] = subject
-                msg["From"] = f"Belle Vitesse <{mail_user}>"
+                msg["From"] = f"Belle Vitesse <{default_from}>"
+                msg["Reply-To"] = default_reply_to
                 msg["To"] = sub.email
                 msg["Date"] = formatdate(localtime=True)
                 msg["Message-ID"] = make_msgid(domain="bellevitesse.com")
@@ -563,10 +582,10 @@ def send_pilot_waiver_invitation_email(to_email, recipient_name, project_name, s
 
 
 def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path, production_name=None, waiver_type=None):
-    """Envoie un email avec le PDF des CGL, BVSR ou Attestation Pilote signé en pièce jointe (CCI admin)."""
-    admin_mail = os.getenv("SUPER_ADMIN_MAIL", "contact@bellevitesse.com")
+    """Envoie un email avec le PDF des CGL, BVSR ou Attestation Pilote signé en pièce jointe (CCI archive/admin)."""
+    archive_mail = os.getenv("ARCHIVE_EMAIL") or os.getenv("SUPER_ADMIN_MAIL", "contact@bellevitesse.com")
     current_app.logger.info(
-        f"🚀 Sending signed document PDF to {to_email} (BCC/CCI admin: {admin_mail})")
+        f"🚀 Sending signed document PDF to {to_email} (BCC/CCI archive: {archive_mail})")
     if waiver_type == "cgl":
         doc_desc = "les Conditions Générales de Location (CGL) signées"
         subject_desc = "Conditions Générales de Location (CGL) signées"
@@ -594,8 +613,8 @@ def send_waiver_signed_email(to_email, recipient_name, project_name, pdf_path, p
     context["subject_desc"] = subject_desc
 
     bcc_recipients = []
-    if admin_mail and admin_mail.strip().lower() != (to_email or "").strip().lower():
-        bcc_recipients.append(admin_mail.strip())
+    if archive_mail and archive_mail.strip().lower() != (to_email or "").strip().lower():
+        bcc_recipients.append(archive_mail.strip())
 
     return EmailService.send_templated_email(
         to_email=to_email,
@@ -742,10 +761,10 @@ def send_incident_signature_request_email(incident, to_email, signing_url):
 
 
 def send_incident_signed_confirmation_email(incident, to_email, pdf_path):
-    """Envoie l'exemplaire certifié scellé du rapport d'incident avec le PDF en pièce jointe (CCI admin)."""
-    admin_mail = os.getenv("SUPER_ADMIN_MAIL", "contact@bellevitesse.com")
+    """Envoie l'exemplaire certifié scellé du rapport d'incident avec le PDF en pièce jointe (CCI archive/admin)."""
+    archive_mail = os.getenv("ARCHIVE_EMAIL") or os.getenv("SUPER_ADMIN_MAIL", "contact@bellevitesse.com")
     current_app.logger.info(
-        f"🚀 Envoi de la confirmation d'incident scellé {incident.incident_number} à {to_email} (BCC/CCI admin: {admin_mail})"
+        f"🚀 Envoi de la confirmation d'incident scellé {incident.incident_number} à {to_email} (BCC/CCI archive: {archive_mail})"
     )
 
     context = _build_incident_email_context(incident)
@@ -762,8 +781,8 @@ def send_incident_signed_confirmation_email(incident, to_email, pdf_path):
     )
 
     bcc_recipients = []
-    if admin_mail and admin_mail.strip().lower() != (to_email or "").strip().lower():
-        bcc_recipients.append(admin_mail.strip())
+    if archive_mail and archive_mail.strip().lower() != (to_email or "").strip().lower():
+        bcc_recipients.append(archive_mail.strip())
 
     return EmailService.send_templated_email(
         to_email=to_email,

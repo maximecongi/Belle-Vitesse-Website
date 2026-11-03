@@ -401,8 +401,8 @@ class PilotWaiverComprehensiveTest(unittest.TestCase):
                 self.assertEqual(args[1], "Adrian Newey")
                 self.assertEqual(kwargs.get("waiver_type"), "safety_rules")
 
-            # 4. Vérification de send_waiver_signed_email : CC=None et BCC=[admin_mail] (CCI)
-            with patch.dict(os.environ, {"SUPER_ADMIN_MAIL": "maxime@bellevitesse.com"}):
+            # 4. Vérification de send_waiver_signed_email : CC=None et BCC=[archive_mail] (CCI)
+            with patch.dict(os.environ, {"ARCHIVE_EMAIL": "archive@bellevitesse.com", "SUPER_ADMIN_MAIL": "maxime@bellevitesse.com"}):
                 send_waiver_signed_email(
                     to_email="max@redbull.com",
                     recipient_name="Max Verstappen",
@@ -414,14 +414,14 @@ class PilotWaiverComprehensiveTest(unittest.TestCase):
                 _, mail_kwargs = mock_send_email.call_args
                 self.assertEqual(mail_kwargs.get("to_email"), "max@redbull.com")
                 self.assertIsNone(mail_kwargs.get("cc"))
-                self.assertEqual(mail_kwargs.get("bcc"), ["maxime@bellevitesse.com"])
+                self.assertEqual(mail_kwargs.get("bcc"), ["archive@bellevitesse.com"])
 
             mock_send_email.reset_mock()
 
-            # 5. Dédoublonnage si le signataire est lui-même l'administrateur
-            with patch.dict(os.environ, {"SUPER_ADMIN_MAIL": "maxime@bellevitesse.com"}):
+            # 5. Dédoublonnage si le signataire est lui-même l'administrateur / archive
+            with patch.dict(os.environ, {"ARCHIVE_EMAIL": "archive@bellevitesse.com", "SUPER_ADMIN_MAIL": "maxime@bellevitesse.com"}):
                 send_waiver_signed_email(
-                    to_email="maxime@bellevitesse.com",
+                    to_email="archive@bellevitesse.com",
                     recipient_name="Maxime Congi",
                     project_name=proj.name,
                     pdf_path="/dummy/path.pdf",
@@ -429,7 +429,8 @@ class PilotWaiverComprehensiveTest(unittest.TestCase):
                 )
                 mock_send_email.assert_called_once()
                 _, mail_kwargs = mock_send_email.call_args
-                self.assertEqual(mail_kwargs.get("to_email"), "maxime@bellevitesse.com")
+                self.assertEqual(mail_kwargs.get("to_email"), "archive@bellevitesse.com")
+                self.assertIsNone(mail_kwargs.get("bcc"))
                 self.assertIsNone(mail_kwargs.get("cc"))
                 self.assertIsNone(mail_kwargs.get("bcc"))
 

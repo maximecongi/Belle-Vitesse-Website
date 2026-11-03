@@ -1,7 +1,7 @@
 import os
 import unittest
 from datetime import datetime, timezone
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 # Isolation stricte de l'environnement de test
 os.environ["FLASK_ENV"] = "testing"
@@ -84,6 +84,57 @@ class CronJobsVerificationTest(unittest.TestCase):
             self.assertNotIn("Dernière exécution (UTC)", rendered)
             self.assertIn("Dernière exécution", rendered)
             self.assertIn("16/09/2026 à 04:00:01", rendered)
+
+    @patch("smtplib.SMTP")
+    def test_send_report_email_recipient_monitoring(self, mock_smtp):
+        from scripts.verify_cron_jobs import send_report_email
+        app = create_app()
+        mock_server = MagicMock()
+        mock_smtp.return_value.__enter__.return_value = mock_server
+
+        with patch.dict(
+            os.environ,
+            {
+                "MAIL_SERVER": "smtp.example.com",
+                "MAIL_PORT": "587",
+                "MAIL_ADMIN_USERNAME": "admin@example.com",
+                "MAIL_ADMIN_PASSWORD": "password",
+                "MONITORING_ALERT_EMAIL": "monitoring@bellevitesse.com",
+                "SUPER_ADMIN_MAIL": "superadmin@bellevitesse.com",
+            },
+        ):
+            send_report_email([], [], "OK", app)
+
+            self.assertTrue(mock_server.send_message.called)
+            sent_msg = mock_server.send_message.call_args[0][0]
+            self.assertEqual(sent_msg["To"], "monitoring@bellevitesse.com")
+            self.assertEqual(sent_msg["From"], "Belle Vitesse <noreply@bellevitesse.com>")
+
+    @patch("smtplib.SMTP")
+    def test_send_report_email_fallback_super_admin(self, mock_smtp):
+        from scripts.verify_cron_jobs import send_report_email
+        app = create_app()
+        mock_server = MagicMock()
+        mock_smtp.return_value.__enter__.return_value = mock_server
+
+        env = {
+            "MAIL_SERVER": "smtp.example.com",
+            "MAIL_PORT": "587",
+            "MAIL_ADMIN_USERNAME": "admin@example.com",
+            "MAIL_ADMIN_PASSWORD": "password",
+            "SUPER_ADMIN_MAIL": "superadmin@bellevitesse.com",
+        }
+        if "MONITORING_ALERT_EMAIL" in os.environ:
+            del os.environ["MONITORING_ALERT_EMAIL"]
+
+        with patch.dict(os.environ, env, clear=False):
+            if "MONITORING_ALERT_EMAIL" in os.environ:
+                del os.environ["MONITORING_ALERT_EMAIL"]
+            send_report_email([], [], "OK", app)
+
+            self.assertTrue(mock_server.send_message.called)
+            sent_msg = mock_server.send_message.call_args[0][0]
+            self.assertEqual(sent_msg["To"], "superadmin@bellevitesse.com")
 
 
 if __name__ == "__main__":

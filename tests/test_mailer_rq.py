@@ -177,6 +177,37 @@ class MailerRQTestCase(unittest.TestCase):
             if os.path.exists(tmp_pdf_path):
                 os.remove(tmp_pdf_path)
 
+    @patch("smtplib.SMTP")
+    def test_smtp_send_from_and_reply_to_defaults(self, mock_smtp):
+        """Vérifie que les en-têtes From et Reply-To sont configurés par défaut sur noreply@ et contact@."""
+        from email.message import EmailMessage
+        mock_server = MagicMock()
+        mock_smtp.return_value.__enter__.return_value = mock_server
+
+        msg = EmailMessage()
+        msg["Subject"] = "Test Default Headers"
+        msg["To"] = "client@example.com"
+
+        with patch.dict(
+            os.environ,
+            {
+                "FLASK_ENV": "production",
+                "TESTING": "False",
+                "MAIL_SERVER": "smtp.example.com",
+                "MAIL_PORT": "587",
+                "MAIL_CONTACT_USERNAME": "contact@bellevitesse.com",
+                "MAIL_CONTACT_PASSWORD": "secret_contact",
+                "MAIL_NOREPLY_USERNAME": "noreply@bellevitesse.com",
+                "MAIL_NOREPLY_PASSWORD": "secret_noreply",
+            },
+        ):
+            # Enlever TESTING de app.config
+            self.app.config["TESTING"] = False
+            EmailService._send_smtp_message(msg, ["client@example.com"], sender_type="contact")
+
+            self.assertEqual(msg["From"], "Belle Vitesse <noreply@bellevitesse.com>")
+            self.assertEqual(msg["Reply-To"], "contact@bellevitesse.com")
+
     @patch("services.common.redis_queue.Redis")
     def test_redis_queue_provider(self, mock_redis_cls):
         """Vérifie la mise en cache et la récupération des connexions Redis et files RQ."""
