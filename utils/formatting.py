@@ -39,6 +39,56 @@ def format_date_fr(date_str: str) -> str:
         return date_str
 
 
+def format_date_numeric(d) -> str:
+    """
+    Formate une date en format numérique standard français JJ/MM/AAAA (ex: 01/01/2026).
+    Supporte les objets date, datetime et les chaînes de caractères (ISO, JJ/MM/AAAA ou texte FR).
+    """
+    if not d or str(d).strip() in ("", "—", "-", "None"):
+        return "—"
+    if hasattr(d, "strftime"):
+        return d.strftime("%d/%m/%Y")
+    d_str = str(d).strip()
+
+    # Si format ISO YYYY-MM-DD ou datetime ISO
+    if "-" in d_str and "/" not in d_str:
+        try:
+            clean_iso = d_str.split(" ")[0].split("T")[0]
+            parts = clean_iso.split("-")
+            if len(parts) == 3:
+                year, month, day = int(parts[0]), int(parts[1]), int(parts[2])
+                return f"{day:02d}/{month:02d}/{year:04d}"
+        except Exception:
+            pass
+
+    # Si format JJ/MM/AAAA ou J/M/AAAA
+    if "/" in d_str:
+        try:
+            parts = d_str.split(" ")[0].split("/")
+            if len(parts) == 3:
+                day, month, year = int(parts[0]), int(parts[1]), int(parts[2])
+                return f"{day:02d}/{month:02d}/{year:04d}"
+        except Exception:
+            pass
+
+    # Si format textuel français (ex: "16 février 2026" ou "1er janvier 2026")
+    parts = d_str.split(" ")
+    if len(parts) >= 3:
+        day_str = parts[0].lower().replace("1er", "1")
+        month_str = parts[1].lower()
+        year_str = parts[2]
+        if month_str in MOIS_FR:
+            try:
+                month = MOIS_FR.index(month_str)
+                day = int(day_str)
+                year = int(year_str)
+                return f"{day:02d}/{month:02d}/{year:04d}"
+            except Exception:
+                pass
+
+    return d_str
+
+
 # ── Markdown Rendering (Notion-style & Secure) ───────────────────────
 
 import re

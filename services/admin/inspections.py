@@ -37,7 +37,7 @@ from utils.checkpoints import get_checkpoints_for_vehicle
 from services.admin.checkpoint_measurements import snapshot_rules, validate_measurement
 from utils.database import get_vehicles
 from utils.document_utils import generate_pdf_access_token
-from utils.formatting import format_date_fr
+from utils.formatting import format_date_fr, format_date_numeric
 from services.admin.projects import get_project_shoot_status
 from utils.image_utils import optimize_and_save_image
 from utils.entity_resolvers import resolve_inspection
@@ -557,13 +557,10 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
 
     ready = "true" if getattr(c, 'vehicle_ready', False) else "false"
 
-    # Formatage des dates pour l'affichage FR
-    c_date = format_date_fr(str(c.inspection_date)
-                             ) if c.inspection_date else "—"
-    d_date = format_date_fr(str(c.project.departure_date)
-                             ) if c.project and c.project.departure_date else "—"
-    r_date = format_date_fr(str(c.project.return_date)
-                             ) if c.project and c.project.return_date else "—"
+    # Formatage des dates pour l'affichage FR (format JJ/MM/AAAA)
+    c_date = format_date_numeric(c.inspection_date) if c.inspection_date else "—"
+    d_date = format_date_numeric(c.project.departure_date) if c.project and c.project.departure_date else "—"
+    r_date = format_date_numeric(c.project.return_date) if c.project and c.project.return_date else "—"
 
     data = {
         "id": c.id,
@@ -704,15 +701,30 @@ def _format_base_inspection_admin(c, vehicle_map, batch_configs=None):
     data["notes"] = c.notes or ""
 
     if c.project:
-        data["production"] = c.project.production.name if c.project.production else "—"
-        data["shoot_start"] = format_date_fr(
-            str(c.project.shoot_start_date)) if c.project.shoot_start_date else "—"
-        data["shoot_end"] = format_date_fr(
-            str(c.project.shoot_end_date)) if c.project.shoot_end_date else "—"
+        p = c.project
+        data["production"] = p.production.name if p.production else "—"
+        data["shoot_start"] = format_date_numeric(
+            p.shoot_start_date) if p.shoot_start_date else "—"
+        data["shoot_end"] = format_date_numeric(
+            p.shoot_end_date) if p.shoot_end_date else "—"
+
+        # Période de tournage synthétisée au format JJ/MM/AAAA
+        s_start = p.shoot_start_date or p.departure_date
+        s_end = p.shoot_end_date or p.return_date or s_start
+        if s_start and s_end:
+            if s_start == s_end:
+                data["shooting_dates"] = format_date_numeric(s_start)
+            else:
+                data["shooting_dates"] = f"Du {format_date_numeric(s_start)} au {format_date_numeric(s_end)}"
+        elif s_start:
+            data["shooting_dates"] = f"À partir du {format_date_numeric(s_start)}"
+        else:
+            data["shooting_dates"] = "—"
+
         data["vehicle_id"] = c.vehicle_id
-        data["project_id"] = str(c.project.id)
-        data["project_id_unique"] = c.project.project_id
-        data["project_name"] = c.project.name
+        data["project_id"] = str(p.id)
+        data["project_id_unique"] = p.project_id
+        data["project_name"] = p.name
         data["vehicle_name"] = vehicle_name
 
     return data
@@ -810,9 +822,9 @@ def get_unified_form_context(mode="checkout"):
                 "shoot_status": status_info.get("status"),
                 "shoot_status_label": status_info.get("label"),
                 "_production_name": p.production.name if p.production else "—",
-                "Date de départ": format_date_fr(str(p.departure_date)) if p.departure_date else "—",
-                "Date de début de tournage": format_date_fr(str(p.shoot_start_date)) if p.shoot_start_date else "—",
-                "Date de fin de tournage": format_date_fr(str(p.shoot_end_date)) if p.shoot_end_date else "—",
+                "Date de départ": format_date_numeric(p.departure_date) if p.departure_date else "—",
+                "Date de début de tournage": format_date_numeric(p.shoot_start_date) if p.shoot_start_date else "—",
+                "Date de fin de tournage": format_date_numeric(p.shoot_end_date) if p.shoot_end_date else "—",
                 "Véhicules à contrôler": veh_ids,
                 "_vehicle_name": v_name
             }

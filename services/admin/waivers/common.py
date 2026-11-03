@@ -31,39 +31,39 @@ logger = logging.getLogger(__name__)
 
 def format_waiver_shooting_dates(shooting_dates_str, default_sep=" au "):
     """
-    Simplifie une chaîne de dates de tournage pour n'afficher que la date de début et la date de fin.
+    Simplifie une chaîne de dates de tournage pour n'afficher que la date de début et la date de fin,
+    au format numérique standard JJ/MM/AAAA (ex: 01/01/2026).
     """
     if not shooting_dates_str or str(shooting_dates_str).strip() in ("", "—", "-"):
         return "—"
 
-    val = str(shooting_dates_str).strip()
+    from utils.formatting import format_date_numeric
 
+    val = str(shooting_dates_str).strip()
+    if val.startswith("Du ") or val.startswith("du "):
+        val = val[3:].strip()
+    elif val.startswith("Le ") or val.startswith("le "):
+        val = val[3:].strip()
+
+    parts = []
     if "," in val:
         parts = [p.strip() for p in val.split(",") if p.strip()]
-        if not parts:
-            return "—"
-        if len(parts) == 1:
-            return parts[0]
-        if parts[0] == parts[-1]:
-            return parts[0]
-        return f"{parts[0]}{default_sep}{parts[-1]}"
-
-    if " au " in val:
+    elif " au " in val:
         parts = [p.strip() for p in val.split(" au ") if p.strip()]
-        if len(parts) == 2:
-            if parts[0] == parts[1]:
-                return parts[0]
-            return f"{parts[0]}{default_sep}{parts[1]}"
+    else:
+        for arrow_sep in (" → ", " -> "):
+            if arrow_sep in val:
+                parts = [p.strip() for p in val.split(arrow_sep) if p.strip()]
+                break
 
-    for arrow_sep in (" → ", " -> "):
-        if arrow_sep in val:
-            parts = [p.strip() for p in val.split(arrow_sep) if p.strip()]
-            if len(parts) == 2:
-                if parts[0] == parts[1]:
-                    return parts[0]
-                return f"{parts[0]}{default_sep}{parts[1]}"
+    if parts:
+        d_start = format_date_numeric(parts[0])
+        d_end = format_date_numeric(parts[-1])
+        if d_start == d_end or not d_end or d_end == "—":
+            return d_start
+        return f"{d_start}{default_sep}{d_end}"
 
-    return val
+    return format_date_numeric(val)
 
 
 def _format_project_shooting_dates(p, default_sep=" au "):

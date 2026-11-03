@@ -431,3 +431,13 @@ def init_context_processors(app):
         from utils.countries import COUNTRIES
         return {"all_countries": COUNTRIES}
 
+    @app.template_filter("date_numeric")
+    def date_numeric_filter(d):
+        from utils.formatting import format_date_numeric
+        return format_date_numeric(d)
+
+    @app.context_processor
+    def inject_date_helpers():
+        from utils.formatting import format_date_numeric
+        return {"format_date_numeric": format_date_numeric}
+

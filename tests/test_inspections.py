@@ -731,6 +731,10 @@ class InspectionsTest(unittest.TestCase):
             self.assertNotIn("État du contrôle", rendered_ci)
             self.assertNotIn("Etat du contrôle", rendered_ci)
 
+            # 4. Vérifier la présence de "Période de tournage" dans les PDF
+            self.assertIn("Période de tournage", rendered_co)
+            self.assertIn("Période de tournage", rendered_ci)
+
     def test_checkout_and_checkin_preview_routes(self):
         """Vérifie le bon fonctionnement des pages de prévisualisation PDF (écran et compilation)."""
         with self.app.app_context():
@@ -875,6 +879,7 @@ class InspectionsTest(unittest.TestCase):
                 project_id=proj.id,
                 vehicle_id="1",
                 controller_id=user.id,
+                inspection_date=date(2026, 6, 2),
                 battery_level=100,
                 vehicle_ready=True,
             )
@@ -901,6 +906,25 @@ class InspectionsTest(unittest.TestCase):
             self.assertIn("public-doc-info-grid", html)
             self.assertIn("public-doc-footer", html)
             self.assertIn("BVCO-TESTSIGNPAGE1", html)
+
+            # Vérification du format strict JJ/MM/AAAA (01/01/2026) pour la période de tournage et le contrôle
+            self.assertIn("Période de tournage", html)
+            self.assertIn("Du 02/06/2026 au 05/06/2026", html)
+            self.assertIn("Date du contrôle", html)
+            self.assertIn("02/06/2026", html)
+
+    def test_format_date_numeric_helper(self):
+        """Vérifie que format_date_numeric formate rigoureusement toute date en format JJ/MM/AAAA (ex: 01/01/2026)."""
+        from utils.formatting import format_date_numeric
+        self.assertEqual(format_date_numeric(date(2026, 1, 1)), "01/01/2026")
+        self.assertEqual(format_date_numeric("2026-01-01"), "01/01/2026")
+        self.assertEqual(format_date_numeric("2026-01-01 14:30:00"), "01/01/2026")
+        self.assertEqual(format_date_numeric("1 janvier 2026"), "01/01/2026")
+        self.assertEqual(format_date_numeric("16 février 2026"), "16/02/2026")
+        self.assertEqual(format_date_numeric("1/2/2026"), "01/02/2026")
+        self.assertEqual(format_date_numeric("01/01/2026"), "01/01/2026")
+        self.assertEqual(format_date_numeric(None), "—")
+        self.assertEqual(format_date_numeric("—"), "—")
 
 
 if __name__ == "__main__":

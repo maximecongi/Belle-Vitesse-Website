@@ -173,6 +173,7 @@
 }
 
 @media print {
+
     .pdf-preview-toolbar,
     .bvpa-screen-footer {
         display: none !important;
@@ -333,6 +334,7 @@
     border-radius: 3pt;
     padding: 6pt 8pt;
     display: flex;
+    width: 130pt;
     align-items: center;
     gap: 8pt;
 }

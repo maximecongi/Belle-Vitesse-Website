@@ -202,7 +202,12 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
             db.session.flush()
 
             contact = Contact(first_name="Alice", last_name="Dubois", mail="alice@studio.com", production_id=prod.id)
-            project = Project(name="Projet Hardening", production_id=prod.id, production_contact_id=contact.id)
+            project = Project(
+                name="Projet Hardening",
+                production_id=prod.id,
+                production_contact_id=contact.id,
+                shooting_locations=[{"name": "Studio Test", "address": "Paris"}]
+            )
             db.session.add_all([contact, project])
             db.session.flush()
 
@@ -313,7 +318,12 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
             db.session.flush()
 
             contact = Contact(first_name="Bob", last_name="Martin", mail="bob@alpha.com", production_id=prod.id)
-            project = Project(name="Film Verification", production_id=prod.id, production_contact_id=contact.id)
+            project = Project(
+                name="Film Verification",
+                production_id=prod.id,
+                production_contact_id=contact.id,
+                shooting_locations=[{"name": "Studio Test", "address": "Paris"}]
+            )
             db.session.add_all([contact, project])
             db.session.flush()
 
@@ -370,7 +380,12 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
             db.session.add(prod)
             db.session.flush()
             contact = Contact(first_name="Alice", last_name="Dupont", mail="alice@upload.com", production_id=prod.id)
-            project = Project(name="Film Upload Verify", production_id=prod.id, production_contact_id=contact.id)
+            project = Project(
+                name="Film Upload Verify",
+                production_id=prod.id,
+                production_contact_id=contact.id,
+                shooting_locations=[{"name": "Studio Test", "address": "Paris"}]
+            )
             db.session.add_all([contact, project])
             db.session.flush()
 
@@ -489,7 +504,12 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
             db.session.add(prod)
             db.session.flush()
             contact = Contact(first_name="Paul", last_name="Secu", mail="paul@secu.com", production_id=prod.id)
-            project = Project(name="Tournage Securite", production_id=prod.id, production_contact_id=contact.id)
+            project = Project(
+                name="Tournage Securite",
+                production_id=prod.id,
+                production_contact_id=contact.id,
+                shooting_locations=[{"name": "Studio Test", "address": "Paris"}]
+            )
             db.session.add_all([contact, project])
             db.session.flush()
 
@@ -541,7 +561,12 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
             db.session.add(prod)
             db.session.flush()
             contact = Contact(first_name="Eva", last_name="Val", mail="eva@fields.com", production_id=prod.id)
-            project = Project(name="Projet Validation", production_id=prod.id, production_contact_id=contact.id)
+            project = Project(
+                name="Projet Validation",
+                production_id=prod.id,
+                production_contact_id=contact.id,
+                shooting_locations=[{"name": "Studio Test", "address": "Paris"}]
+            )
             db.session.add_all([contact, project])
             db.session.flush()
 
@@ -605,7 +630,12 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
             db.session.add(prod)
             db.session.flush()
             contact = Contact(first_name="Luc", last_name="Assur", mail="luc@assur.com", production_id=prod.id)
-            project = Project(name="Projet Assurance", production_id=prod.id, production_contact_id=contact.id)
+            project = Project(
+                name="Projet Assurance",
+                production_id=prod.id,
+                production_contact_id=contact.id,
+                shooting_locations=[{"name": "Studio Test", "address": "Paris"}]
+            )
             db.session.add_all([contact, project])
             db.session.flush()
 
@@ -758,7 +788,12 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
             db.session.add(prod)
             db.session.flush()
             contact = Contact(first_name="Verrou", last_name="Test", mail="verrou@test.com", production_id=prod.id)
-            project = Project(name="Projet Verrou", production_id=prod.id, production_contact_id=contact.id)
+            project = Project(
+                name="Projet Verrou",
+                production_id=prod.id,
+                production_contact_id=contact.id,
+                shooting_locations=[{"name": "Studio Test", "address": "Paris"}]
+            )
             db.session.add_all([contact, project])
             db.session.flush()
 
@@ -1505,7 +1540,11 @@ class SignatureSecurityHardeningTest(unittest.TestCase):
             prod = Production(name="Prod Field Test")
             db.session.add(prod)
             db.session.commit()
-            proj = Project(name="Project Field Test", production_id=prod.id)
+            proj = Project(
+                name="Project Field Test",
+                production_id=prod.id,
+                shooting_locations=[{"name": "Studio Test", "address": "Paris"}]
+            )
             db.session.add(proj)
             db.session.commit()
 

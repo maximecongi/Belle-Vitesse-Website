@@ -84,19 +84,28 @@
                 <div class="public-doc-info-item">
                     <span class="public-doc-info-label">Période de tournage</span>
                     <span class="public-doc-info-value u-text-sm">
-                        {% if data.departure_date and data.return_date and data.departure_date != '—' and
-                        data.return_date != '—' %}
-                        Du {{ data.departure_date }} au {{ data.return_date }}
-                        {% elif data.departure_date and data.departure_date != '—' %}
-                        À partir du {{ data.departure_date }}
+                        {% if data.shooting_dates and data.shooting_dates != '—' %}
+                        {{ data.shooting_dates }}
+                        {% else %}
+                        {% set start_d = (data.shoot_start if (data.shoot_start and data.shoot_start != '—') else data.departure_date)|date_numeric %}
+                        {% set end_d = (data.shoot_end if (data.shoot_end and data.shoot_end != '—') else data.return_date)|date_numeric %}
+                        {% if start_d and end_d and start_d != '—' and end_d != '—' %}
+                            {% if start_d == end_d %}
+                            Le {{ start_d }}
+                            {% else %}
+                            Du {{ start_d }} au {{ end_d }}
+                            {% endif %}
+                        {% elif start_d and start_d != '—' %}
+                        À partir du {{ start_d }}
                         {% else %}
                         —
+                        {% endif %}
                         {% endif %}
                     </span>
                 </div>
                 <div class="public-doc-info-item">
                     <span class="public-doc-info-label">Date du contrôle</span>
-                    <span class="public-doc-info-value u-text-sm">{{ data.control_date or '—' }}</span>
+                    <span class="public-doc-info-value u-text-sm">{{ (data.control_date or '—')|date_numeric }}</span>
                 </div>
                 {% if data.controller and data.controller.name and data.controller.name != '—' %}
                 <div class="public-doc-info-item">
