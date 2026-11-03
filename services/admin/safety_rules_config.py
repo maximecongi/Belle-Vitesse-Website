@@ -66,6 +66,7 @@ DEFAULT_VEHICLE_SAFETY_RULES = {
             "Mandatory safety meeting on the first day of shooting for everyone riding on the vehicle, and before any new person gets on board for the first time.",
             "The driver is responsible for enforcing seatbelt and helmet rules.",
         ],
+        "equipment_ids": ["helmets_jet", "operator_harness"],
     },
     "erider": {
         "label": "eRider (Stark Varg)",
@@ -82,6 +83,7 @@ DEFAULT_VEHICLE_SAFETY_RULES = {
             "Riding restricted to approved rider qualified for high-performance off-road electric motorcycles.",
             "Prior inspection of surface traction and driving path before any take.",
         ],
+        "equipment_ids": ["moto_helmet", "joint_protections"],
     },
     "ecar": {
         "label": "eCar (Twizy)",
@@ -98,6 +100,7 @@ DEFAULT_VEHICLE_SAFETY_RULES = {
             "Mandatory safety tethering for camera head and all technical accessories.",
             "Seatbelt mandatory for driver and front passenger.",
         ],
+        "equipment_ids": ["helmets_jet", "camera_tethers"],
     },
     "etrike": {
         "label": "eTrike / Trike 360",
@@ -114,6 +117,7 @@ DEFAULT_VEHICLE_SAFETY_RULES = {
             "Mandatory safety tethering for all onboard camera equipment.",
             "Do not lean outside the platform while moving.",
         ],
+        "equipment_ids": ["helmets_jet", "camera_tethers"],
     },
     "segway": {
         "label": "Segway i2 / x2",
@@ -130,6 +134,7 @@ DEFAULT_VEHICLE_SAFETY_RULES = {
             "Dry, clean ground free of unexpected drop-offs.",
             "Check Steadicam hardmount before every take.",
         ],
+        "equipment_ids": ["joint_protections"],
     },
     "rickshaw": {
         "label": "Jackal Rickshaw",
@@ -144,8 +149,37 @@ DEFAULT_VEHICLE_SAFETY_RULES = {
             "Safety harness recommended depending on setup.",
             "Operator and grips synchronized before any movement.",
         ],
+        "equipment_ids": ["operator_harness", "helmets_jet"],
     },
 }
+
+DEFAULT_SAFETY_EQUIPMENT_CATALOG = [
+    {
+        "id": "helmets_jet",
+        "label_fr": "Casques mis à disposition : 6 casques jet ouverts (1 Small, 2 Medium, 2 Large, 1 XLarge).",
+        "label_en": "Helmets provided : 6 open face jet helmets (1 Small, 2 Medium, 2 Large, 1 XLarge).",
+    },
+    {
+        "id": "operator_harness",
+        "label_fr": "Harnais de maintien et double ceinture de sécurité opérateur.",
+        "label_en": "Operator safety harness and double safety seatbelt.",
+    },
+    {
+        "id": "camera_tethers",
+        "label_fr": "Élingues de sécurité acier certifiées pour matériel caméra.",
+        "label_en": "Certified steel safety tethers for camera equipment.",
+    },
+    {
+        "id": "joint_protections",
+        "label_fr": "Kit complet de protections articulaires opérateur (genouillères, coudières).",
+        "label_en": "Complete operator joint protective gear kit (knee pads, elbow pads).",
+    },
+    {
+        "id": "moto_helmet",
+        "label_fr": "Casque moto homologué mis à disposition.",
+        "label_en": "Certified motorcycle helmet provided.",
+    },
+]
 
 DEFAULT_HELMETS_INVENTORY = {
     "total": 6,
@@ -153,6 +187,78 @@ DEFAULT_HELMETS_INVENTORY = {
     "description_en": "6 open face jet helmets : 1 Small, 2 Medium, 2 Large, 1 XLarge",
     "sizes": {"Small": 1, "Medium": 2, "Large": 2, "XLarge": 1},
 }
+
+
+def get_safety_equipment_catalog():
+    """
+    Retourne le catalogue global des équipements de sécurité (FR / EN).
+    Chaque équipement possède un identifiant unique stable (id), label_fr et label_en.
+    """
+    try:
+        custom_raw = AppSetting.get("safety_equipment_catalog", None)
+        if custom_raw is not None and str(custom_raw).strip() != "":
+            if isinstance(custom_raw, str):
+                custom_list = json.loads(custom_raw)
+            elif isinstance(custom_list, list):
+                custom_list = custom_raw
+            else:
+                custom_list = []
+
+            if isinstance(custom_list, list):
+                res = []
+                for item in custom_list:
+                    if isinstance(item, dict) and item.get("id"):
+                        res.append({
+                            "id": str(item["id"]).strip(),
+                            "label_fr": str(item.get("label_fr") or "").strip(),
+                            "label_en": str(item.get("label_en") or "").strip(),
+                        })
+                if res:
+                    return res
+    except Exception as e:
+        logger.warning(f"Erreur lors de la lecture du catalogue d'équipements de sécurité : {e}")
+
+    return [dict(item) for item in DEFAULT_SAFETY_EQUIPMENT_CATALOG]
+
+
+def save_safety_equipment_catalog(equipment_items):
+    """
+    Enregistre le catalogue global des équipements de sécurité dans AppSetting.
+    equipment_items peut être une liste de dicts (id, label_fr, label_en) ou de tuples.
+    """
+    try:
+        clean_items = []
+        for idx, item in enumerate(equipment_items or []):
+            if isinstance(item, dict):
+                item_id = str(item.get("id") or "").strip()
+                label_fr = str(item.get("label_fr") or "").strip()
+                label_en = str(item.get("label_en") or "").strip()
+            elif isinstance(item, (list, tuple)):
+                item_id = str(item[0]).strip() if len(item) > 0 else ""
+                label_fr = str(item[1]).strip() if len(item) > 1 else ""
+                label_en = str(item[2]).strip() if len(item) > 2 else ""
+            else:
+                continue
+
+            if not label_fr and not label_en:
+                continue
+            if not item_id:
+                # Génère un identifiant slugifié à partir du libellé français ou d'un index
+                import re
+                slug = re.sub(r'[^a-z0-9]+', '_', label_fr.lower())[:30].strip('_')
+                item_id = slug or f"eq_{idx + 1}"
+
+            clean_items.append({
+                "id": item_id,
+                "label_fr": label_fr,
+                "label_en": label_en,
+            })
+
+        AppSetting.set("safety_equipment_catalog", json.dumps(clean_items, ensure_ascii=False))
+        return True
+    except Exception as e:
+        logger.error(f"Erreur lors de la sauvegarde du catalogue d'équipements : {e}")
+        return False
 
 
 def _extract_vehicle_image(fields):
@@ -181,14 +287,24 @@ def _extract_vehicle_image(fields):
 
 
 def _find_default_rules(name):
-    """Associe des règles par défaut cohérentes en fonction du nom du véhicule."""
+    """Associe des règles et identifiants d'équipements par défaut en fonction du nom du véhicule."""
     query = (name or "").lower().strip()
     for key, data in DEFAULT_VEHICLE_SAFETY_RULES.items():
         if key in query:
-            return list(data.get("rules_fr") or []), list(data.get("rules_en") or []), data.get("label") or name
+            return (
+                list(data.get("rules_fr") or []),
+                list(data.get("rules_en") or []),
+                data.get("label") or name,
+                list(data.get("equipment_ids") or []),
+            )
         for kw in data.get("keywords") or []:
             if kw in query:
-                return list(data.get("rules_fr") or []), list(data.get("rules_en") or []), data.get("label") or name
+                return (
+                    list(data.get("rules_fr") or []),
+                    list(data.get("rules_en") or []),
+                    data.get("label") or name,
+                    list(data.get("equipment_ids") or []),
+                )
     return (
         [
             "Casque obligatoire pour toute personne sur le véhicule en roulage.",
@@ -199,16 +315,19 @@ def _find_default_rules(name):
             "Strict compliance with instructions from the pilot and Belle Vitesse crew.",
         ],
         name or "Véhicule",
+        ["helmets_jet"],
     )
 
 
 def get_all_vehicle_safety_rules_catalog():
     """
     Retourne le catalogue des règles de sécurité pour chaque véhicule réel de la flotte,
-    en combinant les règles par défaut et les personnalisations enregistrées.
+    en combinant les règles par défaut, les équipements rattachés et les personnalisations enregistrées.
     """
     catalog = {}
     custom_dict = {}
+    eq_catalog = {eq["id"]: eq for eq in get_safety_equipment_catalog()}
+
     try:
         custom_raw = AppSetting.get("fleet_safety_rules", None)
         if custom_raw:
@@ -252,7 +371,7 @@ def get_all_vehicle_safety_rules_catalog():
             vname = fields.get("Nom") or fields.get("name") or f"Véhicule {vid}"
             vimg = _extract_vehicle_image(fields)
 
-            def_fr, def_en, def_lbl = _find_default_rules(vname)
+            def_fr, def_en, def_lbl, def_eq_ids = _find_default_rules(vname)
 
             # Recherche d'une personnalisation (par id, ou fallback par nom)
             custom_entry = custom_dict.get(vid)
@@ -266,10 +385,18 @@ def get_all_vehicle_safety_rules_catalog():
                 label = custom_entry.get("label") or def_lbl
                 rules_fr = custom_entry.get("rules_fr", def_fr)
                 rules_en = custom_entry.get("rules_en", def_en)
+                equipment_ids = custom_entry.get("equipment_ids")
+                if equipment_ids is None:
+                    equipment_ids = def_eq_ids
             else:
                 label = def_lbl
                 rules_fr = def_fr
                 rules_en = def_en
+                equipment_ids = def_eq_ids
+
+            clean_eq_ids = [str(x).strip() for x in equipment_ids if str(x).strip()] if isinstance(equipment_ids, list) else []
+            eq_fr = [eq_catalog[x]["label_fr"] for x in clean_eq_ids if x in eq_catalog and eq_catalog[x].get("label_fr")]
+            eq_en = [eq_catalog[x]["label_en"] for x in clean_eq_ids if x in eq_catalog and eq_catalog[x].get("label_en")]
 
             catalog[vid] = {
                 "id": vid,
@@ -278,6 +405,9 @@ def get_all_vehicle_safety_rules_catalog():
                 "label": label,
                 "rules_fr": rules_fr if isinstance(rules_fr, list) else [r.strip() for r in str(rules_fr).split("\n") if r.strip()],
                 "rules_en": rules_en if isinstance(rules_en, list) else [r.strip() for r in str(rules_en).split("\n") if r.strip()],
+                "equipment_ids": clean_eq_ids,
+                "equipment_fr": eq_fr,
+                "equipment_en": eq_en,
             }
     else:
         # Fallback de secours (tests unitaires sans BDD de flotte)
@@ -286,6 +416,14 @@ def get_all_vehicle_safety_rules_catalog():
             label = custom_entry.get("label") or data.get("label") or key.capitalize()
             rules_fr = custom_entry.get("rules_fr", data.get("rules_fr", []))
             rules_en = custom_entry.get("rules_en", data.get("rules_en", []))
+            equipment_ids = custom_entry.get("equipment_ids")
+            if equipment_ids is None:
+                equipment_ids = data.get("equipment_ids", [])
+
+            clean_eq_ids = [str(x).strip() for x in equipment_ids if str(x).strip()] if isinstance(equipment_ids, list) else []
+            eq_fr = [eq_catalog[x]["label_fr"] for x in clean_eq_ids if x in eq_catalog and eq_catalog[x].get("label_fr")]
+            eq_en = [eq_catalog[x]["label_en"] for x in clean_eq_ids if x in eq_catalog and eq_catalog[x].get("label_en")]
+
             catalog[key] = {
                 "id": key,
                 "name": label,
@@ -293,12 +431,20 @@ def get_all_vehicle_safety_rules_catalog():
                 "label": label,
                 "rules_fr": rules_fr if isinstance(rules_fr, list) else [r.strip() for r in str(rules_fr).split("\n") if r.strip()],
                 "rules_en": rules_en if isinstance(rules_en, list) else [r.strip() for r in str(rules_en).split("\n") if r.strip()],
+                "equipment_ids": clean_eq_ids,
+                "equipment_fr": eq_fr,
+                "equipment_en": eq_en,
             }
 
     # Inclure également les entrées personnalisées enregistrées dans AppSetting non encore dans catalog
     for c_id, c_data in custom_dict.items():
         if c_id not in catalog and isinstance(c_data, dict):
             c_label = c_data.get("label") or c_id
+            equipment_ids = c_data.get("equipment_ids") or []
+            clean_eq_ids = [str(x).strip() for x in equipment_ids if str(x).strip()] if isinstance(equipment_ids, list) else []
+            eq_fr = [eq_catalog[x]["label_fr"] for x in clean_eq_ids if x in eq_catalog and eq_catalog[x].get("label_fr")]
+            eq_en = [eq_catalog[x]["label_en"] for x in clean_eq_ids if x in eq_catalog and eq_catalog[x].get("label_en")]
+
             catalog[c_id] = {
                 "id": c_id,
                 "name": c_label,
@@ -306,15 +452,17 @@ def get_all_vehicle_safety_rules_catalog():
                 "label": c_label,
                 "rules_fr": c_data.get("rules_fr") or [],
                 "rules_en": c_data.get("rules_en") or [],
+                "equipment_ids": clean_eq_ids,
+                "equipment_fr": eq_fr,
+                "equipment_en": eq_en,
             }
 
     return catalog
 
 
-def save_vehicle_safety_rules(vehicle_id=None, rules_fr=None, rules_en=None, label=None, vehicle_key=None, **kwargs):
+def save_vehicle_safety_rules(vehicle_id=None, rules_fr=None, rules_en=None, label=None, vehicle_key=None, equipment_ids=None, **kwargs):
     """
-    Enregistre ou met à jour les règles spécifiques pour un véhicule réel dans la configuration de flotte.
-    Accepte vehicle_id ou vehicle_key pour une compatibilité totale.
+    Enregistre ou met à jour les règles et les identifiants d'équipements sélectionnés pour un véhicule.
     """
     try:
         target_id = vehicle_id or vehicle_key
@@ -339,6 +487,11 @@ def save_vehicle_safety_rules(vehicle_id=None, rules_fr=None, rules_en=None, lab
             entry["label"] = label.strip()
         entry["rules_fr"] = rules_fr if isinstance(rules_fr, list) else [r.strip() for r in str(rules_fr or '').split("\n") if r.strip()]
         entry["rules_en"] = rules_en if isinstance(rules_en, list) else [r.strip() for r in str(rules_en or '').split("\n") if r.strip()]
+        if equipment_ids is not None:
+            if isinstance(equipment_ids, list):
+                entry["equipment_ids"] = [str(x).strip() for x in equipment_ids if str(x).strip()]
+            elif isinstance(equipment_ids, str):
+                entry["equipment_ids"] = [x.strip() for x in equipment_ids.split(",") if x.strip()]
 
         custom_dict[clean_id] = entry
         AppSetting.set("fleet_safety_rules", json.dumps(custom_dict, ensure_ascii=False))
@@ -410,9 +563,61 @@ def get_safety_rules_for_vehicles(vehicles_details, catalog=None):
                     "label": label,
                     "rules_fr": entry.get("rules_fr") or [],
                     "rules_en": entry.get("rules_en") or [],
+                    "equipment_ids": entry.get("equipment_ids") or [],
+                    "equipment_fr": entry.get("equipment_fr") or [],
+                    "equipment_en": entry.get("equipment_en") or [],
                 }
 
     return list(matched_categories.values())
+
+
+def get_safety_equipment_for_vehicles(vehicles_details, catalog=None):
+    """
+    Rassemble et déduplique la liste des équipements de sécurité fournis
+    pour l'ensemble des véhicules réservés d'un tournage à partir du catalogue d'équipements.
+    Résolution garantie sans doublon via l'ID de chaque équipement.
+    Retourne un dict: {"rules_fr": [...], "rules_en": [...]}
+    """
+    v_rules = get_safety_rules_for_vehicles(vehicles_details, catalog=catalog)
+    eq_catalog = {eq["id"]: eq for eq in get_safety_equipment_catalog()}
+
+    compiled_fr = []
+    compiled_en = []
+    seen_ids = set()
+    seen_labels = set()
+
+    for vr in v_rules:
+        # 1. Utilisation prioritaire des equipment_ids rattachés
+        for eq_id in (vr.get("equipment_ids") or []):
+            clean_id = str(eq_id).strip()
+            if clean_id and clean_id not in seen_ids:
+                seen_ids.add(clean_id)
+                eq_item = eq_catalog.get(clean_id)
+                if eq_item:
+                    l_fr = eq_item.get("label_fr") or ""
+                    l_en = eq_item.get("label_en") or ""
+                    if l_fr and l_fr.lower() not in seen_labels:
+                        seen_labels.add(l_fr.lower())
+                        compiled_fr.append(l_fr)
+                        compiled_en.append(l_en)
+
+        # 2. Rétro-compatibilité si un véhicule a directement equipment_fr
+        for idx, item_fr in enumerate(vr.get("equipment_fr") or []):
+            clean_fr = str(item_fr).strip()
+            if not clean_fr:
+                continue
+            norm_key = clean_fr.lower()
+            if norm_key not in seen_labels:
+                seen_labels.add(norm_key)
+                compiled_fr.append(clean_fr)
+                eq_en_list = vr.get("equipment_en") or []
+                item_en = eq_en_list[idx].strip() if (idx < len(eq_en_list) and str(eq_en_list[idx]).strip()) else ""
+                compiled_en.append(item_en)
+
+    return {
+        "rules_fr": compiled_fr,
+        "rules_en": compiled_en,
+    }
 
 
 def get_general_safety_rules():

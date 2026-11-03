@@ -113,6 +113,48 @@
     </div>
 </div>
 
+<!-- ═══════════ CATALOGUE GLOBAL DES ÉQUIPEMENTS DE SÉCURITÉ ═══════════ -->
+<div class="admin-card u-p-4 u-mb-4 u-border-left-waiver">
+    <div class="u-flex u-justify-between u-align-start u-mb-3">
+        <div class="u-flex u-align-center u-gap-3">
+            <div class="badge-pill u-bg-waiver-light u-text-waiver">
+                <i data-lucide="hard-hat" class="u-w-20 u-h-20 u-m-0"></i>
+            </div>
+            <div>
+                <h3 class="u-text-lg u-font-bold u-m-0">3. Équipements de Sécurité</h3>
+                <span class="u-text-xs u-text-muted u-d-block u-mt-1">
+                    Équipements et protections (EPI) éditables une seule fois, puis sélectionnables par checkboxes pour
+                    chaque véhicule.
+                </span>
+            </div>
+        </div>
+        <button type="button" class="admin-btn admin-btn-sm admin-btn-secondary btn-edit-equipment-catalog"
+            data-catalog='{{ (equipment_catalog or [])|tojson }}'>
+            <i data-lucide="edit-3"></i> Modifier le catalogue d'équipements
+        </button>
+    </div>
+
+    <div class="u-mt-3">
+        <div class="bvsr-preview-box">
+            <div class="u-flex u-justify-between u-align-center u-mb-2">
+                <span class="u-text-xs u-font-bold u-text-waiver">{{ (equipment_catalog or [])|length }} équipement{% if
+                    (equipment_catalog or [])|length > 1 %}s{% endif %} référencé{% if (equipment_catalog or [])|length
+                    > 1 %}s{% endif %}</span>
+            </div>
+            <ul class="bvsr-preview-list">
+                {% for eq in (equipment_catalog or []) %}
+                <li class="bvsr-preview-item">
+                    <strong>{{ eq.label_fr }}</strong>
+                    {% if eq.label_en %}
+                    <br><em class="u-text-muted">({{ eq.label_en }})</em>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
 <!-- ═══════════ PRÉSENTATION & NOTICE BVSR ═══════════ -->
 <div class="admin-card u-p-4 u-mb-4 u-border-left-waiver">
     <div class="u-flex u-align-start u-gap-3">
@@ -121,7 +163,7 @@
         </div>
         <div class="u-flex-1">
             <div class="u-flex u-justify-between u-align-start">
-                <h3 class="u-text-lg u-font-bold u-m-0">3. Règles de Sécurité par Véhicule (BVSR)</h3>
+                <h3 class="u-text-lg u-font-bold u-m-0">4. Règles de Sécurité par Véhicule (BVSR)</h3>
                 <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-xs u-font-bold">
                     {{ catalog|length }} véhicule{% if catalog|length > 1 %}s{% endif %} de la flotte
                 </span>
@@ -189,6 +231,39 @@
                     </ul>
                 </div>
             </div>
+
+            {% if cat.equipment_fr or cat.equipment_en %}
+            <div class="u-border-t u-pt-3 u-mt-3">
+                <div class="u-flex u-align-center u-gap-2 u-mb-2">
+                    <span class="badge-pill u-bg-waiver-light u-text-waiver u-text-xs u-font-bold">
+                        <i data-lucide="hard-hat" class="u-w-14 u-h-14 u-m-0"></i> Équipements fournis <span
+                            class="bvsr-catalog-equipments-count">{{(cat.equipment_fr or [])|length }}</span>
+                    </span>
+                </div>
+                <div class="u-grid u-gap-3 u-grid-cols-2">
+                    <div class="bvsr-preview-box">
+                        <div class="u-flex u-justify-between u-align-center u-mb-2">
+                            <span class="bvsr-lang-pill">FR</span>
+                        </div>
+                        <ul class="bvsr-preview-list">
+                            {% for eq_fr in cat.equipment_fr %}
+                            <li class="bvsr-preview-item">{{ eq_fr }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="bvsr-preview-box">
+                        <div class="u-flex u-justify-between u-align-center u-mb-2">
+                            <span class="bvsr-lang-pill bvsr-lang-pill--en">EN</span>
+                        </div>
+                        <ul class="bvsr-preview-list">
+                            {% for eq_en in cat.equipment_en %}
+                            <li class="bvsr-preview-item">{{ eq_en }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
     {% endfor %}
@@ -275,6 +350,40 @@
                             protocole de décharge signé.</span>
                     </div>
                 </div>
+
+                <!-- Section des équipements de sécurité fournis (sélection par checkboxes du catalogue) -->
+                <div id="modal_vehicle_equipment_group" class="u-border-t u-pt-3 u-mt-4">
+                    <div class="u-flex u-justify-between u-align-center u-mb-2">
+                        <div class="u-flex u-align-center u-gap-2">
+                            <label class="form-label u-mb-0 u-font-bold">Équipements de Sécurité Fournis (EPI)</label>
+                            <span id="bvsr-equipment-count-badge"
+                                class="badge-pill u-bg-waiver-light u-text-waiver u-text-xs">0 équipement coché</span>
+                        </div>
+                    </div>
+                    <p class="u-text-xs u-text-muted u-mb-3">
+                        Cochez ci-dessous les équipements de sécurité fournis avec ce véhicule parmi le catalogue :
+                    </p>
+
+                    <div id="bvsr-vehicle-equipment-checkboxes" class="u-flex u-flex-column u-gap-2">
+                        {% for eq in (equipment_catalog or []) %}
+                        <label class="u-flex u-align-start u-gap-2 u-p-2 bvsr-preview-box u-cursor-pointer u-mb-0">
+                            <input type="checkbox" name="equipment_ids[]" value="{{ eq.id }}"
+                                class="form-checkbox bvsr-eq-checkbox u-mt-1">
+                            <div class="u-flex-1">
+                                <div class="u-text-sm u-font-semibold">{{ eq.label_fr }}</div>
+                                {% if eq.label_en %}
+                                <div class="u-text-xs u-text-muted"><em>{{ eq.label_en }}</em></div>
+                                {% endif %}
+                            </div>
+                        </label>
+                        {% endfor %}
+                        {% if not equipment_catalog %}
+                        <div class="u-text-xs u-text-muted u-p-2">
+                            Aucun équipement dans le catalogue. Vous pouvez en ajouter dans la section 3 ci-dessus.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
 
             <!-- Pied de page de la modale -->
@@ -288,6 +397,68 @@
                     <button type="button" class="admin-btn admin-btn-secondary btn-close-rule-modal">Annuler</button>
                     <button type="submit" class="admin-btn admin-btn-primary">
                         <i data-lucide="check"></i> Enregistrer les Règles
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ═══════════ MODAL ÉDITION DU CATALOGUE DES ÉQUIPEMENTS DE SÉCURITÉ ═══════════ -->
+<div id="equipmentCatalogModal" class="admin-modal-overlay u-d-none" role="dialog" aria-modal="true" aria-hidden="true"
+    aria-labelledby="eqModalTitle">
+    <div class="admin-modal-container admin-modal-container--lg bvsr-modal-container">
+        <!-- En-tête -->
+        <div class="bvsr-modal-header">
+            <div class="u-flex u-align-center u-gap-3">
+                <div class="badge-pill u-bg-waiver-light u-text-waiver">
+                    <i data-lucide="shield" class="u-w-24 u-h-24 u-m-0"></i>
+                </div>
+                <div>
+                    <h3 id="eqModalTitle" class="u-text-xl u-font-bold u-m-0">Catalogue des Équipements de Sécurité</h3>
+                    <p class="u-text-sm u-text-muted u-mt-1 u-mb-0">Définissez une seule fois les équipements (FR/EN) à
+                        associer aux véhicules</p>
+                </div>
+            </div>
+            <button type="button" class="admin-btn admin-btn-quaternary btn-close-eq-modal"
+                aria-label="Fermer la boîte de dialogue">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <!-- Formulaire d'édition du catalogue global -->
+        <form id="equipmentCatalogForm" method="POST" action="{{ url_for('admin_fleet.admin_safety_rules_config') }}"
+            class="u-flex u-flex-column u-h-100 u-overflow-hidden">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="rule_scope" value="equipment_catalog">
+            <input type="hidden" name="is_equipment_catalog" value="1">
+
+            <div class="bvsr-modal-body">
+                <div class="u-flex u-justify-between u-align-center u-mb-3">
+                    <span class="form-label u-mb-0 u-font-bold">Équipements Référencés</span>
+                    <span class="bvsr-kbd-hint"><kbd>Entrée ↵</kbd> pour ajouter un équipement</span>
+                </div>
+
+                <div id="eq-catalog-items-container" class="bvsr-rules-list"></div>
+
+                <div class="bvsr-add-btn-wrapper u-mt-3">
+                    <button type="button" id="btn-add-catalog-eq-item"
+                        class="admin-btn admin-btn-sm admin-btn-secondary">
+                        <i data-lucide="plus"></i> Ajouter un équipement au catalogue
+                    </button>
+                </div>
+            </div>
+
+            <div class="bvsr-modal-footer">
+                <div class="u-flex u-align-center u-gap-2">
+                    <i data-lucide="info" class="u-w-16 u-h-16 u-text-muted"></i>
+                    <span class="u-text-xs u-text-muted">Les équipements modifiés se répercutent sur tous les véhicules
+                        qui y sont associés.</span>
+                </div>
+                <div class="u-flex u-align-center u-gap-2">
+                    <button type="button" class="admin-btn admin-btn-secondary btn-close-eq-modal">Annuler</button>
+                    <button type="submit" class="admin-btn admin-btn-primary">
+                        <i data-lucide="check"></i> Enregistrer le Catalogue
                     </button>
                 </div>
             </div>

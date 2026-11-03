@@ -373,8 +373,7 @@ body.pdf-body {
     page-break-after: avoid;
 }
 
-.cgl-section-title::before,
-.pdf-section-title::before {
+.cgl-section-title::before {
     content: "";
     display: inline-block;
     width: 6pt;

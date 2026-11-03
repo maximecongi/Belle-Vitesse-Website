@@ -93,6 +93,16 @@
     display: block;
 }
 
+.bvsr-catalog-equipments-count {
+    border: 1.5px solid var(--entity-waiver-text);
+    display: inline-flex;
+    width: 2ch;
+    aspect-ratio: 1;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+}
+
 /* ── Modale d'édition des règles de sécurité ── */
 .bvsr-modal-container {
     max-width: 860px !important;

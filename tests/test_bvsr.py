@@ -11,6 +11,9 @@ from services.admin.safety_rules_config import (
     DEFAULT_VEHICLE_SAFETY_RULES,
     get_all_vehicle_safety_rules_catalog,
     get_safety_rules_for_vehicles,
+    get_safety_equipment_for_vehicles,
+    get_safety_equipment_catalog,
+    save_safety_equipment_catalog,
     save_vehicle_safety_rules,
     get_general_safety_rules,
     save_general_safety_rules,
@@ -661,6 +664,87 @@ class BvsrComprehensiveTest(unittest.TestCase):
             # Nettoyage
             db.session.delete(user)
             db.session.commit()
+
+    def test_bvsr_bilingual_equipment_and_deduplication(self):
+        """Test du catalogue global d'équipements, association par checkboxes et déduplication."""
+        with self.app.app_context():
+            # 1. Sauvegarde d'un catalogue global d'équipements
+            test_catalog = [
+                {"id": "eq_helmets", "label_fr": "Casques jet 6 unités", "label_en": "Jet helmets 6 units"},
+                {"id": "eq_harness", "label_fr": "Harnais de maintien", "label_en": "Safety harness"},
+                {"id": "eq_tethers", "label_fr": "Élingues de sécurité", "label_en": "Safety tethers"},
+            ]
+            ok_cat = save_safety_equipment_catalog(test_catalog)
+            self.assertTrue(ok_cat)
+
+            saved_cat = get_safety_equipment_catalog()
+            self.assertEqual(len(saved_cat), 3)
+            self.assertEqual(saved_cat[0]["id"], "eq_helmets")
+
+            # 2. Association des équipements aux véhicules par IDs (simule la sélection par checkboxes)
+            ok_veh1 = save_vehicle_safety_rules(
+                vehicle_id="erover",
+                label="eRover (Polaris Kinetic)",
+                rules_fr=["Casque obligatoire pour toute personne à l'extérieur."],
+                rules_en=["Helmet mandatory for anyone outside."],
+                equipment_ids=["eq_helmets", "eq_harness"],
+            )
+            self.assertTrue(ok_veh1)
+
+            ok_veh2 = save_vehicle_safety_rules(
+                vehicle_id="ecar",
+                label="eCar (Twizy)",
+                rules_fr=["Ceinture obligatoire."],
+                rules_en=["Seatbelt mandatory."],
+                equipment_ids=["eq_helmets", "eq_tethers"],
+            )
+            self.assertTrue(ok_veh2)
+
+            # 3. Test déduplication sur les 2 véhicules partageant l'équipement 'eq_helmets'
+            catalog = get_all_vehicle_safety_rules_catalog()
+            self.assertIn("erover", catalog)
+            self.assertEqual(catalog["erover"]["equipment_ids"], ["eq_helmets", "eq_harness"])
+            self.assertEqual(catalog["erover"]["equipment_fr"], ["Casques jet 6 unités", "Harnais de maintien"])
+
+            vehicles_test = [
+                {"id": "erover", "name": "eRover"},
+                {"id": "ecar", "name": "eCar (Twizy)"},
+            ]
+            compiled = get_safety_equipment_for_vehicles(vehicles_test, catalog=catalog)
+            # Doit contenir exactement 3 équipements uniques (helmets, harness, tethers)
+            self.assertEqual(len(compiled["rules_fr"]), 3)
+            self.assertEqual(len(compiled["rules_en"]), 3)
+            self.assertEqual(compiled["rules_fr"], ["Casques jet 6 unités", "Harnais de maintien", "Élingues de sécurité"])
+            self.assertEqual(compiled["rules_en"], ["Jet helmets 6 units", "Safety harness", "Safety tethers"])
+
+            # 4. Test de rendu du template de signature public avec test_request_context
+            from services.admin.waivers.mock_data import MockSafetyRulesWaiver
+            waiver = MockSafetyRulesWaiver()
+            waiver.waiver_id = "BVSR-TEST-EQ"
+            waiver.status = "to_sign"
+            waiver.signer_email = "test.signer@example.com"
+            waiver.vehicles_details = vehicles_test
+            v_rules = get_safety_rules_for_vehicles(vehicles_test, catalog=catalog)
+
+            with self.app.test_request_context("/safety-rules/sign/dummy"):
+                from flask import render_template
+                html = render_template(
+                    "public/waivers/sign_safety_rules.html",
+                    waiver=waiver,
+                    vehicle_rules=v_rules,
+                    safety_equipment=compiled,
+                    csrf_token=lambda: "dummy_csrf",
+                    config={"FLASK_ENV": "testing"},
+                    asset_version=lambda x: "1",
+                )
+            # Vérifier que les règles véhicules sont rendues bilingues
+            self.assertIn("CONSIGNES SPÉCIFIQUES PAR VÉHICULE RÉSERVÉ", html)
+            self.assertIn("Helmet mandatory for anyone outside.", html)
+            # Vérifier que les équipements sont rendus
+            self.assertIn("ÉQUIPEMENTS DE PROTECTION ET DE SÉCURITÉ MIS À DISPOSITION", html)
+            self.assertIn("Casques jet 6 unités", html)
+            self.assertIn("Jet helmets 6 units", html)
+            self.assertIn("Élingues de sécurité", html)
 
 
 if __name__ == '__main__':

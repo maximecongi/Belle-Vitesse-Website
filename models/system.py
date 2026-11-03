@@ -63,7 +63,7 @@ class AppSetting(db.Model):
     __tablename__ = "app_settings"
 
     key = db.Column(db.String(100), primary_key=True)
-    value = db.Column(db.String(500), nullable=False)
+    value = db.Column(db.Text, nullable=False)
     updated_at = db.Column(
         db.DateTime, default=_utcnow, onupdate=_utcnow)
 

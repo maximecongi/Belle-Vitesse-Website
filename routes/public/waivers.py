@@ -186,6 +186,9 @@ def init_waiver_routes(app):
                     tech_names)
                 extra_ctx["vehicle_rules"] = get_safety_rules_for_vehicles(
                     waiver.vehicles_details)
+                from services.admin.safety_rules_config import get_safety_equipment_for_vehicles
+                extra_ctx["safety_equipment"] = get_safety_equipment_for_vehicles(
+                    waiver.vehicles_details)
                 extra_ctx["helmets"] = waiver.helmets_inventory or DEFAULT_HELMETS_INVENTORY
             from services.common.signatures import log_signature_event
             log_signature_event(

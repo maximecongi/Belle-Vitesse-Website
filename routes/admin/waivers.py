@@ -417,6 +417,8 @@ def admin_safety_rules_preview(waiver_id=None):
     safety_techs = getattr(waiver, "display_safety_technicians", None) or getattr(waiver, "safety_technicians", "") or None
     general_rules = get_merged_general_safety_rules(safety_techs)
     vehicle_rules = get_safety_rules_for_vehicles(getattr(waiver, "vehicles_details", []))
+    from services.admin.safety_rules_config import get_safety_equipment_for_vehicles
+    safety_equipment = get_safety_equipment_for_vehicles(getattr(waiver, "vehicles_details", []))
     helmets = getattr(waiver, "helmets_inventory", None) or DEFAULT_HELMETS_INVENTORY
 
     is_pdf_format = request.args.get("format") == "pdf"
@@ -425,6 +427,7 @@ def admin_safety_rules_preview(waiver_id=None):
         waiver=waiver,
         general_rules=general_rules,
         vehicle_rules=vehicle_rules,
+        safety_equipment=safety_equipment,
         helmets=helmets,
         safety_technicians=safety_techs,
         bv_signature=getattr(waiver, "bv_signature_data_uri", None),

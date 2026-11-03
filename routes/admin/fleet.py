@@ -68,11 +68,34 @@ def admin_safety_rules_config():
         save_general_safety_rules,
         get_bv_referents_safety_rules,
         save_bv_referents_safety_rules,
+        get_safety_equipment_catalog,
+        save_safety_equipment_catalog,
     )
     if request.method == "POST":
         rule_scope = request.form.get("rule_scope", "").strip()
         is_general = request.form.get("is_general") in ("1", "true", "True") or rule_scope == "general"
         is_bv_referents = request.form.get("is_bv_referents") in ("1", "true", "True") or rule_scope == "bv_referents"
+        is_equipment_catalog = request.form.get("is_equipment_catalog") in ("1", "true", "True") or rule_scope == "equipment_catalog"
+
+        if is_equipment_catalog:
+            eq_ids = request.form.getlist("equipment_id[]") or request.form.getlist("equipment_id")
+            eq_frs = request.form.getlist("equipment_fr[]") or request.form.getlist("equipment_fr")
+            eq_ens = request.form.getlist("equipment_en[]") or request.form.getlist("equipment_en")
+            max_len = max(len(eq_ids), len(eq_frs), len(eq_ens))
+            items = []
+            for i in range(max_len):
+                cid = eq_ids[i].strip() if i < len(eq_ids) else ""
+                cfr = eq_frs[i].strip() if i < len(eq_frs) else ""
+                cen = eq_ens[i].strip() if i < len(eq_ens) else ""
+                if cfr or cen:
+                    items.append({"id": cid, "label_fr": cfr, "label_en": cen})
+            ok = save_safety_equipment_catalog(items)
+            if ok:
+                flash("Catalogue d'équipements de sécurité enregistré avec succès.", "success")
+            else:
+                flash("Erreur lors de l'enregistrement du catalogue d'équipements.", "error")
+            return redirect(url_for("admin_fleet.admin_safety_rules_config"))
+
         # Support de la liste à puces dynamique (rules_fr[] ou rules_fr) ou textarea brut
         rules_fr_list = request.form.getlist("rules_fr[]") or request.form.getlist("rules_fr")
         rules_en_list = request.form.getlist("rules_en[]") or request.form.getlist("rules_en")
@@ -108,6 +131,8 @@ def admin_safety_rules_config():
         else:
             vehicle_id = request.form.get("vehicle_id", "").strip() or request.form.get("vehicle_key", "").strip()
             label = request.form.get("label", "").strip()
+            checked_equipment_ids = request.form.getlist("equipment_ids[]") or request.form.getlist("equipment_ids")
+
             if not vehicle_id:
                 flash("Identifiant de véhicule manquant.", "error")
             else:
@@ -116,9 +141,10 @@ def admin_safety_rules_config():
                     rules_fr=rules_fr,
                     rules_en=rules_en,
                     label=label,
+                    equipment_ids=checked_equipment_ids,
                 )
                 if ok:
-                    flash(f"Règles de sécurité pour « {label or vehicle_id} » enregistrées avec succès.", "success")
+                    flash(f"Règles et équipements de sécurité pour « {label or vehicle_id} » enregistrés avec succès.", "success")
                 else:
                     flash("Erreur lors de l'enregistrement des règles de sécurité.", "error")
         return redirect(url_for("admin_fleet.admin_safety_rules_config"))
@@ -126,11 +152,13 @@ def admin_safety_rules_config():
     catalog = get_all_vehicle_safety_rules_catalog()
     general_rules = get_general_safety_rules()
     bv_referents_rules = get_bv_referents_safety_rules()
+    equipment_catalog = get_safety_equipment_catalog()
     return render_template(
         "admin/safety_rules_catalog.html",
         catalog=catalog,
         general_rules=general_rules,
         bv_referents_rules=bv_referents_rules,
+        equipment_catalog=equipment_catalog,
     )
 
 
