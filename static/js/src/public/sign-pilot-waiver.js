@@ -8,7 +8,7 @@
  * - Feedback unifié et actualisation automatique de l'état scellé
  */
 
-document.addEventListener('DOMContentLoaded', function () {
+function initPilotWaiver() {
     // ── Décompte et redirection si document déjà signé ─────────────────────
     const redirectCounterEl = document.getElementById('redirect-counter');
     if (redirectCounterEl) {
@@ -191,4 +191,10 @@ document.addEventListener('DOMContentLoaded', function () {
     if (window.lucide && typeof window.lucide.createIcons === 'function') {
         window.lucide.createIcons();
     }
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPilotWaiver);
+} else {
+    initPilotWaiver();
+}

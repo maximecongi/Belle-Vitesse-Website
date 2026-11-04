@@ -8,7 +8,7 @@
  * - Feedback unifié et actualisation automatique de l'état scellé
  */
 
-document.addEventListener('DOMContentLoaded', function () {
+function initIncidentSign() {
     if (window.lucide && typeof window.lucide.createIcons === 'function') {
         window.lucide.createIcons();
     }
@@ -128,5 +128,11 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     });
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initIncidentSign);
+} else {
+    initIncidentSign();
+}
 

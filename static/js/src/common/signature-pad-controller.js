@@ -32,13 +32,28 @@ class BelleVitesseSignaturePad {
     }
 
     resize() {
-        if (!this.canvas || !this.wrapper) return;
+        if (!this.canvas) return;
+        const width = this.canvas.offsetWidth || (this.wrapper ? this.wrapper.clientWidth : 0);
+        const height = this.canvas.offsetHeight || 220;
+        if (width === 0) {
+            requestAnimationFrame(() => this.resize());
+            return;
+        }
+
         const ratio = Math.max(window.devicePixelRatio || 1, 1);
-        this.canvas.width = this.wrapper.offsetWidth * ratio;
-        this.canvas.height = this.wrapper.offsetHeight * ratio;
+        const data = this.pad && !this.pad.isEmpty() ? this.pad.toData() : null;
+
+        this.canvas.width = width * ratio;
+        this.canvas.height = height * ratio;
         const ctx = this.canvas.getContext('2d');
         if (ctx) ctx.scale(ratio, ratio);
-        if (this.pad) this.pad.clear();
+
+        if (this.pad) {
+            this.pad.clear();
+            if (data) {
+                this.pad.fromData(data);
+            }
+        }
     }
 
     clear() {

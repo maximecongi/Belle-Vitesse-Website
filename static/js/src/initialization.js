@@ -144,24 +144,27 @@ function initNewsletterForm() {
     });
 }
 
-// Swup Initialization
-const swup = new Swup({
-    plugins: [new SwupPreloadPlugin()]
-});
+// Swup Initialization (uniquement si Swup est chargé sur la page)
+if (typeof Swup !== 'undefined') {
+    const swupPlugins = typeof SwupPreloadPlugin !== 'undefined' ? [new SwupPreloadPlugin()] : [];
+    const swup = new Swup({
+        plugins: swupPlugins
+    });
 
-swup.hooks.on('content:replace', () => {
-    initContent();
-    // Header is now persistent, so we don't re-run initDropdowns()
+    swup.hooks.on('content:replace', () => {
+        initContent();
+        // Header is now persistent, so we don't re-run initDropdowns()
 
-    // Close mobile menu
-    const menuCheckbox = document.getElementById('active');
-    if (menuCheckbox) {
-        menuCheckbox.checked = false;
-    }
+        // Close mobile menu
+        const menuCheckbox = document.getElementById('active');
+        if (menuCheckbox) {
+            menuCheckbox.checked = false;
+        }
 
-    // Update language selector links to match the current page
-    updateLangLinks();
-});
+        // Update language selector links to match the current page
+        updateLangLinks();
+    });
+}
 
 function updateLangLinks() {
     const path = window.location.pathname;
@@ -177,7 +180,12 @@ function updateLangLinks() {
 }
 
 // Initial Load
-document.addEventListener('DOMContentLoaded', () => {
-    initDropdowns(); // Run once for the header
-    initContent();   // Run for the initial content
-});
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        initDropdowns(); // Run once for the header
+        initContent();   // Run for the initial content
+    });
+} else {
+    initDropdowns();
+    initContent();
+}

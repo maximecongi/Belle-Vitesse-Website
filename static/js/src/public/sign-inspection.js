@@ -3,7 +3,7 @@
  * Aucun JS inline - respect strict des standards CSP et règles de développement.
  */
 
-document.addEventListener('DOMContentLoaded', function () {
+function initInspectionSign() {
     const container = document.getElementById('inspection-sign-container');
     if (!container) return;
 
@@ -139,4 +139,10 @@ document.addEventListener('DOMContentLoaded', function () {
     if (window.lucide && typeof window.lucide.createIcons === 'function') {
         window.lucide.createIcons();
     }
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initInspectionSign);
+} else {
+    initInspectionSign();
+}

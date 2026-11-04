@@ -8,7 +8,7 @@
  * - Validation des conditions obligatoires et soumission asynchrone sécurisée
  */
 
-document.addEventListener('DOMContentLoaded', function () {
+function initCglSign() {
     // ── Décompte et redirection si document déjà signé ─────────────────────
     const redirectCounterEl = document.getElementById('redirect-counter');
     if (redirectCounterEl) {
@@ -373,4 +373,10 @@ document.addEventListener('DOMContentLoaded', function () {
     if (window.lucide && typeof window.lucide.createIcons === 'function') {
         window.lucide.createIcons();
     }
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCglSign);
+} else {
+    initCglSign();
+}
