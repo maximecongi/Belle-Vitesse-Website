@@ -13,7 +13,7 @@ class Production(db.Model):
 
     # Relations
     # Liste des projets associés à cette production
-    projects = db.relationship("Project", backref="production", lazy=True)
+    projects = db.relationship("Project", back_populates="production", lazy=True)
     # Liste des contacts professionnels rattachés à cette production
     contacts = db.relationship("Contact", backref="production_rel", lazy=True)
 
@@ -124,6 +124,9 @@ class Project(db.Model):
     kdrive_last_cancel_id = db.Column(db.String(100), nullable=True)
 
     # Relations
+    # Société de production associée
+    production = db.relationship(
+        "Production", back_populates="projects", foreign_keys=[production_id], lazy=True)
     # Liste des contrôles au départ effectués pour ce projet
     checkout_vehicles = db.relationship(
         "CheckoutVehicle", backref="project", lazy=True)
@@ -209,29 +212,68 @@ class Project(db.Model):
         """Retourne la liste des retours non supprimés associés à ce projet."""
         return [c for c in (self.checkin_vehicles or []) if getattr(c, "deleted_at", None) is None]
 
+    def clear_waiver_cache(self):
+        """Réinitialise les caches mémoïsés des décharges actives."""
+        for attr in ("_memo_active_cgl", "_memo_active_safety_rules", "_memo_active_pilot_waivers"):
+            if attr in self.__dict__:
+                del self.__dict__[attr]
+
     @property
     def active_cgl(self):
         """Retourne le contrat CGL / Rental Agreement (BVRA) si il existe et n'a pas été supprimé."""
-        if self.cgl and getattr(self.cgl, "deleted_at", None) is None:
-            return self.cgl
-        if "waivers" in self.__dict__:
-            active = [w for w in (self.waivers or []) if getattr(w, "waiver_type", None) == "cgl" and getattr(w, "deleted_at", None) is None]
+        if hasattr(self, "_memo_active_cgl"):
+            memo = self._memo_active_cgl
+            if memo is None or getattr(memo, "deleted_at", None) is None:
+                return memo
+            self.clear_waiver_cache()
+
+        res = None
+        if "cgl" in self.__dict__ and self.cgl and getattr(self.cgl, "deleted_at", None) is None:
+            res = self.cgl
+        elif "waivers" in self.__dict__:
+            active = [
+                w for w in (self.waivers or [])
+                if getattr(w, "waiver_type", None) == "cgl" and getattr(w, "deleted_at", None) is None
+            ]
             if active:
-                return active[-1]
-        from models.waiver import CglWaiver
-        return CglWaiver.query.filter_by(project_id=self.id, deleted_at=None).order_by(CglWaiver.id.desc()).first()
-
-
+                res = active[-1]
+        elif self.cgl and getattr(self.cgl, "deleted_at", None) is None:
+            res = self.cgl
+        else:
+            from models.waiver import CglWaiver
+            res = CglWaiver.query.filter_by(project_id=self.id, deleted_at=None).order_by(CglWaiver.id.desc()).first()
+        self._memo_active_cgl = res
+        return res
 
     @property
     def active_safety_rules(self):
         """Retourne la liste des règles de sécurité universelles (BVSR) actives pour ce projet."""
-        return [sr for sr in (self.safety_rules or []) if getattr(sr, "deleted_at", None) is None]
+        if hasattr(self, "_memo_active_safety_rules"):
+            return self._memo_active_safety_rules
+        if "waivers" in self.__dict__:
+            res = [
+                w for w in (self.waivers or [])
+                if getattr(w, "waiver_type", None) == "safety_rules" and getattr(w, "deleted_at", None) is None
+            ]
+        else:
+            res = [sr for sr in (self.safety_rules or []) if getattr(sr, "deleted_at", None) is None]
+        self._memo_active_safety_rules = res
+        return res
 
     @property
     def active_pilot_waivers(self):
         """Retourne la liste des attestations pilotes (BVPA) actives pour ce projet."""
-        return [pw for pw in (self.pilot_waivers or []) if getattr(pw, "deleted_at", None) is None]
+        if hasattr(self, "_memo_active_pilot_waivers"):
+            return self._memo_active_pilot_waivers
+        if "waivers" in self.__dict__:
+            res = [
+                w for w in (self.waivers or [])
+                if getattr(w, "waiver_type", None) in ("pilot_waiver", "pilot") and getattr(w, "deleted_at", None) is None
+            ]
+        else:
+            res = [pw for pw in (self.pilot_waivers or []) if getattr(pw, "deleted_at", None) is None]
+        self._memo_active_pilot_waivers = res
+        return res
 
 
     @property
@@ -440,3 +482,16 @@ class Project(db.Model):
 
     def __repr__(self):
         return f"<Project {self.name}>"
+
+
+@db.event.listens_for(Project, "expire")
+def _on_project_expire(target, attrs):
+    if target is not None and hasattr(target, "clear_waiver_cache"):
+        target.clear_waiver_cache()
+
+
+@db.event.listens_for(Project, "refresh")
+def _on_project_refresh(target, context, attrs):
+    if target is not None and hasattr(target, "clear_waiver_cache"):
+        target.clear_waiver_cache()
+

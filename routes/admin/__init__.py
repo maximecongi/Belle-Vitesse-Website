@@ -2,7 +2,7 @@ from flask import flash, redirect, request, url_for
 from flask_wtf.csrf import CSRFError
 
 from .api import api_bp
-from .auth import auth_bp
+from .auth import auth_bp, init_auth_routes
 from .booking import booking_bp
 from .calendar import calendar_bp
 from .catalog import catalog_bp
@@ -19,7 +19,7 @@ from .newsletter import newsletter_bp
 from .preview import preview_bp
 from .pricing import pricing_bp
 from .productions import productions_bp
-from .projects import projects_bp
+from .projects import projects_bp, init_projects_routes
 from .settings import settings_bp
 from .tools import tools_bp
 from .users import users_bp

@@ -80,16 +80,14 @@ def list_projects(
 
     eager_options = (
         joinedload(Project.production),
-        selectinload(Project.checkout_vehicles),
-        selectinload(Project.checkin_vehicles),
         joinedload(Project.pilot_contact),
         joinedload(Project.production_contact),
         joinedload(Project.dop_contact),
         joinedload(Project.first_ac_contact),
         joinedload(Project.key_grip_contact),
-        joinedload(Project.cgl),
-        selectinload(Project.safety_rules),
-        selectinload(Project.pilot_waivers),
+        selectinload(Project.waivers),
+        selectinload(Project.checkout_vehicles),
+        selectinload(Project.checkin_vehicles),
         selectinload(Project.incidents),
         selectinload(Project.reports),
     )
